@@ -745,31 +745,47 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                              {(() => {
                                                const policy = allowanceByService.get(service.id);
 
-                                               if (policy) {
-                                                 const recipeNote = policy.notes?.startsWith('Recipe-based:') ? policy.notes.replace('Recipe-based: ', '') : null;
-                                                 return (
-                                                   <div className="flex items-center gap-2 text-xs">
-                                                     <FileText className="w-3.5 h-3.5 text-primary" />
-                                                     <span className="font-sans text-muted-foreground">
-                                                       {recipeNote || `${policy.included_allowance_qty}${policy.allowance_unit} included · $${Number(policy.overage_rate).toFixed(2)}/${policy.allowance_unit} overage`}
-                                                     </span>
-                                                     <Button
-                                                       variant="ghost"
-                                                       size="sm"
-                                                       className="h-6 px-2 text-[10px] text-muted-foreground hover:text-foreground"
-                                                       onClick={(e) => {
-                                                         e.stopPropagation();
-                                                          setCalculatorServiceId(service.id);
-                                                          setCalculatorServiceName(service.name);
-                                                          setCalculatorContainerTypes((service.container_types || ['bowl']) as ('bowl' | 'bottle')[]);
-                                                          setCalculatorServicePrice(service.price);
-                                                       }}
-                                                     >
-                                                       Edit
-                                                     </Button>
-                                                   </div>
-                                                 );
-                                               }
+                                                if (policy) {
+                                                  const recipeNote = policy.notes?.startsWith('Recipe-based:') ? policy.notes.replace('Recipe-based: ', '') : null;
+                                                  const healthStatus = (policy as any).allowance_health_status as string | null;
+                                                  const healthPct = (policy as any).allowance_health_pct as number | null;
+                                                  return (
+                                                    <div className="flex items-center gap-2 text-xs">
+                                                      <FileText className="w-3.5 h-3.5 text-primary" />
+                                                      <span className="font-sans text-muted-foreground">
+                                                        {recipeNote || `${policy.included_allowance_qty}${policy.allowance_unit} included · $${Number(policy.overage_rate).toFixed(2)}/${policy.allowance_unit} overage`}
+                                                      </span>
+                                                      {healthStatus && healthPct !== null && (
+                                                        <Badge
+                                                          variant="outline"
+                                                          className={cn(
+                                                            'text-[10px] px-1.5 py-0',
+                                                            healthStatus === 'healthy' && 'text-emerald-500 border-emerald-500/30',
+                                                            healthStatus === 'high' && 'text-amber-500 border-amber-500/30',
+                                                            healthStatus === 'low' && 'text-blue-500 border-blue-500/30',
+                                                          )}
+                                                        >
+                                                          {healthPct.toFixed(1)}%
+                                                          {healthStatus === 'high' && ' ⚠'}
+                                                        </Badge>
+                                                      )}
+                                                      <Button
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        className="h-6 px-2 text-[10px] text-muted-foreground hover:text-foreground"
+                                                        onClick={(e) => {
+                                                          e.stopPropagation();
+                                                           setCalculatorServiceId(service.id);
+                                                           setCalculatorServiceName(service.name);
+                                                           setCalculatorContainerTypes((service.container_types || ['bowl']) as ('bowl' | 'bottle')[]);
+                                                           setCalculatorServicePrice(service.price);
+                                                        }}
+                                                      >
+                                                        Edit
+                                                      </Button>
+                                                    </div>
+                                                  );
+                                                }
 
                                                 return (
                                                   <div className="flex items-center gap-2 text-xs">

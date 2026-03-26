@@ -13,7 +13,7 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
-import { Plus, Trash2, Loader2, Beaker, FlaskConical, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, Palette, Search, TestTube2, Check, ArrowRight, Copy } from 'lucide-react';
+import { Plus, Trash2, Loader2, Beaker, FlaskConical, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, Palette, Search, TestTube2, Check, ArrowRight, Copy, ClipboardCopy, Eraser, Pencil } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
@@ -145,7 +145,7 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
   const vesselLabel = (type: 'bowl' | 'bottle', num: number) => type === 'bottle' ? `Bottle ${num}` : `Bowl ${num}`;
   const VesselIcon = (type: 'bowl' | 'bottle') => type === 'bottle' ? TestTube2 : Beaker;
 
-  const { data: catalogProducts = [] } = useQuery({
+  const { data: catalogProducts = [], isLoading: catalogLoading } = useQuery({
     queryKey: ['catalog-products-for-allowance', orgId],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -155,7 +155,8 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
         .eq('is_active', true)
         .eq('product_type', 'Supplies')
         .order('brand')
-        .order('name');
+        .order('name')
+        .limit(2000);
       if (error) throw error;
       return data as CatalogProduct[];
     },
@@ -174,6 +175,9 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
   const [bowls, setBowls] = useState<BowlState[]>([]);
   const [saving, setSaving] = useState(false);
   const [bowlPickers, setBowlPickers] = useState<Record<number, PickerState>>({});
+  const [editingLabelIdx, setEditingLabelIdx] = useState<number | null>(null);
+  const [modeledServicePrice, setModeledServicePrice] = useState<number | null>(null);
+  const effectiveServicePrice = modeledServicePrice ?? servicePrice ?? 0;
   const initialBowlsRef = useRef<string>('');
   const isDirty = useMemo(() => {
     if (!initialBowlsRef.current) return false;
@@ -269,6 +273,8 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
       initialBowlsRef.current = snapshot;
     }
     setBowlPickers({});
+    setEditingLabelIdx(null);
+    setModeledServicePrice(null);
   }, [open, existingBowls, existingBaselines, catalogProducts]);
 
   const grandTotal = useMemo(() => {
@@ -292,9 +298,9 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
   }, [bowls]);
 
   const healthResult: AllowanceHealthResult | null = useMemo(() => {
-    if (!servicePrice || servicePrice <= 0 || grandTotal <= 0) return null;
-    return calculateAllowanceHealth({ allowanceAmount: grandTotal, servicePrice });
-  }, [grandTotal, servicePrice]);
+    if (effectiveServicePrice <= 0 || grandTotal <= 0) return null;
+    return calculateAllowanceHealth({ allowanceAmount: grandTotal, servicePrice: effectiveServicePrice });
+  }, [grandTotal, effectiveServicePrice]);
 
   const queryClient = useQueryClient();
 
@@ -322,11 +328,49 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
     ]);
   }, [defaultVesselType]);
 
+  const removedBowlRef = useRef<{ idx: number; bowl: BowlState } | null>(null);
+
   const removeBowl = useCallback((idx: number) => {
+    const removed = bowls[idx];
     setBowls((prev) => {
       const next = prev.filter((_, i) => i !== idx);
-      return next.map((b, i) => ({ ...b, bowlNumber: i + 1, label: vesselLabel(b.vesselType, i + 1) }));
+      return next.map((b, i) => ({ ...b, bowlNumber: i + 1 }));
     });
+    if (removed) {
+      removedBowlRef.current = { idx, bowl: removed };
+      toast(`Removed ${removed.label}`, {
+        action: {
+          label: 'Undo',
+          onClick: () => {
+            const ref = removedBowlRef.current;
+            if (!ref) return;
+            setBowls((prev) => {
+              const next = [...prev];
+              next.splice(Math.min(ref.idx, next.length), 0, ref.bowl);
+              return next.map((b, i) => ({ ...b, bowlNumber: i + 1 }));
+            });
+            removedBowlRef.current = null;
+          },
+        },
+        duration: 5000,
+      });
+    }
+  }, [bowls]);
+
+  const clearBowl = useCallback((idx: number) => {
+    setBowls((prev) =>
+      prev.map((b, i) => {
+        if (i !== idx) return b;
+        return { ...b, lines: [] };
+      })
+    );
+    toast.success('Bowl cleared');
+  }, []);
+
+  const updateBowlLabel = useCallback((idx: number, label: string) => {
+    setBowls((prev) =>
+      prev.map((b, i) => (i === idx ? { ...b, label } : b))
+    );
   }, []);
 
   const duplicateBowl = useCallback((idx: number) => {
@@ -486,16 +530,20 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
     const existingBaselineIds = existingBaselines?.map(bl => bl.id) || [];
 
     try {
-      // Phase 1: Delete existing data
-      const deleteErrors: string[] = [];
-      for (const id of existingBaselineIds) {
-        try { await deleteBaseline.mutateAsync(id); } catch (e: any) { deleteErrors.push(e.message); }
+      // Phase 1: Batch delete existing data
+      if (existingBaselineIds.length > 0) {
+        const { error: blErr } = await supabase
+          .from('service_recipe_baselines')
+          .delete()
+          .in('id', existingBaselineIds);
+        if (blErr) throw new Error('Failed to clear baselines: ' + blErr.message);
       }
-      for (const id of existingBowlIds) {
-        try { await deleteBowl.mutateAsync(id); } catch (e: any) { deleteErrors.push(e.message); }
-      }
-      if (deleteErrors.length > 0) {
-        throw new Error(`Failed to clear existing data: ${deleteErrors[0]}`);
+      if (existingBowlIds.length > 0) {
+        const { error: bowlErr } = await supabase
+          .from('service_allowance_bowls')
+          .delete()
+          .in('id', existingBowlIds);
+        if (bowlErr) throw new Error('Failed to clear bowls: ' + bowlErr.message);
       }
 
       // Phase 2: Insert new data
@@ -510,14 +558,14 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
         });
 
         for (const line of bowl.lines) {
-          const colorQty = bowl.lines.filter((l) => !l.isDeveloper).reduce((s, l) => s + l.quantity, 0);
-          const effectiveQty = line.isDeveloper ? colorQty * line.developerRatio : line.quantity;
-
+          // P0 fix: Save the RAW quantity for developer lines, not the effective qty.
+          // The effective qty is computed at runtime from colorQty * ratio.
+          // Saving raw qty prevents inflated values on reload.
           await upsertBaseline.mutateAsync({
             organization_id: orgId,
             service_id: serviceId,
             product_id: line.productId,
-            expected_quantity: effectiveQty,
+            expected_quantity: line.quantity,
             unit: 'g',
             notes: line.isDeveloper ? `Developer ${line.developerRatio}× ratio` : undefined,
           });
@@ -861,7 +909,7 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
               const colorLines = bowl.lines.filter((l) => !l.isDeveloper);
               const devLines = bowl.lines.filter((l) => l.isDeveloper);
               const colorQty = colorLines.reduce((s, l) => s + l.quantity, 0);
-              const bowlHealthPct = servicePrice && servicePrice > 0 ? ((bowlCost / servicePrice) * 100) : null;
+              const bowlHealthPct = effectiveServicePrice > 0 ? ((bowlCost / effectiveServicePrice) * 100) : null;
 
               return (
                 <div key={bowl.id || `new-${bowlIdx}`} className="rounded-xl border border-border/60 bg-card/50 overflow-hidden">
@@ -872,7 +920,24 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
                   >
                     <div className="flex items-center gap-2">
                       {(() => { const Icon = VesselIcon(bowl.vesselType); return <Icon className="w-4 h-4 text-primary" />; })()}
-                      <span className="text-sm font-sans font-medium text-foreground">{bowl.label}</span>
+                      {editingLabelIdx === bowlIdx ? (
+                        <Input
+                          autoFocus
+                          value={bowl.label}
+                          className="h-6 w-32 text-sm font-sans px-1.5"
+                          onClick={(e) => e.stopPropagation()}
+                          onChange={(e) => updateBowlLabel(bowlIdx, e.target.value)}
+                          onBlur={() => setEditingLabelIdx(null)}
+                          onKeyDown={(e) => { if (e.key === 'Enter') setEditingLabelIdx(null); }}
+                        />
+                      ) : (
+                        <span
+                          className="text-sm font-sans font-medium text-foreground cursor-text hover:underline decoration-dashed underline-offset-2"
+                          onClick={(e) => { e.stopPropagation(); setEditingLabelIdx(bowlIdx); }}
+                        >
+                          {bowl.label}
+                        </span>
+                      )}
                       {bowl.lines.length > 0 && (
                         <Badge variant="secondary" className="text-xs px-2 py-0.5">
                           {Math.round(bowlWeight)}g · ${bowlCost.toFixed(2)}
@@ -946,6 +1011,22 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
                         </TooltipTrigger>
                         <TooltipContent>Duplicate this {bowl.vesselType}</TooltipContent>
                       </Tooltip>
+                      {/* Clear bowl */}
+                      {bowl.lines.length > 0 && (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
+                              onClick={(e) => { e.stopPropagation(); clearBowl(bowlIdx); }}
+                            >
+                              <Eraser className="w-3.5 h-3.5" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>Clear all products</TooltipContent>
+                        </Tooltip>
+                      )}
                       {bowls.length > 1 && (
                         <Button
                           variant="ghost"
@@ -1230,13 +1311,35 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
         {/* Footer */}
         <div className="px-6 py-4 border-t border-border/40 bg-muted/30 shrink-0">
           <div className="flex items-center justify-between">
-            <div>
+            <div className="flex-1 min-w-0">
               <div className="text-[11px] font-sans font-medium tracking-wide text-muted-foreground uppercase">Total Allowance (Retail)</div>
               <div className="text-2xl font-sans font-medium text-foreground tabular-nums mt-0.5">
                 ${grandTotal.toFixed(2)}
               </div>
-              <div className="text-[11px] font-sans text-muted-foreground/70 mt-0.5">
-                {Math.round(totalWeight)}g across {bowls.filter((b) => b.lines.length > 0).length} vessel{bowls.filter((b) => b.lines.length > 0).length !== 1 ? 's' : ''}
+              <div className="text-[11px] font-sans text-muted-foreground/70 mt-0.5 flex items-center gap-2">
+                <span>{Math.round(totalWeight)}g across {bowls.filter((b) => b.lines.length > 0).length} vessel{bowls.filter((b) => b.lines.length > 0).length !== 1 ? 's' : ''}</span>
+                {/* Inline editable service price */}
+                <span className="text-muted-foreground/40">·</span>
+                <span className="inline-flex items-center gap-1">
+                  Service $
+                  <Input
+                    type="number"
+                    min="0"
+                    step="5"
+                    value={effectiveServicePrice || ''}
+                    onChange={(e) => setModeledServicePrice(parseFloat(e.target.value) || null)}
+                    className="h-5 w-16 text-[11px] px-1 inline-block tabular-nums"
+                    placeholder={servicePrice?.toString() || '0'}
+                  />
+                  {modeledServicePrice !== null && modeledServicePrice !== servicePrice && (
+                    <button
+                      className="text-[10px] text-primary hover:underline"
+                      onClick={() => setModeledServicePrice(null)}
+                    >
+                      reset
+                    </button>
+                  )}
+                </span>
               </div>
               {/* Allowance Health Indicator */}
               {healthResult ? (
@@ -1250,7 +1353,7 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
                         healthResult.status === 'low' && "bg-blue-500/10 text-blue-600 dark:text-blue-400",
                       )}>
                         <span className="font-medium">{healthResult.allowancePct}%</span>
-                        <span>of ${servicePrice?.toFixed(0)} service</span>
+                        <span>of ${effectiveServicePrice.toFixed(0)} service</span>
                         <span className="text-[10px] opacity-70">
                           {healthResult.status === 'healthy' && '— within target range'}
                           {healthResult.status === 'high' && '— consider raising service price or reducing product usage'}
@@ -1258,7 +1361,7 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
                         </span>
                       </div>
                     </TooltipTrigger>
-                    <TooltipContent side="top" className="max-w-[260px] text-[11px] font-sans space-y-1 p-3">
+                    <TooltipContent side="top" className="max-w-[280px] text-[11px] font-sans space-y-1 p-3">
                       <p className="font-medium mb-1.5">Cost Breakdown</p>
                       <div className="flex justify-between">
                         <span className="text-muted-foreground">Wholesale cost</span>
@@ -1272,10 +1375,18 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
                         <span className="font-medium">Retail (after markup)</span>
                         <span className="font-medium tabular-nums">${grandTotal.toFixed(2)}</span>
                       </div>
-                      <div className="flex justify-between pt-1 text-muted-foreground">
-                        <span>Service price</span>
-                        <span className="tabular-nums">${servicePrice?.toFixed(2)}</span>
-                      </div>
+                      {effectiveServicePrice > 0 && (
+                        <>
+                          <div className="flex justify-between pt-1 text-muted-foreground">
+                            <span>Service price</span>
+                            <span className="tabular-nums">${effectiveServicePrice.toFixed(2)}</span>
+                          </div>
+                          <div className="flex justify-between text-muted-foreground">
+                            <span>Margin (service − retail)</span>
+                            <span className="tabular-nums">${(effectiveServicePrice - grandTotal).toFixed(2)} ({((1 - grandTotal / effectiveServicePrice) * 100).toFixed(1)}%)</span>
+                          </div>
+                        </>
+                      )}
                       <div className="text-[10px] text-muted-foreground/70 pt-1">
                         Target: 6–10% of service price (8% ideal). Adjust by changing service price or product amounts.
                       </div>
@@ -1304,7 +1415,7 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
                     </div>
                   )}
                 </div>
-              ) : servicePrice && servicePrice > 0 ? (
+              ) : effectiveServicePrice > 0 ? (
                 <div className="text-[10px] font-sans text-muted-foreground/50 mt-1">
                   Add products to see allowance health vs. service price
                 </div>
@@ -1314,15 +1425,56 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
                 </div>
               )}
             </div>
-            <Button
-              size="sm"
-              className="h-9 px-6"
-              disabled={saving || grandTotal === 0}
-              onClick={handleSave}
-            >
-              {saving ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : null}
-              Save Allowance
-            </Button>
+            <div className="flex flex-col items-end gap-2 shrink-0">
+              {/* Copy summary */}
+              {grandTotal > 0 && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 px-2 text-[10px] text-muted-foreground hover:text-foreground gap-1"
+                  onClick={() => {
+                    const summary = [
+                      `${serviceName} — Product Allowance`,
+                      `Total: $${grandTotal.toFixed(2)} (${Math.round(totalWeight)}g)`,
+                      ...bowls.filter(b => b.lines.length > 0).map(b =>
+                        `\n${b.label}:\n` + b.lines.map(l => {
+                          const qty = l.isDeveloper
+                            ? `${l.developerRatio}× ratio`
+                            : `${l.quantity}g`;
+                          return `  • ${l.productName} — ${qty} — $${l.lineCost.toFixed(2)}`;
+                        }).join('\n')
+                      ),
+                      effectiveServicePrice > 0 ? `\nHealth: ${healthResult?.allowancePct ?? '—'}% of $${effectiveServicePrice.toFixed(0)} service (${healthResult?.status ?? 'N/A'})` : '',
+                    ].join('\n');
+                    navigator.clipboard.writeText(summary);
+                    toast.success('Recipe summary copied to clipboard');
+                  }}
+                >
+                  <ClipboardCopy className="w-3 h-3" />
+                  Copy Summary
+                </Button>
+              )}
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div>
+                    <Button
+                      size="sm"
+                      className="h-9 px-6"
+                      disabled={saving || grandTotal === 0}
+                      onClick={handleSave}
+                    >
+                      {saving ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : null}
+                      Save Allowance
+                    </Button>
+                  </div>
+                </TooltipTrigger>
+                {grandTotal === 0 && !saving && (
+                  <TooltipContent side="top" className="text-xs">
+                    Add at least one product to save the allowance
+                  </TooltipContent>
+                )}
+              </Tooltip>
+            </div>
           </div>
         </div>
       </DialogContent>
