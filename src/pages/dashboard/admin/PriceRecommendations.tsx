@@ -112,27 +112,40 @@ export default function PriceRecommendationsPage() {
           backTo={dashPath('/admin/backroom-settings')}
           backLabel="Back to Backroom"
           actions={
-            kpis.belowTarget > 0 ? (
-              <BulkPriceAcceptConfirmDialog
-                count={kpis.belowTarget}
-                totalImpact={kpis.totalImpact}
-                onConfirm={handleAcceptAll}
-              >
+            <div className="flex items-center gap-2">
+              {recommendations?.length ? (
                 <Button
-                  disabled={isAccepting}
-                  className={tokens.button?.page || 'h-10 px-6'}
+                  variant="outline"
+                  size="sm"
+                  className="gap-1 font-sans"
+                  onClick={exportCSV}
                 >
-                  {isBulkAccepting ? (
-                    <>
-                      <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                      Applying…
-                    </>
-                  ) : (
-                    `Accept All (${kpis.belowTarget})`
-                  )}
+                  <Download className="w-4 h-4" />
+                  Export CSV
                 </Button>
-              </BulkPriceAcceptConfirmDialog>
-            ) : undefined
+              ) : null}
+              {kpis.belowTarget > 0 ? (
+                <BulkPriceAcceptConfirmDialog
+                  count={kpis.belowTarget}
+                  totalImpact={kpis.totalImpact}
+                  onConfirm={handleAcceptAll}
+                >
+                  <Button
+                    disabled={isAccepting}
+                    className={tokens.button?.page || 'h-10 px-6'}
+                  >
+                    {isBulkAccepting ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                        Applying…
+                      </>
+                    ) : (
+                      `Accept All (${kpis.belowTarget})`
+                    )}
+                  </Button>
+                </BulkPriceAcceptConfirmDialog>
+              ) : null}
+            </div>
           }
         />
 
