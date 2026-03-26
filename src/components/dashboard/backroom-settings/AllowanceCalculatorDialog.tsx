@@ -165,7 +165,8 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
               lineCost: 0,
             };
           });
-        return { id: b.id, bowlNumber: b.bowl_number, label: b.label, lines: bowlLines, collapsed: false };
+        const vType = b.label.toLowerCase().includes('bottle') ? 'bottle' as const : 'bowl' as const;
+        return { id: b.id, bowlNumber: b.bowl_number, label: b.label, vesselType: vType, lines: bowlLines, collapsed: false };
       });
 
       loaded.forEach((bowl) => {
