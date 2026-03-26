@@ -784,7 +784,7 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                                       <Button
                                                         variant="ghost"
                                                         size="sm"
-                                                        className="h-6 px-2 text-[10px] text-muted-foreground hover:text-foreground"
+                                                        className={tokens.button.inlineGhost}
                                                         onClick={(e) => {
                                                           e.stopPropagation();
                                                            setCalculatorServiceId(service.id);

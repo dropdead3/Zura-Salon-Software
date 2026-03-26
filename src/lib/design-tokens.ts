@@ -114,6 +114,8 @@ export const tokens = {
     cardFooter: 'w-full text-muted-foreground hover:text-foreground text-sm h-9',
     /** Card header action pill (outline variant) */
     cardAction: 'h-9 px-4 rounded-full text-sm font-sans font-medium',
+    /** Inline ghost action — muted text, high-contrast on hover */
+    inlineGhost: 'h-6 px-2 text-[10px] font-sans text-muted-foreground hover:text-primary-foreground hover:bg-primary/90 rounded-md transition-colors',
   },
 
   // ========================================
