@@ -307,8 +307,8 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
   const updateServicePriceMutation = useMutation({
     mutationFn: async (newPrice: number) => {
       const { error } = await supabase
-        .from('services' as any)
-        .update({ price: newPrice } as any)
+        .from('services')
+        .update({ price: newPrice })
         .eq('id', serviceId);
       if (error) throw error;
     },
