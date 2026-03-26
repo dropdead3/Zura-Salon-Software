@@ -1,52 +1,24 @@
 
 
-## Add Inline Allowance Configuration to Service Drill-Down
+## Analysis: Vish Product Allowance Calculator vs Our Current Approach
 
-### Problem
-The expanded service row shows "No allowance" with a tooltip pointing elsewhere, but Step 2 ("Set Allowances") implies it should be configurable here. There's a disconnect — users have to navigate away to set allowances.
+### How Vish Does It
+Vish calculates allowances **bottom-up from actual product compositions**, not as abstract weight numbers:
 
-### Solution
-Add an inline allowance editor directly in the service drill-down row, replacing the passive "No allowance" indicator with an actionable quick-config panel.
+1. **Bowl-based**: Users build sample bowls with real products from their catalog
+2. **Product + Developer pairs**: Each bowl contains color products (with weight quick-sets: 15g, 30g, 60g, 90g) and developers (with ratio buttons: 1x, 1.5x, 2x, Custom)
+3. **Cost-driven**: Each product's cost is calculated as `weight × cost_per_gram` (shown from catalog data like "$0.17/g")
+4. **Multi-bowl**: Services can have multiple bowls (e.g., "Bowl 1 of 2") — typical for complex services like "3+ Color Blocks"
+5. **Visual bowl fill**: Right sidebar shows a visual bowl representation with fill level
+6. **Total = Allowance**: The sum across all bowls becomes the service's "Product Allowance" dollar amount ($36.51 in the example)
+7. **Save persists**: The total is saved as the service's included allowance
 
-### Technical Detail
+### What We Currently Have
+Our inline editor is a **simple abstract picker**: choose a weight (15g–90g) and an overage rate ($/g). It doesn't reference actual products, bowls, or real costs.
 
-**File: `src/components/dashboard/backroom-settings/ServiceTrackingSection.tsx`**
+### The Gap
+Our model stores `included_allowance_qty` (weight) + `overage_rate` — Vish stores a **recipe of actual products with quantities that sum to a dollar allowance**. This is fundamentally more useful because it ties the allowance to real product costs and realistic service compositions.
 
-1. **Import** `useServiceAllowancePolicies`, `useUpsertAllowancePolicy` from `@/hooks/billing/useServiceAllowancePolicies`, and `useOrganizationContext`.
-
-2. **Fetch policies** at the component level:
-   ```tsx
-   const { data: allPolicies } = useServiceAllowancePolicies();
-   ```
-
-3. **Replace the "No allowance" indicator block** (lines ~674–682) with an inline allowance editor:
-
-   - **If policy exists**: Show a compact summary (e.g., "30g included · $0.50/g overage") with an Edit button that reveals inline fields.
-   - **If no policy**: Show a compact "Set Allowance" form with:
-     - Quick-set weight buttons: `15g`, `30g`, `45g`, `60g`, `90g` (pill buttons, matching existing design patterns from AllowancesBillingSection)
-     - Overage rate input (default `$0.50/g`)
-     - A "Save" button that calls `useUpsertAllowancePolicy` with sensible defaults (`allowance_unit: 'g'`, `overage_rate_type: 'per_unit'`, `billing_mode: 'allowance'`)
-
-4. **Update `hasAllowance` check** to use the fetched policies data instead of whatever it currently derives from.
-
-5. **Auto-update Step 2 progress**: Since the checklist already counts policies via `withAllowance`, saving a policy here will automatically reflect in the "Set Allowances" progress bar.
-
-### UI Layout (within the drill-down)
-```text
-┌─────────────────────────────────────────────────────┐
-│ 📄 Set Allowance                      [Components]  │
-│                                                      │
-│  Included:  [15g] [30g] [45g] [60g] [90g]           │
-│  Overage:   [$0.50] /g                               │
-│                          [Save Allowance]            │
-└─────────────────────────────────────────────────────┘
-```
-
-After saving, it collapses to a summary line:
-```text
-│ 📄 30g included · $0.50/g overage        [Edit]     │
-```
-
-### Files Modified
-- `src/components/dashboard/backroom-settings/ServiceTrackingSection.tsx`
+### No Changes Proposed Yet
+This is an analysis per your request. When you're ready to discuss building a Vish-style bowl-based allowance calculator, we can plan it — it would involve a new dialog/page, product selection from the catalog, developer ratio logic, multi-bowl state management, and a revised allowance data model.
 
