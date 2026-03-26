@@ -326,11 +326,49 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
     ]);
   }, [defaultVesselType]);
 
+  const removedBowlRef = useRef<{ idx: number; bowl: BowlState } | null>(null);
+
   const removeBowl = useCallback((idx: number) => {
+    const removed = bowls[idx];
     setBowls((prev) => {
       const next = prev.filter((_, i) => i !== idx);
-      return next.map((b, i) => ({ ...b, bowlNumber: i + 1, label: vesselLabel(b.vesselType, i + 1) }));
+      return next.map((b, i) => ({ ...b, bowlNumber: i + 1 }));
     });
+    if (removed) {
+      removedBowlRef.current = { idx, bowl: removed };
+      toast(`Removed ${removed.label}`, {
+        action: {
+          label: 'Undo',
+          onClick: () => {
+            const ref = removedBowlRef.current;
+            if (!ref) return;
+            setBowls((prev) => {
+              const next = [...prev];
+              next.splice(Math.min(ref.idx, next.length), 0, ref.bowl);
+              return next.map((b, i) => ({ ...b, bowlNumber: i + 1 }));
+            });
+            removedBowlRef.current = null;
+          },
+        },
+        duration: 5000,
+      });
+    }
+  }, [bowls]);
+
+  const clearBowl = useCallback((idx: number) => {
+    setBowls((prev) =>
+      prev.map((b, i) => {
+        if (i !== idx) return b;
+        return { ...b, lines: [] };
+      })
+    );
+    toast.success('Bowl cleared');
+  }, []);
+
+  const updateBowlLabel = useCallback((idx: number, label: string) => {
+    setBowls((prev) =>
+      prev.map((b, i) => (i === idx ? { ...b, label } : b))
+    );
   }, []);
 
   const duplicateBowl = useCallback((idx: number) => {
