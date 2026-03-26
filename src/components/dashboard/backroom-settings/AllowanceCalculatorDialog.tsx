@@ -116,6 +116,8 @@ function requiresDeveloper(product: CatalogProduct): boolean {
   if (product.color_type) {
     return product.color_type === 'permanent' || product.color_type === 'demi_permanent';
   }
+  // Explicit category check: semi-permanent category never needs developer
+  if ((product.category || '').toLowerCase() === 'semi-permanent') return false;
   // Fallback: keyword detection for legacy/unclassified products
   const name = (product.name || '').toLowerCase();
   const category = (product.category || '').toLowerCase();
