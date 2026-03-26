@@ -198,6 +198,8 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
   const [syncToAllOpen, setSyncToAllOpen] = useState(false);
   const [syncIncludeLevels, setSyncIncludeLevels] = useState(true);
   const [removeBrandOpen, setRemoveBrandOpen] = useState(false);
+  const [showArchived, setShowArchived] = useState(false);
+  const [restoreBrandOpen, setRestoreBrandOpen] = useState<string | null>(null);
 
   // Brand-first navigation
   const [selectedBrand, setSelectedBrand] = useState<string | null>(null);
