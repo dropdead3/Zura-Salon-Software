@@ -74,6 +74,13 @@ const WEIGHT_PRESETS = [15, 30, 45, 60, 90];
 const RATIO_PRESETS = [1, 1.5, 2];
 const DEVELOPER_KEYWORDS = ['developer', 'dev', 'peroxide', 'oxidant', 'activator', 'vol'];
 
+/** Transform category slugs (e.g. "color-remover") into title-case labels ("Color Remover") */
+function formatCategoryLabel(slug: string): string {
+  return slug
+    .replace(/[-_]/g, ' ')
+    .replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
 function isDeveloperProduct(product: CatalogProduct): boolean {
   const name = (product.name || '').toLowerCase();
   const category = (product.category || '').toLowerCase();
@@ -488,7 +495,7 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
                 className="w-full flex items-center justify-between px-3 py-2.5 hover:bg-muted/30 transition-colors text-left group"
                 onClick={() => setPickerState(bowlIdx, { step: 'product', selectedCategory: category, search: '' })}
               >
-                <span className="text-xs font-sans text-foreground">{category}</span>
+                <span className="text-xs font-sans text-foreground">{formatCategoryLabel(category)}</span>
                 <div className="flex items-center gap-1.5">
                   <Badge variant="secondary" className="text-[10px] px-1.5 py-0">{count}</Badge>
                   <ChevronRight className="w-3.5 h-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -526,7 +533,7 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
               <span className="font-medium text-foreground">{picker.selectedBrand}</span>
             </button>
             <span className="text-muted-foreground/40">/</span>
-            <span className="font-medium text-foreground">{picker.selectedCategory}</span>
+            <span className="font-medium text-foreground">{picker.selectedCategory ? formatCategoryLabel(picker.selectedCategory) : ''}</span>
           </div>
 
           <div className="relative">
