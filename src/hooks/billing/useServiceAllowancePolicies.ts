@@ -22,6 +22,9 @@ export interface ServiceAllowancePolicy {
   created_by: string | null;
   created_at: string;
   updated_at: string;
+  allowance_health_status: string | null;
+  allowance_health_pct: number | null;
+  last_health_check_at: string | null;
 }
 
 export function useServiceAllowancePolicies(serviceId?: string) {
