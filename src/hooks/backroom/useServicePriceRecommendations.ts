@@ -388,4 +388,32 @@ export function usePriceRecommendationHistory(limit: number = 20) {
   });
 }
 
+// ─── Revert Accepted Recommendation ──────────────────────────
+export function useRevertPriceRecommendation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (recommendationId: string) => {
+      const userId = (await supabase.auth.getUser()).data.user?.id;
+      const { error } = await supabase.rpc('revert_price_recommendation', {
+        _recommendation_id: recommendationId,
+        _user_id: userId ?? null,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['computed-price-recommendations'] });
+      queryClient.invalidateQueries({ queryKey: ['services'] });
+      queryClient.invalidateQueries({ queryKey: ['service-level-prices'] });
+      queryClient.invalidateQueries({ queryKey: ['service-location-prices'] });
+      queryClient.invalidateQueries({ queryKey: ['native-services'] });
+      queryClient.invalidateQueries({ queryKey: ['price-recommendation-history'] });
+      toast.success('Price reverted successfully');
+    },
+    onError: (error) => {
+      toast.error('Failed to revert: ' + error.message);
+    },
+  });
+}
+
 export type { PriceRecommendation };
