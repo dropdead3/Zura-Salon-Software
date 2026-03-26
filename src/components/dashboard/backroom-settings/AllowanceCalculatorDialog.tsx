@@ -762,7 +762,8 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
                         </div>
                       )}
 
-                      {/* Color product lines */}
+                      {/* Color product lines — capped height with independent scroll */}
+                      <div className="max-h-[240px] overflow-y-auto rounded-md border border-border/20 bg-background/50">
                       <AnimatePresence mode="popLayout">
                       {colorLines.map((line) => (
                         <motion.div
