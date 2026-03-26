@@ -1759,8 +1759,7 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
                           const qty = l.isDeveloper
                             ? (bColorQty > 0 ? `${l.developerRatio}× ratio with color (${Math.round(bColorQty * l.developerRatio)}g)` : `${l.quantity}g (standalone)`)
                             : `${l.quantity}g`;
-                          const prod = catalogProducts.find(p => p.id === l.productId);
-                          const wholesaleCpg = prod ? getWholesaleCostPerGram(prod) : 0;
+                          const wholesaleCpg = wholesaleCostMap.get(l.productId) ?? 0;
                           const effectiveQty = l.isDeveloper ? (bColorQty > 0 ? bColorQty * l.developerRatio : l.quantity) : l.quantity;
                           const wholesaleCost = Math.round(effectiveQty * wholesaleCpg * 100) / 100;
                           return `  • ${l.productName}${l.isDeveloper ? ' [Developer]' : ''} — ${qty} — $${l.lineCost.toFixed(2)} retail ($${wholesaleCost.toFixed(2)} wholesale)`;
