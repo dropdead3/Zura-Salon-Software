@@ -5,7 +5,7 @@
  * 6–10% of the service price, with 8% as the target.
  *
  * If above 10%: product cost is too high or service is underpriced.
- * If below 6%: room to increase product quality or reduce service price.
+ * If below 6%: strong margin — room to upgrade product line or maintain pricing flexibility.
  */
 
 export interface AllowanceHealthInput {
