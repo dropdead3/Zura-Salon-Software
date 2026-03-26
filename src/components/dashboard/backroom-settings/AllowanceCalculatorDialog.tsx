@@ -1507,7 +1507,7 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
                 <Button
                   variant="outline"
                   size="sm"
-                  className="flex-1 h-9 text-xs border-dashed"
+                  className="flex-1 h-9 text-xs border-border/80 bg-muted/40 hover:bg-muted/70"
                   onClick={() => addVessel('bowl')}
                 >
                   <Plus className="w-3.5 h-3.5 mr-1" />
@@ -1518,7 +1518,7 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
                 <Button
                   variant="outline"
                   size="sm"
-                  className="flex-1 h-9 text-xs border-dashed"
+                  className="flex-1 h-9 text-xs border-border/80 bg-muted/40 hover:bg-muted/70"
                   onClick={() => addVessel('bottle')}
                 >
                   <Plus className="w-3.5 h-3.5 mr-1" />
