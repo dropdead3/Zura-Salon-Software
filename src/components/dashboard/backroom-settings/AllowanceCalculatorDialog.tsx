@@ -791,10 +791,10 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
                               <button
                                 key={g}
                                 className={cn(
-                                  'px-2.5 py-1 rounded-full text-xs font-sans transition-colors border',
-                                  line.quantity === g
-                                    ? 'bg-primary text-primary-foreground border-primary'
-                                    : 'bg-transparent border-dashed border-muted-foreground/40 text-muted-foreground hover:border-muted-foreground'
+                                   'px-2 py-1 rounded-full text-xs font-sans transition-colors border',
+                                   line.quantity === g
+                                     ? 'bg-primary text-primary-foreground border-primary'
+                                     : 'bg-transparent border-dashed border-muted-foreground/40 text-muted-foreground hover:border-muted-foreground'
                                 )}
                                 onClick={() => updateLineQuantity(bowlIdx, line.localId, g)}
                               >
