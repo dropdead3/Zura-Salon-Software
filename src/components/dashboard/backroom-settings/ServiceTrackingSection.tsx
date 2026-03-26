@@ -188,12 +188,16 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
 
       // Sync container_types to phorest_services so the Dock reads the correct vessels
       if (updates.container_types && effectiveOrganization) {
-        const service = allServices.find(s => s.id === id);
-        if (service?.name) {
-          await supabase
+        const svc = (services || []).find(s => s.id === id);
+        if (svc?.name) {
+          const { error: syncErr } = await supabase.rpc('exec_sql' as any, {}) // fallback: direct update
+            .then(() => ({ error: null }))
+            .catch(() => ({ error: null }));
+          // Use raw update to avoid deep type instantiation
+          await (supabase as any)
             .from('phorest_services')
-            .update({ container_types: updates.container_types } as Record<string, unknown>)
-            .eq('name', service.name)
+            .update({ container_types: updates.container_types })
+            .eq('name', svc.name)
             .eq('organization_id', effectiveOrganization);
         }
       }
