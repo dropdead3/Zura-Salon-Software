@@ -1426,7 +1426,7 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
                 </div>
               ) : (
                 <>
-                <p className="text-sm font-sans text-muted-foreground mb-3">
+                <p className="text-sm font-sans text-muted-foreground mb-3 text-center">
                   Brands Carried In {activeLocations.find(l => l.id === effectiveLocationId)?.name ?? 'Your Location'}'s Backroom
                 </p>
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
