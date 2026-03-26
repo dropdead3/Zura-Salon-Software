@@ -107,6 +107,19 @@ function isDeveloperProduct(product: CatalogProduct): boolean {
   return DEVELOPER_KEYWORDS.some((kw) => name.includes(kw) || category.includes(kw));
 }
 
+const SEMI_PERMANENT_KEYWORDS = ['semi-permanent', 'semi permanent', 'semi'];
+const DEVELOPER_REQUIRING_KEYWORDS = ['permanent', 'demi'];
+
+function requiresDeveloper(product: CatalogProduct): boolean {
+  const name = (product.name || '').toLowerCase();
+  const category = (product.category || '').toLowerCase();
+  const combined = `${name} ${category}`;
+  // Exclude semi-permanent first
+  if (SEMI_PERMANENT_KEYWORDS.some(kw => combined.includes(kw))) return false;
+  // Check for permanent or demi
+  return DEVELOPER_REQUIRING_KEYWORDS.some(kw => combined.includes(kw));
+}
+
 function computeLineCost(qty: number, costPerGram: number, isDeveloper: boolean, developerRatio: number, colorQty: number): number {
   if (isDeveloper) {
     // When no color products exist, use the developer's direct quantity instead of ratio
