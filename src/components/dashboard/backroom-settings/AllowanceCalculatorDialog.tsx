@@ -435,6 +435,11 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
       const source = prev[idx];
       if (!source) return prev;
       const clonedLines = source.lines.map((l) => ({ ...l, localId: crypto.randomUUID() }));
+      // Recalculate costs for cloned lines in the new bowl context
+      const colorQty = clonedLines.filter((l) => !l.isDeveloper).reduce((s, l) => s + l.quantity, 0);
+      clonedLines.forEach((line) => {
+        line.lineCost = computeLineCost(line.quantity, line.costPerGram, line.isDeveloper, line.developerRatio, colorQty);
+      });
       const next = [...prev, { id: null, bowlNumber: prev.length + 1, label: vesselLabel(source.vesselType, prev.length + 1), vesselType: source.vesselType, lines: clonedLines, collapsed: false }];
       return next;
     });
