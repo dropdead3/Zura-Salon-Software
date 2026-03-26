@@ -24,6 +24,11 @@ import { useFormatNumber } from '@/hooks/useFormatNumber';
 import { BackroomBrandUsageCard } from './BackroomBrandUsageCard';
 import { BackroomHistoryChart } from './BackroomHistoryChart';
 import { BackroomProductAnalyticsCard } from './BackroomProductAnalyticsCard';
+import { WasteCategoryBreakdownCard } from '@/components/dashboard/backroom/WasteCategoryBreakdownCard';
+import { ServicePLReport } from '@/components/dashboard/backroom/ServicePLReport';
+import { BackroomInventoryValuationCard } from '@/components/dashboard/backroom/BackroomInventoryValuationCard';
+import { SeasonalDemandOverlay } from '@/components/dashboard/backroom/SeasonalDemandOverlay';
+import { ProductUsageFrequencyTable } from '@/components/dashboard/backroom/ProductUsageFrequencyTable';
 import { useActiveLocations } from '@/hooks/useLocations';
 import { toast } from 'sonner';
 import type { StaffMetric } from '@/lib/backroom/analytics-engine';
@@ -64,9 +69,12 @@ interface BackroomInsightsSectionProps {
   locationId?: string;
   datePreset?: DatePreset;
   hideFilters?: boolean;
+  showExtendedAnalytics?: boolean;
+  wasteByCategory?: Record<string, number>;
+  totalWasteQty?: number;
 }
 
-export function BackroomInsightsSection({ locationId: propLocationId, datePreset: propDatePreset, hideFilters }: BackroomInsightsSectionProps = {}) {
+export function BackroomInsightsSection({ locationId: propLocationId, datePreset: propDatePreset, hideFilters, showExtendedAnalytics, wasteByCategory, totalWasteQty }: BackroomInsightsSectionProps = {}) {
   const [internalDatePreset, setInternalDatePreset] = useState<DatePreset>('30d');
   const [sortKey, setSortKey] = useState<SortKey>('totalServices');
   const [sortAsc, setSortAsc] = useState(false);
@@ -201,8 +209,15 @@ export function BackroomInsightsSection({ locationId: propLocationId, datePreset
           <SubTabsTrigger value="brands">Brands</SubTabsTrigger>
         </SubTabsList>
 
-        <TabsContent value="products">
+        <TabsContent value="products" className="space-y-6">
           <BackroomProductAnalyticsCard startDate={start} endDate={end} rangeLabel={rangeLabel} locationId={effectiveLocationId} />
+          {showExtendedAnalytics && (
+            <>
+              <ProductUsageFrequencyTable locationId={effectiveLocationId} />
+              <WasteCategoryBreakdownCard wasteByCategory={wasteByCategory ?? {}} totalWasteQty={totalWasteQty ?? 0} />
+              <BackroomInventoryValuationCard locationId={effectiveLocationId} />
+            </>
+          )}
         </TabsContent>
 
         <TabsContent value="staff">
@@ -324,8 +339,14 @@ export function BackroomInsightsSection({ locationId: propLocationId, datePreset
           </Card>
         </TabsContent>
 
-        <TabsContent value="trends">
+        <TabsContent value="trends" className="space-y-6">
           <BackroomHistoryChart startDate={start} endDate={end} rangeLabel={rangeLabel} locationId={effectiveLocationId} />
+          {showExtendedAnalytics && (
+            <>
+              <ServicePLReport startDate={start} endDate={end} locationId={effectiveLocationId} />
+              <SeasonalDemandOverlay locationId={effectiveLocationId} />
+            </>
+          )}
         </TabsContent>
 
         <TabsContent value="brands">

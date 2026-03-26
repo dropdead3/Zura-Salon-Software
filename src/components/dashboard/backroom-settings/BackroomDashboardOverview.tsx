@@ -24,11 +24,6 @@ import { ZuraZIcon } from '@/components/icons/ZuraZIcon';
 import { BackroomSetupWizard } from './BackroomSetupWizard';
 import { BackroomInsightsSection } from './BackroomInsightsSection';
 import { SupplyIntelligenceDashboard } from '@/components/dashboard/backroom/supply-intelligence/SupplyIntelligenceDashboard';
-import { WasteCategoryBreakdownCard } from '@/components/dashboard/backroom/WasteCategoryBreakdownCard';
-import { ServicePLReport } from '@/components/dashboard/backroom/ServicePLReport';
-import { BackroomInventoryValuationCard } from '@/components/dashboard/backroom/BackroomInventoryValuationCard';
-import { SeasonalDemandOverlay } from '@/components/dashboard/backroom/SeasonalDemandOverlay';
-import { ProductUsageFrequencyTable } from '@/components/dashboard/backroom/ProductUsageFrequencyTable';
 import { formatRelativeTime } from '@/lib/format';
 import type { ControlTowerAlert } from '@/lib/backroom/control-tower-engine';
 
@@ -450,16 +445,14 @@ export function BackroomDashboardOverview({ onNavigate, initialSubTab }: Props) 
 
         {/* ── Analytics ── */}
         <TabsContent value="analytics" className="mt-6 space-y-6">
-          <BackroomInsightsSection locationId={selectedLocationId} datePreset={datePreset} hideFilters />
-          {/* Additional analytics cards */}
-          <WasteCategoryBreakdownCard
+          <BackroomInsightsSection
+            locationId={selectedLocationId}
+            datePreset={datePreset}
+            hideFilters
+            showExtendedAnalytics
             wasteByCategory={dashboard.wasteByCategory ?? {}}
             totalWasteQty={dashboard.totalWasteQty ?? 0}
           />
-          <ServicePLReport startDate={start} endDate={end} locationId={effectiveLocationId} />
-          <BackroomInventoryValuationCard locationId={effectiveLocationId} />
-          <SeasonalDemandOverlay locationId={effectiveLocationId} />
-          <ProductUsageFrequencyTable locationId={effectiveLocationId} />
         </TabsContent>
 
         {/* ── AI Intelligence ── */}
