@@ -839,7 +839,7 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
             <div className="flex items-center gap-1 text-xs font-sans text-muted-foreground">
               <button
                 className="hover:text-foreground transition-colors flex items-center gap-0.5"
-                onClick={() => setPickerState(bowlIdx, { step: 'brand', selectedBrand: null, selectedCategory: null, search: '' })}
+                onClick={() => setPickerState(bowlIdx, { step: 'brand', selectedBrand: null, selectedCategory: null })}
               >
                 <ChevronLeft className="w-3.5 h-3.5" />
                 Brands
