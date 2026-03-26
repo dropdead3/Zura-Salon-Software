@@ -1019,7 +1019,11 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
                       ) : (
                         <ArrowRight className="w-3 h-3" />
                       )}
-                      Use ${healthResult.suggestedServicePrice.toFixed(0)} suggested price
+                      Use ${healthResult.suggestedServicePrice} suggested price
+                      <MetricInfoTooltip
+                        description="Calculated using the Vish 8% target: your after-markup product cost ÷ 0.08, rounded up to the nearest $5. You can also adjust service pricing from Price Intelligence in the Backroom Hub, or from the Services Configurator in Organization Settings."
+                        className="w-3 h-3 text-amber-500/60"
+                      />
                     </Button>
                   )}
                 </div>

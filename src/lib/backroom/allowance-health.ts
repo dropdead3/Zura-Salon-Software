@@ -80,8 +80,8 @@ export function calculateAllowanceHealth(input: AllowanceHealthInput): Allowance
 
   if (allowancePct > UPPER_BOUND) {
     status = 'high';
-    suggestedServicePrice = r2(allowanceAmount / (TARGET_PCT / 100));
-    message = `Product cost is ${allowancePct}% of service price. Consider raising service price to $${suggestedServicePrice.toFixed(0)} or reducing product usage.`;
+    suggestedServicePrice = roundUpTo5(allowanceAmount / (TARGET_PCT / 100));
+    message = `Product cost is ${allowancePct}% of service price. Consider raising service price to $${suggestedServicePrice} or reducing product usage.`;
   } else if (allowancePct < LOWER_BOUND) {
     status = 'low';
     suggestedAllowance = r2(servicePrice * (TARGET_PCT / 100));
