@@ -223,9 +223,12 @@ export default function PriceRecommendationsPage() {
                 <TrendingUp className="w-5 h-5 text-primary" />
               </div>
               <div>
-                <p className={cn(tokens.kpi?.label || 'font-display text-[10px] tracking-wider uppercase', 'text-muted-foreground')}>
-                  Avg Margin Gap
-                </p>
+                <div className="flex items-center gap-1">
+                  <p className={cn(tokens.kpi?.label || 'font-display text-[10px] tracking-wider uppercase', 'text-muted-foreground')}>
+                    Avg Margin Gap
+                  </p>
+                  <MetricInfoTooltip description="Average percentage-point difference between target margin and actual margin for services currently below target." className="w-3 h-3" />
+                </div>
                 <p className={tokens.stat?.large || 'font-display text-2xl font-medium'}>{kpis.avgGap}%</p>
               </div>
             </CardContent>
