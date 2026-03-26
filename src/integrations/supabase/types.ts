@@ -21874,6 +21874,103 @@ export type Database = {
           },
         ]
       }
+      transfer_template_lines: {
+        Row: {
+          created_at: string
+          id: string
+          product_id: string
+          quantity: number
+          template_id: string
+          unit: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          product_id: string
+          quantity?: number
+          template_id: string
+          unit?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          product_id?: string
+          quantity?: number
+          template_id?: string
+          unit?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transfer_template_lines_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transfer_template_lines_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "transfer_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      transfer_templates: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          from_location_id: string | null
+          id: string
+          name: string
+          notes: string | null
+          organization_id: string
+          to_location_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          from_location_id?: string | null
+          id?: string
+          name: string
+          notes?: string | null
+          organization_id: string
+          to_location_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          from_location_id?: string | null
+          id?: string
+          name?: string
+          notes?: string | null
+          organization_id?: string
+          to_location_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transfer_templates_from_location_id_fkey"
+            columns: ["from_location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transfer_templates_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transfer_templates_to_location_id_fkey"
+            columns: ["to_location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       usage_metrics: {
         Row: {
           active_users: number | null
