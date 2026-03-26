@@ -744,6 +744,11 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
                           {Math.round(bowlWeight)}g · ${bowlCost.toFixed(2)}
                         </Badge>
                       )}
+                      {bowl.lines.length > 0 && (
+                        <Badge variant="secondary" className="text-[10px] px-2 py-0.5">
+                          {bowl.lines.length} added
+                        </Badge>
+                      )}
                     </div>
                     <div className="flex items-center gap-1">
                       {bowls.length > 1 && (
