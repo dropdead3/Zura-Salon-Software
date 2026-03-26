@@ -391,14 +391,38 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
   }, [bowls]);
 
   const clearBowl = useCallback((idx: number) => {
+    const bowl = bowls[idx];
+    const previousLines = bowl?.lines ?? [];
     setBowls((prev) =>
       prev.map((b, i) => {
         if (i !== idx) return b;
         return { ...b, lines: [] };
       })
     );
-    toast.success('Bowl cleared');
-  }, []);
+    if (previousLines.length > 0) {
+      if (lastUndoToastRef.current) toast.dismiss(lastUndoToastRef.current);
+      const toastId = toast('Bowl cleared', {
+        action: {
+          label: 'Undo',
+          onClick: () => {
+            setBowls((prev) =>
+              prev.map((b, i) => {
+                if (i !== idx) return b;
+                const lines = [...previousLines];
+                const colorQty = lines.filter((l) => !l.isDeveloper).reduce((s, l) => s + l.quantity, 0);
+                lines.forEach((line) => {
+                  line.lineCost = computeLineCost(line.quantity, line.costPerGram, line.isDeveloper, line.developerRatio, colorQty);
+                });
+                return { ...b, lines };
+              })
+            );
+          },
+        },
+        duration: 5000,
+      });
+      lastUndoToastRef.current = toastId;
+    }
+  }, [bowls]);
 
   const updateBowlLabel = useCallback((idx: number, label: string) => {
     setBowls((prev) =>
