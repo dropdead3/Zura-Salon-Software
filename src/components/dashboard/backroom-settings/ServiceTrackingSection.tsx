@@ -35,6 +35,7 @@ interface ServiceRow {
   id: string;
   name: string;
   category: string | null;
+  price: number | null;
   is_backroom_tracked: boolean;
   is_chemical_service: boolean | null;
   assistant_prep_allowed: boolean;
