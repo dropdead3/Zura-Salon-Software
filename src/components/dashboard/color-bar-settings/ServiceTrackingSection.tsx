@@ -698,7 +698,7 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
             </div>
           ) : (
              <div className="rounded-lg border overflow-hidden">
-              <Table className="min-w-[600px]">
+              <Table className="min-w-[400px]">
                 <TableHeader>
                   <TableRow>
                     <TableHead className="w-10">
@@ -711,13 +711,7 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                       />
                     </TableHead>
                     <TableHead className={cn(tokens.table.columnHeader, 'min-w-[180px]')}>Service</TableHead>
-                    <TableHead className={cn(tokens.table.columnHeader, 'min-w-[140px]')}>
-                       <div className="flex items-center gap-1.5">
-                         Billing Method
-                         <MetricInfoTooltip description="Shows the billing method for each tracked service — either an allowance dollar amount or Parts and Labor cost-plus billing." />
-                       </div>
-                     </TableHead>
-                    <TableHead className={cn(tokens.table.columnHeader, 'min-w-[160px] text-right')}>Enable Product Billing</TableHead>
+                    <TableHead className={cn(tokens.table.columnHeader, 'text-right')}>Enable Product Billing</TableHead>
                     <TableHead className="w-10" />
                   </TableRow>
                 </TableHeader>
@@ -733,7 +727,7 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                           className="bg-muted/30 cursor-pointer hover:bg-muted/50 transition-colors"
                           onClick={() => toggleCategoryCollapse(category)}
                         >
-                          <TableCell colSpan={5} className="py-2 px-4">
+                          <TableCell colSpan={4} className="py-2 px-4">
                             <div className="flex items-center justify-between">
                               <div className="flex items-center gap-2">
                                 <ChevronRight className={cn(
@@ -799,7 +793,7 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                   )}
                                 </TableCell>
 
-                                {/* Service — Name + Category subtitle + Type badge */}
+                                {/* Service — Name + Category subtitle + Type badge + Status badge */}
                                 <TableCell>
                                   <div className="flex items-center gap-2">
                                     <div className="min-w-0 flex-1">
@@ -811,7 +805,7 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                           {service.name}
                                         </span>
                                       </div>
-                                      <div className="flex items-center gap-1.5 mt-0.5">
+                                      <div className="flex flex-wrap items-center gap-1.5 mt-0.5">
                                         {service.category && (
                                           <span className="text-[11px] text-muted-foreground">{service.category}</span>
                                         )}
@@ -821,63 +815,40 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                         {type === 'suggested' && (
                                           <Badge variant="outline" className="text-[10px] whitespace-nowrap shrink-0 border-amber-500/40 text-amber-600 dark:text-amber-400 py-0 px-1.5">Suggested</Badge>
                                         )}
+                                        {/* Inline status indicator */}
+                                        {isTrulyConfigured(service) ? (
+                                          <Badge variant="outline" className="text-[10px] whitespace-nowrap shrink-0 border-emerald-500/30 bg-emerald-500/10 text-emerald-500 dark:text-emerald-400 py-0 px-1.5">Configured ✓</Badge>
+                                        ) : service.is_backroom_tracked && (() => {
+                                          const activePolicy = allowancePolicies?.find(p => p.service_id === service.id && p.is_active);
+                                          return activePolicy && activePolicy.billing_mode !== 'parts_and_labor' && (activePolicy.included_allowance_qty > 0 || activePolicy.notes?.match(/\$\d/));
+                                        })() ? (
+                                          <Badge variant="outline" className="text-[10px] whitespace-nowrap shrink-0 border-blue-500/30 bg-blue-500/10 text-blue-500 dark:text-blue-400 py-0 px-1.5">Allowance Set</Badge>
+                                        ) : service.is_backroom_tracked ? (
+                                          <Badge variant="outline" className="text-[10px] whitespace-nowrap shrink-0 border-amber-500/30 bg-amber-500/10 text-amber-500 dark:text-amber-400 py-0 px-1.5">Unconfigured</Badge>
+                                        ) : null}
+                                        {/* Inline billing method indicator */}
+                                        {(() => {
+                                          const policy = allowanceByService?.get(service.id);
+                                          if (!policy) return null;
+                                          if (policy.is_active && policy.billing_mode === 'parts_and_labor') {
+                                            return <Badge variant="outline" className="text-[10px] whitespace-nowrap shrink-0 border-blue-500/30 bg-blue-500/10 text-blue-500 dark:text-blue-400 py-0 px-1.5">Parts & Labor</Badge>;
+                                          }
+                                          if (policy.is_active) {
+                                            const dollarMatch = policy.notes?.match(/\$(\d+\.?\d*)/);
+                                            if (dollarMatch && policy.included_allowance_qty > 0) {
+                                              return <Badge variant="outline" className="text-[10px] whitespace-nowrap shrink-0 border-border/60 py-0 px-1.5">${dollarMatch[1]} Allowance</Badge>;
+                                            }
+                                          }
+                                          return null;
+                                        })()}
                                       </div>
                                     </div>
                                   </div>
                                 </TableCell>
 
-                                {/* Billing Method */}
+                                {/* Tracking toggle — just the switch */}
                                 <TableCell onClick={(e) => e.stopPropagation()}>
-                                  {(() => {
-                                    const policy = allowanceByService?.get(service.id);
-                                    if (!policy) return null;
-                                    if (policy.is_active) {
-                                      if (policy.billing_mode === 'parts_and_labor') {
-                                        return (
-                                          <Badge variant="outline" className="text-[10px] whitespace-nowrap shrink-0 border-blue-500/30 bg-blue-500/10 text-blue-500 dark:text-blue-400">
-                                            Parts and Labor
-                                          </Badge>
-                                        );
-                                      }
-                                      const dollarMatch = policy.notes?.match(/\$(\d+\.?\d*)/);
-                                      if (dollarMatch && policy.included_allowance_qty > 0) {
-                                        return (
-                                          <div className="flex items-center gap-1.5 text-sm text-foreground whitespace-nowrap">
-                                            <Calculator className="w-3.5 h-3.5 text-muted-foreground" />
-                                            <span className="font-sans font-medium">${dollarMatch[1]}</span>
-                                          </div>
-                                        );
-                                      }
-                                      return (
-                                        <Badge variant="outline" className="text-[10px] whitespace-nowrap shrink-0 border-amber-500/30 bg-amber-500/10 text-amber-500 dark:text-amber-400">
-                                          Allowance Needs To Be Set
-                                        </Badge>
-                                      );
-                                    }
-                                    if (policy.billing_mode === 'allowance') {
-                                      return (
-                                        <Badge variant="outline" className="text-[10px] whitespace-nowrap shrink-0 border-amber-500/30 bg-amber-500/10 text-amber-500 dark:text-amber-400">
-                                          Allowance Needs To Be Set
-                                        </Badge>
-                                      );
-                                    }
-                                    return null;
-                                  })()}
-                                </TableCell>
-
-                                {/* Tracking toggle */}
-                                <TableCell onClick={(e) => e.stopPropagation()}>
-                                  <div className="flex items-center gap-2 justify-end">
-                                    {isTrulyConfigured(service) ? (
-                                      <Badge variant="outline" className="text-[10px] whitespace-nowrap shrink-0 min-w-[6.5rem] justify-center border-emerald-500/30 bg-emerald-500/10 text-emerald-500 dark:text-emerald-400">Configured ✓</Badge>
-                                    ) : service.is_backroom_tracked && (() => {
-                                      const activePolicy = allowancePolicies?.find(p => p.service_id === service.id && p.is_active);
-                                      return activePolicy && activePolicy.billing_mode !== 'parts_and_labor' && (activePolicy.included_allowance_qty > 0 || activePolicy.notes?.match(/\$\d/));
-                                    })() ? (
-                                      <Badge variant="outline" className="text-[10px] whitespace-nowrap shrink-0 min-w-[6.5rem] justify-center border-blue-500/30 bg-blue-500/10 text-blue-500 dark:text-blue-400">Allowance Set</Badge>
-                                    ) : service.is_backroom_tracked ? (
-                                      <Badge variant="outline" className="text-[10px] whitespace-nowrap shrink-0 min-w-[6.5rem] justify-center border-amber-500/30 bg-amber-500/10 text-amber-500 dark:text-amber-400">Unconfigured</Badge>
-                                    ) : null}
+                                  <div className="flex justify-end">
                                     <Switch
                                       checked={service.is_backroom_tracked}
                                       onCheckedChange={(v) => toggleTracking.mutate({ id: service.id, tracked: v })}
@@ -905,7 +876,7 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                      transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
                                      style={{ overflow: 'clip' }}
                                    >
-                                     <td colSpan={5} className="p-0">
+                                     <td colSpan={4} className="p-0">
                                        <motion.div
                                          initial={{ opacity: 0, y: -8 }}
                                          animate={{ opacity: 1, y: 0 }}
