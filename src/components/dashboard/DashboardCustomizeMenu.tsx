@@ -640,24 +640,45 @@ export function DashboardCustomizeMenu({ variant = 'icon', roleContext }: Dashbo
           {roleContext?.isLeadership && unpinnedCards.length > 0 && (
             <>
               <div>
-                <h3 className="text-sm font-medium text-muted-foreground mb-3">AVAILABLE ANALYTICS</h3>
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-sm font-medium text-muted-foreground">AVAILABLE ANALYTICS</h3>
+                  {unpinnedCards.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={handleBulkPinAll}
+                      disabled={isTogglingPin}
+                      className="text-[10px] font-medium text-primary hover:text-primary/80 transition-colors disabled:opacity-50"
+                    >
+                      Pin All
+                    </button>
+                  )}
+                </div>
                 <p className="text-xs text-muted-foreground mb-4">
                   Toggle to pin analytics cards to your dashboard.
                 </p>
-                <div className="space-y-1">
-                  {unpinnedCards.map(card => (
-                    <SortablePinnedCardItem
-                      key={card.id}
-                      id={card.id}
-                      label={card.label}
-                      icon={card.icon}
-                      isPinned={false}
-                      onToggle={() => handleTogglePinnedCard(card.id)}
-                      isLoading={isTogglingPin}
-                      
-                    />
+                <div className="space-y-3">
+                  {Object.entries(groupedUnpinnedCards).map(([category, cards]) => (
+                    <div key={category}>
+                      <p className="text-[10px] font-medium text-muted-foreground/70 uppercase tracking-wider mb-1 px-1">{category}</p>
+                      <div className="space-y-1">
+                        {cards.map(card => (
+                          <SortablePinnedCardItem
+                            key={card.id}
+                            id={card.id}
+                            label={card.label}
+                            icon={card.icon}
+                            isPinned={false}
+                            onToggle={() => handleTogglePinnedCard(card.id)}
+                            isLoading={isTogglingPin}
+                          />
+                        ))}
+                      </div>
+                    </div>
                   ))}
                 </div>
+                {Object.keys(groupedUnpinnedCards).length === 0 && searchQuery && (
+                  <p className="text-xs text-muted-foreground text-center py-3">No matching analytics found</p>
+                )}
                 <Button variant="ghost" size={tokens.button.card} className="w-full gap-2 mt-4" asChild>
                   <Link to={dashPath('/admin/analytics')} onClick={() => setIsOpen(false)}>
                     <BarChart3 className="w-4 h-4" />
