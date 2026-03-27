@@ -66,6 +66,7 @@ export function useCalculateOverageCharge() {
         .select('id')
         .eq('mix_session_id', sessionId)
         .eq('appointment_id', appointmentId)
+        .eq('service_name', serviceName ?? '')
         .limit(1)
         .maybeSingle();
 
