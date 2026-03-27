@@ -56,6 +56,7 @@ import { InvitationsTab } from '@/components/access-hub/InvitationsTab';
 import { InviteStaffDialog } from '@/components/dashboard/InviteStaffDialog';
 import { useAuth } from '@/contexts/AuthContext';
 import { useIsPrimaryOwner } from '@/hooks/useIsPrimaryOwner';
+import { PageExplainer } from '@/components/ui/PageExplainer';
 
 type AppRole = Database['public']['Enums']['app_role'];
 

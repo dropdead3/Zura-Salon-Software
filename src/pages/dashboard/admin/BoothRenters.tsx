@@ -8,6 +8,7 @@ import { PlatformPageHeader } from '@/components/platform/ui/PlatformPageHeader'
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { Card, CardContent } from '@/components/ui/card';
+import { PageExplainer } from '@/components/ui/PageExplainer';
 
 export default function BoothRenters() {
   const [searchParams, setSearchParams] = useSearchParams();

@@ -51,6 +51,7 @@ import {
   Beaker,
 } from 'lucide-react';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
+import { PageExplainer } from '@/components/ui/PageExplainer';
 
 interface ManagementCardProps {
   href: string;
@@ -208,6 +209,7 @@ export default function TeamHub() {
           title="Operations Hub"
           description="People management, development, and team operations"
         />
+        <PageExplainer pageId="team-hub" />
 
         {/* Hub Gateway */}
         <CategorySection title="Hubs">

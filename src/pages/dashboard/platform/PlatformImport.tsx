@@ -40,6 +40,7 @@ import { PlatformButton } from '@/components/platform/ui/PlatformButton';
 import { PlatformBadge } from '@/components/platform/ui/PlatformBadge';
 import { PlatformPageContainer } from '@/components/platform/ui/PlatformPageContainer';
 import { PlatformPageHeader } from '@/components/platform/ui/PlatformPageHeader';
+import { PageExplainer } from '@/components/ui/PageExplainer';
 
 interface ImportType {
   value: string;
@@ -86,6 +87,7 @@ export default function PlatformImport() {
         title="Data Migration"
         description="Import data from external software into accounts"
       />
+      <PageExplainer pageId="platform-import" />
 
       <Tabs defaultValue="import" className="space-y-6">
         <TabsList className="bg-slate-800/50 border-slate-700/50">

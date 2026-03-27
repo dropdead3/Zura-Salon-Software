@@ -8,6 +8,7 @@ import { LeadFunnelCard } from '@/components/dashboard/LeadFunnelCard';
 import { LeadInbox } from '@/components/dashboard/LeadInbox';
 import { LeadSlaSettings } from '@/components/dashboard/leads/LeadSlaSettings';
 import { useActiveLocations } from '@/hooks/useLocations';
+import { PageExplainer } from '@/components/ui/PageExplainer';
 
 export default function LeadManagement() {
   const [selectedLocation, setSelectedLocation] = useState<string>('all');
@@ -25,6 +26,7 @@ export default function LeadManagement() {
             title="Lead Management"
             description="Track, assign, and convert salon inquiries from all sources."
           />
+          <PageExplainer pageId="lead-management" />
           <div className="flex flex-wrap gap-3">
             {/* Location filter */}
             <Select value={selectedLocation} onValueChange={setSelectedLocation}>
