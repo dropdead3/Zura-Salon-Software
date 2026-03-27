@@ -22,7 +22,6 @@ export function SortablePinnedCardItem({
   isPinned, 
   onToggle,
   isLoading = false,
-  previewSrc,
 }: SortablePinnedCardItemProps) {
   const { 
     attributes, 
