@@ -108,7 +108,7 @@ export function ColorBarEntitlementsTab() {
       const { data: flags, error: flagErr } = await supabase
         .from('organization_feature_flags')
         .select('*')
-        .eq('flag_key', 'color_bar_enabled');
+        .eq('flag_key', 'backroom_enabled');
 
       if (flagErr) throw flagErr;
 
@@ -183,14 +183,14 @@ export function ColorBarEntitlementsTab() {
   const toggleColorBar = (org: OrgWithColorBar) => {
     if (org.backroom_enabled && org.override_id) {
       deleteFlag.mutate(
-        { organizationId: org.id, flagKey: 'color_bar_enabled' },
+        { organizationId: org.id, flagKey: 'backroom_enabled' },
         { onSuccess: () => toast.success(`Color Bar disabled for ${org.name}`) }
       );
     } else {
       updateFlag.mutate(
         {
           organizationId: org.id,
-          flagKey: 'color_bar_enabled',
+          flagKey: 'backroom_enabled',
           isEnabled: true,
           reason: 'Enabled via Platform Color Bar Admin',
         },
@@ -257,7 +257,7 @@ export function ColorBarEntitlementsTab() {
     toEnable.forEach((org) => {
       updateFlag.mutate({
         organizationId: org.id,
-        flagKey: 'color_bar_enabled',
+        flagKey: 'backroom_enabled',
         isEnabled: true,
         reason: 'Batch enabled via Platform Color Bar Admin',
       });
@@ -271,7 +271,7 @@ export function ColorBarEntitlementsTab() {
       (o) => selected.has(o.id) && o.backroom_enabled && o.override_id
     );
     toDisable.forEach((org) => {
-      deleteFlag.mutate({ organizationId: org.id, flagKey: 'color_bar_enabled' });
+      deleteFlag.mutate({ organizationId: org.id, flagKey: 'backroom_enabled' });
     });
     toast.success(`Disabling color bar for ${toDisable.length} organizations`);
     setSelected(new Set());

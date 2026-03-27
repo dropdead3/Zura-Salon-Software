@@ -22,7 +22,7 @@ export function useCoachAssignments() {
     queryKey: ['coach-assignments'],
     queryFn: async (): Promise<CoachAssignment[]> => {
       const { data, error } = await supabase
-        .from('color_bar_coach_assignments')
+        .from('backroom_coach_assignments')
         .select('*')
         .order('assigned_at', { ascending: true });
 
@@ -64,7 +64,7 @@ export function useMyCoachAssignments() {
       if (!user?.id) return [];
 
       const { data, error } = await supabase
-        .from('color_bar_coach_assignments')
+        .from('backroom_coach_assignments')
         .select('*')
         .eq('coach_user_id', user.id)
         .order('assigned_at', { ascending: true });
@@ -98,7 +98,7 @@ export function useAssignCoach() {
   return useMutation({
     mutationFn: async ({ coachUserId, organizationId }: { coachUserId: string; organizationId: string }) => {
       const { data, error } = await supabase
-        .from('color_bar_coach_assignments')
+        .from('backroom_coach_assignments')
         .insert({
           coach_user_id: coachUserId,
           organization_id: organizationId,
@@ -127,7 +127,7 @@ export function useUnassignCoach() {
   return useMutation({
     mutationFn: async ({ coachUserId, organizationId }: { coachUserId: string; organizationId: string }) => {
       const { error } = await supabase
-        .from('color_bar_coach_assignments')
+        .from('backroom_coach_assignments')
         .delete()
         .eq('coach_user_id', coachUserId)
         .eq('organization_id', organizationId);

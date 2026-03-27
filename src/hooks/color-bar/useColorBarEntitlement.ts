@@ -5,7 +5,7 @@ import { useColorBarOrgId } from '@/hooks/color-bar/useColorBarOrgId';
 
 /**
  * Checks whether the current organization has Color Bar enabled.
- * Uses the organization_feature_flags system with key 'color_bar_enabled'.
+ * Uses the organization_feature_flags system with key 'backroom_enabled'.
  *
  * When `locationId` is provided, also checks the per-location entitlement table.
  * Both the org-level flag AND the location entitlement must be active.
@@ -20,7 +20,7 @@ export function useColorBarEntitlement(locationId?: string) {
         .from('organization_feature_flags')
         .select('is_enabled')
         .eq('organization_id', orgId!)
-        .eq('flag_key', 'color_bar_enabled')
+        .eq('flag_key', 'backroom_enabled')
         .maybeSingle();
       if (error) throw error;
       return data?.is_enabled ?? false;

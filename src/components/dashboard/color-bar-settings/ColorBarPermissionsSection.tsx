@@ -71,7 +71,7 @@ const DEFAULT_PERMISSIONS: Record<string, string[]> = {
 export function ColorBarPermissionsSection() {
   const { effectiveOrganization } = useOrganizationContext();
   const orgId = effectiveOrganization?.id;
-  const { data: setting, isLoading } = useColorBarSetting('color_bar_permissions');
+  const { data: setting, isLoading } = useColorBarSetting('backroom_permissions');
   const upsert = useUpsertColorBarSetting();
 
   const savedPerms = (setting?.value || {}) as Record<string, string[]>;
@@ -92,7 +92,7 @@ export function ColorBarPermissionsSection() {
 
   const handleSave = () => {
     if (!orgId) return;
-    upsert.mutate({ organization_id: orgId, setting_key: 'color_bar_permissions', setting_value: matrix as Record<string, unknown> }, { onSuccess: () => setPerms(null) });
+    upsert.mutate({ organization_id: orgId, setting_key: 'backroom_permissions', setting_value: matrix as Record<string, unknown> }, { onSuccess: () => setPerms(null) });
   };
 
   if (isLoading) {

@@ -38,7 +38,7 @@ interface ServiceRow {
   price: number | null;
   is_backroom_tracked: boolean;
   is_chemical_service: boolean | null;
-  color_bar_config_dismissed: boolean;
+  backroom_config_dismissed: boolean;
   container_types: ('bowl' | 'bottle')[];
 }
 
@@ -155,7 +155,7 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('services')
-        .select('id, name, category, price, is_backroom_tracked, is_chemical_service, color_bar_config_dismissed, container_types')
+        .select('id, name, category, price, is_backroom_tracked, is_chemical_service, backroom_config_dismissed, container_types')
         .eq('organization_id', orgId!)
         .eq('is_active', true)
         .order('category')
@@ -203,9 +203,9 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
       const svc = (services || []).find(s => s.id === id);
 
       // Auto-reset configured status when settings change
-      const didResetConfig = !!(svc?.color_bar_config_dismissed && !('color_bar_config_dismissed' in updates));
+      const didResetConfig = !!(svc?.backroom_config_dismissed && !('backroom_config_dismissed' in updates));
       if (didResetConfig) {
-        updates.color_bar_config_dismissed = false;
+        updates.backroom_config_dismissed = false;
       }
 
       const { error } = await supabase
@@ -256,7 +256,7 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
   };
 
   const needsAttention = (s: ServiceRow): boolean => {
-    if (s.color_bar_config_dismissed) return false;
+    if (s.backroom_config_dismissed) return false;
     const type = getServiceType(s);
     // Chemical but not tracked
     if ((type === 'chemical' || type === 'suggested') && !s.is_backroom_tracked) return true;
@@ -331,7 +331,7 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
       if (!groups.has(cat)) groups.set(cat, { services: [], configured: 0, tracked: 0 });
       const g = groups.get(cat)!;
       g.services.push(s);
-      if (s.color_bar_config_dismissed || allowanceByService.has(s.id)) g.configured++;
+      if (s.backroom_config_dismissed || allowanceByService.has(s.id)) g.configured++;
       if (s.is_backroom_tracked) g.tracked++;
     }
     return groups;
@@ -637,7 +637,7 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                               <TableRow
                                 className={cn(
                                   attention && 'bg-amber-500/[0.03]',
-                                  service.color_bar_config_dismissed && 'bg-emerald-500/[0.04]',
+                                  service.backroom_config_dismissed && 'bg-emerald-500/[0.04]',
                                   'cursor-pointer'
                                 )}
                                 onClick={() => toggleExpand(service.id)}
@@ -691,7 +691,7 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                     {type === 'suggested' && (
                                       <Badge variant="outline" className="text-[10px] shrink-0 border-amber-500/40 text-amber-600 dark:text-amber-400">Suggested</Badge>
                                     )}
-                                    {service.color_bar_config_dismissed ? (
+                                    {service.backroom_config_dismissed ? (
                                       <Badge variant="outline" className="text-[10px] shrink-0 min-w-[6.5rem] justify-center border-emerald-500/30 bg-emerald-500/10 text-emerald-500 dark:text-emerald-400">Configured ✓</Badge>
                                     ) : service.is_backroom_tracked && (() => {
                                       const hasPolicy = allowancePolicies?.some(p => p.service_id === service.id && p.is_active);
@@ -952,7 +952,7 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                             })()}
                                             {/* Mark Configured footer */}
                                             <div className="bg-primary/5 border-t border-primary/20 rounded-b-lg p-3 mt-3 flex items-center justify-between">
-                                              {service.color_bar_config_dismissed ? (
+                                              {service.backroom_config_dismissed ? (
                                                 <div className="flex items-center gap-2 w-full justify-between">
                                                   <span className="text-xs font-sans text-green-600 dark:text-green-400 flex items-center gap-1.5">
                                                     <CheckCircle2 className="w-3.5 h-3.5" />
@@ -968,7 +968,7 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                                         is_backroom_tracked: false,
                                                         is_chemical_service: false,
                                                         container_types: [],
-                                                        color_bar_config_dismissed: false,
+                                                        backroom_config_dismissed: false,
                                                       }});
                                                     }}
                                                   >
@@ -992,7 +992,7 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                                           is_backroom_tracked: false,
                                                           is_chemical_service: false,
                                                           container_types: [],
-                                                          color_bar_config_dismissed: false,
+                                                          backroom_config_dismissed: false,
                                                         }});
                                                       }}
                                                     >
@@ -1005,7 +1005,7 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                                       className="h-7 text-xs shrink-0 text-amber-600 hover:text-amber-700 hover:bg-amber-50 dark:text-amber-400 dark:hover:bg-amber-900/20"
                                                       onClick={(e) => {
                                                         e.stopPropagation();
-                                                        updateService.mutate({ id: service.id, updates: { color_bar_config_dismissed: true } });
+                                                        updateService.mutate({ id: service.id, updates: { backroom_config_dismissed: true } });
                                                         setTimeout(() => {
                                                           setExpandedIds(prev => {
                                                             const next = new Set(prev);
@@ -1066,7 +1066,7 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                             {/* Mark Configured footer for untracked */}
                                             {(type === 'chemical' || type === 'suggested') && (
                                               <div className="bg-primary/5 border-t border-primary/20 rounded-b-lg p-3 mt-3 flex items-center justify-between">
-                                                {service.color_bar_config_dismissed ? (
+                                                {service.backroom_config_dismissed ? (
                                                   <div className="flex items-center gap-2 w-full justify-between">
                                                     <span className="text-xs font-sans text-green-600 dark:text-green-400 flex items-center gap-1.5">
                                                       <CheckCircle2 className="w-3.5 h-3.5" />
@@ -1082,7 +1082,7 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                                           is_backroom_tracked: false,
                                                           is_chemical_service: false,
                                                           container_types: [],
-                                                          color_bar_config_dismissed: false,
+                                                          backroom_config_dismissed: false,
                                                         }});
                                                       }}
                                                     >
@@ -1106,7 +1106,7 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                                             is_backroom_tracked: false,
                                                             is_chemical_service: false,
                                                             container_types: [],
-                                                            color_bar_config_dismissed: false,
+                                                            backroom_config_dismissed: false,
                                                           }});
                                                         }}
                                                       >
@@ -1119,7 +1119,7 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                                         className="h-7 text-xs shrink-0 text-amber-600 hover:text-amber-700 hover:bg-amber-50 dark:text-amber-400 dark:hover:bg-amber-900/20"
                                                         onClick={(e) => {
                                                           e.stopPropagation();
-                                                          updateService.mutate({ id: service.id, updates: { color_bar_config_dismissed: true } });
+                                                          updateService.mutate({ id: service.id, updates: { backroom_config_dismissed: true } });
                                                           setTimeout(() => {
                                                             setExpandedIds(prev => {
                                                               const next = new Set(prev);
