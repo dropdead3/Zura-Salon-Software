@@ -134,6 +134,7 @@ export function ServiceEditorDialog({
       is_chemical_service: isChemicalService,
       is_backroom_tracked: isChemicalService ? true : false,
       container_types: isChemicalService ? containerTypes : [],
+      billing_mode: isChemicalService ? billingMode : 'allowance',
     } as Partial<Service>);
   };
 
