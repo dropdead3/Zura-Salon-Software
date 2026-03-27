@@ -653,7 +653,7 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                           className="bg-muted/30 cursor-pointer hover:bg-muted/50 transition-colors"
                           onClick={() => toggleCategoryCollapse(category)}
                         >
-                          <TableCell colSpan={4} className="py-2 px-4">
+                          <TableCell colSpan={5} className="py-2 px-4">
                             <div className="flex items-center justify-between">
                               <div className="flex items-center gap-2">
                                 <ChevronRight className={cn(
