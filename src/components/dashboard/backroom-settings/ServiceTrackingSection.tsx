@@ -975,13 +975,10 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                                     className="h-7 text-xs text-muted-foreground hover:text-red-500 hover:bg-red-500/10"
                                                     onClick={(e) => {
                                                       e.stopPropagation();
-                                                      updateService.mutate({ id: service.id, updates: {
+                                                       updateService.mutate({ id: service.id, updates: {
                                                         is_backroom_tracked: false,
                                                         is_chemical_service: false,
                                                         container_types: [],
-                                                        assistant_prep_allowed: false,
-                                                        smart_mix_assist_enabled: false,
-                                                        formula_memory_enabled: false,
                                                         backroom_config_dismissed: false,
                                                       }});
                                                     }}
@@ -1006,9 +1003,6 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                                           is_backroom_tracked: false,
                                                           is_chemical_service: false,
                                                           container_types: [],
-                                                          assistant_prep_allowed: false,
-                                                          smart_mix_assist_enabled: false,
-                                                          formula_memory_enabled: false,
                                                           backroom_config_dismissed: false,
                                                         }});
                                                       }}
