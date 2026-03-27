@@ -1101,17 +1101,9 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                         ) : (
                                           /* Untracked service drill-down */
                                           <div className="space-y-3">
-                                            <div className="flex items-center justify-between">
-                                              <div className="space-y-1 text-xs text-muted-foreground">
-                                                <div className="flex items-center gap-3">
-                                                  <span>Category: <span className="text-foreground">{service.category || 'None'}</span></span>
-                                                  <span>Type: <span className="text-foreground capitalize">{type}</span></span>
-                                                </div>
-                                                {(type === 'chemical' || type === 'suggested') && !service.is_chemical_service && (
-                                                  <p className="text-amber-600 dark:text-amber-400">This service appears to use chemicals — consider enabling tracking.</p>
-                                                )}
-                                              </div>
-                                              </div>
+                                            {(type === 'chemical' || type === 'suggested') && !service.is_chemical_service && (
+                                              <p className="text-xs text-amber-600 dark:text-amber-400">This service appears to use chemicals — consider enabling tracking.</p>
+                                            )}
                                             {/* Mark Configured footer for untracked */}
                                             {(type === 'chemical' || type === 'suggested') && (
                                               <div className="bg-primary/5 border-t border-primary/20 rounded-b-lg p-3 mt-3 flex items-center justify-between">
