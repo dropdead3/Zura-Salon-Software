@@ -1,26 +1,36 @@
 
 
-# Conditionally Hide Zero-Assistant Count in Live Session Indicator
+# Fix: Command Center Nav Always Appearing Active
 
 ## Problem
-The indicator always shows "7 stylists, 0 assistants in service now" even when there are zero assistants. It should omit the assistant portion entirely when count is 0.
+The Command Center link (`/dashboard`) stays highlighted on every page because of a `startsWith` match bug.
 
-## Change
+When resolving the nav link:
+1. `href = '/dashboard'` → `.replace(/^\/dashboard/, '')` → `''`
+2. `dashPath('')` → `/org/{slug}/dashboard`
+3. `isActive` check: `location.pathname.startsWith('/org/{slug}/dashboard/')` → **true for ALL dashboard pages**
 
-**File:** `src/components/dashboard/LiveSessionIndicator.tsx` (line 70-72)
+Every sub-route like `/org/{slug}/dashboard/stats` starts with `/org/{slug}/dashboard/`, so Command Center is always "active."
 
-Update the text interpolation logic:
+## Fix
 
-- **Full mode:** Show `"7 stylists in service now"` when `activeAssistantCount === 0`, otherwise `"7 stylists, 2 assistants in service now"`
-- **Compact mode:** Keep `"${total} in service"` as-is (already fine)
+**File:** `src/components/dashboard/SidebarNavContent.tsx` (line 286, and the duplicate at line 641)
+
+Add an exact-match guard for the dashboard root path. When `resolvedHref` is the base dashboard path (no trailing segments), only match on exact equality — never `startsWith`:
 
 ```tsx
-{compact
-  ? `${activeStylistCount + activeAssistantCount} in service`
-  : activeAssistantCount > 0
-    ? `${activeStylistCount} stylists, ${activeAssistantCount} assistants in service now`
-    : `${activeStylistCount} stylists in service now`}
+// Before
+const isActive = location.pathname === resolvedHref || location.pathname.startsWith(resolvedHref + '/');
+
+// After
+const isExactRoot = resolvedHref === dashPath('') || resolvedHref === dashPath('/');
+const isActive = isExactRoot
+  ? location.pathname === resolvedHref
+  : location.pathname === resolvedHref || location.pathname.startsWith(resolvedHref + '/');
 ```
 
-Single line change, no new files.
+Same fix applied in both `NavItem` render (line ~286) and the collapsible group item render (line ~641).
+
+## Files Changed
+- **Modified:** `src/components/dashboard/SidebarNavContent.tsx` — two lines updated
 
