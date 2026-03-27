@@ -85,7 +85,7 @@ export function CheckoutClarityPanel({
         </div>
 
         {charges.map((charge) => {
-          const chargeType = (charge as any).charge_type || 'overage';
+          const chargeType = charge.charge_type || 'overage';
           const isProductCost = chargeType === 'product_cost';
           const statusInfo = STATUS_BADGE[charge.status] ?? STATUS_BADGE.pending;
           const isWaived = charge.status === 'waived';
