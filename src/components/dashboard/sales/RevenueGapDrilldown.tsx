@@ -16,7 +16,7 @@ interface RevenueGapDrilldownProps {
   showDates?: boolean;
 }
 
-const INITIAL_VISIBLE = 10;
+const INITIAL_VISIBLE = 7;
 
 const REASON_CONFIG: Record<GapReason, {
   label: string;
