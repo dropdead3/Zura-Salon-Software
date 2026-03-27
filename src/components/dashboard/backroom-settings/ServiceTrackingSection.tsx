@@ -856,7 +856,8 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                                    ) : (
                                                    <div className="flex items-start justify-between gap-4">
                                                     {(() => {
-                                                     if (policy && policy.is_active) {
+                                                     const hasConfiguredValues = policy && (policy.included_allowance_qty > 0 || policy.overage_rate > 0);
+                                                     if (policy && policy.is_active && hasConfiguredValues) {
                                                        const recipeNote = policy.notes?.startsWith('Recipe-based:') ? policy.notes.replace('Recipe-based: ', '') : null;
                                                         const healthStatus = policy.allowance_health_status;
                                                         const healthPct = policy.allowance_health_pct;
