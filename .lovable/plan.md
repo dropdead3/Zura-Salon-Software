@@ -1,52 +1,29 @@
 
 
-## Fix Post-Rename Breakage: Apps Section & Remaining "backroom" Code Identifiers
+## Remove Redundant "Requires Color/Chemical" Toggle
 
-### Root Cause — Apps Section Disappeared
-The `organization_apps` table stores `app_key: 'backroom'` in the database. During the rename, the `APP_KEY_MAP` in `SidebarNavContent.tsx` was changed to look for `'color-bar'`, and `PricingAnalyticsContent.tsx` checks `hasApp('color-bar')`. Since the DB still has `'backroom'`, no match is found and the Apps section is hidden.
+### Problem
+The "Requires Color/Chemical" toggle inside the expanded service detail is redundant with the main tracking toggle. Enabling tracking already means the service requires color/chemical. The inner toggle just creates confusion and an extra click.
 
-### Fix Strategy
-Since the plan explicitly preserved database values, the code must reference the DB value `'backroom'` when comparing against `organization_apps.app_key`. Two options:
-
-**Option A (recommended):** Revert the app_key references in code back to `'backroom'` so they match the DB.
-**Option B:** Run a migration to update the DB app_key from `'backroom'` to `'color-bar'`.
-
-I recommend **Option A** — no migration needed, consistent with the "DB stays unchanged" rule.
+### Solution
+Remove the "Requires Color/Chemical" toggle from the expanded detail panel. The main row tracking toggle becomes the single gate. When tracking is enabled, `is_chemical_service` is automatically set to `true` with default container `['bowl']`. When tracking is disabled, both flags are cleared.
 
 ### Changes
 
-**1. `src/components/dashboard/SidebarNavContent.tsx` (~line 571)**
-Change `APP_KEY_MAP` value from `'color-bar'` back to `'backroom'`:
-```ts
-'/dashboard/admin/color-bar-settings': 'backroom',
-```
+**`src/components/dashboard/color-bar-settings/ServiceTrackingSection.tsx`**
 
-**2. `src/components/dashboard/analytics/PricingAnalyticsContent.tsx` (~line 134)**
-Change `hasApp('color-bar')` back to `hasApp('backroom')`.
+1. **Update `toggleTracking` mutation** (lines 169–176): When `tracked: true`, also set `is_chemical_service: true` and default `container_types: ['bowl']`. When `tracked: false`, also set `is_chemical_service: false` and `container_types: []`.
 
-### Additional Missed Renames (Code Identifiers)
+2. **Remove the "Requires Color/Chemical" toggle block** (lines 746–760): Delete the entire `<div>` containing the label and Switch for `is_chemical_service`.
 
-These are code-level identifiers that should have been renamed but were missed:
+3. **Keep the Vessels selector**: The vessel picker (Bowls/Bottles) remains visible whenever `is_backroom_tracked` is true (since `is_chemical_service` will always be in sync). Update its visibility condition from `service.is_chemical_service` to `service.is_backroom_tracked` (or just always show it in the expanded panel since it's already gated by tracking).
 
-**3. `src/hooks/color-bar/useLocationStylistCounts.ts` (line 16)**
-Rename `BACKROOM_PER_SERVICE_FEE` → `COLOR_BAR_PER_SERVICE_FEE`. Update all 4 consumer files that import it:
-- `ColorBarCheckoutConfirmDialog.tsx`
-- `ColorBarPaywall.tsx`
-- `ColorBarSubscription.tsx`
-- `useLocationStylistCounts.ts` (definition)
+4. **Update the "Reset Configuration" action** (lines ~967–995): Already clears both flags — no change needed.
 
-### Edge Function Invocations (No Change Needed)
-The following edge function names remain as-is because they are deployed function names and renaming them would break the deployed functions:
-- `create-backroom-checkout`
-- `admin-activate-backroom`
-- `add-backroom-scales`
-- `get-backroom-subscription`
-
-These are correct to leave unchanged — the function names match what's deployed.
-
-### Scope
-- 2 files fix the Apps section bug (critical)
-- 4 files rename `BACKROOM_PER_SERVICE_FEE` constant (cleanup)
-- No database migrations
-- No edge function changes
+### What Stays
+- Main tracking toggle in the list row (the single gate)
+- Vessel picker (Bowls/Bottles)
+- Billing Method section
+- All existing badges and status indicators
+- The `is_chemical_service` column in the DB (just kept in sync automatically)
 
