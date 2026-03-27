@@ -91,7 +91,7 @@ function GapItemRow({ item, showDates, formatCurrency }: {
       </div>
 
       {/* Row 2: Service · stylist */}
-      <div className="flex flex-col gap-1 pl-0.5 min-w-0 text-muted-foreground text-[11px]">
+      <div className="flex flex-col gap-1 pl-0.5 min-w-0 text-muted-foreground text-[11px] text-left">
         <span className="whitespace-normal break-words leading-relaxed pr-2">
           {[
             item.serviceName,
