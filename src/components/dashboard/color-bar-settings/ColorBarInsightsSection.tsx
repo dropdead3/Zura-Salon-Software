@@ -131,7 +131,7 @@ export function ColorBarInsightsSection({ locationId: propLocationId, datePreset
     const csv = [headers.join(','), ...rows.map((r) => r.join(','))].join('\n');
     const blob = new Blob([csv], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement('a'); a.href = url; a.download = `backroom-insights-${start}-to-${end}.csv`; a.click();
+    const a = document.createElement('a'); a.href = url; a.download = `color-bar-insights-${start}-to-${end}.csv`; a.click();
     URL.revokeObjectURL(url);
     toast.success('Report exported');
   };

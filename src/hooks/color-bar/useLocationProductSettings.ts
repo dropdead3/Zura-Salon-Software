@@ -72,8 +72,8 @@ export function useUpsertLocationProductSetting() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['location-product-settings'] });
-      queryClient.invalidateQueries({ queryKey: ['backroom-inventory-table'] });
-      queryClient.invalidateQueries({ queryKey: ['backroom-setup-health'] });
+      queryClient.invalidateQueries({ queryKey: ['color-bar-inventory-table'] });
+      queryClient.invalidateQueries({ queryKey: ['color-bar-setup-health'] });
     },
     onError: (error) => toast.error('Failed to update tracking: ' + error.message),
   });
@@ -108,8 +108,8 @@ export function useBulkUpsertLocationProductSettings() {
     },
     onSuccess: (_, vars) => {
       queryClient.invalidateQueries({ queryKey: ['location-product-settings'] });
-      queryClient.invalidateQueries({ queryKey: ['backroom-inventory-table'] });
-      queryClient.invalidateQueries({ queryKey: ['backroom-setup-health'] });
+      queryClient.invalidateQueries({ queryKey: ['color-bar-inventory-table'] });
+      queryClient.invalidateQueries({ queryKey: ['color-bar-setup-health'] });
       toast.success(
         `${vars.is_tracked ? 'Enabled' : 'Disabled'} tracking for ${vars.productIds.length} products`
       );
@@ -171,8 +171,8 @@ export function useSyncCatalogToAllLocations() {
     },
     onSuccess: ({ synced, targets }) => {
       queryClient.invalidateQueries({ queryKey: ['location-product-settings'] });
-      queryClient.invalidateQueries({ queryKey: ['backroom-inventory-table'] });
-      queryClient.invalidateQueries({ queryKey: ['backroom-setup-health'] });
+      queryClient.invalidateQueries({ queryKey: ['color-bar-inventory-table'] });
+      queryClient.invalidateQueries({ queryKey: ['color-bar-setup-health'] });
       if (synced > 0) {
         toast.success(`Synced ${synced} tracked products to ${targets} location${targets > 1 ? 's' : ''}`);
       }

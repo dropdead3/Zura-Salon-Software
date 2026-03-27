@@ -171,7 +171,7 @@ export function CountEntryForm({ session, locationId, onClose }: CountEntryFormP
       // Invalidate related queries
       queryClient.invalidateQueries({ queryKey: ['stock-counts'] });
       queryClient.invalidateQueries({ queryKey: ['shrinkage-summary'] });
-      queryClient.invalidateQueries({ queryKey: ['backroom-inventory-table'] });
+      queryClient.invalidateQueries({ queryKey: ['color-bar-inventory-table'] });
       queryClient.invalidateQueries({ queryKey: ['products'] });
 
       toast.success(

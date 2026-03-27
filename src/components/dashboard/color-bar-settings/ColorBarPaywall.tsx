@@ -102,7 +102,7 @@ function ProductPreview() {
           </div>
           <div className="flex-1 flex justify-center">
             <div className="px-4 py-1 rounded-md bg-muted/50 text-[10px] text-muted-foreground font-sans">
-              backroom.getzura.com
+              colorbar.getzura.com
             </div>
           </div>
         </div>

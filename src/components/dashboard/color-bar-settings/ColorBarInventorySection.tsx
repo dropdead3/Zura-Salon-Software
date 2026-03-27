@@ -152,7 +152,7 @@ export function ColorBarInventorySection({ initialTab }: { initialTab?: string }
 
       {/* First-time onboarding hint */}
       <FirstTimeCallout
-        id="backroom-inventory-workflow"
+        id="color-bar-inventory-workflow"
         title="Inventory Workflow"
         description="Track Products → Set Reorder Levels → Monitor Stock → Create Orders → Receive Shipments → Run Counts"
       />

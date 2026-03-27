@@ -86,8 +86,8 @@ export function ColorBarBulkPricingDialog({ open, onOpenChange, orgId, productId
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['backroom-product-catalog'] });
-      queryClient.invalidateQueries({ queryKey: ['backroom-inventory-table'] });
+      queryClient.invalidateQueries({ queryKey: ['color-bar-product-catalog'] });
+      queryClient.invalidateQueries({ queryKey: ['color-bar-inventory-table'] });
       queryClient.invalidateQueries({ queryKey: ['products'] });
       toast.success(`Pricing applied to ${productIds.length} products`);
       onOpenChange(false);

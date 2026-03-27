@@ -33,7 +33,7 @@ export function useColorBarSetupHealth() {
   const orgId = useColorBarOrgId();
 
   return useQuery({
-    queryKey: ['backroom-setup-health', orgId],
+    queryKey: ['color-bar-setup-health', orgId],
     queryFn: async (): Promise<SetupHealthMetrics> => {
       const warnings: SetupWarning[] = [];
 

@@ -426,8 +426,8 @@ export function SupplyLibraryDialog({ open, onOpenChange, orgId, existingProduct
       const { error } = await supabase.from('products').insert(itemsToInsert as any);
       if (error) throw error;
 
-      queryClient.invalidateQueries({ queryKey: ['backroom-product-catalog'] });
-      queryClient.invalidateQueries({ queryKey: ['backroom-setup-health'] });
+      queryClient.invalidateQueries({ queryKey: ['color-bar-product-catalog'] });
+      queryClient.invalidateQueries({ queryKey: ['color-bar-setup-health'] });
       queryClient.invalidateQueries({ queryKey: ['products'] });
 
       toast.success(`Added ${itemsToInsert.length} products to your catalog`);
@@ -475,8 +475,8 @@ export function SupplyLibraryDialog({ open, onOpenChange, orgId, existingProduct
       const { error } = await supabase.from('products').insert(itemsToInsert as any);
       if (error) throw error;
 
-      queryClient.invalidateQueries({ queryKey: ['backroom-product-catalog'] });
-      queryClient.invalidateQueries({ queryKey: ['backroom-setup-health'] });
+      queryClient.invalidateQueries({ queryKey: ['color-bar-product-catalog'] });
+      queryClient.invalidateQueries({ queryKey: ['color-bar-setup-health'] });
       queryClient.invalidateQueries({ queryKey: ['products'] });
 
       const insertedNames = itemsToInsert.map((i) => i.name);
@@ -491,8 +491,8 @@ export function SupplyLibraryDialog({ open, onOpenChange, orgId, existingProduct
               .eq('brand', brand)
               .in('name', insertedNames);
             if (!undoError) {
-              queryClient.invalidateQueries({ queryKey: ['backroom-product-catalog'] });
-              queryClient.invalidateQueries({ queryKey: ['backroom-setup-health'] });
+              queryClient.invalidateQueries({ queryKey: ['color-bar-product-catalog'] });
+              queryClient.invalidateQueries({ queryKey: ['color-bar-setup-health'] });
               queryClient.invalidateQueries({ queryKey: ['products'] });
               toast.success(`Removed ${insertedNames.length} ${brand} products`);
             }

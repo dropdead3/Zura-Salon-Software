@@ -213,7 +213,7 @@ export function useDeleteSupplyBrand() {
       queryClient.invalidateQueries({ queryKey: ['supply-library-brands'] });
       queryClient.invalidateQueries({ queryKey: ['supply-library-products'] });
       queryClient.invalidateQueries({ queryKey: ['supply-library-init-status'] });
-      queryClient.invalidateQueries({ queryKey: ['backroom-product-catalog'] });
+      queryClient.invalidateQueries({ queryKey: ['color-bar-product-catalog'] });
       toast.success(`${params.brandName} and ${result.productCount} products removed`);
     },
     onError: (err: any) => {

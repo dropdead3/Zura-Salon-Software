@@ -173,7 +173,7 @@ export function useBatchUpsertSupplier() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['product-suppliers'] });
       queryClient.invalidateQueries({ queryKey: ['product-supplier'] });
-      queryClient.invalidateQueries({ queryKey: ['backroom-inventory-table'] });
+      queryClient.invalidateQueries({ queryKey: ['color-bar-inventory-table'] });
       toast.success('Supplier saved for all products in brand');
     },
     onError: (error) => {

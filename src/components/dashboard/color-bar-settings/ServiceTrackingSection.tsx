@@ -151,7 +151,7 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
   }, [categoryOrder]);
 
   const { data: services, isLoading } = useQuery({
-    queryKey: ['backroom-services', orgId],
+    queryKey: ['color-bar-services', orgId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('services')
@@ -175,8 +175,8 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['backroom-services'] });
-      queryClient.invalidateQueries({ queryKey: ['backroom-setup-health'] });
+      queryClient.invalidateQueries({ queryKey: ['color-bar-services'] });
+      queryClient.invalidateQueries({ queryKey: ['color-bar-setup-health'] });
     },
     onError: (e) => toast.error(e.message),
   });
@@ -190,8 +190,8 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['backroom-services'] });
-      queryClient.invalidateQueries({ queryKey: ['backroom-setup-health'] });
+      queryClient.invalidateQueries({ queryKey: ['color-bar-services'] });
+      queryClient.invalidateQueries({ queryKey: ['color-bar-setup-health'] });
       setSelectedIds(new Set());
       toast.success('Services tracked successfully');
     },
@@ -225,8 +225,8 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
       return { didResetConfig };
     },
     onSuccess: (result) => {
-      queryClient.invalidateQueries({ queryKey: ['backroom-services'] });
-      queryClient.invalidateQueries({ queryKey: ['backroom-setup-health'] });
+      queryClient.invalidateQueries({ queryKey: ['color-bar-services'] });
+      queryClient.invalidateQueries({ queryKey: ['color-bar-setup-health'] });
       queryClient.invalidateQueries({ queryKey: ['services'] });
       queryClient.invalidateQueries({ queryKey: ['org-services'] });
       queryClient.invalidateQueries({ queryKey: ['service-lookup-map'] });
@@ -424,7 +424,7 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
   return (
     <div className="space-y-6">
       <Infotainer
-        id="backroom-services-guide"
+        id="color-bar-services-guide"
         title="Service Tracking"
         description="Link your services (e.g. Balayage, Root Touch-Up) to the products they consume. This tells Zura which products to expect when a stylist mixes for that service."
         icon={<Wrench className="h-4 w-4 text-primary" />}

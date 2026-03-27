@@ -208,7 +208,7 @@ export function AllowancesBillingSection({ onNavigate }: Props) {
       </Collapsible>
 
       <Infotainer
-        id="backroom-allowances-guide"
+        id="color-bar-allowances-guide"
         title="Allowances & Billing"
         description="Define how much product is included in each service price and what to charge when a stylist uses more. Example: 30g of color included, $0.50/g overage. Requires services to be tracked first."
         icon={<DollarSign className="h-4 w-4 text-primary" />}

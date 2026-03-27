@@ -69,8 +69,8 @@ export function ServiceTrackingQuickSetup({
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['backroom-services'] });
-      queryClient.invalidateQueries({ queryKey: ['backroom-setup-health'] });
+      queryClient.invalidateQueries({ queryKey: ['color-bar-services'] });
+      queryClient.invalidateQueries({ queryKey: ['color-bar-setup-health'] });
       toast.success('Services tracked');
     },
     onError: (e) => toast.error(e.message),
@@ -106,8 +106,8 @@ export function ServiceTrackingQuickSetup({
         const { error } = await supabase.from('services').update({ is_chemical_service: u.isChemical }).eq('id', u.id);
         if (error) throw error;
       }
-      queryClient.invalidateQueries({ queryKey: ['backroom-services'] });
-      queryClient.invalidateQueries({ queryKey: ['backroom-setup-health'] });
+      queryClient.invalidateQueries({ queryKey: ['color-bar-services'] });
+      queryClient.invalidateQueries({ queryKey: ['color-bar-setup-health'] });
       toast.success(`${updates.length} service${updates.length > 1 ? 's' : ''} classified`);
       next();
     } catch (e: any) {

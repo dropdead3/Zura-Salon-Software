@@ -223,7 +223,7 @@ export function ColorBarProductCatalogSection({ onNavigate }: Props) {
   const { data: inventoryRows } = useColorBarInventoryTable({ enabled: catalogView === 'inventory', locationId: effectiveLocationId });
 
   const { data: products, isLoading } = useQuery({
-    queryKey: ['backroom-product-catalog', orgId],
+    queryKey: ['color-bar-product-catalog', orgId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('products')
@@ -248,9 +248,9 @@ export function ColorBarProductCatalogSection({ onNavigate }: Props) {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['backroom-product-catalog'] });
-      queryClient.invalidateQueries({ queryKey: ['backroom-inventory-table'] });
-      queryClient.invalidateQueries({ queryKey: ['backroom-setup-health'] });
+      queryClient.invalidateQueries({ queryKey: ['color-bar-product-catalog'] });
+      queryClient.invalidateQueries({ queryKey: ['color-bar-inventory-table'] });
+      queryClient.invalidateQueries({ queryKey: ['color-bar-setup-health'] });
     },
     onError: (error) => toast.error('Failed to update: ' + error.message),
   });
@@ -271,9 +271,9 @@ export function ColorBarProductCatalogSection({ onNavigate }: Props) {
       if (error) throw error;
     },
     onSuccess: (_, vars) => {
-      queryClient.invalidateQueries({ queryKey: ['backroom-product-catalog'] });
-      queryClient.invalidateQueries({ queryKey: ['backroom-inventory-table'] });
-      queryClient.invalidateQueries({ queryKey: ['backroom-setup-health'] });
+      queryClient.invalidateQueries({ queryKey: ['color-bar-product-catalog'] });
+      queryClient.invalidateQueries({ queryKey: ['color-bar-inventory-table'] });
+      queryClient.invalidateQueries({ queryKey: ['color-bar-setup-health'] });
       queryClient.invalidateQueries({ queryKey: ['location-product-settings'] });
       toast.success(`${vars.tracked ? 'Enabled' : 'Disabled'} tracking for ${vars.ids.length} products`);
     },
@@ -323,8 +323,8 @@ export function ColorBarProductCatalogSection({ onNavigate }: Props) {
       return { updated, skipped, total };
     },
     onSuccess: ({ updated, skipped, total }) => {
-      queryClient.invalidateQueries({ queryKey: ['backroom-product-catalog'] });
-      queryClient.invalidateQueries({ queryKey: ['backroom-inventory-table'] });
+      queryClient.invalidateQueries({ queryKey: ['color-bar-product-catalog'] });
+      queryClient.invalidateQueries({ queryKey: ['color-bar-inventory-table'] });
       if (updated > 0) {
         toast.success(`Synced ${updated} of ${total} products from Zura Library. ${skipped} already up to date.`);
       } else {
@@ -374,8 +374,8 @@ export function ColorBarProductCatalogSection({ onNavigate }: Props) {
       return { updated, skipped, total };
     },
     onSuccess: ({ updated, skipped, total }) => {
-      queryClient.invalidateQueries({ queryKey: ['backroom-product-catalog'] });
-      queryClient.invalidateQueries({ queryKey: ['backroom-inventory-table'] });
+      queryClient.invalidateQueries({ queryKey: ['color-bar-product-catalog'] });
+      queryClient.invalidateQueries({ queryKey: ['color-bar-inventory-table'] });
       if (updated > 0) {
         toast.success(`Synced ${updated} of ${total} products from Zura Library. ${skipped} already up to date.`);
       } else {
@@ -429,10 +429,10 @@ export function ColorBarProductCatalogSection({ onNavigate }: Props) {
       setSelectedBrand(null);
       setSelectedCategory(null);
       setSelectedLine(null);
-      queryClient.invalidateQueries({ queryKey: ['backroom-product-catalog'] });
+      queryClient.invalidateQueries({ queryKey: ['color-bar-product-catalog'] });
       queryClient.invalidateQueries({ queryKey: ['location-product-settings'] });
-      queryClient.invalidateQueries({ queryKey: ['backroom-inventory-table'] });
-      queryClient.invalidateQueries({ queryKey: ['backroom-setup-health'] });
+      queryClient.invalidateQueries({ queryKey: ['color-bar-inventory-table'] });
+      queryClient.invalidateQueries({ queryKey: ['color-bar-setup-health'] });
       queryClient.invalidateQueries({ queryKey: ['product-brands'] });
       queryClient.invalidateQueries({ queryKey: ['archived-brands'] });
       // Audit log
@@ -514,7 +514,7 @@ export function ColorBarProductCatalogSection({ onNavigate }: Props) {
     },
     onSuccess: ({ count, brand }) => {
       setRestoreBrandOpen(null);
-      queryClient.invalidateQueries({ queryKey: ['backroom-product-catalog'] });
+      queryClient.invalidateQueries({ queryKey: ['color-bar-product-catalog'] });
       queryClient.invalidateQueries({ queryKey: ['archived-brands'] });
       queryClient.invalidateQueries({ queryKey: ['product-brands'] });
       logAction.mutate({
@@ -783,7 +783,7 @@ export function ColorBarProductCatalogSection({ onNavigate }: Props) {
   return (
     <div className="space-y-4">
       <Infotainer
-        id="backroom-products-guide"
+        id="color-bar-products-guide"
         title="Products & Supplies"
         description="Choose which products stylists use at the mixing station. Toggle tracking on, set costs, and pick how each product is measured (weighed, pumped, etc). Do this first — services can't be tracked without products."
         icon={<Package className="h-4 w-4 text-primary" />}
@@ -1893,8 +1893,8 @@ function InventoryTableRow({
         event_type: 'count',
         reason: 'Manual stock count from inventory table',
       });
-      queryClient.invalidateQueries({ queryKey: ['backroom-inventory-table'] });
-      queryClient.invalidateQueries({ queryKey: ['backroom-product-catalog'] });
+      queryClient.invalidateQueries({ queryKey: ['color-bar-inventory-table'] });
+      queryClient.invalidateQueries({ queryKey: ['color-bar-product-catalog'] });
       queryClient.invalidateQueries({ queryKey: ['products'] });
       toast.success(`Stock updated for ${row.name}`);
     } catch (err: any) {

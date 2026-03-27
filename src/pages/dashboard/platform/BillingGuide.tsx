@@ -43,7 +43,7 @@ const SECTIONS = [
   { id: 'plans', label: 'Plans' },
   { id: 'how-it-works', label: 'How It Works' },
   { id: 'calculator', label: 'Calculator' },
-  { id: 'backroom' , label: 'Color Bar' },
+  { id: 'color-bar' , label: 'Color Bar' },
   { id: 'backroom-calc', label: 'Backroom Calc' },
   { id: 'quick-ref', label: 'Quick Ref' },
   { id: 'changelog', label: 'Changelog' },
@@ -617,7 +617,7 @@ function ColorBarCalculatorWidget() {
   const fmtWhole = (n: number) => `$${n.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
 
   return (
-    <PlatformCard variant="glass" id="backroom-calc">
+    <PlatformCard variant="glass" id="color-bar-calc">
       <PlatformCardHeader>
         <div className="flex items-center gap-3">
           <div className={tokens.card.iconBox}>

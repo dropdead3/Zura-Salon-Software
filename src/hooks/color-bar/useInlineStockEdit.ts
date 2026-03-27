@@ -12,7 +12,7 @@ export function useInlineStockEdit() {
   const queryClient = useQueryClient();
 
   const invalidate = () => {
-    queryClient.invalidateQueries({ queryKey: ['backroom-inventory-table'] });
+    queryClient.invalidateQueries({ queryKey: ['color-bar-inventory-table'] });
     queryClient.invalidateQueries({ queryKey: ['stock-movements'] });
     queryClient.invalidateQueries({ queryKey: ['inventory-ledger'] });
     queryClient.invalidateQueries({ queryKey: ['inventory-audit-trail'] });

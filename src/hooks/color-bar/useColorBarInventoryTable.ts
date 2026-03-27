@@ -131,7 +131,7 @@ export function useColorBarInventoryTable(options?: { enabled?: boolean; locatio
   const locationId = options?.locationId;
 
   return useQuery({
-    queryKey: ['backroom-inventory-table', orgId, locationId],
+    queryKey: ['color-bar-inventory-table', orgId, locationId],
     queryFn: async (): Promise<ColorBarInventoryRow[]> => {
       // Fetch supplier data and open PO quantities in parallel
       const [suppliersResult, openPoData] = await Promise.all([

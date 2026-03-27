@@ -25,7 +25,7 @@ export function RecipeBaselineSection({ onNavigate }: Props) {
   const [selectedServiceId, setSelectedServiceId] = useState<string | null>(null);
 
   const { data: services, isLoading } = useQuery({
-    queryKey: ['backroom-tracked-services', orgId],
+    queryKey: ['color-bar-tracked-services', orgId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('services')
@@ -57,7 +57,7 @@ export function RecipeBaselineSection({ onNavigate }: Props) {
   return (
     <div className="space-y-4">
       <Infotainer
-        id="backroom-recipes-guide"
+        id="color-bar-recipes-guide"
         title="Formula Baselines"
         description="Set the expected product quantities per service — e.g. 'A full highlight uses ~30g lightener + 60ml developer.' Powers Smart Mix Assist suggestions and flags when a stylist uses significantly more or less than expected."
         icon={<BarChart3 className="h-4 w-4 text-primary" />}
@@ -151,7 +151,7 @@ function RecipeBaselineDialog({ serviceId, serviceName, orgId, onClose }: {
   const [newUnit, setNewUnit] = useState<string>('g');
 
   const { data: products } = useQuery({
-    queryKey: ['backroom-products-for-baseline', orgId],
+    queryKey: ['color-bar-products-for-baseline', orgId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('products')

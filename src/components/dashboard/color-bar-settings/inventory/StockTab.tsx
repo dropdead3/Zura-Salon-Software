@@ -127,7 +127,7 @@ async function exportStockPdf(
     if (returnBytes) {
       return doc.output('arraybuffer') as unknown as typeof doc;
     }
-    doc.save(buildReportFileName({ orgName, locationName: locationInfo?.name, reportSlug: 'backroom-stock', dateFrom: format(now, 'yyyy-MM-dd') }));
+    doc.save(buildReportFileName({ orgName, locationName: locationInfo?.name, reportSlug: 'color-bar-stock', dateFrom: format(now, 'yyyy-MM-dd') }));
   }
 
   return doc;
@@ -330,7 +330,7 @@ export function StockTab({ locationId, pdfExportRef }: StockTabProps) {
         } else if (doc) {
           addReportFooter(doc, orgName);
           const now = new Date();
-          doc.save(buildReportFileName({ orgName, reportSlug: 'backroom-stock-combined', dateFrom: format(now, 'yyyy-MM-dd') }));
+          doc.save(buildReportFileName({ orgName, reportSlug: 'color-bar-stock-combined', dateFrom: format(now, 'yyyy-MM-dd') }));
           toast.success('Combined stock report downloaded');
         }
       } else {
@@ -346,7 +346,7 @@ export function StockTab({ locationId, pdfExportRef }: StockTabProps) {
           const rows = locId === locationId ? filtered : await fetchInventoryForLocation(orgId!, locId);
           const locInfo: ReportLocationInfo | undefined = { name: locName };
           const pdfBytes = await exportStockPdf(rows, orgName, logoUrl, formatCurrency, locInfo, undefined, true) as unknown as ArrayBuffer;
-          const fileName = buildReportFileName({ orgName, locationName: locName, reportSlug: 'backroom-stock', dateFrom: dateStr });
+          const fileName = buildReportFileName({ orgName, locationName: locName, reportSlug: 'color-bar-stock', dateFrom: dateStr });
           zip.file(fileName, pdfBytes);
         }
         toast.dismiss('pdf-progress');
@@ -357,7 +357,7 @@ export function StockTab({ locationId, pdfExportRef }: StockTabProps) {
           const url = URL.createObjectURL(blob);
           const a = document.createElement('a');
           a.href = url;
-          a.download = buildReportFileName({ orgName, reportSlug: 'backroom-stock-all', dateFrom: dateStr }).replace('.pdf', '.zip');
+          a.download = buildReportFileName({ orgName, reportSlug: 'color-bar-stock-all', dateFrom: dateStr }).replace('.pdf', '.zip');
           a.click();
           URL.revokeObjectURL(url);
           toast.success(`${locationIds.length} stock reports downloaded as ZIP`);

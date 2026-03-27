@@ -154,7 +154,7 @@ export function ColorBarSetupWizard({ onComplete, onCancel }: Props) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['wizard-products'] });
-      queryClient.invalidateQueries({ queryKey: ['backroom-setup-health'] });
+      queryClient.invalidateQueries({ queryKey: ['color-bar-setup-health'] });
     },
   });
 
