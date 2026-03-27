@@ -5,7 +5,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 
-import { useServiceAllowancePolicies, useUpsertAllowancePolicy } from '@/hooks/billing/useServiceAllowancePolicies';
+import { useServiceAllowancePolicies, useUpsertAllowancePolicy, useDeleteAllowancePolicy } from '@/hooks/billing/useServiceAllowancePolicies';
 import { isSuggestedChemicalService } from '@/utils/serviceCategorization';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { tokens } from '@/lib/design-tokens';
@@ -77,6 +77,7 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
   const [allowanceEditing, setAllowanceEditing] = useState<Set<string>>(new Set());
   const [allowanceDraft, setAllowanceDraft] = useState<Record<string, { qty: number; rate: string }>>({});
   const upsertPolicy = useUpsertAllowancePolicy();
+  const deletePolicy = useDeleteAllowancePolicy();
   const [calculatorServiceId, setCalculatorServiceId] = useState<string | null>(null);
   const [calculatorServiceName, setCalculatorServiceName] = useState('');
   const [calculatorContainerTypes, setCalculatorContainerTypes] = useState<('bowl' | 'bottle')[]>(['bowl']);
@@ -250,6 +251,54 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
     });
     return map;
   }, [allowancePolicies]);
+
+  const handleReset = useCallback(async (serviceId: string) => {
+    if (!window.confirm('Reset all tracking and billing configuration for this service?')) return;
+    try {
+      const { error: svcErr } = await supabase
+        .from('services')
+        .update({
+          is_backroom_tracked: false,
+          is_chemical_service: false,
+          container_types: [],
+          backroom_config_dismissed: false,
+        } as Record<string, unknown>)
+        .eq('id', serviceId);
+      if (svcErr) throw svcErr;
+
+      const policy = allowanceByService.get(serviceId);
+      if (policy) {
+        await deletePolicy.mutateAsync(policy.id);
+      }
+
+      if (orgId) {
+        const { error: baseErr } = await supabase
+          .from('service_recipe_baselines')
+          .delete()
+          .eq('service_id', serviceId)
+          .eq('organization_id', orgId);
+        if (baseErr) throw baseErr;
+      }
+
+      queryClient.invalidateQueries({ queryKey: ['color-bar-services'] });
+      queryClient.invalidateQueries({ queryKey: ['color-bar-setup-health'] });
+      queryClient.invalidateQueries({ queryKey: ['services'] });
+      queryClient.invalidateQueries({ queryKey: ['org-services'] });
+      queryClient.invalidateQueries({ queryKey: ['service-lookup-map'] });
+      queryClient.invalidateQueries({ queryKey: ['service-allowance-policies'] });
+      queryClient.invalidateQueries({ queryKey: ['service-recipe-baselines'] });
+
+      setExpandedIds(prev => {
+        const next = new Set(prev);
+        next.delete(serviceId);
+        return next;
+      });
+
+      toast.success('Service reset to unconfigured');
+    } catch (err: any) {
+      toast.error('Failed to reset: ' + err.message);
+    }
+  }, [allowanceByService, deletePolicy, orgId, queryClient]);
 
   // Classification helpers
   const getServiceType = (s: ServiceRow): 'chemical' | 'suggested' | 'standard' => {
@@ -951,12 +1000,7 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                                     className="h-7 text-xs text-muted-foreground hover:text-red-500 hover:bg-red-500/10"
                                                     onClick={(e) => {
                                                       e.stopPropagation();
-                                                       updateService.mutate({ id: service.id, updates: {
-                                                        is_backroom_tracked: false,
-                                                        is_chemical_service: false,
-                                                        container_types: [],
-                                                        backroom_config_dismissed: false,
-                                                      }});
+                                                      handleReset(service.id);
                                                     }}
                                                   >
                                                     <RotateCcw className="w-3.5 h-3.5" />
@@ -975,12 +1019,7 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                                       className="h-7 text-xs shrink-0 text-muted-foreground hover:text-red-500 hover:bg-red-500/10"
                                                       onClick={(e) => {
                                                         e.stopPropagation();
-                                                        updateService.mutate({ id: service.id, updates: {
-                                                          is_backroom_tracked: false,
-                                                          is_chemical_service: false,
-                                                          container_types: [],
-                                                          backroom_config_dismissed: false,
-                                                        }});
+                                                        handleReset(service.id);
                                                       }}
                                                     >
                                                       <RotateCcw className="w-3.5 h-3.5" />
@@ -1037,15 +1076,10 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                                       variant="ghost"
                                                       size="sm"
                                                       className="h-7 text-xs text-muted-foreground hover:text-red-500 hover:bg-red-500/10"
-                                                      onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        updateService.mutate({ id: service.id, updates: {
-                                                          is_backroom_tracked: false,
-                                                          is_chemical_service: false,
-                                                          container_types: [],
-                                                          backroom_config_dismissed: false,
-                                                        }});
-                                                      }}
+                                                        onClick={(e) => {
+                                                          e.stopPropagation();
+                                                          handleReset(service.id);
+                                                        }}
                                                     >
                                                       <RotateCcw className="w-3.5 h-3.5" />
                                                       Reset Configuration
@@ -1061,15 +1095,10 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                                         variant="ghost"
                                                         size="sm"
                                                         className="h-7 text-xs shrink-0 text-muted-foreground hover:text-red-500 hover:bg-red-500/10"
-                                                        onClick={(e) => {
-                                                          e.stopPropagation();
-                                                          updateService.mutate({ id: service.id, updates: {
-                                                            is_backroom_tracked: false,
-                                                            is_chemical_service: false,
-                                                            container_types: [],
-                                                            backroom_config_dismissed: false,
-                                                          }});
-                                                        }}
+                                                          onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            handleReset(service.id);
+                                                          }}
                                                       >
                                                         <RotateCcw className="w-3.5 h-3.5" />
                                                         Reset
