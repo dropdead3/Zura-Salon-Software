@@ -883,7 +883,7 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                        >
                                         {service.is_backroom_tracked ? (
                                              <div className="space-y-5">
-                                             <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+                                             <div className="grid grid-cols-1 xl:grid-cols-2 gap-5">
                                                {/* ─── Section 1: Tracking ─── */}
                                               <div>
                                                 <p className="text-[10px] font-display uppercase tracking-wider text-muted-foreground mb-2">Tracking</p>
