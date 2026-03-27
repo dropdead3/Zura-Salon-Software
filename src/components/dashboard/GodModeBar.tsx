@@ -57,7 +57,7 @@ export function GodModeBar() {
             </span>
             {!isMobile && selectedOrganization.account_number && (
               <span className="text-xs font-sans text-violet-400/70 shrink-0">
-                (#{selectedOrganization.account_number})
+                Account ID: {selectedOrganization.account_number}
               </span>
             )}
           </div>
