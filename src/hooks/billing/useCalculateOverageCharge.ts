@@ -57,6 +57,20 @@ export function useCalculateOverageCharge() {
       }
       if (!resolvedServiceId) return null;
 
+      // ─── Duplicate charge guard (idempotency) ────────────────
+      const { data: existingCharge } = await supabase
+        .from('checkout_usage_charges')
+        .select('id')
+        .eq('mix_session_id', sessionId)
+        .eq('appointment_id', appointmentId)
+        .limit(1)
+        .maybeSingle();
+
+      if (existingCharge) {
+        console.log('Charge already exists for session, skipping:', sessionId);
+        return null;
+      }
+
       // 1. Look up allowance policy for this service
       const { data: policy, error: policyErr } = await supabase
         .from('service_allowance_policies')
