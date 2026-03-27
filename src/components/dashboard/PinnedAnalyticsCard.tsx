@@ -858,6 +858,80 @@ export function PinnedAnalyticsCard({ cardId, filters, compact = false }: Pinned
           </PinnableCard>
         </VisibilityGate>
       );
+    case 'commission_summary':
+      return (
+        <VisibilityGate elementKey="commission_summary">
+          <PinnableCard elementKey="commission_summary" elementName="Commission Summary" category="Command Center" dateRange={filters.dateRange} locationName={selectedLocationName}>
+            <CommissionSummaryCard
+              stylistData={performers}
+              isLoading={isLoadingPerformers}
+            />
+          </PinnableCard>
+        </VisibilityGate>
+      );
+    case 'staff_commission_breakdown':
+      return (
+        <VisibilityGate elementKey="staff_commission_breakdown">
+          <PinnableCard elementKey="staff_commission_breakdown" elementName="Staff Commission Breakdown" category="Command Center" dateRange={filters.dateRange} locationName={selectedLocationName}>
+            <StaffCommissionTable
+              stylistData={performers}
+              isLoading={isLoadingPerformers}
+            />
+          </PinnableCard>
+        </VisibilityGate>
+      );
+    case 'true_profit':
+      return (
+        <VisibilityGate elementKey="true_profit">
+          <PinnableCard elementKey="true_profit" elementName="True Profit" category="Command Center" dateRange={filters.dateRange} locationName={selectedLocationName}>
+            <TrueProfitCard
+              dateFrom={filters.dateFrom}
+              dateTo={filters.dateTo}
+              locationId={locationFilter}
+            />
+          </PinnableCard>
+        </VisibilityGate>
+      );
+    case 'staff_performance':
+      return (
+        <VisibilityGate elementKey="staff_performance">
+          <PinnableCard elementKey="staff_performance" elementName="Staff Performance" category="Command Center" dateRange={filters.dateRange} locationName={selectedLocationName}>
+            <StaffPerformanceReport
+              dateFrom={filters.dateFrom}
+              dateTo={filters.dateTo}
+              locationId={locationFilter}
+            />
+          </PinnableCard>
+        </VisibilityGate>
+      );
+    case 'service_profitability':
+      return (
+        <VisibilityGate elementKey="service_profitability">
+          <PinnableCard elementKey="service_profitability" elementName="Service Profitability" category="Command Center" dateRange={filters.dateRange} locationName={selectedLocationName}>
+            <ServiceProfitabilityCard
+              dateFrom={filters.dateFrom}
+              dateTo={filters.dateTo}
+              locationId={locationFilter}
+            />
+          </PinnableCard>
+        </VisibilityGate>
+      );
+    case 'control_tower':
+      return (
+        <VisibilityGate elementKey="control_tower">
+          <PinnableCard elementKey="control_tower" elementName="Control Tower" category="Command Center" dateRange={filters.dateRange} locationName={selectedLocationName}>
+            <ColorBarControlTower locationId={locationFilter} />
+          </PinnableCard>
+        </VisibilityGate>
+      );
+    case 'predictive_inventory':
+      return (
+        <VisibilityGate elementKey="predictive_inventory">
+          <PinnableCard elementKey="predictive_inventory" elementName="Predictive Inventory" category="Command Center" dateRange={filters.dateRange} locationName={selectedLocationName}>
+            <PredictiveColorBarSummary locationId={locationFilter} />
+          </PinnableCard>
+        </VisibilityGate>
+      );
     default:
       return null;
   }
