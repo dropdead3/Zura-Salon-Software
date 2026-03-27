@@ -792,7 +792,7 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                         );
                                       }
                                       const dollarMatch = policy.notes?.match(/\$(\d+\.?\d*)/);
-                                      if (dollarMatch) {
+                                      if (dollarMatch && policy.included_allowance_qty > 0) {
                                         return (
                                           <div className="flex items-center gap-1.5 text-sm text-foreground">
                                             <Calculator className="w-3.5 h-3.5 text-muted-foreground" />
@@ -800,7 +800,11 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                           </div>
                                         );
                                       }
-                                      return null;
+                                      return (
+                                        <Badge variant="outline" className="text-[10px] shrink-0 border-amber-500/30 bg-amber-500/10 text-amber-500 dark:text-amber-400">
+                                          Allowance Needs To Be Set
+                                        </Badge>
+                                      );
                                     }
                                     if (policy.billing_mode === 'allowance') {
                                       return (
