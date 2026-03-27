@@ -367,9 +367,9 @@ export function AggregateSalesCard({
   const { data: gapAnalysis, isLoading: gapLoading } = useRevenueGapAnalysis(
     dateFilters.dateFrom,
     dateFilters.dateTo,
-    scheduledRevenue ?? 0,
-    pastActual?.actualRevenue ?? 0,
-    isPastRange && activeDrilldown === 'expectedGap' && scheduledRevenue != null,
+    isToday ? (metrics?.totalRevenue ?? 0) : (scheduledRevenue ?? 0),
+    isToday ? (todayActual?.actualRevenue ?? 0) : (pastActual?.actualRevenue ?? 0),
+    (isPastRange || isToday) && activeDrilldown === 'expectedGap' && (isToday || scheduledRevenue != null),
     filterContext?.locationId
   );
 
@@ -872,6 +872,13 @@ export function AggregateSalesCard({
                             </span>
                           </p>
                         ) : null}
+
+                        {/* Gap analysis drill-down (today) */}
+                        <RevenueGapDrilldown
+                          isOpen={activeDrilldown === 'expectedGap'}
+                          data={gapAnalysis}
+                          isLoading={gapLoading}
+                        />
 
                         {/* Last updated timestamp */}
                         {todayDataUpdatedAt && (

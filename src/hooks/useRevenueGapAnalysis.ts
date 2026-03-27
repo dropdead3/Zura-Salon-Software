@@ -39,7 +39,7 @@ export function useScheduledRevenue(
   });
 }
 
-export type GapReason = 'cancelled' | 'no_show' | 'no_pos_record' | 'service_changed' | 'discount' | 'pricing_diff';
+export type GapReason = 'cancelled' | 'no_show' | 'not_concluded' | 'no_pos_record' | 'service_changed' | 'discount' | 'pricing_diff';
 
 export interface GapItem {
   id: string;
@@ -104,7 +104,7 @@ export function useRevenueGapAnalysis(
         .select('id, service_name, client_name, total_price, appointment_date, start_time, phorest_staff_id, phorest_client_id, status')
         .gte('appointment_date', dateFrom)
         .lte('appointment_date', dateTo)
-        .in('status', ['cancelled', 'no_show', 'completed']);
+        .in('status', ['cancelled', 'no_show', 'completed', 'confirmed', 'pending', 'arrived', 'started']);
 
       if (locationId && locationId !== 'all') {
         apptQuery = apptQuery.eq('location_id', locationId);
@@ -140,6 +140,9 @@ export function useRevenueGapAnalysis(
       const cancelled = (allAppts ?? []).filter(a => a.status === 'cancelled');
       const noShows = (allAppts ?? []).filter(a => a.status === 'no_show');
       const completed = (allAppts ?? []).filter(a => a.status === 'completed');
+      const notConcluded = (allAppts ?? []).filter(a => 
+        a.status && !['cancelled', 'no_show', 'completed'].includes(a.status)
+      );
 
       // ── Build gap items for cancellations & no-shows ──
       const gapItems: GapItem[] = [];
@@ -169,6 +172,23 @@ export function useRevenueGapAnalysis(
           serviceName: a.service_name || 'Unknown service',
           stylistName: a.phorest_staff_id ? staffLookup.get(a.phorest_staff_id) ?? null : null,
           reason: 'no_show',
+          scheduledAmount: price,
+          actualAmount: 0,
+          variance: price,
+          appointmentDate: a.appointment_date,
+        });
+      });
+
+      // ── Not-yet-concluded appointments (today filter) ──
+      notConcluded.forEach(a => {
+        const price = Number(a.total_price) || 0;
+        if (price <= 0) return;
+        gapItems.push({
+          id: a.id,
+          clientName: resolveClient(a),
+          serviceName: a.service_name || 'Unknown service',
+          stylistName: a.phorest_staff_id ? staffLookup.get(a.phorest_staff_id) ?? null : null,
+          reason: 'not_concluded',
           scheduledAmount: price,
           actualAmount: 0,
           variance: price,
@@ -338,13 +358,14 @@ export function useRevenueGapAnalysis(
       const reasonLabels: Record<GapReason, string> = {
         cancelled: 'Cancellations',
         no_show: 'No-shows',
+        not_concluded: 'Not yet concluded',
         no_pos_record: 'No POS record',
         discount: 'Discounts',
         service_changed: 'Service changed',
         pricing_diff: 'Pricing differences',
       };
 
-      const reasonOrder: GapReason[] = ['cancelled', 'no_show', 'no_pos_record', 'discount', 'service_changed', 'pricing_diff'];
+      const reasonOrder: GapReason[] = ['not_concluded', 'cancelled', 'no_show', 'no_pos_record', 'discount', 'service_changed', 'pricing_diff'];
       const summaries: GapSummary[] = reasonOrder
         .filter(r => summaryMap.has(r))
         .map(r => ({

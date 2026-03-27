@@ -4,7 +4,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
 
 import { Skeleton } from '@/components/ui/skeleton';
-import { Ban, UserX, AlertTriangle, Tag, ArrowRight, Shuffle, HelpCircle } from 'lucide-react';
+import { Ban, UserX, AlertTriangle, Tag, ArrowRight, Shuffle, HelpCircle, Clock } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import type { RevenueGapAnalysis, GapItem, GapReason } from '@/hooks/useRevenueGapAnalysis';
@@ -23,6 +23,11 @@ const REASON_CONFIG: Record<GapReason, {
   icon: React.ElementType;
   badgeClass: string;
 }> = {
+  not_concluded: {
+    label: 'Not concluded',
+    icon: Clock,
+    badgeClass: 'bg-muted text-muted-foreground border-border/40',
+  },
   cancelled: {
     label: 'Cancelled',
     icon: Ban,
