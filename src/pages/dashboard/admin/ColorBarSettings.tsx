@@ -148,6 +148,16 @@ export default function ColorBarSettings() {
   const [searchParams, setSearchParams] = useSearchParams();
   const initialSection = (searchParams.get('section') as ColorBarSection) || 'overview';
   const [activeSection, setActiveSection] = useState<ColorBarSection>(initialSection);
+  const [navCollapsed, setNavCollapsed] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('color-bar-nav-collapsed') || 'false'); } catch { return false; }
+  });
+  const toggleNavCollapsed = useCallback(() => {
+    setNavCollapsed((prev: boolean) => {
+      const next = !prev;
+      localStorage.setItem('color-bar-nav-collapsed', JSON.stringify(next));
+      return next;
+    });
+  }, []);
   const [subTab, setSubTab] = useState<string | undefined>();
   const { data: health } = useColorBarSetupHealth();
   const { isEntitled, isLoading: entitlementLoading } = useColorBarEntitlement();
