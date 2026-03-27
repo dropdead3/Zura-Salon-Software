@@ -989,7 +989,7 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
       <Infotainer
         id="color-bar-services-guide"
         title="Service Tracking"
-        description="Link your services (e.g. Balayage, Root Touch-Up) to the products they consume. This tells Zura which products to expect when a stylist mixes for that service."
+        description={`Link your services (e.g. Balayage, Root Touch-Up) to the products they consume. This tells ${PLATFORM_NAME} which products to expect when a stylist mixes for that service, and powers allowance billing, compliance tracking, and Smart Mix Assist.`}
         icon={<Wrench className="h-4 w-4 text-primary" />}
       />
 
