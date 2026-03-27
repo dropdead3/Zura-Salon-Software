@@ -54,6 +54,64 @@ import { formatDistanceToNow } from 'date-fns';
 import { ZuraAvatar } from '@/components/ui/ZuraAvatar';
 
 type ViewMode = 'all' | 'insights' | 'actions' | 'suggestions';
+type WizardIntent = 'failing' | 'quick_wins' | 'revenue' | 'team' | 'retention' | 'everything';
+
+interface IntentConfig {
+  key: WizardIntent;
+  icon: typeof ShieldAlert;
+  label: string;
+  description: string;
+  filter: (insights: InsightItem[]) => InsightItem[];
+  accentClass?: string;
+}
+
+const WIZARD_INTENTS: IntentConfig[] = [
+  {
+    key: 'failing',
+    icon: ShieldAlert,
+    label: 'Where am I failing?',
+    description: 'Critical issues hurting you now',
+    filter: (insights) => insights.filter(i => i.severity === 'critical' || i.severity === 'warning')
+      .sort((a, b) => (b.impactEstimateNumeric ?? 0) - (a.impactEstimateNumeric ?? 0)),
+    accentClass: 'border-red-500/30 hover:border-red-500/50',
+  },
+  {
+    key: 'quick_wins',
+    icon: Zap,
+    label: 'Quickest wins',
+    description: 'High-impact, low-effort items',
+    filter: (insights) => insights.filter(i => i.effortLevel === 'quick_win')
+      .sort((a, b) => (b.impactEstimateNumeric ?? 0) - (a.impactEstimateNumeric ?? 0)),
+  },
+  {
+    key: 'revenue',
+    icon: DollarSign,
+    label: 'Revenue opportunities',
+    description: 'Growth & margin insights',
+    filter: (insights) => insights.filter(i => i.category === 'revenue_pulse' || i.category === 'cash_flow'),
+  },
+  {
+    key: 'team',
+    icon: Users,
+    label: 'Team performance',
+    description: 'Staffing & capacity gaps',
+    filter: (insights) => insights.filter(i => i.category === 'staffing' || i.category === 'capacity'),
+  },
+  {
+    key: 'retention',
+    icon: HeartPulse,
+    label: 'Client retention',
+    description: 'Rebook & churn signals',
+    filter: (insights) => insights.filter(i => i.category === 'client_health'),
+  },
+  {
+    key: 'everything',
+    icon: BarChart3,
+    label: 'Show me everything',
+    description: 'Full insights feed',
+    filter: (insights) => insights,
+  },
+];
 
 const severityOrder: Record<InsightItem['severity'], number> = { critical: 0, warning: 1, info: 2 };
 const priorityOrder: Record<ActionItem['priority'], number> = { high: 0, medium: 1, low: 2 };
