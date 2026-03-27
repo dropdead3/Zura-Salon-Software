@@ -6,6 +6,7 @@
  */
 
 import { useState, useCallback, useMemo, useEffect } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import { Plus, FlaskConical, Loader2, Circle, CheckCircle2, AlertCircle, Check, MoreVertical, Scale, History, TestTube2 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -123,6 +124,7 @@ export function DockServicesTab({ appointment, staff, effectiveServiceName }: Do
   const depleteInventory = useDepleteMixSession();
   const calculateOverage = useCalculateOverageCharge();
   const { effectiveOrganization } = useOrganizationContext();
+  const queryClient = useQueryClient();
   const { data: existingCharges } = useCheckoutUsageCharges(appointment.id);
 
   // Demo-mode local bowl state — persisted in sessionStorage per appointment
@@ -163,8 +165,7 @@ export function DockServicesTab({ appointment, staff, effectiveServiceName }: Do
     () => (sessions ?? []).filter(s => !isTerminalSessionStatus(s.status as any)).map(s => s.id),
     [sessions]
   );
-  const primarySessionId = activeSessionIds[0] || sessions?.[0]?.id || null;
-  const { data: sessionStats } = useDockSessionStats(primarySessionId);
+  const { data: sessionStats } = useDockSessionStats(activeSessionIds.length > 0 ? activeSessionIds : (sessions?.[0]?.id ? [sessions[0].id] : null));
 
   const handleAddBowlForService = useCallback((serviceLabel: string, containerType: ContainerType = 'bowl') => {
     setActiveServiceLabel(serviceLabel);
@@ -296,15 +297,20 @@ export function DockServicesTab({ appointment, staff, effectiveServiceName }: Do
         }
       }
 
+      // Invalidate charges so the sheet shows updated totals
+      await queryClient.invalidateQueries({ queryKey: ['checkout-usage-charges'] });
+
       // Show charge total after all sessions processed
       const totalCharged = activeSessions.length;
       if (totalCharged > 1) {
         toast.success(`All ${totalCharged} sessions completed and charged`);
       }
 
-      setShowComplete(false);
+      // Brief delay so user can see final charges before sheet closes
+      setTimeout(() => setShowComplete(false), 1500);
     } catch (err) {
       console.error('Session completion chain error:', err);
+      toast.error('Some sessions completed but errors occurred — please review');
     }
   };
 
@@ -640,6 +646,17 @@ export function DockServicesTab({ appointment, staff, effectiveServiceName }: Do
           serviceName: c.service_name || undefined,
         }))}
       />
+
+      {/* Complete Session FAB */}
+      {hasActiveSessions && !activeBowl && (
+        <button
+          onClick={() => setShowComplete(true)}
+          className="absolute bottom-4 right-5 z-[25] h-12 px-5 rounded-full bg-emerald-600 hover:bg-emerald-500 text-white font-medium text-sm flex items-center gap-2 shadow-lg active:scale-95 transition-all"
+        >
+          <Check className="w-4 h-4" />
+          Complete Session
+        </button>
+      )}
 
       {/* Formula history floating button */}
       {appointment.client_id && (
