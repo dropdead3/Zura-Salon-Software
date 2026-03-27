@@ -180,7 +180,7 @@ export function RevenueDonutChart({
                 </div>
                 <div className="flex items-center gap-1.5">
                   {!retailAttachmentLoading && retailAttachmentRate !== undefined && (
-                    <span className="hidden lg:inline text-muted-foreground text-[10px]">
+                    <span className="hidden lg:inline text-muted-foreground text-[11px]">
                       {(retailAttachmentRate / 10).toFixed(1)} of every 10 purchase retail (excl. extensions)
                     </span>
                   )}
