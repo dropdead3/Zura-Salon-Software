@@ -843,8 +843,8 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                   </div>
                                 </TableCell>
 
-                                {/* Tracking toggle — just the switch */}
-                                <TableCell onClick={(e) => e.stopPropagation()}>
+                                {/* Tracking toggle — just the switch (hidden at narrow widths) */}
+                                <TableCell onClick={(e) => e.stopPropagation()} className="@[600px]:table-cell hidden">
                                   <div className="flex justify-end">
                                     <Switch
                                       checked={service.is_backroom_tracked}
