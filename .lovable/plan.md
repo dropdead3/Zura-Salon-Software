@@ -1,56 +1,24 @@
 
 
-## Redesign Progress Tracker: Completed vs. Remaining
+## Restyle Service Tracking Progress Card to Match Amber Ghost Theme
 
 ### Problem
-The current vertical step checklist is flat and hard to scan — all 3 milestones look the same regardless of completion state. With 48/48 tracked but 0/48 on billing and allowances, there's no visual separation between what's done and what still needs attention.
-
-### New Design
-
-Replace the flat list with two visual groups: **Completed** and **Remaining**, with a single overall progress indicator at the top.
-
-**Layout:**
-
-```text
-┌─────────────────────────────────────────────────┐
-│  Setup Progress          2 of 3 complete   [===▓░] 67%  │
-│                                                         │
-│  ✓ COMPLETED                                            │
-│  ┌─────────────────────────────────────────────┐        │
-│  │ ✓ Track Services              48 of 48      │        │
-│  └─────────────────────────────────────────────┘        │
-│                                                         │
-│  ○ REMAINING                                            │
-│  ┌─────────────────────────────────────────────┐        │
-│  │ 2  Set Billing Method         0 of 48       │        │
-│  │    ━━━━━━━━━━━━━━━━━━━━━━━━ (empty bar)     │        │
-│  │    Choose how each service is billed...      │        │
-│  ├─────────────────────────────────────────────┤        │
-│  │ 3  Configure Allowances       0 of 48       │        │
-│  │    ━━━━━━━━━━━━━━━━━━━━━━━━ (empty bar)     │        │
-│  │    Build recipes for allowance services...   │        │
-│  └─────────────────────────────────────────────┘        │
-│                                            [Quick Setup]│
-└─────────────────────────────────────────────────┘
-```
+The Service Tracking progress card uses generic `bg-primary/5` and white/muted styling, while the Color Bar Setup Banner above it uses a distinctive amber ghost aesthetic (`border-amber-500/30`, `bg-amber-50 dark:bg-amber-500/[0.08]`, amber accents). They should feel like part of the same setup system.
 
 ### Changes
 
 **File: `src/components/dashboard/color-bar-settings/ServiceTrackingProgressBar.tsx`**
 
-Full rewrite of the render logic:
+Restyle all visual elements to match the amber ghost palette from `ColorBarSetupBanner`:
 
-1. **Overall progress header** — "Setup Progress" title with "X of Y complete" and a single summary `Progress` bar spanning all milestones
-2. **Completed section** — Group header "COMPLETED" (font-display, muted, small) followed by completed milestones as compact rows: green checkmark + label + count. No progress bar or description (already done)
-3. **Remaining section** — Group header "REMAINING" followed by incomplete milestones with step number, label, count, progress bar, and description tooltip (current incomplete rendering preserved)
-4. Either group header is hidden if that group is empty (all complete or none complete)
-5. Celebration overlay stays as-is
+1. **Outer container** — Add `rounded-xl border border-amber-500/30 dark:border-amber-500/50 bg-amber-50 dark:bg-amber-500/[0.08] p-5` wrapper around the entire card content
+2. **Overall progress bar** — Change `indicatorClassName` from `bg-primary` to `bg-amber-500`
+3. **"Setup Progress" title** — Change to `text-foreground` (already is, keep)
+4. **Completed section** — Change `bg-primary/5` to `bg-amber-500/10 dark:bg-amber-500/10`, divider from `divide-primary/10` to `divide-amber-500/20`, check icon from `text-primary` to `text-amber-500`, label text from `text-primary` to `text-amber-600 dark:text-amber-400`
+5. **Remaining step numbers** — Keep the existing amber styling (already amber for in-progress)
+6. **Remaining progress bars** — Keep `bg-amber-500` for in-progress (already correct)
+7. **Celebration overlay** — Change `border-primary/20 bg-primary/5` to `border-amber-500/30 bg-amber-50 dark:bg-amber-500/[0.08]`, and accent ring from `border-primary/20 bg-primary/10` to `border-amber-500/30 bg-amber-500/10`, text from `text-primary` to `text-amber-500`
 
-### Technical Details
-
-- Split `milestones` into `completed` and `remaining` arrays via `.filter()`
-- Completed items render as a compact `bg-primary/5 rounded-lg` card with green check styling
-- Remaining items keep the current amber/muted progress bar treatment
-- Overall progress: `completedCount / milestones.length` (milestone-level, not service-level)
-- No changes to `ServiceTrackingSection.tsx` — the component contract (`milestones: ProgressMilestone[]`) stays identical
+### Result
+The progress tracker visually matches the Color Bar Setup Banner — unified amber ghost card styling across the entire setup experience.
 
