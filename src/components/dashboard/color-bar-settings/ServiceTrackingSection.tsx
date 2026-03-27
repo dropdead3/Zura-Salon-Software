@@ -811,7 +811,7 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                      transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
                                      style={{ overflow: 'clip' }}
                                    >
-                                     <td colSpan={4} className="p-0">
+                                     <td colSpan={5} className="p-0">
                                        <motion.div
                                          initial={{ opacity: 0, y: -8 }}
                                          animate={{ opacity: 1, y: 0 }}
