@@ -365,7 +365,10 @@ export function ColorBarDashboardOverview({ onNavigate, initialSubTab, triggerWi
                     <Package className="w-5 h-5 text-primary" />
                   </div>
                   <div>
-                    <CardTitle className={tokens.card.title}>Inventory Health</CardTitle>
+                    <div className="flex items-center gap-2">
+                      <CardTitle className={tokens.card.title}>Inventory Health</CardTitle>
+                      <MetricInfoTooltip description="Snapshot of stock risk levels across tracked products. Products are classified as Critical, High Risk, or Medium based on projected days-of-supply remaining versus reorder lead times." />
+                    </div>
                     <CardDescription>Stock risk snapshot</CardDescription>
                   </div>
                 </div>
