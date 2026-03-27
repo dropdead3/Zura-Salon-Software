@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { toast } from '@/hooks/use-toast';
 import { tokens } from '@/lib/design-tokens';
 import { Button } from '@/components/ui/button';
 import { PremiumFloatingPanel } from '@/components/ui/premium-floating-panel';
@@ -327,8 +328,8 @@ export function DashboardCustomizeMenu({ variant = 'icon', roleContext }: Dashbo
       if (error) throw error;
 
       queryClient.invalidateQueries({ queryKey: ['dashboard-visibility'] });
-    } catch {
-      // Error handled silently
+    } catch (err: any) {
+      toast({ title: 'Failed to update pinned card', description: err?.message || 'Unknown error', variant: 'destructive' });
     } finally {
       setIsTogglingPin(false);
     }
