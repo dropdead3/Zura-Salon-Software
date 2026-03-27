@@ -19,7 +19,7 @@ import { SilenceState } from '@/components/executive-brief/SilenceState';
 import { EnforcementGateBanner } from '@/components/enforcement/EnforcementGateBanner';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { TogglePill } from '@/components/ui/toggle-pill';
-import { Loader2 } from 'lucide-react';
+import { Loader2, ArrowLeft } from 'lucide-react';
 import { tokens } from '@/lib/design-tokens';
 
 import { cn } from '@/lib/utils';
@@ -54,6 +54,64 @@ import { formatDistanceToNow } from 'date-fns';
 import { ZuraAvatar } from '@/components/ui/ZuraAvatar';
 
 type ViewMode = 'all' | 'insights' | 'actions' | 'suggestions';
+type WizardIntent = 'failing' | 'quick_wins' | 'revenue' | 'team' | 'retention' | 'everything';
+
+interface IntentConfig {
+  key: WizardIntent;
+  icon: typeof ShieldAlert;
+  label: string;
+  description: string;
+  filter: (insights: InsightItem[]) => InsightItem[];
+  accentClass?: string;
+}
+
+const WIZARD_INTENTS: IntentConfig[] = [
+  {
+    key: 'failing',
+    icon: ShieldAlert,
+    label: 'Where am I failing?',
+    description: 'Critical issues hurting you now',
+    filter: (insights) => insights.filter(i => i.severity === 'critical' || i.severity === 'warning')
+      .sort((a, b) => (b.impactEstimateNumeric ?? 0) - (a.impactEstimateNumeric ?? 0)),
+    accentClass: 'border-red-500/30 hover:border-red-500/50',
+  },
+  {
+    key: 'quick_wins',
+    icon: Zap,
+    label: 'Quickest wins',
+    description: 'High-impact, low-effort items',
+    filter: (insights) => insights.filter(i => i.effortLevel === 'quick_win')
+      .sort((a, b) => (b.impactEstimateNumeric ?? 0) - (a.impactEstimateNumeric ?? 0)),
+  },
+  {
+    key: 'revenue',
+    icon: DollarSign,
+    label: 'Revenue opportunities',
+    description: 'Growth & margin insights',
+    filter: (insights) => insights.filter(i => i.category === 'revenue_pulse' || i.category === 'cash_flow'),
+  },
+  {
+    key: 'team',
+    icon: Users,
+    label: 'Team performance',
+    description: 'Staffing & capacity gaps',
+    filter: (insights) => insights.filter(i => i.category === 'staffing' || i.category === 'capacity'),
+  },
+  {
+    key: 'retention',
+    icon: HeartPulse,
+    label: 'Client retention',
+    description: 'Rebook & churn signals',
+    filter: (insights) => insights.filter(i => i.category === 'client_health'),
+  },
+  {
+    key: 'everything',
+    icon: BarChart3,
+    label: 'Show me everything',
+    description: 'Full insights feed',
+    filter: (insights) => insights,
+  },
+];
 
 const severityOrder: Record<InsightItem['severity'], number> = { critical: 0, warning: 1, info: 2 };
 const priorityOrder: Record<ActionItem['priority'], number> = { high: 0, medium: 1, low: 2 };
@@ -363,6 +421,78 @@ function CategoryFilterChip({
   );
 }
 
+/** Wizard intent picker — 2-column grid of intent cards */
+function WizardIntentPicker({
+  intents,
+  sortedInsights,
+  onSelect,
+}: {
+  intents: IntentConfig[];
+  sortedInsights: InsightItem[];
+  onSelect: (intent: WizardIntent) => void;
+}) {
+  return (
+    <div className="px-5 pb-5">
+      <p className="text-sm font-medium text-foreground mb-4">What would you like to focus on?</p>
+      <div className="grid grid-cols-2 gap-2.5">
+        {intents.map((intent) => {
+          const matchCount = intent.key === 'everything' ? sortedInsights.length : intent.filter(sortedInsights).length;
+          const hasUrgent = intent.key !== 'everything' && intent.filter(sortedInsights).some(i => i.severity === 'critical');
+          const Icon = intent.icon;
+          const isEmpty = matchCount === 0 && intent.key !== 'everything';
+
+          return (
+            <button
+              key={intent.key}
+              type="button"
+              onClick={() => !isEmpty && onSelect(intent.key)}
+              disabled={isEmpty}
+              className={cn(
+                'group relative flex flex-col items-start gap-1.5 rounded-xl border p-4 text-left transition-all duration-200',
+                isEmpty
+                  ? 'border-border/30 bg-muted/10 opacity-50 cursor-not-allowed'
+                  : cn(
+                      'border-border/50 bg-card hover:bg-accent/30 hover:border-foreground/20 hover:shadow-sm cursor-pointer',
+                      intent.accentClass,
+                      hasUrgent && 'border-red-500/20 bg-red-500/[0.02]'
+                    ),
+              )}
+            >
+              <div className="flex items-center justify-between w-full">
+                <div className={cn(
+                  'w-8 h-8 rounded-lg flex items-center justify-center',
+                  isEmpty ? 'bg-muted/30' : hasUrgent ? 'bg-red-500/10' : 'bg-primary/10',
+                )}>
+                  <Icon className={cn(
+                    'w-4 h-4',
+                    isEmpty ? 'text-muted-foreground/50' : hasUrgent ? 'text-red-500' : 'text-primary',
+                  )} />
+                </div>
+                {!isEmpty && matchCount > 0 && (
+                  <span className={cn(
+                    'text-[10px] font-display tracking-wider px-2 py-0.5 rounded-full',
+                    hasUrgent
+                      ? 'bg-red-500/10 text-red-600 dark:text-red-400'
+                      : 'bg-muted text-muted-foreground',
+                  )}>
+                    {matchCount}
+                  </span>
+                )}
+              </div>
+              <div>
+                <p className="text-sm font-medium leading-snug">{intent.label}</p>
+                <p className="text-[11px] text-muted-foreground leading-snug mt-0.5">
+                  {isEmpty ? 'No items' : intent.description}
+                </p>
+              </div>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 interface AIInsightsDrawerProps {
   label?: string;
   expanded?: boolean;
@@ -410,6 +540,7 @@ export function AIInsightsDrawer({ label, expanded: controlledExpanded, onToggle
 export function AIInsightsPanel({ onClose }: { onClose: () => void }) {
   const [viewMode, setViewMode] = useState<ViewMode>('all');
   const [leverOpen, setLeverOpen] = useState(false);
+  const [selectedIntent, setSelectedIntent] = useState<WizardIntent | null>(null);
   const [selectedCategories, setSelectedCategories] = useState<Set<InsightItem['category']>>(
     new Set(CATEGORY_FILTERS.map(f => f.key))
   );
@@ -450,11 +581,27 @@ export function AIInsightsPanel({ onClose }: { onClose: () => void }) {
   const urgentInsights = useMemo(() => sortedInsights.filter(i => i.severity === 'critical' || i.severity === 'warning'), [sortedInsights]);
   const infoInsights = useMemo(() => sortedInsights.filter(i => i.severity === 'info'), [sortedInsights]);
 
-  // Filter info insights by selected categories
+  // Apply intent filter first, then category filter on remainder
+  const intentFilteredInsights = useMemo(() => {
+    if (!selectedIntent || selectedIntent === 'everything') return sortedInsights;
+    const intentConfig = WIZARD_INTENTS.find(i => i.key === selectedIntent);
+    return intentConfig ? intentConfig.filter(sortedInsights) : sortedInsights;
+  }, [selectedIntent, sortedInsights]);
+
+  // Filter info insights by selected categories (within intent scope)
   const filteredInfoInsights = useMemo(
-    () => infoInsights.filter(i => selectedCategories.has(i.category)),
-    [infoInsights, selectedCategories]
+    () => {
+      const infos = intentFilteredInsights.filter(i => i.severity === 'info');
+      return infos.filter(i => selectedCategories.has(i.category));
+    },
+    [intentFilteredInsights, selectedCategories]
   );
+
+  // Override urgent insights when intent is active
+  const displayUrgentInsights = useMemo(() => {
+    if (!selectedIntent || selectedIntent === 'everything') return urgentInsights;
+    return intentFilteredInsights.filter(i => i.severity === 'critical' || i.severity === 'warning');
+  }, [selectedIntent, intentFilteredInsights, urgentInsights]);
 
   // Category severity map for filter chips
   const categorySeverityMap = useMemo(() => {
@@ -563,8 +710,25 @@ export function AIInsightsPanel({ onClose }: { onClose: () => void }) {
       {!activeGuidance && (
         <div className="p-5 pb-3">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <span className="font-display text-sm tracking-[0.15em]">{PLATFORM_NAME.toUpperCase()} BUSINESS INSIGHTS</span>
+            <div className="flex items-center gap-2">
+              {selectedIntent && (
+                <button
+                  type="button"
+                  onClick={() => { setSelectedIntent(null); setViewMode('all'); }}
+                  className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  <ArrowLeft className="w-3.5 h-3.5" />
+                  <span className="font-medium">Change focus</span>
+                </button>
+              )}
+              {!selectedIntent && (
+                <span className="font-display text-sm tracking-[0.15em]">{PLATFORM_NAME.toUpperCase()} BUSINESS INSIGHTS</span>
+              )}
+              {selectedIntent && (
+                <span className="font-display text-sm tracking-[0.15em]">
+                  {WIZARD_INTENTS.find(i => i.key === selectedIntent)?.label?.toUpperCase()}
+                </span>
+              )}
               {/* Inline severity dots */}
               <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
                 {severityCounts.critical > 0 && (
@@ -639,31 +803,57 @@ export function AIInsightsPanel({ onClose }: { onClose: () => void }) {
                   </div>
                 )}
 
-                <div className="px-5 pb-5">
-                  {isLoading ? (
-                    <div className="space-y-3">
-                      {[1, 2, 3].map(i => (
-                        <div key={i} className="space-y-1.5">
-                          <Skeleton className="w-20 h-3 rounded" />
-                          <Skeleton className="w-full h-4 rounded" />
-                          <Skeleton className="w-3/4 h-3 rounded" />
+                {/* Wizard intent picker OR feed content */}
+                <AnimatePresence initial={false} mode="wait">
+                  {!selectedIntent ? (
+                    <motion.div
+                      key="wizard"
+                      initial={slideVariants.enterFromLeft}
+                      animate={slideVariants.center}
+                      exit={slideVariants.exitToLeft}
+                      transition={{ duration: 0.25, ease: [0.4, 0, 0.2, 1] }}
+                    >
+                      {isLoading ? (
+                        <div className="px-5 pb-5 space-y-3">
+                          {[1, 2, 3].map(i => (
+                            <div key={i} className="space-y-1.5">
+                              <Skeleton className="w-20 h-3 rounded" />
+                              <Skeleton className="w-full h-4 rounded" />
+                              <Skeleton className="w-3/4 h-3 rounded" />
+                            </div>
+                          ))}
                         </div>
-                      ))}
-                    </div>
-                  ) : !data ? (
-                    <div className="text-center py-14">
-                      <ZuraAvatar size="md" className="mx-auto mb-3 opacity-20" />
-                      <p className="text-sm font-display text-muted-foreground">No insights generated yet</p>
-                      <p className="text-xs text-muted-foreground/80 mt-1 max-w-[240px] mx-auto">We'll analyze your sales, capacity, and team data to surface what matters.</p>
-                      <Button variant="outline" size={tokens.button.card} onClick={() => refresh(true)} disabled={isRefreshing} className="gap-1.5 mt-3">
-                        <Brain className="w-3.5 h-3.5" />
-                        Generate Insights
-                      </Button>
-                    </div>
-                  ) : (hasInsights || hasActionItems || hasSuggestions) ? (
+                      ) : !data ? (
+                        <div className="text-center py-14 px-5">
+                          <ZuraAvatar size="md" className="mx-auto mb-3 opacity-20" />
+                          <p className="text-sm font-display text-muted-foreground">No insights generated yet</p>
+                          <p className="text-xs text-muted-foreground/80 mt-1 max-w-[240px] mx-auto">We'll analyze your sales, capacity, and team data to surface what matters.</p>
+                          <Button variant="outline" size={tokens.button.card} onClick={() => refresh(true)} disabled={isRefreshing} className="gap-1.5 mt-3">
+                            <Brain className="w-3.5 h-3.5" />
+                            Generate Insights
+                          </Button>
+                        </div>
+                      ) : (
+                        <WizardIntentPicker
+                          intents={WIZARD_INTENTS}
+                          sortedInsights={sortedInsights}
+                          onSelect={setSelectedIntent}
+                        />
+                      )}
+                    </motion.div>
+                  ) : (
+                    <motion.div
+                      key="feed"
+                      initial={slideVariants.enterFromRight}
+                      animate={slideVariants.center}
+                      exit={slideVariants.exitToRight}
+                      transition={{ duration: 0.25, ease: [0.4, 0, 0.2, 1] }}
+                    >
+                <div className="px-5 pb-5">
+                  {(hasInsights || hasActionItems || hasSuggestions) ? (
                     <div className="space-y-4">
                       {/* ── NEEDS ATTENTION ── */}
-                      {urgentInsights.length > 0 && (
+                      {displayUrgentInsights.length > 0 && (
                         <div>
                           <div className="flex items-center gap-2 mb-2.5">
                             <ShieldAlert className="w-3.5 h-3.5 text-amber-500" />
@@ -673,7 +863,7 @@ export function AIInsightsPanel({ onClose }: { onClose: () => void }) {
                             <div className="flex-1 h-px bg-border/40" />
                           </div>
                           <div className="space-y-2.5">
-                            {urgentInsights.map((insight, i) => (
+                            {displayUrgentInsights.map((insight, i) => (
                               <InsightCard
                                 key={`urgent-${i}`}
                                 insight={insight}
@@ -790,7 +980,7 @@ export function AIInsightsPanel({ onClose }: { onClose: () => void }) {
                         )}
 
                         {/* Empty state for filtered view */}
-                        {viewMode === 'insights' && filteredInfoInsights.length === 0 && urgentInsights.length === 0 && (
+                        {viewMode === 'insights' && filteredInfoInsights.length === 0 && displayUrgentInsights.length === 0 && (
                           <p className="text-sm text-muted-foreground text-center py-6">No insights match selected categories</p>
                         )}
                       </div>
@@ -838,6 +1028,9 @@ export function AIInsightsPanel({ onClose }: { onClose: () => void }) {
                     </div>
                   )}
                 </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
               <div className="px-5 py-2.5 border-t border-border/40 flex items-center justify-center gap-1.5">
                 <ZuraAvatar size="sm" className="w-3 h-3 opacity-40" />
