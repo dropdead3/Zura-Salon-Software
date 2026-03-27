@@ -329,7 +329,7 @@ export function DashboardCustomizeMenu({ variant = 'icon', roleContext }: Dashbo
 
       queryClient.invalidateQueries({ queryKey: ['dashboard-visibility'] });
     } catch (err: any) {
-      toast.error('Failed to update pinned card: ' + (err?.message || 'Unknown error'));
+      toast({ title: 'Failed to update pinned card', description: err?.message || 'Unknown error', variant: 'destructive' });
     } finally {
       setIsTogglingPin(false);
     }
