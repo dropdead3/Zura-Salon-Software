@@ -1023,33 +1023,7 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                                   <p className="text-amber-600 dark:text-amber-400">This service appears to use chemicals — consider enabling tracking.</p>
                                                 )}
                                               </div>
-                                              <div className="flex items-center gap-2 shrink-0">
-                                              <Button
-                                                size="sm"
-                                                variant="outline"
-                                                className="h-7 text-xs shrink-0"
-                                                onClick={() => toggleTracking.mutate({ id: service.id, tracked: true })}
-                                              >
-                                                Enable Tracking
-                                              </Button>
                                               </div>
-                                            </div>
-                                            {/* Chemical toggle for untracked services */}
-                                            <div className="flex items-center gap-2 pt-2 border-t border-border/40">
-                                              <label className="text-[10px] font-sans text-muted-foreground whitespace-nowrap">Color / Chemical</label>
-                                              <Switch
-                                                checked={service.is_chemical_service}
-                                                onCheckedChange={(v) => {
-                                                  if (v) {
-                                                    const containers = (service.container_types?.length) ? service.container_types : ['bowl'] as ('bowl' | 'bottle')[];
-                                                    updateService.mutate({ id: service.id, updates: { is_chemical_service: true, is_backroom_tracked: true, container_types: containers } });
-                                                  } else {
-                                                    updateService.mutate({ id: service.id, updates: { is_chemical_service: false, container_types: [] } });
-                                                  }
-                                                }}
-                                              />
-                                              <span className="text-[10px] text-muted-foreground/60 font-sans">Enabling also turns on tracking</span>
-                                            </div>
                                             {/* Mark Configured footer for untracked */}
                                             {(type === 'chemical' || type === 'suggested') && (
                                               <div className="bg-primary/5 border-t border-primary/20 rounded-b-lg p-3 mt-3 flex items-center justify-between">
