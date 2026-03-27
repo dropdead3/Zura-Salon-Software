@@ -477,6 +477,30 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
     }
   }, [searchQuery]);
 
+  // Auto-reset stale backroom_config_dismissed flags
+  // When a service has the flag set but allowance mode has zero values, reset it
+  useEffect(() => {
+    if (!orgId || !allServices.length) return;
+    const staleServices = allServices.filter(s => {
+      if (!s.backroom_config_dismissed) return false;
+      const policy = allowanceByService.get(s.id);
+      if (!policy) return false;
+      if (policy.billing_mode === 'allowance' && policy.included_allowance_qty === 0 && policy.overage_rate === 0) return true;
+      return false;
+    });
+    if (staleServices.length === 0) return;
+    // Reset in background
+    (async () => {
+      for (const s of staleServices) {
+        await supabase
+          .from('services')
+          .update({ backroom_config_dismissed: false })
+          .eq('id', s.id);
+      }
+      queryClient.invalidateQueries({ queryKey: ['services'] });
+    })();
+  }, [orgId, allServices, allowanceByService, queryClient]);
+
   const toggleCategoryCollapse = (cat: string) => {
     setCollapsedCategories(prev => {
       const next = new Set(prev ?? []);
