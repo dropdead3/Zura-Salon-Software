@@ -46,7 +46,7 @@ export function AccountAppsCard({ organizationId }: AccountAppsCardProps) {
     );
   }
 
-  const colorBarFlag = flags?.find((f) => f.flag_key === 'color_bar_enabled');
+  const colorBarFlag = flags?.find((f) => f.flag_key === 'backroom_enabled');
   const isColorBarEnabled = colorBarFlag?.org_enabled ?? false;
   const activeLocations = entitlements.filter((e) => e.status === 'active').length;
 

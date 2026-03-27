@@ -117,7 +117,7 @@ export function useStaffPerformanceComposite(
 
     return experienceScores.map((score): StaffPerformanceRow => {
       const sales = salesMap.get(score.staffId);
-      const color bar = colorBarMap.get(score.staffId);
+      const colorBar = colorBarMap.get(score.staffId);
       const avgChem = colorBar && colorBar.mixSessions > 0
         ? colorBar.totalCost / colorBar.mixSessions
         : 0;

@@ -8,7 +8,7 @@ import {
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { useOrgPaymentInfo } from '@/hooks/useOrgPaymentInfo';
 import {
-  COLOR_BAR_BASE_PRICE, BACKROOM_PER_SERVICE_FEE,
+  COLOR_BAR_BASE_PRICE, COLOR_BAR_PER_SERVICE_FEE,
   SCALE_LICENSE_MONTHLY, SCALE_HARDWARE_PRICE,
 } from '@/hooks/color-bar/useLocationStylistCounts';
 
@@ -35,7 +35,7 @@ export function ColorBarCheckoutConfirmDialog({
 
   const baseCost = locationCount * COLOR_BAR_BASE_PRICE;
   const scaleLicenseCost = scaleCount * SCALE_LICENSE_MONTHLY;
-  const estimatedUsage = Math.round(estimatedMonthlyServices * BACKROOM_PER_SERVICE_FEE);
+  const estimatedUsage = Math.round(estimatedMonthlyServices * COLOR_BAR_PER_SERVICE_FEE);
   const monthlyRecurring = baseCost + scaleLicenseCost;
   const hardwareOneTime = scaleCount * SCALE_HARDWARE_PRICE;
   const estimatedMonthlyGrandTotal = monthlyRecurring + estimatedUsage;
@@ -112,7 +112,7 @@ export function ColorBarCheckoutConfirmDialog({
               <div className="flex items-center justify-between px-3 py-2.5">
                 <span className="flex items-center gap-2 text-sm font-sans">
                   <Droplets className="w-3.5 h-3.5 text-primary" />
-                  ~{estimatedMonthlyServices} color services × {formatCurrency(BACKROOM_PER_SERVICE_FEE)}
+                  ~{estimatedMonthlyServices} color services × {formatCurrency(COLOR_BAR_PER_SERVICE_FEE)}
                 </span>
                 <span className="text-sm font-sans font-medium">~{formatCurrency(estimatedUsage)}</span>
               </div>
@@ -149,7 +149,7 @@ export function ColorBarCheckoutConfirmDialog({
               <div className="flex items-center justify-between px-3 py-2.5">
                 <span className="flex items-center gap-2 text-sm font-sans">
                   <Droplets className="w-3.5 h-3.5 text-primary" />
-                  {formatCurrency(BACKROOM_PER_SERVICE_FEE)} × color services
+                  {formatCurrency(COLOR_BAR_PER_SERVICE_FEE)} × color services
                 </span>
                 <span className="text-sm font-sans font-medium">~{formatCurrency(estimatedUsage)}/mo</span>
               </div>

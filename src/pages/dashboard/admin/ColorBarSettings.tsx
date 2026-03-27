@@ -179,7 +179,7 @@ export default function ColorBarSettings() {
               .from('organization_feature_flags')
               .select('is_enabled')
               .eq('organization_id', orgId)
-              .eq('flag_key', 'color_bar_enabled')
+              .eq('flag_key', 'backroom_enabled')
               .maybeSingle();
 
             if (data?.is_enabled) {

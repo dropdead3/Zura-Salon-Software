@@ -34,7 +34,7 @@ export function useColorBarBillingHealth() {
       const { data: flags, error: fErr } = await supabase
         .from('organization_feature_flags')
         .select('organization_id')
-        .eq('flag_key', 'color_bar_enabled')
+        .eq('flag_key', 'backroom_enabled')
         .eq('is_enabled', true);
       if (fErr) throw fErr;
 

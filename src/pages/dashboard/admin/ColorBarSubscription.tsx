@@ -14,7 +14,7 @@ import { toast } from 'sonner';
 import { Loader2, CreditCard, Weight, Settings, Plus, Beaker } from 'lucide-react';
 import { AddScalesDialog } from '@/components/dashboard/color-bar-settings/AddScalesDialog';
 import { ColorBarROICard } from '@/components/dashboard/color-bar-settings/ColorBarROICard';
-import { COLOR_BAR_BASE_PRICE, BACKROOM_PER_SERVICE_FEE, SCALE_LICENSE_MONTHLY } from '@/hooks/color-bar/useLocationStylistCounts';
+import { COLOR_BAR_BASE_PRICE, COLOR_BAR_PER_SERVICE_FEE, SCALE_LICENSE_MONTHLY } from '@/hooks/color-bar/useLocationStylistCounts';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 
 
@@ -229,7 +229,7 @@ export default function ColorBarSubscription() {
               </div>
               <div className="flex items-baseline gap-1">
                 <span className="text-2xl font-display tracking-wide text-foreground">
-                  ${BACKROOM_PER_SERVICE_FEE.toFixed(2)}
+                  ${COLOR_BAR_PER_SERVICE_FEE.toFixed(2)}
                 </span>
                 <span className="text-sm text-muted-foreground font-sans">/color appointment</span>
               </div>

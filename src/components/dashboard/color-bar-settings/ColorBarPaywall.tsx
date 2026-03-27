@@ -29,7 +29,7 @@ import { useColorBarPricingEstimate } from '@/hooks/color-bar/useColorBarPricing
 import { usePerLocationColorServices } from '@/hooks/color-bar/usePerLocationColorServices';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import {
-  COLOR_BAR_BASE_PRICE, BACKROOM_PER_SERVICE_FEE,
+  COLOR_BAR_BASE_PRICE, COLOR_BAR_PER_SERVICE_FEE,
   SCALE_LICENSE_MONTHLY, SCALE_HARDWARE_PRICE,
 } from '@/hooks/color-bar/useLocationStylistCounts';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -244,7 +244,7 @@ export function ColorBarPaywall() {
   // Cost calculations
   const baseCost = locationCount * COLOR_BAR_BASE_PRICE;
   const scaleCost = scaleCount * SCALE_LICENSE_MONTHLY;
-  const usageFee = estimate ? Math.round(estimate.monthlyColorServices * locationFraction * BACKROOM_PER_SERVICE_FEE) : 0;
+  const usageFee = estimate ? Math.round(estimate.monthlyColorServices * locationFraction * COLOR_BAR_PER_SERVICE_FEE) : 0;
   const monthlyTotal = baseCost + scaleCost + usageFee;
   const hardwareTotal = scaleCount * SCALE_HARDWARE_PRICE;
 
@@ -998,7 +998,7 @@ export function ColorBarPaywall() {
                     <span className="font-display text-xl tracking-wide">${COLOR_BAR_BASE_PRICE}</span>
                     <span className="text-muted-foreground">/mo per location</span>
                     <span className="text-muted-foreground/40 mx-3">·</span>
-                    <span className="font-display text-xl tracking-wide">${BACKROOM_PER_SERVICE_FEE.toFixed(2)}</span>
+                    <span className="font-display text-xl tracking-wide">${COLOR_BAR_PER_SERVICE_FEE.toFixed(2)}</span>
                     <span className="text-muted-foreground">/color service</span>
                   </p>
                   <p className="font-sans text-sm text-muted-foreground/60">

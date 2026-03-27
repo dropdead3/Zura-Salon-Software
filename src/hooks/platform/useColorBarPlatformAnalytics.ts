@@ -47,7 +47,7 @@ export function useColorBarPlatformAnalytics() {
       const { data: flags, error: fErr } = await supabase
         .from('organization_feature_flags')
         .select('organization_id, is_enabled, override_reason, created_at')
-        .eq('flag_key', 'color_bar_enabled')
+        .eq('flag_key', 'backroom_enabled')
         .eq('is_enabled', true);
       if (fErr) throw fErr;
 
@@ -202,7 +202,7 @@ export function useColorBarPlatformAnalytics() {
       const { data: counterRow } = await supabase
         .from('platform_kpi_counters')
         .select('value')
-        .eq('key', 'color_bar_coaching_emails_sent')
+        .eq('key', 'backroom_coaching_emails_sent')
         .maybeSingle();
 
       const coachingEmailsSent = counterRow?.value ? Number(counterRow.value) : 0;

@@ -140,7 +140,7 @@ export function useUpsertColorBarSetting() {
       // Audit log
       await supabase.rpc('log_platform_action', {
         _org_id: params.organization_id,
-        _action: 'color_bar_setting_updated',
+        _action: 'backroom_setting_updated',
         _entity_type: 'backroom_settings',
         _details: { key: params.setting_key, location_id: params.location_id },
       });
