@@ -75,6 +75,7 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
   const [searchQuery, setSearchQuery] = useState('');
+  const [collapsedCategories, setCollapsedCategories] = useState<Set<string> | null>(null); // null = not yet initialized
   
   const [wizardOpen, setWizardOpen] = useState(false);
   const [allowanceEditing, setAllowanceEditing] = useState<Set<string>>(new Set());
