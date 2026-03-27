@@ -1,47 +1,25 @@
 
 
-# Fix: Remove Redundant Progress Bar in Revenue Gap Drilldown
+# Fix: Scrollable Gap Items List
 
 ## Problem
-The drilldown section repeats the same "Actual vs Expected" progress bar that already exists on the parent card above it. Two identical progress bars are visually redundant.
+Two issues prevent the scroll from working:
 
-## Solution
-Replace the progress bar in `RevenueGapDrilldown.tsx` with two inline text rows:
-- **Scheduled Service Revenue:** showing `data.expectedRevenue`
-- **Gap Revenue:** showing `data.gapAmount` (colored red/warning for negative gap, green for positive)
-
-This gives the drilldown a text-based summary context without duplicating the visual progress bar.
+1. **`INITIAL_VISIBLE = 10`** — The list shows 10 items before requiring "Show all", but the scroll should activate at 7+ items. Users see all items without scrolling.
+2. **ScrollArea needs explicit height** — `max-h-[350px]` on `ScrollArea` alone doesn't constrain the Radix viewport. The height must be set so the internal viewport can calculate overflow.
 
 ## Changes
 
 **File:** `src/components/dashboard/sales/RevenueGapDrilldown.tsx`
 
-Replace lines 132–153 (the "Summary bar" block with the Progress component) with two simple label-value rows:
+1. Change `INITIAL_VISIBLE` from `10` to `7`
+2. Change the ScrollArea to always wrap the list, with a fixed `h-[350px]` applied when `showAll && items > 7`, otherwise let it size naturally using `max-h-fit`
 
 ```tsx
-{/* Summary context */}
-<div className="space-y-1.5">
-  <div className="flex items-center justify-between text-xs">
-    <span className="text-muted-foreground">Scheduled Service Revenue</span>
-    <BlurredAmount>
-      <span className="font-medium text-foreground">
-        {formatCurrency(data.expectedRevenue)}
-      </span>
-    </BlurredAmount>
-  </div>
-  <div className="flex items-center justify-between text-xs">
-    <span className="text-muted-foreground">Gap Revenue</span>
-    <BlurredAmount>
-      <span className={cn(
-        "font-medium",
-        data.gapAmount <= 0 ? "text-success-foreground" : "text-warning"
-      )}>
-        {data.gapAmount <= 0 ? '+' : '-'}{formatCurrency(Math.abs(data.gapAmount))}
-      </span>
-    </BlurredAmount>
-  </div>
-</div>
-```
+// Line 19
+const INITIAL_VISIBLE = 7;
 
-The `Progress` import can be removed if no longer used elsewhere in the file.
+// Line 162 — use h-[350px] (not max-h) so Radix viewport knows the boundary
+<ScrollArea className={cn(showAll && data.gapItems.length > 7 ? 'h-[350px]' : '')}>
+```
 
