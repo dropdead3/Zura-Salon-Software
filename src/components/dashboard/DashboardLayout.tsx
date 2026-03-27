@@ -536,7 +536,6 @@ function DashboardLayoutInner({ children, hideFooter, hideTopBar, hideSidebar }:
         )}
 
         {/* Banners */}
-        <PlatformContextBanner />
         <IncidentBanner />
         <CustomLandingPageBanner sidebarCollapsed={sidebarCollapsed} />
         
