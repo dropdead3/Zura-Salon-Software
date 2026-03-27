@@ -455,15 +455,20 @@ export function DashboardCustomizeMenu({ variant = 'icon', roleContext }: Dashbo
   const handleBulkPinAll = async () => {
     setIsTogglingPin(true);
     try {
-      const rows = unpinnedCards.flatMap(card =>
-        leadershipRoles.map(role => ({
-          element_key: card.id,
-          element_name: card.label,
+      const rows = unpinnedCards.flatMap(card => {
+        const visibilityKey = getPinnedVisibilityKey(card.id);
+        const visibilityName = visibilityKey === 'operations_quick_stats'
+          ? 'Operations Quick Stats'
+          : card.label;
+
+        return leadershipRoles.map(role => ({
+          element_key: visibilityKey,
+          element_name: visibilityName,
           element_category: card.category,
           role,
           is_visible: true,
-        }))
-      );
+        }));
+      });
       if (rows.length > 0) {
         const { error } = await supabase
           .from('dashboard_element_visibility')

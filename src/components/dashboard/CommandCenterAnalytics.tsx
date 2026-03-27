@@ -120,10 +120,11 @@ export function CommandCenterAnalytics() {
   // Check if any analytics cards are visible for leadership roles
   const leadershipRoles = ['super_admin', 'admin', 'manager'];
   
-  const isElementVisible = (elementKey: string) => {
+  const isElementVisible = (cardId: string) => {
     if (!visibilityData) return false;
+    const visibilityKey = getPinnedVisibilityKey(cardId);
     const element = visibilityData.find(
-      v => v.element_key === elementKey && leadershipRoles.includes(v.role)
+      v => v.element_key === visibilityKey && leadershipRoles.includes(v.role)
     );
     return element?.is_visible ?? false;
   };
