@@ -631,9 +631,6 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                           const hasAllowance = allowanceByService.has(service.id);
                           const attention = needsAttention(service);
                           const isExpanded = expandedIds.has(service.id);
-                          const activeToggles = service.is_backroom_tracked
-                            ? [service.assistant_prep_allowed, service.smart_mix_assist_enabled, service.formula_memory_enabled].filter(Boolean).length
-                            : 0;
 
                           return (
                             <React.Fragment key={service.id}>
