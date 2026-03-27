@@ -1085,8 +1085,8 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
-          {/* Search + Filter tabs */}
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          {/* Search + Filter tabs — search above filters at narrow, right-aligned at wide */}
+          <div className="flex flex-col-reverse gap-3 @[600px]:flex-row @[600px]:items-center @[600px]:justify-between">
             <div className="flex flex-wrap gap-1.5">
               {filters.map(f => (
                 <button
@@ -1106,7 +1106,7 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
               ))}
             </div>
             {allServices.length >= 15 && (
-              <div className="relative w-full sm:w-56">
+              <div className="relative w-full @[600px]:w-56">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
                 <Input
                   ref={searchRef}
