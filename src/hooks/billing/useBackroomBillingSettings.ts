@@ -23,7 +23,7 @@ export function useBackroomBillingSettings(organizationId: string | null | undef
     queryKey: ['backroom-billing-settings', organizationId],
     queryFn: async (): Promise<BackroomBillingSettings | null> => {
       const { data, error } = await supabase
-        .from('backroom_billing_settings' as any)
+        .from('backroom_billing_settings')
         .select('*')
         .eq('organization_id', organizationId!)
         .maybeSingle();
