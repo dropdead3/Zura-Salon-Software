@@ -309,16 +309,44 @@ export function DockServicesTab({ appointment, staff, effectiveServiceName }: Do
       setShowComplete(false);
       return;
     }
-    const session = sessions?.[0];
-    if (!session || !effectiveOrganization?.id) return;
-    markUnresolved.mutate({
-      sessionId: session.id,
-      organizationId: effectiveOrganization.id,
-      locationId: appointment.location_id || undefined,
-      reason,
-    }, {
-      onSuccess: () => setShowComplete(false),
-    });
+    if (!sessions?.length || !effectiveOrganization?.id) return;
+
+    // Flag ALL non-terminal sessions, not just sessions[0]
+    const activeSessions = sessions.filter(
+      s => !isTerminalSessionStatus(s.status as any)
+    );
+
+    if (activeSessions.length === 0) {
+      toast.info('No active sessions to flag');
+      setShowComplete(false);
+      return;
+    }
+
+    // Flag each active session sequentially
+    let completed = 0;
+    const flagNext = () => {
+      const session = activeSessions[completed];
+      if (!session) {
+        setShowComplete(false);
+        return;
+      }
+      markUnresolved.mutate({
+        sessionId: session.id,
+        organizationId: effectiveOrganization!.id,
+        locationId: appointment.location_id || undefined,
+        reason,
+      }, {
+        onSuccess: () => {
+          completed++;
+          if (completed >= activeSessions.length) {
+            setShowComplete(false);
+          } else {
+            flagNext();
+          }
+        },
+      });
+    };
+    flagNext();
   };
 
   const handleBowlAction = useCallback((action: BowlAction) => {
