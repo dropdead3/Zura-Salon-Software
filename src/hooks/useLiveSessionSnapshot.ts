@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
 import { applyLocationFilter } from '@/lib/locationFilter';
-import { formatDisplayName } from '@/lib/utils';
+import { formatFullDisplayName } from '@/lib/utils';
 
 interface ActiveStylist {
   name: string;
