@@ -19,7 +19,7 @@ import { SilenceState } from '@/components/executive-brief/SilenceState';
 import { EnforcementGateBanner } from '@/components/enforcement/EnforcementGateBanner';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { TogglePill } from '@/components/ui/toggle-pill';
-import { Loader2 } from 'lucide-react';
+import { Loader2, ArrowLeft } from 'lucide-react';
 import { tokens } from '@/lib/design-tokens';
 
 import { cn } from '@/lib/utils';
