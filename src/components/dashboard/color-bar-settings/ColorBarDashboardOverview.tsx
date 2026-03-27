@@ -151,24 +151,28 @@ export function ColorBarDashboardOverview({ onNavigate, initialSubTab, triggerWi
               icon={FlaskConical}
               label="Chemical Cost/Svc"
               value={formatCurrency(kpis.chemicalCostPerService)}
+              tooltip="Average product cost per tracked service. Calculated from weighed product usage over the selected period. Use to benchmark cost efficiency and identify services consuming disproportionate product."
             />
             <KpiTile
               icon={Trash2}
               label="Waste Rate"
               value={`${kpis.wasteRate.toFixed(1)}%`}
               status={kpis.wasteRate > 5 ? 'warning' : kpis.wasteRate > 0 ? 'ok' : 'neutral'}
+              tooltip="Percentage of product dispensed but not applied to a client service. Calculated as unused weight divided by total dispensed weight. A rate above 5% signals opportunities to improve dispensing accuracy."
             />
             <KpiTile
               icon={ClipboardCheck}
               label="Reweigh Rate"
               value={`${kpis.reweighCompliance.toFixed(0)}%`}
               status={kpis.reweighCompliance < 80 ? 'warning' : 'ok'}
+              tooltip="Percentage of services where leftover product was weighed back after application. Higher compliance means more accurate waste and cost data. Below 80% indicates staff need reweigh reminders."
             />
             <KpiTile
               icon={AlertCircle}
               label="Stockout Alerts"
               value={String(kpis.stockoutAlertCount)}
               status={kpis.stockoutAlertCount > 0 ? 'warning' : 'ok'}
+              tooltip="Number of products projected to run out before the next scheduled reorder. Based on current usage velocity and remaining stock levels. Address these to avoid service disruptions."
             />
             <BudgetKpiTile
               budgetPct={kpis.budgetPct}
