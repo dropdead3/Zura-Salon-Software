@@ -136,6 +136,7 @@ export function SuperAdminTopBar({
   const { hideNumbers, toggleHideNumbers } = useHideNumbers();
   const { isViewingAs } = useViewAs();
   const { isImpersonating } = useOrganizationContext();
+  const { showInfotainers, toggleInfotainers, isToggling } = useInfotainerSettings();
   const location = useLocation();
 
   const showNextClient = isStylistRole || isStylistAssistantRole;
