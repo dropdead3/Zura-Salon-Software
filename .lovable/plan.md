@@ -1,44 +1,69 @@
 
 
-## Fix: Parts & Labor Charges Not Calculated (is_active Gap)
+## Gap Analysis: Parts & Labor Billing in Zura Dock
 
-### The Bug
+### Critical Gap 1: Dock Session Completion Does NOT Calculate Charges
 
-When a service is configured as "Parts & Labor" in the Service Tracking UI, the policy is saved with `is_active: false`. However, both charge calculation hooks filter for `is_active: true`:
+**The biggest gap.** When a Dock user completes a mix session via `useCompleteDockSession`, it only updates the session status and emits an event. It does **NOT** call `useCalculateOverageCharge` — the hook that actually computes both allowance overage AND parts-and-labor product cost charges and writes them to `checkout_usage_charges`.
 
-- **`useCalculateOverageCharge.ts` line 46** — `.eq('is_active', true)` → P&L policy never found → no charge created at checkout
-- **`useEstimatedProductCharge.ts` line 55** — `.eq('is_active', true)` → P&L estimate never shown in booking wizard
+Compare:
+- **Admin Backroom** (`MixSessionManager.tsx` line 255): calls `calculateOverage.mutate()` after session completion ✅
+- **Dock** (`DockServicesTab.tsx` line 246): calls `completeSession.mutate()` only — **no charge calculation** ❌
 
-This means **Dock sessions for Parts & Labor services will complete with zero charges passed to the client**.
+This means **zero charges flow to checkout** for any Dock-completed session, regardless of billing mode.
 
-### Root Cause
+**Fix:** After `completeSession.mutate()` succeeds in `DockServicesTab.tsx`, call `useCalculateOverageCharge` with `sessionId`, `appointmentId`, `organizationId`, and critically `serviceId`. This requires resolving the service ID (see Gap 2).
 
-`is_active` was designed for allowance mode (on = allowance enforced, off = no overage tracking). Parts & Labor policies should always be "active" — they're a different billing mode, not a deactivated allowance.
+### Critical Gap 2: Dock Has No `serviceId` for Charge Lookup
 
-### Fix
+`useCalculateOverageCharge` requires `serviceId` to look up the `service_allowance_policies` row. The Dock's `DockServicesTab` has `appointment.service_name` but **no `service_id`**. The `DockAppointment` type likely doesn't carry a resolved `service_id` from the platform's `services` table.
 
-**1. ServiceTrackingSection.tsx (line 773)** — Set `is_active: true` for both modes:
+**Fix:** Either:
+- Resolve `service_id` from `service_name` using the existing `useServiceLookup` hook (already imported in DockServicesTab)
+- Or add `service_id` to the Dock appointment data model when it syncs from Phorest/scheduler
 
-```ts
-// Before
-is_active: mode === 'allowance' ? (policy?.is_active ?? false) : false,
+### Critical Gap 3: Dock Inventory Depletion Missing
 
-// After
-is_active: mode === 'parts_and_labor' ? true : (policy?.is_active ?? false),
-```
+`MixSessionManager` calls `depleteInventory.mutateAsync()` before charge calculation. The Dock's `useCompleteDockSession` does **not** deplete inventory. This means stock levels won't update for Dock-completed sessions.
 
-Parts & Labor policies are always active (there's no "configure later" state — the mode itself is the configuration).
+**Fix:** Add `useDepleteMixSession` call to the Dock completion chain in `DockServicesTab`, before charge calculation.
 
-**2. ServiceEditorDialog.tsx** — Same fix on save: when `billingMode === 'parts_and_labor'`, ensure the upserted policy has `is_active: true`.
+### Gap 4: `useDockCompleteAppointment` Fallback Charge Path is Fragile
 
-**3. No changes needed** to `useCalculateOverageCharge` or `useEstimatedProductCharge` — the `is_active` filter is correct behavior (inactive = don't charge). The fix is making P&L policies active.
+The `useDockCompleteAppointment` hook (appointment-level completion, not session-level) has its own charge insertion logic (lines 40–80) that:
+- Doesn't check `billing_mode` — always writes overage-style charges
+- Uses `charge_amount: 0` with a comment "Will be refined by full billing calc" — but nothing refines it
+- Doesn't handle the `parts_and_labor` path at all
 
-### Secondary: CheckoutSummarySheet label clarity
+This is a secondary path (appointment swipe-to-complete), but it produces broken charge records for P&L services.
 
-The `CheckoutSummarySheet` already renders P&L charges via `useCheckoutUsageCharges` and `CheckoutClarityPanel`, but the label says "Product Usage" generically. No functional gap — charges will flow correctly once the `is_active` fix is in place.
+**Fix:** Either remove the inline charge insertion from `useDockCompleteAppointment` (since session-level completion should handle it), or add proper billing mode branching.
+
+### Gap 5: No Dock Checkout Surface for Charges
+
+The `CheckoutSummarySheet` (admin scheduler) renders product cost charges via `useCheckoutUsageCharges`. The Dock has **no checkout sheet** — it completes appointments via swipe gesture. There's no surface for Dock staff to see, approve, or communicate P&L charges to clients.
+
+**Suggestion:** This may be intentional (charges flow to the front desk POS), but if Dock users need charge visibility, a lightweight "Charges Summary" panel in the `DockSessionCompleteSheet` would be needed.
+
+### Gap 6: `backroom_billing_settings` Table May Not Exist
+
+Both `useCalculateOverageCharge` (line 172) and `useEstimatedProductCharge` (line 66) query `backroom_billing_settings` for `default_product_markup_pct`. This table is cast as `any`, suggesting it may not be in the schema yet. If it doesn't exist, P&L charges would silently use 0% markup (wholesale cost = retail price).
+
+**Verify:** Check if this table exists. If not, create it or fall back to product-level `markup_pct`.
+
+---
+
+### Recommended Implementation Order
+
+1. **Wire charge calculation into Dock session completion** (`DockServicesTab.tsx` + `useDockSessionComplete.ts`) — this is the blocking gap
+2. **Resolve serviceId in Dock** via `useServiceLookup` — required for step 1
+3. **Add inventory depletion to Dock completion chain** — data integrity
+4. **Clean up `useDockCompleteAppointment`** inline charge logic — remove duplicate/broken path
+5. **Verify `backroom_billing_settings` table** — ensure markup is correctly sourced
+6. *(Optional)* Add charge visibility to `DockSessionCompleteSheet`
 
 ### Scope
-- 2 files, ~2 lines changed each
-- No database changes
-- Fixes a silent billing failure for all Parts & Labor services
+- 3–4 files modified
+- 1 possible database migration (if `backroom_billing_settings` doesn't exist)
+- No breaking changes to existing admin-side flow
 
