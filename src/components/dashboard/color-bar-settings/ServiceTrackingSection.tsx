@@ -1050,46 +1050,66 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                                     Reset Configuration
                                                   </Button>
                                                 </div>
-                                              ) : (
-                                                <>
-                                                  <p className="text-xs font-sans text-muted-foreground">
-                                                    Review complete? Mark as configured to track setup progress.
-                                                  </p>
-                                                  <div className="flex items-center gap-2">
-                                                    <Button
-                                                      variant="ghost"
-                                                      size="sm"
-                                                      className="h-7 text-xs shrink-0 text-muted-foreground hover:text-red-500 hover:bg-red-500/10"
-                                                      onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        confirmReset(service.id);
-                                                      }}
-                                                    >
-                                                      <RotateCcw className="w-3.5 h-3.5" />
-                                                      Reset
-                                                    </Button>
-                                                    <Button
-                                                      variant="ghost"
-                                                      size="sm"
-                                                      className="h-7 text-xs shrink-0 text-amber-600 hover:text-amber-700 hover:bg-amber-50 dark:text-amber-400 dark:hover:bg-amber-900/20"
-                                                      onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        updateService.mutate({ id: service.id, updates: { backroom_config_dismissed: true } });
-                                                        setTimeout(() => {
-                                                          setExpandedIds(prev => {
-                                                            const next = new Set(prev);
-                                                            next.delete(service.id);
-                                                            return next;
-                                                          });
-                                                        }, 400);
-                                                      }}
-                                                    >
-                                                      <ChevronRight className="w-3.5 h-3.5 animate-nudge-right" />
-                                                      Finalize Configuration
-                                                    </Button>
-                                                  </div>
-                                                </>
-                                              )}
+                                              ) : (() => {
+                                                  const fPolicy = allowanceByService.get(service.id);
+                                                  const fBillingMode = fPolicy?.billing_mode ?? null;
+                                                  const hasConfiguredAllowance = fPolicy && (fPolicy.included_allowance_qty > 0 || fPolicy.overage_rate > 0) && fPolicy.is_active;
+                                                  const canFinalize = fBillingMode === 'parts_and_labor' || (fBillingMode === 'allowance' && hasConfiguredAllowance);
+
+                                                  const hintText = fBillingMode === null
+                                                    ? 'Select a billing method to finalize.'
+                                                    : fBillingMode === 'allowance' && !hasConfiguredAllowance
+                                                      ? 'Configure allowance to finalize.'
+                                                      : 'Review complete? Mark as configured to track setup progress.';
+
+                                                  return (
+                                                    <>
+                                                      <p className="text-xs font-sans text-muted-foreground">
+                                                        {hintText}
+                                                      </p>
+                                                      <div className="flex items-center gap-2">
+                                                        <Button
+                                                          variant="ghost"
+                                                          size="sm"
+                                                          className="h-7 text-xs shrink-0 text-muted-foreground hover:text-red-500 hover:bg-red-500/10"
+                                                          onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            confirmReset(service.id);
+                                                          }}
+                                                        >
+                                                          <RotateCcw className="w-3.5 h-3.5" />
+                                                          Reset
+                                                        </Button>
+                                                        <Button
+                                                          variant="ghost"
+                                                          size="sm"
+                                                          disabled={!canFinalize}
+                                                          className={cn(
+                                                            "h-7 text-xs shrink-0",
+                                                            canFinalize
+                                                              ? "text-amber-600 hover:text-amber-700 hover:bg-amber-50 dark:text-amber-400 dark:hover:bg-amber-900/20"
+                                                              : "text-muted-foreground/50 cursor-not-allowed"
+                                                          )}
+                                                          onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            if (!canFinalize) return;
+                                                            updateService.mutate({ id: service.id, updates: { backroom_config_dismissed: true } });
+                                                            setTimeout(() => {
+                                                              setExpandedIds(prev => {
+                                                                const next = new Set(prev);
+                                                                next.delete(service.id);
+                                                                return next;
+                                                              });
+                                                            }, 400);
+                                                          }}
+                                                        >
+                                                          <ChevronRight className="w-3.5 h-3.5 animate-nudge-right" />
+                                                          Finalize Configuration
+                                                        </Button>
+                                                      </div>
+                                                    </>
+                                                  );
+                                                })()}
                                             </div>
                                           </div>
                                         ) : (
