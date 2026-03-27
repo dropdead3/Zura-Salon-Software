@@ -12,6 +12,7 @@ import { useTeamCalendarEvents, EVENT_TYPE_COLORS, EVENT_TYPE_LABELS, type TeamC
 import { CreateEventDialog } from '@/components/calendar/CreateEventDialog';
 import { EventTypeFilter } from '@/components/calendar/EventTypeFilter';
 import { cn } from '@/lib/utils';
+import { PageExplainer } from '@/components/ui/PageExplainer';
 
 type CalendarView = 'month' | 'week';
 
@@ -100,6 +101,7 @@ export default function TeamCalendar() {
           actions={
             <Button onClick={() => setCreateDialogOpen(true)}>
               <Plus className="h-4 w-4 mr-2" />
+        <PageExplainer pageId="team-calendar" />
               New Event
             </Button>
           }

@@ -30,6 +30,7 @@ import {
 } from '@/hooks/usePlatformRevenue';
 import { MonthlyRevenueChart, PlanBreakdownChart, PlanDistributionPie } from '@/components/platform/RevenueChart';
 import { SubscriptionTable, InvoiceTable, AtRiskTable } from '@/components/platform/SubscriptionTable';
+import { PageExplainer } from '@/components/ui/PageExplainer';
 
 const formatCurrency = (value: number, compact = false) => {
   if (compact && value >= 1000) {
@@ -74,6 +75,7 @@ export default function Revenue() {
         title="Revenue Dashboard"
         description="Track subscription revenue, payment status, and account health"
       />
+        <PageExplainer pageId="platform-revenue" />
 
       {/* KPI Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">

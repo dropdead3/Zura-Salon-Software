@@ -166,6 +166,7 @@ export default function ManagementHub() {
           title="Management Hub"
           description="Central command for team operations"
         />
+        <PageExplainer pageId="management-hub" />
 
         {/* Team Development */}
         <CategorySection title="Team Development">
@@ -217,6 +218,7 @@ export default function ManagementHub() {
             icon={HandHelping}
             title="Assistant Requests"
             description="Manage help requests from stylists"
+import { PageExplainer } from '@/components/ui/PageExplainer';
             stat={stats?.pendingAssistantRequests || null}
             statLabel="pending"
             colorClass="bg-blue-500/10 text-blue-600 dark:text-blue-400"

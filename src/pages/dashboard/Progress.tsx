@@ -6,6 +6,7 @@ import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { DashboardPageHeader } from '@/components/dashboard/DashboardPageHeader';
 import { Card } from '@/components/ui/card';
 import { CheckCircle, Circle, Lock, AlertCircle, Loader2 } from 'lucide-react';
+import { PageExplainer } from '@/components/ui/PageExplainer';
 
 interface Enrollment {
   id: string;
@@ -86,6 +87,7 @@ export default function Progress() {
           description="Visualize your 75-day program journey, track streaks, and celebrate milestones."
           className="mb-8"
         />
+        <PageExplainer pageId="program" />
 
         {loading ? (
           <DashboardLoader className="py-20" />

@@ -73,6 +73,7 @@ import { useFormatDate } from '@/hooks/useFormatDate';
 import { PhorestApiHealthDashboard } from '@/components/dashboard/PhorestApiHealthDashboard';
 import { PhorestWriteGateCard } from '@/components/dashboard/PhorestWriteGateCard';
 import { usePOSProviderLabel } from '@/hooks/usePOSProviderLabel';
+import { PageExplainer } from '@/components/ui/PageExplainer';
 
 export default function PhorestSettings() {
   const { formatDate } = useFormatDate();
@@ -319,6 +320,7 @@ export default function PhorestSettings() {
               disabled={connectionLoading}
             >
               <RefreshCw className={`w-4 h-4 ${connectionLoading ? 'animate-spin' : ''}`} />
+        <PageExplainer pageId="phorest-settings" />
               <span className="ml-2">Test Connection</span>
             </Button>
           }

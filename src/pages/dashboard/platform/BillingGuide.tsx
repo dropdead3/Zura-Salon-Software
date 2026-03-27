@@ -103,6 +103,7 @@ export default function BillingGuide() {
         }
         backTo="/platform/accounts"
       />
+        <PageExplainer pageId="platform-billing-guide" />
 
       {/* Sticky jump nav */}
       <div className="sticky top-0 z-30 -mx-4 px-4 py-3 bg-[hsl(var(--platform-bg)/0.85)] backdrop-blur-xl border-b border-[hsl(var(--platform-border)/0.3)]">
@@ -427,6 +428,7 @@ function BillingCalculatorWidget({ plans }: { plans: SubscriptionPlan[] }) {
   const selectedPlan = plans.find(p => p.tier === detectedTier) || null;
 
   // Calculate base monthly from tier
+import { PageExplainer } from '@/components/ui/PageExplainer';
   const baseMonthly = detectedTier === 'operator' ? 99 : locCount * 200;
   const includedUsers = detectedTier === 'operator' ? 1 : locCount * 10;
   const maxUsers = detectedTier === 'operator' ? 4 : undefined;

@@ -5,6 +5,7 @@ import { ManagerMeetingRequest } from '@/components/coaching/ManagerMeetingReque
 import { PendingMeetingRequests } from '@/components/coaching/PendingMeetingRequests';
 import { useAuth } from '@/contexts/AuthContext';
 import { useEffectiveRoles } from '@/hooks/useEffectiveUser';
+import { PageExplainer } from '@/components/ui/PageExplainer';
 
 export default function MeetingInbox() {
   const { user } = useAuth();
@@ -19,6 +20,7 @@ export default function MeetingInbox() {
             title="Meeting Inbox"
             description="Manager-initiated meeting requests and your pending requests."
           />
+        <PageExplainer pageId="meeting-details" />
 
           <div className="space-y-4">
             {isCoach && (

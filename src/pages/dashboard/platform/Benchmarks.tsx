@@ -16,6 +16,7 @@ import { useMetricLeaderboards, useBenchmarkComparison, useRecalculateBenchmarks
 import { useOrganizationHealthScores } from '@/hooks/useOrganizationHealth';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import { PageExplainer } from '@/components/ui/PageExplainer';
 
 export default function Benchmarks() {
   const [compareOrg1, setCompareOrg1] = useState<string>('');
@@ -51,6 +52,7 @@ export default function Benchmarks() {
     return (
       <PlatformPageContainer>
         <PlatformPageHeader title="Organization Benchmarks" description="Loading..." />
+        <PageExplainer pageId="platform-benchmarks" />
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mt-6">
           {[...Array(4)].map((_, i) => (
             <Skeleton key={i} className="h-64" />

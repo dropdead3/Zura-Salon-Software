@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Loader2, CheckCircle2, XCircle, PenLine, Clock } from 'lucide-react';
 import { useRecommendationHistory, type LeverRecommendation } from '@/hooks/useLeverRecommendations';
 import { useFormatDate } from '@/hooks/useFormatDate';
+import { PageExplainer } from '@/components/ui/PageExplainer';
 
 const STATUS_CONFIG: Record<string, { label: string; icon: React.ElementType; color: string }> = {
   approved: { label: 'Approved', icon: CheckCircle2, color: 'text-green-500' },
@@ -35,6 +36,7 @@ export default function DecisionHistoryPage() {
         title="Decision History"
         description="Every recommendation tracked: what was surfaced, what was decided."
       />
+        <PageExplainer pageId="decision-history" />
 
       <div className="mt-8 space-y-4">
         {isLoading ? (

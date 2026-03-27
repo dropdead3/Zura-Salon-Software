@@ -26,6 +26,7 @@ import { MediumDistributionChart } from '@/components/dashboard/marketing/Medium
 import { CampaignBudgetManager } from '@/components/dashboard/marketing/CampaignBudgetManager';
 import { CommandCenterVisibilityToggle } from '@/components/dashboard/CommandCenterVisibilityToggle';
 import { BentoGrid } from '@/components/ui/bento-grid';
+import { PageExplainer } from '@/components/ui/PageExplainer';
 
 type DateRange = 'week' | 'month' | '3months';
 
@@ -57,6 +58,7 @@ export default function MarketingAnalytics() {
                 elementKey="website_analytics" 
                 elementName="Website Traffic" 
               />
+        <PageExplainer pageId="marketing-analytics" />
               {/* Manage Campaigns Button */}
               <Button variant="outline" onClick={() => setShowBudgetManager(true)}>
                 <Settings2 className="h-4 w-4 mr-2" />

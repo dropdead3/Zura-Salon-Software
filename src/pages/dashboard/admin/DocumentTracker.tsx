@@ -17,6 +17,7 @@ import { Plus, FileText, AlertTriangle, CheckCircle, XCircle } from 'lucide-reac
 import { DashboardPageHeader } from '@/components/dashboard/DashboardPageHeader';
 import { differenceInDays, parseISO } from 'date-fns';
 import { useFormatDate } from '@/hooks/useFormatDate';
+import { PageExplainer } from '@/components/ui/PageExplainer';
 
 const DOCUMENT_TYPES = [
   { value: 'cosmetology_license', label: 'Cosmetology License' },
@@ -97,7 +98,8 @@ export default function DocumentTracker() {
           actions={
             <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-              <Button><Plus className="w-4 h-4 mr-2" />Add Document</Button>
+              <Button><Plus className="w-4 h-4 mr-2" />
+        <PageExplainer pageId="document-tracker" />Add Document</Button>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader><DialogTitle>Add Document</DialogTitle></DialogHeader>

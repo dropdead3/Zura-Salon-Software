@@ -56,6 +56,7 @@ import { InvitationsTab } from '@/components/access-hub/InvitationsTab';
 import { InviteStaffDialog } from '@/components/dashboard/InviteStaffDialog';
 import { useAuth } from '@/contexts/AuthContext';
 import { useIsPrimaryOwner } from '@/hooks/useIsPrimaryOwner';
+import { PageExplainer } from '@/components/ui/PageExplainer';
 
 type AppRole = Database['public']['Enums']['app_role'];
 
@@ -449,7 +450,8 @@ export default function OnboardingTracker() {
         <DashboardPageHeader
           title="Onboarding Hub"
           description="Monitor team onboarding progress, invitations, and checklist completion"
-          actions={<InviteStaffDialog />}
+          actions={<InviteStaffDialog />
+        <PageExplainer pageId="onboarding-tracker" />}
         />
 
         <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">

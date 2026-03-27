@@ -7,6 +7,7 @@ import { VideoLibraryManager } from '@/components/training/VideoLibraryManager';
 import { IndividualAssignments } from '@/components/training/IndividualAssignments';
 import { TeamProgressDashboard } from '@/components/training/TeamProgressDashboard';
 import { TrainingQuizManager } from '@/components/training/TrainingQuizManager';
+import { PageExplainer } from '@/components/ui/PageExplainer';
 
 export default function TrainingHub() {
   const [activeTab, setActiveTab] = useState('library');
@@ -18,6 +19,7 @@ export default function TrainingHub() {
           title="Training Hub"
           description="Manage training library, assignments, quizzes, and track team progress"
         />
+        <PageExplainer pageId="training-hub" />
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">

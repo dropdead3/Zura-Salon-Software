@@ -24,7 +24,9 @@ export default function LeadManagement() {
           <DashboardPageHeader
             title="Lead Management"
             description="Track, assign, and convert salon inquiries from all sources."
+import { PageExplainer } from '@/components/ui/PageExplainer';
           />
+        <PageExplainer pageId="lead-management" />
           <div className="flex flex-wrap gap-3">
             {/* Location filter */}
             <Select value={selectedLocation} onValueChange={setSelectedLocation}>

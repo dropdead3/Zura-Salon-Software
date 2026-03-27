@@ -522,6 +522,7 @@ export default function RingTheBell() {
               className="font-display tracking-wide"
             >
               <Bell className="w-4 h-4 mr-2" />
+        <PageExplainer pageId="ring-the-bell" />
               {showForm ? 'CANCEL' : 'RING IT'}
             </Button>
           }
@@ -724,6 +725,7 @@ export default function RingTheBell() {
               <AlertDialogTitle>Delete Bell Entry?</AlertDialogTitle>
               <AlertDialogDescription>
                 This will permanently remove this {entryToDelete ? formatCurrency(entryToDelete.ticket_value) : ''} booking from the bell feed. This action cannot be undone.
+import { PageExplainer } from '@/components/ui/PageExplainer';
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>

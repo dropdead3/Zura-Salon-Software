@@ -98,6 +98,7 @@ export default function DataImport() {
           title="Data Import"
           description="Migrate your data from other salon software or import from CSV files."
         />
+        <PageExplainer pageId="data-import" />
 
         <Tabs defaultValue="import" className="space-y-6">
           <TabsList>
@@ -208,6 +209,7 @@ export default function DataImport() {
                       <div>
                         <p className="font-medium">
                           Import {DATA_TYPES.find(t => t.id === selectedDataType)?.label} from {IMPORT_SOURCES.find(s => s.id === selectedSource)?.name}
+import { PageExplainer } from '@/components/ui/PageExplainer';
                         </p>
                         <p className="text-sm text-muted-foreground">
                           Upload your CSV file to begin the import process

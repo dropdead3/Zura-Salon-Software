@@ -5,6 +5,7 @@ import { AgreementEditor } from '@/components/dashboard/day-rate/AgreementEditor
 import { VisibilityGate } from '@/components/visibility/VisibilityGate';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { DashboardPageHeader } from '@/components/dashboard/DashboardPageHeader';
+import { PageExplainer } from '@/components/ui/PageExplainer';
 
 export default function DayRateSettings() {
   return (
@@ -14,6 +15,7 @@ export default function DayRateSettings() {
           title="Day Rate Settings"
           description="Configure chair inventory, pricing, and rental agreements"
         />
+        <PageExplainer pageId="day-rate-settings" />
 
         <Tabs defaultValue="chairs" className="w-full">
           <ResponsiveTabsList>

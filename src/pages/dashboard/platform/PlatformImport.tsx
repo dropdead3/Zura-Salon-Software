@@ -85,7 +85,9 @@ export default function PlatformImport() {
       <PlatformPageHeader
         title="Data Migration"
         description="Import data from external software into accounts"
+import { PageExplainer } from '@/components/ui/PageExplainer';
       />
+        <PageExplainer pageId="platform-import" />
 
       <Tabs defaultValue="import" className="space-y-6">
         <TabsList className="bg-slate-800/50 border-slate-700/50">

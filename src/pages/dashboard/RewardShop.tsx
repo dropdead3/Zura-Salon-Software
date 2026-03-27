@@ -27,6 +27,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { PageExplainer } from '@/components/ui/PageExplainer';
 
 export default function RewardShop() {
   const { formatDate } = useFormatDate();
@@ -66,6 +67,7 @@ export default function RewardShop() {
             <Card className="px-4 py-3 flex items-center gap-3">
               <div className="w-10 h-10 rounded-lg bg-amber-500/10 flex items-center justify-center">
                 <Coins className="w-5 h-5 text-amber-500" />
+        <PageExplainer pageId="rewards" />
               </div>
               <div>
                 <p className="text-xs text-muted-foreground">Your Balance</p>

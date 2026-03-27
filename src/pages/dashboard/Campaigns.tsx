@@ -67,6 +67,7 @@ export default function Campaigns() {
             <Select value={filter} onValueChange={setFilter}>
               <SelectTrigger className="w-[160px]">
                 <SelectValue />
+        <PageExplainer pageId="campaigns" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Campaigns</SelectItem>
@@ -87,6 +88,7 @@ export default function Campaigns() {
             <Target className="w-10 h-10 mx-auto text-muted-foreground/20" />
             <p className="text-muted-foreground text-sm">No campaigns yet</p>
             <p className="text-xs text-muted-foreground/60">Campaigns are created from {PLATFORM_NAME} AI insights via "Let's Implement"</p>
+import { PageExplainer } from '@/components/ui/PageExplainer';
           </div>
         ) : (
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">

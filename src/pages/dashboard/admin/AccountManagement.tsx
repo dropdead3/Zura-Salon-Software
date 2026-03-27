@@ -455,6 +455,7 @@ export default function AccountManagement() {
                 <div className="flex items-center gap-1 mt-2 text-sm text-red-600 dark:text-red-400">
                   <AlertTriangle className="w-3 h-3" />
                   <span>Admin role needs approval from Super Admin</span>
+import { PageExplainer } from '@/components/ui/PageExplainer';
                 </div>
               )}
 
@@ -651,6 +652,7 @@ export default function AccountManagement() {
           actions={
             <div className="flex items-center gap-2 flex-wrap">
               <CreateAdminAccountDialog onSuccess={() => refetchApprovals()} />
+        <PageExplainer pageId="account-management" />
               <GenerateTestAccountsButton />
               <InviteStaffDialog />
             </div>

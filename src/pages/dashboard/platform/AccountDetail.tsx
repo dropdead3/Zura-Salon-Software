@@ -55,6 +55,7 @@ import { useLocations } from '@/hooks/useLocations';
 import { useOrganizationUsage, calculateCapacity, getUtilizationColor, getUtilizationBgColor } from '@/hooks/useOrganizationCapacity';
 import { cn } from '@/lib/utils';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
+import { PageExplainer } from '@/components/ui/PageExplainer';
 
 
 const statusColors: Record<string, 'success' | 'warning' | 'error' | 'default'> = {
@@ -133,6 +134,7 @@ export default function AccountDetail() {
             <div className="h-12 w-12 rounded-xl bg-violet-500/10 border border-violet-500/20 flex items-center justify-center mr-2">
               {organization.logo_url ? (
                 <img src={organization.logo_url} alt={organization.name} className="h-10 w-10 rounded-lg object-cover" />
+        <PageExplainer pageId="platform-account-detail" />
               ) : (
                 <Building2 className="h-6 w-6 text-violet-400" />
               )}

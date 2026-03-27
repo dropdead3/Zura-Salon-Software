@@ -38,6 +38,7 @@ import { StylistLocationRevenueChart } from '@/components/dashboard/sales/Stylis
 import { exportRedoCsv } from '@/lib/exportRedoCsv';
 import { Button } from '@/components/ui/button';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
+import { PageExplainer } from '@/components/ui/PageExplainer';
 
 export default function Stats() {
   const { dashPath } = useOrgDashboardPath();
@@ -129,6 +130,7 @@ export default function Stats() {
               >
                 <SelectTrigger className="w-full sm:w-[250px]">
                   <SelectValue placeholder="Select team member..." />
+        <PageExplainer pageId="my-stats" />
                 </SelectTrigger>
                 <SelectContent>
                   {teamMembers.map((member) => (

@@ -18,6 +18,7 @@ import { FileText, Loader2, Download, BookOpen, CheckCircle2, Circle } from 'luc
 import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { useFormatDate } from '@/hooks/useFormatDate';
 import { useToast } from '@/hooks/use-toast';
+import { PageExplainer } from '@/components/ui/PageExplainer';
 
 interface Handbook {
   id: string;
@@ -153,6 +154,7 @@ export default function MyHandbooks() {
             title="My Handbooks"
             description="Review and acknowledge required training materials and team documents."
           />
+        <PageExplainer pageId="my-handbooks" />
           {totalCount > 0 && (
             <div className="mt-4 flex items-center gap-2">
               <div className="h-2 flex-1 max-w-xs bg-muted rounded-full overflow-hidden">

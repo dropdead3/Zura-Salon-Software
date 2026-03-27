@@ -18,6 +18,7 @@ import { cn } from '@/lib/utils';
 import { tokens } from '@/lib/design-tokens';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { PageExplainer } from '@/components/ui/PageExplainer';
 
 const DAYS_OF_WEEK = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
@@ -219,6 +220,7 @@ export default function ScheduleRequests() {
           title="Schedule Change Requests"
           description="Review and manage employee schedule change requests"
         />
+        <PageExplainer pageId="schedule-requests" />
 
         {/* Stats */}
         <div className="grid gap-4 grid-cols-3">

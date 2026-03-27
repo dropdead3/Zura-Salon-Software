@@ -11,6 +11,7 @@ import { Separator } from '@/components/ui/separator';
 import { format, parseISO, isToday, isBefore } from 'date-fns';
 import { motion } from 'framer-motion';
 import { CLV_TIERS } from '@/lib/clv-calculator';
+import { PageExplainer } from '@/components/ui/PageExplainer';
 
 function formatTime(timeStr: string | null): string {
   if (!timeStr) return '';
@@ -256,6 +257,7 @@ export default function TodayPrep() {
         <DashboardPageHeader
           title="Today's Prep"
         />
+        <PageExplainer pageId="today-prep" />
 
         {appts.length === 0 ? (
           <div className={tokens.empty.container}>

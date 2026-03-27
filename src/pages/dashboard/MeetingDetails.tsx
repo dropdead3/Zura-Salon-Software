@@ -17,6 +17,7 @@ import { AccountabilityItems } from '@/components/coaching/AccountabilityItems';
 import { ReportBuilder } from '@/components/coaching/ReportBuilder';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { PageExplainer } from '@/components/ui/PageExplainer';
 
 const meetingTypes: Record<string, string> = {
   coaching: 'Coaching Session',
@@ -85,6 +86,7 @@ export default function MeetingDetails() {
           <DashboardPageHeader
             title="Meeting Details"
           />
+        <PageExplainer pageId="meeting-details" />
           <Card>
             <CardContent className="p-8 text-center text-muted-foreground">
               Meeting not found.

@@ -8,6 +8,7 @@ import { RoleRulesTab } from '@/components/zura-config/RoleRulesTab';
 import { GuardrailsTab } from '@/components/zura-config/GuardrailsTab';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { PLATFORM_NAME } from '@/lib/brand';
+import { PageExplainer } from '@/components/ui/PageExplainer';
 
 export default function ZuraConfigPage() {
   const { currentOrganization } = useOrganizationContext();
@@ -20,6 +21,7 @@ export default function ZuraConfigPage() {
           title={`${PLATFORM_NAME} Configuration`}
           description={`Customize how ${PLATFORM_NAME} communicates, what she knows, and her boundaries`}
         />
+        <PageExplainer pageId="zura-config" />
 
         {orgId ? (
           <Tabs defaultValue="personality" className="space-y-6">

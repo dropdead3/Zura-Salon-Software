@@ -68,6 +68,7 @@ import {
 } from '@/hooks/useFeatureFlags';
 import { useRoles } from '@/hooks/useRoles';
 import { cn } from '@/lib/utils';
+import { PageExplainer } from '@/components/ui/PageExplainer';
 
 const CATEGORY_CONFIG: Record<string, { icon: typeof Flag; label: string; color: string }> = {
   ui: { icon: Layout, label: 'UI/UX', color: 'text-violet-400' },
@@ -255,6 +256,7 @@ export default function PlatformFeatureFlags() {
         actions={
           <PlatformButton onClick={handleCreate} className="gap-2">
             <Plus className="w-4 h-4" />
+        <PageExplainer pageId="platform-feature-flags" />
             New Flag
           </PlatformButton>
         }

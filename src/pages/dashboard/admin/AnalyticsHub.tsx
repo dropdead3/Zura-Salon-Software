@@ -255,6 +255,7 @@ export default function AnalyticsHub() {
                 <Select value={locationId} onValueChange={setLocationId}>
                   <SelectTrigger className="w-[200px]">
                     <MapPin className="w-4 h-4 mr-2 text-muted-foreground" />
+        <PageExplainer pageId="analytics-hub" />
                     <SelectValue placeholder={t('sales.select_location')} />
                   </SelectTrigger>
                   <SelectContent>
@@ -336,6 +337,7 @@ export default function AnalyticsHub() {
                         selected={{ from: customDateRange.from, to: customDateRange.to }}
                         onSelect={(range) => {
                           if (range?.from && range?.to) {
+import { PageExplainer } from '@/components/ui/PageExplainer';
                             setCustomDateRange({ from: range.from, to: range.to });
                           }
                         }}

@@ -27,6 +27,7 @@ import {
   useDeleteChallenge,
   type TeamChallenge 
 } from '@/hooks/useChallenges';
+import { PageExplainer } from '@/components/ui/PageExplainer';
 
 export default function ChallengesDashboard() {
   const navigate = useNavigate();
@@ -84,6 +85,7 @@ export default function ChallengesDashboard() {
           actions={
             <Button onClick={() => setCreateDialogOpen(true)}>
               <Plus className="w-4 h-4 mr-2" />
+        <PageExplainer pageId="challenges" />
               New Challenge
             </Button>
           }

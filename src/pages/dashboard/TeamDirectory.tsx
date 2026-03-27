@@ -133,6 +133,7 @@ export default function TeamDirectory() {
   const { data: strikeCounts = {} } = useStrikeCounts(canViewStrikes ? userIds : []);
 
   // Get all unique roles from team members for filter dropdown
+import { PageExplainer } from '@/components/ui/PageExplainer';
   const allRoles = [...new Set(team.flatMap(member => 
     member.is_super_admin ? ['super_admin', ...member.roles] : member.roles
   ))].sort((a, b) => (rolePriority[a] ?? 99) - (rolePriority[b] ?? 99));
@@ -209,6 +210,7 @@ export default function TeamDirectory() {
           description="View team members and salon locations."
           className="mb-8"
         />
+        <PageExplainer pageId="team-directory" />
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-6">
           <TabsList>

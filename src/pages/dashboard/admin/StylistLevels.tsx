@@ -218,6 +218,7 @@ export default function StylistLevels() {
   const handleDiscard = () => {
     setHasChanges(false);
     // This will trigger the useEffect to reset from DB
+import { PageExplainer } from '@/components/ui/PageExplainer';
   };
 
   if (isLoading) {
@@ -269,6 +270,7 @@ export default function StylistLevels() {
                   >
                     {saveLevels.isPending ? (
                       <Loader2 className="w-4 h-4 animate-spin" />
+        <PageExplainer pageId="stylist-levels" />
                     ) : (
                       <Save className="w-4 h-4" />
                     )}

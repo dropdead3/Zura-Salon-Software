@@ -11,6 +11,7 @@ import { Progress } from '@/components/ui/progress';
 import { Video, Play, CheckCircle, Clock, Loader2 } from 'lucide-react';
 import { useAchievements } from '@/hooks/useAchievements';
 import { AchievementNotificationToast } from '@/components/achievements/AchievementNotificationToast';
+import { PageExplainer } from '@/components/ui/PageExplainer';
 
 interface TrainingVideo {
   id: string;
@@ -172,6 +173,7 @@ export default function Training() {
           description="Complete assigned training videos and track your progress across all categories."
           className="mb-8"
         />
+        <PageExplainer pageId="training" />
 
         {/* Progress Overview */}
         <Card className="p-6 mb-8">

@@ -187,6 +187,7 @@ export default function Announcements() {
   };
 
   // Handle edit query parameter from Command Center
+import { PageExplainer } from '@/components/ui/PageExplainer';
   useEffect(() => {
     const editId = searchParams.get('edit');
     if (editId && announcements) {
@@ -357,6 +358,7 @@ export default function Announcements() {
                 <DialogTrigger asChild>
                   <Button onClick={resetForm}>
                     <Plus className="w-4 h-4 mr-2" />
+        <PageExplainer pageId="announcements" />
                     New Announcement
                   </Button>
                 </DialogTrigger>

@@ -37,7 +37,8 @@ export default function BoothRenters() {
           <PlatformPageHeader
             title="Renter Hub"
             description="Manage booth renters and rent payments"
-            actions={<Store className="h-6 w-6 text-primary" />}
+            actions={<Store className="h-6 w-6 text-primary" />
+        <PageExplainer pageId="booth-renters" />}
           />
           <Card className="bg-muted/30 border-dashed">
             <CardContent className="flex flex-col items-center justify-center py-12 text-center">
@@ -45,6 +46,7 @@ export default function BoothRenters() {
               <h3 className="text-lg font-medium mb-2">No Organization Selected</h3>
               <p className="text-sm text-muted-foreground max-w-md">
                 Please select an organization from the context switcher to view booth renters and manage rent payments.
+import { PageExplainer } from '@/components/ui/PageExplainer';
               </p>
             </CardContent>
           </Card>

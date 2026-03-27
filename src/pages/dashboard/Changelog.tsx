@@ -32,6 +32,7 @@ import { ChangelogFAB } from '@/components/dashboard/ChangelogFAB';
 import { MobileSubmitDrawer } from '@/components/dashboard/MobileSubmitDrawer';
 import { ChangelogSearchFilter, filterChangelogEntries, type ChangelogFilters } from '@/components/dashboard/ChangelogSearchFilter';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { PageExplainer } from '@/components/ui/PageExplainer';
 
 const ENTRY_TYPE_CONFIG: Record<string, { icon: typeof Sparkles; label: string; color: string }> = {
   update: { icon: Sparkles, label: 'Update', color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300' },
@@ -359,6 +360,7 @@ export default function Changelog() {
                   className="gap-1.5 text-xs sm:text-sm"
                 >
                   <LayoutList className="h-4 w-4" />
+        <PageExplainer pageId="changelog" />
                   <span className="hidden sm:inline">List</span>
                 </Button>
                 <Button

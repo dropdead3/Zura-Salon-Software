@@ -82,6 +82,7 @@ export default function ViewProfile() {
   const specialtyOptions = specialtyOptionsData.map(o => o.name);
   
   // Fetch all service names from DB for highlighted services picker
+import { PageExplainer } from '@/components/ui/PageExplainer';
   const { data: allServiceNames = [] } = useQuery({
     queryKey: ['all-service-names'],
     queryFn: async () => {
@@ -380,6 +381,7 @@ export default function ViewProfile() {
             title={profile.display_name || profile.full_name}
             description="Editing profile as Super Admin"
           />
+        <PageExplainer pageId="my-profile" />
           
           <div className="flex items-start gap-4">
             <Avatar className="w-16 h-16">

@@ -18,6 +18,7 @@ import { useFormatDate } from '@/hooks/useFormatDate';
 import { cn } from '@/lib/utils';
 import { ROLE_LABELS } from '@/hooks/useUserRoles';
 import { BirthdayExportButton } from '@/components/dashboard/BirthdayExportButton';
+import { PageExplainer } from '@/components/ui/PageExplainer';
 
 const DAYS_OF_WEEK = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
@@ -95,6 +96,7 @@ export default function TeamBirthdays() {
           description="Celebrate your team members' special days and milestones"
           actions={
             <BirthdayExportButton birthdays={upcomingBirthdays || []} />
+        <PageExplainer pageId="team-birthdays" />
           }
         />
 

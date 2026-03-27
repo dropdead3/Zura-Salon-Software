@@ -11,6 +11,7 @@ import {
 } from '@/components/ui/select';
 import { Plus } from 'lucide-react';
 import { tokens } from '@/lib/design-tokens';
+import { PageExplainer } from '@/components/ui/PageExplainer';
 
 export default function Waitlist() {
   const { effectiveOrganization } = useOrganizationContext();
@@ -34,6 +35,7 @@ export default function Waitlist() {
               <Select value={statusFilter} onValueChange={setStatusFilter}>
                 <SelectTrigger className="w-[140px]">
                   <SelectValue />
+        <PageExplainer pageId="waitlist" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="active">Active</SelectItem>

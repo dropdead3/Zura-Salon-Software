@@ -13,6 +13,7 @@ import { Switch } from '@/components/ui/switch';
 import { usePTOPolicies, usePTOBalances } from '@/hooks/usePTOBalances';
 import { Plus, Calendar, Settings } from 'lucide-react';
 import { DashboardPageHeader } from '@/components/dashboard/DashboardPageHeader';
+import { PageExplainer } from '@/components/ui/PageExplainer';
 
 const ACCRUAL_PERIODS = [
   { value: 'per_pay_period', label: 'Per Pay Period' },
@@ -57,6 +58,7 @@ export default function PTOManager() {
           title="PTO Manager"
           description="Manage PTO policies and employee balances"
         />
+        <PageExplainer pageId="pto-manager" />
 
         <Tabs defaultValue="policies">
           <TabsList>

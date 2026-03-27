@@ -139,6 +139,7 @@ export default function RecruitingPipeline() {
           description="Track and manage job applicants"
           className="mb-6"
         />
+        <PageExplainer pageId="recruiting" />
 
         {/* Stats Cards */}
         <BentoGrid maxPerRow={5} gap="gap-4">
@@ -269,6 +270,7 @@ export default function RecruitingPipeline() {
                 <Users className="h-12 w-12 mx-auto mb-4 opacity-20" />
                 <p>No applicants found</p>
                 <p className="text-sm">Applications from your website forms will appear here</p>
+import { PageExplainer } from '@/components/ui/PageExplainer';
               </div>
             ) : (
               <div className="divide-y">

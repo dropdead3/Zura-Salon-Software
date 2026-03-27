@@ -50,6 +50,7 @@ import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { PageExplainer } from '@/components/ui/PageExplainer';
 
 interface HeadshotRequest {
   id: string;
@@ -214,6 +215,7 @@ export default function HeadshotRequests() {
           description="Schedule and manage headshot sessions for team members."
           className="mb-8"
         />
+        <PageExplainer pageId="headshot-requests" />
 
         {/* Stats Cards */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">

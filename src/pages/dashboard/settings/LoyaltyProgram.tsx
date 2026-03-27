@@ -6,6 +6,7 @@ import { DashboardPageHeader } from '@/components/dashboard/DashboardPageHeader'
 import { LoyaltyProgramConfigurator } from '@/components/dashboard/loyalty/LoyaltyProgramConfigurator';
 import { LoyaltyTiersEditor } from '@/components/dashboard/loyalty/LoyaltyTiersEditor';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
+import { PageExplainer } from '@/components/ui/PageExplainer';
 
 export default function LoyaltyProgram() {
   const [activeTab, setActiveTab] = useState('program');
@@ -19,6 +20,7 @@ export default function LoyaltyProgram() {
           title="Loyalty & Rewards"
           description="Configure your client loyalty program, tiers, and points"
         />
+        <PageExplainer pageId="loyalty-program" />
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           <ResponsiveTabsList onTabChange={setActiveTab}>

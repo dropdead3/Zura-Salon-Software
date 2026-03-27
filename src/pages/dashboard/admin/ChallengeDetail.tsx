@@ -39,6 +39,7 @@ import {
 } from '@/hooks/useChallenges';
 import { useAuth } from '@/contexts/AuthContext';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
+import { PageExplainer } from '@/components/ui/PageExplainer';
 
 
 const metricIcons: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -144,6 +145,7 @@ export default function ChallengeDetail() {
                 <DropdownMenuTrigger asChild>
                   <Button variant="outline" size="icon">
                     <MoreVertical className="w-4 h-4" />
+        <PageExplainer pageId="challenges" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">

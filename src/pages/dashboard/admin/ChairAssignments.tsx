@@ -51,6 +51,7 @@ export default function ChairAssignments() {
         <DashboardPageHeader
           title="Chair Assignments"
           description="Assign stylists to chairs weekly. Randomize or carry over from previous weeks."
+import { PageExplainer } from '@/components/ui/PageExplainer';
           backTo={dashPath('/admin/team-hub')}
           actions={
             <Button
@@ -59,6 +60,7 @@ export default function ChairAssignments() {
               className="gap-2"
             >
               <Shuffle className="h-4 w-4" />
+        <PageExplainer pageId="chair-assignments" />
               Assign Chairs
             </Button>
           }

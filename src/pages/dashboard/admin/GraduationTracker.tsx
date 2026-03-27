@@ -48,6 +48,7 @@ import {
   type GraduationFeedback,
 } from '@/hooks/useGraduationTracker';
 import { useFormatDate } from '@/hooks/useFormatDate';
+import { PageExplainer } from '@/components/ui/PageExplainer';
 
 const STATUS_COLORS = {
   pending: 'bg-amber-100 text-amber-800',
@@ -338,6 +339,7 @@ export default function GraduationTracker() {
         actions={
           <div className="relative w-64">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <PageExplainer pageId="graduation-tracker" />
             <Input
               placeholder="Search assistants..."
               value={searchQuery}

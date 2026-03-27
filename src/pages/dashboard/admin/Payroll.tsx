@@ -68,6 +68,7 @@ export default function Payroll() {
                   {activeTab !== 'hire' && (
                     <Button onClick={() => setShowWizard(true)}>
                       <Plus className="h-4 w-4 mr-2" />
+        <PageExplainer pageId="payroll" />
                       Run Payroll
                     </Button>
                   )}
@@ -218,6 +219,7 @@ export default function Payroll() {
                       <CardContent>
                         <p className="text-sm text-muted-foreground">
                           Pay schedule configuration will be synced from your payroll provider once connected.
+import { PageExplainer } from '@/components/ui/PageExplainer';
                         </p>
                       </CardContent>
                     </Card>

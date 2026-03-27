@@ -19,6 +19,7 @@ import { ArrowLeft, Plus, ShieldAlert, AlertTriangle, CheckCircle, Clock } from 
 import { Link } from 'react-router-dom';
 import { parseISO } from 'date-fns';
 import { useFormatDate } from '@/hooks/useFormatDate';
+import { PageExplainer } from '@/components/ui/PageExplainer';
 
 const INCIDENT_TYPES = [
   { value: 'workplace_injury', label: 'Workplace Injury' },
@@ -101,7 +102,8 @@ export default function IncidentReports() {
           actions={
             <Dialog open={open} onOpenChange={setOpen}>
               <DialogTrigger asChild>
-                <Button><Plus className="w-4 h-4 mr-2" />Report Incident</Button>
+                <Button><Plus className="w-4 h-4 mr-2" />
+        <PageExplainer pageId="incident-reports" />Report Incident</Button>
               </DialogTrigger>
               <DialogContent className="max-w-lg">
                 <DialogHeader><DialogTitle>Report Incident</DialogTitle></DialogHeader>

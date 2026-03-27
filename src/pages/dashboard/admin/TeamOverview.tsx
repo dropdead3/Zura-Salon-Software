@@ -44,6 +44,7 @@ import { ClientEngineOverview } from '@/components/dashboard/ClientEngineOvervie
 import { toast } from 'sonner';
 import { useFormatDate } from '@/hooks/useFormatDate';
 import { BentoGrid } from '@/components/ui/bento-grid';
+import { PageExplainer } from '@/components/ui/PageExplainer';
 
 interface TeamMember {
   user_id: string;
@@ -303,6 +304,7 @@ export default function TeamOverview() {
             title="New-Client Engine Program Team Overview"
             description="Monitor stylist progress, view Weekly Wins, and add coaching notes."
           />
+        <PageExplainer pageId="team-overview" />
         </div>
 
         {/* Client Engine Overview Card */}

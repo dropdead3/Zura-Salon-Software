@@ -17,6 +17,7 @@ import {
   CreditCard, Users2, ReceiptText, BoxIcon, Tablet,
   type LucideIcon,
 } from 'lucide-react';
+import { PageExplainer } from '@/components/ui/PageExplainer';
 
 interface NavItem {
   value: string;
@@ -84,6 +85,7 @@ export default function ColorBarAdmin() {
         title="Zura Color Bar"
         description="Wholesale price intelligence, source configuration, organization entitlements, billing health, and platform analytics."
       />
+        <PageExplainer pageId="platform-color-bar" />
 
       <div className="flex gap-6 min-h-[calc(100vh-220px)]">
         {/* Left sidebar nav */}

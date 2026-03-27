@@ -95,6 +95,7 @@ export default function PlatformAccounts() {
   const [editOrg, setEditOrg] = useState<OrganizationListItem | null>(null);
 
   // Extract unique countries and states from the data
+import { PageExplainer } from '@/components/ui/PageExplainer';
   const { countries, statesByCountry } = useMemo(() => {
     const countrySet = new Set<string>();
     const stateMap = new Map<string, Set<string>>();
@@ -162,6 +163,7 @@ export default function PlatformAccounts() {
         actions={
           <PlatformButton onClick={() => setCreateDialogOpen(true)} className="gap-2">
             <Plus className="h-4 w-4" />
+        <PageExplainer pageId="platform-accounts" />
             New Account
           </PlatformButton>
         }

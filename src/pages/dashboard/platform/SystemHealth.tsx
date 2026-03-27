@@ -22,6 +22,7 @@ import { useLatestJobRuns, useJobStats } from '@/hooks/useEdgeFunctionLogs';
 import { usePOSProviderLabel } from '@/hooks/usePOSProviderLabel';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import { PageExplainer } from '@/components/ui/PageExplainer';
 
 const SERVICE_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
   supabase: Database,
@@ -74,6 +75,7 @@ export default function SystemHealthPage() {
             disabled={isFetching}
           >
             <RefreshCw className={cn("h-4 w-4 mr-1", isFetching && "animate-spin")} />
+        <PageExplainer pageId="platform-system-health" />
             Refresh
           </PlatformButton>
         }

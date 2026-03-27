@@ -78,6 +78,7 @@ export default function NotificationPreferences() {
   const [hasChanges, setHasChanges] = useState(false);
 
   // Initialize local state from fetched preferences
+import { PageExplainer } from '@/components/ui/PageExplainer';
   useEffect(() => {
     if (preferences) {
       const prefs: Record<string, any> = {};
@@ -161,6 +162,7 @@ export default function NotificationPreferences() {
           title="Notification Preferences"
           description="Choose which notifications you'd like to receive"
         />
+        <PageExplainer pageId="notification-preferences" />
 
         {/* In-App Notifications */}
         <Card>

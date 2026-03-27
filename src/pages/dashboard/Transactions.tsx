@@ -43,6 +43,7 @@ export default function Transactions() {
   const { data: locations = [] } = useLocations();
 
   // Calculate date range from preset
+import { PageExplainer } from '@/components/ui/PageExplainer';
   const getDateRange = (): { startDate?: string; endDate?: string } => {
     const now = new Date();
     switch (datePreset) {
@@ -108,6 +109,7 @@ export default function Transactions() {
             <div className="flex gap-2">
               <Button variant="outline" size={tokens.button.card} onClick={() => refetch()}>
                 <RefreshCw className="w-4 h-4 mr-2" />
+        <PageExplainer pageId="transactions" />
                 Refresh
               </Button>
               <Button size={tokens.button.card} onClick={() => setIsCreditsOpen(true)}>

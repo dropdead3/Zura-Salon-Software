@@ -71,6 +71,7 @@ import { EditStrikeDialog } from '@/components/dashboard/EditStrikeDialog';
 import { StrikeExportButton } from '@/components/dashboard/StrikeExportButton';
 import { useTeamDirectory } from '@/hooks/useEmployeeProfile';
 import { cn } from '@/lib/utils';
+import { PageExplainer } from '@/components/ui/PageExplainer';
 
 export default function StaffStrikes() {
   const { formatDate } = useFormatDate();
@@ -180,6 +181,7 @@ export default function StaffStrikes() {
           actions={
             <div className="flex items-center gap-2">
               <StrikeExportButton strikes={strikes} filteredStrikes={filteredStrikes} />
+        <PageExplainer pageId="staff-strikes" />
               <AddStrikeToStaffDialog />
             </div>
           }
