@@ -149,6 +149,7 @@ export function AggregateSalesCard({
   const [locationDrilldownTarget, setLocationDrilldownTarget] = useState<string | null>(null);
   const [locationDrilldown, setLocationDrilldown] = useState<{ type: LocationDrilldownType; locationId: string; locationName: string } | null>(null);
   const [tipsDrilldownOpen, setTipsDrilldownOpen] = useState(false);
+  const [tipsCardExpanded, setTipsCardExpanded] = useState(false);
   const [activeDrilldown, setActiveDrilldown] = useState<'revenue' | 'transactions' | 'avgTicket' | 'revPerHour' | 'goals' | 'expectedGap' | null>(null);
   const { hideNumbers } = useHideNumbers();
   const { formatCurrency, formatCurrencyWhole, currency } = useFormatCurrency();
@@ -165,6 +166,15 @@ export function AggregateSalesCard({
   const handleTipsToggle = () => {
     setTipsDrilldownOpen(prev => !prev);
     setActiveDrilldown(null); // Close others when opening tips
+  };
+
+  const handleTipsCardToggle = () => {
+    setTipsCardExpanded(prev => {
+      if (prev) {
+        setTipsDrilldownOpen(false);
+      }
+      return !prev;
+    });
   };
 
   const handleLocationMetricClick = (
@@ -1452,55 +1462,76 @@ export function AggregateSalesCard({
                     <MetricInfoTooltip description="Total gratuities (staff tips) recorded across all completed appointments. Not included in total revenue. Click for stylist breakdown." />
                   </div>
                 </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div
-                className={cn(
-                  "text-center p-4 bg-card-inner rounded-lg border transition-all cursor-pointer",
-                  tipsDrilldownOpen
-                    ? "border-primary/50 ring-1 ring-primary/20"
-                    : "border-border/70 dark:border-border/40 hover:border-primary/30 hover:bg-muted/50"
-                )}
-                onClick={handleTipsToggle}
-              >
-                <AnimatedBlurredAmount value={metrics?.totalTips ?? 0} currency={currency} className="text-2xl md:text-3xl font-display tabular-nums" />
-                <p className="text-xs text-muted-foreground mt-1">Total Tips</p>
-                <div className="flex items-center justify-center gap-4 mt-3 pt-3 border-t border-border/40">
-                  <div className="pr-4 border-r border-border/40">
-                    <p className="text-sm font-display tabular-nums">
+                <div
+                  className="flex items-center gap-2 cursor-pointer select-none"
+                  onClick={handleTipsCardToggle}
+                >
+                  {!tipsCardExpanded && (
+                    <span className="text-sm font-display tabular-nums text-muted-foreground">
                       {(() => {
                         const tipDenominator = isToday && todayActual?.hasActualData
                           ? todayActual.actualRevenue
                           : displayMetrics.totalRevenue;
                         const tips = metrics?.totalTips ?? 0;
                         return tipDenominator > 0 && tips > 0
-                          ? `${(tips / tipDenominator * 100).toFixed(1)}%`
-                          : '—';
+                          ? `${(tips / tipDenominator * 100).toFixed(1)}% Avg Tip Rate`
+                          : '— Avg Tip Rate';
                       })()}
-                    </p>
-                    <p className="text-xs text-muted-foreground">Avg Tip Rate</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-display tabular-nums">
-                      {tipAttachRate !== null ? `${tipAttachRate.toFixed(0)}%` : '—'}
-                    </p>
-                    <p className="text-xs text-muted-foreground">Tip Attach</p>
-                  </div>
-                </div>
-                <div className="flex items-center justify-center gap-1 mt-3">
-                  <p className="text-xs text-muted-foreground">Click for breakdown</p>
-                  <ChevronDown className={cn("w-3 h-3 text-muted-foreground transition-transform duration-200", tipsDrilldownOpen && "rotate-180")} />
+                    </span>
+                  )}
+                  <ChevronDown className={cn("w-4 h-4 text-muted-foreground transition-transform duration-200", tipsCardExpanded && "rotate-180")} />
                 </div>
               </div>
+            </CardHeader>
+            {tipsCardExpanded && (
+              <CardContent>
+                <div
+                  className={cn(
+                    "text-center p-4 bg-card-inner rounded-lg border transition-all cursor-pointer",
+                    tipsDrilldownOpen
+                      ? "border-primary/50 ring-1 ring-primary/20"
+                      : "border-border/70 dark:border-border/40 hover:border-primary/30 hover:bg-muted/50"
+                  )}
+                  onClick={handleTipsToggle}
+                >
+                  <AnimatedBlurredAmount value={metrics?.totalTips ?? 0} currency={currency} className="text-2xl md:text-3xl font-display tabular-nums" />
+                  <p className="text-xs text-muted-foreground mt-1">Total Tips</p>
+                  <div className="flex items-center justify-center gap-4 mt-3 pt-3 border-t border-border/40">
+                    <div className="pr-4 border-r border-border/40">
+                      <p className="text-sm font-display tabular-nums">
+                        {(() => {
+                          const tipDenominator = isToday && todayActual?.hasActualData
+                            ? todayActual.actualRevenue
+                            : displayMetrics.totalRevenue;
+                          const tips = metrics?.totalTips ?? 0;
+                          return tipDenominator > 0 && tips > 0
+                            ? `${(tips / tipDenominator * 100).toFixed(1)}%`
+                            : '—';
+                        })()}
+                      </p>
+                      <p className="text-xs text-muted-foreground">Avg Tip Rate</p>
+                    </div>
+                    <div>
+                      <p className="text-sm font-display tabular-nums">
+                        {tipAttachRate !== null ? `${tipAttachRate.toFixed(0)}%` : '—'}
+                      </p>
+                      <p className="text-xs text-muted-foreground">Tip Attach</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-center gap-1 mt-3">
+                    <p className="text-xs text-muted-foreground">Click for breakdown</p>
+                    <ChevronDown className={cn("w-3 h-3 text-muted-foreground transition-transform duration-200", tipsDrilldownOpen && "rotate-180")} />
+                  </div>
+                </div>
 
-              <TipsDrilldownPanel
-                isOpen={tipsDrilldownOpen}
-                parentLocationId={filterContext?.locationId}
-                dateFrom={dateFilters.dateFrom}
-                dateTo={dateFilters.dateTo}
-              />
-            </CardContent>
+                <TipsDrilldownPanel
+                  isOpen={tipsDrilldownOpen}
+                  parentLocationId={filterContext?.locationId}
+                  dateFrom={dateFilters.dateFrom}
+                  dateTo={dateFilters.dateTo}
+                />
+              </CardContent>
+            )}
           </Card>
         </div>
       </div>
