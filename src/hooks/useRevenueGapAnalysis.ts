@@ -84,6 +84,8 @@ export function useRevenueGapAnalysis(
   enabled: boolean,
   locationId?: string | null
 ) {
+  const todayStr = new Date().toISOString().slice(0, 10);
+  const rangeIncludesToday = dateFrom <= todayStr && dateTo >= todayStr;
   return useQuery<RevenueGapAnalysis>({
     queryKey: ['revenue-gap-analysis', dateFrom, dateTo, locationId],
     queryFn: async () => {
