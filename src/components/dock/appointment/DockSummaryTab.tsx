@@ -99,9 +99,9 @@ export function DockSummaryTab({ appointment, staff }: DockSummaryTabProps) {
         </div>
       )}
 
-      {/* Event timeline */}
-      {primarySessionId && (
-        <DockSessionTimeline sessionId={primarySessionId} />
+      {/* Event timeline — show for first session */}
+      {allSessionIds.length > 0 && (
+        <DockSessionTimeline sessionId={allSessionIds[0]} />
       )}
 
       {bowls.length === 0 && (
