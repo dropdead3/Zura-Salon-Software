@@ -863,7 +863,7 @@ export function AIInsightsPanel({ onClose }: { onClose: () => void }) {
                             <div className="flex-1 h-px bg-border/40" />
                           </div>
                           <div className="space-y-2.5">
-                            {urgentInsights.map((insight, i) => (
+                            {displayUrgentInsights.map((insight, i) => (
                               <InsightCard
                                 key={`urgent-${i}`}
                                 insight={insight}
