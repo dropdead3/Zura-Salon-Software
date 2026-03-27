@@ -165,8 +165,7 @@ export function DockServicesTab({ appointment, staff, effectiveServiceName }: Do
     () => (sessions ?? []).filter(s => !isTerminalSessionStatus(s.status as any)).map(s => s.id),
     [sessions]
   );
-  const primarySessionId = activeSessionIds[0] || sessions?.[0]?.id || null;
-  const { data: sessionStats } = useDockSessionStats(primarySessionId);
+  const { data: sessionStats } = useDockSessionStats(activeSessionIds.length > 0 ? activeSessionIds : (sessions?.[0]?.id ? [sessions[0].id] : null));
 
   const handleAddBowlForService = useCallback((serviceLabel: string, containerType: ContainerType = 'bowl') => {
     setActiveServiceLabel(serviceLabel);

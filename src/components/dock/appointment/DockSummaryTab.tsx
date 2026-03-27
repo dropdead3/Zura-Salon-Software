@@ -20,8 +20,8 @@ interface DockSummaryTabProps {
 
 export function DockSummaryTab({ appointment, staff }: DockSummaryTabProps) {
   const { data: sessions, isLoading } = useDockMixSessions(appointment.id);
-  const primarySessionId = sessions?.[0]?.id || null;
-  const { data: stats } = useDockSessionStats(primarySessionId);
+  const allSessionIds = (sessions ?? []).map(s => s.id);
+  const { data: stats } = useDockSessionStats(allSessionIds.length > 0 ? allSessionIds : null);
 
   if (isLoading) {
     return (

@@ -1,6 +1,6 @@
 /**
  * useDockSessionStats — Fetches aggregated session stats from mix_bowl_projections.
- * Provides real dispensed/leftover/cost totals for the session complete sheet.
+ * Accepts a single sessionId OR an array of sessionIds for multi-session aggregation.
  */
 
 import { useQuery } from '@tanstack/react-query';
@@ -24,16 +24,21 @@ const DEMO_SESSION_STATS: SessionStats = {
   totalCost: 12.50,
 };
 
-export function useDockSessionStats(sessionId: string | null) {
+export function useDockSessionStats(sessionIdOrIds: string | string[] | null) {
+  // Normalize to array
+  const sessionIds = Array.isArray(sessionIdOrIds)
+    ? sessionIdOrIds.filter(Boolean)
+    : sessionIdOrIds ? [sessionIdOrIds] : [];
+
   return useQuery({
-    queryKey: ['dock-session-stats', sessionId],
+    queryKey: ['dock-session-stats', ...sessionIds],
     queryFn: async (): Promise<SessionStats> => {
-      if (sessionId?.startsWith('demo-')) return DEMO_SESSION_STATS;
+      if (sessionIds.some(id => id.startsWith('demo-'))) return DEMO_SESSION_STATS;
 
       const { data, error } = await supabase
         .from('mix_bowl_projections')
         .select('dispensed_total, leftover_total, net_usage_total, estimated_cost, has_reweigh, current_status')
-        .eq('mix_session_id', sessionId!);
+        .in('mix_session_id', sessionIds);
 
       if (error) throw error;
 
@@ -47,7 +52,7 @@ export function useDockSessionStats(sessionId: string | null) {
         totalCost: bowls.reduce((sum: number, b: any) => sum + (b.estimated_cost || 0), 0),
       };
     },
-    enabled: !!sessionId,
+    enabled: sessionIds.length > 0,
     staleTime: 10_000,
   });
 }
