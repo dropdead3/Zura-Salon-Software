@@ -1111,7 +1111,7 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                             })()}
                                             {/* Mark Configured footer */}
                                             <div className="bg-amber-500/5 border-t border-amber-500/20 rounded-b-lg p-3 mt-3 flex items-center justify-between">
-                                              {service.backroom_config_dismissed ? (
+                                              {isTrulyConfigured(service) ? (
                                                 <div className="flex items-center gap-2 w-full justify-between">
                                                   <span className="text-xs font-sans text-green-600 dark:text-green-400 flex items-center gap-1.5">
                                                     <CheckCircle2 className="w-3.5 h-3.5" />
