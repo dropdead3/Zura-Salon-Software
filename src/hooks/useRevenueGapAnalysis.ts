@@ -179,6 +179,23 @@ export function useRevenueGapAnalysis(
         });
       });
 
+      // ── Not-yet-concluded appointments (today filter) ──
+      notConcluded.forEach(a => {
+        const price = Number(a.total_price) || 0;
+        if (price <= 0) return;
+        gapItems.push({
+          id: a.id,
+          clientName: resolveClient(a),
+          serviceName: a.service_name || 'Unknown service',
+          stylistName: a.phorest_staff_id ? staffLookup.get(a.phorest_staff_id) ?? null : null,
+          reason: 'not_concluded',
+          scheduledAmount: price,
+          actualAmount: 0,
+          variance: price,
+          appointmentDate: a.appointment_date,
+        });
+      });
+
       // ── POS matching for completed appointments (client-day level) ──
       const completedClientIds = [...new Set(
         completed.map(a => a.phorest_client_id).filter((id): id is string => !!id)
