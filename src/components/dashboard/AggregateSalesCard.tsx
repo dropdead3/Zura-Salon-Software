@@ -1464,7 +1464,7 @@ export function AggregateSalesCard({
                 </div>
                 <div
                   className="flex items-center gap-2 cursor-pointer select-none"
-                  onClick={handleTipsToggle}
+                  onClick={handleTipsCardToggle}
                 >
                   {!tipsCardExpanded && (
                     <span className="text-sm font-display tabular-nums text-muted-foreground">
