@@ -922,8 +922,10 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                                      })}
                                                    </div>
 
-                                                   {/* Mode-specific content */}
-                                                   {billingMode === 'parts_and_labor' ? (
+                                                    {/* Mode-specific content */}
+                                                    {billingMode === null ? (
+                                                      <p className="text-xs font-sans text-muted-foreground italic pl-1">Select a billing method above.</p>
+                                                    ) : billingMode === 'parts_and_labor' ? (
                                                      <div className="flex items-center gap-2 text-xs">
                                                        <FileText className="w-3.5 h-3.5 text-primary" />
                                                        <span className="font-sans text-muted-foreground">
