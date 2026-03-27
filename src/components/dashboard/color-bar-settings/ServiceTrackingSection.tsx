@@ -881,6 +881,15 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                          transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1], delay: 0.08 }}
                                          className="px-6 py-4 bg-muted/30 border-t border-border/30"
                                        >
+                                        {/* Toggle row — visible only at narrow container widths */}
+                                        <div className="@[600px]:hidden flex items-center justify-between py-3 border-b border-border/30 mb-4" onClick={(e) => e.stopPropagation()}>
+                                          <span className="text-xs font-sans text-muted-foreground">Enable Product Billing</span>
+                                          <Switch
+                                            checked={service.is_backroom_tracked}
+                                            onCheckedChange={(v) => toggleTracking.mutate({ id: service.id, tracked: v })}
+                                            className="scale-90 shrink-0"
+                                          />
+                                        </div>
                                         {service.is_backroom_tracked ? (
                                              <div className="space-y-5">
                                              <div className="grid grid-cols-1 xl:grid-cols-2 gap-5">
