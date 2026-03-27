@@ -55,9 +55,9 @@ export function GodModeBar() {
             <span className="text-sm font-sans font-medium text-white truncate">
               {selectedOrganization.name}
             </span>
-            {!isMobile && (
+            {!isMobile && selectedOrganization.account_number && (
               <span className="text-xs font-sans text-violet-400/70 shrink-0">
-                ({selectedOrganization.id.slice(0, 8)})
+                (#{selectedOrganization.account_number})
               </span>
             )}
           </div>
