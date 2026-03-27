@@ -57,6 +57,20 @@ export function useCalculateOverageCharge() {
       }
       if (!resolvedServiceId) return null;
 
+      // ─── Duplicate charge guard (idempotency) ────────────────
+      const { data: existingCharge } = await supabase
+        .from('checkout_usage_charges')
+        .select('id')
+        .eq('mix_session_id', sessionId)
+        .eq('appointment_id', appointmentId)
+        .limit(1)
+        .maybeSingle();
+
+      if (existingCharge) {
+        console.log('Charge already exists for session, skipping:', sessionId);
+        return null;
+      }
+
       // 1. Look up allowance policy for this service
       const { data: policy, error: policyErr } = await supabase
         .from('service_allowance_policies')
@@ -199,7 +213,7 @@ async function handlePartsAndLabor({
   // 2. Aggregate bowl line costs (actual dispensed)
   const { data: bowlLines, error: lineErr } = await supabase
     .from('mix_bowl_lines' as any)
-    .select('dispensed_weight, product_id, dispensed_cost_snapshot')
+    .select('dispensed_quantity, product_id, dispensed_cost_snapshot')
     .eq('mix_session_id', sessionId);
 
   if (lineErr) throw lineErr;
@@ -224,13 +238,15 @@ async function handlePartsAndLabor({
   }
 
   // 4. Calculate total wholesale cost and weighted markup
+  // dispensed_cost_snapshot is per-unit cost; multiply by dispensed_quantity for line total
   let totalWholesaleCost = 0;
   let totalActualUsage = 0;
 
   for (const line of bowlLines as any[]) {
-    const lineCost = line.dispensed_cost_snapshot ?? 0;
-    totalWholesaleCost += lineCost;
-    totalActualUsage += line.dispensed_weight ?? 0;
+    const qty = line.dispensed_quantity ?? 0;
+    const unitCost = line.dispensed_cost_snapshot ?? 0;
+    totalWholesaleCost += qty * unitCost;
+    totalActualUsage += qty;
   }
 
   // Determine effective markup: average of per-product markups, falling back to org default
