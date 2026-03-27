@@ -158,8 +158,12 @@ export function DockServicesTab({ appointment, staff, effectiveServiceName }: Do
   // Parse chemical services
   const chemicalServices = useMemo(() => getChemicalServices(effectiveServiceName ?? appointment.service_name), [effectiveServiceName, appointment.service_name]);
 
-  // Get the first session ID for stats query
-  const primarySessionId = sessions?.[0]?.id || null;
+  // Aggregate stats across ALL active session IDs
+  const activeSessionIds = useMemo(
+    () => (sessions ?? []).filter(s => !isTerminalSessionStatus(s.status as any)).map(s => s.id),
+    [sessions]
+  );
+  const primarySessionId = activeSessionIds[0] || sessions?.[0]?.id || null;
   const { data: sessionStats } = useDockSessionStats(primarySessionId);
 
   const handleAddBowlForService = useCallback((serviceLabel: string, containerType: ContainerType = 'bowl') => {
@@ -309,16 +313,44 @@ export function DockServicesTab({ appointment, staff, effectiveServiceName }: Do
       setShowComplete(false);
       return;
     }
-    const session = sessions?.[0];
-    if (!session || !effectiveOrganization?.id) return;
-    markUnresolved.mutate({
-      sessionId: session.id,
-      organizationId: effectiveOrganization.id,
-      locationId: appointment.location_id || undefined,
-      reason,
-    }, {
-      onSuccess: () => setShowComplete(false),
-    });
+    if (!sessions?.length || !effectiveOrganization?.id) return;
+
+    // Flag ALL non-terminal sessions, not just sessions[0]
+    const activeSessions = sessions.filter(
+      s => !isTerminalSessionStatus(s.status as any)
+    );
+
+    if (activeSessions.length === 0) {
+      toast.info('No active sessions to flag');
+      setShowComplete(false);
+      return;
+    }
+
+    // Flag each active session sequentially
+    let completed = 0;
+    const flagNext = () => {
+      const session = activeSessions[completed];
+      if (!session) {
+        setShowComplete(false);
+        return;
+      }
+      markUnresolved.mutate({
+        sessionId: session.id,
+        organizationId: effectiveOrganization!.id,
+        locationId: appointment.location_id || undefined,
+        reason,
+      }, {
+        onSuccess: () => {
+          completed++;
+          if (completed >= activeSessions.length) {
+            setShowComplete(false);
+          } else {
+            flagNext();
+          }
+        },
+      });
+    };
+    flagNext();
   };
 
   const handleBowlAction = useCallback((action: BowlAction) => {
