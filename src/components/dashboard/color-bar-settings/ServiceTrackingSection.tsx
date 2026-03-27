@@ -717,7 +717,7 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                          <MetricInfoTooltip description="Shows the billing method for each tracked service — either an allowance dollar amount or Parts and Labor cost-plus billing." />
                        </div>
                      </TableHead>
-                    <TableHead className={cn(tokens.table.columnHeader, 'min-w-[160px]')}>Tracked</TableHead>
+                    <TableHead className={cn(tokens.table.columnHeader, 'min-w-[160px] text-right')}>Enable Product Billing</TableHead>
                     <TableHead className="w-10" />
                   </TableRow>
                 </TableHeader>
