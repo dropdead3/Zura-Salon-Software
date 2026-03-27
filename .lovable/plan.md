@@ -1,39 +1,19 @@
 
 
-## Allow Deselecting Billing Method to Reset
+## Add "or" Separator Between Billing Method Pills
 
-### Problem
-Once a billing method is selected, clicking it again does nothing. Users expect toggle behavior — clicking an active pill should deselect it, resetting to the "no method chosen" state.
-
-### Changes
+### Change
 
 **File: `src/components/dashboard/color-bar-settings/ServiceTrackingSection.tsx`**
 
-**Lines 926–938 (billing mode onClick)** — If the clicked mode is already active, set `billing_mode` to `null` (reset) instead of re-upserting the same mode. Also reset `is_active` to `false` and zero out allowance values so the service returns to unconfigured state:
+**Lines 915–960** — Replace the `.map()` over the two modes with explicit rendering of both buttons separated by an "or" label. Instead of mapping an array, render the Allowance button, then a `<span className="text-xs font-sans text-muted-foreground">or</span>`, then the Parts & Labor button.
 
-```typescript
-onClick={(e) => {
-  e.stopPropagation();
-  if (active) {
-    // Deselect — reset to unconfigured
-    upsertPolicy.mutate({
-      organization_id: effectiveOrganization!.id,
-      service_id: service.id,
-      billing_mode: null,
-      is_active: false,
-      included_allowance_qty: 0,
-      overage_rate: 0,
-      overage_rate_type: 'per_unit',
-      overage_cap: null,
-      notes: null,
-    });
-  } else {
-    // Select new mode (existing logic)
-    upsertPolicy.mutate({ ... });
-  }
-}}
-```
+This keeps the gap between elements consistent and adds a clear visual separator indicating these are mutually exclusive choices.
+
+### Technical Detail
+
+Replace the `{(['allowance', 'parts_and_labor'] as const).map(...)}` block with two explicit button blocks and an "or" span between them, reusing the same `onClick`/styling logic for each. The container `gap-1.5` may increase to `gap-2` for breathing room around the word.
 
 ### Result
-Clicking an already-selected billing pill deselects it, returning the service to the "Select a billing method above" state. This gives users a natural undo path without needing to use the destructive Reset action.
+The two billing options will read: `Billing: [✓ Allowance] or [+ Parts & Labor]` — making the mutual exclusivity immediately obvious.
 
