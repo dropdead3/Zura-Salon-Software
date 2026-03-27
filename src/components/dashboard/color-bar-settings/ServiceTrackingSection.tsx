@@ -262,8 +262,16 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
     return map;
   }, [allowancePolicies]);
 
-  const handleReset = useCallback(async (serviceId: string) => {
-    if (!window.confirm('Reset all tracking and billing configuration for this service?')) return;
+  const [resetConfirmServiceId, setResetConfirmServiceId] = useState<string | null>(null);
+
+  const confirmReset = useCallback((serviceId: string) => {
+    setResetConfirmServiceId(serviceId);
+  }, []);
+
+  const executeReset = useCallback(async () => {
+    const serviceId = resetConfirmServiceId;
+    if (!serviceId) return;
+    setResetConfirmServiceId(null);
     try {
       const { error: svcErr } = await supabase
         .from('services')
@@ -308,7 +316,7 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
     } catch (err: any) {
       toast.error('Failed to reset: ' + err.message);
     }
-  }, [allowanceByService, deletePolicy, orgId, queryClient]);
+  }, [resetConfirmServiceId, allowanceByService, deletePolicy, orgId, queryClient]);
 
   // Classification helpers
   const getServiceType = (s: ServiceRow): 'chemical' | 'suggested' | 'standard' => {
