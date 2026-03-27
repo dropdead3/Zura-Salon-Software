@@ -782,12 +782,7 @@ export function ColorBarProductCatalogSection({ onNavigate }: Props) {
 
   return (
     <div className="space-y-4">
-      <Infotainer
-        id="color-bar-products-guide"
-        title="Products & Supplies"
-        description="Choose which products stylists use at the mixing station. Toggle tracking on, set costs, and pick how each product is measured (weighed, pumped, etc). Do this first — services can't be tracked without products."
-        icon={<Package className="h-4 w-4 text-primary" />}
-      />
+      <PageExplainer pageId="color-bar-products" />
 
       <Card>
         <CardHeader>
