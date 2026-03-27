@@ -395,15 +395,17 @@ export function ColorBarDashboardOverview({ onNavigate, initialSubTab, triggerWi
 
 /* ── Sub-components ── */
 
-function KpiTile({ icon: Icon, label, value, status = 'neutral', subtitle }: {
+function KpiTile({ icon: Icon, label, value, status = 'neutral', subtitle, tooltip }: {
   icon: typeof FlaskConical;
   label: string;
   value: string;
   status?: 'ok' | 'warning' | 'neutral';
   subtitle?: string;
+  tooltip?: string;
 }) {
   return (
     <div className={cn(tokens.kpi.tile, 'relative')}>
+      {tooltip && <MetricInfoTooltip description={tooltip} className={tokens.kpi.infoIcon} />}
       <div className="flex items-center gap-2 mb-2">
         <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center shrink-0">
           <Icon className={cn('w-4 h-4', status === 'warning' ? 'text-amber-500' : 'text-primary')} />
