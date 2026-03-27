@@ -1792,7 +1792,7 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
                     <div>
                       <Button
                         size="sm"
-                        className="h-9 px-6"
+                        className="h-9 px-6 w-full sm:w-auto"
                         disabled={saving || grandTotal === 0}
                         onClick={handleSave}
                       >
