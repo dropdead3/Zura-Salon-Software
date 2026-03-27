@@ -540,6 +540,7 @@ export function AIInsightsDrawer({ label, expanded: controlledExpanded, onToggle
 export function AIInsightsPanel({ onClose }: { onClose: () => void }) {
   const [viewMode, setViewMode] = useState<ViewMode>('all');
   const [leverOpen, setLeverOpen] = useState(false);
+  const [selectedIntent, setSelectedIntent] = useState<WizardIntent | null>(null);
   const [selectedCategories, setSelectedCategories] = useState<Set<InsightItem['category']>>(
     new Set(CATEGORY_FILTERS.map(f => f.key))
   );
