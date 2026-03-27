@@ -809,7 +809,8 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                                        </React.Fragment>
                                                      );
                                                    })}
-                                                 </div>
+                                                  </div>
+                                                )}
                                               </div>
                                               </div>
                                               </div>
