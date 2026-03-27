@@ -41,51 +41,15 @@ async function fetchAllBatched<T>(
 }
 
 /**
- * Generalized POS revenue hook for any date range.
- * Queries phorest_daily_sales_summary with fallback to phorest_transaction_items.
+ * Canonical POS revenue hook for any date range.
+ * Uses raw transaction items as the source of truth so partially populated
+ * daily summary tables cannot undercount multi-day ranges.
  * Supports location filtering and batch fetching for >1000 rows.
  */
 export function useActualRevenue(dateFrom: string, dateTo: string, enabled: boolean, locationId?: string) {
   return useQuery<ActualRevenueData>({
     queryKey: ['actual-revenue', dateFrom, dateTo, locationId ?? 'all'],
     queryFn: async () => {
-      // Primary: daily sales summary (batched)
-      const data = await fetchAllBatched<{
-        total_revenue: number | null;
-        service_revenue: number | null;
-        product_revenue: number | null;
-        total_transactions: number | null;
-      }>((from, to) => {
-        let q = supabase
-          .from('phorest_daily_sales_summary')
-          .select('total_revenue, service_revenue, product_revenue, total_transactions')
-          .gte('summary_date', dateFrom)
-          .lte('summary_date', dateTo)
-          .range(from, to);
-        q = addLocationFilter(q, locationId);
-        return q;
-      });
-
-      if (data && data.length > 0) {
-        const totals = data.reduce(
-          (acc, row) => ({
-            totalRevenue: acc.totalRevenue + (Number(row.total_revenue) || 0),
-            serviceRevenue: acc.serviceRevenue + (Number(row.service_revenue) || 0),
-            productRevenue: acc.productRevenue + (Number(row.product_revenue) || 0),
-            totalTransactions: acc.totalTransactions + (Number(row.total_transactions) || 0),
-          }),
-          { totalRevenue: 0, serviceRevenue: 0, productRevenue: 0, totalTransactions: 0 }
-        );
-        return {
-          actualRevenue: totals.totalRevenue,
-          actualServiceRevenue: totals.serviceRevenue,
-          actualProductRevenue: totals.productRevenue,
-          actualTransactions: totals.totalTransactions,
-          hasActualData: totals.totalRevenue > 0,
-        };
-      }
-
-      // Fallback: raw transaction items (batched)
       const txnData = await fetchAllBatched<{
         item_type: string | null;
         total_amount: number | null;
@@ -103,7 +67,13 @@ export function useActualRevenue(dateFrom: string, dateTo: string, enabled: bool
       });
 
       if (!txnData || txnData.length === 0) {
-        return { actualRevenue: 0, actualServiceRevenue: 0, actualProductRevenue: 0, actualTransactions: 0, hasActualData: false };
+        return {
+          actualRevenue: 0,
+          actualServiceRevenue: 0,
+          actualProductRevenue: 0,
+          actualTransactions: 0,
+          hasActualData: false,
+        };
       }
 
       let serviceRevenue = 0;
@@ -112,15 +82,19 @@ export function useActualRevenue(dateFrom: string, dateTo: string, enabled: bool
 
       for (const row of txnData) {
         const amount = (Number(row.total_amount) || 0) + (Number(row.tax_amount) || 0);
-        if (row.item_type === 'service') {
+        const itemType = (row.item_type || '').toLowerCase();
+
+        if (itemType === 'service') {
           serviceRevenue += amount;
         } else {
           productRevenue += amount;
         }
+
         if (row.phorest_client_id) clientIds.add(row.phorest_client_id);
       }
 
       const totalRevenue = serviceRevenue + productRevenue;
+
       return {
         actualRevenue: totalRevenue,
         actualServiceRevenue: serviceRevenue,
