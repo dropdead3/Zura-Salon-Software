@@ -307,7 +307,7 @@ function DashboardRoutes() {
 
       <Route path="admin/zura-config" element={<ProtectedRoute requiredPermission="manage_settings"><ZuraConfigPage /></ProtectedRoute>} />
       <Route path="admin/color-bar-settings" element={<ProtectedRoute requiredPermission="manage_settings"><ColorBarSettings /></ProtectedRoute>} />
-      <Route path="admin/backroom-subscription" element={<ProtectedRoute requiredPermission="manage_settings"><ColorBarSubscription /></ProtectedRoute>} />
+      <Route path="admin/color-bar-subscription" element={<ProtectedRoute requiredPermission="manage_settings"><ColorBarSubscription /></ProtectedRoute>} />
       <Route path="admin/price-recommendations" element={<Navigate to="admin/color-bar-settings?section=price-intelligence" replace />} />
       <Route path="admin/kpi-builder" element={<ProtectedRoute requiredPermission="manage_settings"><KpiBuilderPage /></ProtectedRoute>} />
       <Route path="admin/executive-brief" element={<ProtectedRoute requiredPermission="manage_settings"><ExecutiveBriefPage /></ProtectedRoute>} />
@@ -450,7 +450,7 @@ const App = () => (
                               <Route path="settings/integrations/:integrationId" element={<ProtectedRoute requirePlatformRole="platform_admin"><PlatformIntegrationDetail /></ProtectedRoute>} />
                               <Route path="permissions" element={<ProtectedRoute requirePlatformRole="platform_admin"><PlatformPermissions /></ProtectedRoute>} />
                               <Route path="feature-flags" element={<ProtectedRoute requirePlatformRole="platform_admin"><PlatformFeatureFlags /></ProtectedRoute>} />
-                              <Route path="backroom" element={<ProtectedRoute requirePlatformRole="platform_admin"><ColorBarAdmin /></ProtectedRoute>} />
+                              <Route path="color-bar" element={<ProtectedRoute requirePlatformRole="platform_admin"><ColorBarAdmin /></ProtectedRoute>} />
                               <Route path="coach" element={<ProtectedRoute requireAnyPlatformRole><CoachDashboard /></ProtectedRoute>} />
                               <Route path="demo-features" element={<ProtectedRoute requirePlatformRole="platform_admin"><DemoFeatures /></ProtectedRoute>} />
                             </Route>
