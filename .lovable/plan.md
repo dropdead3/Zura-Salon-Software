@@ -1,81 +1,87 @@
 
 
-# Zura Insights: Redesign for Instant Clarity
+# Zura Insights: Intent-First Wizard Flow
 
-## Problem
-The current panel packs too much into a vertical scroll: summary strip, health strip, severity counts, lever, "One Thing Today", then tabs with a 2-column grid. It's dense and hard to scan quickly. Users can't choose which business areas they care about, and urgent items aren't visually separated from informational ones.
+## Concept
+Add a wizard entry screen to the insights panel. When opened, instead of dumping all data, the panel asks "What do you need right now?" with 5-6 tappable intent cards. Selection filters the feed to exactly what the user needs. A "Show everything" option bypasses the wizard for power users.
 
-## Design Principles
-- **Urgent first, optional later** — critical/warning items surface at the top in a dedicated "Needs Attention" section before any other content
-- **Category filters** — let users toggle which business areas they want to see (Revenue, Retention, Capacity, Staffing, etc.) via pill-style filter chips
-- **Scannable single-column layout** — remove the 2-column grid in favor of a clear vertical stack; each card is full-width with consistent structure
-- **Flatten tabs** — merge "Key Insights" and "Action Items" into a single scrollable feed, with a view toggle (Insights / Actions / All) instead of hiding content behind tabs
-- **Reduce chrome** — remove the health strip (redundant with severity dots), collapse severity counts into the header, and simplify the summary strip
-
-## New Layout Structure
+## Layout
 
 ```text
 ┌─────────────────────────────────────────────────────┐
 │  ZURA BUSINESS INSIGHTS          [Refresh] [Close]  │
 │  ┌─────────────────────────────────────────────────┐ │
-│  │ 🔮 Summary: "Revenue is healthy but 0% rebook  │ │
-│  │    rate signals retention risk..."   · 2m ago   │ │
+│  │ 🔮 Summary strip (always visible)    · 2m ago  │ │
 │  └─────────────────────────────────────────────────┘ │
 │                                                      │
-│  ── NEEDS ATTENTION ─────────────────────────────── │
-│  [Critical insight card - full width, red accent]    │
-│  [Warning insight card - full width, amber accent]   │
+│  What would you like to focus on?                    │
 │                                                      │
-│  ── CATEGORY FILTERS ────────────────────────────── │
-│  [$ Revenue ●] [♥ Retention ●] [~ Retail] [↗ Cap]  │
-│                                                      │
-│  ── VIEW ────────────────────────────────────────── │
-│  ( All ) ( Insights ) ( Actions ) ( Suggestions )   │
-│                                                      │
-│  [Insight card - single column, full width]          │
-│  [Insight card - single column, full width]          │
-│  [Action item card]                                  │
-│  ...                                                 │
-│                                                      │
-│  ── WEEKLY LEVER (collapsible) ─────────────────── │
-│  [No KPIs configured → Build KPIs]                  │
+│  ┌──────────────────┐  ┌──────────────────┐         │
+│  │ 🚨 Where am I    │  │ ⚡ Quickest      │         │
+│  │    failing?       │  │    wins          │         │
+│  │ Critical issues   │  │ High-impact,     │         │
+│  │ hurting you now   │  │ low-effort items │         │
+│  └──────────────────┘  └──────────────────┘         │
+│  ┌──────────────────┐  ┌──────────────────┐         │
+│  │ 💰 Revenue       │  │ 👥 Team          │         │
+│  │    opportunities  │  │    performance   │         │
+│  │ Growth & margin   │  │ Staffing &       │         │
+│  │ insights          │  │ capacity gaps    │         │
+│  └──────────────────┘  └──────────────────┘         │
+│  ┌──────────────────┐  ┌──────────────────┐         │
+│  │ ❤️ Client        │  │ 📊 Show me       │         │
+│  │    retention      │  │    everything    │         │
+│  │ Rebook & churn    │  │ Full insights    │         │
+│  │ signals           │  │ feed             │         │
+│  └──────────────────┘  └──────────────────┘         │
 │                                                      │
 │  Powered by Zura AI · Based on your data            │
 └─────────────────────────────────────────────────────┘
 ```
 
+After selecting an intent, the wizard slides out and the filtered feed slides in (reusing existing `slideVariants`). A "← Change focus" button in the header lets users return to the intent picker.
+
+## Intent Definitions
+
+| Intent | Label | Description | Filter Logic |
+|--------|-------|-------------|-------------|
+| `failing` | Where am I failing? | Critical issues hurting you now | severity === 'critical' OR severity === 'warning', sorted by impact desc |
+| `quick_wins` | Quickest wins | High-impact, low-effort items | effortLevel === 'quick_win', sorted by impactEstimateNumeric desc |
+| `revenue` | Revenue opportunities | Growth & margin insights | category in ['revenue_pulse', 'cash_flow'] |
+| `team` | Team performance | Staffing & capacity gaps | category in ['staffing', 'capacity'] |
+| `retention` | Client retention | Rebook & churn signals | category === 'client_health' |
+| `everything` | Show me everything | Full insights feed | No filter (current behavior) |
+
 ## Changes
 
-### 1. Restructure `AIInsightsPanel` layout (src/components/dashboard/AIInsightsDrawer.tsx)
+### 1. Add wizard state to `AIInsightsPanel`
 
-**Header:** Keep title + refresh/close. Move severity count dots inline with the title (e.g., "ZURA BUSINESS INSIGHTS · ● 1 ● 1 ● 1").
+New state: `selectedIntent: WizardIntent | null` — starts as `null` (wizard screen shown). When an intent is selected, it transitions to the filtered feed.
 
-**Summary strip:** Keep as-is but remove the separate `BusinessHealthStrip` below it. The category filters replace its function.
+### 2. Add `WizardIntentPicker` component (inline in same file)
 
-**"Needs Attention" section (NEW):** Extract all `critical` and `warning` severity insights into a dedicated top section with a subtle label. These render as full-width cards with stronger visual accents. Always visible, not affected by category filters.
+A 2-column grid of intent cards. Each card has an icon, title, one-line description, and a count badge showing how many insights match that intent (so users can see "Where am I failing? (3)" vs empty intents).
 
-**Category filter chips (NEW):** Horizontal row of toggleable pill buttons — one per category (Revenue, Retention, Retail, Capacity, Staffing). Each shows a severity dot if that category has active insights. Multi-select; all active by default. Filters only the "info" severity insights below — urgent items always show above.
+- Cards with 0 matching insights show as muted/disabled with "No items" label
+- Cards with critical items get a subtle red accent
+- Clicking sets `selectedIntent` and triggers the slide transition
 
-**View toggle:** Replace the 3-tab `Tabs` component with a simpler segmented control: All / Insights / Actions / Suggestions. "All" interleaves insights and action items by priority score.
+### 3. Modify feed rendering
 
-**Content feed:** Single-column, full-width cards. Remove the `lg:grid-cols-2` grid. Each card is slightly more compact (reduce vertical padding). Remove the "One Thing Today" standalone card — the top critical/warning items in "Needs Attention" serve this purpose better.
+When `selectedIntent` is set (and not `'everything'`), apply the intent's filter function to `sortedInsights` and `sortedActionItems` before rendering. The existing category filters and view toggle still work within the filtered set.
 
-**Weekly Lever:** Move to bottom of the panel, below the feed. Keeps collapsible behavior.
+When intent is `'everything'`, render exactly as current (no change).
 
-### 2. Add category filter state
+### 4. Add "Change focus" header button
 
-Add `selectedCategories` state (Set of category keys) to `AIInsightsPanel`. Default: all selected. Filter `sortedInsights` by selected categories for the main feed only (not the "Needs Attention" section).
+When `selectedIntent` is set, show a `← Change focus` button in the header (left of title) that resets `selectedIntent` to `null`, returning to the wizard picker.
 
-### 3. Remove `BusinessHealthStrip` component
+### 5. Animation
 
-No longer needed — category filters with severity dots replace it entirely.
-
-### 4. Remove "One Thing Today" block
-
-The "Needs Attention" section at the top replaces this. The highest-priority critical/warning insight is naturally the first card there.
+Reuse existing `slideVariants` — wizard picker exits left, filtered feed enters from right (same pattern as the Guidance panel transition).
 
 ## Files Changed
-- **Modified:** `src/components/dashboard/AIInsightsDrawer.tsx` — restructure `AIInsightsPanel`, remove `BusinessHealthStrip`, add category filters, flatten to single-column, add "Needs Attention" section
+- **Modified:** `src/components/dashboard/AIInsightsDrawer.tsx` — add `WizardIntent` type, `WizardIntentPicker` component, `selectedIntent` state, intent filter logic, "Change focus" button, and slide transitions between wizard and feed
 
-No new files needed. This is a layout reorganization within the existing component.
+Single file change. No new files needed.
 
