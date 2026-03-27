@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
 import { applyLocationFilter } from '@/lib/locationFilter';
-import { formatDisplayName } from '@/lib/utils';
+import { formatFullDisplayName } from '@/lib/utils';
 
 interface ActiveStylist {
   name: string;
@@ -131,7 +131,7 @@ export function useLiveSessionSnapshot(locationId?: string): LiveSessionSnapshot
         const profile = userId ? profileMap.get(userId) : null;
         const phorestName = staffToName.get(staffId);
         fallbackIndex++;
-        const name = profile ? formatDisplayName(profile.full_name || '', profile.display_name) : (phorestName ? formatDisplayName(phorestName) : `Stylist ${fallbackIndex}`);
+        const name = profile ? formatFullDisplayName(profile.full_name || '', profile.display_name) : (phorestName ? phorestName : `Stylist ${fallbackIndex}`);
         return { name, photoUrl: profile?.photo_url || null };
       });
 
@@ -167,7 +167,7 @@ export function useLiveSessionSnapshot(locationId?: string): LiveSessionSnapshot
             .in('user_id', assistantUserIds);
 
           const assistantProfileMap = new Map(
-            (assistantProfiles || []).map(p => [p.user_id, formatDisplayName(p.full_name || '', p.display_name)])
+            (assistantProfiles || []).map(p => [p.user_id, formatFullDisplayName(p.full_name || '', p.display_name)])
           );
 
           assistants.forEach(a => {
@@ -191,7 +191,7 @@ export function useLiveSessionSnapshot(locationId?: string): LiveSessionSnapshot
         const userId = staffToUser.get(staffId);
         const profile = userId ? profileMap.get(userId) : null;
         const phorestName = staffToName.get(staffId);
-        const name = profile ? formatDisplayName(profile.full_name || '', profile.display_name) : (phorestName ? formatDisplayName(phorestName) : `Stylist ${detailFallbackIndex}`);
+        const name = profile ? formatFullDisplayName(profile.full_name || '', profile.display_name) : (phorestName ? phorestName : `Stylist ${detailFallbackIndex}`);
         const photoUrl = profile?.photo_url || null;
 
         // All appointments for this staff today, sorted chronologically
