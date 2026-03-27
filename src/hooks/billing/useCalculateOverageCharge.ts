@@ -179,9 +179,9 @@ async function handleAllowanceMode({
       overage_qty: result.overageQty,
       overage_rate: Number(policy.overage_rate),
       charge_amount: result.chargeAmount,
-      charge_type: 'overage' as any,
+      charge_type: 'overage',
       status: 'pending',
-    } as any)
+    })
     .select()
     .single();
 
