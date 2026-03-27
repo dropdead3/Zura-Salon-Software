@@ -770,7 +770,7 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                                            organization_id: effectiveOrganization!.id,
                                                            service_id: service.id,
                                                            billing_mode: mode,
-                                                           is_active: mode === 'allowance' ? (policy?.is_active ?? false) : false,
+                                                           is_active: mode === 'parts_and_labor' ? true : (policy?.is_active ?? false),
                                                            included_allowance_qty: policy?.included_allowance_qty ?? 0,
                                                            overage_rate: policy?.overage_rate ?? 0,
                                                            overage_rate_type: policy?.overage_rate_type ?? 'per_unit',
