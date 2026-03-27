@@ -671,7 +671,7 @@ export function DashboardCustomizeMenu({ variant = 'icon', roleContext }: Dashbo
             <>
               <div>
                 <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-sm font-medium text-muted-foreground">AVAILABLE ANALYTICS</h3>
+                  <h3 className="text-sm font-display font-medium text-muted-foreground tracking-wide">AVAILABLE ANALYTICS</h3>
                   {unpinnedCards.length > 1 && (
                     <button
                       type="button"
