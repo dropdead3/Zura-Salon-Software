@@ -100,13 +100,26 @@ export function ServiceTrackingProgressBar({ milestones, onQuickSetup }: Props) 
           <span className="font-display text-xs tracking-[0.08em] uppercase text-foreground">
             Setup Progress
           </span>
-          <span className="text-xs tabular-nums font-sans text-muted-foreground">
-            {completed.length} of {milestones.length} complete
-          </span>
+          <div className="flex items-center gap-3">
+            <span className="text-xs tabular-nums font-sans text-muted-foreground">
+              {completed.length} of {milestones.length} complete
+            </span>
+            {onQuickSetup && !allComplete && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="shrink-0 bg-amber-500/10 hover:bg-amber-500/20 text-amber-600 dark:text-amber-400 border-amber-500/40 dark:border-amber-500/50 hover:border-amber-500/60"
+                onClick={onQuickSetup}
+              >
+                <Sparkles className="w-3.5 h-3.5 mr-1.5" />
+                Quick Setup
+              </Button>
+            )}
+          </div>
         </div>
         <Progress
           value={overallPct}
-          className="h-1.5"
+          className="h-2 bg-amber-500/20"
           indicatorClassName="bg-amber-500"
         />
       </div>
