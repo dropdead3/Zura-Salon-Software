@@ -283,6 +283,20 @@ export function DashboardCustomizeMenu({ variant = 'icon', roleContext }: Dashbo
   const unpinnedCards = useMemo(() => {
     return PINNABLE_CARDS.filter(card => !isCardPinned(card.id));
   }, [visibilityData]);
+
+  // Group unpinned cards by category
+  const groupedUnpinnedCards = useMemo(() => {
+    const lowerQuery = searchQuery.toLowerCase();
+    const filtered = unpinnedCards.filter(card => 
+      !searchQuery || card.label.toLowerCase().includes(lowerQuery) || card.category.toLowerCase().includes(lowerQuery)
+    );
+    const groups: Record<string, typeof PINNABLE_CARDS> = {};
+    for (const card of filtered) {
+      if (!groups[card.category]) groups[card.category] = [];
+      groups[card.category].push(card);
+    }
+    return groups;
+  }, [unpinnedCards, searchQuery]);
   
   const { hasPermission } = useAuth();
   const permittedHubs = useMemo(() => {
