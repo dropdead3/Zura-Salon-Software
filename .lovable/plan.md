@@ -1,65 +1,95 @@
 
 
-## Gap Analysis: Service Tracking, Pricing & Dock Billing
+## Fix: P&L Charge Calculation Queries Non-Existent Column + Remaining Gaps
 
-### Bug 1 (Critical): P&L Handler Queries Non-Existent Column — Zero Charges
+### Bug 1 (CRITICAL — Charges Silently Fail): P&L Handler Queries Wrong Table/Column
 
-`handlePartsAndLabor` in `useCalculateOverageCharge.ts` (line 202) selects `dispensed_weight` from `mix_bowl_lines`. **This column does not exist.** The actual column is `dispensed_quantity` (confirmed in `types.ts` line 10059 and every other query in the codebase).
-
-Result: the query returns rows but `dispensed_weight` resolves to `undefined` on every line → `totalActualUsage` = 0, `dispensed_cost_snapshot` is a per-unit cost not a total → `totalWholesaleCost` is wrong. P&L charges are silently miscalculated.
-
-**Fix:** Change `dispensed_weight` → `dispensed_quantity` in the select and the aggregation loop. Also fix the cost calculation — `dispensed_cost_snapshot` is cost-per-unit, so wholesale cost per line should be `dispensed_quantity × dispensed_cost_snapshot`, not just `dispensed_cost_snapshot` alone (line 231).
-
-### Bug 2 (Critical): P&L Cost Aggregation Is Wrong
-
-Line 231: `const lineCost = line.dispensed_cost_snapshot ?? 0` treats the snapshot as the total line cost. But `dispensed_cost_snapshot` is the **per-unit cost** (wholesale price per gram). The correct formula is:
-
-```
-lineCost = dispensed_quantity × dispensed_cost_snapshot
+`handlePartsAndLabor` in `useCalculateOverageCharge.ts` (line 214) queries:
+```ts
+.from('mix_bowl_lines').eq('mix_session_id', sessionId)
 ```
 
-Every other cost calculation in the codebase (e.g., `mix-calculations.ts` line 44, `DockLiveDispensing.tsx` line 131) multiplies quantity × cost. This handler does not.
+**`mix_bowl_lines` has no `mix_session_id` column.** It only has `bowl_id`. This query returns zero rows (or errors silently via the `as any` cast), producing $0.00 charges for every Parts & Labor session.
 
-**Fix:** `totalWholesaleCost += (line.dispensed_quantity ?? 0) * (line.dispensed_cost_snapshot ?? 0)`
+Every other query in the codebase correctly joins through `mix_bowls` first:
+- `MixSessionManager.tsx` → gets bowl IDs from `mix_bowls`, then queries `mix_bowl_lines` by `bowl_id`
+- `DockLiveDispensing.tsx` → queries `mix_bowl_lines` by `bowl_id`
+- `useUsageVariance.ts` → same pattern
 
-### Bug 3 (Medium): Multi-Service Appointments Get Single Charge
+**Fix:** Two-step query:
+1. Get bowl IDs: `mix_bowls` where `mix_session_id = sessionId` and `status != 'discarded'`
+2. Get lines: `mix_bowl_lines` where `bowl_id in bowlIds`
 
-`handleCompleteSession` in `DockServicesTab.tsx` (line 270–276) passes the full `service_name` string (e.g., "Balayage, Toner, Gloss") to `calculateOverage`. But `resolveServiceId` does a single `eq('name', serviceName)` lookup — it will never match a comma-separated string.
+### Bug 2 (Medium): Allowance Mode Also Ignores Discarded Bowl Lines
 
-For multi-service appointments, each chemical service may have a different billing mode (one allowance, one P&L). The current flow calculates zero charges for all but an exact single-service name match.
+The allowance handler (line 142) correctly filters `mix_bowls` by `neq('status', 'discarded')`, but uses `net_usage_weight` from the bowl-level aggregate. This is fine — but if a bowl is partially discarded, individual lines from that bowl still count. Consistent with existing behavior, no change needed here.
 
-**Fix:** Split the service name string and call `calculateOverage` once per chemical service that has bowls assigned to it (using `service_label` on sessions to match).
+### Gap 3 (Medium): Completion Flow Only Processes `sessions[0]`
 
-### Gap 4 (Medium): Charges Shown After Completion — Timing Issue
+`handleCompleteSession` (line 250) only completes `sessions?.[0]`. Multi-bowl appointments create multiple sessions (one per bowl group). If an appointment has 3 bowls across 2 sessions, only the first session gets completed, depleted, and charged. The second session's bowls are orphaned.
 
-`DockSessionCompleteSheet` receives `pendingCharges` from `useCheckoutUsageCharges`, but charges are only *inserted* during the completion flow (step 3). When the sheet opens *before* completion, `pendingCharges` is empty. The charge summary only appears if the user opens the sheet a second time after completing.
+**Fix:** Iterate all non-terminal sessions and run the complete → deplete → charge chain for each.
 
-**Fix:** Either show an *estimated* charge preview before completion (using `useEstimatedProductCharge` or inline calculation from session stats), or surface the charge summary in a post-completion toast/confirmation rather than the pre-completion sheet.
+### Gap 4 (Low): Charge Timing — Sheet Shows Empty on First Open
 
-### Gap 5 (Low): `backroom_billing_settings` Table Availability
+The `DockSessionCompleteSheet` maps `existingCharges` from `useCheckoutUsageCharges`. But charges are created *during* the `onComplete` callback (step 3 of the chain). When the sheet first opens, no charges exist yet. The user sees an empty charges panel, presses "Complete", charges are created, but the sheet closes immediately.
 
-Both `handlePartsAndLabor` and `useEstimatedProductCharge` query `backroom_billing_settings` cast as `any`. The table exists in the schema (the hook works), but there is no UI to create the initial row for an organization. If no row exists, markup defaults to 0% — salons would charge wholesale cost to clients.
+**Fix:** After the completion chain succeeds, briefly show a post-completion confirmation with the calculated charges (either keep the sheet open and refetch, or show a toast with the charge total).
 
-**Fix:** Ensure the Backroom Billing Settings UI (`useUpsertBackroomBillingSettings`) is accessible from the Backroom Hub, and consider auto-creating a default row (e.g., 40% markup) when an org first enables P&L billing.
+### Gap 5 (Low): `as any` Casts Hide Type Errors
 
-### Gap 6 (Low): No Duplicate Charge Guard
-
-If `handleCompleteSession` is called twice (network retry, double-tap), `useCalculateOverageCharge` will insert duplicate charge records. There's no idempotency check on `(mix_session_id, policy_id)`.
-
-**Fix:** Add a check at the top of the mutation: if a `checkout_usage_charges` row already exists for this `mix_session_id` + `policy_id`, skip insertion.
+The `handlePartsAndLabor` function casts `mix_bowl_lines` queries as `any`, which is exactly what allowed Bug 1 to go undetected. After fixing the query path, remove the `as any` cast on the table name and use the typed schema.
 
 ---
 
-### Recommended Implementation Order
+### Implementation
 
-1. **Fix column name + cost formula** in `handlePartsAndLabor` — Bugs 1 & 2 (blocking, wrong charges)
-2. **Fix multi-service charge calculation** — Bug 3 (incorrect for multi-service appointments)
-3. **Add duplicate charge guard** — Gap 6 (data integrity)
-4. **Fix charge timing in completion sheet** — Gap 4 (UX)
-5. **Ensure billing settings accessibility** — Gap 5 (configuration)
+**File: `src/hooks/billing/useCalculateOverageCharge.ts`**
+
+Replace the P&L handler's single query with the correct two-step join:
+
+```ts
+// 1. Get non-discarded bowl IDs for this session
+const { data: bowls } = await supabase
+  .from('mix_bowls')
+  .select('id')
+  .eq('mix_session_id', sessionId)
+  .neq('status', 'discarded');
+
+const bowlIds = (bowls ?? []).map(b => b.id);
+if (bowlIds.length === 0) return zeroResult;
+
+// 2. Get lines from those bowls
+const { data: bowlLines, error: lineErr } = await supabase
+  .from('mix_bowl_lines')
+  .select('dispensed_quantity, product_id, dispensed_cost_snapshot')
+  .in('bowl_id', bowlIds);
+```
+
+Remove the `as any` cast on the table name since `mix_bowl_lines` is in the typed schema.
+
+**File: `src/components/dock/appointment/DockServicesTab.tsx`**
+
+Update `handleCompleteSession` to process all non-terminal sessions:
+
+```ts
+const activeSessions = (sessions ?? []).filter(
+  s => !isTerminalSessionStatus(s.status as any)
+);
+
+for (const session of activeSessions) {
+  await completeSession.mutateAsync({ sessionId: session.id, ... });
+  await depleteInventory.mutateAsync({ sessionId: session.id, ... });
+  for (const svcName of serviceNames) {
+    await calculateOverage.mutateAsync({ sessionId: session.id, ... });
+  }
+}
+```
+
+After the loop completes successfully, invalidate `checkout-usage-charges` to refresh the charge display.
 
 ### Scope
-- 2 files modified: `useCalculateOverageCharge.ts`, `DockServicesTab.tsx`
-- No database migrations
-- No breaking changes to admin-side flow
+- 2 files modified
+- No database changes
+- Fixes a silent $0.00 charge bug affecting all P&L sessions
 
