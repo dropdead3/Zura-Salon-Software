@@ -948,36 +948,6 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                               </div>
                                               )}
 
-                                              {/* ─── Section 3: App Preferences ─── */}
-                                              <div>
-                                                <p className="text-[10px] font-display uppercase tracking-wider text-muted-foreground mb-2">App Preferences</p>
-                                                <div className="pl-3 border-l border-border/40">
-                                             <div className="grid grid-cols-3 gap-4">
-                                              <div className="flex items-center gap-2">
-                                                <label className="text-[10px] font-sans text-muted-foreground whitespace-nowrap">Assistant Prep</label>
-                                                <Switch
-                                                  checked={service.assistant_prep_allowed}
-                                                  onCheckedChange={(v) => updateService.mutate({ id: service.id, updates: { assistant_prep_allowed: v } })}
-                                                />
-                                              </div>
-                                              <div className="flex items-center gap-2">
-                                                <label className="text-[10px] font-sans text-muted-foreground whitespace-nowrap">Smart Mix Assist</label>
-                                                <Switch
-                                                  checked={service.smart_mix_assist_enabled}
-                                                  onCheckedChange={(v) => updateService.mutate({ id: service.id, updates: { smart_mix_assist_enabled: v } })}
-                                                />
-                                              </div>
-                                              <div className="flex items-center gap-2">
-                                                <label className="text-[10px] font-sans text-muted-foreground whitespace-nowrap">Formula Memory</label>
-                                                <Switch
-                                                  checked={service.formula_memory_enabled}
-                                                  onCheckedChange={(v) => updateService.mutate({ id: service.id, updates: { formula_memory_enabled: v } })}
-                                                />
-                                              </div>
-                                             </div>
-                                                </div>
-                                              </div>
-
                                              {/* Price Recommendation inline alert */}
                                             {(() => {
                                               const rec = priceRecMap.get(service.id);
