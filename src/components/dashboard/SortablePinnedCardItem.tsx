@@ -4,6 +4,7 @@ import { Switch } from '@/components/ui/switch';
 import { GripVertical, Eye } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import * as HoverCardPrimitive from '@radix-ui/react-hover-card';
+import { AnalyticsCardPreview } from './previews/AnalyticsCardPreview';
 
 interface SortablePinnedCardItemProps {
   id: string;
@@ -12,7 +13,6 @@ interface SortablePinnedCardItemProps {
   isPinned: boolean;
   onToggle: () => void;
   isLoading?: boolean;
-  previewSrc?: string;
 }
 
 export function SortablePinnedCardItem({ 
