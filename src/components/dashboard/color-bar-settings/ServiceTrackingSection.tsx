@@ -457,11 +457,7 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
       const g = groups.get(cat)!;
       g.services.push(s);
       const policy = allowanceByService.get(s.id);
-      const isFullyConfigured = s.backroom_config_dismissed || (
-        policy?.billing_mode === 'parts_and_labor' ||
-        (policy?.billing_mode === 'allowance' && policy.is_active && (policy.included_allowance_qty > 0 || policy.overage_rate > 0))
-      );
-      if (isFullyConfigured) g.configured++;
+      if (isTrulyConfigured(s)) g.configured++;
       if (s.is_backroom_tracked) g.tracked++;
     }
     return groups;
