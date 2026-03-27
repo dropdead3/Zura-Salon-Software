@@ -793,13 +793,22 @@ export function AggregateSalesCard({
                     return (
                       <>
                         <div className="flex items-center justify-center gap-1.5">
-                          <Badge variant="outline" className={cn("text-xs font-normal gap-1", exceededExpected ? "bg-success/10 text-success-foreground border-success/30" : "bg-warning/10 text-warning border-warning/30")}>
-                            <Clock className="w-3 h-3" />
-                            <BlurredAmount>
-                              <span>{formatCurrency(displayMetrics.totalRevenue)}</span>
-                            </BlurredAmount>
-                            <span>Expected</span>
-                          </Badge>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Badge 
+                                variant="outline" 
+                                className={cn("text-xs font-normal gap-1 cursor-pointer", exceededExpected ? "bg-success/10 text-success-foreground border-success/30" : "bg-warning/10 text-warning border-warning/30")}
+                                onClick={() => toggleDrilldown('expectedGap')}
+                              >
+                                <Clock className="w-3 h-3" />
+                                <BlurredAmount disableTooltip>
+                                  <span>{formatCurrency(displayMetrics.totalRevenue)}</span>
+                                </BlurredAmount>
+                                <span>Expected</span>
+                              </Badge>
+                            </TooltipTrigger>
+                            <TooltipContent>Click to see Gap Report</TooltipContent>
+                          </Tooltip>
                           <Tooltip>
                             <TooltipTrigger asChild>
                               <Info className="w-3.5 h-3.5 text-muted-foreground cursor-help" />
