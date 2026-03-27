@@ -29,7 +29,7 @@ import { useColorBarPricingEstimate } from '@/hooks/color-bar/useColorBarPricing
 import { usePerLocationColorServices } from '@/hooks/color-bar/usePerLocationColorServices';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import {
-  COLOR_BAR_BASE_PRICE, BACKROOM_PER_SERVICE_FEE,
+  COLOR_BAR_BASE_PRICE, COLOR_BAR_PER_SERVICE_FEE,
   SCALE_LICENSE_MONTHLY, SCALE_HARDWARE_PRICE,
 } from '@/hooks/color-bar/useLocationStylistCounts';
 import { useIsMobile } from '@/hooks/use-mobile';
