@@ -711,7 +711,7 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                       />
                     </TableHead>
                     <TableHead className={cn(tokens.table.columnHeader, 'min-w-[180px]')}>Service</TableHead>
-                    <TableHead className={cn(tokens.table.columnHeader, 'text-right')}>Enable Product Billing</TableHead>
+                    <TableHead className={cn(tokens.table.columnHeader, 'text-right @[600px]:table-cell hidden')}>Enable Product Billing</TableHead>
                     <TableHead className="w-10" />
                   </TableRow>
                 </TableHeader>
