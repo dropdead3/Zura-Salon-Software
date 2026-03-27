@@ -59,7 +59,7 @@ export function useUpsertBackroomBillingSettings() {
       let data, error;
       if ((existing as any)?.id) {
         ({ data, error } = await supabase
-          .from('backroom_billing_settings' as any)
+          .from('backroom_billing_settings')
           .update({
             ...(params.default_product_markup_pct !== undefined && {
               default_product_markup_pct: params.default_product_markup_pct,
