@@ -8,6 +8,7 @@ import { AnalyticsCardPreview } from './previews/AnalyticsCardPreview';
 
 interface SortablePinnedCardItemProps {
   id: string;
+  cardId?: string;
   label: string;
   icon: React.ReactNode;
   isPinned: boolean;
