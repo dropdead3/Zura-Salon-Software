@@ -677,17 +677,6 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                         {service.category && (
                                           <span className="text-[11px] text-muted-foreground">{service.category}</span>
                                         )}
-                                        {service.is_backroom_tracked && (
-                                          <>
-                                            {service.category && <span className="text-[11px] text-muted-foreground/40">·</span>}
-                                            <span className={cn(
-                                              'text-[11px]',
-                                              activeToggles === 3 ? 'text-primary' : 'text-muted-foreground',
-                                            )}>
-                                              {activeToggles}/3 on
-                                            </span>
-                                          </>
-                                        )}
                                       </div>
                                     </div>
                                   </div>
