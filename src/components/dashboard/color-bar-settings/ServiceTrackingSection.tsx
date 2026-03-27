@@ -1154,9 +1154,8 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                         />
                       </TableHead>
                       <TableHead className={cn(tokens.table.columnHeader, 'min-w-[180px]')}>Service</TableHead>
-                      <TableHead className={cn(tokens.table.columnHeader, 'text-right')}>
-                        <span className="@[1100px]:hidden">Billing</span>
-                        <span className="hidden @[1100px]:inline">Enable Product Billing</span>
+                      <TableHead className={cn(tokens.table.columnHeader, 'text-right whitespace-nowrap')}>
+                        Enable Product Billing
                       </TableHead>
                       <TableHead className="w-10" />
                     </TableRow>
