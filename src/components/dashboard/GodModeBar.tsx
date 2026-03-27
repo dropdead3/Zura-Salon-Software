@@ -41,9 +41,9 @@ export function GodModeBar() {
         <div className="flex items-center gap-3 min-w-0">
           <div className="flex items-center gap-2 shrink-0">
             {platformIcon ? (
-              <img src={platformIcon} alt="" className="h-4 w-4 shrink-0" />
+              <img src={platformIcon} alt="" className="h-4 w-4 shrink-0 opacity-70" />
             ) : (
-              <ZuraZIcon className="h-4 w-4 text-white" />
+              <ZuraZIcon className="h-4 w-4 text-violet-300" />
             )}
             {!isMobile && (
               <span className="font-display text-[11px] tracking-[0.08em] uppercase text-violet-300">
