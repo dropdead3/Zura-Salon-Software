@@ -78,6 +78,7 @@ export function ServiceEditorDialog({
         const hasContainers = Array.isArray((initialData as any).container_types) && (initialData as any).container_types.length > 0;
         setIsChemicalService((initialData as any).is_chemical_service ?? hasContainers);
         setContainerTypes((initialData as any).container_types || ['bowl']);
+        setBillingMode((initialData as any).billing_mode || 'allowance');
         setRequiresDeposit(initialData.requires_deposit ?? false);
         setDepositType(initialData.deposit_type ?? 'percentage');
         setDepositAmount(initialData.deposit_amount != null ? String(initialData.deposit_amount) : '');
