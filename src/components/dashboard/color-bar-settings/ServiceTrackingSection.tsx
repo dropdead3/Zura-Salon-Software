@@ -21,7 +21,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 import { Table, TableHeader, TableHead, TableRow, TableCell, TableBody } from '@/components/ui/table';
-import { Loader2, Wrench, Plus, Zap, ArrowRight, CircleDot, AlertTriangle, FileText, ChevronDown, ChevronRight, Search, Sparkles, CheckCircle2, RotateCcw, Check } from 'lucide-react';
+import { Loader2, Wrench, Plus, Zap, ArrowRight, CircleDot, AlertTriangle, FileText, ChevronDown, ChevronRight, Search, Sparkles, CheckCircle2, RotateCcw, Check, Calculator } from 'lucide-react';
 import { toast } from 'sonner';
 import { Infotainer } from '@/components/ui/Infotainer';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
@@ -631,6 +631,12 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                       />
                     </TableHead>
                     <TableHead className={tokens.table.columnHeader}>Service</TableHead>
+                    <TableHead className={tokens.table.columnHeader}>
+                      <div className="flex items-center gap-1.5">
+                        Product Allowance
+                        <MetricInfoTooltip description="Shows the billing configuration for each tracked service. Displays the dollar allowance included in the service price, or 'Parts and Labor' if the service uses cost-plus billing." />
+                      </div>
+                    </TableHead>
                     <TableHead className={tokens.table.columnHeader}>Tracked</TableHead>
                     <TableHead className="w-10" />
                   </TableRow>
@@ -647,7 +653,7 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                           className="bg-muted/30 cursor-pointer hover:bg-muted/50 transition-colors"
                           onClick={() => toggleCategoryCollapse(category)}
                         >
-                          <TableCell colSpan={4} className="py-2 px-4">
+                          <TableCell colSpan={5} className="py-2 px-4">
                             <div className="flex items-center justify-between">
                               <div className="flex items-center gap-2">
                                 <ChevronRight className={cn(
@@ -734,6 +740,31 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                   </div>
                                 </TableCell>
 
+                                {/* Product Allowance */}
+                                <TableCell onClick={(e) => e.stopPropagation()}>
+                                  {(() => {
+                                    const policy = allowanceByService?.get(service.id);
+                                    if (!policy || !policy.is_active) return null;
+                                    if (policy.billing_mode === 'parts_and_labor') {
+                                      return (
+                                        <Badge variant="outline" className="text-[10px] shrink-0 border-blue-500/30 bg-blue-500/10 text-blue-500 dark:text-blue-400">
+                                          Parts and Labor
+                                        </Badge>
+                                      );
+                                    }
+                                    const dollarMatch = policy.notes?.match(/\$(\d+\.?\d*)/);
+                                    if (dollarMatch) {
+                                      return (
+                                        <div className="flex items-center gap-1.5 text-sm text-foreground">
+                                          <Calculator className="w-3.5 h-3.5 text-muted-foreground" />
+                                          <span className="font-sans font-medium">${dollarMatch[1]}</span>
+                                        </div>
+                                      );
+                                    }
+                                    return null;
+                                  })()}
+                                </TableCell>
+
                                 {/* Tracking toggle */}
                                 <TableCell onClick={(e) => e.stopPropagation()}>
                                   <div className="flex items-center gap-2 justify-end">
@@ -780,7 +811,7 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                      transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
                                      style={{ overflow: 'clip' }}
                                    >
-                                     <td colSpan={4} className="p-0">
+                                     <td colSpan={5} className="p-0">
                                        <motion.div
                                          initial={{ opacity: 0, y: -8 }}
                                          animate={{ opacity: 1, y: 0 }}
