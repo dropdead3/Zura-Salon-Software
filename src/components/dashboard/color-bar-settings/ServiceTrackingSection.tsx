@@ -188,9 +188,18 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
         .eq('id', id);
       if (error) throw error;
     },
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['color-bar-services'] });
       queryClient.invalidateQueries({ queryKey: ['color-bar-setup-health'] });
+      setExpandedIds(prev => {
+        const next = new Set(prev);
+        if (variables.tracked) {
+          next.add(variables.id);
+        } else {
+          next.delete(variables.id);
+        }
+        return next;
+      });
     },
     onError: (e) => toast.error(e.message),
   });
