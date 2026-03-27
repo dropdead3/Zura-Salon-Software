@@ -189,6 +189,7 @@ export function ColorBarDashboardOverview({ onNavigate, initialSubTab, triggerWi
                 value={`${supplyCostRecovery.recoveryRate}%`}
                 status={supplyCostRecovery.recoveryRate >= 80 ? 'ok' : supplyCostRecovery.recoveryRate > 0 ? 'warning' : 'neutral'}
                 subtitle={`${formatCurrency(supplyCostRecovery.totalRecouped)} recouped · ${formatCurrency(supplyCostRecovery.totalWaived)} waived`}
+                tooltip="Percentage of product costs recouped through client billing. Compares billed supply charges against actual product cost. Higher rates mean better cost pass-through to clients."
               />
             )}
           </div>
