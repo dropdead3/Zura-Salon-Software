@@ -80,7 +80,7 @@ export function useUpsertBackroomBillingSettings() {
           .single());
       } else {
         ({ data, error } = await supabase
-          .from('backroom_billing_settings' as any)
+          .from('backroom_billing_settings')
           .insert({
             organization_id: params.organization_id,
             default_product_markup_pct: params.default_product_markup_pct ?? 0,
@@ -88,7 +88,7 @@ export function useUpsertBackroomBillingSettings() {
             product_charge_label: params.product_charge_label ?? 'Product Usage',
             enable_supply_cost_recovery: params.enable_supply_cost_recovery ?? false,
             updated_by: userId,
-          } as any)
+          })
           .select()
           .single());
       }

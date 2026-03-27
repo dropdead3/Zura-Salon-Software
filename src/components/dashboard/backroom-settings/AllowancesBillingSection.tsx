@@ -168,6 +168,17 @@ export function AllowancesBillingSection({ onNavigate }: Props) {
       overage_rate: policy.overage_rate,
       billing_mode: newMode,
     } as any);
+
+    // Auto-ensure backroom_billing_settings row exists when switching to P&L
+    if (newMode === 'parts_and_labor' && !billingSettings) {
+      upsertBillingSettings.mutate({
+        organization_id: orgId,
+        default_product_markup_pct: 40,
+        product_charge_taxable: true,
+        product_charge_label: 'Product Usage',
+        enable_supply_cost_recovery: true,
+      });
+    }
   };
 
   if (isLoading) {
