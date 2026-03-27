@@ -1131,7 +1131,7 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
           )}
 
           {/* ─── Left Panel: Product Picker ─── */}
-          <div className="w-full md:w-[320px] shrink-0 border-b md:border-b-0 md:border-r border-border/40 p-4 flex flex-col gap-3 overflow-y-auto max-h-[40vh] md:max-h-none">
+          <div className="w-full md:w-[320px] shrink-0 border-b md:border-b-0 md:border-r border-border/40 px-4 py-4 sm:px-5 flex flex-col gap-3 overflow-y-auto max-h-[40vh] md:max-h-none">
             {/* Bowl selector */}
             <div className="space-y-1.5">
               <label className="text-[10px] font-display tracking-[0.08em] uppercase text-muted-foreground">
