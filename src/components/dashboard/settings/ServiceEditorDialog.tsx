@@ -55,6 +55,7 @@ export function ServiceEditorDialog({
   const [requiresNewClientConsultation, setRequiresNewClientConsultation] = useState(false);
   const [isChemicalService, setIsChemicalService] = useState(false);
   const [containerTypes, setContainerTypes] = useState<('bowl' | 'bottle')[]>(['bowl']);
+  const [billingMode, setBillingMode] = useState<'allowance' | 'parts_and_labor'>('allowance');
 
   useEffect(() => {
     if (open) {
