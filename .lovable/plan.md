@@ -1,29 +1,40 @@
 
 
-## Remove Redundant "Requires Color/Chemical" Toggle
+## Fix Reset to Fully Clear Service Configuration
 
 ### Problem
-The "Requires Color/Chemical" toggle inside the expanded service detail is redundant with the main tracking toggle. Enabling tracking already means the service requires color/chemical. The inner toggle just creates confusion and an extra click.
+The "Reset" button currently only clears service-level flags (`is_backroom_tracked`, `is_chemical_service`, `container_types`, `backroom_config_dismissed`) but leaves behind:
+- **Allowance policies** in `service_allowance_policies` — the service still shows "Allowance Set" badge after re-enabling tracking
+- **Recipe baselines** in `service_recipe_baselines` — stale formula data persists
 
-### Solution
-Remove the "Requires Color/Chemical" toggle from the expanded detail panel. The main row tracking toggle becomes the single gate. When tracking is enabled, `is_chemical_service` is automatically set to `true` with default container `['bowl']`. When tracking is disabled, both flags are cleared.
+The service should return to a completely untouched "Needs Attention" state.
 
 ### Changes
 
 **`src/components/dashboard/color-bar-settings/ServiceTrackingSection.tsx`**
 
-1. **Update `toggleTracking` mutation** (lines 169–176): When `tracked: true`, also set `is_chemical_service: true` and default `container_types: ['bowl']`. When `tracked: false`, also set `is_chemical_service: false` and `container_types: []`.
+1. **Import `useDeleteAllowancePolicy`** from `@/hooks/billing/useServiceAllowancePolicies` (already has `useServiceAllowancePolicies` imported).
 
-2. **Remove the "Requires Color/Chemical" toggle block** (lines 746–760): Delete the entire `<div>` containing the label and Switch for `is_chemical_service`.
+2. **Add a delete baselines mutation** using `supabase.from('service_recipe_baselines').delete().eq('service_id', id).eq('organization_id', orgId)`.
 
-3. **Keep the Vessels selector**: The vessel picker (Bowls/Bottles) remains visible whenever `is_backroom_tracked` is true (since `is_chemical_service` will always be in sync). Update its visibility condition from `service.is_chemical_service` to `service.is_backroom_tracked` (or just always show it in the expanded panel since it's already gated by tracking).
+3. **Replace all 4 Reset click handlers** (lines ~954, ~978, ~1042, ~1066) with a single `handleReset(serviceId)` function that:
+   - Updates the service record: `is_backroom_tracked: false`, `is_chemical_service: false`, `container_types: []`, `backroom_config_dismissed: false`
+   - Deletes the allowance policy for that service (if one exists, looked up from `allowanceByService` map)
+   - Deletes all recipe baselines for that service
+   - Invalidates relevant query keys
+   - Collapses the expanded row
+   - Shows a toast: "Service reset to unconfigured"
 
-4. **Update the "Reset Configuration" action** (lines ~967–995): Already clears both flags — no change needed.
+4. **Add confirmation** — wrap the reset in a simple `window.confirm('Reset all tracking and billing configuration for this service?')` to prevent accidental clicks, since this is destructive.
 
-### What Stays
-- Main tracking toggle in the list row (the single gate)
-- Vessel picker (Bowls/Bottles)
-- Billing Method section
-- All existing badges and status indicators
-- The `is_chemical_service` column in the DB (just kept in sync automatically)
+### What Gets Cleared
+| Data | Table | Action |
+|------|-------|--------|
+| Tracking flags | `services` | Set to false/empty |
+| Config dismissed | `services` | Set to false |
+| Allowance policy | `service_allowance_policies` | Delete row |
+| Recipe baselines | `service_recipe_baselines` | Delete rows |
+
+### Result
+After reset, the service appears in the "Needs Attention" state with no badges, no allowance, no baselines — identical to a freshly imported service.
 
