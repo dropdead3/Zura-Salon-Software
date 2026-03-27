@@ -176,10 +176,10 @@ export function DockClientTab({ appointment, staff, activeBowlId }: DockClientTa
   // Visit history
   const { data: visits = [], isLoading: visitsLoading } = useClientVisitHistory(phorestClientId);
 
-  // Formula memory
+  // Formula memory (gated by org-wide setting)
   const { data: formulaMemory } = useInstantFormulaMemory(
-    phorestClientId || clientId,
-    appointment.service_name,
+    formulaMemoryEnabled ? (phorestClientId || clientId) : null,
+    formulaMemoryEnabled ? appointment.service_name : null,
   );
 
   // Formula history
