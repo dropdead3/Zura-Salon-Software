@@ -1,43 +1,56 @@
 
 
-## Preview-on-Hover for Analytics Cards
+## Replace AI-Generated Preview Images with Code-Rendered Previews
 
-Add an eye icon to each analytics card row in the Customize Dashboard drawer. On hover, it shows a tooltip-style popover with a static preview image of what that card looks like with sample data.
+### Problem
+The current preview images are AI-generated JPGs that don't match the actual card designs, typography, color scheme, or data layout used in the real analytics cards.
 
 ### Approach
-
-Use static preview images (one per card) rather than rendering live components — this keeps the drawer lightweight, avoids data dependencies, and gives full control over the preview appearance.
+Create lightweight, self-contained preview components for each card type that render with hardcoded faux data — matching the real card's visual structure (headers, charts, metrics, badges) but without any hooks or data fetching. These replace the `<img>` tag in the HoverCard.
 
 ### Changes
 
-**1. Create preview images**
-- Generate a set of static preview screenshots (PNG) for each of the 12 pinnable cards, stored in `src/assets/analytics-previews/`
-- Each image shows the card populated with realistic faux data at a consistent size (~400px wide)
-- Images named by card ID: `sales_overview.png`, `revenue_breakdown.png`, etc.
+**1. Create `src/components/dashboard/previews/AnalyticsCardPreview.tsx`**
+- A router component that takes a `cardId` and renders the appropriate mini preview
+- Each card preview is a small function returning JSX with hardcoded data
+- Uses the same design tokens, typography (Termina headers, Aeonik body), and layout patterns as the real cards
+- Includes simplified versions of: metric values, mini bar/donut charts (via simple divs/SVGs), stat rows, badges
+- All monetary values shown as realistic sample numbers (not blurred — these are previews)
+- Scaled down to fit ~360px width naturally
 
-**2. Create a preview map (`src/components/dashboard/analyticsCardPreviews.ts`)**
-- Export a `Record<string, { src: string; alt: string }>` mapping each card ID to its preview image import
-- This keeps the mapping centralized and type-safe
+**2. Preview components for all 12 pinnable cards:**
+- `SalesOverviewPreview` — Revenue total, service/retail split bars, comparison badge
+- `RevenueBreakdownPreview` — Simple donut chart (CSS), category legend
+- `TopPerformersPreview` — Ranked list with revenue bars
+- `WeekAheadForecastPreview` — Mini line chart area, daily forecast row
+- `GoalTrackerPreview` — Progress ring, pace status badge, daily run rate
+- `NewBookingsPreview` — Booking count, trend arrow, time distribution
+- `ClientFunnelPreview` — New/returning split, funnel visualization
+- `OperationsStatsPreview` — Utilization gauge, queue stats
+- `CapacityUtilizationPreview` — Bar chart by provider
+- `StylistWorkloadPreview` — Workload distribution bars
+- `StaffingTrendsPreview` — Mini trend line, headcount stats
+- `HiringCapacityPreview` — Open positions, capacity meter
 
-**3. Update `SortablePinnedCardItem`**
-- Add an `Eye` icon button between the label and the toggle switch
-- On hover (using `HoverCard` from Radix), display the preview image in a floating card
-- The preview popover appears to the left of the drawer (side="left") so it doesn't overlap the panel
-- Props addition: `previewSrc?: string` — optional, so rows without previews degrade gracefully
+Each preview is ~30-50 lines of JSX using existing UI primitives (Card, Badge, Progress) and design tokens.
 
-**4. Update `DashboardCustomizeMenu`**
-- Pass `previewSrc` from the preview map to each `SortablePinnedCardItem` in both pinned and unpinned lists
+**3. Update `SortablePinnedCardItem.tsx`**
+- Replace `previewSrc?: string` prop with `cardId: string` (already has `id`)
+- Replace the `<img>` tag inside HoverCard with `<AnalyticsCardPreview cardId={cardId} />`
+- Remove the `previewSrc` prop entirely
 
-### UI Details
+**4. Update `DashboardCustomizeMenu.tsx`**
+- Remove `ANALYTICS_CARD_PREVIEWS` import and `previewSrc` prop passing
+- Pass just the card ID (already passed as `id`)
 
-- Eye icon: `w-4 h-4 text-muted-foreground/40 hover:text-muted-foreground` — subtle, not competing with the toggle
-- HoverCard content: `w-[380px] p-2 rounded-xl` with the preview image, card label as caption
-- Preview image: `rounded-lg` with a subtle border to frame it
-- Placement: `side="left"` with `sideOffset={16}` to float outside the drawer
+**5. Clean up**
+- Delete `src/components/dashboard/analyticsCardPreviews.ts`
+- Delete all 12 JPG files from `src/assets/analytics-previews/`
 
-### Technical Notes
-
-- Since the drawer is a portal (PremiumFloatingPanel), HoverCard portals will layer correctly
-- Preview images will be ES module imports from `src/assets/` for proper bundling
-- For the initial implementation, placeholder preview images can be created programmatically or captured manually — the architecture supports swapping them later
+### Technical Details
+- Preview components use zero hooks — pure JSX with hardcoded data
+- Charts are simplified: CSS gradient bars, SVG circles for donuts, simple div-based bar charts
+- Design tokens imported for consistent typography and spacing
+- Each preview wrapped in a `Card` with the canonical header layout (icon + Termina title)
+- Total new code ~600-800 lines in a single file, keeping it consolidated
 
