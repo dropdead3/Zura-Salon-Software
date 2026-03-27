@@ -198,6 +198,31 @@ export function SuperAdminTopBar({
             </div>
           )}
 
+          {/* Page Explainers toggle — admin only */}
+          {(isPlatformUser || isAdmin) && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className={cn(
+                    "h-9 w-9 rounded-full transition-all duration-150",
+                    showInfotainers
+                      ? "text-blue-400 hover:text-blue-300 hover:bg-blue-500/10"
+                      : "text-muted-foreground hover:text-foreground"
+                  )}
+                  onClick={() => toggleInfotainers(!showInfotainers)}
+                  disabled={isToggling}
+                >
+                  {showInfotainers ? <BookOpen className="w-4 h-4" /> : <BookX className="w-4 h-4" />}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="text-xs">
+                {showInfotainers ? 'Hide page explainers' : 'Show page explainers (resets dismissed)'}
+              </TooltipContent>
+            </Tooltip>
+          )}
+
           {/* Primary role badge — only highest-priority shown */}
           {(isPlatformUser || isAdmin) && roleBadges.length > 0 && (() => {
             const badge = roleBadges[0];
