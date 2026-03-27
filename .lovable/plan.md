@@ -1,36 +1,36 @@
 
 
-## Fix: Top Bar Hide/Unhide Button Should Not Show Confirmation Dialog
+## God Mode Bar — Dynamic Platform Icon
 
-### Problem
-The "Show/hide $" button in the top bar shows a confirmation dialog when clicking to reveal numbers. This is unnecessary friction — the button is a deliberate, explicit action. The confirmation dialog should only appear when clicking on a blurred number inline on the page (via `requestUnhide`).
+### What
+Replace the hardcoded `Shield` icon in the God Mode bar with the platform's branded icon, pulled from platform branding settings (`icon_light_url`). Falls back to the `ZuraZIcon` component when no custom icon is uploaded.
 
-### Root Cause
-In `HideNumbersContext.tsx`, `toggleHideNumbers` (used by the top bar button) routes through the confirmation dialog on line 134 when `hideNumbers` is true — identical behavior to `requestUnhide`. The comment on line 127 acknowledges this should bypass confirmation, but the implementation doesn't.
+### Why
+The God Mode bar is a platform-level surface. It should reflect the platform's visual identity and update automatically when platform logos change — no hardcoded assets.
 
-### Fix
-**Single file change: `src/contexts/HideNumbersContext.tsx`**
+### Changes
 
-Update `toggleHideNumbers` to directly unhide without showing the confirmation dialog:
+**Single file: `src/components/dashboard/GodModeBar.tsx`**
 
-```typescript
-// Line 128-153: toggleHideNumbers
-const toggleHideNumbers = async () => {
-  if (!user) return;
-  const newValue = !hideNumbers;
-  setHideNumbers(newValue);
-  
-  try {
-    await supabase
-      .from('employee_profiles')
-      .update({ hide_numbers: newValue })
-      .eq('user_id', user.id);
-  } catch (err) {
-    console.error('Error saving hide_numbers preference:', err);
-    setHideNumbers(!newValue);
-  }
-};
+1. Import `usePlatformBranding` and `ZuraZIcon`
+2. Replace the `Shield` icon with:
+   - If `branding.icon_light_url` exists: render an `<img>` tag with that URL (light icon works on the dark violet background)
+   - Otherwise: render `<ZuraZIcon>` as the default fallback
+3. Keep the same sizing (`h-4 w-4`) and `text-violet-300` color treatment (ZuraZIcon inherits `currentColor`)
+
+### Technical Detail
+
+```tsx
+const { branding } = usePlatformBranding();
+const platformIcon = branding.icon_light_url;
+
+// In JSX:
+{platformIcon ? (
+  <img src={platformIcon} alt="" className="h-4 w-4 shrink-0" />
+) : (
+  <ZuraZIcon className="h-4 w-4 text-violet-300" />
+)}
 ```
 
-Remove the confirmation branch (lines 133-137). Both hiding and unhiding via the explicit top bar button will toggle directly. The `requestUnhide` function (used by `BlurredAmount` and `AnimatedBlurredAmount` when clicking inline blurred values) continues to show the confirmation dialog as before.
+This ensures the icon is fully dynamic — if a platform admin uploads a new icon via branding settings, the God Mode bar updates automatically without code changes.
 
