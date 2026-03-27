@@ -18,6 +18,7 @@ export interface ProgressMilestone {
 
 interface Props {
   milestones: ProgressMilestone[];
+  onQuickSetup?: () => void;
 }
 
 export function ServiceTrackingProgressBar({ milestones }: Props) {
