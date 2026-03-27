@@ -139,7 +139,7 @@ export function RevenueDonutChart({
                 <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: 'hsl(var(--muted-foreground) / 0.4)' }} />
                 <span className="text-muted-foreground">Retail</span>
               </div>
-              <span className="font-medium tabular-nums">{retailPercent}%</span>
+              <span className="font-medium tabular-nums text-foreground">{retailPercent}%</span>
             </div>
             {/* Retail sub-category rows */}
             {subCategories.map((sub) => {
