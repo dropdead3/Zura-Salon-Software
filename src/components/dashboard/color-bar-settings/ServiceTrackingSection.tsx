@@ -1050,8 +1050,7 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                                     Reset Configuration
                                                   </Button>
                                                 </div>
-                                              ) : (
-                                                {(() => {
+                                              ) : (() => {
                                                   const fPolicy = allowanceByService.get(service.id);
                                                   const fBillingMode = fPolicy?.billing_mode ?? null;
                                                   const hasConfiguredAllowance = fPolicy && (fPolicy.included_allowance_qty > 0 || fPolicy.overage_rate > 0) && fPolicy.is_active;
@@ -1111,7 +1110,6 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                                     </>
                                                   );
                                                 })()}
-                                              )}
                                             </div>
                                           </div>
                                         ) : (
