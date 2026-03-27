@@ -168,9 +168,12 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
 
   const toggleTracking = useMutation({
     mutationFn: async ({ id, tracked }: { id: string; tracked: boolean }) => {
+      const updates = tracked
+        ? { is_backroom_tracked: true, is_chemical_service: true, container_types: ['bowl'] as ('bowl' | 'bottle')[] }
+        : { is_backroom_tracked: false, is_chemical_service: false, container_types: [] as ('bowl' | 'bottle')[] };
       const { error } = await supabase
         .from('services')
-        .update({ is_backroom_tracked: tracked })
+        .update(updates)
         .eq('id', id);
       if (error) throw error;
     },
@@ -744,57 +747,41 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                                 <p className="text-[10px] font-display uppercase tracking-wider text-muted-foreground mb-2">Tracking</p>
                                                 <div className="pl-3 border-l border-border/40">
                                               <div className="flex flex-wrap items-center gap-4">
-                                               <div className="flex items-center gap-2">
-                                                 <label className="text-[10px] font-sans text-muted-foreground whitespace-nowrap">Requires Color/Chemical</label>
-                                                 <Switch
-                                                   checked={service.is_chemical_service}
-                                                   onCheckedChange={(v) => {
-                                                     if (v) {
-                                                       const containers = (service.container_types?.length) ? service.container_types : ['bowl'] as ('bowl' | 'bottle')[];
-                                                       updateService.mutate({ id: service.id, updates: { is_chemical_service: true, container_types: containers } });
-                                                     } else {
-                                                       updateService.mutate({ id: service.id, updates: { is_chemical_service: false, is_backroom_tracked: false, container_types: [] } });
-                                                     }
-                                                   }}
-                                                 />
+                                                  <div className="flex items-center gap-1.5">
+                                                    <span className="text-xs font-sans text-muted-foreground">Vessels:</span>
+                                                    {(['bowl', 'bottle'] as const).map((vt, idx) => {
+                                                      const active = (service.container_types || []).includes(vt);
+                                                      return (
+                                                        <React.Fragment key={vt}>
+                                                          {idx === 1 && (
+                                                            <span className="text-xs font-sans text-muted-foreground/70 italic">and/or</span>
+                                                          )}
+                                                          <button
+                                                            className={cn(
+                                                              'px-3 py-1 rounded-full text-xs font-sans capitalize transition-colors border flex items-center gap-1',
+                                                              active
+                                                                ? 'bg-primary text-primary-foreground border-primary'
+                                                                : 'bg-transparent border-dashed border-muted-foreground/40 text-muted-foreground hover:border-muted-foreground'
+                                                            )}
+                                                            onClick={(e) => {
+                                                              e.stopPropagation();
+                                                              const current = service.container_types || [];
+                                                              if (active && current.length === 1) {
+                                                                toast.error('At least one vessel type is required');
+                                                                return;
+                                                              }
+                                                              const next = active ? current.filter(t => t !== vt) : [...current, vt];
+                                                              updateService.mutate({ id: service.id, updates: { container_types: next } });
+                                                            }}
+                                                          >
+                                                            {active ? <Check className="w-3 h-3" /> : <Plus className="w-3 h-3" />}
+                                                            {vt === 'bowl' ? 'Bowls' : 'Bottles'}
+                                                          </button>
+                                                        </React.Fragment>
+                                                      );
+                                                    })}
+                                                   </div>
                                                </div>
-                                               {service.is_chemical_service && (
-                                                 <div className="flex items-center gap-1.5">
-                                                   <span className="text-xs font-sans text-muted-foreground">Vessels:</span>
-                                                   {(['bowl', 'bottle'] as const).map((vt, idx) => {
-                                                     const active = (service.container_types || []).includes(vt);
-                                                     return (
-                                                       <React.Fragment key={vt}>
-                                                         {idx === 1 && (
-                                                           <span className="text-xs font-sans text-muted-foreground/70 italic">and/or</span>
-                                                         )}
-                                                         <button
-                                                           className={cn(
-                                                             'px-3 py-1 rounded-full text-xs font-sans capitalize transition-colors border flex items-center gap-1',
-                                                             active
-                                                               ? 'bg-primary text-primary-foreground border-primary'
-                                                               : 'bg-transparent border-dashed border-muted-foreground/40 text-muted-foreground hover:border-muted-foreground'
-                                                           )}
-                                                           onClick={(e) => {
-                                                             e.stopPropagation();
-                                                             const current = service.container_types || [];
-                                                             if (active && current.length === 1) {
-                                                               toast.error('At least one vessel type is required');
-                                                               return;
-                                                             }
-                                                             const next = active ? current.filter(t => t !== vt) : [...current, vt];
-                                                             updateService.mutate({ id: service.id, updates: { container_types: next } });
-                                                           }}
-                                                         >
-                                                           {active ? <Check className="w-3 h-3" /> : <Plus className="w-3 h-3" />}
-                                                           {vt === 'bowl' ? 'Bowls' : 'Bottles'}
-                                                         </button>
-                                                       </React.Fragment>
-                                                     );
-                                                   })}
-                                                  </div>
-                                                )}
-                                              </div>
                                               </div>
                                               </div>
 
