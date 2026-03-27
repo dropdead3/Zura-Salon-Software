@@ -737,8 +737,9 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                          className="px-6 py-4 bg-muted/30 border-t border-border/30"
                                        >
                                         {service.is_backroom_tracked ? (
-                                            <div className="space-y-5">
-                                              {/* ─── Section 1: Tracking ─── */}
+                                             <div className="space-y-5">
+                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                                               {/* ─── Section 1: Tracking ─── */}
                                               <div>
                                                 <p className="text-[10px] font-display uppercase tracking-wider text-muted-foreground mb-2">Tracking</p>
                                                 <div className="pl-3 border-l border-border/40">
@@ -932,7 +933,8 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                                 })()}
                                                 </div>
                                               </div>
-                                              )}
+                                               )}
+                                             </div>
 
                                              {/* Price Recommendation inline alert */}
                                             {(() => {
