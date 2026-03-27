@@ -330,8 +330,14 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
     const type = getServiceType(s);
     // Chemical but not tracked
     if ((type === 'chemical' || type === 'suggested') && !s.is_backroom_tracked) return true;
-    // Tracked but missing components or allowance
+    // Tracked but missing policy entirely
     if (s.is_backroom_tracked && !allowanceByService.has(s.id)) return true;
+    // Tracked with policy but incomplete billing configuration
+    if (s.is_backroom_tracked) {
+      const p = allowanceByService.get(s.id);
+      if (p && (p.billing_mode === null || p.billing_mode === undefined)) return true;
+      if (p && p.billing_mode === 'allowance' && p.included_allowance_qty === 0 && p.overage_rate === 0) return true;
+    }
     return false;
   };
 
