@@ -248,13 +248,14 @@ export function useRevenueGapAnalysis(
         // Null-client appointments can never match POS — emit as individual gap items
         if (!a.phorest_client_id) {
           const price = Number(a.total_price) || 0;
+          const isApptToday = rangeIncludesToday && a.appointment_date === todayStr;
           if (price > 0) {
             gapItems.push({
               id: a.id,
               clientName: a.client_name ?? 'Walk-in',
               serviceName: a.service_name || 'Unknown service',
               stylistName: a.phorest_staff_id ? staffLookup.get(a.phorest_staff_id) ?? null : null,
-              reason: 'no_pos_record',
+              reason: isApptToday ? 'not_concluded' : 'no_pos_record',
               scheduledAmount: price,
               actualAmount: 0,
               variance: price,
