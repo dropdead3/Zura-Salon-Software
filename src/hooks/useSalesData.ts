@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { formatDisplayName } from '@/lib/utils';
+import { formatDisplayName, formatFullDisplayName } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 
 export interface SalesTransaction {
