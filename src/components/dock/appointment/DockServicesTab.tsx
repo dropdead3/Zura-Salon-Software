@@ -271,22 +271,14 @@ export function DockServicesTab({ appointment, staff, effectiveServiceName }: Do
 
     try {
       for (const session of activeSessions) {
-        // 1. Complete the session status
-        await completeSession.mutateAsync({
-          sessionId: session.id,
-          organizationId: effectiveOrganization.id,
-          locationId: appointment.location_id || undefined,
-          notes,
-        });
-
-        // 2. Deplete inventory for this session
+        // 1. Deplete inventory FIRST (retryable if session stays active)
         await depleteInventory.mutateAsync({
           sessionId: session.id,
           organizationId: effectiveOrganization.id,
           locationId: appointment.location_id || undefined,
         });
 
-        // 3. Calculate charges per chemical service
+        // 2. Calculate charges per chemical service
         for (const svcName of serviceNames) {
           await calculateOverage.mutateAsync({
             sessionId: session.id,
@@ -295,6 +287,14 @@ export function DockServicesTab({ appointment, staff, effectiveServiceName }: Do
             serviceName: svcName,
           });
         }
+
+        // 3. Mark session completed LAST (terminal — cannot retry after this)
+        await completeSession.mutateAsync({
+          sessionId: session.id,
+          organizationId: effectiveOrganization.id,
+          locationId: appointment.location_id || undefined,
+          notes,
+        });
       }
 
       // Invalidate charges so the sheet shows updated totals
@@ -310,7 +310,8 @@ export function DockServicesTab({ appointment, staff, effectiveServiceName }: Do
       setTimeout(() => setShowComplete(false), 1500);
     } catch (err) {
       console.error('Session completion chain error:', err);
-      toast.error('Some sessions completed but errors occurred — please review');
+      const step = depleteInventory.isError ? 'inventory depletion' : calculateOverage.isError ? 'charge calculation' : 'session completion';
+      toast.error(`Failed during ${step} — retry to continue`);
     }
   };
 
