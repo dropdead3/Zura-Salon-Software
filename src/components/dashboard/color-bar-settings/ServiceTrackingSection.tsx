@@ -793,7 +793,7 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                   )}
                                 </TableCell>
 
-                                {/* Service — Name + Category subtitle + Type badge */}
+                                {/* Service — Name + Category subtitle + Type badge + Status badge */}
                                 <TableCell>
                                   <div className="flex items-center gap-2">
                                     <div className="min-w-0 flex-1">
@@ -805,7 +805,7 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                           {service.name}
                                         </span>
                                       </div>
-                                      <div className="flex items-center gap-1.5 mt-0.5">
+                                      <div className="flex flex-wrap items-center gap-1.5 mt-0.5">
                                         {service.category && (
                                           <span className="text-[11px] text-muted-foreground">{service.category}</span>
                                         )}
@@ -815,48 +815,35 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                         {type === 'suggested' && (
                                           <Badge variant="outline" className="text-[10px] whitespace-nowrap shrink-0 border-amber-500/40 text-amber-600 dark:text-amber-400 py-0 px-1.5">Suggested</Badge>
                                         )}
+                                        {/* Inline status indicator */}
+                                        {isTrulyConfigured(service) ? (
+                                          <Badge variant="outline" className="text-[10px] whitespace-nowrap shrink-0 border-emerald-500/30 bg-emerald-500/10 text-emerald-500 dark:text-emerald-400 py-0 px-1.5">Configured ✓</Badge>
+                                        ) : service.is_backroom_tracked && (() => {
+                                          const activePolicy = allowancePolicies?.find(p => p.service_id === service.id && p.is_active);
+                                          return activePolicy && activePolicy.billing_mode !== 'parts_and_labor' && (activePolicy.included_allowance_qty > 0 || activePolicy.notes?.match(/\$\d/));
+                                        })() ? (
+                                          <Badge variant="outline" className="text-[10px] whitespace-nowrap shrink-0 border-blue-500/30 bg-blue-500/10 text-blue-500 dark:text-blue-400 py-0 px-1.5">Allowance Set</Badge>
+                                        ) : service.is_backroom_tracked ? (
+                                          <Badge variant="outline" className="text-[10px] whitespace-nowrap shrink-0 border-amber-500/30 bg-amber-500/10 text-amber-500 dark:text-amber-400 py-0 px-1.5">Unconfigured</Badge>
+                                        ) : null}
+                                        {/* Inline billing method indicator */}
+                                        {(() => {
+                                          const policy = allowanceByService?.get(service.id);
+                                          if (!policy) return null;
+                                          if (policy.is_active && policy.billing_mode === 'parts_and_labor') {
+                                            return <Badge variant="outline" className="text-[10px] whitespace-nowrap shrink-0 border-blue-500/30 bg-blue-500/10 text-blue-500 dark:text-blue-400 py-0 px-1.5">Parts & Labor</Badge>;
+                                          }
+                                          if (policy.is_active) {
+                                            const dollarMatch = policy.notes?.match(/\$(\d+\.?\d*)/);
+                                            if (dollarMatch && policy.included_allowance_qty > 0) {
+                                              return <Badge variant="outline" className="text-[10px] whitespace-nowrap shrink-0 border-border/60 py-0 px-1.5">${dollarMatch[1]} Allowance</Badge>;
+                                            }
+                                          }
+                                          return null;
+                                        })()}
                                       </div>
                                     </div>
                                   </div>
-                                </TableCell>
-
-                                {/* Billing Method */}
-                                <TableCell onClick={(e) => e.stopPropagation()}>
-                                  {(() => {
-                                    const policy = allowanceByService?.get(service.id);
-                                    if (!policy) return null;
-                                    if (policy.is_active) {
-                                      if (policy.billing_mode === 'parts_and_labor') {
-                                        return (
-                                          <Badge variant="outline" className="text-[10px] whitespace-nowrap shrink-0 border-blue-500/30 bg-blue-500/10 text-blue-500 dark:text-blue-400">
-                                            Parts and Labor
-                                          </Badge>
-                                        );
-                                      }
-                                      const dollarMatch = policy.notes?.match(/\$(\d+\.?\d*)/);
-                                      if (dollarMatch && policy.included_allowance_qty > 0) {
-                                        return (
-                                          <div className="flex items-center gap-1.5 text-sm text-foreground whitespace-nowrap">
-                                            <Calculator className="w-3.5 h-3.5 text-muted-foreground" />
-                                            <span className="font-sans font-medium">${dollarMatch[1]}</span>
-                                          </div>
-                                        );
-                                      }
-                                      return (
-                                        <Badge variant="outline" className="text-[10px] whitespace-nowrap shrink-0 border-amber-500/30 bg-amber-500/10 text-amber-500 dark:text-amber-400">
-                                          Allowance Needs To Be Set
-                                        </Badge>
-                                      );
-                                    }
-                                    if (policy.billing_mode === 'allowance') {
-                                      return (
-                                        <Badge variant="outline" className="text-[10px] whitespace-nowrap shrink-0 border-amber-500/30 bg-amber-500/10 text-amber-500 dark:text-amber-400">
-                                          Allowance Needs To Be Set
-                                        </Badge>
-                                      );
-                                    }
-                                    return null;
-                                  })()}
                                 </TableCell>
 
                                 {/* Tracking toggle */}
