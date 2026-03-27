@@ -57,12 +57,7 @@ export function RecipeBaselineSection({ onNavigate }: Props) {
 
   return (
     <div className="space-y-4">
-      <Infotainer
-        id="color-bar-recipes-guide"
-        title="Formula Baselines"
-        description="Set the expected product quantities per service — e.g. 'A full highlight uses ~30g lightener + 60ml developer.' Powers Smart Mix Assist suggestions and flags when a stylist uses significantly more or less than expected."
-        icon={<BarChart3 className="h-4 w-4 text-primary" />}
-      />
+      <PageExplainer pageId="color-bar-recipes" />
       <Card>
         <CardHeader>
           <div className="flex items-center gap-3">
