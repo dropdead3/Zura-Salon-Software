@@ -14,7 +14,7 @@ import { toast } from 'sonner';
 import { Loader2, CreditCard, Weight, Settings, Plus, Beaker } from 'lucide-react';
 import { AddScalesDialog } from '@/components/dashboard/color-bar-settings/AddScalesDialog';
 import { ColorBarROICard } from '@/components/dashboard/color-bar-settings/ColorBarROICard';
-import { COLOR_BAR_BASE_PRICE, BACKROOM_PER_SERVICE_FEE, SCALE_LICENSE_MONTHLY } from '@/hooks/color-bar/useLocationStylistCounts';
+import { COLOR_BAR_BASE_PRICE, COLOR_BAR_PER_SERVICE_FEE, SCALE_LICENSE_MONTHLY } from '@/hooks/color-bar/useLocationStylistCounts';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 
 
