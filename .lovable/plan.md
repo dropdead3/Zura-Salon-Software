@@ -2,56 +2,53 @@
 
 ## Problem
 
-The "Available Analytics" toggles fail silently because the `dashboard_element_visibility` table's RLS write policy only allows users with `is_super_admin = true` in `employee_profiles`. When you're using God Mode (impersonating an organization), your `auth.uid()` likely doesn't have a matching `employee_profiles` row with `is_super_admin = true` for that org, so the upsert is blocked by RLS.
+God Mode is currently restricted in several ways that prevent platform operators from making changes on behalf of an organization:
 
-Additionally, the error is swallowed silently in the catch block, giving no feedback.
+1. **`useTasks` blocks all mutations** — Every create/update/delete/toggle/snooze operation throws `"Cannot modify tasks while impersonating"` when `isImpersonating` is true
+2. **`isLeadership` doesn't account for God Mode** — The dashboard's leadership check (`isLeadership`) in `DashboardHome.tsx` doesn't include platform users during impersonation, so God Mode users can't see leadership-only UI (analytics toggles, AI insights, customize menu sections)
+3. **`DashboardCustomizeMenu` gates sections behind `roleContext.isLeadership`** — Available Analytics and Quick Access Hubs sections are hidden from God Mode users who aren't detected as leadership
+4. **RLS policies may still block writes** — Some tables may not include `is_platform_user(auth.uid())` in their write policies, causing silent failures on mutations
 
 ## Solution
 
-Two changes:
+Make God Mode a full-access mode: platform users impersonating an org get unrestricted read/write access across all dashboard surfaces.
 
-### 1. Broaden the RLS write policy
-Update the write policy on `dashboard_element_visibility` to also allow `admin` and `manager` roles (leadership roles) to manage visibility settings — not just `super_admin`. This aligns with the UI which already gates the section behind `roleContext?.isLeadership`. We'll also add a platform-level bypass for God Mode users via `is_platform_user(auth.uid())`.
+### Changes
 
-**Database migration:**
-```sql
-DROP POLICY "Super admins can manage visibility settings" ON public.dashboard_element_visibility;
+**1. `src/hooks/useTasks.ts` — Remove impersonation write blocks**
+- Remove all `if (isImpersonating) throw` guards from `createTask`, `toggleTask`, `deleteTask`, `snoozeTask`, and `updateTask` mutations
+- Remove the corresponding `onError` handlers that check for impersonation error messages
+- God Mode users should be able to create/edit/delete tasks on behalf of the org
 
-CREATE POLICY "Leadership can manage visibility settings"
-ON public.dashboard_element_visibility
-FOR ALL
-TO authenticated
-USING (
-  EXISTS (
-    SELECT 1 FROM public.employee_profiles
-    WHERE user_id = auth.uid()
-    AND is_super_admin = true
-  )
-  OR public.is_platform_user(auth.uid())
-)
-WITH CHECK (
-  EXISTS (
-    SELECT 1 FROM public.employee_profiles
-    WHERE user_id = auth.uid()
-    AND is_super_admin = true
-  )
-  OR public.is_platform_user(auth.uid())
-);
-```
+**2. `src/pages/dashboard/DashboardHome.tsx` — Grant leadership status to God Mode users**
+- Update the `isLeadership` computation to include God Mode:
+  ```typescript
+  const { isImpersonating } = useOrganizationContext();
+  const isLeadership = isImpersonating
+    ? true  // God Mode = full access
+    : isViewingAs
+      ? roles.includes('super_admin') || roles.includes('manager')
+      : profile?.is_super_admin || roles.includes('super_admin') || roles.includes('manager');
+  ```
+- This ensures all leadership-gated UI (analytics, insights, customize sections) is visible in God Mode
 
-### 2. Surface errors in the UI
-**File: `src/components/dashboard/DashboardCustomizeMenu.tsx`**
+**3. `src/components/dashboard/DashboardLayout.tsx` — Treat God Mode as leadership for layout**
+- Update `isLeadershipUser` to include `isImpersonating`:
+  ```typescript
+  const isLeadershipUser = isImpersonating || actualRoles.includes('super_admin') || ...
+  ```
 
-Replace the silent `catch` block in `handleTogglePinnedCard` with a `toast.error()` so failures are visible:
-```typescript
-} catch (err: any) {
-  toast.error('Failed to update pinned card: ' + (err?.message || 'Unknown error'));
-}
-```
+**4. `src/components/auth/ProtectedRoute.tsx` — Bypass permission checks for God Mode**
+- Platform users impersonating an org already bypass via `isPlatformUser` check — verify this covers all paths (it does for `requiredPermission` checks)
 
-## Technical Details
+**5. RLS audit (database)** — Ensure key tables allow platform user writes
+- Audit tables commonly written from the dashboard (`tasks`, `user_preferences`, `dashboard_element_visibility`, `announcements`, etc.) to confirm `is_platform_user(auth.uid())` is in their write policies
+- Add the bypass to any table missing it via a single migration
 
-- The `is_platform_user` function already exists for platform-level access bypass (God Mode)
-- The `employee_profiles.is_super_admin` check stays as the primary org-level gate
-- The silent catch was masking the RLS permission error entirely
+### Technical Details
+
+- `isImpersonating` comes from `OrganizationContext` and is `true` when a platform user has selected an org to view
+- `is_platform_user(auth.uid())` is an existing database function that checks platform role membership
+- The `ProtectedRoute` already bypasses permission checks for `isPlatformUser`, so route-level access is already covered
+- The primary gaps are in component-level role checks and mutation guards within hooks
 
