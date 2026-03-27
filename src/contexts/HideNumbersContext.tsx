@@ -212,6 +212,16 @@ export function BlurredAmount({
   };
   
   if (!hideNumbers) {
+    if (disableTooltip) {
+      return (
+        <Component 
+          className={cn(className, 'cursor-pointer')} 
+          onDoubleClick={handleDoubleClick}
+        >
+          {children}
+        </Component>
+      );
+    }
     return (
       <TooltipProvider delayDuration={100}>
         <Tooltip>
