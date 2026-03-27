@@ -542,6 +542,16 @@ export function PinnedAnalyticsCard({ cardId, filters, compact = false }: Pinned
         metricLabel = 'Average utilization across active staff';
         break;
       }
+      case 'commission_summary':
+      case 'staff_commission_breakdown':
+      case 'true_profit':
+      case 'staff_performance':
+      case 'service_profitability':
+      case 'control_tower':
+      case 'predictive_inventory':
+        metricValue = '--';
+        metricLabel = 'View full card for details';
+        break;
       default:
         metricValue = '--';
         metricLabel = '';
