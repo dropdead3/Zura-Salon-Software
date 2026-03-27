@@ -9,7 +9,7 @@ import { CalendarPlus, FileText, FlaskConical, MessageSquare, Send, Trash2, Lock
 import { cn } from '@/lib/utils';
 import { DOCK_CONTENT } from '@/components/dock/dock-ui-tokens';
 import { useAppointmentNotes } from '@/hooks/useAppointmentNotes';
-import { useClientFormulaHistory } from '@/hooks/backroom/useClientFormulaHistory';
+import { useClientFormulaHistory } from '@/hooks/color-bar/useClientFormulaHistory';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { format } from 'date-fns';
 import type { DockAppointment } from '@/hooks/dock/useDockAppointments';

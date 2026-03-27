@@ -8,8 +8,8 @@ import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import {
   fetchServiceProfiles,
   generateOptimizationInsights,
-} from '@/lib/backroom/services/service-intelligence-service';
-import type { ServiceProfile, OptimizationInsight } from '@/lib/backroom/service-intelligence-engine';
+} from '@/lib/color-bar/services/service-intelligence-service';
+import type { ServiceProfile, OptimizationInsight } from '@/lib/color-bar/service-intelligence-engine';
 
 export type { ServiceProfile, OptimizationInsight };
 

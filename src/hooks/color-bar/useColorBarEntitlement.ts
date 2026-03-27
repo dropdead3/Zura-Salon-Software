@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { useBackroomLocationEntitlements } from '@/hooks/backroom/useBackroomLocationEntitlements';
-import { useBackroomOrgId } from '@/hooks/backroom/useBackroomOrgId';
+import { useBackroomLocationEntitlements } from '@/hooks/color-bar/useColorBarLocationEntitlements';
+import { useBackroomOrgId } from '@/hooks/color-bar/useColorBarOrgId';
 
 /**
  * Checks whether the current organization has Backroom enabled.

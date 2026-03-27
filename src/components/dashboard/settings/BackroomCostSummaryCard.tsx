@@ -4,11 +4,11 @@ import { Separator } from '@/components/ui/separator';
 import { tokens } from '@/lib/design-tokens';
 import { Beaker, Loader2 } from 'lucide-react';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
-import { useBackroomLocationEntitlements } from '@/hooks/backroom/useBackroomLocationEntitlements';
+import { useBackroomLocationEntitlements } from '@/hooks/color-bar/useColorBarLocationEntitlements';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { formatCurrency } from '@/hooks/useBillingCalculations';
-import { BACKROOM_BASE_PRICE, SCALE_LICENSE_MONTHLY } from '@/hooks/backroom/useLocationStylistCounts';
+import { BACKROOM_BASE_PRICE, SCALE_LICENSE_MONTHLY } from '@/hooks/color-bar/useLocationStylistCounts';
 
 export function BackroomCostSummaryCard() {
   const { effectiveOrganization } = useOrganizationContext();

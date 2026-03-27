@@ -29,7 +29,7 @@ import { ServiceTrackingProgressBar, type ProgressMilestone } from './ServiceTra
 import { ServiceTrackingQuickSetup } from './ServiceTrackingQuickSetup';
 import { AllowanceCalculatorDialog } from './AllowanceCalculatorDialog';
 import { PriceRecommendationCard } from './PriceRecommendationCard';
-import { useComputedPriceRecommendations, useAcceptPriceRecommendation, useDismissPriceRecommendation } from '@/hooks/backroom/useServicePriceRecommendations';
+import { useComputedPriceRecommendations, useAcceptPriceRecommendation, useDismissPriceRecommendation } from '@/hooks/color-bar/useServicePriceRecommendations';
 
 interface ServiceRow {
   id: string;
@@ -87,7 +87,7 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
   const acceptPriceRec = useAcceptPriceRecommendation();
   const dismissPriceRec = useDismissPriceRecommendation();
   const priceRecMap = useMemo(() => {
-    const map = new Map<string, import('@/lib/backroom/price-recommendation').PriceRecommendation>();
+    const map = new Map<string, import('@/lib/color-bar/price-recommendation').PriceRecommendation>();
     for (const r of (priceRecommendations || [])) {
       if (r.is_below_target) map.set(r.service_id, r);
     }

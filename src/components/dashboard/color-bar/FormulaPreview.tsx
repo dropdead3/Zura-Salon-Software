@@ -3,7 +3,7 @@
  */
 
 import { Badge } from '@/components/ui/badge';
-import type { FormulaLine } from '@/lib/backroom/mix-calculations';
+import type { FormulaLine } from '@/lib/color-bar/mix-calculations';
 
 interface FormulaPreviewProps {
   formulaData: FormulaLine[];

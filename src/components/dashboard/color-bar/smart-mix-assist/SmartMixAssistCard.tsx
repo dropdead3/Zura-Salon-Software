@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Sparkles, Beaker, X } from 'lucide-react';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
-import type { FormulaSuggestion } from '@/lib/backroom/services/smart-mix-assist-service';
+import type { FormulaSuggestion } from '@/lib/color-bar/services/smart-mix-assist-service';
 
 interface SmartMixAssistCardProps {
   suggestion: FormulaSuggestion;

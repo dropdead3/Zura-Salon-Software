@@ -10,7 +10,7 @@
 import { supabase } from '@/integrations/supabase/client';
 import { resolveFormula, type ResolvedFormula } from './formula-resolver';
 import { calculateReplenishment, REPLENISHMENT_DEFAULTS } from '@/lib/inventory/replenishment-engine';
-import type { FormulaLine } from '@/lib/backroom/mix-calculations';
+import type { FormulaLine } from '@/lib/color-bar/mix-calculations';
 
 // ─── Types ───────────────────────────────────────────
 

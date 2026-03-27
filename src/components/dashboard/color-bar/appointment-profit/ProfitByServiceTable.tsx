@@ -10,8 +10,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { TrendingUp, ArrowUpDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
-import { getMarginHealth } from '@/lib/backroom/appointment-profit-engine';
-import type { ServiceMarginRanking } from '@/lib/backroom/appointment-profit-engine';
+import { getMarginHealth } from '@/lib/color-bar/appointment-profit-engine';
+import type { ServiceMarginRanking } from '@/lib/color-bar/appointment-profit-engine';
 
 type SortKey = 'serviceName' | 'appointmentCount' | 'avgRevenue' | 'avgChemicalCost' | 'avgLaborCost' | 'avgMargin' | 'avgMarginPct';
 

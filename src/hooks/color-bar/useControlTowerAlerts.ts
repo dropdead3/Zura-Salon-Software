@@ -9,10 +9,10 @@ import { supabase } from '@/integrations/supabase/client';
 import { isPast } from 'date-fns';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useHighRiskInventory } from '@/hooks/inventory/useInventoryRiskProjection';
-import { useBackroomExceptions } from '@/hooks/backroom/useBackroomExceptions';
-import { useStaffBackroomPerformance } from '@/hooks/backroom/useStaffBackroomPerformance';
-import { useStockoutAlerts, useForecastSummary } from '@/hooks/backroom/usePredictiveBackroom';
-import { useAppointmentProfitSummary } from '@/hooks/backroom/useAppointmentProfit';
+import { useBackroomExceptions } from '@/hooks/color-bar/useColorBarExceptions';
+import { useStaffBackroomPerformance } from '@/hooks/color-bar/useStaffColorBarPerformance';
+import { useStockoutAlerts, useForecastSummary } from '@/hooks/color-bar/usePredictiveColorBar';
+import { useAppointmentProfitSummary } from '@/hooks/color-bar/useAppointmentProfit';
 import {
   buildControlTowerAlerts,
   summarizePriorities,
@@ -22,7 +22,7 @@ import {
   type AlertCategory,
   type DraftPOAlert,
   type AuditOverdueAlert,
-} from '@/lib/backroom/control-tower-engine';
+} from '@/lib/color-bar/control-tower-engine';
 
 export interface ControlTowerResult {
   alerts: ControlTowerAlert[];

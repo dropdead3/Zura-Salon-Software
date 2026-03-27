@@ -19,7 +19,7 @@ import {
   DRILLDOWN_DIALOG_CONTENT_CLASS,
   DRILLDOWN_OVERLAY_CLASS,
 } from '@/components/dashboard/drilldownDialogStyles';
-import type { ProductCostTrendItem } from '@/hooks/backroom/useProductCostTrend';
+import type { ProductCostTrendItem } from '@/hooks/color-bar/useProductCostTrend';
 
 interface ProductCostDrilldownDialogProps {
   open: boolean;

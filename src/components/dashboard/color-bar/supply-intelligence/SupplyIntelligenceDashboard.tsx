@@ -18,9 +18,9 @@ import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import {
   useSupplyIntelligence,
   useRefreshSupplyIntelligence,
-} from '@/hooks/backroom/useSupplyIntelligence';
-import { useBackroomSetting, useUpsertBackroomSetting } from '@/hooks/backroom/useBackroomSettings';
-import { useBackroomOrgId } from '@/hooks/backroom/useBackroomOrgId';
+} from '@/hooks/color-bar/useSupplyIntelligence';
+import { useBackroomSetting, useUpsertBackroomSetting } from '@/hooks/color-bar/useColorBarSettings';
+import { useBackroomOrgId } from '@/hooks/color-bar/useColorBarOrgId';
 import { SupplyKPICards } from './SupplyKPICards';
 import { SupplyInsightCard } from './SupplyInsightCard';
 import { ProductCostTrendSection } from './ProductCostTrendSection';

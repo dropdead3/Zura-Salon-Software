@@ -17,7 +17,7 @@ import {
   useUpdateTransformation,
   type ClientTransformation,
 } from '@/hooks/useClientTransformations';
-import { useClientFormulaHistory, type ClientFormula } from '@/hooks/backroom/useClientFormulaHistory';
+import { useClientFormulaHistory, type ClientFormula } from '@/hooks/color-bar/useClientFormulaHistory';
 import { CompareVisitsDialog } from './CompareVisitsDialog';
 
 interface TransformationTimelineProps {

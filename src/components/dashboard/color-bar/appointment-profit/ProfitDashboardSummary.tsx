@@ -7,8 +7,8 @@ import { cn } from '@/lib/utils';
 import { Card } from '@/components/ui/card';
 import { BarChart3, TrendingUp, TrendingDown, Percent } from 'lucide-react';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
-import { getMarginHealth } from '@/lib/backroom/appointment-profit-engine';
-import type { AppointmentProfitSummary } from '@/hooks/backroom/useAppointmentProfit';
+import { getMarginHealth } from '@/lib/color-bar/appointment-profit-engine';
+import type { AppointmentProfitSummary } from '@/hooks/color-bar/useAppointmentProfit';
 
 interface ProfitDashboardSummaryProps {
   summary: AppointmentProfitSummary;

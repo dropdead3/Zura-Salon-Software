@@ -6,11 +6,11 @@
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { UserCheck, Clock, CheckCircle2 } from 'lucide-react';
-import type { MixSession } from '@/hooks/backroom/useMixSession';
-import type { MixBowl } from '@/hooks/backroom/useMixBowls';
-import type { MixBowlLine } from '@/hooks/backroom/useMixBowlLines';
+import type { MixSession } from '@/hooks/color-bar/useMixSession';
+import type { MixBowl } from '@/hooks/color-bar/useMixBowls';
+import type { MixBowlLine } from '@/hooks/color-bar/useMixBowlLines';
 import { StylistBowlReview } from './StylistBowlReview';
-import { isAwaitingApproval, isPreparedBowl } from '@/lib/backroom/bowl-state-machine';
+import { isAwaitingApproval, isPreparedBowl } from '@/lib/color-bar/bowl-state-machine';
 
 interface PrepModeBannerProps {
   session: MixSession;

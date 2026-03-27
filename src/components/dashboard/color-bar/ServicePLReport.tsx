@@ -12,8 +12,8 @@ import { cn } from '@/lib/utils';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
-import { useAppointmentProfitSummary } from '@/hooks/backroom/useAppointmentProfit';
-import type { ServiceMarginRanking } from '@/lib/backroom/appointment-profit-engine';
+import { useAppointmentProfitSummary } from '@/hooks/color-bar/useAppointmentProfit';
+import type { ServiceMarginRanking } from '@/lib/color-bar/appointment-profit-engine';
 
 interface ServicePLReportProps {
   startDate: string;

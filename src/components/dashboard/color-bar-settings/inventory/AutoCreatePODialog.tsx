@@ -22,7 +22,7 @@ import { cn } from '@/lib/utils';
 import { useCreateMultiLinePO } from '@/hooks/inventory/usePurchaseOrderLines';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { toast } from 'sonner';
-import type { BackroomInventoryRow } from '@/hooks/backroom/useBackroomInventoryTable';
+import type { BackroomInventoryRow } from '@/hooks/color-bar/useColorBarInventoryTable';
 import { SupplierAssignDialog } from './SupplierAssignDialog';
 
 interface SupplierGroup {

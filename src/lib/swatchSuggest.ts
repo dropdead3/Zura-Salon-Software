@@ -5,7 +5,7 @@
  */
 
 import { extractShadeLevel } from './shadeSort';
-import { HAIR_COLOR_SWATCHES } from '@/components/platform/backroom/SwatchPicker';
+import { HAIR_COLOR_SWATCHES } from '@/components/platform/color-bar/SwatchPicker';
 
 type ToneFamily = 'natural' | 'ash' | 'gold' | 'red' | 'copper' | 'violet' | 'blue' | 'pastel' | 'vivid' | 'red_violet' | 'warm_brown';
 

@@ -21,7 +21,7 @@ import { MapPin, CreditCard, Weight, AlertTriangle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { BACKROOM_BASE_PRICE, SCALE_LICENSE_MONTHLY } from '@/hooks/backroom/useLocationStylistCounts';
+import { BACKROOM_BASE_PRICE, SCALE_LICENSE_MONTHLY } from '@/hooks/color-bar/useLocationStylistCounts';
 
 interface LocationConfig {
   location_id: string;

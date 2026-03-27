@@ -3,7 +3,7 @@
  * Place on navigation items to surface unresolved anomalies.
  */
 
-import { useBackroomExceptions } from '@/hooks/backroom/useBackroomExceptions';
+import { useBackroomExceptions } from '@/hooks/color-bar/useColorBarExceptions';
 
 interface ExceptionBadgeProps {
   className?: string;

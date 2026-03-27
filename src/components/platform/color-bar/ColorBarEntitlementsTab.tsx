@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { AdminActivateDialog } from '@/components/platform/backroom/AdminActivateDialog';
+import { AdminActivateDialog } from '@/components/platform/color-bar/AdminActivateDialog';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import {
@@ -46,7 +46,7 @@ import {
   useUpsertLocationEntitlement,
   useDeleteLocationEntitlement,
   type BackroomLocationEntitlement,
-} from '@/hooks/backroom/useBackroomLocationEntitlements';
+} from '@/hooks/color-bar/useColorBarLocationEntitlements';
 import { toast } from 'sonner';
 import { formatRelativeTime } from '@/lib/format';
 

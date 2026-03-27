@@ -18,8 +18,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Loader2, Zap, Info } from 'lucide-react';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
-import { useAutoParSuggestions, type AutoParSuggestion } from '@/hooks/backroom/useAutoParSuggestions';
-import { useInlineStockEdit } from '@/hooks/backroom/useInlineStockEdit';
+import { useAutoParSuggestions, type AutoParSuggestion } from '@/hooks/color-bar/useAutoParSuggestions';
+import { useInlineStockEdit } from '@/hooks/color-bar/useInlineStockEdit';
 import { toast } from 'sonner';
 
 interface AutoParDialogProps {

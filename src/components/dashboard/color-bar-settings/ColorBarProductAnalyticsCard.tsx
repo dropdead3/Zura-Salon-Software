@@ -13,7 +13,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Skeleton } from '@/components/ui/skeleton';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
-import { useBackroomProductAnalytics } from '@/hooks/backroom/useBackroomProductAnalytics';
+import { useBackroomProductAnalytics } from '@/hooks/color-bar/useColorBarProductAnalytics';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { useFormatNumber } from '@/hooks/useFormatNumber';
 

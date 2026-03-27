@@ -18,7 +18,7 @@ import {
   type MixSessionEventInput,
   type MixSessionEvent,
   type SessionStatus,
-} from '@/lib/backroom/mix-session-service';
+} from '@/lib/color-bar/mix-session-service';
 
 /**
  * Fetch all events for a mix session, ordered by sequence.

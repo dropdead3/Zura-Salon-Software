@@ -23,7 +23,7 @@ import {
   CheckCircle2,
   XCircle,
 } from 'lucide-react';
-import { useBackroomBillingHealth, type BackroomBillingOrg } from '@/hooks/platform/useBackroomBillingHealth';
+import { useBackroomBillingHealth, type BackroomBillingOrg } from '@/hooks/platform/useColorBarBillingHealth';
 
 function BillingKPICard({
   icon: Icon,

@@ -4,7 +4,7 @@
  */
 
 import { Check, ArrowDown, Beaker, DollarSign, Scale } from 'lucide-react';
-import { roundWeight, roundCost, calculateNetUsage } from '@/lib/backroom/mix-calculations';
+import { roundWeight, roundCost, calculateNetUsage } from '@/lib/color-bar/mix-calculations';
 
 interface DockReweighSummaryProps {
   dispensedTotal: number;

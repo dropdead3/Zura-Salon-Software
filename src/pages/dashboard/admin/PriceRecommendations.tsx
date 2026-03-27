@@ -20,9 +20,9 @@ import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip,
   ResponsiveContainer, ReferenceLine,
 } from 'recharts';
-import { PriceRecommendationsTable } from '@/components/dashboard/backroom-settings/PriceRecommendationsTable';
-import { PriceRecommendationHistory } from '@/components/dashboard/backroom-settings/PriceRecommendationHistory';
-import { BulkPriceAcceptConfirmDialog } from '@/components/dashboard/backroom-settings/PriceAcceptConfirmDialog';
+import { PriceRecommendationsTable } from '@/components/dashboard/color-bar-settings/PriceRecommendationsTable';
+import { PriceRecommendationHistory } from '@/components/dashboard/color-bar-settings/PriceRecommendationHistory';
+import { BulkPriceAcceptConfirmDialog } from '@/components/dashboard/color-bar-settings/PriceAcceptConfirmDialog';
 import {
   useComputedPriceRecommendations,
   useAcceptPriceRecommendation,
@@ -30,8 +30,8 @@ import {
   useUpsertPriceTarget,
   useDefaultTargetMargin,
   useUpdateDefaultTargetMargin,
-} from '@/hooks/backroom/useServicePriceRecommendations';
-import { useServiceProfitabilitySnapshots } from '@/hooks/backroom/useServiceProfitability';
+} from '@/hooks/color-bar/useServicePriceRecommendations';
+import { useServiceProfitabilitySnapshots } from '@/hooks/color-bar/useServiceProfitability';
 import { toast } from 'sonner';
 
 export function PriceRecommendationsContent() {

@@ -9,7 +9,7 @@ import { motion, AnimatePresence, useDragControls } from 'framer-motion';
 import { DockFormulaBuilder, type FormulaLine } from './DockFormulaBuilder';
 import { DockFormulaHistoryPicker } from './DockFormulaHistoryPicker';
 import { DOCK_SHEET } from '../dock-ui-tokens';
-import type { ClientFormula } from '@/hooks/backroom/useClientFormulaHistory';
+import type { ClientFormula } from '@/hooks/color-bar/useClientFormulaHistory';
 import type { DockProduct } from '@/hooks/dock/useDockProductCatalog';
 
 interface DockNewBowlSheetProps {

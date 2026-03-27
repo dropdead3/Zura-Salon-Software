@@ -14,7 +14,7 @@ import {
   SOURCE_LABELS,
   computeRatio,
 } from './formula-resolver';
-import type { FormulaLine } from '@/lib/backroom/mix-calculations';
+import type { FormulaLine } from '@/lib/color-bar/mix-calculations';
 
 // Re-export types for backward compatibility
 export type { SuggestionSource, FormulaLine };

@@ -12,7 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
-import { useBackroomSavings, type SavingsCategory } from '@/hooks/backroom/useBackroomSavings';
+import { useBackroomSavings, type SavingsCategory } from '@/hooks/color-bar/useColorBarSavings';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { AnimatedNumber } from '@/components/ui/AnimatedNumber';
 import {

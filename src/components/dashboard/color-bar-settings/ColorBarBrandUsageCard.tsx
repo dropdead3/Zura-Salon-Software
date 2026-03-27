@@ -19,7 +19,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { useBackroomBrandUsage, type BrandUsageRow } from '@/hooks/backroom/useBackroomBrandUsage';
+import { useBackroomBrandUsage, type BrandUsageRow } from '@/hooks/color-bar/useColorBarBrandUsage';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { useFormatNumber } from '@/hooks/useFormatNumber';
 

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
-import { useSmartMixAssistSettings, useUpdateSmartMixAssistSettings } from '@/hooks/backroom/useSmartMixAssist';
-import { useBackroomSetting, useUpsertBackroomSetting } from '@/hooks/backroom/useBackroomSettings';
+import { useSmartMixAssistSettings, useUpdateSmartMixAssistSettings } from '@/hooks/color-bar/useSmartMixAssist';
+import { useBackroomSetting, useUpsertBackroomSetting } from '@/hooks/color-bar/useColorBarSettings';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';

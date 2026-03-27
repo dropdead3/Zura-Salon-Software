@@ -5,7 +5,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
-import { resolveFormulaMemory, type ResolvedFormulaMemory } from '@/lib/backroom/services/formula-resolver';
+import { resolveFormulaMemory, type ResolvedFormulaMemory } from '@/lib/color-bar/services/formula-resolver';
 import { DEMO_FORMULA_MEMORY, DEMO_FORMULA_HISTORY } from '@/hooks/dock/dockDemoData';
 
 export function useInstantFormulaMemory(

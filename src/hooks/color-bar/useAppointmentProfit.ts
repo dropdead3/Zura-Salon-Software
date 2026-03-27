@@ -14,7 +14,7 @@ import {
   type EnrichedAppointmentProfit,
   type ServiceMarginRanking,
   type MarginOutlier,
-} from '@/lib/backroom/appointment-profit-engine';
+} from '@/lib/color-bar/appointment-profit-engine';
 
 export function useAppointmentProfit(
   startDate: string,

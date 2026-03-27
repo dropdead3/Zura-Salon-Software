@@ -18,7 +18,7 @@ import {
 } from 'recharts';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
-import { useReorderAnalytics, useProcurementBudget } from '@/hooks/backroom/useReorderAnalytics';
+import { useReorderAnalytics, useProcurementBudget } from '@/hooks/color-bar/useReorderAnalytics';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 
 function KpiCard({ icon: Icon, label, value, subtitle }: {

@@ -6,7 +6,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
-import { calculateGhostLoss, type GhostLossResult } from '@/lib/backroom/analytics-engine';
+import { calculateGhostLoss, type GhostLossResult } from '@/lib/color-bar/analytics-engine';
 
 export interface ProductGhostLoss extends GhostLossResult {
   productId: string;

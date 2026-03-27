@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Button } from '@/components/ui/button';
 import { MapPin, Package, FileText, Truck, ClipboardCheck, History, AlertTriangle, XCircle, Inbox, PackageOpen, BarChart3, FileDown, ArrowLeftRight } from 'lucide-react';
 import { useActiveLocations } from '@/hooks/useLocations';
-import { useBackroomInventoryTable } from '@/hooks/backroom/useBackroomInventoryTable';
+import { useBackroomInventoryTable } from '@/hooks/color-bar/useColorBarInventoryTable';
 import { usePurchaseOrders } from '@/hooks/usePurchaseOrders';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';

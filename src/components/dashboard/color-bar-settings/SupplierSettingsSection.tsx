@@ -37,10 +37,10 @@ import {
   useRenameSupplier,
   useDeleteSupplier,
   type SupplierGroup,
-} from '@/hooks/backroom/useSupplierSettings';
+} from '@/hooks/color-bar/useSupplierSettings';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { useProducts } from '@/hooks/useProducts';
-import { useBackroomOrgId } from '@/hooks/backroom/useBackroomOrgId';
+import { useBackroomOrgId } from '@/hooks/color-bar/useColorBarOrgId';
 
 interface ContactForm {
   contact_name: string;

@@ -15,7 +15,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { ArrowRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import type { EnrichedPriceRecommendation } from '@/hooks/backroom/useServicePriceRecommendations';
+import type { EnrichedPriceRecommendation } from '@/hooks/color-bar/useServicePriceRecommendations';
 
 interface SingleProps {
   recommendation: EnrichedPriceRecommendation;

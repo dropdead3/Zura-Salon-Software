@@ -6,7 +6,7 @@
  * - Smart Mix Assist: reads from existing `smart_mix_assist_settings.is_enabled`
  */
 
-import { useBackroomSetting } from './useBackroomSettings';
+import { useBackroomSetting } from './useColorBarSettings';
 import { useSmartMixAssistSettings } from './useSmartMixAssist';
 
 export function useDockFeatureSettings() {

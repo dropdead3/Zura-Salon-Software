@@ -12,7 +12,7 @@ import {
   calculateOverageCharge,
   type AllowanceBillingInput,
   type AllowanceBillingResult,
-} from '@/lib/backroom/allowance-billing';
+} from '@/lib/color-bar/allowance-billing';
 
 export interface ComputeCheckoutParams {
   organization_id: string;

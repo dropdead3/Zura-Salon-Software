@@ -6,14 +6,14 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { buildCommandMeta } from '@/lib/backroom/commands/types';
+import { buildCommandMeta } from '@/lib/color-bar/commands/types';
 import {
   executeStartMixSession,
   executeRecordLineItem,
   executeSealBowl,
   executeCaptureReweigh,
-} from '@/lib/backroom/commands/mixing-commands';
-import { emitSessionEvent } from '@/lib/backroom/mix-session-service';
+} from '@/lib/color-bar/commands/mixing-commands';
+import { emitSessionEvent } from '@/lib/color-bar/mix-session-service';
 import type { FormulaLine } from '@/components/dock/mixing/DockFormulaBuilder';
 
 export interface CreatedBowlResult {

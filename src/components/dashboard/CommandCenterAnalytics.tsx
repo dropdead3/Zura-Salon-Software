@@ -27,8 +27,8 @@ import { StaffCommissionTable } from '@/components/dashboard/sales/StaffCommissi
 import { TrueProfitCard } from '@/components/dashboard/sales/TrueProfitCard';
 import { StaffPerformanceReport } from '@/components/dashboard/analytics/StaffPerformanceReport';
 import { ServiceProfitabilityCard } from '@/components/dashboard/analytics/ServiceProfitabilityCard';
-import { BackroomControlTower } from '@/components/dashboard/backroom/control-tower/BackroomControlTower';
-import { PredictiveBackroomSummary } from '@/components/dashboard/backroom/predictive-backroom/PredictiveBackroomSummary';
+import { BackroomControlTower } from '@/components/dashboard/color-bar/control-tower/BackroomControlTower';
+import { PredictiveBackroomSummary } from '@/components/dashboard/color-bar/predictive-color-bar/PredictiveBackroomSummary';
 import { useDashboardVisibility } from '@/hooks/useDashboardVisibility';
 import { useDashboardLayout } from '@/hooks/useDashboardLayout';
 import { useSalesMetrics, useSalesByStylist } from '@/hooks/useSalesData';

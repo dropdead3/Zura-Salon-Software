@@ -6,9 +6,9 @@
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { CheckCircle2, Pencil, Trash2, Beaker } from 'lucide-react';
-import type { MixBowl } from '@/hooks/backroom/useMixBowls';
-import type { MixBowlLine } from '@/hooks/backroom/useMixBowlLines';
-import { isAwaitingApproval, isPreparedBowl } from '@/lib/backroom/bowl-state-machine';
+import type { MixBowl } from '@/hooks/color-bar/useMixBowls';
+import type { MixBowlLine } from '@/hooks/color-bar/useMixBowlLines';
+import { isAwaitingApproval, isPreparedBowl } from '@/lib/color-bar/bowl-state-machine';
 
 interface StylistBowlReviewProps {
   bowl: MixBowl;

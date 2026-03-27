@@ -7,9 +7,9 @@ import { format, addMinutes, subMinutes, subWeeks, setHours, setMinutes, setSeco
 import type { DockAppointment } from './useDockAppointments';
 import type { DockProduct } from './useDockProductCatalog';
 import type { DockMixSession } from './useDockMixSessions';
-import type { ClientFormula } from '@/hooks/backroom/useClientFormulaHistory';
+import type { ClientFormula } from '@/hooks/color-bar/useClientFormulaHistory';
 import type { ClientVisit } from '@/hooks/useClientVisitHistory';
-import type { ResolvedFormulaMemory } from '@/lib/backroom/services/formula-resolver';
+import type { ResolvedFormulaMemory } from '@/lib/color-bar/services/formula-resolver';
 
 const today = format(new Date(), 'yyyy-MM-dd');
 const now = new Date();

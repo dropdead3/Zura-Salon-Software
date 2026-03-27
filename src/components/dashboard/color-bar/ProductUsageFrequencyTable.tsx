@@ -10,7 +10,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { BarChart3, Search, ArrowUpDown, PackageOpen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { formatRelativeTime } from '@/lib/format';
-import { useProductUsageFrequency, type UsageTier, type ProductUsageRow } from '@/hooks/backroom/useProductUsageFrequency';
+import { useProductUsageFrequency, type UsageTier, type ProductUsageRow } from '@/hooks/color-bar/useProductUsageFrequency';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 
 interface Props {

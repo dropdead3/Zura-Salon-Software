@@ -6,7 +6,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
-import { useChemicalCostTrend } from '@/hooks/backroom/useChemicalCostTrend';
+import { useChemicalCostTrend } from '@/hooks/color-bar/useChemicalCostTrend';
 import { TrendingUp, TrendingDown, Minus, AlertTriangle } from 'lucide-react';
 import { tokens } from '@/lib/design-tokens';
 import { ResponsiveContainer, LineChart, Line, YAxis } from 'recharts';

@@ -24,7 +24,7 @@ import { cn } from '@/lib/utils';
 import {
   useSmartMixAssistSettings,
   useUpdateSmartMixAssistSettings,
-} from '@/hooks/backroom/useSmartMixAssist';
+} from '@/hooks/color-bar/useSmartMixAssist';
 import { supabase } from '@/integrations/supabase/client';
 
 export function SmartMixAssistSettingsCard() {

@@ -11,7 +11,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { TrendSparkline } from '@/components/dashboard/TrendSparkline';
-import { useProductCostTrend, type ProductCostTrendItem } from '@/hooks/backroom/useProductCostTrend';
+import { useProductCostTrend, type ProductCostTrendItem } from '@/hooks/color-bar/useProductCostTrend';
 import { ProductCostDrilldownDialog } from './ProductCostDrilldownDialog';
 
 export function ProductCostTrendSection() {

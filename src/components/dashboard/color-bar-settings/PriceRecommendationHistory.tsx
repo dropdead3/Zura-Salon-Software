@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { History, ChevronDown, Undo2 } from 'lucide-react';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
-import { usePriceRecommendationHistory, useRevertPriceRecommendation } from '@/hooks/backroom/useServicePriceRecommendations';
+import { usePriceRecommendationHistory, useRevertPriceRecommendation } from '@/hooks/color-bar/useServicePriceRecommendations';
 import { format, differenceInHours } from 'date-fns';
 
 export function PriceRecommendationHistory() {

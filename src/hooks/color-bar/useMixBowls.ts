@@ -8,15 +8,15 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import type { MixBowlStatus } from '@/lib/backroom/bowl-state-machine';
-import { canTransitionBowl } from '@/lib/backroom/bowl-state-machine';
+import type { MixBowlStatus } from '@/lib/color-bar/bowl-state-machine';
+import { canTransitionBowl } from '@/lib/color-bar/bowl-state-machine';
 import {
   executeCreateBowl,
   executeSealBowl,
   executeCaptureReweigh,
-} from '@/lib/backroom/commands/mixing-commands';
-import { emitSessionEvent } from '@/lib/backroom/mix-session-service';
-import { buildCommandMeta } from '@/lib/backroom/commands/types';
+} from '@/lib/color-bar/commands/mixing-commands';
+import { emitSessionEvent } from '@/lib/color-bar/mix-session-service';
+import { buildCommandMeta } from '@/lib/color-bar/commands/types';
 
 export interface MixBowl {
   id: string;

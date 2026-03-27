@@ -24,7 +24,7 @@ import { useFormatNumber } from '@/hooks/useFormatNumber';
 import { format } from 'date-fns';
 import { CountEntryForm } from './CountEntryForm';
 import { AuditComplianceTracker } from './AuditComplianceTracker';
-import { useBackroomInventoryTable } from '@/hooks/backroom/useBackroomInventoryTable';
+import { useBackroomInventoryTable } from '@/hooks/color-bar/useColorBarInventoryTable';
 import { generateCountSheetPdf, type CountSheetFilters } from '@/lib/generateCountSheetPdf';
 import { buildReportFileName } from '@/lib/reportPdfLayout';
 import { fetchLogoAsDataUrl } from '@/lib/reportPdfLayout';

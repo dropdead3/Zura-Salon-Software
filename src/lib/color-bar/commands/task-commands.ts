@@ -14,7 +14,7 @@ import {
   escalateTask,
   type TaskStatus,
   type ResolutionAction,
-} from '@/lib/backroom/services/operational-task-service';
+} from '@/lib/color-bar/services/operational-task-service';
 import {
   validateAssignTask,
   validateUpdateStatus,

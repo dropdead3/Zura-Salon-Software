@@ -14,9 +14,9 @@ import {
   useCreateBackroomStation,
   useUpdateBackroomStation,
   type BackroomStation,
-} from '@/hooks/backroom/useBackroomStations';
-import { ScaleConnectionStatus } from '@/components/dashboard/backroom/ScaleConnectionStatus';
-import type { ConnectionState } from '@/lib/backroom/weight-event-schema';
+} from '@/hooks/color-bar/useColorBarStations';
+import { ScaleConnectionStatus } from '@/components/dashboard/color-bar/ScaleConnectionStatus';
+import type { ConnectionState } from '@/lib/color-bar/weight-event-schema';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';

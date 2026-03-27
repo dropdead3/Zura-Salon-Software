@@ -5,7 +5,7 @@
 
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
-import { useStaffPinnedProducts, type PinnedProduct } from '@/hooks/backroom/useStaffPinnedProducts';
+import { useStaffPinnedProducts, type PinnedProduct } from '@/hooks/color-bar/useStaffPinnedProducts';
 import { Zap } from 'lucide-react';
 
 interface QuickProductButtonsProps {

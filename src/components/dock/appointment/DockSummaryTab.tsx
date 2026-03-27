@@ -7,9 +7,9 @@ import type { DockStaffSession } from '@/pages/Dock';
 import type { DockAppointment } from '@/hooks/dock/useDockAppointments';
 import { useDockMixSessions } from '@/hooks/dock/useDockMixSessions';
 import { useDockSessionStats } from '@/hooks/dock/useDockSessionStats';
-import { normalizeSessionStatus } from '@/lib/backroom/session-state-machine';
+import { normalizeSessionStatus } from '@/lib/color-bar/session-state-machine';
 import { DockSessionTimeline } from '../mixing/DockSessionTimeline';
-import { roundWeight, roundCost } from '@/lib/backroom/mix-calculations';
+import { roundWeight, roundCost } from '@/lib/color-bar/mix-calculations';
 import { cn } from '@/lib/utils';
 import { DOCK_CONTENT } from '@/components/dock/dock-ui-tokens';
 

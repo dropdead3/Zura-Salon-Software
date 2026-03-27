@@ -7,7 +7,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { toast } from 'sonner';
-import { resolveException } from '@/lib/backroom/services/exception-service';
+import { resolveException } from '@/lib/color-bar/services/exception-service';
 
 export interface BackroomException {
   id: string;

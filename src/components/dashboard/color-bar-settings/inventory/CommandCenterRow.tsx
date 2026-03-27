@@ -12,7 +12,7 @@ import { ChevronRight, History, ShoppingCart, Truck, RotateCcw } from 'lucide-re
 import { cn } from '@/lib/utils';
 import { tokens } from '@/lib/design-tokens';
 import { Badge } from '@/components/ui/badge';
-import { type BackroomInventoryRow, type StockSeverity } from '@/hooks/backroom/useBackroomInventoryTable';
+import { type BackroomInventoryRow, type StockSeverity } from '@/hooks/color-bar/useColorBarInventoryTable';
 import { TrendSparkline } from '@/components/dashboard/TrendSparkline';
 
 // ─── Severity visual config ──────────────────────

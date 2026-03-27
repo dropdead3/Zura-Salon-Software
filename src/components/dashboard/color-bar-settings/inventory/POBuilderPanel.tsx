@@ -10,7 +10,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { X, Truck, Minus, Plus, Send, FileText, Trash2, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { tokens } from '@/lib/design-tokens';
-import { type BackroomInventoryRow } from '@/hooks/backroom/useBackroomInventoryTable';
+import { type BackroomInventoryRow } from '@/hooks/color-bar/useColorBarInventoryTable';
 import { stripSizeSuffix } from './CommandCenterRow';
 
 interface POBuilderPanelProps {

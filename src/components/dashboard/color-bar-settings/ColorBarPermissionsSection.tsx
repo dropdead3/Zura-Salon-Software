@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
-import { useBackroomSetting, useUpsertBackroomSetting } from '@/hooks/backroom/useBackroomSettings';
+import { useBackroomSetting, useUpsertBackroomSetting } from '@/hooks/color-bar/useColorBarSettings';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';

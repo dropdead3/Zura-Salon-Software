@@ -7,7 +7,7 @@ import {
   useDeleteBackroomStation,
   getHealthColor,
   type BackroomStation,
-} from '@/hooks/backroom/useBackroomStations';
+} from '@/hooks/color-bar/useColorBarStations';
 import { useActiveLocations } from '@/hooks/useLocations';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';

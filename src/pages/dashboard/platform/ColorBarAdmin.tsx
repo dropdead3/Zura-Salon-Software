@@ -1,16 +1,16 @@
 import { useState } from 'react';
 import { PlatformPageContainer } from '@/components/platform/ui/PlatformPageContainer';
 import { PlatformPageHeader } from '@/components/platform/ui/PlatformPageHeader';
-import { PriceQueueTab } from '@/components/platform/backroom/PriceQueueTab';
-import { PriceSourcesTab } from '@/components/platform/backroom/PriceSourcesTab';
-import { BackroomEntitlementsTab } from '@/components/platform/backroom/BackroomEntitlementsTab';
-import { SupplyLibraryTab } from '@/components/platform/backroom/SupplyLibraryTab';
-import { HardwareOrdersTab } from '@/components/platform/backroom/HardwareOrdersTab';
-import { BackroomAnalyticsTab } from '@/components/platform/backroom/BackroomAnalyticsTab';
-import { BackroomBillingTab } from '@/components/platform/backroom/BackroomBillingTab';
-import { CoachPerformanceTab } from '@/components/platform/backroom/CoachPerformanceTab';
-import { RefundHistoryTab } from '@/components/platform/backroom/RefundHistoryTab';
-import { DockAppTab } from '@/components/platform/backroom/DockAppTab';
+import { PriceQueueTab } from '@/components/platform/color-bar/PriceQueueTab';
+import { PriceSourcesTab } from '@/components/platform/color-bar/PriceSourcesTab';
+import { BackroomEntitlementsTab } from '@/components/platform/color-bar/ColorBarEntitlementsTab';
+import { SupplyLibraryTab } from '@/components/platform/color-bar/SupplyLibraryTab';
+import { HardwareOrdersTab } from '@/components/platform/color-bar/HardwareOrdersTab';
+import { BackroomAnalyticsTab } from '@/components/platform/color-bar/ColorBarAnalyticsTab';
+import { BackroomBillingTab } from '@/components/platform/color-bar/ColorBarBillingTab';
+import { CoachPerformanceTab } from '@/components/platform/color-bar/CoachPerformanceTab';
+import { RefundHistoryTab } from '@/components/platform/color-bar/RefundHistoryTab';
+import { DockAppTab } from '@/components/platform/color-bar/DockAppTab';
 import { cn } from '@/lib/utils';
 import {
   ClipboardList, Database, Building2, Package, BarChart3,

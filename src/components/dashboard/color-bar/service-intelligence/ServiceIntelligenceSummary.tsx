@@ -4,7 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Brain, AlertTriangle, TrendingUp } from 'lucide-react';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { useFormatNumber } from '@/hooks/useFormatNumber';
-import type { ServiceProfile, OptimizationInsight } from '@/lib/backroom/service-intelligence-engine';
+import type { ServiceProfile, OptimizationInsight } from '@/lib/color-bar/service-intelligence-engine';
 
 interface ServiceIntelligenceSummaryProps {
   profiles: ServiceProfile[];

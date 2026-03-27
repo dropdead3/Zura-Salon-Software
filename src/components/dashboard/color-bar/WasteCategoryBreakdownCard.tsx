@@ -10,7 +10,7 @@ import { Trash2 } from 'lucide-react';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
-import { WASTE_CATEGORY_LABELS } from '@/hooks/backroom/useWasteEvents';
+import { WASTE_CATEGORY_LABELS } from '@/hooks/color-bar/useWasteEvents';
 
 interface WasteCategoryBreakdownCardProps {
   wasteByCategory: Record<string, number>;

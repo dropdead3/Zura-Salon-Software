@@ -7,11 +7,11 @@ import { useState } from 'react';
 import { motion, AnimatePresence, useDragControls } from 'framer-motion';
 import { X, Beaker, ChevronDown, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useClientFormulaHistory, type ClientFormula } from '@/hooks/backroom/useClientFormulaHistory';
+import { useClientFormulaHistory, type ClientFormula } from '@/hooks/color-bar/useClientFormulaHistory';
 import { useFormatDate } from '@/hooks/useFormatDate';
 import { DOCK_SHEET, DOCK_TEXT, DOCK_BUTTON, DOCK_BADGE } from '@/components/dock/dock-ui-tokens';
 import { Skeleton } from '@/components/ui/skeleton';
-import type { FormulaLine } from '@/lib/backroom/mix-calculations';
+import type { FormulaLine } from '@/lib/color-bar/mix-calculations';
 
 interface DockFormulaHistorySheetProps {
   isOpen: boolean;

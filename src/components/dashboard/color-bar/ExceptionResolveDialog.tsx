@@ -14,7 +14,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { useResolveException, type BackroomException } from '@/hooks/backroom/useBackroomExceptions';
+import { useResolveException, type BackroomException } from '@/hooks/color-bar/useColorBarExceptions';
 
 interface ExceptionResolveDialogProps {
   exception: BackroomException | null;

@@ -13,14 +13,14 @@ import {
   generateSuggestion,
   type FormulaSuggestion,
   type SuggestionRequest,
-} from '@/lib/backroom/services/smart-mix-assist-service';
+} from '@/lib/color-bar/services/smart-mix-assist-service';
 import {
   executeApplySuggestedFormula,
   executeDismissSuggestedFormula,
   type ApplySuggestedFormulaCommand,
   type DismissSuggestedFormulaCommand,
-} from '@/lib/backroom/commands/mixing-commands';
-import { buildCommandMeta } from '@/lib/backroom/commands/types';
+} from '@/lib/color-bar/commands/mixing-commands';
+import { buildCommandMeta } from '@/lib/color-bar/commands/types';
 
 // ─── Settings ────────────────────────────────────────
 

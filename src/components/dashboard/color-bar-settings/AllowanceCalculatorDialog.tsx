@@ -30,11 +30,11 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
-import { useAllowanceBowls } from '@/hooks/backroom/useAllowanceBowls';
+import { useAllowanceBowls } from '@/hooks/color-bar/useAllowanceBowls';
 import { useServiceRecipeBaselines } from '@/hooks/inventory/useServiceRecipeBaselines';
 import { useUpsertAllowancePolicy } from '@/hooks/billing/useServiceAllowancePolicies';
-import { useBackroomBillingSettings } from '@/hooks/billing/useBackroomBillingSettings';
-import { calculateRetailCostPerGram, calculateAllowanceHealth, type AllowanceHealthResult } from '@/lib/backroom/allowance-health';
+import { useBackroomBillingSettings } from '@/hooks/billing/useColorBarBillingSettings';
+import { calculateRetailCostPerGram, calculateAllowanceHealth, type AllowanceHealthResult } from '@/lib/color-bar/allowance-health';
 import { toast } from 'sonner';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';

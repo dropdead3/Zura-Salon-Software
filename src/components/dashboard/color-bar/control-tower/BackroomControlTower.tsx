@@ -10,8 +10,8 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ControlTowerSummaryBar } from './ControlTowerSummaryBar';
 import { ControlTowerAlertCard } from './ControlTowerAlertCard';
-import { useControlTowerAlerts, type ControlTowerResult } from '@/hooks/backroom/useControlTowerAlerts';
-import type { AlertCategory } from '@/lib/backroom/control-tower-engine';
+import { useControlTowerAlerts, type ControlTowerResult } from '@/hooks/color-bar/useControlTowerAlerts';
+import type { AlertCategory } from '@/lib/color-bar/control-tower-engine';
 
 const CATEGORY_FILTERS: { key: AlertCategory | null; label: string }[] = [
   { key: null, label: 'All' },

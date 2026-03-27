@@ -13,7 +13,7 @@ import { useMeetingAccountabilityItems, type AccountabilityItem } from '@/hooks/
 import { useMeetingReports, useCreateMeetingReport, useSendMeetingReport } from '@/hooks/useMeetingReports';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import ReactMarkdown from 'react-markdown';
-import { useStaffComplianceSummary } from '@/hooks/backroom/useStaffComplianceSummary';
+import { useStaffComplianceSummary } from '@/hooks/color-bar/useStaffComplianceSummary';
 import { format, subDays } from 'date-fns';
 
 interface ReportBuilderProps {

@@ -7,14 +7,14 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { toast } from 'sonner';
-import { buildCommandMeta } from '@/lib/backroom/commands/types';
+import { buildCommandMeta } from '@/lib/color-bar/commands/types';
 import {
   executeAssignOperationalTask,
   executeUpdateOperationalTaskStatus,
   executeResolveOperationalTask,
   executeEscalateOperationalTask,
-} from '@/lib/backroom/commands/task-commands';
-import type { TaskStatus, TaskPriority, ResolutionAction, OperationalTask } from '@/lib/backroom/services/operational-task-service';
+} from '@/lib/color-bar/commands/task-commands';
+import type { TaskStatus, TaskPriority, ResolutionAction, OperationalTask } from '@/lib/color-bar/services/operational-task-service';
 
 // ─── Filters ─────────────────────────────────────────
 

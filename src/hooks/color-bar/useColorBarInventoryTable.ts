@@ -6,7 +6,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { useBackroomOrgId } from './useBackroomOrgId';
+import { useBackroomOrgId } from './useColorBarOrgId';
 
 export type StockStatus = 'in_stock' | 'replenish' | 'urgent_reorder' | 'out_of_stock' | 'not_stocked';
 

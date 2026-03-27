@@ -16,13 +16,13 @@ import { BowlLineRow } from './BowlLineRow';
 import { AddProductToBowl } from './AddProductToBowl';
 import { QuickProductButtons } from './QuickProductButtons';
 import { ManualWeightInput } from './ManualWeightInput';
-import { useAllowanceRemaining } from '@/hooks/backroom/useAllowanceRemaining';
-import { calculateBowlWeight, calculateBowlCost } from '@/lib/backroom/mix-calculations';
+import { useAllowanceRemaining } from '@/hooks/color-bar/useAllowanceRemaining';
+import { calculateBowlWeight, calculateBowlCost } from '@/lib/color-bar/mix-calculations';
 import { Lock, Trash2, Beaker } from 'lucide-react';
 import { tokens } from '@/lib/design-tokens';
-import type { MixBowl } from '@/hooks/backroom/useMixBowls';
-import type { PinnedProduct } from '@/hooks/backroom/useStaffPinnedProducts';
-import type { MixBowlLine } from '@/hooks/backroom/useMixBowlLines';
+import type { MixBowl } from '@/hooks/color-bar/useMixBowls';
+import type { PinnedProduct } from '@/hooks/color-bar/useStaffPinnedProducts';
+import type { MixBowlLine } from '@/hooks/color-bar/useMixBowlLines';
 
 interface LiveBowlCardProps {
   bowl: MixBowl;

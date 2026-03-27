@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import type { ClientTransformation } from '@/hooks/useClientTransformations';
-import type { ClientFormula } from '@/hooks/backroom/useClientFormulaHistory';
+import type { ClientFormula } from '@/hooks/color-bar/useClientFormulaHistory';
 
 interface CompareVisitsDialogProps {
   open: boolean;

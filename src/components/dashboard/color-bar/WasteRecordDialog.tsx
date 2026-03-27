@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ManualWeightInput } from './ManualWeightInput';
-import { WASTE_CATEGORY_LABELS, type WasteCategory } from '@/hooks/backroom/useWasteEvents';
+import { WASTE_CATEGORY_LABELS, type WasteCategory } from '@/hooks/color-bar/useWasteEvents';
 
 interface WasteRecordDialogProps {
   open: boolean;

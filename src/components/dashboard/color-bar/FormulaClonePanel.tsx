@@ -7,12 +7,12 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { useClientFormulaHistory } from '@/hooks/backroom/useClientFormulaHistory';
-import { useCloneFormula } from '@/hooks/backroom/useCloneFormula';
+import { useClientFormulaHistory } from '@/hooks/color-bar/useClientFormulaHistory';
+import { useCloneFormula } from '@/hooks/color-bar/useCloneFormula';
 import { History, Copy, AlertTriangle, ChevronDown, ChevronUp } from 'lucide-react';
 import { format } from 'date-fns';
 import { tokens } from '@/lib/design-tokens';
-import type { ClientFormula } from '@/hooks/backroom/useClientFormulaHistory';
+import type { ClientFormula } from '@/hooks/color-bar/useClientFormulaHistory';
 
 interface FormulaClonePanelProps {
   clientId: string;

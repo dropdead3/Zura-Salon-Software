@@ -6,7 +6,7 @@
  */
 
 import { supabase } from '@/integrations/supabase/client';
-import type { FormulaLine } from '@/lib/backroom/mix-calculations';
+import type { FormulaLine } from '@/lib/color-bar/mix-calculations';
 
 export interface SaveFormulaParams {
   organization_id: string;

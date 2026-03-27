@@ -9,7 +9,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { Loader2, Package, Send, Save } from 'lucide-react';
 import { useBatchCreatePurchaseOrders } from '@/hooks/useBatchReorder';
-import type { BackroomInventoryRow } from '@/hooks/backroom/useBackroomInventoryTable';
+import type { BackroomInventoryRow } from '@/hooks/color-bar/useColorBarInventoryTable';
 
 interface BackroomBulkReorderDialogProps {
   open: boolean;

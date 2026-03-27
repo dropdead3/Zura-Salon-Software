@@ -6,7 +6,7 @@
 import { Weight, WifiOff, Bluetooth, BluetoothSearching, BluetoothConnected, RefreshCw, Zap, Radio, RotateCcw } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useDockScale } from '@/hooks/dock/useDockScale';
-import type { ConnectionState } from '@/lib/backroom/weight-event-schema';
+import type { ConnectionState } from '@/lib/color-bar/weight-event-schema';
 
 const CONNECTION_STATE_UI: Record<ConnectionState, {
   label: string;

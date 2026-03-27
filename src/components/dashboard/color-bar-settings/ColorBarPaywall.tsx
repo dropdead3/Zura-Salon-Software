@@ -23,18 +23,18 @@ import {
 } from '@/components/ui/accordion';
 import { supabase } from '@/integrations/supabase/client';
 import { useLocations } from '@/hooks/useLocations';
-import { useBackroomOrgId } from '@/hooks/backroom/useBackroomOrgId';
-import { useBackroomLocationEntitlements } from '@/hooks/backroom/useBackroomLocationEntitlements';
-import { useBackroomPricingEstimate } from '@/hooks/backroom/useBackroomPricingEstimate';
-import { usePerLocationColorServices } from '@/hooks/backroom/usePerLocationColorServices';
+import { useBackroomOrgId } from '@/hooks/color-bar/useColorBarOrgId';
+import { useBackroomLocationEntitlements } from '@/hooks/color-bar/useColorBarLocationEntitlements';
+import { useBackroomPricingEstimate } from '@/hooks/color-bar/useColorBarPricingEstimate';
+import { usePerLocationColorServices } from '@/hooks/color-bar/usePerLocationColorServices';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import {
   BACKROOM_BASE_PRICE, BACKROOM_PER_SERVICE_FEE,
   SCALE_LICENSE_MONTHLY, SCALE_HARDWARE_PRICE,
-} from '@/hooks/backroom/useLocationStylistCounts';
+} from '@/hooks/color-bar/useLocationStylistCounts';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { toast } from 'sonner';
-import { BackroomCheckoutConfirmDialog } from './BackroomCheckoutConfirmDialog';
+import { BackroomCheckoutConfirmDialog } from './ColorBarCheckoutConfirmDialog';
 import { CompetitorComparison } from './CompetitorComparison';
 
 

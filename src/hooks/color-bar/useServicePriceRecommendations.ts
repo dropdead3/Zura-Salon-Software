@@ -3,10 +3,10 @@
  */
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { useBackroomOrgId } from './useBackroomOrgId';
-import { buildRecommendation, calculateScalingRatio, type PriceRecommendation, type ProductCostInput } from '@/lib/backroom/price-recommendation';
+import { useBackroomOrgId } from './useColorBarOrgId';
+import { buildRecommendation, calculateScalingRatio, type PriceRecommendation, type ProductCostInput } from '@/lib/color-bar/price-recommendation';
 import { toast } from 'sonner';
-import { useBackroomSetting, useUpsertBackroomSetting } from './useBackroomSettings';
+import { useBackroomSetting, useUpsertBackroomSetting } from './useColorBarSettings';
 
 // ─── Types ───────────────────────────────────────────────────
 export interface ServicePriceTarget {

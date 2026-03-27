@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Beaker, Clock, Play, CheckCircle2, Loader2 } from 'lucide-react';
-import { useAssistantDailyPrep, type DailyPrepItem } from '@/hooks/backroom/useAssistantDailyPrep';
+import { useAssistantDailyPrep, type DailyPrepItem } from '@/hooks/color-bar/useAssistantDailyPrep';
 import { tokens } from '@/lib/design-tokens';
 
 interface AssistantDailyPrepProps {

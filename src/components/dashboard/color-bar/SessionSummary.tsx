@@ -8,9 +8,9 @@ import { Badge } from '@/components/ui/badge';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { CheckCircle2, AlertTriangle } from 'lucide-react';
 import { ConfidenceScoreBadge } from './ConfidenceScoreBadge';
-import type { MixSession } from '@/hooks/backroom/useMixSession';
-import type { MixBowl } from '@/hooks/backroom/useMixBowls';
-import { calculateSessionCost, calculateSessionNetUsage, type BowlSummary } from '@/lib/backroom/mix-calculations';
+import type { MixSession } from '@/hooks/color-bar/useMixSession';
+import type { MixBowl } from '@/hooks/color-bar/useMixBowls';
+import { calculateSessionCost, calculateSessionNetUsage, type BowlSummary } from '@/lib/color-bar/mix-calculations';
 
 interface SessionSummaryProps {
   session: MixSession;

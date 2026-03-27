@@ -5,7 +5,7 @@
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { postLedgerEntry } from '@/lib/backroom/services/inventory-ledger-service';
+import { postLedgerEntry } from '@/lib/color-bar/services/inventory-ledger-service';
 import { toast } from 'sonner';
 
 export function useInlineStockEdit() {

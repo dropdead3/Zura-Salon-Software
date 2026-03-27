@@ -2,8 +2,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { toast } from 'sonner';
-import { saveFormula } from '@/lib/backroom/services/formula-service';
-import type { FormulaLine } from '@/lib/backroom/mix-calculations';
+import { saveFormula } from '@/lib/color-bar/services/formula-service';
+import type { FormulaLine } from '@/lib/color-bar/mix-calculations';
 import { DEMO_FORMULA_HISTORY } from '@/hooks/dock/dockDemoData';
 
 export interface ClientFormula {

@@ -5,7 +5,7 @@
 
 import { ChevronLeft, FlaskConical, Clock } from 'lucide-react';
 import { format } from 'date-fns';
-import { useClientFormulaHistory, type ClientFormula } from '@/hooks/backroom/useClientFormulaHistory';
+import { useClientFormulaHistory, type ClientFormula } from '@/hooks/color-bar/useClientFormulaHistory';
 import { DOCK_TEXT } from '../dock-ui-tokens';
 
 interface DockFormulaHistoryPickerProps {

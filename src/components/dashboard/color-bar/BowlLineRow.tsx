@@ -7,7 +7,7 @@ import { Trash2, Pencil } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
-import type { MixBowlLine } from '@/hooks/backroom/useMixBowlLines';
+import type { MixBowlLine } from '@/hooks/color-bar/useMixBowlLines';
 
 interface BowlLineRowProps {
   line: MixBowlLine;

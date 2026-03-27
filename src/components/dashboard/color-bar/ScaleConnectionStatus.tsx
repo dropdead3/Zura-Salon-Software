@@ -5,7 +5,7 @@
 
 import { Badge } from '@/components/ui/badge';
 import { Weight, Wifi, WifiOff } from 'lucide-react';
-import type { ConnectionState } from '@/lib/backroom/weight-event-schema';
+import type { ConnectionState } from '@/lib/color-bar/weight-event-schema';
 
 interface ScaleConnectionStatusProps {
   state: ConnectionState;

@@ -4,10 +4,10 @@
  */
 
 import type { InventoryRiskProjection } from '@/hooks/inventory/useInventoryRiskProjection';
-import type { BackroomException } from '@/hooks/backroom/useBackroomExceptions';
-import type { StaffBackroomPerformance } from '@/hooks/backroom/useStaffBackroomPerformance';
-import type { ProductDemandForecast, ForecastSummary } from '@/lib/backroom/services/predictive-backroom-service';
-import type { MarginOutlier } from '@/lib/backroom/appointment-profit-engine';
+import type { BackroomException } from '@/hooks/color-bar/useColorBarExceptions';
+import type { StaffBackroomPerformance } from '@/hooks/color-bar/useStaffColorBarPerformance';
+import type { ProductDemandForecast, ForecastSummary } from '@/lib/color-bar/services/predictive-backroom-service';
+import type { MarginOutlier } from '@/lib/color-bar/appointment-profit-engine';
 
 // ── Types ──────────────────────────────────────────────────────────
 

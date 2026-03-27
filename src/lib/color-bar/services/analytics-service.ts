@@ -18,7 +18,7 @@ import {
   calculateStaffEfficiency,
   calculateInventoryDaysRemaining,
   calculateMixConfidence,
-} from '@/lib/backroom/analytics-engine';
+} from '@/lib/color-bar/analytics-engine';
 
 // Re-export calculation functions for convenience
 export {

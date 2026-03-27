@@ -2,7 +2,7 @@ import { BillingOverviewCard } from './BillingOverviewCard';
 import { PaymentMethodCard } from './PaymentMethodCard';
 import { OrgBillingHistoryCard } from './OrgBillingHistoryCard';
 import { PlanComparisonCard } from './PlanComparisonCard';
-import { BackroomCostSummaryCard } from './BackroomCostSummaryCard';
+import { BackroomCostSummaryCard } from './ColorBarCostSummaryCard';
 import { BillingAlertsBanner } from './BillingAlertsBanner';
 import { BillingAccessBanner, BillingOwnerToggleCard, BillingAccessDenied } from './BillingAccessGate';
 import { useBillingAccess } from '@/hooks/useBillingAccess';

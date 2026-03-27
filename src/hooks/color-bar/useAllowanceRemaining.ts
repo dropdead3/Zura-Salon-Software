@@ -5,7 +5,7 @@
 
 import { useMemo } from 'react';
 import { useServiceAllowancePolicies } from '@/hooks/billing/useServiceAllowancePolicies';
-import type { MixBowlLine } from '@/hooks/backroom/useMixBowlLines';
+import type { MixBowlLine } from '@/hooks/color-bar/useMixBowlLines';
 
 export type AllowanceStatus = 'safe' | 'warning' | 'over';
 

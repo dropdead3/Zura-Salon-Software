@@ -5,7 +5,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { useInstantFormulaMemory } from '@/hooks/backroom/useInstantFormulaMemory';
+import { useInstantFormulaMemory } from '@/hooks/color-bar/useInstantFormulaMemory';
 import { useClientVisitHistory } from '@/hooks/useClientVisitHistory';
 
 export interface ClientMemoryData {

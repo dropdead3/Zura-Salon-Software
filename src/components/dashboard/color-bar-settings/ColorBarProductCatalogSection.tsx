@@ -1,11 +1,11 @@
 import { useState, useMemo, useCallback, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { useBackroomOrgId } from '@/hooks/backroom/useBackroomOrgId';
-import { useBackroomInventoryTable, STOCK_STATUS_CONFIG, computeChargePerGram, type BackroomInventoryRow, type StockStatus } from '@/hooks/backroom/useBackroomInventoryTable';
-import { useLocationProductSettingsMap, useUpsertLocationProductSetting, useBulkUpsertLocationProductSettings, useSyncCatalogToAllLocations } from '@/hooks/backroom/useLocationProductSettings';
+import { useBackroomOrgId } from '@/hooks/color-bar/useColorBarOrgId';
+import { useBackroomInventoryTable, STOCK_STATUS_CONFIG, computeChargePerGram, type BackroomInventoryRow, type StockStatus } from '@/hooks/color-bar/useColorBarInventoryTable';
+import { useLocationProductSettingsMap, useUpsertLocationProductSetting, useBulkUpsertLocationProductSettings, useSyncCatalogToAllLocations } from '@/hooks/color-bar/useLocationProductSettings';
 import { useLocations } from '@/hooks/useLocations';
-import { postLedgerEntry } from '@/lib/backroom/services/inventory-ledger-service';
+import { postLedgerEntry } from '@/lib/color-bar/services/inventory-ledger-service';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -39,7 +39,7 @@ import {
   TableRow,
   TableCell,
 } from '@/components/ui/table';
-import { OrgBrowseColumn as BrowseColumn, type BrowseColumnItem } from '@/components/dashboard/backroom-settings/OrgBrowseColumn';
+import { OrgBrowseColumn as BrowseColumn, type BrowseColumnItem } from '@/components/dashboard/color-bar-settings/OrgBrowseColumn';
 import { extractProductLine, groupByProductLine } from '@/lib/supply-line-parser';
 import { useSupplyBrandsMeta, type SupplyBrandMeta } from '@/hooks/platform/useSupplyLibraryBrandMeta';
 import { sortByShadeLevel, SHADE_SORTED_CATEGORIES } from '@/lib/shadeSort';
@@ -50,8 +50,8 @@ import { toast } from 'sonner';
 import { Infotainer } from '@/components/ui/Infotainer';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { SupplyLibraryDialog } from './SupplyLibraryDialog';
-import { BackroomBulkPricingDialog } from './BackroomBulkPricingDialog';
-import { BackroomBulkReorderDialog } from './BackroomBulkReorderDialog';
+import { BackroomBulkPricingDialog } from './ColorBarBulkPricingDialog';
+import { BackroomBulkReorderDialog } from './ColorBarBulkReorderDialog';
 import { useLogPlatformAction } from '@/hooks/usePlatformAuditLog';
 import { useAuth } from '@/contexts/AuthContext';
 import { formatDistanceToNow, differenceInHours } from 'date-fns';

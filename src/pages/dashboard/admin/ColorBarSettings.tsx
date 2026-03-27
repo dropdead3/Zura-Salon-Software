@@ -4,9 +4,9 @@ import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
-import { useBackroomEntitlement } from '@/hooks/backroom/useBackroomEntitlement';
-import { useBackroomOrgId } from '@/hooks/backroom/useBackroomOrgId';
-import { BackroomPaywall } from '@/components/dashboard/backroom-settings/BackroomPaywall';
+import { useBackroomEntitlement } from '@/hooks/color-bar/useColorBarEntitlement';
+import { useBackroomOrgId } from '@/hooks/color-bar/useColorBarOrgId';
+import { BackroomPaywall } from '@/components/dashboard/color-bar-settings/ColorBarPaywall';
 import { Loader2, ArrowLeft } from 'lucide-react';
 import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { cn } from '@/lib/utils';
@@ -31,26 +31,26 @@ import {
 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
-import { useBackroomSetupHealth } from '@/hooks/backroom/useBackroomSetupHealth';
-import { BackroomDashboardOverview } from '@/components/dashboard/backroom-settings/BackroomDashboardOverview';
-import { BackroomInsightsSection } from '@/components/dashboard/backroom-settings/BackroomInsightsSection';
-import { BackroomSetupBanner } from '@/components/dashboard/backroom-settings/BackroomSetupBanner';
-import { useBackroomSetting } from '@/hooks/backroom/useBackroomSettings';
-import { BackroomProductCatalogSection } from '@/components/dashboard/backroom-settings/BackroomProductCatalogSection';
-import { ServiceTrackingSection } from '@/components/dashboard/backroom-settings/ServiceTrackingSection';
-import { RecipeBaselineSection } from '@/components/dashboard/backroom-settings/RecipeBaselineSection';
-import { AllowancesBillingSection } from '@/components/dashboard/backroom-settings/AllowancesBillingSection';
-import { StationsHardwareSection } from '@/components/dashboard/backroom-settings/StationsHardwareSection';
-import { BackroomInventorySection } from '@/components/dashboard/backroom-settings/BackroomInventorySection';
-import { BackroomPermissionsSection } from '@/components/dashboard/backroom-settings/BackroomPermissionsSection';
-import { AlertsExceptionsSection } from '@/components/dashboard/backroom-settings/AlertsExceptionsSection';
-import { FormulaAssistanceSection } from '@/components/dashboard/backroom-settings/FormulaAssistanceSection';
-import { MultiLocationSection } from '@/components/dashboard/backroom-settings/MultiLocationSection';
-import { BackroomComplianceSection } from '@/components/dashboard/backroom-settings/BackroomComplianceSection';
-import { SupplierSettingsSection } from '@/components/dashboard/backroom-settings/SupplierSettingsSection';
+import { useBackroomSetupHealth } from '@/hooks/color-bar/useColorBarSetupHealth';
+import { BackroomDashboardOverview } from '@/components/dashboard/color-bar-settings/ColorBarDashboardOverview';
+import { BackroomInsightsSection } from '@/components/dashboard/color-bar-settings/ColorBarInsightsSection';
+import { BackroomSetupBanner } from '@/components/dashboard/color-bar-settings/ColorBarSetupBanner';
+import { useBackroomSetting } from '@/hooks/color-bar/useColorBarSettings';
+import { BackroomProductCatalogSection } from '@/components/dashboard/color-bar-settings/ColorBarProductCatalogSection';
+import { ServiceTrackingSection } from '@/components/dashboard/color-bar-settings/ServiceTrackingSection';
+import { RecipeBaselineSection } from '@/components/dashboard/color-bar-settings/RecipeBaselineSection';
+import { AllowancesBillingSection } from '@/components/dashboard/color-bar-settings/AllowancesBillingSection';
+import { StationsHardwareSection } from '@/components/dashboard/color-bar-settings/StationsHardwareSection';
+import { BackroomInventorySection } from '@/components/dashboard/color-bar-settings/ColorBarInventorySection';
+import { BackroomPermissionsSection } from '@/components/dashboard/color-bar-settings/ColorBarPermissionsSection';
+import { AlertsExceptionsSection } from '@/components/dashboard/color-bar-settings/AlertsExceptionsSection';
+import { FormulaAssistanceSection } from '@/components/dashboard/color-bar-settings/FormulaAssistanceSection';
+import { MultiLocationSection } from '@/components/dashboard/color-bar-settings/MultiLocationSection';
+import { BackroomComplianceSection } from '@/components/dashboard/color-bar-settings/ColorBarComplianceSection';
+import { SupplierSettingsSection } from '@/components/dashboard/color-bar-settings/SupplierSettingsSection';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 import { PriceRecommendationsContent } from '@/pages/dashboard/admin/PriceRecommendations';
-import { BackroomSavingsSection } from '@/components/dashboard/backroom-settings/BackroomSavingsSection';
+import { BackroomSavingsSection } from '@/components/dashboard/color-bar-settings/ColorBarSavingsSection';
 
 
 type BackroomSection =

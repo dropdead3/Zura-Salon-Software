@@ -4,7 +4,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { AlertTriangle, TrendingUp, DollarSign, BarChart3 } from 'lucide-react';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
-import type { OptimizationInsight } from '@/lib/backroom/service-intelligence-engine';
+import type { OptimizationInsight } from '@/lib/color-bar/service-intelligence-engine';
 
 interface OptimizationInsightCardProps {
   insight: OptimizationInsight;

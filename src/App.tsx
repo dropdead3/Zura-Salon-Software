@@ -149,7 +149,7 @@ import RewardShop from "./pages/dashboard/RewardShop";
 import PointsConfig from "./pages/dashboard/admin/PointsConfig";
 import DailyHuddle from "./pages/dashboard/admin/DailyHuddle";
 import ZuraConfigPage from "./pages/dashboard/admin/ZuraConfigPage";
-import BackroomSettings from "./pages/dashboard/admin/BackroomSettings";
+import BackroomSettings from "./pages/dashboard/admin/ColorBarSettings";
 import BackroomSubscription from "./pages/dashboard/admin/BackroomSubscription";
 import PriceRecommendations from "./pages/dashboard/admin/PriceRecommendations";
 
@@ -199,7 +199,7 @@ import NotificationsPage from "./pages/dashboard/platform/Notifications";
 import DemoFeatures from "./pages/dashboard/platform/DemoFeatures";
 import HealthScoresPage from "./pages/dashboard/platform/HealthScores";
 import BenchmarksPage from "./pages/dashboard/platform/Benchmarks";
-import BackroomAdmin from "./pages/dashboard/platform/BackroomAdmin";
+import BackroomAdmin from "./pages/dashboard/platform/ColorBarAdmin";
 import CoachDashboard from "./pages/dashboard/platform/CoachDashboard";
 import BillingGuide from "./pages/dashboard/platform/BillingGuide";
 import { PlatformLayout } from "./components/platform/layout/PlatformLayout";

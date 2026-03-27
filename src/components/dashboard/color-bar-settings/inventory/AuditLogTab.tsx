@@ -15,7 +15,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Loader2, Search, Download, FileText, CalendarIcon, ChevronLeft, ChevronRight, Clock } from 'lucide-react';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
-import { useBulkInventoryAuditTrail, type BulkAuditEntry, type BulkAuditFilters } from '@/hooks/backroom/useBulkInventoryAuditTrail';
+import { useBulkInventoryAuditTrail, type BulkAuditEntry, type BulkAuditFilters } from '@/hooks/color-bar/useBulkInventoryAuditTrail';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useBusinessSettings } from '@/hooks/useBusinessSettings';
 import { format, startOfDay, startOfWeek } from 'date-fns';

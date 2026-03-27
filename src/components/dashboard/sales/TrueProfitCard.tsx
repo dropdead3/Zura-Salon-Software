@@ -9,7 +9,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/com
 import { Skeleton } from '@/components/ui/skeleton';
 import { DollarSign, ArrowDown, ArrowUp, Minus } from 'lucide-react';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
-import { useAppointmentProfitSummary } from '@/hooks/backroom/useAppointmentProfit';
+import { useAppointmentProfitSummary } from '@/hooks/color-bar/useAppointmentProfit';
 import { TrendSparkline } from '@/components/dashboard/TrendSparkline';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { AnimatedBlurredAmount } from '@/components/ui/AnimatedBlurredAmount';

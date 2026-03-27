@@ -13,7 +13,7 @@ import { Check, X, ArrowUpRight, ArrowDownRight, ArrowUpDown, ArrowUp, ArrowDown
 import { PriceAcceptConfirmDialog } from './PriceAcceptConfirmDialog';
 import { PriceRecommendationCard } from './PriceRecommendationCard';
 import { useIsMobile } from '@/hooks/use-mobile';
-import type { EnrichedPriceRecommendation } from '@/hooks/backroom/useServicePriceRecommendations';
+import type { EnrichedPriceRecommendation } from '@/hooks/color-bar/useServicePriceRecommendations';
 
 interface Props {
   recommendations: EnrichedPriceRecommendation[];

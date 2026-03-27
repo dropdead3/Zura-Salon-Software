@@ -3,7 +3,7 @@
  */
 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useBackroomStations } from '@/hooks/backroom/useBackroomStations';
+import { useBackroomStations } from '@/hooks/color-bar/useColorBarStations';
 
 interface StationSelectorProps {
   locationId?: string;

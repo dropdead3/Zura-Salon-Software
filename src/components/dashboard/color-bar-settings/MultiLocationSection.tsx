@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
-import { useBackroomSettingsAll, useUpsertBackroomSetting, type BackroomSetting } from '@/hooks/backroom/useBackroomSettings';
-import { useBackroomAlertRules, useUpsertAlertRule, type BackroomAlertRule } from '@/hooks/backroom/useBackroomAlertRules';
+import { useBackroomSettingsAll, useUpsertBackroomSetting, type BackroomSetting } from '@/hooks/color-bar/useColorBarSettings';
+import { useBackroomAlertRules, useUpsertAlertRule, type BackroomAlertRule } from '@/hooks/color-bar/useColorBarAlertRules';
 import { useActiveLocations } from '@/hooks/useLocations';
 import { supabase } from '@/integrations/supabase/client';
 import { tokens } from '@/lib/design-tokens';

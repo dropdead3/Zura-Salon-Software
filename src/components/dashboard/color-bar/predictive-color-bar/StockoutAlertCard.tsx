@@ -4,12 +4,12 @@
 
 import { AlertTriangle } from 'lucide-react';
 import { tokens } from '@/lib/design-tokens';
-import { QuickReorderButton } from '@/components/dashboard/backroom/supply-intelligence/QuickReorderButton';
+import { QuickReorderButton } from '@/components/dashboard/color-bar/supply-intelligence/QuickReorderButton';
 import { cn } from '@/lib/utils';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { useStockoutAlerts } from '@/hooks/backroom/usePredictiveBackroom';
-import type { ProductDemandForecast } from '@/lib/backroom/services/predictive-backroom-service';
+import { useStockoutAlerts } from '@/hooks/color-bar/usePredictiveColorBar';
+import type { ProductDemandForecast } from '@/lib/color-bar/services/predictive-backroom-service';
 
 interface StockoutAlertCardProps {
   locationId?: string | null;

@@ -12,7 +12,7 @@ import { PlatformBadge } from '@/components/platform/ui/PlatformBadge';
 import { PlatformButton } from '@/components/platform/ui/PlatformButton';
 import { PlatformTable as Table, PlatformTableBody as TableBody, PlatformTableCell as TableCell, PlatformTableHead as TableHead, PlatformTableHeader as TableHeader, PlatformTableRow as TableRow } from '@/components/platform/ui/PlatformTable';
 import { BarChart3, Building2, DollarSign, TrendingDown, Loader2, Activity, AlertCircle, CheckCircle2, Mail, History, UserPlus } from 'lucide-react';
-import { useBackroomPlatformAnalytics, type CoachingSignal } from '@/hooks/platform/useBackroomPlatformAnalytics';
+import { useBackroomPlatformAnalytics, type CoachingSignal } from '@/hooks/platform/useColorBarPlatformAnalytics';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';

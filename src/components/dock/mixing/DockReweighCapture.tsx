@@ -12,7 +12,7 @@ import { useDockDemo } from '@/contexts/DockDemoContext';
 import { TeardropFill } from './TeardropFill';
 import { ProgressBarFill } from './ProgressBarFill';
 import { DockWeightInput } from './DockWeightInput';
-import { roundWeight } from '@/lib/backroom/mix-calculations';
+import { roundWeight } from '@/lib/color-bar/mix-calculations';
 import { cn } from '@/lib/utils';
 
 interface DockReweighCaptureProps {

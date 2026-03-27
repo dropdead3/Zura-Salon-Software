@@ -3,7 +3,7 @@ import { cn } from '@/lib/utils';
 import { Card, CardContent } from '@/components/ui/card';
 import { TrendingUp, DollarSign, BarChart3 } from 'lucide-react';
 import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
-import { useBackroomSavings } from '@/hooks/backroom/useBackroomSavings';
+import { useBackroomSavings } from '@/hooks/color-bar/useColorBarSavings';
 import { formatCurrency } from '@/lib/format';
 
 interface BackroomROICardProps {

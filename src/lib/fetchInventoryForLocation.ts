@@ -11,7 +11,7 @@ import {
   type BackroomInventoryRow,
   type StockState,
   type StockSeverity,
-} from '@/hooks/backroom/useBackroomInventoryTable';
+} from '@/hooks/color-bar/useColorBarInventoryTable';
 
 export async function fetchInventoryForLocation(
   orgId: string,

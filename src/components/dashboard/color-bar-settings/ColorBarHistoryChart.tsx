@@ -22,7 +22,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Skeleton } from '@/components/ui/skeleton';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useBackroomHistory, type BucketMode, type HistoryDataPoint } from '@/hooks/backroom/useBackroomHistory';
+import { useBackroomHistory, type BucketMode, type HistoryDataPoint } from '@/hooks/color-bar/useColorBarHistory';
 import { useFormatNumber } from '@/hooks/useFormatNumber';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 

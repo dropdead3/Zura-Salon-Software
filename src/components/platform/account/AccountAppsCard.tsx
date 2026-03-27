@@ -8,7 +8,7 @@ import {
 } from '@/components/platform/ui/PlatformCard';
 import { PlatformBadge } from '@/components/platform/ui/PlatformBadge';
 import { useOrganizationFeatureFlags } from '@/hooks/useOrganizationFeatureFlags';
-import { useBackroomLocationEntitlements } from '@/hooks/backroom/useBackroomLocationEntitlements';
+import { useBackroomLocationEntitlements } from '@/hooks/color-bar/useColorBarLocationEntitlements';
 
 interface AccountAppsCardProps {
   organizationId: string;

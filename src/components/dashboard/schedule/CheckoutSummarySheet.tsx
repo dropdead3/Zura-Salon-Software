@@ -24,7 +24,7 @@ import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { NextVisitRecommendation } from '@/components/dashboard/schedule/NextVisitRecommendation';
 import type { RebookInterval } from '@/lib/scheduling/rebook-recommender';
 import { useCheckoutUsageCharges } from '@/hooks/billing/useCheckoutUsageCharges';
-import { useBackroomBillingSettings } from '@/hooks/billing/useBackroomBillingSettings';
+import { useBackroomBillingSettings } from '@/hooks/billing/useColorBarBillingSettings';
 
 // Constants
 const RECEIPT_WIDTH = 80; // mm

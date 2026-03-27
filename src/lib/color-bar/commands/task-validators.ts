@@ -6,7 +6,7 @@
  */
 
 import type { ValidationError } from './types';
-import { isValidTransition, type TaskStatus } from '@/lib/backroom/services/operational-task-service';
+import { isValidTransition, type TaskStatus } from '@/lib/color-bar/services/operational-task-service';
 
 // ─── Assign Task ─────────────────────────────────────
 

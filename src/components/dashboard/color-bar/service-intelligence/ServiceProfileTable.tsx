@@ -10,7 +10,7 @@ import { ArrowUpDown, Beaker } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { useFormatNumber } from '@/hooks/useFormatNumber';
-import type { ServiceProfile } from '@/lib/backroom/service-intelligence-engine';
+import type { ServiceProfile } from '@/lib/color-bar/service-intelligence-engine';
 
 interface ServiceProfileTableProps {
   profiles: ServiceProfile[];

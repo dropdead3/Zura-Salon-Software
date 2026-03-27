@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { useBackroomSetupHealth, type SetupWarning } from '@/hooks/backroom/useBackroomSetupHealth';
-import { useBackroomSetting } from '@/hooks/backroom/useBackroomSettings';
+import { useBackroomSetupHealth, type SetupWarning } from '@/hooks/color-bar/useColorBarSetupHealth';
+import { useBackroomSetting } from '@/hooks/color-bar/useColorBarSettings';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Loader2, AlertTriangle, CheckCircle2, Info, Package, Truck, Wrench, DollarSign, Monitor, BarChart3, Bell, Sparkles, LayoutDashboard } from 'lucide-react';
-import { BackroomSetupWizard } from './BackroomSetupWizard';
+import { BackroomSetupWizard } from './ColorBarSetupWizard';
 import { Infotainer } from '@/components/ui/Infotainer';
 
 interface Props {

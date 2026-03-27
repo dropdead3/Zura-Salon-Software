@@ -4,16 +4,16 @@
  */
 
 import { useMemo, useState, useEffect, useRef } from 'react';
-import { useBackroomAnalytics } from './useBackroomAnalytics';
+import { useBackroomAnalytics } from './useColorBarAnalytics';
 import { useControlTowerAlerts } from './useControlTowerAlerts';
-import { useStockoutAlerts } from './usePredictiveBackroom';
-import { useBackroomStaffMetrics } from './useBackroomStaffMetrics';
+import { useStockoutAlerts } from './usePredictiveColorBar';
+import { useBackroomStaffMetrics } from './useColorBarStaffMetrics';
 import { useReorderAnalytics, useProcurementBudget } from './useReorderAnalytics';
-import { useBackroomSetupHealth } from './useBackroomSetupHealth';
+import { useBackroomSetupHealth } from './useColorBarSetupHealth';
 import { useHighRiskInventory } from '@/hooks/inventory/useInventoryRiskProjection';
 import { useSupplyCostRecovery } from './useSupplyCostRecovery';
-import { useBackroomBillingSettings } from '@/hooks/billing/useBackroomBillingSettings';
-import { useBackroomOrgId } from './useBackroomOrgId';
+import { useBackroomBillingSettings } from '@/hooks/billing/useColorBarBillingSettings';
+import { useBackroomOrgId } from './useColorBarOrgId';
 
 function getLast30Days() {
   const end = new Date();

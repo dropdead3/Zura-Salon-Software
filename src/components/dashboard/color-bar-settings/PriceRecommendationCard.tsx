@@ -10,8 +10,8 @@ import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 import { PriceAcceptConfirmDialog } from './PriceAcceptConfirmDialog';
-import type { EnrichedPriceRecommendation } from '@/hooks/backroom/useServicePriceRecommendations';
-import type { PriceRecommendation } from '@/lib/backroom/price-recommendation';
+import type { EnrichedPriceRecommendation } from '@/hooks/color-bar/useServicePriceRecommendations';
+import type { PriceRecommendation } from '@/lib/color-bar/price-recommendation';
 
 interface Props {
   recommendation: PriceRecommendation | EnrichedPriceRecommendation;

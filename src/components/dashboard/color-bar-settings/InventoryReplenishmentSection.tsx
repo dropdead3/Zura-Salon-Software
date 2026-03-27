@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
-import { useBackroomSetting, useUpsertBackroomSetting } from '@/hooks/backroom/useBackroomSettings';
+import { useBackroomSetting, useUpsertBackroomSetting } from '@/hooks/color-bar/useColorBarSettings';
 import { useInventoryAlertSettings, useUpsertInventoryAlertSettings } from '@/hooks/useInventoryAlertSettings';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';

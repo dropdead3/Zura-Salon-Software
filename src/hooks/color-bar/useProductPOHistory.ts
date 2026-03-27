@@ -5,7 +5,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { useBackroomOrgId } from './useBackroomOrgId';
+import { useBackroomOrgId } from './useColorBarOrgId';
 import { subWeeks, startOfWeek, differenceInWeeks } from 'date-fns';
 
 const WEEKS = 12;

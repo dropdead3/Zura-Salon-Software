@@ -15,7 +15,7 @@ import {
   useResolveException,
   type BackroomException,
   type ExceptionFilters,
-} from '@/hooks/backroom/useBackroomExceptions';
+} from '@/hooks/color-bar/useColorBarExceptions';
 import { ExceptionResolveDialog } from './ExceptionResolveDialog';
 import { tokens } from '@/lib/design-tokens';
 import {

@@ -13,7 +13,7 @@ import {
   calculateOverageCharge,
   calculateProductCostCharge,
   type OverageRateType,
-} from '@/lib/backroom/allowance-billing';
+} from '@/lib/color-bar/allowance-billing';
 import { toast } from 'sonner';
 
 interface OverageChargeParams {

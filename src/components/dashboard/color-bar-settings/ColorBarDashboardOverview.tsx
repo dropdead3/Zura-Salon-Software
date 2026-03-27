@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { format, subDays, startOfMonth, endOfMonth, subMonths } from 'date-fns';
-import { useBackroomDashboard } from '@/hooks/backroom/useBackroomDashboard';
-import { useBackroomSetting } from '@/hooks/backroom/useBackroomSettings';
-import { useBackroomSetupHealth } from '@/hooks/backroom/useBackroomSetupHealth';
+import { useBackroomDashboard } from '@/hooks/color-bar/useColorBarDashboard';
+import { useBackroomSetting } from '@/hooks/color-bar/useColorBarSettings';
+import { useBackroomSetupHealth } from '@/hooks/color-bar/useColorBarSetupHealth';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { useActiveLocations } from '@/hooks/useLocations';
 import { tokens } from '@/lib/design-tokens';
@@ -19,11 +19,11 @@ import {
   PackageOpen, TrendingUp, TrendingDown,
   Users2, Package, ShieldAlert, BarChart3, Brain, MapPin,
 } from 'lucide-react';
-import { BackroomSetupWizard } from './BackroomSetupWizard';
-import { BackroomInsightsSection } from './BackroomInsightsSection';
-import { SupplyIntelligenceDashboard } from '@/components/dashboard/backroom/supply-intelligence/SupplyIntelligenceDashboard';
+import { BackroomSetupWizard } from './ColorBarSetupWizard';
+import { BackroomInsightsSection } from './ColorBarInsightsSection';
+import { SupplyIntelligenceDashboard } from '@/components/dashboard/color-bar/supply-intelligence/SupplyIntelligenceDashboard';
 import { formatRelativeTime } from '@/lib/format';
-import type { ControlTowerAlert } from '@/lib/backroom/control-tower-engine';
+import type { ControlTowerAlert } from '@/lib/color-bar/control-tower-engine';
 
 interface Props {
   onNavigate: (section: string) => void;

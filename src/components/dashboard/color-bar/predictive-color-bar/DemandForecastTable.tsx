@@ -11,8 +11,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useDemandForecast } from '@/hooks/backroom/usePredictiveBackroom';
-import type { ProductDemandForecast, StockoutRisk } from '@/lib/backroom/services/predictive-backroom-service';
+import { useDemandForecast } from '@/hooks/color-bar/usePredictiveColorBar';
+import type { ProductDemandForecast, StockoutRisk } from '@/lib/color-bar/services/predictive-backroom-service';
 
 const RISK_BADGE: Record<StockoutRisk, { label: string; className: string }> = {
   critical: { label: 'Critical', className: 'bg-destructive/15 text-destructive border-destructive/30' },

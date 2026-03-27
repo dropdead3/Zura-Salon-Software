@@ -12,9 +12,9 @@ import { supabase } from '@/integrations/supabase/client';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { toast } from 'sonner';
 import { Loader2, CreditCard, Weight, Settings, Plus, Beaker } from 'lucide-react';
-import { AddScalesDialog } from '@/components/dashboard/backroom-settings/AddScalesDialog';
-import { BackroomROICard } from '@/components/dashboard/backroom-settings/BackroomROICard';
-import { BACKROOM_BASE_PRICE, BACKROOM_PER_SERVICE_FEE, SCALE_LICENSE_MONTHLY } from '@/hooks/backroom/useLocationStylistCounts';
+import { AddScalesDialog } from '@/components/dashboard/color-bar-settings/AddScalesDialog';
+import { BackroomROICard } from '@/components/dashboard/color-bar-settings/ColorBarROICard';
+import { BACKROOM_BASE_PRICE, BACKROOM_PER_SERVICE_FEE, SCALE_LICENSE_MONTHLY } from '@/hooks/color-bar/useLocationStylistCounts';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 
 

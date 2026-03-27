@@ -13,11 +13,11 @@ import { BowlLineRow } from './BowlLineRow';
 import { ManualWeightInput } from './ManualWeightInput';
 import { AddProductToBowl } from './AddProductToBowl';
 import { LiveBowlCard } from './LiveBowlCard';
-import type { MixBowl } from '@/hooks/backroom/useMixBowls';
-import type { MixBowlLine } from '@/hooks/backroom/useMixBowlLines';
-import { calculateBowlWeight, calculateBowlCost } from '@/lib/backroom/mix-calculations';
-import type { MixBowlStatus } from '@/lib/backroom/bowl-state-machine';
-import { isBowlOpen, isTerminalBowlStatus } from '@/lib/backroom/bowl-state-machine';
+import type { MixBowl } from '@/hooks/color-bar/useMixBowls';
+import type { MixBowlLine } from '@/hooks/color-bar/useMixBowlLines';
+import { calculateBowlWeight, calculateBowlCost } from '@/lib/color-bar/mix-calculations';
+import type { MixBowlStatus } from '@/lib/color-bar/bowl-state-machine';
+import { isBowlOpen, isTerminalBowlStatus } from '@/lib/color-bar/bowl-state-machine';
 
 const STATUS_STYLES: Record<MixBowlStatus, { label: string; variant: 'default' | 'secondary' | 'outline' | 'destructive' }> = {
   open: { label: 'Open', variant: 'default' },

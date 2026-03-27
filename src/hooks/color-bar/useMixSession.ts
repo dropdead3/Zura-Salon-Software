@@ -10,15 +10,15 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { toast } from 'sonner';
-import type { MixSessionStatus } from '@/lib/backroom/session-state-machine';
-import { canTransitionSession } from '@/lib/backroom/session-state-machine';
-import { emitSessionEvent, type SessionStatus } from '@/lib/backroom/mix-session-service';
+import type { MixSessionStatus } from '@/lib/color-bar/session-state-machine';
+import { canTransitionSession } from '@/lib/color-bar/session-state-machine';
+import { emitSessionEvent, type SessionStatus } from '@/lib/color-bar/mix-session-service';
 import {
   executeStartMixSession,
   executeCompleteSession,
   executeMarkSessionUnresolved,
-} from '@/lib/backroom/commands/mixing-commands';
-import { buildCommandMeta } from '@/lib/backroom/commands/types';
+} from '@/lib/color-bar/commands/mixing-commands';
+import { buildCommandMeta } from '@/lib/color-bar/commands/types';
 
 export interface MixSession {
   id: string;

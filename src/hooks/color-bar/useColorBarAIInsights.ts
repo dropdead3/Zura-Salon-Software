@@ -12,12 +12,12 @@ import {
   fetchCachedInsights,
   refreshInsights,
   type BackroomAIInsightsData,
-} from '@/lib/backroom/services/ai-insight-service';
+} from '@/lib/color-bar/services/ai-insight-service';
 
 const STALE_TIME = 2 * 60 * 60 * 1000; // 2 hours
 const COOLDOWN_MS = 60 * 1000;
 
-export type { BackroomAIInsight, BackroomAIInsightsData } from '@/lib/backroom/services/ai-insight-service';
+export type { BackroomAIInsight, BackroomAIInsightsData } from '@/lib/color-bar/services/ai-insight-service';
 
 export function useBackroomAIInsights(locationId?: string) {
   const { user } = useAuth();

@@ -8,7 +8,7 @@ import { cn } from '@/lib/utils';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useForecastSummary } from '@/hooks/backroom/usePredictiveBackroom';
+import { useForecastSummary } from '@/hooks/color-bar/usePredictiveColorBar';
 
 interface PredictiveBackroomSummaryProps {
   locationId?: string | null;

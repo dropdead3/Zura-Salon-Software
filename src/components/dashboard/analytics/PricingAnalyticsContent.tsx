@@ -19,9 +19,9 @@ import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { AnalyticsFilterBadge } from '@/components/dashboard/AnalyticsFilterBadge';
 import { EmptyState } from '@/components/ui/empty-state';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
-import { useComputedPriceRecommendations, useDefaultTargetMargin } from '@/hooks/backroom/useServicePriceRecommendations';
+import { useComputedPriceRecommendations, useDefaultTargetMargin } from '@/hooks/color-bar/useServicePriceRecommendations';
 import { useOrganizationApps } from '@/hooks/useOrganizationApps';
-import { useServiceProfitabilitySnapshots } from '@/hooks/backroom/useServiceProfitability';
+import { useServiceProfitabilitySnapshots } from '@/hooks/color-bar/useServiceProfitability';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 import type { FilterContext } from '@/components/dashboard/AnalyticsFilterBadge';
 

@@ -8,7 +8,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { toast } from 'sonner';
-import type { BlueprintStep, BlueprintStepType, StepMetadata } from '@/lib/backroom/blueprint-engine';
+import type { BlueprintStep, BlueprintStepType, StepMetadata } from '@/lib/color-bar/blueprint-engine';
 
 // ─── Query: Ordered steps for one service ───────────
 

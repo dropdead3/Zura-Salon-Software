@@ -16,7 +16,7 @@ import {
   type ServiceProfile,
   type OptimizationInsight,
   type CostTrendPeriod,
-} from '@/lib/backroom/service-intelligence-engine';
+} from '@/lib/color-bar/service-intelligence-engine';
 
 /**
  * Fetch and compute service profiles for a date range.

@@ -7,7 +7,7 @@ import { Timer, X, Play, Square } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { tokens } from '@/lib/design-tokens';
-import type { TimerSnapshot } from '@/hooks/backroom/useProcessingTimers';
+import type { TimerSnapshot } from '@/hooks/color-bar/useProcessingTimers';
 
 interface ProcessingTimerBarProps {
   timers: TimerSnapshot[];

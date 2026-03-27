@@ -5,8 +5,8 @@
 
 import { useState } from 'react';
 import { Beaker, ChevronDown, ChevronRight } from 'lucide-react';
-import { useClientFormulaHistory, type ClientFormula } from '@/hooks/backroom/useClientFormulaHistory';
-import { FormulaPreview } from '@/components/dashboard/backroom/FormulaPreview';
+import { useClientFormulaHistory, type ClientFormula } from '@/hooks/color-bar/useClientFormulaHistory';
+import { FormulaPreview } from '@/components/dashboard/color-bar/FormulaPreview';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';

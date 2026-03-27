@@ -5,7 +5,7 @@
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { postUsageFromSession } from '@/lib/backroom/services/inventory-ledger-service';
+import { postUsageFromSession } from '@/lib/color-bar/services/inventory-ledger-service';
 
 interface DepletionParams {
   sessionId: string;

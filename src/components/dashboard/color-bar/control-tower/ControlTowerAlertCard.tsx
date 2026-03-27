@@ -3,7 +3,7 @@ import { ArrowRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { tokens } from '@/lib/design-tokens';
 import { Button } from '@/components/ui/button';
-import type { ControlTowerAlert } from '@/lib/backroom/control-tower-engine';
+import type { ControlTowerAlert } from '@/lib/color-bar/control-tower-engine';
 
 interface ControlTowerAlertCardProps {
   alert: ControlTowerAlert;

@@ -8,8 +8,8 @@ import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useOrganizationBilling, useSubscriptionPlans } from '@/hooks/useOrganizationBilling';
 import { useBillingCalculations, formatCurrency, getBillingCycleLabel, getContractLengthLabel } from '@/hooks/useBillingCalculations';
 import { useTrialStatus } from '@/hooks/useTrialStatus';
-import { useBackroomLocationEntitlements } from '@/hooks/backroom/useBackroomLocationEntitlements';
-import { BACKROOM_BASE_PRICE, SCALE_LICENSE_MONTHLY } from '@/hooks/backroom/useLocationStylistCounts';
+import { useBackroomLocationEntitlements } from '@/hooks/color-bar/useColorBarLocationEntitlements';
+import { BACKROOM_BASE_PRICE, SCALE_LICENSE_MONTHLY } from '@/hooks/color-bar/useLocationStylistCounts';
 
 export function BillingOverviewCard() {
   const { effectiveOrganization } = useOrganizationContext();

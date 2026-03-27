@@ -6,7 +6,7 @@
 import { useMemo } from 'react';
 import { useStylistExperienceScore } from '@/hooks/useStylistExperienceScore';
 import { useSalesByStylist } from '@/hooks/useSalesData';
-import { useStaffBackroomPerformance } from '@/hooks/backroom/useStaffBackroomPerformance';
+import { useStaffBackroomPerformance } from '@/hooks/color-bar/useStaffColorBarPerformance';
 
 export interface StaffPerformanceRow {
   staffId: string;

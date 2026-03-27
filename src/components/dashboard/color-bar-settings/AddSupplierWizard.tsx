@@ -19,8 +19,8 @@ import { cn } from '@/lib/utils';
 import {
   Loader2, ArrowLeft, ArrowRight, Check, Search, Package, Layers, Plus, X, Lock,
 } from 'lucide-react';
-import { useAllProductsWithSupplier } from '@/hooks/backroom/useSupplierSettings';
-import { useLinkProducts, useUpdateSupplierContact } from '@/hooks/backroom/useSupplierSettings';
+import { useAllProductsWithSupplier } from '@/hooks/color-bar/useSupplierSettings';
+import { useLinkProducts, useUpdateSupplierContact } from '@/hooks/color-bar/useSupplierSettings';
 
 interface SupplierDetails {
   name: string;

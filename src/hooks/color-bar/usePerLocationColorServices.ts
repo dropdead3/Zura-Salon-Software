@@ -5,7 +5,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { useBackroomOrgId } from './useBackroomOrgId';
+import { useBackroomOrgId } from './useColorBarOrgId';
 import { isColorOrChemicalService } from '@/utils/serviceCategorization';
 
 const BATCH_SIZE = 1000;

@@ -14,7 +14,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { Loader2, ArrowUp, ArrowDown, Settings, User, Clock, Download, FileText, CalendarIcon } from 'lucide-react';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
-import { useInventoryAuditTrail, type AuditEntry, type AuditFilters } from '@/hooks/backroom/useInventoryAuditTrail';
+import { useInventoryAuditTrail, type AuditEntry, type AuditFilters } from '@/hooks/color-bar/useInventoryAuditTrail';
 import { DRILLDOWN_DIALOG_CONTENT_CLASS } from '@/components/dashboard/drilldownDialogStyles';
 import { format, formatDistanceToNow } from 'date-fns';
 import { AuditEntryDetailPanel, type AuditDetailEntry } from './AuditEntryDetailPanel';

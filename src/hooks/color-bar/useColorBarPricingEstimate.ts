@@ -6,7 +6,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { useBackroomOrgId } from './useBackroomOrgId';
+import { useBackroomOrgId } from './useColorBarOrgId';
 import { isColorOrChemicalService } from '@/utils/serviceCategorization';
 
 /** Industry baseline: ~12 % of color product spend is wasted */

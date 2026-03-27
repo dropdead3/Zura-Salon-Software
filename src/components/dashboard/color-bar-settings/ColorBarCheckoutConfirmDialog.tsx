@@ -10,7 +10,7 @@ import { useOrgPaymentInfo } from '@/hooks/useOrgPaymentInfo';
 import {
   BACKROOM_BASE_PRICE, BACKROOM_PER_SERVICE_FEE,
   SCALE_LICENSE_MONTHLY, SCALE_HARDWARE_PRICE,
-} from '@/hooks/backroom/useLocationStylistCounts';
+} from '@/hooks/color-bar/useLocationStylistCounts';
 
 interface Props {
   open: boolean;

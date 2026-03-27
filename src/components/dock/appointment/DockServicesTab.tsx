@@ -17,7 +17,7 @@ import { DOCK_CARD } from '@/components/dock/dock-ui-tokens';
 import type { DockStaffSession } from '@/pages/Dock';
 import type { DockAppointment } from '@/hooks/dock/useDockAppointments';
 import { useDockMixSessions, type DockMixSession } from '@/hooks/dock/useDockMixSessions';
-import { normalizeSessionStatus, isTerminalSessionStatus, isActiveSession, requiresReweigh } from '@/lib/backroom/session-state-machine';
+import { normalizeSessionStatus, isTerminalSessionStatus, isActiveSession, requiresReweigh } from '@/lib/color-bar/session-state-machine';
 import { DockNewBowlSheet } from '../mixing/DockNewBowlSheet';
 import { DockLiveDispensing, type BowlLine } from '../mixing/DockLiveDispensing';
 import { DockSessionCompleteSheet, type PendingChargeSummary } from '../mixing/DockSessionCompleteSheet';
@@ -32,10 +32,10 @@ import { DockClientAlertsBanner } from './DockClientAlertsBanner';
 import { DockFormulaHistorySheet } from './DockFormulaHistorySheet';
 import { isColorOrChemicalService } from '@/utils/serviceCategorization';
 import { useServiceLookup, type ContainerType } from '@/hooks/useServiceLookup';
-import { useDepleteMixSession } from '@/hooks/backroom/useDepleteMixSession';
+import { useDepleteMixSession } from '@/hooks/color-bar/useDepleteMixSession';
 import { useCalculateOverageCharge } from '@/hooks/billing/useCalculateOverageCharge';
 import { useCheckoutUsageCharges } from '@/hooks/billing/useCheckoutUsageCharges';
-import { useBackroomBillingSettings } from '@/hooks/billing/useBackroomBillingSettings';
+import { useBackroomBillingSettings } from '@/hooks/billing/useColorBarBillingSettings';
 
 interface DockServicesTabProps {
   appointment: DockAppointment;

@@ -7,7 +7,7 @@ import { cn } from '@/lib/utils';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { DollarSign, AlertTriangle, Beaker, Clock, Trash2 } from 'lucide-react';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
-import type { EnrichedAppointmentProfit, MarginHealth } from '@/lib/backroom/appointment-profit-engine';
+import type { EnrichedAppointmentProfit, MarginHealth } from '@/lib/color-bar/appointment-profit-engine';
 
 const healthConfig: Record<MarginHealth, { label: string; className: string }> = {
   healthy: { label: 'Healthy', className: 'text-green-600 bg-green-500/10' },

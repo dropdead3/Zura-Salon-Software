@@ -9,7 +9,7 @@ import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import {
   calculateInventoryDaysRemaining,
   type InventoryDaysResult,
-} from '@/lib/backroom/analytics-engine';
+} from '@/lib/color-bar/analytics-engine';
 
 export function useInventoryDaysRemaining(locationId?: string) {
   const { effectiveOrganization } = useOrganizationContext();

@@ -43,7 +43,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { formatRelativeTime } from '@/lib/format';
 import { useSupplyLibraryRequests, useResolveSupplyRequest } from '@/hooks/platform/useSupplyLibraryRequests';
 import { groupByProductLine, extractProductLine } from '@/lib/supply-line-parser';
-import { useBackroomOrgId } from '@/hooks/backroom/useBackroomOrgId';
+import { useBackroomOrgId } from '@/hooks/color-bar/useColorBarOrgId';
 import { sortByShadeLevel, SHADE_SORTED_CATEGORIES } from '@/lib/shadeSort';
 import { SwatchPicker } from './SwatchPicker';
 import { suggestSwatchColor } from '@/lib/swatchSuggest';

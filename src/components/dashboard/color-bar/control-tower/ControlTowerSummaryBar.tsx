@@ -1,6 +1,6 @@
 import { cn } from '@/lib/utils';
 import { tokens } from '@/lib/design-tokens';
-import type { PrioritySummary } from '@/lib/backroom/control-tower-engine';
+import type { PrioritySummary } from '@/lib/color-bar/control-tower-engine';
 
 interface ControlTowerSummaryBarProps {
   summary: PrioritySummary;

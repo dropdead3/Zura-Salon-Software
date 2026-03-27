@@ -6,8 +6,8 @@
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useAppointmentProfitSummary } from '@/hooks/backroom/useAppointmentProfit';
-import { ProfitByServiceTable } from '@/components/dashboard/backroom/appointment-profit/ProfitByServiceTable';
+import { useAppointmentProfitSummary } from '@/hooks/color-bar/useAppointmentProfit';
+import { ProfitByServiceTable } from '@/components/dashboard/color-bar/appointment-profit/ProfitByServiceTable';
 
 interface ServiceProfitabilityCardProps {
   dateFrom: string;

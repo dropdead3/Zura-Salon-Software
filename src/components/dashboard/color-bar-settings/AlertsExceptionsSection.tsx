@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
-import { useBackroomAlertRules, useUpsertAlertRule, useDeleteAlertRule, ALERT_RULE_TYPES, SEVERITY_OPTIONS, type BackroomAlertRule } from '@/hooks/backroom/useBackroomAlertRules';
+import { useBackroomAlertRules, useUpsertAlertRule, useDeleteAlertRule, ALERT_RULE_TYPES, SEVERITY_OPTIONS, type BackroomAlertRule } from '@/hooks/color-bar/useColorBarAlertRules';
 import { useActiveLocations } from '@/hooks/useLocations';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';

@@ -11,7 +11,7 @@ import {
   calculateWastePercentage,
   calculateReweighCompliance,
   type StaffSessionData,
-} from '@/lib/backroom/analytics-engine';
+} from '@/lib/color-bar/analytics-engine';
 
 export interface BackroomAnalyticsData {
   totalSessions: number;

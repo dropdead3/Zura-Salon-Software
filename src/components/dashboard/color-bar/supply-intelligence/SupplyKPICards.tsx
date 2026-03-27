@@ -8,7 +8,7 @@ import { cn } from '@/lib/utils';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { Skeleton } from '@/components/ui/skeleton';
-import type { SupplyInsightKPIs } from '@/hooks/backroom/useSupplyIntelligence';
+import type { SupplyInsightKPIs } from '@/hooks/color-bar/useSupplyIntelligence';
 
 interface SupplyKPICardsProps {
   kpis: SupplyInsightKPIs | undefined;

@@ -7,8 +7,8 @@
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { useBackroomAnalytics } from './useBackroomAnalytics';
-import { calculateStaffEfficiency, type StaffMetric } from '@/lib/backroom/analytics-engine';
+import { useBackroomAnalytics } from './useColorBarAnalytics';
+import { calculateStaffEfficiency, type StaffMetric } from '@/lib/color-bar/analytics-engine';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 
 export function useBackroomStaffMetrics(
