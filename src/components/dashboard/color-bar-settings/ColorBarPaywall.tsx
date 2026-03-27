@@ -998,7 +998,7 @@ export function ColorBarPaywall() {
                     <span className="font-display text-xl tracking-wide">${COLOR_BAR_BASE_PRICE}</span>
                     <span className="text-muted-foreground">/mo per location</span>
                     <span className="text-muted-foreground/40 mx-3">·</span>
-                    <span className="font-display text-xl tracking-wide">${BACKROOM_PER_SERVICE_FEE.toFixed(2)}</span>
+                    <span className="font-display text-xl tracking-wide">${COLOR_BAR_PER_SERVICE_FEE.toFixed(2)}</span>
                     <span className="text-muted-foreground">/color service</span>
                   </p>
                   <p className="font-sans text-sm text-muted-foreground/60">

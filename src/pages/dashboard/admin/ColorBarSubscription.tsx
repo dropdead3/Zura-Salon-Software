@@ -229,7 +229,7 @@ export default function ColorBarSubscription() {
               </div>
               <div className="flex items-baseline gap-1">
                 <span className="text-2xl font-display tracking-wide text-foreground">
-                  ${BACKROOM_PER_SERVICE_FEE.toFixed(2)}
+                  ${COLOR_BAR_PER_SERVICE_FEE.toFixed(2)}
                 </span>
                 <span className="text-sm text-muted-foreground font-sans">/color appointment</span>
               </div>
