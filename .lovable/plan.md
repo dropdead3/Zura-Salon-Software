@@ -1,65 +1,51 @@
 
 
-## Move App Preferences to Org-Wide Backroom Settings & Wire Dock Enforcement
-
-### Current State
-- **Assistant Prep**, **Smart Mix Assist**, and **Formula Memory** exist as per-service boolean columns on the `services` table
-- They are only toggled in `ServiceTrackingSection.tsx` — the Dock never reads them
-- Smart Mix Assist already has a separate org-wide `smart_mix_assist_settings` table (used by `FormulaAssistanceSection`)
-- Formula Memory is used unconditionally in `DockClientTab` (no gating)
-- Assistant Prep is not consumed anywhere in the Dock
+## Put Tracking & Billing Method Side-by-Side in a 2-Column Layout
 
 ### What Changes
 
-**1. Store as org-wide backroom_settings keys** (no migration needed)
+The "Tracking" and "Billing Method" sections currently stack vertically, leaving unused horizontal space. This puts them in a responsive 2-column grid that collapses to stacked rows on smaller screens.
 
-Use the existing `backroom_settings` table with three new setting keys:
-- `dock_assistant_prep_enabled` → `{ enabled: boolean }`
-- `dock_smart_mix_assist_enabled` → reads from existing `smart_mix_assist_settings.is_enabled` (already org-wide — no duplication)
-- `dock_formula_memory_enabled` → `{ enabled: boolean }`
+### Implementation — 1 File Modified
 
-Since Smart Mix Assist already has its own dedicated settings table and `FormulaAssistanceSection` UI, we only need to add **two** new `backroom_settings` keys (assistant prep + formula memory). Smart Mix Assist continues using its existing table.
+**`src/components/dashboard/backroom-settings/ServiceTrackingSection.tsx`** (~lines 740–935)
 
-**2. Remove per-service App Preferences section from ServiceTrackingSection**
+1. **Wrap Sections 1 & 2 in a responsive grid** — Replace the current `space-y-5` parent with a grid layout:
+   ```
+   grid grid-cols-1 md:grid-cols-2 gap-5
+   ```
+   - On `md+` (≥768px): Tracking and Billing Method render side-by-side
+   - Below `md`: They stack vertically as they do now
 
-- Delete the entire "Section 3: App Preferences" block (~lines 955–983)
-- Remove `assistant_prep_allowed`, `smart_mix_assist_enabled`, `formula_memory_enabled` from the select query and `ServiceRow` interface
-- Remove these fields from all "Reset Configuration" mutation payloads (4 places)
-- Remove `activeToggles` count that references these fields
+2. **Keep each section as its own grid child** — No structural changes to the internal content of either section. The existing `<div>` wrappers for Section 1 (Tracking) and Section 2 (Billing Method) become direct children of the grid.
 
-**3. Add org-wide toggles to FormulaAssistanceSection**
+3. **Price Recommendation + Mark Configured footer remain full-width below the grid** — These span both columns and stay outside the 2-col layout.
 
-Extend the existing `FormulaAssistanceSection` (Backroom Hub → Formula Assistance) with two additional cards:
-- **Formula Memory** card with enable/disable switch + description
-- **Assistant Prep** card with enable/disable switch + description
+### Visual Structure
 
-These sit alongside the existing Smart Mix Assist card, making `FormulaAssistanceSection` the single source of truth for all three Dock intelligence features.
+```text
+Desktop (md+):
+┌──────────────────────┬──────────────────────────┐
+│ TRACKING             │ BILLING METHOD            │
+│ ┃ Requires Color [⏻] │ ┃ [✓ Allowance] [+ P&L]  │
+│ ┃ Vessels: [Bowls]   │ ┃ 45g · $0.50/g  Edit     │
+└──────────────────────┴──────────────────────────┘
+│ [Price Recommendation if any]                    │
+│ ─── Configured ✓ ──── [Reset Configuration]      │
 
-**4. Create `useDockFeatureSettings` hook**
-
-A lightweight hook that resolves all three org-wide feature flags for Dock consumption:
-```ts
-export function useDockFeatureSettings(orgId?: string) {
-  // Reads backroom_settings for assistant_prep + formula_memory
-  // Reads smart_mix_assist_settings for smart mix
-  // Returns { assistantPrepEnabled, smartMixAssistEnabled, formulaMemoryEnabled, isLoading }
-}
+Mobile (<md):
+┌──────────────────────┐
+│ TRACKING             │
+│ ┃ Requires Color [⏻] │
+│ ┃ Vessels: [Bowls]   │
+├──────────────────────┤
+│ BILLING METHOD       │
+│ ┃ [✓ Allowance]      │
+│ ┃ 45g · $0.50/g Edit │
+└──────────────────────┘
 ```
 
-**5. Wire enforcement in Dock**
-
-- **Formula Memory**: Gate the `useInstantFormulaMemory` call in `DockClientTab.tsx` — only fetch/render the "Last Formula" section when `formulaMemoryEnabled` is true
-- **Smart Mix Assist**: Already gated via `isSmartMixAssistEnabled()` in the service layer — no Dock changes needed
-- **Assistant Prep**: No Dock surfaces exist yet for this feature — the toggle becomes a forward-looking configuration. No enforcement wiring needed until the prep workflow is built.
-
-### Files Modified
-1. `src/components/dashboard/backroom-settings/ServiceTrackingSection.tsx` — Remove App Preferences section + related fields
-2. `src/components/dashboard/backroom-settings/FormulaAssistanceSection.tsx` — Add Formula Memory + Assistant Prep cards
-3. `src/hooks/backroom/useDockFeatureSettings.ts` — New hook for Dock feature flag resolution
-4. `src/components/dock/appointment/DockClientTab.tsx` — Gate formula memory behind org setting
-
 ### Scope
-- No database migrations (uses existing `backroom_settings` table)
-- Per-service columns remain in the DB but are no longer referenced in code
-- No breaking changes
+- 1 file, ~5 lines changed (wrap existing sections in a grid div, adjust parent from `space-y-5` to `space-y-5` with inner grid)
+- No logic changes, no database changes
 
