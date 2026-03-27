@@ -18,6 +18,9 @@ export interface CheckoutUsageCharge {
   overage_qty: number;
   overage_rate: number;
   charge_amount: number;
+  charge_type: string;
+  product_wholesale_cost: number | null;
+  product_charge_markup_pct: number | null;
   status: string;
   waived_by: string | null;
   waived_reason: string | null;

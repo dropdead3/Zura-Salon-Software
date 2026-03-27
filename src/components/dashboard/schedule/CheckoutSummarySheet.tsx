@@ -131,11 +131,16 @@ export function CheckoutSummarySheet({
   const productChargeLabel = billingSettings?.product_charge_label || 'Product Usage';
   const productChargeTaxable = billingSettings?.product_charge_taxable ?? true;
 
-  // Filter to approved/pending product cost charges
+  // Filter to approved/pending charges — both product_cost and overage
   const productCostCharges = usageCharges.filter(
-    (c: any) => c.charge_type === 'product_cost' && c.status !== 'waived'
+    (c) => c.charge_type === 'product_cost' && c.status !== 'waived'
+  );
+  const overageCharges = usageCharges.filter(
+    (c) => c.charge_type === 'overage' && c.status !== 'waived'
   );
   const productChargeTotal = productCostCharges.reduce((s, c) => s + c.charge_amount, 0);
+  const overageChargeTotal = overageCharges.reduce((s, c) => s + c.charge_amount, 0);
+  const allUsageChargeTotal = productChargeTotal + overageChargeTotal;
 
   if (!appointment) return null;
 
