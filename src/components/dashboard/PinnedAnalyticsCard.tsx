@@ -294,6 +294,13 @@ const CARD_LINKS: Record<string, { label: string; href: string }> = {
   hiring_capacity: { label: 'Hiring', href: '/dashboard/admin/analytics?tab=operations' },
   operations_stats: { label: 'Queue', href: '/dashboard/admin/analytics?tab=operations' },
   client_experience_staff: { label: 'Experience', href: '/dashboard/admin/analytics?tab=sales' },
+  commission_summary: { label: 'Commissions', href: '/dashboard/admin/analytics?tab=sales' },
+  staff_commission_breakdown: { label: 'Commissions', href: '/dashboard/admin/analytics?tab=sales' },
+  true_profit: { label: 'Profit', href: '/dashboard/admin/analytics?tab=sales' },
+  staff_performance: { label: 'Performance', href: '/dashboard/admin/analytics?tab=sales' },
+  service_profitability: { label: 'Profitability', href: '/dashboard/admin/analytics?tab=sales' },
+  control_tower: { label: 'Control Tower', href: '/dashboard/admin/color-bar' },
+  predictive_inventory: { label: 'Inventory', href: '/dashboard/admin/color-bar' },
 };
 
 /**
