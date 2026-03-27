@@ -4,7 +4,6 @@ import { Switch } from '@/components/ui/switch';
 import { GripVertical, Eye } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import * as HoverCardPrimitive from '@radix-ui/react-hover-card';
-import { cn } from '@/lib/utils';
 
 interface SortablePinnedCardItemProps {
   id: string;
