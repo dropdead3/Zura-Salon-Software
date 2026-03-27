@@ -728,29 +728,29 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                           onClick={() => toggleCategoryCollapse(category)}
                         >
                           <TableCell colSpan={4} className="py-2 px-4">
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-2">
+                            <div className="flex items-center justify-between gap-3 flex-wrap">
+                              <div className="flex items-center gap-2 min-w-0">
                                 <ChevronRight className={cn(
-                                  'w-4 h-4 text-muted-foreground transition-transform duration-200',
+                                  'w-4 h-4 text-muted-foreground transition-transform duration-200 shrink-0',
                                   !isCollapsed && 'rotate-90',
                                 )} />
-                                <span className="text-[11px] font-display uppercase tracking-wider text-muted-foreground">
+                                <span className="text-[11px] font-display uppercase tracking-wider text-muted-foreground truncate">
                                   {category}
                                 </span>
                               </div>
-                              <div className="flex items-center gap-1.5">
-                                <span className="text-[11px] font-sans text-muted-foreground tabular-nums">
+                              <div className="flex items-center gap-1.5 shrink-0">
+                                <span className="text-[11px] font-sans text-muted-foreground tabular-nums whitespace-nowrap">
                                   {group.services.length} service{group.services.length !== 1 ? 's' : ''}
                                 </span>
                                 <span className="text-[11px] text-muted-foreground/40">·</span>
                                 <span className={cn(
-                                  'text-[11px] font-sans tabular-nums',
+                                  'text-[11px] font-sans tabular-nums whitespace-nowrap',
                                   allConfigured ? 'text-emerald-500' : 'text-muted-foreground',
                                 )}>
                                   {group.configured} configured
                                 </span>
                                 {allConfigured && (
-                                  <CheckCircle2 className="w-3 h-3 text-emerald-500" />
+                                  <CheckCircle2 className="w-3 h-3 text-emerald-500 shrink-0" />
                                 )}
                               </div>
                             </div>
