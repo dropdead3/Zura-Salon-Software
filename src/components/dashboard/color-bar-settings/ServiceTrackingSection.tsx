@@ -697,7 +697,7 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
               </p>
             </div>
           ) : (
-             <div className="rounded-lg border overflow-hidden">
+             <div className="@container rounded-lg border overflow-hidden">
               <Table className="min-w-[400px]">
                 <TableHeader>
                   <TableRow>
