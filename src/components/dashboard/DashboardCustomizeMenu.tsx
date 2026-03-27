@@ -414,6 +414,37 @@ export function DashboardCustomizeMenu({ variant = 'icon', roleContext }: Dashbo
   const handleResetToDefault = () => {
     resetToDefault.mutate();
   };
+
+  const handleBulkPinAll = async () => {
+    setIsTogglingPin(true);
+    try {
+      const rows = unpinnedCards.flatMap(card =>
+        leadershipRoles.map(role => ({
+          element_key: card.id,
+          element_name: card.label,
+          element_category: card.category,
+          role,
+          is_visible: true,
+        }))
+      );
+      if (rows.length > 0) {
+        const { error } = await supabase
+          .from('dashboard_element_visibility')
+          .upsert(rows, { onConflict: 'element_key,role' });
+        if (error) throw error;
+        queryClient.invalidateQueries({ queryKey: ['dashboard-visibility'] });
+        
+        const newPinnedEntries = unpinnedCards.map(c => toPinnedEntry(c.id));
+        const newSectionOrder = [...orderedUnifiedItems, ...newPinnedEntries];
+        const newPinnedCards = [...(layout.pinnedCards || []), ...unpinnedCards.map(c => c.id)];
+        saveLayout.mutate({ ...layout, pinnedCards: newPinnedCards, sectionOrder: newSectionOrder });
+      }
+    } catch (err: any) {
+      toast({ title: 'Failed to pin all cards', description: err?.message, variant: 'destructive' });
+    } finally {
+      setIsTogglingPin(false);
+    }
+  };
   
   const handleToggleHub = (hubHref: string) => {
     const currentEnabled = layout.enabledHubs || permittedHubs.map(h => h.href);
