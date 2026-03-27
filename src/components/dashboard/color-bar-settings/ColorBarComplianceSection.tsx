@@ -20,6 +20,7 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { Infotainer } from '@/components/ui/Infotainer';
+import { PageExplainer } from '@/components/ui/PageExplainer';
 import { AnimatedBlurredAmount } from '@/components/ui/AnimatedBlurredAmount';
 import { format, subDays } from 'date-fns';
 import { FileDown } from 'lucide-react';
