@@ -591,6 +591,14 @@ export function CheckoutSummarySheet({
                 </div>
               )}
 
+              {/* Overage charges (allowance-mode, non-discountable) */}
+              {overageChargeTotal > 0 && (
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Additional Product Usage</span>
+                  <span className="font-medium">{formatCurrency(overageChargeTotal)}</span>
+                </div>
+              )}
+
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Tax ({(taxRate * 100).toFixed(1)}%)</span>
                 <span className="font-medium">{formatCurrency(tax)}</span>
