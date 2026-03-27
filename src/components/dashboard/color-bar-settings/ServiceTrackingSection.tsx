@@ -849,7 +849,7 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                         );
                                       }
                                       return (
-                                        <Badge variant="outline" className="text-[10px] shrink-0 border-amber-500/30 bg-amber-500/10 text-amber-500 dark:text-amber-400">
+                                        <Badge variant="outline" className="text-[10px] whitespace-nowrap shrink-0 border-amber-500/30 bg-amber-500/10 text-amber-500 dark:text-amber-400">
                                           Allowance Needs To Be Set
                                         </Badge>
                                       );
