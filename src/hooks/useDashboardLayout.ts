@@ -177,25 +177,26 @@ export function useDashboardTemplates() {
 }
 
 // Fetch user's dashboard layout
-export function useDashboardLayout() {
+export function useDashboardLayout(overrideUserId?: string) {
   const { user } = useAuth();
   const roles = useEffectiveRoles();
+  const targetUserId = overrideUserId || user?.id;
 
   const { data: userPrefs, isLoading: prefsLoading } = useQuery({
-    queryKey: ['user-preferences', user?.id],
+    queryKey: ['user-preferences', targetUserId],
     queryFn: async () => {
-      if (!user?.id) return null;
+      if (!targetUserId) return null;
       
       const { data, error } = await supabase
         .from('user_preferences')
         .select('dashboard_layout')
-        .eq('user_id', user.id)
+        .eq('user_id', targetUserId)
         .maybeSingle();
 
       if (error) throw error;
       return data;
     },
-    enabled: !!user?.id,
+    enabled: !!targetUserId,
   });
 
   // Determine if user is leadership for template selection
