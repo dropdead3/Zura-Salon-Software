@@ -149,9 +149,9 @@ export function CheckoutSummarySheet({
   const discount = appliedPromo?.calculated_discount || 0;
   // Product charges are NOT discountable — kept separate from promo subtotal
   const discountedSubtotal = subtotal - discount;
-  const taxableBase = discountedSubtotal + (productChargeTaxable ? productChargeTotal : 0);
+  const taxableBase = discountedSubtotal + (productChargeTaxable ? allUsageChargeTotal : 0);
   const tax = taxableBase * taxRate;
-  const checkoutTotal = discountedSubtotal + productChargeTotal + tax;
+  const checkoutTotal = discountedSubtotal + allUsageChargeTotal + tax;
   const grandTotal = checkoutTotal + tipAmount;
 
   const getDuration = () => {
