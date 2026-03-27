@@ -32,7 +32,7 @@ import { PredictiveColorBarSummary } from '@/components/dashboard/color-bar/pred
 import { ClientExperienceCard } from '@/components/dashboard/sales/ClientExperienceCard';
 import { OperationsQuickStats } from '@/components/dashboard/operations/OperationsQuickStats';
 import { useDashboardVisibility } from '@/hooks/useDashboardVisibility';
-import { useDashboardLayout } from '@/hooks/useDashboardLayout';
+import { useDashboardLayout, getPinnedVisibilityKey } from '@/hooks/useDashboardLayout';
 import { useSalesMetrics, useSalesByStylist } from '@/hooks/useSalesData';
 import { useStaffUtilization } from '@/hooks/useStaffUtilization';
 import { useActiveLocations } from '@/hooks/useLocations';
@@ -120,10 +120,11 @@ export function CommandCenterAnalytics() {
   // Check if any analytics cards are visible for leadership roles
   const leadershipRoles = ['super_admin', 'admin', 'manager'];
   
-  const isElementVisible = (elementKey: string) => {
+  const isElementVisible = (cardId: string) => {
     if (!visibilityData) return false;
+    const visibilityKey = getPinnedVisibilityKey(cardId);
     const element = visibilityData.find(
-      v => v.element_key === elementKey && leadershipRoles.includes(v.role)
+      v => v.element_key === visibilityKey && leadershipRoles.includes(v.role)
     );
     return element?.is_visible ?? false;
   };

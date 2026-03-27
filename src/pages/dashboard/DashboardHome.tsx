@@ -49,7 +49,7 @@ import { AnnouncementsDrawer } from '@/components/dashboard/AnnouncementsDrawer'
 import { LiveSessionIndicator } from '@/components/dashboard/LiveSessionIndicator';
 import { DashboardSetupWizard } from '@/components/dashboard/DashboardSetupWizard';
 import { DashboardCustomizeMenu, getCardSize } from '@/components/dashboard/DashboardCustomizeMenu';
-import { useDashboardLayout, isPinnedCardEntry, getPinnedCardId, PINNABLE_CARD_IDS } from '@/hooks/useDashboardLayout';
+import { useDashboardLayout, isPinnedCardEntry, getPinnedCardId, getPinnedVisibilityKey, PINNABLE_CARD_IDS } from '@/hooks/useDashboardLayout';
 import { TodaysQueueSection } from '@/components/dashboard/TodaysQueueSection';
 import { OperationsQuickStats } from '@/components/dashboard/operations/OperationsQuickStats';
 import { PinnedAnalyticsCard, getDateRange, type AnalyticsFilters, type DateRangeType } from '@/components/dashboard/PinnedAnalyticsCard';
@@ -407,8 +407,9 @@ function DashboardSections({
   
   const isCardPinned = (cardId: string): boolean => {
     if (!visibilityData) return false;
+    const visibilityKey = getPinnedVisibilityKey(cardId);
     return leadershipRoles.some(role => 
-      visibilityData.find(v => v.element_key === cardId && v.role === role)?.is_visible ?? false
+      visibilityData.find(v => v.element_key === visibilityKey && v.role === role)?.is_visible ?? false
     );
   };
   

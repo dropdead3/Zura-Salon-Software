@@ -32,29 +32,70 @@ export const isPinnedCardEntry = (id: string): boolean => id.startsWith('pinned:
 export const getPinnedCardId = (id: string): string => id.replace('pinned:', '');
 export const toPinnedEntry = (cardId: string): string => `pinned:${cardId}`;
 
+// Single source of truth for visibility keys when card IDs and registered element keys differ.
+const PINNED_CARD_VISIBILITY_KEY_MAP: Record<string, string> = {
+  operations_stats: 'operations_quick_stats',
+};
+
+export const getPinnedVisibilityKey = (cardId: string): string => PINNED_CARD_VISIBILITY_KEY_MAP[cardId] ?? cardId;
+
 // All available pinnable card IDs for reference
 export const PINNABLE_CARD_IDS = [
   'executive_summary',
-  'operations_stats',
+  'daily_brief',
   'sales_overview',
   'top_performers',
   'revenue_breakdown',
   'client_funnel',
   'client_health',
-  'daily_brief',
-  'operational_health',
-  'locations_rollup',
-  'service_mix',
-  'retail_effectiveness',
   'rebooking',
+  'operational_health',
+  'operations_stats',
   'goal_tracker',
   'new_bookings',
   'week_ahead_forecast',
   'capacity_utilization',
-  'hiring_capacity',
+  'locations_rollup',
+  'service_mix',
+  'retail_effectiveness',
+  'commission_summary',
+  'staff_commission_breakdown',
+  'true_profit',
+  'service_profitability',
+  'staff_performance',
   'staffing_trends',
+  'hiring_capacity',
   'stylist_workload',
-];
+  'client_experience_staff',
+  'control_tower',
+  'predictive_inventory',
+] as const;
+
+const VALID_PINNABLE_CARD_IDS = new Set<string>(PINNABLE_CARD_IDS);
+
+function dedupe<T>(items: T[] | undefined): T[] | undefined {
+  return items ? [...new Set(items)] : undefined;
+}
+
+function sanitizeDashboardLayout(layout: DashboardLayout): DashboardLayout {
+  const pinnedCards = [...new Set((layout.pinnedCards || []).filter((id) => VALID_PINNABLE_CARD_IDS.has(id)))];
+  const sectionOrderSource = layout.sectionOrder?.length ? layout.sectionOrder : layout.sections || [];
+  const sectionOrder = [...new Set(sectionOrderSource.filter((id) => {
+    if (!isPinnedCardEntry(id)) return true;
+    return VALID_PINNABLE_CARD_IDS.has(getPinnedCardId(id));
+  }))];
+
+  return {
+    ...layout,
+    sections: [...new Set(layout.sections || [])],
+    sectionOrder,
+    pinnedCards,
+    widgets: [...new Set(layout.widgets || [])],
+    widgetOrder: dedupe(layout.widgetOrder),
+    hubOrder: dedupe(layout.hubOrder),
+    enabledHubs: dedupe(layout.enabledHubs),
+  };
+}
 
 const DEFAULT_LAYOUT: DashboardLayout = {
   sections: ['ai_insights', 'todays_prep', 'hub_quicklinks', 'payroll_deadline', 'payday_countdown', 'active_campaigns', 'quick_actions', 'todays_queue', 'quick_stats', 'schedule_tasks', 'announcements', 'client_engine', 'widgets'],
@@ -70,28 +111,29 @@ const DEFAULT_LAYOUT: DashboardLayout = {
  * Also ensures new sections like 'hub_quicklinks' are added for existing users.
  */
 function migrateLayout(layout: DashboardLayout, pinnedCards: string[]): DashboardLayout {
-  let migrated = { ...layout };
-  
+  let migrated = sanitizeDashboardLayout({ ...layout });
+  const sanitizedPinnedCards = [...new Set((pinnedCards || []).filter((id) => VALID_PINNABLE_CARD_IDS.has(id)))];
+
   // If sectionOrder contains 'command_center', migrate to inline pinned cards
   if (migrated.sectionOrder?.includes('command_center')) {
     const insertIndex = migrated.sectionOrder.indexOf('command_center');
-    
+
     // Remove command_center from sections and sectionOrder
     const newSectionOrder = migrated.sectionOrder.filter(id => id !== 'command_center');
     const newSections = migrated.sections.filter(id => id !== 'command_center');
-    
+
     // Insert pinned cards at the command_center position
-    const pinnedEntries = pinnedCards.map(id => toPinnedEntry(id));
+    const pinnedEntries = sanitizedPinnedCards.map(id => toPinnedEntry(id));
     newSectionOrder.splice(insertIndex, 0, ...pinnedEntries);
-    
-    migrated = { 
-      ...migrated, 
-      sectionOrder: newSectionOrder, 
+
+    migrated = {
+      ...migrated,
+      sectionOrder: newSectionOrder,
       sections: newSections,
-      pinnedCards,
+      pinnedCards: sanitizedPinnedCards,
     };
   }
-  
+
   // Ensure hub_quicklinks is added for existing layouts (migration for existing users)
   if (!migrated.sectionOrder?.includes('hub_quicklinks')) {
     migrated = {
@@ -100,7 +142,7 @@ function migrateLayout(layout: DashboardLayout, pinnedCards: string[]): Dashboar
       sectionOrder: ['hub_quicklinks', ...(migrated.sectionOrder || [])],
     };
   }
-  
+
   // Ensure ai_insights is added for existing layouts (migration for existing users)
   if (!migrated.sectionOrder?.includes('ai_insights')) {
     migrated = {
@@ -109,7 +151,7 @@ function migrateLayout(layout: DashboardLayout, pinnedCards: string[]): Dashboar
       sectionOrder: ['ai_insights', ...(migrated.sectionOrder || [])],
     };
   }
-  
+
   // Ensure todays_prep is added for existing layouts (after ai_insights)
   if (!migrated.sectionOrder?.includes('todays_prep')) {
     const insightsIdx = migrated.sectionOrder?.indexOf('ai_insights');
@@ -124,7 +166,7 @@ function migrateLayout(layout: DashboardLayout, pinnedCards: string[]): Dashboar
       sectionOrder: newOrder,
     };
   }
-  
+
   // Ensure payroll sections are added for existing layouts
   if (!migrated.sectionOrder?.includes('payroll_deadline')) {
     const insertAfter = migrated.sectionOrder?.indexOf('hub_quicklinks');
@@ -139,12 +181,8 @@ function migrateLayout(layout: DashboardLayout, pinnedCards: string[]): Dashboar
       sectionOrder: newOrder,
     };
   }
-  
-  // Deduplicate sections and sectionOrder to clean up any dirty stored data
-  migrated.sections = [...new Set(migrated.sections)];
-  migrated.sectionOrder = [...new Set(migrated.sectionOrder)];
 
-  return migrated;
+  return sanitizeDashboardLayout(migrated);
 }
 
 // Map roles to template role_name
@@ -167,7 +205,7 @@ export function useDashboardTemplates() {
         .order('display_name');
 
       if (error) throw error;
-      
+
       return (data || []).map(template => ({
         ...template,
         layout: template.layout as unknown as DashboardLayout,
@@ -186,7 +224,7 @@ export function useDashboardLayout(overrideUserId?: string) {
     queryKey: ['user-preferences', targetUserId],
     queryFn: async () => {
       if (!targetUserId) return null;
-      
+
       const { data, error } = await supabase
         .from('user_preferences')
         .select('dashboard_layout')
@@ -213,7 +251,7 @@ export function useDashboardLayout(overrideUserId?: string) {
         .maybeSingle();
 
       if (error) throw error;
-      
+
       if (data) {
         return {
           ...data,
@@ -227,7 +265,7 @@ export function useDashboardLayout(overrideUserId?: string) {
 
   // Determine the effective layout - safely parse JSON
   const parsedLayout = userPrefs?.dashboard_layout as Record<string, unknown> | null;
-  const rawSavedLayout: DashboardLayout | null = parsedLayout ? {
+  const rawSavedLayout: DashboardLayout | null = parsedLayout ? sanitizeDashboardLayout({
     sections: (parsedLayout.sections as string[]) || [],
     sectionOrder: (parsedLayout.sectionOrder as string[]) || (parsedLayout.sections as string[]) || [],
     pinnedCards: (parsedLayout.pinnedCards as string[]) || [],
@@ -235,14 +273,14 @@ export function useDashboardLayout(overrideUserId?: string) {
     hasCompletedSetup: (parsedLayout.hasCompletedSetup as boolean) || false,
     hubOrder: (parsedLayout.hubOrder as string[]) || undefined,
     enabledHubs: (parsedLayout.enabledHubs as string[]) || undefined,
-  } : null;
-  
+  }) : null;
+
   const hasCompletedSetup = rawSavedLayout?.hasCompletedSetup ?? false;
-  
+
   // Use saved layout if exists, otherwise use role template, otherwise default
-  const baseLayout: DashboardLayout = rawSavedLayout || 
-    (roleTemplate?.layout ? { ...roleTemplate.layout, sectionOrder: roleTemplate.layout.sectionOrder || roleTemplate.layout.sections, hasCompletedSetup: false } : DEFAULT_LAYOUT);
-  
+  const baseLayout: DashboardLayout = rawSavedLayout ||
+    (roleTemplate?.layout ? sanitizeDashboardLayout({ ...roleTemplate.layout, sectionOrder: roleTemplate.layout.sectionOrder || roleTemplate.layout.sections, hasCompletedSetup: false }) : DEFAULT_LAYOUT);
+
   // Migrate legacy layouts that use command_center
   const layout = migrateLayout(baseLayout, baseLayout.pinnedCards || []);
 
@@ -266,14 +304,15 @@ export function useSaveDashboardLayout(overrideUserId?: string) {
       const targetId = overrideUserId || user?.id;
       if (!targetId) throw new Error('User not authenticated');
 
+      const sanitizedLayout = sanitizeDashboardLayout(layout);
       const layoutJson = {
-        sections: layout.sections,
-        sectionOrder: layout.sectionOrder,
-        pinnedCards: layout.pinnedCards,
-        widgets: layout.widgets,
-        hasCompletedSetup: layout.hasCompletedSetup,
-        hubOrder: layout.hubOrder,
-        enabledHubs: layout.enabledHubs,
+        sections: sanitizedLayout.sections,
+        sectionOrder: sanitizedLayout.sectionOrder,
+        pinnedCards: sanitizedLayout.pinnedCards,
+        widgets: sanitizedLayout.widgets,
+        hasCompletedSetup: sanitizedLayout.hasCompletedSetup,
+        hubOrder: sanitizedLayout.hubOrder,
+        enabledHubs: sanitizedLayout.enabledHubs,
       };
 
       // First check if user preferences exist
@@ -295,8 +334,8 @@ export function useSaveDashboardLayout(overrideUserId?: string) {
         // Insert new preferences
         const { error } = await supabase
           .from('user_preferences')
-          .insert([{ 
-            user_id: targetId, 
+          .insert([{
+            user_id: targetId,
             dashboard_layout: layoutJson,
           }]);
 
@@ -331,10 +370,10 @@ export function useCompleteSetup() {
 
   return useMutation({
     mutationFn: async (templateLayout?: DashboardLayout) => {
-      const layout = templateLayout ? 
-        { ...templateLayout, hasCompletedSetup: true } : 
+      const layout = templateLayout ?
+        { ...templateLayout, hasCompletedSetup: true } :
         { ...DEFAULT_LAYOUT, hasCompletedSetup: true };
-      
+
       await saveMutation.mutateAsync(layout);
     },
     onSuccess: () => {
@@ -353,10 +392,10 @@ export function useResetToDefault(overrideUserId?: string) {
       if (!roleTemplate?.layout) {
         throw new Error('No default template found');
       }
-      
-      await saveMutation.mutateAsync({ 
-        ...roleTemplate.layout, 
-        hasCompletedSetup: true 
+
+      await saveMutation.mutateAsync({
+        ...roleTemplate.layout,
+        hasCompletedSetup: true,
       });
     },
     onSuccess: () => {
@@ -375,7 +414,7 @@ export function useToggleSection() {
       const sections = layout.sections.includes(sectionId)
         ? layout.sections.filter(s => s !== sectionId)
         : [...layout.sections, sectionId];
-      
+
       await saveMutation.mutateAsync({ ...layout, sections });
     },
   });
@@ -391,7 +430,7 @@ export function useToggleWidget() {
       const widgets = layout.widgets.includes(widgetId)
         ? layout.widgets.filter(w => w !== widgetId)
         : [...layout.widgets, widgetId];
-      
+
       await saveMutation.mutateAsync({ ...layout, widgets });
     },
   });
