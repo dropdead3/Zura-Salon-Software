@@ -266,14 +266,19 @@ export function DockServicesTab({ appointment, staff, effectiveServiceName }: Do
         locationId: appointment.location_id || undefined,
       });
 
-      // 3. Calculate overage / P&L charges (resolves serviceId from name internally)
-      const serviceName = effectiveServiceName ?? appointment.service_name;
-      await calculateOverage.mutateAsync({
-        sessionId: session.id,
-        appointmentId: appointment.id,
-        organizationId: effectiveOrganization.id,
-        serviceName: serviceName || undefined,
-      });
+      // 3. Calculate charges per chemical service (handles multi-service appointments)
+      const serviceNames = chemicalServices.length > 0
+        ? chemicalServices
+        : [effectiveServiceName ?? appointment.service_name].filter(Boolean) as string[];
+
+      for (const svcName of serviceNames) {
+        await calculateOverage.mutateAsync({
+          sessionId: session.id,
+          appointmentId: appointment.id,
+          organizationId: effectiveOrganization.id,
+          serviceName: svcName,
+        });
+      }
 
       setShowComplete(false);
     } catch (err) {
