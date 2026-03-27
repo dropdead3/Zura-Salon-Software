@@ -671,8 +671,8 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                     <TableHead className={tokens.table.columnHeader}>Service</TableHead>
                     <TableHead className={tokens.table.columnHeader}>
                       <div className="flex items-center gap-1.5">
-                        Product Allowance
-                        <MetricInfoTooltip description="Shows the billing configuration for each tracked service. Displays the dollar allowance included in the service price, or 'Parts and Labor' if the service uses cost-plus billing." />
+                        Billing Method
+                        <MetricInfoTooltip description="Shows the billing method for each tracked service — either an allowance dollar amount or Parts and Labor cost-plus billing." />
                       </div>
                     </TableHead>
                     <TableHead className={tokens.table.columnHeader}>Tracked</TableHead>
