@@ -36,6 +36,7 @@ interface DockSessionCompleteSheetProps {
   onClose: () => void;
   isPending?: boolean;
   pendingCharges?: PendingChargeSummary[];
+  estimatedCharge?: number | null;
 }
 
 export function DockSessionCompleteSheet({
@@ -46,11 +47,21 @@ export function DockSessionCompleteSheet({
   onClose,
   isPending,
   pendingCharges,
+  estimatedCharge,
 }: DockSessionCompleteSheetProps) {
   const [mode, setMode] = useState<'confirm' | 'unresolved'>('confirm');
   const [notes, setNotes] = useState('');
   const [unresolvedReason, setUnresolvedReason] = useState('');
   const dragControls = useDragControls();
+
+  // Reset state when sheet opens
+  useEffect(() => {
+    if (open) {
+      setMode('confirm');
+      setNotes('');
+      setUnresolvedReason('');
+    }
+  }, [open]);
 
   const allReweighed = stats.reweighedBowls >= stats.totalBowls;
   const wastePct = stats.totalDispensed > 0
