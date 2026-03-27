@@ -873,6 +873,13 @@ export function AggregateSalesCard({
                           </p>
                         ) : null}
 
+                        {/* Gap analysis drill-down (today) */}
+                        <RevenueGapDrilldown
+                          isOpen={activeDrilldown === 'expectedGap'}
+                          data={gapAnalysis}
+                          isLoading={gapLoading}
+                        />
+
                         {/* Last updated timestamp */}
                         {todayDataUpdatedAt && (
                           <p className="text-[10px] text-muted-foreground/50 text-center">

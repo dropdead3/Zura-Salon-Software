@@ -23,6 +23,11 @@ const REASON_CONFIG: Record<GapReason, {
   icon: React.ElementType;
   badgeClass: string;
 }> = {
+  not_concluded: {
+    label: 'Not concluded',
+    icon: Clock,
+    badgeClass: 'bg-muted text-muted-foreground border-border/40',
+  },
   cancelled: {
     label: 'Cancelled',
     icon: Ban,

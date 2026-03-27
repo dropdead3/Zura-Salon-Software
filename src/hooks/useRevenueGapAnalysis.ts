@@ -358,13 +358,14 @@ export function useRevenueGapAnalysis(
       const reasonLabels: Record<GapReason, string> = {
         cancelled: 'Cancellations',
         no_show: 'No-shows',
+        not_concluded: 'Not yet concluded',
         no_pos_record: 'No POS record',
         discount: 'Discounts',
         service_changed: 'Service changed',
         pricing_diff: 'Pricing differences',
       };
 
-      const reasonOrder: GapReason[] = ['cancelled', 'no_show', 'no_pos_record', 'discount', 'service_changed', 'pricing_diff'];
+      const reasonOrder: GapReason[] = ['not_concluded', 'cancelled', 'no_show', 'no_pos_record', 'discount', 'service_changed', 'pricing_diff'];
       const summaries: GapSummary[] = reasonOrder
         .filter(r => summaryMap.has(r))
         .map(r => ({
