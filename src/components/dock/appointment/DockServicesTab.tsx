@@ -33,6 +33,7 @@ import { isColorOrChemicalService } from '@/utils/serviceCategorization';
 import { useServiceLookup, type ContainerType } from '@/hooks/useServiceLookup';
 import { useDepleteMixSession } from '@/hooks/backroom/useDepleteMixSession';
 import { useCalculateOverageCharge } from '@/hooks/billing/useCalculateOverageCharge';
+import { useCheckoutUsageCharges } from '@/hooks/billing/useCheckoutUsageCharges';
 
 interface DockServicesTabProps {
   appointment: DockAppointment;
