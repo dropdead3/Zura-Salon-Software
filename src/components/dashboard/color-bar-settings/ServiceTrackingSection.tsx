@@ -241,10 +241,20 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
     onError: (e) => toast.error(e.message),
   });
 
+  // Derived data
+  const allServices = services || [];
+
+  const allowanceByService = useMemo(() => {
+    const map = new Map<string, typeof allowancePolicies extends (infer T)[] | undefined ? T : never>();
+    (allowancePolicies || []).forEach((p) => {
+      map.set(p.service_id, p);
+    });
+    return map;
+  }, [allowancePolicies]);
+
   const handleReset = useCallback(async (serviceId: string) => {
     if (!window.confirm('Reset all tracking and billing configuration for this service?')) return;
     try {
-      // 1. Clear service flags
       const { error: svcErr } = await supabase
         .from('services')
         .update({
@@ -256,13 +266,11 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
         .eq('id', serviceId);
       if (svcErr) throw svcErr;
 
-      // 2. Delete allowance policy if one exists
       const policy = allowanceByService.get(serviceId);
       if (policy) {
         await deletePolicy.mutateAsync(policy.id);
       }
 
-      // 3. Delete all recipe baselines for this service
       if (orgId) {
         const { error: baseErr } = await supabase
           .from('service_recipe_baselines')
@@ -272,7 +280,6 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
         if (baseErr) throw baseErr;
       }
 
-      // 4. Invalidate queries
       queryClient.invalidateQueries({ queryKey: ['color-bar-services'] });
       queryClient.invalidateQueries({ queryKey: ['color-bar-setup-health'] });
       queryClient.invalidateQueries({ queryKey: ['services'] });
@@ -281,7 +288,6 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
       queryClient.invalidateQueries({ queryKey: ['service-allowance-policies'] });
       queryClient.invalidateQueries({ queryKey: ['service-recipe-baselines'] });
 
-      // 5. Collapse row
       setExpandedIds(prev => {
         const next = new Set(prev);
         next.delete(serviceId);
@@ -293,17 +299,6 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
       toast.error('Failed to reset: ' + err.message);
     }
   }, [allowanceByService, deletePolicy, orgId, queryClient]);
-
-  // Derived data
-  const allServices = services || [];
-
-  const allowanceByService = useMemo(() => {
-    const map = new Map<string, typeof allowancePolicies extends (infer T)[] | undefined ? T : never>();
-    (allowancePolicies || []).forEach((p) => {
-      map.set(p.service_id, p);
-    });
-    return map;
-  }, [allowancePolicies]);
 
   // Classification helpers
   const getServiceType = (s: ServiceRow): 'chemical' | 'suggested' | 'standard' => {
