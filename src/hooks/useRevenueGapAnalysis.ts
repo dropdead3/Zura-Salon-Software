@@ -39,7 +39,7 @@ export function useScheduledRevenue(
   });
 }
 
-export type GapReason = 'cancelled' | 'no_show' | 'no_pos_record' | 'service_changed' | 'discount' | 'pricing_diff';
+export type GapReason = 'cancelled' | 'no_show' | 'not_concluded' | 'no_pos_record' | 'service_changed' | 'discount' | 'pricing_diff';
 
 export interface GapItem {
   id: string;
