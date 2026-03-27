@@ -1,39 +1,44 @@
 
 
-## Fix: "Configured" Status Shows When Allowance Is Not Actually Set
+## Add Subtle Bento Active Highlight to Sidebar Nav Links
 
-### Root Cause
-The `backroom_config_dismissed` flag was set to `true` (either from a previous interaction or before the allowance guard was tightened), but the allowance policy has zero values (`included_allowance_qty: 0`, `overage_rate: 0`). The footer and badge blindly trust `backroom_config_dismissed` without cross-checking if the billing configuration is actually complete.
+### Problem
+Active navigation links in the sidebar have no visible highlight in the current dark theme. The `dark:bg-muted` active state blends into the sidebar background, making it impossible to tell which page you're on.
+
+### Solution
+Replace the current active state styling with a subtle bento-style highlight — a soft, semi-transparent fill with a faint border ring, consistent with the project's glass/bento card aesthetic.
 
 ### Changes
 
-**File: `src/components/dashboard/color-bar-settings/ServiceTrackingSection.tsx`**
+**File: `src/components/dashboard/SidebarNavContent.tsx`**
 
-**1. Add a derived "truly configured" check that combines `backroom_config_dismissed` with actual billing completeness**
+**1. Update the `renderNavLink` active state (line ~305–306)**
 
-Create a helper that returns `true` only when:
-- `backroom_config_dismissed === true` AND one of:
-  - No billing policy exists (service was intentionally dismissed as non-chemical)
-  - `billing_mode === 'parts_and_labor'` (always complete)
-  - `billing_mode === 'allowance'` AND `is_active === true` AND (`included_allowance_qty > 0` OR `overage_rate > 0`)
+Replace:
+```
+"bg-foreground text-background shadow-sm dark:bg-muted dark:text-foreground dark:shadow-none"
+```
+With a subtle bento highlight:
+```
+"bg-muted/80 text-foreground ring-1 ring-border/40 shadow-sm backdrop-blur-sm"
+```
 
-If `backroom_config_dismissed` is `true` but the allowance policy has zero values, treat the service as **not configured**.
+This gives:
+- Soft background fill (`bg-muted/80`) visible in both light and dark modes
+- Gentle border ring (`ring-1 ring-border/40`) for definition without harshness
+- Text promoted to `text-foreground` for clarity
+- No high-contrast inversion that fights the dark theme
 
-**2. Replace raw `service.backroom_config_dismissed` checks with the derived check**
+**2. Update the collapsed popover active state (line ~653–654)**
 
-Update the following locations:
-- **Table row badge** (line ~829): The green "Configured ✓" badge
-- **Table row background** (line ~736): The emerald tint
-- **Category group counter** (line ~437): The `isFullyConfigured` logic (already partially correct but uses `||` with `backroom_config_dismissed` which bypasses the allowance check)
-- **Footer section** (line ~1095): The "Configured" vs "Finalize" footer
-- **Needs attention filter** (line ~343): Early return that skips attention check
+Apply the same bento highlight style to the popover menu's active link for consistency.
 
-**3. Auto-reset `backroom_config_dismissed` when it's stale**
+**3. Update the onboarding link active state (lines ~439, ~458)**
 
-When a tracked service has `backroom_config_dismissed: true` but billing mode is `allowance` with zero values, automatically reset the flag to `false` in the background. This cleans up stale data without user intervention.
+Apply same pattern to the onboarding nav link active states for visual consistency.
 
 ### Result
-- A service with Allowance selected but no allowance amount configured will show "Unconfigured" / "Allowance Needs To Be Set" instead of "Configured ✓"
-- The "Finalize Configuration" button remains disabled until the allowance is actually set
-- Stale `backroom_config_dismissed` flags get auto-corrected
+- Active page link gets a visible but calm bento-style highlight
+- Works naturally in both light and dark modes
+- Consistent with the project's glass card aesthetic (`bg-card/80`, `backdrop-blur`, `ring-border`)
 
