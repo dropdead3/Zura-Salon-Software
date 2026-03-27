@@ -127,7 +127,7 @@ export function ServiceTrackingProgressBar({ milestones, onQuickSetup }: Props) 
       {/* Completed section */}
       {completed.length > 0 && (
         <div className="space-y-1.5">
-          <span className="font-display text-[10px] tracking-[0.08em] uppercase text-muted-foreground/60">
+          <span className="font-display text-[11px] tracking-[0.08em] uppercase text-amber-600/60 dark:text-amber-400/40">
             Completed
           </span>
           <div className="rounded-lg bg-amber-500/10 dark:bg-amber-500/10 divide-y divide-amber-500/20">
