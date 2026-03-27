@@ -517,12 +517,12 @@ export function DashboardCustomizeMenu({ variant = 'icon', roleContext }: Dashbo
                         <SortablePinnedCardItem
                           key={itemId}
                           id={itemId}
+                          cardId={cardId}
                           label={card.label}
                           icon={card.icon}
                           isPinned={true}
                           onToggle={() => handleTogglePinnedCard(cardId)}
                           isLoading={isTogglingPin}
-                          
                         />
                       );
                     }
