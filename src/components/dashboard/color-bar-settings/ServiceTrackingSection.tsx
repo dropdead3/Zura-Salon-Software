@@ -35,6 +35,7 @@ import { Table, TableHeader, TableHead, TableRow, TableCell, TableBody } from '@
 import { Loader2, Wrench, Plus, Zap, ArrowRight, CircleDot, AlertTriangle, FileText, ChevronDown, ChevronRight, Search, CheckCircle2, RotateCcw, Check, Calculator } from 'lucide-react';
 import { toast } from 'sonner';
 import { Infotainer } from '@/components/ui/Infotainer';
+import { PageExplainer } from '@/components/ui/PageExplainer';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { ServiceTrackingProgressBar, type ProgressMilestone } from './ServiceTrackingProgressBar';
 import { ServiceTrackingQuickSetup } from './ServiceTrackingQuickSetup';
