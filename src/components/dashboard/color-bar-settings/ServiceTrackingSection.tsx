@@ -197,6 +197,11 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
           next.add(variables.id);
         } else {
           next.delete(variables.id);
+          // Clean up orphaned billing policy
+          const orphanedPolicy = allowanceByService.get(variables.id);
+          if (orphanedPolicy) {
+            deletePolicy.mutate(orphanedPolicy.id);
+          }
         }
         return next;
       });
