@@ -271,12 +271,14 @@ export function DashboardCustomizeMenu({ variant = 'icon', roleContext }: Dashbo
   }, [layout.sectionOrder, SECTIONS, visibilityData]);
 
   const orderedWidgets = useMemo(() => {
-    const savedOrder = layout.widgets || [];
+    const savedWidgetOrder = layout.widgetOrder || [];
     const allIds = WIDGETS.map(w => w.id);
-    const enabled = savedOrder.filter(id => allIds.includes(id));
-    const disabled = allIds.filter(id => !enabled.includes(id));
-    return [...enabled, ...disabled];
-  }, [layout.widgets]);
+    // Start with saved order, keeping only valid IDs
+    const ordered = savedWidgetOrder.filter((id: string) => allIds.includes(id));
+    // Add any missing widget IDs
+    const missing = allIds.filter(id => !ordered.includes(id));
+    return [...ordered, ...missing];
+  }, [layout.widgetOrder, layout.widgets]);
   
   const unpinnedCards = useMemo(() => {
     return PINNABLE_CARDS.filter(card => !isCardPinned(card.id));
