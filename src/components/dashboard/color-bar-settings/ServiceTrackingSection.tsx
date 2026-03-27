@@ -890,7 +890,7 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                                    <div className="flex items-center gap-1.5">
                                                      <span className="text-xs font-sans text-muted-foreground">Billing:</span>
                                                      {(['allowance', 'parts_and_labor'] as const).map((mode) => {
-                                                       const active = billingMode === mode;
+                                                       const active = billingMode !== null && billingMode === mode;
                                                        return (
                                                          <button
                                                            key={mode}
