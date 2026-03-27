@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { X, BookOpen } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useInfotainerVisible, useDismissInfotainer } from '@/hooks/useInfotainers';
 
 interface FirstTimeCalloutProps {
   id: string;
@@ -11,17 +12,15 @@ interface FirstTimeCalloutProps {
 }
 
 export function FirstTimeCallout({ id, title, description, className }: FirstTimeCalloutProps) {
-  const storageKey = `zura_callout_dismissed_${id}`;
-  const [visible, setVisible] = useState(false);
+  const { isVisible, isLoading } = useInfotainerVisible(id);
+  const dismissInfotainer = useDismissInfotainer();
+  const [localDismissed, setLocalDismissed] = useState(false);
 
-  useEffect(() => {
-    const dismissed = localStorage.getItem(storageKey);
-    if (!dismissed) setVisible(true);
-  }, [storageKey]);
+  const visible = !isLoading && isVisible && !localDismissed;
 
   const dismiss = () => {
-    localStorage.setItem(storageKey, 'true');
-    setVisible(false);
+    dismissInfotainer(id);
+    setLocalDismissed(true);
   };
 
   return (

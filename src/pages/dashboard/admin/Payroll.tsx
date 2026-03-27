@@ -83,6 +83,7 @@ export default function Payroll() {
               )
             }
           />
+          <PageExplainer pageId="payroll" />
 
           {!isConnected && activeTab !== 'hire' && (
             <Alert>

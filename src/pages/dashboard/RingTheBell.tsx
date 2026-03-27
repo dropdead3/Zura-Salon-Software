@@ -527,7 +527,7 @@ export default function RingTheBell() {
             </Button>
           }
         />
-
+        <PageExplainer pageId="ring-the-bell" />
 
         {/* Info Notice */}
         <Alert className="mb-6 bg-accent/50 border-accent">

@@ -78,6 +78,7 @@ export default function Campaigns() {
             </Select>
           }
         />
+        <PageExplainer pageId="campaigns" />
 
         {isLoading ? (
           <div className="flex items-center justify-center py-16">

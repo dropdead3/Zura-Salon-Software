@@ -738,6 +738,7 @@ export default function ClientDirectory() {
           }
           className="mb-8"
         />
+        <PageExplainer pageId="client-directory" />
 
         {/* Primary Tabs */}
         <div className="mb-6">
