@@ -697,7 +697,7 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
               </p>
             </div>
           ) : (
-             <div className="rounded-lg border overflow-hidden">
+             <div className="@container rounded-lg border overflow-hidden">
               <Table className="min-w-[400px]">
                 <TableHeader>
                   <TableRow>
@@ -711,7 +711,7 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                       />
                     </TableHead>
                     <TableHead className={cn(tokens.table.columnHeader, 'min-w-[180px]')}>Service</TableHead>
-                    <TableHead className={cn(tokens.table.columnHeader, 'text-right')}>Enable Product Billing</TableHead>
+                    <TableHead className={cn(tokens.table.columnHeader, 'text-right @[600px]:table-cell hidden')}>Enable Product Billing</TableHead>
                     <TableHead className="w-10" />
                   </TableRow>
                 </TableHeader>
@@ -843,8 +843,8 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                   </div>
                                 </TableCell>
 
-                                {/* Tracking toggle — just the switch */}
-                                <TableCell onClick={(e) => e.stopPropagation()}>
+                                {/* Tracking toggle — just the switch (hidden at narrow widths) */}
+                                <TableCell onClick={(e) => e.stopPropagation()} className="@[600px]:table-cell hidden">
                                   <div className="flex justify-end">
                                     <Switch
                                       checked={service.is_backroom_tracked}
@@ -881,6 +881,15 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                          transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1], delay: 0.08 }}
                                          className="px-6 py-4 bg-muted/30 border-t border-border/30"
                                        >
+                                        {/* Toggle row — visible only at narrow container widths */}
+                                        <div className="@[600px]:hidden flex items-center justify-between py-3 border-b border-border/30 mb-4" onClick={(e) => e.stopPropagation()}>
+                                          <span className="text-xs font-sans text-muted-foreground">Enable Product Billing</span>
+                                          <Switch
+                                            checked={service.is_backroom_tracked}
+                                            onCheckedChange={(v) => toggleTracking.mutate({ id: service.id, tracked: v })}
+                                            className="scale-90 shrink-0"
+                                          />
+                                        </div>
                                         {service.is_backroom_tracked ? (
                                              <div className="space-y-5">
                                              <div className="grid grid-cols-1 xl:grid-cols-2 gap-5">
@@ -1186,6 +1195,15 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                         ) : (
                                           /* Untracked service drill-down */
                                           <div className="space-y-3">
+                                            {/* Toggle row for narrow widths — untracked state */}
+                                            <div className="@[600px]:hidden flex items-center justify-between py-2" onClick={(e) => e.stopPropagation()}>
+                                              <span className="text-xs font-sans text-muted-foreground">Enable Product Billing</span>
+                                              <Switch
+                                                checked={service.is_backroom_tracked}
+                                                onCheckedChange={(v) => toggleTracking.mutate({ id: service.id, tracked: v })}
+                                                className="scale-90 shrink-0"
+                                              />
+                                            </div>
                                             {(type === 'chemical' || type === 'suggested') && !service.is_chemical_service && (
                                               <p className="text-xs text-amber-600 dark:text-amber-400">This service appears to use chemicals — consider enabling tracking.</p>
                                             )}
