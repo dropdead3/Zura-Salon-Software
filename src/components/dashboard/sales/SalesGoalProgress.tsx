@@ -204,6 +204,9 @@ export function SalesGoalProgress({
   const { openDays: daysLeft, isLocationAware } = getOpenDaysRemaining(goalPeriod, hoursJson, holidayClosures);
   const neededPerDay = remaining / daysLeft;
 
+  // Projected total: extrapolate current earnings across the full period
+  const projectedTotal = elapsedFraction > 0 ? current / elapsedFraction : current;
+
   const handleGetBackOnTrack = async () => {
     setLoading(true);
     setDialogOpen(true);
@@ -280,7 +283,17 @@ export function SalesGoalProgress({
       />
       
       <div className="flex items-center justify-between text-xs text-muted-foreground">
-        <BlurredAmount>{formatCurrencyWhole(current)} earned</BlurredAmount>
+        <div className="flex items-center gap-2">
+          <BlurredAmount>{formatCurrencyWhole(current)} earned</BlurredAmount>
+          {!isComplete && elapsedFraction > 0 && elapsedFraction < 1 && (
+            <>
+              <span className="text-muted-foreground/40">·</span>
+              <span className="text-muted-foreground/70">
+                On track to earn <BlurredAmount>{formatCurrencyWhole(Math.round(projectedTotal))}</BlurredAmount>
+              </span>
+            </>
+          )}
+        </div>
         {isComplete ? (
           <span className="text-chart-2 flex items-center gap-1">
             <TrendingUp className="w-3 h-3" />
