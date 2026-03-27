@@ -280,6 +280,47 @@ export function ServiceEditorDialog({
                             <span className="text-sm">Bottle</span>
                           </label>
                         </div>
+
+                        {/* Billing Mode */}
+                        <div className="mt-3 pt-3 border-t border-border/40">
+                          <div className="flex items-center gap-1.5 mb-1">
+                            <p className={tokens.body.emphasis}>Billing Mode</p>
+                            <MetricInfoTooltip description="Allowance: set a product budget per service — overage costs pass to the client. Parts & Labor: client pays stylist hourly rate plus retail cost of all supplies used." />
+                          </div>
+                          <p className={tokens.body.muted}>How product costs are billed to the client</p>
+                          <div className="flex gap-3 mt-2">
+                            <label className="flex items-start gap-2 cursor-pointer p-2 rounded-lg border transition-colors hover:bg-muted/50"
+                              style={{ borderColor: billingMode === 'allowance' ? 'hsl(var(--primary))' : 'hsl(var(--border))' }}
+                            >
+                              <input
+                                type="radio"
+                                name="billing-mode"
+                                checked={billingMode === 'allowance'}
+                                onChange={() => setBillingMode('allowance')}
+                                className="mt-0.5"
+                              />
+                              <div>
+                                <span className="text-sm font-sans">Allowance</span>
+                                <p className="text-xs text-muted-foreground">Set a product budget — overage billed to client</p>
+                              </div>
+                            </label>
+                            <label className="flex items-start gap-2 cursor-pointer p-2 rounded-lg border transition-colors hover:bg-muted/50"
+                              style={{ borderColor: billingMode === 'parts_and_labor' ? 'hsl(var(--primary))' : 'hsl(var(--border))' }}
+                            >
+                              <input
+                                type="radio"
+                                name="billing-mode"
+                                checked={billingMode === 'parts_and_labor'}
+                                onChange={() => setBillingMode('parts_and_labor')}
+                                className="mt-0.5"
+                              />
+                              <div>
+                                <span className="text-sm font-sans">Parts & Labor</span>
+                                <p className="text-xs text-muted-foreground">Hourly rate + retail cost of supplies</p>
+                              </div>
+                            </label>
+                          </div>
+                        </div>
                       </div>
                     )}
                   </div>
