@@ -145,7 +145,7 @@ export function ColorBarDashboardOverview({ onNavigate, initialSubTab, triggerWi
         {/* ── Command Center ── */}
         <TabsContent value="command-center" className="space-y-6 mt-6">
           {/* ── KPI Strip ── */}
-          <div className={cn('grid gap-3', supplyCostRecoveryEnabled ? 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-6' : 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-5')}>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             <KpiTile
               icon={FlaskConical}
               label="Chemical Cost/Svc"
