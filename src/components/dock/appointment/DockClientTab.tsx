@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { format, parseISO, differenceInDays } from 'date-fns';
 import { useInstantFormulaMemory } from '@/hooks/backroom/useInstantFormulaMemory';
+import { useDockFeatureSettings } from '@/hooks/backroom/useDockFeatureSettings';
 import { useClientVisitHistory } from '@/hooks/useClientVisitHistory';
 import { useClientMemory } from '@/hooks/useClientMemory';
 import { useClientProductAffinity } from '@/hooks/useClientProductAffinity';
@@ -116,6 +117,7 @@ export function DockClientTab({ appointment, staff, activeBowlId }: DockClientTa
   const phorestClientId = appointment.phorest_client_id;
   const clientId = appointment.client_id;
   const usingDemoClient = isDemoClientId(phorestClientId) || isDemoClientId(clientId);
+  const { formulaMemoryEnabled } = useDockFeatureSettings();
 
   // ─── Editable medical alerts state ───
   const [editingAlert, setEditingAlert] = useState(false);
@@ -174,10 +176,10 @@ export function DockClientTab({ appointment, staff, activeBowlId }: DockClientTa
   // Visit history
   const { data: visits = [], isLoading: visitsLoading } = useClientVisitHistory(phorestClientId);
 
-  // Formula memory
+  // Formula memory (gated by org-wide setting)
   const { data: formulaMemory } = useInstantFormulaMemory(
-    phorestClientId || clientId,
-    appointment.service_name,
+    formulaMemoryEnabled ? (phorestClientId || clientId) : null,
+    formulaMemoryEnabled ? appointment.service_name : null,
   );
 
   // Formula history

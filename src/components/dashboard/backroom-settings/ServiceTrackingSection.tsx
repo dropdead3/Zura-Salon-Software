@@ -38,10 +38,6 @@ interface ServiceRow {
   price: number | null;
   is_backroom_tracked: boolean;
   is_chemical_service: boolean | null;
-  assistant_prep_allowed: boolean;
-  smart_mix_assist_enabled: boolean;
-  formula_memory_enabled: boolean;
-  
   backroom_config_dismissed: boolean;
   container_types: ('bowl' | 'bottle')[];
 }
@@ -159,7 +155,7 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('services')
-        .select('id, name, category, price, is_backroom_tracked, is_chemical_service, assistant_prep_allowed, smart_mix_assist_enabled, formula_memory_enabled, backroom_config_dismissed, container_types')
+        .select('id, name, category, price, is_backroom_tracked, is_chemical_service, backroom_config_dismissed, container_types')
         .eq('organization_id', orgId!)
         .eq('is_active', true)
         .order('category')
@@ -635,9 +631,6 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                           const hasAllowance = allowanceByService.has(service.id);
                           const attention = needsAttention(service);
                           const isExpanded = expandedIds.has(service.id);
-                          const activeToggles = service.is_backroom_tracked
-                            ? [service.assistant_prep_allowed, service.smart_mix_assist_enabled, service.formula_memory_enabled].filter(Boolean).length
-                            : 0;
 
                           return (
                             <React.Fragment key={service.id}>
@@ -683,17 +676,6 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                       <div className="flex items-center gap-1.5">
                                         {service.category && (
                                           <span className="text-[11px] text-muted-foreground">{service.category}</span>
-                                        )}
-                                        {service.is_backroom_tracked && (
-                                          <>
-                                            {service.category && <span className="text-[11px] text-muted-foreground/40">·</span>}
-                                            <span className={cn(
-                                              'text-[11px]',
-                                              activeToggles === 3 ? 'text-primary' : 'text-muted-foreground',
-                                            )}>
-                                              {activeToggles}/3 on
-                                            </span>
-                                          </>
                                         )}
                                       </div>
                                     </div>
@@ -952,36 +934,6 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                               </div>
                                               )}
 
-                                              {/* ─── Section 3: App Preferences ─── */}
-                                              <div>
-                                                <p className="text-[10px] font-display uppercase tracking-wider text-muted-foreground mb-2">App Preferences</p>
-                                                <div className="pl-3 border-l border-border/40">
-                                             <div className="grid grid-cols-3 gap-4">
-                                              <div className="flex items-center gap-2">
-                                                <label className="text-[10px] font-sans text-muted-foreground whitespace-nowrap">Assistant Prep</label>
-                                                <Switch
-                                                  checked={service.assistant_prep_allowed}
-                                                  onCheckedChange={(v) => updateService.mutate({ id: service.id, updates: { assistant_prep_allowed: v } })}
-                                                />
-                                              </div>
-                                              <div className="flex items-center gap-2">
-                                                <label className="text-[10px] font-sans text-muted-foreground whitespace-nowrap">Smart Mix Assist</label>
-                                                <Switch
-                                                  checked={service.smart_mix_assist_enabled}
-                                                  onCheckedChange={(v) => updateService.mutate({ id: service.id, updates: { smart_mix_assist_enabled: v } })}
-                                                />
-                                              </div>
-                                              <div className="flex items-center gap-2">
-                                                <label className="text-[10px] font-sans text-muted-foreground whitespace-nowrap">Formula Memory</label>
-                                                <Switch
-                                                  checked={service.formula_memory_enabled}
-                                                  onCheckedChange={(v) => updateService.mutate({ id: service.id, updates: { formula_memory_enabled: v } })}
-                                                />
-                                              </div>
-                                             </div>
-                                                </div>
-                                              </div>
-
                                              {/* Price Recommendation inline alert */}
                                             {(() => {
                                               const rec = priceRecMap.get(service.id);
@@ -1009,13 +961,10 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                                     className="h-7 text-xs text-muted-foreground hover:text-red-500 hover:bg-red-500/10"
                                                     onClick={(e) => {
                                                       e.stopPropagation();
-                                                      updateService.mutate({ id: service.id, updates: {
+                                                       updateService.mutate({ id: service.id, updates: {
                                                         is_backroom_tracked: false,
                                                         is_chemical_service: false,
                                                         container_types: [],
-                                                        assistant_prep_allowed: false,
-                                                        smart_mix_assist_enabled: false,
-                                                        formula_memory_enabled: false,
                                                         backroom_config_dismissed: false,
                                                       }});
                                                     }}
@@ -1040,9 +989,6 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                                           is_backroom_tracked: false,
                                                           is_chemical_service: false,
                                                           container_types: [],
-                                                          assistant_prep_allowed: false,
-                                                          smart_mix_assist_enabled: false,
-                                                          formula_memory_enabled: false,
                                                           backroom_config_dismissed: false,
                                                         }});
                                                       }}
@@ -1133,9 +1079,6 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                                           is_backroom_tracked: false,
                                                           is_chemical_service: false,
                                                           container_types: [],
-                                                          assistant_prep_allowed: false,
-                                                          smart_mix_assist_enabled: false,
-                                                          formula_memory_enabled: false,
                                                           backroom_config_dismissed: false,
                                                         }});
                                                       }}
@@ -1160,9 +1103,6 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                                             is_backroom_tracked: false,
                                                             is_chemical_service: false,
                                                             container_types: [],
-                                                            assistant_prep_allowed: false,
-                                                            smart_mix_assist_enabled: false,
-                                                            formula_memory_enabled: false,
                                                             backroom_config_dismissed: false,
                                                           }});
                                                         }}
