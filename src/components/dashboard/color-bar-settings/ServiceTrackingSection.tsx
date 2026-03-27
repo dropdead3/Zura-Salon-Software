@@ -842,7 +842,7 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                       const dollarMatch = policy.notes?.match(/\$(\d+\.?\d*)/);
                                       if (dollarMatch && policy.included_allowance_qty > 0) {
                                         return (
-                                          <div className="flex items-center gap-1.5 text-sm text-foreground">
+                                          <div className="flex items-center gap-1.5 text-sm text-foreground whitespace-nowrap">
                                             <Calculator className="w-3.5 h-3.5 text-muted-foreground" />
                                             <span className="font-sans font-medium">${dollarMatch[1]}</span>
                                           </div>
