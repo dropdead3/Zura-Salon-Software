@@ -933,7 +933,8 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                                 })()}
                                                 </div>
                                               </div>
-                                              )}
+                                               )}
+                                             </div>
 
                                              {/* Price Recommendation inline alert */}
                                             {(() => {
