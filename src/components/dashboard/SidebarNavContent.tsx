@@ -283,7 +283,10 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
     inFooter?: boolean;
   }) => {
     const resolvedHref = dashPath(href.replace(/^\/dashboard/, ''));
-    const isActive = location.pathname === resolvedHref || location.pathname.startsWith(resolvedHref + '/');
+    const isExactRoot = resolvedHref === dashPath('') || resolvedHref === dashPath('/');
+    const isActive = isExactRoot
+      ? location.pathname === resolvedHref
+      : location.pathname === resolvedHref || location.pathname.startsWith(resolvedHref + '/');
     const displayLabel = label;
     
     const handleClick = (e: React.MouseEvent) => {
@@ -638,7 +641,10 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
                         {filteredItems.map((item) => {
                           const Icon = item.icon;
                           const resolvedItemHref = dashPath(item.href.replace(/^\/dashboard/, ''));
-                          const isActive = location.pathname === resolvedItemHref || location.pathname.startsWith(resolvedItemHref + '/');
+                          const isExactRoot = resolvedItemHref === dashPath('') || resolvedItemHref === dashPath('/');
+                          const isActive = isExactRoot
+                            ? location.pathname === resolvedItemHref
+                            : location.pathname === resolvedItemHref || location.pathname.startsWith(resolvedItemHref + '/');
                           const label = getNavLabel(item);
                           return (
                             <a
