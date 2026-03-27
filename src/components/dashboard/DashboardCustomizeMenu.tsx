@@ -408,7 +408,7 @@ export function DashboardCustomizeMenu({ variant = 'icon', roleContext }: Dashbo
     const newOrder = arrayMove(orderedWidgets, oldIndex, newIndex);
     
     const enabledWidgets = newOrder.filter(id => layout.widgets.includes(id));
-    saveLayout.mutate({ ...layout, widgets: enabledWidgets });
+    saveLayout.mutate({ ...layout, widgets: enabledWidgets, widgetOrder: newOrder });
   };
 
   const handleResetToDefault = () => {
