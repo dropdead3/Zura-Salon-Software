@@ -1,25 +1,33 @@
 
 
-# Fix: Scrollable Gap Items List
+# Enable Gap Report for Today's Filter
 
 ## Problem
-Two issues prevent the scroll from working:
+When filtered to "today", clicking the Expected badge does nothing visible because:
+1. The gap analysis query is gated by `isPastRange` (which is `false` for today)
+2. The `RevenueGapDrilldown` component is only rendered inside the past-range block
+3. Appointments that haven't concluded yet (status `confirmed`, `pending`, etc.) aren't represented as a gap reason
 
-1. **`INITIAL_VISIBLE = 10`** — The list shows 10 items before requiring "Show all", but the scroll should activate at 7+ items. Users see all items without scrolling.
-2. **ScrollArea needs explicit height** — `max-h-[350px]` on `ScrollArea` alone doesn't constrain the Radix viewport. The height must be set so the internal viewport can calculate overflow.
+## Solution
+Enable gap analysis for today by also fetching/displaying it when `isToday`, and add a new `not_concluded` gap reason for appointments still in progress.
 
 ## Changes
 
-**File:** `src/components/dashboard/sales/RevenueGapDrilldown.tsx`
+### 1. `src/hooks/useRevenueGapAnalysis.ts`
+- Add `'not_concluded'` to the `GapReason` type
+- Expand the appointment status filter to also fetch `confirmed`/`pending` statuses
+- Add logic to categorize non-completed, non-cancelled, non-no-show appointments as `not_concluded` gap items
+- Add label `'Not yet concluded'` to `reasonLabels` and include in `reasonOrder`
 
-1. Change `INITIAL_VISIBLE` from `10` to `7`
-2. Change the ScrollArea to always wrap the list, with a fixed `h-[350px]` applied when `showAll && items > 7`, otherwise let it size naturally using `max-h-fit`
+### 2. `src/components/dashboard/sales/RevenueGapDrilldown.tsx`
+- Add `not_concluded` entry to `REASON_CONFIG` with a clock icon and neutral styling
+- Import `Clock` from lucide-react
 
-```tsx
-// Line 19
-const INITIAL_VISIBLE = 7;
-
-// Line 162 — use h-[350px] (not max-h) so Radix viewport knows the boundary
-<ScrollArea className={cn(showAll && data.gapItems.length > 7 ? 'h-[350px]' : '')}>
-```
+### 3. `src/components/dashboard/AggregateSalesCard.tsx`
+- Update the gap analysis `enabled` condition (line 372) to also fire when `isToday`:
+  ```
+  (isPastRange || isToday) && activeDrilldown === 'expectedGap' && scheduledRevenue != null
+  ```
+- For today, pass `displayMetrics.totalRevenue` as expectedRevenue and `todayActual?.actualRevenue ?? 0` as actualRevenue to the hook
+- Add a `<RevenueGapDrilldown>` inside the today block (after the progress bar / estimated-final-time section, before the last-updated timestamp), rendering when `activeDrilldown === 'expectedGap'`
 
