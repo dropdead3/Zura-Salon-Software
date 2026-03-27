@@ -132,7 +132,7 @@ export function ServiceTrackingProgressBar({ milestones, onQuickSetup }: Props) 
           </span>
           <div className="rounded-lg bg-amber-500/10 dark:bg-amber-500/10 divide-y divide-amber-500/20">
             {completed.map((m, i) => (
-              <div key={i} className="flex items-center justify-between px-3 py-2">
+              <div key={i} className="flex items-center justify-between px-4 py-2.5">
                 <div className="flex items-center gap-2">
                   <CheckCircle2 className="w-4 h-4 text-amber-500 shrink-0" />
                   <span className="text-sm font-sans text-amber-600 dark:text-amber-400">{m.label}</span>
