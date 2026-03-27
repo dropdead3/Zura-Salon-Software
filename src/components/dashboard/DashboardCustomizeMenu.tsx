@@ -262,8 +262,9 @@ export function DashboardCustomizeMenu({ variant = 'icon', roleContext }: Dashbo
   
   const isCardPinned = (cardId: string): boolean => {
     if (!visibilityData) return false;
+    const visibilityKey = getPinnedVisibilityKey(cardId);
     return leadershipRoles.some(role => 
-      visibilityData.find(v => v.element_key === cardId && v.role === role)?.is_visible ?? false
+      visibilityData.find(v => v.element_key === visibilityKey && v.role === role)?.is_visible ?? false
     );
   };
 
