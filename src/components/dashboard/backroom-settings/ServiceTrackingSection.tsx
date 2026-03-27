@@ -810,10 +810,16 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                                      );
                                                    })}
                                                  </div>
-                                               )}
-                                             </div>
+                                              </div>
+                                              </div>
+                                              </div>
 
-                                               {/* Billing mode + Allowance config — gated on vessel selection */}
+                                              {/* ─── Section 2: Billing Method ─── */}
+                                              {(service.container_types || []).length > 0 && (
+                                              <div>
+                                                <p className="text-[10px] font-display uppercase tracking-wider text-muted-foreground mb-2">Billing Method</p>
+                                                <div className="pl-3 border-l border-border/40">
+                                                {/* Billing mode + Allowance config — gated on vessel selection */}
                                                {(service.container_types || []).length > 0 && (() => {
                                                  const policy = allowanceByService.get(service.id);
                                                  const billingMode = policy?.billing_mode || 'allowance';
