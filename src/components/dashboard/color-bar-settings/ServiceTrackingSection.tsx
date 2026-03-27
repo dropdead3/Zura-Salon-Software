@@ -5,7 +5,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 
-import { useServiceAllowancePolicies, useUpsertAllowancePolicy } from '@/hooks/billing/useServiceAllowancePolicies';
+import { useServiceAllowancePolicies, useUpsertAllowancePolicy, useDeleteAllowancePolicy } from '@/hooks/billing/useServiceAllowancePolicies';
 import { isSuggestedChemicalService } from '@/utils/serviceCategorization';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { tokens } from '@/lib/design-tokens';
