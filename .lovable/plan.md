@@ -1,74 +1,82 @@
 
 
-## Gap Analysis: Missing Analytics & Widgets in Dashboard Customizer
+## God Mode Dashboard Customization — Save to Org Owner
 
-### Findings
+### Problem
+When a platform super admin is in God Mode (viewing an organization), dashboard customization changes (section toggles, reorder, analytics pinning, widget toggles) are saved to the **platform admin's own** `user_preferences` instead of the **organization's Account Owner's** preferences. The analytics visibility toggles write to `dashboard_element_visibility` which is global and works correctly, but the layout persistence (`sectionOrder`, `pinnedCards`, `widgets`, `hubOrder`) is user-scoped and targets the wrong user.
 
-The customizer's `PINNABLE_CARDS` list has **12 cards**, but `CommandCenterAnalytics.renderCard()` supports **25 card types**. That means **13 analytics cards are renderable on the dashboard but completely invisible in the customizer** — users cannot discover, pin, reorder, or toggle them.
+### Root Cause
+- `useSaveDashboardLayout` uses `useAuth().user.id` (the platform admin) for all reads and writes to `user_preferences.dashboard_layout`
+- `useDashboardLayout` similarly reads from the platform admin's preferences
+- No mechanism exists to resolve the org owner's user ID during God Mode
 
-Additionally, `operations_stats` exists in the customizer but has no matching `renderCard` case — it appears to be a stale entry that should map to `operational_health`.
+### Approach
+When God Mode is active (`isImpersonating` from `OrganizationContext`), resolve the selected organization's primary owner (`is_primary_owner = true` on `employee_profiles`) and use their user ID for reading and writing dashboard layout preferences.
 
-### Missing Cards (13 total)
+### Changes
 
-| Card ID | Label | Suggested Category |
-|---|---|---|
-| `executive_summary` | Executive Summary | Executive |
-| `daily_brief` | Daily Brief | Executive |
-| `client_health` | Client Health | Clients |
-| `operational_health` | Operational Health | Operations |
-| `rebooking` | Rebooking Rate | Clients |
-| `locations_rollup` | Locations Rollup | Operations |
-| `service_mix` | Service Mix | Sales |
-| `retail_effectiveness` | Retail Effectiveness | Sales |
-| `commission_summary` | Commission Summary | Financial |
-| `staff_commission_breakdown` | Staff Commission Breakdown | Financial |
-| `true_profit` | True Profit | Financial |
-| `staff_performance` | Staff Performance | Staffing |
-| `service_profitability` | Service Profitability | Financial |
-| `control_tower` | Color Bar Control Tower | Backroom |
-| `predictive_inventory` | Predictive Inventory | Backroom |
+**1. Create `useGodModeTargetUserId` hook** (`src/hooks/useGodModeTargetUserId.ts`)
+- When `isImpersonating` is true, queries `employee_profiles` for the selected org's `is_primary_owner = true` user
+- Returns the org owner's `user_id`, or falls back to the current user
+- Cached with staleTime to avoid repeated lookups
 
-### Stale Entry
+**2. Update `useDashboardLayout` in `src/hooks/useDashboardLayout.ts`**
+- Import and use `useGodModeTargetUserId` to get the target user ID
+- Read `user_preferences.dashboard_layout` using the target user ID instead of `user.id`
+- Update query key to include the target user ID
 
-- `operations_stats` in PINNABLE_CARDS has no renderCard case — replace with `operational_health`
+**3. Update `useSaveDashboardLayout` in `src/hooks/useDashboardLayout.ts`**
+- Accept an optional `targetUserId` parameter
+- When provided, write to that user's `user_preferences` instead of `user.id`
+- RLS already allows this: "Platform users can manage all preferences" policy exists
 
-### Changes Required
+**4. Update `DashboardCustomizeMenu.tsx`**
+- Pass the target user ID through to `saveLayout` calls
+- This ensures section toggles, drag reorder, widget toggles, hub toggles, and reset-to-default all write to the org owner's preferences
 
-**1. Update `PINNABLE_CARDS` in `DashboardCustomizeMenu.tsx`**
-- Remove stale `operations_stats` entry
-- Add all 15 missing card definitions with appropriate icons, categories, and size overrides
-- New categories: `Executive`, `Financial`, `Backroom` (joining existing Sales, Forecasting, Clients, Operations, Staffing)
-
-**2. Update `CARD_SIZE_OVERRIDES` map**
-- Already has some of these (executive_summary: full, service_mix: half, etc.) — verify all new entries have correct sizes
-
-**3. Create preview components for new cards**
-- Add 15 new preview mini-components to `AnalyticsCardPreview.tsx`
-- Each follows the existing pattern: `MiniHeader` + hardcoded faux data rows
-- Executive Summary: KPI strip with revenue/margin/retention
-- Daily Brief: Today's highlights list
-- Client Health: Retention gauge + at-risk count
-- Operational Health: Utilization + cancellation stats
-- Rebooking: Rate gauge + trend
-- Locations Rollup: Location comparison bars
-- Service Mix: Category donut
-- Retail Effectiveness: Attach rate + top products
-- Commission Summary: Total payout + tier breakdown
-- Staff Commission Breakdown: Staff table rows
-- True Profit: Revenue - costs waterfall
-- Staff Performance: Ranked performance bars
-- Service Profitability: Service margin rows
-- Control Tower: Status indicators
-- Predictive Inventory: Reorder alerts
-
-**4. Update `renderCard` default order**
-- Ensure `DEFAULT_PINNED_CARDS` or similar default lists include the new cards appropriately (likely not pinned by default — they appear in Available Analytics)
+**5. Update `useResetToDefault` in `src/hooks/useDashboardLayout.ts`**
+- Same target user ID override for God Mode
 
 ### Technical Details
 
-- The `CARD_SIZE_OVERRIDES` map already defines sizes for several of these cards (executive_summary: full, service_mix: half, etc.) — those remain untouched
-- Category grouping in the Available Analytics section will automatically organize new cards under their categories
-- Preview components follow the existing `MiniHeader` + `StatRow` pattern, ~30-40 lines each
-- Total new preview code: ~500 lines added to `AnalyticsCardPreview.tsx`
-- No database changes needed — this is purely a UI registration gap
+**Target user resolution:**
+```typescript
+// useGodModeTargetUserId.ts
+export function useGodModeTargetUserId(): string | undefined {
+  const { user } = useAuth();
+  const { isImpersonating, selectedOrganization } = useOrganizationContext();
+  
+  const { data: ownerUserId } = useQuery({
+    queryKey: ['org-primary-owner', selectedOrganization?.id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('employee_profiles')
+        .select('user_id')
+        .eq('organization_id', selectedOrganization!.id)
+        .eq('is_primary_owner', true)
+        .maybeSingle();
+      return data?.user_id ?? null;
+    },
+    enabled: isImpersonating && !!selectedOrganization?.id,
+  });
+  
+  return isImpersonating ? (ownerUserId ?? user?.id) : user?.id;
+}
+```
+
+**Save mutation change:**
+```typescript
+export function useSaveDashboardLayout(overrideUserId?: string) {
+  const { user } = useAuth();
+  const targetId = overrideUserId || user?.id;
+  // ... use targetId instead of user.id for all reads/writes
+}
+```
+
+**No database changes needed** — RLS already has "Platform users can manage all preferences" policy on `user_preferences`, and "Leadership can manage visibility settings" on `dashboard_element_visibility` with `is_platform_user()` bypass.
+
+### Files Modified
+- `src/hooks/useGodModeTargetUserId.ts` (new)
+- `src/hooks/useDashboardLayout.ts` (read/write target user)
+- `src/components/dashboard/DashboardCustomizeMenu.tsx` (pass target user)
 
