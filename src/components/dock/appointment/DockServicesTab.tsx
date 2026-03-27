@@ -577,7 +577,7 @@ export function DockServicesTab({ appointment, staff, effectiveServiceName }: Do
         onComplete={handleCompleteSession}
         onMarkUnresolved={handleMarkUnresolved}
         onClose={() => setShowComplete(false)}
-        isPending={completeSession.isPending || markUnresolved.isPending}
+        isPending={completeSession.isPending || markUnresolved.isPending || depleteInventory.isPending || calculateOverage.isPending}
       />
 
       {/* Formula history floating button */}

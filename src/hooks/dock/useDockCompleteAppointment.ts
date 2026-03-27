@@ -38,64 +38,12 @@ export function useDockCompleteAppointment() {
         .eq('appointment_id', appointmentId)
         .eq('status', 'completed');
 
-      // 3. For each completed session, trigger overage charge calculation
-      // (uses the existing billing service pattern)
-      if (sessions && sessions.length > 0) {
-        for (const session of sessions) {
-          // Check if a charge already exists for this session
-          const { data: existingCharge } = await supabase
-            .from('checkout_usage_charges' as any)
-            .select('id')
-            .eq('mix_session_id', session.id)
-            .maybeSingle();
+      // NOTE: Overage/P&L charge calculation is handled at session-level completion
+      // in DockServicesTab via useCalculateOverageCharge. The appointment-level
+      // completion here only marks the appointment as done — no inline charge
+      // insertion to avoid duplicate/broken records.
 
-          if (existingCharge) continue; // Already calculated
-
-          // Look up the service for this appointment to find the policy
-          const { data: appt } = await supabase
-            .from(source === 'phorest' ? 'phorest_appointments' : 'appointments')
-            .select('service_name')
-            .eq('id', appointmentId)
-            .maybeSingle();
-
-          // Get session totals from projection
-          const { data: projection } = await supabase
-            .from('mix_session_projections')
-            .select('running_dispensed_weight, running_estimated_cost')
-            .eq('mix_session_id', session.id)
-            .maybeSingle();
-
-          if (!projection) continue;
-
-          // Look up allowance policy by service name
-          const { data: policy } = await supabase
-            .from('service_allowance_policies')
-            .select('*')
-            .eq('organization_id', organizationId)
-            .eq('is_active', true)
-            .limit(1)
-            .maybeSingle();
-
-          if (!policy) continue;
-
-          // Insert basic charge record
-          await supabase
-            .from('checkout_usage_charges' as any)
-            .insert({
-              organization_id: organizationId,
-              appointment_id: appointmentId,
-              mix_session_id: session.id,
-              service_name: appt?.service_name || 'Unknown',
-              included_allowance_qty: policy.included_allowance_qty || 0,
-              actual_usage_qty: projection.running_dispensed_weight || 0,
-              overage_qty: Math.max(0, (projection.running_dispensed_weight || 0) - (policy.included_allowance_qty || 0)),
-              charge_amount: 0, // Will be refined by full billing calc
-              status: 'pending',
-            } as any);
-        }
-      }
-
-      // 4. Log audit event
+      // 3. Log audit event
       await supabase
         .from('appointment_audit_log')
         .insert({
