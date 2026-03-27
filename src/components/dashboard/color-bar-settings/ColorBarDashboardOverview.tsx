@@ -203,7 +203,10 @@ export function ColorBarDashboardOverview({ onNavigate, initialSubTab, triggerWi
                     <ShieldAlert className="w-5 h-5 text-primary" />
                   </div>
                   <div>
-                    <CardTitle className={tokens.card.title}>Control Tower</CardTitle>
+                    <div className="flex items-center gap-2">
+                      <CardTitle className={tokens.card.title}>Control Tower</CardTitle>
+                      <MetricInfoTooltip description="Real-time operational alerts for your color bar — cost spikes, stockouts, compliance gaps, and audit flags. Alerts are ranked by severity so you can address the highest-impact issues first." />
+                    </div>
                     <CardDescription>
                       {lastUpdatedAt ? `Updated ${formatRelativeTime(lastUpdatedAt)}` : 'Priority alerts requiring attention'}
                     </CardDescription>
@@ -242,7 +245,10 @@ export function ColorBarDashboardOverview({ onNavigate, initialSubTab, triggerWi
                     <Wallet className="w-5 h-5 text-primary" />
                   </div>
                   <div>
-                    <CardTitle className={tokens.card.title}>Procurement</CardTitle>
+                    <div className="flex items-center gap-2">
+                      <CardTitle className={tokens.card.title}>Procurement</CardTitle>
+                      <MetricInfoTooltip description="Tracks month-to-date procurement spend against your configured budget target. Includes next-month projections based on current usage velocity and flags when spend is trending over budget." />
+                    </div>
                     <CardDescription>Budget tracking & projections</CardDescription>
                   </div>
                 </div>
@@ -311,7 +317,10 @@ export function ColorBarDashboardOverview({ onNavigate, initialSubTab, triggerWi
                     <Users2 className="w-5 h-5 text-primary" />
                   </div>
                   <div>
-                    <CardTitle className={tokens.card.title}>Staff Performance</CardTitle>
+                    <div className="flex items-center gap-2">
+                      <CardTitle className={tokens.card.title}>Staff Performance</CardTitle>
+                      <MetricInfoTooltip description="Ranks stylists by waste rate over the last 30 days. Identifies top performers and those needing coaching. Use to target training on dispensing accuracy and reweigh compliance." />
+                    </div>
                     <CardDescription>Last 30 days — by waste rate</CardDescription>
                   </div>
                 </div>
@@ -356,7 +365,10 @@ export function ColorBarDashboardOverview({ onNavigate, initialSubTab, triggerWi
                     <Package className="w-5 h-5 text-primary" />
                   </div>
                   <div>
-                    <CardTitle className={tokens.card.title}>Inventory Health</CardTitle>
+                    <div className="flex items-center gap-2">
+                      <CardTitle className={tokens.card.title}>Inventory Health</CardTitle>
+                      <MetricInfoTooltip description="Snapshot of stock risk levels across tracked products. Products are classified as Critical, High Risk, or Medium based on projected days-of-supply remaining versus reorder lead times." />
+                    </div>
                     <CardDescription>Stock risk snapshot</CardDescription>
                   </div>
                 </div>
