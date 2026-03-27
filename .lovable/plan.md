@@ -1,78 +1,64 @@
 
 
-## Gap Analysis: Service Tracking, Pricing & Dock Billing — Pass 5
+## Gap Analysis: Service Tracking, Pricing & Dock Billing — Pass 6
 
-### Bug 1 (CRITICAL — All Dock Charges Fail): `resolveServiceId` Queries Wrong Table
+### Bug 1 (CRITICAL — Completion Sheet Unreachable): No Trigger to Open DockSessionCompleteSheet
 
-This is the single biggest remaining bug. It silently breaks **every** Dock charge calculation.
+`showComplete` is declared at line 115 and used to control the `DockSessionCompleteSheet` visibility. But **`setShowComplete(true)` is never called anywhere in the codebase.** The `hasActiveSessions` variable is computed (line 444) but never rendered as a button or trigger.
 
-`resolveServiceId` in `useCalculateOverageCharge.ts` (line 32) queries `phorest_services` to resolve a service name to an ID:
+Result: The Dock user has no way to complete a session. The entire completion → depletion → charge chain is dead code. No inventory depletion, no charges, no session finalization from the Dock.
 
-```ts
-.from('phorest_services').select('id').eq('name', serviceName)
+**Fix:** Add a "Complete Session" FAB (floating action button) at the bottom of the services tab when `hasActiveSessions` is true. Style it per Dock UI tokens — a prominent emerald button with a `Check` icon, positioned above the formula history button. Tapping it calls `setShowComplete(true)`.
+
+```tsx
+{hasActiveSessions && !activeBowl && (
+  <button
+    onClick={() => setShowComplete(true)}
+    className="absolute bottom-4 right-5 z-[25] h-12 px-5 rounded-full 
+               bg-emerald-600 hover:bg-emerald-500 text-white font-medium text-sm
+               flex items-center gap-2 shadow-lg active:scale-95 transition-all"
+  >
+    <Check className="w-4 h-4" />
+    Complete Session
+  </button>
+)}
 ```
 
-But `service_allowance_policies.service_id` has a **foreign key to `services.id`** (the internal platform table, not `phorest_services`). These are completely different tables with different UUIDs. The resolved ID from `phorest_services` will never match any policy's `service_id`.
+### Gap 2 (Medium): Session Stats Only Cover First Session
 
-**Result:** Policy lookup on line 76 (`eq('service_id', resolvedServiceId)`) returns `null` → no policy found → no charge created. This affects every Dock-completed session regardless of billing mode (allowance or P&L).
+`useDockSessionStats` accepts a single `sessionId`. For multi-session appointments, `primarySessionId` only feeds the first session's stats to the completion sheet. All other sessions' dispensed weight, cost, and bowl count are missing.
 
-**Fix:** Change `resolveServiceId` to query the `services` table instead:
+**Fix:** Update `useDockSessionStats` to accept `sessionIds: string[]` (an array). Query `mix_bowl_projections` using `.in('mix_session_id', sessionIds)` and aggregate across all results. Update callers to pass `activeSessionIds` instead of `primarySessionId`.
 
-```ts
-const { data } = await supabase
-  .from('services')
-  .select('id')
-  .eq('name', serviceName)
-  .eq('organization_id', organizationId)
-  .eq('is_active', true)
-  .limit(1)
-  .maybeSingle();
-```
+### Gap 3 (Medium): `DockSummaryTab` Also Only Uses First Session
 
-This matches the table that policies reference (`service_allowance_policies_service_id_fkey → services`).
+`DockSummaryTab.tsx` line 23: `const primarySessionId = sessions?.[0]?.id`. Same single-session stats issue. Should aggregate across all sessions for the appointment.
 
-### Bug 2 (Medium): `handleMarkUnresolved` Only Flags `sessions[0]`
+**Fix:** Apply the same multi-session array pattern from Gap 2.
 
-Line 312: `const session = sessions?.[0]` — the "Flag Issue" action only marks the first session as unresolved, even though `handleCompleteSession` was fixed to process all active sessions. Multi-session appointments will only flag one session.
+### Gap 4 (Low): Completion Chain Has No Error Recovery
 
-**Fix:** Apply the same pattern as `handleCompleteSession` — iterate all non-terminal sessions.
+If `depleteInventory` fails mid-loop (e.g., network drop), the session status is already set to `completed` but inventory is not depleted and charges are not calculated. The chain cannot be retried because the session is now in a terminal state.
 
-### Gap 3 (Medium): Duplicate Guard Scope Is Too Broad
+**Fix:** Wrap the completion chain in a try/catch per session. If depletion or charge calculation fails, log the failure and show a warning toast ("Session completed but inventory/charges need review") rather than silently swallowing the error. Consider adding a `needs_reconciliation` flag to the session for manager follow-up.
 
-The idempotency check (line 61) matches on `mix_session_id` + `appointment_id` but **not** `service_name`. For multi-service appointments where `calculateOverage` is called once per chemical service per session, the first service's charge will succeed, and all subsequent services will be skipped because the guard finds an existing row for that session+appointment combo.
+### Gap 5 (Low): Charge Amount Not Surfaced Post-Completion
 
-**Fix:** Add `service_name` to the duplicate check:
+After `handleCompleteSession` runs the charge chain, it closes the sheet immediately via `setShowComplete(false)`. The user never sees the calculated charges. The `existingCharges` query won't have the new data until it refetches.
 
-```ts
-.eq('mix_session_id', sessionId)
-.eq('appointment_id', appointmentId)
-.eq('service_name', serviceName ?? '')
-```
-
-### Gap 4 (Low): Session Stats Only Aggregated for First Session
-
-Line 162: `const primarySessionId = sessions?.[0]?.id` feeds `useDockSessionStats`. For multi-session appointments, the completion sheet only shows stats from the first session. Dispensed weight, cost, and bowl count will be incomplete.
-
-**Fix:** Either aggregate stats across all active sessions in `useDockSessionStats` (pass all session IDs), or sum `demoTotalDispensed`/`demoTotalCost` across all sessions in `DockServicesTab`.
-
-### Gap 5 (Low): No Charge Estimate Before Completion
-
-The `DockSessionCompleteSheet` shows charges from `useCheckoutUsageCharges`, but charges are only inserted *during* the completion flow. On first open, the panel is always empty. The user taps "Complete" blind — no preview of what will be charged.
-
-**Enhancement:** Add an inline cost estimate to the completion sheet using the already-available `sessionStats.totalCost` and `backroom_billing_settings.default_product_markup_pct`. Show "Estimated client charge: ~$X.XX" before completion, then replace with actual charges post-completion.
+**Fix:** After the completion loop, `await queryClient.invalidateQueries(['checkout-usage-charges'])` and briefly delay sheet close (or switch the sheet to a "completed" confirmation mode showing the calculated totals).
 
 ---
 
 ### Implementation Order
 
-1. **Fix `resolveServiceId` to query `services` table** — Bug 1 (blocking, zero charges)
-2. **Fix duplicate guard to include `service_name`** — Gap 3 (multi-service broken)
-3. **Fix `handleMarkUnresolved` for multi-session** — Bug 2
-4. **Multi-session stats aggregation** — Gap 4
-5. *(Optional)* Pre-completion charge estimate — Gap 5
+1. **Add "Complete Session" FAB** — Bug 1 (entire flow is unreachable without this)
+2. **Multi-session stats aggregation** — Gap 2 + 3
+3. **Post-completion charge visibility** — Gap 5
+4. **Error recovery for completion chain** — Gap 4
 
 ### Scope
-- 2 files modified: `useCalculateOverageCharge.ts`, `DockServicesTab.tsx`
+- 3 files modified: `DockServicesTab.tsx`, `useDockSessionStats.ts`, `DockSummaryTab.tsx`
 - No database migrations
-- No breaking changes to admin-side flow
+- No breaking changes
 
