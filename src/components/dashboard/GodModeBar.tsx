@@ -43,7 +43,7 @@ export function GodModeBar() {
             {platformIcon ? (
               <img src={platformIcon} alt="" className="h-4 w-4 shrink-0" />
             ) : (
-              <ZuraZIcon className="h-4 w-4 text-white" />
+              <ZuraZIcon className="h-4 w-4 text-violet-300" />
             )}
             {!isMobile && (
               <span className="font-display text-[11px] tracking-[0.08em] uppercase text-violet-300">
