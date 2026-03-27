@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { createPortal } from 'react-dom';
 
 type PanelSide = 'right' | 'left' | 'bottom';
