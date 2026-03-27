@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { formatDisplayName } from '@/lib/utils';
+import { formatDisplayName, formatFullDisplayName } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 
 export interface SalesTransaction {
@@ -390,7 +390,7 @@ export function useSalesByStylist(dateFrom?: string, dateTo?: string, locationId
         if (m.user_id) {
           mappingLookup[m.phorest_staff_id] = {
             userId: m.user_id,
-            name: profile ? formatDisplayName(profile.full_name || '', profile.display_name) : (m.phorest_staff_name || 'Unknown'),
+            name: profile ? formatFullDisplayName(profile.full_name || '', profile.display_name) : (m.phorest_staff_name || 'Unknown'),
             photo: profile?.photo_url,
           };
         }
