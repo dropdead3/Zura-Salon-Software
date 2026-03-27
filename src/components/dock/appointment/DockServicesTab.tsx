@@ -19,7 +19,7 @@ import { useDockMixSessions, type DockMixSession } from '@/hooks/dock/useDockMix
 import { normalizeSessionStatus, isTerminalSessionStatus, isActiveSession, requiresReweigh } from '@/lib/backroom/session-state-machine';
 import { DockNewBowlSheet } from '../mixing/DockNewBowlSheet';
 import { DockLiveDispensing, type BowlLine } from '../mixing/DockLiveDispensing';
-import { DockSessionCompleteSheet } from '../mixing/DockSessionCompleteSheet';
+import { DockSessionCompleteSheet, type PendingChargeSummary } from '../mixing/DockSessionCompleteSheet';
 import { DockBowlDetectionGate } from '../mixing/DockBowlDetectionGate';
 import { useCreateDockBowl, type CreatedBowlResult } from '@/hooks/dock/useDockMixSession';
 import { useCompleteDockSession, useMarkDockSessionUnresolved } from '@/hooks/dock/useDockSessionComplete';
