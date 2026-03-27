@@ -44,7 +44,7 @@ const SECTIONS = [
   { id: 'how-it-works', label: 'How It Works' },
   { id: 'calculator', label: 'Calculator' },
   { id: 'color-bar' , label: 'Color Bar' },
-  { id: 'backroom-calc', label: 'Backroom Calc' },
+  { id: 'color-bar-calc', label: 'Color Bar Calc' },
   { id: 'quick-ref', label: 'Quick Ref' },
   { id: 'changelog', label: 'Changelog' },
 ];
@@ -289,7 +289,7 @@ export default function BillingGuide() {
                   <Package className="w-5 h-5 text-primary" />
                 </div>
                 <div>
-                  <PlatformCardTitle className={tokens.card.title}>Backroom Add-On</PlatformCardTitle>
+                  <PlatformCardTitle className={tokens.card.title}>Color Bar Add-On</PlatformCardTitle>
                   <PlatformCardDescription>Chemical tracking module pricing.</PlatformCardDescription>
                 </div>
               </div>
@@ -624,7 +624,7 @@ function ColorBarCalculatorWidget() {
             <FlaskConical className="w-5 h-5 text-primary" />
           </div>
           <div>
-            <PlatformCardTitle className={tokens.card.title}>Backroom Quote Calculator</PlatformCardTitle>
+            <PlatformCardTitle className={tokens.card.title}>Color Bar Quote Calculator</PlatformCardTitle>
             <PlatformCardDescription>Estimate monthly Color Bar costs for an organization. Uses the flat metered pricing model.</PlatformCardDescription>
           </div>
         </div>
@@ -659,7 +659,7 @@ function ColorBarCalculatorWidget() {
 
           {/* Results */}
           <div className="rounded-xl border border-[hsl(var(--platform-border)/0.5)] bg-[hsl(var(--platform-bg-card)/0.4)] p-5">
-            <p className="font-display text-sm tracking-wide uppercase text-[hsl(var(--platform-foreground-muted))] mb-4">Backroom Quote</p>
+            <p className="font-display text-sm tracking-wide uppercase text-[hsl(var(--platform-foreground-muted))] mb-4">Color Bar Quote</p>
 
             <div className="space-y-3 text-sm">
               <p className="font-display text-xs tracking-wide uppercase text-[hsl(var(--platform-foreground-muted))]">Monthly Recurring</p>

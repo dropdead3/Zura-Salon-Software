@@ -21,7 +21,7 @@ export const AUDIT_EVENTS = {
   // Notes
   NOTE_ADDED: 'note_added',
 
-  // Backroom
+  // Color Bar
   MIX_SESSION_STARTED: 'mix_session_started',
   MIX_SESSION_COMPLETED: 'mix_session_completed',
   BOWL_REWEIGHED: 'bowl_reweighed',
