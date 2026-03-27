@@ -4,7 +4,7 @@
  * Supports pull-to-dismiss and tap-outside-to-close.
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Check, AlertTriangle, FlaskConical, X, Flag, DollarSign } from 'lucide-react';
 import { motion, AnimatePresence, useDragControls } from 'framer-motion';
 import { cn } from '@/lib/utils';
