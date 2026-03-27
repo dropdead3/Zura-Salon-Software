@@ -261,8 +261,7 @@ export function AggregateSalesCard({
   const { data: tomorrowData } = useTomorrowRevenue();
   const { goals } = useSalesGoals();
   const { data: locations } = useActiveLocations();
-  const todayStr = format(new Date(), 'yyyy-MM-dd');
-  const rangeIncludesToday = dateFilters.dateTo === todayStr;
+  const rangeIncludesToday = dateFilters.dateTo === format(new Date(), 'yyyy-MM-dd');
   const { data: todayActual, locationActuals, isLoading: todayActualLoading, dataUpdatedAt: todayDataUpdatedAt } = useTodayActualRevenue(dateRange === 'today' || rangeIncludesToday);
   const { data: attachmentData, isLoading: attachmentLoading } = useRetailAttachmentRate({
     dateFrom: dateFilters.dateFrom,
