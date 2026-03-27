@@ -450,9 +450,10 @@ export default function OnboardingTracker() {
         <DashboardPageHeader
           title="Onboarding Hub"
           description="Monitor team onboarding progress, invitations, and checklist completion"
-          actions={<InviteStaffDialog />
+          actions={<InviteStaffDialog />}
         />
 
+        <PageExplainer pageId="onboarding-tracker" />
         <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
           <ResponsiveTabsList onTabChange={handleTabChange}>
             <TabsTrigger value="progress" className="gap-2">
