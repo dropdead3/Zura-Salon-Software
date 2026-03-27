@@ -327,6 +327,43 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
     });
   }, [filteredServices, searchQuery, categoryOrderMap]);
 
+  // Group services by category for collapsible rendering
+  const categoryGroups = useMemo(() => {
+    const groups = new Map<string, { services: ServiceRow[]; configured: number; tracked: number }>();
+    for (const s of searchedServices) {
+      const cat = s.category || 'Other';
+      if (!groups.has(cat)) groups.set(cat, { services: [], configured: 0, tracked: 0 });
+      const g = groups.get(cat)!;
+      g.services.push(s);
+      if (s.backroom_config_dismissed || allowanceByService.has(s.id)) g.configured++;
+      if (s.is_backroom_tracked) g.tracked++;
+    }
+    return groups;
+  }, [searchedServices, allowanceByService]);
+
+  // Initialize collapsedCategories to ALL categories once data loads (default collapsed)
+  useEffect(() => {
+    if (collapsedCategories === null && categoryGroups.size > 0) {
+      setCollapsedCategories(new Set(categoryGroups.keys()));
+    }
+  }, [categoryGroups, collapsedCategories]);
+
+  // Auto-expand all categories when searching
+  useEffect(() => {
+    if (searchQuery.trim()) {
+      setCollapsedCategories(new Set()); // all expanded
+    }
+  }, [searchQuery]);
+
+  const toggleCategoryCollapse = (cat: string) => {
+    setCollapsedCategories(prev => {
+      const next = new Set(prev ?? []);
+      if (next.has(cat)) next.delete(cat);
+      else next.add(cat);
+      return next;
+    });
+  };
+
   // Expand toggle helper
   const toggleExpand = (id: string) => {
     setExpandedIds(prev => {
