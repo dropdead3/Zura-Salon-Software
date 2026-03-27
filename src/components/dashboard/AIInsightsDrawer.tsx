@@ -493,6 +493,7 @@ function WizardIntentPicker({
   );
 }
 
+interface AIInsightsDrawerProps {
   label?: string;
   expanded?: boolean;
   onToggle?: () => void;
