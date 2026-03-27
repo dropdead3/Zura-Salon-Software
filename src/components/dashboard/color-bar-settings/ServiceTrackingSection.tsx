@@ -923,20 +923,35 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                                                ? 'bg-primary text-primary-foreground border-primary'
                                                                : 'bg-transparent border-dashed border-muted-foreground/40 text-muted-foreground hover:border-muted-foreground'
                                                            )}
-                                                           onClick={(e) => {
-                                                             e.stopPropagation();
-                                                             upsertPolicy.mutate({
-                                                               organization_id: effectiveOrganization!.id,
-                                                               service_id: service.id,
-                                                               billing_mode: mode,
-                                                               is_active: mode === 'parts_and_labor' ? true : (policy?.is_active ?? false),
-                                                               included_allowance_qty: policy?.included_allowance_qty ?? 0,
-                                                               overage_rate: policy?.overage_rate ?? 0,
-                                                               overage_rate_type: policy?.overage_rate_type ?? 'per_unit',
-                                                               overage_cap: policy?.overage_cap ?? null,
-                                                               notes: policy?.notes ?? null,
-                                                             });
-                                                           }}
+                                                            onClick={(e) => {
+                                                              e.stopPropagation();
+                                                              if (active) {
+                                                                // Deselect — reset to unconfigured
+                                                                upsertPolicy.mutate({
+                                                                  organization_id: effectiveOrganization!.id,
+                                                                  service_id: service.id,
+                                                                  billing_mode: null,
+                                                                  is_active: false,
+                                                                  included_allowance_qty: 0,
+                                                                  overage_rate: 0,
+                                                                  overage_rate_type: 'per_unit',
+                                                                  overage_cap: null,
+                                                                  notes: null,
+                                                                });
+                                                              } else {
+                                                                upsertPolicy.mutate({
+                                                                  organization_id: effectiveOrganization!.id,
+                                                                  service_id: service.id,
+                                                                  billing_mode: mode,
+                                                                  is_active: mode === 'parts_and_labor' ? true : (policy?.is_active ?? false),
+                                                                  included_allowance_qty: policy?.included_allowance_qty ?? 0,
+                                                                  overage_rate: policy?.overage_rate ?? 0,
+                                                                  overage_rate_type: policy?.overage_rate_type ?? 'per_unit',
+                                                                  overage_cap: policy?.overage_cap ?? null,
+                                                                  notes: policy?.notes ?? null,
+                                                                });
+                                                              }
+                                                            }}
                                                          >
                                                            {active ? <Check className="w-3 h-3" /> : <Plus className="w-3 h-3" />}
                                                            {mode === 'allowance' ? 'Allowance' : 'Parts & Labor'}
