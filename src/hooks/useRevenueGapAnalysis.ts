@@ -319,9 +319,10 @@ export function useRevenueGapAnalysis(
 
         if (variance <= 1) return; // skip negligible
 
+        const isApptToday = rangeIncludesToday && scheduled.appointmentDate === todayStr;
         let reason: GapReason;
         if (!actual) {
-          reason = 'no_pos_record';
+          reason = isApptToday ? 'not_concluded' : 'no_pos_record';
         } else {
           const servicesChanged = JSON.stringify(scheduled.services.sort()) !== JSON.stringify(actual.services.sort());
           if (actual.hasDiscount) reason = 'discount';
