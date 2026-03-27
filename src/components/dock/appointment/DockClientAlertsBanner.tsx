@@ -9,7 +9,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { AlertTriangle, CalendarPlus, X } from 'lucide-react';
 import { motion, AnimatePresence, type PanInfo } from 'framer-motion';
-import { detectAllergyFlags } from '@/lib/backroom/detect-allergy-flags';
+import { detectAllergyFlags } from '@/lib/color-bar/detect-allergy-flags';
 import { DOCK_TEXT } from '@/components/dock/dock-ui-tokens';
 import { cn } from '@/lib/utils';
 

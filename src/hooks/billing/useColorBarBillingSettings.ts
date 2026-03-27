@@ -1,0 +1,107 @@
+/**
+ * useColorBarBillingSettings — Org-level billing configuration for product cost pass-through.
+ */
+
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
+
+export interface ColorBarBillingSettings {
+  id: string;
+  organization_id: string;
+  default_product_markup_pct: number;
+  product_charge_taxable: boolean;
+  product_charge_label: string;
+  enable_supply_cost_recovery: boolean;
+  updated_by: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export function useColorBarBillingSettings(organizationId: string | null | undefined) {
+  return useQuery({
+    queryKey: ['color-bar-billing-settings', organizationId],
+    queryFn: async (): Promise<ColorBarBillingSettings | null> => {
+      const { data, error } = await supabase
+        .from('backroom_billing_settings')
+        .select('*')
+        .eq('organization_id', organizationId!)
+        .maybeSingle();
+
+      if (error) throw error;
+      return data as unknown as ColorBarBillingSettings | null;
+    },
+    enabled: !!organizationId,
+    staleTime: 60_000,
+  });
+}
+
+export function useUpsertColorBarBillingSettings() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (params: {
+      organization_id: string;
+      default_product_markup_pct?: number;
+      product_charge_taxable?: boolean;
+      product_charge_label?: string;
+      enable_supply_cost_recovery?: boolean;
+    }) => {
+      const userId = (await supabase.auth.getUser()).data.user?.id;
+
+      // Check if exists
+      const { data: existing } = await supabase
+        .from('backroom_billing_settings')
+        .select('id')
+        .eq('organization_id', params.organization_id)
+        .maybeSingle();
+
+      let data, error;
+      if ((existing as any)?.id) {
+        ({ data, error } = await supabase
+          .from('backroom_billing_settings')
+          .update({
+            ...(params.default_product_markup_pct !== undefined && {
+              default_product_markup_pct: params.default_product_markup_pct,
+            }),
+            ...(params.product_charge_taxable !== undefined && {
+              product_charge_taxable: params.product_charge_taxable,
+            }),
+            ...(params.product_charge_label !== undefined && {
+              product_charge_label: params.product_charge_label,
+            }),
+            ...(params.enable_supply_cost_recovery !== undefined && {
+              enable_supply_cost_recovery: params.enable_supply_cost_recovery,
+            }),
+            updated_by: userId,
+          })
+          .eq('id', (existing as any).id)
+          .select()
+          .single());
+      } else {
+        ({ data, error } = await supabase
+          .from('backroom_billing_settings')
+          .insert({
+            organization_id: params.organization_id,
+            default_product_markup_pct: params.default_product_markup_pct ?? 0,
+            product_charge_taxable: params.product_charge_taxable ?? true,
+            product_charge_label: params.product_charge_label ?? 'Product Usage',
+            enable_supply_cost_recovery: params.enable_supply_cost_recovery ?? false,
+            updated_by: userId,
+          })
+          .select()
+          .single());
+      }
+
+      if (error) throw error;
+      return data as unknown as ColorBarBillingSettings;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['color-bar-billing-settings'] });
+      toast.success('Billing settings saved');
+    },
+    onError: (error) => {
+      toast.error('Failed to save billing settings: ' + error.message);
+    },
+  });
+}

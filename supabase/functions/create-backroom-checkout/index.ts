@@ -121,7 +121,7 @@ Deno.serve(async (req) => {
     const sharedMetadata = {
       organization_id: org.id,
       addon_type: "backroom",
-      backroom_plan: "standard",
+      color_bar_plan: "standard",
       scale_count: String(scaleQty),
       billing_interval: "monthly",
       location_ids: JSON.stringify(resolvedLocationIds),
@@ -144,8 +144,8 @@ Deno.serve(async (req) => {
       customer: customerId,
       mode: "subscription",
       line_items: lineItems,
-      success_url: success_url || `${req.headers.get("origin")}/dashboard/admin/backroom-settings?checkout=success`,
-      cancel_url: cancel_url || `${req.headers.get("origin")}/dashboard/admin/backroom-settings?checkout=cancelled`,
+      success_url: success_url || `${req.headers.get("origin")}/dashboard/admin/color-bar-settings?checkout=success`,
+      cancel_url: cancel_url || `${req.headers.get("origin")}/dashboard/admin/color-bar-settings?checkout=cancelled`,
       metadata: sharedMetadata,
       subscription_data: {
         metadata: sharedMetadata,

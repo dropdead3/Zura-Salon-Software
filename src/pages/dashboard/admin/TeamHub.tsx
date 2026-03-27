@@ -254,10 +254,10 @@ export default function TeamHub() {
             description="Website themes, editor, settings, and content management"
           />
           <HubGatewayCard
-            href={dashPath('/admin/backroom-settings')}
+            href={dashPath('/admin/color-bar-settings')}
             icon={Beaker}
-            title="Zura Backroom Hub"
-            description="Backroom color & supply management, formulas, and station tracking"
+            title="Zura Color Bar Hub"
+            description="Color Bar color & supply management, formulas, and station tracking"
           />
         </CategorySection>
 

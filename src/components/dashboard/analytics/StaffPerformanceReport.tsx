@@ -1,6 +1,6 @@
 /**
  * StaffPerformanceReport — Unified stylist scorecard for salon owners.
- * Composites revenue, experience scores, and backroom metrics per stylist.
+ * Composites revenue, experience scores, and color bar metrics per stylist.
  */
 
 import { useState } from 'react';

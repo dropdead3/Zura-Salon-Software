@@ -19,9 +19,9 @@ import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { AnalyticsFilterBadge } from '@/components/dashboard/AnalyticsFilterBadge';
 import { EmptyState } from '@/components/ui/empty-state';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
-import { useComputedPriceRecommendations, useDefaultTargetMargin } from '@/hooks/backroom/useServicePriceRecommendations';
+import { useComputedPriceRecommendations, useDefaultTargetMargin } from '@/hooks/color-bar/useServicePriceRecommendations';
 import { useOrganizationApps } from '@/hooks/useOrganizationApps';
-import { useServiceProfitabilitySnapshots } from '@/hooks/backroom/useServiceProfitability';
+import { useServiceProfitabilitySnapshots } from '@/hooks/color-bar/useServiceProfitability';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 import type { FilterContext } from '@/components/dashboard/AnalyticsFilterBadge';
 
@@ -130,20 +130,20 @@ export function PricingAnalyticsContent({
     );
   }
 
-  // Backroom not activated — show empty state
-  if (!appsLoading && !hasApp('backroom')) {
+  // Color Bar not activated — show empty state
+  if (!appsLoading && !hasApp('color-bar')) {
     return (
       <EmptyState
         icon={Beaker}
-        title="Pricing intelligence requires Zura Backroom"
-        description="Activate Zura Backroom to unlock service pricing analytics, margin tracking, and AI-driven price recommendations."
+        title="Pricing intelligence requires Zura Color Bar"
+        description="Activate Zura Color Bar to unlock service pricing analytics, margin tracking, and AI-driven price recommendations."
         action={
           <Button
             variant="outline"
-            onClick={() => navigate(dashPath('/admin/backroom-settings'))}
+            onClick={() => navigate(dashPath('/admin/color-bar-settings'))}
             className="font-sans gap-1"
           >
-            Explore Backroom <ArrowRight className="w-3.5 h-3.5" />
+            Explore Color Bar <ArrowRight className="w-3.5 h-3.5" />
           </Button>
         }
       />
@@ -424,7 +424,7 @@ export function PricingAnalyticsContent({
           </div>
           <Button
             className="font-sans gap-1"
-            onClick={() => navigate(dashPath('/admin/backroom-settings?section=price-intelligence'))}
+            onClick={() => navigate(dashPath('/admin/color-bar-settings?section=price-intelligence'))}
           >
             Open Price Intelligence <ArrowRight className="w-4 h-4" />
           </Button>

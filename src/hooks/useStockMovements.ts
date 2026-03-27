@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
-import { postLedgerEntry } from '@/lib/backroom/services/inventory-ledger-service';
+import { postLedgerEntry } from '@/lib/color-bar/services/inventory-ledger-service';
 
 export interface StockMovement {
   id: string;

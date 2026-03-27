@@ -55,23 +55,23 @@ Deno.serve(async (req) => {
       throw new Error("No active billing account found");
     }
 
-    // Find existing backroom subscription
+    // Find existing color bar subscription
     const subscriptions = await stripe.subscriptions.list({
       customer: org.stripe_customer_id,
       status: "active",
       limit: 10,
     });
 
-    const backroomSub = subscriptions.data.find(
+    const colorBarSub = subscriptions.data.find(
       (s) => (s.metadata as Record<string, string>)?.addon_type === "backroom"
     );
 
-    if (!backroomSub) {
-      throw new Error("No active Backroom subscription found");
+    if (!colorBarSub) {
+      throw new Error("No active Color Bar subscription found");
     }
 
     // Check if scale license item already exists on the subscription
-    const existingLicenseItem = backroomSub.items.data.find(
+    const existingLicenseItem = colorBarSub.items.data.find(
       (item) => item.price.id === SCALE_LICENSE_PRICE_ID
     );
 
@@ -83,7 +83,7 @@ Deno.serve(async (req) => {
     } else {
       // Add new line item
       await stripe.subscriptionItems.create({
-        subscription: backroomSub.id,
+        subscription: colorBarSub.id,
         price: SCALE_LICENSE_PRICE_ID,
         quantity: qty,
       });
@@ -104,10 +104,10 @@ Deno.serve(async (req) => {
     });
 
     // Update scale count in metadata
-    const currentScales = parseInt(backroomSub.metadata?.scale_count || "0", 10);
-    await stripe.subscriptions.update(backroomSub.id, {
+    const currentScales = parseInt(colorBarSub.metadata?.scale_count || "0", 10);
+    await stripe.subscriptions.update(colorBarSub.id, {
       metadata: {
-        ...backroomSub.metadata,
+        ...colorBarSub.metadata,
         scale_count: String(currentScales + qty),
       },
     });
@@ -117,12 +117,12 @@ Deno.serve(async (req) => {
       .from("organization_feature_flags")
       .upsert({
         organization_id: org.id,
-        flag_key: "backroom_plan",
+        flag_key: "color_bar_plan",
         is_enabled: true,
         override_reason: JSON.stringify({
-          plan: backroomSub.metadata?.backroom_plan || "professional",
+          plan: colorBarSub.metadata?.color_bar_plan || "professional",
           scale_count: currentScales + qty,
-          billing_interval: backroomSub.metadata?.billing_interval || "monthly",
+          billing_interval: colorBarSub.metadata?.billing_interval || "monthly",
         }),
         updated_at: new Date().toISOString(),
       }, { onConflict: "organization_id,flag_key" });

@@ -1,6 +1,6 @@
 /**
  * DockWeightInput — Mobile-optimized numpad weight entry.
- * Large touch targets for salon backroom use (gloved hands).
+ * Large touch targets for salon color bar use (gloved hands).
  */
 
 import { useState } from 'react';

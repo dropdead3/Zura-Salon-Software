@@ -9,7 +9,7 @@ import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import { formatCurrency, formatDateShort, formatRelativeTime } from '@/lib/format';
 import { useAuth } from '@/contexts/AuthContext';
-import { useStylistMixingDashboard } from '@/hooks/backroom/useStylistMixingDashboard';
+import { useStylistMixingDashboard } from '@/hooks/color-bar/useStylistMixingDashboard';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 
 // ─── Status badge helper ────────────────────────────────────────────────────
@@ -59,7 +59,7 @@ export default function StylistMixingDashboard() {
     <div className={tokens.layout.pageContainer}>
       <DashboardPageHeader
         title="My Mixing"
-        description="Your backroom mixing activity, formulas, and performance"
+        description="Your color bar mixing activity, formulas, and performance"
       />
 
       {/* ─── Performance Snapshot ────────────────────────────────────────── */}

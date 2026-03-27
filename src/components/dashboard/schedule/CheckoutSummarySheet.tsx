@@ -24,7 +24,7 @@ import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { NextVisitRecommendation } from '@/components/dashboard/schedule/NextVisitRecommendation';
 import type { RebookInterval } from '@/lib/scheduling/rebook-recommender';
 import { useCheckoutUsageCharges } from '@/hooks/billing/useCheckoutUsageCharges';
-import { useBackroomBillingSettings } from '@/hooks/billing/useBackroomBillingSettings';
+import { useColorBarBillingSettings } from '@/hooks/billing/useColorBarBillingSettings';
 
 // Constants
 const RECEIPT_WIDTH = 80; // mm
@@ -126,7 +126,7 @@ export function CheckoutSummarySheet({
 
   // Product cost charges (parts_and_labor)
   const { data: usageCharges = [] } = useCheckoutUsageCharges(appointment?.id ?? null);
-  const { data: billingSettings } = useBackroomBillingSettings(organizationId);
+  const { data: billingSettings } = useColorBarBillingSettings(organizationId);
 
   const productChargeLabel = billingSettings?.product_charge_label || 'Product Usage';
   const productChargeTaxable = billingSettings?.product_charge_taxable ?? true;

@@ -6,7 +6,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { emitSessionEvent } from '@/lib/backroom/mix-session-service';
+import { emitSessionEvent } from '@/lib/color-bar/mix-session-service';
 
 /**
  * Complete a mix session (all bowls reweighed or accepted as-is).

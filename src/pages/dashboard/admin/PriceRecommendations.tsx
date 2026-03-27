@@ -20,9 +20,9 @@ import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip,
   ResponsiveContainer, ReferenceLine,
 } from 'recharts';
-import { PriceRecommendationsTable } from '@/components/dashboard/backroom-settings/PriceRecommendationsTable';
-import { PriceRecommendationHistory } from '@/components/dashboard/backroom-settings/PriceRecommendationHistory';
-import { BulkPriceAcceptConfirmDialog } from '@/components/dashboard/backroom-settings/PriceAcceptConfirmDialog';
+import { PriceRecommendationsTable } from '@/components/dashboard/color-bar-settings/PriceRecommendationsTable';
+import { PriceRecommendationHistory } from '@/components/dashboard/color-bar-settings/PriceRecommendationHistory';
+import { BulkPriceAcceptConfirmDialog } from '@/components/dashboard/color-bar-settings/PriceAcceptConfirmDialog';
 import {
   useComputedPriceRecommendations,
   useAcceptPriceRecommendation,
@@ -30,8 +30,8 @@ import {
   useUpsertPriceTarget,
   useDefaultTargetMargin,
   useUpdateDefaultTargetMargin,
-} from '@/hooks/backroom/useServicePriceRecommendations';
-import { useServiceProfitabilitySnapshots } from '@/hooks/backroom/useServiceProfitability';
+} from '@/hooks/color-bar/useServicePriceRecommendations';
+import { useServiceProfitabilitySnapshots } from '@/hooks/color-bar/useServiceProfitability';
 import { toast } from 'sonner';
 
 export function PriceRecommendationsContent() {
@@ -346,7 +346,7 @@ export function PriceRecommendationsContent() {
                 </h3>
                  <p className={tokens.empty.description}>
                    <Link
-                     to={dashPath('/admin/backroom-settings?section=formulas')}
+                     to={dashPath('/admin/color-bar-settings?section=formulas')}
                      className="text-primary hover:text-primary/80 underline underline-offset-4 transition-colors"
                    >
                      Set up recipe baselines
@@ -453,7 +453,7 @@ export function PriceRecommendationsContent() {
   );
 }
 
-/** @deprecated Redirects to backroom hub. Kept for route compatibility. */
+/** @deprecated Redirects to color bar hub. Kept for route compatibility. */
 export default function PriceRecommendationsPage() {
   return null;
 }

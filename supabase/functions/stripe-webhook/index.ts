@@ -307,14 +307,14 @@ async function handleChargeFailed(
   console.log(`Charge failure notification created for ${org.name}`);
 }
 
-// Handler for checkout.session.completed (backroom addon)
+// Handler for checkout.session.completed (color bar addon)
 async function handleCheckoutCompleted(
   supabase: SupabaseClientAny,
   session: Record<string, unknown>
 ) {
   const metadata = session.metadata as Record<string, string> | null;
-  if (!metadata || metadata.addon_type !== 'backroom') {
-    console.log("Checkout session not a backroom addon - skipping");
+  if (!metadata || metadata.addon_type !== 'color-bar' ) {
+    console.log("Checkout session not a color bar addon - skipping");
     return;
   }
 
@@ -350,7 +350,7 @@ async function handleCheckoutCompleted(
     }));
   }
 
-  console.log(`Enabling backroom for organization: ${orgId}, locations: ${locationPlans.length}, scales: ${scaleCount}, interval: ${billingInterval}`);
+  console.log(`Enabling color bar for organization: ${orgId}, locations: ${locationPlans.length}, scales: ${scaleCount}, interval: ${billingInterval}`);
 
   // 1. Upsert the org-level feature flag (master switch)
   const planSummary = locationPlans.map((lp) => `${lp.location_id}:${lp.plan_tier}`).join(', ');
@@ -358,7 +358,7 @@ async function handleCheckoutCompleted(
     .from('organization_feature_flags')
     .upsert({
       organization_id: orgId,
-      flag_key: 'backroom_enabled',
+      flag_key: 'color_bar_enabled',
       is_enabled: true,
       override_reason: `Stripe checkout completed — ${locationPlans.length} location(s), ${scaleCount} scale(s)`,
       updated_at: new Date().toISOString(),
@@ -367,7 +367,7 @@ async function handleCheckoutCompleted(
     });
 
   if (error) {
-    console.error("Failed to enable backroom flag:", error);
+    console.error("Failed to enable color bar flag:", error);
   } else {
     console.log(`Backroom master switch enabled for org ${orgId}`);
   }
@@ -377,7 +377,7 @@ async function handleCheckoutCompleted(
     .from('organization_feature_flags')
     .upsert({
       organization_id: orgId,
-      flag_key: 'backroom_plan',
+      flag_key: 'color_bar_plan',
       is_enabled: true,
       override_reason: JSON.stringify({
         location_plans: locationPlans,
@@ -469,15 +469,15 @@ async function handleSubscriptionDeleted(
     return;
   }
 
-  // Check if this was a backroom subscription
+  // Check if this was a color bar subscription
   const subMetadata = subscription.metadata as Record<string, string> | null;
-  if (subMetadata?.addon_type === 'backroom') {
-    // Disable backroom feature flag (master switch)
+  if (subMetadata?.addon_type === 'color-bar' ) {
+    // Disable color bar feature flag (master switch)
     await supabase
       .from('organization_feature_flags')
       .upsert({
         organization_id: org.id,
-        flag_key: 'backroom_enabled',
+        flag_key: 'color_bar_enabled',
         is_enabled: false,
         override_reason: 'Stripe subscription cancelled',
         updated_at: new Date().toISOString(),
@@ -499,7 +499,7 @@ async function handleSubscriptionDeleted(
       console.log(`Location entitlements cancelled for org ${org.id} (sub ${stripeSubId})`);
     }
 
-    console.log(`Backroom disabled for org ${org.id} after subscription cancellation`);
+    console.log(`Color Bar disabled for org ${org.id} after subscription cancellation`);
   }
 
   await supabase

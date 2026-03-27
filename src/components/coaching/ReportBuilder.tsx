@@ -13,7 +13,7 @@ import { useMeetingAccountabilityItems, type AccountabilityItem } from '@/hooks/
 import { useMeetingReports, useCreateMeetingReport, useSendMeetingReport } from '@/hooks/useMeetingReports';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import ReactMarkdown from 'react-markdown';
-import { useStaffComplianceSummary } from '@/hooks/backroom/useStaffComplianceSummary';
+import { useStaffComplianceSummary } from '@/hooks/color-bar/useStaffComplianceSummary';
 import { format, subDays } from 'date-fns';
 
 interface ReportBuilderProps {
@@ -86,9 +86,9 @@ export function ReportBuilder({ meetingId, teamMemberId, teamMemberName }: Repor
       content += `## Additional Notes\n\n${additionalContent}\n\n`;
     }
 
-    // Backroom Performance section (renamed from Compliance)
+    // Color Bar Performance section (renamed from Compliance)
     if (includeCompliance && complianceData && complianceData.totalColorAppointments > 0) {
-      content += `## Backroom Performance (Last 30 Days)\n\n`;
+      content += `## Color Bar Performance (Last 30 Days)\n\n`;
       content += `- **Reweigh Rate:** ${complianceData.complianceRate}%\n`;
       content += `- **Color Appointments:** ${complianceData.totalColorAppointments}\n`;
       content += `- **Tracked Sessions:** ${complianceData.tracked}\n`;
@@ -120,7 +120,7 @@ export function ReportBuilder({ meetingId, teamMemberId, teamMemberName }: Repor
       // Coaching callouts
       const callouts: string[] = [];
       if (complianceData.complianceRate < 90) {
-        callouts.push('Reweigh rate is below 90%. Review backroom habits and ensure all color services are tracked through Zura Backroom.');
+        callouts.push('Reweigh rate is below 90%. Review color bar habits and ensure all color services are tracked through Zura Color Bar.');
       }
       if (complianceData.wastePct > 15) {
         callouts.push(`Waste rate is ${complianceData.wastePct}% — above the 15% threshold. Consider reviewing dispensing habits and mixing accuracy.`);
@@ -249,7 +249,7 @@ export function ReportBuilder({ meetingId, teamMemberId, teamMemberName }: Repor
               )}
             </div>
 
-            {/* Backroom Performance */}
+            {/* Color Bar Performance */}
             {complianceData && complianceData.totalColorAppointments > 0 && (
               <div className="space-y-2">
                 <div className="flex items-start gap-2">
@@ -259,7 +259,7 @@ export function ReportBuilder({ meetingId, teamMemberId, teamMemberName }: Repor
                     onCheckedChange={(checked) => setIncludeCompliance(!!checked)}
                   />
                   <label htmlFor="include-compliance" className="text-sm cursor-pointer flex-1">
-                    <span className="font-medium">Include Backroom Performance</span>
+                    <span className="font-medium">Include Color Bar Performance</span>
                     <span className="text-muted-foreground ml-2">
                       ({complianceSummaryParts.join(' · ')})
                     </span>

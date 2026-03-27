@@ -15,17 +15,17 @@ import {
   Heart, History, Copy, Sparkles, ArrowUp, ArrowDown, TrendingUp,
 } from 'lucide-react';
 import { format, parseISO, differenceInDays } from 'date-fns';
-import { useInstantFormulaMemory } from '@/hooks/backroom/useInstantFormulaMemory';
-import { useDockFeatureSettings } from '@/hooks/backroom/useDockFeatureSettings';
+import { useInstantFormulaMemory } from '@/hooks/color-bar/useInstantFormulaMemory';
+import { useDockFeatureSettings } from '@/hooks/color-bar/useDockFeatureSettings';
 import { useClientVisitHistory } from '@/hooks/useClientVisitHistory';
 import { useClientMemory } from '@/hooks/useClientMemory';
 import { useClientProductAffinity } from '@/hooks/useClientProductAffinity';
 import { usePreferredStylist, getStylistDisplayName } from '@/hooks/usePreferredStylist';
-import { useClientFormulaHistory } from '@/hooks/backroom/useClientFormulaHistory';
-import { useCloneFormula } from '@/hooks/backroom/useCloneFormula';
+import { useClientFormulaHistory } from '@/hooks/color-bar/useClientFormulaHistory';
+import { useCloneFormula } from '@/hooks/color-bar/useCloneFormula';
 import { calculateCLV, assignCLVTier } from '@/lib/clv-calculator';
-import type { ClientFormula } from '@/hooks/backroom/useClientFormulaHistory';
-import type { FormulaLine } from '@/lib/backroom/mix-calculations';
+import type { ClientFormula } from '@/hooks/color-bar/useClientFormulaHistory';
+import type { FormulaLine } from '@/lib/color-bar/mix-calculations';
 import type { DockAppointment } from '@/hooks/dock/useDockAppointments';
 import type { DockStaffSession } from '@/pages/Dock';
 import { toast } from 'sonner';
@@ -44,7 +44,7 @@ function getInitials(name: string | null): string {
   return name.split(' ').map(w => w[0]).filter(Boolean).join('').toUpperCase().slice(0, 2);
 }
 
-import { detectAllergyFlags } from '@/lib/backroom/detect-allergy-flags';
+import { detectAllergyFlags } from '@/lib/color-bar/detect-allergy-flags';
 
 // ─── Smart Formula Diffing ───
 interface FormulaDiff {

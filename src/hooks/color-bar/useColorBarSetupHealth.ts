@@ -1,0 +1,153 @@
+/**
+ * useColorBarSetupHealth — Validates color bar configuration completeness.
+ * Returns typed health warnings for the overview dashboard.
+ */
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { useColorBarOrgId } from './useColorBarOrgId';
+
+export interface SetupWarning {
+  id: string;
+  severity: 'error' | 'warning' | 'info';
+  title: string;
+  description: string;
+  section: string;
+}
+
+export interface SetupHealthMetrics {
+  trackedProducts: number;
+  totalProducts: number;
+  suppliersConfigured: number;
+  trackedServices: number;
+  totalServices: number;
+  recipesConfigured: number;
+  allowancePolicies: number;
+  stationsConfigured: number;
+  alertRulesConfigured: number;
+  billingConfigured: boolean;
+  trackedServicesWithComponents: number;
+  warnings: SetupWarning[];
+}
+
+export function useColorBarSetupHealth() {
+  const orgId = useColorBarOrgId();
+
+  return useQuery({
+    queryKey: ['color-bar-setup-health', orgId],
+    queryFn: async (): Promise<SetupHealthMetrics> => {
+      const warnings: SetupWarning[] = [];
+
+      // Parallel queries
+      const [productsRes, servicesRes, recipesRes, policiesRes, stationsRes, alertsRes, componentsRes, billingRes, suppliersRes] = await Promise.all([
+        supabase.from('products').select('id, is_backroom_tracked, cost_price, cost_per_gram, is_active', { count: 'exact' }).eq('organization_id', orgId!).eq('is_active', true),
+        supabase.from('services').select('id, is_backroom_tracked, name', { count: 'exact' }).eq('organization_id', orgId!).eq('is_active', true),
+        supabase.from('service_recipe_baselines').select('id', { count: 'exact' }).eq('organization_id', orgId!),
+        supabase.from('service_allowance_policies').select('id', { count: 'exact' }).eq('organization_id', orgId!),
+        supabase.from('backroom_stations').select('id', { count: 'exact' }).eq('organization_id', orgId!),
+        supabase.from('backroom_alert_rules').select('id', { count: 'exact' }).eq('organization_id', orgId!),
+        supabase.from('service_tracking_components').select('service_id', { count: 'exact' }).eq('organization_id', orgId!),
+        supabase.from('backroom_billing_settings' as any).select('enable_supply_cost_recovery').eq('organization_id', orgId!).maybeSingle(),
+        supabase.from('product_suppliers').select('supplier_name').eq('organization_id', orgId!),
+      ]);
+
+      const products = productsRes.data || [];
+      const services = servicesRes.data || [];
+      const trackedProducts = products.filter((p: { is_backroom_tracked: boolean }) => p.is_backroom_tracked);
+      const trackedServices = services.filter((s: { is_backroom_tracked: boolean }) => s.is_backroom_tracked);
+      const distinctSuppliers = new Set((suppliersRes.data || []).map((r: { supplier_name: string }) => r.supplier_name));
+      const suppliersConfigured = distinctSuppliers.size;
+
+      // Products missing cost
+      const missingCost = trackedProducts.filter((p: { cost_price: number | null; cost_per_gram: number | null }) => !p.cost_price && !p.cost_per_gram);
+      if (missingCost.length > 0) {
+        warnings.push({
+          id: 'products-missing-cost',
+          severity: 'warning',
+          title: `${missingCost.length} tracked product${missingCost.length > 1 ? 's' : ''} missing unit cost`,
+          description: 'Products need cost data for accurate usage tracking and overage billing.',
+          section: 'products',
+        });
+      }
+
+      // No tracked products
+      if (trackedProducts.length === 0 && products.length > 0) {
+        warnings.push({
+          id: 'no-tracked-products',
+          severity: 'error',
+          title: 'No color bar products configured',
+          description: 'Assign products to color bar tracking before services can be tracked.',
+          section: 'products',
+        });
+      }
+
+      // No suppliers configured
+      if (trackedProducts.length > 0 && suppliersConfigured === 0) {
+        warnings.push({
+          id: 'no-suppliers',
+          severity: 'info',
+          title: 'No suppliers configured',
+          description: 'Link suppliers to your tracked products for reorder and procurement workflows.',
+          section: 'suppliers',
+        });
+      }
+
+      // Tracked services with no components
+      const componentServiceIds = new Set((componentsRes.data || []).map((c: { service_id: string }) => c.service_id));
+      const trackedServicesWithComponents = trackedServices.filter((s: { id: string }) => componentServiceIds.has(s.id)).length;
+      if (trackedServices.length > 0) {
+        const servicesWithoutComponents = trackedServices.filter((s: { id: string }) => !componentServiceIds.has(s.id));
+        if (servicesWithoutComponents.length > 0) {
+          warnings.push({
+            id: 'services-no-components',
+            severity: 'warning',
+            title: `${servicesWithoutComponents.length} tracked service${servicesWithoutComponents.length > 1 ? 's' : ''} with no usage components`,
+            description: 'Map products to tracked services so usage can be measured.',
+            section: 'services',
+          });
+        }
+      }
+
+      // No allowance policies
+      if (trackedServices.length > 0 && (policiesRes.count || 0) === 0) {
+        warnings.push({
+          id: 'no-allowance-policies',
+          severity: 'info',
+          title: 'No allowance policies configured',
+          description: 'Define supply allowances and overage rules for client billing.',
+          section: 'allowances',
+        });
+      }
+
+      // No stations
+      if ((stationsRes.count || 0) === 0) {
+        warnings.push({
+          id: 'no-stations',
+          severity: 'info',
+          title: 'No color bar stations configured',
+          description: 'Set up mixing stations for device and scale pairing.',
+          section: 'stations',
+        });
+      }
+
+      const billingConfigured = !!(billingRes.data as any)?.enable_supply_cost_recovery ||
+        (policiesRes.count || 0) > 0;
+
+      return {
+        trackedProducts: trackedProducts.length,
+        totalProducts: products.length,
+        suppliersConfigured,
+        trackedServices: trackedServices.length,
+        totalServices: services.length,
+        recipesConfigured: recipesRes.count || 0,
+        allowancePolicies: policiesRes.count || 0,
+        stationsConfigured: stationsRes.count || 0,
+        alertRulesConfigured: alertsRes.count || 0,
+        billingConfigured,
+        trackedServicesWithComponents,
+        warnings,
+      };
+    },
+    enabled: !!orgId,
+    staleTime: 30_000,
+  });
+}

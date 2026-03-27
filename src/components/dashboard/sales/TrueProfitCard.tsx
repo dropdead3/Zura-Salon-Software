@@ -9,7 +9,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/com
 import { Skeleton } from '@/components/ui/skeleton';
 import { DollarSign, ArrowDown, ArrowUp, Minus } from 'lucide-react';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
-import { useAppointmentProfitSummary } from '@/hooks/backroom/useAppointmentProfit';
+import { useAppointmentProfitSummary } from '@/hooks/color-bar/useAppointmentProfit';
 import { TrendSparkline } from '@/components/dashboard/TrendSparkline';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { AnimatedBlurredAmount } from '@/components/ui/AnimatedBlurredAmount';
@@ -66,7 +66,7 @@ export function TrueProfitCard({ dateFrom, dateTo, locationId, className }: True
                 <CardTitle className={tokens.card.title}>True Profit</CardTitle>
                 <MetricInfoTooltip
                   title="True Profit"
-                  description="Net profit after deducting chemical costs, labor estimates, and waste from service revenue. Based on completed appointment data with backroom tracking."
+                  description="Net profit after deducting chemical costs, labor estimates, and waste from service revenue. Based on completed appointment data with color bar tracking."
                 />
               </div>
               <CardDescription className={tokens.body.muted}>
@@ -96,7 +96,7 @@ export function TrueProfitCard({ dateFrom, dateTo, locationId, className }: True
             <DollarSign className={tokens.empty.icon} />
             <h3 className={tokens.empty.heading}>No profit data</h3>
             <p className={tokens.empty.description}>
-              Complete appointments with backroom tracking to see profitability
+              Complete appointments with color bar tracking to see profitability
             </p>
           </div>
         ) : (

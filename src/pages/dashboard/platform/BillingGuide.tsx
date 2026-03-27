@@ -43,13 +43,13 @@ const SECTIONS = [
   { id: 'plans', label: 'Plans' },
   { id: 'how-it-works', label: 'How It Works' },
   { id: 'calculator', label: 'Calculator' },
-  { id: 'backroom', label: 'Backroom' },
-  { id: 'backroom-calc', label: 'Backroom Calc' },
+  { id: 'color-bar' , label: 'Color Bar' },
+  { id: 'color-bar-calc', label: 'Color Bar Calc' },
   { id: 'quick-ref', label: 'Quick Ref' },
   { id: 'changelog', label: 'Changelog' },
 ];
 
-// --- Backroom pricing constants (from pricing model) ---
+// --- Color Bar pricing constants (from pricing model) ---
 const BR_LOCATION_FEE = 20;
 const BR_USAGE_FEE = 0.50;
 const BR_HARDWARE_COST = 199;
@@ -281,7 +281,7 @@ export default function BillingGuide() {
         <BillingCalculatorWidget plans={plans || []} />
 
         <div className="grid gap-6 lg:grid-cols-2">
-          {/* Backroom Add-On */}
+          {/* Color Bar Add-On */}
           <PlatformCard variant="glass" id="backroom">
             <PlatformCardHeader>
               <div className="flex items-center gap-3">
@@ -289,7 +289,7 @@ export default function BillingGuide() {
                   <Package className="w-5 h-5 text-primary" />
                 </div>
                 <div>
-                  <PlatformCardTitle className={tokens.card.title}>Backroom Add-On</PlatformCardTitle>
+                  <PlatformCardTitle className={tokens.card.title}>Color Bar Add-On</PlatformCardTitle>
                   <PlatformCardDescription>Chemical tracking module pricing.</PlatformCardDescription>
                 </div>
               </div>
@@ -313,7 +313,7 @@ export default function BillingGuide() {
                   <span className="font-medium text-[hsl(var(--platform-foreground))]">${BR_LICENSE_FEE}/mo per scale</span>
                 </div>
                 <p className="text-xs text-[hsl(var(--platform-foreground-muted))] pt-2">
-                  Backroom is enabled per-location. Charges are billed alongside the subscription invoice.
+                  Color Bar is enabled per-location. Charges are billed alongside the subscription invoice.
                 </p>
               </div>
             </PlatformCardContent>
@@ -359,8 +359,8 @@ export default function BillingGuide() {
           </PlatformCard>
         </div>
 
-        {/* Backroom Add-On Calculator */}
-        <BackroomCalculatorWidget />
+        {/* Color Bar Add-On Calculator */}
+        <ColorBarCalculatorWidget />
 
         {/* Changelog */}
         <PlatformCard variant="glass" id="changelog">
@@ -591,9 +591,9 @@ function ResultRow({ label, value, highlight, accent }: { label: string; value: 
   );
 }
 
-// --- Backroom Add-On Calculator Widget ---
+// --- Color Bar Add-On Calculator Widget ---
 
-function BackroomCalculatorWidget() {
+function ColorBarCalculatorWidget() {
   const [locations, setLocations] = useState<string>('1');
   const [scales, setScales] = useState<string>('1');
   const [colorServices, setColorServices] = useState<string>('80');
@@ -617,15 +617,15 @@ function BackroomCalculatorWidget() {
   const fmtWhole = (n: number) => `$${n.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
 
   return (
-    <PlatformCard variant="glass" id="backroom-calc">
+    <PlatformCard variant="glass" id="color-bar-calc">
       <PlatformCardHeader>
         <div className="flex items-center gap-3">
           <div className={tokens.card.iconBox}>
             <FlaskConical className="w-5 h-5 text-primary" />
           </div>
           <div>
-            <PlatformCardTitle className={tokens.card.title}>Backroom Quote Calculator</PlatformCardTitle>
-            <PlatformCardDescription>Estimate monthly Backroom costs for an organization. Uses the flat metered pricing model.</PlatformCardDescription>
+            <PlatformCardTitle className={tokens.card.title}>Color Bar Quote Calculator</PlatformCardTitle>
+            <PlatformCardDescription>Estimate monthly Color Bar costs for an organization. Uses the flat metered pricing model.</PlatformCardDescription>
           </div>
         </div>
       </PlatformCardHeader>
@@ -659,7 +659,7 @@ function BackroomCalculatorWidget() {
 
           {/* Results */}
           <div className="rounded-xl border border-[hsl(var(--platform-border)/0.5)] bg-[hsl(var(--platform-bg-card)/0.4)] p-5">
-            <p className="font-display text-sm tracking-wide uppercase text-[hsl(var(--platform-foreground-muted))] mb-4">Backroom Quote</p>
+            <p className="font-display text-sm tracking-wide uppercase text-[hsl(var(--platform-foreground-muted))] mb-4">Color Bar Quote</p>
 
             <div className="space-y-3 text-sm">
               <p className="font-display text-xs tracking-wide uppercase text-[hsl(var(--platform-foreground-muted))]">Monthly Recurring</p>
@@ -690,7 +690,7 @@ function BackroomCalculatorWidget() {
               <ResultRow label="Annual Waste Savings" value={fmt(annualWasteSavings)} accent />
               {annualWasteSavings > annualTotal && (
                 <div className="mt-2 rounded-lg bg-primary/10 px-3 py-2 text-xs text-primary">
-                  Net positive ROI — estimated savings exceed Backroom cost by {fmt(annualWasteSavings - annualTotal)}/yr
+                  Net positive ROI — estimated savings exceed Color Bar cost by {fmt(annualWasteSavings - annualTotal)}/yr
                 </div>
               )}
             </div>

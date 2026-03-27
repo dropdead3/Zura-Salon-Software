@@ -34,9 +34,9 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { BackroomTab } from '@/components/dashboard/backroom/BackroomTab';
+import { ColorBarTab } from '@/components/dashboard/color-bar/ColorBarTab';
 import { ClientFormulaHistoryTab } from '@/components/dashboard/clients/ClientFormulaHistoryTab';
-import { CheckoutClarityPanel } from '@/components/dashboard/backroom/CheckoutClarityPanel';
+import { CheckoutClarityPanel } from '@/components/dashboard/color-bar/CheckoutClarityPanel';
 import { ClientMemoryPanel } from '@/components/dashboard/schedule/ClientMemoryPanel';
 import { TransformationTimeline } from '@/components/dashboard/clients/TransformationTimeline';
 import { Separator } from '@/components/ui/separator';
@@ -1069,7 +1069,7 @@ export function AppointmentDetailSheet({
                     <Beaker className="w-3.5 h-3.5" />
                     Formulas
                   </TabsTrigger>
-                  <TabsTrigger value="backroom" className="font-sans">Backroom</TabsTrigger>
+                  <TabsTrigger value="color-bar" className="font-sans">Color Bar</TabsTrigger>
                 </TabsList>
 
                 <ScrollArea className="flex-1">
@@ -1778,9 +1778,9 @@ export function AppointmentDetailSheet({
                     <ClientFormulaHistoryTab clientId={appointment.phorest_client_id} />
                   </TabsContent>
 
-                  {/* ─── TAB: Backroom ─────────────────────────── */}
-                  <TabsContent value="backroom" className="p-6 pt-4 mt-0">
-                    <BackroomTab
+                  {/* ─── TAB: Color Bar ─────────────────────────── */}
+                  <TabsContent value="color-bar" className="p-6 pt-4 mt-0">
+                    <ColorBarTab
                       appointment={appointment}
                       organizationId={effectiveOrganization?.id ?? ''}
                     />

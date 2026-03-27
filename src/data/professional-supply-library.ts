@@ -2,7 +2,7 @@
  * Professional Supply Library
  * 
  * Curated reference dataset of salon chemical/supply product lines
- * organized by brand. Used by the Backroom Product Catalog to let
+ * organized by brand. Used by the Color Bar Product Catalog to let
  * salon owners quickly build their supply inventory.
  * 
  * Every individual shade / volume variant is listed separately so

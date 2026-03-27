@@ -5,9 +5,9 @@
  */
 
 import { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react';
-import type { ScaleAdapter } from '@/lib/backroom/scale-adapter';
-import { createScaleAdapter, BLEScaleAdapter } from '@/lib/backroom/scale-adapter';
-import type { ConnectionState, WeightEvent } from '@/lib/backroom/weight-event-schema';
+import type { ScaleAdapter } from '@/lib/color-bar/scale-adapter';
+import { createScaleAdapter, BLEScaleAdapter } from '@/lib/color-bar/scale-adapter';
+import type { ConnectionState, WeightEvent } from '@/lib/color-bar/weight-event-schema';
 
 export interface DockScaleContextValue {
   adapter: ScaleAdapter;

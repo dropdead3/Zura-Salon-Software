@@ -45,13 +45,13 @@ import {
   type MixStepMetadata,
   type AssistantPrepStepMetadata,
   type ProcessingStepMetadata,
-} from '@/lib/backroom/blueprint-engine';
+} from '@/lib/color-bar/blueprint-engine';
 import {
   useServiceBlueprint,
   useUpsertBlueprintStep,
   useDeleteBlueprintStep,
   useReorderBlueprintSteps,
-} from '@/hooks/backroom/useServiceBlueprints';
+} from '@/hooks/color-bar/useServiceBlueprints';
 
 const STEP_ICONS: Record<BlueprintStepType, React.ReactNode> = {
   mix_step: <Beaker className="w-4 h-4" />,

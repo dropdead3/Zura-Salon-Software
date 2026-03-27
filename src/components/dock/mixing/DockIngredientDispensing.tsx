@@ -12,7 +12,7 @@ import { ProgressBarFill } from './ProgressBarFill';
 import { useDockDispensingVisual } from '@/hooks/dock/useDockDispensingVisual';
 import { DockWeightInput } from './DockWeightInput';
 import type { BowlLine } from './DockLiveDispensing';
-import { roundWeight } from '@/lib/backroom/mix-calculations';
+import { roundWeight } from '@/lib/color-bar/mix-calculations';
 import { toast } from 'sonner';
 import { useDockScale } from '@/hooks/dock/useDockScale';
 

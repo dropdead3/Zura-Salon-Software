@@ -59,25 +59,25 @@ Deno.serve(async (req) => {
       limit: 10,
     });
 
-    const backroomSub = subscriptions.data.find(
+    const colorBarSub = subscriptions.data.find(
       (s) => ['active', 'trialing'].includes(s.status) && (s.metadata as Record<string, string>)?.addon_type === "backroom"
     );
 
-    if (!backroomSub) {
+    if (!colorBarSub) {
       return new Response(
         JSON.stringify({ subscribed: false }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    const meta = backroomSub.metadata as Record<string, string>;
-    const scaleItem = backroomSub.items.data.find(
+    const meta = colorBarSub.metadata as Record<string, string>;
+    const scaleItem = colorBarSub.items.data.find(
       (item) => item.price.id === SCALE_LICENSE_PRICE_ID
     );
 
     // Calculate monthly cost from items
     let monthlyCost = 0;
-    for (const item of backroomSub.items.data) {
+    for (const item of colorBarSub.items.data) {
       const unitAmount = (item.price.unit_amount || 0) / 100;
       const qty = item.quantity || 1;
       const interval = item.price.recurring?.interval;
@@ -88,22 +88,22 @@ Deno.serve(async (req) => {
       }
     }
 
-    const isTrialing = backroomSub.status === 'trialing';
-    const trialEnd = isTrialing && backroomSub.trial_end
-      ? new Date(backroomSub.trial_end * 1000).toISOString()
+    const isTrialing = colorBarSub.status === 'trialing';
+    const trialEnd = isTrialing && colorBarSub.trial_end
+      ? new Date(colorBarSub.trial_end * 1000).toISOString()
       : null;
 
     return new Response(
       JSON.stringify({
         subscribed: true,
-        plan: meta.backroom_plan || "starter",
+        plan: meta.color_bar_plan || "starter",
         billing_interval: meta.billing_interval || "monthly",
         scale_count: parseInt(meta.scale_count || "0", 10),
         scale_licenses: scaleItem?.quantity || 0,
-        status: backroomSub.status,
-        current_period_end: new Date(backroomSub.current_period_end * 1000).toISOString(),
+        status: colorBarSub.status,
+        current_period_end: new Date(colorBarSub.current_period_end * 1000).toISOString(),
         monthly_cost: Math.round(monthlyCost * 100) / 100,
-        subscription_id: backroomSub.id,
+        subscription_id: colorBarSub.id,
         trial_end: trialEnd,
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }

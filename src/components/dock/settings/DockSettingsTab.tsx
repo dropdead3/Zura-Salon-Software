@@ -32,7 +32,7 @@ export function DockSettingsTab({ staff, onLogout }: DockSettingsTabProps) {
   const locationName = locations?.find(l => l.id === staff.locationId)?.name ?? 'Unknown location';
 
   const { data: stationCount } = useQuery({
-    queryKey: ['backroom-stations-count', staff.organizationId, staff.locationId],
+    queryKey: ['color-bar-stations-count', staff.organizationId, staff.locationId],
     queryFn: async () => {
       const { count, error } = await supabase
         .from('backroom_stations')
@@ -93,7 +93,7 @@ export function DockSettingsTab({ staff, onLogout }: DockSettingsTabProps) {
             {staff.displayName}
           </p>
           <p className="text-xs text-[hsl(var(--platform-foreground-muted))]">
-            Zura Backroom Station 1 of {totalStations} at {locationName}
+            Zura Color Bar Station 1 of {totalStations} at {locationName}
           </p>
         </div>
       </div>

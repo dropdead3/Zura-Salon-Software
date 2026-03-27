@@ -1,6 +1,6 @@
 /**
- * fetchInventoryForLocation — Standalone fetch for backroom inventory data
- * for a single location. Mirrors useBackroomInventoryTable logic but callable
+ * fetchInventoryForLocation — Standalone fetch for color bar inventory data
+ * for a single location. Mirrors useColorBarInventoryTable logic but callable
  * outside React hooks (e.g. for multi-location PDF exports).
  */
 
@@ -8,15 +8,15 @@ import { supabase } from '@/integrations/supabase/client';
 import {
   getStockStatus,
   computeChargePerGram,
-  type BackroomInventoryRow,
+  type ColorBarInventoryRow,
   type StockState,
   type StockSeverity,
-} from '@/hooks/backroom/useBackroomInventoryTable';
+} from '@/hooks/color-bar/useColorBarInventoryTable';
 
 export async function fetchInventoryForLocation(
   orgId: string,
   locationId: string,
-): Promise<BackroomInventoryRow[]> {
+): Promise<ColorBarInventoryRow[]> {
   // Fetch supplier data and open PO quantities
   const [suppliersResult, openPOs] = await Promise.all([
     supabase
@@ -129,6 +129,6 @@ export async function fetchInventoryForLocation(
       charge_per_gram: chargePerGram,
       supplier_name: sup?.supplier_name ?? null,
       supplier_email: sup?.supplier_email ?? null,
-    } satisfies BackroomInventoryRow;
+    } satisfies ColorBarInventoryRow;
   });
 }

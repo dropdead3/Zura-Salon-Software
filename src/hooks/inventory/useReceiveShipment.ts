@@ -5,10 +5,10 @@
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { receiveShipment, type ReceiveShipmentInput } from '@/lib/backroom/services/purchasing-service';
+import { receiveShipment, type ReceiveShipmentInput } from '@/lib/color-bar/services/purchasing-service';
 
 // Re-export types for backward compatibility
-export type { ReceivingLineInput, ReceiveShipmentInput } from '@/lib/backroom/services/purchasing-service';
+export type { ReceivingLineInput, ReceiveShipmentInput } from '@/lib/color-bar/services/purchasing-service';
 
 export function useReceiveShipment() {
   const queryClient = useQueryClient();

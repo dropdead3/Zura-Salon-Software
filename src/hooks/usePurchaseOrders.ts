@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
-import { postReceiving } from '@/lib/backroom/services/inventory-ledger-service';
+import { postReceiving } from '@/lib/color-bar/services/inventory-ledger-service';
 
 export interface PurchaseOrder {
   id: string;

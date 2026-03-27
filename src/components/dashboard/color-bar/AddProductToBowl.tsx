@@ -1,0 +1,248 @@
+/**
+ * AddProductToBowl — Product search and weight capture for bowl lines.
+ * Searches existing product catalog and captures dispensed weight.
+ */
+
+import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { useOrganizationContext } from '@/contexts/OrganizationContext';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Badge } from '@/components/ui/badge';
+import { ManualWeightInput } from './ManualWeightInput';
+import { useStaffPinnedProducts, useTogglePinnedProduct } from '@/hooks/color-bar/useStaffPinnedProducts';
+import { useProductSubstitutions } from '@/hooks/color-bar/useProductSubstitutions';
+import { Search, X, Pin, PinOff, AlertTriangle, ArrowRight } from 'lucide-react';
+
+interface AddProductToBowlProps {
+  bowlId: string;
+  onAdd: (
+    productId: string,
+    productName: string,
+    brand: string | null,
+    costPerUnit: number,
+    quantity: number,
+    unit: string,
+    capturedVia: string
+  ) => void;
+  onCancel: () => void;
+  /** When true, renders always-visible search without cancel button */
+  inline?: boolean;
+}
+
+export function AddProductToBowl({ bowlId, onAdd, onCancel, inline = false }: AddProductToBowlProps) {
+  const { effectiveOrganization } = useOrganizationContext();
+  const orgId = effectiveOrganization?.id;
+  const [search, setSearch] = useState('');
+  const [selectedProduct, setSelectedProduct] = useState<{
+    id: string;
+    name: string;
+    brand: string | null;
+    cost_price: number | null;
+    quantity_on_hand?: number | null;
+  } | null>(null);
+
+  const { data: pinnedProducts = [] } = useStaffPinnedProducts();
+  const pinnedIds = new Set(pinnedProducts.map((p) => p.product_id));
+  const togglePin = useTogglePinnedProduct();
+  const { data: substitutions = [] } = useProductSubstitutions(
+    selectedProduct && (selectedProduct.quantity_on_hand ?? 1) <= 0 ? selectedProduct.id : null
+  );
+
+  const { data: products = [] } = useQuery({
+    queryKey: ['color-bar-products', orgId, search],
+    queryFn: async () => {
+      let query = supabase
+        .from('products')
+        .select('id, name, brand, cost_price, category, quantity_on_hand')
+        .eq('organization_id', orgId!)
+        .eq('is_active', true)
+        .order('name')
+        .limit(20);
+
+      if (search) {
+        query = query.or(`name.ilike.%${search}%,brand.ilike.%${search}%`);
+      }
+
+      const { data, error } = await query;
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!orgId,
+    staleTime: 60_000,
+  });
+
+  if (selectedProduct) {
+    const isOutOfStock = (selectedProduct.quantity_on_hand ?? 1) <= 0;
+
+    return (
+      <div className="rounded-lg border border-border bg-muted/20 p-3 space-y-3">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="font-sans text-sm font-medium">{selectedProduct.name}</p>
+            {selectedProduct.brand && (
+              <p className="font-sans text-xs text-muted-foreground">{selectedProduct.brand}</p>
+            )}
+          </div>
+          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setSelectedProduct(null)}>
+            <X className="w-3.5 h-3.5" />
+          </Button>
+        </div>
+
+        {/* Out of stock warning + substitutions */}
+        {isOutOfStock && (
+          <div className="space-y-2">
+            <div className="flex items-center gap-2 rounded-md bg-warning/10 px-3 py-2">
+              <AlertTriangle className="w-3.5 h-3.5 text-warning shrink-0" />
+              <span className="font-sans text-xs text-warning">Out of stock</span>
+            </div>
+            {substitutions.length > 0 && (
+              <div className="space-y-1">
+                <p className="font-sans text-[10px] text-muted-foreground uppercase tracking-wider">
+                  Suggested Substitutes
+                </p>
+                {substitutions.map((sub) => (
+                  <button
+                    key={sub.id}
+                    onClick={() => setSelectedProduct({
+                      id: sub.substitute_product_id,
+                      name: sub.substitute_name,
+                      brand: sub.substitute_brand,
+                      cost_price: sub.substitute_cost_price,
+                      quantity_on_hand: sub.substitute_quantity_on_hand,
+                    })}
+                    className="w-full flex items-center justify-between px-3 py-2 rounded-md hover:bg-muted/50 transition-colors text-left"
+                  >
+                    <div className="flex items-center gap-2">
+                      <ArrowRight className="w-3 h-3 text-muted-foreground" />
+                      <div>
+                        <p className="font-sans text-xs">{sub.substitute_name}</p>
+                        {sub.substitute_brand && (
+                          <p className="font-sans text-[10px] text-muted-foreground">{sub.substitute_brand}</p>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {sub.substitute_quantity_on_hand != null && (
+                        <Badge variant="outline" className="text-[10px]">
+                          {sub.substitute_quantity_on_hand} in stock
+                        </Badge>
+                      )}
+                      {sub.substitute_cost_price != null && (
+                        <span className="font-sans text-[10px] text-muted-foreground">
+                          ${sub.substitute_cost_price.toFixed(2)}
+                        </span>
+                      )}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        <ManualWeightInput
+          onSubmit={(weight, unit) => {
+            onAdd(
+              selectedProduct.id,
+              selectedProduct.name,
+              selectedProduct.brand,
+              selectedProduct.cost_price ?? 0,
+              weight,
+              unit,
+              'manual'
+            );
+            if (inline) {
+              setSelectedProduct(null);
+              setSearch('');
+            }
+          }}
+          label="Dispensed amount"
+        />
+      </div>
+    );
+  }
+
+  return (
+    <div className="rounded-lg border border-border bg-muted/20 p-3 space-y-2">
+      <div className="flex items-center gap-2">
+        <div className="flex-1 relative">
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+          <Input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search products..."
+            className="pl-8 h-10 font-sans text-sm"
+            autoFocus
+          />
+        </div>
+        {!inline && (
+          <Button variant="ghost" size="icon" className="h-10 w-10 shrink-0" onClick={onCancel}>
+            <X className="w-4 h-4" />
+          </Button>
+        )}
+      </div>
+
+      <ScrollArea className="max-h-[200px]">
+        <div className="space-y-0.5">
+          {products.map((product) => (
+            <div
+              key={product.id}
+              className="flex items-center gap-1"
+            >
+              <button
+                onClick={() => setSelectedProduct(product)}
+                className="flex-1 flex items-center justify-between px-3 py-2.5 rounded-md hover:bg-muted/50 transition-colors text-left min-h-[44px]"
+              >
+                <div>
+                  <p className="font-sans text-sm">{product.name}</p>
+                  {product.brand && (
+                    <p className="font-sans text-xs text-muted-foreground">{product.brand}</p>
+                  )}
+                </div>
+                <div className="flex items-center gap-2">
+                  {(product as any).quantity_on_hand != null && (product as any).quantity_on_hand <= 0 && (
+                    <Badge variant="outline" className="text-[10px] text-warning border-warning/30">
+                      Out of stock
+                    </Badge>
+                  )}
+                  {product.cost_price != null && (
+                    <span className="font-sans text-xs text-muted-foreground shrink-0">
+                      ${product.cost_price.toFixed(2)}/unit
+                    </span>
+                  )}
+                </div>
+              </button>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 shrink-0"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  togglePin.mutate({
+                    productId: product.id,
+                    isPinned: pinnedIds.has(product.id),
+                  });
+                }}
+              >
+                {pinnedIds.has(product.id) ? (
+                  <PinOff className="w-3.5 h-3.5 text-primary" />
+                ) : (
+                  <Pin className="w-3.5 h-3.5 text-muted-foreground" />
+                )}
+              </Button>
+            </div>
+          ))}
+          {products.length === 0 && (
+            <p className="font-sans text-xs text-muted-foreground text-center py-3">
+              No products found
+            </p>
+          )}
+        </div>
+      </ScrollArea>
+    </div>
+  );
+}

@@ -15,7 +15,7 @@ import { DockReweighCapture } from './DockReweighCapture';
 import { DockReweighSummary } from './DockReweighSummary';
 import { DockIngredientDispensing } from './DockIngredientDispensing';
 import { useRecordDispensedWeight, useSealDockBowl, useReweighDockBowl } from '@/hooks/dock/useDockMixSession';
-import { roundWeight } from '@/lib/backroom/mix-calculations';
+import { roundWeight } from '@/lib/color-bar/mix-calculations';
 
 interface DockLiveDispensingProps {
   sessionId: string;

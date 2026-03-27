@@ -1,12 +1,12 @@
 /**
  * useStaffPerformanceComposite — Merges experience scores, sales revenue,
- * and backroom performance into a unified per-stylist report.
+ * and color bar performance into a unified per-stylist report.
  */
 
 import { useMemo } from 'react';
 import { useStylistExperienceScore } from '@/hooks/useStylistExperienceScore';
 import { useSalesByStylist } from '@/hooks/useSalesData';
-import { useStaffBackroomPerformance } from '@/hooks/backroom/useStaffBackroomPerformance';
+import { useStaffColorBarPerformance } from '@/hooks/color-bar/useStaffColorBarPerformance';
 
 export interface StaffPerformanceRow {
   staffId: string;
@@ -25,15 +25,15 @@ export interface StaffPerformanceRow {
   /** Composite experience score 0-100 */
   experienceScore: number;
   experienceStatus: 'needs-attention' | 'watch' | 'strong';
-  /** Average chemical cost per service (from backroom) */
+  /** Average chemical cost per service (from color bar) */
   avgChemicalCostPerService: number;
-  /** Waste rate from backroom */
+  /** Waste rate from color bar */
   wasteRate: number;
-  /** Total mix sessions tracked in backroom */
+  /** Total mix sessions tracked in color bar */
   mixSessionCount: number;
   /** Appointment count in period */
   appointmentCount: number;
-  /** Reweigh compliance rate 0-100 from backroom performance */
+  /** Reweigh compliance rate 0-100 from color bar performance */
   reweighComplianceRate: number;
   /** % of color appointments with overage charges */
   overageAttachmentRate: number;
@@ -55,13 +55,13 @@ export function useStaffPerformanceComposite(
     dateTo,
     locationId,
   );
-  const { data: backroomData, isLoading: backroomLoading } = useStaffBackroomPerformance(
+  const { data: colorBarData, isLoading: colorBarLoading } = useStaffColorBarPerformance(
     dateFrom,
     dateTo,
     locationId,
   );
 
-  const isLoading = expLoading || salesLoading || backroomLoading;
+  const isLoading = expLoading || salesLoading || colorBarLoading;
 
   const rows = useMemo((): StaffPerformanceRow[] => {
     if (!experienceScores?.length) return [];
@@ -76,16 +76,16 @@ export function useStaffPerformanceComposite(
       });
     }
 
-    // Build backroom lookup by staff_id
-    const backroomMap = new Map<string, {
+    // Build color bar lookup by staff_id
+    const colorBarMap = new Map<string, {
       avgCost: number;
       wasteRate: number;
       mixSessions: number;
       totalCost: number;
       reweighComplianceRate: number;
     }>();
-    for (const b of backroomData ?? []) {
-      const existing = backroomMap.get(b.staff_id);
+    for (const b of colorBarData ?? []) {
+      const existing = colorBarMap.get(b.staff_id);
       if (existing) {
         existing.mixSessions += b.mix_session_count;
         existing.totalCost += b.total_product_cost;
@@ -94,7 +94,7 @@ export function useStaffPerformanceComposite(
         // weighted average reweigh compliance
         existing.reweighComplianceRate = (existing.reweighComplianceRate * (existing.mixSessions - b.mix_session_count) + b.reweigh_compliance_rate * b.mix_session_count) / existing.mixSessions;
       } else {
-        backroomMap.set(b.staff_id, {
+        colorBarMap.set(b.staff_id, {
           avgCost: b.mix_session_count > 0 ? b.total_product_cost / b.mix_session_count : 0,
           wasteRate: b.waste_rate,
           mixSessions: b.mix_session_count,
@@ -105,7 +105,7 @@ export function useStaffPerformanceComposite(
     }
 
     // Compute salon-wide averages for coaching signals
-    const allChemCosts = Array.from(backroomMap.values()).filter(v => v.mixSessions > 0).map(v => v.totalCost / v.mixSessions);
+    const allChemCosts = Array.from(colorBarMap.values()).filter(v => v.mixSessions > 0).map(v => v.totalCost / v.mixSessions);
     const salonAvgChemCost = allChemCosts.length > 0
       ? allChemCosts.reduce((a, b) => a + b, 0) / allChemCosts.length
       : 0;
@@ -117,11 +117,11 @@ export function useStaffPerformanceComposite(
 
     return experienceScores.map((score): StaffPerformanceRow => {
       const sales = salesMap.get(score.staffId);
-      const backroom = backroomMap.get(score.staffId);
-      const avgChem = backroom && backroom.mixSessions > 0
-        ? backroom.totalCost / backroom.mixSessions
+      const color bar = colorBarMap.get(score.staffId);
+      const avgChem = colorBar && colorBar.mixSessions > 0
+        ? colorBar.totalCost / colorBar.mixSessions
         : 0;
-      const reweighRate = backroom?.reweighComplianceRate ?? 0;
+      const reweighRate = colorBar?.reweighComplianceRate ?? 0;
 
       // Generate coaching signals
       const signals: string[] = [];
@@ -135,10 +135,10 @@ export function useStaffPerformanceComposite(
       if (score.metrics.retailAttachment < 10) {
         signals.push('Low retail attachment — coaching opportunity');
       }
-      if (backroom && backroom.wasteRate > 15) {
-        signals.push(`Waste rate ${Math.round(backroom.wasteRate)}% — review dispensing habits`);
+      if (colorBar && colorBar.wasteRate > 15) {
+        signals.push(`Waste rate ${Math.round(colorBar.wasteRate)}% — review dispensing habits`);
       }
-      if (backroom && backroom.mixSessions > 0 && reweighRate < 80) {
+      if (colorBar && colorBar.mixSessions > 0 && reweighRate < 80) {
         signals.push(`Reweigh rate ${Math.round(reweighRate)}% — below 80% target`);
       }
 
@@ -154,15 +154,15 @@ export function useStaffPerformanceComposite(
         experienceScore: score.compositeScore,
         experienceStatus: score.status,
         avgChemicalCostPerService: Math.round(avgChem * 100) / 100,
-        wasteRate: backroom?.wasteRate ?? 0,
-        mixSessionCount: backroom?.mixSessions ?? 0,
+        wasteRate: colorBar?.wasteRate ?? 0,
+        mixSessionCount: colorBar?.mixSessions ?? 0,
         appointmentCount: score.appointmentCount,
         reweighComplianceRate: Math.round(reweighRate),
         overageAttachmentRate: 0, // requires checkout_usage_charges join — deferred to per-staff drill-down
         coachingSignals: signals,
       };
     });
-  }, [experienceScores, salesData, backroomData]);
+  }, [experienceScores, salesData, colorBarData]);
 
   return { data: rows, isLoading };
 }

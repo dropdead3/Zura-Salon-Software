@@ -83,19 +83,19 @@ function InventoryManagerDashboardCardInner() {
     {
       label: 'Receive PO',
       icon: Truck,
-      to: '/dashboard/admin/backroom-settings?section=inventory&tab=receive',
+      to: '/dashboard/admin/color-bar-settings?section=inventory&tab=receive',
       count: stats?.pendingReceives,
       countLabel: 'to receive',
     },
     {
       label: 'Start Count',
       icon: ClipboardList,
-      to: '/dashboard/admin/backroom-settings?section=inventory&tab=counts',
+      to: '/dashboard/admin/color-bar-settings?section=inventory&tab=counts',
     },
     {
       label: 'Reorder Queue',
       icon: Package,
-      to: '/dashboard/admin/backroom-settings?section=inventory&tab=reorder',
+      to: '/dashboard/admin/color-bar-settings?section=inventory&tab=reorder',
       count: stats?.draftPOs,
       countLabel: 'draft POs',
     },
@@ -115,7 +115,7 @@ function InventoryManagerDashboardCardInner() {
             </CardDescription>
           </div>
           <Button variant="ghost" size="sm" className="font-sans text-xs" asChild>
-            <Link to={dashPath('/admin/backroom-settings?section=inventory')}>
+            <Link to={dashPath('/admin/color-bar-settings?section=inventory')}>
               View All <ChevronRight className="w-3.5 h-3.5 ml-1" />
             </Link>
           </Button>
@@ -152,7 +152,7 @@ function InventoryManagerDashboardCardInner() {
               {stats!.lowStockAlerts} product{stats!.lowStockAlerts !== 1 ? 's' : ''} below reorder point
             </p>
             <Button variant="ghost" size="sm" className="ml-auto h-6 px-2 text-[10px] font-sans text-destructive" asChild>
-              <Link to={dashPath('/admin/backroom-settings?section=inventory&tab=reorder')}>Review</Link>
+              <Link to={dashPath('/admin/color-bar-settings?section=inventory&tab=reorder')}>Review</Link>
             </Button>
           </div>
         )}
@@ -165,7 +165,7 @@ function InventoryManagerDashboardCardInner() {
               Next audit {isOverdue ? 'overdue' : 'due'}: {format(new Date(nextAudit.due_date), 'MMM d, yyyy')}
             </p>
             <Button variant="ghost" size="sm" className="ml-auto h-6 px-2 text-[10px] font-sans" asChild>
-              <Link to={dashPath('/admin/backroom-settings?section=inventory&tab=counts')}>View</Link>
+              <Link to={dashPath('/admin/color-bar-settings?section=inventory&tab=counts')}>View</Link>
             </Button>
           </div>
         )}

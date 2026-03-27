@@ -6,7 +6,7 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { format } from 'date-fns';
-import type { StaffComplianceBreakdown, ComplianceLogItem } from '@/hooks/backroom/useBackroomComplianceTracker';
+import type { StaffComplianceBreakdown, ComplianceLogItem } from '@/hooks/color-bar/useColorBarComplianceTracker';
 
 export interface StaffComplianceReportOptions {
   orgName: string;

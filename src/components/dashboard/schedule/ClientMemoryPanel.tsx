@@ -9,7 +9,7 @@ import { tokens } from '@/lib/design-tokens';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { useClientMemory } from '@/hooks/useClientMemory';
-import { useClientFormulaHistory } from '@/hooks/backroom/useClientFormulaHistory';
+import { useClientFormulaHistory } from '@/hooks/color-bar/useClientFormulaHistory';
 
 interface ClientMemoryPanelProps {
   clientId: string | null | undefined;

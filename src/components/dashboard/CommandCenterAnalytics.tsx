@@ -27,8 +27,8 @@ import { StaffCommissionTable } from '@/components/dashboard/sales/StaffCommissi
 import { TrueProfitCard } from '@/components/dashboard/sales/TrueProfitCard';
 import { StaffPerformanceReport } from '@/components/dashboard/analytics/StaffPerformanceReport';
 import { ServiceProfitabilityCard } from '@/components/dashboard/analytics/ServiceProfitabilityCard';
-import { BackroomControlTower } from '@/components/dashboard/backroom/control-tower/BackroomControlTower';
-import { PredictiveBackroomSummary } from '@/components/dashboard/backroom/predictive-backroom/PredictiveBackroomSummary';
+import { ColorBarControlTower } from '@/components/dashboard/color-bar/control-tower/ColorBarControlTower';
+import { PredictiveColorBarSummary } from '@/components/dashboard/color-bar/predictive-color-bar/PredictiveColorBarSummary';
 import { useDashboardVisibility } from '@/hooks/useDashboardVisibility';
 import { useDashboardLayout } from '@/hooks/useDashboardLayout';
 import { useSalesMetrics, useSalesByStylist } from '@/hooks/useSalesData';
@@ -527,7 +527,7 @@ export function CommandCenterAnalytics() {
         return (
           <VisibilityGate key={cardId} elementKey="control_tower">
             <PinnableCard elementKey="control_tower" elementName="Control Tower" category="Command Center">
-              <BackroomControlTower locationId={locationFilter} />
+              <ColorBarControlTower locationId={locationFilter} />
             </PinnableCard>
           </VisibilityGate>
         );
@@ -535,7 +535,7 @@ export function CommandCenterAnalytics() {
         return (
           <VisibilityGate key={cardId} elementKey="predictive_inventory">
             <PinnableCard elementKey="predictive_inventory" elementName="Predictive Inventory" category="Command Center">
-              <PredictiveBackroomSummary locationId={locationFilter} />
+              <PredictiveColorBarSummary locationId={locationFilter} />
             </PinnableCard>
           </VisibilityGate>
         );

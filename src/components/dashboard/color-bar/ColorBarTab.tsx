@@ -1,0 +1,47 @@
+/**
+ * ColorBarTab — Entry point for color bar functionality inside AppointmentDetailSheet.
+ * Loads appointment context and renders Instant Formula Memory + MixSessionManager.
+ */
+
+import { MixSessionManager } from './MixSessionManager';
+import { InstantFormulaCard } from './InstantFormulaCard';
+
+interface ColorBarTabProps {
+  appointment: {
+    id: string;
+    organization_id?: string | null;
+    client_id?: string | null;
+    client_name?: string | null;
+    staff_user_id?: string | null;
+    staff_name?: string | null;
+    location_id?: string | null;
+    service_name?: string | null;
+    service_id?: string | null;
+    phorest_client_id?: string | null;
+  };
+  organizationId: string;
+}
+
+export function ColorBarTab({ appointment, organizationId }: ColorBarTabProps) {
+  const clientId = appointment.client_id ?? appointment.phorest_client_id ?? undefined;
+
+  return (
+    <div className="space-y-4">
+      <InstantFormulaCard
+        clientId={clientId}
+        serviceName={appointment.service_name}
+        currentServiceName={appointment.service_name}
+      />
+      <MixSessionManager
+        organizationId={organizationId}
+        appointmentId={appointment.id}
+        clientId={clientId}
+        staffUserId={appointment.staff_user_id ?? undefined}
+        locationId={appointment.location_id ?? undefined}
+        serviceId={appointment.service_id ?? undefined}
+        serviceName={appointment.service_name ?? undefined}
+        staffName={appointment.staff_name ?? undefined}
+      />
+    </div>
+  );
+}
