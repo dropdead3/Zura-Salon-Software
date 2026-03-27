@@ -35,7 +35,7 @@ export function ColorBarCheckoutConfirmDialog({
 
   const baseCost = locationCount * COLOR_BAR_BASE_PRICE;
   const scaleLicenseCost = scaleCount * SCALE_LICENSE_MONTHLY;
-  const estimatedUsage = Math.round(estimatedMonthlyServices * BACKROOM_PER_SERVICE_FEE);
+  const estimatedUsage = Math.round(estimatedMonthlyServices * COLOR_BAR_PER_SERVICE_FEE);
   const monthlyRecurring = baseCost + scaleLicenseCost;
   const hardwareOneTime = scaleCount * SCALE_HARDWARE_PRICE;
   const estimatedMonthlyGrandTotal = monthlyRecurring + estimatedUsage;
