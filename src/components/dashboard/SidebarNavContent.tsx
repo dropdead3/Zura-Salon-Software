@@ -437,7 +437,7 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
                       "flex items-center justify-center px-2 py-2.5 mx-2 text-sm font-sans",
                       "transition-all duration-300 ease-out rounded-full",
                       location.pathname === '/dashboard/onboarding'
-                        ? "bg-foreground text-background shadow-sm" 
+                        ? "bg-muted/80 text-foreground ring-1 ring-border/40 shadow-sm backdrop-blur-sm" 
                         : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
                     )}
                   >
