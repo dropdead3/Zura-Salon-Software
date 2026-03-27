@@ -641,6 +641,17 @@ export function DockServicesTab({ appointment, staff, effectiveServiceName }: Do
         }))}
       />
 
+      {/* Complete Session FAB */}
+      {hasActiveSessions && !activeBowl && (
+        <button
+          onClick={() => setShowComplete(true)}
+          className="absolute bottom-4 right-5 z-[25] h-12 px-5 rounded-full bg-emerald-600 hover:bg-emerald-500 text-white font-medium text-sm flex items-center gap-2 shadow-lg active:scale-95 transition-all"
+        >
+          <Check className="w-4 h-4" />
+          Complete Session
+        </button>
+      )}
+
       {/* Formula history floating button */}
       {appointment.client_id && (
         <button
