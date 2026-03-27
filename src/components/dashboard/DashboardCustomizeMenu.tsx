@@ -463,7 +463,7 @@ export function DashboardCustomizeMenu({ variant = 'icon', roleContext }: Dashbo
                           isPinned={true}
                           onToggle={() => handleTogglePinnedCard(cardId)}
                           isLoading={isTogglingPin}
-                          previewSrc={ANALYTICS_CARD_PREVIEWS[cardId]}
+                          
                         />
                       );
                     }
