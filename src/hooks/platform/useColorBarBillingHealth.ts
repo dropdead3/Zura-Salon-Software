@@ -29,7 +29,7 @@ export interface ColorBarBillingMetrics {
 
 export function useColorBarBillingHealth() {
   return useQuery({
-    queryKey: ['backroom-billing-health'],
+    queryKey: ['color-bar-billing-health'],
     queryFn: async (): Promise<ColorBarBillingMetrics> => {
       const { data: flags, error: fErr } = await supabase
         .from('organization_feature_flags')

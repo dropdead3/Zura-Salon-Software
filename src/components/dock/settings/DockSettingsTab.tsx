@@ -32,7 +32,7 @@ export function DockSettingsTab({ staff, onLogout }: DockSettingsTabProps) {
   const locationName = locations?.find(l => l.id === staff.locationId)?.name ?? 'Unknown location';
 
   const { data: stationCount } = useQuery({
-    queryKey: ['backroom-stations-count', staff.organizationId, staff.locationId],
+    queryKey: ['color-bar-stations-count', staff.organizationId, staff.locationId],
     queryFn: async () => {
       const { count, error } = await supabase
         .from('backroom_stations')

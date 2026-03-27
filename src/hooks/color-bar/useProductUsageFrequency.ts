@@ -43,7 +43,7 @@ export function useProductUsageFrequency(locationId?: string) {
       cutoff.setDate(cutoff.getDate() - 90);
       const cutoffISO = cutoff.toISOString();
 
-      // 1. Get all backroom-tracked products for this org
+      // 1. Get all color-bar-tracked products for this org
       const { data: products, error: pErr } = await supabase
         .from('products')
         .select('id, name, brand, category, cost_price, quantity_on_hand')

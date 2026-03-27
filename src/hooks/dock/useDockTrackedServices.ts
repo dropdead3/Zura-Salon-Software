@@ -1,5 +1,5 @@
 /**
- * useDockTrackedServices — Fetches backroom-tracked service names for filtering.
+ * useDockTrackedServices — Fetches color-bar-tracked service names for filtering.
  * Returns a Set<string> of lowercase service names, or null if none configured (use regex fallback).
  */
 import { useQuery } from '@tanstack/react-query';

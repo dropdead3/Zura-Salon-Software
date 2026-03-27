@@ -81,7 +81,7 @@ export function useColorBarComplianceTracker(
   const orgId = useColorBarOrgId();
 
   return useQuery<ComplianceTrackerResult>({
-    queryKey: ['backroom-compliance-tracker', orgId, dateFrom, dateTo, locationId, staffUserId],
+    queryKey: ['color-bar-compliance-tracker', orgId, dateFrom, dateTo, locationId, staffUserId],
     queryFn: async () => {
       let query = supabase
         .from('backroom_compliance_log')

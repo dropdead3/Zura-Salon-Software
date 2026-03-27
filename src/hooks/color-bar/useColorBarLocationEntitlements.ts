@@ -29,7 +29,7 @@ export interface ColorBarLocationEntitlement {
 
 export function useColorBarLocationEntitlements(organizationId: string | undefined) {
   const query = useQuery({
-    queryKey: ['backroom-location-entitlements', organizationId],
+    queryKey: ['color-bar-location-entitlements', organizationId],
     queryFn: async (): Promise<ColorBarLocationEntitlement[]> => {
       const { data, error } = await supabase
         .from('backroom_location_entitlements')
@@ -116,10 +116,10 @@ export function useUpsertLocationEntitlement() {
     },
     onSuccess: (_, vars) => {
       queryClient.invalidateQueries({
-        queryKey: ['backroom-location-entitlements', vars.organization_id],
+        queryKey: ['color-bar-location-entitlements', vars.organization_id],
       });
       queryClient.invalidateQueries({
-        queryKey: ['platform-backroom-entitlements'],
+        queryKey: ['platform-color-bar-entitlements'],
       });
     },
     onError: (error) => {
@@ -147,10 +147,10 @@ export function useDeleteLocationEntitlement() {
     },
     onSuccess: (_, vars) => {
       queryClient.invalidateQueries({
-        queryKey: ['backroom-location-entitlements', vars.organization_id],
+        queryKey: ['color-bar-location-entitlements', vars.organization_id],
       });
       queryClient.invalidateQueries({
-        queryKey: ['platform-backroom-entitlements'],
+        queryKey: ['platform-color-bar-entitlements'],
       });
     },
     onError: (error) => {

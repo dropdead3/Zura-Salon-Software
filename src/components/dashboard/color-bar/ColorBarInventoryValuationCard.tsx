@@ -30,7 +30,7 @@ export function ColorBarInventoryValuationCard({ locationId }: { locationId?: st
   const { formatCurrency } = useFormatCurrency();
 
   const { data, isLoading } = useQuery({
-    queryKey: ['backroom-inventory-valuation', orgId, locationId],
+    queryKey: ['color-bar-inventory-valuation', orgId, locationId],
     queryFn: async (): Promise<BrandValuation[]> => {
       // Fetch professional products with inventory projections
       const { data: products } = await (supabase
@@ -112,7 +112,7 @@ export function ColorBarInventoryValuationCard({ locationId }: { locationId?: st
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'backroom-inventory-valuation.csv';
+    a.download = 'color-bar-inventory-valuation.csv';
     a.click();
     URL.revokeObjectURL(url);
   }, [data]);

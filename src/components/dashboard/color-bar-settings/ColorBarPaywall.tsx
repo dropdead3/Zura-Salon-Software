@@ -447,7 +447,7 @@ export function ColorBarPaywall() {
                   <div className="w-10 h-10 rounded-lg bg-destructive/10 flex items-center justify-center shrink-0">
                     <XCircle className="w-5 h-5 text-destructive" />
                   </div>
-                  <h3 className="font-display text-base tracking-wide uppercase text-destructive">Without Backroom</h3>
+                  <h3 className="font-display text-base tracking-wide uppercase text-destructive">Without Color Bar</h3>
                 </div>
                 <ul className="space-y-5">
                   {[
@@ -475,7 +475,7 @@ export function ColorBarPaywall() {
                   <div className="w-10 h-10 rounded-lg bg-success/10 flex items-center justify-center shrink-0">
                     <CheckCircle2 className="w-5 h-5 text-success" />
                   </div>
-                  <h3 className="font-display text-base tracking-wide uppercase text-success">With Backroom</h3>
+                  <h3 className="font-display text-base tracking-wide uppercase text-success">With Color Bar</h3>
                 </div>
                 <ul className="space-y-5">
                   {[
@@ -728,7 +728,7 @@ export function ColorBarPaywall() {
                   { key: 'formulas', icon: Brain, title: 'Formula Memory', desc: 'Formulas are saved automatically to the client profile.' },
                   { key: 'inventory', icon: PackageSearch, title: 'Inventory Intelligence', desc: 'Every bowl updates product inventory in real time.' },
                   { key: 'profitability', icon: DollarSign, title: 'Service Profitability', desc: 'Product costs are connected directly to each service.' },
-                  { key: 'insights', icon: BarChart3, title: 'Operational Insights', desc: 'Backroom activity becomes measurable salon intelligence.' },
+                  { key: 'insights', icon: BarChart3, title: 'Operational Insights', desc: 'Color Bar activity becomes measurable salon intelligence.' },
                 ].map((f) => (
                   <button
                     key={f.key}

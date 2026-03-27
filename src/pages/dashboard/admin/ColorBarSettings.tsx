@@ -184,7 +184,7 @@ export default function ColorBarSettings() {
 
             if (data?.is_enabled) {
               queryClient.invalidateQueries({ queryKey: ['color-bar-entitlement'] });
-              queryClient.invalidateQueries({ queryKey: ['backroom-location-entitlements'] });
+              queryClient.invalidateQueries({ queryKey: ['color-bar-location-entitlements'] });
               queryClient.invalidateQueries({ queryKey: ['backroom-org-flag'] });
               toast.success('Backroom activated! Your subscription is now active.');
               pollingRef.current = false;
@@ -198,7 +198,7 @@ export default function ColorBarSettings() {
         }
 
         queryClient.invalidateQueries({ queryKey: ['color-bar-entitlement'] });
-        queryClient.invalidateQueries({ queryKey: ['backroom-location-entitlements'] });
+        queryClient.invalidateQueries({ queryKey: ['color-bar-location-entitlements'] });
         queryClient.invalidateQueries({ queryKey: ['backroom-org-flag'] });
         toast.success('Payment received! Your color bar access is being activated — please refresh in a moment.');
         pollingRef.current = false;

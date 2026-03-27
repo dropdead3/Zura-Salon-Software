@@ -9,7 +9,7 @@ import {
   generateForecastSummary,
   type ProductDemandForecast,
   type ForecastSummary,
-} from '@/lib/color-bar/services/predictive-backroom-service';
+} from '@/lib/color-bar/services/predictive-color-bar-service';
 
 const FORECAST_STALE_TIME = 5 * 60_000; // 5 minutes
 

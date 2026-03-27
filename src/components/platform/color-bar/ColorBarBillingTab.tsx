@@ -118,7 +118,7 @@ export function ColorBarBillingTab() {
         />
         <BillingKPICard
           icon={DollarSign}
-          label="Backroom MRR"
+          label="Color Bar MRR"
           value={`$${metrics.totalMRR.toLocaleString()}`}
           subtitle="From active locations"
         />
@@ -148,7 +148,7 @@ export function ColorBarBillingTab() {
             <div>
               <PlatformCardTitle>Billing Health</PlatformCardTitle>
               <PlatformCardDescription>
-                {metrics.orgs.length} backroom-enabled organizations
+                {metrics.orgs.length} color-bar-enabled organizations
               </PlatformCardDescription>
             </div>
           </div>

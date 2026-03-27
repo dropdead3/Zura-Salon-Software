@@ -213,7 +213,7 @@ export function ColorBarAnalyticsTab() {
             <div>
               <PlatformCardTitle>Organization Usage</PlatformCardTitle>
               <PlatformCardDescription>
-                {metrics.orgUsageStats.length} backroom-enabled organizations
+                {metrics.orgUsageStats.length} color-bar-enabled organizations
               </PlatformCardDescription>
             </div>
           </div>

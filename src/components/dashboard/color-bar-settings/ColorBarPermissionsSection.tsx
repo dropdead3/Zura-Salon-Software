@@ -40,7 +40,7 @@ const ROLES = [
 ] as const;
 
 const PERMISSIONS = [
-  { key: 'view_color_bar', label: 'View Backroom', group: 'Access' },
+  { key: 'view_color_bar', label: 'View Color Bar', group: 'Access' },
   { key: 'mix_bowls', label: 'Mix Bowls', group: 'Mixing' },
   { key: 'smart_mix_assist', label: 'Smart Mix Assist', group: 'Mixing' },
   { key: 'formula_memory', label: 'Formula Memory', group: 'Mixing' },

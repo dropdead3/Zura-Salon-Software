@@ -6,7 +6,7 @@
 import type { InventoryRiskProjection } from '@/hooks/inventory/useInventoryRiskProjection';
 import type { ColorBarException } from '@/hooks/color-bar/useColorBarExceptions';
 import type { StaffColorBarPerformance } from '@/hooks/color-bar/useStaffColorBarPerformance';
-import type { ProductDemandForecast, ForecastSummary } from '@/lib/color-bar/services/predictive-backroom-service';
+import type { ProductDemandForecast, ForecastSummary } from '@/lib/color-bar/services/predictive-color-bar-service';
 import type { MarginOutlier } from '@/lib/color-bar/appointment-profit-engine';
 
 // ── Types ──────────────────────────────────────────────────────────

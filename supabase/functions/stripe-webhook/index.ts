@@ -499,7 +499,7 @@ async function handleSubscriptionDeleted(
       console.log(`Location entitlements cancelled for org ${org.id} (sub ${stripeSubId})`);
     }
 
-    console.log(`Backroom disabled for org ${org.id} after subscription cancellation`);
+    console.log(`Color Bar disabled for org ${org.id} after subscription cancellation`);
   }
 
   await supabase

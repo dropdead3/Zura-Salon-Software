@@ -817,7 +817,7 @@ export function ColorBarProductCatalogSection({ onNavigate }: Props) {
                   </>
                 ) : (
                   <>
-                    <CardTitle className={tokens.card.title}>Backroom Product Catalog</CardTitle>
+                    <CardTitle className={tokens.card.title}>Color Bar Product Catalog</CardTitle>
                     <CardDescription>
                       {effectiveLocationId
                         ? `Managing catalog for ${activeLocations.find(l => l.id === effectiveLocationId)?.name ?? 'selected location'}`
@@ -1427,7 +1427,7 @@ export function ColorBarProductCatalogSection({ onNavigate }: Props) {
               ) : (
                 <>
                 <p className="text-sm font-sans text-muted-foreground mb-3 text-center">
-                  Brands Carried In {activeLocations.find(l => l.id === effectiveLocationId)?.name ?? 'Your Location'}'s Backroom
+                  Brands Carried In {activeLocations.find(l => l.id === effectiveLocationId)?.name ?? 'Your Location'}'s Color Bar
                 </p>
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
                   {filteredBrands.map((brandName) => {

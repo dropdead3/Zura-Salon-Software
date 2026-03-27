@@ -248,7 +248,7 @@ export function ColorBarSetupWizard({ onComplete, onCancel }: Props) {
           setting_value: { completed: true, completed_at: new Date().toISOString() },
         });
       }
-      toast.success('Backroom setup complete!');
+      toast.success('Color Bar setup complete!');
       onComplete();
       return;
     }
@@ -534,7 +534,7 @@ function WelcomeStep() {
           <Sparkles className="w-7 h-7 text-primary" />
         </div>
         <div>
-          <h2 className={cn(tokens.heading.page, 'mb-2')}>Set Up Backroom</h2>
+          <h2 className={cn(tokens.heading.page, 'mb-2')}>Set Up Color Bar</h2>
           <p className={cn(tokens.body.muted, 'max-w-md mx-auto')}>
             This wizard will guide you through configuring products, services, allowances, and mixing stations
             so Zura Color Bar can start tracking usage and protecting your margins.

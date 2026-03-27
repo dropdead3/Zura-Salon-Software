@@ -1,6 +1,6 @@
 /**
  * ManualWeightInput — Large iPad-friendly numeric input for weight entry.
- * Optimized for one-handed, fast entry in a salon backroom.
+ * Optimized for one-handed, fast entry in a salon color bar.
  */
 
 import { useState } from 'react';

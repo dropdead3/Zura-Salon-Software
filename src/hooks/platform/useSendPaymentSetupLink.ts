@@ -30,7 +30,7 @@ export function useSendPaymentSetupLink() {
       }
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ['platform-backroom-entitlements'] });
+      queryClient.invalidateQueries({ queryKey: ['platform-color-bar-entitlements'] });
     },
   });
 }

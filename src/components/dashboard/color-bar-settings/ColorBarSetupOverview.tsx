@@ -51,7 +51,7 @@ export function ColorBarSetupOverview({ onNavigate }: Props) {
   }
 
   const checklistItems = [
-    { label: 'Backroom products configured', value: health.trackedProducts, total: health.totalProducts, section: 'products', icon: Package, done: health.trackedProducts > 0 },
+    { label: 'Color Bar products configured', value: health.trackedProducts, total: health.totalProducts, section: 'products', icon: Package, done: health.trackedProducts > 0 },
     { label: 'Suppliers linked to products', value: health.suppliersConfigured, section: 'suppliers', icon: Truck, done: health.suppliersConfigured > 0 },
     { label: 'Services mapped for tracking', value: health.trackedServices, total: health.totalServices, section: 'services', icon: Wrench, done: health.trackedServices > 0 },
     { label: 'Recipe baselines defined', value: health.recipesConfigured, section: 'recipes', icon: BarChart3, done: health.recipesConfigured > 0 },
@@ -156,7 +156,7 @@ export function ColorBarSetupOverview({ onNavigate }: Props) {
           <CardContent className="py-8 text-center">
             <CheckCircle2 className="w-10 h-10 mx-auto mb-3 text-primary" />
             <p className={cn(tokens.body.emphasis, 'text-foreground')}>All systems configured</p>
-            <p className="text-sm text-muted-foreground">Backroom is ready to operate.</p>
+            <p className="text-sm text-muted-foreground">Color Bar is ready to operate.</p>
           </CardContent>
         </Card>
       )}

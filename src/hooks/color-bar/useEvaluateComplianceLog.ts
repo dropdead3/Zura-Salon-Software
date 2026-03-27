@@ -114,7 +114,7 @@ export function useEvaluateComplianceLog() {
       return { evaluated: rows.length, compliant, missing };
     },
     onSuccess: (result) => {
-      queryClient.invalidateQueries({ queryKey: ['backroom-compliance-tracker'] });
+      queryClient.invalidateQueries({ queryKey: ['color-bar-compliance-tracker'] });
       toast.success(`Evaluated ${result.evaluated} color appointments: ${result.compliant} compliant, ${result.missing} missing`);
     },
     onError: (err) => {

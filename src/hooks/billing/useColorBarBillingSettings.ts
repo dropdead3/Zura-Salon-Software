@@ -20,7 +20,7 @@ export interface ColorBarBillingSettings {
 
 export function useColorBarBillingSettings(organizationId: string | null | undefined) {
   return useQuery({
-    queryKey: ['backroom-billing-settings', organizationId],
+    queryKey: ['color-bar-billing-settings', organizationId],
     queryFn: async (): Promise<ColorBarBillingSettings | null> => {
       const { data, error } = await supabase
         .from('backroom_billing_settings')
@@ -97,7 +97,7 @@ export function useUpsertColorBarBillingSettings() {
       return data as unknown as ColorBarBillingSettings;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['backroom-billing-settings'] });
+      queryClient.invalidateQueries({ queryKey: ['color-bar-billing-settings'] });
       toast.success('Billing settings saved');
     },
     onError: (error) => {

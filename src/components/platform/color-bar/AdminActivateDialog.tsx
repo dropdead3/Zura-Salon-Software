@@ -120,10 +120,10 @@ export function AdminActivateDialog({
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
 
-      toast.success(data.message || 'Backroom activated successfully');
-      queryClient.invalidateQueries({ queryKey: ['backroom-location-entitlements', orgId] });
-      queryClient.invalidateQueries({ queryKey: ['platform-backroom-entitlements'] });
-      queryClient.invalidateQueries({ queryKey: ['platform-backroom-all-entitlement-counts'] });
+      toast.success(data.message || 'Color Bar activated successfully');
+      queryClient.invalidateQueries({ queryKey: ['color-bar-location-entitlements', orgId] });
+      queryClient.invalidateQueries({ queryKey: ['platform-color-bar-entitlements'] });
+      queryClient.invalidateQueries({ queryKey: ['platform-color-bar-all-entitlement-counts'] });
       onOpenChange(false);
     } catch (err: any) {
       toast.error('Activation failed: ' + (err.message || 'Unknown error'));

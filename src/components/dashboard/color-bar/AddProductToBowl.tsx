@@ -53,7 +53,7 @@ export function AddProductToBowl({ bowlId, onAdd, onCancel, inline = false }: Ad
   );
 
   const { data: products = [] } = useQuery({
-    queryKey: ['backroom-products', orgId, search],
+    queryKey: ['color-bar-products', orgId, search],
     queryFn: async () => {
       let query = supabase
         .from('products')

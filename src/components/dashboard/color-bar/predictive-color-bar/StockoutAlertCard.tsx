@@ -9,7 +9,7 @@ import { cn } from '@/lib/utils';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useStockoutAlerts } from '@/hooks/color-bar/usePredictiveColorBar';
-import type { ProductDemandForecast } from '@/lib/color-bar/services/predictive-backroom-service';
+import type { ProductDemandForecast } from '@/lib/color-bar/services/predictive-color-bar-service';
 
 interface StockoutAlertCardProps {
   locationId?: string | null;

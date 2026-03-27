@@ -96,7 +96,7 @@ export function ColorBarEntitlementsTab() {
 
   // Fetch all orgs with their color bar flag
   const { data: orgs = [], isLoading: orgsLoading } = useQuery({
-    queryKey: ['platform-backroom-entitlements'],
+    queryKey: ['platform-color-bar-entitlements'],
     queryFn: async (): Promise<OrgWithColorBar[]> => {
       const { data: organizations, error: orgErr } = await supabase
         .from('organizations')
@@ -152,7 +152,7 @@ export function ColorBarEntitlementsTab() {
 
   // Fetch location entitlements for the expanded org
   const { data: locEntitlements = [], isLoading: entsLoading } = useQuery({
-    queryKey: ['backroom-location-entitlements', expandedOrg],
+    queryKey: ['color-bar-location-entitlements', expandedOrg],
     queryFn: async (): Promise<ColorBarLocationEntitlement[]> => {
       const { data, error } = await supabase
         .from('backroom_location_entitlements')
@@ -184,7 +184,7 @@ export function ColorBarEntitlementsTab() {
     if (org.backroom_enabled && org.override_id) {
       deleteFlag.mutate(
         { organizationId: org.id, flagKey: 'color_bar_enabled' },
-        { onSuccess: () => toast.success(`Backroom disabled for ${org.name}`) }
+        { onSuccess: () => toast.success(`Color Bar disabled for ${org.name}`) }
       );
     } else {
       updateFlag.mutate(
@@ -221,15 +221,15 @@ export function ColorBarEntitlementsTab() {
                         { onConflict: 'organization_id,location_id' }
                       );
 
-                queryClient.invalidateQueries({ queryKey: ['platform-backroom-entitlements'] });
-                toast.success(`Backroom enabled for ${org.name} — all locations activated`);
+                queryClient.invalidateQueries({ queryKey: ['platform-color-bar-entitlements'] });
+                toast.success(`Color Bar enabled for ${org.name} — all locations activated`);
               } else {
-                toast.success(`Backroom enabled for ${org.name}`);
+                toast.success(`Color Bar enabled for ${org.name}`);
               }
             } catch {
               // Org flag was set successfully; location entitlements failed silently
-              queryClient.invalidateQueries({ queryKey: ['platform-backroom-entitlements'] });
-              toast.success(`Backroom enabled for ${org.name}`);
+              queryClient.invalidateQueries({ queryKey: ['platform-color-bar-entitlements'] });
+              toast.success(`Color Bar enabled for ${org.name}`);
             }
           },
         }
@@ -300,7 +300,7 @@ export function ColorBarEntitlementsTab() {
 
   // For backfill: fetch all location entitlements counts
   const { data: allEntitlementCounts = [] } = useQuery({
-    queryKey: ['platform-backroom-all-entitlement-counts'],
+    queryKey: ['platform-color-bar-all-entitlement-counts'],
     queryFn: async () => {
       const enabledOrgIds = orgs.filter((o) => o.backroom_enabled).map((o) => o.id);
       if (enabledOrgIds.length === 0) return [];
@@ -345,8 +345,8 @@ export function ColorBarEntitlementsTab() {
         }
       }
       toast.success(`Backfilled entitlements for ${orphans.length} organizations`);
-      queryClient.invalidateQueries({ queryKey: ['platform-backroom-all-entitlement-counts'] });
-      queryClient.invalidateQueries({ queryKey: ['platform-backroom-entitlements'] });
+      queryClient.invalidateQueries({ queryKey: ['platform-color-bar-all-entitlement-counts'] });
+      queryClient.invalidateQueries({ queryKey: ['platform-color-bar-entitlements'] });
     } catch (err: any) {
       toast.error('Backfill failed: ' + err.message);
     } finally {
@@ -363,7 +363,7 @@ export function ColorBarEntitlementsTab() {
             <Building2 className="w-5 h-5 text-violet-400" />
           </div>
           <div>
-            <PlatformCardTitle>Backroom App Access</PlatformCardTitle>
+            <PlatformCardTitle>Color Bar App Access</PlatformCardTitle>
             <PlatformCardDescription>
               {enabledCount} active orgs · {orgs.length} total · Per-location activation
             </PlatformCardDescription>
@@ -868,9 +868,9 @@ function LocationEntitlementPanel({
                   if (error) throw error;
                   if (data?.error) throw new Error(data.error);
                   toast.success(data.message || 'Refund processed successfully');
-                  refundQueryClient.invalidateQueries({ queryKey: ['backroom-location-entitlements', orgId] });
-                  refundQueryClient.invalidateQueries({ queryKey: ['platform-backroom-entitlements'] });
-                  refundQueryClient.invalidateQueries({ queryKey: ['platform-backroom-all-entitlement-counts'] });
+                  refundQueryClient.invalidateQueries({ queryKey: ['color-bar-location-entitlements', orgId] });
+                  refundQueryClient.invalidateQueries({ queryKey: ['platform-color-bar-entitlements'] });
+                  refundQueryClient.invalidateQueries({ queryKey: ['platform-color-bar-all-entitlement-counts'] });
                 } catch (err: any) {
                   toast.error('Refund failed: ' + (err.message || 'Unknown error'));
                 } finally {

@@ -61,7 +61,7 @@ export function ColorBarCostSummaryCard() {
             <Beaker className="w-5 h-5 text-primary" />
           </div>
           <div>
-            <CardTitle className={tokens.card.title}>Backroom Add-Ons</CardTitle>
+            <CardTitle className={tokens.card.title}>Color Bar Add-Ons</CardTitle>
             <CardDescription>Per-location chemical tracking subscriptions</CardDescription>
           </div>
         </div>

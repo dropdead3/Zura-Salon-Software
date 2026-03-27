@@ -41,7 +41,7 @@ const PLAN_PRICES: Record<string, number> = {
 
 export function useColorBarPlatformAnalytics() {
   return useQuery({
-    queryKey: ['backroom-platform-analytics'],
+    queryKey: ['color-bar-platform-analytics'],
     queryFn: async (): Promise<ColorBarPlatformMetrics> => {
       // Fetch enabled orgs
       const { data: flags, error: fErr } = await supabase

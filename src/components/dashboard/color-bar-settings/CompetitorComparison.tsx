@@ -35,7 +35,7 @@ const featureTooltips: Record<string, string> = {
   'Demand forecasting': 'Projects future product needs based on upcoming appointments and historical consumption patterns.',
   'Cost-per-service profitability': 'Calculates the true product cost for each service performed, revealing which services actually make money.',
   'Supply fee recovery': 'Automatically calculates a per-service supply charge you can pass to clients, recovering product costs transparently.',
-  'Full platform integration': 'Backroom data flows into scheduling, payroll, and analytics — no exports or third-party syncing required.',
+  'Full platform integration': 'Color Bar data flows into scheduling, payroll, and analytics — no exports or third-party syncing required.',
 };
 
 const comparisonData: FeatureCategory[] = [
