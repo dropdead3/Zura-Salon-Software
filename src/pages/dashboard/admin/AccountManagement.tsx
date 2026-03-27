@@ -652,7 +652,6 @@ export default function AccountManagement() {
           actions={
             <div className="flex items-center gap-2 flex-wrap">
               <CreateAdminAccountDialog onSuccess={() => refetchApprovals()} />
-        <PageExplainer pageId="account-management" />
               <GenerateTestAccountsButton />
               <InviteStaffDialog />
             </div>
