@@ -692,15 +692,32 @@ export function DashboardCustomizeMenu({ variant = 'icon', roleContext }: Dashbo
           )}
 
           <div className="space-y-3">
-            <Button 
-              variant="outline" 
-              className="w-full gap-2"
-              onClick={handleResetToDefault}
-              disabled={resetToDefault.isPending}
-            >
-              <RotateCcw className="w-4 h-4" />
-              {resetToDefault.isPending ? 'Resetting...' : 'Reset to Default'}
-            </Button>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button 
+                  variant="outline" 
+                  className="w-full gap-2"
+                  disabled={resetToDefault.isPending}
+                >
+                  <RotateCcw className="w-4 h-4" />
+                  {resetToDefault.isPending ? 'Resetting...' : 'Reset to Default'}
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Reset Dashboard Layout</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This will restore all sections, widgets, and analytics to their default positions. Your current layout will be lost.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleResetToDefault}>
+                    Reset to Default
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
 
             {canManageVisibility && (
               <Button 
