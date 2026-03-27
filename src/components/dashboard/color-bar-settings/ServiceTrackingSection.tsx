@@ -778,25 +778,35 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                   </div>
                                 </TableCell>
 
-                                {/* Product Allowance */}
+                                {/* Billing Method */}
                                 <TableCell onClick={(e) => e.stopPropagation()}>
                                   {(() => {
                                     const policy = allowanceByService?.get(service.id);
-                                    if (!policy || !policy.is_active) return null;
-                                    if (policy.billing_mode === 'parts_and_labor') {
-                                      return (
-                                        <Badge variant="outline" className="text-[10px] shrink-0 border-blue-500/30 bg-blue-500/10 text-blue-500 dark:text-blue-400">
-                                          Parts and Labor
-                                        </Badge>
-                                      );
+                                    if (!policy) return null;
+                                    if (policy.is_active) {
+                                      if (policy.billing_mode === 'parts_and_labor') {
+                                        return (
+                                          <Badge variant="outline" className="text-[10px] shrink-0 border-blue-500/30 bg-blue-500/10 text-blue-500 dark:text-blue-400">
+                                            Parts and Labor
+                                          </Badge>
+                                        );
+                                      }
+                                      const dollarMatch = policy.notes?.match(/\$(\d+\.?\d*)/);
+                                      if (dollarMatch) {
+                                        return (
+                                          <div className="flex items-center gap-1.5 text-sm text-foreground">
+                                            <Calculator className="w-3.5 h-3.5 text-muted-foreground" />
+                                            <span className="font-sans font-medium">${dollarMatch[1]}</span>
+                                          </div>
+                                        );
+                                      }
+                                      return null;
                                     }
-                                    const dollarMatch = policy.notes?.match(/\$(\d+\.?\d*)/);
-                                    if (dollarMatch) {
+                                    if (policy.billing_mode === 'allowance') {
                                       return (
-                                        <div className="flex items-center gap-1.5 text-sm text-foreground">
-                                          <Calculator className="w-3.5 h-3.5 text-muted-foreground" />
-                                          <span className="font-sans font-medium">${dollarMatch[1]}</span>
-                                        </div>
+                                        <Badge variant="outline" className="text-[10px] shrink-0 border-amber-500/30 bg-amber-500/10 text-amber-500 dark:text-amber-400">
+                                          Allowance Needs To Be Set
+                                        </Badge>
                                       );
                                     }
                                     return null;
