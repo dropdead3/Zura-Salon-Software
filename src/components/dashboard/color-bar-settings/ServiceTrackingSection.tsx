@@ -12,6 +12,16 @@ import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogCancel,
+  AlertDialogAction,
+} from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
@@ -252,8 +262,16 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
     return map;
   }, [allowancePolicies]);
 
-  const handleReset = useCallback(async (serviceId: string) => {
-    if (!window.confirm('Reset all tracking and billing configuration for this service?')) return;
+  const [resetConfirmServiceId, setResetConfirmServiceId] = useState<string | null>(null);
+
+  const confirmReset = useCallback((serviceId: string) => {
+    setResetConfirmServiceId(serviceId);
+  }, []);
+
+  const executeReset = useCallback(async () => {
+    const serviceId = resetConfirmServiceId;
+    if (!serviceId) return;
+    setResetConfirmServiceId(null);
     try {
       const { error: svcErr } = await supabase
         .from('services')
@@ -298,7 +316,7 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
     } catch (err: any) {
       toast.error('Failed to reset: ' + err.message);
     }
-  }, [allowanceByService, deletePolicy, orgId, queryClient]);
+  }, [resetConfirmServiceId, allowanceByService, deletePolicy, orgId, queryClient]);
 
   // Classification helpers
   const getServiceType = (s: ServiceRow): 'chemical' | 'suggested' | 'standard' => {
@@ -1031,7 +1049,7 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                                     className="h-7 text-xs text-muted-foreground hover:text-red-500 hover:bg-red-500/10"
                                                     onClick={(e) => {
                                                       e.stopPropagation();
-                                                      handleReset(service.id);
+                                                      confirmReset(service.id);
                                                     }}
                                                   >
                                                     <RotateCcw className="w-3.5 h-3.5" />
@@ -1050,7 +1068,7 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                                       className="h-7 text-xs shrink-0 text-muted-foreground hover:text-red-500 hover:bg-red-500/10"
                                                       onClick={(e) => {
                                                         e.stopPropagation();
-                                                        handleReset(service.id);
+                                                        confirmReset(service.id);
                                                       }}
                                                     >
                                                       <RotateCcw className="w-3.5 h-3.5" />
@@ -1109,7 +1127,7 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                                       className="h-7 text-xs text-muted-foreground hover:text-red-500 hover:bg-red-500/10"
                                                         onClick={(e) => {
                                                           e.stopPropagation();
-                                                          handleReset(service.id);
+                                                          confirmReset(service.id);
                                                         }}
                                                     >
                                                       <RotateCcw className="w-3.5 h-3.5" />
@@ -1128,7 +1146,7 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                                         className="h-7 text-xs shrink-0 text-muted-foreground hover:text-red-500 hover:bg-red-500/10"
                                                           onClick={(e) => {
                                                             e.stopPropagation();
-                                                            handleReset(service.id);
+                                                            confirmReset(service.id);
                                                           }}
                                                       >
                                                         <RotateCcw className="w-3.5 h-3.5" />
@@ -1210,6 +1228,25 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
           servicePrice={calculatorServicePrice}
         />
       )}
+
+      <AlertDialog open={!!resetConfirmServiceId} onOpenChange={(open) => { if (!open) setResetConfirmServiceId(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="font-display text-base tracking-wide">
+              Reset Service Configuration
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              This will clear all tracking, billing, and formula configuration for this service. It will return to a "Needs Attention" state.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={executeReset} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Reset
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
