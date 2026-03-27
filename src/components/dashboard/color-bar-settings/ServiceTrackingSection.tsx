@@ -1349,8 +1349,11 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                             'text-[11px] font-sans tabular-nums whitespace-nowrap',
                             allConfigured ? 'text-emerald-500' : 'text-muted-foreground',
                           )}>
-                            {group.configured} ✓
+                            {group.configured}
                           </span>
+                          {allConfigured && (
+                            <CheckCircle2 className="w-3 h-3 text-emerald-500 shrink-0" />
+                          )}
                         </div>
                       </button>
 
