@@ -1000,12 +1000,7 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                                     className="h-7 text-xs text-muted-foreground hover:text-red-500 hover:bg-red-500/10"
                                                     onClick={(e) => {
                                                       e.stopPropagation();
-                                                       updateService.mutate({ id: service.id, updates: {
-                                                        is_backroom_tracked: false,
-                                                        is_chemical_service: false,
-                                                        container_types: [],
-                                                        backroom_config_dismissed: false,
-                                                      }});
+                                                      handleReset(service.id);
                                                     }}
                                                   >
                                                     <RotateCcw className="w-3.5 h-3.5" />
