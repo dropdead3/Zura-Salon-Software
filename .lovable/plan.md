@@ -1,35 +1,56 @@
 
 
-## Reconfigure Progress Milestones for Current Architecture
+## Redesign Progress Tracker: Completed vs. Remaining
 
 ### Problem
-The progress bar shows 2 outdated milestones ("Classify & Track Services" and "Set Allowances") that no longer reflect the actual setup workflow. The build now has billing modes, recipe baselines, and product pricing as distinct configuration steps.
+The current vertical step checklist is flat and hard to scan — all 3 milestones look the same regardless of completion state. With 48/48 tracked but 0/48 on billing and allowances, there's no visual separation between what's done and what still needs attention.
 
-### New Milestones (4 steps)
+### New Design
 
-| # | Label | Numerator | Denominator | Tooltip |
-|---|-------|-----------|-------------|---------|
-| 1 | **Track Services** | Services with `is_backroom_tracked === true` | Services where `getServiceType` returns `chemical` or `suggested` | "Enable tracking for services that use color or chemical products." |
-| 2 | **Set Billing Mode** | Tracked services that have an allowance policy (any `billing_mode`) | All tracked services | "Choose Allowance or Parts & Labor billing for each tracked service." |
-| 3 | **Build Recipes** | Tracked services with `billing_mode === 'allowance'` AND `policy.is_active === true` AND `policy.notes` contains a dollar value (recipe saved) | Tracked services with `billing_mode === 'allowance'` (or no policy yet, defaulting to allowance) | "Define product recipes and quantities for allowance-based services." |
-| 4 | **Configure Pricing** | Tracked services with `billing_mode === 'parts_and_labor'` that have `is_active === true` on their policy, PLUS allowance services already counted in step 3 | All tracked services | "Confirm pricing rules are set — allowance amounts or pass-through markup." |
+Replace the flat list with two visual groups: **Completed** and **Remaining**, with a single overall progress indicator at the top.
 
-**Simplification**: After review, steps 3 and 4 overlap too much. Better approach with 3 clean milestones:
+**Layout:**
 
-| # | Label | Current | Total | Tooltip |
-|---|-------|---------|-------|---------|
-| 1 | **Track Services** | Tracked services count | Chemical + suggested services count | "Enable color bar tracking for services that use color or chemical products." |
-| 2 | **Set Billing Method** | Tracked services with an allowance policy record | All tracked services | "Choose how each service is billed — Allowance (recipe-based) or Parts & Labor (cost pass-through)." |
-| 3 | **Configure Allowances** | Tracked services where the policy `is_active === true` (recipe saved for allowance mode, or auto-active for P&L) | All tracked services | "Build recipes for allowance services or confirm pass-through settings for Parts & Labor services." |
+```text
+┌─────────────────────────────────────────────────┐
+│  Setup Progress          2 of 3 complete   [===▓░] 67%  │
+│                                                         │
+│  ✓ COMPLETED                                            │
+│  ┌─────────────────────────────────────────────┐        │
+│  │ ✓ Track Services              48 of 48      │        │
+│  └─────────────────────────────────────────────┘        │
+│                                                         │
+│  ○ REMAINING                                            │
+│  ┌─────────────────────────────────────────────┐        │
+│  │ 2  Set Billing Method         0 of 48       │        │
+│  │    ━━━━━━━━━━━━━━━━━━━━━━━━ (empty bar)     │        │
+│  │    Choose how each service is billed...      │        │
+│  ├─────────────────────────────────────────────┤        │
+│  │ 3  Configure Allowances       0 of 48       │        │
+│  │    ━━━━━━━━━━━━━━━━━━━━━━━━ (empty bar)     │        │
+│  │    Build recipes for allowance services...   │        │
+│  └─────────────────────────────────────────────┘        │
+│                                            [Quick Setup]│
+└─────────────────────────────────────────────────┘
+```
 
-### File: `src/components/dashboard/color-bar-settings/ServiceTrackingSection.tsx`
+### Changes
 
-**Lines 338–359** — Replace the `milestones` useMemo with the 3 new milestones using existing `allServices`, `allowanceByService`, and `getServiceType` data (no new queries needed).
+**File: `src/components/dashboard/color-bar-settings/ServiceTrackingProgressBar.tsx`**
 
-### File: `src/components/dashboard/color-bar-settings/ServiceTrackingProgressBar.tsx`
+Full rewrite of the render logic:
 
-No changes needed — it already renders any number of milestones dynamically.
+1. **Overall progress header** — "Setup Progress" title with "X of Y complete" and a single summary `Progress` bar spanning all milestones
+2. **Completed section** — Group header "COMPLETED" (font-display, muted, small) followed by completed milestones as compact rows: green checkmark + label + count. No progress bar or description (already done)
+3. **Remaining section** — Group header "REMAINING" followed by incomplete milestones with step number, label, count, progress bar, and description tooltip (current incomplete rendering preserved)
+4. Either group header is hidden if that group is empty (all complete or none complete)
+5. Celebration overlay stays as-is
 
-### Result
-Progress bar reflects the actual 3-step workflow: Track → Choose Billing Method → Configure. Each step has clear completion criteria tied to real data.
+### Technical Details
+
+- Split `milestones` into `completed` and `remaining` arrays via `.filter()`
+- Completed items render as a compact `bg-primary/5 rounded-lg` card with green check styling
+- Remaining items keep the current amber/muted progress bar treatment
+- Overall progress: `completedCount / milestones.length` (milestone-level, not service-level)
+- No changes to `ServiceTrackingSection.tsx` — the component contract (`milestones: ProgressMilestone[]`) stays identical
 
