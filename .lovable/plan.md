@@ -1,27 +1,27 @@
 
 
-## Fix: Product Allowance Calculator Padding Loss on Tablet/Mobile
+## Fix: Sidebar Nav Active State for Org-Scoped Routes
 
 ### Problem
-The dialog (`DialogContent className="max-w-5xl max-h-[90vh] p-0"`) uses `p-0` globally, then relies on inner sections to provide their own padding. On tablet/mobile, certain areas lose padding — particularly the left panel, footer, and health indicator strip — because the responsive stacking (`md:flex-row` → `flex-col`) doesn't adjust spacing for narrower widths.
+The sidebar stores nav hrefs as legacy paths (e.g. `/dashboard/admin/color-bar-settings`), but the actual URL uses org-scoped paths (`/org/drop-dead-salons/dashboard/admin/color-bar-settings`). The `isActive` check does an exact equality comparison against `location.pathname`, so it never matches — the nav item is never highlighted.
 
-### Changes (single file)
-**`src/components/dashboard/color-bar-settings/AllowanceCalculatorDialog.tsx`**
+### Root Cause
+Two locations in `SidebarNavContent.tsx` compute active state without transforming hrefs through `dashPath()`:
+- **Line 285** (expanded `NavLink`): `const isActive = location.pathname === href;`
+- **Line 639** (collapsed popover): `const isActive = location.pathname === item.href;`
 
-1. **Left panel (line ~1134):** Currently `p-4`. At mobile widths the panel stretches full-width but `p-4` (16px) feels cramped against a near-full-screen dialog. Change to `px-4 py-4 sm:px-5` so small screens get comfortable side padding.
+Additionally, navigation calls at lines 291 and 647 pass the raw `href` to `navigate()` instead of the org-scoped version.
 
-2. **Right panel / recipe area:** Find the matching right panel div and ensure it also carries `px-4 py-4 sm:px-5` instead of bare `p-4`.
+### Fix (single file: `SidebarNavContent.tsx`)
 
-3. **Footer (line ~1661):** Currently `px-6 py-4`. On small screens this is fine horizontally, but the content inside (`flex-wrap items-start justify-between`) should stack vertically on narrow widths. Change footer inner to `flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4` so the "Save Allowance" button and health indicators don't crunch together.
+1. **`NavLink` inner component (~line 285):** Transform `href` through `dashPath()` for both the active check and the `navigate()` call. Use `startsWith` matching so sub-routes (query params, nested views) also highlight the parent nav item.
 
-4. **Header (line ~1109):** Currently `px-6 pt-5 pb-4` — this is adequate but should be `px-4 pt-4 pb-3 sm:px-6 sm:pt-5 sm:pb-4` to keep proportional on small screens.
+2. **Collapsed popover links (~line 639):** Same treatment — resolve `item.href` through `dashPath()` for active state and navigation.
 
-5. **Footer Save button area (line ~1767):** The `flex flex-col items-end` block should become full-width on mobile with the button spanning `w-full sm:w-auto` so it's a proper touch target.
+3. **Badge count lookup (~line 589):** The `getBadgeCount` function compares against raw hrefs — this is fine since it matches against the same raw config values, not `location.pathname`.
 
 ### Summary
-- Header: responsive padding (`px-4 → sm:px-6`)
-- Left panel: responsive padding
-- Right panel: responsive padding  
-- Footer: stack vertically on mobile, full-width save button
-- No structural or logic changes — padding/layout only
+- Transform all sidebar nav hrefs through `dashPath()` before comparing to `location.pathname`
+- Use `startsWith` for active matching to cover sub-routes
+- Single file change: `src/components/dashboard/SidebarNavContent.tsx`
 
