@@ -131,7 +131,7 @@ export function RevenueDonutChart({
                 <div className="w-2 h-2 rounded-full bg-foreground shrink-0" />
                 <span className="text-muted-foreground">Services</span>
               </div>
-              <span className="font-medium tabular-nums">{servicePercent}%</span>
+              <span className="font-medium tabular-nums text-foreground">{servicePercent}%</span>
             </div>
             {/* Retail row */}
             <div className="flex items-center justify-between gap-2">
