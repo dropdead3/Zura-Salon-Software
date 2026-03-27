@@ -416,11 +416,19 @@ function DashboardLayoutInner({ children, hideFooter, hideTopBar, hideSidebar }:
   const { isLocked, unlock } = useDashboardLock();
 
   return (
-    <div className={cn("bg-background", hideFooter ? "h-screen overflow-hidden" : "min-h-screen")}>
+    <div className={cn(
+      "bg-background transition-[padding-top] duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]",
+      hideFooter ? "h-screen overflow-hidden" : "min-h-screen",
+      isImpersonating && "pt-[44px] god-mode-active"
+    )}>
+      {/* God Mode Bar — system-level layer above everything */}
+      <GodModeBar />
+
       {!hideSidebar && (
       <aside 
         className={cn(
-          "hidden lg:fixed lg:top-3 lg:bottom-3 lg:left-3 lg:z-50 lg:block lg:border lg:backdrop-blur-xl lg:overflow-hidden lg:shadow-sm transition-[width,background-color,border-color,border-radius] duration-500 ease-[cubic-bezier(0.4,0,0.2,1)]",
+          "hidden lg:fixed lg:bottom-3 lg:left-3 lg:z-50 lg:block lg:border lg:backdrop-blur-xl lg:overflow-hidden lg:shadow-sm transition-[width,top,background-color,border-color,border-radius] duration-500 ease-[cubic-bezier(0.4,0,0.2,1)]",
+          isImpersonating ? "lg:top-[56px]" : "lg:top-3",
           sidebarCollapsed
             ? "lg:bg-card/80 lg:backdrop-saturate-150 lg:border-border lg:rounded-[32px]"
             : "lg:bg-card/80 lg:backdrop-saturate-150 lg:border-border lg:rounded-xl",
