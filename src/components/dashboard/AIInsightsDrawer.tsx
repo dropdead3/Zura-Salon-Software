@@ -65,13 +65,18 @@ interface IntentConfig {
   accentClass?: string;
 }
 
+/** Returns true if an insight is claimed by the higher-priority "failing" or "quick_wins" intents */
+const isClaimedByPriority = (i: InsightItem) =>
+  i.severity === 'critical' || i.severity === 'warning' || i.effortLevel === 'quick_win';
+
 const WIZARD_INTENTS: IntentConfig[] = [
   {
     key: 'failing',
     icon: ShieldAlert,
     label: 'Where am I failing?',
     description: 'Critical issues hurting you now',
-    filter: (insights) => insights.filter(i => i.severity === 'critical' || i.severity === 'warning')
+    filter: (insights) => insights
+      .filter(i => i.severity === 'critical' || i.severity === 'warning')
       .sort((a, b) => (b.impactEstimateNumeric ?? 0) - (a.impactEstimateNumeric ?? 0)),
     accentClass: 'border-red-500/30 hover:border-red-500/50',
   },
@@ -80,7 +85,8 @@ const WIZARD_INTENTS: IntentConfig[] = [
     icon: Zap,
     label: 'Quickest wins',
     description: 'High-impact, low-effort items',
-    filter: (insights) => insights.filter(i => i.effortLevel === 'quick_win')
+    filter: (insights) => insights
+      .filter(i => i.effortLevel === 'quick_win' && i.severity !== 'critical' && i.severity !== 'warning')
       .sort((a, b) => (b.impactEstimateNumeric ?? 0) - (a.impactEstimateNumeric ?? 0)),
   },
   {
@@ -88,21 +94,24 @@ const WIZARD_INTENTS: IntentConfig[] = [
     icon: DollarSign,
     label: 'Revenue opportunities',
     description: 'Growth & margin insights',
-    filter: (insights) => insights.filter(i => i.category === 'revenue_pulse' || i.category === 'cash_flow'),
+    filter: (insights) => insights
+      .filter(i => (i.category === 'revenue_pulse' || i.category === 'cash_flow') && !isClaimedByPriority(i)),
   },
   {
     key: 'team',
     icon: Users,
     label: 'Team performance',
     description: 'Staffing & capacity gaps',
-    filter: (insights) => insights.filter(i => i.category === 'staffing' || i.category === 'capacity'),
+    filter: (insights) => insights
+      .filter(i => (i.category === 'staffing' || i.category === 'capacity') && !isClaimedByPriority(i)),
   },
   {
     key: 'retention',
     icon: HeartPulse,
     label: 'Client retention',
     description: 'Rebook & churn signals',
-    filter: (insights) => insights.filter(i => i.category === 'client_health'),
+    filter: (insights) => insights
+      .filter(i => i.category === 'client_health' && !isClaimedByPriority(i)),
   },
   {
     key: 'everything',
