@@ -336,9 +336,16 @@ export function CheckoutSummarySheet({
     }
 
     if (overageChargeTotal > 0) {
+      doc.setFont('helvetica', 'bold');
       doc.text('Additional Product Usage', margin, y);
-      doc.text(`$${overageChargeTotal.toFixed(2)}`, pageWidth - margin, y, { align: 'right' });
       y += 4;
+      doc.setFont('helvetica', 'normal');
+      for (const oc of overageCharges) {
+        doc.text(oc.service_name ?? 'Overage', margin, y);
+        doc.text(`$${oc.charge_amount.toFixed(2)}`, pageWidth - margin, y, { align: 'right' });
+        y += 4;
+      }
+      y += 2;
     }
 
     doc.text(`Tax (${(taxRate * 100).toFixed(1)}%)`, margin, y);

@@ -4,7 +4,7 @@
  * Supports pull-to-dismiss and tap-outside-to-close.
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Check, AlertTriangle, FlaskConical, X, Flag, DollarSign } from 'lucide-react';
 import { motion, AnimatePresence, useDragControls } from 'framer-motion';
 import { cn } from '@/lib/utils';
@@ -36,6 +36,7 @@ interface DockSessionCompleteSheetProps {
   onClose: () => void;
   isPending?: boolean;
   pendingCharges?: PendingChargeSummary[];
+  estimatedCharge?: number | null;
 }
 
 export function DockSessionCompleteSheet({
@@ -46,11 +47,21 @@ export function DockSessionCompleteSheet({
   onClose,
   isPending,
   pendingCharges,
+  estimatedCharge,
 }: DockSessionCompleteSheetProps) {
   const [mode, setMode] = useState<'confirm' | 'unresolved'>('confirm');
   const [notes, setNotes] = useState('');
   const [unresolvedReason, setUnresolvedReason] = useState('');
   const dragControls = useDragControls();
+
+  // Reset state when sheet opens
+  useEffect(() => {
+    if (open) {
+      setMode('confirm');
+      setNotes('');
+      setUnresolvedReason('');
+    }
+  }, [open]);
 
   const allReweighed = stats.reweighedBowls >= stats.totalBowls;
   const wastePct = stats.totalDispensed > 0
@@ -156,6 +167,20 @@ export function DockSessionCompleteSheet({
                       <span className="text-xs text-violet-300 font-medium">${totalCharges.toFixed(2)}</span>
                     </div>
                   )}
+                </div>
+              )}
+
+              {/* Pre-completion estimate (when no actual charges exist yet) */}
+              {(!pendingCharges || pendingCharges.length === 0) && estimatedCharge != null && estimatedCharge > 0 && (
+                <div className="rounded-xl bg-[hsl(var(--platform-bg-card))] border border-[hsl(var(--platform-border)/0.15)] p-3 space-y-1">
+                  <div className="flex items-center gap-1.5">
+                    <DollarSign className="w-3.5 h-3.5 text-[hsl(var(--platform-foreground-muted)/0.5)]" />
+                    <span className="text-xs text-[hsl(var(--platform-foreground-muted)/0.6)] font-medium">Estimated Charge</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] text-[hsl(var(--platform-foreground-muted)/0.5)]">Product cost + markup</span>
+                    <span className="text-xs text-[hsl(var(--platform-foreground-muted))] font-medium">~${estimatedCharge.toFixed(2)}</span>
+                  </div>
                 </div>
               )}
 
