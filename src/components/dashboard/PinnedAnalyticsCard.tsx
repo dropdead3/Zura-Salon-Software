@@ -48,6 +48,7 @@ import { StaffPerformanceReport } from '@/components/dashboard/analytics/StaffPe
 import { ServiceProfitabilityCard } from '@/components/dashboard/analytics/ServiceProfitabilityCard';
 import { ColorBarControlTower } from '@/components/dashboard/color-bar/control-tower/ColorBarControlTower';
 import { PredictiveColorBarSummary } from '@/components/dashboard/color-bar/predictive-color-bar/PredictiveColorBarSummary';
+import { ClientExperienceCard } from '@/components/dashboard/sales/ClientExperienceCard';
 import { useSalesMetrics, useSalesByStylist, useServiceMix } from '@/hooks/useSalesData';
 import { useTodayActualRevenue } from '@/hooks/useTodayActualRevenue';
 import { useRetailAttachmentRate } from '@/hooks/useRetailAttachmentRate';
@@ -929,6 +930,19 @@ export function PinnedAnalyticsCard({ cardId, filters, compact = false }: Pinned
         <VisibilityGate elementKey="predictive_inventory">
           <PinnableCard elementKey="predictive_inventory" elementName="Predictive Inventory" category="Command Center" dateRange={filters.dateRange} locationName={selectedLocationName}>
             <PredictiveColorBarSummary locationId={locationFilter} />
+          </PinnableCard>
+        </VisibilityGate>
+      );
+    case 'client_experience_staff':
+      return (
+        <VisibilityGate elementKey="client_experience_staff">
+          <PinnableCard elementKey="client_experience_staff" elementName="Client Experience" category="Command Center" dateRange={filters.dateRange} locationName={selectedLocationName}>
+            <ClientExperienceCard
+              dateFrom={filters.dateFrom}
+              dateTo={filters.dateTo}
+              locationId={locationFilter}
+              filterContext={filterContext}
+            />
           </PinnableCard>
         </VisibilityGate>
       );
