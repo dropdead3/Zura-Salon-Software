@@ -149,6 +149,7 @@ export function AggregateSalesCard({
   const [locationDrilldownTarget, setLocationDrilldownTarget] = useState<string | null>(null);
   const [locationDrilldown, setLocationDrilldown] = useState<{ type: LocationDrilldownType; locationId: string; locationName: string } | null>(null);
   const [tipsDrilldownOpen, setTipsDrilldownOpen] = useState(false);
+  const [tipsCardExpanded, setTipsCardExpanded] = useState(false);
   const [activeDrilldown, setActiveDrilldown] = useState<'revenue' | 'transactions' | 'avgTicket' | 'revPerHour' | 'goals' | 'expectedGap' | null>(null);
   const { hideNumbers } = useHideNumbers();
   const { formatCurrency, formatCurrencyWhole, currency } = useFormatCurrency();
