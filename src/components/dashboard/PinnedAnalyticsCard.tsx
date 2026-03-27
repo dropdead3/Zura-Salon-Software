@@ -11,6 +11,7 @@ import {
   Activity, MapPin, Scissors, ShoppingBag, CalendarCheck,
   Target, Gauge, FileText, Sparkles, Briefcase, UserPlus,
   LineChart, BarChart2, ChevronRight, CheckCircle2, AlertTriangle,
+  Beaker, Award, FlaskConical, Package,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { tokens } from '@/lib/design-tokens';
