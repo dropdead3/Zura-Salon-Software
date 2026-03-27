@@ -51,7 +51,7 @@ export function useUpsertBackroomBillingSettings() {
 
       // Check if exists
       const { data: existing } = await supabase
-        .from('backroom_billing_settings' as any)
+        .from('backroom_billing_settings')
         .select('id')
         .eq('organization_id', params.organization_id)
         .maybeSingle();
