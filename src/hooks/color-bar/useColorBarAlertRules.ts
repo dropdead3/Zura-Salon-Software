@@ -40,7 +40,7 @@ export function useColorBarAlertRules(locationId?: string | null) {
   const orgId = effectiveOrganization?.id;
 
   return useQuery({
-    queryKey: ['backroom-alert-rules', orgId, locationId],
+    queryKey: ['color-bar-alert-rules', orgId, locationId],
     queryFn: async (): Promise<ColorBarAlertRule[]> => {
       let query = supabase
         .from('backroom_alert_rules')
@@ -88,7 +88,7 @@ export function useUpsertAlertRule() {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['backroom-alert-rules'] });
+      queryClient.invalidateQueries({ queryKey: ['color-bar-alert-rules'] });
       toast.success('Alert rule saved');
     },
     onError: (error) => {
@@ -109,7 +109,7 @@ export function useDeleteAlertRule() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['backroom-alert-rules'] });
+      queryClient.invalidateQueries({ queryKey: ['color-bar-alert-rules'] });
       toast.success('Alert rule removed');
     },
     onError: (error) => {

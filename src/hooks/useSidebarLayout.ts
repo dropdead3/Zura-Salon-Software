@@ -26,7 +26,7 @@ export const DEFAULT_SECTION_ORDER = [
   'main',
   'myTools',    // Staff-facing daily tools (replaces growth + stats)
   'manage',     // Admin hub-only links (replaces manager with 22+ items)
-  'apps',       // Org-activated add-on apps (Backroom, etc.)
+  'apps',       // Org-activated add-on apps (Color Bar, etc.)
   'system',     // Admin config (replaces adminOnly)
   'platform',
 ];

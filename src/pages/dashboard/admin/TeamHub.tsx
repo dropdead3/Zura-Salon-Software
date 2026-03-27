@@ -257,7 +257,7 @@ export default function TeamHub() {
             href={dashPath('/admin/color-bar-settings')}
             icon={Beaker}
             title="Zura Color Bar Hub"
-            description="Backroom color & supply management, formulas, and station tracking"
+            description="Color Bar color & supply management, formulas, and station tracking"
           />
         </CategorySection>
 

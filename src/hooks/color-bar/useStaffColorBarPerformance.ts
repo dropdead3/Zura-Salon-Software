@@ -34,7 +34,7 @@ export function useStaffColorBarPerformance(
   const orgId = effectiveOrganization?.id;
 
   return useQuery({
-    queryKey: ['staff-backroom-performance', orgId, periodStart, periodEnd, locationId, staffId],
+    queryKey: ['staff-color-bar-performance', orgId, periodStart, periodEnd, locationId, staffId],
     queryFn: async (): Promise<StaffColorBarPerformance[]> => {
       let query = supabase
         .from('staff_backroom_performance')

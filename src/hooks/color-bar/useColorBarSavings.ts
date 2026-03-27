@@ -175,7 +175,7 @@ export function useColorBarSavings(days: number = 30, subscriptionMonthlyCost: n
 
   // All-time cumulative savings (no date filter)
   const allTimeQuery = useQuery<AllTimeSavingsData>({
-    queryKey: ['backroom-savings-alltime', orgId],
+    queryKey: ['color-bar-savings-alltime', orgId],
     queryFn: async () => {
       if (!orgId) throw new Error('No org');
 

@@ -204,7 +204,7 @@ Deno.serve(async (req) => {
       JSON.stringify({
         success: true,
         subscription_id: subscription.id,
-        message: `Backroom activated for ${location_plans.length} location(s). Subscription charged to card on file.`,
+        message: `Color Bar activated for ${location_plans.length} location(s). Subscription charged to card on file.`,
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );

@@ -38,9 +38,9 @@ export default function ColorBarSubscription() {
   const [addScalesOpen, setAddScalesOpen] = useState(false);
 
   const { data: sub, isLoading } = useQuery<SubscriptionData>({
-    queryKey: ['backroom-subscription', effectiveOrganization?.id],
+    queryKey: ['color-bar-subscription', effectiveOrganization?.id],
     queryFn: async () => {
-      const { data, error } = await supabase.functions.invoke('get-backroom-subscription', {
+      const { data, error } = await supabase.functions.invoke('get-color-bar-subscription', {
         body: { organization_id: effectiveOrganization!.id },
       });
       if (error) throw error;
@@ -82,7 +82,7 @@ export default function ColorBarSubscription() {
       <DashboardLayout>
         <div className={tokens.layout.pageContainer}>
           <DashboardPageHeader
-            title="Backroom Subscription"
+            title="Color Bar Subscription"
             description="You don't have an active Color Bar subscription."
             backTo={dashPath('/admin/color-bar-settings')}
           />
@@ -116,7 +116,7 @@ export default function ColorBarSubscription() {
     <DashboardLayout>
       <div className={tokens.layout.pageContainer}>
         <DashboardPageHeader
-          title="Backroom Subscription"
+          title="Color Bar Subscription"
           description="Manage your Color Bar subscription, scale licenses, and billing."
           backTo={dashPath('/admin/color-bar-settings')}
           actions={

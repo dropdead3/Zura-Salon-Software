@@ -14,7 +14,7 @@ export function useColorBarEntitlement(locationId?: string) {
   const orgId = useColorBarOrgId();
 
   const { data: orgEnabled = false, isLoading: orgLoading } = useQuery({
-    queryKey: ['backroom-org-flag', orgId],
+    queryKey: ['color-bar-org-flag', orgId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('organization_feature_flags')

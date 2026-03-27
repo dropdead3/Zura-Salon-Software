@@ -118,10 +118,10 @@ export function useStaffPerformanceComposite(
     return experienceScores.map((score): StaffPerformanceRow => {
       const sales = salesMap.get(score.staffId);
       const color bar = colorBarMap.get(score.staffId);
-      const avgChem = color bar && backroom.mixSessions > 0
-        ? backroom.totalCost / backroom.mixSessions
+      const avgChem = colorBar && colorBar.mixSessions > 0
+        ? colorBar.totalCost / colorBar.mixSessions
         : 0;
-      const reweighRate = backroom?.reweighComplianceRate ?? 0;
+      const reweighRate = colorBar?.reweighComplianceRate ?? 0;
 
       // Generate coaching signals
       const signals: string[] = [];
@@ -135,10 +135,10 @@ export function useStaffPerformanceComposite(
       if (score.metrics.retailAttachment < 10) {
         signals.push('Low retail attachment — coaching opportunity');
       }
-      if (color bar && backroom.wasteRate > 15) {
-        signals.push(`Waste rate ${Math.round(backroom.wasteRate)}% — review dispensing habits`);
+      if (colorBar && colorBar.wasteRate > 15) {
+        signals.push(`Waste rate ${Math.round(colorBar.wasteRate)}% — review dispensing habits`);
       }
-      if (color bar && backroom.mixSessions > 0 && reweighRate < 80) {
+      if (colorBar && colorBar.mixSessions > 0 && reweighRate < 80) {
         signals.push(`Reweigh rate ${Math.round(reweighRate)}% — below 80% target`);
       }
 
@@ -154,8 +154,8 @@ export function useStaffPerformanceComposite(
         experienceScore: score.compositeScore,
         experienceStatus: score.status,
         avgChemicalCostPerService: Math.round(avgChem * 100) / 100,
-        wasteRate: backroom?.wasteRate ?? 0,
-        mixSessionCount: backroom?.mixSessions ?? 0,
+        wasteRate: colorBar?.wasteRate ?? 0,
+        mixSessionCount: colorBar?.mixSessions ?? 0,
         appointmentCount: score.appointmentCount,
         reweighComplianceRate: Math.round(reweighRate),
         overageAttachmentRate: 0, // requires checkout_usage_charges join — deferred to per-staff drill-down

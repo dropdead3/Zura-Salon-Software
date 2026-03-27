@@ -20,7 +20,7 @@ export function useColorBarBrandUsage(startDate: string, endDate: string, locati
   const orgId = effectiveOrganization?.id;
 
   return useQuery({
-    queryKey: ['backroom-brand-usage', orgId, startDate, endDate, locationId],
+    queryKey: ['color-bar-brand-usage', orgId, startDate, endDate, locationId],
     queryFn: async (): Promise<BrandUsageRow[]> => {
       // 1. Fetch sessions in range
       let sessionsQuery = supabase

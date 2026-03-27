@@ -210,7 +210,7 @@ export async function postUsageFromSession(params: {
       reference_type: 'mix_session',
       reference_id: params.sessionId,
       location_id: params.locationId ?? null,
-      notes: 'Backroom mix session depletion',
+      notes: 'Color Bar mix session depletion',
       created_by: userId,
     });
   }

@@ -108,7 +108,7 @@ const sections: SectionMeta[] = [
   { id: 'formula', label: 'Formula Assistance', icon: Sparkles, tooltip: 'Smart Mix Assist suggestion settings.', group: 'configuration' },
   { id: 'stations', label: 'Stations & Hardware', icon: Monitor, tooltip: 'Register mixing stations and pair scales.', group: 'configuration' },
   // Settings
-  { id: 'permissions', label: 'Permissions', icon: Shield, tooltip: 'Control who can do what in Backroom.', group: 'settings' },
+  { id: 'permissions', label: 'Permissions', icon: Shield, tooltip: 'Control who can do what in Color Bar.', group: 'settings' },
   { id: 'alerts', label: 'Alerts & Exceptions', icon: Bell, tooltip: 'Automatic alerts for operational issues.', group: 'settings' },
   { id: 'multi-location', label: 'Multi-Location', icon: Building2, tooltip: 'Compare and copy settings between locations.', group: 'settings' },
 ];
@@ -185,8 +185,8 @@ export default function ColorBarSettings() {
             if (data?.is_enabled) {
               queryClient.invalidateQueries({ queryKey: ['color-bar-entitlement'] });
               queryClient.invalidateQueries({ queryKey: ['color-bar-location-entitlements'] });
-              queryClient.invalidateQueries({ queryKey: ['backroom-org-flag'] });
-              toast.success('Backroom activated! Your subscription is now active.');
+              queryClient.invalidateQueries({ queryKey: ['color-bar-org-flag'] });
+              toast.success('Color Bar activated! Your subscription is now active.');
               pollingRef.current = false;
               return;
             }
@@ -199,7 +199,7 @@ export default function ColorBarSettings() {
 
         queryClient.invalidateQueries({ queryKey: ['color-bar-entitlement'] });
         queryClient.invalidateQueries({ queryKey: ['color-bar-location-entitlements'] });
-        queryClient.invalidateQueries({ queryKey: ['backroom-org-flag'] });
+        queryClient.invalidateQueries({ queryKey: ['color-bar-org-flag'] });
         toast.success('Payment received! Your color bar access is being activated — please refresh in a moment.');
         pollingRef.current = false;
       };

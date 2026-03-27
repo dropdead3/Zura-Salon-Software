@@ -29,7 +29,7 @@ export function useColorBarAIInsights(locationId?: string) {
   const orgId = profile?.organization_id;
 
   const { data, isLoading, error } = useQuery({
-    queryKey: ['ai-backroom-insights', orgId, locationId],
+    queryKey: ['ai-color-bar-insights', orgId, locationId],
     queryFn: async () => {
       if (!orgId) return null;
       return fetchCachedInsights(orgId, locationId);
@@ -55,8 +55,8 @@ export function useColorBarAIInsights(locationId?: string) {
 
     try {
       await refreshInsights(locationId);
-      queryClient.invalidateQueries({ queryKey: ['ai-backroom-insights', orgId, locationId] });
-      toast.success('Backroom insights refreshed');
+      queryClient.invalidateQueries({ queryKey: ['ai-color-bar-insights', orgId, locationId] });
+      toast.success('Color Bar insights refreshed');
     } catch (err) {
       console.error('Failed to refresh color bar insights:', err);
       toast.error(err instanceof Error ? err.message : 'Failed to refresh insights');

@@ -1,7 +1,7 @@
 /**
  * AIInsightService — Read-only wrapper for AI insight generation.
  *
- * Calls the ai-backroom-insights edge function.
+ * Calls the ai-color-bar-insights edge function.
  * Never writes to ledger, projections, or operational tables.
  */
 
@@ -37,7 +37,7 @@ export async function fetchCachedInsights(
     .order('generated_at', { ascending: false })
     .limit(1);
 
-  const locationKey = locationId ? `backroom:${locationId}` : 'backroom:all';
+  const locationKey = locationId ? `backroom:${locationId}` : 'color-bar:all';
   query = query.eq('location_id', locationKey);
 
   const { data, error } = await query;
@@ -56,7 +56,7 @@ export async function refreshInsights(
   if (!token) throw new Error('Not authenticated');
 
   const response = await fetch(
-    `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-backroom-insights`,
+    `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-color-bar-insights`,
     {
       method: 'POST',
       headers: {
