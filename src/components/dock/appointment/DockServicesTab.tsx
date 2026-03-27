@@ -123,6 +123,7 @@ export function DockServicesTab({ appointment, staff, effectiveServiceName }: Do
   const depleteInventory = useDepleteMixSession();
   const calculateOverage = useCalculateOverageCharge();
   const { effectiveOrganization } = useOrganizationContext();
+  const queryClient = useQueryClient();
   const { data: existingCharges } = useCheckoutUsageCharges(appointment.id);
 
   // Demo-mode local bowl state — persisted in sessionStorage per appointment
