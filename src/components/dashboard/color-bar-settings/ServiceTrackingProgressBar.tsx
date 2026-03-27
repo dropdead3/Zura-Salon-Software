@@ -1,8 +1,7 @@
 /**
- * ServiceTrackingProgressBar — Vertical step checklist for service tracking setup.
- * Shows three sequential steps with individual progress bars and descriptions.
+ * ServiceTrackingProgressBar — Setup progress with Completed / Remaining grouping.
  */
-import { useRef, useEffect, useState } from 'react';
+import { useRef, useEffect, useState, useMemo } from 'react';
 import { cn } from '@/lib/utils';
 import { tokens } from '@/lib/design-tokens';
 import { CheckCircle2 } from 'lucide-react';
@@ -22,7 +21,12 @@ interface Props {
 }
 
 export function ServiceTrackingProgressBar({ milestones }: Props) {
-  const allComplete = milestones.length > 0 && milestones.every(m => m.current === m.total && m.total > 0);
+  const completed = useMemo(() => milestones.filter(m => m.current >= m.total && m.total > 0), [milestones]);
+  const remaining = useMemo(() => milestones.filter(m => m.current < m.total || m.total === 0), [milestones]);
+
+  const allComplete = milestones.length > 0 && remaining.length === 0;
+  const overallPct = milestones.length > 0 ? Math.round((completed.length / milestones.length) * 100) : 0;
+
   const prevComplete = useRef(allComplete);
   const [showCelebration, setShowCelebration] = useState(false);
   const reduceMotion = useReducedMotion();
@@ -34,9 +38,12 @@ export function ServiceTrackingProgressBar({ milestones }: Props) {
     prevComplete.current = allComplete;
   }, [allComplete]);
 
+  // Track remaining step numbers (sequential after completed)
+  let remainingIndex = 0;
+
   return (
-    <div className="space-y-2">
-      {/* Completion celebration overlay */}
+    <div className="space-y-4">
+      {/* Celebration overlay */}
       <AnimatePresence>
         {showCelebration && (
           <motion.div
@@ -86,67 +93,97 @@ export function ServiceTrackingProgressBar({ milestones }: Props) {
         )}
       </AnimatePresence>
 
-      {/* Vertical step checklist */}
-      <div className="space-y-4">
-        {milestones.map((m, i) => {
-          const pct = m.total > 0 ? Math.round((m.current / m.total) * 100) : 0;
-          const done = m.current === m.total && m.total > 0;
-          const inProgress = m.current > 0 && !done;
-          const notStarted = m.current === 0;
+      {/* Overall progress header */}
+      <div className="space-y-2">
+        <div className="flex items-center justify-between">
+          <span className="font-display text-xs tracking-[0.08em] uppercase text-foreground">
+            Setup Progress
+          </span>
+          <span className="text-xs tabular-nums font-sans text-muted-foreground">
+            {completed.length} of {milestones.length} complete
+          </span>
+        </div>
+        <Progress
+          value={overallPct}
+          className="h-1.5"
+          indicatorClassName="bg-primary"
+        />
+      </div>
 
-          return (
-            <div key={i} className="space-y-1.5">
-              {/* Header row: step number + label + count */}
-              <div className="flex items-center justify-between">
+      {/* Completed section */}
+      {completed.length > 0 && (
+        <div className="space-y-1.5">
+          <span className="font-display text-[10px] tracking-[0.08em] uppercase text-muted-foreground/60">
+            Completed
+          </span>
+          <div className="rounded-lg bg-primary/5 divide-y divide-primary/10">
+            {completed.map((m, i) => (
+              <div key={i} className="flex items-center justify-between px-3 py-2">
                 <div className="flex items-center gap-2">
-                  {done ? (
-                    <CheckCircle2 className="w-4 h-4 text-primary shrink-0" />
-                  ) : (
-                    <span className={cn(
-                      'flex items-center justify-center w-4 h-4 rounded-full text-[10px] font-sans shrink-0',
-                      inProgress
-                        ? 'bg-amber-500/20 text-amber-600 dark:text-amber-400'
-                        : 'bg-muted text-muted-foreground',
-                    )}>
-                      {i + 1}
-                    </span>
-                  )}
-                  <span className={cn(
-                    'text-sm font-sans',
-                    done ? 'text-primary' : inProgress ? 'text-foreground' : 'text-muted-foreground',
-                  )}>
-                    {m.label}
-                  </span>
+                  <CheckCircle2 className="w-4 h-4 text-primary shrink-0" />
+                  <span className="text-sm font-sans text-primary">{m.label}</span>
                 </div>
-                <span className={cn(
-                  'text-xs tabular-nums font-sans',
-                  done ? 'text-primary' : 'text-muted-foreground',
-                )}>
+                <span className="text-xs tabular-nums font-sans text-primary">
                   {m.current} of {m.total}
                 </span>
               </div>
+            ))}
+          </div>
+        </div>
+      )}
 
-              {/* Progress bar — skip for completed steps */}
-              {!done && (
-                <Progress
-                  value={pct}
-                  className="h-1.5"
-                  indicatorClassName={cn(
-                    inProgress ? 'bg-amber-500' : 'bg-muted-foreground/20',
-                  )}
-                />
-              )}
+      {/* Remaining section */}
+      {remaining.length > 0 && (
+        <div className="space-y-1.5">
+          <span className="font-display text-[10px] tracking-[0.08em] uppercase text-muted-foreground/60">
+            Remaining
+          </span>
+          <div className="space-y-3">
+            {remaining.map((m, i) => {
+              remainingIndex++;
+              const globalIdx = completed.length + remainingIndex;
+              const pct = m.total > 0 ? Math.round((m.current / m.total) * 100) : 0;
+              const inProgress = m.current > 0;
 
-              {/* Description */}
-              {!done && (
-                <p className="text-xs text-muted-foreground pl-6">
-                  {m.tooltip}
-                </p>
-              )}
-            </div>
-          );
-        })}
-      </div>
+              return (
+                <div key={i} className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className={cn(
+                        'flex items-center justify-center w-4 h-4 rounded-full text-[10px] font-sans shrink-0',
+                        inProgress
+                          ? 'bg-amber-500/20 text-amber-600 dark:text-amber-400'
+                          : 'bg-muted text-muted-foreground',
+                      )}>
+                        {globalIdx}
+                      </span>
+                      <span className={cn(
+                        'text-sm font-sans',
+                        inProgress ? 'text-foreground' : 'text-muted-foreground',
+                      )}>
+                        {m.label}
+                      </span>
+                    </div>
+                    <span className="text-xs tabular-nums font-sans text-muted-foreground">
+                      {m.current} of {m.total}
+                    </span>
+                  </div>
+                  <Progress
+                    value={pct}
+                    className="h-1.5"
+                    indicatorClassName={cn(
+                      inProgress ? 'bg-amber-500' : 'bg-muted-foreground/20',
+                    )}
+                  />
+                  <p className="text-xs text-muted-foreground pl-6">
+                    {m.tooltip}
+                  </p>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
