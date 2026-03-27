@@ -339,8 +339,31 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
     return 'standard';
   };
 
+  /**
+   * Derived "truly configured" check — combines backroom_config_dismissed with
+   * actual billing completeness. A service is only truly configured when:
+   * - backroom_config_dismissed === true AND
+   *   - billing_mode is 'parts_and_labor' (always complete), OR
+   *   - billing_mode is 'allowance' with actual values set, OR
+   *   - no policy exists (intentionally dismissed as non-chemical)
+   */
+  const isTrulyConfigured = useCallback((s: ServiceRow): boolean => {
+    if (!s.backroom_config_dismissed) return false;
+    const policy = allowanceByService.get(s.id);
+    // No policy = intentionally dismissed (not a chemical service)
+    if (!policy) return true;
+    // P&L is always complete once selected
+    if (policy.billing_mode === 'parts_and_labor') return true;
+    // Allowance mode requires actual values
+    if (policy.billing_mode === 'allowance') {
+      return policy.is_active === true && (policy.included_allowance_qty > 0 || policy.overage_rate > 0);
+    }
+    // No billing mode set yet = not configured
+    return false;
+  }, [allowanceByService]);
+
   const needsAttention = (s: ServiceRow): boolean => {
-    if (s.backroom_config_dismissed) return false;
+    if (isTrulyConfigured(s)) return false;
     const type = getServiceType(s);
     // Chemical but not tracked
     if ((type === 'chemical' || type === 'suggested') && !s.is_backroom_tracked) return true;
@@ -433,12 +456,7 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
       if (!groups.has(cat)) groups.set(cat, { services: [], configured: 0, tracked: 0 });
       const g = groups.get(cat)!;
       g.services.push(s);
-      const policy = allowanceByService.get(s.id);
-      const isFullyConfigured = s.backroom_config_dismissed || (
-        policy?.billing_mode === 'parts_and_labor' ||
-        (policy?.billing_mode === 'allowance' && policy.is_active && (policy.included_allowance_qty > 0 || policy.overage_rate > 0))
-      );
-      if (isFullyConfigured) g.configured++;
+      if (isTrulyConfigured(s)) g.configured++;
       if (s.is_backroom_tracked) g.tracked++;
     }
     return groups;
@@ -457,6 +475,30 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
       setCollapsedCategories(new Set()); // all expanded
     }
   }, [searchQuery]);
+
+  // Auto-reset stale backroom_config_dismissed flags
+  // When a service has the flag set but allowance mode has zero values, reset it
+  useEffect(() => {
+    if (!orgId || !allServices.length) return;
+    const staleServices = allServices.filter(s => {
+      if (!s.backroom_config_dismissed) return false;
+      const policy = allowanceByService.get(s.id);
+      if (!policy) return false;
+      if (policy.billing_mode === 'allowance' && policy.included_allowance_qty === 0 && policy.overage_rate === 0) return true;
+      return false;
+    });
+    if (staleServices.length === 0) return;
+    // Reset in background
+    (async () => {
+      for (const s of staleServices) {
+        await supabase
+          .from('services')
+          .update({ backroom_config_dismissed: false })
+          .eq('id', s.id);
+      }
+      queryClient.invalidateQueries({ queryKey: ['services'] });
+    })();
+  }, [orgId, allServices, allowanceByService, queryClient]);
 
   const toggleCategoryCollapse = (cat: string) => {
     setCollapsedCategories(prev => {
@@ -733,7 +775,7 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                               <TableRow
                                 className={cn(
                                   attention && 'bg-amber-500/[0.03]',
-                                  service.backroom_config_dismissed && 'bg-emerald-500/[0.04]',
+                                  isTrulyConfigured(service) && 'bg-emerald-500/[0.04]',
                                   'cursor-pointer'
                                 )}
                                 onClick={() => toggleExpand(service.id)}
@@ -826,7 +868,7 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                     {type === 'suggested' && (
                                       <Badge variant="outline" className="text-[10px] shrink-0 border-amber-500/40 text-amber-600 dark:text-amber-400">Suggested</Badge>
                                     )}
-                                    {service.backroom_config_dismissed ? (
+                                    {isTrulyConfigured(service) ? (
                                       <Badge variant="outline" className="text-[10px] shrink-0 min-w-[6.5rem] justify-center border-emerald-500/30 bg-emerald-500/10 text-emerald-500 dark:text-emerald-400">Configured ✓</Badge>
                                     ) : service.is_backroom_tracked && (() => {
                                       const activePolicy = allowancePolicies?.find(p => p.service_id === service.id && p.is_active);
@@ -1092,7 +1134,7 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                             })()}
                                             {/* Mark Configured footer */}
                                             <div className="bg-amber-500/5 border-t border-amber-500/20 rounded-b-lg p-3 mt-3 flex items-center justify-between">
-                                              {service.backroom_config_dismissed ? (
+                                              {isTrulyConfigured(service) ? (
                                                 <div className="flex items-center gap-2 w-full justify-between">
                                                   <span className="text-xs font-sans text-green-600 dark:text-green-400 flex items-center gap-1.5">
                                                     <CheckCircle2 className="w-3.5 h-3.5" />
