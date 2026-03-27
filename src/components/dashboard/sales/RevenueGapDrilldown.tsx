@@ -159,7 +159,7 @@ export function RevenueGapDrilldown({ isOpen, data, isLoading, showDates = false
                       WHERE THE GAP CAME FROM
                     </p>
 
-                    <ScrollArea className={cn(showAll && data.gapItems.length > 7 && 'max-h-[350px]')}>
+                    <ScrollArea className={cn(showAll && data.gapItems.length > 7 ? 'h-[350px]' : '')}>
                       <div className="space-y-1">
                         {(showAll ? data.gapItems : data.gapItems.slice(0, INITIAL_VISIBLE)).map((item) => (
                           <GapItemRow
