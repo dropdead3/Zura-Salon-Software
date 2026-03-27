@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Loader2, AlertTriangle, CheckCircle2, Info, Package, Truck, Wrench, DollarSign, Monitor, BarChart3, Bell, Sparkles, LayoutDashboard } from 'lucide-react';
 import { ColorBarSetupWizard } from './ColorBarSetupWizard';
-import { Infotainer } from '@/components/ui/Infotainer';
+import { PageExplainer } from '@/components/ui/PageExplainer';
 
 interface Props {
   onNavigate: (section: string) => void;
@@ -65,12 +65,7 @@ export function ColorBarSetupOverview({ onNavigate }: Props) {
 
   return (
     <div className="space-y-6">
-      <Infotainer
-        id="color-bar-overview-guide"
-        title="Setup Overview"
-        description="This dashboard shows your Color Bar configuration progress. Complete each area to unlock full tracking, billing, and compliance features. Use the Setup Wizard for a guided walkthrough, or configure each section individually from the left navigation."
-        icon={<LayoutDashboard className="h-4 w-4 text-primary" />}
-      />
+      <PageExplainer pageId="color-bar-setup-overview" />
       {/* Wizard launch CTA */}
       {!wizardCompleted && completedCount < checklistItems.length && (
         <Card className="border-primary/30">

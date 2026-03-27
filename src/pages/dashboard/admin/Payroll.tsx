@@ -69,7 +69,6 @@ export default function Payroll() {
                   {activeTab !== 'hire' && (
                     <Button onClick={() => setShowWizard(true)}>
                       <Plus className="h-4 w-4 mr-2" />
-        <PageExplainer pageId="payroll" />
                       Run Payroll
                     </Button>
                   )}
@@ -84,6 +83,7 @@ export default function Payroll() {
               )
             }
           />
+          <PageExplainer pageId="payroll" />
 
           {!isConnected && activeTab !== 'hire' && (
             <Alert>

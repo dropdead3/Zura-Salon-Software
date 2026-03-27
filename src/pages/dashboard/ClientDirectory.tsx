@@ -730,7 +730,6 @@ export default function ClientDirectory() {
               {canMerge && selectedForMerge.size >= 2 && (
                 <Button onClick={handleBulkMerge} className="gap-2">
                   <GitMerge className="w-4 h-4" />
-        <PageExplainer pageId="client-directory" />
                   Merge Selected ({selectedForMerge.size})
                 </Button>
               )}
@@ -739,6 +738,7 @@ export default function ClientDirectory() {
           }
           className="mb-8"
         />
+        <PageExplainer pageId="client-directory" />
 
         {/* Primary Tabs */}
         <div className="mb-6">

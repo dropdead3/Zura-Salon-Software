@@ -11,7 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Loader2, Bell, Plus, Trash2, Zap, MapPin } from 'lucide-react';
-import { Infotainer } from '@/components/ui/Infotainer';
+import { PageExplainer } from '@/components/ui/PageExplainer';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { toast } from 'sonner';
 
@@ -81,7 +81,7 @@ export function AlertsExceptionsSection() {
 
   return (
     <div className="space-y-6">
-      <Infotainer id="color-bar-alerts-guide" title="Alerts & Exceptions" description="Set up automatic alerts for operational issues — like a stylist skipping the reweigh step, using 50% more product than expected, or running low on stock." icon={<Bell className="h-4 w-4 text-primary" />} />
+      <PageExplainer pageId="color-bar-alerts" />
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <div className="flex items-center gap-3">

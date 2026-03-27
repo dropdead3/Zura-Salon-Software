@@ -523,12 +523,11 @@ export default function RingTheBell() {
               className="font-display tracking-wide"
             >
               <Bell className="w-4 h-4 mr-2" />
-        <PageExplainer pageId="ring-the-bell" />
               {showForm ? 'CANCEL' : 'RING IT'}
             </Button>
           }
         />
-
+        <PageExplainer pageId="ring-the-bell" />
 
         {/* Info Notice */}
         <Alert className="mb-6 bg-accent/50 border-accent">

@@ -68,7 +68,6 @@ export default function Campaigns() {
             <Select value={filter} onValueChange={setFilter}>
               <SelectTrigger className="w-[160px]">
                 <SelectValue />
-        <PageExplainer pageId="campaigns" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Campaigns</SelectItem>
@@ -79,6 +78,7 @@ export default function Campaigns() {
             </Select>
           }
         />
+        <PageExplainer pageId="campaigns" />
 
         {isLoading ? (
           <div className="flex items-center justify-center py-16">

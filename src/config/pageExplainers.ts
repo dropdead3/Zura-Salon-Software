@@ -580,9 +580,32 @@ export const PAGE_EXPLAINERS: Record<string, PageExplainerEntry> = {
     description: `Manage your Color Bar module subscription. View plan details, usage, and billing for ${PLATFORM_NAME}'s chemical tracking features.`,
     icon: CreditCard,
   },
+  'color-bar-setup-overview': {
+    title: 'Setup Overview',
+    description: `This dashboard shows your Color Bar configuration progress. Complete each area to unlock full tracking, billing, and compliance features. Use the Setup Wizard for a guided walkthrough, or configure each section individually.`,
+    icon: LayoutDashboard,
+  },
+  'color-bar-permissions': {
+    title: 'Color Bar Permissions',
+    description: 'Decide who can do what in Color Bar — from mixing bowls to viewing costs to overriding charges. Each column is a role, each row is a capability.',
+    icon: ShieldCheck,
+  },
+  'color-bar-alerts': {
+    title: 'Alerts & Exceptions',
+    description: 'Set up automatic alerts for operational issues — like a stylist skipping the reweigh step, using 50% more product than expected, or running low on stock.',
+    icon: AlertTriangle,
+  },
+  'color-bar-formula': {
+    title: 'Formula Assistance',
+    description: 'Smart Mix Assist suggests formulas based on client history and formula baselines. Configure the suggestion priority, auto-populate behavior, and the disclaimer shown to staff.',
+    icon: Sparkles,
+  },
+  'color-bar-products': {
+    title: 'Products & Supplies',
+    description: "Choose which products stylists use at the mixing station. Toggle tracking on, set costs, and pick how each product is measured (weighed, pumped, etc). Do this first — services can't be tracked without products.",
+    icon: Package,
+  },
 
-  // ============================================================
-  // PLATFORM PAGES
   // ============================================================
   'platform-overview': {
     title: 'Platform Command Center',

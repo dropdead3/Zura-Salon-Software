@@ -254,9 +254,8 @@ export default function AnalyticsHub() {
               {/* Location Filter - conditionally rendered based on access */}
               {showLocationSelector && (
                 <Select value={locationId} onValueChange={setLocationId}>
-                  <SelectTrigger className="w-[200px]">
+                   <SelectTrigger className="w-[200px]">
                     <MapPin className="w-4 h-4 mr-2 text-muted-foreground" />
-        <PageExplainer pageId="analytics-hub" />
                     <SelectValue placeholder={t('sales.select_location')} />
                   </SelectTrigger>
                   <SelectContent>
@@ -351,6 +350,7 @@ export default function AnalyticsHub() {
             </div>
           ) : undefined}
         />
+        <PageExplainer pageId="analytics-hub" />
 
         {/* Main Tab Navigation */}
         <Tabs value={activeTab} onValueChange={handleTabChange}>

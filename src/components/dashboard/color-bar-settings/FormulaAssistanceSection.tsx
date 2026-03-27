@@ -10,7 +10,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Loader2, Sparkles, Save } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Infotainer } from '@/components/ui/Infotainer';
+import { PageExplainer } from '@/components/ui/PageExplainer';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 
 const DEFAULT_DISCLAIMER = 'Smart Mix Assist suggestions are based on historical usage data and formula baselines. Always verify formulas with your professional judgment before applying.';
@@ -54,7 +54,7 @@ export function FormulaAssistanceSection() {
 
   return (
     <div className="space-y-6">
-      <Infotainer id="color-bar-formula-guide" title="Formula Assistance" description="Smart Mix Assist suggests formulas based on client history and formula baselines. Configure the suggestion priority, auto-populate behavior, and the disclaimer shown to staff." icon={<Sparkles className="h-4 w-4 text-primary" />} />
+      <PageExplainer pageId="color-bar-formula" />
 
       <Card>
         <CardHeader className="flex flex-row items-center justify-between pr-6">

@@ -15,7 +15,7 @@ import { usePurchaseOrders } from '@/hooks/usePurchaseOrders';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import { NavBadge } from '../NavBadge';
-import { FirstTimeCallout } from '@/components/ui/FirstTimeCallout';
+import { PageExplainer } from '@/components/ui/PageExplainer';
 import { StockTab } from './inventory/StockTab';
 import { OrdersTab } from './inventory/OrdersTab';
 import { ReceiveTab } from './inventory/ReceiveTab';
@@ -151,11 +151,7 @@ export function ColorBarInventorySection({ initialTab }: { initialTab?: string }
 
 
       {/* First-time onboarding hint */}
-      <FirstTimeCallout
-        id="color-bar-inventory-workflow"
-        title="Inventory Workflow"
-        description="Track Products → Set Reorder Levels → Monitor Stock → Create Orders → Receive Shipments → Run Counts"
-      />
+      <PageExplainer pageId="color-bar-inventory" />
 
       {/* Tabbed workspace */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">

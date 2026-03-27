@@ -87,7 +87,7 @@ export default function ColorBarSubscription() {
             description="You don't have an active Color Bar subscription."
             backTo={dashPath('/admin/color-bar-settings')}
           />
-        <PageExplainer pageId="color-bar-subscription" />
+          <PageExplainer pageId="color-bar-subscription" />
           <Card className="bg-card/60 border-border/40 max-w-lg">
             <CardContent className="p-6 text-center space-y-4">
               <p className="text-muted-foreground font-sans text-sm">

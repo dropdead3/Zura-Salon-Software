@@ -104,7 +104,7 @@ export default function BillingGuide() {
         }
         backTo="/platform/accounts"
       />
-        <PageExplainer pageId="platform-billing-guide" />
+      <PageExplainer pageId="platform-billing-guide" />
 
       {/* Sticky jump nav */}
       <div className="sticky top-0 z-30 -mx-4 px-4 py-3 bg-[hsl(var(--platform-bg)/0.85)] backdrop-blur-xl border-b border-[hsl(var(--platform-border)/0.3)]">
