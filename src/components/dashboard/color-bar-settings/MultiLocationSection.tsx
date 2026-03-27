@@ -137,7 +137,7 @@ export function MultiLocationSection() {
 
   return (
     <div className="space-y-6">
-      <Infotainer id="color-bar-multilocation-guide" title="Multi-Location Settings" description="View and manage setting differences between locations. Push org defaults to all locations at once, copy between locations, or compare side-by-side." icon={<Building2 className="h-4 w-4 text-primary" />} />
+      <PageExplainer pageId="color-bar-multilocation" />
 
       {/* Push to All Locations */}
       <Card className="border-primary/20">
