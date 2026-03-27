@@ -1,44 +1,34 @@
 
 
-## Enhance Progress Card and Remove Outer Gray Card Wrapper
+## Fix Billing Method Defaulting to Allowance
 
 ### Problem
-The progress bar is wrapped in a generic `<Card>` + `<CardContent>` (lines 513–530 in ServiceTrackingSection.tsx) which creates a gray card container around the already amber-styled progress bar. This double-boxing looks wrong — the amber ghost card should be the only container.
+On line 886 of `ServiceTrackingSection.tsx`, when a service has no policy record yet, the code falls back to `'allowance'`:
+
+```typescript
+const billingMode = policy?.billing_mode || 'allowance';
+```
+
+This makes every unconfigured service appear as if "Allowance" has already been selected, which is misleading. Neither option should appear selected until the user explicitly chooses one.
 
 ### Changes
 
 **File: `src/components/dashboard/color-bar-settings/ServiceTrackingSection.tsx`**
 
-**Lines 512–530** — Remove the `<Card>` / `<CardContent>` wrapper. Render the progress bar and Quick Setup button directly inside a simple flex container:
+1. **Line 886** — Change the fallback from `'allowance'` to `null`:
+   ```typescript
+   const billingMode = policy?.billing_mode ?? null;
+   ```
 
-```tsx
-{/* Configuration Progress */}
-<div className="flex items-center gap-3">
-  <div className="flex-1">
-    <ServiceTrackingProgressBar milestones={milestones} />
-  </div>
-  <Button
-    variant="outline"
-    size="sm"
-    className="shrink-0"
-    onClick={() => setWizardOpen(true)}
-  >
-    <Sparkles className="w-3.5 h-3.5 mr-1.5" />
-    Quick Setup
-  </Button>
-</div>
-```
+2. **Lines 892-922** — Update the toggle rendering so that when `billingMode` is `null`, neither pill shows as active. Both pills render in the dashed/unselected style with a `+` icon. Clicking either one creates the policy with that mode (existing mutation logic unchanged).
 
-**File: `src/components/dashboard/color-bar-settings/ServiceTrackingProgressBar.tsx`**
+3. **Line 893** — Update the active check:
+   ```typescript
+   const active = billingMode !== null && billingMode === mode;
+   ```
 
-Visual enhancements to the amber ghost card:
-
-1. **Overall progress bar** — Increase height from `h-1.5` to `h-2` and add `bg-amber-500/20` track background for better contrast
-2. **Completed rows** — Add slight padding bump (`py-2.5 px-4`) and font-medium on labels for better readability
-3. **Remaining step progress bars** — Also bump to `h-1.5` with `bg-amber-500/20` track
-4. **Section headers** — Bump from `text-[10px]` to `text-[11px]` for legibility, use `text-amber-600/60 dark:text-amber-400/40` to tie into the amber palette
-5. **Quick Setup button alignment** — Move into the progress bar component's header row (right side of "Setup Progress" / "X of 3 complete") so it's visually integrated inside the amber card rather than floating outside
+4. **Lines 926-930** — Guard the mode-specific content below the toggles so it only renders when a mode is actually selected (`billingMode !== null`). When null, show a subtle hint: "Select a billing method above."
 
 ### Result
-Single amber ghost card contains everything — progress header, milestones, and Quick Setup button. No outer gray card wrapper. Cleaner hierarchy and more polished appearance.
+Unconfigured services show both billing options as unselected. The user must explicitly choose Allowance or Parts & Labor, eliminating false "already configured" signals and fixing the progress milestone counts.
 
