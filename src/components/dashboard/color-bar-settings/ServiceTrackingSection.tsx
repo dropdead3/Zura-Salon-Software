@@ -710,14 +710,14 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                         onCheckedChange={selectAll}
                       />
                     </TableHead>
-                    <TableHead className={tokens.table.columnHeader}>Service</TableHead>
-                    <TableHead className={tokens.table.columnHeader}>
-                      <div className="flex items-center gap-1.5">
-                        Billing Method
-                        <MetricInfoTooltip description="Shows the billing method for each tracked service — either an allowance dollar amount or Parts and Labor cost-plus billing." />
-                      </div>
-                    </TableHead>
-                    <TableHead className={tokens.table.columnHeader}>Tracked</TableHead>
+                    <TableHead className={cn(tokens.table.columnHeader, 'min-w-[180px]')}>Service</TableHead>
+                    <TableHead className={cn(tokens.table.columnHeader, 'min-w-[140px]')}>
+                       <div className="flex items-center gap-1.5">
+                         Billing Method
+                         <MetricInfoTooltip description="Shows the billing method for each tracked service — either an allowance dollar amount or Parts and Labor cost-plus billing." />
+                       </div>
+                     </TableHead>
+                    <TableHead className={cn(tokens.table.columnHeader, 'min-w-[160px]')}>Tracked</TableHead>
                     <TableHead className="w-10" />
                   </TableRow>
                 </TableHeader>
