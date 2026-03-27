@@ -1,18 +1,47 @@
 
 
-# Make "Where the Gap Came From" List Scrollable
+# Fix: Remove Redundant Progress Bar in Revenue Gap Drilldown
 
 ## Problem
-When there are many gap items (and the user clicks "Show all"), the list grows unbounded and pushes the dialog content beyond comfortable viewing. The screenshot shows 12+ items with no scroll constraint.
+The drilldown section repeats the same "Actual vs Expected" progress bar that already exists on the parent card above it. Two identical progress bars are visually redundant.
 
 ## Solution
-Wrap the gap items list in a `ScrollArea` with a max height equivalent to ~7 rows (~350px). The list scrolls when items exceed 7; otherwise it renders naturally without a scrollbar.
+Replace the progress bar in `RevenueGapDrilldown.tsx` with two inline text rows:
+- **Scheduled Service Revenue:** showing `data.expectedRevenue`
+- **Gap Revenue:** showing `data.gapAmount` (colored red/warning for negative gap, green for positive)
+
+This gives the drilldown a text-based summary context without duplicating the visual progress bar.
 
 ## Changes
 
 **File:** `src/components/dashboard/sales/RevenueGapDrilldown.tsx`
 
-- Import `ScrollArea` from `@/components/ui/scroll-area`
-- Wrap the `<div className="space-y-1">` containing the `GapItemRow` map in a `<ScrollArea className="max-h-[350px]">` so it becomes scrollable when expanded beyond 7 items
-- The "Show all" button and summary section remain outside the scroll area
+Replace lines 132–153 (the "Summary bar" block with the Progress component) with two simple label-value rows:
+
+```tsx
+{/* Summary context */}
+<div className="space-y-1.5">
+  <div className="flex items-center justify-between text-xs">
+    <span className="text-muted-foreground">Scheduled Service Revenue</span>
+    <BlurredAmount>
+      <span className="font-medium text-foreground">
+        {formatCurrency(data.expectedRevenue)}
+      </span>
+    </BlurredAmount>
+  </div>
+  <div className="flex items-center justify-between text-xs">
+    <span className="text-muted-foreground">Gap Revenue</span>
+    <BlurredAmount>
+      <span className={cn(
+        "font-medium",
+        data.gapAmount <= 0 ? "text-success-foreground" : "text-warning"
+      )}>
+        {data.gapAmount <= 0 ? '+' : '-'}{formatCurrency(Math.abs(data.gapAmount))}
+      </span>
+    </BlurredAmount>
+  </div>
+</div>
+```
+
+The `Progress` import can be removed if no longer used elsewhere in the file.
 
