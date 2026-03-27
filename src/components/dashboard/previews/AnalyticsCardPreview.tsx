@@ -1,6 +1,9 @@
 import { 
   DollarSign, Trophy, PieChart, TrendingUp, Target, CalendarPlus, 
-  Users, Gauge, BarChart3, Briefcase, LineChart, UserPlus 
+  Users, Gauge, BarChart3, Briefcase, LineChart, UserPlus,
+  FileText, Sun, HeartPulse, Activity, RefreshCw, MapPin,
+  Layers, ShoppingBag, Wallet, Receipt, Scale, Award,
+  FlaskConical, PackageSearch,
 } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -49,7 +52,48 @@ function MiniBar({ label, pct, color = 'bg-primary' }: { label: string; pct: num
 }
 
 /* ═══════════════════════════════════════ */
-/* 1. SALES OVERVIEW                      */
+/* EXECUTIVE SUMMARY                      */
+/* ═══════════════════════════════════════ */
+function ExecutiveSummaryPreview() {
+  return (
+    <div className="space-y-3">
+      <MiniHeader icon={FileText} title="EXECUTIVE SUMMARY" />
+      <div className="grid grid-cols-3 gap-2">
+        {[
+          { label: 'Revenue', value: '$48.2k', delta: '+8%' },
+          { label: 'Margin', value: '62%', delta: '+2pp' },
+          { label: 'Retention', value: '84%', delta: '+1%' },
+        ].map(k => (
+          <div key={k.label} className="rounded-md bg-muted/40 p-2 text-center">
+            <p className="font-display text-sm font-medium">{k.value}</p>
+            <p className="text-[8px] text-muted-foreground">{k.label}</p>
+            <p className="text-[8px] text-emerald-500 font-medium">{k.delta}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════ */
+/* DAILY BRIEF                            */
+/* ═══════════════════════════════════════ */
+function DailyBriefPreview() {
+  return (
+    <div className="space-y-3">
+      <MiniHeader icon={Sun} title="DAILY BRIEF" />
+      <div className="space-y-1.5">
+        <StatRow label="Today's appointments" value="24" />
+        <StatRow label="Projected revenue" value="$4,800" />
+        <StatRow label="Open gaps" value="3 slots" />
+        <StatRow label="New clients today" value="5" />
+      </div>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════ */
+/* SALES OVERVIEW                         */
 /* ═══════════════════════════════════════ */
 function SalesOverviewPreview() {
   return (
@@ -78,7 +122,7 @@ function SalesOverviewPreview() {
 }
 
 /* ═══════════════════════════════════════ */
-/* 2. REVENUE BREAKDOWN                   */
+/* REVENUE BREAKDOWN                      */
 /* ═══════════════════════════════════════ */
 function RevenueBreakdownPreview() {
   const segments = [
@@ -125,7 +169,7 @@ function RevenueBreakdownPreview() {
 }
 
 /* ═══════════════════════════════════════ */
-/* 3. TOP PERFORMERS                      */
+/* TOP PERFORMERS                         */
 /* ═══════════════════════════════════════ */
 function TopPerformersPreview() {
   const performers = [
@@ -154,7 +198,55 @@ function TopPerformersPreview() {
 }
 
 /* ═══════════════════════════════════════ */
-/* 4. WEEK AHEAD FORECAST                 */
+/* SERVICE MIX                            */
+/* ═══════════════════════════════════════ */
+function ServiceMixPreview() {
+  const categories = [
+    { label: 'Color', pct: 38 },
+    { label: 'Cut & Style', pct: 30 },
+    { label: 'Treatments', pct: 18 },
+    { label: 'Extensions', pct: 14 },
+  ];
+  return (
+    <div className="space-y-3">
+      <MiniHeader icon={Layers} title="SERVICE MIX" />
+      <div className="space-y-1.5">
+        {categories.map(c => (
+          <MiniBar key={c.label} label={c.label} pct={c.pct} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════ */
+/* RETAIL EFFECTIVENESS                   */
+/* ═══════════════════════════════════════ */
+function RetailEffectivenessPreview() {
+  return (
+    <div className="space-y-3">
+      <MiniHeader icon={ShoppingBag} title="RETAIL EFFECTIVENESS" />
+      <div className="grid grid-cols-2 gap-2">
+        <div className="rounded-md bg-muted/40 p-2 text-center">
+          <p className="font-display text-sm font-medium">34%</p>
+          <p className="text-[9px] text-muted-foreground">Attach rate</p>
+        </div>
+        <div className="rounded-md bg-muted/40 p-2 text-center">
+          <p className="font-display text-sm font-medium">$42</p>
+          <p className="text-[9px] text-muted-foreground">Avg ticket</p>
+        </div>
+      </div>
+      <div className="space-y-1.5">
+        <StatRow label="Olaplex" value="$1,240" />
+        <StatRow label="K18" value="$980" />
+        <StatRow label="Redken" value="$760" />
+      </div>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════ */
+/* WEEK AHEAD FORECAST                    */
 /* ═══════════════════════════════════════ */
 function WeekAheadForecastPreview() {
   const days = [
@@ -186,7 +278,7 @@ function WeekAheadForecastPreview() {
 }
 
 /* ═══════════════════════════════════════ */
-/* 5. GOAL TRACKER                        */
+/* GOAL TRACKER                           */
 /* ═══════════════════════════════════════ */
 function GoalTrackerPreview() {
   return (
@@ -212,7 +304,7 @@ function GoalTrackerPreview() {
 }
 
 /* ═══════════════════════════════════════ */
-/* 6. NEW BOOKINGS                        */
+/* NEW BOOKINGS                           */
 /* ═══════════════════════════════════════ */
 function NewBookingsPreview() {
   return (
@@ -234,7 +326,7 @@ function NewBookingsPreview() {
 }
 
 /* ═══════════════════════════════════════ */
-/* 7. CLIENT FUNNEL                       */
+/* CLIENT FUNNEL                          */
 /* ═══════════════════════════════════════ */
 function ClientFunnelPreview() {
   const stages = [
@@ -262,33 +354,82 @@ function ClientFunnelPreview() {
 }
 
 /* ═══════════════════════════════════════ */
-/* 8. OPERATIONS STATS                    */
+/* CLIENT HEALTH                          */
 /* ═══════════════════════════════════════ */
-function OperationsStatsPreview() {
+function ClientHealthPreview() {
   return (
     <div className="space-y-3">
-      <MiniHeader icon={Gauge} title="OPERATIONS STATS" />
-      <div className="grid grid-cols-2 gap-2">
-        <div className="rounded-md bg-muted/40 p-2 text-center">
-          <p className="font-display text-sm font-medium">87%</p>
-          <p className="text-[9px] text-muted-foreground">Utilization</p>
+      <MiniHeader icon={HeartPulse} title="CLIENT HEALTH" />
+      <div className="flex items-center gap-3">
+        <svg viewBox="0 0 36 36" className="w-14 h-14">
+          <circle cx="18" cy="18" r="15" fill="none" strokeWidth="3" stroke="hsl(var(--muted))" />
+          <circle cx="18" cy="18" r="15" fill="none" strokeWidth="3" stroke="hsl(var(--primary))"
+            strokeDasharray={`${0.84 * 94.2} ${94.2 - 0.84 * 94.2}`}
+            strokeLinecap="round" transform="rotate(-90 18 18)"
+          />
+          <text x="18" y="19.5" textAnchor="middle" className="fill-foreground text-[8px] font-medium">84%</text>
+        </svg>
+        <div className="space-y-1">
+          <p className="text-[10px] font-medium">Retention rate</p>
+          <p className="text-[9px] text-muted-foreground">12 at-risk clients</p>
+          <p className="text-[9px] text-muted-foreground">8 win-backs this month</p>
         </div>
-        <div className="rounded-md bg-muted/40 p-2 text-center">
-          <p className="font-display text-sm font-medium">12 min</p>
-          <p className="text-[9px] text-muted-foreground">Avg wait</p>
-        </div>
-      </div>
-      <div className="space-y-1.5">
-        <StatRow label="Clients served" value="142" />
-        <StatRow label="No-shows" value="3" sub="(2.1%)" />
-        <StatRow label="Rebooking rate" value="68%" />
       </div>
     </div>
   );
 }
 
 /* ═══════════════════════════════════════ */
-/* 9. CAPACITY UTILIZATION                */
+/* REBOOKING RATE                         */
+/* ═══════════════════════════════════════ */
+function RebookingPreview() {
+  return (
+    <div className="space-y-3">
+      <MiniHeader icon={RefreshCw} title="REBOOKING RATE" />
+      <div className="text-center">
+        <p className="font-display text-lg font-medium">68%</p>
+        <p className="text-[10px] text-muted-foreground">Overall rebooking rate</p>
+      </div>
+      <div className="space-y-1.5">
+        <StatRow label="At checkout" value="52%" />
+        <StatRow label="Within 7 days" value="16%" />
+        <StatRow label="Target" value="75%" />
+      </div>
+      <div className="flex items-center justify-center gap-1">
+        <TrendingUp className="w-3 h-3 text-emerald-500" />
+        <span className="text-[10px] text-emerald-500 font-medium">+3% vs last month</span>
+      </div>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════ */
+/* OPERATIONAL HEALTH                     */
+/* ═══════════════════════════════════════ */
+function OperationalHealthPreview() {
+  return (
+    <div className="space-y-3">
+      <MiniHeader icon={Activity} title="OPERATIONAL HEALTH" />
+      <div className="grid grid-cols-2 gap-2">
+        <div className="rounded-md bg-muted/40 p-2 text-center">
+          <p className="font-display text-sm font-medium">87%</p>
+          <p className="text-[9px] text-muted-foreground">Utilization</p>
+        </div>
+        <div className="rounded-md bg-muted/40 p-2 text-center">
+          <p className="font-display text-sm font-medium">4.2%</p>
+          <p className="text-[9px] text-muted-foreground">Cancellation</p>
+        </div>
+      </div>
+      <div className="space-y-1.5">
+        <StatRow label="No-shows" value="3" sub="(2.1%)" />
+        <StatRow label="Avg wait time" value="8 min" />
+      </div>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════ */
+/* CAPACITY UTILIZATION                   */
 /* ═══════════════════════════════════════ */
 function CapacityUtilizationPreview() {
   const providers = [
@@ -313,7 +454,7 @@ function CapacityUtilizationPreview() {
 }
 
 /* ═══════════════════════════════════════ */
-/* 10. STYLIST WORKLOAD                   */
+/* STYLIST WORKLOAD                       */
 /* ═══════════════════════════════════════ */
 function StylistWorkloadPreview() {
   const stylists = [
@@ -340,7 +481,172 @@ function StylistWorkloadPreview() {
 }
 
 /* ═══════════════════════════════════════ */
-/* 11. STAFFING TRENDS                    */
+/* LOCATIONS ROLLUP                       */
+/* ═══════════════════════════════════════ */
+function LocationsRollupPreview() {
+  const locations = [
+    { name: 'Downtown', rev: '$18.4k', pct: 100 },
+    { name: 'Midtown', rev: '$14.2k', pct: 77 },
+    { name: 'Suburbs', rev: '$9.8k', pct: 53 },
+  ];
+  return (
+    <div className="space-y-3">
+      <MiniHeader icon={MapPin} title="LOCATIONS ROLLUP" />
+      <div className="space-y-2">
+        {locations.map(l => (
+          <div key={l.name} className="space-y-0.5">
+            <div className="flex justify-between text-[10px]">
+              <span className="text-foreground font-medium">{l.name}</span>
+              <span className="text-muted-foreground">{l.rev}</span>
+            </div>
+            <div className="h-1.5 bg-muted rounded-full overflow-hidden">
+              <div className="h-full rounded-full bg-primary/70" style={{ width: `${l.pct}%` }} />
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════ */
+/* COMMISSION SUMMARY                     */
+/* ═══════════════════════════════════════ */
+function CommissionSummaryPreview() {
+  return (
+    <div className="space-y-3">
+      <MiniHeader icon={Wallet} title="COMMISSION SUMMARY" />
+      <div className="text-center">
+        <p className="font-display text-lg font-medium">$12,840</p>
+        <p className="text-[10px] text-muted-foreground">Total commission liability</p>
+      </div>
+      <div className="grid grid-cols-2 gap-2">
+        <div className="rounded-md bg-muted/40 p-2 text-center">
+          <p className="text-[10px] text-muted-foreground">Service</p>
+          <p className="font-display text-sm font-medium">$9,600</p>
+        </div>
+        <div className="rounded-md bg-muted/40 p-2 text-center">
+          <p className="text-[10px] text-muted-foreground">Retail</p>
+          <p className="font-display text-sm font-medium">$3,240</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════ */
+/* STAFF COMMISSION BREAKDOWN             */
+/* ═══════════════════════════════════════ */
+function StaffCommissionBreakdownPreview() {
+  const staff = [
+    { name: 'Sarah M.', tier: 'Gold', amount: '$3,420' },
+    { name: 'Jessica R.', tier: 'Silver', amount: '$2,860' },
+    { name: 'Amanda K.', tier: 'Silver', amount: '$2,190' },
+  ];
+  return (
+    <div className="space-y-3">
+      <MiniHeader icon={Receipt} title="STAFF COMMISSION" />
+      <div className="space-y-1.5">
+        {staff.map(s => (
+          <div key={s.name} className="flex items-center justify-between text-[10px]">
+            <span className="text-foreground">{s.name}</span>
+            <div className="flex items-center gap-1.5">
+              <Badge variant="outline" className="text-[7px] px-1 py-0">{s.tier}</Badge>
+              <span className="font-medium">{s.amount}</span>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════ */
+/* TRUE PROFIT                            */
+/* ═══════════════════════════════════════ */
+function TrueProfitPreview() {
+  const rows = [
+    { label: 'Gross Revenue', value: '$48,200', bar: 100 },
+    { label: '− Commission', value: '−$12,840', bar: 73 },
+    { label: '− Product Cost', value: '−$4,200', bar: 64 },
+    { label: '− Overhead', value: '−$8,600', bar: 46 },
+  ];
+  return (
+    <div className="space-y-3">
+      <MiniHeader icon={Scale} title="TRUE PROFIT" />
+      <div className="space-y-1.5">
+        {rows.map(r => (
+          <div key={r.label} className="space-y-0.5">
+            <div className="flex justify-between text-[9px]">
+              <span className="text-muted-foreground">{r.label}</span>
+              <span className="font-medium text-foreground">{r.value}</span>
+            </div>
+            <div className="h-1 bg-muted rounded-full overflow-hidden">
+              <div className="h-full rounded-full bg-primary/60" style={{ width: `${r.bar}%` }} />
+            </div>
+          </div>
+        ))}
+      </div>
+      <div className="text-center pt-1 border-t border-border">
+        <p className="text-[10px] text-muted-foreground">Net profit</p>
+        <p className="font-display text-sm font-medium">$22,560</p>
+      </div>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════ */
+/* SERVICE PROFITABILITY                  */
+/* ═══════════════════════════════════════ */
+function ServiceProfitabilityPreview() {
+  const services = [
+    { name: 'Balayage', margin: '72%', rev: '$8,400' },
+    { name: 'Full Color', margin: '65%', rev: '$6,200' },
+    { name: 'Cut & Style', margin: '82%', rev: '$4,800' },
+    { name: 'Extensions', margin: '48%', rev: '$3,100' },
+  ];
+  return (
+    <div className="space-y-3">
+      <MiniHeader icon={BarChart3} title="SERVICE PROFITABILITY" />
+      <div className="space-y-1.5">
+        {services.map(s => (
+          <div key={s.name} className="flex items-center justify-between text-[10px]">
+            <span className="text-foreground">{s.name}</span>
+            <div className="flex items-center gap-2">
+              <span className="text-muted-foreground">{s.rev}</span>
+              <Badge variant="outline" className="text-[7px] px-1 py-0">{s.margin}</Badge>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════ */
+/* STAFF PERFORMANCE                      */
+/* ═══════════════════════════════════════ */
+function StaffPerformancePreview() {
+  const staff = [
+    { name: 'Sarah M.', score: 94 },
+    { name: 'Jessica R.', score: 87 },
+    { name: 'Amanda K.', score: 82 },
+    { name: 'Mike T.', score: 76 },
+  ];
+  return (
+    <div className="space-y-3">
+      <MiniHeader icon={Award} title="STAFF PERFORMANCE" />
+      <div className="space-y-1.5">
+        {staff.map(s => (
+          <MiniBar key={s.name} label={s.name} pct={s.score} color={s.score >= 85 ? 'bg-primary' : 'bg-primary/60'} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════ */
+/* STAFFING TRENDS                        */
 /* ═══════════════════════════════════════ */
 function StaffingTrendsPreview() {
   const points = [18, 19, 19, 20, 20, 21, 22];
@@ -378,7 +684,7 @@ function StaffingTrendsPreview() {
 }
 
 /* ═══════════════════════════════════════ */
-/* 12. HIRING & CAPACITY                  */
+/* HIRING & CAPACITY                      */
 /* ═══════════════════════════════════════ */
 function HiringCapacityPreview() {
   return (
@@ -407,21 +713,96 @@ function HiringCapacityPreview() {
 }
 
 /* ═══════════════════════════════════════ */
+/* CONTROL TOWER                          */
+/* ═══════════════════════════════════════ */
+function ControlTowerPreview() {
+  const alerts = [
+    { label: 'Cost spike — Lightener +18%', severity: 'destructive' as const },
+    { label: 'Low stock — Developer 20vol', severity: 'outline' as const },
+    { label: 'Waste above threshold', severity: 'outline' as const },
+  ];
+  return (
+    <div className="space-y-3">
+      <MiniHeader icon={FlaskConical} title="CONTROL TOWER" />
+      <div className="space-y-1.5">
+        {alerts.map((a, i) => (
+          <div key={i} className="flex items-center gap-2">
+            <Badge variant={a.severity} className="text-[7px] px-1.5 py-0">
+              {a.severity === 'destructive' ? 'Alert' : 'Watch'}
+            </Badge>
+            <span className="text-[9px] text-muted-foreground truncate">{a.label}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════ */
+/* PREDICTIVE INVENTORY                   */
+/* ═══════════════════════════════════════ */
+function PredictiveInventoryPreview() {
+  return (
+    <div className="space-y-3">
+      <MiniHeader icon={PackageSearch} title="PREDICTIVE INVENTORY" />
+      <div className="grid grid-cols-2 gap-2">
+        <div className="rounded-md bg-muted/40 p-2 text-center">
+          <p className="font-display text-sm font-medium">4</p>
+          <p className="text-[9px] text-muted-foreground">Reorder alerts</p>
+        </div>
+        <div className="rounded-md bg-muted/40 p-2 text-center">
+          <p className="font-display text-sm font-medium">12 days</p>
+          <p className="text-[9px] text-muted-foreground">Avg runway</p>
+        </div>
+      </div>
+      <div className="space-y-1.5">
+        <StatRow label="Developer 20vol" value="3 days left" />
+        <StatRow label="Lightener" value="5 days left" />
+        <StatRow label="Toner 9V" value="8 days left" />
+      </div>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════ */
 /* ROUTER                                 */
 /* ═══════════════════════════════════════ */
 const PREVIEWS: Record<string, () => JSX.Element> = {
+  // Executive
+  executive_summary: ExecutiveSummaryPreview,
+  daily_brief: DailyBriefPreview,
+  // Sales
   sales_overview: SalesOverviewPreview,
   revenue_breakdown: RevenueBreakdownPreview,
   top_performers: TopPerformersPreview,
+  service_mix: ServiceMixPreview,
+  retail_effectiveness: RetailEffectivenessPreview,
+  // Forecasting
   week_ahead_forecast: WeekAheadForecastPreview,
   goal_tracker: GoalTrackerPreview,
   new_bookings: NewBookingsPreview,
+  // Clients
   client_funnel: ClientFunnelPreview,
-  operations_stats: OperationsStatsPreview,
+  client_health: ClientHealthPreview,
+  rebooking: RebookingPreview,
+  // Operations
+  operations_stats: OperationalHealthPreview, // legacy alias
+  operational_health: OperationalHealthPreview,
   capacity_utilization: CapacityUtilizationPreview,
   stylist_workload: StylistWorkloadPreview,
+  locations_rollup: LocationsRollupPreview,
+  // Financial
+  commission_summary: CommissionSummaryPreview,
+  staff_commission_breakdown: StaffCommissionBreakdownPreview,
+  true_profit: TrueProfitPreview,
+  service_profitability: ServiceProfitabilityPreview,
+  // Staffing
+  staff_performance: StaffPerformancePreview,
   staffing_trends: StaffingTrendsPreview,
   hiring_capacity: HiringCapacityPreview,
+  // Backroom
+  control_tower: ControlTowerPreview,
+  predictive_inventory: PredictiveInventoryPreview,
 };
 
 export function AnalyticsCardPreview({ cardId }: { cardId: string }) {
