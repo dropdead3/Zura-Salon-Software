@@ -124,14 +124,14 @@ export function RevenueDonutChart({
               </PieChart>
             </ResponsiveContainer>
           </div>
-          <div className="flex-1 min-w-0 text-xs space-y-1">
+          <div className="flex-1 min-w-0 text-sm space-y-1.5">
             {/* Services row */}
             <div className="flex items-center justify-between gap-2">
               <div className="flex items-center gap-2">
                 <div className="w-2 h-2 rounded-full bg-foreground shrink-0" />
                 <span className="text-muted-foreground">Services</span>
               </div>
-              <span className="font-medium tabular-nums">{servicePercent}%</span>
+              <span className="font-medium tabular-nums text-foreground">{servicePercent}%</span>
             </div>
             {/* Retail row */}
             <div className="flex items-center justify-between gap-2">
@@ -139,20 +139,20 @@ export function RevenueDonutChart({
                 <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: 'hsl(var(--muted-foreground) / 0.4)' }} />
                 <span className="text-muted-foreground">Retail</span>
               </div>
-              <span className="font-medium tabular-nums">{retailPercent}%</span>
+              <span className="font-medium tabular-nums text-foreground">{retailPercent}%</span>
             </div>
             {/* Retail sub-category rows */}
             {subCategories.map((sub) => {
               const subPct = total > 0 ? Math.round((sub.value / total) * 100) : 0;
               return (
                 <div key={sub.label} className="flex items-center justify-between gap-2 pl-4">
-                  <span className="text-muted-foreground/70 text-[11px]">{sub.label}</span>
-                  <span className="text-muted-foreground tabular-nums text-[11px]">{subPct}%</span>
+                  <span className="text-muted-foreground/70 text-xs">{sub.label}</span>
+                  <span className="text-muted-foreground tabular-nums text-xs">{subPct}%</span>
                 </div>
               );
             })}
             {/* Metrics section */}
-            <div className="pt-2 mt-2 border-t border-border/50 space-y-1">
+            <div className="pt-2 mt-2 border-t border-border/50 space-y-1.5">
               <div className="flex items-center justify-between gap-2">
                 <div className="flex items-center gap-1.5">
                   <span className="text-muted-foreground">Retail %</span>
@@ -180,7 +180,7 @@ export function RevenueDonutChart({
                 </div>
                 <div className="flex items-center gap-1.5">
                   {!retailAttachmentLoading && retailAttachmentRate !== undefined && (
-                    <span className="hidden lg:inline text-muted-foreground text-[10px]">
+                    <span className="hidden lg:inline text-muted-foreground text-[11px]">
                       {(retailAttachmentRate / 10).toFixed(1)} of every 10 purchase retail (excl. extensions)
                     </span>
                   )}
