@@ -1106,7 +1106,7 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
       onOpenChange(newOpen);
     }}>
       <DialogContent className="max-w-5xl max-h-[90vh] p-0 overflow-hidden flex flex-col">
-        <DialogHeader className="px-6 pt-5 pb-4 border-b border-border/40 shrink-0">
+        <DialogHeader className="px-4 pt-4 pb-3 sm:px-6 sm:pt-5 sm:pb-4 border-b border-border/40 shrink-0">
           <div className="flex items-center gap-2">
             <DialogTitle className={cn(tokens.card.title)}>Product Allowance Calculator</DialogTitle>
             <MetricInfoTooltip
