@@ -44,6 +44,7 @@ import {
   GitMerge,
 } from 'lucide-react';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
+import { PageExplainer } from '@/components/ui/PageExplainer';
 
 interface ManagementCardProps {
   href: string;
@@ -166,6 +167,7 @@ export default function ManagementHub() {
           title="Management Hub"
           description="Central command for team operations"
         />
+        <PageExplainer pageId="management-hub" />
 
         {/* Team Development */}
         <CategorySection title="Team Development">

@@ -25,6 +25,7 @@ import { useOnboardingOrganizations, type OnboardingOrganization } from '@/hooks
 import { OnboardingCalendar } from '@/components/platform/onboarding/OnboardingCalendar';
 import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
+import { PageExplainer } from '@/components/ui/PageExplainer';
 
 const stageConfig: Record<string, { label: string; order: number }> = {
   new: { label: 'New', order: 1 },
@@ -269,6 +270,7 @@ export default function PlatformOnboarding() {
           title="Onboarding" 
           description="Track accounts through their go-live journey"
         />
+        <PageExplainer pageId="platform-onboarding" />
         <div className="mt-8 text-center text-red-400">
           Failed to load onboarding data
         </div>

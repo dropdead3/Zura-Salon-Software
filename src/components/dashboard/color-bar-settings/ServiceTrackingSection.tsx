@@ -35,6 +35,7 @@ import { Table, TableHeader, TableHead, TableRow, TableCell, TableBody } from '@
 import { Loader2, Wrench, Plus, Zap, ArrowRight, CircleDot, AlertTriangle, FileText, ChevronDown, ChevronRight, Search, CheckCircle2, RotateCcw, Check, Calculator } from 'lucide-react';
 import { toast } from 'sonner';
 import { Infotainer } from '@/components/ui/Infotainer';
+import { PageExplainer } from '@/components/ui/PageExplainer';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { ServiceTrackingProgressBar, type ProgressMilestone } from './ServiceTrackingProgressBar';
 import { ServiceTrackingQuickSetup } from './ServiceTrackingQuickSetup';
@@ -987,12 +988,7 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
 
   return (
     <div className="space-y-6 @container">
-      <Infotainer
-        id="color-bar-services-guide"
-        title="Service Tracking"
-        description={`Link your services (e.g. Balayage, Root Touch-Up) to the products they consume. This tells ${PLATFORM_NAME} which products to expect when a stylist mixes for that service, and powers allowance billing, compliance tracking, and Smart Mix Assist.`}
-        icon={<Wrench className="h-4 w-4 text-primary" />}
-      />
+      <PageExplainer pageId="color-bar-services" />
 
       {/* Configuration Progress */}
       <ServiceTrackingProgressBar milestones={milestones} onQuickSetup={() => setWizardOpen(true)} />

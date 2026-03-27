@@ -25,6 +25,7 @@ import {
 } from '@/hooks/useOrganizationHealth';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import { PageExplainer } from '@/components/ui/PageExplainer';
 
 type RiskFilter = 'all' | 'healthy' | 'at_risk' | 'critical';
 
@@ -64,6 +65,7 @@ export default function HealthScores() {
     return (
       <PlatformPageContainer>
         <PlatformPageHeader title="Organization Health" description="Loading..." />
+        <PageExplainer pageId="platform-health-scores" />
         <div className="grid gap-4 md:grid-cols-4 mt-6">
           {[...Array(4)].map((_, i) => (
             <Skeleton key={i} className="h-24" />

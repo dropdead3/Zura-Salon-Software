@@ -17,6 +17,7 @@ import {
 } from '@/components/platform/ui/PlatformCard';
 import { PlatformPageContainer } from '@/components/platform/ui/PlatformPageContainer';
 import { PlatformPageHeader } from '@/components/platform/ui/PlatformPageHeader';
+import { PageExplainer } from '@/components/ui/PageExplainer';
 
 export default function PlatformSettings() {
   const tabTriggerClass = 'data-[state=active]:bg-violet-600 data-[state=active]:text-white text-[hsl(var(--platform-foreground-muted))] hover:text-[hsl(var(--platform-foreground))]';
@@ -27,6 +28,7 @@ export default function PlatformSettings() {
         title="Platform Settings"
         description="Configure platform-wide settings and defaults"
       />
+        <PageExplainer pageId="platform-settings" />
 
       <Tabs defaultValue="account" className="space-y-6">
         <TabsList className="border p-1 bg-[hsl(var(--platform-bg-card)/0.5)] border-[hsl(var(--platform-border)/0.5)]">

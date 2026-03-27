@@ -19,6 +19,7 @@ import {
 } from '@/hooks/useChairAssignments';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
+import { PageExplainer } from '@/components/ui/PageExplainer';
 
 
 export default function ChairAssignments() {
@@ -63,6 +64,7 @@ export default function ChairAssignments() {
             </Button>
           }
         />
+        <PageExplainer pageId="chair-assignments" />
 
         {/* Week navigation */}
         <div className="flex items-center gap-3">

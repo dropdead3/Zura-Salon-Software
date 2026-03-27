@@ -40,6 +40,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { PageExplainer } from '@/components/ui/PageExplainer';
 
 export default function PointsConfig() {
   const [activeTab, setActiveTab] = useState('rules');
@@ -84,6 +85,7 @@ export default function PointsConfig() {
           title="Points & Rewards"
           description="Configure point rules, manage rewards, and approve redemptions"
         />
+        <PageExplainer pageId="points-config" />
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab}>

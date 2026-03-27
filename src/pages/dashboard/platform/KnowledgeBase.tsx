@@ -7,6 +7,7 @@ import { KBCategoryManager } from '@/components/platform/settings/KBCategoryMana
 import { KBArticlesList } from '@/components/platform/settings/KBArticlesList';
 import { KBArticleEditor } from '@/components/platform/settings/KBArticleEditor';
 import { useAdminKBArticles, KBArticle } from '@/hooks/useKnowledgeBase';
+import { PageExplainer } from '@/components/ui/PageExplainer';
 
 export default function KnowledgeBase() {
   const [isEditorOpen, setIsEditorOpen] = useState(false);
@@ -39,6 +40,7 @@ export default function KnowledgeBase() {
         actions={
           <PlatformButton onClick={handleNewArticle} className="gap-2">
             <Plus className="h-4 w-4" />
+        <PageExplainer pageId="platform-knowledge-base" />
             New Article
           </PlatformButton>
         }

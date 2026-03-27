@@ -12,6 +12,7 @@ import { Switch } from '@/components/ui/switch';
 import { Loader2, Package, Save } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Infotainer } from '@/components/ui/Infotainer';
+import { PageExplainer } from '@/components/ui/PageExplainer';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 
 interface InventoryConfig {
@@ -56,7 +57,7 @@ export function InventoryReplenishmentSection() {
 
   return (
     <div className="space-y-6">
-      <Infotainer id="color-bar-inventory-guide" title="Inventory & Replenishment" description={`Control how ${PLATFORM_NAME} monitors stock levels, triggers reorder alerts, and forecasts demand based on upcoming appointments and historical usage patterns.`} icon={<Package className="h-4 w-4 text-primary" />} />
+      <PageExplainer pageId="color-bar-inventory" />
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <div className="flex items-center gap-3">

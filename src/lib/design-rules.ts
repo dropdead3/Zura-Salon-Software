@@ -100,6 +100,14 @@ export const TYPOGRAPHY_RULES = {
     prohibited: ['font-display on badges', 'font-bold on badges', 'uppercase on badges', 'inline hardcoded badge classes'],
     note: 'All Dock badges use DOCK_BADGE.base for shared sizing/font and a variant key for color. Ghost style: low-opacity bg + border.',
   },
+  PAGE_EXPLAINER_RULES: {
+    required: 'Every dashboard page MUST include a <PageExplainer pageId="..." /> component',
+    registry: 'Content must be registered in src/config/pageExplainers.ts before use',
+    placement: 'Immediately after DashboardPageHeader, before main content',
+    component: '<PageExplainer> from @/components/ui/PageExplainer.tsx',
+    styling: 'Blue ghost aesthetic — bg-blue-500/[0.04], border-blue-500/20, BookOpen icon',
+    prohibited: ['Inline explainer content (use registry)', 'Skipping explainer on new pages'],
+  },
 } as const;
 
 export function isProhibitedFontWeight(className: string): boolean {

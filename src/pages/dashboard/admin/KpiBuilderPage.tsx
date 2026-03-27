@@ -13,6 +13,7 @@ import { Switch } from '@/components/ui/switch';
 import { Loader2, Plus, Target, AlertTriangle, XCircle, Check, Pencil, Trash2 } from 'lucide-react';
 import { KPI_TEMPLATES, KPI_CATEGORY_LABELS, type KpiTemplate } from '@/constants/kpiTemplates';
 import { useKpiDefinitions, useCreateKpiDefinition, useUpdateKpiDefinition, useDeleteKpiDefinition, type KpiDefinition } from '@/hooks/useKpiDefinitions';
+import { PageExplainer } from '@/components/ui/PageExplainer';
 
 export default function KpiBuilderPage() {
   const { data: definitions, isLoading } = useKpiDefinitions();
@@ -91,6 +92,7 @@ export default function KpiBuilderPage() {
         title="KPI Architecture"
         description="Define the metrics that matter, the thresholds that trigger alerts, and the cadence of review."
       />
+        <PageExplainer pageId="kpi-builder" />
 
       {/* Active KPIs */}
       {definitions && definitions.length > 0 && (

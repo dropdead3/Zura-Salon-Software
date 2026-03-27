@@ -17,6 +17,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 import { PLATFORM_NAME } from '@/lib/brand';
+import { PageExplainer } from '@/components/ui/PageExplainer';
 
 interface PreferenceItem {
   key: string;
@@ -161,6 +162,7 @@ export default function NotificationPreferences() {
           title="Notification Preferences"
           description="Choose which notifications you'd like to receive"
         />
+        <PageExplainer pageId="notification-preferences" />
 
         {/* In-App Notifications */}
         <Card>

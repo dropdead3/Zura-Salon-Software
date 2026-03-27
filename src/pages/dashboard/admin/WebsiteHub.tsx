@@ -2,6 +2,7 @@ import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { DashboardPageHeader } from '@/components/dashboard/DashboardPageHeader';
 import { WebsiteSettingsContent } from '@/components/dashboard/settings/WebsiteSettingsContent';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
+import { PageExplainer } from '@/components/ui/PageExplainer';
 
 
 export default function WebsiteHub() {
@@ -13,6 +14,7 @@ export default function WebsiteHub() {
         description="Theme, booking, retail & SEO settings"
         backTo={dashPath('/admin/management')}
       />
+        <PageExplainer pageId="website-hub" />
       <WebsiteSettingsContent />
     </DashboardLayout>
   );

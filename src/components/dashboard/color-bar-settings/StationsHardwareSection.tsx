@@ -21,6 +21,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Loader2, Monitor, Plus, Trash2, Pencil, Wand2, ArrowRight, MapPin } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { Infotainer } from '@/components/ui/Infotainer';
+import { PageExplainer } from '@/components/ui/PageExplainer';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { StationHardwareWizard } from './StationHardwareWizard';
 
@@ -84,7 +85,7 @@ export function StationsHardwareSection({ onNavigate }: Props) {
 
   return (
     <div className="space-y-6">
-      <Infotainer id="color-bar-stations-guide" title="Stations & Hardware" description={`Register your physical mixing stations and optionally pair Bluetooth scales. Each station is tied to a location so ${PLATFORM_NAME} knows where mixing happens.`} icon={<Monitor className="h-4 w-4 text-primary" />} />
+      <PageExplainer pageId="color-bar-stations" />
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <div className="flex items-center gap-3">

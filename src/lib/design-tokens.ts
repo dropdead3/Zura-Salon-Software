@@ -245,6 +245,24 @@ export const tokens = {
     /** Toast radius only — for overriding in third-party toast wrappers */
     radius: 'rounded-lg',
   },
+
+  // ========================================
+  // PAGE EXPLAINER TOKENS
+  // ========================================
+  explainer: {
+    /** Outer container: blue ghost card */
+    container: 'rounded-xl border border-blue-500/20 bg-blue-500/[0.04] p-5 pr-12',
+    /** "Page Explainer" eyebrow label */
+    eyebrow: 'font-display text-[10px] tracking-[0.1em] uppercase text-blue-400/70',
+    /** Explainer title */
+    title: 'font-display text-sm tracking-wide text-foreground',
+    /** Explainer description text */
+    description: 'text-sm text-muted-foreground leading-relaxed',
+    /** Icon container box */
+    iconBox: 'h-8 w-8 rounded-xl bg-blue-500/10 flex items-center justify-center',
+    /** Icon inside box */
+    icon: 'h-4 w-4 text-blue-400',
+  },
 } as const;
 
 /**

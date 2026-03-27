@@ -50,6 +50,7 @@ import { useOrganizations } from '@/hooks/useOrganizations';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
 import { tokens } from '@/lib/design-tokens';
+import { PageExplainer } from '@/components/ui/PageExplainer';
 
 const DATE_PRESETS = [
   { label: 'Last 24 hours', value: '24h', getRange: () => ({ from: subHours(new Date(), 24), to: new Date() }) },
@@ -99,6 +100,7 @@ export default function AuditLogPage() {
           <div className="flex gap-2">
             <PlatformButton variant="outline" onClick={() => refetch()} disabled={isFetching}>
               <RefreshCw className={cn("w-4 h-4 mr-2", isFetching && "animate-spin")} />
+        <PageExplainer pageId="platform-audit-log" />
               Refresh
             </PlatformButton>
             <DropdownMenu>

@@ -18,6 +18,7 @@ import { DashboardPageHeader } from '@/components/dashboard/DashboardPageHeader'
 import { formatRelativeTime } from '@/lib/format';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Tabs, TabsContent, TabsTrigger, ResponsiveTabsList } from '@/components/ui/tabs';
+import { PageExplainer } from '@/components/ui/PageExplainer';
 
 interface Announcement {
   id: string;
@@ -419,6 +420,7 @@ export default function AllNotifications() {
                     disabled={markAllAsReadMutation.isPending}
                   >
                     <Check className="w-4 h-4 mr-1" />
+        <PageExplainer pageId="all-notifications" />
                     Mark All Read
                   </Button>
                 )

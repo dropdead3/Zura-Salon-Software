@@ -17,6 +17,7 @@ import { useFormatDate } from '@/hooks/useFormatDate';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { PLATFORM_NAME } from '@/lib/brand';
+import { PageExplainer } from '@/components/ui/PageExplainer';
 
 const statusConfig: Record<string, { label: string; color: string; icon: typeof Rocket }> = {
   active: { label: 'Active', color: 'text-primary', icon: Rocket },
@@ -67,6 +68,7 @@ export default function Campaigns() {
             <Select value={filter} onValueChange={setFilter}>
               <SelectTrigger className="w-[160px]">
                 <SelectValue />
+        <PageExplainer pageId="campaigns" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Campaigns</SelectItem>

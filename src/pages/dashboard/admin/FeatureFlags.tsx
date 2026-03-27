@@ -68,6 +68,7 @@ import {
   FeatureFlag,
 } from '@/hooks/useFeatureFlags';
 import { useRoles } from '@/hooks/useRoles';
+import { PageExplainer } from '@/components/ui/PageExplainer';
 
 const CATEGORY_CONFIG: Record<string, { icon: typeof Flag; label: string; color: string }> = {
   ui: { icon: Layout, label: 'UI/UX', color: 'text-primary' },
@@ -208,6 +209,7 @@ export default function FeatureFlags() {
           actions={
             <Button onClick={handleCreate} className="gap-2">
               <Plus className="w-4 h-4" />
+        <PageExplainer pageId="feature-flags" />
               New Flag
             </Button>
           }

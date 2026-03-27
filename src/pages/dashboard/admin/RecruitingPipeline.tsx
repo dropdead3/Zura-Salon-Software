@@ -53,6 +53,7 @@ import { cn } from "@/lib/utils";
 import { tokens } from '@/lib/design-tokens';
 import { ApplicantDetailSheet } from "@/components/dashboard/ApplicantDetailSheet";
 import { BentoGrid } from '@/components/ui/bento-grid';
+import { PageExplainer } from '@/components/ui/PageExplainer';
 
 export default function RecruitingPipeline() {
   const navigate = useNavigate();
@@ -139,6 +140,7 @@ export default function RecruitingPipeline() {
           description="Track and manage job applicants"
           className="mb-6"
         />
+        <PageExplainer pageId="recruiting" />
 
         {/* Stats Cards */}
         <BentoGrid maxPerRow={5} gap="gap-4">

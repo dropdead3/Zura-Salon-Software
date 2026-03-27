@@ -25,6 +25,7 @@ import {
 import { Link } from 'react-router-dom';
 import { useShiftSwaps, useMySwaps, type ShiftSwap } from '@/hooks/useShiftSwaps';
 import { useAuth } from '@/contexts/AuthContext';
+import { PageExplainer } from '@/components/ui/PageExplainer';
 
 export default function ShiftSwapMarketplace() {
   const { user } = useAuth();
@@ -74,6 +75,7 @@ export default function ShiftSwapMarketplace() {
           actions={
             <Button onClick={() => setPostDialogOpen(true)}>
               <Plus className="w-4 h-4 mr-2" />
+        <PageExplainer pageId="shift-swaps" />
               Post a Shift
             </Button>
           }

@@ -31,6 +31,7 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Info } from 'lucide-react';
+import { PageExplainer } from '@/components/ui/PageExplainer';
 
 export default function Payroll() {
   const { connection, isLoading, isConnected } = usePayrollConnection();
@@ -68,6 +69,7 @@ export default function Payroll() {
                   {activeTab !== 'hire' && (
                     <Button onClick={() => setShowWizard(true)}>
                       <Plus className="h-4 w-4 mr-2" />
+        <PageExplainer pageId="payroll" />
                       Run Payroll
                     </Button>
                   )}

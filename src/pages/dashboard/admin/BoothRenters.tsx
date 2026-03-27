@@ -8,6 +8,7 @@ import { PlatformPageHeader } from '@/components/platform/ui/PlatformPageHeader'
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { Card, CardContent } from '@/components/ui/card';
+import { PageExplainer } from '@/components/ui/PageExplainer';
 
 export default function BoothRenters() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -63,8 +64,8 @@ export default function BoothRenters() {
           description="Manage booth renters and rent payments"
           actions={<Store className="h-6 w-6 text-primary" />}
         />
+        <PageExplainer pageId="booth-renters" />
 
-        {/* Tabbed Navigation */}
         <Tabs value={activeTab} onValueChange={handleTabChange}>
           <TabsList>
             <TabsTrigger value="renters" className="gap-2">

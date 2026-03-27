@@ -25,6 +25,7 @@ import { RoleConfigTab } from '@/components/access-hub/RoleConfigTab';
 import { InvitationsTab } from '@/components/access-hub/InvitationsTab';
 import { ChatPermissionsHubTab } from '@/components/access-hub/ChatPermissionsHubTab';
 import { TeamPinManagementTab } from '@/components/access-hub/TeamPinManagementTab';
+import { PageExplainer } from '@/components/ui/PageExplainer';
 
 type TabValue = 'modules' | 'user-roles' | 'role-access' | 'permissions' | 'role-config' | 'invitations' | 'chat' | 'pins';
 
@@ -61,6 +62,7 @@ export default function AccessHub() {
             !canManage ? (
               <Badge variant="secondary" className="gap-1">
                 <Lock className="h-3 w-3" />
+        <PageExplainer pageId="access-hub" />
                 View Only
               </Badge>
             ) : undefined

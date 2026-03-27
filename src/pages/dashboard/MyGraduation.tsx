@@ -35,6 +35,7 @@ import {
 } from '@/hooks/useGraduationTracker';
 import { useEffectiveUserId } from '@/hooks/useEffectiveUser';
 import { useFormatDate } from '@/hooks/useFormatDate';
+import { PageExplainer } from '@/components/ui/PageExplainer';
 
 const STATUS_COLORS = {
   pending: 'bg-amber-500/10 text-amber-600 border-amber-500/20',
@@ -378,6 +379,7 @@ export default function MyGraduation() {
           title="My Graduation Progress"
           description="Submit proof of completion for graduation requirements and track review status."
         />
+        <PageExplainer pageId="my-graduation" />
 
         {/* Progress Overview */}
         <Card className={isGraduationReady ? 'border-emerald-500/50 bg-emerald-500/5' : ''}>

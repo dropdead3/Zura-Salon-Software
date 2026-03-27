@@ -40,6 +40,7 @@ import { CampaignsTabContent } from '@/components/dashboard/analytics/CampaignsT
 import { PinnableCard } from '@/components/dashboard/PinnableCard';
 import { LeadershipTabContent } from '@/components/dashboard/analytics/LeadershipTabContent';
 import { useHasRenters } from '@/hooks/useHasRenters';
+import { PageExplainer } from '@/components/ui/PageExplainer';
 
 
 const baseCategories = [
@@ -255,6 +256,7 @@ export default function AnalyticsHub() {
                 <Select value={locationId} onValueChange={setLocationId}>
                   <SelectTrigger className="w-[200px]">
                     <MapPin className="w-4 h-4 mr-2 text-muted-foreground" />
+        <PageExplainer pageId="analytics-hub" />
                     <SelectValue placeholder={t('sales.select_location')} />
                   </SelectTrigger>
                   <SelectContent>

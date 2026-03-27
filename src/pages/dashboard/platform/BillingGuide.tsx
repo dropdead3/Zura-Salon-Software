@@ -27,6 +27,7 @@ import { PlatformInput } from '@/components/platform/ui/PlatformInput';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
+import { PageExplainer } from '@/components/ui/PageExplainer';
 
 // --- Changelog entries (add newest first) ---
 const BILLING_CHANGELOG = [
@@ -103,6 +104,7 @@ export default function BillingGuide() {
         }
         backTo="/platform/accounts"
       />
+        <PageExplainer pageId="platform-billing-guide" />
 
       {/* Sticky jump nav */}
       <div className="sticky top-0 z-30 -mx-4 px-4 py-3 bg-[hsl(var(--platform-bg)/0.85)] backdrop-blur-xl border-b border-[hsl(var(--platform-border)/0.3)]">

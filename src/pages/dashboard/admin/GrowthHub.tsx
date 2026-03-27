@@ -11,6 +11,7 @@ import {
   ChevronRight,
 } from 'lucide-react';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
+import { PageExplainer } from '@/components/ui/PageExplainer';
 
 interface HubCardProps {
   href: string;
@@ -51,6 +52,7 @@ export default function GrowthHub() {
           title="Growth Hub"
           description="Marketing, campaigns, and online visibility"
         />
+        <PageExplainer pageId="growth-hub" />
 
         <div className="space-y-3">
           <h2 className="font-display text-sm tracking-wide text-muted-foreground uppercase">Marketing & Visibility</h2>

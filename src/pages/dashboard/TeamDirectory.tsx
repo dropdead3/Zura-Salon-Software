@@ -25,6 +25,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useStrikeCounts } from '@/hooks/useStaffStrikes';
 import { ResponsibilityBadges } from '@/components/access-hub/ResponsibilityBadges';
 import { useRoleUtils, getIconComponent } from '@/hooks/useRoleUtils';
+import { PageExplainer } from '@/components/ui/PageExplainer';
 
 const roleLabels: Record<string, string> = {
   super_admin: 'Super Admin',
@@ -209,6 +210,7 @@ export default function TeamDirectory() {
           description="View team members and salon locations."
           className="mb-8"
         />
+        <PageExplainer pageId="team-directory" />
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-6">
           <TabsList>

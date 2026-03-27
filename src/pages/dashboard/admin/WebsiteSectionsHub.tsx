@@ -21,6 +21,7 @@ import { TestimonialsEditor } from '@/components/dashboard/website-editor/Testim
 import { FAQEditor } from '@/components/dashboard/website-editor/FAQEditor';
 import { GalleryDisplayEditor } from '@/components/dashboard/website-editor/GalleryDisplayEditor';
 import { CustomSectionEditor } from '@/components/dashboard/website-editor/CustomSectionEditor';
+import { PageExplainer } from '@/components/ui/PageExplainer';
 
 const COMPONENT_MAP: Record<string, React.ComponentType<any>> = {
   hero: HeroEditor,
@@ -156,6 +157,7 @@ export default function WebsiteSectionsHub() {
   return (
     <DashboardLayout>
       <DashboardPageHeader title="Website Sections" />
+        <PageExplainer pageId="website-hub" />
       
       <div className="container max-w-[1600px] px-8 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

@@ -18,6 +18,7 @@ import {
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
+import { PageExplainer } from '@/components/ui/PageExplainer';
 
 
 interface Enrollment {
@@ -209,6 +210,7 @@ export default function WeeklyWins() {
           description={`Week ${currentWeek} Report — Reflect on your progress and plan ahead.`}
           className="mb-8"
         />
+        <PageExplainer pageId="weekly-wins" />
 
         {loading ? (
           <div className="flex items-center justify-center py-20">

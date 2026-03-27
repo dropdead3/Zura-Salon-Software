@@ -31,6 +31,7 @@ import {
 } from '@/hooks/usePlatformNotifications';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import { PageExplainer } from '@/components/ui/PageExplainer';
 
 const SEVERITY_CONFIG = {
   info: { icon: Info, color: 'text-blue-400', bg: 'bg-blue-500/20' },
@@ -80,6 +81,7 @@ export default function NotificationsPage() {
               disabled={markAllRead.isPending}
             >
               <Check className="h-4 w-4 mr-1" />
+        <PageExplainer pageId="platform-notifications" />
               Mark All Read
             </PlatformButton>
           )

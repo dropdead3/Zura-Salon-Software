@@ -136,6 +136,7 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import { DragFeedback } from '@/components/dnd/DragFeedback';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
+import { PageExplainer } from '@/components/ui/PageExplainer';
 
 
 interface UserWithRole {
@@ -995,6 +996,7 @@ export default function Settings() {
             <DashboardPageHeader
               title={categoriesMap[activeCategory]?.label.toUpperCase() ?? ''}
             />
+            <PageExplainer pageId="settings" />
           </div>
 
           {/* Category Content */}

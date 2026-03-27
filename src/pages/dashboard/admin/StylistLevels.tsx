@@ -49,6 +49,7 @@ import {
   StylistLevel 
 } from '@/hooks/useStylistLevels';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
+import { PageExplainer } from '@/components/ui/PageExplainer';
 
 type LocalStylistLevel = {
   id: string;
@@ -278,6 +279,7 @@ export default function StylistLevels() {
               )
             }
           />
+          <PageExplainer pageId="stylist-levels" />
         </div>
 
         {/* Info Notice */}

@@ -9,6 +9,7 @@ import { PaymentEventFeed } from '@/components/platform/stripe/PaymentEventFeed'
 import { useStripePaymentsHealth } from '@/hooks/useStripePaymentsHealth';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import { PageExplainer } from '@/components/ui/PageExplainer';
 
 export default function StripeHealthPage() {
   const { data, isLoading, isFetching, refetch } = useStripePaymentsHealth();
@@ -49,6 +50,7 @@ export default function StripeHealthPage() {
               disabled={isFetching}
             >
               <RefreshCw className={cn("h-4 w-4 mr-1", isFetching && "animate-spin")} />
+        <PageExplainer pageId="platform-stripe-health" />
               Refresh
             </PlatformButton>
           </div>

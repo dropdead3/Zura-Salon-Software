@@ -28,6 +28,7 @@ import { IssueCreditsDialog } from '@/components/dashboard/transactions/IssueCre
 import { GiftCardManager } from '@/components/dashboard/transactions/GiftCardManager';
 import { cn } from '@/lib/utils';
 import { BentoGrid } from '@/components/ui/bento-grid';
+import { PageExplainer } from '@/components/ui/PageExplainer';
 
 type DatePreset = 'today' | 'this_week' | 'this_month' | 'last_month' | 'all';
 
@@ -108,6 +109,7 @@ export default function Transactions() {
             <div className="flex gap-2">
               <Button variant="outline" size={tokens.button.card} onClick={() => refetch()}>
                 <RefreshCw className="w-4 h-4 mr-2" />
+        <PageExplainer pageId="transactions" />
                 Refresh
               </Button>
               <Button size={tokens.button.card} onClick={() => setIsCreditsOpen(true)}>

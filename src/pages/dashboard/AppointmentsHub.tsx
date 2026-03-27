@@ -30,6 +30,7 @@ import { CreditCard, RefreshCw, Download, AlertTriangle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
+import { PageExplainer } from '@/components/ui/PageExplainer';
 
 type DatePreset = 'today' | 'this_week' | 'this_month' | 'last_month' | 'all';
 
@@ -300,6 +301,7 @@ export default function AppointmentsHub() {
           title="Appointments & Transactions"
           description="View, filter, and manage individual appointment records, transactions, and gift cards. Use batch actions to update statuses or export data."
         />
+        <PageExplainer pageId="appointments-hub" />
 
         {/* Analytics quick-links callout */}
         <Collapsible defaultOpen>

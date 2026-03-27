@@ -22,6 +22,7 @@ import { DataImportWizard } from '@/components/admin/DataImportWizard';
 import { ImportHistoryCard } from '@/components/admin/ImportHistoryCard';
 import { useImportJobs } from '@/hooks/useImportJobs';
 import { cn } from '@/lib/utils';
+import { PageExplainer } from '@/components/ui/PageExplainer';
 
 // Source system configurations
 const IMPORT_SOURCES = [
@@ -98,6 +99,7 @@ export default function DataImport() {
           title="Data Import"
           description="Migrate your data from other salon software or import from CSV files."
         />
+        <PageExplainer pageId="data-import" />
 
         <Tabs defaultValue="import" className="space-y-6">
           <TabsList>

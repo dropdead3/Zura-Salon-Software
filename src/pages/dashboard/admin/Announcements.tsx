@@ -59,6 +59,7 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { DraggableAnnouncementCard } from '@/components/dashboard/DraggableAnnouncementCard';
+import { PageExplainer } from '@/components/ui/PageExplainer';
 
 type Priority = 'low' | 'normal' | 'high' | 'urgent';
 
@@ -357,6 +358,7 @@ export default function Announcements() {
                 <DialogTrigger asChild>
                   <Button onClick={resetForm}>
                     <Plus className="w-4 h-4 mr-2" />
+        <PageExplainer pageId="announcements" />
                     New Announcement
                   </Button>
                 </DialogTrigger>

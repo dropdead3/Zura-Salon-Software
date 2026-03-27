@@ -7,6 +7,7 @@ import { CurrentPeriodCard } from '@/components/dashboard/mypay/CurrentPeriodCar
 import { EarningsBreakdownCard } from '@/components/dashboard/mypay/EarningsBreakdownCard';
 import { MyPayStubHistory } from '@/components/dashboard/mypay/MyPayStubHistory';
 import { Loader2, Wallet } from 'lucide-react';
+import { PageExplainer } from '@/components/ui/PageExplainer';
 
 export default function MyPay() {
   const { isLoading, settings, currentPeriod, salesData, estimatedCompensation, payStubs, error } = useMyPayData();
@@ -28,6 +29,7 @@ export default function MyPay() {
       <DashboardLayout>
         <div className="px-8 py-8 max-w-[1600px] mx-auto">
           <DashboardPageHeader title="My Pay" description="Your earnings and pay history" className="mb-8" />
+        <PageExplainer pageId="my-pay" />
           <Card>
             <CardContent className="flex flex-col items-center justify-center py-16">
               <Wallet className="h-12 w-12 text-muted-foreground/50 mb-4" />

@@ -10,6 +10,7 @@ import { OrganizationLeaderboards } from '@/components/platform/analytics/Organi
 import { RevenueIntelligence } from '@/components/platform/analytics/RevenueIntelligence';
 import { OperationalMetrics } from '@/components/platform/analytics/OperationalMetrics';
 import { GrowthAnalytics } from '@/components/platform/analytics/GrowthAnalytics';
+import { PageExplainer } from '@/components/ui/PageExplainer';
 
 export default function PlatformAnalytics() {
   const { resolvedTheme } = usePlatformTheme();
@@ -62,6 +63,7 @@ export default function PlatformAnalytics() {
         actions={
           <PlatformBadge variant="warning" size="sm" className="gap-1">
             <Crown className="w-3 h-3" />
+        <PageExplainer pageId="platform-analytics" />
             Owner Only
           </PlatformBadge>
         }

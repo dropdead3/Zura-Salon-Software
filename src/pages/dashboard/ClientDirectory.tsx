@@ -64,6 +64,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from '@/components/ui/pagination';
+import { PageExplainer } from '@/components/ui/PageExplainer';
 
 const PAGE_SIZE = 50;
 const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
@@ -729,6 +730,7 @@ export default function ClientDirectory() {
               {canMerge && selectedForMerge.size >= 2 && (
                 <Button onClick={handleBulkMerge} className="gap-2">
                   <GitMerge className="w-4 h-4" />
+        <PageExplainer pageId="client-directory" />
                   Merge Selected ({selectedForMerge.size})
                 </Button>
               )}

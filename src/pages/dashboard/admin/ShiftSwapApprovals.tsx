@@ -24,6 +24,7 @@ import {
 import { DashboardPageHeader } from '@/components/dashboard/DashboardPageHeader';
 import { usePendingApprovals, useShiftSwaps, useApproveSwap, type ShiftSwap } from '@/hooks/useShiftSwaps';
 import { formatDisplayName } from '@/lib/utils';
+import { PageExplainer } from '@/components/ui/PageExplainer';
 
 const swapTypeConfig = {
   swap: { icon: ArrowLeftRight, label: 'Swap', color: 'text-blue-600' },
@@ -197,6 +198,7 @@ export default function ShiftSwapApprovals() {
           description="Review and approve shift swap requests from your team"
           className="mb-6"
         />
+        <PageExplainer pageId="shift-swap-approvals" />
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab}>

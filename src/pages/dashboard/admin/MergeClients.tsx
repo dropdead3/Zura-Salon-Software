@@ -12,6 +12,7 @@ import { useMergeAuditLog, useUndoMerge } from '@/hooks/useClientMerge';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { format } from 'date-fns';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
+import { PageExplainer } from '@/components/ui/PageExplainer';
 
 
 export default function MergeClients() {
@@ -31,6 +32,7 @@ export default function MergeClients() {
           title="Merge Clients"
           description="Consolidate duplicate client profiles safely"
         />
+        <PageExplainer pageId="merge-clients" />
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList>

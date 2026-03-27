@@ -15,6 +15,7 @@ import { PlatformBadge } from '@/components/platform/ui/PlatformBadge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useMyCoachAssignments } from '@/hooks/platform/useCoachAssignments';
 import { useColorBarPlatformAnalytics } from '@/hooks/platform/useColorBarPlatformAnalytics';
+import { PageExplainer } from '@/components/ui/PageExplainer';
 
 export default function CoachDashboard() {
   const { data: assignments, isLoading: assignmentsLoading } = useMyCoachAssignments();
@@ -39,6 +40,7 @@ export default function CoachDashboard() {
           title="Coach Dashboard"
           description="Your assigned organizations"
         />
+        <PageExplainer pageId="platform-coach" />
         <div className={cn(tokens.empty.container, 'mt-12')}>
           <Building2 className={tokens.empty.icon} />
           <h3 className={tokens.empty.heading}>No assignments yet</h3>

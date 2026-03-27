@@ -15,6 +15,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useAuth } from '@/contexts/AuthContext';
 import { useFeaturesByCategory, useToggleOrganizationFeature, useBulkToggleFeatures } from '@/hooks/useOrganizationFeatures';
 import { FeatureCategorySection } from '@/components/features/FeatureCategorySection';
+import { PageExplainer } from '@/components/ui/PageExplainer';
 
 type FilterState = 'all' | 'enabled' | 'disabled';
 
@@ -89,6 +90,7 @@ export default function FeaturesCenter() {
           title="Features Center"
           description="Customize which features are available in your organization"
         />
+        <PageExplainer pageId="features-center" />
 
         {/* Stats */}
         <div className="flex flex-wrap items-center gap-4">

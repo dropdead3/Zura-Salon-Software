@@ -39,6 +39,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import confetti from 'canvas-confetti';
+import { PageExplainer } from '@/components/ui/PageExplainer';
 
 interface BellEntry {
   id: string;
@@ -522,6 +523,7 @@ export default function RingTheBell() {
               className="font-display tracking-wide"
             >
               <Bell className="w-4 h-4 mr-2" />
+        <PageExplainer pageId="ring-the-bell" />
               {showForm ? 'CANCEL' : 'RING IT'}
             </Button>
           }

@@ -8,6 +8,7 @@ import { SEOWorkshopOverview } from '@/components/dashboard/seo-workshop/SEOWork
 import { SEOWorkshopActionList } from '@/components/dashboard/seo-workshop/SEOWorkshopActionList';
 import { SEOWorkshopGuides } from '@/components/dashboard/seo-workshop/SEOWorkshopGuides';
 import { SEOWorkshopTools } from '@/components/dashboard/seo-workshop/SEOWorkshopTools';
+import { PageExplainer } from '@/components/ui/PageExplainer';
 
 export default function SEOWorkshopHub() {
   const { effectiveOrganization } = useOrganizationContext();
@@ -21,6 +22,7 @@ export default function SEOWorkshopHub() {
           title="SEO Workshop"
           description="Tasks and guides to improve local visibility"
         />
+        <PageExplainer pageId="seo-workshop" />
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList>

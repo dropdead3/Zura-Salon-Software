@@ -19,6 +19,7 @@ import { Loader2, Building2, Copy, RotateCcw, ArrowRight, Upload, AlertTriangle 
 import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
 import { Infotainer } from '@/components/ui/Infotainer';
+import { PageExplainer } from '@/components/ui/PageExplainer';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 
 export function MultiLocationSection() {
@@ -136,7 +137,7 @@ export function MultiLocationSection() {
 
   return (
     <div className="space-y-6">
-      <Infotainer id="color-bar-multilocation-guide" title="Multi-Location Settings" description="View and manage setting differences between locations. Push org defaults to all locations at once, copy between locations, or compare side-by-side." icon={<Building2 className="h-4 w-4 text-primary" />} />
+      <PageExplainer pageId="color-bar-multilocation" />
 
       {/* Push to All Locations */}
       <Card className="border-primary/20">

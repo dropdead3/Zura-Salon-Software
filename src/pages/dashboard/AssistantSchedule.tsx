@@ -27,6 +27,7 @@ import { useActiveAssistants } from '@/hooks/useAssistantAvailability';
 import { useAuth } from '@/contexts/AuthContext';
 import { useViewAs } from '@/contexts/ViewAsContext';
 import { cn } from '@/lib/utils';
+import { PageExplainer } from '@/components/ui/PageExplainer';
 
 function formatTime(time: string) {
   const [hours, minutes] = time.split(':');
@@ -540,6 +541,7 @@ export default function AssistantSchedule() {
             </div>
           }
         />
+        <PageExplainer pageId="assistant-schedule" />
 
         {/* Non-admin Calendar View */}
         {showCalendarToggle && viewMode === 'calendar' && (

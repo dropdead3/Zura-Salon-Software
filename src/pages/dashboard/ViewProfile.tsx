@@ -28,6 +28,7 @@ import { AssistantRequestHistoryCard } from '@/components/dashboard/AssistantReq
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
+import { PageExplainer } from '@/components/ui/PageExplainer';
 
 
 const DAYS_OF_WEEK = [
@@ -380,6 +381,7 @@ export default function ViewProfile() {
             title={profile.display_name || profile.full_name}
             description="Editing profile as Super Admin"
           />
+        <PageExplainer pageId="my-profile" />
           
           <div className="flex items-start gap-4">
             <Avatar className="w-16 h-16">

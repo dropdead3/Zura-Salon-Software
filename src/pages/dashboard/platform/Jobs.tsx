@@ -51,6 +51,7 @@ import {
   type EdgeFunctionLog 
 } from '@/hooks/useEdgeFunctionLogs';
 import { cn } from '@/lib/utils';
+import { PageExplainer } from '@/components/ui/PageExplainer';
 
 export default function JobsPage() {
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
@@ -113,6 +114,7 @@ export default function JobsPage() {
             onClick={() => refetch()}
           >
             <RefreshCw className="h-4 w-4 mr-1" />
+        <PageExplainer pageId="platform-jobs" />
             Refresh
           </PlatformButton>
         }

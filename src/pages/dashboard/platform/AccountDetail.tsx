@@ -55,6 +55,7 @@ import { useLocations } from '@/hooks/useLocations';
 import { useOrganizationUsage, calculateCapacity, getUtilizationColor, getUtilizationBgColor } from '@/hooks/useOrganizationCapacity';
 import { cn } from '@/lib/utils';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
+import { PageExplainer } from '@/components/ui/PageExplainer';
 
 
 const statusColors: Record<string, 'success' | 'warning' | 'error' | 'default'> = {
@@ -165,6 +166,7 @@ export default function AccountDetail() {
           </div>
         }
       />
+      <PageExplainer pageId="platform-account-detail" />
 
       {/* Stats Cards */}
       <div className="grid gap-4 md:grid-cols-4">

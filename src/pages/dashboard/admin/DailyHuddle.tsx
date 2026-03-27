@@ -9,6 +9,7 @@ import { HuddleEditor } from '@/components/huddle/HuddleEditor';
 import { HuddleArchive } from '@/components/huddle/HuddleArchive';
 import { useTodaysHuddle, useHuddleById } from '@/hooks/useHuddles';
 import { useFormatDate } from '@/hooks/useFormatDate';
+import { PageExplainer } from '@/components/ui/PageExplainer';
 
 export default function DailyHuddle() {
   const { formatDate } = useFormatDate();
@@ -39,6 +40,7 @@ export default function DailyHuddle() {
           title="Daily Huddle"
           description="Create and manage daily team huddle notes"
         />
+        <PageExplainer pageId="daily-huddle" />
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab}>

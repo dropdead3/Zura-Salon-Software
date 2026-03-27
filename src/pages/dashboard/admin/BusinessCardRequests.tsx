@@ -46,6 +46,7 @@ import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { useFormatDate } from '@/hooks/useFormatDate';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+import { PageExplainer } from '@/components/ui/PageExplainer';
 
 interface BusinessCardRequest {
   id: string;
@@ -224,6 +225,7 @@ export default function BusinessCardRequests() {
           description="Manage and process business card requests from team members."
           className="mb-8"
         />
+        <PageExplainer pageId="business-card-requests" />
 
         {/* Stats Cards */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">

@@ -16,6 +16,7 @@ import { AddScalesDialog } from '@/components/dashboard/color-bar-settings/AddSc
 import { ColorBarROICard } from '@/components/dashboard/color-bar-settings/ColorBarROICard';
 import { COLOR_BAR_BASE_PRICE, COLOR_BAR_PER_SERVICE_FEE, SCALE_LICENSE_MONTHLY } from '@/hooks/color-bar/useLocationStylistCounts';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
+import { PageExplainer } from '@/components/ui/PageExplainer';
 
 
 interface SubscriptionData {
@@ -86,6 +87,7 @@ export default function ColorBarSubscription() {
             description="You don't have an active Color Bar subscription."
             backTo={dashPath('/admin/color-bar-settings')}
           />
+        <PageExplainer pageId="color-bar-subscription" />
           <Card className="bg-card/60 border-border/40 max-w-lg">
             <CardContent className="p-6 text-center space-y-4">
               <p className="text-muted-foreground font-sans text-sm">

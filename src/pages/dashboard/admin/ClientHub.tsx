@@ -14,6 +14,7 @@ import {
   ChevronRight,
 } from 'lucide-react';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
+import { PageExplainer } from '@/components/ui/PageExplainer';
 
 interface HubCardProps {
   href: string;
@@ -54,6 +55,7 @@ export default function ClientHub() {
           title="Client Hub"
           description="Client management, health tracking, and engagement"
         />
+        <PageExplainer pageId="client-hub" />
 
         <div className="space-y-3">
           <h2 className="font-display text-sm tracking-wide text-muted-foreground uppercase">Client Management</h2>
