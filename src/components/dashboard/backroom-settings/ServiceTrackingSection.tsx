@@ -1090,9 +1090,6 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                                           is_backroom_tracked: false,
                                                           is_chemical_service: false,
                                                           container_types: [],
-                                                          assistant_prep_allowed: false,
-                                                          smart_mix_assist_enabled: false,
-                                                          formula_memory_enabled: false,
                                                           backroom_config_dismissed: false,
                                                         }});
                                                       }}
