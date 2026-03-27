@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { PLATFORM_NAME } from '@/lib/brand';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import {
   useColorBarStations,
