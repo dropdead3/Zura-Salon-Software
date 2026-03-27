@@ -1228,6 +1228,25 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
           servicePrice={calculatorServicePrice}
         />
       )}
+
+      <AlertDialog open={!!resetConfirmServiceId} onOpenChange={(open) => { if (!open) setResetConfirmServiceId(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="font-display text-base tracking-wide">
+              Reset Service Configuration
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              This will clear all tracking, billing, and formula configuration for this service. It will return to a "Needs Attention" state.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={executeReset} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Reset
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
