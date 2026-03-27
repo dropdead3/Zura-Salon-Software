@@ -119,6 +119,8 @@ export function DockServicesTab({ appointment, staff, effectiveServiceName }: Do
   const createBowl = useCreateDockBowl();
   const completeSession = useCompleteDockSession();
   const markUnresolved = useMarkDockSessionUnresolved();
+  const depleteInventory = useDepleteMixSession();
+  const calculateOverage = useCalculateOverageCharge();
   const { effectiveOrganization } = useOrganizationContext();
 
   // Demo-mode local bowl state — persisted in sessionStorage per appointment
