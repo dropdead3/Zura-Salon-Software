@@ -14,7 +14,7 @@ export function GodModeBar() {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const { branding } = usePlatformBranding();
-  const platformIcon = branding.icon_light_url;
+  const platformIcon = branding.icon_dark_url;
 
   if (!isImpersonating || !selectedOrganization) return null;
 
