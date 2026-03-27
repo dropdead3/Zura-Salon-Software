@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { createPortal } from 'react-dom';
 
 type PanelSide = 'right' | 'left' | 'bottom';
@@ -77,6 +78,7 @@ export function PremiumFloatingPanel({
   side = 'right',
 }: PremiumFloatingPanelProps) {
   const isMobile = useIsMobile();
+  const { isImpersonating } = useOrganizationContext();
 
   const handleClose = () => onOpenChange(false);
 
@@ -85,6 +87,19 @@ export function PremiumFloatingPanel({
 
   // For bottom panels, maxWidth is irrelevant; use maxHeight instead
   const isBottom = side === 'bottom';
+
+  // God Mode bar offset: 44px bar height
+  const godModeOffset = isImpersonating ? 44 : 0;
+
+  // Compute top style for non-bottom panels
+  const panelTopStyle = isBottom
+    ? undefined
+    : isMobile
+      ? `${godModeOffset}px`        // mobile: flush with bar (or 0)
+      : `${godModeOffset + 16}px`;  // desktop: 16px gap below bar (or top-4)
+
+  // Backdrop top offset so it doesn't cover the God Mode bar
+  const backdropTopStyle = godModeOffset > 0 ? `${godModeOffset}px` : undefined;
 
   return createPortal(
     <AnimatePresence>
@@ -101,7 +116,7 @@ export function PremiumFloatingPanel({
               'fixed inset-0 bg-black/20 backdrop-blur-sm',
               backdropClassName,
             )}
-            style={{ zIndex: zIndex - 10 }}
+            style={{ zIndex: zIndex - 10, top: backdropTopStyle }}
             onClick={handleClose}
           />
 
@@ -117,6 +132,7 @@ export function PremiumFloatingPanel({
             )}
             style={{
               zIndex,
+              ...(panelTopStyle ? { top: panelTopStyle } : {}),
               ...(isBottom
                 ? { maxHeight: isMobile ? undefined : (maxHeight || '85vh') }
                 : { maxWidth: isMobile ? 'none' : maxWidth }),
