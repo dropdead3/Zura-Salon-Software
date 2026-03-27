@@ -335,6 +335,12 @@ export function CheckoutSummarySheet({
       y += 4;
     }
 
+    if (overageChargeTotal > 0) {
+      doc.text('Additional Product Usage', margin, y);
+      doc.text(`$${overageChargeTotal.toFixed(2)}`, pageWidth - margin, y, { align: 'right' });
+      y += 4;
+    }
+
     doc.text(`Tax (${(taxRate * 100).toFixed(1)}%)`, margin, y);
     doc.text(`$${tax.toFixed(2)}`, pageWidth - margin, y, { align: 'right' });
     y += 4;
