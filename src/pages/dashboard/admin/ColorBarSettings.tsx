@@ -7,7 +7,7 @@ import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { useColorBarEntitlement } from '@/hooks/color-bar/useColorBarEntitlement';
 import { useColorBarOrgId } from '@/hooks/color-bar/useColorBarOrgId';
 import { ColorBarPaywall } from '@/components/dashboard/color-bar-settings/ColorBarPaywall';
-import { Loader2, ArrowLeft } from 'lucide-react';
+import { Loader2, ArrowLeft, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { cn } from '@/lib/utils';
 import { tokens } from '@/lib/design-tokens';
@@ -29,6 +29,12 @@ import {
   CircleDollarSign,
   Coins,
 } from 'lucide-react';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+  TooltipProvider,
+} from '@/components/ui/tooltip';
 
 import { Button } from '@/components/ui/button';
 import { useColorBarSetupHealth } from '@/hooks/color-bar/useColorBarSetupHealth';
@@ -142,6 +148,16 @@ export default function ColorBarSettings() {
   const [searchParams, setSearchParams] = useSearchParams();
   const initialSection = (searchParams.get('section') as ColorBarSection) || 'overview';
   const [activeSection, setActiveSection] = useState<ColorBarSection>(initialSection);
+  const [navCollapsed, setNavCollapsed] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('color-bar-nav-collapsed') || 'false'); } catch { return false; }
+  });
+  const toggleNavCollapsed = useCallback(() => {
+    setNavCollapsed((prev: boolean) => {
+      const next = !prev;
+      localStorage.setItem('color-bar-nav-collapsed', JSON.stringify(next));
+      return next;
+    });
+  }, []);
   const [subTab, setSubTab] = useState<string | undefined>();
   const { data: health } = useColorBarSetupHealth();
   const { isEntitled, isLoading: entitlementLoading } = useColorBarEntitlement();
@@ -294,52 +310,90 @@ export default function ColorBarSettings() {
 
         <div className="flex gap-6">
           {/* Sidebar nav */}
-          <nav className="w-56 shrink-0 hidden lg:block">
+          <TooltipProvider delayDuration={200}>
+          <nav className={cn(
+            'shrink-0 hidden lg:block transition-all duration-200',
+            navCollapsed ? 'w-12' : 'w-56'
+          )}>
               <div className="sticky top-24 space-y-1">
+                {/* Collapse toggle */}
+                <div className={cn('flex mb-2', navCollapsed ? 'justify-center' : 'justify-end px-2')}>
+                  <button
+                    onClick={toggleNavCollapsed}
+                    className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+                    aria-label={navCollapsed ? 'Expand navigation' : 'Collapse navigation'}
+                  >
+                    {navCollapsed ? <PanelLeftOpen className="w-4 h-4" /> : <PanelLeftClose className="w-4 h-4" />}
+                  </button>
+                </div>
+
                 {sectionsByGroup.map((group, gi) => (
                   <div key={group.group}>
-                    {gi > 0 && <div className="mx-3 my-2 h-px bg-border/40" />}
-                    <p className="px-3 pt-3 pb-1 text-[10px] uppercase tracking-widest font-display text-muted-foreground/60">
-                      {group.label}
-                    </p>
+                    {gi > 0 && <div className={cn('my-2 h-px bg-border/40', navCollapsed ? 'mx-1' : 'mx-3')} />}
+                    {!navCollapsed && (
+                      <p className="px-3 pt-3 pb-1 text-[10px] uppercase tracking-widest font-display text-muted-foreground/60">
+                        {group.label}
+                      </p>
+                    )}
                     <div className="space-y-0.5">
                       {group.items.map((s) => {
                         const Icon = s.icon;
                         const isActive = activeSection === s.id;
-                        const status = getSectionStatus(s.id, health);
                         const prereqOk = isPrereqMet(s, health);
+                        const IconToRender = !prereqOk ? Lock : Icon;
 
-                        return (
-                              <button
-                                key={s.id}
-                                onClick={() => setActiveSection(s.id)}
-                                className={cn(
-                                  'w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-sans transition-colors text-left',
-                                  isActive
-                                    ? 'bg-muted text-foreground font-medium'
-                                    : 'text-muted-foreground hover:text-foreground hover:bg-muted/50',
-                                  !prereqOk && !isActive && 'opacity-60'
-                                )}
-                              >
-                                {!prereqOk ? (
-                                  <Lock className="w-4 h-4 shrink-0 text-muted-foreground/60" />
-                                ) : (
-                                  <Icon className="w-4 h-4 shrink-0" />
-                                )}
-                                <span className="flex-1 truncate">{s.label}</span>
-                              </button>
+                        const btn = (
+                          <button
+                            key={s.id}
+                            onClick={() => setActiveSection(s.id)}
+                            className={cn(
+                              'w-full flex items-center rounded-lg text-sm font-sans transition-colors text-left',
+                              navCollapsed ? 'justify-center px-0 py-2' : 'gap-2.5 px-3 py-2',
+                              isActive
+                                ? 'bg-muted text-foreground font-medium'
+                                : 'text-muted-foreground hover:text-foreground hover:bg-muted/50',
+                              !prereqOk && !isActive && 'opacity-60'
+                            )}
+                          >
+                            <IconToRender className={cn('w-4 h-4 shrink-0', !prereqOk && 'text-muted-foreground/60')} />
+                            {!navCollapsed && <span className="flex-1 truncate">{s.label}</span>}
+                          </button>
                         );
+
+                        if (navCollapsed) {
+                          return (
+                            <Tooltip key={s.id}>
+                              <TooltipTrigger asChild>{btn}</TooltipTrigger>
+                              <TooltipContent side="right" className="text-xs">{s.label}</TooltipContent>
+                            </Tooltip>
+                          );
+                        }
+                        return btn;
                       })}
                       {/* Subscription inside Settings group */}
                       {group.group === 'settings' && (
-                        <div className="mt-2 pt-2 border-t border-border/40">
-                          <button
-                            onClick={() => navigate(dashPath('/admin/color-bar-subscription'))}
-                            className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-sans text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors text-left"
-                          >
-                            <CreditCard className="w-4 h-4 shrink-0" />
-                            <span className="flex-1 truncate">Subscription</span>
-                          </button>
+                        <div className={cn(navCollapsed ? 'mt-1 pt-1' : 'mt-2 pt-2 border-t border-border/40')}>
+                          {navCollapsed ? (
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <button
+                                  onClick={() => navigate(dashPath('/admin/color-bar-subscription'))}
+                                  className="w-full flex items-center justify-center py-2 rounded-lg text-sm font-sans text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+                                >
+                                  <CreditCard className="w-4 h-4 shrink-0" />
+                                </button>
+                              </TooltipTrigger>
+                              <TooltipContent side="right" className="text-xs">Subscription</TooltipContent>
+                            </Tooltip>
+                          ) : (
+                            <button
+                              onClick={() => navigate(dashPath('/admin/color-bar-subscription'))}
+                              className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-sans text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors text-left"
+                            >
+                              <CreditCard className="w-4 h-4 shrink-0" />
+                              <span className="flex-1 truncate">Subscription</span>
+                            </button>
+                          )}
                         </div>
                       )}
                     </div>
@@ -347,6 +401,7 @@ export default function ColorBarSettings() {
                 ))}
               </div>
           </nav>
+          </TooltipProvider>
 
           {/* Mobile section selector */}
           <div className="lg:hidden w-full mb-4">
