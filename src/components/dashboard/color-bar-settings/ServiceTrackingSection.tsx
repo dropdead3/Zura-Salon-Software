@@ -169,8 +169,8 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
   const toggleTracking = useMutation({
     mutationFn: async ({ id, tracked }: { id: string; tracked: boolean }) => {
       const updates = tracked
-        ? { is_backroom_tracked: true, is_chemical_service: true, container_types: ['bowl'] }
-        : { is_backroom_tracked: false, is_chemical_service: false, container_types: [] as string[] };
+        ? { is_backroom_tracked: true, is_chemical_service: true, container_types: ['bowl'] as ('bowl' | 'bottle')[] }
+        : { is_backroom_tracked: false, is_chemical_service: false, container_types: [] as ('bowl' | 'bottle')[] };
       const { error } = await supabase
         .from('services')
         .update(updates)
