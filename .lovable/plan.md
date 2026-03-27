@@ -1,55 +1,80 @@
 
 
-## Gap Analysis: Service Tracking, Pricing & Dock Billing — Pass 7
+## Gap Analysis: Service Tracking, Pricing & Dock Billing — Pass 8
 
-### Bug 1 (Medium): `CheckoutUsageCharge` Interface Missing Fields
+### Bug 1 (Low): Leftover `as any` Cast on `charge_type` in DockServicesTab
 
-The `CheckoutUsageCharge` TypeScript interface (line 9–28 of `useCheckoutUsageCharges.ts`) is missing three columns that exist in the database and are actively used:
-- `charge_type` (used in `CheckoutClarityPanel`, `CheckoutSummarySheet`, `DockServicesTab`)
-- `product_wholesale_cost` (used in `CheckoutClarityPanel` profit calculation)
-- `product_charge_markup_pct` (used in `CheckoutClarityPanel` breakdown)
+Line 644 of `DockServicesTab.tsx`:
+```ts
+chargeType: (c as any).charge_type === 'product_cost' ? ...
+```
+`charge_type` is now on the `CheckoutUsageCharge` interface (added in Pass 7). The `as any` cast is unnecessary and should be removed to `c.charge_type`.
 
-Every consumer accesses these via `(charge as any).charge_type`, which defeats type safety and could silently break if column names change.
+**Fix:** Remove `as any` cast — one line change.
 
-**Fix:** Add the three missing fields to the `CheckoutUsageCharge` interface. Remove all `as any` casts on charge objects in consumers.
+---
 
-### Bug 2 (Medium): `useCalculateOverageCharge` Insert Uses `as any` on Typed Table
+### Gap 2 (Medium): Pre-Completion Charge Estimate Still Missing
 
-Lines 171–186 and 288–307 of `useCalculateOverageCharge.ts` cast the entire insert payload `as any`. The `checkout_usage_charges` table IS in the typed schema (types.ts line 3948), so these casts are unnecessary and hide type errors. The `charge_type: 'overage' as any` cast on line 182 is particularly suspicious — the column is typed as `string`, so no cast is needed.
+The `DockSessionCompleteSheet` shows `pendingCharges` from `existingCharges` — but charges only exist *after* the completion chain runs. On first open, the charges section is always empty. The user taps "Complete" blind.
 
-**Fix:** Remove all `as any` casts from `checkout_usage_charges` inserts. The typed schema accepts these fields directly.
+An `useEstimatedProductCharge` hook already exists and is used in the booking wizard. It computes estimates from `service_recipe_baselines` + `products.cost_per_gram` for parts-and-labor services.
 
-### Gap 3 (Medium): Allowance Overage Charges Not Surfaced in Checkout Summary
+**Fix:** In `DockServicesTab`, when `existingCharges` is empty and `sessionStats?.totalCost > 0`, compute an inline estimate:
+- For P&L services: use `sessionStats.totalCost` × `(1 + backroom_billing_settings.default_product_markup_pct / 100)`
+- For allowance services: use `sessionStats.totalNetUsage` vs the policy's `included_allowance_qty` to show "Within allowance" or "~Xg over allowance"
 
-`CheckoutSummarySheet` (line 135) filters charges to only `charge_type === 'product_cost'`. Allowance-mode overage charges (`charge_type === 'overage'`) are never included in the checkout total. This means clients who exceed their included allowance get charged $0 at checkout.
+Pass an `estimatedCharges` prop to `DockSessionCompleteSheet` when `pendingCharges` is empty. Show it with a "~" prefix and muted styling to differentiate from actual charges.
 
-**Fix:** Include overage charges in `CheckoutSummarySheet` as a separate line item (e.g., "Additional Product Usage: $X.XX") below the product cost charges. Non-waived overage charges should be added to the checkout total.
+**Files:** `DockServicesTab.tsx`, `DockSessionCompleteSheet.tsx`
 
-### Gap 4 (Low): Timeline Only Shows First Session
+---
 
-`DockSummaryTab` line 104: `<DockSessionTimeline sessionId={allSessionIds[0]} />` — only the first session's event timeline is shown. Multi-session appointments lose visibility into events from other sessions.
+### Gap 3 (Medium): Completion Error Recovery — Partial State Corruption
 
-**Fix:** Render a `DockSessionTimeline` for each session ID, or merge events from all sessions into a single unified timeline.
+The `handleCompleteSession` try/catch catches errors but provides no recovery path. If `completeSession.mutateAsync` succeeds but `depleteInventory.mutateAsync` fails, the session is stuck in `completed` status with undepleted inventory. The chain cannot be retried.
 
-### Gap 5 (Low): No Charge Estimate Before Completion (Carryover)
+**Fix:** Restructure the completion chain so that `completeSession` is called *last* (after depletion and charge calculation succeed). This way, if depletion fails, the session stays in its active state and can be retried. The order becomes:
+1. Deplete inventory
+2. Calculate charges
+3. Mark session completed (only if 1+2 succeed)
 
-The completion sheet still shows zero charges on first open because charges are created during the completion callback. The `pendingCharges` prop maps `existingCharges` which are empty pre-completion.
+Update the error toast to show which step failed.
 
-**Fix:** Compute an inline estimate using `sessionStats.totalCost` and `backroom_billing_settings.default_product_markup_pct` to show "Estimated charge: ~$X.XX" in the completion sheet before the user taps Complete.
+**File:** `DockServicesTab.tsx`
+
+---
+
+### Gap 4 (Low): `DockSessionCompleteSheet` Doesn't Reset State on Reopen
+
+When the sheet closes and reopens, `notes` and `unresolvedReason` retain their previous values because `useState` persists across mount cycles (the component stays mounted, just hidden via `open` prop).
+
+**Fix:** Add a `useEffect` that resets `notes`, `unresolvedReason`, and `mode` when `open` transitions from `false` to `true`.
+
+**File:** `DockSessionCompleteSheet.tsx`
+
+---
+
+### Gap 5 (Low): Checkout Summary Receipt PDF Missing Overage Line Items
+
+The PDF receipt generator in `CheckoutSummarySheet.tsx` (line 313–341) prints product cost charges individually but only prints overage charges as a single lump sum ("Additional Product Usage: $X.XX"). For transparency, overage charges should list individual service names like product charges do.
+
+**Fix:** Add per-service overage line items to the PDF, matching the product cost pattern.
+
+**File:** `CheckoutSummarySheet.tsx`
 
 ---
 
 ### Implementation Order
 
-1. **Update `CheckoutUsageCharge` interface** — Bug 1 (type safety across 3 consumers)
-2. **Remove `as any` casts from charge inserts** — Bug 2
-3. **Surface overage charges in CheckoutSummarySheet** — Gap 3 (missing revenue)
-4. **Multi-session timeline in DockSummaryTab** — Gap 4
-5. *(Optional)* Pre-completion charge estimate — Gap 5
+1. **Reorder completion chain** (deplete → charge → complete) — Gap 3
+2. **Pre-completion charge estimate** — Gap 2
+3. **Sheet state reset on reopen** — Gap 4
+4. **Remove leftover `as any`** — Bug 1
+5. **Overage receipt line items** — Gap 5
 
 ### Scope
-- 4 files modified: `useCheckoutUsageCharges.ts`, `useCalculateOverageCharge.ts`, `CheckoutSummarySheet.tsx`, `DockSummaryTab.tsx`
-- Remove `as any` casts from `CheckoutClarityPanel.tsx`
+- 3 files modified: `DockServicesTab.tsx`, `DockSessionCompleteSheet.tsx`, `CheckoutSummarySheet.tsx`
 - No database migrations
 - No breaking changes
 
