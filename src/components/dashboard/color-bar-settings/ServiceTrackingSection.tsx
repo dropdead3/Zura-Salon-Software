@@ -671,8 +671,8 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                     <TableHead className={tokens.table.columnHeader}>Service</TableHead>
                     <TableHead className={tokens.table.columnHeader}>
                       <div className="flex items-center gap-1.5">
-                        Product Allowance
-                        <MetricInfoTooltip description="Shows the billing configuration for each tracked service. Displays the dollar allowance included in the service price, or 'Parts and Labor' if the service uses cost-plus billing." />
+                        Billing Method
+                        <MetricInfoTooltip description="Shows the billing method for each tracked service — either an allowance dollar amount or Parts and Labor cost-plus billing." />
                       </div>
                     </TableHead>
                     <TableHead className={tokens.table.columnHeader}>Tracked</TableHead>
@@ -778,25 +778,35 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                   </div>
                                 </TableCell>
 
-                                {/* Product Allowance */}
+                                {/* Billing Method */}
                                 <TableCell onClick={(e) => e.stopPropagation()}>
                                   {(() => {
                                     const policy = allowanceByService?.get(service.id);
-                                    if (!policy || !policy.is_active) return null;
-                                    if (policy.billing_mode === 'parts_and_labor') {
-                                      return (
-                                        <Badge variant="outline" className="text-[10px] shrink-0 border-blue-500/30 bg-blue-500/10 text-blue-500 dark:text-blue-400">
-                                          Parts and Labor
-                                        </Badge>
-                                      );
+                                    if (!policy) return null;
+                                    if (policy.is_active) {
+                                      if (policy.billing_mode === 'parts_and_labor') {
+                                        return (
+                                          <Badge variant="outline" className="text-[10px] shrink-0 border-blue-500/30 bg-blue-500/10 text-blue-500 dark:text-blue-400">
+                                            Parts and Labor
+                                          </Badge>
+                                        );
+                                      }
+                                      const dollarMatch = policy.notes?.match(/\$(\d+\.?\d*)/);
+                                      if (dollarMatch) {
+                                        return (
+                                          <div className="flex items-center gap-1.5 text-sm text-foreground">
+                                            <Calculator className="w-3.5 h-3.5 text-muted-foreground" />
+                                            <span className="font-sans font-medium">${dollarMatch[1]}</span>
+                                          </div>
+                                        );
+                                      }
+                                      return null;
                                     }
-                                    const dollarMatch = policy.notes?.match(/\$(\d+\.?\d*)/);
-                                    if (dollarMatch) {
+                                    if (policy.billing_mode === 'allowance') {
                                       return (
-                                        <div className="flex items-center gap-1.5 text-sm text-foreground">
-                                          <Calculator className="w-3.5 h-3.5 text-muted-foreground" />
-                                          <span className="font-sans font-medium">${dollarMatch[1]}</span>
-                                        </div>
+                                        <Badge variant="outline" className="text-[10px] shrink-0 border-amber-500/30 bg-amber-500/10 text-amber-500 dark:text-amber-400">
+                                          Allowance Needs To Be Set
+                                        </Badge>
                                       );
                                     }
                                     return null;
@@ -819,11 +829,6 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                       return activePolicy && activePolicy.billing_mode !== 'parts_and_labor';
                                     })() ? (
                                       <Badge variant="outline" className="text-[10px] shrink-0 min-w-[6.5rem] justify-center border-blue-500/30 bg-blue-500/10 text-blue-500 dark:text-blue-400">Allowance Set</Badge>
-                                    ) : service.is_backroom_tracked && (() => {
-                                      const policy = allowancePolicies?.find(p => p.service_id === service.id);
-                                      return policy && policy.billing_mode === 'allowance' && !policy.is_active;
-                                    })() ? (
-                                      <Badge variant="outline" className="text-[10px] shrink-0 min-w-[6.5rem] justify-center border-amber-500/30 bg-amber-500/10 text-amber-500 dark:text-amber-400">Allowance Needs To Be Set</Badge>
                                     ) : service.is_backroom_tracked ? (
                                       <Badge variant="outline" className="text-[10px] shrink-0 min-w-[6.5rem] justify-center border-amber-500/30 bg-amber-500/10 text-amber-500 dark:text-amber-400">Unconfigured</Badge>
                                     ) : null}
