@@ -1,36 +1,40 @@
 
 
-## God Mode Bar — Dynamic Platform Icon
+## Fix: Category Section Headers Must Use Termina (font-display)
 
-### What
-Replace the hardcoded `Shield` icon in the God Mode bar with the platform's branded icon, pulled from platform branding settings (`icon_light_url`). Falls back to the `ZuraZIcon` component when no custom icon is uploaded.
+### Problem
+In `DashboardCustomizeMenu.tsx` line 692, category group headers ("EXECUTIVE", "SALES", "FORECASTING", etc.) use `uppercase tracking-wider` without `font-display`, rendering them in Aeonik Pro — a direct violation of the typography doctrine.
 
-### Why
-The God Mode bar is a platform-level surface. It should reflect the platform's visual identity and update automatically when platform logos change — no hardcoded assets.
+**Rule**: All uppercase text must use `font-display` (Termina). Aeonik Pro (`font-sans`) is never uppercase.
 
-### Changes
+### Root Cause
+The `uppercase` class was applied without the required `font-display` companion. This is a common slip when styling small labels — developers reach for `uppercase tracking-wider` as a visual shorthand without pairing it with the correct font family.
 
-**Single file: `src/components/dashboard/GodModeBar.tsx`**
+### Fix
 
-1. Import `usePlatformBranding` and `ZuraZIcon`
-2. Replace the `Shield` icon with:
-   - If `branding.icon_light_url` exists: render an `<img>` tag with that URL (light icon works on the dark violet background)
-   - Otherwise: render `<ZuraZIcon>` as the default fallback
-3. Keep the same sizing (`h-4 w-4`) and `text-violet-300` color treatment (ZuraZIcon inherits `currentColor`)
+**File: `src/components/dashboard/DashboardCustomizeMenu.tsx`** (line 692)
 
-### Technical Detail
-
+Change:
 ```tsx
-const { branding } = usePlatformBranding();
-const platformIcon = branding.icon_light_url;
-
-// In JSX:
-{platformIcon ? (
-  <img src={platformIcon} alt="" className="h-4 w-4 shrink-0" />
-) : (
-  <ZuraZIcon className="h-4 w-4 text-violet-300" />
-)}
+<p className="text-[10px] font-medium text-muted-foreground/70 uppercase tracking-wider mb-1 px-1">
 ```
 
-This ensures the icon is fully dynamic — if a platform admin uploads a new icon via branding settings, the God Mode bar updates automatically without code changes.
+To:
+```tsx
+<p className="text-[10px] font-display font-medium text-muted-foreground/70 uppercase tracking-wider mb-1 px-1">
+```
+
+Add `font-display` so these category headers render in Termina as required.
+
+### Also check: "AVAILABLE ANALYTICS" header (line 674)
+
+Same file, the main heading also uses uppercase without `font-display`:
+```tsx
+<h3 className="text-sm font-medium text-muted-foreground">AVAILABLE ANALYTICS</h3>
+```
+
+Fix: add `font-display tracking-wide` to match the card title token pattern.
+
+### Scope
+Two lines in one file. No other components affected.
 
