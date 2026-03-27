@@ -1,69 +1,37 @@
 
 
-# Fix: Deduplicate Insights Across Wizard Intents
+# Fix: Date Range Toggle Filters Not Working Correctly
 
-## Problem
-The wizard intents filter on overlapping dimensions — `failing` filters by severity, `quick_wins` by effort level, while `revenue`/`team`/`retention` filter by category. A single insight can match multiple intents (e.g., a critical revenue insight appears in both "Where am I failing?" and "Revenue opportunities"). Only "Show me everything" should aggregate all data.
+## Bugs Found
 
-## Solution
-Make the category-based intents (`revenue`, `team`, `retention`) exclude items already claimed by `failing` and `quick_wins`. Apply a priority waterfall:
+### Bug 1: Missing `todayToEom` case in `getDateRange()`
+The `getDateRange` function in `PinnedAnalyticsCard.tsx` has no `case 'todayToEom'`, so selecting "Today → End of Month" silently falls through to the default (last 30 days). The user sees incorrect data without any indication the filter failed.
 
-1. **Failing** — claims all `critical` + `warning` severity items
-2. **Quick wins** — claims all `quick_win` effort items NOT already claimed by `failing`
-3. **Revenue / Team / Retention** — filter by category, excluding anything claimed by `failing` or `quick_wins`
-4. **Everything** — no filter (unchanged)
+### Bug 2: Duplicate `getDateRange` in `CommandCenterAnalytics.tsx`
+A second copy of `getDateRange` exists in `CommandCenterAnalytics.tsx` (line 62) — also missing `todayToEom` and `todayToPayday`. Both should use the canonical version from `PinnedAnalyticsCard.tsx`.
 
-## Changes
+### Bug 3: `lastMonth` incorrectly mapped in `mapToSalesDateRange`
+`lastMonth` maps to `'30d'` in `mapToSalesDateRange` (line 114), so the Sales Overview card shows "last 30 rolling days" data instead of the actual previous calendar month when Last Month is selected.
 
-**File:** `src/components/dashboard/AIInsightsDrawer.tsx`
+## Fix
 
-Update the `filter` functions in `WIZARD_INTENTS`:
+### 1. Add missing `todayToEom` case to canonical `getDateRange` (PinnedAnalyticsCard.tsx)
 
 ```tsx
-// Helper: items claimed by higher-priority intents
-const isClaimed = (i: InsightItem) =>
-  i.severity === 'critical' || i.severity === 'warning' || i.effortLevel === 'quick_win';
-
-const WIZARD_INTENTS: IntentConfig[] = [
-  {
-    key: 'failing',
-    filter: (insights) => insights
-      .filter(i => i.severity === 'critical' || i.severity === 'warning')
-      .sort(...),
-  },
-  {
-    key: 'quick_wins',
-    filter: (insights) => insights
-      .filter(i => i.effortLevel === 'quick_win'
-        && i.severity !== 'critical' && i.severity !== 'warning')
-      .sort(...),
-  },
-  {
-    key: 'revenue',
-    filter: (insights) => insights
-      .filter(i => (i.category === 'revenue_pulse' || i.category === 'cash_flow')
-        && !isClaimed(i)),
-  },
-  {
-    key: 'team',
-    filter: (insights) => insights
-      .filter(i => (i.category === 'staffing' || i.category === 'capacity')
-        && !isClaimed(i)),
-  },
-  {
-    key: 'retention',
-    filter: (insights) => insights
-      .filter(i => i.category === 'client_health' && !isClaimed(i)),
-  },
-  {
-    key: 'everything',
-    filter: (insights) => insights, // unchanged
-  },
-];
+case 'todayToEom':
+  return {
+    dateFrom: format(now, 'yyyy-MM-dd'),
+    dateTo: format(endOfMonth(now), 'yyyy-MM-dd'),
+  };
 ```
 
-This ensures each insight appears in exactly one intent bucket, with `everything` as the only aggregation view. The count badges on the wizard cards will also update automatically since they use the same filter functions.
+### 2. Remove duplicate `getDateRange` from `CommandCenterAnalytics.tsx`
+Import and use the canonical `getDateRange` from `PinnedAnalyticsCard.tsx` instead of the local copy.
+
+### 3. Fix `lastMonth` mapping in `mapToSalesDateRange`
+Map `'lastMonth'` to `'lastMonth'` (or add `'lastMonth'` to the `SalesDateRange` type if it doesn't exist yet) so the Sales Overview card queries the correct calendar month.
 
 ## Files Changed
-- **Modified:** `src/components/dashboard/AIInsightsDrawer.tsx` — update 4 filter functions + add `isClaimed` helper
+- **Modified:** `src/components/dashboard/PinnedAnalyticsCard.tsx` — add `todayToEom` case, fix `lastMonth` mapping
+- **Modified:** `src/components/dashboard/CommandCenterAnalytics.tsx` — remove duplicate `getDateRange`, import canonical version
 
