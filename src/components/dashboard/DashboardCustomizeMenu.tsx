@@ -4,6 +4,18 @@ import { tokens } from '@/lib/design-tokens';
 import { Button } from '@/components/ui/button';
 import { PremiumFloatingPanel } from '@/components/ui/premium-floating-panel';
 import { Separator } from '@/components/ui/separator';
+import { Input } from '@/components/ui/input';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import { 
   Settings2, 
   LayoutDashboard, 
@@ -27,6 +39,7 @@ import {
   Briefcase,
   CalendarPlus,
   ClipboardCheck,
+  Search,
 } from 'lucide-react';
 import { 
   useDashboardLayout, 
