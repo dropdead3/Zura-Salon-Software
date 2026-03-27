@@ -282,13 +282,14 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
     badgeCount?: number;
     inFooter?: boolean;
   }) => {
-    const isActive = location.pathname === href;
+    const resolvedHref = dashPath(href.replace(/^\/dashboard/, ''));
+    const isActive = location.pathname === resolvedHref || location.pathname.startsWith(resolvedHref + '/');
     const displayLabel = label;
     
     const handleClick = (e: React.MouseEvent) => {
       e.preventDefault();
       // Always navigate with a fresh timestamp to trigger state reset on same-route navigation
-      navigate(href, { state: { navTimestamp: Date.now() } });
+      navigate(resolvedHref, { state: { navTimestamp: Date.now() } });
       onNavClick();
     };
     
