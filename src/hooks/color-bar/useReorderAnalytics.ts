@@ -5,7 +5,7 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { useBackroomOrgId } from './useColorBarOrgId';
+import { useColorBarOrgId } from './useColorBarOrgId';
 import { subMonths, addMonths, format, differenceInDays } from 'date-fns';
 import { toast } from 'sonner';
 
@@ -49,7 +49,7 @@ function weightedMovingAvg(values: number[]): number {
 }
 
 export function useReorderAnalytics() {
-  const orgId = useBackroomOrgId();
+  const orgId = useColorBarOrgId();
 
   return useQuery({
     queryKey: ['reorder-analytics', orgId],
@@ -254,7 +254,7 @@ export interface ProcurementBudget {
 }
 
 export function useProcurementBudget() {
-  const orgId = useBackroomOrgId();
+  const orgId = useColorBarOrgId();
   const queryClient = useQueryClient();
 
   const query = useQuery({

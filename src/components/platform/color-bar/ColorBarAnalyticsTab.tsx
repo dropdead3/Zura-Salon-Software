@@ -58,7 +58,7 @@ function formatCooldownLabel(coachedAt: string): string {
   return `Coached ${Math.floor(hours / 24)}d ago`;
 }
 
-export function BackroomAnalyticsTab() {
+export function ColorBarAnalyticsTab() {
   const [sendingOrgId, setSendingOrgId] = useState<string | null>(null);
   const [coachedMap, setCoachedMap] = useState<Record<string, string>>({});
   const [historyOrg, setHistoryOrg] = useState<{ id: string; name: string } | null>(null);

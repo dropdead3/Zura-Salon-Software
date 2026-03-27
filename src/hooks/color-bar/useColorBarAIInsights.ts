@@ -1,5 +1,5 @@
 /**
- * useBackroomAIInsights — Thin wrapper around AIInsightService.
+ * useColorBarAIInsights — Thin wrapper around AIInsightService.
  * Cached AI insights for backroom analytics with 2hr stale, 1min cooldown.
  */
 
@@ -19,7 +19,7 @@ const COOLDOWN_MS = 60 * 1000;
 
 export type { BackroomAIInsight, BackroomAIInsightsData } from '@/lib/color-bar/services/ai-insight-service';
 
-export function useBackroomAIInsights(locationId?: string) {
+export function useColorBarAIInsights(locationId?: string) {
   const { user } = useAuth();
   const { data: profile } = useEmployeeProfile();
   const queryClient = useQueryClient();

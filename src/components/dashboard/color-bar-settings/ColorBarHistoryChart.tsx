@@ -1,5 +1,5 @@
 /**
- * BackroomHistoryChart — Multi-metric time-series with toggleable legend.
+ * ColorBarHistoryChart — Multi-metric time-series with toggleable legend.
  * Multi-metric product usage history chart.
  */
 
@@ -22,7 +22,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Skeleton } from '@/components/ui/skeleton';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useBackroomHistory, type BucketMode, type HistoryDataPoint } from '@/hooks/color-bar/useColorBarHistory';
+import { useColorBarHistory, type BucketMode, type HistoryDataPoint } from '@/hooks/color-bar/useColorBarHistory';
 import { useFormatNumber } from '@/hooks/useFormatNumber';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 
@@ -57,10 +57,10 @@ const METRICS: MetricConfig[] = [
 
 const DEFAULT_ACTIVE = new Set(METRICS.filter(m => m.defaultOn).map(m => m.key));
 
-export function BackroomHistoryChart({ startDate, endDate, rangeLabel, locationId }: Props) {
+export function ColorBarHistoryChart({ startDate, endDate, rangeLabel, locationId }: Props) {
   const [bucketMode, setBucketMode] = useState<BucketMode>('daily');
   const [activeMetrics, setActiveMetrics] = useState<Set<string>>(new Set(DEFAULT_ACTIVE));
-  const { data: history, isLoading } = useBackroomHistory(startDate, endDate, bucketMode, locationId);
+  const { data: history, isLoading } = useColorBarHistory(startDate, endDate, bucketMode, locationId);
   const { formatNumber } = useFormatNumber();
   const { formatCurrency } = useFormatCurrency();
 

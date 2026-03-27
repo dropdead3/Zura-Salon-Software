@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import {
-  useBackroomStations,
+  useColorBarStations,
   useCreateBackroomStation,
   useUpdateBackroomStation,
   useDeleteBackroomStation,
@@ -39,7 +39,7 @@ export function StationsHardwareSection({ onNavigate }: Props) {
   const orgId = effectiveOrganization?.id;
   const { data: locations } = useActiveLocations();
   const [filterLocationId, setFilterLocationId] = useState('all');
-  const { data: allStations, isLoading } = useBackroomStations();
+  const { data: allStations, isLoading } = useColorBarStations();
   const createStation = useCreateBackroomStation();
   const updateStation = useUpdateBackroomStation();
   const deleteStation = useDeleteBackroomStation();

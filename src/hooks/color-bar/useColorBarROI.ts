@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { useBackroomOrgId } from './useColorBarOrgId';
+import { useColorBarOrgId } from './useColorBarOrgId';
 
 interface ROIData {
   monthlySavings: number;
@@ -14,8 +14,8 @@ interface ROIData {
 /** Industry baseline: ~12% waste rate on color spend */
 const BASELINE_WASTE_RATE = 0.12;
 
-export function useBackroomROI(subscriptionMonthlyCost?: number) {
-  const orgId = useBackroomOrgId();
+export function useColorBarROI(subscriptionMonthlyCost?: number) {
+  const orgId = useColorBarOrgId();
 
   return useQuery<ROIData>({
     queryKey: ['backroom-roi', orgId, subscriptionMonthlyCost],

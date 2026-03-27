@@ -1,5 +1,5 @@
 /**
- * BackroomInventoryValuationCard — Total professional product inventory value
+ * ColorBarInventoryValuationCard — Total professional product inventory value
  * at cost and retail, grouped by brand.
  */
 
@@ -24,7 +24,7 @@ interface BrandValuation {
   retailValue: number;
 }
 
-export function BackroomInventoryValuationCard({ locationId }: { locationId?: string }) {
+export function ColorBarInventoryValuationCard({ locationId }: { locationId?: string }) {
   const { effectiveOrganization } = useOrganizationContext();
   const orgId = effectiveOrganization?.id;
   const { formatCurrency } = useFormatCurrency();

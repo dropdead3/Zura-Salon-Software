@@ -1,5 +1,5 @@
 /**
- * BackroomExceptionInbox — Manager-facing inbox for operational anomalies.
+ * ColorBarExceptionInbox — Manager-facing inbox for operational anomalies.
  * Surfaces problems automatically instead of burying them in reports.
  * Filterable, resolvable, with clear visual hierarchy by severity.
  */
@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
-  useBackroomExceptions,
+  useColorBarExceptions,
   useResolveException,
   type BackroomException,
   type ExceptionFilters,
@@ -69,7 +69,7 @@ const TYPE_OPTIONS = [
   { value: 'unresolved_session', label: 'Unresolved Session' },
 ];
 
-export function BackroomExceptionInbox() {
+export function ColorBarExceptionInbox() {
   const [statusFilter, setStatusFilter] = useState('open');
   const [typeFilter, setTypeFilter] = useState('all');
   const [resolveTarget, setResolveTarget] = useState<BackroomException | null>(null);
@@ -78,7 +78,7 @@ export function BackroomExceptionInbox() {
   if (statusFilter !== 'all') filters.status = statusFilter;
   if (typeFilter !== 'all') filters.exceptionType = typeFilter;
 
-  const { data: exceptions = [], isLoading } = useBackroomExceptions(filters);
+  const { data: exceptions = [], isLoading } = useColorBarExceptions(filters);
   const resolveException = useResolveException();
 
   const handleAcknowledge = (exception: BackroomException) => {

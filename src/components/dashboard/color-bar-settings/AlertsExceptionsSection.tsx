@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
-import { useBackroomAlertRules, useUpsertAlertRule, useDeleteAlertRule, ALERT_RULE_TYPES, SEVERITY_OPTIONS, type BackroomAlertRule } from '@/hooks/color-bar/useColorBarAlertRules';
+import { useColorBarAlertRules, useUpsertAlertRule, useDeleteAlertRule, ALERT_RULE_TYPES, SEVERITY_OPTIONS, type BackroomAlertRule } from '@/hooks/color-bar/useColorBarAlertRules';
 import { useActiveLocations } from '@/hooks/useLocations';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
@@ -30,7 +30,7 @@ export function AlertsExceptionsSection() {
   const [filterLocationId, setFilterLocationId] = useState('all');
   const { data: activeLocations = [] } = useActiveLocations();
   const effectiveLocationId = filterLocationId === 'all' ? undefined : filterLocationId;
-  const { data: allRules, isLoading } = useBackroomAlertRules(filterLocationId === 'all' ? null : filterLocationId);
+  const { data: allRules, isLoading } = useColorBarAlertRules(filterLocationId === 'all' ? null : filterLocationId);
   const upsertRule = useUpsertAlertRule();
   const deleteRule = useDeleteAlertRule();
 

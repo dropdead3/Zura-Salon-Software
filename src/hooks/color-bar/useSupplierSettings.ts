@@ -4,7 +4,7 @@
  */
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { useBackroomOrgId } from './useColorBarOrgId';
+import { useColorBarOrgId } from './useColorBarOrgId';
 import { toast } from 'sonner';
 
 export interface SupplierGroup {
@@ -50,7 +50,7 @@ export interface SupplierStats {
 }
 
 export function useSupplierGroups() {
-  const orgId = useBackroomOrgId();
+  const orgId = useColorBarOrgId();
 
   return useQuery({
     queryKey: ['supplier-groups', orgId],
@@ -97,7 +97,7 @@ export function useSupplierGroups() {
 }
 
 export function useUnlinkedProducts() {
-  const orgId = useBackroomOrgId();
+  const orgId = useColorBarOrgId();
 
   return useQuery({
     queryKey: ['unlinked-products', orgId],
@@ -129,7 +129,7 @@ export function useUnlinkedProducts() {
 
 /** All products with their current supplier name (for reassignment dialog) */
 export function useAllProductsWithSupplier() {
-  const orgId = useBackroomOrgId();
+  const orgId = useColorBarOrgId();
 
   return useQuery({
     queryKey: ['all-products-with-supplier', orgId],
@@ -168,7 +168,7 @@ export function useAllProductsWithSupplier() {
 
 /** Supplier stats from purchase_orders */
 export function useSupplierStats(supplierName: string | null) {
-  const orgId = useBackroomOrgId();
+  const orgId = useColorBarOrgId();
 
   return useQuery({
     queryKey: ['supplier-stats', orgId, supplierName],
@@ -206,7 +206,7 @@ function invalidateAll(qc: ReturnType<typeof useQueryClient>) {
 /** Batch-update contact info for all rows sharing a supplier_name */
 export function useUpdateSupplierContact() {
   const queryClient = useQueryClient();
-  const orgId = useBackroomOrgId();
+  const orgId = useColorBarOrgId();
 
   return useMutation({
     mutationFn: async (params: {
@@ -258,7 +258,7 @@ export function useUpdateSupplierContact() {
 /** Link products to an existing or new supplier */
 export function useLinkProducts() {
   const queryClient = useQueryClient();
-  const orgId = useBackroomOrgId();
+  const orgId = useColorBarOrgId();
 
   return useMutation({
     mutationFn: async (params: { supplier_name: string; product_ids: string[] }) => {
@@ -306,7 +306,7 @@ export function useUnlinkProduct() {
 /** Rename a supplier across all product_suppliers rows */
 export function useRenameSupplier() {
   const queryClient = useQueryClient();
-  const orgId = useBackroomOrgId();
+  const orgId = useColorBarOrgId();
 
   return useMutation({
     mutationFn: async (params: { old_name: string; new_name: string }) => {
@@ -337,7 +337,7 @@ export interface SupplierSpendSummary {
 
 /** Compute inventory value, retail value, and implied margin for a supplier's linked products */
 export function useSupplierSpendSummary(supplierName: string | null) {
-  const orgId = useBackroomOrgId();
+  const orgId = useColorBarOrgId();
 
   return useQuery({
     queryKey: ['supplier-spend-summary', orgId, supplierName],
@@ -396,7 +396,7 @@ export function useSupplierSpendSummary(supplierName: string | null) {
 /** Delete all product_suppliers rows for a given supplier name */
 export function useDeleteSupplier() {
   const queryClient = useQueryClient();
-  const orgId = useBackroomOrgId();
+  const orgId = useColorBarOrgId();
 
   return useMutation({
     mutationFn: async (supplierName: string) => {

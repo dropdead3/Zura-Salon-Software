@@ -4,7 +4,7 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { useBackroomOrgId } from './useColorBarOrgId';
+import { useColorBarOrgId } from './useColorBarOrgId';
 import { toast } from 'sonner';
 
 export interface SupplyInsightKPIs {
@@ -35,7 +35,7 @@ export interface SupplyIntelligenceData {
 const STALE_TIME = 5 * 60_000;
 
 export function useSupplyIntelligence(locationId?: string | null) {
-  const orgId = useBackroomOrgId();
+  const orgId = useColorBarOrgId();
   const cacheKey = locationId ? `supply:${locationId}` : 'supply:all';
 
   return useQuery({

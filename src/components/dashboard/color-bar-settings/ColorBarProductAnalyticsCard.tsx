@@ -1,5 +1,5 @@
 /**
- * BackroomProductAnalyticsCard — Product & Category usage analytics
+ * ColorBarProductAnalyticsCard — Product & Category usage analytics
  * with horizontal bar charts and a sortable product table.
  */
 
@@ -13,7 +13,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Skeleton } from '@/components/ui/skeleton';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
-import { useBackroomProductAnalytics } from '@/hooks/color-bar/useColorBarProductAnalytics';
+import { useColorBarProductAnalytics } from '@/hooks/color-bar/useColorBarProductAnalytics';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { useFormatNumber } from '@/hooks/useFormatNumber';
 
@@ -45,8 +45,8 @@ interface Props {
 
 type ProductSortKey = 'name' | 'dispensed' | 'waste' | 'cost' | 'retail' | 'services';
 
-export function BackroomProductAnalyticsCard({ startDate, endDate, rangeLabel, locationId }: Props) {
-  const { data, isLoading } = useBackroomProductAnalytics(startDate, endDate, locationId);
+export function ColorBarProductAnalyticsCard({ startDate, endDate, rangeLabel, locationId }: Props) {
+  const { data, isLoading } = useColorBarProductAnalytics(startDate, endDate, locationId);
   const { formatCurrency } = useFormatCurrency();
   const { formatNumber } = useFormatNumber();
   const [sortKey, setSortKey] = useState<ProductSortKey>('cost');

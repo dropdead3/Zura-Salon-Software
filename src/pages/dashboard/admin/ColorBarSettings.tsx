@@ -4,9 +4,9 @@ import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
-import { useBackroomEntitlement } from '@/hooks/color-bar/useColorBarEntitlement';
-import { useBackroomOrgId } from '@/hooks/color-bar/useColorBarOrgId';
-import { BackroomPaywall } from '@/components/dashboard/color-bar-settings/ColorBarPaywall';
+import { useColorBarEntitlement } from '@/hooks/color-bar/useColorBarEntitlement';
+import { useColorBarOrgId } from '@/hooks/color-bar/useColorBarOrgId';
+import { ColorBarPaywall } from '@/components/dashboard/color-bar-settings/ColorBarPaywall';
 import { Loader2, ArrowLeft } from 'lucide-react';
 import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { cn } from '@/lib/utils';
@@ -31,26 +31,26 @@ import {
 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
-import { useBackroomSetupHealth } from '@/hooks/color-bar/useColorBarSetupHealth';
-import { BackroomDashboardOverview } from '@/components/dashboard/color-bar-settings/ColorBarDashboardOverview';
-import { BackroomInsightsSection } from '@/components/dashboard/color-bar-settings/ColorBarInsightsSection';
-import { BackroomSetupBanner } from '@/components/dashboard/color-bar-settings/ColorBarSetupBanner';
+import { useColorBarSetupHealth } from '@/hooks/color-bar/useColorBarSetupHealth';
+import { ColorBarDashboardOverview } from '@/components/dashboard/color-bar-settings/ColorBarDashboardOverview';
+import { ColorBarInsightsSection } from '@/components/dashboard/color-bar-settings/ColorBarInsightsSection';
+import { ColorBarSetupBanner } from '@/components/dashboard/color-bar-settings/ColorBarSetupBanner';
 import { useBackroomSetting } from '@/hooks/color-bar/useColorBarSettings';
-import { BackroomProductCatalogSection } from '@/components/dashboard/color-bar-settings/ColorBarProductCatalogSection';
+import { ColorBarProductCatalogSection } from '@/components/dashboard/color-bar-settings/ColorBarProductCatalogSection';
 import { ServiceTrackingSection } from '@/components/dashboard/color-bar-settings/ServiceTrackingSection';
 import { RecipeBaselineSection } from '@/components/dashboard/color-bar-settings/RecipeBaselineSection';
 import { AllowancesBillingSection } from '@/components/dashboard/color-bar-settings/AllowancesBillingSection';
 import { StationsHardwareSection } from '@/components/dashboard/color-bar-settings/StationsHardwareSection';
-import { BackroomInventorySection } from '@/components/dashboard/color-bar-settings/ColorBarInventorySection';
-import { BackroomPermissionsSection } from '@/components/dashboard/color-bar-settings/ColorBarPermissionsSection';
+import { ColorBarInventorySection } from '@/components/dashboard/color-bar-settings/ColorBarInventorySection';
+import { ColorBarPermissionsSection } from '@/components/dashboard/color-bar-settings/ColorBarPermissionsSection';
 import { AlertsExceptionsSection } from '@/components/dashboard/color-bar-settings/AlertsExceptionsSection';
 import { FormulaAssistanceSection } from '@/components/dashboard/color-bar-settings/FormulaAssistanceSection';
 import { MultiLocationSection } from '@/components/dashboard/color-bar-settings/MultiLocationSection';
-import { BackroomComplianceSection } from '@/components/dashboard/color-bar-settings/ColorBarComplianceSection';
+import { ColorBarComplianceSection } from '@/components/dashboard/color-bar-settings/ColorBarComplianceSection';
 import { SupplierSettingsSection } from '@/components/dashboard/color-bar-settings/SupplierSettingsSection';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 import { PriceRecommendationsContent } from '@/pages/dashboard/admin/PriceRecommendations';
-import { BackroomSavingsSection } from '@/components/dashboard/color-bar-settings/ColorBarSavingsSection';
+import { ColorBarSavingsSection } from '@/components/dashboard/color-bar-settings/ColorBarSavingsSection';
 
 
 type BackroomSection =
@@ -119,7 +119,7 @@ const sectionsByGroup = GROUP_ORDER.map(group => ({
   items: sections.filter(s => s.group === group),
 }));
 
-function getSectionStatus(sectionId: BackroomSection, health: ReturnType<typeof useBackroomSetupHealth>['data']): 'done' | 'warning' | 'none' {
+function getSectionStatus(sectionId: BackroomSection, health: ReturnType<typeof useColorBarSetupHealth>['data']): 'done' | 'warning' | 'none' {
   if (!health) return 'none';
   switch (sectionId) {
     case 'products': return health.trackedProducts > 0 ? 'done' : 'none';
@@ -132,26 +132,26 @@ function getSectionStatus(sectionId: BackroomSection, health: ReturnType<typeof 
   }
 }
 
-function isPrereqMet(section: SectionMeta, health: ReturnType<typeof useBackroomSetupHealth>['data']): boolean {
+function isPrereqMet(section: SectionMeta, health: ReturnType<typeof useColorBarSetupHealth>['data']): boolean {
   if (!section.requires || !health) return true;
   return section.requires.every(req => getSectionStatus(req, health) === 'done');
 }
 
-export default function BackroomSettings() {
+export default function ColorBarSettings() {
   const { dashPath } = useOrgDashboardPath();
   const [searchParams, setSearchParams] = useSearchParams();
   const initialSection = (searchParams.get('section') as BackroomSection) || 'overview';
   const [activeSection, setActiveSection] = useState<BackroomSection>(initialSection);
   const [subTab, setSubTab] = useState<string | undefined>();
-  const { data: health } = useBackroomSetupHealth();
-  const { isEntitled, isLoading: entitlementLoading } = useBackroomEntitlement();
+  const { data: health } = useColorBarSetupHealth();
+  const { isEntitled, isLoading: entitlementLoading } = useColorBarEntitlement();
   const { data: wizardSetting } = useBackroomSetting('setup_wizard_completed');
   const wizardCompleted = !!(wizardSetting?.value as Record<string, unknown>)?.completed;
   const [showWizardFromBanner, setShowWizardFromBanner] = useState(false);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const pollingRef = useRef(false);
-  const orgId = useBackroomOrgId();
+  const orgId = useColorBarOrgId();
 
   // Handle Stripe checkout redirect with polling for webhook delay
   useEffect(() => {
@@ -254,7 +254,7 @@ export default function BackroomSettings() {
   if (!isEntitled) {
     return (
       <DashboardLayout>
-        <BackroomPaywall />
+        <ColorBarPaywall />
       </DashboardLayout>
     );
   }
@@ -263,7 +263,7 @@ export default function BackroomSettings() {
     <DashboardLayout>
       <div className="px-4 py-6 sm:px-6 sm:py-8 lg:px-8 max-w-[1600px] mx-auto w-full space-y-6">
         {/* Setup Banner — persistent across all sections */}
-        <BackroomSetupBanner
+        <ColorBarSetupBanner
           setupHealth={bannerHealth}
           wizardCompleted={wizardCompleted}
           onNavigate={handleNavigate}
@@ -368,7 +368,7 @@ export default function BackroomSettings() {
           {/* Content area */}
           <div className="flex-1 min-w-0">
             {activeSection === 'overview' && (
-              <BackroomDashboardOverview
+              <ColorBarDashboardOverview
                 onNavigate={handleNavigate}
                 initialSubTab={subTab}
                 triggerWizard={showWizardFromBanner}
@@ -376,7 +376,7 @@ export default function BackroomSettings() {
               />
             )}
             {activeSection === 'analytics' && (
-              <BackroomInsightsSection
+              <ColorBarInsightsSection
                 locationId="all"
                 datePreset="30d"
                 showExtendedAnalytics
@@ -384,20 +384,20 @@ export default function BackroomSettings() {
                 totalWasteQty={0}
               />
             )}
-            {activeSection === 'products' && <BackroomProductCatalogSection onNavigate={handleNavigate} />}
+            {activeSection === 'products' && <ColorBarProductCatalogSection onNavigate={handleNavigate} />}
             {activeSection === 'services' && <ServiceTrackingSection onNavigate={handleNavigate} />}
             {activeSection === 'formulas' && <RecipeBaselineSection onNavigate={handleNavigate} />}
             {activeSection === 'allowances' && <AllowancesBillingSection onNavigate={handleNavigate} />}
             {activeSection === 'stations' && <StationsHardwareSection onNavigate={handleNavigate} />}
-            {activeSection === 'inventory' && <BackroomInventorySection initialTab={subTab} />}
+            {activeSection === 'inventory' && <ColorBarInventorySection initialTab={subTab} />}
             {activeSection === 'suppliers' && <SupplierSettingsSection />}
-            {activeSection === 'permissions' && <BackroomPermissionsSection />}
+            {activeSection === 'permissions' && <ColorBarPermissionsSection />}
             {activeSection === 'alerts' && <AlertsExceptionsSection />}
             {activeSection === 'formula' && <FormulaAssistanceSection />}
-            {activeSection === 'compliance' && <BackroomComplianceSection />}
+            {activeSection === 'compliance' && <ColorBarComplianceSection />}
             {activeSection === 'multi-location' && <MultiLocationSection />}
             {activeSection === 'price-intelligence' && <PriceRecommendationsContent />}
-            {activeSection === 'savings' && <BackroomSavingsSection />}
+            {activeSection === 'savings' && <ColorBarSavingsSection />}
           </div>
         </div>
       </div>

@@ -6,7 +6,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { useBackroomOrgId } from './useColorBarOrgId';
+import { useColorBarOrgId } from './useColorBarOrgId';
 
 export interface AuditEntry {
   id: string;
@@ -32,7 +32,7 @@ export interface AuditFilters {
 }
 
 export function useInventoryAuditTrail(productId: string | null, limit = 50, filters?: AuditFilters) {
-  const orgId = useBackroomOrgId();
+  const orgId = useColorBarOrgId();
   const typeFilter = filters?.typeFilter ?? 'all';
 
   return useQuery({

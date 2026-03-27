@@ -75,7 +75,7 @@ function subscriptionBadge(status: string | null) {
   return <PlatformBadge variant={cfg.variant} size="sm">{cfg.label}</PlatformBadge>;
 }
 
-export function BackroomBillingTab() {
+export function ColorBarBillingTab() {
   const { data: metrics, isLoading } = useBackroomBillingHealth();
   const [search, setSearch] = useState('');
   const [showAtRiskOnly, setShowAtRiskOnly] = useState(false);

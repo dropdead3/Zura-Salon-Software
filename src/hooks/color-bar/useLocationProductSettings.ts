@@ -3,7 +3,7 @@
  */
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { useBackroomOrgId } from './useColorBarOrgId';
+import { useColorBarOrgId } from './useColorBarOrgId';
 import { toast } from 'sonner';
 
 export interface LocationProductSetting {
@@ -16,7 +16,7 @@ export interface LocationProductSetting {
 }
 
 export function useLocationProductSettings(locationId: string | undefined) {
-  const orgId = useBackroomOrgId();
+  const orgId = useColorBarOrgId();
 
   return useQuery({
     queryKey: ['location-product-settings', orgId, locationId],
@@ -44,7 +44,7 @@ export function useLocationProductSettingsMap(locationId: string | undefined) {
 
 /** Upsert tracking for a single product at a location */
 export function useUpsertLocationProductSetting() {
-  const orgId = useBackroomOrgId();
+  const orgId = useColorBarOrgId();
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -81,7 +81,7 @@ export function useUpsertLocationProductSetting() {
 
 /** Bulk upsert tracking for multiple products at a location */
 export function useBulkUpsertLocationProductSettings() {
-  const orgId = useBackroomOrgId();
+  const orgId = useColorBarOrgId();
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -120,7 +120,7 @@ export function useBulkUpsertLocationProductSettings() {
 
 /** Sync tracked products from one location to all other active locations */
 export function useSyncCatalogToAllLocations() {
-  const orgId = useBackroomOrgId();
+  const orgId = useColorBarOrgId();
   const queryClient = useQueryClient();
 
   return useMutation({

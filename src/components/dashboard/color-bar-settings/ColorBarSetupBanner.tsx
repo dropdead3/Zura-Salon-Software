@@ -1,5 +1,5 @@
 /**
- * BackroomSetupBanner — Persistent setup wizard banner shown above
+ * ColorBarSetupBanner — Persistent setup wizard banner shown above
  * the Backroom page header until setup is complete.
  */
 import React, { useState } from 'react';
@@ -24,19 +24,19 @@ interface SetupHealthData {
   warnings: Array<{ id: string; title: string; description: string; section: string }>;
 }
 
-interface BackroomSetupBannerProps {
+interface ColorBarSetupBannerProps {
   setupHealth: SetupHealthData | undefined;
   wizardCompleted: boolean;
   onNavigate: (section: string) => void;
   onResumeSetup: () => void;
 }
 
-export function BackroomSetupBanner({
+export function ColorBarSetupBanner({
   setupHealth,
   wizardCompleted,
   onNavigate,
   onResumeSetup,
-}: BackroomSetupBannerProps) {
+}: ColorBarSetupBannerProps) {
   const [setupOpen, setSetupOpen] = useState(false);
 
   if (!setupHealth || setupHealth.isComplete) return null;

@@ -1,5 +1,5 @@
 /**
- * useBackroomOrgId — Resolves the organization ID for backroom queries.
+ * useColorBarOrgId — Resolves the organization ID for backroom queries.
  * 
  * Falls back to the user's employee_profile.organization_id when
  * effectiveOrganization is null (common for platform users who also own an org).
@@ -9,7 +9,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useAuth } from '@/contexts/AuthContext';
 
-export function useBackroomOrgId(): string | undefined {
+export function useColorBarOrgId(): string | undefined {
   const { effectiveOrganization } = useOrganizationContext();
   const { user } = useAuth();
 

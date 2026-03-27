@@ -1,19 +1,19 @@
 /**
- * useBackroomDashboard — Composition hook aggregating existing backroom hooks
+ * useColorBarDashboard — Composition hook aggregating existing backroom hooks
  * into a single shaped result for the overview command center.
  */
 
 import { useMemo, useState, useEffect, useRef } from 'react';
-import { useBackroomAnalytics } from './useColorBarAnalytics';
+import { useColorBarAnalytics } from './useColorBarAnalytics';
 import { useControlTowerAlerts } from './useControlTowerAlerts';
 import { useStockoutAlerts } from './usePredictiveColorBar';
-import { useBackroomStaffMetrics } from './useColorBarStaffMetrics';
+import { useColorBarStaffMetrics } from './useColorBarStaffMetrics';
 import { useReorderAnalytics, useProcurementBudget } from './useReorderAnalytics';
-import { useBackroomSetupHealth } from './useColorBarSetupHealth';
+import { useColorBarSetupHealth } from './useColorBarSetupHealth';
 import { useHighRiskInventory } from '@/hooks/inventory/useInventoryRiskProjection';
 import { useSupplyCostRecovery } from './useSupplyCostRecovery';
-import { useBackroomBillingSettings } from '@/hooks/billing/useColorBarBillingSettings';
-import { useBackroomOrgId } from './useColorBarOrgId';
+import { useColorBarBillingSettings } from '@/hooks/billing/useColorBarBillingSettings';
+import { useColorBarOrgId } from './useColorBarOrgId';
 
 function getLast30Days() {
   const end = new Date();
@@ -25,21 +25,21 @@ function getLast30Days() {
   };
 }
 
-export function useBackroomDashboard(locationId?: string, startDateOverride?: string, endDateOverride?: string) {
+export function useColorBarDashboard(locationId?: string, startDateOverride?: string, endDateOverride?: string) {
   const { startDate: defaultStart, endDate: defaultEnd } = getLast30Days();
   const startDate = startDateOverride || defaultStart;
   const endDate = endDateOverride || defaultEnd;
-  const orgId = useBackroomOrgId();
+  const orgId = useColorBarOrgId();
 
-  const analyticsQ = useBackroomAnalytics(startDate, endDate, locationId);
+  const analyticsQ = useColorBarAnalytics(startDate, endDate, locationId);
   const controlTowerQ = useControlTowerAlerts(locationId);
   const stockoutQ = useStockoutAlerts(locationId);
-  const staffQ = useBackroomStaffMetrics(startDate, endDate, locationId);
+  const staffQ = useColorBarStaffMetrics(startDate, endDate, locationId);
   const reorderQ = useReorderAnalytics();
   const budgetQ = useProcurementBudget();
-  const setupQ = useBackroomSetupHealth();
+  const setupQ = useColorBarSetupHealth();
   const inventoryRiskQ = useHighRiskInventory(locationId);
-  const billingSettingsQ = useBackroomBillingSettings(orgId);
+  const billingSettingsQ = useColorBarBillingSettings(orgId);
   const supplyCostEnabled = billingSettingsQ.data?.enable_supply_cost_recovery ?? false;
   const supplyCostQ = useSupplyCostRecovery(startDate, endDate, supplyCostEnabled, locationId);
 

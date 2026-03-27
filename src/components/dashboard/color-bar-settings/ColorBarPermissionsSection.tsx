@@ -68,7 +68,7 @@ const DEFAULT_PERMISSIONS: Record<string, string[]> = {
   booth_renter: ['view_backroom', 'mix_bowls'],
 };
 
-export function BackroomPermissionsSection() {
+export function ColorBarPermissionsSection() {
   const { effectiveOrganization } = useOrganizationContext();
   const orgId = effectiveOrganization?.id;
   const { data: setting, isLoading } = useBackroomSetting('backroom_permissions');

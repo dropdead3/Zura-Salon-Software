@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
-import { useBackroomSettingsAll, useUpsertBackroomSetting, type BackroomSetting } from '@/hooks/color-bar/useColorBarSettings';
-import { useBackroomAlertRules, useUpsertAlertRule, type BackroomAlertRule } from '@/hooks/color-bar/useColorBarAlertRules';
+import { useColorBarSettingsAll, useUpsertBackroomSetting, type BackroomSetting } from '@/hooks/color-bar/useColorBarSettings';
+import { useColorBarAlertRules, useUpsertAlertRule, type BackroomAlertRule } from '@/hooks/color-bar/useColorBarAlertRules';
 import { useActiveLocations } from '@/hooks/useLocations';
 import { supabase } from '@/integrations/supabase/client';
 import { tokens } from '@/lib/design-tokens';
@@ -24,8 +24,8 @@ import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 export function MultiLocationSection() {
   const { effectiveOrganization } = useOrganizationContext();
   const orgId = effectiveOrganization?.id;
-  const { data: allSettings, isLoading: settingsLoading } = useBackroomSettingsAll();
-  const { data: orgAlertRules } = useBackroomAlertRules();
+  const { data: allSettings, isLoading: settingsLoading } = useColorBarSettingsAll();
+  const { data: orgAlertRules } = useColorBarAlertRules();
   const { data: locations, isLoading: locLoading } = useActiveLocations();
   const upsert = useUpsertBackroomSetting();
   const upsertRule = useUpsertAlertRule();

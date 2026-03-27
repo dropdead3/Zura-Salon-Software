@@ -8,7 +8,7 @@ import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useOrganizationBilling, useSubscriptionPlans } from '@/hooks/useOrganizationBilling';
 import { useBillingCalculations, formatCurrency, getBillingCycleLabel, getContractLengthLabel } from '@/hooks/useBillingCalculations';
 import { useTrialStatus } from '@/hooks/useTrialStatus';
-import { useBackroomLocationEntitlements } from '@/hooks/color-bar/useColorBarLocationEntitlements';
+import { useColorBarLocationEntitlements } from '@/hooks/color-bar/useColorBarLocationEntitlements';
 import { BACKROOM_BASE_PRICE, SCALE_LICENSE_MONTHLY } from '@/hooks/color-bar/useLocationStylistCounts';
 
 export function BillingOverviewCard() {
@@ -17,7 +17,7 @@ export function BillingOverviewCard() {
   const { data: billing, isLoading: billingLoading } = useOrganizationBilling(orgId);
   const { data: plans, isLoading: plansLoading } = useSubscriptionPlans();
   const trialStatus = useTrialStatus();
-  const { entitlements } = useBackroomLocationEntitlements(orgId);
+  const { entitlements } = useColorBarLocationEntitlements(orgId);
 
   const currentPlan = useMemo(() => {
     if (!billing?.plan_id || !plans) return null;

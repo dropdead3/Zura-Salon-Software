@@ -1,12 +1,12 @@
 /**
- * useBackroomSavings — Unified hook that aggregates all savings categories
+ * useColorBarSavings — Unified hook that aggregates all savings categories
  * from backroom analytics snapshots and checkout usage charges.
  * Supports configurable period (7/30/90 days) and all-time cumulative totals.
  */
 
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { useBackroomOrgId } from './useColorBarOrgId';
+import { useColorBarOrgId } from './useColorBarOrgId';
 
 /** Industry baseline: ~12% waste rate on color spend */
 const BASELINE_WASTE_RATE = 0.12;
@@ -133,8 +133,8 @@ function computeSavings(
   };
 }
 
-export function useBackroomSavings(days: number = 30, subscriptionMonthlyCost: number = 0) {
-  const orgId = useBackroomOrgId();
+export function useColorBarSavings(days: number = 30, subscriptionMonthlyCost: number = 0) {
+  const orgId = useColorBarOrgId();
 
   const periodQuery = useQuery<BackroomSavingsData>({
     queryKey: ['backroom-savings', orgId, days, subscriptionMonthlyCost],

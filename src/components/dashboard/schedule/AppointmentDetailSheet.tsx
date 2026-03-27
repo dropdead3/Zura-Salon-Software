@@ -34,7 +34,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { BackroomTab } from '@/components/dashboard/color-bar/ColorBarTab';
+import { ColorBarTab } from '@/components/dashboard/color-bar/ColorBarTab';
 import { ClientFormulaHistoryTab } from '@/components/dashboard/clients/ClientFormulaHistoryTab';
 import { CheckoutClarityPanel } from '@/components/dashboard/color-bar/CheckoutClarityPanel';
 import { ClientMemoryPanel } from '@/components/dashboard/schedule/ClientMemoryPanel';
@@ -1780,7 +1780,7 @@ export function AppointmentDetailSheet({
 
                   {/* ─── TAB: Backroom ─────────────────────────── */}
                   <TabsContent value="backroom" className="p-6 pt-4 mt-0">
-                    <BackroomTab
+                    <ColorBarTab
                       appointment={appointment}
                       organizationId={effectiveOrganization?.id ?? ''}
                     />

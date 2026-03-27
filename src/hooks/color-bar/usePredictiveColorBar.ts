@@ -1,5 +1,5 @@
 /**
- * usePredictiveBackroom — Hooks for demand forecasting and stockout alerts.
+ * usePredictiveColorBar — Hooks for demand forecasting and stockout alerts.
  */
 
 import { useQuery } from '@tanstack/react-query';

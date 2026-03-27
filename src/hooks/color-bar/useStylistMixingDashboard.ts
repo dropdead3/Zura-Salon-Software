@@ -6,7 +6,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
-import { useStaffBackroomPerformance } from './useStaffColorBarPerformance';
+import { useStaffColorBarPerformance } from './useStaffColorBarPerformance';
 import { format, subDays, startOfDay } from 'date-fns';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -279,7 +279,7 @@ export function useStylistMixingDashboard(userId: string | undefined) {
   const periodEnd = format(now, 'yyyy-MM-dd');
 
   const todaySessions = useTodaySessions(userId);
-  const performance = useStaffBackroomPerformance(periodStart, periodEnd, undefined, userId);
+  const performance = useStaffColorBarPerformance(periodStart, periodEnd, undefined, userId);
   const productTrends = useProductUsageTrends(userId);
   const topFormulas = useTopFormulas(userId);
   const overageHistory = useStylistOverageHistory(userId);

@@ -11,7 +11,7 @@ import { Loader2, Package, Send, Save } from 'lucide-react';
 import { useBatchCreatePurchaseOrders } from '@/hooks/useBatchReorder';
 import type { BackroomInventoryRow } from '@/hooks/color-bar/useColorBarInventoryTable';
 
-interface BackroomBulkReorderDialogProps {
+interface ColorBarBulkReorderDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   orgId: string;
@@ -32,7 +32,7 @@ interface ReorderLine {
   included: boolean;
 }
 
-export function BackroomBulkReorderDialog({ open, onOpenChange, orgId, reorderItems }: BackroomBulkReorderDialogProps) {
+export function ColorBarBulkReorderDialog({ open, onOpenChange, orgId, reorderItems }: ColorBarBulkReorderDialogProps) {
   const batchMutation = useBatchCreatePurchaseOrders();
 
   const [lines, setLines] = useState<ReorderLine[]>(() =>

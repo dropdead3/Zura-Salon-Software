@@ -25,7 +25,7 @@ interface Props {
   netBenefit: number;
 }
 
-export function BackroomCheckoutConfirmDialog({
+export function ColorBarCheckoutConfirmDialog({
   open, onOpenChange, onConfirm, loading,
   organizationId, locationCount, scaleCount, estimatedMonthlyServices,
   estimatedMonthlySavings, netBenefit,

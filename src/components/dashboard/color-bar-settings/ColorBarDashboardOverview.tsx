@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { format, subDays, startOfMonth, endOfMonth, subMonths } from 'date-fns';
-import { useBackroomDashboard } from '@/hooks/color-bar/useColorBarDashboard';
+import { useColorBarDashboard } from '@/hooks/color-bar/useColorBarDashboard';
 import { useBackroomSetting } from '@/hooks/color-bar/useColorBarSettings';
-import { useBackroomSetupHealth } from '@/hooks/color-bar/useColorBarSetupHealth';
+import { useColorBarSetupHealth } from '@/hooks/color-bar/useColorBarSetupHealth';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { useActiveLocations } from '@/hooks/useLocations';
 import { tokens } from '@/lib/design-tokens';
@@ -19,8 +19,8 @@ import {
   PackageOpen, TrendingUp, TrendingDown,
   Users2, Package, ShieldAlert, BarChart3, Brain, MapPin,
 } from 'lucide-react';
-import { BackroomSetupWizard } from './ColorBarSetupWizard';
-import { BackroomInsightsSection } from './ColorBarInsightsSection';
+import { ColorBarSetupWizard } from './ColorBarSetupWizard';
+import { ColorBarInsightsSection } from './ColorBarInsightsSection';
 import { SupplyIntelligenceDashboard } from '@/components/dashboard/color-bar/supply-intelligence/SupplyIntelligenceDashboard';
 import { formatRelativeTime } from '@/lib/format';
 import type { ControlTowerAlert } from '@/lib/color-bar/control-tower-engine';
@@ -53,7 +53,7 @@ function getDateRange(preset: DatePreset): { start: string; end: string; label: 
   }
 }
 
-export function BackroomDashboardOverview({ onNavigate, initialSubTab, triggerWizard, onWizardTriggered }: Props) {
+export function ColorBarDashboardOverview({ onNavigate, initialSubTab, triggerWizard, onWizardTriggered }: Props) {
   const [datePreset, setDatePreset] = useState<DatePreset>('30d');
   const [selectedLocationId, setSelectedLocationId] = useState('all');
   const { data: activeLocations = [] } = useActiveLocations();
@@ -61,7 +61,7 @@ export function BackroomDashboardOverview({ onNavigate, initialSubTab, triggerWi
   const { start, end, label: rangeLabel } = useMemo(() => getDateRange(datePreset), [datePreset]);
   const effectiveLocationId = selectedLocationId === 'all' ? undefined : selectedLocationId;
 
-  const dashboard = useBackroomDashboard(effectiveLocationId, start, end);
+  const dashboard = useColorBarDashboard(effectiveLocationId, start, end);
   const { formatCurrency } = useFormatCurrency();
   const { data: wizardSetting } = useBackroomSetting('setup_wizard_completed');
   const [showWizard, setShowWizard] = useState(false);
@@ -90,7 +90,7 @@ export function BackroomDashboardOverview({ onNavigate, initialSubTab, triggerWi
 
   if (showWizard) {
     return (
-      <BackroomSetupWizard
+      <ColorBarSetupWizard
         onComplete={() => setShowWizard(false)}
         onCancel={() => setShowWizard(false)}
       />

@@ -1,5 +1,5 @@
 /**
- * useBackroomLocationEntitlements — Fetches per-location Backroom entitlements
+ * useColorBarLocationEntitlements — Fetches per-location Backroom entitlements
  * and provides helpers for checking location-level access.
  */
 
@@ -27,7 +27,7 @@ export interface BackroomLocationEntitlement {
   updated_at: string;
 }
 
-export function useBackroomLocationEntitlements(organizationId: string | undefined) {
+export function useColorBarLocationEntitlements(organizationId: string | undefined) {
   const query = useQuery({
     queryKey: ['backroom-location-entitlements', organizationId],
     queryFn: async (): Promise<BackroomLocationEntitlement[]> => {

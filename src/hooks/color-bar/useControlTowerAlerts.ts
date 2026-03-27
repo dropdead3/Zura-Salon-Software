@@ -9,8 +9,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { isPast } from 'date-fns';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useHighRiskInventory } from '@/hooks/inventory/useInventoryRiskProjection';
-import { useBackroomExceptions } from '@/hooks/color-bar/useColorBarExceptions';
-import { useStaffBackroomPerformance } from '@/hooks/color-bar/useStaffColorBarPerformance';
+import { useColorBarExceptions } from '@/hooks/color-bar/useColorBarExceptions';
+import { useStaffColorBarPerformance } from '@/hooks/color-bar/useStaffColorBarPerformance';
 import { useStockoutAlerts, useForecastSummary } from '@/hooks/color-bar/usePredictiveColorBar';
 import { useAppointmentProfitSummary } from '@/hooks/color-bar/useAppointmentProfit';
 import {
@@ -115,11 +115,11 @@ export function useControlTowerAlerts(
   const { periodStart, periodEnd } = getLast30Days();
 
   const inventoryQ = useHighRiskInventory(locationId);
-  const exceptionsQ = useBackroomExceptions({
+  const exceptionsQ = useColorBarExceptions({
     status: 'open',
     locationId: locationId ?? undefined,
   });
-  const staffQ = useStaffBackroomPerformance(periodStart, periodEnd, locationId ?? undefined);
+  const staffQ = useStaffColorBarPerformance(periodStart, periodEnd, locationId ?? undefined);
   const stockoutQ = useStockoutAlerts(locationId);
   const profitQ = useAppointmentProfitSummary(periodStart, periodEnd, locationId ?? undefined);
   const draftPOsQ = useDraftPOs(locationId);

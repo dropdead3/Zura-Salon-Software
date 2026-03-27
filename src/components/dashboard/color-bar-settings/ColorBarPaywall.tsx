@@ -23,9 +23,9 @@ import {
 } from '@/components/ui/accordion';
 import { supabase } from '@/integrations/supabase/client';
 import { useLocations } from '@/hooks/useLocations';
-import { useBackroomOrgId } from '@/hooks/color-bar/useColorBarOrgId';
-import { useBackroomLocationEntitlements } from '@/hooks/color-bar/useColorBarLocationEntitlements';
-import { useBackroomPricingEstimate } from '@/hooks/color-bar/useColorBarPricingEstimate';
+import { useColorBarOrgId } from '@/hooks/color-bar/useColorBarOrgId';
+import { useColorBarLocationEntitlements } from '@/hooks/color-bar/useColorBarLocationEntitlements';
+import { useColorBarPricingEstimate } from '@/hooks/color-bar/useColorBarPricingEstimate';
 import { usePerLocationColorServices } from '@/hooks/color-bar/usePerLocationColorServices';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import {
@@ -34,7 +34,7 @@ import {
 } from '@/hooks/color-bar/useLocationStylistCounts';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { toast } from 'sonner';
-import { BackroomCheckoutConfirmDialog } from './ColorBarCheckoutConfirmDialog';
+import { ColorBarCheckoutConfirmDialog } from './ColorBarCheckoutConfirmDialog';
 import { CompetitorComparison } from './CompetitorComparison';
 
 
@@ -173,7 +173,7 @@ function ProductPreview() {
   );
 }
 
-export function BackroomPaywall() {
+export function ColorBarPaywall() {
   const [loading, setLoading] = useState(false);
   const [scaleCount, setScaleCount] = useState(0);
   const [selectedLocationIds, setSelectedLocationIds] = useState<Set<string>>(new Set());
@@ -183,13 +183,13 @@ export function BackroomPaywall() {
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [activeFeature, setActiveFeature] = useState('mixing');
 
-  const orgId = useBackroomOrgId();
+  const orgId = useColorBarOrgId();
   const { data: locations = [] } = useLocations(orgId);
-  const { isLocationEntitled } = useBackroomLocationEntitlements(orgId);
+  const { isLocationEntitled } = useColorBarLocationEntitlements(orgId);
   const { formatCurrency, formatCurrencyCompact } = useFormatCurrency();
   const isMobile = useIsMobile();
 
-  const { data: estimate, isLoading: estimateLoading } = useBackroomPricingEstimate(manualStylistCount);
+  const { data: estimate, isLoading: estimateLoading } = useColorBarPricingEstimate(manualStylistCount);
   const { data: perLocationData } = usePerLocationColorServices();
 
   const activeLocations = locations.filter((l) => l.is_active);
@@ -1267,7 +1267,7 @@ export function BackroomPaywall() {
 
 
 
-      <BackroomCheckoutConfirmDialog
+      <ColorBarCheckoutConfirmDialog
         open={confirmDialogOpen}
         onOpenChange={setConfirmDialogOpen}
         onConfirm={handleCheckout}

@@ -1,5 +1,5 @@
 /**
- * BackroomInsightsSection — Top-level KPI cards + tabbed analytics content.
+ * ColorBarInsightsSection — Top-level KPI cards + tabbed analytics content.
  */
 
 import { useState, useMemo } from 'react';
@@ -17,16 +17,16 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useBackroomAnalytics } from '@/hooks/color-bar/useColorBarAnalytics';
-import { useBackroomStaffMetrics } from '@/hooks/color-bar/useColorBarStaffMetrics';
+import { useColorBarAnalytics } from '@/hooks/color-bar/useColorBarAnalytics';
+import { useColorBarStaffMetrics } from '@/hooks/color-bar/useColorBarStaffMetrics';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { useFormatNumber } from '@/hooks/useFormatNumber';
-import { BackroomBrandUsageCard } from './ColorBarBrandUsageCard';
-import { BackroomHistoryChart } from './ColorBarHistoryChart';
-import { BackroomProductAnalyticsCard } from './ColorBarProductAnalyticsCard';
+import { ColorBarBrandUsageCard } from './ColorBarBrandUsageCard';
+import { ColorBarHistoryChart } from './ColorBarHistoryChart';
+import { ColorBarProductAnalyticsCard } from './ColorBarProductAnalyticsCard';
 import { WasteCategoryBreakdownCard } from '@/components/dashboard/color-bar/WasteCategoryBreakdownCard';
 import { ServicePLReport } from '@/components/dashboard/color-bar/ServicePLReport';
-import { BackroomInventoryValuationCard } from '@/components/dashboard/color-bar/ColorBarInventoryValuationCard';
+import { ColorBarInventoryValuationCard } from '@/components/dashboard/color-bar/ColorBarInventoryValuationCard';
 import { SeasonalDemandOverlay } from '@/components/dashboard/color-bar/SeasonalDemandOverlay';
 import { ProductUsageFrequencyTable } from '@/components/dashboard/color-bar/ProductUsageFrequencyTable';
 import { useActiveLocations } from '@/hooks/useLocations';
@@ -65,7 +65,7 @@ function getAvatarColor(index: number) {
   return AVATAR_COLORS[index % AVATAR_COLORS.length];
 }
 
-interface BackroomInsightsSectionProps {
+interface ColorBarInsightsSectionProps {
   locationId?: string;
   datePreset?: DatePreset;
   hideFilters?: boolean;
@@ -74,7 +74,7 @@ interface BackroomInsightsSectionProps {
   totalWasteQty?: number;
 }
 
-export function BackroomInsightsSection({ locationId: propLocationId, datePreset: propDatePreset, hideFilters, showExtendedAnalytics, wasteByCategory, totalWasteQty }: BackroomInsightsSectionProps = {}) {
+export function ColorBarInsightsSection({ locationId: propLocationId, datePreset: propDatePreset, hideFilters, showExtendedAnalytics, wasteByCategory, totalWasteQty }: ColorBarInsightsSectionProps = {}) {
   const [internalDatePreset, setInternalDatePreset] = useState<DatePreset>('30d');
   const [sortKey, setSortKey] = useState<SortKey>('totalServices');
   const [sortAsc, setSortAsc] = useState(false);
@@ -87,8 +87,8 @@ export function BackroomInsightsSection({ locationId: propLocationId, datePreset
 
   const { start, end, label: rangeLabel } = getDateRange(datePreset);
   const effectiveLocationId = selectedLocationId === 'all' ? undefined : selectedLocationId;
-  const { data: analytics, isLoading: analyticsLoading } = useBackroomAnalytics(start, end, effectiveLocationId);
-  const { data: staffMetrics, isLoading: staffLoading } = useBackroomStaffMetrics(start, end, effectiveLocationId);
+  const { data: analytics, isLoading: analyticsLoading } = useColorBarAnalytics(start, end, effectiveLocationId);
+  const { data: staffMetrics, isLoading: staffLoading } = useColorBarStaffMetrics(start, end, effectiveLocationId);
   const { formatCurrency } = useFormatCurrency();
   const { formatNumber, formatPercent } = useFormatNumber();
 
@@ -210,12 +210,12 @@ export function BackroomInsightsSection({ locationId: propLocationId, datePreset
         </SubTabsList>
 
         <TabsContent value="products" className="space-y-6">
-          <BackroomProductAnalyticsCard startDate={start} endDate={end} rangeLabel={rangeLabel} locationId={effectiveLocationId} />
+          <ColorBarProductAnalyticsCard startDate={start} endDate={end} rangeLabel={rangeLabel} locationId={effectiveLocationId} />
           {showExtendedAnalytics && (
             <>
               <ProductUsageFrequencyTable locationId={effectiveLocationId} />
               <WasteCategoryBreakdownCard wasteByCategory={wasteByCategory ?? {}} totalWasteQty={totalWasteQty ?? 0} />
-              <BackroomInventoryValuationCard locationId={effectiveLocationId} />
+              <ColorBarInventoryValuationCard locationId={effectiveLocationId} />
             </>
           )}
         </TabsContent>
@@ -340,7 +340,7 @@ export function BackroomInsightsSection({ locationId: propLocationId, datePreset
         </TabsContent>
 
         <TabsContent value="trends" className="space-y-6">
-          <BackroomHistoryChart startDate={start} endDate={end} rangeLabel={rangeLabel} locationId={effectiveLocationId} />
+          <ColorBarHistoryChart startDate={start} endDate={end} rangeLabel={rangeLabel} locationId={effectiveLocationId} />
           {showExtendedAnalytics && (
             <>
               <ServicePLReport startDate={start} endDate={end} locationId={effectiveLocationId} />
@@ -350,7 +350,7 @@ export function BackroomInsightsSection({ locationId: propLocationId, datePreset
         </TabsContent>
 
         <TabsContent value="brands">
-          <BackroomBrandUsageCard startDate={start} endDate={end} rangeLabel={rangeLabel} locationId={effectiveLocationId} />
+          <ColorBarBrandUsageCard startDate={start} endDate={end} rangeLabel={rangeLabel} locationId={effectiveLocationId} />
         </TabsContent>
       </Tabs>
     </div>

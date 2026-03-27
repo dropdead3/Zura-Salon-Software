@@ -21,7 +21,7 @@ export interface BackroomStation {
   updated_at: string;
 }
 
-export function useBackroomStations(locationId?: string) {
+export function useColorBarStations(locationId?: string) {
   const { effectiveOrganization } = useOrganizationContext();
   const orgId = effectiveOrganization?.id;
 

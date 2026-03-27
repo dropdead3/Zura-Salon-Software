@@ -3,15 +3,15 @@ import { cn } from '@/lib/utils';
 import { Card, CardContent } from '@/components/ui/card';
 import { TrendingUp, DollarSign, BarChart3 } from 'lucide-react';
 import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
-import { useBackroomSavings } from '@/hooks/color-bar/useColorBarSavings';
+import { useColorBarSavings } from '@/hooks/color-bar/useColorBarSavings';
 import { formatCurrency } from '@/lib/format';
 
-interface BackroomROICardProps {
+interface ColorBarROICardProps {
   subscriptionMonthlyCost?: number;
 }
 
-export function BackroomROICard({ subscriptionMonthlyCost }: BackroomROICardProps) {
-  const { data: savings, isLoading } = useBackroomSavings(30, subscriptionMonthlyCost ?? 0);
+export function ColorBarROICard({ subscriptionMonthlyCost }: ColorBarROICardProps) {
+  const { data: savings, isLoading } = useColorBarSavings(30, subscriptionMonthlyCost ?? 0);
 
   if (isLoading) {
     return (

@@ -1,5 +1,5 @@
 /**
- * useBackroomExceptions — Query hook (read-only).
+ * useColorBarExceptions — Query hook (read-only).
  * useResolveException — Thin wrapper around ExceptionService.
  */
 
@@ -39,7 +39,7 @@ export interface ExceptionFilters {
   endDate?: string;
 }
 
-export function useBackroomExceptions(filters?: ExceptionFilters) {
+export function useColorBarExceptions(filters?: ExceptionFilters) {
   const { effectiveOrganization } = useOrganizationContext();
   const orgId = effectiveOrganization?.id;
 

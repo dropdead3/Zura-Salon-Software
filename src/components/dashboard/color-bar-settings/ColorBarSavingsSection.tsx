@@ -1,5 +1,5 @@
 /**
- * BackroomSavingsSection — "Your Savings" dashboard showing ROI
+ * ColorBarSavingsSection — "Your Savings" dashboard showing ROI
  * with transparent formula explanations, period toggle, subscription
  * comparison, smart empty states, and cumulative savings banner.
  */
@@ -12,7 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
-import { useBackroomSavings, type SavingsCategory } from '@/hooks/color-bar/useColorBarSavings';
+import { useColorBarSavings, type SavingsCategory } from '@/hooks/color-bar/useColorBarSavings';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { AnimatedNumber } from '@/components/ui/AnimatedNumber';
 import {
@@ -98,9 +98,9 @@ function CategoryCard({
   );
 }
 
-export function BackroomSavingsSection() {
+export function ColorBarSavingsSection() {
   const [selectedDays, setSelectedDays] = useState(30);
-  const { data, isLoading, allTime, allTimeLoading } = useBackroomSavings(selectedDays);
+  const { data, isLoading, allTime, allTimeLoading } = useColorBarSavings(selectedDays);
   const { formatCurrency } = useFormatCurrency();
 
   if (isLoading) {

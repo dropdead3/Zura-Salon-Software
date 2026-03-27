@@ -35,7 +35,7 @@ export const SEVERITY_OPTIONS = [
   { value: 'critical', label: 'Critical' },
 ] as const;
 
-export function useBackroomAlertRules(locationId?: string | null) {
+export function useColorBarAlertRules(locationId?: string | null) {
   const { effectiveOrganization } = useOrganizationContext();
   const orgId = effectiveOrganization?.id;
 

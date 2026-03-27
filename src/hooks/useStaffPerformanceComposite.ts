@@ -6,7 +6,7 @@
 import { useMemo } from 'react';
 import { useStylistExperienceScore } from '@/hooks/useStylistExperienceScore';
 import { useSalesByStylist } from '@/hooks/useSalesData';
-import { useStaffBackroomPerformance } from '@/hooks/color-bar/useStaffColorBarPerformance';
+import { useStaffColorBarPerformance } from '@/hooks/color-bar/useStaffColorBarPerformance';
 
 export interface StaffPerformanceRow {
   staffId: string;
@@ -55,7 +55,7 @@ export function useStaffPerformanceComposite(
     dateTo,
     locationId,
   );
-  const { data: backroomData, isLoading: backroomLoading } = useStaffBackroomPerformance(
+  const { data: backroomData, isLoading: backroomLoading } = useStaffColorBarPerformance(
     dateFrom,
     dateTo,
     locationId,

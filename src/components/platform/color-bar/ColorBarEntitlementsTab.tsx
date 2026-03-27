@@ -86,7 +86,7 @@ function statusBadge(status: string) {
 }
 
 
-export function BackroomEntitlementsTab() {
+export function ColorBarEntitlementsTab() {
   const [search, setSearch] = useState('');
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [expandedOrg, setExpandedOrg] = useState<string | null>(null);

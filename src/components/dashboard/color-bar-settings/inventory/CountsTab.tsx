@@ -24,7 +24,7 @@ import { useFormatNumber } from '@/hooks/useFormatNumber';
 import { format } from 'date-fns';
 import { CountEntryForm } from './CountEntryForm';
 import { AuditComplianceTracker } from './AuditComplianceTracker';
-import { useBackroomInventoryTable } from '@/hooks/color-bar/useColorBarInventoryTable';
+import { useColorBarInventoryTable } from '@/hooks/color-bar/useColorBarInventoryTable';
 import { generateCountSheetPdf, type CountSheetFilters } from '@/lib/generateCountSheetPdf';
 import { buildReportFileName } from '@/lib/reportPdfLayout';
 import { fetchLogoAsDataUrl } from '@/lib/reportPdfLayout';
@@ -58,7 +58,7 @@ export function CountsTab({ locationId, pdfExportRef, locations: locationsProp }
   const isLoading = sessionsLoading || shrinkageLoading;
   const totalShrinkageCost = shrinkage.reduce((s, r) => s + r.shrinkageCost, 0);
 
-  const { data: inventoryProducts = [] } = useBackroomInventoryTable({ locationId });
+  const { data: inventoryProducts = [] } = useColorBarInventoryTable({ locationId });
   const [generatingPdf, setGeneratingPdf] = useState(false);
   const [showFilterDialog, setShowFilterDialog] = useState(false);
   const [selectedBrands, setSelectedBrands] = useState<Set<string>>(new Set());

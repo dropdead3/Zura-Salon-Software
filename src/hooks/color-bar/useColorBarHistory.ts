@@ -1,5 +1,5 @@
 /**
- * useBackroomHistory — Time-bucketed backroom metrics for trend charts.
+ * useColorBarHistory — Time-bucketed backroom metrics for trend charts.
  * Buckets mix_session data by day/week/month/year.
  */
 
@@ -29,7 +29,7 @@ export interface HistoryDataPoint {
   estimatedProductWasted: number;
 }
 
-export function useBackroomHistory(
+export function useColorBarHistory(
   startDate: string,
   endDate: string,
   bucketMode: BucketMode = 'daily',

@@ -43,7 +43,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { formatRelativeTime } from '@/lib/format';
 import { useSupplyLibraryRequests, useResolveSupplyRequest } from '@/hooks/platform/useSupplyLibraryRequests';
 import { groupByProductLine, extractProductLine } from '@/lib/supply-line-parser';
-import { useBackroomOrgId } from '@/hooks/color-bar/useColorBarOrgId';
+import { useColorBarOrgId } from '@/hooks/color-bar/useColorBarOrgId';
 import { sortByShadeLevel, SHADE_SORTED_CATEGORIES } from '@/lib/shadeSort';
 import { SwatchPicker } from './SwatchPicker';
 import { suggestSwatchColor } from '@/lib/swatchSuggest';
@@ -66,7 +66,7 @@ interface BrandCardData {
 
 export function SupplyLibraryTab() {
   const queryClient = useQueryClient();
-  const orgId = useBackroomOrgId() ?? '_';
+  const orgId = useColorBarOrgId() ?? '_';
   const [selectedBrand, setSelectedBrand] = useState<string | null>(null);
   const [brandSearch, setBrandSearch] = useState('');
   const [activeLetter, setActiveLetter] = useState<string | null>(null);

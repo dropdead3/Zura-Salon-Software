@@ -35,7 +35,7 @@ import { useServiceLookup, type ContainerType } from '@/hooks/useServiceLookup';
 import { useDepleteMixSession } from '@/hooks/color-bar/useDepleteMixSession';
 import { useCalculateOverageCharge } from '@/hooks/billing/useCalculateOverageCharge';
 import { useCheckoutUsageCharges } from '@/hooks/billing/useCheckoutUsageCharges';
-import { useBackroomBillingSettings } from '@/hooks/billing/useColorBarBillingSettings';
+import { useColorBarBillingSettings } from '@/hooks/billing/useColorBarBillingSettings';
 
 interface DockServicesTabProps {
   appointment: DockAppointment;
@@ -127,7 +127,7 @@ export function DockServicesTab({ appointment, staff, effectiveServiceName }: Do
   const { effectiveOrganization } = useOrganizationContext();
   const queryClient = useQueryClient();
   const { data: existingCharges } = useCheckoutUsageCharges(appointment.id);
-  const { data: billingSettings } = useBackroomBillingSettings(effectiveOrganization?.id);
+  const { data: billingSettings } = useColorBarBillingSettings(effectiveOrganization?.id);
 
   // Demo-mode local bowl state — persisted in sessionStorage per appointment
   const demoBowlsKey = `dock-demo-bowls::${appointment.id}`;

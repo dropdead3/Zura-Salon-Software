@@ -1,5 +1,5 @@
 /**
- * BackroomComplianceSection — Compliance Reports dashboard for Backroom Settings.
+ * ColorBarComplianceSection — Compliance Reports dashboard for Backroom Settings.
  * Enhanced with waste metrics and overage attachment rate.
  */
 
@@ -23,7 +23,7 @@ import { Infotainer } from '@/components/ui/Infotainer';
 import { AnimatedBlurredAmount } from '@/components/ui/AnimatedBlurredAmount';
 import { format, subDays } from 'date-fns';
 import { FileDown } from 'lucide-react';
-import { useBackroomComplianceTracker } from '@/hooks/color-bar/useColorBarComplianceTracker';
+import { useColorBarComplianceTracker } from '@/hooks/color-bar/useColorBarComplianceTracker';
 import { useEvaluateComplianceLog } from '@/hooks/color-bar/useEvaluateComplianceLog';
 import { useActiveLocations } from '@/hooks/useLocations';
 import { StaffComplianceReportDialog } from './compliance/StaffComplianceReportDialog';
@@ -49,7 +49,7 @@ function getComplianceBadge(rate: number) {
   return { variant: 'destructive' as const, icon: ShieldX, label: 'Needs Attention' };
 }
 
-export function BackroomComplianceSection() {
+export function ColorBarComplianceSection() {
   const [range, setRange] = useState<RangeKey>('7d');
   const [staffFilter, setStaffFilter] = useState<string>('all');
   const [reportDialogOpen, setReportDialogOpen] = useState(false);
@@ -58,7 +58,7 @@ export function BackroomComplianceSection() {
   const { from, to } = useMemo(() => getDateRange(range), [range]);
   const effectiveLocationId = selectedLocationId === 'all' ? undefined : selectedLocationId;
 
-  const { data, isLoading } = useBackroomComplianceTracker(from, to, effectiveLocationId, staffFilter !== 'all' ? staffFilter : undefined);
+  const { data, isLoading } = useColorBarComplianceTracker(from, to, effectiveLocationId, staffFilter !== 'all' ? staffFilter : undefined);
   const evaluate = useEvaluateComplianceLog();
 
   const today = format(new Date(), 'yyyy-MM-dd');

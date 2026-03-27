@@ -1,5 +1,5 @@
 /**
- * BackroomBrandUsageCard — Donut chart for brand share + manufacturer table.
+ * ColorBarBrandUsageCard — Donut chart for brand share + manufacturer table.
  */
 
 import { useMemo } from 'react';
@@ -19,7 +19,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { useBackroomBrandUsage, type BrandUsageRow } from '@/hooks/color-bar/useColorBarBrandUsage';
+import { useColorBarBrandUsage, type BrandUsageRow } from '@/hooks/color-bar/useColorBarBrandUsage';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { useFormatNumber } from '@/hooks/useFormatNumber';
 
@@ -41,8 +41,8 @@ interface Props {
   locationId?: string;
 }
 
-export function BackroomBrandUsageCard({ startDate, endDate, rangeLabel, locationId }: Props) {
-  const { data: brands, isLoading } = useBackroomBrandUsage(startDate, endDate, locationId);
+export function ColorBarBrandUsageCard({ startDate, endDate, rangeLabel, locationId }: Props) {
+  const { data: brands, isLoading } = useColorBarBrandUsage(startDate, endDate, locationId);
   const { formatCurrency } = useFormatCurrency();
   const { formatNumber, formatPercent } = useFormatNumber();
 

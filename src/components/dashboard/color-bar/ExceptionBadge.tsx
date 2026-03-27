@@ -3,14 +3,14 @@
  * Place on navigation items to surface unresolved anomalies.
  */
 
-import { useBackroomExceptions } from '@/hooks/color-bar/useColorBarExceptions';
+import { useColorBarExceptions } from '@/hooks/color-bar/useColorBarExceptions';
 
 interface ExceptionBadgeProps {
   className?: string;
 }
 
 export function ExceptionBadge({ className = '' }: ExceptionBadgeProps) {
-  const { data: exceptions = [] } = useBackroomExceptions({ status: 'open' });
+  const { data: exceptions = [] } = useColorBarExceptions({ status: 'open' });
 
   if (exceptions.length === 0) return null;
 

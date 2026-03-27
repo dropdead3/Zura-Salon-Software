@@ -5,7 +5,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { useBackroomOrgId } from './useColorBarOrgId';
+import { useColorBarOrgId } from './useColorBarOrgId';
 
 export interface SupplyCostRecoveryData {
   totalRecouped: number;
@@ -22,7 +22,7 @@ export function useSupplyCostRecovery(
   enabled: boolean,
   locationId?: string,
 ) {
-  const orgId = useBackroomOrgId();
+  const orgId = useColorBarOrgId();
 
   return useQuery({
     queryKey: ['supply-cost-recovery', orgId, startDate, endDate, locationId],

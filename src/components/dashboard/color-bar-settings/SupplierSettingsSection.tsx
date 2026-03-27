@@ -40,7 +40,7 @@ import {
 } from '@/hooks/color-bar/useSupplierSettings';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { useProducts } from '@/hooks/useProducts';
-import { useBackroomOrgId } from '@/hooks/color-bar/useColorBarOrgId';
+import { useColorBarOrgId } from '@/hooks/color-bar/useColorBarOrgId';
 
 interface ContactForm {
   contact_name: string;
@@ -66,7 +66,7 @@ export function SupplierSettingsSection() {
   const unlinkProduct = useUnlinkProduct();
   const renameSupplier = useRenameSupplier();
   const deleteSupplier = useDeleteSupplier();
-  const orgId = useBackroomOrgId();
+  const orgId = useColorBarOrgId();
 
   const [selected, setSelected] = useState<string | null>(null);
   const [linkDialogOpen, setLinkDialogOpen] = useState(false);

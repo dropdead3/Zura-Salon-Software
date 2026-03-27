@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { useBackroomLocationEntitlements } from '@/hooks/color-bar/useColorBarLocationEntitlements';
-import { useBackroomOrgId } from '@/hooks/color-bar/useColorBarOrgId';
+import { useColorBarLocationEntitlements } from '@/hooks/color-bar/useColorBarLocationEntitlements';
+import { useColorBarOrgId } from '@/hooks/color-bar/useColorBarOrgId';
 
 /**
  * Checks whether the current organization has Backroom enabled.
@@ -10,8 +10,8 @@ import { useBackroomOrgId } from '@/hooks/color-bar/useColorBarOrgId';
  * When `locationId` is provided, also checks the per-location entitlement table.
  * Both the org-level flag AND the location entitlement must be active.
  */
-export function useBackroomEntitlement(locationId?: string) {
-  const orgId = useBackroomOrgId();
+export function useColorBarEntitlement(locationId?: string) {
+  const orgId = useColorBarOrgId();
 
   const { data: orgEnabled = false, isLoading: orgLoading } = useQuery({
     queryKey: ['backroom-org-flag', orgId],
@@ -30,7 +30,7 @@ export function useBackroomEntitlement(locationId?: string) {
   });
 
   const { isLocationEntitled, isLoading: locLoading, activeCount } =
-    useBackroomLocationEntitlements(orgId);
+    useColorBarLocationEntitlements(orgId);
 
   // If no locationId provided, require org flag AND at least one active location
   if (!locationId) {

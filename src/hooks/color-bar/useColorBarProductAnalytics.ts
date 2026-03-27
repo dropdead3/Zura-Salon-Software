@@ -1,5 +1,5 @@
 /**
- * useBackroomProductAnalytics — Aggregates mix_bowl_lines by category and product.
+ * useColorBarProductAnalytics — Aggregates mix_bowl_lines by category and product.
  * Returns category-level and product-level usage breakdowns for the Product Analytics card.
  */
 
@@ -31,7 +31,7 @@ export interface ProductAnalyticsData {
   products: ProductUsageRow[];
 }
 
-export function useBackroomProductAnalytics(
+export function useColorBarProductAnalytics(
   startDate: string,
   endDate: string,
   locationId?: string

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useBackroomSetupHealth, type SetupWarning } from '@/hooks/color-bar/useColorBarSetupHealth';
+import { useColorBarSetupHealth, type SetupWarning } from '@/hooks/color-bar/useColorBarSetupHealth';
 import { useBackroomSetting } from '@/hooks/color-bar/useColorBarSettings';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
@@ -8,15 +8,15 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Loader2, AlertTriangle, CheckCircle2, Info, Package, Truck, Wrench, DollarSign, Monitor, BarChart3, Bell, Sparkles, LayoutDashboard } from 'lucide-react';
-import { BackroomSetupWizard } from './ColorBarSetupWizard';
+import { ColorBarSetupWizard } from './ColorBarSetupWizard';
 import { Infotainer } from '@/components/ui/Infotainer';
 
 interface Props {
   onNavigate: (section: string) => void;
 }
 
-export function BackroomSetupOverview({ onNavigate }: Props) {
-  const { data: health, isLoading } = useBackroomSetupHealth();
+export function ColorBarSetupOverview({ onNavigate }: Props) {
+  const { data: health, isLoading } = useColorBarSetupHealth();
   const { data: wizardSetting } = useBackroomSetting('setup_wizard_completed');
   const [showWizard, setShowWizard] = useState(false);
   const wizardCompleted = !!(wizardSetting?.value as Record<string, unknown>)?.completed;
@@ -43,7 +43,7 @@ export function BackroomSetupOverview({ onNavigate }: Props) {
 
   if (showWizard) {
     return (
-      <BackroomSetupWizard
+      <ColorBarSetupWizard
         onComplete={() => setShowWizard(false)}
         onCancel={() => setShowWizard(false)}
       />

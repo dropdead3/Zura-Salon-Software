@@ -5,7 +5,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { useBackroomOrgId } from './useColorBarOrgId';
+import { useColorBarOrgId } from './useColorBarOrgId';
 import { suggestParLevel, type ParLevelSuggestion } from '@/lib/parLevelSuggestion';
 import { subDays } from 'date-fns';
 
@@ -16,7 +16,7 @@ export interface AutoParSuggestion extends ParLevelSuggestion {
 }
 
 export function useAutoParSuggestions(productIds: string[]) {
-  const orgId = useBackroomOrgId();
+  const orgId = useColorBarOrgId();
 
   return useQuery({
     queryKey: ['auto-par-suggestions', orgId, productIds.length],

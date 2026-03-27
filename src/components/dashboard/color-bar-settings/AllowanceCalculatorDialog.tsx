@@ -33,7 +33,7 @@ import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useAllowanceBowls } from '@/hooks/color-bar/useAllowanceBowls';
 import { useServiceRecipeBaselines } from '@/hooks/inventory/useServiceRecipeBaselines';
 import { useUpsertAllowancePolicy } from '@/hooks/billing/useServiceAllowancePolicies';
-import { useBackroomBillingSettings } from '@/hooks/billing/useColorBarBillingSettings';
+import { useColorBarBillingSettings } from '@/hooks/billing/useColorBarBillingSettings';
 import { calculateRetailCostPerGram, calculateAllowanceHealth, type AllowanceHealthResult } from '@/lib/color-bar/allowance-health';
 import { toast } from 'sonner';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -164,7 +164,7 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
   const { effectiveOrganization } = useOrganizationContext();
   const orgId = effectiveOrganization?.id;
 
-  const { data: billingSettings } = useBackroomBillingSettings(orgId);
+  const { data: billingSettings } = useColorBarBillingSettings(orgId);
   const defaultMarkupPct = billingSettings?.default_product_markup_pct ?? 0;
 
   const hasBowls = containerTypes.includes('bowl');

@@ -5,13 +5,13 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { useBackroomOrgId } from './useColorBarOrgId';
+import { useColorBarOrgId } from './useColorBarOrgId';
 import { subWeeks, startOfWeek, differenceInWeeks } from 'date-fns';
 
 const WEEKS = 12;
 
 export function useProductPOHistory() {
-  const orgId = useBackroomOrgId();
+  const orgId = useColorBarOrgId();
 
   return useQuery({
     queryKey: ['product-po-history', orgId],

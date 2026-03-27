@@ -8,7 +8,7 @@ import {
 } from '@/components/platform/ui/PlatformCard';
 import { PlatformBadge } from '@/components/platform/ui/PlatformBadge';
 import { useOrganizationFeatureFlags } from '@/hooks/useOrganizationFeatureFlags';
-import { useBackroomLocationEntitlements } from '@/hooks/color-bar/useColorBarLocationEntitlements';
+import { useColorBarLocationEntitlements } from '@/hooks/color-bar/useColorBarLocationEntitlements';
 
 interface AccountAppsCardProps {
   organizationId: string;
@@ -16,7 +16,7 @@ interface AccountAppsCardProps {
 
 export function AccountAppsCard({ organizationId }: AccountAppsCardProps) {
   const { data: flags, isLoading: flagsLoading } = useOrganizationFeatureFlags(organizationId);
-  const { entitlements, isLoading: entitlementsLoading } = useBackroomLocationEntitlements(organizationId);
+  const { entitlements, isLoading: entitlementsLoading } = useColorBarLocationEntitlements(organizationId);
 
   const isLoading = flagsLoading || entitlementsLoading;
 

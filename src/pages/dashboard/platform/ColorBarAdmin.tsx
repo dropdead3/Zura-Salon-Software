@@ -3,11 +3,11 @@ import { PlatformPageContainer } from '@/components/platform/ui/PlatformPageCont
 import { PlatformPageHeader } from '@/components/platform/ui/PlatformPageHeader';
 import { PriceQueueTab } from '@/components/platform/color-bar/PriceQueueTab';
 import { PriceSourcesTab } from '@/components/platform/color-bar/PriceSourcesTab';
-import { BackroomEntitlementsTab } from '@/components/platform/color-bar/ColorBarEntitlementsTab';
+import { ColorBarEntitlementsTab } from '@/components/platform/color-bar/ColorBarEntitlementsTab';
 import { SupplyLibraryTab } from '@/components/platform/color-bar/SupplyLibraryTab';
 import { HardwareOrdersTab } from '@/components/platform/color-bar/HardwareOrdersTab';
-import { BackroomAnalyticsTab } from '@/components/platform/color-bar/ColorBarAnalyticsTab';
-import { BackroomBillingTab } from '@/components/platform/color-bar/ColorBarBillingTab';
+import { ColorBarAnalyticsTab } from '@/components/platform/color-bar/ColorBarAnalyticsTab';
+import { ColorBarBillingTab } from '@/components/platform/color-bar/ColorBarBillingTab';
 import { CoachPerformanceTab } from '@/components/platform/color-bar/CoachPerformanceTab';
 import { RefundHistoryTab } from '@/components/platform/color-bar/RefundHistoryTab';
 import { DockAppTab } from '@/components/platform/color-bar/DockAppTab';
@@ -63,19 +63,19 @@ const navGroups: NavGroup[] = [
 ];
 
 const panels: Record<string, React.ReactNode> = {
-  analytics: <BackroomAnalyticsTab />,
+  analytics: <ColorBarAnalyticsTab />,
   queue: <PriceQueueTab />,
   sources: <PriceSourcesTab />,
-  entitlements: <BackroomEntitlementsTab />,
+  entitlements: <ColorBarEntitlementsTab />,
   library: <SupplyLibraryTab />,
-  billing: <BackroomBillingTab />,
+  billing: <ColorBarBillingTab />,
   'coach-performance': <CoachPerformanceTab />,
   'refund-history': <RefundHistoryTab />,
   'hardware-orders': <HardwareOrdersTab />,
   'dock-app': <DockAppTab />,
 };
 
-export default function BackroomAdmin() {
+export default function ColorBarAdmin() {
   const [tab, setTab] = useState('analytics');
 
   return (

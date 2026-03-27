@@ -23,12 +23,12 @@ const CATEGORY_FILTERS: { key: AlertCategory | null; label: string }[] = [
   { key: 'audit_overdue', label: 'Audits' },
 ];
 
-interface BackroomControlTowerProps {
+interface ColorBarControlTowerProps {
   locationId?: string | null;
   className?: string;
 }
 
-export function BackroomControlTower({ locationId, className }: BackroomControlTowerProps) {
+export function ColorBarControlTower({ locationId, className }: ColorBarControlTowerProps) {
   const [category, setCategory] = useState<AlertCategory | null>(null);
   const { alerts, overflow, summary, isLoading, isError } = useControlTowerAlerts(locationId, category);
   const [expanded, setExpanded] = useState(false);

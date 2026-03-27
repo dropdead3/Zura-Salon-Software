@@ -6,12 +6,12 @@
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { useBackroomOrgId } from './useColorBarOrgId';
+import { useColorBarOrgId } from './useColorBarOrgId';
 import { isColorOrChemicalService } from '@/utils/serviceCategorization';
 import { toast } from 'sonner';
 
 export function useEvaluateComplianceLog() {
-  const orgId = useBackroomOrgId();
+  const orgId = useColorBarOrgId();
   const queryClient = useQueryClient();
 
   return useMutation({

@@ -3,7 +3,7 @@
  */
 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useBackroomStations } from '@/hooks/color-bar/useColorBarStations';
+import { useColorBarStations } from '@/hooks/color-bar/useColorBarStations';
 
 interface StationSelectorProps {
   locationId?: string;
@@ -12,7 +12,7 @@ interface StationSelectorProps {
 }
 
 export function StationSelector({ locationId, value, onValueChange }: StationSelectorProps) {
-  const { data: stations = [], isLoading } = useBackroomStations(locationId);
+  const { data: stations = [], isLoading } = useColorBarStations(locationId);
 
   if (isLoading) {
     return <div className="h-10 bg-muted/30 animate-pulse rounded-md" />;

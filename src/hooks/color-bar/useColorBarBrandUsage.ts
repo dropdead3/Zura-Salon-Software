@@ -1,5 +1,5 @@
 /**
- * useBackroomBrandUsage — Aggregates mix_bowl_lines by brand_snapshot for a date range.
+ * useColorBarBrandUsage — Aggregates mix_bowl_lines by brand_snapshot for a date range.
  * Returns brand-level dispensed weight, cost, waste, and service count.
  */
 
@@ -15,7 +15,7 @@ export interface BrandUsageRow {
   serviceCount: number;
 }
 
-export function useBackroomBrandUsage(startDate: string, endDate: string, locationId?: string) {
+export function useColorBarBrandUsage(startDate: string, endDate: string, locationId?: string) {
   const { effectiveOrganization } = useOrganizationContext();
   const orgId = effectiveOrganization?.id;
 

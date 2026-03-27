@@ -23,11 +23,11 @@ import { Loader2, Search, Package, ChevronRight, UserPlus, FileDown, FileText, S
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
-import { useBackroomInventoryTable, STOCK_STATUS_CONFIG, type BackroomInventoryRow } from '@/hooks/color-bar/useColorBarInventoryTable';
+import { useColorBarInventoryTable, STOCK_STATUS_CONFIG, type BackroomInventoryRow } from '@/hooks/color-bar/useColorBarInventoryTable';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { useFormatNumber } from '@/hooks/useFormatNumber';
 import { useInlineStockEdit } from '@/hooks/color-bar/useInlineStockEdit';
-import { useBackroomOrgId } from '@/hooks/color-bar/useColorBarOrgId';
+import { useColorBarOrgId } from '@/hooks/color-bar/useColorBarOrgId';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useCreateMultiLinePO } from '@/hooks/inventory/usePurchaseOrderLines';
 import { useBatchCreatePurchaseOrders } from '@/hooks/useBatchReorder';
@@ -136,7 +136,7 @@ async function exportStockPdf(
 // ─── Main Component ─────────────────────────────────
 
 export function StockTab({ locationId, pdfExportRef }: StockTabProps) {
-  const { data: inventory = [], isLoading } = useBackroomInventoryTable({ locationId });
+  const { data: inventory = [], isLoading } = useColorBarInventoryTable({ locationId });
   const { data: allLocations = [] } = useActiveLocations();
   const { data: poHistoryMap } = useProductPOHistory();
   const { data: intelligenceMap } = useInventoryIntelligence(locationId);
@@ -145,7 +145,7 @@ export function StockTab({ locationId, pdfExportRef }: StockTabProps) {
   const { formatCurrency } = useFormatCurrency();
   const { formatNumber } = useFormatNumber();
   const { adjustStock, updateMinMax } = useInlineStockEdit();
-  const orgId = useBackroomOrgId();
+  const orgId = useColorBarOrgId();
   const { effectiveOrganization } = useOrganizationContext();
   const createPO = useCreateMultiLinePO();
   const batchCreatePOs = useBatchCreatePurchaseOrders();

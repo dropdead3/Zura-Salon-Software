@@ -1,12 +1,12 @@
 /**
- * BackroomTab — Entry point for backroom functionality inside AppointmentDetailSheet.
+ * ColorBarTab — Entry point for backroom functionality inside AppointmentDetailSheet.
  * Loads appointment context and renders Instant Formula Memory + MixSessionManager.
  */
 
 import { MixSessionManager } from './MixSessionManager';
 import { InstantFormulaCard } from './InstantFormulaCard';
 
-interface BackroomTabProps {
+interface ColorBarTabProps {
   appointment: {
     id: string;
     organization_id?: string | null;
@@ -22,7 +22,7 @@ interface BackroomTabProps {
   organizationId: string;
 }
 
-export function BackroomTab({ appointment, organizationId }: BackroomTabProps) {
+export function ColorBarTab({ appointment, organizationId }: ColorBarTabProps) {
   const clientId = appointment.client_id ?? appointment.phorest_client_id ?? undefined;
 
   return (

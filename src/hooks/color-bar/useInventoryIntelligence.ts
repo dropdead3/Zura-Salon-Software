@@ -6,7 +6,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { useBackroomOrgId } from './useColorBarOrgId';
+import { useColorBarOrgId } from './useColorBarOrgId';
 
 export interface ProductIntelligence {
   dailyUsage: number;
@@ -14,7 +14,7 @@ export interface ProductIntelligence {
 }
 
 export function useInventoryIntelligence(locationId?: string) {
-  const orgId = useBackroomOrgId();
+  const orgId = useColorBarOrgId();
 
   return useQuery({
     queryKey: ['inventory-intelligence', orgId, locationId],

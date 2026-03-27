@@ -1,5 +1,5 @@
 /**
- * useBackroomBillingSettings — Org-level billing configuration for product cost pass-through.
+ * useColorBarBillingSettings — Org-level billing configuration for product cost pass-through.
  */
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -18,7 +18,7 @@ export interface BackroomBillingSettings {
   updated_at: string;
 }
 
-export function useBackroomBillingSettings(organizationId: string | null | undefined) {
+export function useColorBarBillingSettings(organizationId: string | null | undefined) {
   return useQuery({
     queryKey: ['backroom-billing-settings', organizationId],
     queryFn: async (): Promise<BackroomBillingSettings | null> => {

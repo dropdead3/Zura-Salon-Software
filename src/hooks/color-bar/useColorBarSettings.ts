@@ -1,10 +1,10 @@
 /**
- * useBackroomSettings — Generic key-value settings with org→location inheritance.
+ * useColorBarSettings — Generic key-value settings with org→location inheritance.
  */
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
-import { useBackroomOrgId } from './useColorBarOrgId';
+import { useColorBarOrgId } from './useColorBarOrgId';
 import { toast } from 'sonner';
 
 export interface BackroomSetting {
@@ -21,8 +21,8 @@ export interface BackroomSetting {
  * Fetches all backroom settings for the org. Returns org-level defaults
  * and any location overrides. Consumer can resolve inheritance.
  */
-export function useBackroomSettingsAll() {
-  const orgId = useBackroomOrgId();
+export function useColorBarSettingsAll() {
+  const orgId = useColorBarOrgId();
 
   return useQuery({
     queryKey: ['backroom-settings', orgId],
@@ -45,7 +45,7 @@ export function useBackroomSettingsAll() {
  * Resolve a single setting value with location→org fallback.
  */
 export function useBackroomSetting(key: string, locationId?: string | null) {
-  const orgId = useBackroomOrgId();
+  const orgId = useColorBarOrgId();
 
   return useQuery({
     queryKey: ['backroom-settings', orgId, key, locationId],

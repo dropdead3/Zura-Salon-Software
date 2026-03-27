@@ -58,7 +58,7 @@ function UnitInput({
   );
 }
 
-export function BackroomBulkPricingDialog({ open, onOpenChange, orgId, productIds, scopeLabel }: Props) {
+export function ColorBarBulkPricingDialog({ open, onOpenChange, orgId, productIds, scopeLabel }: Props) {
   const queryClient = useQueryClient();
   const [wholesalePrice, setWholesalePrice] = useState('');
   const [markupPct, setMarkupPct] = useState('');

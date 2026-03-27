@@ -149,7 +149,7 @@ import RewardShop from "./pages/dashboard/RewardShop";
 import PointsConfig from "./pages/dashboard/admin/PointsConfig";
 import DailyHuddle from "./pages/dashboard/admin/DailyHuddle";
 import ZuraConfigPage from "./pages/dashboard/admin/ZuraConfigPage";
-import BackroomSettings from "./pages/dashboard/admin/ColorBarSettings";
+import ColorBarSettings from "./pages/dashboard/admin/ColorBarSettings";
 import BackroomSubscription from "./pages/dashboard/admin/BackroomSubscription";
 import PriceRecommendations from "./pages/dashboard/admin/PriceRecommendations";
 
@@ -199,7 +199,7 @@ import NotificationsPage from "./pages/dashboard/platform/Notifications";
 import DemoFeatures from "./pages/dashboard/platform/DemoFeatures";
 import HealthScoresPage from "./pages/dashboard/platform/HealthScores";
 import BenchmarksPage from "./pages/dashboard/platform/Benchmarks";
-import BackroomAdmin from "./pages/dashboard/platform/ColorBarAdmin";
+import ColorBarAdmin from "./pages/dashboard/platform/ColorBarAdmin";
 import CoachDashboard from "./pages/dashboard/platform/CoachDashboard";
 import BillingGuide from "./pages/dashboard/platform/BillingGuide";
 import { PlatformLayout } from "./components/platform/layout/PlatformLayout";
@@ -306,7 +306,7 @@ function DashboardRoutes() {
       <Route path="admin/feature-flags" element={<Navigate to="/platform/feature-flags" replace />} />
 
       <Route path="admin/zura-config" element={<ProtectedRoute requiredPermission="manage_settings"><ZuraConfigPage /></ProtectedRoute>} />
-      <Route path="admin/backroom-settings" element={<ProtectedRoute requiredPermission="manage_settings"><BackroomSettings /></ProtectedRoute>} />
+      <Route path="admin/backroom-settings" element={<ProtectedRoute requiredPermission="manage_settings"><ColorBarSettings /></ProtectedRoute>} />
       <Route path="admin/backroom-subscription" element={<ProtectedRoute requiredPermission="manage_settings"><BackroomSubscription /></ProtectedRoute>} />
       <Route path="admin/price-recommendations" element={<Navigate to="admin/backroom-settings?section=price-intelligence" replace />} />
       <Route path="admin/kpi-builder" element={<ProtectedRoute requiredPermission="manage_settings"><KpiBuilderPage /></ProtectedRoute>} />
@@ -450,7 +450,7 @@ const App = () => (
                               <Route path="settings/integrations/:integrationId" element={<ProtectedRoute requirePlatformRole="platform_admin"><PlatformIntegrationDetail /></ProtectedRoute>} />
                               <Route path="permissions" element={<ProtectedRoute requirePlatformRole="platform_admin"><PlatformPermissions /></ProtectedRoute>} />
                               <Route path="feature-flags" element={<ProtectedRoute requirePlatformRole="platform_admin"><PlatformFeatureFlags /></ProtectedRoute>} />
-                              <Route path="backroom" element={<ProtectedRoute requirePlatformRole="platform_admin"><BackroomAdmin /></ProtectedRoute>} />
+                              <Route path="backroom" element={<ProtectedRoute requirePlatformRole="platform_admin"><ColorBarAdmin /></ProtectedRoute>} />
                               <Route path="coach" element={<ProtectedRoute requireAnyPlatformRole><CoachDashboard /></ProtectedRoute>} />
                               <Route path="demo-features" element={<ProtectedRoute requirePlatformRole="platform_admin"><DemoFeatures /></ProtectedRoute>} />
                             </Route>

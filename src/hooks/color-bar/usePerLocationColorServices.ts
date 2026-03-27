@@ -5,7 +5,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { useBackroomOrgId } from './useColorBarOrgId';
+import { useColorBarOrgId } from './useColorBarOrgId';
 import { isColorOrChemicalService } from '@/utils/serviceCategorization';
 
 const BATCH_SIZE = 1000;
@@ -37,7 +37,7 @@ export interface LocationColorMetrics {
 }
 
 export function usePerLocationColorServices() {
-  const orgId = useBackroomOrgId();
+  const orgId = useColorBarOrgId();
 
   return useQuery<Map<string, LocationColorMetrics>>({
     queryKey: ['per-location-color-services', orgId],

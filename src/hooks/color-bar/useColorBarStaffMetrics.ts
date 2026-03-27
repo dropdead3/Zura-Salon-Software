@@ -1,23 +1,23 @@
 /**
- * useBackroomStaffMetrics — Per-staff efficiency metrics for a date range.
- * Wraps useBackroomAnalytics data through the analytics engine.
+ * useColorBarStaffMetrics — Per-staff efficiency metrics for a date range.
+ * Wraps useColorBarAnalytics data through the analytics engine.
  * Fetches product charges from checkout_usage_charges and attaches per staff.
  */
 
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { useBackroomAnalytics } from './useColorBarAnalytics';
+import { useColorBarAnalytics } from './useColorBarAnalytics';
 import { calculateStaffEfficiency, type StaffMetric } from '@/lib/color-bar/analytics-engine';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 
-export function useBackroomStaffMetrics(
+export function useColorBarStaffMetrics(
   startDate: string,
   endDate: string,
   locationId?: string,
   staffId?: string
 ) {
-  const { data, isLoading, error } = useBackroomAnalytics(startDate, endDate, locationId);
+  const { data, isLoading, error } = useColorBarAnalytics(startDate, endDate, locationId);
   const { effectiveOrganization } = useOrganizationContext();
   const orgId = effectiveOrganization?.id;
 

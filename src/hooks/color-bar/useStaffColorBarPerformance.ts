@@ -1,5 +1,5 @@
 /**
- * useStaffBackroomPerformance — Read pre-computed staff backroom analytics.
+ * useStaffColorBarPerformance — Read pre-computed staff backroom analytics.
  * Projection is updated daily by edge function.
  */
 
@@ -24,7 +24,7 @@ export interface StaffBackroomPerformance {
   last_calculated_at: string;
 }
 
-export function useStaffBackroomPerformance(
+export function useStaffColorBarPerformance(
   periodStart: string,
   periodEnd: string,
   locationId?: string,

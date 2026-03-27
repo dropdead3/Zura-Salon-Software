@@ -1,10 +1,10 @@
 /**
- * useBackroomSetupHealth — Validates backroom configuration completeness.
+ * useColorBarSetupHealth — Validates backroom configuration completeness.
  * Returns typed health warnings for the overview dashboard.
  */
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { useBackroomOrgId } from './useColorBarOrgId';
+import { useColorBarOrgId } from './useColorBarOrgId';
 
 export interface SetupWarning {
   id: string;
@@ -29,8 +29,8 @@ export interface SetupHealthMetrics {
   warnings: SetupWarning[];
 }
 
-export function useBackroomSetupHealth() {
-  const orgId = useBackroomOrgId();
+export function useColorBarSetupHealth() {
+  const orgId = useColorBarOrgId();
 
   return useQuery({
     queryKey: ['backroom-setup-health', orgId],

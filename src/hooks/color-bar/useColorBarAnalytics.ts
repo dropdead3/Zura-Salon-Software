@@ -1,5 +1,5 @@
 /**
- * useBackroomAnalytics — Aggregates backroom metrics for a date range.
+ * useColorBarAnalytics — Aggregates backroom metrics for a date range.
  * Real-time computation from raw tables; falls back to snapshots for historical.
  */
 
@@ -32,7 +32,7 @@ export interface BackroomAnalyticsData {
   staffData: StaffSessionData[];
 }
 
-export function useBackroomAnalytics(
+export function useColorBarAnalytics(
   startDate: string,
   endDate: string,
   locationId?: string

@@ -1,12 +1,12 @@
 /**
- * useBackroomComplianceTracker — Reads backroom_compliance_log for a date range.
+ * useColorBarComplianceTracker — Reads backroom_compliance_log for a date range.
  * Returns individual items + aggregated summary stats + per-staff breakdown.
  * Enhanced with waste metrics + overage attachment rate.
  */
 
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { useBackroomOrgId } from './useColorBarOrgId';
+import { useColorBarOrgId } from './useColorBarOrgId';
 
 export interface ComplianceLogItem {
   id: string;
@@ -72,13 +72,13 @@ export interface ComplianceTrackerResult {
   trend: ComplianceTrendPoint[];
 }
 
-export function useBackroomComplianceTracker(
+export function useColorBarComplianceTracker(
   dateFrom: string,
   dateTo: string,
   locationId?: string,
   staffUserId?: string,
 ) {
-  const orgId = useBackroomOrgId();
+  const orgId = useColorBarOrgId();
 
   return useQuery<ComplianceTrackerResult>({
     queryKey: ['backroom-compliance-tracker', orgId, dateFrom, dateTo, locationId, staffUserId],

@@ -1,12 +1,12 @@
 /**
- * useBackroomPricingEstimate — Pulls the salon's real color service
+ * useColorBarPricingEstimate — Pulls the salon's real color service
  * appointment data and product spend to generate personalized ROI projections
  * for the Backroom paywall / sales page.
  */
 
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { useBackroomOrgId } from './useColorBarOrgId';
+import { useColorBarOrgId } from './useColorBarOrgId';
 import { isColorOrChemicalService } from '@/utils/serviceCategorization';
 
 /** Industry baseline: ~12 % of color product spend is wasted */
@@ -56,8 +56,8 @@ async function fetchAllBatched<T>(
   return all;
 }
 
-export function useBackroomPricingEstimate(stylistCountFallback = 2) {
-  const orgId = useBackroomOrgId();
+export function useColorBarPricingEstimate(stylistCountFallback = 2) {
+  const orgId = useColorBarOrgId();
 
   return useQuery<PricingEstimate>({
     queryKey: ['backroom-pricing-estimate', orgId],

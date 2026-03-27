@@ -1,12 +1,12 @@
 /**
- * useBackroomInventoryTable — Joins backroom products with inventory_projections
+ * useColorBarInventoryTable — Joins backroom products with inventory_projections
  * to provide stock levels, status badges, and computed order quantities.
  * Factors in open PO quantities to prevent double-ordering.
  */
 
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { useBackroomOrgId } from './useColorBarOrgId';
+import { useColorBarOrgId } from './useColorBarOrgId';
 
 export type StockStatus = 'in_stock' | 'replenish' | 'urgent_reorder' | 'out_of_stock' | 'not_stocked';
 
@@ -126,8 +126,8 @@ function computeReorderFields(qty: number, parLevel: number | null, reorderLevel
   return { orderQty, recommendedOrderQty, effectiveStock };
 }
 
-export function useBackroomInventoryTable(options?: { enabled?: boolean; locationId?: string }) {
-  const orgId = useBackroomOrgId();
+export function useColorBarInventoryTable(options?: { enabled?: boolean; locationId?: string }) {
+  const orgId = useColorBarOrgId();
   const locationId = options?.locationId;
 
   return useQuery({

@@ -1,6 +1,6 @@
 /**
  * fetchInventoryForLocation — Standalone fetch for backroom inventory data
- * for a single location. Mirrors useBackroomInventoryTable logic but callable
+ * for a single location. Mirrors useColorBarInventoryTable logic but callable
  * outside React hooks (e.g. for multi-location PDF exports).
  */
 

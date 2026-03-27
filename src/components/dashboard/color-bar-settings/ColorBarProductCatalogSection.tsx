@@ -1,8 +1,8 @@
 import { useState, useMemo, useCallback, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { useBackroomOrgId } from '@/hooks/color-bar/useColorBarOrgId';
-import { useBackroomInventoryTable, STOCK_STATUS_CONFIG, computeChargePerGram, type BackroomInventoryRow, type StockStatus } from '@/hooks/color-bar/useColorBarInventoryTable';
+import { useColorBarOrgId } from '@/hooks/color-bar/useColorBarOrgId';
+import { useColorBarInventoryTable, STOCK_STATUS_CONFIG, computeChargePerGram, type BackroomInventoryRow, type StockStatus } from '@/hooks/color-bar/useColorBarInventoryTable';
 import { useLocationProductSettingsMap, useUpsertLocationProductSetting, useBulkUpsertLocationProductSettings, useSyncCatalogToAllLocations } from '@/hooks/color-bar/useLocationProductSettings';
 import { useLocations } from '@/hooks/useLocations';
 import { postLedgerEntry } from '@/lib/color-bar/services/inventory-ledger-service';
@@ -50,8 +50,8 @@ import { toast } from 'sonner';
 import { Infotainer } from '@/components/ui/Infotainer';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { SupplyLibraryDialog } from './SupplyLibraryDialog';
-import { BackroomBulkPricingDialog } from './ColorBarBulkPricingDialog';
-import { BackroomBulkReorderDialog } from './ColorBarBulkReorderDialog';
+import { ColorBarBulkPricingDialog } from './ColorBarBulkPricingDialog';
+import { ColorBarBulkReorderDialog } from './ColorBarBulkReorderDialog';
 import { useLogPlatformAction } from '@/hooks/usePlatformAuditLog';
 import { useAuth } from '@/contexts/AuthContext';
 import { formatDistanceToNow, differenceInHours } from 'date-fns';
@@ -168,8 +168,8 @@ interface Props {
 }
 
 /* ====== Main Component ====== */
-export function BackroomProductCatalogSection({ onNavigate }: Props) {
-  const orgId = useBackroomOrgId();
+export function ColorBarProductCatalogSection({ onNavigate }: Props) {
+  const orgId = useColorBarOrgId();
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const logAction = useLogPlatformAction();
@@ -220,7 +220,7 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
   // Data — deferred fetching for performance
   const { data: brandsMeta = [] } = useSupplyBrandsMeta();
   const { data: libraryItems = [] } = useSupplyLibraryItemsByBrand(selectedBrand);
-  const { data: inventoryRows } = useBackroomInventoryTable({ enabled: catalogView === 'inventory', locationId: effectiveLocationId });
+  const { data: inventoryRows } = useColorBarInventoryTable({ enabled: catalogView === 'inventory', locationId: effectiveLocationId });
 
   const { data: products, isLoading } = useQuery({
     queryKey: ['backroom-product-catalog', orgId],
@@ -1501,7 +1501,7 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
         />
       )}
       {orgId && (
-        <BackroomBulkPricingDialog
+        <ColorBarBulkPricingDialog
           open={bulkPricingOpen}
           onOpenChange={setBulkPricingOpen}
           orgId={orgId}
@@ -1520,7 +1520,7 @@ export function BackroomProductCatalogSection({ onNavigate }: Props) {
         />
       )}
       {orgId && (
-        <BackroomBulkReorderDialog
+        <ColorBarBulkReorderDialog
           open={bulkReorderOpen}
           onOpenChange={setBulkReorderOpen}
           orgId={orgId}

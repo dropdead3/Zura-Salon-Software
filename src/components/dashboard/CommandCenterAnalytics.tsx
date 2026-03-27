@@ -27,7 +27,7 @@ import { StaffCommissionTable } from '@/components/dashboard/sales/StaffCommissi
 import { TrueProfitCard } from '@/components/dashboard/sales/TrueProfitCard';
 import { StaffPerformanceReport } from '@/components/dashboard/analytics/StaffPerformanceReport';
 import { ServiceProfitabilityCard } from '@/components/dashboard/analytics/ServiceProfitabilityCard';
-import { BackroomControlTower } from '@/components/dashboard/color-bar/control-tower/BackroomControlTower';
+import { ColorBarControlTower } from '@/components/dashboard/color-bar/control-tower/ColorBarControlTower';
 import { PredictiveBackroomSummary } from '@/components/dashboard/color-bar/predictive-color-bar/PredictiveBackroomSummary';
 import { useDashboardVisibility } from '@/hooks/useDashboardVisibility';
 import { useDashboardLayout } from '@/hooks/useDashboardLayout';
@@ -527,7 +527,7 @@ export function CommandCenterAnalytics() {
         return (
           <VisibilityGate key={cardId} elementKey="control_tower">
             <PinnableCard elementKey="control_tower" elementName="Control Tower" category="Command Center">
-              <BackroomControlTower locationId={locationFilter} />
+              <ColorBarControlTower locationId={locationFilter} />
             </PinnableCard>
           </VisibilityGate>
         );

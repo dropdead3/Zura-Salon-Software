@@ -3,7 +3,7 @@
  */
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { useBackroomOrgId } from './useColorBarOrgId';
+import { useColorBarOrgId } from './useColorBarOrgId';
 import { buildRecommendation, calculateScalingRatio, type PriceRecommendation, type ProductCostInput } from '@/lib/color-bar/price-recommendation';
 import { toast } from 'sonner';
 import { useBackroomSetting, useUpsertBackroomSetting } from './useColorBarSettings';
@@ -53,7 +53,7 @@ export function useDefaultTargetMargin() {
 }
 
 export function useUpdateDefaultTargetMargin() {
-  const orgId = useBackroomOrgId();
+  const orgId = useColorBarOrgId();
   const upsert = useUpsertBackroomSetting();
   
   return {
@@ -71,7 +71,7 @@ export function useUpdateDefaultTargetMargin() {
 
 // ─── Price Targets CRUD ──────────────────────────────────────
 export function useServicePriceTargets() {
-  const orgId = useBackroomOrgId();
+  const orgId = useColorBarOrgId();
 
   return useQuery({
     queryKey: ['service-price-targets', orgId],
@@ -90,7 +90,7 @@ export function useServicePriceTargets() {
 
 export function useUpsertPriceTarget() {
   const queryClient = useQueryClient();
-  const orgId = useBackroomOrgId();
+  const orgId = useColorBarOrgId();
 
   return useMutation({
     mutationFn: async (params: { service_id: string; target_margin_pct: number }) => {
@@ -118,7 +118,7 @@ export function useUpsertPriceTarget() {
 
 // ─── Computed Recommendations ────────────────────────────────
 export function useComputedPriceRecommendations() {
-  const orgId = useBackroomOrgId();
+  const orgId = useColorBarOrgId();
   const { margin: defaultMargin } = useDefaultTargetMargin();
 
   return useQuery({
@@ -266,7 +266,7 @@ export function useComputedPriceRecommendations() {
 // ─── Accept Price Recommendation (Transactional via DB function) ─────
 export function useAcceptPriceRecommendation() {
   const queryClient = useQueryClient();
-  const orgId = useBackroomOrgId();
+  const orgId = useColorBarOrgId();
 
   return useMutation({
     mutationFn: async (rec: PriceRecommendation) => {
@@ -320,7 +320,7 @@ export function useAcceptPriceRecommendation() {
 // ─── Dismiss Recommendation ──────────────────────────────────
 export function useDismissPriceRecommendation() {
   const queryClient = useQueryClient();
-  const orgId = useBackroomOrgId();
+  const orgId = useColorBarOrgId();
 
   return useMutation({
     mutationFn: async (rec: PriceRecommendation) => {
@@ -366,7 +366,7 @@ export function useDismissPriceRecommendation() {
 
 // ─── Recommendation History (with service name join) ─────────
 export function usePriceRecommendationHistory(limit: number = 20) {
-  const orgId = useBackroomOrgId();
+  const orgId = useColorBarOrgId();
 
   return useQuery({
     queryKey: ['price-recommendation-history', orgId, limit],

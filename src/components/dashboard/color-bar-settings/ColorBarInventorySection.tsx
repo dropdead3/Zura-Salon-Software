@@ -1,5 +1,5 @@
 /**
- * BackroomInventorySection — Tabbed inventory management workspace.
+ * ColorBarInventorySection — Tabbed inventory management workspace.
  * Workflow-oriented 6-tab layout: Stock | Orders | Receive | Counts | Audit Log | Analytics
  * Includes health banner with clickable navigation chips and first-time onboarding hint.
  */
@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Button } from '@/components/ui/button';
 import { MapPin, Package, FileText, Truck, ClipboardCheck, History, AlertTriangle, XCircle, Inbox, PackageOpen, BarChart3, FileDown, ArrowLeftRight } from 'lucide-react';
 import { useActiveLocations } from '@/hooks/useLocations';
-import { useBackroomInventoryTable } from '@/hooks/color-bar/useColorBarInventoryTable';
+import { useColorBarInventoryTable } from '@/hooks/color-bar/useColorBarInventoryTable';
 import { usePurchaseOrders } from '@/hooks/usePurchaseOrders';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
@@ -57,7 +57,7 @@ function HealthChip({ icon: Icon, count, label, color, onClick }: {
   );
 }
 
-export function BackroomInventorySection({ initialTab }: { initialTab?: string }) {
+export function ColorBarInventorySection({ initialTab }: { initialTab?: string }) {
   const { data: locations = [] } = useActiveLocations();
   const [locationId, setLocationId] = useState<string | undefined>(locations[0]?.id);
   const effectiveLocationId = locationId || locations[0]?.id;
@@ -71,7 +71,7 @@ export function BackroomInventorySection({ initialTab }: { initialTab?: string }
   }, [initialTab]);
 
   // Badge counts
-  const { data: inventory = [] } = useBackroomInventoryTable({ locationId: effectiveLocationId });
+  const { data: inventory = [] } = useColorBarInventoryTable({ locationId: effectiveLocationId });
   const { data: allOrders = [] } = usePurchaseOrders({ status: 'all' });
 
   const outOfStockCount = useMemo(() => inventory.filter(r => r.status === 'out_of_stock').length, [inventory]);

@@ -60,7 +60,7 @@ interface ServiceRow {
   is_backroom_tracked: boolean;
 }
 
-export function BackroomSetupWizard({ onComplete, onCancel }: Props) {
+export function ColorBarSetupWizard({ onComplete, onCancel }: Props) {
   const { effectiveOrganization } = useOrganizationContext();
   const orgId = effectiveOrganization?.id;
   const queryClient = useQueryClient();

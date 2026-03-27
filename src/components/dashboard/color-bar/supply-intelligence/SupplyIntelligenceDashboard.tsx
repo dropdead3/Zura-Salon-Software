@@ -20,7 +20,7 @@ import {
   useRefreshSupplyIntelligence,
 } from '@/hooks/color-bar/useSupplyIntelligence';
 import { useBackroomSetting, useUpsertBackroomSetting } from '@/hooks/color-bar/useColorBarSettings';
-import { useBackroomOrgId } from '@/hooks/color-bar/useColorBarOrgId';
+import { useColorBarOrgId } from '@/hooks/color-bar/useColorBarOrgId';
 import { SupplyKPICards } from './SupplyKPICards';
 import { SupplyInsightCard } from './SupplyInsightCard';
 import { ProductCostTrendSection } from './ProductCostTrendSection';
@@ -45,7 +45,7 @@ export function SupplyIntelligenceDashboard({ locationId }: SupplyIntelligenceDa
   const { data, isLoading } = useSupplyIntelligence(locationId);
   const refresh = useRefreshSupplyIntelligence();
   const [filter, setFilter] = useState<string>('all');
-  const orgId = useBackroomOrgId();
+  const orgId = useColorBarOrgId();
 
   // Digest frequency setting
   const { data: digestSetting } = useBackroomSetting('supply_digest_frequency');
