@@ -224,6 +224,14 @@ export function AggregateSalesCard({
           dateFrom: format(now, 'yyyy-MM-dd'), 
           dateTo: format(endOfMonth(now), 'yyyy-MM-dd') 
         };
+      case 'lastMonth': {
+        const lm = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        const lmEnd = new Date(now.getFullYear(), now.getMonth(), 0);
+        return {
+          dateFrom: format(lm, 'yyyy-MM-dd'),
+          dateTo: format(lmEnd, 'yyyy-MM-dd'),
+        };
+      }
       case 'ytd':
         return { 
           dateFrom: format(startOfYear(now), 'yyyy-MM-dd'), 
