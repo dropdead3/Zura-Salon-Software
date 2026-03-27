@@ -547,10 +547,10 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                 <Wrench className={tokens.card.icon} />
               </div>
               <div>
-                <CardTitle className={tokens.card.title}>
-                  All Services
+                <div className="flex items-center gap-2">
+                  <CardTitle className={tokens.card.title}>All Services</CardTitle>
                   <MetricInfoTooltip description="Complete view of all active services. Toggle tracking, view configuration status, and identify gaps." />
-                </CardTitle>
+                </div>
                 <CardDescription>
                   {filterCounts.tracked} tracked · {filterCounts.untracked} untracked · {filterCounts.attention > 0 && (
                     <span className="text-amber-500">{filterCounts.attention} need attention</span>
