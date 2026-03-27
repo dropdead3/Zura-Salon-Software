@@ -158,8 +158,12 @@ export function DockServicesTab({ appointment, staff, effectiveServiceName }: Do
   // Parse chemical services
   const chemicalServices = useMemo(() => getChemicalServices(effectiveServiceName ?? appointment.service_name), [effectiveServiceName, appointment.service_name]);
 
-  // Get the first session ID for stats query
-  const primarySessionId = sessions?.[0]?.id || null;
+  // Aggregate stats across ALL active session IDs
+  const activeSessionIds = useMemo(
+    () => (sessions ?? []).filter(s => !isTerminalSessionStatus(s.status as any)).map(s => s.id),
+    [sessions]
+  );
+  const primarySessionId = activeSessionIds[0] || sessions?.[0]?.id || null;
   const { data: sessionStats } = useDockSessionStats(primarySessionId);
 
   const handleAddBowlForService = useCallback((serviceLabel: string, containerType: ContainerType = 'bowl') => {
