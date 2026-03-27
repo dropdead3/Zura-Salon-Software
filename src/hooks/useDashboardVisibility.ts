@@ -24,11 +24,13 @@ export function useDashboardVisibility() {
   return useQuery({
     queryKey: ['dashboard-visibility'],
     queryFn: async () => {
+      // Table has 1800+ rows — must override the default 1000-row limit
       const { data, error } = await supabase
         .from('dashboard_element_visibility')
         .select('*')
         .order('element_category')
-        .order('element_name');
+        .order('element_name')
+        .limit(5000);
 
       if (error) throw error;
       return data as DashboardElementVisibility[];
