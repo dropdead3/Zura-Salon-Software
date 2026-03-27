@@ -34,7 +34,10 @@ import {
   Bell,
   ChevronDown,
   X,
+  BookOpen,
+  BookX,
 } from 'lucide-react';
+import { useInfotainerSettings } from '@/hooks/useInfotainers';
 import { useNavigationHistory } from '@/contexts/NavigationHistoryContext';
 import type { RoleBadgeConfig } from '@/lib/roleBadgeConfig';
 import type { Database } from '@/integrations/supabase/types';
@@ -133,6 +136,7 @@ export function SuperAdminTopBar({
   const { hideNumbers, toggleHideNumbers } = useHideNumbers();
   const { isViewingAs } = useViewAs();
   const { isImpersonating } = useOrganizationContext();
+  const { showInfotainers, toggleInfotainers, isToggling } = useInfotainerSettings();
   const location = useLocation();
 
   const showNextClient = isStylistRole || isStylistAssistantRole;
@@ -192,6 +196,31 @@ export function SuperAdminTopBar({
             <div className="flex">
               <HideNumbersToggle />
             </div>
+          )}
+
+          {/* Page Explainers toggle — admin only */}
+          {(isPlatformUser || isAdmin) && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className={cn(
+                    "h-9 w-9 rounded-full transition-all duration-150",
+                    showInfotainers
+                      ? "text-blue-400 hover:text-blue-300 hover:bg-blue-500/10"
+                      : "text-muted-foreground hover:text-foreground"
+                  )}
+                  onClick={() => toggleInfotainers(!showInfotainers)}
+                  disabled={isToggling}
+                >
+                  {showInfotainers ? <BookOpen className="w-4 h-4" /> : <BookX className="w-4 h-4" />}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="text-xs">
+                {showInfotainers ? 'Hide page explainers' : 'Show page explainers (resets dismissed)'}
+              </TooltipContent>
+            </Tooltip>
           )}
 
           {/* Primary role badge — only highest-priority shown */}
