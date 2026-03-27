@@ -40,6 +40,12 @@ import { ServiceTrackingQuickSetup } from './ServiceTrackingQuickSetup';
 import { AllowanceCalculatorDialog } from './AllowanceCalculatorDialog';
 import { PriceRecommendationCard } from './PriceRecommendationCard';
 import { useComputedPriceRecommendations, useAcceptPriceRecommendation, useDismissPriceRecommendation } from '@/hooks/color-bar/useServicePriceRecommendations';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 
 interface ServiceRow {
   id: string;
@@ -81,7 +87,7 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
   const [searchQuery, setSearchQuery] = useState('');
-  const [collapsedCategories, setCollapsedCategories] = useState<Set<string> | null>(null); // null = not yet initialized
+  const [collapsedCategories, setCollapsedCategories] = useState<Set<string> | null>(null);
   
   const [wizardOpen, setWizardOpen] = useState(false);
   const [allowanceEditing, setAllowanceEditing] = useState<Set<string>>(new Set());
@@ -118,8 +124,8 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
     if (Math.abs(deltaY) < 40) return;
     setExpandedIds(prev => {
       const next = new Set(prev);
-      if (deltaY > 0 && !next.has(id)) next.add(id);       // swipe down = expand
-      else if (deltaY < 0 && next.has(id)) next.delete(id); // swipe up = collapse
+      if (deltaY > 0 && !next.has(id)) next.add(id);
+      else if (deltaY < 0 && next.has(id)) next.delete(id);
       return next;
     });
   }, []);
@@ -197,7 +203,6 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
           next.add(variables.id);
         } else {
           next.delete(variables.id);
-          // Clean up orphaned billing policy
           const orphanedPolicy = allowanceByService.get(variables.id);
           if (orphanedPolicy) {
             deletePolicy.mutate(orphanedPolicy.id);
@@ -229,27 +234,21 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
   const updateService = useMutation({
     mutationFn: async ({ id, updates }: { id: string; updates: Partial<ServiceRow> }) => {
       const svc = (services || []).find(s => s.id === id);
-
-      // Auto-reset configured status when settings change
       const didResetConfig = !!(svc?.backroom_config_dismissed && !('backroom_config_dismissed' in updates));
       if (didResetConfig) {
         updates.backroom_config_dismissed = false;
       }
-
       const { error } = await supabase
         .from('services')
         .update(updates as Record<string, unknown>)
         .eq('id', id);
       if (error) throw error;
-
-      // Sync container_types to phorest_services so the Dock reads the correct vessels
       if (updates.container_types && orgId && svc?.name) {
         await (supabase.from('phorest_services') as any)
           .update({ container_types: updates.container_types })
           .eq('name', svc.name)
           .eq('organization_id', orgId);
       }
-
       return { didResetConfig };
     },
     onSuccess: (result) => {
@@ -339,37 +338,22 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
     return 'standard';
   };
 
-  /**
-   * Derived "truly configured" check — combines backroom_config_dismissed with
-   * actual billing completeness. A service is only truly configured when:
-   * - backroom_config_dismissed === true AND
-   *   - billing_mode is 'parts_and_labor' (always complete), OR
-   *   - billing_mode is 'allowance' with actual values set, OR
-   *   - no policy exists (intentionally dismissed as non-chemical)
-   */
   const isTrulyConfigured = useCallback((s: ServiceRow): boolean => {
     if (!s.backroom_config_dismissed) return false;
     const policy = allowanceByService.get(s.id);
-    // No policy = intentionally dismissed (not a chemical service)
     if (!policy) return true;
-    // P&L is always complete once selected
     if (policy.billing_mode === 'parts_and_labor') return true;
-    // Allowance mode requires actual values
     if (policy.billing_mode === 'allowance') {
       return policy.is_active === true && (policy.included_allowance_qty > 0 || policy.overage_rate > 0);
     }
-    // No billing mode set yet = not configured
     return false;
   }, [allowanceByService]);
 
   const needsAttention = (s: ServiceRow): boolean => {
     if (isTrulyConfigured(s)) return false;
     const type = getServiceType(s);
-    // Chemical but not tracked
     if ((type === 'chemical' || type === 'suggested') && !s.is_backroom_tracked) return true;
-    // Tracked but missing policy entirely
     if (s.is_backroom_tracked && !allowanceByService.has(s.id)) return true;
-    // Tracked with policy but incomplete billing configuration
     if (s.is_backroom_tracked) {
       const p = allowanceByService.get(s.id);
       if (p && (p.billing_mode === null || p.billing_mode === undefined)) return true;
@@ -429,14 +413,13 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
     }
   }, [allServices, activeFilter, allowanceByService]);
 
-  // Search filter (applied after tab filter)
+  // Search filter
   const searchedServices = useMemo(() => {
     let list = filteredServices;
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
       list = list.filter(s => s.name.toLowerCase().includes(q));
     }
-    // Sort by category display_order, then alphabetically by name
     return [...list].sort((a, b) => {
       const catA = a.category || '';
       const catB = b.category || '';
@@ -448,7 +431,7 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
     });
   }, [filteredServices, searchQuery, categoryOrderMap]);
 
-  // Group services by category for collapsible rendering
+  // Group services by category
   const categoryGroups = useMemo(() => {
     const groups = new Map<string, { services: ServiceRow[]; configured: number; tracked: number }>();
     for (const s of searchedServices) {
@@ -462,7 +445,7 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
     return groups;
   }, [searchedServices, allowanceByService]);
 
-  // Initialize collapsedCategories to ALL categories once data loads (default collapsed)
+  // Initialize collapsedCategories
   useEffect(() => {
     if (collapsedCategories === null && categoryGroups.size > 0) {
       setCollapsedCategories(new Set(categoryGroups.keys()));
@@ -472,12 +455,11 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
   // Auto-expand all categories when searching
   useEffect(() => {
     if (searchQuery.trim()) {
-      setCollapsedCategories(new Set()); // all expanded
+      setCollapsedCategories(new Set());
     }
   }, [searchQuery]);
 
   // Auto-reset stale backroom_config_dismissed flags
-  // When a service has the flag set but allowance mode has zero values, reset it
   useEffect(() => {
     if (!orgId || !allServices.length) return;
     const staleServices = allServices.filter(s => {
@@ -488,7 +470,6 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
       return false;
     });
     if (staleServices.length === 0) return;
-    // Reset in background
     (async () => {
       for (const s of staleServices) {
         await supabase
@@ -509,7 +490,6 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
     });
   };
 
-  // Expand toggle helper
   const toggleExpand = (id: string) => {
     setExpandedIds(prev => {
       const next = new Set(prev);
@@ -570,8 +550,449 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
     { key: 'uncategorized', label: 'Uncategorized' },
   ];
 
+  // ─── Shared detail panel renderer (used by both table and card modes) ───
+  const renderDetailPanel = (service: ServiceRow) => {
+    const type = getServiceType(service);
+    return (
+      <div className="@[500px]:px-6 px-4 py-4 bg-muted/30 border-t border-border/30">
+        {/* Toggle row — visible only at narrow container widths */}
+        <div className="@[600px]:hidden flex items-center justify-between py-3 border-b border-border/30 mb-4" onClick={(e) => e.stopPropagation()}>
+          <span className="text-xs font-sans text-muted-foreground">Enable Product Billing</span>
+          <Switch
+            checked={service.is_backroom_tracked}
+            onCheckedChange={(v) => toggleTracking.mutate({ id: service.id, tracked: v })}
+            className="scale-90 shrink-0"
+          />
+        </div>
+        {service.is_backroom_tracked ? (
+          <div className="space-y-5">
+            <div className="grid grid-cols-1 @[900px]:grid-cols-2 gap-5">
+              {/* ─── Section 1: Tracking ─── */}
+              <div>
+                <p className="text-[10px] font-display uppercase tracking-wider text-muted-foreground mb-2">Tracking</p>
+                <div className="pl-3 border-l border-border/40">
+                  <div className="flex flex-wrap items-center gap-4">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-xs font-sans text-muted-foreground">Vessels:</span>
+                      {(['bowl', 'bottle'] as const).map((vt, idx) => {
+                        const active = (service.container_types || []).includes(vt);
+                        return (
+                          <React.Fragment key={vt}>
+                            {idx === 1 && (
+                              <span className="text-xs font-sans text-muted-foreground/70 italic">and/or</span>
+                            )}
+                            <button
+                              className={cn(
+                                'px-3 py-1 rounded-full text-xs font-sans capitalize transition-colors border flex items-center gap-1 min-h-[44px] @[500px]:min-h-0',
+                                active
+                                  ? 'bg-primary text-primary-foreground border-primary'
+                                  : 'bg-transparent border-dashed border-muted-foreground/40 text-muted-foreground hover:border-muted-foreground'
+                              )}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                const current = service.container_types || [];
+                                if (active && current.length === 1) {
+                                  toast.error('At least one vessel type is required');
+                                  return;
+                                }
+                                const next = active ? current.filter(t => t !== vt) : [...current, vt];
+                                updateService.mutate({ id: service.id, updates: { container_types: next } });
+                              }}
+                            >
+                              {active ? <Check className="w-3 h-3" /> : <Plus className="w-3 h-3" />}
+                              {vt === 'bowl' ? 'Bowls' : 'Bottles'}
+                            </button>
+                          </React.Fragment>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* ─── Section 2: Billing Method ─── */}
+              {(service.container_types || []).length > 0 && (
+                <div>
+                  <p className="text-[10px] font-display uppercase tracking-wider text-muted-foreground mb-2">Billing Method</p>
+                  <div className="pl-3 border-l border-border/40">
+                    {(() => {
+                      const policy = allowanceByService.get(service.id);
+                      const billingMode = policy?.billing_mode ?? null;
+                      return (
+                        <div className="space-y-2">
+                          {/* Billing mode toggle — stacks vertically at <500px */}
+                          <div className="flex items-center gap-1.5 @[500px]:flex-row flex-col @[500px]:items-center items-stretch">
+                            <span className="text-xs font-sans text-muted-foreground @[500px]:inline hidden">Billing:</span>
+                            <span className="text-xs font-sans text-muted-foreground @[500px]:hidden mb-1">Billing:</span>
+                            {(['allowance', 'parts_and_labor'] as const).map((mode, idx) => {
+                              const active = billingMode !== null && billingMode === mode;
+                              return (
+                                <React.Fragment key={mode}>
+                                  {idx === 1 && (
+                                    <span className="text-xs font-sans text-muted-foreground/60 select-none @[500px]:inline hidden">or</span>
+                                  )}
+                                  <button
+                                    className={cn(
+                                      'px-3 py-1 rounded-full text-xs font-sans capitalize transition-colors border flex items-center gap-1 justify-center min-h-[44px] @[500px]:min-h-0',
+                                      active
+                                        ? 'bg-primary text-primary-foreground border-primary'
+                                        : 'bg-transparent border-dashed border-muted-foreground/40 text-muted-foreground hover:border-muted-foreground'
+                                    )}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      if (active) {
+                                        const existingPolicy = allowanceByService.get(service.id);
+                                        if (existingPolicy) {
+                                          deletePolicy.mutate(existingPolicy.id);
+                                        }
+                                      } else {
+                                        upsertPolicy.mutate({
+                                          organization_id: effectiveOrganization!.id,
+                                          service_id: service.id,
+                                          billing_mode: mode,
+                                          is_active: mode === 'parts_and_labor' ? true : (policy?.is_active ?? false),
+                                          included_allowance_qty: policy?.included_allowance_qty ?? 0,
+                                          overage_rate: policy?.overage_rate ?? 0,
+                                          overage_rate_type: policy?.overage_rate_type ?? 'per_unit',
+                                          overage_cap: policy?.overage_cap ?? null,
+                                          notes: policy?.notes ?? null,
+                                        });
+                                      }
+                                    }}
+                                  >
+                                    {active ? <Check className="w-3 h-3" /> : <Plus className="w-3 h-3" />}
+                                    {mode === 'allowance' ? 'Allowance' : 'Parts & Labor'}
+                                  </button>
+                                </React.Fragment>
+                              );
+                            })}
+                          </div>
+
+                          {/* Mode-specific content */}
+                          {billingMode === null ? (
+                            <p className="text-xs font-sans text-muted-foreground italic pl-1">Select a billing method above.</p>
+                          ) : billingMode === 'parts_and_labor' ? (
+                            <div className="flex items-center gap-2 text-xs">
+                              <FileText className="w-3.5 h-3.5 text-primary shrink-0" />
+                              <span className="font-sans text-muted-foreground">
+                                Parts & Labor — client pays hourly rate + retail cost of supplies. No allowance needed.
+                              </span>
+                            </div>
+                          ) : (
+                            <div className="flex items-start justify-between gap-4">
+                              {(() => {
+                                const hasConfiguredValues = policy && (policy.included_allowance_qty > 0 || policy.overage_rate > 0);
+                                if (policy && policy.is_active && hasConfiguredValues) {
+                                  const recipeNote = policy.notes?.startsWith('Recipe-based:') ? policy.notes.replace('Recipe-based: ', '') : null;
+                                  const healthStatus = policy.allowance_health_status;
+                                  const healthPct = policy.allowance_health_pct;
+                                  return (
+                                    <div className="flex items-center gap-2 text-xs flex-wrap">
+                                      <FileText className="w-3.5 h-3.5 text-primary shrink-0" />
+                                      <span className="font-sans text-muted-foreground">
+                                        {recipeNote || `${policy.included_allowance_qty}${policy.allowance_unit} included · $${Number(policy.overage_rate).toFixed(2)}/${policy.allowance_unit} overage`}
+                                      </span>
+                                      {healthStatus && healthPct !== null && (
+                                        <Badge
+                                          variant="outline"
+                                          className={cn(
+                                            'text-[10px] px-1.5 py-0 cursor-pointer hover:opacity-80 transition-opacity',
+                                            healthStatus === 'healthy' && 'text-emerald-500 border-emerald-500/30',
+                                            healthStatus === 'high' && 'text-amber-500 border-amber-500/30',
+                                            healthStatus === 'low' && 'text-blue-500 border-blue-500/30',
+                                          )}
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            setCalculatorServiceId(service.id);
+                                            setCalculatorServiceName(service.name);
+                                            setCalculatorContainerTypes((service.container_types || ['bowl']) as ('bowl' | 'bottle')[]);
+                                            setCalculatorServicePrice(service.price);
+                                          }}
+                                        >
+                                          {healthPct.toFixed(1)}%
+                                          {healthStatus === 'high' && ' ⚠'}
+                                        </Badge>
+                                      )}
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        className={tokens.button.inlineGhost}
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          setCalculatorServiceId(service.id);
+                                          setCalculatorServiceName(service.name);
+                                          setCalculatorContainerTypes((service.container_types || ['bowl']) as ('bowl' | 'bottle')[]);
+                                          setCalculatorServicePrice(service.price);
+                                        }}
+                                      >
+                                        Edit
+                                      </Button>
+                                    </div>
+                                  );
+                                }
+
+                                return (
+                                  <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-3 space-y-1.5 w-full">
+                                    <p className="text-xs font-sans text-amber-700 dark:text-amber-300/80">
+                                      Set a product allowance to calculate overage billing for this service.
+                                    </p>
+                                    <div className="flex items-center gap-2">
+                                      <Button
+                                        size="sm"
+                                        className="h-8 text-xs bg-amber-500 text-amber-950 hover:bg-amber-400 font-sans gap-1.5 rounded-full @[500px]:w-auto w-full"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          setCalculatorServiceId(service.id);
+                                          setCalculatorServiceName(service.name);
+                                          setCalculatorContainerTypes((service.container_types || ['bowl']) as ('bowl' | 'bottle')[]);
+                                          setCalculatorServicePrice(service.price);
+                                        }}
+                                      >
+                                        <span className="relative flex h-2 w-2">
+                                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-300 opacity-75" />
+                                          <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-200" />
+                                        </span>
+                                        Configure Allowance
+                                        <ArrowRight className="w-3 h-3" />
+                                      </Button>
+                                      <MetricInfoTooltip description="Use benchmark products to set a dollar allowance for this service. Stylists can mix any product — once the allowance is reached, overage costs are passed to the client at checkout." />
+                                    </div>
+                                  </div>
+                                );
+                              })()}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })()}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Price Recommendation inline alert */}
+            {(() => {
+              const rec = priceRecMap.get(service.id);
+              if (!rec) return null;
+              return (
+                <PriceRecommendationCard
+                  recommendation={rec}
+                  onAccept={() => acceptPriceRec.mutate(rec)}
+                  onDismiss={() => dismissPriceRec.mutate(rec)}
+                  isAccepting={acceptPriceRec.isPending}
+                />
+              );
+            })()}
+
+            {/* Mark Configured footer — stacks at <500px */}
+            <div className="bg-amber-500/5 border-t border-amber-500/20 rounded-b-lg p-3 mt-3 @[500px]:flex-row flex-col @[500px]:items-center items-stretch flex justify-between gap-2">
+              {isTrulyConfigured(service) ? (
+                <div className="flex items-center gap-2 w-full justify-between">
+                  <span className="text-xs font-sans text-green-600 dark:text-green-400 flex items-center gap-1.5">
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                    Configured
+                  </span>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-9 @[500px]:h-7 text-xs text-muted-foreground hover:text-red-500 hover:bg-red-500/10"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      confirmReset(service.id);
+                    }}
+                  >
+                    <RotateCcw className="w-3.5 h-3.5" />
+                    Reset Configuration
+                  </Button>
+                </div>
+              ) : (() => {
+                const fPolicy = allowanceByService.get(service.id);
+                const fBillingMode = fPolicy?.billing_mode ?? null;
+                const hasConfiguredAllowance = fPolicy && (fPolicy.included_allowance_qty > 0 || fPolicy.overage_rate > 0) && fPolicy.is_active;
+                const canFinalize = fBillingMode === 'parts_and_labor' || (fBillingMode === 'allowance' && hasConfiguredAllowance);
+
+                const hintText = fBillingMode === null
+                  ? 'Select a billing method to finalize.'
+                  : fBillingMode === 'allowance' && !hasConfiguredAllowance
+                    ? 'Configure allowance to finalize.'
+                    : 'Review complete? Mark as configured to track setup progress.';
+
+                return (
+                  <>
+                    <p className="text-xs font-sans text-muted-foreground">
+                      {hintText}
+                    </p>
+                    <div className="flex items-center gap-2 @[500px]:justify-end justify-stretch">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-9 @[500px]:h-7 text-xs shrink-0 text-muted-foreground hover:text-red-500 hover:bg-red-500/10"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          confirmReset(service.id);
+                        }}
+                      >
+                        <RotateCcw className="w-3.5 h-3.5" />
+                        Reset
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        disabled={!canFinalize}
+                        className={cn(
+                          "h-9 @[500px]:h-7 text-xs shrink-0",
+                          canFinalize
+                            ? "text-amber-600 hover:text-amber-700 hover:bg-amber-50 dark:text-amber-400 dark:hover:bg-amber-900/20"
+                            : "text-muted-foreground/50 cursor-not-allowed"
+                        )}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (!canFinalize) return;
+                          updateService.mutate({ id: service.id, updates: { backroom_config_dismissed: true } });
+                          setTimeout(() => {
+                            setExpandedIds(prev => {
+                              const next = new Set(prev);
+                              next.delete(service.id);
+                              return next;
+                            });
+                          }, 400);
+                        }}
+                      >
+                        <ChevronRight className="w-3.5 h-3.5 animate-nudge-right" />
+                        Finalize Configuration
+                      </Button>
+                    </div>
+                  </>
+                );
+              })()}
+            </div>
+          </div>
+        ) : (
+          /* Untracked service drill-down */
+          <div className="space-y-3">
+            {/* Toggle row for narrow widths — untracked state */}
+            <div className="@[600px]:hidden flex items-center justify-between py-2" onClick={(e) => e.stopPropagation()}>
+              <span className="text-xs font-sans text-muted-foreground">Enable Product Billing</span>
+              <Switch
+                checked={service.is_backroom_tracked}
+                onCheckedChange={(v) => toggleTracking.mutate({ id: service.id, tracked: v })}
+                className="scale-90 shrink-0"
+              />
+            </div>
+            {(type === 'chemical' || type === 'suggested') && !service.is_chemical_service && (
+              <p className="text-xs text-amber-600 dark:text-amber-400">This service appears to use chemicals — consider enabling tracking.</p>
+            )}
+            {/* Mark Configured footer for untracked */}
+            {(type === 'chemical' || type === 'suggested') && (
+              <div className="bg-primary/5 border-t border-primary/20 rounded-b-lg p-3 mt-3 @[500px]:flex-row flex-col @[500px]:items-center items-stretch flex justify-between gap-2">
+                {service.backroom_config_dismissed ? (
+                  <div className="flex items-center gap-2 w-full justify-between">
+                    <span className="text-xs font-sans text-green-600 dark:text-green-400 flex items-center gap-1.5">
+                      <CheckCircle2 className="w-3.5 h-3.5" />
+                      Reviewed
+                    </span>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-9 @[500px]:h-7 text-xs text-muted-foreground hover:text-red-500 hover:bg-red-500/10"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        confirmReset(service.id);
+                      }}
+                    >
+                      <RotateCcw className="w-3.5 h-3.5" />
+                      Reset Configuration
+                    </Button>
+                  </div>
+                ) : (
+                  <>
+                    <p className="text-xs font-sans text-muted-foreground">
+                      Doesn't need tracking? Mark as reviewed.
+                    </p>
+                    <div className="flex items-center gap-2 @[500px]:justify-end justify-stretch">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-9 @[500px]:h-7 text-xs shrink-0 text-muted-foreground hover:text-red-500 hover:bg-red-500/10"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          confirmReset(service.id);
+                        }}
+                      >
+                        <RotateCcw className="w-3.5 h-3.5" />
+                        Reset
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-9 @[500px]:h-7 text-xs shrink-0 text-amber-600 hover:text-amber-700 hover:bg-amber-50 dark:text-amber-400 dark:hover:bg-amber-900/20"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          updateService.mutate({ id: service.id, updates: { backroom_config_dismissed: true } });
+                          setTimeout(() => {
+                            setExpandedIds(prev => {
+                              const next = new Set(prev);
+                              next.delete(service.id);
+                              return next;
+                            });
+                          }, 400);
+                        }}
+                      >
+                        <ChevronRight className="w-3.5 h-3.5 animate-nudge-right" />
+                        Finalize Configuration
+                      </Button>
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  // ─── Service badges renderer (shared) ───
+  const renderServiceBadges = (service: ServiceRow) => {
+    const type = getServiceType(service);
+    return (
+      <div className="flex flex-wrap items-center gap-1.5 mt-0.5">
+        {service.category && (
+          <span className="text-[11px] text-muted-foreground">{service.category}</span>
+        )}
+        {type === 'suggested' && (
+          <Badge variant="outline" className="text-[10px] whitespace-nowrap shrink-0 border-amber-500/40 text-amber-600 dark:text-amber-400 py-0 px-1.5">Suggested</Badge>
+        )}
+        {isTrulyConfigured(service) ? (
+          <Badge variant="outline" className="text-[10px] whitespace-nowrap shrink-0 border-emerald-500/30 bg-emerald-500/10 text-emerald-500 dark:text-emerald-400 py-0 px-1.5">Configured ✓</Badge>
+        ) : service.is_backroom_tracked && (() => {
+          const activePolicy = allowancePolicies?.find(p => p.service_id === service.id && p.is_active);
+          return activePolicy && activePolicy.billing_mode !== 'parts_and_labor' && (activePolicy.included_allowance_qty > 0 || activePolicy.notes?.match(/\$\d/));
+        })() ? (
+          <Badge variant="outline" className="text-[10px] whitespace-nowrap shrink-0 border-blue-500/30 bg-blue-500/10 text-blue-500 dark:text-blue-400 py-0 px-1.5">Allowance Set</Badge>
+        ) : service.is_backroom_tracked ? (
+          <Badge variant="outline" className="text-[10px] whitespace-nowrap shrink-0 border-amber-500/30 bg-amber-500/10 text-amber-500 dark:text-amber-400 py-0 px-1.5">Unconfigured</Badge>
+        ) : null}
+        {(() => {
+          const policy = allowanceByService?.get(service.id);
+          if (!policy) return null;
+          if (policy.is_active && policy.billing_mode === 'parts_and_labor') {
+            return <Badge variant="outline" className="text-[10px] whitespace-nowrap shrink-0 border-blue-500/30 bg-blue-500/10 text-blue-500 dark:text-blue-400 py-0 px-1.5">Parts & Labor</Badge>;
+          }
+          if (policy.is_active) {
+            const dollarMatch = policy.notes?.match(/\$(\d+\.?\d*)/);
+            if (dollarMatch && policy.included_allowance_qty > 0) {
+              return <Badge variant="outline" className="text-[10px] whitespace-nowrap shrink-0 border-border/60 py-0 px-1.5">${dollarMatch[1]} Allowance</Badge>;
+            }
+          }
+          return null;
+        })()}
+      </div>
+    );
+  };
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 @container">
       <Infotainer
         id="color-bar-services-guide"
         title="Service Tracking"
@@ -582,16 +1003,19 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
       {/* Configuration Progress */}
       <ServiceTrackingProgressBar milestones={milestones} onQuickSetup={() => setWizardOpen(true)} />
 
-      {/* Auto-detect banner (slim inline) */}
+      {/* Auto-detect banner — stacks at <500px */}
       {chemicalUntracked.length > 0 && (
-        <div className="flex items-center gap-3 rounded-xl border border-amber-500/30 bg-amber-500/5 px-4 py-3">
-          <Zap className="w-4 h-4 text-amber-500 shrink-0" />
-          <p className={cn(tokens.body.muted, 'flex-1')}>
-            <span className="text-foreground font-sans font-medium">{chemicalUntracked.length} color/chemical service{chemicalUntracked.length > 1 ? 's' : ''}</span>{' '}
-            detected but not yet tracked.
-          </p>
+        <div className="flex @[500px]:flex-row flex-col @[500px]:items-center items-start gap-3 rounded-xl border border-amber-500/30 bg-amber-500/5 px-4 py-3">
+          <div className="flex items-center gap-3 flex-1 min-w-0">
+            <Zap className="w-4 h-4 text-amber-500 shrink-0" />
+            <p className={cn(tokens.body.muted, 'flex-1')}>
+              <span className="text-foreground font-sans font-medium">{chemicalUntracked.length} color/chemical service{chemicalUntracked.length > 1 ? 's' : ''}</span>{' '}
+              detected but not yet tracked.
+            </p>
+          </div>
           <Button
             size="sm"
+            className="@[500px]:w-auto w-full shrink-0"
             onClick={() => bulkTrackMutation.mutate(chemicalUntracked.map(s => s.id))}
             disabled={bulkTrackMutation.isPending}
           >
@@ -603,12 +1027,12 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
       {/* Unified Service Table */}
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3 min-w-0">
               <div className={tokens.card.iconBox}>
                 <Wrench className={tokens.card.icon} />
               </div>
-              <div>
+              <div className="min-w-0">
                 <div className="flex items-center gap-2">
                   <CardTitle className={tokens.card.title}>All Services</CardTitle>
                   <MetricInfoTooltip description="Complete view of all active services. Toggle tracking, view configuration status, and identify gaps." />
@@ -620,19 +1044,38 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                 </CardDescription>
               </div>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 shrink-0">
+              {/* Track Selected — hidden at <600px, replaced by sticky bar */}
               {selectedIds.size > 0 && (
                 <Button
                   size="sm"
+                  className="hidden @[600px]:inline-flex"
                   onClick={() => bulkTrackMutation.mutate(Array.from(selectedIds))}
                   disabled={bulkTrackMutation.isPending}
                 >
                   Track Selected ({selectedIds.size})
                 </Button>
               )}
+              {/* Services Configurator — full at ≥700px, icon-only at <700px */}
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="@[700px]:hidden"
+                      onClick={() => navigate(dashPath('/admin/settings?category=services'))}
+                    >
+                      <ArrowRight className="w-4 h-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Services Configurator</TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
               <Button
                 variant="outline"
                 size="sm"
+                className="hidden @[700px]:inline-flex"
                 onClick={() => navigate(dashPath('/admin/settings?category=services'))}
               >
                 Services Configurator
@@ -681,7 +1124,7 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
             )}
           </div>
 
-          {/* Table */}
+          {/* Content area */}
           {searchedServices.length === 0 ? (
             <div className={tokens.empty.container}>
               <Wrench className={tokens.empty.icon} />
@@ -697,598 +1140,331 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
               </p>
             </div>
           ) : (
-             <div className="@container rounded-lg border overflow-hidden">
-              <Table className="min-w-[400px]">
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-10">
-                      <Checkbox
-                        checked={
-                          searchedServices.filter(s => !s.is_backroom_tracked).length > 0 &&
-                          searchedServices.filter(s => !s.is_backroom_tracked).every(s => selectedIds.has(s.id))
-                        }
-                        onCheckedChange={selectAll}
-                      />
-                    </TableHead>
-                    <TableHead className={cn(tokens.table.columnHeader, 'min-w-[180px]')}>Service</TableHead>
-                    <TableHead className={cn(tokens.table.columnHeader, 'text-right @[600px]:table-cell hidden')}>
-                      <span className="@[800px]:hidden">Billing</span>
-                      <span className="hidden @[800px]:inline">Enable Product Billing</span>
-                    </TableHead>
-                    <TableHead className="w-10" />
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {Array.from(categoryGroups.entries()).map(([category, group]) => {
-                    const isCollapsed = collapsedCategories?.has(category) ?? true;
-                    const allConfigured = group.configured === group.services.length && group.services.length > 0;
+            <div className="@container rounded-lg border overflow-hidden relative">
+              {/* ═══ DESKTOP TABLE VIEW (≥900px container) ═══ */}
+              <div className="hidden @[900px]:block">
+                <Table className="min-w-[400px]">
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-10">
+                        <Checkbox
+                          checked={
+                            searchedServices.filter(s => !s.is_backroom_tracked).length > 0 &&
+                            searchedServices.filter(s => !s.is_backroom_tracked).every(s => selectedIds.has(s.id))
+                          }
+                          onCheckedChange={selectAll}
+                        />
+                      </TableHead>
+                      <TableHead className={cn(tokens.table.columnHeader, 'min-w-[180px]')}>Service</TableHead>
+                      <TableHead className={cn(tokens.table.columnHeader, 'text-right')}>
+                        <span className="@[1100px]:hidden">Billing</span>
+                        <span className="hidden @[1100px]:inline">Enable Product Billing</span>
+                      </TableHead>
+                      <TableHead className="w-10" />
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {Array.from(categoryGroups.entries()).map(([category, group]) => {
+                      const isCollapsed = collapsedCategories?.has(category) ?? true;
+                      const allConfigured = group.configured === group.services.length && group.services.length > 0;
 
-                    return (
-                      <React.Fragment key={`cat-${category}`}>
-                        {/* Collapsible category header */}
-                        <TableRow
-                          className="bg-muted/30 cursor-pointer hover:bg-muted/50 transition-colors"
-                          onClick={() => toggleCategoryCollapse(category)}
-                        >
-                          <TableCell colSpan={4} className="py-2 px-4">
-                            <div className="flex items-center justify-between gap-3 flex-wrap">
-                              <div className="flex items-center gap-2 min-w-0">
-                                <ChevronRight className={cn(
-                                  'w-4 h-4 text-muted-foreground transition-transform duration-200 shrink-0',
-                                  !isCollapsed && 'rotate-90',
-                                )} />
-                                <span className="text-[11px] font-display uppercase tracking-wider text-muted-foreground truncate">
-                                  {category}
-                                </span>
-                              </div>
-                              <div className="flex items-center gap-1.5 shrink-0">
-                                <span className="text-[11px] font-sans text-muted-foreground tabular-nums whitespace-nowrap">
-                                  {group.services.length} service{group.services.length !== 1 ? 's' : ''}
-                                </span>
-                                <span className="text-[11px] text-muted-foreground/40">·</span>
-                                <span className={cn(
-                                  'text-[11px] font-sans tabular-nums whitespace-nowrap',
-                                  allConfigured ? 'text-emerald-500' : 'text-muted-foreground',
-                                )}>
-                                  {group.configured} configured
-                                </span>
-                                {allConfigured && (
-                                  <CheckCircle2 className="w-3 h-3 text-emerald-500 shrink-0" />
-                                )}
-                              </div>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-
-                        {/* Service rows — only visible when expanded */}
-                        {!isCollapsed && group.services.map((service) => {
-                          const type = getServiceType(service);
-                          const hasAllowance = allowanceByService.has(service.id);
-                          const attention = needsAttention(service);
-                          const isExpanded = expandedIds.has(service.id);
-
-                          return (
-                            <React.Fragment key={service.id}>
-                              <TableRow
-                                className={cn(
-                                  attention && 'bg-amber-500/[0.03]',
-                                  isTrulyConfigured(service) && 'bg-emerald-500/[0.04]',
-                                  'cursor-pointer'
-                                )}
-                                onClick={() => toggleExpand(service.id)}
-                                {...(isMobile ? {
-                                  onTouchStart: (e: React.TouchEvent) => handleTouchStart(service.id, e),
-                                  onTouchEnd: handleTouchEnd,
-                                } : {})}
-                              >
-                                {/* Checkbox / Status dot */}
-                                <TableCell onClick={(e) => e.stopPropagation()}>
-                                  {!service.is_backroom_tracked ? (
-                                    <Checkbox
-                                      checked={selectedIds.has(service.id)}
-                                      onCheckedChange={() => toggleSelect(service.id)}
-                                    />
-                                  ) : (
-                                    <div className={cn(
-                                      'w-2.5 h-2.5 rounded-full',
-                                      'bg-primary',
-                                    )} />
+                      return (
+                        <React.Fragment key={`cat-${category}`}>
+                          {/* Collapsible category header */}
+                          <TableRow
+                            className="bg-muted/30 cursor-pointer hover:bg-muted/50 transition-colors"
+                            onClick={() => toggleCategoryCollapse(category)}
+                          >
+                            <TableCell colSpan={4} className="py-2 px-4">
+                              <div className="flex items-center justify-between gap-3 flex-wrap">
+                                <div className="flex items-center gap-2 min-w-0">
+                                  <ChevronRight className={cn(
+                                    'w-4 h-4 text-muted-foreground transition-transform duration-200 shrink-0',
+                                    !isCollapsed && 'rotate-90',
+                                  )} />
+                                  <span className="text-[11px] font-display uppercase tracking-wider text-muted-foreground truncate">
+                                    {category}
+                                  </span>
+                                </div>
+                                <div className="flex items-center gap-1.5 shrink-0">
+                                  <span className="text-[11px] font-sans text-muted-foreground tabular-nums whitespace-nowrap">
+                                    {group.services.length} service{group.services.length !== 1 ? 's' : ''}
+                                  </span>
+                                  <span className="text-[11px] text-muted-foreground/40">·</span>
+                                  <span className={cn(
+                                    'text-[11px] font-sans tabular-nums whitespace-nowrap',
+                                    allConfigured ? 'text-emerald-500' : 'text-muted-foreground',
+                                  )}>
+                                    {group.configured} configured
+                                  </span>
+                                  {allConfigured && (
+                                    <CheckCircle2 className="w-3 h-3 text-emerald-500 shrink-0" />
                                   )}
-                                </TableCell>
+                                </div>
+                              </div>
+                            </TableCell>
+                          </TableRow>
 
-                                {/* Service — Name + Category subtitle + Type badge + Status badge */}
-                                <TableCell>
-                                  <div className="flex items-center gap-2">
-                                    <div className="min-w-0 flex-1">
-                                      <div className="flex items-center gap-1.5">
-                                        <span className={cn(
-                                          'text-sm font-sans truncate',
-                                          service.is_backroom_tracked ? 'text-foreground font-medium' : 'text-muted-foreground',
-                                        )}>
-                                          {service.name}
-                                        </span>
-                                      </div>
-                                      <div className="flex flex-wrap items-center gap-1.5 mt-0.5">
-                                        {service.category && (
-                                          <span className="text-[11px] text-muted-foreground">{service.category}</span>
-                                        )}
-                                        {type === 'suggested' && (
-                                          <Badge variant="outline" className="text-[10px] whitespace-nowrap shrink-0 border-amber-500/40 text-amber-600 dark:text-amber-400 py-0 px-1.5">Suggested</Badge>
-                                        )}
-                                        {/* Inline status indicator */}
-                                        {isTrulyConfigured(service) ? (
-                                          <Badge variant="outline" className="text-[10px] whitespace-nowrap shrink-0 border-emerald-500/30 bg-emerald-500/10 text-emerald-500 dark:text-emerald-400 py-0 px-1.5">Configured ✓</Badge>
-                                        ) : service.is_backroom_tracked && (() => {
-                                          const activePolicy = allowancePolicies?.find(p => p.service_id === service.id && p.is_active);
-                                          return activePolicy && activePolicy.billing_mode !== 'parts_and_labor' && (activePolicy.included_allowance_qty > 0 || activePolicy.notes?.match(/\$\d/));
-                                        })() ? (
-                                          <Badge variant="outline" className="text-[10px] whitespace-nowrap shrink-0 border-blue-500/30 bg-blue-500/10 text-blue-500 dark:text-blue-400 py-0 px-1.5">Allowance Set</Badge>
-                                        ) : service.is_backroom_tracked ? (
-                                          <Badge variant="outline" className="text-[10px] whitespace-nowrap shrink-0 border-amber-500/30 bg-amber-500/10 text-amber-500 dark:text-amber-400 py-0 px-1.5">Unconfigured</Badge>
-                                        ) : null}
-                                        {/* Inline billing method indicator */}
-                                        {(() => {
-                                          const policy = allowanceByService?.get(service.id);
-                                          if (!policy) return null;
-                                          if (policy.is_active && policy.billing_mode === 'parts_and_labor') {
-                                            return <Badge variant="outline" className="text-[10px] whitespace-nowrap shrink-0 border-blue-500/30 bg-blue-500/10 text-blue-500 dark:text-blue-400 py-0 px-1.5">Parts & Labor</Badge>;
-                                          }
-                                          if (policy.is_active) {
-                                            const dollarMatch = policy.notes?.match(/\$(\d+\.?\d*)/);
-                                            if (dollarMatch && policy.included_allowance_qty > 0) {
-                                              return <Badge variant="outline" className="text-[10px] whitespace-nowrap shrink-0 border-border/60 py-0 px-1.5">${dollarMatch[1]} Allowance</Badge>;
-                                            }
-                                          }
-                                          return null;
-                                        })()}
+                          {/* Service rows */}
+                          {!isCollapsed && group.services.map((service) => {
+                            const attention = needsAttention(service);
+                            const isExpanded = expandedIds.has(service.id);
+
+                            return (
+                              <React.Fragment key={service.id}>
+                                <TableRow
+                                  className={cn(
+                                    attention && 'bg-amber-500/[0.03]',
+                                    isTrulyConfigured(service) && 'bg-emerald-500/[0.04]',
+                                    'cursor-pointer'
+                                  )}
+                                  onClick={() => toggleExpand(service.id)}
+                                  {...(isMobile ? {
+                                    onTouchStart: (e: React.TouchEvent) => handleTouchStart(service.id, e),
+                                    onTouchEnd: handleTouchEnd,
+                                  } : {})}
+                                >
+                                  {/* Checkbox / Status dot */}
+                                  <TableCell onClick={(e) => e.stopPropagation()}>
+                                    {!service.is_backroom_tracked ? (
+                                      <Checkbox
+                                        checked={selectedIds.has(service.id)}
+                                        onCheckedChange={() => toggleSelect(service.id)}
+                                      />
+                                    ) : (
+                                      <div className="w-2.5 h-2.5 rounded-full bg-primary" />
+                                    )}
+                                  </TableCell>
+
+                                  {/* Service — Name + badges */}
+                                  <TableCell>
+                                    <div className="flex items-center gap-2">
+                                      <div className="min-w-0 flex-1">
+                                        <div className="flex items-center gap-1.5">
+                                          <span className={cn(
+                                            'text-sm font-sans truncate',
+                                            service.is_backroom_tracked ? 'text-foreground font-medium' : 'text-muted-foreground',
+                                          )}>
+                                            {service.name}
+                                          </span>
+                                        </div>
+                                        {renderServiceBadges(service)}
                                       </div>
                                     </div>
+                                  </TableCell>
+
+                                  {/* Tracking toggle */}
+                                  <TableCell onClick={(e) => e.stopPropagation()}>
+                                    <div className="flex justify-end">
+                                      <Switch
+                                        checked={service.is_backroom_tracked}
+                                        onCheckedChange={(v) => toggleTracking.mutate({ id: service.id, tracked: v })}
+                                        className="scale-90 shrink-0"
+                                      />
+                                    </div>
+                                  </TableCell>
+
+                                  {/* Expand chevron */}
+                                  <TableCell>
+                                    <ChevronDown className={cn(
+                                      'w-4 h-4 text-muted-foreground transition-transform duration-200',
+                                      isExpanded && 'rotate-180',
+                                    )} />
+                                  </TableCell>
+                                </TableRow>
+
+                                {/* Animated expandable detail row */}
+                                <AnimatePresence initial={false}>
+                                  {isExpanded && (
+                                    <motion.tr
+                                      initial={{ height: 0, opacity: 0 }}
+                                      animate={{ height: 'auto', opacity: 1 }}
+                                      exit={{ height: 0, opacity: 0 }}
+                                      transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
+                                      style={{ overflow: 'clip' }}
+                                    >
+                                      <td colSpan={4} className="p-0">
+                                        <motion.div
+                                          initial={{ opacity: 0, y: -8 }}
+                                          animate={{ opacity: 1, y: 0 }}
+                                          exit={{ opacity: 0, y: -8 }}
+                                          transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1], delay: 0.08 }}
+                                        >
+                                          {renderDetailPanel(service)}
+                                        </motion.div>
+                                      </td>
+                                    </motion.tr>
+                                  )}
+                                </AnimatePresence>
+                              </React.Fragment>
+                            );
+                          })}
+                        </React.Fragment>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </div>
+
+              {/* ═══ TABLET / MOBILE CARD VIEW (<900px container) ═══ */}
+              <div className="@[900px]:hidden">
+                {/* Select-all row for card mode */}
+                {searchedServices.some(s => !s.is_backroom_tracked) && (
+                  <div className="flex items-center gap-3 px-4 py-2.5 border-b border-border/50 bg-muted/30">
+                    <Checkbox
+                      checked={
+                        searchedServices.filter(s => !s.is_backroom_tracked).length > 0 &&
+                        searchedServices.filter(s => !s.is_backroom_tracked).every(s => selectedIds.has(s.id))
+                      }
+                      onCheckedChange={selectAll}
+                    />
+                    <span className="text-xs font-sans text-muted-foreground">Select all untracked</span>
+                  </div>
+                )}
+
+                {Array.from(categoryGroups.entries()).map(([category, group]) => {
+                  const isCollapsed = collapsedCategories?.has(category) ?? true;
+                  const allConfigured = group.configured === group.services.length && group.services.length > 0;
+
+                  return (
+                    <div key={`card-cat-${category}`}>
+                      {/* Category divider bar */}
+                      <button
+                        className="flex items-center justify-between gap-3 w-full px-4 py-2.5 bg-muted/30 hover:bg-muted/50 transition-colors border-b border-border/50"
+                        onClick={() => toggleCategoryCollapse(category)}
+                      >
+                        <div className="flex items-center gap-2 min-w-0">
+                          <ChevronRight className={cn(
+                            'w-4 h-4 text-muted-foreground transition-transform duration-200 shrink-0',
+                            !isCollapsed && 'rotate-90',
+                          )} />
+                          <span className="text-[11px] font-display uppercase tracking-wider text-muted-foreground truncate">
+                            {category}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          <span className="text-[11px] font-sans text-muted-foreground tabular-nums whitespace-nowrap">
+                            {group.services.length}
+                          </span>
+                          <span className="text-[11px] text-muted-foreground/40">·</span>
+                          <span className={cn(
+                            'text-[11px] font-sans tabular-nums whitespace-nowrap',
+                            allConfigured ? 'text-emerald-500' : 'text-muted-foreground',
+                          )}>
+                            {group.configured} ✓
+                          </span>
+                        </div>
+                      </button>
+
+                      {/* Service cards */}
+                      <AnimatePresence initial={false}>
+                        {!isCollapsed && (
+                          <motion.div
+                            initial={{ height: 0, opacity: 0 }}
+                            animate={{ height: 'auto', opacity: 1 }}
+                            exit={{ height: 0, opacity: 0 }}
+                            transition={{ duration: 0.25 }}
+                            style={{ overflow: 'clip' }}
+                          >
+                            {group.services.map((service) => {
+                              const attention = needsAttention(service);
+                              const isExpanded = expandedIds.has(service.id);
+
+                              return (
+                                <div key={service.id}>
+                                  {/* Card row */}
+                                  <div
+                                    className={cn(
+                                      'flex items-start gap-3 px-4 py-3 border-b border-border/30 cursor-pointer transition-colors',
+                                      attention && 'bg-amber-500/[0.03]',
+                                      isTrulyConfigured(service) && 'bg-emerald-500/[0.04]',
+                                      'hover:bg-muted/30 active:bg-muted/50',
+                                    )}
+                                    onClick={() => toggleExpand(service.id)}
+                                    {...(isMobile ? {
+                                      onTouchStart: (e: React.TouchEvent) => handleTouchStart(service.id, e),
+                                      onTouchEnd: handleTouchEnd,
+                                    } : {})}
+                                  >
+                                    {/* Checkbox / Status dot */}
+                                    <div
+                                      className="pt-0.5 shrink-0"
+                                      onClick={(e) => e.stopPropagation()}
+                                    >
+                                      {!service.is_backroom_tracked ? (
+                                        <Checkbox
+                                          checked={selectedIds.has(service.id)}
+                                          onCheckedChange={() => toggleSelect(service.id)}
+                                        />
+                                      ) : (
+                                        <div className="w-2.5 h-2.5 rounded-full bg-primary mt-1" />
+                                      )}
+                                    </div>
+
+                                    {/* Service info */}
+                                    <div className="flex-1 min-w-0">
+                                      <span className={cn(
+                                        'text-sm font-sans',
+                                        service.is_backroom_tracked ? 'text-foreground font-medium' : 'text-muted-foreground',
+                                      )}>
+                                        {service.name}
+                                      </span>
+                                      {renderServiceBadges(service)}
+                                    </div>
+
+                                    {/* Chevron */}
+                                    <ChevronDown className={cn(
+                                      'w-4 h-4 text-muted-foreground transition-transform duration-200 shrink-0 mt-0.5',
+                                      isExpanded && 'rotate-180',
+                                    )} />
                                   </div>
-                                </TableCell>
 
-                                {/* Tracking toggle — just the switch (hidden at narrow widths) */}
-                                <TableCell onClick={(e) => e.stopPropagation()} className="@[600px]:table-cell hidden">
-                                  <div className="flex justify-end">
-                                    <Switch
-                                      checked={service.is_backroom_tracked}
-                                      onCheckedChange={(v) => toggleTracking.mutate({ id: service.id, tracked: v })}
-                                      className="scale-90 shrink-0"
-                                    />
-                                  </div>
-                                </TableCell>
+                                  {/* Expanded detail panel */}
+                                  <AnimatePresence initial={false}>
+                                    {isExpanded && (
+                                      <motion.div
+                                        initial={{ height: 0, opacity: 0 }}
+                                        animate={{ height: 'auto', opacity: 1 }}
+                                        exit={{ height: 0, opacity: 0 }}
+                                        transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
+                                        style={{ overflow: 'clip' }}
+                                      >
+                                        <motion.div
+                                          initial={{ opacity: 0, y: -8 }}
+                                          animate={{ opacity: 1, y: 0 }}
+                                          exit={{ opacity: 0, y: -8 }}
+                                          transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1], delay: 0.08 }}
+                                        >
+                                          {renderDetailPanel(service)}
+                                        </motion.div>
+                                      </motion.div>
+                                    )}
+                                  </AnimatePresence>
+                                </div>
+                              );
+                            })}
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
+                  );
+                })}
+              </div>
 
-                                {/* Expand chevron */}
-                                <TableCell>
-                                  <ChevronDown className={cn(
-                                    'w-4 h-4 text-muted-foreground transition-transform duration-200',
-                                    isExpanded && 'rotate-180',
-                                  )} />
-                                </TableCell>
-                              </TableRow>
-
-                              {/* Animated expandable detail row */}
-                              <AnimatePresence initial={false}>
-                                {isExpanded && (
-                                   <motion.tr
-                                     initial={{ height: 0, opacity: 0 }}
-                                     animate={{ height: 'auto', opacity: 1 }}
-                                     exit={{ height: 0, opacity: 0 }}
-                                     transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
-                                     style={{ overflow: 'clip' }}
-                                   >
-                                     <td colSpan={4} className="p-0">
-                                       <motion.div
-                                         initial={{ opacity: 0, y: -8 }}
-                                         animate={{ opacity: 1, y: 0 }}
-                                         exit={{ opacity: 0, y: -8 }}
-                                         transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1], delay: 0.08 }}
-                                         className="px-6 py-4 bg-muted/30 border-t border-border/30"
-                                       >
-                                        {/* Toggle row — visible only at narrow container widths */}
-                                        <div className="@[600px]:hidden flex items-center justify-between py-3 border-b border-border/30 mb-4" onClick={(e) => e.stopPropagation()}>
-                                          <span className="text-xs font-sans text-muted-foreground">Enable Product Billing</span>
-                                          <Switch
-                                            checked={service.is_backroom_tracked}
-                                            onCheckedChange={(v) => toggleTracking.mutate({ id: service.id, tracked: v })}
-                                            className="scale-90 shrink-0"
-                                          />
-                                        </div>
-                                        {service.is_backroom_tracked ? (
-                                             <div className="space-y-5">
-                                             <div className="grid grid-cols-1 xl:grid-cols-2 gap-5">
-                                               {/* ─── Section 1: Tracking ─── */}
-                                              <div>
-                                                <p className="text-[10px] font-display uppercase tracking-wider text-muted-foreground mb-2">Tracking</p>
-                                                <div className="pl-3 border-l border-border/40">
-                                              <div className="flex flex-wrap items-center gap-4">
-                                                  <div className="flex items-center gap-1.5">
-                                                    <span className="text-xs font-sans text-muted-foreground">Vessels:</span>
-                                                    {(['bowl', 'bottle'] as const).map((vt, idx) => {
-                                                      const active = (service.container_types || []).includes(vt);
-                                                      return (
-                                                        <React.Fragment key={vt}>
-                                                          {idx === 1 && (
-                                                            <span className="text-xs font-sans text-muted-foreground/70 italic">and/or</span>
-                                                          )}
-                                                          <button
-                                                            className={cn(
-                                                              'px-3 py-1 rounded-full text-xs font-sans capitalize transition-colors border flex items-center gap-1',
-                                                              active
-                                                                ? 'bg-primary text-primary-foreground border-primary'
-                                                                : 'bg-transparent border-dashed border-muted-foreground/40 text-muted-foreground hover:border-muted-foreground'
-                                                            )}
-                                                            onClick={(e) => {
-                                                              e.stopPropagation();
-                                                              const current = service.container_types || [];
-                                                              if (active && current.length === 1) {
-                                                                toast.error('At least one vessel type is required');
-                                                                return;
-                                                              }
-                                                              const next = active ? current.filter(t => t !== vt) : [...current, vt];
-                                                              updateService.mutate({ id: service.id, updates: { container_types: next } });
-                                                            }}
-                                                          >
-                                                            {active ? <Check className="w-3 h-3" /> : <Plus className="w-3 h-3" />}
-                                                            {vt === 'bowl' ? 'Bowls' : 'Bottles'}
-                                                          </button>
-                                                        </React.Fragment>
-                                                      );
-                                                    })}
-                                                   </div>
-                                               </div>
-                                              </div>
-                                              </div>
-
-                                              {/* ─── Section 2: Billing Method ─── */}
-                                              {(service.container_types || []).length > 0 && (
-                                              <div>
-                                                <p className="text-[10px] font-display uppercase tracking-wider text-muted-foreground mb-2">Billing Method</p>
-                                                <div className="pl-3 border-l border-border/40">
-                                                 {/* Billing mode + Allowance config */}
-                                                {(() => {
-                                                 const policy = allowanceByService.get(service.id);
-                                                 const billingMode = policy?.billing_mode ?? null;
-                                                 return (
-                                                 <div className="space-y-2">
-                                                   {/* Billing mode toggle */}
-                                                   <div className="flex items-center gap-1.5">
-                                                     <span className="text-xs font-sans text-muted-foreground">Billing:</span>
-                                                      {(['allowance', 'parts_and_labor'] as const).map((mode, idx) => {
-                                                        const active = billingMode !== null && billingMode === mode;
-                                                        return (
-                                                          <React.Fragment key={mode}>
-                                                            {idx === 1 && (
-                                                              <span className="text-xs font-sans text-muted-foreground/60 select-none">or</span>
-                                                            )}
-                                                            <button
-                                                              className={cn(
-                                                                'px-3 py-1 rounded-full text-xs font-sans capitalize transition-colors border flex items-center gap-1',
-                                                                active
-                                                                  ? 'bg-primary text-primary-foreground border-primary'
-                                                                  : 'bg-transparent border-dashed border-muted-foreground/40 text-muted-foreground hover:border-muted-foreground'
-                                                              )}
-                                                               onClick={(e) => {
-                                                                 e.stopPropagation();
-                                                                  if (active) {
-                                                                    const existingPolicy = allowanceByService.get(service.id);
-                                                                    if (existingPolicy) {
-                                                                      deletePolicy.mutate(existingPolicy.id);
-                                                                    }
-                                                                 } else {
-                                                                   upsertPolicy.mutate({
-                                                                     organization_id: effectiveOrganization!.id,
-                                                                     service_id: service.id,
-                                                                     billing_mode: mode,
-                                                                     is_active: mode === 'parts_and_labor' ? true : (policy?.is_active ?? false),
-                                                                     included_allowance_qty: policy?.included_allowance_qty ?? 0,
-                                                                     overage_rate: policy?.overage_rate ?? 0,
-                                                                     overage_rate_type: policy?.overage_rate_type ?? 'per_unit',
-                                                                     overage_cap: policy?.overage_cap ?? null,
-                                                                     notes: policy?.notes ?? null,
-                                                                   });
-                                                                 }
-                                                               }}
-                                                            >
-                                                              {active ? <Check className="w-3 h-3" /> : <Plus className="w-3 h-3" />}
-                                                              {mode === 'allowance' ? 'Allowance' : 'Parts & Labor'}
-                                                            </button>
-                                                          </React.Fragment>
-                                                        );
-                                                      })}
-                                                   </div>
-
-                                                    {/* Mode-specific content */}
-                                                    {billingMode === null ? (
-                                                      <p className="text-xs font-sans text-muted-foreground italic pl-1">Select a billing method above.</p>
-                                                    ) : billingMode === 'parts_and_labor' ? (
-                                                     <div className="flex items-center gap-2 text-xs">
-                                                       <FileText className="w-3.5 h-3.5 text-primary" />
-                                                       <span className="font-sans text-muted-foreground">
-                                                         Parts & Labor — client pays hourly rate + retail cost of supplies. No allowance needed.
-                                                       </span>
-                                                     </div>
-                                                   ) : (
-                                                   <div className="flex items-start justify-between gap-4">
-                                                    {(() => {
-                                                     const hasConfiguredValues = policy && (policy.included_allowance_qty > 0 || policy.overage_rate > 0);
-                                                     if (policy && policy.is_active && hasConfiguredValues) {
-                                                       const recipeNote = policy.notes?.startsWith('Recipe-based:') ? policy.notes.replace('Recipe-based: ', '') : null;
-                                                        const healthStatus = policy.allowance_health_status;
-                                                        const healthPct = policy.allowance_health_pct;
-                                                       return (
-                                                         <div className="flex items-center gap-2 text-xs">
-                                                           <FileText className="w-3.5 h-3.5 text-primary" />
-                                                           <span className="font-sans text-muted-foreground">
-                                                             {recipeNote || `${policy.included_allowance_qty}${policy.allowance_unit} included · $${Number(policy.overage_rate).toFixed(2)}/${policy.allowance_unit} overage`}
-                                                           </span>
-                                                            {healthStatus && healthPct !== null && (
-                                                              <Badge
-                                                                variant="outline"
-                                                                className={cn(
-                                                                  'text-[10px] px-1.5 py-0 cursor-pointer hover:opacity-80 transition-opacity',
-                                                                  healthStatus === 'healthy' && 'text-emerald-500 border-emerald-500/30',
-                                                                  healthStatus === 'high' && 'text-amber-500 border-amber-500/30',
-                                                                  healthStatus === 'low' && 'text-blue-500 border-blue-500/30',
-                                                                )}
-                                                                onClick={(e) => {
-                                                                  e.stopPropagation();
-                                                                  setCalculatorServiceId(service.id);
-                                                                  setCalculatorServiceName(service.name);
-                                                                  setCalculatorContainerTypes((service.container_types || ['bowl']) as ('bowl' | 'bottle')[]);
-                                                                  setCalculatorServicePrice(service.price);
-                                                                }}
-                                                              >
-                                                                {healthPct.toFixed(1)}%
-                                                                {healthStatus === 'high' && ' ⚠'}
-                                                              </Badge>
-                                                            )}
-                                                           <Button
-                                                             variant="ghost"
-                                                             size="sm"
-                                                             className={tokens.button.inlineGhost}
-                                                             onClick={(e) => {
-                                                               e.stopPropagation();
-                                                                setCalculatorServiceId(service.id);
-                                                                setCalculatorServiceName(service.name);
-                                                                setCalculatorContainerTypes((service.container_types || ['bowl']) as ('bowl' | 'bottle')[]);
-                                                                setCalculatorServicePrice(service.price);
-                                                             }}
-                                                           >
-                                                             Edit
-                                                           </Button>
-                                                         </div>
-                                                       );
-                                                     }
-
-                                                      return (
-                                                        <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-3 space-y-1.5">
-                                                          <p className="text-xs font-sans text-amber-700 dark:text-amber-300/80">
-                                                            Set a product allowance to calculate overage billing for this service.
-                                                          </p>
-                                                          <div className="flex items-center gap-2">
-                                                            <Button
-                                                              size="sm"
-                                                              className="h-8 text-xs bg-amber-500 text-amber-950 hover:bg-amber-400 font-sans gap-1.5 rounded-full"
-                                                              onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                setCalculatorServiceId(service.id);
-                                                                setCalculatorServiceName(service.name);
-                                                                setCalculatorContainerTypes((service.container_types || ['bowl']) as ('bowl' | 'bottle')[]);
-                                                                setCalculatorServicePrice(service.price);
-                                                              }}
-                                                            >
-                                                              <span className="relative flex h-2 w-2">
-                                                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-300 opacity-75" />
-                                                                <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-200" />
-                                                              </span>
-                                                              Configure Allowance
-                                                              <ArrowRight className="w-3 h-3" />
-                                                            </Button>
-                                                            <MetricInfoTooltip description="Use benchmark products to set a dollar allowance for this service. Stylists can mix any product — once the allowance is reached, overage costs are passed to the client at checkout." />
-                                                          </div>
-                                                        </div>
-                                                    );
-                                                    })()}
-                                                   </div>
-                                                   )}
-                                                 </div>
-                                                 );
-                                                })()}
-                                                </div>
-                                              </div>
-                                               )}
-                                             </div>
-
-                                             {/* Price Recommendation inline alert */}
-                                            {(() => {
-                                              const rec = priceRecMap.get(service.id);
-                                              if (!rec) return null;
-                                              return (
-                                                <PriceRecommendationCard
-                                                  recommendation={rec}
-                                                  onAccept={() => acceptPriceRec.mutate(rec)}
-                                                  onDismiss={() => dismissPriceRec.mutate(rec)}
-                                                  isAccepting={acceptPriceRec.isPending}
-                                                />
-                                              );
-                                            })()}
-                                            {/* Mark Configured footer */}
-                                            <div className="bg-amber-500/5 border-t border-amber-500/20 rounded-b-lg p-3 mt-3 flex items-center justify-between">
-                                              {isTrulyConfigured(service) ? (
-                                                <div className="flex items-center gap-2 w-full justify-between">
-                                                  <span className="text-xs font-sans text-green-600 dark:text-green-400 flex items-center gap-1.5">
-                                                    <CheckCircle2 className="w-3.5 h-3.5" />
-                                                    Configured
-                                                  </span>
-                                                  <Button
-                                                    variant="ghost"
-                                                    size="sm"
-                                                    className="h-7 text-xs text-muted-foreground hover:text-red-500 hover:bg-red-500/10"
-                                                    onClick={(e) => {
-                                                      e.stopPropagation();
-                                                      confirmReset(service.id);
-                                                    }}
-                                                  >
-                                                    <RotateCcw className="w-3.5 h-3.5" />
-                                                    Reset Configuration
-                                                  </Button>
-                                                </div>
-                                              ) : (() => {
-                                                  const fPolicy = allowanceByService.get(service.id);
-                                                  const fBillingMode = fPolicy?.billing_mode ?? null;
-                                                  const hasConfiguredAllowance = fPolicy && (fPolicy.included_allowance_qty > 0 || fPolicy.overage_rate > 0) && fPolicy.is_active;
-                                                  const canFinalize = fBillingMode === 'parts_and_labor' || (fBillingMode === 'allowance' && hasConfiguredAllowance);
-
-                                                  const hintText = fBillingMode === null
-                                                    ? 'Select a billing method to finalize.'
-                                                    : fBillingMode === 'allowance' && !hasConfiguredAllowance
-                                                      ? 'Configure allowance to finalize.'
-                                                      : 'Review complete? Mark as configured to track setup progress.';
-
-                                                  return (
-                                                    <>
-                                                      <p className="text-xs font-sans text-muted-foreground">
-                                                        {hintText}
-                                                      </p>
-                                                      <div className="flex items-center gap-2">
-                                                        <Button
-                                                          variant="ghost"
-                                                          size="sm"
-                                                          className="h-7 text-xs shrink-0 text-muted-foreground hover:text-red-500 hover:bg-red-500/10"
-                                                          onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            confirmReset(service.id);
-                                                          }}
-                                                        >
-                                                          <RotateCcw className="w-3.5 h-3.5" />
-                                                          Reset
-                                                        </Button>
-                                                        <Button
-                                                          variant="ghost"
-                                                          size="sm"
-                                                          disabled={!canFinalize}
-                                                          className={cn(
-                                                            "h-7 text-xs shrink-0",
-                                                            canFinalize
-                                                              ? "text-amber-600 hover:text-amber-700 hover:bg-amber-50 dark:text-amber-400 dark:hover:bg-amber-900/20"
-                                                              : "text-muted-foreground/50 cursor-not-allowed"
-                                                          )}
-                                                          onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            if (!canFinalize) return;
-                                                            updateService.mutate({ id: service.id, updates: { backroom_config_dismissed: true } });
-                                                            setTimeout(() => {
-                                                              setExpandedIds(prev => {
-                                                                const next = new Set(prev);
-                                                                next.delete(service.id);
-                                                                return next;
-                                                              });
-                                                            }, 400);
-                                                          }}
-                                                        >
-                                                          <ChevronRight className="w-3.5 h-3.5 animate-nudge-right" />
-                                                          Finalize Configuration
-                                                        </Button>
-                                                      </div>
-                                                    </>
-                                                  );
-                                                })()}
-                                            </div>
-                                          </div>
-                                        ) : (
-                                          /* Untracked service drill-down */
-                                          <div className="space-y-3">
-                                            {/* Toggle row for narrow widths — untracked state */}
-                                            <div className="@[600px]:hidden flex items-center justify-between py-2" onClick={(e) => e.stopPropagation()}>
-                                              <span className="text-xs font-sans text-muted-foreground">Enable Product Billing</span>
-                                              <Switch
-                                                checked={service.is_backroom_tracked}
-                                                onCheckedChange={(v) => toggleTracking.mutate({ id: service.id, tracked: v })}
-                                                className="scale-90 shrink-0"
-                                              />
-                                            </div>
-                                            {(type === 'chemical' || type === 'suggested') && !service.is_chemical_service && (
-                                              <p className="text-xs text-amber-600 dark:text-amber-400">This service appears to use chemicals — consider enabling tracking.</p>
-                                            )}
-                                            {/* Mark Configured footer for untracked */}
-                                            {(type === 'chemical' || type === 'suggested') && (
-                                              <div className="bg-primary/5 border-t border-primary/20 rounded-b-lg p-3 mt-3 flex items-center justify-between">
-                                                {service.backroom_config_dismissed ? (
-                                                  <div className="flex items-center gap-2 w-full justify-between">
-                                                    <span className="text-xs font-sans text-green-600 dark:text-green-400 flex items-center gap-1.5">
-                                                      <CheckCircle2 className="w-3.5 h-3.5" />
-                                                      Reviewed
-                                                    </span>
-                                                    <Button
-                                                      variant="ghost"
-                                                      size="sm"
-                                                      className="h-7 text-xs text-muted-foreground hover:text-red-500 hover:bg-red-500/10"
-                                                        onClick={(e) => {
-                                                          e.stopPropagation();
-                                                          confirmReset(service.id);
-                                                        }}
-                                                    >
-                                                      <RotateCcw className="w-3.5 h-3.5" />
-                                                      Reset Configuration
-                                                    </Button>
-                                                  </div>
-                                                ) : (
-                                                  <>
-                                                    <p className="text-xs font-sans text-muted-foreground">
-                                                      Doesn't need tracking? Mark as reviewed.
-                                                    </p>
-                                                    <div className="flex items-center gap-2">
-                                                      <Button
-                                                        variant="ghost"
-                                                        size="sm"
-                                                        className="h-7 text-xs shrink-0 text-muted-foreground hover:text-red-500 hover:bg-red-500/10"
-                                                          onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            confirmReset(service.id);
-                                                          }}
-                                                      >
-                                                        <RotateCcw className="w-3.5 h-3.5" />
-                                                        Reset
-                                                      </Button>
-                                                      <Button
-                                                        variant="ghost"
-                                                        size="sm"
-                                                        className="h-7 text-xs shrink-0 text-amber-600 hover:text-amber-700 hover:bg-amber-50 dark:text-amber-400 dark:hover:bg-amber-900/20"
-                                                        onClick={(e) => {
-                                                          e.stopPropagation();
-                                                          updateService.mutate({ id: service.id, updates: { backroom_config_dismissed: true } });
-                                                          setTimeout(() => {
-                                                            setExpandedIds(prev => {
-                                                              const next = new Set(prev);
-                                                              next.delete(service.id);
-                                                              return next;
-                                                            });
-                                                          }, 400);
-                                                        }}
-                                                      >
-                                                        <ChevronRight className="w-3.5 h-3.5 animate-nudge-right" />
-                                                        Finalize Configuration
-                                                      </Button>
-                                                    </div>
-                                                  </>
-                                                )}
-                                              </div>
-                                            )}
-                                          </div>
-                                        )}
-                                       </motion.div>
-                                    </td>
-                                  </motion.tr>
-                                )}
-                              </AnimatePresence>
-                            </React.Fragment>
-                          );
-                        })}
-                      </React.Fragment>
-                    );
-                  })}
-                </TableBody>
-              </Table>
+              {/* ═══ STICKY ACTION BAR (mobile, when services selected) ═══ */}
+              {selectedIds.size > 0 && (
+                <div className="@[600px]:hidden sticky bottom-0 left-0 right-0 bg-card border-t border-border shadow-lg p-3 flex items-center justify-between gap-3 z-10">
+                  <span className="text-xs font-sans text-muted-foreground">{selectedIds.size} selected</span>
+                  <Button
+                    size="sm"
+                    className="flex-1 max-w-[200px]"
+                    onClick={() => bulkTrackMutation.mutate(Array.from(selectedIds))}
+                    disabled={bulkTrackMutation.isPending}
+                  >
+                    Track Selected
+                  </Button>
+                </div>
+              )}
             </div>
           )}
 
@@ -1348,4 +1524,3 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
     </div>
   );
 }
-
