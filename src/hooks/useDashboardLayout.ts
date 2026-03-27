@@ -177,25 +177,26 @@ export function useDashboardTemplates() {
 }
 
 // Fetch user's dashboard layout
-export function useDashboardLayout() {
+export function useDashboardLayout(overrideUserId?: string) {
   const { user } = useAuth();
   const roles = useEffectiveRoles();
+  const targetUserId = overrideUserId || user?.id;
 
   const { data: userPrefs, isLoading: prefsLoading } = useQuery({
-    queryKey: ['user-preferences', user?.id],
+    queryKey: ['user-preferences', targetUserId],
     queryFn: async () => {
-      if (!user?.id) return null;
+      if (!targetUserId) return null;
       
       const { data, error } = await supabase
         .from('user_preferences')
         .select('dashboard_layout')
-        .eq('user_id', user.id)
+        .eq('user_id', targetUserId)
         .maybeSingle();
 
       if (error) throw error;
       return data;
     },
-    enabled: !!user?.id,
+    enabled: !!targetUserId,
   });
 
   // Determine if user is leadership for template selection
@@ -256,13 +257,14 @@ export function useDashboardLayout() {
 }
 
 // Save dashboard layout
-export function useSaveDashboardLayout() {
+export function useSaveDashboardLayout(overrideUserId?: string) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (layout: DashboardLayout) => {
-      if (!user?.id) throw new Error('User not authenticated');
+      const targetId = overrideUserId || user?.id;
+      if (!targetId) throw new Error('User not authenticated');
 
       const layoutJson = {
         sections: layout.sections,
@@ -278,7 +280,7 @@ export function useSaveDashboardLayout() {
       const { data: existing } = await supabase
         .from('user_preferences')
         .select('id')
-        .eq('user_id', user.id)
+        .eq('user_id', targetId)
         .maybeSingle();
 
       if (existing) {
@@ -286,7 +288,7 @@ export function useSaveDashboardLayout() {
         const { error } = await supabase
           .from('user_preferences')
           .update({ dashboard_layout: layoutJson })
-          .eq('user_id', user.id);
+          .eq('user_id', targetId);
 
         if (error) throw error;
       } else {
@@ -294,7 +296,7 @@ export function useSaveDashboardLayout() {
         const { error } = await supabase
           .from('user_preferences')
           .insert([{ 
-            user_id: user.id, 
+            user_id: targetId, 
             dashboard_layout: layoutJson,
           }]);
 
@@ -342,9 +344,9 @@ export function useCompleteSetup() {
 }
 
 // Reset to role default template
-export function useResetToDefault() {
-  const { roleTemplate } = useDashboardLayout();
-  const saveMutation = useSaveDashboardLayout();
+export function useResetToDefault(overrideUserId?: string) {
+  const { roleTemplate } = useDashboardLayout(overrideUserId);
+  const saveMutation = useSaveDashboardLayout(overrideUserId);
 
   return useMutation({
     mutationFn: async () => {

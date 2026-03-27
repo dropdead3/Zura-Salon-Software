@@ -63,6 +63,7 @@ import {
   getPinnedCardId,
   toPinnedEntry,
 } from '@/hooks/useDashboardLayout';
+import { useGodModeTargetUserId } from '@/hooks/useGodModeTargetUserId';
 import { Link } from 'react-router-dom';
 import { usePermission } from '@/hooks/usePermission';
 import { useAuth } from '@/contexts/AuthContext';
@@ -238,9 +239,10 @@ export function DashboardCustomizeMenu({ variant = 'icon', roleContext }: Dashbo
       return section.isVisible(roleContext);
     });
   }, [roleContext]);
-  const { layout, isLoading, roleTemplate } = useDashboardLayout();
-  const resetToDefault = useResetToDefault();
-  const saveLayout = useSaveDashboardLayout();
+  const targetUserId = useGodModeTargetUserId();
+  const { layout, isLoading, roleTemplate } = useDashboardLayout(targetUserId);
+  const resetToDefault = useResetToDefault(targetUserId);
+  const saveLayout = useSaveDashboardLayout(targetUserId);
   const { can } = usePermission();
   const canManageVisibility = can('manage_visibility_console');
   
