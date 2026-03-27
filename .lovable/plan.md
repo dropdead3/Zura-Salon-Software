@@ -1,28 +1,89 @@
 
 
-## Show "Configure Allowance" When Policy Values Are All Zeros
+## Rename "Backroom" → "Color Bar" Across Entire Codebase
 
-### Problem
-When an allowance policy exists but has default zero values (0g included, $0.00/g overage), the UI displays those zeros as if it's a real configuration. This is confusing — it should show the "Configure Allowance" button instead.
+### Scope Summary
+285 files contain "Backroom" or "backroom" references. This rename touches folders, file names, hook names, variable names, import paths, UI strings, comments, route paths, and nav labels.
 
-### Implementation — 1 File Modified
+**Not renamed** (would require DB migrations and break existing data):
+- Database table names (`backroom_settings`, `staff_backroom_performance`, etc.)
+- Database column names (`is_backroom_tracked`)
+- Supabase RPC function names
+- Setting keys stored in DB (`dock_assistant_prep_enabled` etc. — these don't contain "backroom")
 
-**`src/components/dashboard/backroom-settings/ServiceTrackingSection.tsx`** (~line 859)
+### Phase 1 — Folder & File Renames
 
-Update the condition that determines whether to show the configured allowance summary vs the "Configure Allowance" button. Currently it checks `policy && policy.is_active`. Add a check that the policy has meaningful values:
+| Current Path | New Path |
+|---|---|
+| `src/lib/backroom/` | `src/lib/color-bar/` |
+| `src/hooks/backroom/` | `src/hooks/color-bar/` |
+| `src/components/dashboard/backroom-settings/` | `src/components/dashboard/color-bar-settings/` |
+| `src/components/platform/backroom/` | `src/components/platform/color-bar/` |
+| `src/pages/dashboard/admin/BackroomSettings.tsx` | `src/pages/dashboard/admin/ColorBarSettings.tsx` |
+| `src/pages/dashboard/platform/BackroomAdmin.tsx` | `src/pages/dashboard/platform/ColorBarAdmin.tsx` |
 
+### Phase 2 — Import Path Updates (~200+ files)
+
+Every file importing from `@/lib/backroom/`, `@/hooks/backroom/`, or `@/components/dashboard/backroom-settings/` gets updated import paths. Example:
 ```ts
 // Before
-if (policy && policy.is_active) {
-
+import { supabase } from '@/lib/backroom/services/formula-service';
 // After
-const hasConfiguredValues = policy.included_allowance_qty > 0 || policy.overage_rate > 0;
-if (policy && policy.is_active && hasConfiguredValues) {
+import { supabase } from '@/lib/color-bar/services/formula-service';
 ```
 
-When `included_allowance_qty` and `overage_rate` are both zero, the code falls through to the existing "Configure Allowance" button branch — no new UI needed.
+### Phase 3 — Identifier Renames
 
-### Scope
-- 1 file, ~2 lines changed
-- No logic changes to billing engine or database
+Hooks, functions, variables, interfaces, and types containing "backroom" or "Backroom":
+- `useBackroomSetting` → `useColorBarSetting`
+- `useBackroomOrgId` → `useColorBarOrgId`
+- `useBackroomSavings` → `useColorBarSavings`
+- `useBackroomPricingEstimate` → `useColorBarPricingEstimate`
+- `useStaffBackroomPerformance` → `useStaffColorBarPerformance`
+- `BackroomSavingsSection` → `ColorBarSavingsSection`
+- `BackroomSetupWizard` → `ColorBarSetupWizard`
+- `BackroomSetupBanner` → `ColorBarSetupBanner`
+- `BackroomAnalyticsSection` → `ColorBarAnalyticsSection`
+- `BackroomOverviewSection` → `ColorBarOverviewSection`
+- (and ~50+ more identifiers following the same pattern)
+
+### Phase 4 — User-Facing Strings
+
+All display text updated:
+- `"Zura Backroom"` → `"Zura Color Bar"`
+- `"Backroom Hub"` → `"Color Bar Hub"`
+- `"backroom sessions"` → `"color bar sessions"`
+- `"backroom tracking"` → `"color bar tracking"`
+- Nav label: `"Zura Backroom"` → `"Zura Color Bar"` (in `dashboardNav.ts`, `SidebarPreview.tsx`)
+- Tooltips, descriptions, comments — all instances
+
+### Phase 5 — Route Paths
+
+| Current | New |
+|---|---|
+| `/dashboard/admin/backroom-settings` | `/dashboard/admin/color-bar-settings` |
+| Platform admin routes with "backroom" | Updated similarly |
+
+Router config, nav items, and all `href`/`navigate()` references updated.
+
+### Phase 6 — Comment Headers
+
+All file-level doc comments like `/** Zura Backroom — ... */` updated to `/** Zura Color Bar — ... */`.
+
+### What Stays Unchanged
+- **Database tables**: `backroom_settings`, `staff_backroom_performance`, `checkout_usage_projections` — these are DB-level and renaming requires migrations + risks data loss
+- **DB column names**: `is_backroom_tracked` etc. — referenced in queries but aliased in code
+- **Query keys**: Will be updated in code (e.g., `'backroom-pricing-estimate'` → `'color-bar-pricing-estimate'`)
+
+### Execution Strategy
+Due to the massive scope (~285 files), this will be executed in batches:
+1. Create new folders + move/rename files
+2. Bulk update imports across all consumers
+3. Rename identifiers within each file
+4. Update strings and comments
+5. Update routes and navigation
+
+### Risk
+- High file count but mechanical rename — no logic changes
+- DB table names remain as-is to avoid migration risk
 
