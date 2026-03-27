@@ -131,7 +131,7 @@ export function PricingAnalyticsContent({
   }
 
   // Color Bar not activated — show empty state
-  if (!appsLoading && !hasApp('color-bar')) {
+  if (!appsLoading && !hasApp('backroom')) {
     return (
       <EmptyState
         icon={Beaker}

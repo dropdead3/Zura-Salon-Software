@@ -568,7 +568,7 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
           // Filter individual app items by their app_key mapping
           if (sectionId === 'apps') {
             const APP_KEY_MAP: Record<string, string> = {
-              '/dashboard/admin/color-bar-settings': 'color-bar' ,
+              '/dashboard/admin/color-bar-settings': 'backroom',
             };
             filteredItems = filteredItems.filter(item => {
               const appKey = APP_KEY_MAP[item.href];
