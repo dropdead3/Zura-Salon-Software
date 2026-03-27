@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { AnimatePresence, motion } from 'framer-motion';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { Progress } from '@/components/ui/progress';
