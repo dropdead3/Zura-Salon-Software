@@ -834,7 +834,7 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                     if (policy.is_active) {
                                       if (policy.billing_mode === 'parts_and_labor') {
                                         return (
-                                          <Badge variant="outline" className="text-[10px] shrink-0 border-blue-500/30 bg-blue-500/10 text-blue-500 dark:text-blue-400">
+                                          <Badge variant="outline" className="text-[10px] whitespace-nowrap shrink-0 border-blue-500/30 bg-blue-500/10 text-blue-500 dark:text-blue-400">
                                             Parts and Labor
                                           </Badge>
                                         );
