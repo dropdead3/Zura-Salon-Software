@@ -65,7 +65,7 @@ export const PAGE_EXPLAINERS: Record<string, PageExplainerEntry> = {
   },
   'my-stats': {
     title: 'Personal Performance',
-    description: 'Track your key metrics — revenue, retention, rebooking, retail, and utilization. See how you're trending and where to focus for growth.',
+    description: `Track your key metrics — revenue, retention, rebooking, retail, and utilization. See how you're trending and where to focus for growth.`,
     icon: BarChart3,
   },
   'my-pay': {
