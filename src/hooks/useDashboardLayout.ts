@@ -344,9 +344,9 @@ export function useCompleteSetup() {
 }
 
 // Reset to role default template
-export function useResetToDefault() {
-  const { roleTemplate } = useDashboardLayout();
-  const saveMutation = useSaveDashboardLayout();
+export function useResetToDefault(overrideUserId?: string) {
+  const { roleTemplate } = useDashboardLayout(overrideUserId);
+  const saveMutation = useSaveDashboardLayout(overrideUserId);
 
   return useMutation({
     mutationFn: async () => {
