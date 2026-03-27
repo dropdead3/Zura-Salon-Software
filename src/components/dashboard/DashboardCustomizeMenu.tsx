@@ -482,14 +482,25 @@ export function DashboardCustomizeMenu({ variant = 'icon', roleContext }: Dashbo
       )}
 
       <PremiumFloatingPanel open={isOpen} onOpenChange={setIsOpen} maxWidth="440px">
-        <div className="p-5 pb-3 border-b border-border/40">
-          <h2 className="font-display text-sm tracking-wide uppercase flex items-center gap-2">
-            <LayoutDashboard className="w-5 h-5" />
-            Customize Dashboard
-          </h2>
-          <p className="text-sm text-muted-foreground mt-1">
-            Drag to reorder, toggle to show/hide sections
-          </p>
+        <div className="p-5 pb-3 border-b border-border/40 space-y-3">
+          <div>
+            <h2 className="font-display text-sm tracking-wide uppercase flex items-center gap-2">
+              <LayoutDashboard className="w-5 h-5" />
+              Customize Dashboard
+            </h2>
+            <p className="text-sm text-muted-foreground mt-1">
+              Drag to reorder, toggle to show/hide sections
+            </p>
+          </div>
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground/50" />
+            <Input
+              placeholder="Search sections, widgets, analytics..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="h-8 pl-8 text-xs bg-muted/30 border-border/40"
+            />
+          </div>
         </div>
 
         <div className="flex-1 overflow-y-auto p-5 space-y-6">
