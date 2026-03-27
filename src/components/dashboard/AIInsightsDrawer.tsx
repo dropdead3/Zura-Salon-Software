@@ -710,8 +710,25 @@ export function AIInsightsPanel({ onClose }: { onClose: () => void }) {
       {!activeGuidance && (
         <div className="p-5 pb-3">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <span className="font-display text-sm tracking-[0.15em]">{PLATFORM_NAME.toUpperCase()} BUSINESS INSIGHTS</span>
+            <div className="flex items-center gap-2">
+              {selectedIntent && (
+                <button
+                  type="button"
+                  onClick={() => { setSelectedIntent(null); setViewMode('all'); }}
+                  className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  <ArrowLeft className="w-3.5 h-3.5" />
+                  <span className="font-medium">Change focus</span>
+                </button>
+              )}
+              {!selectedIntent && (
+                <span className="font-display text-sm tracking-[0.15em]">{PLATFORM_NAME.toUpperCase()} BUSINESS INSIGHTS</span>
+              )}
+              {selectedIntent && (
+                <span className="font-display text-sm tracking-[0.15em]">
+                  {WIZARD_INTENTS.find(i => i.key === selectedIntent)?.label?.toUpperCase()}
+                </span>
+              )}
               {/* Inline severity dots */}
               <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
                 {severityCounts.critical > 0 && (
