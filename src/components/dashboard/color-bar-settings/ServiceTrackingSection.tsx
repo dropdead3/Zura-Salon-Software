@@ -31,7 +31,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 import { Table, TableHeader, TableHead, TableRow, TableCell, TableBody } from '@/components/ui/table';
-import { Loader2, Wrench, Plus, Zap, ArrowRight, CircleDot, AlertTriangle, FileText, ChevronDown, ChevronRight, Search, Sparkles, CheckCircle2, RotateCcw, Check, Calculator } from 'lucide-react';
+import { Loader2, Wrench, Plus, Zap, ArrowRight, CircleDot, AlertTriangle, FileText, ChevronDown, ChevronRight, Search, CheckCircle2, RotateCcw, Check, Calculator } from 'lucide-react';
 import { toast } from 'sonner';
 import { Infotainer } from '@/components/ui/Infotainer';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
@@ -510,24 +510,7 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
       />
 
       {/* Configuration Progress */}
-      <Card>
-        <CardContent className="py-4">
-          <div className="flex items-center gap-3">
-            <div className="flex-1">
-              <ServiceTrackingProgressBar milestones={milestones} />
-            </div>
-            <Button
-              variant="outline"
-              size="sm"
-              className="shrink-0"
-              onClick={() => setWizardOpen(true)}
-            >
-              <Sparkles className="w-3.5 h-3.5 mr-1.5" />
-              Quick Setup
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+      <ServiceTrackingProgressBar milestones={milestones} onQuickSetup={() => setWizardOpen(true)} />
 
       {/* Auto-detect banner (slim inline) */}
       {chemicalUntracked.length > 0 && (

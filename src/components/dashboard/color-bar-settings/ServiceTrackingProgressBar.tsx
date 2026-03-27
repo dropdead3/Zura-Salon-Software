@@ -4,7 +4,7 @@
 import { useRef, useEffect, useState, useMemo } from 'react';
 import { cn } from '@/lib/utils';
 import { tokens } from '@/lib/design-tokens';
-import { CheckCircle2 } from 'lucide-react';
+import { CheckCircle2, Sparkles } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
@@ -18,9 +18,10 @@ export interface ProgressMilestone {
 
 interface Props {
   milestones: ProgressMilestone[];
+  onQuickSetup?: () => void;
 }
 
-export function ServiceTrackingProgressBar({ milestones }: Props) {
+export function ServiceTrackingProgressBar({ milestones, onQuickSetup }: Props) {
   const completed = useMemo(() => milestones.filter(m => m.current >= m.total && m.total > 0), [milestones]);
   const remaining = useMemo(() => milestones.filter(m => m.current < m.total || m.total === 0), [milestones]);
 
@@ -99,13 +100,26 @@ export function ServiceTrackingProgressBar({ milestones }: Props) {
           <span className="font-display text-xs tracking-[0.08em] uppercase text-foreground">
             Setup Progress
           </span>
-          <span className="text-xs tabular-nums font-sans text-muted-foreground">
-            {completed.length} of {milestones.length} complete
-          </span>
+          <div className="flex items-center gap-3">
+            <span className="text-xs tabular-nums font-sans text-muted-foreground">
+              {completed.length} of {milestones.length} complete
+            </span>
+            {onQuickSetup && !allComplete && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="shrink-0 bg-amber-500/10 hover:bg-amber-500/20 text-amber-600 dark:text-amber-400 border-amber-500/40 dark:border-amber-500/50 hover:border-amber-500/60"
+                onClick={onQuickSetup}
+              >
+                <Sparkles className="w-3.5 h-3.5 mr-1.5" />
+                Quick Setup
+              </Button>
+            )}
+          </div>
         </div>
         <Progress
           value={overallPct}
-          className="h-1.5"
+          className="h-2 bg-amber-500/20"
           indicatorClassName="bg-amber-500"
         />
       </div>
@@ -113,12 +127,12 @@ export function ServiceTrackingProgressBar({ milestones }: Props) {
       {/* Completed section */}
       {completed.length > 0 && (
         <div className="space-y-1.5">
-          <span className="font-display text-[10px] tracking-[0.08em] uppercase text-muted-foreground/60">
+          <span className="font-display text-[11px] tracking-[0.08em] uppercase text-amber-600/60 dark:text-amber-400/40">
             Completed
           </span>
           <div className="rounded-lg bg-amber-500/10 dark:bg-amber-500/10 divide-y divide-amber-500/20">
             {completed.map((m, i) => (
-              <div key={i} className="flex items-center justify-between px-3 py-2">
+              <div key={i} className="flex items-center justify-between px-4 py-2.5">
                 <div className="flex items-center gap-2">
                   <CheckCircle2 className="w-4 h-4 text-amber-500 shrink-0" />
                   <span className="text-sm font-sans text-amber-600 dark:text-amber-400">{m.label}</span>
@@ -135,7 +149,7 @@ export function ServiceTrackingProgressBar({ milestones }: Props) {
       {/* Remaining section */}
       {remaining.length > 0 && (
         <div className="space-y-1.5">
-          <span className="font-display text-[10px] tracking-[0.08em] uppercase text-muted-foreground/60">
+          <span className="font-display text-[11px] tracking-[0.08em] uppercase text-amber-600/60 dark:text-amber-400/40">
             Remaining
           </span>
           <div className="space-y-3">
@@ -170,7 +184,7 @@ export function ServiceTrackingProgressBar({ milestones }: Props) {
                   </div>
                   <Progress
                     value={pct}
-                    className="h-1.5"
+                    className="h-1.5 bg-amber-500/20"
                     indicatorClassName={cn(
                       inProgress ? 'bg-amber-500' : 'bg-muted-foreground/20',
                     )}
