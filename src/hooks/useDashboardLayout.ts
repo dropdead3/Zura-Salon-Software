@@ -257,13 +257,14 @@ export function useDashboardLayout(overrideUserId?: string) {
 }
 
 // Save dashboard layout
-export function useSaveDashboardLayout() {
+export function useSaveDashboardLayout(overrideUserId?: string) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (layout: DashboardLayout) => {
-      if (!user?.id) throw new Error('User not authenticated');
+      const targetId = overrideUserId || user?.id;
+      if (!targetId) throw new Error('User not authenticated');
 
       const layoutJson = {
         sections: layout.sections,
@@ -279,7 +280,7 @@ export function useSaveDashboardLayout() {
       const { data: existing } = await supabase
         .from('user_preferences')
         .select('id')
-        .eq('user_id', user.id)
+        .eq('user_id', targetId)
         .maybeSingle();
 
       if (existing) {
@@ -287,7 +288,7 @@ export function useSaveDashboardLayout() {
         const { error } = await supabase
           .from('user_preferences')
           .update({ dashboard_layout: layoutJson })
-          .eq('user_id', user.id);
+          .eq('user_id', targetId);
 
         if (error) throw error;
       } else {
@@ -295,7 +296,7 @@ export function useSaveDashboardLayout() {
         const { error } = await supabase
           .from('user_preferences')
           .insert([{ 
-            user_id: user.id, 
+            user_id: targetId, 
             dashboard_layout: layoutJson,
           }]);
 
