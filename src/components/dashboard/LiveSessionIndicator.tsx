@@ -69,7 +69,9 @@ export function LiveSessionIndicator({ locationId, compact }: LiveSessionIndicat
             <span className="text-xs font-medium text-foreground whitespace-nowrap font-sans truncate">
               {compact
                 ? `${activeStylistCount + activeAssistantCount} in service`
-                : `${activeStylistCount} stylists, ${activeAssistantCount} assistants in service now`}
+                : activeAssistantCount > 0
+                  ? `${activeStylistCount} stylists, ${activeAssistantCount} assistants in service now`
+                  : `${activeStylistCount} stylists in service now`}
             </span>
 
             {/* Stacked avatars (hidden for enterprise) */}
