@@ -104,7 +104,7 @@ export function useRevenueGapAnalysis(
         .select('id, service_name, client_name, total_price, appointment_date, start_time, phorest_staff_id, phorest_client_id, status')
         .gte('appointment_date', dateFrom)
         .lte('appointment_date', dateTo)
-        .in('status', ['cancelled', 'no_show', 'completed']);
+        .in('status', ['cancelled', 'no_show', 'completed', 'confirmed', 'pending', 'arrived', 'started']);
 
       if (locationId && locationId !== 'all') {
         apptQuery = apptQuery.eq('location_id', locationId);
