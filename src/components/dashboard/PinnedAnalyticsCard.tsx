@@ -111,7 +111,7 @@ function mapToSalesDateRange(dashboardRange: DateRangeType): SalesDateRange {
     'thisMonth': 'mtd',
     'todayToEom': 'todayToEom',
     'todayToPayday': 'todayToEom', // Fallback for sales card
-    'lastMonth': '30d',
+    'lastMonth': 'lastMonth',
   };
   return mapping[dashboardRange] || 'today';
 }
@@ -144,6 +144,11 @@ export function getDateRange(
       return { 
         dateFrom: format(startOfMonth(now), 'yyyy-MM-dd'), 
         dateTo: format(now, 'yyyy-MM-dd') 
+      };
+    case 'todayToEom':
+      return {
+        dateFrom: format(now, 'yyyy-MM-dd'),
+        dateTo: format(endOfMonth(now), 'yyyy-MM-dd'),
       };
     case 'todayToPayday': {
       const nextPayDay = getNextPayDay(payScheduleSettings || null);

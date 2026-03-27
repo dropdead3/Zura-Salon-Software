@@ -84,7 +84,7 @@ import { Progress } from '@/components/ui/progress';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { useTranslation } from 'react-i18next';
 
-export type DateRange = 'today' | 'yesterday' | '7d' | '30d' | 'thisWeek' | 'mtd' | 'todayToEom' | 'ytd' | 'lastYear' | 'last365';
+export type DateRange = 'today' | 'yesterday' | '7d' | '30d' | 'thisWeek' | 'mtd' | 'todayToEom' | 'lastMonth' | 'ytd' | 'lastYear' | 'last365';
 
 /** Wrapper that fetches goal-period revenue independently of the dashboard filter */
 function GoalProgressWithOwnRevenue({ goalPeriod, locationId, target, label, hoursJson, holidayClosures, onClick, isExpanded }: {
@@ -224,6 +224,14 @@ export function AggregateSalesCard({
           dateFrom: format(now, 'yyyy-MM-dd'), 
           dateTo: format(endOfMonth(now), 'yyyy-MM-dd') 
         };
+      case 'lastMonth': {
+        const lm = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        const lmEnd = new Date(now.getFullYear(), now.getMonth(), 0);
+        return {
+          dateFrom: format(lm, 'yyyy-MM-dd'),
+          dateTo: format(lmEnd, 'yyyy-MM-dd'),
+        };
+      }
       case 'ytd':
         return { 
           dateFrom: format(startOfYear(now), 'yyyy-MM-dd'), 

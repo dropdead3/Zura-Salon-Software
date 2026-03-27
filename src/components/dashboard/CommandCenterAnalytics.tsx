@@ -39,7 +39,7 @@ import { useRetailBreakdown } from '@/hooks/useRetailBreakdown';
 // Commission resolution is now handled internally by CommissionSummaryCard and StaffCommissionTable
 import { Link } from 'react-router-dom';
 import { Settings2, MapPin, Calendar } from 'lucide-react';
-import { format, startOfMonth, subDays, startOfWeek } from 'date-fns';
+import { format } from 'date-fns';
 import {
   Select,
   SelectContent,
@@ -48,52 +48,16 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 
-type DateRangeType = 'today' | 'yesterday' | '7d' | '30d' | 'thisWeek' | 'thisMonth' | 'todayToPayday' | 'lastMonth';
+type DateRangeType = 'today' | 'yesterday' | '7d' | '30d' | 'thisWeek' | 'thisMonth' | 'todayToEom' | 'todayToPayday' | 'lastMonth';
 
 import { DATE_RANGE_LABELS, getDateRangeSubtitle } from '@/lib/dateRangeLabels';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
+import { getDateRange } from '@/components/dashboard/PinnedAnalyticsCard';
 
 
 const CC_DATE_RANGE_KEYS: DateRangeType[] = [
-  'today', 'yesterday', '7d', '30d', 'thisWeek', 'thisMonth', 'todayToPayday', 'lastMonth',
+  'today', 'yesterday', '7d', '30d', 'thisWeek', 'thisMonth', 'todayToEom', 'todayToPayday', 'lastMonth',
 ];
-
-// Helper function to get date range
-function getDateRange(dateRange: DateRangeType): { dateFrom: string; dateTo: string } {
-  const now = new Date();
-  switch (dateRange) {
-    case 'today':
-      return { dateFrom: format(now, 'yyyy-MM-dd'), dateTo: format(now, 'yyyy-MM-dd') };
-    case 'yesterday': {
-      const yesterday = subDays(now, 1);
-      return { dateFrom: format(yesterday, 'yyyy-MM-dd'), dateTo: format(yesterday, 'yyyy-MM-dd') };
-    }
-    case '7d':
-      return { dateFrom: format(subDays(now, 7), 'yyyy-MM-dd'), dateTo: format(now, 'yyyy-MM-dd') };
-    case '30d':
-      return { dateFrom: format(subDays(now, 30), 'yyyy-MM-dd'), dateTo: format(now, 'yyyy-MM-dd') };
-    case 'thisWeek':
-      return { 
-        dateFrom: format(startOfWeek(now, { weekStartsOn: 1 }), 'yyyy-MM-dd'), 
-        dateTo: format(now, 'yyyy-MM-dd') 
-      };
-    case 'thisMonth':
-      return { 
-        dateFrom: format(startOfMonth(now), 'yyyy-MM-dd'), 
-        dateTo: format(now, 'yyyy-MM-dd') 
-      };
-    case 'lastMonth': {
-      const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-      const lastDay = new Date(now.getFullYear(), now.getMonth(), 0);
-      return { 
-        dateFrom: format(lastMonth, 'yyyy-MM-dd'), 
-        dateTo: format(lastDay, 'yyyy-MM-dd') 
-      };
-    }
-    default:
-      return { dateFrom: format(subDays(now, 30), 'yyyy-MM-dd'), dateTo: format(now, 'yyyy-MM-dd') };
-  }
-}
 
 // Map of card IDs to their render components
 const CARD_COMPONENTS: Record<string, string> = {
