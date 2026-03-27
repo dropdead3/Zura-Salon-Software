@@ -755,9 +755,12 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                          className="px-6 py-4 bg-muted/30 border-t border-border/30"
                                        >
                                         {service.is_backroom_tracked ? (
-                                           <div className="space-y-4">
-                                             {/* Chemical toggle + vessel selector — FIRST */}
-                                             <div className="flex flex-wrap items-center gap-4 pb-3 mb-3 border-b border-border/40">
+                                            <div className="space-y-5">
+                                              {/* ─── Section 1: Tracking ─── */}
+                                              <div>
+                                                <p className="text-[10px] font-display uppercase tracking-wider text-muted-foreground mb-2">Tracking</p>
+                                                <div className="pl-3 border-l border-border/40">
+                                              <div className="flex flex-wrap items-center gap-4">
                                                <div className="flex items-center gap-2">
                                                  <label className="text-[10px] font-sans text-muted-foreground whitespace-nowrap">Requires Color/Chemical</label>
                                                  <Switch
@@ -806,12 +809,19 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                                        </React.Fragment>
                                                      );
                                                    })}
-                                                 </div>
-                                               )}
-                                             </div>
+                                                  </div>
+                                                )}
+                                              </div>
+                                              </div>
+                                              </div>
 
-                                               {/* Billing mode + Allowance config — gated on vessel selection */}
-                                               {(service.container_types || []).length > 0 && (() => {
+                                              {/* ─── Section 2: Billing Method ─── */}
+                                              {(service.container_types || []).length > 0 && (
+                                              <div>
+                                                <p className="text-[10px] font-display uppercase tracking-wider text-muted-foreground mb-2">Billing Method</p>
+                                                <div className="pl-3 border-l border-border/40">
+                                                 {/* Billing mode + Allowance config */}
+                                                {(() => {
                                                  const policy = allowanceByService.get(service.id);
                                                  const billingMode = policy?.billing_mode || 'allowance';
                                                  return (
@@ -937,9 +947,16 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                                    )}
                                                  </div>
                                                  );
-                                               })()}
-                                            {/* Toggles grid */}
-                                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                                                })()}
+                                                </div>
+                                              </div>
+                                              )}
+
+                                              {/* ─── Section 3: App Preferences ─── */}
+                                              <div>
+                                                <p className="text-[10px] font-display uppercase tracking-wider text-muted-foreground mb-2">App Preferences</p>
+                                                <div className="pl-3 border-l border-border/40">
+                                             <div className="grid grid-cols-3 gap-4">
                                               <div className="flex items-center gap-2">
                                                 <label className="text-[10px] font-sans text-muted-foreground whitespace-nowrap">Assistant Prep</label>
                                                 <Switch
@@ -961,8 +978,11 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                                   onCheckedChange={(v) => updateService.mutate({ id: service.id, updates: { formula_memory_enabled: v } })}
                                                 />
                                               </div>
-                                            </div>
-                                            {/* Price Recommendation inline alert */}
+                                             </div>
+                                                </div>
+                                              </div>
+
+                                             {/* Price Recommendation inline alert */}
                                             {(() => {
                                               const rec = priceRecMap.get(service.id);
                                               if (!rec) return null;
