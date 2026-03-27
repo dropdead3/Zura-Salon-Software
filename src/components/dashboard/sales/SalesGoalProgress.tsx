@@ -285,7 +285,7 @@ export function SalesGoalProgress({
       <div className="flex items-center justify-between text-xs text-muted-foreground">
         <div className="flex items-center gap-2">
           <BlurredAmount>{formatCurrencyWhole(current)} earned</BlurredAmount>
-          {!isComplete && elapsedFraction > 0 && elapsedFraction < 1 && (
+          {elapsedFraction > 0 && elapsedFraction < 1 && (
             <>
               <span className="text-muted-foreground/40">·</span>
               <span className="text-muted-foreground/70">
