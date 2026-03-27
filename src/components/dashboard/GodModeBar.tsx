@@ -4,7 +4,6 @@ import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useNavigate } from 'react-router-dom';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
-import { usePlatformBranding } from '@/hooks/usePlatformBranding';
 import { ZuraZIcon } from '@/components/icons/ZuraZIcon';
 
 const SPRING = { type: 'spring' as const, damping: 26, stiffness: 300, mass: 0.8 };
