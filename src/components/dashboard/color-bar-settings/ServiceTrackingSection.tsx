@@ -698,7 +698,7 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
             </div>
           ) : (
              <div className="rounded-lg border overflow-hidden">
-              <Table className="min-w-[600px]">
+              <Table className="min-w-[400px]">
                 <TableHeader>
                   <TableRow>
                     <TableHead className="w-10">
@@ -711,13 +711,7 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                       />
                     </TableHead>
                     <TableHead className={cn(tokens.table.columnHeader, 'min-w-[180px]')}>Service</TableHead>
-                    <TableHead className={cn(tokens.table.columnHeader, 'min-w-[140px]')}>
-                       <div className="flex items-center gap-1.5">
-                         Billing Method
-                         <MetricInfoTooltip description="Shows the billing method for each tracked service — either an allowance dollar amount or Parts and Labor cost-plus billing." />
-                       </div>
-                     </TableHead>
-                    <TableHead className={cn(tokens.table.columnHeader, 'min-w-[160px] text-right')}>Enable Product Billing</TableHead>
+                    <TableHead className={cn(tokens.table.columnHeader, 'text-right')}>Enable Product Billing</TableHead>
                     <TableHead className="w-10" />
                   </TableRow>
                 </TableHeader>
