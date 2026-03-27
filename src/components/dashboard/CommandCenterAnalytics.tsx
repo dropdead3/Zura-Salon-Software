@@ -90,6 +90,8 @@ const CARD_COMPONENTS: Record<string, string> = {
   'service_profitability': 'ServiceProfitability',
   'control_tower': 'ControlTower',
   'predictive_inventory': 'PredictiveInventory',
+  'client_experience_staff': 'ClientExperience',
+  'operations_stats': 'OperationsStats',
 };
 
 /**
