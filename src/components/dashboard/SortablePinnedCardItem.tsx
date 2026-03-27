@@ -67,41 +67,32 @@ export function SortablePinnedCardItem({
       </div>
 
       {/* Preview Eye */}
-      {previewSrc && (
-        <HoverCardPrimitive.Root openDelay={200} closeDelay={100}>
-          <HoverCardPrimitive.Trigger asChild>
-            <button
-              type="button"
-              className="p-1 mr-1 rounded-md text-muted-foreground/40 hover:text-muted-foreground hover:bg-accent transition-colors"
-            >
-              <Eye className="w-4 h-4" />
-            </button>
-          </HoverCardPrimitive.Trigger>
-          <HoverCardPrimitive.Portal>
-            <HoverCardPrimitive.Content
-              side="left"
-              align="start"
-              sideOffset={16}
-              className={cn(
-                "z-[60] w-[380px] p-2 rounded-xl border bg-popover text-popover-foreground shadow-xl",
-                "data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95"
-              )}
-            >
-              <div className="space-y-2">
-                <img
-                  src={previewSrc}
-                  alt={`${label} preview`}
-                  className="rounded-lg border border-border/60 shadow-sm w-full"
-                  loading="lazy"
-                />
-                <p className="text-[10px] text-muted-foreground text-center">
-                  Preview with example data
-                </p>
-              </div>
-            </HoverCardPrimitive.Content>
-          </HoverCardPrimitive.Portal>
-        </HoverCardPrimitive.Root>
-      )}
+      <HoverCardPrimitive.Root openDelay={200} closeDelay={100}>
+        <HoverCardPrimitive.Trigger asChild>
+          <button
+            type="button"
+            className="p-1 mr-1 rounded-md text-muted-foreground/40 hover:text-muted-foreground hover:bg-accent transition-colors"
+          >
+            <Eye className="w-4 h-4" />
+          </button>
+        </HoverCardPrimitive.Trigger>
+        <HoverCardPrimitive.Portal>
+          <HoverCardPrimitive.Content
+            side="left"
+            align="start"
+            sideOffset={16}
+            className={cn(
+              "z-[60] w-[340px] p-3 rounded-xl border bg-popover text-popover-foreground shadow-xl",
+              "data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95"
+            )}
+          >
+            <AnalyticsCardPreview cardId={id} />
+            <p className="text-[10px] text-muted-foreground text-center mt-2">
+              Preview with example data
+            </p>
+          </HoverCardPrimitive.Content>
+        </HoverCardPrimitive.Portal>
+      </HoverCardPrimitive.Root>
       
       {/* Toggle */}
       <Switch 
