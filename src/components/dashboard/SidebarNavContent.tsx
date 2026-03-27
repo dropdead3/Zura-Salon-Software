@@ -283,7 +283,10 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
     inFooter?: boolean;
   }) => {
     const resolvedHref = dashPath(href.replace(/^\/dashboard/, ''));
-    const isActive = location.pathname === resolvedHref || location.pathname.startsWith(resolvedHref + '/');
+    const isExactRoot = resolvedHref === dashPath('') || resolvedHref === dashPath('/');
+    const isActive = isExactRoot
+      ? location.pathname === resolvedHref
+      : location.pathname === resolvedHref || location.pathname.startsWith(resolvedHref + '/');
     const displayLabel = label;
     
     const handleClick = (e: React.MouseEvent) => {
