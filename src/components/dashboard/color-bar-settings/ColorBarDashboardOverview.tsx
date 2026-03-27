@@ -317,7 +317,10 @@ export function ColorBarDashboardOverview({ onNavigate, initialSubTab, triggerWi
                     <Users2 className="w-5 h-5 text-primary" />
                   </div>
                   <div>
-                    <CardTitle className={tokens.card.title}>Staff Performance</CardTitle>
+                    <div className="flex items-center gap-2">
+                      <CardTitle className={tokens.card.title}>Staff Performance</CardTitle>
+                      <MetricInfoTooltip description="Ranks stylists by waste rate over the last 30 days. Identifies top performers and those needing coaching. Use to target training on dispensing accuracy and reweigh compliance." />
+                    </div>
                     <CardDescription>Last 30 days — by waste rate</CardDescription>
                   </div>
                 </div>
