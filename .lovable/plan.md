@@ -1,20 +1,35 @@
 
 
-## Remove Category/Type Info from Untracked Service Dropdown
+## Move MetricInfoTooltip Inline with Card Title
 
 ### Problem
-When a service has tracking toggled off, expanding it shows a "Category: Blonding / Type: Standard" line that adds no value — the user already sees the category from the group header and the type isn't actionable here.
+The info icon is currently nested *inside* the `CardTitle` element, causing it to render below the title text instead of inline to its right.
 
 ### Change
 
 **File: `src/components/dashboard/color-bar-settings/ServiceTrackingSection.tsx`**
 
-**Lines 1104–1114** — Remove the Category/Type metadata block from the untracked service drill-down. Keep the "Mark Configured" footer (lines 1115+) and the chemical suggestion warning. Specifically:
+**Lines 549–553** — Wrap `CardTitle` and `MetricInfoTooltip` in a flex row:
 
-- Delete the outer `<div className="flex items-center justify-between">` wrapper and its contents (the Category/Type spans)
-- Preserve the amber chemical suggestion warning (`"This service appears to use chemicals..."`) but move it outside the deleted block, directly into the `<div className="space-y-3">` parent
-- The result: expanding an untracked service shows only the chemical suggestion (when applicable) and the "Mark as reviewed" footer — no redundant metadata
+```tsx
+// Before
+<div>
+  <CardTitle className={tokens.card.title}>
+    All Services
+    <MetricInfoTooltip description="..." />
+  </CardTitle>
+  <CardDescription>...</CardDescription>
+</div>
 
-### Result
-Cleaner untracked service expansion — no redundant category/type info that's already visible from the group header.
+// After
+<div>
+  <div className="flex items-center gap-2">
+    <CardTitle className={tokens.card.title}>All Services</CardTitle>
+    <MetricInfoTooltip description="Complete view of all active services. Toggle tracking, view configuration status, and identify gaps." />
+  </div>
+  <CardDescription>...</CardDescription>
+</div>
+```
+
+This matches the canonical card header pattern from the UI canon and the same pattern used on the Command Center cards.
 
