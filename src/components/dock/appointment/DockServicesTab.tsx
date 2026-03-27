@@ -127,6 +127,7 @@ export function DockServicesTab({ appointment, staff, effectiveServiceName }: Do
   const { effectiveOrganization } = useOrganizationContext();
   const queryClient = useQueryClient();
   const { data: existingCharges } = useCheckoutUsageCharges(appointment.id);
+  const { data: billingSettings } = useBackroomBillingSettings(effectiveOrganization?.id);
 
   // Demo-mode local bowl state — persisted in sessionStorage per appointment
   const demoBowlsKey = `dock-demo-bowls::${appointment.id}`;
