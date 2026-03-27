@@ -1,62 +1,65 @@
 
 
-## Reorganize Service Detail Panel into 3 Labeled Sections
+## Move App Preferences to Org-Wide Backroom Settings & Wire Dock Enforcement
+
+### Current State
+- **Assistant Prep**, **Smart Mix Assist**, and **Formula Memory** exist as per-service boolean columns on the `services` table
+- They are only toggled in `ServiceTrackingSection.tsx` — the Dock never reads them
+- Smart Mix Assist already has a separate org-wide `smart_mix_assist_settings` table (used by `FormulaAssistanceSection`)
+- Formula Memory is used unconditionally in `DockClientTab` (no gating)
+- Assistant Prep is not consumed anywhere in the Dock
 
 ### What Changes
 
-The expanded service detail panel currently renders all controls in a flat layout. This reorganizes the content into three visually distinct, labeled sections:
+**1. Store as org-wide backroom_settings keys** (no migration needed)
 
-1. **Tracking** — "Requires Color/Chemical" toggle + Vessel selector (Bowls/Bottles)
-2. **Billing Method** — Allowance vs Parts & Labor mode toggle + allowance config/P&L description
-3. **App Preferences** — Assistant Prep, Smart Mix Assist, Formula Memory toggles
+Use the existing `backroom_settings` table with three new setting keys:
+- `dock_assistant_prep_enabled` → `{ enabled: boolean }`
+- `dock_smart_mix_assist_enabled` → reads from existing `smart_mix_assist_settings.is_enabled` (already org-wide — no duplication)
+- `dock_formula_memory_enabled` → `{ enabled: boolean }`
 
-### Implementation — 1 File Modified
+Since Smart Mix Assist already has its own dedicated settings table and `FormulaAssistanceSection` UI, we only need to add **two** new `backroom_settings` keys (assistant prep + formula memory). Smart Mix Assist continues using its existing table.
 
-**`src/components/dashboard/backroom-settings/ServiceTrackingSection.tsx`** (~lines 758–964)
+**2. Remove per-service App Preferences section from ServiceTrackingSection**
 
-1. **Create a section wrapper pattern** — Each section gets a consistent layout:
-   - Section label: `text-[10px] font-display uppercase tracking-wider text-muted-foreground` 
-   - Content area: `pl-3 border-l border-border/40` (subtle left-border indent)
-   - Sections separated by `space-y-4` (no heavy dividers — the labels + indent provide structure)
+- Delete the entire "Section 3: App Preferences" block (~lines 955–983)
+- Remove `assistant_prep_allowed`, `smart_mix_assist_enabled`, `formula_memory_enabled` from the select query and `ServiceRow` interface
+- Remove these fields from all "Reset Configuration" mutation payloads (4 places)
+- Remove `activeToggles` count that references these fields
 
-2. **Section 1 — "Tracking"** (lines 760–811)
-   - Wrap the existing "Requires Color/Chemical" switch + vessel selector pills
-   - Remove the bottom border (`border-b border-border/40`) since the section label provides visual separation
+**3. Add org-wide toggles to FormulaAssistanceSection**
 
-3. **Section 2 — "Billing Method"** (lines 813–939)
-   - Wrap the existing billing mode toggle (Allowance / Parts & Labor) + mode-specific content
-   - Gated on `is_chemical_service` being true (same as current vessel gate)
+Extend the existing `FormulaAssistanceSection` (Backroom Hub → Formula Assistance) with two additional cards:
+- **Formula Memory** card with enable/disable switch + description
+- **Assistant Prep** card with enable/disable switch + description
 
-4. **Section 3 — "App Preferences"** (lines 941–963)
-   - Wrap the existing toggles grid (Assistant Prep, Smart Mix Assist, Formula Memory)
-   - Change grid from `grid-cols-2 sm:grid-cols-4` to `grid-cols-3` since there are exactly 3 items — cleaner alignment
+These sit alongside the existing Smart Mix Assist card, making `FormulaAssistanceSection` the single source of truth for all three Dock intelligence features.
 
-5. **Price Recommendation card and "Mark Configured" footer remain outside/below the 3 sections** — they are action items, not configuration sections.
+**4. Create `useDockFeatureSettings` hook**
 
-### Visual Structure
-
-```text
-┌─────────────────────────────────────────────┐
-│ TRACKING                                    │
-│ ┃ Requires Color/Chemical [toggle]          │
-│ ┃ Vessels: [✓ Bowls] and/or [+ Bottles]     │
-│                                             │
-│ BILLING METHOD                              │
-│ ┃ [✓ Allowance] [+ Parts & Labor]           │
-│ ┃ 45g included · $0.50/g overage  [Edit]    │
-│                                             │
-│ APP PREFERENCES                             │
-│ ┃ Assistant Prep [toggle]                   │
-│ ┃ Smart Mix Assist [toggle]                 │
-│ ┃ Formula Memory [toggle]                   │
-│                                             │
-│ [Price Recommendation if any]               │
-│ ─── Configured ✓ ──── [Reset Configuration] │
-└─────────────────────────────────────────────┘
+A lightweight hook that resolves all three org-wide feature flags for Dock consumption:
+```ts
+export function useDockFeatureSettings(orgId?: string) {
+  // Reads backroom_settings for assistant_prep + formula_memory
+  // Reads smart_mix_assist_settings for smart mix
+  // Returns { assistantPrepEnabled, smartMixAssistEnabled, formulaMemoryEnabled, isLoading }
+}
 ```
 
+**5. Wire enforcement in Dock**
+
+- **Formula Memory**: Gate the `useInstantFormulaMemory` call in `DockClientTab.tsx` — only fetch/render the "Last Formula" section when `formulaMemoryEnabled` is true
+- **Smart Mix Assist**: Already gated via `isSmartMixAssistEnabled()` in the service layer — no Dock changes needed
+- **Assistant Prep**: No Dock surfaces exist yet for this feature — the toggle becomes a forward-looking configuration. No enforcement wiring needed until the prep workflow is built.
+
+### Files Modified
+1. `src/components/dashboard/backroom-settings/ServiceTrackingSection.tsx` — Remove App Preferences section + related fields
+2. `src/components/dashboard/backroom-settings/FormulaAssistanceSection.tsx` — Add Formula Memory + Assistant Prep cards
+3. `src/hooks/backroom/useDockFeatureSettings.ts` — New hook for Dock feature flag resolution
+4. `src/components/dock/appointment/DockClientTab.tsx` — Gate formula memory behind org setting
+
 ### Scope
-- 1 file modified: `ServiceTrackingSection.tsx`
-- Rendering reorganization only — no logic changes
-- No database migrations
+- No database migrations (uses existing `backroom_settings` table)
+- Per-service columns remain in the DB but are no longer referenced in code
+- No breaking changes
 
