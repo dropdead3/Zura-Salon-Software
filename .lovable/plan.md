@@ -1,61 +1,44 @@
 
 
-## Add Billing Mode Choice to Service Tracking & Services Configurator
+## Fix: Parts & Labor Charges Not Calculated (is_active Gap)
 
-### Problem
-Chemical services currently default to allowance-based pricing with no way to select **Parts & Labor** mode — where the client pays the stylist's hourly rate plus retail cost of supplies, with no allowance. The `billing_mode` column already exists on `service_allowance_policies` and the billing engine already handles both modes, but the UI never exposes the choice.
+### The Bug
 
-### Design
+When a service is configured as "Parts & Labor" in the Service Tracking UI, the policy is saved with `is_active: false`. However, both charge calculation hooks filter for `is_active: true`:
 
-A billing mode selector appears in two places, keeping them in sync via the shared `service_allowance_policies` table:
+- **`useCalculateOverageCharge.ts` line 46** — `.eq('is_active', true)` → P&L policy never found → no charge created at checkout
+- **`useEstimatedProductCharge.ts` line 55** — `.eq('is_active', true)` → P&L estimate never shown in booking wizard
 
-```text
-Billing:  [ Allowance ]  [ Parts & Labor ]
+This means **Dock sessions for Parts & Labor services will complete with zero charges passed to the client**.
 
-(Allowance):   📄 Configure Allowance  ⓘ  / recipe summary + Edit
-(Parts & Labor): 📄 Parts & Labor — client pays hourly rate + retail cost of supplies
+### Root Cause
+
+`is_active` was designed for allowance mode (on = allowance enforced, off = no overage tracking). Parts & Labor policies should always be "active" — they're a different billing mode, not a deactivated allowance.
+
+### Fix
+
+**1. ServiceTrackingSection.tsx (line 773)** — Set `is_active: true` for both modes:
+
+```ts
+// Before
+is_active: mode === 'allowance' ? (policy?.is_active ?? false) : false,
+
+// After
+is_active: mode === 'parts_and_labor' ? true : (policy?.is_active ?? false),
 ```
 
-### Changes
+Parts & Labor policies are always active (there's no "configure later" state — the mode itself is the configuration).
 
-#### 1. ServiceTrackingSection.tsx — Add billing mode toggle (lines ~747–824)
+**2. ServiceEditorDialog.tsx** — Same fix on save: when `billingMode === 'parts_and_labor'`, ensure the upserted policy has `is_active: true`.
 
-- **Read** `billing_mode` from the existing policy (default `'allowance'` when no policy)
-- **Render** a two-option toggle row (dashed-outline pill buttons matching the Bowls/Bottles vessel style) above the current allowance config block:
-  - "Allowance" — shows existing Configure Allowance / recipe summary / Edit
-  - "Parts & Labor" — shows info line: `FileText` icon + "Parts & Labor — client pays hourly rate + retail cost of supplies. No allowance needed."
-- **On toggle**, upsert `service_allowance_policies` via existing `upsertPolicy.mutate()` with the new `billing_mode`
-- When switching to Parts & Labor, deactivate the allowance policy (`is_active: false`) so overage logic doesn't fire
-- When switching back to Allowance, keep existing recipe if one was configured
-- Apply same pattern to the **untracked-but-chemical** service block (~line 950+) if it has an allowance section
+**3. No changes needed** to `useCalculateOverageCharge` or `useEstimatedProductCharge` — the `is_active` filter is correct behavior (inactive = don't charge). The fix is making P&L policies active.
 
-#### 2. ServiceEditorDialog.tsx — Add billing mode selector (lines ~248–280, inside chemical service indent block)
+### Secondary: CheckoutSummarySheet label clarity
 
-- Add a **Billing Mode** section below Container Types within the `isChemicalService` indent block
-- Two radio-style options: "Allowance" and "Parts & Labor" with brief descriptions
-- Store selection in local state (`billingMode`), persisted on save via the existing `onSubmit` payload (add `billing_mode` to the submitted data)
-- On save, if the service has a policy, update its `billing_mode`; if no policy exists yet and mode is `parts_and_labor`, create a minimal policy row
-- When `parts_and_labor` is selected, hide the "Cost ($)" field tooltip about margin reporting (it becomes the direct supply cost)
-
-#### 3. Bidirectional sync (gap fix)
-
-- When billing mode is changed in **ServiceTrackingSection**, the policy table updates — ServiceEditorDialog reads from the same policy on open, so it stays in sync automatically
-- When billing mode is changed in **ServiceEditorDialog** on save, upsert the `service_allowance_policies` row so ServiceTrackingSection picks it up on next render
-- Add `billing_mode` to the `useServiceAllowancePolicies` select query if not already included (it is — confirmed in the hook)
-
-#### 4. AllowanceCalculatorDialog — Guard against opening in P&L mode
-
-- If the service is set to `parts_and_labor`, the "Configure Allowance" button won't render (gated by the toggle), so the dialog naturally won't open. No changes needed here.
-
-### What's already wired (no changes needed)
-- `billing_mode` column on `service_allowance_policies` — exists
-- `useCalculateOverageCharge` — handles `parts_and_labor` branch
-- `useEstimatedProductCharge` — filters for `parts_and_labor` services at checkout
-- `CheckoutSummarySheet` — renders product cost charges for P&L services
-- `AllowancesBillingSection` — already has a billing mode toggle (platform admin level)
+The `CheckoutSummarySheet` already renders P&L charges via `useCheckoutUsageCharges` and `CheckoutClarityPanel`, but the label says "Product Usage" generically. No functional gap — charges will flow correctly once the `is_active` fix is in place.
 
 ### Scope
-- 2 files modified: `ServiceTrackingSection.tsx`, `ServiceEditorDialog.tsx`
-- ~40 lines added/restructured per file
+- 2 files, ~2 lines changed each
 - No database changes
+- Fixes a silent billing failure for all Parts & Labor services
 
