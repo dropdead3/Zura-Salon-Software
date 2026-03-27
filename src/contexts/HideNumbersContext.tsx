@@ -129,17 +129,8 @@ export function HideNumbersProvider({ children }: { children: ReactNode }) {
     if (!user) return;
 
     const newValue = !hideNumbers;
-    
-    // If revealing, show confirmation dialog instead
-    if (hideNumbers) {
-      setShowConfirmDialog(true);
-      return;
-    }
-    
-    // If hiding, do it directly
     setHideNumbers(newValue);
 
-    // Persist to database
     try {
       await supabase
         .from('employee_profiles')
@@ -147,7 +138,6 @@ export function HideNumbersProvider({ children }: { children: ReactNode }) {
         .eq('user_id', user.id);
     } catch (err) {
       console.error('Error saving hide_numbers preference:', err);
-      // Revert on error
       setHideNumbers(!newValue);
     }
   };
