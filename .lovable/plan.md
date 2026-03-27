@@ -2,25 +2,56 @@
 
 ## Problem
 
-The `PremiumFloatingPanel` (used by the Customize Dashboard drawer, mobile sidebar, and other slide-in panels) is portaled directly to `document.body` with `fixed` positioning using `top-4`. Since the God Mode bar is also `fixed` at `top-0` with 44px height, these panels slide behind it.
+The "Available Analytics" toggles fail silently because the `dashboard_element_visibility` table's RLS write policy only allows users with `is_super_admin = true` in `employee_profiles`. When you're using God Mode (impersonating an organization), your `auth.uid()` likely doesn't have a matching `employee_profiles` row with `is_super_admin = true` for that org, so the upsert is blocked by RLS.
 
-The same issue affects:
-- The Customize Dashboard drawer (right side)
-- Mobile sidebar (left side)  
-- Any other panel using `PremiumFloatingPanel`
+Additionally, the error is swallowed silently in the catch block, giving no feedback.
 
 ## Solution
 
-Update `PremiumFloatingPanel` to be God-Mode-aware by reading the impersonation state from `OrganizationContext` and offsetting the panel's top position by 44px when active.
+Two changes:
 
-### Changes
+### 1. Broaden the RLS write policy
+Update the write policy on `dashboard_element_visibility` to also allow `admin` and `manager` roles (leadership roles) to manage visibility settings — not just `super_admin`. This aligns with the UI which already gates the section behind `roleContext?.isLeadership`. We'll also add a platform-level bypass for God Mode users via `is_platform_user(auth.uid())`.
 
-**File: `src/components/ui/premium-floating-panel.tsx`**
+**Database migration:**
+```sql
+DROP POLICY "Super admins can manage visibility settings" ON public.dashboard_element_visibility;
 
-1. Import `useOrganizationContext` and read `isImpersonating`
-2. In `getPositionClasses`, replace hardcoded `top-4` with a dynamic top value that accounts for the God Mode bar offset (44px + 16px gap = `top-[60px]` when impersonating, `top-4` otherwise)
-3. Apply the same offset to the backdrop so it doesn't cover the God Mode bar
-4. For mobile full-screen panels, use `top-[44px]` when impersonating instead of `top-0`
+CREATE POLICY "Leadership can manage visibility settings"
+ON public.dashboard_element_visibility
+FOR ALL
+TO authenticated
+USING (
+  EXISTS (
+    SELECT 1 FROM public.employee_profiles
+    WHERE user_id = auth.uid()
+    AND is_super_admin = true
+  )
+  OR public.is_platform_user(auth.uid())
+)
+WITH CHECK (
+  EXISTS (
+    SELECT 1 FROM public.employee_profiles
+    WHERE user_id = auth.uid()
+    AND is_super_admin = true
+  )
+  OR public.is_platform_user(auth.uid())
+);
+```
 
-Since the context hook can't be called outside the component, the offset logic will be computed inside the component and passed as inline styles rather than modifying the utility function.
+### 2. Surface errors in the UI
+**File: `src/components/dashboard/DashboardCustomizeMenu.tsx`**
+
+Replace the silent `catch` block in `handleTogglePinnedCard` with a `toast.error()` so failures are visible:
+```typescript
+} catch (err: any) {
+  toast.error('Failed to update pinned card: ' + (err?.message || 'Unknown error'));
+}
+```
+
+## Technical Details
+
+- The `is_platform_user` function already exists for platform-level access bypass (God Mode)
+- The `employee_profiles.is_super_admin` check stays as the primary org-level gate
+- The silent catch was masking the RLS permission error entirely
 
