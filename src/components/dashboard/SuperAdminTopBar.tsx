@@ -34,7 +34,10 @@ import {
   Bell,
   ChevronDown,
   X,
+  BookOpen,
+  BookX,
 } from 'lucide-react';
+import { useInfotainerSettings } from '@/hooks/useInfotainers';
 import { useNavigationHistory } from '@/contexts/NavigationHistoryContext';
 import type { RoleBadgeConfig } from '@/lib/roleBadgeConfig';
 import type { Database } from '@/integrations/supabase/types';
