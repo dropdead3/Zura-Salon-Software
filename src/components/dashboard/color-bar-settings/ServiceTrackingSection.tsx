@@ -197,6 +197,11 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
           next.add(variables.id);
         } else {
           next.delete(variables.id);
+          // Clean up orphaned billing policy
+          const orphanedPolicy = allowanceByService.get(variables.id);
+          if (orphanedPolicy) {
+            deletePolicy.mutate(orphanedPolicy.id);
+          }
         }
         return next;
       });
@@ -928,18 +933,11 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                                               )}
                                                                onClick={(e) => {
                                                                  e.stopPropagation();
-                                                                 if (active) {
-                                                                   upsertPolicy.mutate({
-                                                                     organization_id: effectiveOrganization!.id,
-                                                                     service_id: service.id,
-                                                                     billing_mode: null,
-                                                                     is_active: false,
-                                                                     included_allowance_qty: 0,
-                                                                     overage_rate: 0,
-                                                                     overage_rate_type: 'per_unit',
-                                                                     overage_cap: null,
-                                                                     notes: null,
-                                                                   });
+                                                                  if (active) {
+                                                                    const existingPolicy = allowanceByService.get(service.id);
+                                                                    if (existingPolicy) {
+                                                                      deletePolicy.mutate(existingPolicy.id);
+                                                                    }
                                                                  } else {
                                                                    upsertPolicy.mutate({
                                                                      organization_id: effectiveOrganization!.id,
