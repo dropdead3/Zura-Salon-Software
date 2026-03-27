@@ -296,15 +296,20 @@ export function DockServicesTab({ appointment, staff, effectiveServiceName }: Do
         }
       }
 
+      // Invalidate charges so the sheet shows updated totals
+      await queryClient.invalidateQueries({ queryKey: ['checkout-usage-charges'] });
+
       // Show charge total after all sessions processed
       const totalCharged = activeSessions.length;
       if (totalCharged > 1) {
         toast.success(`All ${totalCharged} sessions completed and charged`);
       }
 
-      setShowComplete(false);
+      // Brief delay so user can see final charges before sheet closes
+      setTimeout(() => setShowComplete(false), 1500);
     } catch (err) {
       console.error('Session completion chain error:', err);
+      toast.error('Some sessions completed but errors occurred — please review');
     }
   };
 
