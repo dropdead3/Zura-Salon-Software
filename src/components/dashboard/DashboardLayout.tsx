@@ -49,7 +49,7 @@ import { ClockInPromptDialog } from '@/components/dashboard/ClockInPromptDialog'
 import SidebarNavContent from '@/components/dashboard/SidebarNavContent';
 
 import { OrganizationSwitcher } from '@/components/platform/OrganizationSwitcher';
-import { PlatformContextBanner } from '@/components/platform/PlatformContextBanner';
+import { GodModeBar } from '@/components/dashboard/GodModeBar';
 import { useRoleUtils, getIconComponent } from '@/hooks/useRoleUtils';
 import { useRoles, ROLE_CATEGORIES } from '@/hooks/useRoles';
 import { getRoleIconComponent } from '@/components/dashboard/RoleIconPicker';
