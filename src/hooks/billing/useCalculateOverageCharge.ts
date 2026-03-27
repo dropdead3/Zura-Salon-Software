@@ -203,12 +203,12 @@ async function handlePartsAndLabor({
 }) {
   // 1. Get org-level default markup
   const { data: billingSettings } = await supabase
-    .from('backroom_billing_settings' as any)
+    .from('backroom_billing_settings')
     .select('default_product_markup_pct')
     .eq('organization_id', organizationId)
     .maybeSingle();
 
-  const orgDefaultMarkup = (billingSettings as any)?.default_product_markup_pct ?? 0;
+  const orgDefaultMarkup = billingSettings?.default_product_markup_pct ?? 0;
 
   // 2. Aggregate bowl line costs (actual dispensed)
   const { data: bowlLines, error: lineErr } = await supabase

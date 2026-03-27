@@ -23,7 +23,7 @@ export function useBackroomBillingSettings(organizationId: string | null | undef
     queryKey: ['backroom-billing-settings', organizationId],
     queryFn: async (): Promise<BackroomBillingSettings | null> => {
       const { data, error } = await supabase
-        .from('backroom_billing_settings' as any)
+        .from('backroom_billing_settings')
         .select('*')
         .eq('organization_id', organizationId!)
         .maybeSingle();
@@ -51,7 +51,7 @@ export function useUpsertBackroomBillingSettings() {
 
       // Check if exists
       const { data: existing } = await supabase
-        .from('backroom_billing_settings' as any)
+        .from('backroom_billing_settings')
         .select('id')
         .eq('organization_id', params.organization_id)
         .maybeSingle();
@@ -59,7 +59,7 @@ export function useUpsertBackroomBillingSettings() {
       let data, error;
       if ((existing as any)?.id) {
         ({ data, error } = await supabase
-          .from('backroom_billing_settings' as any)
+          .from('backroom_billing_settings')
           .update({
             ...(params.default_product_markup_pct !== undefined && {
               default_product_markup_pct: params.default_product_markup_pct,
@@ -74,13 +74,13 @@ export function useUpsertBackroomBillingSettings() {
               enable_supply_cost_recovery: params.enable_supply_cost_recovery,
             }),
             updated_by: userId,
-          } as any)
+          })
           .eq('id', (existing as any).id)
           .select()
           .single());
       } else {
         ({ data, error } = await supabase
-          .from('backroom_billing_settings' as any)
+          .from('backroom_billing_settings')
           .insert({
             organization_id: params.organization_id,
             default_product_markup_pct: params.default_product_markup_pct ?? 0,
@@ -88,7 +88,7 @@ export function useUpsertBackroomBillingSettings() {
             product_charge_label: params.product_charge_label ?? 'Product Usage',
             enable_supply_cost_recovery: params.enable_supply_cost_recovery ?? false,
             updated_by: userId,
-          } as any)
+          })
           .select()
           .single());
       }
