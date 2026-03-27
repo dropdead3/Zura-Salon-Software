@@ -129,10 +129,18 @@ export function RevenueGapDrilldown({ isOpen, data, isLoading, showDates = false
               </div>
             ) : data ? (
               <>
-                {/* Summary bar */}
-                <div className="space-y-2">
+                {/* Summary context */}
+                <div className="space-y-1.5">
                   <div className="flex items-center justify-between text-xs">
-                    <span className="text-muted-foreground">Actual vs Expected</span>
+                    <span className="text-muted-foreground">Scheduled Service Revenue</span>
+                    <BlurredAmount>
+                      <span className="font-medium text-foreground">
+                        {formatCurrency(data.expectedRevenue)}
+                      </span>
+                    </BlurredAmount>
+                  </div>
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-muted-foreground">Gap Revenue</span>
                     <BlurredAmount>
                       <span className={cn(
                         "font-medium",
@@ -142,14 +150,6 @@ export function RevenueGapDrilldown({ isOpen, data, isLoading, showDates = false
                       </span>
                     </BlurredAmount>
                   </div>
-                  <Progress
-                    value={data.expectedRevenue > 0
-                      ? Math.min((data.actualRevenue / data.expectedRevenue) * 100, 100)
-                      : 0
-                    }
-                    className="h-1.5"
-                    indicatorClassName={data.gapAmount <= 0 ? "bg-success-foreground" : undefined}
-                  />
                 </div>
 
                 {/* Unified gap item list */}
