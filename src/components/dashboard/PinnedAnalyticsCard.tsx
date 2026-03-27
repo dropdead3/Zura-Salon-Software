@@ -932,6 +932,19 @@ export function PinnedAnalyticsCard({ cardId, filters, compact = false }: Pinned
           </PinnableCard>
         </VisibilityGate>
       );
+    case 'client_experience_staff':
+      return (
+        <VisibilityGate elementKey="client_experience_staff">
+          <PinnableCard elementKey="client_experience_staff" elementName="Client Experience" category="Command Center" dateRange={filters.dateRange} locationName={selectedLocationName}>
+            <ClientExperienceCard
+              dateFrom={filters.dateFrom}
+              dateTo={filters.dateTo}
+              locationId={locationFilter}
+              filterContext={filterContext}
+            />
+          </PinnableCard>
+        </VisibilityGate>
+      );
     default:
       return null;
   }

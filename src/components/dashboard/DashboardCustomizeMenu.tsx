@@ -195,6 +195,7 @@ const PINNABLE_CARDS = [
   { id: 'rebooking', label: 'Rebooking Rate', category: 'Clients', icon: <RefreshCw className="w-4 h-4" />, size: 'half' as const },
   // Operations
   { id: 'operational_health', label: 'Operational Health', category: 'Operations', icon: <Activity className="w-4 h-4" />, size: 'half' as const },
+  { id: 'operations_stats', label: 'Operations Queue', category: 'Operations', icon: <ClipboardCheck className="w-4 h-4" />, size: 'half' as const },
   { id: 'capacity_utilization', label: 'Capacity Utilization', category: 'Operations', icon: <Gauge className="w-4 h-4" />, size: 'full' as const },
   { id: 'stylist_workload', label: 'Stylist Workload', category: 'Operations', icon: <Briefcase className="w-4 h-4" />, size: 'half' as const },
   { id: 'locations_rollup', label: 'Locations Rollup', category: 'Operations', icon: <MapPin className="w-4 h-4" />, size: 'full' as const },
@@ -207,14 +208,14 @@ const PINNABLE_CARDS = [
   { id: 'staff_performance', label: 'Staff Performance', category: 'Staffing', icon: <Award className="w-4 h-4" />, size: 'full' as const },
   { id: 'staffing_trends', label: 'Staffing Trends', category: 'Staffing', icon: <LineChart className="w-4 h-4" />, size: 'full' as const },
   { id: 'hiring_capacity', label: 'Hiring Capacity', category: 'Staffing', icon: <UserPlus className="w-4 h-4" />, size: 'half' as const },
+  // Clients (advanced)
+  { id: 'client_experience_staff', label: 'Client Experience', category: 'Clients', icon: <HeartPulse className="w-4 h-4" />, size: 'full' as const },
   // Backroom
   { id: 'control_tower', label: 'Color Bar Control Tower', category: 'Backroom', icon: <FlaskConical className="w-4 h-4" />, size: 'full' as const },
   { id: 'predictive_inventory', label: 'Predictive Inventory', category: 'Backroom', icon: <PackageSearch className="w-4 h-4" />, size: 'full' as const },
 ];
 
-const CARD_SIZE_OVERRIDES: Record<string, 'half' | 'full'> = {
-  client_experience_staff: 'full',
-};
+const CARD_SIZE_OVERRIDES: Record<string, 'half' | 'full'> = {};
 
 export function getCardSize(cardId: string): 'half' | 'full' {
   const card = PINNABLE_CARDS.find(c => c.id === cardId);

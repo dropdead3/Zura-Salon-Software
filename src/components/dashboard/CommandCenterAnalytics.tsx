@@ -507,6 +507,26 @@ export function CommandCenterAnalytics() {
             </PinnableCard>
           </VisibilityGate>
         );
+      case 'client_experience_staff':
+        return (
+          <VisibilityGate key={cardId} elementKey="client_experience_staff">
+            <PinnableCard elementKey="client_experience_staff" elementName="Client Experience" category="Command Center">
+              <ClientExperienceCard
+                dateFrom={dateFilters.dateFrom}
+                dateTo={dateFilters.dateTo}
+                locationId={locationFilter}
+              />
+            </PinnableCard>
+          </VisibilityGate>
+        );
+      case 'operations_stats':
+        return (
+          <VisibilityGate key={cardId} elementKey="operations_quick_stats">
+            <PinnableCard elementKey="operations_quick_stats" elementName="Operations Queue" category="Command Center">
+              <OperationsQuickStats locationId={locationFilter} filterContext={{ locationId, dateRange }} />
+            </PinnableCard>
+          </VisibilityGate>
+        );
       default:
         return null;
     }
