@@ -70,28 +70,28 @@ function GapItemRow({ item, showDates, formatCurrency }: {
   const showAmountShift = item.reason !== 'cancelled' && item.reason !== 'no_show' && item.actualAmount > 0;
 
   return (
-    <div className="flex flex-col gap-1.5 text-[11px] py-2.5 px-3 rounded-md bg-muted/40 border border-border/20 overflow-hidden">
-      {/* Row 1: Badge + client name + variance */}
-      <div className="flex items-start justify-between gap-2 min-w-0">
-        <div className="flex items-center gap-1.5 min-w-0 flex-1">
+    <div className="flex flex-col gap-2 text-xs py-3 px-3.5 rounded-lg bg-muted/40 border border-border/30 overflow-hidden">
+      {/* Row 1: Badge + client name */}
+      <div className="flex items-center justify-between gap-3 min-w-0">
+        <div className="flex items-center gap-2 min-w-0 flex-1">
           <span className={cn(
-            "inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded-full border shrink-0",
+            "inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full border shrink-0",
             config.badgeClass
           )}>
-            <Icon className="w-2.5 h-2.5" />
+            <Icon className="w-3 h-3" />
             {config.label}
           </span>
-          <span className="font-sans text-foreground truncate min-w-0">{item.clientName}</span>
+          <span className="font-sans text-foreground font-medium truncate min-w-0">{item.clientName}</span>
         </div>
         <BlurredAmount>
-          <span className="font-sans text-destructive/80 whitespace-nowrap shrink-0">
+          <span className="font-sans text-sm text-destructive/90 whitespace-nowrap shrink-0 tabular-nums">
             -{formatCurrency(item.variance)}
           </span>
         </BlurredAmount>
       </div>
 
-      {/* Row 2: Service · stylist · optional amount shift */}
-      <div className="flex flex-col gap-1 pl-0.5 min-w-0 text-muted-foreground">
+      {/* Row 2: Service · stylist */}
+      <div className="flex flex-col gap-1 pl-0.5 min-w-0 text-muted-foreground text-[11px]">
         <span className="whitespace-normal break-words leading-relaxed pr-2">
           {[
             item.serviceName,
@@ -100,9 +100,9 @@ function GapItemRow({ item, showDates, formatCurrency }: {
           ].filter(Boolean).join(' · ')}
         </span>
         {showAmountShift && (
-          <span className="flex items-center gap-0.5 shrink-0 self-end text-[10px] sm:text-[11px]">
+          <span className="flex items-center gap-1 shrink-0 self-end text-[11px]">
             <BlurredAmount><span>{formatCurrency(item.scheduledAmount)}</span></BlurredAmount>
-            <ArrowRight className="w-2.5 h-2.5" />
+            <ArrowRight className="w-3 h-3" />
             <BlurredAmount><span>{formatCurrency(item.actualAmount)}</span></BlurredAmount>
           </span>
         )}
