@@ -18,12 +18,14 @@ interface SortablePinnedCardItemProps {
 
 export function SortablePinnedCardItem({ 
   id, 
+  cardId,
   label, 
   icon, 
   isPinned, 
   onToggle,
   isLoading = false,
 }: SortablePinnedCardItemProps) {
+  const rawCardId = cardId || id;
   const { 
     attributes, 
     listeners, 
