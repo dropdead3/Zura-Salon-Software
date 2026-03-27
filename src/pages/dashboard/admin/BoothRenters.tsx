@@ -38,7 +38,7 @@ export default function BoothRenters() {
           <PlatformPageHeader
             title="Renter Hub"
             description="Manage booth renters and rent payments"
-            actions={<Store className="h-6 w-6 text-primary" />
+            actions={<Store className="h-6 w-6 text-primary" />}
           />
           <Card className="bg-muted/30 border-dashed">
             <CardContent className="flex flex-col items-center justify-center py-12 text-center">
