@@ -77,6 +77,7 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
   const [allowanceEditing, setAllowanceEditing] = useState<Set<string>>(new Set());
   const [allowanceDraft, setAllowanceDraft] = useState<Record<string, { qty: number; rate: string }>>({});
   const upsertPolicy = useUpsertAllowancePolicy();
+  const deletePolicy = useDeleteAllowancePolicy();
   const [calculatorServiceId, setCalculatorServiceId] = useState<string | null>(null);
   const [calculatorServiceName, setCalculatorServiceName] = useState('');
   const [calculatorContainerTypes, setCalculatorContainerTypes] = useState<('bowl' | 'bottle')[]>(['bowl']);
