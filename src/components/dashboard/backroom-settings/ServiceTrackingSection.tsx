@@ -744,84 +744,134 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                            )}
                                          </div>
 
-                                          {/* Allowance config + actions — gated on vessel selection */}
-                                          {(service.container_types || []).length > 0 && (
-                                          <div className="flex items-start justify-between gap-4">
-                                             {(() => {
-                                               const policy = allowanceByService.get(service.id);
-
-                                                if (policy && policy.is_active) {
-                                                  const recipeNote = policy.notes?.startsWith('Recipe-based:') ? policy.notes.replace('Recipe-based: ', '') : null;
-                                                   const healthStatus = policy.allowance_health_status;
-                                                   const healthPct = policy.allowance_health_pct;
-                                                  return (
-                                                    <div className="flex items-center gap-2 text-xs">
-                                                      <FileText className="w-3.5 h-3.5 text-primary" />
-                                                      <span className="font-sans text-muted-foreground">
-                                                        {recipeNote || `${policy.included_allowance_qty}${policy.allowance_unit} included · $${Number(policy.overage_rate).toFixed(2)}/${policy.allowance_unit} overage`}
-                                                      </span>
-                                                       {healthStatus && healthPct !== null && (
-                                                         <Badge
-                                                           variant="outline"
-                                                           className={cn(
-                                                             'text-[10px] px-1.5 py-0 cursor-pointer hover:opacity-80 transition-opacity',
-                                                             healthStatus === 'healthy' && 'text-emerald-500 border-emerald-500/30',
-                                                             healthStatus === 'high' && 'text-amber-500 border-amber-500/30',
-                                                             healthStatus === 'low' && 'text-blue-500 border-blue-500/30',
-                                                           )}
-                                                           onClick={(e) => {
-                                                             e.stopPropagation();
-                                                             setCalculatorServiceId(service.id);
-                                                             setCalculatorServiceName(service.name);
-                                                             setCalculatorContainerTypes((service.container_types || ['bowl']) as ('bowl' | 'bottle')[]);
-                                                             setCalculatorServicePrice(service.price);
-                                                           }}
-                                                         >
-                                                           {healthPct.toFixed(1)}%
-                                                           {healthStatus === 'high' && ' ⚠'}
-                                                         </Badge>
+                                           {/* Billing mode + Allowance config — gated on vessel selection */}
+                                           {(service.container_types || []).length > 0 && (() => {
+                                             const policy = allowanceByService.get(service.id);
+                                             const billingMode = policy?.billing_mode || 'allowance';
+                                             return (
+                                             <div className="space-y-2">
+                                               {/* Billing mode toggle */}
+                                               <div className="flex items-center gap-1.5">
+                                                 <span className="text-xs font-sans text-muted-foreground">Billing:</span>
+                                                 {(['allowance', 'parts_and_labor'] as const).map((mode) => {
+                                                   const active = billingMode === mode;
+                                                   return (
+                                                     <button
+                                                       key={mode}
+                                                       className={cn(
+                                                         'px-3 py-1 rounded-full text-xs font-sans capitalize transition-colors border flex items-center gap-1',
+                                                         active
+                                                           ? 'bg-primary text-primary-foreground border-primary'
+                                                           : 'bg-transparent border-dashed border-muted-foreground/40 text-muted-foreground hover:border-muted-foreground'
                                                        )}
-                                                      <Button
-                                                        variant="ghost"
-                                                        size="sm"
-                                                        className={tokens.button.inlineGhost}
-                                                        onClick={(e) => {
-                                                          e.stopPropagation();
-                                                           setCalculatorServiceId(service.id);
-                                                           setCalculatorServiceName(service.name);
-                                                           setCalculatorContainerTypes((service.container_types || ['bowl']) as ('bowl' | 'bottle')[]);
-                                                           setCalculatorServicePrice(service.price);
-                                                        }}
-                                                      >
-                                                        Edit
-                                                      </Button>
-                                                    </div>
-                                                  );
-                                                }
+                                                       onClick={(e) => {
+                                                         e.stopPropagation();
+                                                         upsertPolicy.mutate({
+                                                           organization_id: effectiveOrganization!.id,
+                                                           service_id: service.id,
+                                                           billing_mode: mode,
+                                                           is_active: mode === 'allowance' ? (policy?.is_active ?? false) : false,
+                                                           included_allowance_qty: policy?.included_allowance_qty ?? 0,
+                                                           overage_rate: policy?.overage_rate ?? 0,
+                                                           overage_rate_type: policy?.overage_rate_type ?? 'per_unit',
+                                                           overage_cap: policy?.overage_cap ?? null,
+                                                           notes: policy?.notes ?? null,
+                                                         });
+                                                       }}
+                                                     >
+                                                       {active ? <Check className="w-3 h-3" /> : <Plus className="w-3 h-3" />}
+                                                       {mode === 'allowance' ? 'Allowance' : 'Parts & Labor'}
+                                                     </button>
+                                                   );
+                                                 })}
+                                               </div>
 
-                                                return (
-                                                  <div className="flex items-center gap-2 text-xs">
-                                                    <FileText className="w-3.5 h-3.5 text-muted-foreground" />
-                                                    <Button
-                                                      variant="outline"
-                                                      size="sm"
-                                                      className="h-7 text-xs border-dashed"
-                                                      onClick={(e) => {
-                                                        e.stopPropagation();
-                                                         setCalculatorServiceId(service.id);
-                                                         setCalculatorServiceName(service.name);
-                                                         setCalculatorContainerTypes((service.container_types || ['bowl']) as ('bowl' | 'bottle')[]);
-                                                         setCalculatorServicePrice(service.price);
-                                                      }}
-                                                    >
-                                                      Configure Allowance
-                                                    </Button>
-                                                    <MetricInfoTooltip description="Use benchmark products to set a dollar allowance for this service. Stylists can mix any product — once the allowance is reached, overage costs are passed to the client at checkout." />
-                                                  </div>
-                                               );
-                                             })()}
-                                          </div>
-                                          )}
+                                               {/* Mode-specific content */}
+                                               {billingMode === 'parts_and_labor' ? (
+                                                 <div className="flex items-center gap-2 text-xs">
+                                                   <FileText className="w-3.5 h-3.5 text-primary" />
+                                                   <span className="font-sans text-muted-foreground">
+                                                     Parts & Labor — client pays hourly rate + retail cost of supplies. No allowance needed.
+                                                   </span>
+                                                 </div>
+                                               ) : (
+                                               <div className="flex items-start justify-between gap-4">
+                                                {(() => {
+                                                 if (policy && policy.is_active) {
+                                                   const recipeNote = policy.notes?.startsWith('Recipe-based:') ? policy.notes.replace('Recipe-based: ', '') : null;
+                                                    const healthStatus = policy.allowance_health_status;
+                                                    const healthPct = policy.allowance_health_pct;
+                                                   return (
+                                                     <div className="flex items-center gap-2 text-xs">
+                                                       <FileText className="w-3.5 h-3.5 text-primary" />
+                                                       <span className="font-sans text-muted-foreground">
+                                                         {recipeNote || `${policy.included_allowance_qty}${policy.allowance_unit} included · $${Number(policy.overage_rate).toFixed(2)}/${policy.allowance_unit} overage`}
+                                                       </span>
+                                                        {healthStatus && healthPct !== null && (
+                                                          <Badge
+                                                            variant="outline"
+                                                            className={cn(
+                                                              'text-[10px] px-1.5 py-0 cursor-pointer hover:opacity-80 transition-opacity',
+                                                              healthStatus === 'healthy' && 'text-emerald-500 border-emerald-500/30',
+                                                              healthStatus === 'high' && 'text-amber-500 border-amber-500/30',
+                                                              healthStatus === 'low' && 'text-blue-500 border-blue-500/30',
+                                                            )}
+                                                            onClick={(e) => {
+                                                              e.stopPropagation();
+                                                              setCalculatorServiceId(service.id);
+                                                              setCalculatorServiceName(service.name);
+                                                              setCalculatorContainerTypes((service.container_types || ['bowl']) as ('bowl' | 'bottle')[]);
+                                                              setCalculatorServicePrice(service.price);
+                                                            }}
+                                                          >
+                                                            {healthPct.toFixed(1)}%
+                                                            {healthStatus === 'high' && ' ⚠'}
+                                                          </Badge>
+                                                        )}
+                                                       <Button
+                                                         variant="ghost"
+                                                         size="sm"
+                                                         className={tokens.button.inlineGhost}
+                                                         onClick={(e) => {
+                                                           e.stopPropagation();
+                                                            setCalculatorServiceId(service.id);
+                                                            setCalculatorServiceName(service.name);
+                                                            setCalculatorContainerTypes((service.container_types || ['bowl']) as ('bowl' | 'bottle')[]);
+                                                            setCalculatorServicePrice(service.price);
+                                                         }}
+                                                       >
+                                                         Edit
+                                                       </Button>
+                                                     </div>
+                                                   );
+                                                 }
+
+                                                 return (
+                                                   <div className="flex items-center gap-2 text-xs">
+                                                     <FileText className="w-3.5 h-3.5 text-muted-foreground" />
+                                                     <Button
+                                                       variant="outline"
+                                                       size="sm"
+                                                       className="h-7 text-xs border-dashed"
+                                                       onClick={(e) => {
+                                                         e.stopPropagation();
+                                                          setCalculatorServiceId(service.id);
+                                                          setCalculatorServiceName(service.name);
+                                                          setCalculatorContainerTypes((service.container_types || ['bowl']) as ('bowl' | 'bottle')[]);
+                                                          setCalculatorServicePrice(service.price);
+                                                       }}
+                                                     >
+                                                       Configure Allowance
+                                                     </Button>
+                                                     <MetricInfoTooltip description="Use benchmark products to set a dollar allowance for this service. Stylists can mix any product — once the allowance is reached, overage costs are passed to the client at checkout." />
+                                                   </div>
+                                                );
+                                                })()}
+                                               </div>
+                                               )}
+                                             </div>
+                                             );
+                                           })()}
                                         {/* Toggles grid */}
                                         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                                           <div className="flex items-center gap-2">
