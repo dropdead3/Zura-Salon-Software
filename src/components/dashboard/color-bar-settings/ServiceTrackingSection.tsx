@@ -799,7 +799,7 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                   )}
                                 </TableCell>
 
-                                {/* Service — Name + Category subtitle + Type badge + Inline summary */}
+                                {/* Service — Name + Category subtitle + Type badge */}
                                 <TableCell>
                                   <div className="flex items-center gap-2">
                                     <div className="min-w-0 flex-1">
@@ -811,9 +811,15 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                           {service.name}
                                         </span>
                                       </div>
-                                      <div className="flex items-center gap-1.5">
+                                      <div className="flex items-center gap-1.5 mt-0.5">
                                         {service.category && (
                                           <span className="text-[11px] text-muted-foreground">{service.category}</span>
+                                        )}
+                                        {type === 'chemical' && (
+                                          <Badge variant="default" className="text-[10px] whitespace-nowrap shrink-0 gap-1 py-0 px-1.5"><CheckCircle2 className="w-2.5 h-2.5" />Color/Chemical</Badge>
+                                        )}
+                                        {type === 'suggested' && (
+                                          <Badge variant="outline" className="text-[10px] whitespace-nowrap shrink-0 border-amber-500/40 text-amber-600 dark:text-amber-400 py-0 px-1.5">Suggested</Badge>
                                         )}
                                       </div>
                                     </div>
