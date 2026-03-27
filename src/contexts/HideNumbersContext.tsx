@@ -194,12 +194,14 @@ interface BlurredAmountProps {
   children: ReactNode;
   className?: string;
   as?: 'span' | 'p' | 'div';
+  disableTooltip?: boolean;
 }
 
 export function BlurredAmount({ 
   children, 
   className,
-  as: Component = 'span'
+  as: Component = 'span',
+  disableTooltip = false
 }: BlurredAmountProps) {
   const { hideNumbers, requestUnhide, quickHide } = useHideNumbers();
   
