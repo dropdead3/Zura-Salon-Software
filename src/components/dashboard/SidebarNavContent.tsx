@@ -641,7 +641,10 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
                         {filteredItems.map((item) => {
                           const Icon = item.icon;
                           const resolvedItemHref = dashPath(item.href.replace(/^\/dashboard/, ''));
-                          const isActive = location.pathname === resolvedItemHref || location.pathname.startsWith(resolvedItemHref + '/');
+                          const isExactRoot = resolvedItemHref === dashPath('') || resolvedItemHref === dashPath('/');
+                          const isActive = isExactRoot
+                            ? location.pathname === resolvedItemHref
+                            : location.pathname === resolvedItemHref || location.pathname.startsWith(resolvedItemHref + '/');
                           const label = getNavLabel(item);
                           return (
                             <a
