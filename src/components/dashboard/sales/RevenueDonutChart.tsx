@@ -124,7 +124,7 @@ export function RevenueDonutChart({
               </PieChart>
             </ResponsiveContainer>
           </div>
-          <div className="flex-1 min-w-0 text-xs space-y-1">
+          <div className="flex-1 min-w-0 text-sm space-y-1.5">
             {/* Services row */}
             <div className="flex items-center justify-between gap-2">
               <div className="flex items-center gap-2">
