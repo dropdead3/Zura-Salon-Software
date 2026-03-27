@@ -1049,7 +1049,7 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                                     className="h-7 text-xs text-muted-foreground hover:text-red-500 hover:bg-red-500/10"
                                                     onClick={(e) => {
                                                       e.stopPropagation();
-                                                      handleReset(service.id);
+                                                      confirmReset(service.id);
                                                     }}
                                                   >
                                                     <RotateCcw className="w-3.5 h-3.5" />
@@ -1068,7 +1068,7 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                                       className="h-7 text-xs shrink-0 text-muted-foreground hover:text-red-500 hover:bg-red-500/10"
                                                       onClick={(e) => {
                                                         e.stopPropagation();
-                                                        handleReset(service.id);
+                                                        confirmReset(service.id);
                                                       }}
                                                     >
                                                       <RotateCcw className="w-3.5 h-3.5" />
@@ -1127,7 +1127,7 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                                       className="h-7 text-xs text-muted-foreground hover:text-red-500 hover:bg-red-500/10"
                                                         onClick={(e) => {
                                                           e.stopPropagation();
-                                                          handleReset(service.id);
+                                                          confirmReset(service.id);
                                                         }}
                                                     >
                                                       <RotateCcw className="w-3.5 h-3.5" />
@@ -1146,7 +1146,7 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                                         className="h-7 text-xs shrink-0 text-muted-foreground hover:text-red-500 hover:bg-red-500/10"
                                                           onClick={(e) => {
                                                             e.stopPropagation();
-                                                            handleReset(service.id);
+                                                            confirmReset(service.id);
                                                           }}
                                                       >
                                                         <RotateCcw className="w-3.5 h-3.5" />
