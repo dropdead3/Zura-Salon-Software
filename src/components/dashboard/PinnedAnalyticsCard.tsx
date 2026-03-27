@@ -41,6 +41,13 @@ import { LocationsRollupCard } from '@/components/dashboard/analytics/LocationsR
 import { ServiceMixCard } from '@/components/dashboard/analytics/ServiceMixCard';
 import { RetailEffectivenessCard } from '@/components/dashboard/analytics/RetailEffectivenessCard';
 import { RebookingCard } from '@/components/dashboard/analytics/RebookingCard';
+import { CommissionSummaryCard } from '@/components/dashboard/sales/CommissionSummaryCard';
+import { StaffCommissionTable } from '@/components/dashboard/sales/StaffCommissionTable';
+import { TrueProfitCard } from '@/components/dashboard/sales/TrueProfitCard';
+import { StaffPerformanceReport } from '@/components/dashboard/analytics/StaffPerformanceReport';
+import { ServiceProfitabilityCard } from '@/components/dashboard/analytics/ServiceProfitabilityCard';
+import { ColorBarControlTower } from '@/components/dashboard/color-bar/control-tower/ColorBarControlTower';
+import { PredictiveColorBarSummary } from '@/components/dashboard/color-bar/predictive-color-bar/PredictiveColorBarSummary';
 import { useSalesMetrics, useSalesByStylist, useServiceMix } from '@/hooks/useSalesData';
 import { useTodayActualRevenue } from '@/hooks/useTodayActualRevenue';
 import { useRetailAttachmentRate } from '@/hooks/useRetailAttachmentRate';
