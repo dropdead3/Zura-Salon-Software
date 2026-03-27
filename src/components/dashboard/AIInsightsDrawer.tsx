@@ -421,7 +421,78 @@ function CategoryFilterChip({
   );
 }
 
-interface AIInsightsDrawerProps {
+/** Wizard intent picker — 2-column grid of intent cards */
+function WizardIntentPicker({
+  intents,
+  sortedInsights,
+  onSelect,
+}: {
+  intents: IntentConfig[];
+  sortedInsights: InsightItem[];
+  onSelect: (intent: WizardIntent) => void;
+}) {
+  return (
+    <div className="px-5 pb-5">
+      <p className="text-sm font-medium text-foreground mb-4">What would you like to focus on?</p>
+      <div className="grid grid-cols-2 gap-2.5">
+        {intents.map((intent) => {
+          const matchCount = intent.key === 'everything' ? sortedInsights.length : intent.filter(sortedInsights).length;
+          const hasUrgent = intent.key !== 'everything' && intent.filter(sortedInsights).some(i => i.severity === 'critical');
+          const Icon = intent.icon;
+          const isEmpty = matchCount === 0 && intent.key !== 'everything';
+
+          return (
+            <button
+              key={intent.key}
+              type="button"
+              onClick={() => !isEmpty && onSelect(intent.key)}
+              disabled={isEmpty}
+              className={cn(
+                'group relative flex flex-col items-start gap-1.5 rounded-xl border p-4 text-left transition-all duration-200',
+                isEmpty
+                  ? 'border-border/30 bg-muted/10 opacity-50 cursor-not-allowed'
+                  : cn(
+                      'border-border/50 bg-card hover:bg-accent/30 hover:border-foreground/20 hover:shadow-sm cursor-pointer',
+                      intent.accentClass,
+                      hasUrgent && 'border-red-500/20 bg-red-500/[0.02]'
+                    ),
+              )}
+            >
+              <div className="flex items-center justify-between w-full">
+                <div className={cn(
+                  'w-8 h-8 rounded-lg flex items-center justify-center',
+                  isEmpty ? 'bg-muted/30' : hasUrgent ? 'bg-red-500/10' : 'bg-primary/10',
+                )}>
+                  <Icon className={cn(
+                    'w-4 h-4',
+                    isEmpty ? 'text-muted-foreground/50' : hasUrgent ? 'text-red-500' : 'text-primary',
+                  )} />
+                </div>
+                {!isEmpty && matchCount > 0 && (
+                  <span className={cn(
+                    'text-[10px] font-display tracking-wider px-2 py-0.5 rounded-full',
+                    hasUrgent
+                      ? 'bg-red-500/10 text-red-600 dark:text-red-400'
+                      : 'bg-muted text-muted-foreground',
+                  )}>
+                    {matchCount}
+                  </span>
+                )}
+              </div>
+              <div>
+                <p className="text-sm font-medium leading-snug">{intent.label}</p>
+                <p className="text-[11px] text-muted-foreground leading-snug mt-0.5">
+                  {isEmpty ? 'No items' : intent.description}
+                </p>
+              </div>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
   label?: string;
   expanded?: boolean;
   onToggle?: () => void;
