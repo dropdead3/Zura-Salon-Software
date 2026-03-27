@@ -35,6 +35,7 @@ import { useServiceLookup, type ContainerType } from '@/hooks/useServiceLookup';
 import { useDepleteMixSession } from '@/hooks/backroom/useDepleteMixSession';
 import { useCalculateOverageCharge } from '@/hooks/billing/useCalculateOverageCharge';
 import { useCheckoutUsageCharges } from '@/hooks/billing/useCheckoutUsageCharges';
+import { useBackroomBillingSettings } from '@/hooks/billing/useBackroomBillingSettings';
 
 interface DockServicesTabProps {
   appointment: DockAppointment;
