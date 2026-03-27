@@ -845,7 +845,7 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                     {type === 'suggested' && (
                                       <Badge variant="outline" className="text-[10px] shrink-0 border-amber-500/40 text-amber-600 dark:text-amber-400">Suggested</Badge>
                                     )}
-                                    {service.backroom_config_dismissed ? (
+                                    {isTrulyConfigured(service) ? (
                                       <Badge variant="outline" className="text-[10px] shrink-0 min-w-[6.5rem] justify-center border-emerald-500/30 bg-emerald-500/10 text-emerald-500 dark:text-emerald-400">Configured ✓</Badge>
                                     ) : service.is_backroom_tracked && (() => {
                                       const activePolicy = allowancePolicies?.find(p => p.service_id === service.id && p.is_active);
