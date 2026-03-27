@@ -175,29 +175,43 @@ const WIDGETS = [
 ];
 
 const PINNABLE_CARDS = [
+  // Executive
+  { id: 'executive_summary', label: 'Executive Summary', category: 'Executive', icon: <FileText className="w-4 h-4" />, size: 'full' as const },
+  { id: 'daily_brief', label: 'Daily Brief', category: 'Executive', icon: <Sun className="w-4 h-4" />, size: 'full' as const },
+  // Sales
   { id: 'sales_overview', label: 'Sales Overview', category: 'Sales', icon: <DollarSign className="w-4 h-4" />, size: 'full' as const },
   { id: 'revenue_breakdown', label: 'Revenue Breakdown', category: 'Sales', icon: <PieChart className="w-4 h-4" />, size: 'half' as const },
   { id: 'top_performers', label: 'Top Performers', category: 'Sales', icon: <Trophy className="w-4 h-4" />, size: 'half' as const },
+  { id: 'service_mix', label: 'Service Mix', category: 'Sales', icon: <Layers className="w-4 h-4" />, size: 'half' as const },
+  { id: 'retail_effectiveness', label: 'Retail Effectiveness', category: 'Sales', icon: <ShoppingBag className="w-4 h-4" />, size: 'half' as const },
+  // Forecasting
   { id: 'week_ahead_forecast', label: 'Revenue Forecast', category: 'Forecasting', icon: <TrendingUp className="w-4 h-4" />, size: 'full' as const },
   { id: 'goal_tracker', label: 'Goal Tracker', category: 'Forecasting', icon: <Target className="w-4 h-4" />, size: 'half' as const },
   { id: 'new_bookings', label: 'New Bookings', category: 'Forecasting', icon: <CalendarPlus className="w-4 h-4" />, size: 'half' as const },
+  // Clients
   { id: 'client_funnel', label: 'Client Funnel', category: 'Clients', icon: <Users className="w-4 h-4" />, size: 'half' as const },
-  { id: 'operations_stats', label: 'Operations Stats', category: 'Operations', icon: <LayoutDashboard className="w-4 h-4" />, size: 'full' as const },
+  { id: 'client_health', label: 'Client Health', category: 'Clients', icon: <HeartPulse className="w-4 h-4" />, size: 'half' as const },
+  { id: 'rebooking', label: 'Rebooking Rate', category: 'Clients', icon: <RefreshCw className="w-4 h-4" />, size: 'half' as const },
+  // Operations
+  { id: 'operational_health', label: 'Operational Health', category: 'Operations', icon: <Activity className="w-4 h-4" />, size: 'half' as const },
   { id: 'capacity_utilization', label: 'Capacity Utilization', category: 'Operations', icon: <Gauge className="w-4 h-4" />, size: 'full' as const },
   { id: 'stylist_workload', label: 'Stylist Workload', category: 'Operations', icon: <Briefcase className="w-4 h-4" />, size: 'half' as const },
+  { id: 'locations_rollup', label: 'Locations Rollup', category: 'Operations', icon: <MapPin className="w-4 h-4" />, size: 'full' as const },
+  // Financial
+  { id: 'commission_summary', label: 'Commission Summary', category: 'Financial', icon: <Wallet className="w-4 h-4" />, size: 'full' as const },
+  { id: 'staff_commission_breakdown', label: 'Staff Commission Breakdown', category: 'Financial', icon: <Receipt className="w-4 h-4" />, size: 'full' as const },
+  { id: 'true_profit', label: 'True Profit', category: 'Financial', icon: <Scale className="w-4 h-4" />, size: 'full' as const },
+  { id: 'service_profitability', label: 'Service Profitability', category: 'Financial', icon: <BarChart3 className="w-4 h-4" />, size: 'full' as const },
+  // Staffing
+  { id: 'staff_performance', label: 'Staff Performance', category: 'Staffing', icon: <Award className="w-4 h-4" />, size: 'full' as const },
   { id: 'staffing_trends', label: 'Staffing Trends', category: 'Staffing', icon: <LineChart className="w-4 h-4" />, size: 'full' as const },
   { id: 'hiring_capacity', label: 'Hiring Capacity', category: 'Staffing', icon: <UserPlus className="w-4 h-4" />, size: 'half' as const },
+  // Backroom
+  { id: 'control_tower', label: 'Color Bar Control Tower', category: 'Backroom', icon: <FlaskConical className="w-4 h-4" />, size: 'full' as const },
+  { id: 'predictive_inventory', label: 'Predictive Inventory', category: 'Backroom', icon: <PackageSearch className="w-4 h-4" />, size: 'full' as const },
 ];
 
 const CARD_SIZE_OVERRIDES: Record<string, 'half' | 'full'> = {
-  executive_summary: 'full',
-  daily_brief: 'full',
-  operational_health: 'half',
-  locations_rollup: 'full',
-  service_mix: 'half',
-  retail_effectiveness: 'half',
-  rebooking: 'half',
-  client_health: 'half',
   client_experience_staff: 'full',
 };
 
