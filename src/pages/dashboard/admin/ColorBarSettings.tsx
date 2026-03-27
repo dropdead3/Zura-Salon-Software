@@ -7,7 +7,7 @@ import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { useColorBarEntitlement } from '@/hooks/color-bar/useColorBarEntitlement';
 import { useColorBarOrgId } from '@/hooks/color-bar/useColorBarOrgId';
 import { ColorBarPaywall } from '@/components/dashboard/color-bar-settings/ColorBarPaywall';
-import { Loader2, ArrowLeft } from 'lucide-react';
+import { Loader2, ArrowLeft, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { cn } from '@/lib/utils';
 import { tokens } from '@/lib/design-tokens';
@@ -29,6 +29,12 @@ import {
   CircleDollarSign,
   Coins,
 } from 'lucide-react';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+  TooltipProvider,
+} from '@/components/ui/tooltip';
 
 import { Button } from '@/components/ui/button';
 import { useColorBarSetupHealth } from '@/hooks/color-bar/useColorBarSetupHealth';
