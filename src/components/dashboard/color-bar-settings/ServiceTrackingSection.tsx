@@ -883,7 +883,7 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                                  {/* Billing mode + Allowance config */}
                                                 {(() => {
                                                  const policy = allowanceByService.get(service.id);
-                                                 const billingMode = policy?.billing_mode || 'allowance';
+                                                 const billingMode = policy?.billing_mode ?? null;
                                                  return (
                                                  <div className="space-y-2">
                                                    {/* Billing mode toggle */}
