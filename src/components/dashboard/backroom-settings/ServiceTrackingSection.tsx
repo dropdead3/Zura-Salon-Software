@@ -946,9 +946,16 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                                    )}
                                                  </div>
                                                  );
-                                               })()}
-                                            {/* Toggles grid */}
-                                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                                                })()}
+                                                </div>
+                                              </div>
+                                              )}
+
+                                              {/* ─── Section 3: App Preferences ─── */}
+                                              <div>
+                                                <p className="text-[10px] font-display uppercase tracking-wider text-muted-foreground mb-2">App Preferences</p>
+                                                <div className="pl-3 border-l border-border/40">
+                                             <div className="grid grid-cols-3 gap-4">
                                               <div className="flex items-center gap-2">
                                                 <label className="text-[10px] font-sans text-muted-foreground whitespace-nowrap">Assistant Prep</label>
                                                 <Switch
