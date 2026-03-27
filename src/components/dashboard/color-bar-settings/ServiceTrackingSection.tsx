@@ -822,11 +822,11 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                     <p className="text-xs font-sans text-muted-foreground">
                       {hintText}
                     </p>
-                    <div className="flex items-center gap-2 @[500px]:justify-end justify-stretch">
+                    <div className="flex @[500px]:flex-row @[500px]:items-center @[500px]:justify-end @[500px]:gap-2 flex-col gap-2">
                       <Button
-                        variant="ghost"
+                        variant="outline"
                         size="sm"
-                        className="h-9 @[500px]:h-7 text-xs shrink-0 text-muted-foreground hover:text-red-500 hover:bg-red-500/10"
+                        className="@[500px]:h-7 @[500px]:w-auto @[500px]:rounded-full h-10 w-full rounded-full text-xs text-muted-foreground hover:text-red-500 hover:bg-red-500/10 border-border/60"
                         onClick={(e) => {
                           e.stopPropagation();
                           confirmReset(service.id);
@@ -836,14 +836,13 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                         Reset
                       </Button>
                       <Button
-                        variant="ghost"
                         size="sm"
                         disabled={!canFinalize}
                         className={cn(
-                          "h-9 @[500px]:h-7 text-xs shrink-0",
+                          "@[500px]:h-7 @[500px]:w-auto @[500px]:rounded-full h-10 w-full rounded-full text-xs",
                           canFinalize
-                            ? "text-amber-600 hover:text-amber-700 hover:bg-amber-50 dark:text-amber-400 dark:hover:bg-amber-900/20"
-                            : "text-muted-foreground/50 cursor-not-allowed"
+                            ? "bg-amber-500/90 text-amber-950 hover:bg-amber-400 dark:bg-amber-500/80 dark:hover:bg-amber-400/80"
+                            : "bg-muted text-muted-foreground/50 cursor-not-allowed"
                         )}
                         onClick={(e) => {
                           e.stopPropagation();
@@ -909,11 +908,11 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                     <p className="text-xs font-sans text-muted-foreground">
                       Doesn't need tracking? Mark as reviewed.
                     </p>
-                    <div className="flex items-center gap-2 @[500px]:justify-end justify-stretch">
+                    <div className="flex @[500px]:flex-row @[500px]:items-center @[500px]:justify-end @[500px]:gap-2 flex-col gap-2">
                       <Button
-                        variant="ghost"
+                        variant="outline"
                         size="sm"
-                        className="h-9 @[500px]:h-7 text-xs shrink-0 text-muted-foreground hover:text-red-500 hover:bg-red-500/10"
+                        className="@[500px]:h-7 @[500px]:w-auto @[500px]:rounded-full h-10 w-full rounded-full text-xs text-muted-foreground hover:text-red-500 hover:bg-red-500/10 border-border/60"
                         onClick={(e) => {
                           e.stopPropagation();
                           confirmReset(service.id);
@@ -923,9 +922,8 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                         Reset
                       </Button>
                       <Button
-                        variant="ghost"
                         size="sm"
-                        className="h-9 @[500px]:h-7 text-xs shrink-0 text-amber-600 hover:text-amber-700 hover:bg-amber-50 dark:text-amber-400 dark:hover:bg-amber-900/20"
+                        className="@[500px]:h-7 @[500px]:w-auto @[500px]:rounded-full h-10 w-full rounded-full text-xs bg-amber-500/90 text-amber-950 hover:bg-amber-400 dark:bg-amber-500/80 dark:hover:bg-amber-400/80"
                         onClick={(e) => {
                           e.stopPropagation();
                           updateService.mutate({ id: service.id, updates: { backroom_config_dismissed: true } });
