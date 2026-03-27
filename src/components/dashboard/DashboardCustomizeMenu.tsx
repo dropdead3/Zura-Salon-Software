@@ -700,6 +700,7 @@ export function DashboardCustomizeMenu({ variant = 'icon', roleContext }: Dashbo
                             isPinned={false}
                             onToggle={() => handleTogglePinnedCard(card.id)}
                             isLoading={isTogglingPin}
+                            sortable={false}
                           />
                         ))}
                       </div>
