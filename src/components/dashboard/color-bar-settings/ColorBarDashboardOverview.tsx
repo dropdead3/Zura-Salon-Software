@@ -436,6 +436,7 @@ function BudgetKpiTile({ budgetPct, currentSpend, monthlyBudget, threshold, form
       onClick={() => onNavigate('inventory:reorder')}
       className={cn(tokens.kpi.tile, 'relative cursor-pointer hover:ring-1 hover:ring-primary/20 transition-all text-left w-full')}
     >
+      <MetricInfoTooltip description="Percentage of your monthly procurement budget spent so far this period. Tracks reorder spend against the budget you configured. Exceeding the alert threshold triggers a warning." className={tokens.kpi.infoIcon} />
       <div className="flex items-center gap-2 mb-2">
         <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center shrink-0">
           <Wallet className={cn('w-4 h-4', status === 'over' ? 'text-destructive' : status === 'warn' ? 'text-amber-500' : 'text-primary')} />
