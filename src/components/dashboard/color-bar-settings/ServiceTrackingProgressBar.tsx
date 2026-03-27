@@ -184,7 +184,7 @@ export function ServiceTrackingProgressBar({ milestones, onQuickSetup }: Props) 
                   </div>
                   <Progress
                     value={pct}
-                    className="h-1.5"
+                    className="h-1.5 bg-amber-500/20"
                     indicatorClassName={cn(
                       inProgress ? 'bg-amber-500' : 'bg-muted-foreground/20',
                     )}
