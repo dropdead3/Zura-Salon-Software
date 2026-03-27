@@ -25,7 +25,7 @@ export interface StaffPerformanceRow {
   /** Composite experience score 0-100 */
   experienceScore: number;
   experienceStatus: 'needs-attention' | 'watch' | 'strong';
-  /** Average chemical cost per service (from backroom) */
+  /** Average chemical cost per service (from color bar) */
   avgChemicalCostPerService: number;
   /** Waste rate from color bar */
   wasteRate: number;
