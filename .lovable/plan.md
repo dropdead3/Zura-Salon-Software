@@ -1,28 +1,47 @@
 
 
-## Change KPI Strip to 3×2 Responsive Grid
+## Add MetricInfoTooltip to Color Bar KPI Tiles
 
-### Problem
-The 6 KPI tiles are cramped in a single row on desktop. The data doesn't breathe — labels wrap and values are hard to scan.
+### What Changes
+Add info circle icons (top-right, per UI canon `tokens.kpi.infoIcon`) to each of the 6 KPI tiles with tooltip descriptions explaining what the metric is, how it's calculated, and how to use it.
 
-### Change
+### File: `src/components/dashboard/color-bar-settings/ColorBarDashboardOverview.tsx`
 
-**File: `src/components/dashboard/color-bar-settings/ColorBarDashboardOverview.tsx`**
+**1. Import `MetricInfoTooltip`** from `@/components/ui/MetricInfoTooltip`.
 
-**Line 148** — Replace the grid class from the current single-row layout:
-
+**2. Add `tooltip` prop to `KpiTile`** and render it absolutely positioned top-right:
+```tsx
+function KpiTile({ icon: Icon, label, value, status, subtitle, tooltip }: {
+  // ...existing props
+  tooltip?: string;
+}) {
+  return (
+    <div className={cn(tokens.kpi.tile, 'relative')}>
+      {tooltip && (
+        <MetricInfoTooltip
+          description={tooltip}
+          className={tokens.kpi.infoIcon}  // absolute top-4 right-4
+        />
+      )}
+      {/* ...existing content */}
+    </div>
+  );
+}
 ```
-// Before
-grid-cols-2 sm:grid-cols-3 lg:grid-cols-6  (or lg:grid-cols-5)
 
-// After
-grid-cols-1 sm:grid-cols-2 lg:grid-cols-3
-```
+**3. Add `tooltip` prop to `BudgetKpiTile`** with same absolute positioning.
 
-This gives a **3×2 grid** on desktop, **2×3 on tablet**, and **1-column stack on mobile** — more room for each tile to display its label, value, and subtitle without cramping.
+**4. Add tooltip text to each KPI call site** (lines 149–188):
 
-The conditional logic for `supplyCostRecoveryEnabled` (5 vs 6 columns) is no longer needed since 3 columns handles both 5 and 6 tiles gracefully (5 tiles = 3+2 rows, 6 tiles = 3+3 rows).
+| KPI | Tooltip |
+|-----|---------|
+| Chemical Cost/Svc | "Average product cost per tracked service. Calculated from weighed product usage over the selected period. Use to benchmark cost efficiency and identify services consuming disproportionate product." |
+| Waste Rate | "Percentage of product dispensed but not applied to a client service. Calculated as unused weight divided by total dispensed weight. A rate above 5% signals opportunities to improve dispensing accuracy." |
+| Reweigh Rate | "Percentage of services where leftover product was weighed back after application. Higher compliance means more accurate waste and cost data. Below 80% indicates staff need reweigh reminders." |
+| Stockout Alerts | "Number of products projected to run out before the next scheduled reorder. Based on current usage velocity and remaining stock levels. Address these to avoid service disruptions." |
+| Budget | "Percentage of your monthly procurement budget spent so far this period. Tracks reorder spend against the budget you configured. Exceeding the alert threshold triggers a warning." |
+| Supply Recovery | "Percentage of product costs recouped through client billing. Compares billed supply charges against actual product cost. Higher rates mean better cost pass-through to clients." |
 
 ### Result
-Each KPI tile gets ~3× the horizontal space, making labels, values, and subtitles comfortably readable. The 2-row layout also better matches the visual hierarchy — KPIs as a prominent section rather than a compressed strip.
+Each KPI tile gets a subtle info icon in the top-right corner. Hovering reveals a clear explanation of the metric, its calculation, and actionable guidance — matching the platform's analytics tooltip standard.
 
