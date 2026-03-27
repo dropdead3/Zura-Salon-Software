@@ -117,6 +117,7 @@ export function DockClientTab({ appointment, staff, activeBowlId }: DockClientTa
   const phorestClientId = appointment.phorest_client_id;
   const clientId = appointment.client_id;
   const usingDemoClient = isDemoClientId(phorestClientId) || isDemoClientId(clientId);
+  const { formulaMemoryEnabled } = useDockFeatureSettings();
 
   // ─── Editable medical alerts state ───
   const [editingAlert, setEditingAlert] = useState(false);
