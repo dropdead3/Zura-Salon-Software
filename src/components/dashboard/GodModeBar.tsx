@@ -57,7 +57,7 @@ export function GodModeBar() {
             </span>
             {!isMobile && (
               <span className="text-xs font-sans text-violet-400/70 shrink-0">
-                ({selectedOrganization.slug})
+                ({selectedOrganization.id.slice(0, 8)})
               </span>
             )}
           </div>
