@@ -803,31 +803,57 @@ export function AIInsightsPanel({ onClose }: { onClose: () => void }) {
                   </div>
                 )}
 
-                <div className="px-5 pb-5">
-                  {isLoading ? (
-                    <div className="space-y-3">
-                      {[1, 2, 3].map(i => (
-                        <div key={i} className="space-y-1.5">
-                          <Skeleton className="w-20 h-3 rounded" />
-                          <Skeleton className="w-full h-4 rounded" />
-                          <Skeleton className="w-3/4 h-3 rounded" />
+                {/* Wizard intent picker OR feed content */}
+                <AnimatePresence initial={false} mode="wait">
+                  {!selectedIntent ? (
+                    <motion.div
+                      key="wizard"
+                      initial={slideVariants.enterFromLeft}
+                      animate={slideVariants.center}
+                      exit={slideVariants.exitToLeft}
+                      transition={{ duration: 0.25, ease: [0.4, 0, 0.2, 1] }}
+                    >
+                      {isLoading ? (
+                        <div className="px-5 pb-5 space-y-3">
+                          {[1, 2, 3].map(i => (
+                            <div key={i} className="space-y-1.5">
+                              <Skeleton className="w-20 h-3 rounded" />
+                              <Skeleton className="w-full h-4 rounded" />
+                              <Skeleton className="w-3/4 h-3 rounded" />
+                            </div>
+                          ))}
                         </div>
-                      ))}
-                    </div>
-                  ) : !data ? (
-                    <div className="text-center py-14">
-                      <ZuraAvatar size="md" className="mx-auto mb-3 opacity-20" />
-                      <p className="text-sm font-display text-muted-foreground">No insights generated yet</p>
-                      <p className="text-xs text-muted-foreground/80 mt-1 max-w-[240px] mx-auto">We'll analyze your sales, capacity, and team data to surface what matters.</p>
-                      <Button variant="outline" size={tokens.button.card} onClick={() => refresh(true)} disabled={isRefreshing} className="gap-1.5 mt-3">
-                        <Brain className="w-3.5 h-3.5" />
-                        Generate Insights
-                      </Button>
-                    </div>
-                  ) : (hasInsights || hasActionItems || hasSuggestions) ? (
+                      ) : !data ? (
+                        <div className="text-center py-14 px-5">
+                          <ZuraAvatar size="md" className="mx-auto mb-3 opacity-20" />
+                          <p className="text-sm font-display text-muted-foreground">No insights generated yet</p>
+                          <p className="text-xs text-muted-foreground/80 mt-1 max-w-[240px] mx-auto">We'll analyze your sales, capacity, and team data to surface what matters.</p>
+                          <Button variant="outline" size={tokens.button.card} onClick={() => refresh(true)} disabled={isRefreshing} className="gap-1.5 mt-3">
+                            <Brain className="w-3.5 h-3.5" />
+                            Generate Insights
+                          </Button>
+                        </div>
+                      ) : (
+                        <WizardIntentPicker
+                          intents={WIZARD_INTENTS}
+                          sortedInsights={sortedInsights}
+                          onSelect={setSelectedIntent}
+                        />
+                      )}
+                    </motion.div>
+                  ) : (
+                    <motion.div
+                      key="feed"
+                      initial={slideVariants.enterFromRight}
+                      animate={slideVariants.center}
+                      exit={slideVariants.exitToRight}
+                      transition={{ duration: 0.25, ease: [0.4, 0, 0.2, 1] }}
+                    >
+                <div className="px-5 pb-5">
+                  {(hasInsights || hasActionItems || hasSuggestions) ? (
                     <div className="space-y-4">
                       {/* ── NEEDS ATTENTION ── */}
-                      {urgentInsights.length > 0 && (
+                      {displayUrgentInsights.length > 0 && (
                         <div>
                           <div className="flex items-center gap-2 mb-2.5">
                             <ShieldAlert className="w-3.5 h-3.5 text-amber-500" />
