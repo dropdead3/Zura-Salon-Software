@@ -230,6 +230,13 @@ const CARD_META: Record<string, { icon: React.ElementType; label: string }> = {
   staffing_trends: { icon: BarChart2, label: 'Staffing Trends' },
   stylist_workload: { icon: Users, label: 'Stylist Workload' },
   client_experience_staff: { icon: Users, label: 'Client Experience' },
+  commission_summary: { icon: DollarSign, label: 'Commission Summary' },
+  staff_commission_breakdown: { icon: Users, label: 'Staff Commissions' },
+  true_profit: { icon: TrendingUp, label: 'True Profit' },
+  staff_performance: { icon: Award, label: 'Staff Performance' },
+  service_profitability: { icon: Scissors, label: 'Service Profitability' },
+  control_tower: { icon: FlaskConical, label: 'Control Tower' },
+  predictive_inventory: { icon: Package, label: 'Predictive Inventory' },
 };
 
 // Tooltip descriptions for compact bento tiles
