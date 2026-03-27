@@ -132,6 +132,7 @@ export function SuperAdminTopBar({
   const { data: unreadCount = 0 } = useUnreadAnnouncements();
   const { hideNumbers, toggleHideNumbers } = useHideNumbers();
   const { isViewingAs } = useViewAs();
+  const { isImpersonating } = useOrganizationContext();
   const location = useLocation();
 
   const showNextClient = isStylistRole || isStylistAssistantRole;
@@ -142,8 +143,8 @@ export function SuperAdminTopBar({
       className={cn(
         "dashboard-top-bar hidden lg:block z-30 px-3 pt-3 pb-3",
         hideFooter
-          ? "fixed top-0 right-0 z-50 transition-transform duration-300 ease-in-out"
-          : "sticky top-0",
+          ? cn("fixed right-0 z-50 transition-transform duration-300 ease-in-out", isImpersonating ? "top-[44px]" : "top-0")
+          : cn("sticky", isImpersonating ? "top-[44px]" : "top-0"),
         hideFooter && !headerHovered && "-translate-y-full",
         hideFooter && headerHovered && "translate-y-0",
         hideFooter && "shrink-0"
