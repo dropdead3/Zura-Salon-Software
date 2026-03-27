@@ -65,12 +65,7 @@ export function ColorBarSetupOverview({ onNavigate }: Props) {
 
   return (
     <div className="space-y-6">
-      <Infotainer
-        id="color-bar-overview-guide"
-        title="Setup Overview"
-        description="This dashboard shows your Color Bar configuration progress. Complete each area to unlock full tracking, billing, and compliance features. Use the Setup Wizard for a guided walkthrough, or configure each section individually from the left navigation."
-        icon={<LayoutDashboard className="h-4 w-4 text-primary" />}
-      />
+      <PageExplainer pageId="color-bar-setup-overview" />
       {/* Wizard launch CTA */}
       {!wizardCompleted && completedCount < checklistItems.length && (
         <Card className="border-primary/30">

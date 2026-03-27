@@ -350,6 +350,7 @@ export default function AnalyticsHub() {
             </div>
           ) : undefined}
         />
+        <PageExplainer pageId="analytics-hub" />
 
         {/* Main Tab Navigation */}
         <Tabs value={activeTab} onValueChange={handleTabChange}>

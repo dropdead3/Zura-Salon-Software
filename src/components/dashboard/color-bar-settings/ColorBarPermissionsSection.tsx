@@ -103,7 +103,7 @@ export function ColorBarPermissionsSection() {
 
   return (
     <div className="space-y-6">
-      <Infotainer id="color-bar-permissions-guide" title="Color Bar Permissions" description="Decide who can do what in Color Bar — from mixing bowls to viewing costs to overriding charges. Each column is a role, each row is a capability." icon={<Shield className="h-4 w-4 text-primary" />} />
+      <PageExplainer pageId="color-bar-permissions" />
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <div className="flex items-center gap-3">
