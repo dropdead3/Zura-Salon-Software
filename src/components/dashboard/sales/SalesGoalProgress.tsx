@@ -206,7 +206,6 @@ export function SalesGoalProgress({
 
   // Projected total: extrapolate current earnings across the full period
   const projectedTotal = elapsedFraction > 0 ? current / elapsedFraction : current;
-  const neededPerDay = remaining / daysLeft;
 
   const handleGetBackOnTrack = async () => {
     setLoading(true);
