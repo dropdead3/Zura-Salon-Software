@@ -282,13 +282,14 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
     badgeCount?: number;
     inFooter?: boolean;
   }) => {
-    const isActive = location.pathname === href;
+    const resolvedHref = dashPath(href.replace(/^\/dashboard/, ''));
+    const isActive = location.pathname === resolvedHref || location.pathname.startsWith(resolvedHref + '/');
     const displayLabel = label;
     
     const handleClick = (e: React.MouseEvent) => {
       e.preventDefault();
       // Always navigate with a fresh timestamp to trigger state reset on same-route navigation
-      navigate(href, { state: { navTimestamp: Date.now() } });
+      navigate(resolvedHref, { state: { navTimestamp: Date.now() } });
       onNavClick();
     };
     
@@ -636,15 +637,16 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
                         </p>
                         {filteredItems.map((item) => {
                           const Icon = item.icon;
-                          const isActive = location.pathname === item.href;
+                          const resolvedItemHref = dashPath(item.href.replace(/^\/dashboard/, ''));
+                          const isActive = location.pathname === resolvedItemHref || location.pathname.startsWith(resolvedItemHref + '/');
                           const label = getNavLabel(item);
                           return (
                             <a
                               key={item.href}
-                              href={item.href}
+                              href={resolvedItemHref}
                               onClick={(e) => {
                                 e.preventDefault();
-                                navigate(item.href, { state: { navTimestamp: Date.now() } });
+                                navigate(resolvedItemHref, { state: { navTimestamp: Date.now() } });
                                 onNavClick();
                               }}
                               className={cn(
