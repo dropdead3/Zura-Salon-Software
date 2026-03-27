@@ -1,37 +1,27 @@
 
 
-## Surface Allowance / Parts & Labor Status in Service List
+## Replace Browser `window.confirm` with In-App Dialog
 
-### What Changes
-Add a **Product Allowance** column to the service tracking table that displays:
-- **Dollar amount** (e.g., `$20.04`) with a calculator icon for services with an allowance policy
-- **"Parts and Labor"** badge (blue, like the Vish screenshot) for services using P&L billing mode
-- **Empty** for untracked or unconfigured services
+### Problem
+The reset action uses `window.confirm()`, which shows an ugly browser-native dialog exposing the raw project URL. This should be an in-app confirmation dialog matching the platform's design language.
 
-### File: `src/components/dashboard/color-bar-settings/ServiceTrackingSection.tsx`
+### Changes
 
-**1. Add a new `TableHead` column** between "Service" and "Tracked" (after line 633):
-- Label: `Product Allowance`
-- Uses `tokens.table.columnHeader`
-- Add a `MetricInfoTooltip` explaining what this column shows
+**`src/components/dashboard/color-bar-settings/ServiceTrackingSection.tsx`**
 
-**2. Add a new `TableCell` in each service row** (between the service name cell and the tracking toggle cell, around line 736):
-- Look up the policy from `allowanceByService.get(service.id)`
-- If `billing_mode === 'parts_and_labor'` → render a blue `Badge` reading "Parts and Labor"
-- If `billing_mode === 'allowance'` and policy exists → parse the dollar amount from `policy.notes` (format: `"Recipe-based: $20.04 product allowance..."`) using a regex like `/\$(\d+\.\d{2})/`, display with a calculator icon
-- If no policy → render nothing
+1. **Import `AlertDialog` components** from `@/components/ui/alert-dialog` (`AlertDialog`, `AlertDialogContent`, `AlertDialogHeader`, `AlertDialogTitle`, `AlertDialogDescription`, `AlertDialogFooter`, `AlertDialogCancel`, `AlertDialogAction`).
 
-**3. Update the `colSpan` on the expanded detail row** from `4` to `5` (line 783)
+2. **Add state** for the confirmation dialog:
+   - `resetConfirmServiceId: string | null` — when non-null, the dialog is open for that service.
 
-**4. Add a helper function** to extract the dollar amount:
-```ts
-function extractAllowanceDollar(notes: string | null): string | null {
-  if (!notes) return null;
-  const match = notes.match(/\$(\d+\.?\d*)/);
-  return match ? `$${match[1]}` : null;
-}
-```
+3. **Split `handleReset` into two parts**:
+   - `confirmReset(serviceId)` — sets `resetConfirmServiceId` to open the dialog.
+   - `executeReset()` — contains the actual reset logic (current body minus the `window.confirm` line). Reads from `resetConfirmServiceId`, then clears it after execution.
 
-### Visual Result
-Matches the Vish reference: services show their allowance dollar value inline, or a "Parts and Labor" badge — giving operators instant visibility into billing configuration without expanding each row.
+4. **Update all `handleReset(service.id)` call sites** to use `confirmReset(service.id)` instead.
+
+5. **Add the `AlertDialog` JSX** at the bottom of the component (before the closing fragment), with:
+   - Title: "Reset Service Configuration"
+   - Description: "This will clear all tracking, billing, and formula configuration for this service. It will return to a 'Needs Attention' state."
+   - Cancel button + destructive "Reset" action button
 
