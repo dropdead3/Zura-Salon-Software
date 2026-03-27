@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Loader2, AlertTriangle, CheckCircle2, Info, Package, Truck, Wrench, DollarSign, Monitor, BarChart3, Bell, Sparkles, LayoutDashboard } from 'lucide-react';
 import { ColorBarSetupWizard } from './ColorBarSetupWizard';
-import { Infotainer } from '@/components/ui/Infotainer';
+import { PageExplainer } from '@/components/ui/PageExplainer';
 
 interface Props {
   onNavigate: (section: string) => void;
