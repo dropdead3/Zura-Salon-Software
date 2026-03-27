@@ -1,5 +1,5 @@
 /**
- * Zura Backroom — Deterministic Calculation Module
+ * Zura Color Bar — Deterministic Calculation Module
  * 
  * All mixing math lives here. No AI, no approximation.
  * These are source-of-truth calculations for usage, cost, and waste.

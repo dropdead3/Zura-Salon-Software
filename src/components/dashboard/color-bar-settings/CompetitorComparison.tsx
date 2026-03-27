@@ -76,7 +76,7 @@ const pricingComparison: Record<'zura' | 'competitorA' | 'salonScale', { pricing
 
 /* ─── Column headers ─── */
 const columns = [
-  { key: 'zura' as const, label: 'Zura Backroom' },
+  { key: 'zura' as const, label: 'Zura Color Bar' },
   { key: 'competitorA' as const, label: 'Competitor A' },
   { key: 'salonScale' as const, label: 'SalonScale' },
 ];
@@ -86,7 +86,7 @@ export function CompetitorComparison() {
     <TooltipProvider delayDuration={200}>
     <div className="space-y-8 md:space-y-10">
       <h2 className="font-display text-2xl md:text-3xl font-medium tracking-wide text-center text-foreground">
-        How Zura Backroom Compares
+        How Zura Color Bar Compares
       </h2>
 
       <Card className="bg-card border-border/50 shadow-sm overflow-hidden">
@@ -202,7 +202,7 @@ export function CompetitorComparison() {
           {/* Summary */}
           <div className="px-6 py-5 border-t border-border/30">
             <p className="font-sans text-sm text-muted-foreground text-center leading-relaxed max-w-lg mx-auto">
-              Zura Backroom is the only system that connects chemical tracking to scheduling,
+              Zura Color Bar is the only system that connects chemical tracking to scheduling,
               profitability analytics, and operational intelligence — inside one unified platform.
             </p>
           </div>

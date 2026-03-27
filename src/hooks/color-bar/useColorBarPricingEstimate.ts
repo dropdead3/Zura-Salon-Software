@@ -1,7 +1,7 @@
 /**
  * useColorBarPricingEstimate — Pulls the salon's real color service
  * appointment data and product spend to generate personalized ROI projections
- * for the Backroom paywall / sales page.
+ * for the Color Bar paywall / sales page.
  */
 
 import { useQuery } from '@tanstack/react-query';
@@ -60,7 +60,7 @@ export function useColorBarPricingEstimate(stylistCountFallback = 2) {
   const orgId = useColorBarOrgId();
 
   return useQuery<PricingEstimate>({
-    queryKey: ['backroom-pricing-estimate', orgId],
+    queryKey: ['color-bar-pricing-estimate', orgId],
     queryFn: async () => {
       if (!orgId) throw new Error('No org');
 

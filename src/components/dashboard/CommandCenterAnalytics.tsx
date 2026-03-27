@@ -28,7 +28,7 @@ import { TrueProfitCard } from '@/components/dashboard/sales/TrueProfitCard';
 import { StaffPerformanceReport } from '@/components/dashboard/analytics/StaffPerformanceReport';
 import { ServiceProfitabilityCard } from '@/components/dashboard/analytics/ServiceProfitabilityCard';
 import { ColorBarControlTower } from '@/components/dashboard/color-bar/control-tower/ColorBarControlTower';
-import { PredictiveBackroomSummary } from '@/components/dashboard/color-bar/predictive-color-bar/PredictiveBackroomSummary';
+import { PredictiveColorBarSummary } from '@/components/dashboard/color-bar/predictive-color-bar/PredictiveColorBarSummary';
 import { useDashboardVisibility } from '@/hooks/useDashboardVisibility';
 import { useDashboardLayout } from '@/hooks/useDashboardLayout';
 import { useSalesMetrics, useSalesByStylist } from '@/hooks/useSalesData';
@@ -535,7 +535,7 @@ export function CommandCenterAnalytics() {
         return (
           <VisibilityGate key={cardId} elementKey="predictive_inventory">
             <PinnableCard elementKey="predictive_inventory" elementName="Predictive Inventory" category="Command Center">
-              <PredictiveBackroomSummary locationId={locationFilter} />
+              <PredictiveColorBarSummary locationId={locationFilter} />
             </PinnableCard>
           </VisibilityGate>
         );

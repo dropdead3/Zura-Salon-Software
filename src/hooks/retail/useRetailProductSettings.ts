@@ -1,6 +1,6 @@
 /**
  * useRetailProductSettings — Per-location retail product tracking settings.
- * Mirrors the backroom's useLocationProductSettings but for retail product types.
+ * Mirrors the color bar's useLocationProductSettings but for retail product types.
  */
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';

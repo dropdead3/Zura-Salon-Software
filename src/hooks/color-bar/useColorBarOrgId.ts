@@ -15,7 +15,7 @@ export function useColorBarOrgId(): string | undefined {
 
   // Fallback: fetch org from employee profile when context has no effective org
   const { data: fallbackOrgId } = useQuery({
-    queryKey: ['backroom-org-fallback', user?.id],
+    queryKey: ['color-bar-org-fallback', user?.id],
     queryFn: async () => {
       if (!user?.id) return null;
       const { data } = await supabase

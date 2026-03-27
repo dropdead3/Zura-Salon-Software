@@ -27,7 +27,7 @@ const LINK_CONFIG: Record<string, { label: string }> = {
   '/dashboard/admin/payroll': { label: 'Hiring & Payroll Hub' },
   '/dashboard/admin/booth-renters': { label: 'Renter Hub' },
   // Apps
-  '/dashboard/admin/backroom-settings': { label: 'Zura Backroom' },
+  '/dashboard/admin/color-bar-settings': { label: 'Zura Color Bar' },
   // System
   '/dashboard/admin/access-hub': { label: 'Roles & Controls Hub' },
   '/dashboard/admin/settings': { label: 'Settings' },

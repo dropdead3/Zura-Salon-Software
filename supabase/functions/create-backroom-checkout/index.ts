@@ -144,8 +144,8 @@ Deno.serve(async (req) => {
       customer: customerId,
       mode: "subscription",
       line_items: lineItems,
-      success_url: success_url || `${req.headers.get("origin")}/dashboard/admin/backroom-settings?checkout=success`,
-      cancel_url: cancel_url || `${req.headers.get("origin")}/dashboard/admin/backroom-settings?checkout=cancelled`,
+      success_url: success_url || `${req.headers.get("origin")}/dashboard/admin/color-bar-settings?checkout=success`,
+      cancel_url: cancel_url || `${req.headers.get("origin")}/dashboard/admin/color-bar-settings?checkout=cancelled`,
       metadata: sharedMetadata,
       subscription_data: {
         metadata: sharedMetadata,

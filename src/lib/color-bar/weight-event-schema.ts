@@ -1,5 +1,5 @@
 /**
- * Zura Backroom — Normalized Weight Event Schema
+ * Zura Color Bar — Normalized Weight Event Schema
  * 
  * Common schema for weight readings regardless of source (manual, BLE scale, etc.)
  */

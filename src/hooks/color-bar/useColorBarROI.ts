@@ -18,7 +18,7 @@ export function useColorBarROI(subscriptionMonthlyCost?: number) {
   const orgId = useColorBarOrgId();
 
   return useQuery<ROIData>({
-    queryKey: ['backroom-roi', orgId, subscriptionMonthlyCost],
+    queryKey: ['color-bar-roi', orgId, subscriptionMonthlyCost],
     queryFn: async () => {
       if (!orgId) throw new Error('No org');
 

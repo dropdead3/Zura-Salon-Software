@@ -513,7 +513,7 @@ export function useIndividualStaffReport(staffUserId: string | null, dateFrom?: 
         complianceRate: 0, // Populated below after individual compliance is computed
       };
 
-      // ── Backroom Compliance (color/chemical appointments vs mix_sessions) ──
+      // ── Color Bar Compliance (color/chemical appointments vs mix_sessions) ──
       const staffColorAppts = currentApts.filter((a: any) =>
         isColorOrChemicalService(a.service_name ?? null, a.service_category ?? null),
       );

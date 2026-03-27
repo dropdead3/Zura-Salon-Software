@@ -41,7 +41,7 @@ export function useColorBarAnalytics(
   const orgId = effectiveOrganization?.id;
 
   return useQuery({
-    queryKey: ['backroom-analytics', orgId, startDate, endDate, locationId],
+    queryKey: ['color-bar-analytics', orgId, startDate, endDate, locationId],
     queryFn: async (): Promise<BackroomAnalyticsData> => {
       // 1. Fetch sessions in range
       let sessionsQuery = supabase

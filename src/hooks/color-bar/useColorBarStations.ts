@@ -26,7 +26,7 @@ export function useColorBarStations(locationId?: string) {
   const orgId = effectiveOrganization?.id;
 
   return useQuery({
-    queryKey: ['backroom-stations', orgId, locationId],
+    queryKey: ['color-bar-stations', orgId, locationId],
     queryFn: async (): Promise<BackroomStation[]> => {
       let query = supabase
         .from('backroom_stations')
@@ -72,7 +72,7 @@ export function useCreateBackroomStation() {
       return data as unknown as BackroomStation;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['backroom-stations'] });
+      queryClient.invalidateQueries({ queryKey: ['color-bar-stations'] });
       toast.success('Station created');
     },
     onError: (error) => {
@@ -109,7 +109,7 @@ export function useUpdateBackroomStation() {
       return data as unknown as BackroomStation;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['backroom-stations'] });
+      queryClient.invalidateQueries({ queryKey: ['color-bar-stations'] });
       toast.success('Station updated');
     },
     onError: (error) => {
@@ -130,7 +130,7 @@ export function useDeleteBackroomStation() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['backroom-stations'] });
+      queryClient.invalidateQueries({ queryKey: ['color-bar-stations'] });
       toast.success('Station removed');
     },
     onError: (error) => {

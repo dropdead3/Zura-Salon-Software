@@ -81,7 +81,7 @@ export default function ColorBarAdmin() {
   return (
     <PlatformPageContainer className="space-y-6">
       <PlatformPageHeader
-        title="Zura Backroom"
+        title="Zura Color Bar"
         description="Wholesale price intelligence, source configuration, organization entitlements, billing health, and platform analytics."
       />
 

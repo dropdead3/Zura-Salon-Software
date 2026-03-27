@@ -40,7 +40,7 @@ export function ClientFormulaHistoryTab({ clientId, className }: ClientFormulaHi
         <Beaker className={tokens.empty.icon} />
         <h3 className={tokens.empty.heading}>No formulas on file</h3>
         <p className={tokens.empty.description}>
-          Formulas will appear here after backroom sessions are completed.
+          Formulas will appear here after color bar sessions are completed.
         </p>
       </div>
     );

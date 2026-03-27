@@ -1,5 +1,5 @@
 /**
- * useStaffColorBarPerformance — Read pre-computed staff backroom analytics.
+ * useStaffColorBarPerformance — Read pre-computed staff color bar analytics.
  * Projection is updated daily by edge function.
  */
 

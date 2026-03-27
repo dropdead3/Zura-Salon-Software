@@ -11,7 +11,7 @@ import { Infotainer } from '@/components/ui/Infotainer';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 
 const PERMISSION_TOOLTIPS: Record<string, string> = {
-  view_backroom: 'Access to the Backroom mixing dashboard.',
+  view_backroom: 'Access to the Color Bar mixing dashboard.',
   mix_bowls: 'Ability to create and manage mixing bowls.',
   smart_mix_assist: 'Access to AI-powered formula suggestions during mixing.',
   formula_memory: 'View and recall past formulas for returning clients.',
@@ -103,7 +103,7 @@ export function ColorBarPermissionsSection() {
 
   return (
     <div className="space-y-6">
-      <Infotainer id="backroom-permissions-guide" title="Backroom Permissions" description="Decide who can do what in Backroom — from mixing bowls to viewing costs to overriding charges. Each column is a role, each row is a capability." icon={<Shield className="h-4 w-4 text-primary" />} />
+      <Infotainer id="backroom-permissions-guide" title="Color Bar Permissions" description="Decide who can do what in Backroom — from mixing bowls to viewing costs to overriding charges. Each column is a role, each row is a capability." icon={<Shield className="h-4 w-4 text-primary" />} />
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <div className="flex items-center gap-3">
@@ -111,8 +111,8 @@ export function ColorBarPermissionsSection() {
               <Shield className="w-5 h-5 text-primary" />
             </div>
             <div>
-              <CardTitle className={tokens.card.title}>Backroom Permissions</CardTitle>
-              <CardDescription>Control which roles can access backroom features.</CardDescription>
+              <CardTitle className={tokens.card.title}>Color Bar Permissions</CardTitle>
+              <CardDescription>Control which roles can access color bar features.</CardDescription>
             </div>
           </div>
           <Button size="sm" onClick={handleSave} disabled={!perms || upsert.isPending}>
@@ -159,7 +159,7 @@ export function ColorBarPermissionsSection() {
             </table>
           </div>
           <p className="text-sm text-muted-foreground mt-4">
-            Owner permissions cannot be modified. Changes apply to all backroom features across locations.
+            Owner permissions cannot be modified. Changes apply to all color bar features across locations.
           </p>
         </CardContent>
       </Card>

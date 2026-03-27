@@ -18,14 +18,14 @@ export interface BackroomSetting {
 }
 
 /**
- * Fetches all backroom settings for the org. Returns org-level defaults
+ * Fetches all color bar settings for the org. Returns org-level defaults
  * and any location overrides. Consumer can resolve inheritance.
  */
 export function useColorBarSettingsAll() {
   const orgId = useColorBarOrgId();
 
   return useQuery({
-    queryKey: ['backroom-settings', orgId],
+    queryKey: ['color-bar-settings', orgId],
     queryFn: async (): Promise<BackroomSetting[]> => {
       const { data, error } = await supabase
         .from('backroom_settings')
@@ -48,7 +48,7 @@ export function useBackroomSetting(key: string, locationId?: string | null) {
   const orgId = useColorBarOrgId();
 
   return useQuery({
-    queryKey: ['backroom-settings', orgId, key, locationId],
+    queryKey: ['color-bar-settings', orgId, key, locationId],
     queryFn: async (): Promise<{ value: Record<string, unknown>; isOverride: boolean }> => {
       // Try location-specific first
       if (locationId) {
@@ -140,7 +140,7 @@ export function useUpsertBackroomSetting() {
       // Audit log
       await supabase.rpc('log_platform_action', {
         _org_id: params.organization_id,
-        _action: 'backroom_setting_updated',
+        _action: 'color_bar_setting_updated',
         _entity_type: 'backroom_settings',
         _details: { key: params.setting_key, location_id: params.location_id },
       });
@@ -148,7 +148,7 @@ export function useUpsertBackroomSetting() {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['backroom-settings'] });
+      queryClient.invalidateQueries({ queryKey: ['color-bar-settings'] });
       toast.success('Setting saved');
     },
     onError: (error) => {

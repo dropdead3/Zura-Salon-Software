@@ -44,7 +44,7 @@ export function useColorBarExceptions(filters?: ExceptionFilters) {
   const orgId = effectiveOrganization?.id;
 
   return useQuery({
-    queryKey: ['backroom-exceptions', orgId, filters],
+    queryKey: ['color-bar-exceptions', orgId, filters],
     queryFn: async (): Promise<BackroomException[]> => {
       let query = supabase
         .from('backroom_exceptions' as any)
@@ -84,7 +84,7 @@ export function useResolveException() {
       await resolveException(params);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['backroom-exceptions'] });
+      queryClient.invalidateQueries({ queryKey: ['color-bar-exceptions'] });
       toast.success('Exception updated');
     },
     onError: (err) => {

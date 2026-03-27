@@ -1,5 +1,5 @@
 /**
- * PredictiveBackroomService — Read-only demand forecasting layer.
+ * PredictiveColorBarService — Read-only demand forecasting layer.
  *
  * Combines upcoming appointment schedule + formula resolution + inventory
  * projections to predict chemical demand and stockout risk.

@@ -138,7 +138,7 @@ export function AdminActivateDialog({
         <DialogHeader>
           <DialogTitle>Activate Backroom & Charge Card</DialogTitle>
           <DialogDescription>
-            Activate Zura Backroom for <strong>{orgName}</strong> at ${BACKROOM_BASE_PRICE}/mo per location.
+            Activate Zura Color Bar for <strong>{orgName}</strong> at ${BACKROOM_BASE_PRICE}/mo per location.
           </DialogDescription>
         </DialogHeader>
 

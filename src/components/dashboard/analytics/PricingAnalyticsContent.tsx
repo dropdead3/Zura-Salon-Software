@@ -135,12 +135,12 @@ export function PricingAnalyticsContent({
     return (
       <EmptyState
         icon={Beaker}
-        title="Pricing intelligence requires Zura Backroom"
-        description="Activate Zura Backroom to unlock service pricing analytics, margin tracking, and AI-driven price recommendations."
+        title="Pricing intelligence requires Zura Color Bar"
+        description="Activate Zura Color Bar to unlock service pricing analytics, margin tracking, and AI-driven price recommendations."
         action={
           <Button
             variant="outline"
-            onClick={() => navigate(dashPath('/admin/backroom-settings'))}
+            onClick={() => navigate(dashPath('/admin/color-bar-settings'))}
             className="font-sans gap-1"
           >
             Explore Backroom <ArrowRight className="w-3.5 h-3.5" />
@@ -424,7 +424,7 @@ export function PricingAnalyticsContent({
           </div>
           <Button
             className="font-sans gap-1"
-            onClick={() => navigate(dashPath('/admin/backroom-settings?section=price-intelligence'))}
+            onClick={() => navigate(dashPath('/admin/color-bar-settings?section=price-intelligence'))}
           >
             Open Price Intelligence <ArrowRight className="w-4 h-4" />
           </Button>

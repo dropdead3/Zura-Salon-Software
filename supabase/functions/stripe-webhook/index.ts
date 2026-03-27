@@ -314,7 +314,7 @@ async function handleCheckoutCompleted(
 ) {
   const metadata = session.metadata as Record<string, string> | null;
   if (!metadata || metadata.addon_type !== 'backroom') {
-    console.log("Checkout session not a backroom addon - skipping");
+    console.log("Checkout session not a color bar addon - skipping");
     return;
   }
 
@@ -469,10 +469,10 @@ async function handleSubscriptionDeleted(
     return;
   }
 
-  // Check if this was a backroom subscription
+  // Check if this was a color bar subscription
   const subMetadata = subscription.metadata as Record<string, string> | null;
   if (subMetadata?.addon_type === 'backroom') {
-    // Disable backroom feature flag (master switch)
+    // Disable color bar feature flag (master switch)
     await supabase
       .from('organization_feature_flags')
       .upsert({

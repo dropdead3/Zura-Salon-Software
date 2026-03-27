@@ -147,7 +147,7 @@ export function ColorBarInsightsSection({ locationId: propLocationId, datePreset
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <h2 className={tokens.heading.section}>Backroom Insights</h2>
+          <h2 className={tokens.heading.section}>Color Bar Insights</h2>
           <p className="text-sm text-muted-foreground mt-1">High-level backroom performance for {rangeLabel.toLowerCase()}</p>
         </div>
         {!hideFilters && (

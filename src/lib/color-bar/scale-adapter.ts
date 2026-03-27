@@ -1,5 +1,5 @@
 /**
- * Zura Backroom — Scale Adapter Abstraction
+ * Zura Color Bar — Scale Adapter Abstraction
  *
  * ManualScaleAdapter: user types weight directly.
  * BLEScaleAdapter: connects to Acaia Pearl via Capacitor BLE plugin.

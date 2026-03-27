@@ -120,7 +120,7 @@ export function ReportBuilder({ meetingId, teamMemberId, teamMemberName }: Repor
       // Coaching callouts
       const callouts: string[] = [];
       if (complianceData.complianceRate < 90) {
-        callouts.push('Reweigh rate is below 90%. Review backroom habits and ensure all color services are tracked through Zura Backroom.');
+        callouts.push('Reweigh rate is below 90%. Review backroom habits and ensure all color services are tracked through Zura Color Bar.');
       }
       if (complianceData.wastePct > 15) {
         callouts.push(`Waste rate is ${complianceData.wastePct}% — above the 15% threshold. Consider reviewing dispensing habits and mixing accuracy.`);

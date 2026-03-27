@@ -96,7 +96,7 @@ export function CountsTab({ locationId, pdfExportRef, locations: locationsProp }
     try {
       const logoDataUrl = await fetchLogoAsDataUrl(businessSettings?.logo_light_url || effectiveOrganization?.logo_url || null);
       // Build a URL that links back to the inventory counts tab
-      const countEntryUrl = `${window.location.origin}/dashboard/admin/backroom-settings?category=inventory`;
+      const countEntryUrl = `${window.location.origin}/dashboard/admin/color-bar-settings?category=inventory`;
       await generateCountSheetPdf({
         products: inventoryProducts,
         orgName: businessSettings?.business_name || effectiveOrganization?.name || 'Organization',
@@ -121,7 +121,7 @@ export function CountsTab({ locationId, pdfExportRef, locations: locationsProp }
     setGeneratingPdf(true);
     try {
       const logoDataUrl = await fetchLogoAsDataUrl(logoUrl);
-      const countEntryUrl = `${window.location.origin}/dashboard/admin/backroom-settings?category=inventory`;
+      const countEntryUrl = `${window.location.origin}/dashboard/admin/color-bar-settings?category=inventory`;
 
       // Single location
       if (locationIds.length <= 1) {

@@ -306,9 +306,9 @@ function DashboardRoutes() {
       <Route path="admin/feature-flags" element={<Navigate to="/platform/feature-flags" replace />} />
 
       <Route path="admin/zura-config" element={<ProtectedRoute requiredPermission="manage_settings"><ZuraConfigPage /></ProtectedRoute>} />
-      <Route path="admin/backroom-settings" element={<ProtectedRoute requiredPermission="manage_settings"><ColorBarSettings /></ProtectedRoute>} />
+      <Route path="admin/color-bar-settings" element={<ProtectedRoute requiredPermission="manage_settings"><ColorBarSettings /></ProtectedRoute>} />
       <Route path="admin/backroom-subscription" element={<ProtectedRoute requiredPermission="manage_settings"><BackroomSubscription /></ProtectedRoute>} />
-      <Route path="admin/price-recommendations" element={<Navigate to="admin/backroom-settings?section=price-intelligence" replace />} />
+      <Route path="admin/price-recommendations" element={<Navigate to="admin/color-bar-settings?section=price-intelligence" replace />} />
       <Route path="admin/kpi-builder" element={<ProtectedRoute requiredPermission="manage_settings"><KpiBuilderPage /></ProtectedRoute>} />
       <Route path="admin/executive-brief" element={<ProtectedRoute requiredPermission="manage_settings"><ExecutiveBriefPage /></ProtectedRoute>} />
       <Route path="admin/decision-history" element={<ProtectedRoute requiredPermission="manage_settings"><DecisionHistoryPage /></ProtectedRoute>} />

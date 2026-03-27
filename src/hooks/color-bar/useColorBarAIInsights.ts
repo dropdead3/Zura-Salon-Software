@@ -1,6 +1,6 @@
 /**
  * useColorBarAIInsights — Thin wrapper around AIInsightService.
- * Cached AI insights for backroom analytics with 2hr stale, 1min cooldown.
+ * Cached AI insights for color bar analytics with 2hr stale, 1min cooldown.
  */
 
 import { useState, useCallback } from 'react';

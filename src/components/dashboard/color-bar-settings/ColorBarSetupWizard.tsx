@@ -537,7 +537,7 @@ function WelcomeStep() {
           <h2 className={cn(tokens.heading.page, 'mb-2')}>Set Up Backroom</h2>
           <p className={cn(tokens.body.muted, 'max-w-md mx-auto')}>
             This wizard will guide you through configuring products, services, allowances, and mixing stations
-            so Zura Backroom can start tracking usage and protecting your margins.
+            so Zura Color Bar can start tracking usage and protecting your margins.
           </p>
         </div>
         <div className="grid grid-cols-2 gap-3 max-w-sm mx-auto">
@@ -822,7 +822,7 @@ function ProductsStep({
       <CardHeader>
         <CardTitle className={tokens.card.title}>Select Products to Track</CardTitle>
         <CardDescription className={tokens.body.muted}>
-          Choose which products should be tracked in the backroom. You can set a cost per gram for accurate usage tracking.
+          Choose which products should be tracked in the color bar. You can set a cost per gram for accurate usage tracking.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4 max-h-[50vh] overflow-y-auto">
@@ -908,7 +908,7 @@ function ServicesStep({
       <CardHeader>
         <CardTitle className={tokens.card.title}>Map Services to Products</CardTitle>
         <CardDescription className={tokens.body.muted}>
-          Select which services use backroom products, then map their primary product component.
+          Select which services use color bar products, then map their primary product component.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-3 max-h-[50vh] overflow-y-auto">
@@ -1090,7 +1090,7 @@ function StationStep({
               <p className={tokens.body.emphasis}>Almost done!</p>
               <p className={tokens.body.muted}>
                 After completing setup, you can add more stations, configure alert rules, and fine-tune permissions
-                from the Backroom Settings page.
+                from the Color Bar Settings page.
               </p>
             </div>
           </div>

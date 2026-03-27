@@ -91,7 +91,7 @@ export function ColorBarControlTower({ locationId, className }: ColorBarControlT
           <EmptyState
             icon={Shield}
             title="All systems clear"
-            description="No active backroom alerts. Operations are running within expected parameters."
+            description="No active color bar alerts. Operations are running within expected parameters."
           />
         )}
 

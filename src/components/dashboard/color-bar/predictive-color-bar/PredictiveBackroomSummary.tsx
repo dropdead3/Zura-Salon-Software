@@ -1,5 +1,5 @@
 /**
- * PredictiveBackroomSummary — Compact overview card for owner dashboard.
+ * PredictiveColorBarSummary — Compact overview card for owner dashboard.
  */
 
 import { Beaker, AlertTriangle, Calendar, ShoppingCart } from 'lucide-react';
@@ -10,11 +10,11 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useForecastSummary } from '@/hooks/color-bar/usePredictiveColorBar';
 
-interface PredictiveBackroomSummaryProps {
+interface PredictiveColorBarSummaryProps {
   locationId?: string | null;
 }
 
-export function PredictiveBackroomSummary({ locationId }: PredictiveBackroomSummaryProps) {
+export function PredictiveColorBarSummary({ locationId }: PredictiveColorBarSummaryProps) {
   const { data: summary, isLoading } = useForecastSummary(locationId);
 
   if (isLoading) {
@@ -26,7 +26,7 @@ export function PredictiveBackroomSummary({ locationId }: PredictiveBackroomSumm
               <Beaker className="w-5 h-5 text-primary" />
             </div>
             <div>
-              <CardTitle className={tokens.card.title}>Predictive Backroom</CardTitle>
+              <CardTitle className={tokens.card.title}>Predictive Color Bar</CardTitle>
               <CardDescription>Loading forecast…</CardDescription>
             </div>
           </div>
@@ -51,7 +51,7 @@ export function PredictiveBackroomSummary({ locationId }: PredictiveBackroomSumm
               <Beaker className="w-5 h-5 text-primary" />
             </div>
             <div>
-              <CardTitle className={tokens.card.title}>Predictive Backroom</CardTitle>
+              <CardTitle className={tokens.card.title}>Predictive Color Bar</CardTitle>
               <CardDescription>Chemical demand forecast</CardDescription>
             </div>
           </div>

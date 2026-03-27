@@ -397,7 +397,7 @@ function StepDeviceAssignment({
       type: 'direct',
       icon: Tablet,
       title: 'Direct iPad Connection',
-      desc: 'Connect an iPad running the Zura Backroom app via USB or local network.',
+      desc: 'Connect an iPad running the Zura Color Bar app via USB or local network.',
     },
   ];
 
@@ -460,7 +460,7 @@ function StepDeviceAssignment({
             </div>
             <div className={cn(tokens.card.inner, 'p-3')}>
               <p className={cn(tokens.body.muted, 'text-xs')}>
-                Install the <span className="text-foreground font-medium">Zura Backroom</span> app
+                Install the <span className="text-foreground font-medium">Zura Color Bar</span> app
                 on your iPad, then enter the device name shown in the app settings.
               </p>
             </div>

@@ -1,5 +1,5 @@
 /**
- * StationSelector — Pick or create a backroom station.
+ * StationSelector — Pick or create a color bar station.
  */
 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';

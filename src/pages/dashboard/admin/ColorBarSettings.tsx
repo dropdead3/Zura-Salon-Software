@@ -98,7 +98,7 @@ const sections: SectionMeta[] = [
   { id: 'inventory', label: 'Inventory', icon: Package, tooltip: 'Stock monitoring, reorder alerts, and demand forecasting.', group: 'operations' },
   { id: 'price-intelligence', label: 'Price Intelligence', icon: CircleDollarSign, tooltip: 'Margin analysis and price recommendations.', group: 'operations' },
   { id: 'compliance', label: 'Compliance Reports', icon: ShieldCheck, tooltip: 'Staff compliance tracking, accountability reports, and 1:1 coaching prep.', group: 'operations' },
-  { id: 'savings', label: 'Your Savings', icon: Coins, tooltip: 'See how Zura Backroom saves you money with transparent ROI calculations.', group: 'operations' },
+  { id: 'savings', label: 'Your Savings', icon: Coins, tooltip: 'See how Zura Color Bar saves you money with transparent ROI calculations.', group: 'operations' },
   // Configuration
   { id: 'products', label: 'Products & Supplies', icon: Package, tooltip: 'Choose which products are tracked at the mixing station.', group: 'configuration' },
   { id: 'suppliers', label: 'Suppliers', icon: Truck, tooltip: 'Manage supplier contacts and product assignments.', requires: ['products'], requiresLabel: 'Products', group: 'configuration' },
@@ -183,7 +183,7 @@ export default function ColorBarSettings() {
               .maybeSingle();
 
             if (data?.is_enabled) {
-              queryClient.invalidateQueries({ queryKey: ['backroom-entitlement'] });
+              queryClient.invalidateQueries({ queryKey: ['color-bar-entitlement'] });
               queryClient.invalidateQueries({ queryKey: ['backroom-location-entitlements'] });
               queryClient.invalidateQueries({ queryKey: ['backroom-org-flag'] });
               toast.success('Backroom activated! Your subscription is now active.');
@@ -197,7 +197,7 @@ export default function ColorBarSettings() {
           }
         }
 
-        queryClient.invalidateQueries({ queryKey: ['backroom-entitlement'] });
+        queryClient.invalidateQueries({ queryKey: ['color-bar-entitlement'] });
         queryClient.invalidateQueries({ queryKey: ['backroom-location-entitlements'] });
         queryClient.invalidateQueries({ queryKey: ['backroom-org-flag'] });
         toast.success('Payment received! Your backroom access is being activated — please refresh in a moment.');
@@ -286,7 +286,7 @@ export default function ColorBarSettings() {
               <ArrowLeft className="h-4 w-4" />
             </Button>
             <div>
-              <h1 className={tokens.heading.page}>Zura Backroom</h1>
+              <h1 className={tokens.heading.page}>Zura Color Bar</h1>
               <p className="text-muted-foreground">Operational command center — monitor performance, track inventory, and manage backroom policies.</p>
             </div>
           </div>

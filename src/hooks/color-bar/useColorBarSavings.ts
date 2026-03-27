@@ -1,6 +1,6 @@
 /**
  * useColorBarSavings — Unified hook that aggregates all savings categories
- * from backroom analytics snapshots and checkout usage charges.
+ * from color bar analytics snapshots and checkout usage charges.
  * Supports configurable period (7/30/90 days) and all-time cumulative totals.
  */
 
@@ -137,7 +137,7 @@ export function useColorBarSavings(days: number = 30, subscriptionMonthlyCost: n
   const orgId = useColorBarOrgId();
 
   const periodQuery = useQuery<BackroomSavingsData>({
-    queryKey: ['backroom-savings', orgId, days, subscriptionMonthlyCost],
+    queryKey: ['color-bar-savings', orgId, days, subscriptionMonthlyCost],
     queryFn: async () => {
       if (!orgId) throw new Error('No org');
 

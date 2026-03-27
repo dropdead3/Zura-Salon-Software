@@ -104,7 +104,7 @@ export function ColorBarHistoryChart({ startDate, endDate, rangeLabel, locationI
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <CardTitle className={tokens.card.title}>Backroom History</CardTitle>
+                <CardTitle className={tokens.card.title}>Color Bar History</CardTitle>
                 <MetricInfoTooltip description="Tracks dispensed product, waste, reweigh compliance, and per-service ratios over time. Click legend items to show/hide metrics." />
               </div>
               <CardDescription className="text-xs">{rangeLabel}</CardDescription>

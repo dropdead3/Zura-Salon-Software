@@ -84,7 +84,7 @@ export function RecipeBaselineSection({ onNavigate }: Props) {
             <div className={tokens.empty.container}>
               <BarChart3 className={tokens.empty.icon} />
               <h3 className={tokens.empty.heading}>No tracked services</h3>
-              <p className={tokens.empty.description}>Products → Services → then Baselines. Enable backroom tracking on services first.</p>
+              <p className={tokens.empty.description}>Products → Services → then Baselines. Enable color bar tracking on services first.</p>
               {onNavigate && (
                 <Button variant="outline" size="sm" className="mt-2" onClick={() => onNavigate('services')}>
                   Go to Service Tracking

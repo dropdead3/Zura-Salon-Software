@@ -75,7 +75,7 @@ export function InventoryReplenishmentSection() {
           <div className="rounded-lg border border-border/60 bg-card/80 p-4 flex items-center justify-between">
             <div>
               <p className={cn(tokens.body.emphasis, 'text-foreground')}>Inventory Tracking</p>
-              <p className="text-sm text-muted-foreground">Enable automatic inventory tracking from backroom sessions</p>
+              <p className="text-sm text-muted-foreground">Enable automatic inventory tracking from color bar sessions</p>
             </div>
             <Switch checked={current.tracking_enabled} onCheckedChange={v => update('tracking_enabled', v)} />
           </div>

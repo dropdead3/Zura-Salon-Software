@@ -78,7 +78,7 @@ export const platformNavGroups: PlatformNavGroup[] = [
   {
     label: 'Products',
     items: [
-      { href: '/platform/backroom', label: 'Backroom', icon: Package, platformRoles: ['platform_owner', 'platform_admin'] },
+      { href: '/platform/backroom', label: 'Color Bar', icon: Package, platformRoles: ['platform_owner', 'platform_admin'] },
     ],
   },
   {

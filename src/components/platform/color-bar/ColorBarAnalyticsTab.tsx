@@ -158,7 +158,7 @@ export function ColorBarAnalyticsTab() {
           icon={Activity}
           label="Total Sessions"
           value={metrics.orgUsageStats.reduce((s, o) => s + o.totalSessions, 0).toLocaleString()}
-          subtitle="All-time backroom sessions"
+          subtitle="All-time color bar sessions"
         />
         <KPICard
           icon={Mail}

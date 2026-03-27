@@ -57,14 +57,14 @@ export function AccountAppsCard({ organizationId }: AccountAppsCardProps) {
       </PlatformCardHeader>
       <PlatformCardContent>
         <div className="divide-y divide-slate-700/50">
-          {/* Zura Backroom */}
+          {/* Zura Color Bar */}
           <div className="flex items-center justify-between py-3 first:pt-0 last:pb-0">
             <div className="flex items-center gap-3">
               <div className="p-2 rounded-lg bg-slate-700/50">
                 <Package className="h-4 w-4 text-violet-400" />
               </div>
               <div>
-                <p className="font-medium text-[hsl(var(--platform-foreground))]">Zura Backroom</p>
+                <p className="font-medium text-[hsl(var(--platform-foreground))]">Zura Color Bar</p>
                 <p className="text-sm text-[hsl(var(--platform-foreground-muted))]">
                   {isBackroomEnabled
                     ? `${activeLocations} active ${activeLocations === 1 ? 'location' : 'locations'}`

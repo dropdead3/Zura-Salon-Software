@@ -1,5 +1,5 @@
 /**
- * useColorBarInventoryTable — Joins backroom products with inventory_projections
+ * useColorBarInventoryTable — Joins color bar products with inventory_projections
  * to provide stock levels, status badges, and computed order quantities.
  * Factors in open PO quantities to prevent double-ordering.
  */

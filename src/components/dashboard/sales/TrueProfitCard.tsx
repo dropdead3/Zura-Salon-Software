@@ -66,7 +66,7 @@ export function TrueProfitCard({ dateFrom, dateTo, locationId, className }: True
                 <CardTitle className={tokens.card.title}>True Profit</CardTitle>
                 <MetricInfoTooltip
                   title="True Profit"
-                  description="Net profit after deducting chemical costs, labor estimates, and waste from service revenue. Based on completed appointment data with backroom tracking."
+                  description="Net profit after deducting chemical costs, labor estimates, and waste from service revenue. Based on completed appointment data with color bar tracking."
                 />
               </div>
               <CardDescription className={tokens.body.muted}>
@@ -96,7 +96,7 @@ export function TrueProfitCard({ dateFrom, dateTo, locationId, className }: True
             <DollarSign className={tokens.empty.icon} />
             <h3 className={tokens.empty.heading}>No profit data</h3>
             <p className={tokens.empty.description}>
-              Complete appointments with backroom tracking to see profitability
+              Complete appointments with color bar tracking to see profitability
             </p>
           </div>
         ) : (

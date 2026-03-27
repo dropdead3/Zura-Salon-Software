@@ -97,7 +97,7 @@ export function BillingMethodEducation({ showWizardHint }: BillingMethodEducatio
         <h3 className={tokens.heading.section}>How Salons Recover Product Cost</h3>
         <p className="text-sm text-muted-foreground leading-relaxed max-w-2xl">
           Every salon needs a strategy for recouping the cost of color, lightener, and other
-          backroom products. There are two core methods — and most salons benefit from combining
+          color bar products. There are two core methods — and most salons benefit from combining
           them.
         </p>
       </div>

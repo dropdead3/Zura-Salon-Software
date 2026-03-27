@@ -585,7 +585,7 @@ export function SupplyLibraryDialog({ open, onOpenChange, orgId, existingProduct
                     <DialogTitle className={cn(tokens.card.title, 'truncate')}>{selectedBrand}</DialogTitle>
                   </div>
                   <DialogDescription className={tokens.body.muted}>
-                    Select products to add to your backroom catalog
+                    Select products to add to your color bar catalog
                   </DialogDescription>
                 </>
               ) : (

@@ -31,7 +31,7 @@ export interface ResolveExceptionParams {
 }
 
 /**
- * Create a new exception in the backroom_exceptions queue.
+ * Create a new exception in the color bar_exceptions queue.
  */
 export async function createException(params: CreateExceptionParams): Promise<string> {
   const { data, error } = await supabase

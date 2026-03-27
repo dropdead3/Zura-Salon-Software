@@ -1,6 +1,6 @@
 /**
  * InstantFormulaCard — Surfaces the client's most relevant previous formula
- * at the top of the backroom workspace. Includes formula sharing.
+ * at the top of the color bar workspace. Includes formula sharing.
  */
 
 import { useState } from 'react';

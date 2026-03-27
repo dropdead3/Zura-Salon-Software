@@ -43,7 +43,7 @@ export function PriceRecommendationCard({ recommendation: rec, onAccept, onDismi
           </span>
         </div>
         <Link
-          to={dashPath('/admin/backroom-settings?section=price-intelligence')}
+          to={dashPath('/admin/color-bar-settings?section=price-intelligence')}
           className="text-[10px] font-sans text-primary hover:text-primary/80 transition-colors"
         >
           View all →

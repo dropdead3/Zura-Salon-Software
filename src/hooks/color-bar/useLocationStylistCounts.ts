@@ -1,6 +1,6 @@
 /**
  * useLocationStylistCounts — Fetches the count of active stylists per location
- * for an organization. Used by the Backroom billing display.
+ * for an organization. Used by the Color Bar billing display.
  */
 
 import { useQuery } from '@tanstack/react-query';

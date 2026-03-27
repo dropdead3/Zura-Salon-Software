@@ -1,5 +1,5 @@
 /**
- * Zura Backroom — Mix Session Event Stream Service
+ * Zura Color Bar — Mix Session Event Stream Service
  *
  * Thin client-side service that:
  * 1. Validates events against current session/bowl state

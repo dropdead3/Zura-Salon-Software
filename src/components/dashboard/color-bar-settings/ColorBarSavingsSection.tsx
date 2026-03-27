@@ -117,7 +117,7 @@ export function ColorBarSavingsSection() {
         <div>
           <h2 className={tokens.heading.page}>Your Savings</h2>
           <p className={cn(tokens.body.muted, 'mt-1')}>
-            See exactly how Zura Backroom saves you money.
+            See exactly how Zura Color Bar saves you money.
           </p>
         </div>
 
@@ -263,7 +263,7 @@ export function ColorBarSavingsSection() {
               </div>
               <p className={cn('text-xs font-sans', savingsExceedsCost ? 'text-primary' : 'text-muted-foreground')}>
                 {savingsExceedsCost
-                  ? `Net benefit: ${formatCurrency(data.netBenefit)}/mo — your backroom pays for itself.`
+                  ? `Net benefit: ${formatCurrency(data.netBenefit)}/mo — your color bar pays for itself.`
                   : `Net cost: ${formatCurrency(Math.abs(data.netBenefit))}/mo — savings are building as you track more data.`}
               </p>
             </div>
@@ -301,7 +301,7 @@ export function ColorBarSavingsSection() {
                 </p>
                 <p>
                   <span className="font-medium text-foreground">Your Data:</span>{' '}
-                  All calculations use your actual backroom data — mix sessions, reweigh
+                  All calculations use your actual color bar data — mix sessions, reweigh
                   measurements, inventory movements, and checkout charges. We average across the
                   selected period for stability.
                 </p>

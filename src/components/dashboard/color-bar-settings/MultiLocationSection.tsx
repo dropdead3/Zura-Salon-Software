@@ -102,7 +102,7 @@ export function MultiLocationSection() {
   const handleResetOverride = async (settingId: string) => {
     const { error } = await supabase.from('backroom_settings').delete().eq('id', settingId);
     if (error) toast.error('Failed to reset override: ' + error.message);
-    else { toast.success('Override removed — location will use org default'); queryClient.invalidateQueries({ queryKey: ['backroom-settings'] }); }
+    else { toast.success('Override removed — location will use org default'); queryClient.invalidateQueries({ queryKey: ['color-bar-settings'] }); }
   };
 
   const compareKeys = useMemo(() => {
@@ -148,7 +148,7 @@ export function MultiLocationSection() {
             <div>
               <div className="flex items-center gap-2">
                 <CardTitle className={tokens.card.title}>Push Org Defaults to All Locations</CardTitle>
-                <MetricInfoTooltip description="Takes your organization-level backroom settings and replicates them as overrides for every active location. Stations are excluded since they're hardware-specific. Existing location overrides will be replaced." />
+                <MetricInfoTooltip description="Takes your organization-level color bar settings and replicates them as overrides for every active location. Stations are excluded since they're hardware-specific. Existing location overrides will be replaced." />
               </div>
               <CardDescription>Apply your org-level configuration to every location at once for faster multi-location setup.</CardDescription>
             </div>
@@ -227,8 +227,8 @@ export function MultiLocationSection() {
               <Building2 className={tokens.card.icon} />
             </div>
             <div>
-              <div className="flex items-center gap-2"><CardTitle className={tokens.card.title}>Location Overrides</CardTitle><MetricInfoTooltip description="Shows all backroom settings with their org-level defaults and any location-specific overrides. Reset an override to fall back to the org default." /></div>
-              <CardDescription>Manage org defaults and location-specific overrides for backroom settings.</CardDescription>
+              <div className="flex items-center gap-2"><CardTitle className={tokens.card.title}>Location Overrides</CardTitle><MetricInfoTooltip description="Shows all color bar settings with their org-level defaults and any location-specific overrides. Reset an override to fall back to the org default." /></div>
+              <CardDescription>Manage org defaults and location-specific overrides for color bar settings.</CardDescription>
             </div>
           </div>
         </CardHeader>
@@ -275,7 +275,7 @@ export function MultiLocationSection() {
       <Card>
         <CardHeader>
           <div className="flex items-center gap-2"><CardTitle className={tokens.card.title}>Copy Settings</CardTitle><MetricInfoTooltip description="Copies all backroom setting overrides from the source location to the target. Choose 'All other locations' to bulk-replicate one location's config everywhere." /></div>
-          <CardDescription>Duplicate all backroom settings from one location to another or all others.</CardDescription>
+          <CardDescription>Duplicate all color bar settings from one location to another or all others.</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex items-center gap-3 flex-wrap">
@@ -301,7 +301,7 @@ export function MultiLocationSection() {
       {/* Compare Mode */}
       <Card>
         <CardHeader>
-          <div className="flex items-center gap-2"><CardTitle className={tokens.card.title}>Compare Locations</CardTitle><MetricInfoTooltip description="Select two locations to see which backroom settings differ. 'Different' means one or both have overrides with non-matching values." /></div>
+          <div className="flex items-center gap-2"><CardTitle className={tokens.card.title}>Compare Locations</CardTitle><MetricInfoTooltip description="Select two locations to see which color bar settings differ. 'Different' means one or both have overrides with non-matching values." /></div>
           <CardDescription>See which settings differ between two locations.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">

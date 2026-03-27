@@ -79,7 +79,7 @@ const faqItems = [
   },
   {
     question: 'Do I need to change my workflow?',
-    answer: 'No. Zura Backroom adapts to how your team already works. The scale sits at your existing station — no rearranging required.',
+    answer: 'No. Zura Color Bar adapts to how your team already works. The scale sits at your existing station — no rearranging required.',
   },
   {
     question: 'Can I cancel anytime?',
@@ -384,7 +384,7 @@ export function ColorBarPaywall() {
             {/* Left — Text */}
             <div className="space-y-6 text-center lg:text-left">
               <div className="space-y-4">
-                <Eyebrow className="text-muted-foreground mb-2">Zura Backroom</Eyebrow>
+                <Eyebrow className="text-muted-foreground mb-2">Zura Color Bar</Eyebrow>
                 <h1 className="font-display text-3xl md:text-4xl lg:text-5xl font-medium tracking-wide leading-[1.08]">
                   Stop Losing Money in Your Color Room
                 </h1>
@@ -425,7 +425,7 @@ export function ColorBarPaywall() {
         <section className="pb-16 md:pb-20">
           <div className="text-center mb-10 md:mb-12">
             <SectionHeading>
-              How Zura Backroom Transforms Your Color Room
+              How Zura Color Bar Transforms Your Color Room
             </SectionHeading>
             <p className="mt-4 text-base text-muted-foreground font-sans font-light max-w-xl mx-auto">
               From guesswork to a controlled, measurable system.
@@ -517,7 +517,7 @@ export function ColorBarPaywall() {
               </div>
               <blockquote className="space-y-2">
                 <p className="text-muted-foreground text-base font-sans leading-relaxed italic">
-                  "Zura Backroom saved us thousands per month and helps us recoup over $50,000 a year in color costs. 10/10 add-on feature."
+                  "Zura Color Bar saved us thousands per month and helps us recoup over $50,000 a year in color costs. 10/10 add-on feature."
                 </p>
                 <footer className="text-xs text-muted-foreground/50 font-sans">
                   <span className="font-medium text-muted-foreground/70">Jamie Torres</span> · Owner, Drop Dead Salon · Austin, TX
@@ -920,7 +920,7 @@ export function ColorBarPaywall() {
                             <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
                               <BarChart3 className="w-4 h-4 text-primary" />
                             </div>
-                            <span className="font-display text-xs tracking-wide text-muted-foreground uppercase">Backroom Intelligence</span>
+                            <span className="font-display text-xs tracking-wide text-muted-foreground uppercase">Color Bar Intelligence</span>
                           </div>
                           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                             {[

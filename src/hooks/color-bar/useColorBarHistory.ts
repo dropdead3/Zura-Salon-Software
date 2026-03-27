@@ -39,7 +39,7 @@ export function useColorBarHistory(
   const orgId = effectiveOrganization?.id;
 
   return useQuery({
-    queryKey: ['backroom-history', orgId, startDate, endDate, bucketMode, locationId],
+    queryKey: ['color-bar-history', orgId, startDate, endDate, bucketMode, locationId],
     queryFn: async (): Promise<HistoryDataPoint[]> => {
       // 1. Fetch sessions
       let sessionsQuery = supabase

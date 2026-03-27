@@ -1,5 +1,5 @@
 /**
- * Zura Backroom — Bowl State Machine
+ * Zura Color Bar — Bowl State Machine
  * 
  * Enforces valid lifecycle transitions for mix bowls.
  * open → sealed → reweighed

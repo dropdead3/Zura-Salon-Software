@@ -1,7 +1,7 @@
 /**
  * FormulaResolver — Shared formula resolution logic.
  *
- * Used by both SmartMixAssist and Predictive Backroom.
+ * Used by both SmartMixAssist and Predictive Color Bar.
  * Resolves a formula for a given service using the 3-priority hierarchy:
  *   1. Client's most recent matching formula
  *   2. Stylist's most-used formula for the service

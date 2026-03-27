@@ -1,5 +1,5 @@
 /**
- * Zura Backroom — Mix Session State Machine
+ * Zura Color Bar — Mix Session State Machine
  * 
  * Enforces valid lifecycle transitions for mix sessions.
  *

@@ -1,5 +1,5 @@
 /**
- * ExceptionBadge — Small count indicator for open backroom exceptions.
+ * ExceptionBadge — Small count indicator for open color bar exceptions.
  * Place on navigation items to surface unresolved anomalies.
  */
 

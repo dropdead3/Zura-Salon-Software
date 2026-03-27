@@ -141,7 +141,7 @@ export function useColorBarComplianceTracker(
         sessionWasteMap.set(w.mix_session_id, prev + (w.quantity ?? 0));
       }
 
-      // --- Fetch backroom analytics snapshot for dispensed totals & cost ---
+      // --- Fetch color bar analytics snapshot for dispensed totals & cost ---
       let totalDispensedQty = 0;
       let totalProductCost = 0;
       {

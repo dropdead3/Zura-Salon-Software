@@ -84,16 +84,16 @@ export default function BackroomSubscription() {
           <DashboardPageHeader
             title="Backroom Subscription"
             description="You don't have an active Backroom subscription."
-            backTo={dashPath('/admin/backroom-settings')}
+            backTo={dashPath('/admin/color-bar-settings')}
           />
           <Card className="bg-card/60 border-border/40 max-w-lg">
             <CardContent className="p-6 text-center space-y-4">
               <p className="text-muted-foreground font-sans text-sm">
-                Subscribe to Zura Backroom to access inventory intelligence, chemical tracking, and cost optimization.
+                Subscribe to Zura Color Bar to access inventory intelligence, chemical tracking, and cost optimization.
               </p>
               <Button
                 className="font-sans font-medium"
-                onClick={() => window.location.href = '/dashboard/admin/backroom-settings'}
+                onClick={() => window.location.href = '/dashboard/admin/color-bar-settings'}
               >
                 View Plans
               </Button>
@@ -117,8 +117,8 @@ export default function BackroomSubscription() {
       <div className={tokens.layout.pageContainer}>
         <DashboardPageHeader
           title="Backroom Subscription"
-          description="Manage your Backroom subscription, scale licenses, and billing."
-          backTo={dashPath('/admin/backroom-settings')}
+          description="Manage your Color Bar subscription, scale licenses, and billing."
+          backTo={dashPath('/admin/color-bar-settings')}
           actions={
             <Button
               variant="outline"

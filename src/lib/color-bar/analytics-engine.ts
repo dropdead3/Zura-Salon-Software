@@ -1,5 +1,5 @@
 /**
- * Backroom Analytics Engine — Pure calculation functions.
+ * Color Bar Analytics Engine — Pure calculation functions.
  * No side effects, no DB access. All inputs are pre-fetched data.
  */
 

@@ -1,5 +1,5 @@
 /**
- * ExceptionResolveDialog — Resolution workflow for backroom exceptions.
+ * ExceptionResolveDialog — Resolution workflow for color bar exceptions.
  * Captures notes and action type before resolving.
  */
 

@@ -49,7 +49,7 @@ export function ColorBarCheckoutConfirmDialog({
         <DialogHeader>
           <DialogTitle className={tokens.card.title}>Confirm Subscription</DialogTitle>
           <DialogDescription>
-            Review your Backroom charges before proceeding to checkout.
+            Review your Color Bar charges before proceeding to checkout.
           </DialogDescription>
         </DialogHeader>
 

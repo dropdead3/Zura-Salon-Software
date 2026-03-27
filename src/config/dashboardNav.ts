@@ -103,7 +103,7 @@ export const manageNavItems: DashboardNavItem[] = [
 // ─── SECTION: apps (org-activated add-ons) ───────────────────────────────────
 
 export const appsNavItems: DashboardNavItem[] = [
-  { href: '/dashboard/admin/backroom-settings', label: 'Zura Backroom', labelKey: 'zura_backroom', icon: Package, permission: 'manage_settings' },
+  { href: '/dashboard/admin/color-bar-settings', label: 'Zura Color Bar', labelKey: 'zura_backroom', icon: Package, permission: 'manage_settings' },
 ];
 
 // ─── SECTION: system (admin config) ──────────────────────────────────────────

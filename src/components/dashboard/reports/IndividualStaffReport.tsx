@@ -146,7 +146,7 @@ export function IndividualStaffReport({ dateFrom, dateTo, locationId, onClose, i
           ['New Clients', data.clientMetrics.newClients.toString(), Math.round(data.teamAverages.newClients).toString()],
           ['Commission Earned', formatCurrencyWhole(data.commission.totalCommission), ''],
           ['Experience Score', `${data.experienceScore.composite}/100`, ''],
-          ['Backroom Compliance', `${data.backroomCompliance.complianceRate}%`, `${data.teamAverages.complianceRate}%`],
+          ['Color Bar Compliance', `${data.backroomCompliance.complianceRate}%`, `${data.teamAverages.complianceRate}%`],
           ['Color Appointments', `${data.backroomCompliance.totalColorAppointments} (${data.backroomCompliance.tracked} tracked)`, ''],
         ],
         theme: 'striped',
@@ -230,7 +230,7 @@ export function IndividualStaffReport({ dateFrom, dateTo, locationId, onClose, i
     csv += `New Clients,${data.clientMetrics.newClients},${Math.round(data.teamAverages.newClients)}\n`;
     csv += `Commission Earned,${data.commission.totalCommission},\n`;
     csv += `Experience Score,${data.experienceScore.composite},\n`;
-    csv += `Backroom Compliance,${data.backroomCompliance.complianceRate}%,${data.teamAverages.complianceRate}%\n`;
+    csv += `Color Bar Compliance,${data.backroomCompliance.complianceRate}%,${data.teamAverages.complianceRate}%\n`;
     csv += `Color Appointments,${data.backroomCompliance.totalColorAppointments} (${data.backroomCompliance.tracked} tracked),\n`;
     csv += '\nTop Services\nService,Count,Revenue,Avg Price\n';
     data.topServices.forEach(s => { csv += `"${s.name}",${s.count},${s.revenue},${s.avgPrice}\n`; });
@@ -288,8 +288,8 @@ export function IndividualStaffReport({ dateFrom, dateTo, locationId, onClose, i
 
     // Backroom compliance
     if (data.backroomCompliance.totalColorAppointments > 0) {
-      if (data.backroomCompliance.complianceRate === 100) strengths.push('100% backroom compliance — all color services tracked');
-      else if (data.backroomCompliance.complianceRate >= 90) strengths.push(`Strong backroom compliance at ${data.backroomCompliance.complianceRate}%`);
+      if (data.backroomCompliance.complianceRate === 100) strengths.push('100% color bar compliance — all color services tracked');
+      else if (data.backroomCompliance.complianceRate >= 90) strengths.push(`Strong color bar compliance at ${data.backroomCompliance.complianceRate}%`);
       else if (data.backroomCompliance.complianceRate < 70) improvements.push(`Backroom compliance at ${data.backroomCompliance.complianceRate}% — ${data.backroomCompliance.missed} color services not tracked`);
       else improvements.push(`Backroom compliance at ${data.backroomCompliance.complianceRate}% — review backroom habits`);
     }
@@ -651,14 +651,14 @@ export function IndividualStaffReport({ dateFrom, dateTo, locationId, onClose, i
             </Card>
           )}
 
-          {/* Section 8b: Backroom Compliance */}
+          {/* Section 8b: Color Bar Compliance */}
           {data.backroomCompliance.totalColorAppointments > 0 && (
             <Card>
               <CardHeader className="pb-2">
                 <div className="flex items-center gap-2">
                   <ShieldCheck className="w-4 h-4 text-primary" />
-                  <CardTitle className="font-display text-sm tracking-wide uppercase">Backroom Compliance</CardTitle>
-                  <MetricInfoTooltip description="Percentage of color/chemical appointments that were tracked in Zura Backroom with a mix session and reweigh." />
+                  <CardTitle className="font-display text-sm tracking-wide uppercase">Color Bar Compliance</CardTitle>
+                  <MetricInfoTooltip description="Percentage of color/chemical appointments that were tracked in Zura Color Bar with a mix session and reweigh." />
                 </div>
               </CardHeader>
               <CardContent>

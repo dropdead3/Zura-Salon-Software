@@ -1,6 +1,6 @@
 /**
  * ColorBarSetupBanner — Persistent setup wizard banner shown above
- * the Backroom page header until setup is complete.
+ * the Color Bar page header until setup is complete.
  */
 import React, { useState } from 'react';
 import { cn } from '@/lib/utils';
@@ -55,8 +55,8 @@ export function ColorBarSetupBanner({
               <div className="flex-1 min-w-0">
                 <CardTitle className="font-display text-sm tracking-wide text-foreground">
                   {isFirstVisit
-                    ? "Welcome to your Backroom! Let's get you set up."
-                    : "Uh-oh, you haven't finished setting up your backroom!"}
+                    ? "Welcome to your Color Bar! Let's get you set up."
+                    : "Uh-oh, you haven't finished setting up your color bar!"}
                 </CardTitle>
                 <CardDescription className="text-xs text-muted-foreground mt-0.5">
                   <span className="font-display text-amber-600 dark:text-amber-400/80 tracking-wide">

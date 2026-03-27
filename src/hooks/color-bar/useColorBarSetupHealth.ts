@@ -74,8 +74,8 @@ export function useColorBarSetupHealth() {
         warnings.push({
           id: 'no-tracked-products',
           severity: 'error',
-          title: 'No backroom products configured',
-          description: 'Assign products to backroom tracking before services can be tracked.',
+          title: 'No color bar products configured',
+          description: 'Assign products to color bar tracking before services can be tracked.',
           section: 'products',
         });
       }
@@ -123,7 +123,7 @@ export function useColorBarSetupHealth() {
         warnings.push({
           id: 'no-stations',
           severity: 'info',
-          title: 'No backroom stations configured',
+          title: 'No color bar stations configured',
           description: 'Set up mixing stations for device and scale pairing.',
           section: 'stations',
         });

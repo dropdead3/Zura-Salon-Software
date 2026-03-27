@@ -1,5 +1,5 @@
 /**
- * useServiceTrackingComponents — CRUD for mapping products to services for backroom tracking.
+ * useServiceTrackingComponents — CRUD for mapping products to services for color bar tracking.
  */
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';

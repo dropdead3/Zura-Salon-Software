@@ -43,7 +43,7 @@ const SECTIONS = [
   { id: 'plans', label: 'Plans' },
   { id: 'how-it-works', label: 'How It Works' },
   { id: 'calculator', label: 'Calculator' },
-  { id: 'backroom', label: 'Backroom' },
+  { id: 'backroom', label: 'Color Bar' },
   { id: 'backroom-calc', label: 'Backroom Calc' },
   { id: 'quick-ref', label: 'Quick Ref' },
   { id: 'changelog', label: 'Changelog' },

@@ -235,9 +235,9 @@ export function ServiceEditorDialog({
                       <div>
                         <div className="flex items-center gap-1.5">
                           <p className={tokens.body.emphasis}>Color or Chemical Service</p>
-                          <MetricInfoTooltip description="Enable for services that involve color, lightener, toner, or other chemical formulations tracked by Zura Backroom." />
+                          <MetricInfoTooltip description="Enable for services that involve color, lightener, toner, or other chemical formulations tracked by Zura Color Bar." />
                         </div>
-                        <p className={tokens.body.muted}>Track formulations and supply usage in Zura Backroom</p>
+                        <p className={tokens.body.muted}>Track formulations and supply usage in Zura Color Bar</p>
                       </div>
                       <Switch
                         checked={isChemicalService}
@@ -254,7 +254,7 @@ export function ServiceEditorDialog({
                         <div className="mb-1">
                           <div className="flex items-center gap-1.5">
                             <p className={tokens.body.emphasis}>Container Types</p>
-                            <MetricInfoTooltip description="Determines which vessel types (bowls, bottles) appear in Zura Backroom when mixing formulations for this service." />
+                            <MetricInfoTooltip description="Determines which vessel types (bowls, bottles) appear in Zura Color Bar when mixing formulations for this service." />
                           </div>
                           <p className={tokens.body.muted}>Select both if the service uses bowls and bottles</p>
                         </div>

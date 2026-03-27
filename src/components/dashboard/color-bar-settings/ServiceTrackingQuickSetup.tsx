@@ -37,7 +37,7 @@ interface Props {
 
 const STEPS = [
   { key: 'classify', label: 'Classify Services', icon: Beaker, description: 'Mark services as requiring color/chemical or not.' },
-  { key: 'track', label: 'Enable Tracking', icon: Layers, description: 'Turn on backroom tracking for chemical services.' },
+  { key: 'track', label: 'Enable Tracking', icon: Layers, description: 'Turn on color bar tracking for chemical services.' },
   { key: 'allowances', label: 'Set Allowances', icon: FileText, description: 'Configure billing allowances for tracked services.' },
 ] as const;
 
