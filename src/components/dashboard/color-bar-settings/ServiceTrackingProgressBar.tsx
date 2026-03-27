@@ -52,7 +52,7 @@ export function ServiceTrackingProgressBar({ milestones, onQuickSetup }: Props) 
             animate={reduceMotion ? undefined : { opacity: 1, scale: 1 }}
             exit={reduceMotion ? undefined : { opacity: 0, scale: 0.96 }}
             transition={{ duration: 0.22, ease: 'easeOut' }}
-            className="rounded-xl border border-amber-500/30 bg-amber-50 dark:bg-amber-500/[0.08] p-6"
+            className="rounded-xl bg-amber-500/5 p-6"
           >
             <div className="flex flex-col items-center text-center gap-3">
               <motion.div
