@@ -1106,7 +1106,7 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
       onOpenChange(newOpen);
     }}>
       <DialogContent className="max-w-5xl max-h-[90vh] p-0 overflow-hidden flex flex-col">
-        <DialogHeader className="px-6 pt-5 pb-4 border-b border-border/40 shrink-0">
+        <DialogHeader className="px-4 pt-4 pb-3 sm:px-6 sm:pt-5 sm:pb-4 border-b border-border/40 shrink-0">
           <div className="flex items-center gap-2">
             <DialogTitle className={cn(tokens.card.title)}>Product Allowance Calculator</DialogTitle>
             <MetricInfoTooltip
@@ -1131,7 +1131,7 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
           )}
 
           {/* ─── Left Panel: Product Picker ─── */}
-          <div className="w-full md:w-[320px] shrink-0 border-b md:border-b-0 md:border-r border-border/40 p-4 flex flex-col gap-3 overflow-y-auto max-h-[40vh] md:max-h-none">
+          <div className="w-full md:w-[320px] shrink-0 border-b md:border-b-0 md:border-r border-border/40 px-4 py-4 sm:px-5 flex flex-col gap-3 overflow-y-auto max-h-[40vh] md:max-h-none">
             {/* Bowl selector */}
             <div className="space-y-1.5">
               <label className="text-[10px] font-display tracking-[0.08em] uppercase text-muted-foreground">
@@ -1169,7 +1169,7 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
           </div>
 
           {/* ─── Right Panel: Recipe / Bowls ─── */}
-          <div className="flex-1 min-w-0 overflow-y-auto p-4 space-y-4">
+          <div className="flex-1 min-w-0 overflow-y-auto px-4 py-4 sm:px-5 space-y-4">
             {bowls.map((bowl, bowlIdx) => {
               const bowlWeight = getBowlWeight(bowl);
               const bowlCost = bowl.lines.reduce((s, l) => s + l.lineCost, 0);
@@ -1658,8 +1658,8 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
         </div>
 
         {/* Footer */}
-        <div className="px-6 py-4 border-t border-border/40 bg-muted/30 shrink-0">
-          <div className="flex flex-wrap items-start justify-between gap-4">
+        <div className="px-4 py-4 sm:px-6 border-t border-border/40 bg-muted/30 shrink-0">
+          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
             <div className="flex-1 min-w-0">
               <div className="text-[11px] font-sans font-medium tracking-wide text-muted-foreground uppercase">Total Allowance (Retail)</div>
               <div className="text-2xl font-sans font-medium text-foreground tabular-nums mt-0.5">
@@ -1764,7 +1764,7 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
                 </div>
               )}
             </div>
-            <div className="flex flex-col items-end gap-2 shrink-0">
+            <div className="flex flex-col items-stretch sm:items-end gap-2 shrink-0 w-full sm:w-auto">
               {hasExistingData && (
                 <Button
                   variant="ghost"
@@ -1792,7 +1792,7 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
                     <div>
                       <Button
                         size="sm"
-                        className="h-9 px-6"
+                        className="h-9 px-6 w-full sm:w-auto"
                         disabled={saving || grandTotal === 0}
                         onClick={handleSave}
                       >
