@@ -100,6 +100,7 @@ export function ServiceEditorDialog({
         setRequiresNewClientConsultation(false);
         setIsChemicalService(false);
         setContainerTypes(['bowl']);
+        setBillingMode('allowance');
         setRequiresDeposit(false);
         setDepositType('percentage');
         setDepositAmount('');
