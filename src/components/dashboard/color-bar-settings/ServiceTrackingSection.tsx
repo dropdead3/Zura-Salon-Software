@@ -883,14 +883,14 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                                  {/* Billing mode + Allowance config */}
                                                 {(() => {
                                                  const policy = allowanceByService.get(service.id);
-                                                 const billingMode = policy?.billing_mode || 'allowance';
+                                                 const billingMode = policy?.billing_mode ?? null;
                                                  return (
                                                  <div className="space-y-2">
                                                    {/* Billing mode toggle */}
                                                    <div className="flex items-center gap-1.5">
                                                      <span className="text-xs font-sans text-muted-foreground">Billing:</span>
                                                      {(['allowance', 'parts_and_labor'] as const).map((mode) => {
-                                                       const active = billingMode === mode;
+                                                       const active = billingMode !== null && billingMode === mode;
                                                        return (
                                                          <button
                                                            key={mode}
@@ -922,8 +922,10 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                                      })}
                                                    </div>
 
-                                                   {/* Mode-specific content */}
-                                                   {billingMode === 'parts_and_labor' ? (
+                                                    {/* Mode-specific content */}
+                                                    {billingMode === null ? (
+                                                      <p className="text-xs font-sans text-muted-foreground italic pl-1">Select a billing method above.</p>
+                                                    ) : billingMode === 'parts_and_labor' ? (
                                                      <div className="flex items-center gap-2 text-xs">
                                                        <FileText className="w-3.5 h-3.5 text-primary" />
                                                        <span className="font-sans text-muted-foreground">
