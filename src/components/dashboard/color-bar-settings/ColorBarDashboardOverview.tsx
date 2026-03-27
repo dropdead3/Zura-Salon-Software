@@ -20,6 +20,7 @@ import {
   Users2, Package, ShieldAlert, BarChart3, Brain, MapPin,
 } from 'lucide-react';
 import { ColorBarSetupWizard } from './ColorBarSetupWizard';
+import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { ColorBarInsightsSection } from './ColorBarInsightsSection';
 import { SupplyIntelligenceDashboard } from '@/components/dashboard/color-bar/supply-intelligence/SupplyIntelligenceDashboard';
 import { formatRelativeTime } from '@/lib/format';
@@ -150,24 +151,28 @@ export function ColorBarDashboardOverview({ onNavigate, initialSubTab, triggerWi
               icon={FlaskConical}
               label="Chemical Cost/Svc"
               value={formatCurrency(kpis.chemicalCostPerService)}
+              tooltip="Average product cost per tracked service. Calculated from weighed product usage over the selected period. Use to benchmark cost efficiency and identify services consuming disproportionate product."
             />
             <KpiTile
               icon={Trash2}
               label="Waste Rate"
               value={`${kpis.wasteRate.toFixed(1)}%`}
               status={kpis.wasteRate > 5 ? 'warning' : kpis.wasteRate > 0 ? 'ok' : 'neutral'}
+              tooltip="Percentage of product dispensed but not applied to a client service. Calculated as unused weight divided by total dispensed weight. A rate above 5% signals opportunities to improve dispensing accuracy."
             />
             <KpiTile
               icon={ClipboardCheck}
               label="Reweigh Rate"
               value={`${kpis.reweighCompliance.toFixed(0)}%`}
               status={kpis.reweighCompliance < 80 ? 'warning' : 'ok'}
+              tooltip="Percentage of services where leftover product was weighed back after application. Higher compliance means more accurate waste and cost data. Below 80% indicates staff need reweigh reminders."
             />
             <KpiTile
               icon={AlertCircle}
               label="Stockout Alerts"
               value={String(kpis.stockoutAlertCount)}
               status={kpis.stockoutAlertCount > 0 ? 'warning' : 'ok'}
+              tooltip="Number of products projected to run out before the next scheduled reorder. Based on current usage velocity and remaining stock levels. Address these to avoid service disruptions."
             />
             <BudgetKpiTile
               budgetPct={kpis.budgetPct}
@@ -184,6 +189,7 @@ export function ColorBarDashboardOverview({ onNavigate, initialSubTab, triggerWi
                 value={`${supplyCostRecovery.recoveryRate}%`}
                 status={supplyCostRecovery.recoveryRate >= 80 ? 'ok' : supplyCostRecovery.recoveryRate > 0 ? 'warning' : 'neutral'}
                 subtitle={`${formatCurrency(supplyCostRecovery.totalRecouped)} recouped · ${formatCurrency(supplyCostRecovery.totalWaived)} waived`}
+                tooltip="Percentage of product costs recouped through client billing. Compares billed supply charges against actual product cost. Higher rates mean better cost pass-through to clients."
               />
             )}
           </div>
@@ -389,15 +395,17 @@ export function ColorBarDashboardOverview({ onNavigate, initialSubTab, triggerWi
 
 /* ── Sub-components ── */
 
-function KpiTile({ icon: Icon, label, value, status = 'neutral', subtitle }: {
+function KpiTile({ icon: Icon, label, value, status = 'neutral', subtitle, tooltip }: {
   icon: typeof FlaskConical;
   label: string;
   value: string;
   status?: 'ok' | 'warning' | 'neutral';
   subtitle?: string;
+  tooltip?: string;
 }) {
   return (
     <div className={cn(tokens.kpi.tile, 'relative')}>
+      {tooltip && <MetricInfoTooltip description={tooltip} className={tokens.kpi.infoIcon} />}
       <div className="flex items-center gap-2 mb-2">
         <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center shrink-0">
           <Icon className={cn('w-4 h-4', status === 'warning' ? 'text-amber-500' : 'text-primary')} />
@@ -428,6 +436,7 @@ function BudgetKpiTile({ budgetPct, currentSpend, monthlyBudget, threshold, form
       onClick={() => onNavigate('inventory:reorder')}
       className={cn(tokens.kpi.tile, 'relative cursor-pointer hover:ring-1 hover:ring-primary/20 transition-all text-left w-full')}
     >
+      <MetricInfoTooltip description="Percentage of your monthly procurement budget spent so far this period. Tracks reorder spend against the budget you configured. Exceeding the alert threshold triggers a warning." className={tokens.kpi.infoIcon} />
       <div className="flex items-center gap-2 mb-2">
         <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center shrink-0">
           <Wallet className={cn('w-4 h-4', status === 'over' ? 'text-destructive' : status === 'warn' ? 'text-amber-500' : 'text-primary')} />
