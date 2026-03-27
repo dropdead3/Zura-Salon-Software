@@ -456,7 +456,6 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
       if (!groups.has(cat)) groups.set(cat, { services: [], configured: 0, tracked: 0 });
       const g = groups.get(cat)!;
       g.services.push(s);
-      const policy = allowanceByService.get(s.id);
       if (isTrulyConfigured(s)) g.configured++;
       if (s.is_backroom_tracked) g.tracked++;
     }
