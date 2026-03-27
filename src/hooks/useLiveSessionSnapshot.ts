@@ -167,7 +167,7 @@ export function useLiveSessionSnapshot(locationId?: string): LiveSessionSnapshot
             .in('user_id', assistantUserIds);
 
           const assistantProfileMap = new Map(
-            (assistantProfiles || []).map(p => [p.user_id, formatDisplayName(p.full_name || '', p.display_name)])
+            (assistantProfiles || []).map(p => [p.user_id, formatFullDisplayName(p.full_name || '', p.display_name)])
           );
 
           assistants.forEach(a => {
