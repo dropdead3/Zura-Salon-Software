@@ -648,6 +648,11 @@ export function DockServicesTab({ appointment, staff, effectiveServiceName }: Do
           chargeAmount: c.charge_amount,
           serviceName: c.service_name || undefined,
         }))}
+        estimatedCharge={
+          (!existingCharges || existingCharges.length === 0) && sessionStats?.totalCost
+            ? sessionStats.totalCost * (1 + (billingSettings?.default_product_markup_pct ?? 0) / 100)
+            : null
+        }
       />
 
       {/* Complete Session FAB */}
