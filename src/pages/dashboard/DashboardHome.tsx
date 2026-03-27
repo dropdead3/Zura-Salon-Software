@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
+import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useEffectiveRoles } from '@/hooks/useEffectiveUser';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
@@ -180,12 +181,16 @@ export default function DashboardHome() {
   
   // Check if viewing as another role
   const { isViewingAs } = useViewAs();
+  const { isImpersonating: isGodMode } = useOrganizationContext();
   
   // Leadership team: super admin and manager only (not regular admin or assistants)
+  // God Mode (platform impersonation) = full leadership access
   // When viewing as another role, only use effective roles (ignore profile.is_super_admin)
-  const isLeadership = isViewingAs 
-    ? roles.includes('super_admin') || roles.includes('manager')
-    : profile?.is_super_admin || roles.includes('super_admin') || roles.includes('manager');
+  const isLeadership = isGodMode
+    ? true
+    : isViewingAs 
+      ? roles.includes('super_admin') || roles.includes('manager')
+      : profile?.is_super_admin || roles.includes('super_admin') || roles.includes('manager');
   
   // Check if user has stylist, stylist_assistant, or booth_renter roles (for Quick Actions visibility)
   const hasStylistRole = roles.includes('stylist') || roles.includes('stylist_assistant') || roles.includes('booth_renter');

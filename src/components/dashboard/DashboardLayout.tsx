@@ -321,7 +321,7 @@ function DashboardLayoutInner({ children, hideFooter, hideTopBar, hideSidebar }:
   const { roles: dbRoles, roleNames: ALL_ROLES, roleLabels: ROLE_LABELS, getRoleBadgeClasses, getRoleIcon, getRoleDescription } = useRoleUtils();
 
   const firstName = user?.user_metadata?.full_name?.split(' ')[0] || 'there';
-  const isLeadershipUser = actualRoles.includes('super_admin') || actualRoles.includes('manager') || (employeeProfile as any)?.is_super_admin;
+  const isLeadershipUser = isImpersonating || actualRoles.includes('super_admin') || actualRoles.includes('manager') || (employeeProfile as any)?.is_super_admin;
   const hasStylistRoleForGreeting = actualRoles.includes('stylist') || actualRoles.includes('stylist_assistant') || actualRoles.includes('booth_renter');
   const isFrontDeskForGreeting = actualRoles.includes('receptionist');
   
