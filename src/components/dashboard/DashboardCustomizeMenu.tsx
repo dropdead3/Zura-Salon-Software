@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { toast } from '@/hooks/use-toast';
 import { tokens } from '@/lib/design-tokens';
 import { Button } from '@/components/ui/button';
 import { PremiumFloatingPanel } from '@/components/ui/premium-floating-panel';
