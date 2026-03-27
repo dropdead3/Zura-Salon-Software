@@ -1449,7 +1449,7 @@ export function AggregateSalesCard({
 
           {/* Tips Summary Card */}
           <Card className="bg-card/80 backdrop-blur-xl border-border/40">
-            <CardHeader className="pb-3">
+            <CardHeader className={tipsCardExpanded ? "pb-3" : "pb-0"}>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 bg-muted flex items-center justify-center rounded-lg">
