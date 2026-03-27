@@ -1,45 +1,62 @@
 
 
-## Enhance Service Tracking Table with Collapsible Categories
+## Reorganize Service Detail Panel into 3 Labeled Sections
 
 ### What Changes
 
-The flat service table currently renders category headers as non-interactive rows interspersed with service rows. This enhancement converts each category into a collapsible group that:
-- Defaults to **collapsed**
-- Shows category label with counts: **"BLONDING · 5 services · 3 configured"**
-- Clicking the category row toggles visibility of its child service rows
-- Chevron icon animates on open/close
+The expanded service detail panel currently renders all controls in a flat layout. This reorganizes the content into three visually distinct, labeled sections:
+
+1. **Tracking** — "Requires Color/Chemical" toggle + Vessel selector (Bowls/Bottles)
+2. **Billing Method** — Allowance vs Parts & Labor mode toggle + allowance config/P&L description
+3. **App Preferences** — Assistant Prep, Smart Mix Assist, Formula Memory toggles
 
 ### Implementation — 1 File Modified
 
-**`src/components/dashboard/backroom-settings/ServiceTrackingSection.tsx`**
+**`src/components/dashboard/backroom-settings/ServiceTrackingSection.tsx`** (~lines 758–964)
 
-1. **Pre-group services by category** — Add a `useMemo` that groups `searchedServices` into `Map<string, ServiceRow[]>` ordered by `categoryOrderMap`. Each group entry tracks:
-   - `total`: number of services in the category
-   - `configured`: count where `backroom_config_dismissed === true` or has active allowance policy
-   - `tracked`: count where `is_backroom_tracked === true`
+1. **Create a section wrapper pattern** — Each section gets a consistent layout:
+   - Section label: `text-[10px] font-display uppercase tracking-wider text-muted-foreground` 
+   - Content area: `pl-3 border-l border-border/40` (subtle left-border indent)
+   - Sections separated by `space-y-4` (no heavy dividers — the labels + indent provide structure)
 
-2. **Add `collapsedCategories` state** — `useState<Set<string>>` initialized to contain ALL category keys (default collapsed). When search query is active, auto-expand all categories so search results are visible.
+2. **Section 1 — "Tracking"** (lines 760–811)
+   - Wrap the existing "Requires Color/Chemical" switch + vessel selector pills
+   - Remove the bottom border (`border-b border-border/40`) since the section label provides visual separation
 
-3. **Replace flat rendering with grouped rendering** — Instead of checking `showCategoryHeader` per row, iterate over category groups:
-   - Render a clickable category header row with `ChevronRight`/`ChevronDown` + category name + count badges
-   - Only render child service rows when category is NOT in `collapsedCategories`
-   - Category header styling: `bg-muted/30`, clickable, with hover state
+3. **Section 2 — "Billing Method"** (lines 813–939)
+   - Wrap the existing billing mode toggle (Allowance / Parts & Labor) + mode-specific content
+   - Gated on `is_chemical_service` being true (same as current vessel gate)
 
-4. **Category header row layout**:
-   ```
-   [▶] BLONDING                          5 services · 3 configured
-   ```
-   - Left: chevron + uppercase category label (font-display, tracking-wider)
-   - Right: muted count text showing `{total} services · {configured} configured`
-   - When all services in a category are configured, show a subtle emerald indicator
+4. **Section 3 — "App Preferences"** (lines 941–963)
+   - Wrap the existing toggles grid (Assistant Prep, Smart Mix Assist, Formula Memory)
+   - Change grid from `grid-cols-2 sm:grid-cols-4` to `grid-cols-3` since there are exactly 3 items — cleaner alignment
 
-5. **Preserve existing behavior** — Select-all checkbox, bulk actions, expand/collapse of individual service detail rows all continue to work within visible (uncollapsed) categories.
+5. **Price Recommendation card and "Mark Configured" footer remain outside/below the 3 sections** — they are action items, not configuration sections.
 
-### Technical Details
+### Visual Structure
 
-- Category collapse state is separate from individual service `expandedIds` (which controls the detail/config panel per service)
-- When `searchQuery` is non-empty, force all categories open so filtered results are visible
-- The "select all" checkbox logic scopes to visible (uncollapsed) untracked services only
-- No database changes, no new files — purely a rendering enhancement in the existing component
+```text
+┌─────────────────────────────────────────────┐
+│ TRACKING                                    │
+│ ┃ Requires Color/Chemical [toggle]          │
+│ ┃ Vessels: [✓ Bowls] and/or [+ Bottles]     │
+│                                             │
+│ BILLING METHOD                              │
+│ ┃ [✓ Allowance] [+ Parts & Labor]           │
+│ ┃ 45g included · $0.50/g overage  [Edit]    │
+│                                             │
+│ APP PREFERENCES                             │
+│ ┃ Assistant Prep [toggle]                   │
+│ ┃ Smart Mix Assist [toggle]                 │
+│ ┃ Formula Memory [toggle]                   │
+│                                             │
+│ [Price Recommendation if any]               │
+│ ─── Configured ✓ ──── [Reset Configuration] │
+└─────────────────────────────────────────────┘
+```
+
+### Scope
+- 1 file modified: `ServiceTrackingSection.tsx`
+- Rendering reorganization only — no logic changes
+- No database migrations
 
