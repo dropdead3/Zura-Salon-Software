@@ -1,8 +1,13 @@
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { Switch } from '@/components/ui/switch';
-import { GripVertical } from 'lucide-react';
+import { GripVertical, Eye } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from '@/components/ui/hover-card';
 
 interface SortablePinnedCardItemProps {
   id: string;
@@ -11,6 +16,7 @@ interface SortablePinnedCardItemProps {
   isPinned: boolean;
   onToggle: () => void;
   isLoading?: boolean;
+  previewSrc?: string;
 }
 
 export function SortablePinnedCardItem({ 
@@ -20,6 +26,7 @@ export function SortablePinnedCardItem({
   isPinned, 
   onToggle,
   isLoading = false,
+  previewSrc,
 }: SortablePinnedCardItemProps) {
   const { 
     attributes, 
@@ -63,6 +70,38 @@ export function SortablePinnedCardItem({
         </div>
         <p className="text-sm font-medium">{label}</p>
       </div>
+
+      {/* Preview Eye */}
+      {previewSrc && (
+        <HoverCard openDelay={200} closeDelay={100}>
+          <HoverCardTrigger asChild>
+            <button
+              type="button"
+              className="p-1 mr-1 rounded-md text-muted-foreground/40 hover:text-muted-foreground hover:bg-accent transition-colors"
+            >
+              <Eye className="w-4 h-4" />
+            </button>
+          </HoverCardTrigger>
+          <HoverCardContent
+            side="left"
+            align="start"
+            sideOffset={16}
+            className="w-[380px] p-2 rounded-xl"
+          >
+            <div className="space-y-2">
+              <img
+                src={previewSrc}
+                alt={`${label} preview`}
+                className="rounded-lg border border-border/60 shadow-sm w-full"
+                loading="lazy"
+              />
+              <p className="text-[10px] text-muted-foreground text-center">
+                Preview with example data
+              </p>
+            </div>
+          </HoverCardContent>
+        </HoverCard>
+      )}
       
       {/* Toggle */}
       <Switch 
