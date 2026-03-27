@@ -240,21 +240,44 @@ export function DockServicesTab({ appointment, staff, effectiveServiceName }: Do
     });
   };
 
-  const handleCompleteSession = (notes?: string) => {
+  const handleCompleteSession = async (notes?: string) => {
     if (isDemoMode) {
       setShowComplete(false);
       return;
     }
     const session = sessions?.[0];
     if (!session || !effectiveOrganization?.id) return;
-    completeSession.mutate({
-      sessionId: session.id,
-      organizationId: effectiveOrganization.id,
-      locationId: appointment.location_id || undefined,
-      notes,
-    }, {
-      onSuccess: () => setShowComplete(false),
-    });
+
+    try {
+      // 1. Complete the session status
+      await completeSession.mutateAsync({
+        sessionId: session.id,
+        organizationId: effectiveOrganization.id,
+        locationId: appointment.location_id || undefined,
+        notes,
+      });
+
+      // 2. Deplete inventory for this session
+      await depleteInventory.mutateAsync({
+        sessionId: session.id,
+        organizationId: effectiveOrganization.id,
+        locationId: appointment.location_id || undefined,
+      });
+
+      // 3. Calculate overage / P&L charges (resolves serviceId from name internally)
+      const serviceName = effectiveServiceName ?? appointment.service_name;
+      await calculateOverage.mutateAsync({
+        sessionId: session.id,
+        appointmentId: appointment.id,
+        organizationId: effectiveOrganization.id,
+        serviceName: serviceName || undefined,
+      });
+
+      setShowComplete(false);
+    } catch (err) {
+      // Individual hooks already toast errors; just keep sheet open
+      console.error('Session completion chain error:', err);
+    }
   };
 
   const handleMarkUnresolved = (reason: string) => {
