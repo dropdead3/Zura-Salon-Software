@@ -580,6 +580,11 @@ export function DockServicesTab({ appointment, staff, effectiveServiceName }: Do
         onMarkUnresolved={handleMarkUnresolved}
         onClose={() => setShowComplete(false)}
         isPending={completeSession.isPending || markUnresolved.isPending || depleteInventory.isPending || calculateOverage.isPending}
+        pendingCharges={existingCharges?.filter(c => c.charge_amount > 0).map(c => ({
+          chargeType: (c as any).charge_type === 'product_cost' ? 'product_cost' as const : 'overage' as const,
+          chargeAmount: c.charge_amount,
+          serviceName: c.service_name || undefined,
+        }))}
       />
 
       {/* Formula history floating button */}
