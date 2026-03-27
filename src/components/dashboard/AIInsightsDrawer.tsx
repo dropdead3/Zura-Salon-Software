@@ -581,11 +581,27 @@ export function AIInsightsPanel({ onClose }: { onClose: () => void }) {
   const urgentInsights = useMemo(() => sortedInsights.filter(i => i.severity === 'critical' || i.severity === 'warning'), [sortedInsights]);
   const infoInsights = useMemo(() => sortedInsights.filter(i => i.severity === 'info'), [sortedInsights]);
 
-  // Filter info insights by selected categories
+  // Apply intent filter first, then category filter on remainder
+  const intentFilteredInsights = useMemo(() => {
+    if (!selectedIntent || selectedIntent === 'everything') return sortedInsights;
+    const intentConfig = WIZARD_INTENTS.find(i => i.key === selectedIntent);
+    return intentConfig ? intentConfig.filter(sortedInsights) : sortedInsights;
+  }, [selectedIntent, sortedInsights]);
+
+  // Filter info insights by selected categories (within intent scope)
   const filteredInfoInsights = useMemo(
-    () => infoInsights.filter(i => selectedCategories.has(i.category)),
-    [infoInsights, selectedCategories]
+    () => {
+      const infos = intentFilteredInsights.filter(i => i.severity === 'info');
+      return infos.filter(i => selectedCategories.has(i.category));
+    },
+    [intentFilteredInsights, selectedCategories]
   );
+
+  // Override urgent insights when intent is active
+  const displayUrgentInsights = useMemo(() => {
+    if (!selectedIntent || selectedIntent === 'everything') return urgentInsights;
+    return intentFilteredInsights.filter(i => i.severity === 'critical' || i.severity === 'warning');
+  }, [selectedIntent, intentFilteredInsights, urgentInsights]);
 
   // Category severity map for filter chips
   const categorySeverityMap = useMemo(() => {
