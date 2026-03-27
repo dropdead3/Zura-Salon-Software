@@ -1169,7 +1169,7 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
           </div>
 
           {/* ─── Right Panel: Recipe / Bowls ─── */}
-          <div className="flex-1 min-w-0 overflow-y-auto p-4 space-y-4">
+          <div className="flex-1 min-w-0 overflow-y-auto px-4 py-4 sm:px-5 space-y-4">
             {bowls.map((bowl, bowlIdx) => {
               const bowlWeight = getBowlWeight(bowl);
               const bowlCost = bowl.lines.reduce((s, l) => s + l.lineCost, 0);
