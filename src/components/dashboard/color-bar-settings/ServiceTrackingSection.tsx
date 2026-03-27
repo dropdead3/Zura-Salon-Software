@@ -1008,25 +1008,33 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                                        );
                                                      }
 
-                                                     return (
-                                                       <div className="flex items-center gap-2 text-xs">
-                                                         <FileText className="w-3.5 h-3.5 text-muted-foreground" />
-                                                         <Button
-                                                           variant="outline"
-                                                           size="sm"
-                                                           className="h-7 text-xs border-dashed"
-                                                           onClick={(e) => {
-                                                             e.stopPropagation();
-                                                              setCalculatorServiceId(service.id);
-                                                              setCalculatorServiceName(service.name);
-                                                              setCalculatorContainerTypes((service.container_types || ['bowl']) as ('bowl' | 'bottle')[]);
-                                                              setCalculatorServicePrice(service.price);
-                                                           }}
-                                                         >
-                                                           Configure Allowance
-                                                         </Button>
-                                                         <MetricInfoTooltip description="Use benchmark products to set a dollar allowance for this service. Stylists can mix any product — once the allowance is reached, overage costs are passed to the client at checkout." />
-                                                       </div>
+                                                      return (
+                                                        <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-3 space-y-1.5">
+                                                          <p className="text-xs font-sans text-amber-700 dark:text-amber-300/80">
+                                                            Set a product allowance to calculate overage billing for this service.
+                                                          </p>
+                                                          <div className="flex items-center gap-2">
+                                                            <Button
+                                                              size="sm"
+                                                              className="h-8 text-xs bg-amber-500 text-amber-950 hover:bg-amber-400 font-sans gap-1.5 rounded-full"
+                                                              onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                setCalculatorServiceId(service.id);
+                                                                setCalculatorServiceName(service.name);
+                                                                setCalculatorContainerTypes((service.container_types || ['bowl']) as ('bowl' | 'bottle')[]);
+                                                                setCalculatorServicePrice(service.price);
+                                                              }}
+                                                            >
+                                                              <span className="relative flex h-2 w-2">
+                                                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-300 opacity-75" />
+                                                                <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-200" />
+                                                              </span>
+                                                              Configure Allowance
+                                                              <ArrowRight className="w-3 h-3" />
+                                                            </Button>
+                                                            <MetricInfoTooltip description="Use benchmark products to set a dollar allowance for this service. Stylists can mix any product — once the allowance is reached, overage costs are passed to the client at checkout." />
+                                                          </div>
+                                                        </div>
                                                     );
                                                     })()}
                                                    </div>
