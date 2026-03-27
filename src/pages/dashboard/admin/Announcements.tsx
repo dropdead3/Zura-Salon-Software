@@ -59,6 +59,7 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { DraggableAnnouncementCard } from '@/components/dashboard/DraggableAnnouncementCard';
+import { PageExplainer } from '@/components/ui/PageExplainer';
 
 type Priority = 'low' | 'normal' | 'high' | 'urgent';
 
@@ -187,7 +188,6 @@ export default function Announcements() {
   };
 
   // Handle edit query parameter from Command Center
-import { PageExplainer } from '@/components/ui/PageExplainer';
   useEffect(() => {
     const editId = searchParams.get('edit');
     if (editId && announcements) {

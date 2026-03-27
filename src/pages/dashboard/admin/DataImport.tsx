@@ -22,6 +22,7 @@ import { DataImportWizard } from '@/components/admin/DataImportWizard';
 import { ImportHistoryCard } from '@/components/admin/ImportHistoryCard';
 import { useImportJobs } from '@/hooks/useImportJobs';
 import { cn } from '@/lib/utils';
+import { PageExplainer } from '@/components/ui/PageExplainer';
 
 // Source system configurations
 const IMPORT_SOURCES = [
@@ -209,7 +210,6 @@ export default function DataImport() {
                       <div>
                         <p className="font-medium">
                           Import {DATA_TYPES.find(t => t.id === selectedDataType)?.label} from {IMPORT_SOURCES.find(s => s.id === selectedSource)?.name}
-import { PageExplainer } from '@/components/ui/PageExplainer';
                         </p>
                         <p className="text-sm text-muted-foreground">
                           Upload your CSV file to begin the import process

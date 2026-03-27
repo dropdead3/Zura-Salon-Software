@@ -31,6 +31,7 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Info } from 'lucide-react';
+import { PageExplainer } from '@/components/ui/PageExplainer';
 
 export default function Payroll() {
   const { connection, isLoading, isConnected } = usePayrollConnection();
@@ -219,7 +220,6 @@ export default function Payroll() {
                       <CardContent>
                         <p className="text-sm text-muted-foreground">
                           Pay schedule configuration will be synced from your payroll provider once connected.
-import { PageExplainer } from '@/components/ui/PageExplainer';
                         </p>
                       </CardContent>
                     </Card>

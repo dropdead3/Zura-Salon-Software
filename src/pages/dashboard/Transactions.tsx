@@ -28,6 +28,7 @@ import { IssueCreditsDialog } from '@/components/dashboard/transactions/IssueCre
 import { GiftCardManager } from '@/components/dashboard/transactions/GiftCardManager';
 import { cn } from '@/lib/utils';
 import { BentoGrid } from '@/components/ui/bento-grid';
+import { PageExplainer } from '@/components/ui/PageExplainer';
 
 type DatePreset = 'today' | 'this_week' | 'this_month' | 'last_month' | 'all';
 
@@ -43,7 +44,6 @@ export default function Transactions() {
   const { data: locations = [] } = useLocations();
 
   // Calculate date range from preset
-import { PageExplainer } from '@/components/ui/PageExplainer';
   const getDateRange = (): { startDate?: string; endDate?: string } => {
     const now = new Date();
     switch (datePreset) {

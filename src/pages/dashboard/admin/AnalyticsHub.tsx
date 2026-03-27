@@ -40,6 +40,7 @@ import { CampaignsTabContent } from '@/components/dashboard/analytics/CampaignsT
 import { PinnableCard } from '@/components/dashboard/PinnableCard';
 import { LeadershipTabContent } from '@/components/dashboard/analytics/LeadershipTabContent';
 import { useHasRenters } from '@/hooks/useHasRenters';
+import { PageExplainer } from '@/components/ui/PageExplainer';
 
 
 const baseCategories = [
@@ -337,7 +338,6 @@ export default function AnalyticsHub() {
                         selected={{ from: customDateRange.from, to: customDateRange.to }}
                         onSelect={(range) => {
                           if (range?.from && range?.to) {
-import { PageExplainer } from '@/components/ui/PageExplainer';
                             setCustomDateRange({ from: range.from, to: range.to });
                           }
                         }}

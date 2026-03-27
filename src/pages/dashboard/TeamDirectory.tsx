@@ -25,6 +25,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useStrikeCounts } from '@/hooks/useStaffStrikes';
 import { ResponsibilityBadges } from '@/components/access-hub/ResponsibilityBadges';
 import { useRoleUtils, getIconComponent } from '@/hooks/useRoleUtils';
+import { PageExplainer } from '@/components/ui/PageExplainer';
 
 const roleLabels: Record<string, string> = {
   super_admin: 'Super Admin',
@@ -133,7 +134,6 @@ export default function TeamDirectory() {
   const { data: strikeCounts = {} } = useStrikeCounts(canViewStrikes ? userIds : []);
 
   // Get all unique roles from team members for filter dropdown
-import { PageExplainer } from '@/components/ui/PageExplainer';
   const allRoles = [...new Set(team.flatMap(member => 
     member.is_super_admin ? ['super_admin', ...member.roles] : member.roles
   ))].sort((a, b) => (rolePriority[a] ?? 99) - (rolePriority[b] ?? 99));

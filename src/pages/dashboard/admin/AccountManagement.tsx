@@ -77,6 +77,7 @@ import { QRCodeCanvas } from 'qrcode.react';
 import BrandLogo from '@/assets/brand-logo-secondary.svg';
 import { PLATFORM_NAME } from '@/lib/brand';
 import { QRCodeFullScreen } from '@/components/dashboard/QRCodeFullScreen';
+import { PageExplainer } from '@/components/ui/PageExplainer';
 
 const ROLE_COLORS: Record<string, string> = {
   admin: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300',
@@ -455,7 +456,6 @@ export default function AccountManagement() {
                 <div className="flex items-center gap-1 mt-2 text-sm text-red-600 dark:text-red-400">
                   <AlertTriangle className="w-3 h-3" />
                   <span>Admin role needs approval from Super Admin</span>
-import { PageExplainer } from '@/components/ui/PageExplainer';
                 </div>
               )}
 

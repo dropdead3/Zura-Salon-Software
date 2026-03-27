@@ -53,6 +53,7 @@ import { PlatformPageContainer } from '@/components/platform/ui/PlatformPageCont
 import { PlatformPageHeader } from '@/components/platform/ui/PlatformPageHeader';
 import { StripeStatusIndicator } from '@/components/platform/ui/StripeStatusIndicator';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
+import { PageExplainer } from '@/components/ui/PageExplainer';
 
 
 const statusColors: Record<string, 'success' | 'warning' | 'error' | 'default'> = {
@@ -95,7 +96,6 @@ export default function PlatformAccounts() {
   const [editOrg, setEditOrg] = useState<OrganizationListItem | null>(null);
 
   // Extract unique countries and states from the data
-import { PageExplainer } from '@/components/ui/PageExplainer';
   const { countries, statesByCountry } = useMemo(() => {
     const countrySet = new Set<string>();
     const stateMap = new Map<string, Set<string>>();

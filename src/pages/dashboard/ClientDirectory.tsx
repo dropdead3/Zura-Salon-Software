@@ -64,6 +64,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from '@/components/ui/pagination';
+import { PageExplainer } from '@/components/ui/PageExplainer';
 
 const PAGE_SIZE = 50;
 const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
@@ -686,7 +687,6 @@ export default function ClientDirectory() {
     }
     
     // Exclude archived from main stats
-import { PageExplainer } from '@/components/ui/PageExplainer';
     const active = clientsForStats.filter(c => !c.is_archived);
     
     return {

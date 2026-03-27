@@ -53,6 +53,7 @@ import { cn } from "@/lib/utils";
 import { tokens } from '@/lib/design-tokens';
 import { ApplicantDetailSheet } from "@/components/dashboard/ApplicantDetailSheet";
 import { BentoGrid } from '@/components/ui/bento-grid';
+import { PageExplainer } from '@/components/ui/PageExplainer';
 
 export default function RecruitingPipeline() {
   const navigate = useNavigate();
@@ -270,7 +271,6 @@ export default function RecruitingPipeline() {
                 <Users className="h-12 w-12 mx-auto mb-4 opacity-20" />
                 <p>No applicants found</p>
                 <p className="text-sm">Applications from your website forms will appear here</p>
-import { PageExplainer } from '@/components/ui/PageExplainer';
               </div>
             ) : (
               <div className="divide-y">

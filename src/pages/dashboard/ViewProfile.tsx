@@ -28,6 +28,7 @@ import { AssistantRequestHistoryCard } from '@/components/dashboard/AssistantReq
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
+import { PageExplainer } from '@/components/ui/PageExplainer';
 
 
 const DAYS_OF_WEEK = [
@@ -82,7 +83,6 @@ export default function ViewProfile() {
   const specialtyOptions = specialtyOptionsData.map(o => o.name);
   
   // Fetch all service names from DB for highlighted services picker
-import { PageExplainer } from '@/components/ui/PageExplainer';
   const { data: allServiceNames = [] } = useQuery({
     queryKey: ['all-service-names'],
     queryFn: async () => {

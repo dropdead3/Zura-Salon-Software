@@ -27,6 +27,7 @@ import { PlatformInput } from '@/components/platform/ui/PlatformInput';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
+import { PageExplainer } from '@/components/ui/PageExplainer';
 
 // --- Changelog entries (add newest first) ---
 const BILLING_CHANGELOG = [
@@ -428,7 +429,6 @@ function BillingCalculatorWidget({ plans }: { plans: SubscriptionPlan[] }) {
   const selectedPlan = plans.find(p => p.tier === detectedTier) || null;
 
   // Calculate base monthly from tier
-import { PageExplainer } from '@/components/ui/PageExplainer';
   const baseMonthly = detectedTier === 'operator' ? 99 : locCount * 200;
   const includedUsers = detectedTier === 'operator' ? 1 : locCount * 10;
   const maxUsers = detectedTier === 'operator' ? 4 : undefined;

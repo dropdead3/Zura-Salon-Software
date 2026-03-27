@@ -17,6 +17,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 import { PLATFORM_NAME } from '@/lib/brand';
+import { PageExplainer } from '@/components/ui/PageExplainer';
 
 interface PreferenceItem {
   key: string;
@@ -78,7 +79,6 @@ export default function NotificationPreferences() {
   const [hasChanges, setHasChanges] = useState(false);
 
   // Initialize local state from fetched preferences
-import { PageExplainer } from '@/components/ui/PageExplainer';
   useEffect(() => {
     if (preferences) {
       const prefs: Record<string, any> = {};

@@ -16,6 +16,7 @@ import { AddScalesDialog } from '@/components/dashboard/color-bar-settings/AddSc
 import { ColorBarROICard } from '@/components/dashboard/color-bar-settings/ColorBarROICard';
 import { COLOR_BAR_BASE_PRICE, COLOR_BAR_PER_SERVICE_FEE, SCALE_LICENSE_MONTHLY } from '@/hooks/color-bar/useLocationStylistCounts';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
+import { PageExplainer } from '@/components/ui/PageExplainer';
 
 
 interface SubscriptionData {
@@ -236,7 +237,6 @@ export default function ColorBarSubscription() {
               </div>
               <p className="text-xs text-muted-foreground font-sans">
                 Usage is tracked automatically from completed mix sessions and billed at the end of each billing cycle.
-import { PageExplainer } from '@/components/ui/PageExplainer';
               </p>
             </CardContent>
           </Card>
