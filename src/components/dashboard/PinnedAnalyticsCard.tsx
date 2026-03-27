@@ -111,7 +111,7 @@ function mapToSalesDateRange(dashboardRange: DateRangeType): SalesDateRange {
     'thisMonth': 'mtd',
     'todayToEom': 'todayToEom',
     'todayToPayday': 'todayToEom', // Fallback for sales card
-    'lastMonth': '30d',
+    'lastMonth': 'lastMonth',
   };
   return mapping[dashboardRange] || 'today';
 }

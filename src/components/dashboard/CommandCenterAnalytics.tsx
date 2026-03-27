@@ -39,7 +39,7 @@ import { useRetailBreakdown } from '@/hooks/useRetailBreakdown';
 // Commission resolution is now handled internally by CommissionSummaryCard and StaffCommissionTable
 import { Link } from 'react-router-dom';
 import { Settings2, MapPin, Calendar } from 'lucide-react';
-import { format, startOfMonth, subDays, startOfWeek } from 'date-fns';
+import { format } from 'date-fns';
 import {
   Select,
   SelectContent,
