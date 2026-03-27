@@ -24,6 +24,21 @@ interface OverageChargeParams {
   serviceName?: string;
 }
 
+/**
+ * Resolve a phorest_services ID from a service name.
+ * Used when Dock context only has a name string.
+ */
+async function resolveServiceId(serviceName: string, organizationId: string): Promise<string | null> {
+  const { data } = await supabase
+    .from('phorest_services')
+    .select('id')
+    .eq('name', serviceName)
+    .eq('is_active', true)
+    .limit(1)
+    .maybeSingle();
+  return data?.id ?? null;
+}
+
 export function useCalculateOverageCharge() {
   const queryClient = useQueryClient();
 
@@ -35,14 +50,19 @@ export function useCalculateOverageCharge() {
       serviceId,
       serviceName,
     }: OverageChargeParams) => {
-      if (!serviceId) return null;
+      // Resolve serviceId from name if not provided
+      let resolvedServiceId = serviceId;
+      if (!resolvedServiceId && serviceName) {
+        resolvedServiceId = await resolveServiceId(serviceName, organizationId) ?? undefined;
+      }
+      if (!resolvedServiceId) return null;
 
       // 1. Look up allowance policy for this service
       const { data: policy, error: policyErr } = await supabase
         .from('service_allowance_policies')
         .select('*')
         .eq('organization_id', organizationId)
-        .eq('service_id', serviceId)
+        .eq('service_id', resolvedServiceId)
         .eq('is_active', true)
         .maybeSingle();
 

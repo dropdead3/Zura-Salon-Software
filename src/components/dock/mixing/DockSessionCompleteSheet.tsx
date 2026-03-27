@@ -5,7 +5,7 @@
  */
 
 import { useState } from 'react';
-import { Check, AlertTriangle, FlaskConical, X, Flag } from 'lucide-react';
+import { Check, AlertTriangle, FlaskConical, X, Flag, DollarSign } from 'lucide-react';
 import { motion, AnimatePresence, useDragControls } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { roundWeight, roundCost } from '@/lib/backroom/mix-calculations';
@@ -22,6 +22,12 @@ interface SessionStats {
   totalCost: number;
 }
 
+export interface PendingChargeSummary {
+  chargeType: 'overage' | 'product_cost';
+  chargeAmount: number;
+  serviceName?: string;
+}
+
 interface DockSessionCompleteSheetProps {
   open: boolean;
   stats: SessionStats;
@@ -29,6 +35,7 @@ interface DockSessionCompleteSheetProps {
   onMarkUnresolved: (reason: string) => void;
   onClose: () => void;
   isPending?: boolean;
+  pendingCharges?: PendingChargeSummary[];
 }
 
 export function DockSessionCompleteSheet({
@@ -38,6 +45,7 @@ export function DockSessionCompleteSheet({
   onMarkUnresolved,
   onClose,
   isPending,
+  pendingCharges,
 }: DockSessionCompleteSheetProps) {
   const [mode, setMode] = useState<'confirm' | 'unresolved'>('confirm');
   const [notes, setNotes] = useState('');
@@ -48,6 +56,8 @@ export function DockSessionCompleteSheet({
   const wastePct = stats.totalDispensed > 0
     ? roundWeight((stats.totalLeftover / stats.totalDispensed) * 100)
     : 0;
+
+  const totalCharges = pendingCharges?.reduce((s, c) => s + c.chargeAmount, 0) ?? 0;
 
   return (
     <AnimatePresence>
@@ -119,8 +129,35 @@ export function DockSessionCompleteSheet({
               </div>
               <div className="grid grid-cols-2 gap-2">
                 <SummaryTile label="Total Dispensed" value={`${roundWeight(stats.totalDispensed)}g`} />
-                <SummaryTile label="Total Cost" value={`$${roundCost(stats.totalCost).toFixed(2)}`} />
+                <SummaryTile label="Product Cost" value={`$${roundCost(stats.totalCost).toFixed(2)}`} />
               </div>
+
+              {/* Pending charges summary */}
+              {pendingCharges && pendingCharges.length > 0 && (
+                <div className="rounded-xl bg-violet-500/10 border border-violet-500/20 p-3 space-y-2">
+                  <div className="flex items-center gap-1.5">
+                    <DollarSign className="w-3.5 h-3.5 text-violet-400" />
+                    <span className="text-xs text-violet-300 font-medium">Client Charges</span>
+                  </div>
+                  {pendingCharges.map((charge, i) => (
+                    <div key={i} className="flex items-center justify-between">
+                      <span className="text-[11px] text-[hsl(var(--platform-foreground-muted)/0.7)]">
+                        {charge.chargeType === 'product_cost' ? 'Product Cost' : 'Overage'}
+                        {charge.serviceName ? ` — ${charge.serviceName}` : ''}
+                      </span>
+                      <span className="text-xs text-[hsl(var(--platform-foreground))] font-medium">
+                        ${charge.chargeAmount.toFixed(2)}
+                      </span>
+                    </div>
+                  ))}
+                  {pendingCharges.length > 1 && (
+                    <div className="flex items-center justify-between pt-1.5 border-t border-violet-500/15">
+                      <span className="text-[11px] text-violet-300">Total</span>
+                      <span className="text-xs text-violet-300 font-medium">${totalCharges.toFixed(2)}</span>
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* Mode tabs */}
               <div className="flex gap-1 bg-[hsl(var(--platform-bg-card))] rounded-xl p-1 border border-[hsl(var(--platform-border)/0.2)]">

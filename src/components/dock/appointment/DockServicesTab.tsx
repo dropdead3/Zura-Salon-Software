@@ -19,7 +19,7 @@ import { useDockMixSessions, type DockMixSession } from '@/hooks/dock/useDockMix
 import { normalizeSessionStatus, isTerminalSessionStatus, isActiveSession, requiresReweigh } from '@/lib/backroom/session-state-machine';
 import { DockNewBowlSheet } from '../mixing/DockNewBowlSheet';
 import { DockLiveDispensing, type BowlLine } from '../mixing/DockLiveDispensing';
-import { DockSessionCompleteSheet } from '../mixing/DockSessionCompleteSheet';
+import { DockSessionCompleteSheet, type PendingChargeSummary } from '../mixing/DockSessionCompleteSheet';
 import { DockBowlDetectionGate } from '../mixing/DockBowlDetectionGate';
 import { useCreateDockBowl, type CreatedBowlResult } from '@/hooks/dock/useDockMixSession';
 import { useCompleteDockSession, useMarkDockSessionUnresolved } from '@/hooks/dock/useDockSessionComplete';
@@ -31,6 +31,9 @@ import { DockClientAlertsBanner } from './DockClientAlertsBanner';
 import { DockFormulaHistorySheet } from './DockFormulaHistorySheet';
 import { isColorOrChemicalService } from '@/utils/serviceCategorization';
 import { useServiceLookup, type ContainerType } from '@/hooks/useServiceLookup';
+import { useDepleteMixSession } from '@/hooks/backroom/useDepleteMixSession';
+import { useCalculateOverageCharge } from '@/hooks/billing/useCalculateOverageCharge';
+import { useCheckoutUsageCharges } from '@/hooks/billing/useCheckoutUsageCharges';
 
 interface DockServicesTabProps {
   appointment: DockAppointment;
@@ -117,7 +120,10 @@ export function DockServicesTab({ appointment, staff, effectiveServiceName }: Do
   const createBowl = useCreateDockBowl();
   const completeSession = useCompleteDockSession();
   const markUnresolved = useMarkDockSessionUnresolved();
+  const depleteInventory = useDepleteMixSession();
+  const calculateOverage = useCalculateOverageCharge();
   const { effectiveOrganization } = useOrganizationContext();
+  const { data: existingCharges } = useCheckoutUsageCharges(appointment.id);
 
   // Demo-mode local bowl state — persisted in sessionStorage per appointment
   const demoBowlsKey = `dock-demo-bowls::${appointment.id}`;
@@ -236,21 +242,44 @@ export function DockServicesTab({ appointment, staff, effectiveServiceName }: Do
     });
   };
 
-  const handleCompleteSession = (notes?: string) => {
+  const handleCompleteSession = async (notes?: string) => {
     if (isDemoMode) {
       setShowComplete(false);
       return;
     }
     const session = sessions?.[0];
     if (!session || !effectiveOrganization?.id) return;
-    completeSession.mutate({
-      sessionId: session.id,
-      organizationId: effectiveOrganization.id,
-      locationId: appointment.location_id || undefined,
-      notes,
-    }, {
-      onSuccess: () => setShowComplete(false),
-    });
+
+    try {
+      // 1. Complete the session status
+      await completeSession.mutateAsync({
+        sessionId: session.id,
+        organizationId: effectiveOrganization.id,
+        locationId: appointment.location_id || undefined,
+        notes,
+      });
+
+      // 2. Deplete inventory for this session
+      await depleteInventory.mutateAsync({
+        sessionId: session.id,
+        organizationId: effectiveOrganization.id,
+        locationId: appointment.location_id || undefined,
+      });
+
+      // 3. Calculate overage / P&L charges (resolves serviceId from name internally)
+      const serviceName = effectiveServiceName ?? appointment.service_name;
+      await calculateOverage.mutateAsync({
+        sessionId: session.id,
+        appointmentId: appointment.id,
+        organizationId: effectiveOrganization.id,
+        serviceName: serviceName || undefined,
+      });
+
+      setShowComplete(false);
+    } catch (err) {
+      // Individual hooks already toast errors; just keep sheet open
+      console.error('Session completion chain error:', err);
+    }
   };
 
   const handleMarkUnresolved = (reason: string) => {
@@ -550,7 +579,12 @@ export function DockServicesTab({ appointment, staff, effectiveServiceName }: Do
         onComplete={handleCompleteSession}
         onMarkUnresolved={handleMarkUnresolved}
         onClose={() => setShowComplete(false)}
-        isPending={completeSession.isPending || markUnresolved.isPending}
+        isPending={completeSession.isPending || markUnresolved.isPending || depleteInventory.isPending || calculateOverage.isPending}
+        pendingCharges={existingCharges?.filter(c => c.charge_amount > 0).map(c => ({
+          chargeType: (c as any).charge_type === 'product_cost' ? 'product_cost' as const : 'overage' as const,
+          chargeAmount: c.charge_amount,
+          serviceName: c.service_name || undefined,
+        }))}
       />
 
       {/* Formula history floating button */}
