@@ -8,6 +8,7 @@ import { AnalyticsCardPreview } from './previews/AnalyticsCardPreview';
 
 interface SortablePinnedCardItemProps {
   id: string;
+  cardId?: string;
   label: string;
   icon: React.ReactNode;
   isPinned: boolean;
@@ -17,12 +18,14 @@ interface SortablePinnedCardItemProps {
 
 export function SortablePinnedCardItem({ 
   id, 
+  cardId,
   label, 
   icon, 
   isPinned, 
   onToggle,
   isLoading = false,
 }: SortablePinnedCardItemProps) {
+  const rawCardId = cardId || id;
   const { 
     attributes, 
     listeners, 
@@ -86,7 +89,7 @@ export function SortablePinnedCardItem({
               "data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95"
             )}
           >
-            <AnalyticsCardPreview cardId={id} />
+            <AnalyticsCardPreview cardId={rawCardId} />
             <p className="text-[10px] text-muted-foreground text-center mt-2">
               Preview with example data
             </p>

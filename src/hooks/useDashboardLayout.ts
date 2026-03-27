@@ -9,6 +9,7 @@ export interface DashboardLayout {
   sectionOrder: string[];  // All sections in display order (enabled + disabled), includes pinned: prefixed cards
   pinnedCards: string[];   // Tracks which cards are pinned (for visibility)
   widgets: string[];
+  widgetOrder?: string[];  // All widgets in display order (enabled + disabled)
   hasCompletedSetup: boolean;
   // Hub customization
   hubOrder?: string[];     // Order of hub hrefs

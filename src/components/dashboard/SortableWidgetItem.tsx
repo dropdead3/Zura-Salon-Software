@@ -49,6 +49,7 @@ export function SortableWidgetItem({
         {...listeners} 
         className="touch-none mr-2 text-muted-foreground/50 hover:text-muted-foreground cursor-grab active:cursor-grabbing"
         type="button"
+        disabled={!isEnabled}
       >
         <GripVertical className="w-4 h-4" />
       </button>

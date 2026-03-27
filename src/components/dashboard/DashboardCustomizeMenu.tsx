@@ -4,6 +4,18 @@ import { tokens } from '@/lib/design-tokens';
 import { Button } from '@/components/ui/button';
 import { PremiumFloatingPanel } from '@/components/ui/premium-floating-panel';
 import { Separator } from '@/components/ui/separator';
+import { Input } from '@/components/ui/input';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import { 
   Settings2, 
   LayoutDashboard, 
@@ -27,6 +39,7 @@ import {
   Briefcase,
   CalendarPlus,
   ClipboardCheck,
+  Search,
 } from 'lucide-react';
 import { 
   useDashboardLayout, 
@@ -188,7 +201,7 @@ interface DashboardCustomizeMenuProps {
 export function DashboardCustomizeMenu({ variant = 'icon', roleContext }: DashboardCustomizeMenuProps) {
   const { dashPath } = useOrgDashboardPath();
   const [isOpen, setIsOpen] = useState(false);
-  
+  const [searchQuery, setSearchQuery] = useState('');
   const SECTIONS = useMemo(() => {
     const allSections = getSections();
     if (!roleContext) return allSections;
@@ -258,16 +271,32 @@ export function DashboardCustomizeMenu({ variant = 'icon', roleContext }: Dashbo
   }, [layout.sectionOrder, SECTIONS, visibilityData]);
 
   const orderedWidgets = useMemo(() => {
-    const savedOrder = layout.widgets || [];
+    const savedWidgetOrder = layout.widgetOrder || [];
     const allIds = WIDGETS.map(w => w.id);
-    const enabled = savedOrder.filter(id => allIds.includes(id));
-    const disabled = allIds.filter(id => !enabled.includes(id));
-    return [...enabled, ...disabled];
-  }, [layout.widgets]);
+    // Start with saved order, keeping only valid IDs
+    const ordered = savedWidgetOrder.filter((id: string) => allIds.includes(id));
+    // Add any missing widget IDs
+    const missing = allIds.filter(id => !ordered.includes(id));
+    return [...ordered, ...missing];
+  }, [layout.widgetOrder, layout.widgets]);
   
   const unpinnedCards = useMemo(() => {
     return PINNABLE_CARDS.filter(card => !isCardPinned(card.id));
   }, [visibilityData]);
+
+  // Group unpinned cards by category
+  const groupedUnpinnedCards = useMemo(() => {
+    const lowerQuery = searchQuery.toLowerCase();
+    const filtered = unpinnedCards.filter(card => 
+      !searchQuery || card.label.toLowerCase().includes(lowerQuery) || card.category.toLowerCase().includes(lowerQuery)
+    );
+    const groups: Record<string, typeof PINNABLE_CARDS> = {};
+    for (const card of filtered) {
+      if (!groups[card.category]) groups[card.category] = [];
+      groups[card.category].push(card);
+    }
+    return groups;
+  }, [unpinnedCards, searchQuery]);
   
   const { hasPermission } = useAuth();
   const permittedHubs = useMemo(() => {
@@ -379,11 +408,42 @@ export function DashboardCustomizeMenu({ variant = 'icon', roleContext }: Dashbo
     const newOrder = arrayMove(orderedWidgets, oldIndex, newIndex);
     
     const enabledWidgets = newOrder.filter(id => layout.widgets.includes(id));
-    saveLayout.mutate({ ...layout, widgets: enabledWidgets });
+    saveLayout.mutate({ ...layout, widgets: enabledWidgets, widgetOrder: newOrder });
   };
 
   const handleResetToDefault = () => {
     resetToDefault.mutate();
+  };
+
+  const handleBulkPinAll = async () => {
+    setIsTogglingPin(true);
+    try {
+      const rows = unpinnedCards.flatMap(card =>
+        leadershipRoles.map(role => ({
+          element_key: card.id,
+          element_name: card.label,
+          element_category: card.category,
+          role,
+          is_visible: true,
+        }))
+      );
+      if (rows.length > 0) {
+        const { error } = await supabase
+          .from('dashboard_element_visibility')
+          .upsert(rows, { onConflict: 'element_key,role' });
+        if (error) throw error;
+        queryClient.invalidateQueries({ queryKey: ['dashboard-visibility'] });
+        
+        const newPinnedEntries = unpinnedCards.map(c => toPinnedEntry(c.id));
+        const newSectionOrder = [...orderedUnifiedItems, ...newPinnedEntries];
+        const newPinnedCards = [...(layout.pinnedCards || []), ...unpinnedCards.map(c => c.id)];
+        saveLayout.mutate({ ...layout, pinnedCards: newPinnedCards, sectionOrder: newSectionOrder });
+      }
+    } catch (err: any) {
+      toast({ title: 'Failed to pin all cards', description: err?.message, variant: 'destructive' });
+    } finally {
+      setIsTogglingPin(false);
+    }
   };
   
   const handleToggleHub = (hubHref: string) => {
@@ -422,14 +482,25 @@ export function DashboardCustomizeMenu({ variant = 'icon', roleContext }: Dashbo
       )}
 
       <PremiumFloatingPanel open={isOpen} onOpenChange={setIsOpen} maxWidth="440px">
-        <div className="p-5 pb-3 border-b border-border/40">
-          <h2 className="font-display text-sm tracking-wide uppercase flex items-center gap-2">
-            <LayoutDashboard className="w-5 h-5" />
-            Customize Dashboard
-          </h2>
-          <p className="text-sm text-muted-foreground mt-1">
-            Drag to reorder, toggle to show/hide sections
-          </p>
+        <div className="p-5 pb-3 border-b border-border/40 space-y-3">
+          <div>
+            <h2 className="font-display text-sm tracking-wide uppercase flex items-center gap-2">
+              <LayoutDashboard className="w-5 h-5" />
+              Customize Dashboard
+            </h2>
+            <p className="text-sm text-muted-foreground mt-1">
+              Drag to reorder, toggle to show/hide sections
+            </p>
+          </div>
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground/50" />
+            <Input
+              placeholder="Search sections, widgets, analytics..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="h-8 pl-8 text-xs bg-muted/30 border-border/40"
+            />
+          </div>
         </div>
 
         <div className="flex-1 overflow-y-auto p-5 space-y-6">
@@ -457,12 +528,12 @@ export function DashboardCustomizeMenu({ variant = 'icon', roleContext }: Dashbo
                         <SortablePinnedCardItem
                           key={itemId}
                           id={itemId}
+                          cardId={cardId}
                           label={card.label}
                           icon={card.icon}
                           isPinned={true}
                           onToggle={() => handleTogglePinnedCard(cardId)}
                           isLoading={isTogglingPin}
-                          
                         />
                       );
                     }
@@ -569,24 +640,45 @@ export function DashboardCustomizeMenu({ variant = 'icon', roleContext }: Dashbo
           {roleContext?.isLeadership && unpinnedCards.length > 0 && (
             <>
               <div>
-                <h3 className="text-sm font-medium text-muted-foreground mb-3">AVAILABLE ANALYTICS</h3>
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-sm font-medium text-muted-foreground">AVAILABLE ANALYTICS</h3>
+                  {unpinnedCards.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={handleBulkPinAll}
+                      disabled={isTogglingPin}
+                      className="text-[10px] font-medium text-primary hover:text-primary/80 transition-colors disabled:opacity-50"
+                    >
+                      Pin All
+                    </button>
+                  )}
+                </div>
                 <p className="text-xs text-muted-foreground mb-4">
                   Toggle to pin analytics cards to your dashboard.
                 </p>
-                <div className="space-y-1">
-                  {unpinnedCards.map(card => (
-                    <SortablePinnedCardItem
-                      key={card.id}
-                      id={card.id}
-                      label={card.label}
-                      icon={card.icon}
-                      isPinned={false}
-                      onToggle={() => handleTogglePinnedCard(card.id)}
-                      isLoading={isTogglingPin}
-                      
-                    />
+                <div className="space-y-3">
+                  {Object.entries(groupedUnpinnedCards).map(([category, cards]) => (
+                    <div key={category}>
+                      <p className="text-[10px] font-medium text-muted-foreground/70 uppercase tracking-wider mb-1 px-1">{category}</p>
+                      <div className="space-y-1">
+                        {cards.map(card => (
+                          <SortablePinnedCardItem
+                            key={card.id}
+                            id={card.id}
+                            label={card.label}
+                            icon={card.icon}
+                            isPinned={false}
+                            onToggle={() => handleTogglePinnedCard(card.id)}
+                            isLoading={isTogglingPin}
+                          />
+                        ))}
+                      </div>
+                    </div>
                   ))}
                 </div>
+                {Object.keys(groupedUnpinnedCards).length === 0 && searchQuery && (
+                  <p className="text-xs text-muted-foreground text-center py-3">No matching analytics found</p>
+                )}
                 <Button variant="ghost" size={tokens.button.card} className="w-full gap-2 mt-4" asChild>
                   <Link to={dashPath('/admin/analytics')} onClick={() => setIsOpen(false)}>
                     <BarChart3 className="w-4 h-4" />
@@ -600,15 +692,32 @@ export function DashboardCustomizeMenu({ variant = 'icon', roleContext }: Dashbo
           )}
 
           <div className="space-y-3">
-            <Button 
-              variant="outline" 
-              className="w-full gap-2"
-              onClick={handleResetToDefault}
-              disabled={resetToDefault.isPending}
-            >
-              <RotateCcw className="w-4 h-4" />
-              {resetToDefault.isPending ? 'Resetting...' : 'Reset to Default'}
-            </Button>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button 
+                  variant="outline" 
+                  className="w-full gap-2"
+                  disabled={resetToDefault.isPending}
+                >
+                  <RotateCcw className="w-4 h-4" />
+                  {resetToDefault.isPending ? 'Resetting...' : 'Reset to Default'}
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Reset Dashboard Layout</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This will restore all sections, widgets, and analytics to their default positions. Your current layout will be lost.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleResetToDefault}>
+                    Reset to Default
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
 
             {canManageVisibility && (
               <Button 
