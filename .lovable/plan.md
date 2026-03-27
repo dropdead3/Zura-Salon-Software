@@ -1,64 +1,55 @@
 
 
-## Gap Analysis: Service Tracking, Pricing & Dock Billing — Pass 6
+## Gap Analysis: Service Tracking, Pricing & Dock Billing — Pass 7
 
-### Bug 1 (CRITICAL — Completion Sheet Unreachable): No Trigger to Open DockSessionCompleteSheet
+### Bug 1 (Medium): `CheckoutUsageCharge` Interface Missing Fields
 
-`showComplete` is declared at line 115 and used to control the `DockSessionCompleteSheet` visibility. But **`setShowComplete(true)` is never called anywhere in the codebase.** The `hasActiveSessions` variable is computed (line 444) but never rendered as a button or trigger.
+The `CheckoutUsageCharge` TypeScript interface (line 9–28 of `useCheckoutUsageCharges.ts`) is missing three columns that exist in the database and are actively used:
+- `charge_type` (used in `CheckoutClarityPanel`, `CheckoutSummarySheet`, `DockServicesTab`)
+- `product_wholesale_cost` (used in `CheckoutClarityPanel` profit calculation)
+- `product_charge_markup_pct` (used in `CheckoutClarityPanel` breakdown)
 
-Result: The Dock user has no way to complete a session. The entire completion → depletion → charge chain is dead code. No inventory depletion, no charges, no session finalization from the Dock.
+Every consumer accesses these via `(charge as any).charge_type`, which defeats type safety and could silently break if column names change.
 
-**Fix:** Add a "Complete Session" FAB (floating action button) at the bottom of the services tab when `hasActiveSessions` is true. Style it per Dock UI tokens — a prominent emerald button with a `Check` icon, positioned above the formula history button. Tapping it calls `setShowComplete(true)`.
+**Fix:** Add the three missing fields to the `CheckoutUsageCharge` interface. Remove all `as any` casts on charge objects in consumers.
 
-```tsx
-{hasActiveSessions && !activeBowl && (
-  <button
-    onClick={() => setShowComplete(true)}
-    className="absolute bottom-4 right-5 z-[25] h-12 px-5 rounded-full 
-               bg-emerald-600 hover:bg-emerald-500 text-white font-medium text-sm
-               flex items-center gap-2 shadow-lg active:scale-95 transition-all"
-  >
-    <Check className="w-4 h-4" />
-    Complete Session
-  </button>
-)}
-```
+### Bug 2 (Medium): `useCalculateOverageCharge` Insert Uses `as any` on Typed Table
 
-### Gap 2 (Medium): Session Stats Only Cover First Session
+Lines 171–186 and 288–307 of `useCalculateOverageCharge.ts` cast the entire insert payload `as any`. The `checkout_usage_charges` table IS in the typed schema (types.ts line 3948), so these casts are unnecessary and hide type errors. The `charge_type: 'overage' as any` cast on line 182 is particularly suspicious — the column is typed as `string`, so no cast is needed.
 
-`useDockSessionStats` accepts a single `sessionId`. For multi-session appointments, `primarySessionId` only feeds the first session's stats to the completion sheet. All other sessions' dispensed weight, cost, and bowl count are missing.
+**Fix:** Remove all `as any` casts from `checkout_usage_charges` inserts. The typed schema accepts these fields directly.
 
-**Fix:** Update `useDockSessionStats` to accept `sessionIds: string[]` (an array). Query `mix_bowl_projections` using `.in('mix_session_id', sessionIds)` and aggregate across all results. Update callers to pass `activeSessionIds` instead of `primarySessionId`.
+### Gap 3 (Medium): Allowance Overage Charges Not Surfaced in Checkout Summary
 
-### Gap 3 (Medium): `DockSummaryTab` Also Only Uses First Session
+`CheckoutSummarySheet` (line 135) filters charges to only `charge_type === 'product_cost'`. Allowance-mode overage charges (`charge_type === 'overage'`) are never included in the checkout total. This means clients who exceed their included allowance get charged $0 at checkout.
 
-`DockSummaryTab.tsx` line 23: `const primarySessionId = sessions?.[0]?.id`. Same single-session stats issue. Should aggregate across all sessions for the appointment.
+**Fix:** Include overage charges in `CheckoutSummarySheet` as a separate line item (e.g., "Additional Product Usage: $X.XX") below the product cost charges. Non-waived overage charges should be added to the checkout total.
 
-**Fix:** Apply the same multi-session array pattern from Gap 2.
+### Gap 4 (Low): Timeline Only Shows First Session
 
-### Gap 4 (Low): Completion Chain Has No Error Recovery
+`DockSummaryTab` line 104: `<DockSessionTimeline sessionId={allSessionIds[0]} />` — only the first session's event timeline is shown. Multi-session appointments lose visibility into events from other sessions.
 
-If `depleteInventory` fails mid-loop (e.g., network drop), the session status is already set to `completed` but inventory is not depleted and charges are not calculated. The chain cannot be retried because the session is now in a terminal state.
+**Fix:** Render a `DockSessionTimeline` for each session ID, or merge events from all sessions into a single unified timeline.
 
-**Fix:** Wrap the completion chain in a try/catch per session. If depletion or charge calculation fails, log the failure and show a warning toast ("Session completed but inventory/charges need review") rather than silently swallowing the error. Consider adding a `needs_reconciliation` flag to the session for manager follow-up.
+### Gap 5 (Low): No Charge Estimate Before Completion (Carryover)
 
-### Gap 5 (Low): Charge Amount Not Surfaced Post-Completion
+The completion sheet still shows zero charges on first open because charges are created during the completion callback. The `pendingCharges` prop maps `existingCharges` which are empty pre-completion.
 
-After `handleCompleteSession` runs the charge chain, it closes the sheet immediately via `setShowComplete(false)`. The user never sees the calculated charges. The `existingCharges` query won't have the new data until it refetches.
-
-**Fix:** After the completion loop, `await queryClient.invalidateQueries(['checkout-usage-charges'])` and briefly delay sheet close (or switch the sheet to a "completed" confirmation mode showing the calculated totals).
+**Fix:** Compute an inline estimate using `sessionStats.totalCost` and `backroom_billing_settings.default_product_markup_pct` to show "Estimated charge: ~$X.XX" in the completion sheet before the user taps Complete.
 
 ---
 
 ### Implementation Order
 
-1. **Add "Complete Session" FAB** — Bug 1 (entire flow is unreachable without this)
-2. **Multi-session stats aggregation** — Gap 2 + 3
-3. **Post-completion charge visibility** — Gap 5
-4. **Error recovery for completion chain** — Gap 4
+1. **Update `CheckoutUsageCharge` interface** — Bug 1 (type safety across 3 consumers)
+2. **Remove `as any` casts from charge inserts** — Bug 2
+3. **Surface overage charges in CheckoutSummarySheet** — Gap 3 (missing revenue)
+4. **Multi-session timeline in DockSummaryTab** — Gap 4
+5. *(Optional)* Pre-completion charge estimate — Gap 5
 
 ### Scope
-- 3 files modified: `DockServicesTab.tsx`, `useDockSessionStats.ts`, `DockSummaryTab.tsx`
+- 4 files modified: `useCheckoutUsageCharges.ts`, `useCalculateOverageCharge.ts`, `CheckoutSummarySheet.tsx`, `DockSummaryTab.tsx`
+- Remove `as any` casts from `CheckoutClarityPanel.tsx`
 - No database migrations
 - No breaking changes
 
