@@ -75,6 +75,7 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
   const [searchQuery, setSearchQuery] = useState('');
+  const [collapsedCategories, setCollapsedCategories] = useState<Set<string> | null>(null); // null = not yet initialized
   
   const [wizardOpen, setWizardOpen] = useState(false);
   const [allowanceEditing, setAllowanceEditing] = useState<Set<string>>(new Set());
@@ -326,6 +327,43 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
     });
   }, [filteredServices, searchQuery, categoryOrderMap]);
 
+  // Group services by category for collapsible rendering
+  const categoryGroups = useMemo(() => {
+    const groups = new Map<string, { services: ServiceRow[]; configured: number; tracked: number }>();
+    for (const s of searchedServices) {
+      const cat = s.category || 'Other';
+      if (!groups.has(cat)) groups.set(cat, { services: [], configured: 0, tracked: 0 });
+      const g = groups.get(cat)!;
+      g.services.push(s);
+      if (s.backroom_config_dismissed || allowanceByService.has(s.id)) g.configured++;
+      if (s.is_backroom_tracked) g.tracked++;
+    }
+    return groups;
+  }, [searchedServices, allowanceByService]);
+
+  // Initialize collapsedCategories to ALL categories once data loads (default collapsed)
+  useEffect(() => {
+    if (collapsedCategories === null && categoryGroups.size > 0) {
+      setCollapsedCategories(new Set(categoryGroups.keys()));
+    }
+  }, [categoryGroups, collapsedCategories]);
+
+  // Auto-expand all categories when searching
+  useEffect(() => {
+    if (searchQuery.trim()) {
+      setCollapsedCategories(new Set()); // all expanded
+    }
+  }, [searchQuery]);
+
+  const toggleCategoryCollapse = (cat: string) => {
+    setCollapsedCategories(prev => {
+      const next = new Set(prev ?? []);
+      if (next.has(cat)) next.delete(cat);
+      else next.add(cat);
+      return next;
+    });
+  };
+
   // Expand toggle helper
   const toggleExpand = (id: string) => {
     setExpandedIds(prev => {
@@ -550,524 +588,405 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {searchedServices.map((service, idx) => {
-                    const prevCategory = idx > 0 ? (searchedServices[idx - 1].category || 'Other') : null;
-                    const currentCategory = service.category || 'Other';
-                    const showCategoryHeader = currentCategory !== prevCategory;
-                    const type = getServiceType(service);
-                    const hasAllowance = allowanceByService.has(service.id);
-                    const attention = needsAttention(service);
-                    const isExpanded = expandedIds.has(service.id);
-
-                    // Inline config summary for tracked services
-                    const activeToggles = service.is_backroom_tracked
-                      ? [service.assistant_prep_allowed, service.smart_mix_assist_enabled, service.formula_memory_enabled].filter(Boolean).length
-                      : 0;
+                  {Array.from(categoryGroups.entries()).map(([category, group]) => {
+                    const isCollapsed = collapsedCategories?.has(category) ?? true;
+                    const allConfigured = group.configured === group.services.length && group.services.length > 0;
 
                     return (
-                      <React.Fragment key={service.id}>
-                        {showCategoryHeader && (
-                          <TableRow className="bg-muted/30 pointer-events-none">
-                            <TableCell colSpan={4} className="py-1.5 px-4">
-                              <span className="text-[11px] font-display uppercase tracking-wider text-muted-foreground">
-                                {currentCategory}
-                              </span>
-                            </TableCell>
-                          </TableRow>
-                        )}
-                          <TableRow
-                            className={cn(
-                              attention && 'bg-amber-500/[0.03]',
-                              service.backroom_config_dismissed && 'bg-emerald-500/[0.04]',
-                              'cursor-pointer'
-                            )}
-                            onClick={() => toggleExpand(service.id)}
-                            {...(isMobile ? {
-                              onTouchStart: (e: React.TouchEvent) => handleTouchStart(service.id, e),
-                              onTouchEnd: handleTouchEnd,
-                            } : {})}
-                          >
-                            {/* Checkbox / Status dot */}
-                            <TableCell onClick={(e) => e.stopPropagation()}>
-                              {!service.is_backroom_tracked ? (
-                                <Checkbox
-                                  checked={selectedIds.has(service.id)}
-                                  onCheckedChange={() => toggleSelect(service.id)}
-                                />
-                              ) : (
-                                <div className={cn(
-                                  'w-2.5 h-2.5 rounded-full',
-                                  'bg-primary',
-                                )} />
-                              )}
-                            </TableCell>
-
-                            {/* Service — Name + Category subtitle + Type badge + Inline summary */}
-                            <TableCell>
+                      <React.Fragment key={`cat-${category}`}>
+                        {/* Collapsible category header */}
+                        <TableRow
+                          className="bg-muted/30 cursor-pointer hover:bg-muted/50 transition-colors"
+                          onClick={() => toggleCategoryCollapse(category)}
+                        >
+                          <TableCell colSpan={4} className="py-2 px-4">
+                            <div className="flex items-center justify-between">
                               <div className="flex items-center gap-2">
-                                <div className="min-w-0 flex-1">
-                                  <div className="flex items-center gap-1.5">
-                                    <span className={cn(
-                                      'text-sm font-sans truncate',
-                                      service.is_backroom_tracked ? 'text-foreground font-medium' : 'text-muted-foreground',
-                                    )}>
-                                      {service.name}
-                                    </span>
-                                  </div>
-                                  <div className="flex items-center gap-1.5">
-                                    {service.category && (
-                                      <span className="text-[11px] text-muted-foreground">{service.category}</span>
-                                    )}
-                                    {service.is_backroom_tracked && (
-                                      <>
-                                        {service.category && <span className="text-[11px] text-muted-foreground/40">·</span>}
+                                <ChevronRight className={cn(
+                                  'w-4 h-4 text-muted-foreground transition-transform duration-200',
+                                  !isCollapsed && 'rotate-90',
+                                )} />
+                                <span className="text-[11px] font-display uppercase tracking-wider text-muted-foreground">
+                                  {category}
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-1.5">
+                                <span className="text-[11px] font-sans text-muted-foreground tabular-nums">
+                                  {group.services.length} service{group.services.length !== 1 ? 's' : ''}
+                                </span>
+                                <span className="text-[11px] text-muted-foreground/40">·</span>
+                                <span className={cn(
+                                  'text-[11px] font-sans tabular-nums',
+                                  allConfigured ? 'text-emerald-500' : 'text-muted-foreground',
+                                )}>
+                                  {group.configured} configured
+                                </span>
+                                {allConfigured && (
+                                  <CheckCircle2 className="w-3 h-3 text-emerald-500" />
+                                )}
+                              </div>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+
+                        {/* Service rows — only visible when expanded */}
+                        {!isCollapsed && group.services.map((service) => {
+                          const type = getServiceType(service);
+                          const hasAllowance = allowanceByService.has(service.id);
+                          const attention = needsAttention(service);
+                          const isExpanded = expandedIds.has(service.id);
+                          const activeToggles = service.is_backroom_tracked
+                            ? [service.assistant_prep_allowed, service.smart_mix_assist_enabled, service.formula_memory_enabled].filter(Boolean).length
+                            : 0;
+
+                          return (
+                            <React.Fragment key={service.id}>
+                              <TableRow
+                                className={cn(
+                                  attention && 'bg-amber-500/[0.03]',
+                                  service.backroom_config_dismissed && 'bg-emerald-500/[0.04]',
+                                  'cursor-pointer'
+                                )}
+                                onClick={() => toggleExpand(service.id)}
+                                {...(isMobile ? {
+                                  onTouchStart: (e: React.TouchEvent) => handleTouchStart(service.id, e),
+                                  onTouchEnd: handleTouchEnd,
+                                } : {})}
+                              >
+                                {/* Checkbox / Status dot */}
+                                <TableCell onClick={(e) => e.stopPropagation()}>
+                                  {!service.is_backroom_tracked ? (
+                                    <Checkbox
+                                      checked={selectedIds.has(service.id)}
+                                      onCheckedChange={() => toggleSelect(service.id)}
+                                    />
+                                  ) : (
+                                    <div className={cn(
+                                      'w-2.5 h-2.5 rounded-full',
+                                      'bg-primary',
+                                    )} />
+                                  )}
+                                </TableCell>
+
+                                {/* Service — Name + Category subtitle + Type badge + Inline summary */}
+                                <TableCell>
+                                  <div className="flex items-center gap-2">
+                                    <div className="min-w-0 flex-1">
+                                      <div className="flex items-center gap-1.5">
                                         <span className={cn(
-                                          'text-[11px]',
-                                          activeToggles === 3 ? 'text-primary' : 'text-muted-foreground',
+                                          'text-sm font-sans truncate',
+                                          service.is_backroom_tracked ? 'text-foreground font-medium' : 'text-muted-foreground',
                                         )}>
-                                          {activeToggles}/3 on
+                                          {service.name}
                                         </span>
-                                      </>
-                                    )}
+                                      </div>
+                                      <div className="flex items-center gap-1.5">
+                                        {service.category && (
+                                          <span className="text-[11px] text-muted-foreground">{service.category}</span>
+                                        )}
+                                        {service.is_backroom_tracked && (
+                                          <>
+                                            {service.category && <span className="text-[11px] text-muted-foreground/40">·</span>}
+                                            <span className={cn(
+                                              'text-[11px]',
+                                              activeToggles === 3 ? 'text-primary' : 'text-muted-foreground',
+                                            )}>
+                                              {activeToggles}/3 on
+                                            </span>
+                                          </>
+                                        )}
+                                      </div>
+                                    </div>
                                   </div>
-                                </div>
-                              </div>
-                            </TableCell>
+                                </TableCell>
 
-                            {/* Tracking toggle */}
-                            <TableCell onClick={(e) => e.stopPropagation()}>
-                              <div className="flex items-center gap-2 justify-end">
-                                {type === 'chemical' && (
-                                  <Badge variant="default" className="text-[10px] shrink-0 gap-1"><CheckCircle2 className="w-3 h-3" />Requires Color/Chemical</Badge>
-                                )}
-                                {type === 'suggested' && (
-                                  <Badge variant="outline" className="text-[10px] shrink-0 border-amber-500/40 text-amber-600 dark:text-amber-400">Suggested</Badge>
-                                )}
-                                {service.backroom_config_dismissed ? (
-                                  <Badge variant="outline" className="text-[10px] shrink-0 min-w-[6.5rem] justify-center border-emerald-500/30 bg-emerald-500/10 text-emerald-500 dark:text-emerald-400">Configured ✓</Badge>
-                                ) : service.is_backroom_tracked && (() => {
-                                  const hasPolicy = allowancePolicies?.some(p => p.service_id === service.id && p.is_active);
-                                  return hasPolicy;
-                                })() ? (
-                                  <Badge variant="outline" className="text-[10px] shrink-0 min-w-[6.5rem] justify-center border-blue-500/30 bg-blue-500/10 text-blue-500 dark:text-blue-400">Allowance Set</Badge>
-                                ) : service.is_backroom_tracked ? (
-                                  <Badge variant="outline" className="text-[10px] shrink-0 min-w-[6.5rem] justify-center border-amber-500/30 bg-amber-500/10 text-amber-500 dark:text-amber-400">Unconfigured</Badge>
-                                ) : null}
-                                <Switch
-                                  checked={service.is_backroom_tracked}
-                                  onCheckedChange={(v) => toggleTracking.mutate({ id: service.id, tracked: v })}
-                                  className="scale-90"
-                                />
-                              </div>
-                            </TableCell>
+                                {/* Tracking toggle */}
+                                <TableCell onClick={(e) => e.stopPropagation()}>
+                                  <div className="flex items-center gap-2 justify-end">
+                                    {type === 'chemical' && (
+                                      <Badge variant="default" className="text-[10px] shrink-0 gap-1"><CheckCircle2 className="w-3 h-3" />Requires Color/Chemical</Badge>
+                                    )}
+                                    {type === 'suggested' && (
+                                      <Badge variant="outline" className="text-[10px] shrink-0 border-amber-500/40 text-amber-600 dark:text-amber-400">Suggested</Badge>
+                                    )}
+                                    {service.backroom_config_dismissed ? (
+                                      <Badge variant="outline" className="text-[10px] shrink-0 min-w-[6.5rem] justify-center border-emerald-500/30 bg-emerald-500/10 text-emerald-500 dark:text-emerald-400">Configured ✓</Badge>
+                                    ) : service.is_backroom_tracked && (() => {
+                                      const hasPolicy = allowancePolicies?.some(p => p.service_id === service.id && p.is_active);
+                                      return hasPolicy;
+                                    })() ? (
+                                      <Badge variant="outline" className="text-[10px] shrink-0 min-w-[6.5rem] justify-center border-blue-500/30 bg-blue-500/10 text-blue-500 dark:text-blue-400">Allowance Set</Badge>
+                                    ) : service.is_backroom_tracked ? (
+                                      <Badge variant="outline" className="text-[10px] shrink-0 min-w-[6.5rem] justify-center border-amber-500/30 bg-amber-500/10 text-amber-500 dark:text-amber-400">Unconfigured</Badge>
+                                    ) : null}
+                                    <Switch
+                                      checked={service.is_backroom_tracked}
+                                      onCheckedChange={(v) => toggleTracking.mutate({ id: service.id, tracked: v })}
+                                      className="scale-90"
+                                    />
+                                  </div>
+                                </TableCell>
 
-                            {/* Expand chevron */}
-                            <TableCell>
-                              <ChevronDown className={cn(
-                                'w-4 h-4 text-muted-foreground transition-transform duration-200',
-                                isExpanded && 'rotate-180',
-                              )} />
-                            </TableCell>
-                          </TableRow>
+                                {/* Expand chevron */}
+                                <TableCell>
+                                  <ChevronDown className={cn(
+                                    'w-4 h-4 text-muted-foreground transition-transform duration-200',
+                                    isExpanded && 'rotate-180',
+                                  )} />
+                                </TableCell>
+                              </TableRow>
 
-                          {/* Animated expandable detail row */}
-                          <AnimatePresence initial={false}>
-                            {isExpanded && (
-                               <motion.tr
-                                 initial={{ height: 0, opacity: 0 }}
-                                 animate={{ height: 'auto', opacity: 1 }}
-                                 exit={{ height: 0, opacity: 0 }}
-                                 transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
-                                 style={{ overflow: 'clip' }}
-                               >
-                                 <td colSpan={4} className="p-0">
-                                   <motion.div
-                                     initial={{ opacity: 0, y: -8 }}
-                                     animate={{ opacity: 1, y: 0 }}
-                                     exit={{ opacity: 0, y: -8 }}
-                                     transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1], delay: 0.08 }}
-                                     className="px-6 py-4 bg-muted/30 border-t border-border/30"
+                              {/* Animated expandable detail row */}
+                              <AnimatePresence initial={false}>
+                                {isExpanded && (
+                                   <motion.tr
+                                     initial={{ height: 0, opacity: 0 }}
+                                     animate={{ height: 'auto', opacity: 1 }}
+                                     exit={{ height: 0, opacity: 0 }}
+                                     transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
+                                     style={{ overflow: 'clip' }}
                                    >
-                                    {service.is_backroom_tracked ? (
-                                       <div className="space-y-4">
-                                         {/* Chemical toggle + vessel selector — FIRST */}
-                                         <div className="flex flex-wrap items-center gap-4 pb-3 mb-3 border-b border-border/40">
-                                           <div className="flex items-center gap-2">
-                                             <label className="text-[10px] font-sans text-muted-foreground whitespace-nowrap">Requires Color/Chemical</label>
-                                             <Switch
-                                               checked={service.is_chemical_service}
-                                               onCheckedChange={(v) => {
-                                                 if (v) {
-                                                   const containers = (service.container_types?.length) ? service.container_types : ['bowl'] as ('bowl' | 'bottle')[];
-                                                   updateService.mutate({ id: service.id, updates: { is_chemical_service: true, container_types: containers } });
-                                                 } else {
-                                                   updateService.mutate({ id: service.id, updates: { is_chemical_service: false, is_backroom_tracked: false, container_types: [] } });
-                                                 }
-                                               }}
-                                             />
-                                           </div>
-                                           {service.is_chemical_service && (
-                                             <div className="flex items-center gap-1.5">
-                                               <span className="text-xs font-sans text-muted-foreground">Vessels:</span>
-                                               {(['bowl', 'bottle'] as const).map((vt, idx) => {
-                                                 const active = (service.container_types || []).includes(vt);
-                                                 return (
-                                                   <React.Fragment key={vt}>
-                                                     {idx === 1 && (
-                                                       <span className="text-xs font-sans text-muted-foreground/70 italic">and/or</span>
-                                                     )}
-                                                     <button
-                                                       className={cn(
-                                                         'px-3 py-1 rounded-full text-xs font-sans capitalize transition-colors border flex items-center gap-1',
-                                                         active
-                                                           ? 'bg-primary text-primary-foreground border-primary'
-                                                           : 'bg-transparent border-dashed border-muted-foreground/40 text-muted-foreground hover:border-muted-foreground'
-                                                       )}
-                                                       onClick={(e) => {
-                                                         e.stopPropagation();
-                                                         const current = service.container_types || [];
-                                                         if (active && current.length === 1) {
-                                                           toast.error('At least one vessel type is required');
-                                                           return;
-                                                         }
-                                                         const next = active ? current.filter(t => t !== vt) : [...current, vt];
-                                                         updateService.mutate({ id: service.id, updates: { container_types: next } });
-                                                       }}
-                                                     >
-                                                       {active ? <Check className="w-3 h-3" /> : <Plus className="w-3 h-3" />}
-                                                       {vt === 'bowl' ? 'Bowls' : 'Bottles'}
-                                                     </button>
-                                                   </React.Fragment>
-                                                 );
-                                               })}
-                                             </div>
-                                           )}
-                                         </div>
-
-                                           {/* Billing mode + Allowance config — gated on vessel selection */}
-                                           {(service.container_types || []).length > 0 && (() => {
-                                             const policy = allowanceByService.get(service.id);
-                                             const billingMode = policy?.billing_mode || 'allowance';
-                                             return (
-                                             <div className="space-y-2">
-                                               {/* Billing mode toggle */}
-                                               <div className="flex items-center gap-1.5">
-                                                 <span className="text-xs font-sans text-muted-foreground">Billing:</span>
-                                                 {(['allowance', 'parts_and_labor'] as const).map((mode) => {
-                                                   const active = billingMode === mode;
-                                                   return (
-                                                     <button
-                                                       key={mode}
-                                                       className={cn(
-                                                         'px-3 py-1 rounded-full text-xs font-sans capitalize transition-colors border flex items-center gap-1',
-                                                         active
-                                                           ? 'bg-primary text-primary-foreground border-primary'
-                                                           : 'bg-transparent border-dashed border-muted-foreground/40 text-muted-foreground hover:border-muted-foreground'
-                                                       )}
-                                                       onClick={(e) => {
-                                                         e.stopPropagation();
-                                                         upsertPolicy.mutate({
-                                                           organization_id: effectiveOrganization!.id,
-                                                           service_id: service.id,
-                                                           billing_mode: mode,
-                                                           is_active: mode === 'parts_and_labor' ? true : (policy?.is_active ?? false),
-                                                           included_allowance_qty: policy?.included_allowance_qty ?? 0,
-                                                           overage_rate: policy?.overage_rate ?? 0,
-                                                           overage_rate_type: policy?.overage_rate_type ?? 'per_unit',
-                                                           overage_cap: policy?.overage_cap ?? null,
-                                                           notes: policy?.notes ?? null,
-                                                         });
-                                                       }}
-                                                     >
-                                                       {active ? <Check className="w-3 h-3" /> : <Plus className="w-3 h-3" />}
-                                                       {mode === 'allowance' ? 'Allowance' : 'Parts & Labor'}
-                                                     </button>
-                                                   );
-                                                 })}
+                                     <td colSpan={4} className="p-0">
+                                       <motion.div
+                                         initial={{ opacity: 0, y: -8 }}
+                                         animate={{ opacity: 1, y: 0 }}
+                                         exit={{ opacity: 0, y: -8 }}
+                                         transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1], delay: 0.08 }}
+                                         className="px-6 py-4 bg-muted/30 border-t border-border/30"
+                                       >
+                                        {service.is_backroom_tracked ? (
+                                           <div className="space-y-4">
+                                             {/* Chemical toggle + vessel selector — FIRST */}
+                                             <div className="flex flex-wrap items-center gap-4 pb-3 mb-3 border-b border-border/40">
+                                               <div className="flex items-center gap-2">
+                                                 <label className="text-[10px] font-sans text-muted-foreground whitespace-nowrap">Requires Color/Chemical</label>
+                                                 <Switch
+                                                   checked={service.is_chemical_service}
+                                                   onCheckedChange={(v) => {
+                                                     if (v) {
+                                                       const containers = (service.container_types?.length) ? service.container_types : ['bowl'] as ('bowl' | 'bottle')[];
+                                                       updateService.mutate({ id: service.id, updates: { is_chemical_service: true, container_types: containers } });
+                                                     } else {
+                                                       updateService.mutate({ id: service.id, updates: { is_chemical_service: false, is_backroom_tracked: false, container_types: [] } });
+                                                     }
+                                                   }}
+                                                 />
                                                </div>
-
-                                               {/* Mode-specific content */}
-                                               {billingMode === 'parts_and_labor' ? (
-                                                 <div className="flex items-center gap-2 text-xs">
-                                                   <FileText className="w-3.5 h-3.5 text-primary" />
-                                                   <span className="font-sans text-muted-foreground">
-                                                     Parts & Labor — client pays hourly rate + retail cost of supplies. No allowance needed.
-                                                   </span>
+                                               {service.is_chemical_service && (
+                                                 <div className="flex items-center gap-1.5">
+                                                   <span className="text-xs font-sans text-muted-foreground">Vessels:</span>
+                                                   {(['bowl', 'bottle'] as const).map((vt, idx) => {
+                                                     const active = (service.container_types || []).includes(vt);
+                                                     return (
+                                                       <React.Fragment key={vt}>
+                                                         {idx === 1 && (
+                                                           <span className="text-xs font-sans text-muted-foreground/70 italic">and/or</span>
+                                                         )}
+                                                         <button
+                                                           className={cn(
+                                                             'px-3 py-1 rounded-full text-xs font-sans capitalize transition-colors border flex items-center gap-1',
+                                                             active
+                                                               ? 'bg-primary text-primary-foreground border-primary'
+                                                               : 'bg-transparent border-dashed border-muted-foreground/40 text-muted-foreground hover:border-muted-foreground'
+                                                           )}
+                                                           onClick={(e) => {
+                                                             e.stopPropagation();
+                                                             const current = service.container_types || [];
+                                                             if (active && current.length === 1) {
+                                                               toast.error('At least one vessel type is required');
+                                                               return;
+                                                             }
+                                                             const next = active ? current.filter(t => t !== vt) : [...current, vt];
+                                                             updateService.mutate({ id: service.id, updates: { container_types: next } });
+                                                           }}
+                                                         >
+                                                           {active ? <Check className="w-3 h-3" /> : <Plus className="w-3 h-3" />}
+                                                           {vt === 'bowl' ? 'Bowls' : 'Bottles'}
+                                                         </button>
+                                                       </React.Fragment>
+                                                     );
+                                                   })}
                                                  </div>
-                                               ) : (
-                                               <div className="flex items-start justify-between gap-4">
-                                                {(() => {
-                                                 if (policy && policy.is_active) {
-                                                   const recipeNote = policy.notes?.startsWith('Recipe-based:') ? policy.notes.replace('Recipe-based: ', '') : null;
-                                                    const healthStatus = policy.allowance_health_status;
-                                                    const healthPct = policy.allowance_health_pct;
-                                                   return (
+                                               )}
+                                             </div>
+
+                                               {/* Billing mode + Allowance config — gated on vessel selection */}
+                                               {(service.container_types || []).length > 0 && (() => {
+                                                 const policy = allowanceByService.get(service.id);
+                                                 const billingMode = policy?.billing_mode || 'allowance';
+                                                 return (
+                                                 <div className="space-y-2">
+                                                   {/* Billing mode toggle */}
+                                                   <div className="flex items-center gap-1.5">
+                                                     <span className="text-xs font-sans text-muted-foreground">Billing:</span>
+                                                     {(['allowance', 'parts_and_labor'] as const).map((mode) => {
+                                                       const active = billingMode === mode;
+                                                       return (
+                                                         <button
+                                                           key={mode}
+                                                           className={cn(
+                                                             'px-3 py-1 rounded-full text-xs font-sans capitalize transition-colors border flex items-center gap-1',
+                                                             active
+                                                               ? 'bg-primary text-primary-foreground border-primary'
+                                                               : 'bg-transparent border-dashed border-muted-foreground/40 text-muted-foreground hover:border-muted-foreground'
+                                                           )}
+                                                           onClick={(e) => {
+                                                             e.stopPropagation();
+                                                             upsertPolicy.mutate({
+                                                               organization_id: effectiveOrganization!.id,
+                                                               service_id: service.id,
+                                                               billing_mode: mode,
+                                                               is_active: mode === 'parts_and_labor' ? true : (policy?.is_active ?? false),
+                                                               included_allowance_qty: policy?.included_allowance_qty ?? 0,
+                                                               overage_rate: policy?.overage_rate ?? 0,
+                                                               overage_rate_type: policy?.overage_rate_type ?? 'per_unit',
+                                                               overage_cap: policy?.overage_cap ?? null,
+                                                               notes: policy?.notes ?? null,
+                                                             });
+                                                           }}
+                                                         >
+                                                           {active ? <Check className="w-3 h-3" /> : <Plus className="w-3 h-3" />}
+                                                           {mode === 'allowance' ? 'Allowance' : 'Parts & Labor'}
+                                                         </button>
+                                                       );
+                                                     })}
+                                                   </div>
+
+                                                   {/* Mode-specific content */}
+                                                   {billingMode === 'parts_and_labor' ? (
                                                      <div className="flex items-center gap-2 text-xs">
                                                        <FileText className="w-3.5 h-3.5 text-primary" />
                                                        <span className="font-sans text-muted-foreground">
-                                                         {recipeNote || `${policy.included_allowance_qty}${policy.allowance_unit} included · $${Number(policy.overage_rate).toFixed(2)}/${policy.allowance_unit} overage`}
+                                                         Parts & Labor — client pays hourly rate + retail cost of supplies. No allowance needed.
                                                        </span>
-                                                        {healthStatus && healthPct !== null && (
-                                                          <Badge
-                                                            variant="outline"
-                                                            className={cn(
-                                                              'text-[10px] px-1.5 py-0 cursor-pointer hover:opacity-80 transition-opacity',
-                                                              healthStatus === 'healthy' && 'text-emerald-500 border-emerald-500/30',
-                                                              healthStatus === 'high' && 'text-amber-500 border-amber-500/30',
-                                                              healthStatus === 'low' && 'text-blue-500 border-blue-500/30',
+                                                     </div>
+                                                   ) : (
+                                                   <div className="flex items-start justify-between gap-4">
+                                                    {(() => {
+                                                     if (policy && policy.is_active) {
+                                                       const recipeNote = policy.notes?.startsWith('Recipe-based:') ? policy.notes.replace('Recipe-based: ', '') : null;
+                                                        const healthStatus = policy.allowance_health_status;
+                                                        const healthPct = policy.allowance_health_pct;
+                                                       return (
+                                                         <div className="flex items-center gap-2 text-xs">
+                                                           <FileText className="w-3.5 h-3.5 text-primary" />
+                                                           <span className="font-sans text-muted-foreground">
+                                                             {recipeNote || `${policy.included_allowance_qty}${policy.allowance_unit} included · $${Number(policy.overage_rate).toFixed(2)}/${policy.allowance_unit} overage`}
+                                                           </span>
+                                                            {healthStatus && healthPct !== null && (
+                                                              <Badge
+                                                                variant="outline"
+                                                                className={cn(
+                                                                  'text-[10px] px-1.5 py-0 cursor-pointer hover:opacity-80 transition-opacity',
+                                                                  healthStatus === 'healthy' && 'text-emerald-500 border-emerald-500/30',
+                                                                  healthStatus === 'high' && 'text-amber-500 border-amber-500/30',
+                                                                  healthStatus === 'low' && 'text-blue-500 border-blue-500/30',
+                                                                )}
+                                                                onClick={(e) => {
+                                                                  e.stopPropagation();
+                                                                  setCalculatorServiceId(service.id);
+                                                                  setCalculatorServiceName(service.name);
+                                                                  setCalculatorContainerTypes((service.container_types || ['bowl']) as ('bowl' | 'bottle')[]);
+                                                                  setCalculatorServicePrice(service.price);
+                                                                }}
+                                                              >
+                                                                {healthPct.toFixed(1)}%
+                                                                {healthStatus === 'high' && ' ⚠'}
+                                                              </Badge>
                                                             )}
-                                                            onClick={(e) => {
-                                                              e.stopPropagation();
+                                                           <Button
+                                                             variant="ghost"
+                                                             size="sm"
+                                                             className={tokens.button.inlineGhost}
+                                                             onClick={(e) => {
+                                                               e.stopPropagation();
+                                                                setCalculatorServiceId(service.id);
+                                                                setCalculatorServiceName(service.name);
+                                                                setCalculatorContainerTypes((service.container_types || ['bowl']) as ('bowl' | 'bottle')[]);
+                                                                setCalculatorServicePrice(service.price);
+                                                             }}
+                                                           >
+                                                             Edit
+                                                           </Button>
+                                                         </div>
+                                                       );
+                                                     }
+
+                                                     return (
+                                                       <div className="flex items-center gap-2 text-xs">
+                                                         <FileText className="w-3.5 h-3.5 text-muted-foreground" />
+                                                         <Button
+                                                           variant="outline"
+                                                           size="sm"
+                                                           className="h-7 text-xs border-dashed"
+                                                           onClick={(e) => {
+                                                             e.stopPropagation();
                                                               setCalculatorServiceId(service.id);
                                                               setCalculatorServiceName(service.name);
                                                               setCalculatorContainerTypes((service.container_types || ['bowl']) as ('bowl' | 'bottle')[]);
                                                               setCalculatorServicePrice(service.price);
-                                                            }}
-                                                          >
-                                                            {healthPct.toFixed(1)}%
-                                                            {healthStatus === 'high' && ' ⚠'}
-                                                          </Badge>
-                                                        )}
-                                                       <Button
-                                                         variant="ghost"
-                                                         size="sm"
-                                                         className={tokens.button.inlineGhost}
-                                                         onClick={(e) => {
-                                                           e.stopPropagation();
-                                                            setCalculatorServiceId(service.id);
-                                                            setCalculatorServiceName(service.name);
-                                                            setCalculatorContainerTypes((service.container_types || ['bowl']) as ('bowl' | 'bottle')[]);
-                                                            setCalculatorServicePrice(service.price);
-                                                         }}
-                                                       >
-                                                         Edit
-                                                       </Button>
-                                                     </div>
-                                                   );
-                                                 }
-
-                                                 return (
-                                                   <div className="flex items-center gap-2 text-xs">
-                                                     <FileText className="w-3.5 h-3.5 text-muted-foreground" />
-                                                     <Button
-                                                       variant="outline"
-                                                       size="sm"
-                                                       className="h-7 text-xs border-dashed"
-                                                       onClick={(e) => {
-                                                         e.stopPropagation();
-                                                          setCalculatorServiceId(service.id);
-                                                          setCalculatorServiceName(service.name);
-                                                          setCalculatorContainerTypes((service.container_types || ['bowl']) as ('bowl' | 'bottle')[]);
-                                                          setCalculatorServicePrice(service.price);
-                                                       }}
-                                                     >
-                                                       Configure Allowance
-                                                     </Button>
-                                                     <MetricInfoTooltip description="Use benchmark products to set a dollar allowance for this service. Stylists can mix any product — once the allowance is reached, overage costs are passed to the client at checkout." />
+                                                           }}
+                                                         >
+                                                           Configure Allowance
+                                                         </Button>
+                                                         <MetricInfoTooltip description="Use benchmark products to set a dollar allowance for this service. Stylists can mix any product — once the allowance is reached, overage costs are passed to the client at checkout." />
+                                                       </div>
+                                                    );
+                                                    })()}
                                                    </div>
-                                                );
-                                                })()}
-                                               </div>
-                                               )}
-                                             </div>
-                                             );
-                                           })()}
-                                        {/* Toggles grid */}
-                                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                                          <div className="flex items-center gap-2">
-                                            <label className="text-[10px] font-sans text-muted-foreground whitespace-nowrap">Assistant Prep</label>
-                                            <Switch
-                                              checked={service.assistant_prep_allowed}
-                                              onCheckedChange={(v) => updateService.mutate({ id: service.id, updates: { assistant_prep_allowed: v } })}
-                                            />
-                                          </div>
-                                          <div className="flex items-center gap-2">
-                                            <label className="text-[10px] font-sans text-muted-foreground whitespace-nowrap">Smart Mix Assist</label>
-                                            <Switch
-                                              checked={service.smart_mix_assist_enabled}
-                                              onCheckedChange={(v) => updateService.mutate({ id: service.id, updates: { smart_mix_assist_enabled: v } })}
-                                            />
-                                          </div>
-                                          <div className="flex items-center gap-2">
-                                            <label className="text-[10px] font-sans text-muted-foreground whitespace-nowrap">Formula Memory</label>
-                                            <Switch
-                                              checked={service.formula_memory_enabled}
-                                              onCheckedChange={(v) => updateService.mutate({ id: service.id, updates: { formula_memory_enabled: v } })}
-                                            />
-                                          </div>
-                                        </div>
-                                        {/* Price Recommendation inline alert */}
-                                        {(() => {
-                                          const rec = priceRecMap.get(service.id);
-                                          if (!rec) return null;
-                                          return (
-                                            <PriceRecommendationCard
-                                              recommendation={rec}
-                                              onAccept={() => acceptPriceRec.mutate(rec)}
-                                              onDismiss={() => dismissPriceRec.mutate(rec)}
-                                              isAccepting={acceptPriceRec.isPending}
-                                            />
-                                          );
-                                        })()}
-                                        {/* Mark Configured footer */}
-                                        <div className="bg-primary/5 border-t border-primary/20 rounded-b-lg p-3 mt-3 flex items-center justify-between">
-                                          {service.backroom_config_dismissed ? (
-                                            <div className="flex items-center gap-2 w-full justify-between">
-                                              <span className="text-xs font-sans text-green-600 dark:text-green-400 flex items-center gap-1.5">
-                                                <CheckCircle2 className="w-3.5 h-3.5" />
-                                                Configured
-                                              </span>
-                                              <Button
-                                                variant="ghost"
-                                                size="sm"
-                                                className="h-7 text-xs text-muted-foreground hover:text-red-500 hover:bg-red-500/10"
-                                                onClick={(e) => {
-                                                  e.stopPropagation();
-                                                  updateService.mutate({ id: service.id, updates: {
-                                                    is_backroom_tracked: false,
-                                                    is_chemical_service: false,
-                                                    container_types: [],
-                                                    assistant_prep_allowed: false,
-                                                    smart_mix_assist_enabled: false,
-                                                    formula_memory_enabled: false,
-                                                    backroom_config_dismissed: false,
-                                                  }});
-                                                }}
-                                              >
-                                                <RotateCcw className="w-3.5 h-3.5" />
-                                                Reset Configuration
-                                              </Button>
-                                            </div>
-                                          ) : (
-                                            <>
-                                              <p className="text-xs font-sans text-muted-foreground">
-                                                Review complete? Mark as configured to track setup progress.
-                                              </p>
+                                                   )}
+                                                 </div>
+                                                 );
+                                               })()}
+                                            {/* Toggles grid */}
+                                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                                               <div className="flex items-center gap-2">
-                                                <Button
-                                                  variant="ghost"
-                                                  size="sm"
-                                                  className="h-7 text-xs shrink-0 text-muted-foreground hover:text-red-500 hover:bg-red-500/10"
-                                                  onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    updateService.mutate({ id: service.id, updates: {
-                                                      is_backroom_tracked: false,
-                                                      is_chemical_service: false,
-                                                      container_types: [],
-                                                      assistant_prep_allowed: false,
-                                                      smart_mix_assist_enabled: false,
-                                                      formula_memory_enabled: false,
-                                                      backroom_config_dismissed: false,
-                                                    }});
-                                                  }}
-                                                >
-                                                  <RotateCcw className="w-3.5 h-3.5" />
-                                                  Reset
-                                                </Button>
-                                                <Button
-                                                  variant="ghost"
-                                                  size="sm"
-                                                  className="h-7 text-xs shrink-0 text-amber-600 hover:text-amber-700 hover:bg-amber-50 dark:text-amber-400 dark:hover:bg-amber-900/20"
-                                                  onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    updateService.mutate({ id: service.id, updates: { backroom_config_dismissed: true } });
-                                                    setTimeout(() => {
-                                                      setExpandedIds(prev => {
-                                                        const next = new Set(prev);
-                                                        next.delete(service.id);
-                                                        return next;
-                                                      });
-                                                    }, 400);
-                                                  }}
-                                                >
-                                                  <ChevronRight className="w-3.5 h-3.5 animate-nudge-right" />
-                                                  Finalize Configuration
-                                                </Button>
+                                                <label className="text-[10px] font-sans text-muted-foreground whitespace-nowrap">Assistant Prep</label>
+                                                <Switch
+                                                  checked={service.assistant_prep_allowed}
+                                                  onCheckedChange={(v) => updateService.mutate({ id: service.id, updates: { assistant_prep_allowed: v } })}
+                                                />
                                               </div>
-                                            </>
-                                          )}
-                                        </div>
-                                      </div>
-                                    ) : (
-                                      /* Untracked service drill-down */
-                                      <div className="space-y-3">
-                                        <div className="flex items-center justify-between">
-                                          <div className="space-y-1 text-xs text-muted-foreground">
-                                            <div className="flex items-center gap-3">
-                                              <span>Category: <span className="text-foreground">{service.category || 'None'}</span></span>
-                                              <span>Type: <span className="text-foreground capitalize">{type}</span></span>
+                                              <div className="flex items-center gap-2">
+                                                <label className="text-[10px] font-sans text-muted-foreground whitespace-nowrap">Smart Mix Assist</label>
+                                                <Switch
+                                                  checked={service.smart_mix_assist_enabled}
+                                                  onCheckedChange={(v) => updateService.mutate({ id: service.id, updates: { smart_mix_assist_enabled: v } })}
+                                                />
+                                              </div>
+                                              <div className="flex items-center gap-2">
+                                                <label className="text-[10px] font-sans text-muted-foreground whitespace-nowrap">Formula Memory</label>
+                                                <Switch
+                                                  checked={service.formula_memory_enabled}
+                                                  onCheckedChange={(v) => updateService.mutate({ id: service.id, updates: { formula_memory_enabled: v } })}
+                                                />
+                                              </div>
                                             </div>
-                                            {(type === 'chemical' || type === 'suggested') && !service.is_chemical_service && (
-                                              <p className="text-amber-600 dark:text-amber-400">This service appears to use chemicals — consider enabling tracking.</p>
-                                            )}
-                                          </div>
-                                          <div className="flex items-center gap-2 shrink-0">
-                                          <Button
-                                            size="sm"
-                                            variant="outline"
-                                            className="h-7 text-xs shrink-0"
-                                            onClick={() => toggleTracking.mutate({ id: service.id, tracked: true })}
-                                          >
-                                            Enable Tracking
-                                          </Button>
-                                          </div>
-                                        </div>
-                                        {/* Chemical toggle for untracked services */}
-                                        <div className="flex items-center gap-2 pt-2 border-t border-border/40">
-                                          <label className="text-[10px] font-sans text-muted-foreground whitespace-nowrap">Color / Chemical</label>
-                                          <Switch
-                                            checked={service.is_chemical_service}
-                                            onCheckedChange={(v) => {
-                                              if (v) {
-                                                const containers = (service.container_types?.length) ? service.container_types : ['bowl'] as ('bowl' | 'bottle')[];
-                                                updateService.mutate({ id: service.id, updates: { is_chemical_service: true, is_backroom_tracked: true, container_types: containers } });
-                                              } else {
-                                                updateService.mutate({ id: service.id, updates: { is_chemical_service: false, container_types: [] } });
-                                              }
-                                            }}
-                                          />
-                                          <span className="text-[10px] text-muted-foreground/60 font-sans">Enabling also turns on tracking</span>
-                                        </div>
-                                        {/* Mark Configured footer for untracked */}
-                                        {(type === 'chemical' || type === 'suggested') && (
-                                          <div className="bg-primary/5 border-t border-primary/20 rounded-b-lg p-3 mt-3 flex items-center justify-between">
-                                            {service.backroom_config_dismissed ? (
-                                              <div className="flex items-center gap-2 w-full justify-between">
-                                                <span className="text-xs font-sans text-green-600 dark:text-green-400 flex items-center gap-1.5">
-                                                  <CheckCircle2 className="w-3.5 h-3.5" />
-                                                  Reviewed
-                                                </span>
-                                                <Button
-                                                  variant="ghost"
-                                                  size="sm"
-                                                  className="h-7 text-xs text-muted-foreground hover:text-red-500 hover:bg-red-500/10"
-                                                  onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    updateService.mutate({ id: service.id, updates: {
-                                                      is_backroom_tracked: false,
-                                                      is_chemical_service: false,
-                                                      container_types: [],
-                                                      assistant_prep_allowed: false,
-                                                      smart_mix_assist_enabled: false,
-                                                      formula_memory_enabled: false,
-                                                      backroom_config_dismissed: false,
-                                                    }});
-                                                  }}
-                                                >
-                                                  <RotateCcw className="w-3.5 h-3.5" />
-                                                  Reset Configuration
-                                                </Button>
-                                              </div>
-                                            ) : (
-                                              <>
-                                                <p className="text-xs font-sans text-muted-foreground">
-                                                  Doesn't need tracking? Mark as reviewed.
-                                                </p>
-                                                <div className="flex items-center gap-2">
+                                            {/* Price Recommendation inline alert */}
+                                            {(() => {
+                                              const rec = priceRecMap.get(service.id);
+                                              if (!rec) return null;
+                                              return (
+                                                <PriceRecommendationCard
+                                                  recommendation={rec}
+                                                  onAccept={() => acceptPriceRec.mutate(rec)}
+                                                  onDismiss={() => dismissPriceRec.mutate(rec)}
+                                                  isAccepting={acceptPriceRec.isPending}
+                                                />
+                                              );
+                                            })()}
+                                            {/* Mark Configured footer */}
+                                            <div className="bg-primary/5 border-t border-primary/20 rounded-b-lg p-3 mt-3 flex items-center justify-between">
+                                              {service.backroom_config_dismissed ? (
+                                                <div className="flex items-center gap-2 w-full justify-between">
+                                                  <span className="text-xs font-sans text-green-600 dark:text-green-400 flex items-center gap-1.5">
+                                                    <CheckCircle2 className="w-3.5 h-3.5" />
+                                                    Configured
+                                                  </span>
                                                   <Button
                                                     variant="ghost"
                                                     size="sm"
-                                                    className="h-7 text-xs shrink-0 text-muted-foreground hover:text-red-500 hover:bg-red-500/10"
+                                                    className="h-7 text-xs text-muted-foreground hover:text-red-500 hover:bg-red-500/10"
                                                     onClick={(e) => {
                                                       e.stopPropagation();
                                                       updateService.mutate({ id: service.id, updates: {
@@ -1082,39 +1001,189 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                                     }}
                                                   >
                                                     <RotateCcw className="w-3.5 h-3.5" />
-                                                    Reset
-                                                  </Button>
-                                                  <Button
-                                                    variant="ghost"
-                                                    size="sm"
-                                                    className="h-7 text-xs shrink-0 text-amber-600 hover:text-amber-700 hover:bg-amber-50 dark:text-amber-400 dark:hover:bg-amber-900/20"
-                                                    onClick={(e) => {
-                                                      e.stopPropagation();
-                                                      updateService.mutate({ id: service.id, updates: { backroom_config_dismissed: true } });
-                                                      setTimeout(() => {
-                                                        setExpandedIds(prev => {
-                                                          const next = new Set(prev);
-                                                          next.delete(service.id);
-                                                          return next;
-                                                        });
-                                                      }, 400);
-                                                    }}
-                                                  >
-                                                    <ChevronRight className="w-3.5 h-3.5 animate-nudge-right" />
-                                                    Finalize Configuration
+                                                    Reset Configuration
                                                   </Button>
                                                 </div>
-                                              </>
+                                              ) : (
+                                                <>
+                                                  <p className="text-xs font-sans text-muted-foreground">
+                                                    Review complete? Mark as configured to track setup progress.
+                                                  </p>
+                                                  <div className="flex items-center gap-2">
+                                                    <Button
+                                                      variant="ghost"
+                                                      size="sm"
+                                                      className="h-7 text-xs shrink-0 text-muted-foreground hover:text-red-500 hover:bg-red-500/10"
+                                                      onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        updateService.mutate({ id: service.id, updates: {
+                                                          is_backroom_tracked: false,
+                                                          is_chemical_service: false,
+                                                          container_types: [],
+                                                          assistant_prep_allowed: false,
+                                                          smart_mix_assist_enabled: false,
+                                                          formula_memory_enabled: false,
+                                                          backroom_config_dismissed: false,
+                                                        }});
+                                                      }}
+                                                    >
+                                                      <RotateCcw className="w-3.5 h-3.5" />
+                                                      Reset
+                                                    </Button>
+                                                    <Button
+                                                      variant="ghost"
+                                                      size="sm"
+                                                      className="h-7 text-xs shrink-0 text-amber-600 hover:text-amber-700 hover:bg-amber-50 dark:text-amber-400 dark:hover:bg-amber-900/20"
+                                                      onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        updateService.mutate({ id: service.id, updates: { backroom_config_dismissed: true } });
+                                                        setTimeout(() => {
+                                                          setExpandedIds(prev => {
+                                                            const next = new Set(prev);
+                                                            next.delete(service.id);
+                                                            return next;
+                                                          });
+                                                        }, 400);
+                                                      }}
+                                                    >
+                                                      <ChevronRight className="w-3.5 h-3.5 animate-nudge-right" />
+                                                      Finalize Configuration
+                                                    </Button>
+                                                  </div>
+                                                </>
+                                              )}
+                                            </div>
+                                          </div>
+                                        ) : (
+                                          /* Untracked service drill-down */
+                                          <div className="space-y-3">
+                                            <div className="flex items-center justify-between">
+                                              <div className="space-y-1 text-xs text-muted-foreground">
+                                                <div className="flex items-center gap-3">
+                                                  <span>Category: <span className="text-foreground">{service.category || 'None'}</span></span>
+                                                  <span>Type: <span className="text-foreground capitalize">{type}</span></span>
+                                                </div>
+                                                {(type === 'chemical' || type === 'suggested') && !service.is_chemical_service && (
+                                                  <p className="text-amber-600 dark:text-amber-400">This service appears to use chemicals — consider enabling tracking.</p>
+                                                )}
+                                              </div>
+                                              <div className="flex items-center gap-2 shrink-0">
+                                              <Button
+                                                size="sm"
+                                                variant="outline"
+                                                className="h-7 text-xs shrink-0"
+                                                onClick={() => toggleTracking.mutate({ id: service.id, tracked: true })}
+                                              >
+                                                Enable Tracking
+                                              </Button>
+                                              </div>
+                                            </div>
+                                            {/* Chemical toggle for untracked services */}
+                                            <div className="flex items-center gap-2 pt-2 border-t border-border/40">
+                                              <label className="text-[10px] font-sans text-muted-foreground whitespace-nowrap">Color / Chemical</label>
+                                              <Switch
+                                                checked={service.is_chemical_service}
+                                                onCheckedChange={(v) => {
+                                                  if (v) {
+                                                    const containers = (service.container_types?.length) ? service.container_types : ['bowl'] as ('bowl' | 'bottle')[];
+                                                    updateService.mutate({ id: service.id, updates: { is_chemical_service: true, is_backroom_tracked: true, container_types: containers } });
+                                                  } else {
+                                                    updateService.mutate({ id: service.id, updates: { is_chemical_service: false, container_types: [] } });
+                                                  }
+                                                }}
+                                              />
+                                              <span className="text-[10px] text-muted-foreground/60 font-sans">Enabling also turns on tracking</span>
+                                            </div>
+                                            {/* Mark Configured footer for untracked */}
+                                            {(type === 'chemical' || type === 'suggested') && (
+                                              <div className="bg-primary/5 border-t border-primary/20 rounded-b-lg p-3 mt-3 flex items-center justify-between">
+                                                {service.backroom_config_dismissed ? (
+                                                  <div className="flex items-center gap-2 w-full justify-between">
+                                                    <span className="text-xs font-sans text-green-600 dark:text-green-400 flex items-center gap-1.5">
+                                                      <CheckCircle2 className="w-3.5 h-3.5" />
+                                                      Reviewed
+                                                    </span>
+                                                    <Button
+                                                      variant="ghost"
+                                                      size="sm"
+                                                      className="h-7 text-xs text-muted-foreground hover:text-red-500 hover:bg-red-500/10"
+                                                      onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        updateService.mutate({ id: service.id, updates: {
+                                                          is_backroom_tracked: false,
+                                                          is_chemical_service: false,
+                                                          container_types: [],
+                                                          assistant_prep_allowed: false,
+                                                          smart_mix_assist_enabled: false,
+                                                          formula_memory_enabled: false,
+                                                          backroom_config_dismissed: false,
+                                                        }});
+                                                      }}
+                                                    >
+                                                      <RotateCcw className="w-3.5 h-3.5" />
+                                                      Reset Configuration
+                                                    </Button>
+                                                  </div>
+                                                ) : (
+                                                  <>
+                                                    <p className="text-xs font-sans text-muted-foreground">
+                                                      Doesn't need tracking? Mark as reviewed.
+                                                    </p>
+                                                    <div className="flex items-center gap-2">
+                                                      <Button
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        className="h-7 text-xs shrink-0 text-muted-foreground hover:text-red-500 hover:bg-red-500/10"
+                                                        onClick={(e) => {
+                                                          e.stopPropagation();
+                                                          updateService.mutate({ id: service.id, updates: {
+                                                            is_backroom_tracked: false,
+                                                            is_chemical_service: false,
+                                                            container_types: [],
+                                                            assistant_prep_allowed: false,
+                                                            smart_mix_assist_enabled: false,
+                                                            formula_memory_enabled: false,
+                                                            backroom_config_dismissed: false,
+                                                          }});
+                                                        }}
+                                                      >
+                                                        <RotateCcw className="w-3.5 h-3.5" />
+                                                        Reset
+                                                      </Button>
+                                                      <Button
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        className="h-7 text-xs shrink-0 text-amber-600 hover:text-amber-700 hover:bg-amber-50 dark:text-amber-400 dark:hover:bg-amber-900/20"
+                                                        onClick={(e) => {
+                                                          e.stopPropagation();
+                                                          updateService.mutate({ id: service.id, updates: { backroom_config_dismissed: true } });
+                                                          setTimeout(() => {
+                                                            setExpandedIds(prev => {
+                                                              const next = new Set(prev);
+                                                              next.delete(service.id);
+                                                              return next;
+                                                            });
+                                                          }, 400);
+                                                        }}
+                                                      >
+                                                        <ChevronRight className="w-3.5 h-3.5 animate-nudge-right" />
+                                                        Finalize Configuration
+                                                      </Button>
+                                                    </div>
+                                                  </>
+                                                )}
+                                              </div>
                                             )}
                                           </div>
                                         )}
-                                      </div>
-                                    )}
-                                   </motion.div>
-                                </td>
-                              </motion.tr>
-                            )}
-                          </AnimatePresence>
+                                       </motion.div>
+                                    </td>
+                                  </motion.tr>
+                                )}
+                              </AnimatePresence>
+                            </React.Fragment>
+                          );
+                        })}
                       </React.Fragment>
                     );
                   })}
