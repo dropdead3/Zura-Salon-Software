@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
+import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useEffectiveRoles } from '@/hooks/useEffectiveUser';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
