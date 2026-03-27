@@ -637,15 +637,16 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
                         </p>
                         {filteredItems.map((item) => {
                           const Icon = item.icon;
-                          const isActive = location.pathname === item.href;
+                          const resolvedItemHref = dashPath(item.href.replace(/^\/dashboard/, ''));
+                          const isActive = location.pathname === resolvedItemHref || location.pathname.startsWith(resolvedItemHref + '/');
                           const label = getNavLabel(item);
                           return (
                             <a
                               key={item.href}
-                              href={item.href}
+                              href={resolvedItemHref}
                               onClick={(e) => {
                                 e.preventDefault();
-                                navigate(item.href, { state: { navTimestamp: Date.now() } });
+                                navigate(resolvedItemHref, { state: { navTimestamp: Date.now() } });
                                 onNavClick();
                               }}
                               className={cn(
