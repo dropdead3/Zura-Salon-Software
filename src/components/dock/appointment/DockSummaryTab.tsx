@@ -99,10 +99,10 @@ export function DockSummaryTab({ appointment, staff }: DockSummaryTabProps) {
         </div>
       )}
 
-      {/* Event timeline — show for first session */}
-      {allSessionIds.length > 0 && (
-        <DockSessionTimeline sessionId={allSessionIds[0]} />
-      )}
+      {/* Event timeline — show for all sessions */}
+      {allSessionIds.map((sid) => (
+        <DockSessionTimeline key={sid} sessionId={sid} />
+      ))}
 
       {bowls.length === 0 && (
         <div className="flex flex-col items-center justify-center pt-8 text-center">

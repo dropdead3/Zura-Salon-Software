@@ -179,9 +179,9 @@ async function handleAllowanceMode({
       overage_qty: result.overageQty,
       overage_rate: Number(policy.overage_rate),
       charge_amount: result.chargeAmount,
-      charge_type: 'overage' as any,
+      charge_type: 'overage',
       status: 'pending',
-    } as any)
+    })
     .select()
     .single();
 
@@ -302,7 +302,7 @@ async function handlePartsAndLabor({
       product_wholesale_cost: costResult.wholesaleCost,
       product_charge_markup_pct: costResult.markupPct,
       status: 'pending',
-    } as any)
+    })
     .select()
     .single();
 

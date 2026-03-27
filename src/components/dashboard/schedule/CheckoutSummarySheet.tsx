@@ -131,11 +131,16 @@ export function CheckoutSummarySheet({
   const productChargeLabel = billingSettings?.product_charge_label || 'Product Usage';
   const productChargeTaxable = billingSettings?.product_charge_taxable ?? true;
 
-  // Filter to approved/pending product cost charges
+  // Filter to approved/pending charges — both product_cost and overage
   const productCostCharges = usageCharges.filter(
-    (c: any) => c.charge_type === 'product_cost' && c.status !== 'waived'
+    (c) => c.charge_type === 'product_cost' && c.status !== 'waived'
+  );
+  const overageCharges = usageCharges.filter(
+    (c) => c.charge_type === 'overage' && c.status !== 'waived'
   );
   const productChargeTotal = productCostCharges.reduce((s, c) => s + c.charge_amount, 0);
+  const overageChargeTotal = overageCharges.reduce((s, c) => s + c.charge_amount, 0);
+  const allUsageChargeTotal = productChargeTotal + overageChargeTotal;
 
   if (!appointment) return null;
 
@@ -144,9 +149,9 @@ export function CheckoutSummarySheet({
   const discount = appliedPromo?.calculated_discount || 0;
   // Product charges are NOT discountable — kept separate from promo subtotal
   const discountedSubtotal = subtotal - discount;
-  const taxableBase = discountedSubtotal + (productChargeTaxable ? productChargeTotal : 0);
+  const taxableBase = discountedSubtotal + (productChargeTaxable ? allUsageChargeTotal : 0);
   const tax = taxableBase * taxRate;
-  const checkoutTotal = discountedSubtotal + productChargeTotal + tax;
+  const checkoutTotal = discountedSubtotal + allUsageChargeTotal + tax;
   const grandTotal = checkoutTotal + tipAmount;
 
   const getDuration = () => {
@@ -327,6 +332,12 @@ export function CheckoutSummarySheet({
     if (productChargeTotal > 0) {
       doc.text(productChargeLabel, margin, y);
       doc.text(`$${productChargeTotal.toFixed(2)}`, pageWidth - margin, y, { align: 'right' });
+      y += 4;
+    }
+
+    if (overageChargeTotal > 0) {
+      doc.text('Additional Product Usage', margin, y);
+      doc.text(`$${overageChargeTotal.toFixed(2)}`, pageWidth - margin, y, { align: 'right' });
       y += 4;
     }
 
@@ -583,6 +594,14 @@ export function CheckoutSummarySheet({
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">{productChargeLabel}</span>
                   <span className="font-medium">{formatCurrency(productChargeTotal)}</span>
+                </div>
+              )}
+
+              {/* Overage charges (allowance-mode, non-discountable) */}
+              {overageChargeTotal > 0 && (
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Additional Product Usage</span>
+                  <span className="font-medium">{formatCurrency(overageChargeTotal)}</span>
                 </div>
               )}
 

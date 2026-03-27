@@ -85,7 +85,7 @@ export function CheckoutClarityPanel({
         </div>
 
         {charges.map((charge) => {
-          const chargeType = (charge as any).charge_type || 'overage';
+          const chargeType = charge.charge_type || 'overage';
           const isProductCost = chargeType === 'product_cost';
           const statusInfo = STATUS_BADGE[charge.status] ?? STATUS_BADGE.pending;
           const isWaived = charge.status === 'waived';
@@ -135,14 +135,14 @@ export function CheckoutClarityPanel({
               </div>
 
               {/* Salon profit (product cost only, manager view) */}
-              {isProductCost && isManagerOrAdmin && !isWaived && (charge as any).product_wholesale_cost != null && (
+              {isProductCost && isManagerOrAdmin && !isWaived && charge.product_wholesale_cost != null && (
                 <div className="flex items-center justify-between text-xs text-muted-foreground bg-muted/30 rounded-md px-2 py-1.5">
                   <div className="flex items-center gap-1">
                     <TrendingUp className="w-3 h-3 text-emerald-600" />
                     <span>Salon profit</span>
                   </div>
                   <span className="font-medium text-emerald-600 tabular-nums">
-                    ${(charge.charge_amount - ((charge as any).product_wholesale_cost ?? 0)).toFixed(2)}
+                    ${(charge.charge_amount - (charge.product_wholesale_cost ?? 0)).toFixed(2)}
                   </span>
                 </div>
               )}
