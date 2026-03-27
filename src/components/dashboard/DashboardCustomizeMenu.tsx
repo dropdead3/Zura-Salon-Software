@@ -372,12 +372,16 @@ export function DashboardCustomizeMenu({ variant = 'icon', roleContext }: Dashbo
     const isPinned = isCardPinned(cardId);
     const newIsVisible = !isPinned;
     const card = PINNABLE_CARDS.find(c => c.id === cardId);
+    const visibilityKey = getPinnedVisibilityKey(cardId);
+    const visibilityName = visibilityKey === 'operations_quick_stats'
+      ? 'Operations Quick Stats'
+      : card?.label || cardId;
     
     setIsTogglingPin(true);
     try {
       const rows = leadershipRoles.map(role => ({
-        element_key: cardId,
-        element_name: card?.label || cardId,
+        element_key: visibilityKey,
+        element_name: visibilityName,
         element_category: card?.category || 'Analytics Hub',
         role,
         is_visible: newIsVisible,
