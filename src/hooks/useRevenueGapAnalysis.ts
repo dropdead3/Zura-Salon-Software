@@ -140,6 +140,9 @@ export function useRevenueGapAnalysis(
       const cancelled = (allAppts ?? []).filter(a => a.status === 'cancelled');
       const noShows = (allAppts ?? []).filter(a => a.status === 'no_show');
       const completed = (allAppts ?? []).filter(a => a.status === 'completed');
+      const notConcluded = (allAppts ?? []).filter(a => 
+        a.status && !['cancelled', 'no_show', 'completed'].includes(a.status)
+      );
 
       // ── Build gap items for cancellations & no-shows ──
       const gapItems: GapItem[] = [];
