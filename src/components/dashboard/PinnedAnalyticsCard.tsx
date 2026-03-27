@@ -145,6 +145,11 @@ export function getDateRange(
         dateFrom: format(startOfMonth(now), 'yyyy-MM-dd'), 
         dateTo: format(now, 'yyyy-MM-dd') 
       };
+    case 'todayToEom':
+      return {
+        dateFrom: format(now, 'yyyy-MM-dd'),
+        dateTo: format(endOfMonth(now), 'yyyy-MM-dd'),
+      };
     case 'todayToPayday': {
       const nextPayDay = getNextPayDay(payScheduleSettings || null);
       return { 
