@@ -105,7 +105,7 @@ export const PAGE_EXPLAINERS: Record<string, PageExplainerEntry> = {
   },
   'my-graduation': {
     title: 'Graduation Tracker',
-    description: 'Track your journey through the assistant-to-stylist graduation program. See requirements, completed milestones, and what's left before your chair.',
+    description: `Track your journey through the assistant-to-stylist graduation program. See requirements, completed milestones, and what's left before your chair.`,
     icon: GraduationCap,
   },
   'weekly-wins': {
