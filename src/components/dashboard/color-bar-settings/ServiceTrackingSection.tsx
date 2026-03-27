@@ -583,7 +583,7 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                             )}
                             <button
                               className={cn(
-                                'px-3 py-1 rounded-full text-xs font-sans capitalize transition-colors border flex items-center gap-1 min-h-[44px] @[500px]:min-h-0',
+                                'px-3 py-1 rounded-full text-xs font-sans capitalize transition-colors border flex items-center gap-1 ',
                                 active
                                   ? 'bg-primary text-primary-foreground border-primary'
                                   : 'bg-transparent border-dashed border-muted-foreground/40 text-muted-foreground hover:border-muted-foreground'
@@ -633,7 +633,7 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                   )}
                                   <button
                                     className={cn(
-                                      'px-3 py-1 rounded-full text-xs font-sans capitalize transition-colors border flex items-center gap-1 justify-center min-h-[44px] @[500px]:min-h-0',
+                                      'px-3 py-1 rounded-full text-xs font-sans capitalize transition-colors border flex items-center gap-1 justify-center ',
                                       active
                                         ? 'bg-primary text-primary-foreground border-primary'
                                         : 'bg-transparent border-dashed border-muted-foreground/40 text-muted-foreground hover:border-muted-foreground'
