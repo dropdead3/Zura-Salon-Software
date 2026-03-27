@@ -31,6 +31,8 @@ import { DockClientAlertsBanner } from './DockClientAlertsBanner';
 import { DockFormulaHistorySheet } from './DockFormulaHistorySheet';
 import { isColorOrChemicalService } from '@/utils/serviceCategorization';
 import { useServiceLookup, type ContainerType } from '@/hooks/useServiceLookup';
+import { useDepleteMixSession } from '@/hooks/backroom/useDepleteMixSession';
+import { useCalculateOverageCharge } from '@/hooks/billing/useCalculateOverageCharge';
 
 interface DockServicesTabProps {
   appointment: DockAppointment;
