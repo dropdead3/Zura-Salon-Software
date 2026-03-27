@@ -671,7 +671,7 @@ export function DashboardCustomizeMenu({ variant = 'icon', roleContext }: Dashbo
             <>
               <div>
                 <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-sm font-medium text-muted-foreground">AVAILABLE ANALYTICS</h3>
+                  <h3 className="text-sm font-display font-medium text-muted-foreground tracking-wide">AVAILABLE ANALYTICS</h3>
                   {unpinnedCards.length > 1 && (
                     <button
                       type="button"
@@ -689,7 +689,7 @@ export function DashboardCustomizeMenu({ variant = 'icon', roleContext }: Dashbo
                 <div className="space-y-3">
                   {Object.entries(groupedUnpinnedCards).map(([category, cards]) => (
                     <div key={category}>
-                      <p className="text-[10px] font-medium text-muted-foreground/70 uppercase tracking-wider mb-1 px-1">{category}</p>
+                      <p className="text-[10px] font-display font-medium text-muted-foreground/70 uppercase tracking-wider mb-1 px-1">{category}</p>
                       <div className="space-y-1">
                         {cards.map(card => (
                           <SortablePinnedCardItem
