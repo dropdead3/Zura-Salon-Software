@@ -84,6 +84,8 @@ export function useRevenueGapAnalysis(
   enabled: boolean,
   locationId?: string | null
 ) {
+  const todayStr = new Date().toISOString().slice(0, 10);
+  const rangeIncludesToday = dateFrom <= todayStr && dateTo >= todayStr;
   return useQuery<RevenueGapAnalysis>({
     queryKey: ['revenue-gap-analysis', dateFrom, dateTo, locationId],
     queryFn: async () => {
@@ -246,13 +248,14 @@ export function useRevenueGapAnalysis(
         // Null-client appointments can never match POS — emit as individual gap items
         if (!a.phorest_client_id) {
           const price = Number(a.total_price) || 0;
+          const isApptToday = rangeIncludesToday && a.appointment_date === todayStr;
           if (price > 0) {
             gapItems.push({
               id: a.id,
               clientName: a.client_name ?? 'Walk-in',
               serviceName: a.service_name || 'Unknown service',
               stylistName: a.phorest_staff_id ? staffLookup.get(a.phorest_staff_id) ?? null : null,
-              reason: 'no_pos_record',
+              reason: isApptToday ? 'not_concluded' : 'no_pos_record',
               scheduledAmount: price,
               actualAmount: 0,
               variance: price,
@@ -316,9 +319,10 @@ export function useRevenueGapAnalysis(
 
         if (variance <= 1) return; // skip negligible
 
+        const isApptToday = rangeIncludesToday && scheduled.appointmentDate === todayStr;
         let reason: GapReason;
         if (!actual) {
-          reason = 'no_pos_record';
+          reason = isApptToday ? 'not_concluded' : 'no_pos_record';
         } else {
           const servicesChanged = JSON.stringify(scheduled.services.sort()) !== JSON.stringify(actual.services.sort());
           if (actual.hasDiscount) reason = 'discount';
