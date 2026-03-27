@@ -25,14 +25,17 @@ interface OverageChargeParams {
 }
 
 /**
- * Resolve a phorest_services ID from a service name.
- * Used when Dock context only has a name string.
+ * Resolve a services table ID from a service name.
+ * service_allowance_policies.service_id references the `services` table,
+ * NOT `phorest_services`. Using phorest_services would silently return
+ * mismatched UUIDs and break all policy lookups.
  */
 async function resolveServiceId(serviceName: string, organizationId: string): Promise<string | null> {
   const { data } = await supabase
-    .from('phorest_services')
+    .from('services' as any)
     .select('id')
     .eq('name', serviceName)
+    .eq('organization_id', organizationId)
     .eq('is_active', true)
     .limit(1)
     .maybeSingle();
