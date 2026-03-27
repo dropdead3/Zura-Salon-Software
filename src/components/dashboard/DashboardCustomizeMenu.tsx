@@ -1,5 +1,4 @@
 import { useState, useMemo } from 'react';
-import { ANALYTICS_CARD_PREVIEWS } from './analyticsCardPreviews';
 import { toast } from '@/hooks/use-toast';
 import { tokens } from '@/lib/design-tokens';
 import { Button } from '@/components/ui/button';
@@ -463,7 +462,7 @@ export function DashboardCustomizeMenu({ variant = 'icon', roleContext }: Dashbo
                           isPinned={true}
                           onToggle={() => handleTogglePinnedCard(cardId)}
                           isLoading={isTogglingPin}
-                          previewSrc={ANALYTICS_CARD_PREVIEWS[cardId]}
+                          
                         />
                       );
                     }
@@ -584,7 +583,7 @@ export function DashboardCustomizeMenu({ variant = 'icon', roleContext }: Dashbo
                       isPinned={false}
                       onToggle={() => handleTogglePinnedCard(card.id)}
                       isLoading={isTogglingPin}
-                      previewSrc={ANALYTICS_CARD_PREVIEWS[card.id]}
+                      
                     />
                   ))}
                 </div>
