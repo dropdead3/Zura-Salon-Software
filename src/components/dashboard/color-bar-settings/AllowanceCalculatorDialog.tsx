@@ -1816,58 +1816,59 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
 
     {/* Price adjustment confirmation dialog */}
     <AlertDialog open={showPriceConfirm} onOpenChange={setShowPriceConfirm}>
-      <AlertDialogContent className="border-none bg-gradient-to-b from-card via-card to-muted/20 shadow-2xl overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-transparent via-transparent to-muted/10 pointer-events-none" />
+      <AlertDialogContent className="max-w-md p-0 border-border/50 bg-card overflow-hidden gap-0">
+        {/* Header band */}
+        <div className="px-6 pt-6 pb-4">
+          <AlertDialogHeader className="space-y-1">
+            <AlertDialogTitle className="font-display uppercase tracking-wide text-sm text-foreground">
+              Price Adjustment
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-xs font-sans text-muted-foreground">
+              Update the base service price across all surfaces.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+        </div>
 
-        <AlertDialogHeader className="relative">
-          <div className="mx-auto mb-4 relative">
-            <div className="w-16 h-16 rounded-full bg-gradient-to-br from-amber-500/20 via-amber-500/10 to-muted/20 flex items-center justify-center ring-1 ring-amber-500/20">
-              <div className="w-11 h-11 rounded-full bg-gradient-to-br from-card to-muted/30 flex items-center justify-center shadow-inner">
-                <DollarSign className="h-5 w-5 text-amber-600 dark:text-amber-400" />
-              </div>
-            </div>
-            <div className="absolute inset-0 rounded-full bg-amber-500/10 blur-xl -z-10" />
+        {/* Price comparison strip */}
+        <div className="mx-6 mb-4 flex items-center gap-3 p-3 rounded-lg border border-border/50 bg-muted/30">
+          <div className="flex-1 text-center">
+            <span className="block text-[10px] font-display uppercase tracking-wider text-muted-foreground mb-0.5">Current</span>
+            <span className="text-base font-sans font-medium text-foreground tabular-nums">${effectiveServicePrice.toFixed(2)}</span>
           </div>
+          <ArrowRight className="w-4 h-4 text-muted-foreground/50 shrink-0" />
+          <div className="flex-1 text-center">
+            <span className="block text-[10px] font-display uppercase tracking-wider text-muted-foreground mb-0.5">New Price</span>
+            <span className="text-base font-sans font-medium text-emerald-500 tabular-nums">${healthResult?.suggestedServicePrice?.toFixed(2)}</span>
+          </div>
+        </div>
 
-          <AlertDialogTitle className="text-center font-display uppercase tracking-wide text-lg">
-            Confirm Service Price Adjustment
-          </AlertDialogTitle>
+        {/* Impact list */}
+        <div className="px-6 pb-4 space-y-3">
+          <p className="text-[10px] font-display uppercase tracking-wider text-muted-foreground">Reflected on</p>
+          <ul className="space-y-2">
+            {[
+              'Service Tracking & allowance calculations',
+              'Price Intelligence engine recommendations',
+              'Your public website services page',
+              'Location & level overrides referencing this base price',
+            ].map((item) => (
+              <li key={item} className="flex items-start gap-2 text-xs font-sans text-muted-foreground">
+                <Check className="w-3.5 h-3.5 mt-0.5 text-emerald-500 shrink-0" />
+                {item}
+              </li>
+            ))}
+          </ul>
 
-          <AlertDialogDescription asChild>
-            <div className="space-y-4 pt-2 font-sans text-sm text-muted-foreground">
-              <div className="flex items-center justify-center gap-4 p-4 rounded-xl bg-muted/50">
-                <div className="text-center">
-                  <div className="text-[10px] text-muted-foreground">Current</div>
-                  <div className="text-lg font-medium text-foreground tabular-nums">${effectiveServicePrice.toFixed(2)}</div>
-                </div>
-                <ArrowRight className="w-4 h-4 text-muted-foreground" />
-                <div className="text-center">
-                  <div className="text-[10px] text-muted-foreground">New Price</div>
-                  <div className="text-lg font-medium text-amber-600 dark:text-amber-400 tabular-nums">${healthResult?.suggestedServicePrice?.toFixed(2)}</div>
-                </div>
-              </div>
+          <p className="text-[11px] font-sans text-muted-foreground/70 pt-1">
+            Rounded to nearest $5 based on ${grandTotal.toFixed(2)} retail product cost and 8% industry target.
+          </p>
+        </div>
 
-              <div>
-                <p className="font-medium text-foreground text-xs mb-2">This change will be reflected on:</p>
-                <ul className="space-y-1.5 text-xs">
-                  <li className="flex items-start gap-2"><Check className="w-3.5 h-3.5 mt-0.5 text-emerald-500 flex-shrink-0" /> Service Tracking & allowance calculations</li>
-                  <li className="flex items-start gap-2"><Check className="w-3.5 h-3.5 mt-0.5 text-emerald-500 flex-shrink-0" /> Price Intelligence engine recommendations</li>
-                  <li className="flex items-start gap-2"><Check className="w-3.5 h-3.5 mt-0.5 text-emerald-500 flex-shrink-0" /> Your public website services page</li>
-                  <li className="flex items-start gap-2"><Check className="w-3.5 h-3.5 mt-0.5 text-emerald-500 flex-shrink-0" /> Location & level overrides referencing this base price</li>
-                </ul>
-              </div>
-
-              <p className="text-[11px] text-muted-foreground/80">
-                Price is rounded up to the nearest $5 based on your retail product cost of ${grandTotal.toFixed(2)} and the 8% industry target.
-              </p>
-            </div>
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-
-        <AlertDialogFooter className="sm:justify-center gap-3 relative">
-          <AlertDialogCancel className="flex-1 sm:flex-none">Cancel</AlertDialogCancel>
+        {/* Footer */}
+        <AlertDialogFooter className="border-t border-border/50 px-6 py-4 gap-2 sm:gap-2">
+          <AlertDialogCancel className="rounded-full h-9 px-5 text-xs font-sans">Cancel</AlertDialogCancel>
           <AlertDialogAction
-            className="flex-1 sm:flex-none bg-amber-600 hover:bg-amber-700 text-white shadow-lg"
+            className="rounded-full h-9 px-5 text-xs font-sans bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm"
             onClick={() => {
               const oldPrice = servicePrice;
               updateServicePriceMutation.mutate(healthResult?.suggestedServicePrice!, {
