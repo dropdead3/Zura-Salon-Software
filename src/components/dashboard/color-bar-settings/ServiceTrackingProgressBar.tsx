@@ -4,7 +4,7 @@
 import { useRef, useEffect, useState, useMemo } from 'react';
 import { cn } from '@/lib/utils';
 import { tokens } from '@/lib/design-tokens';
-import { CheckCircle2 } from 'lucide-react';
+import { CheckCircle2, Sparkles } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
