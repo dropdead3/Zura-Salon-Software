@@ -330,8 +330,14 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
     const type = getServiceType(s);
     // Chemical but not tracked
     if ((type === 'chemical' || type === 'suggested') && !s.is_backroom_tracked) return true;
-    // Tracked but missing components or allowance
+    // Tracked but missing policy entirely
     if (s.is_backroom_tracked && !allowanceByService.has(s.id)) return true;
+    // Tracked with policy but incomplete billing configuration
+    if (s.is_backroom_tracked) {
+      const p = allowanceByService.get(s.id);
+      if (p && (p.billing_mode === null || p.billing_mode === undefined)) return true;
+      if (p && p.billing_mode === 'allowance' && p.included_allowance_qty === 0 && p.overage_rate === 0) return true;
+    }
     return false;
   };
 
@@ -339,7 +345,10 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
   const milestones: ProgressMilestone[] = useMemo(() => {
     const chemicalOrSuggested = allServices.filter(s => getServiceType(s) !== 'standard');
     const tracked = allServices.filter(s => s.is_backroom_tracked);
-    const withPolicy = tracked.filter(s => allowanceByService.has(s.id));
+    const withPolicy = tracked.filter(s => {
+      const p = allowanceByService.get(s.id);
+      return p && p.billing_mode !== null && p.billing_mode !== undefined;
+    });
     const configured = tracked.filter(s => {
       const policy = allowanceByService.get(s.id);
       return policy?.is_active === true;
@@ -410,7 +419,12 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
       if (!groups.has(cat)) groups.set(cat, { services: [], configured: 0, tracked: 0 });
       const g = groups.get(cat)!;
       g.services.push(s);
-      if (s.backroom_config_dismissed || allowanceByService.has(s.id)) g.configured++;
+      const policy = allowanceByService.get(s.id);
+      const isFullyConfigured = s.backroom_config_dismissed || (
+        policy?.billing_mode === 'parts_and_labor' ||
+        (policy?.billing_mode === 'allowance' && policy.is_active && (policy.included_allowance_qty > 0 || policy.overage_rate > 0))
+      );
+      if (isFullyConfigured) g.configured++;
       if (s.is_backroom_tracked) g.tracked++;
     }
     return groups;
@@ -1030,7 +1044,7 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                               );
                                             })()}
                                             {/* Mark Configured footer */}
-                                            <div className="bg-primary/5 border-t border-primary/20 rounded-b-lg p-3 mt-3 flex items-center justify-between">
+                                            <div className="bg-amber-500/5 border-t border-amber-500/20 rounded-b-lg p-3 mt-3 flex items-center justify-between">
                                               {service.backroom_config_dismissed ? (
                                                 <div className="flex items-center gap-2 w-full justify-between">
                                                   <span className="text-xs font-sans text-green-600 dark:text-green-400 flex items-center gap-1.5">
