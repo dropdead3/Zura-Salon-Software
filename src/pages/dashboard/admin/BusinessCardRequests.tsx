@@ -222,10 +222,8 @@ export default function BusinessCardRequests() {
         <DashboardPageHeader
           title="Business Card Requests"
           description="Manage and process business card requests from team members."
-import { PageExplainer } from '@/components/ui/PageExplainer';
           className="mb-8"
         />
-        <PageExplainer pageId="business-card-requests" />
 
         {/* Stats Cards */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">

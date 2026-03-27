@@ -208,7 +208,6 @@ export default function TeamHub() {
           title="Operations Hub"
           description="People management, development, and team operations"
         />
-        <PageExplainer pageId="team-hub" />
 
         {/* Hub Gateway */}
         <CategorySection title="Hubs">
@@ -321,7 +320,6 @@ export default function TeamHub() {
             icon={HandHelping}
             title="Assistant Requests"
             description="Manage help requests from stylists"
-import { PageExplainer } from '@/components/ui/PageExplainer';
             stat={stats?.pendingAssistantRequests || null}
             statLabel="pending"
           />

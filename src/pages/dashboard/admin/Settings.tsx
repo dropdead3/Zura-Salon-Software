@@ -787,7 +787,6 @@ export default function Settings() {
       toast({
         title: 'User Deactivated',
         description: 'User has been removed from active staff.',
-import { PageExplainer } from '@/components/ui/PageExplainer';
       });
     }
   };
@@ -996,7 +995,6 @@ import { PageExplainer } from '@/components/ui/PageExplainer';
             <DashboardPageHeader
               title={categoriesMap[activeCategory]?.label.toUpperCase() ?? ''}
             />
-        <PageExplainer pageId="settings" />
           </div>
 
           {/* Category Content */}

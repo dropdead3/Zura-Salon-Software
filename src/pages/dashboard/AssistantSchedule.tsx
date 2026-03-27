@@ -493,7 +493,6 @@ export default function AssistantSchedule() {
         <DashboardPageHeader
           title={isStylist ? 'Request An Assistant' : isStylistAssistant ? 'Assisting Requests' : 'Assistant Schedule'}
           description={isStylist ? 'Request help from salon assistants' : isStylistAssistant ? 'View and manage your assignments' : 'Overview of all assistant request activity'}
-import { PageExplainer } from '@/components/ui/PageExplainer';
           className="mb-6"
           actions={
             <div className="flex items-center gap-2">
@@ -501,7 +500,6 @@ import { PageExplainer } from '@/components/ui/PageExplainer';
                 <Select value={locationFilter} onValueChange={setLocationFilter}>
                   <SelectTrigger className="w-[180px]">
                     <MapPin className="h-4 w-4 mr-2 text-muted-foreground" />
-        <PageExplainer pageId="assistant-schedule" />
                     <SelectValue placeholder="All Locations" />
                   </SelectTrigger>
                   <SelectContent>

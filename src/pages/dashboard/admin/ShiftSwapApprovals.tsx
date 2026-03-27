@@ -195,10 +195,8 @@ export default function ShiftSwapApprovals() {
         <DashboardPageHeader
           title="Shift Swap Approvals"
           description="Review and approve shift swap requests from your team"
-import { PageExplainer } from '@/components/ui/PageExplainer';
           className="mb-6"
         />
-        <PageExplainer pageId="shift-swap-approvals" />
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab}>
