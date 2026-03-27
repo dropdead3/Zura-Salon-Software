@@ -20,6 +20,7 @@ import {
   Users2, Package, ShieldAlert, BarChart3, Brain, MapPin,
 } from 'lucide-react';
 import { ColorBarSetupWizard } from './ColorBarSetupWizard';
+import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { ColorBarInsightsSection } from './ColorBarInsightsSection';
 import { SupplyIntelligenceDashboard } from '@/components/dashboard/color-bar/supply-intelligence/SupplyIntelligenceDashboard';
 import { formatRelativeTime } from '@/lib/format';
