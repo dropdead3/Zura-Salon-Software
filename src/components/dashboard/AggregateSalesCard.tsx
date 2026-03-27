@@ -1428,13 +1428,11 @@ export function AggregateSalesCard({
 
         {/* Sidebar - Top Performers & Donut */}
         <div className="flex flex-col gap-6 min-w-0 order-last xl:order-none">
-          <div className="flex-1">
-            <TopPerformersCard 
-              performers={stylistData || []} 
-              isLoading={stylistLoading}
-              showInfoTooltip
-            />
-          </div>
+          <TopPerformersCard 
+            performers={stylistData || []} 
+            isLoading={stylistLoading}
+            showInfoTooltip
+          />
           <RevenueDonutChart
             serviceRevenue={isToday ? (todayActual?.hasActualData ? todayActual.actualServiceRevenue : 0) : displayMetrics.serviceRevenue} 
             productRevenue={isToday ? (todayActual?.hasActualData ? todayActual.actualProductRevenue : 0) : displayMetrics.productRevenue}
