@@ -755,9 +755,12 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                          className="px-6 py-4 bg-muted/30 border-t border-border/30"
                                        >
                                         {service.is_backroom_tracked ? (
-                                           <div className="space-y-4">
-                                             {/* Chemical toggle + vessel selector — FIRST */}
-                                             <div className="flex flex-wrap items-center gap-4 pb-3 mb-3 border-b border-border/40">
+                                            <div className="space-y-5">
+                                              {/* ─── Section 1: Tracking ─── */}
+                                              <div>
+                                                <p className="text-[10px] font-display uppercase tracking-wider text-muted-foreground mb-2">Tracking</p>
+                                                <div className="pl-3 border-l border-border/40">
+                                              <div className="flex flex-wrap items-center gap-4">
                                                <div className="flex items-center gap-2">
                                                  <label className="text-[10px] font-sans text-muted-foreground whitespace-nowrap">Requires Color/Chemical</label>
                                                  <Switch
