@@ -339,21 +339,30 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
   const milestones: ProgressMilestone[] = useMemo(() => {
     const chemicalOrSuggested = allServices.filter(s => getServiceType(s) !== 'standard');
     const tracked = allServices.filter(s => s.is_backroom_tracked);
-    const classified = allServices.filter(s => s.is_chemical_service !== null);
-    const withAllowance = tracked.filter(s => allowanceByService.has(s.id));
+    const withPolicy = tracked.filter(s => allowanceByService.has(s.id));
+    const configured = tracked.filter(s => {
+      const policy = allowanceByService.get(s.id);
+      return policy?.is_active === true;
+    });
 
     return [
       {
-        label: 'Classify & Track Services',
-        current: classified.length,
-        total: allServices.length,
-        tooltip: 'Review each service and mark whether it requires color or chemical products.',
+        label: 'Track Services',
+        current: tracked.length,
+        total: chemicalOrSuggested.length,
+        tooltip: 'Enable color bar tracking for services that use color or chemical products.',
       },
       {
-        label: 'Set Allowances',
-        current: withAllowance.length,
+        label: 'Set Billing Method',
+        current: withPolicy.length,
         total: tracked.length,
-        tooltip: 'Define supply allowances and overage billing rules for tracked services.',
+        tooltip: 'Choose how each service is billed — Allowance (recipe-based) or Parts & Labor (cost pass-through).',
+      },
+      {
+        label: 'Configure Allowances',
+        current: configured.length,
+        total: tracked.length,
+        tooltip: 'Build recipes for allowance services or confirm pass-through settings for Parts & Labor services.',
       },
     ];
   }, [allServices, allowanceByService]);
