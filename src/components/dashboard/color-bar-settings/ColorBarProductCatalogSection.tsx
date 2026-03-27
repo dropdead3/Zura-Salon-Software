@@ -47,7 +47,7 @@ import { Loader2, Search, Package, ArrowRight, ArrowLeft, Library, Check, Chevro
 import { Checkbox } from '@/components/ui/checkbox';
 import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { toast } from 'sonner';
-import { Infotainer } from '@/components/ui/Infotainer';
+import { PageExplainer } from '@/components/ui/PageExplainer';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { SupplyLibraryDialog } from './SupplyLibraryDialog';
 import { ColorBarBulkPricingDialog } from './ColorBarBulkPricingDialog';
