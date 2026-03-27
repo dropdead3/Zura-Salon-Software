@@ -2,6 +2,8 @@
  * AllowanceCalculatorDialog — Bowl-based product allowance calculator.
  * Builds recipes from real catalog products to derive a dollar-based allowance.
  * Product picker uses a 3-step Brand → Category → Product drill-down.
+ *
+ * Two-panel layout: left = persistent picker, right = recipe/bowls.
  */
 
 import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
@@ -11,6 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import { Plus, Trash2, Loader2, Beaker, FlaskConical, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, Palette, Search, TestTube2, Check, ArrowRight, Copy, Eraser, Pencil, ArrowUpDown, Info, DollarSign, AlertTriangle, X } from 'lucide-react';
@@ -85,7 +88,7 @@ interface BowlState {
 }
 
 interface PickerState {
-  step: 'brand' | 'category' | 'product' | 'closed';
+  step: 'brand' | 'category' | 'product';
   selectedBrand: string | null;
   selectedCategory: string | null;
   search: string;
@@ -112,13 +115,10 @@ const SEMI_PERMANENT_KEYWORDS = ['semi-permanent', 'semi permanent', 'semi'];
 const DEVELOPER_REQUIRING_KEYWORDS = ['permanent', 'demi'];
 
 function requiresDeveloper(product: CatalogProduct): boolean {
-  // Data-first: use structured color_type if set
   if (product.color_type) {
     return product.color_type === 'permanent' || product.color_type === 'demi_permanent';
   }
-  // Explicit category check: semi-permanent category never needs developer
   if ((product.category || '').toLowerCase() === 'semi-permanent') return false;
-  // Fallback: keyword detection for legacy/unclassified products
   const name = (product.name || '').toLowerCase();
   const category = (product.category || '').toLowerCase();
   const combined = `${name} ${category}`;
@@ -128,7 +128,6 @@ function requiresDeveloper(product: CatalogProduct): boolean {
 
 function computeLineCost(qty: number, costPerGram: number, isDeveloper: boolean, developerRatio: number, colorQty: number): number {
   if (isDeveloper) {
-    // When no color products exist, use the developer's direct quantity instead of ratio
     const devQty = colorQty > 0 ? colorQty * developerRatio : qty;
     return Math.round(devQty * costPerGram * 100) / 100;
   }
@@ -196,13 +195,13 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
   const { data: existingBowls } = useAllowanceBowls(serviceId);
   const { data: existingBaselines } = useServiceRecipeBaselines(serviceId);
 
-
-
   const upsertPolicy = useUpsertAllowancePolicy();
 
   const [bowls, setBowls] = useState<BowlState[]>([]);
   const [saving, setSaving] = useState(false);
-  const [bowlPickers, setBowlPickers] = useState<Record<number, PickerState>>({});
+  // Single shared picker state + active bowl index
+  const [activeBowlIdx, setActiveBowlIdx] = useState(0);
+  const [pickerState, setPickerStateRaw] = useState<PickerState>(DEFAULT_PICKER);
   const [editingLabelIdx, setEditingLabelIdx] = useState<number | null>(null);
   const [modeledServicePrice, setModeledServicePrice] = useState<number | null>(null);
   const [highPricePopoverOpen, setHighPricePopoverOpen] = useState(false);
@@ -220,15 +219,8 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
     return currentSnapshot !== initialBowlsRef.current || modeledServicePrice !== null;
   }, [bowls, modeledServicePrice]);
 
-  const getPickerState = useCallback((bowlIdx: number): PickerState => {
-    return bowlPickers[bowlIdx] || DEFAULT_PICKER;
-  }, [bowlPickers]);
-
-  const setPickerState = useCallback((bowlIdx: number, update: Partial<PickerState>) => {
-    setBowlPickers((prev) => ({
-      ...prev,
-      [bowlIdx]: { ...(prev[bowlIdx] || DEFAULT_PICKER), ...update },
-    }));
+  const setPickerState = useCallback((update: Partial<PickerState>) => {
+    setPickerStateRaw((prev) => ({ ...prev, ...update }));
   }, []);
 
   // Derived brand list from catalog
@@ -309,25 +301,32 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
       initialBowlsRef.current = snapshot;
       hasInitRef.current = true;
     } else if (existingBowls && existingBaselines) {
-      // No existing bowls — create default
       const defaultBowls = [{ id: null, bowlNumber: 1, label: vesselLabel(defaultVesselType, 1), vesselType: defaultVesselType, lines: [] as BowlLine[], collapsed: false }];
       setBowls(defaultBowls);
       const snapshot = JSON.stringify(defaultBowls.map(b => ({ label: b.label, lines: b.lines.map(l => ({ productId: l.productId, quantity: l.quantity, developerRatio: l.developerRatio })), vesselType: b.vesselType })));
       initialBowlsRef.current = snapshot;
       hasInitRef.current = true;
     }
-    setBowlPickers({});
+    setPickerStateRaw(DEFAULT_PICKER);
+    setActiveBowlIdx(0);
     setEditingLabelIdx(null);
     setModeledServicePrice(null);
   }, [open, existingBowls, existingBaselines, catalogProducts]);
 
-  // Force-close effect: runs with current onOpenChange prop, avoiding stale closures
+  // Force-close effect
   useEffect(() => {
     if (forceClose) {
       setForceClose(false);
       onOpenChange(false);
     }
   }, [forceClose, onOpenChange]);
+
+  // Clamp activeBowlIdx when bowls change
+  useEffect(() => {
+    if (activeBowlIdx >= bowls.length && bowls.length > 0) {
+      setActiveBowlIdx(bowls.length - 1);
+    }
+  }, [bowls.length, activeBowlIdx]);
 
   const productBowlMap = useMemo(() => {
     const map = new Map<string, string[]>();
@@ -393,10 +392,15 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
   });
 
   const addVessel = useCallback((type: 'bowl' | 'bottle' = defaultVesselType) => {
-    setBowls((prev) => [
-      ...prev,
-      { id: null, bowlNumber: prev.length + 1, label: vesselLabel(type, prev.length + 1), vesselType: type, lines: [], collapsed: false },
-    ]);
+    setBowls((prev) => {
+      const next = [
+        ...prev,
+        { id: null, bowlNumber: prev.length + 1, label: vesselLabel(type, prev.length + 1), vesselType: type, lines: [], collapsed: false },
+      ];
+      // Auto-select the new bowl in the picker
+      setActiveBowlIdx(next.length - 1);
+      return next;
+    });
   }, [defaultVesselType]);
 
   const removedBowlRef = useRef<{ idx: number; bowl: BowlState } | null>(null);
@@ -408,7 +412,6 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
       return next.map((b, i) => ({ ...b, bowlNumber: i + 1, label: vesselLabel(b.vesselType, i + 1) }));
     });
     if (removed) {
-      // Dismiss any previous undo toast to prevent stale undo
       if (lastUndoToastRef.current) toast.dismiss(lastUndoToastRef.current);
       removedBowlRef.current = { idx, bowl: removed };
       const toastId = toast(`Removed ${removed.label}`, {
@@ -476,7 +479,6 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
       const source = prev[idx];
       if (!source) return prev;
       const clonedLines = source.lines.map((l) => ({ ...l, localId: crypto.randomUUID() }));
-      // Recalculate costs for cloned lines in the new bowl context
       const colorQty = clonedLines.filter((l) => !l.isDeveloper).reduce((s, l) => s + l.quantity, 0);
       clonedLines.forEach((line) => {
         line.lineCost = computeLineCost(line.quantity, line.costPerGram, line.isDeveloper, line.developerRatio, colorQty);
@@ -524,7 +526,6 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
     (bowlIdx: number, product: CatalogProduct) => {
       const cpg = getRetailCostPerGram(product, defaultMarkupPct);
       const asDeveloper = isDeveloperProduct(product);
-      // Give developers a default 30g quantity when no color lines exist in the bowl
       const currentBowl = bowls[bowlIdx];
       const hasColorLines = currentBowl?.lines.some((l) => !l.isDeveloper) ?? false;
       const devDefaultQty = asDeveloper && !hasColorLines ? 30 : (asDeveloper ? 0 : 30);
@@ -553,13 +554,12 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
         })
       );
 
-      // Developer warning logic — use the lines we just built, not stale state
+      // Developer warning logic
       setBowls((prev) => {
         const updatedLines = prev[bowlIdx]?.lines ?? [];
         const hasDev = updatedLines.some((l) => l.isDeveloper);
         const needsDev = updatedLines.some((l) => {
           if (l.isDeveloper) return false;
-          // Build a minimal CatalogProduct-like object from the line + the product we just added
           const cat = l.localId === newLine.localId ? product : catalogProducts?.find((cp) => cp.id === l.productId);
           return cat ? requiresDeveloper(cat) : false;
         });
@@ -569,7 +569,7 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
         } else {
           setDeveloperWarningBowls((p) => new Set(p).add(bowlIdx));
         }
-        return prev; // no mutation — just piggybacking on the latest state
+        return prev;
       });
     },
     [bowls, defaultMarkupPct, catalogProducts]
@@ -578,7 +578,6 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
   const removedLineRef = useRef<{ bowlIdx: number; line: BowlLine; position: number } | null>(null);
 
   const removeLineFromBowl = useCallback((bowlIdx: number, lineLocalId: string) => {
-    // Capture the line for undo
     const bowl = bowls[bowlIdx];
     const lineIdx = bowl?.lines.findIndex((l) => l.localId === lineLocalId) ?? -1;
     const removedLine = bowl?.lines[lineIdx];
@@ -594,7 +593,6 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
         return { ...b, lines };
       });
 
-      // Re-evaluate developer warning for this bowl after removal
       const updatedLines = next[bowlIdx]?.lines ?? [];
       const hasDev = updatedLines.some((l) => l.isDeveloper);
       const needsDev = updatedLines.some((l) => {
@@ -654,7 +652,6 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
   }, []);
 
   const updateDevRatio = useCallback((bowlIdx: number, lineLocalId: string, ratio: number) => {
-    // Clamp ratio to safe range [0.5, 4]
     const clamped = Math.min(4, Math.max(0.5, ratio || 1));
     setBowls((prev) =>
       prev.map((b, i) => {
@@ -673,20 +670,16 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
     if (!orgId) return;
     setSaving(true);
 
-    // Auto-remove empty bowls (except the first) before saving
     const activeBowls = bowls.filter((b, i) => i === 0 || b.lines.length > 0);
     const bowlsToSave = activeBowls.map((b, i) => ({ ...b, bowlNumber: i + 1, label: vesselLabel(b.vesselType, i + 1) }));
-    // Update local state to reflect removed empty bowls
     if (bowlsToSave.length !== bowls.length) {
       setBowls(bowlsToSave);
     }
 
-    // Snapshot existing data for rollback
     const existingBowlIds = existingBowls?.map(b => b.id) || [];
     const existingBaselineIds = existingBaselines?.map(bl => bl.id) || [];
 
     try {
-      // Phase 1: Batch delete existing data
       if (existingBaselineIds.length > 0) {
         const { error: blErr } = await supabase
           .from('service_recipe_baselines')
@@ -702,7 +695,6 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
         if (bowlErr) throw new Error('Failed to clear bowls: ' + bowlErr.message);
       }
 
-      // Phase 2: Insert new data using raw supabase calls to avoid per-row cache invalidation
       const userId = (await supabase.auth.getUser()).data.user?.id;
 
       for (const bowl of bowlsToSave) {
@@ -720,7 +712,6 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
           .single();
         if (bowlInsertErr || !savedBowl) throw new Error('Failed to save bowl: ' + (bowlInsertErr?.message ?? 'unknown'));
 
-        // Batch insert all baselines for this bowl
         const baselineRows = bowl.lines.map((line) => ({
           organization_id: orgId,
           service_id: serviceId,
@@ -741,7 +732,6 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
         if (blInsertErr) throw new Error('Failed to save baselines: ' + blInsertErr.message);
       }
 
-      // Phase 3: Update policy
       await upsertPolicy.mutateAsync({
         organization_id: orgId,
         service_id: serviceId,
@@ -751,17 +741,15 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
         overage_rate_type: 'per_unit',
         billing_mode: 'allowance',
         is_active: true,
-      notes: `Recipe-based: $${grandTotal.toFixed(2)} product allowance across ${bowlsToSave.filter((b) => b.lines.length > 0).length} vessel(s)`,
-      allowance_health_status: healthResult?.status ?? null,
+        notes: `Recipe-based: $${grandTotal.toFixed(2)} product allowance across ${bowlsToSave.filter((b) => b.lines.length > 0).length} vessel(s)`,
+        allowance_health_status: healthResult?.status ?? null,
         allowance_health_pct: healthResult?.allowancePct ?? null,
         last_health_check_at: healthResult ? new Date().toISOString() : null,
       });
 
-      // Invalidate caches once after all inserts
       queryClient.invalidateQueries({ queryKey: ['allowance-bowls'] });
       queryClient.invalidateQueries({ queryKey: ['service-recipe-baselines'] });
 
-      // Update snapshot so isDirty resets
       initialBowlsRef.current = JSON.stringify(bowlsToSave.map(b => ({ label: b.label, lines: b.lines.map(l => ({ productId: l.productId, quantity: l.quantity, developerRatio: l.developerRatio })), vesselType: b.vesselType })));
       setModeledServicePrice(null);
 
@@ -829,7 +817,7 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
     }
   }, [orgId, serviceId, existingBowls, existingBaselines, upsertPolicy, queryClient, onOpenChange, defaultVesselType]);
 
-   // Cmd+S / Ctrl+S keyboard shortcut
+  // Cmd+S / Ctrl+S keyboard shortcut
   useEffect(() => {
     if (!open) return;
     const handler = (e: KeyboardEvent) => {
@@ -842,18 +830,18 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
     return () => window.removeEventListener('keydown', handler);
   }, [open, grandTotal, saving, handleSave]);
 
-  // ─── Render ────────────────────────────────────────────────────────────────
+  // ─── Picker Panel (rendered once in left panel) ────────────────────────────
 
-  const renderPickerPanel = (bowlIdx: number) => {
-    const picker = getPickerState(bowlIdx);
+  const renderPickerPanel = () => {
+    const bowlIdx = activeBowlIdx;
+    const picker = pickerState;
     const searchLower = picker.search.toLowerCase().trim();
 
     // Step 1: Brand list
     if (picker.step === 'brand') {
-      // Show skeleton only while actively loading; show empty state if catalog is genuinely empty
       if (catalogLoading) {
         return (
-          <div className="pt-2 space-y-1.5">
+          <div className="space-y-1.5">
             <Skeleton className="h-8 w-full rounded-full" />
             <div className="rounded-lg border border-border/40 bg-background p-1">
               {[1, 2, 3].map((i) => (
@@ -866,7 +854,7 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
 
       if (catalogProducts.length === 0) {
         return (
-          <div className="pt-2 px-3 py-6 text-center">
+          <div className="px-3 py-6 text-center">
             <p className="text-xs font-sans text-muted-foreground">No supply products found in your catalog.</p>
             <p className="text-[11px] font-sans text-muted-foreground/60 mt-1">Add products in Inventory to use the allowance calculator.</p>
           </div>
@@ -878,18 +866,18 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
         : brandList;
 
       return (
-        <div className="pt-2 space-y-1.5">
+        <div className="space-y-1.5">
           <div className="relative">
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
             <Input
               placeholder="Search brands..."
               value={picker.search}
-              onChange={(e) => setPickerState(bowlIdx, { search: e.target.value })}
+              onChange={(e) => setPickerState({ search: e.target.value })}
               className="h-8 text-xs pl-8"
             />
           </div>
           <div
-            className="max-h-48 overflow-y-auto rounded-lg border border-border/40 bg-background"
+            className="flex-1 overflow-y-auto rounded-lg border border-border/40 bg-background"
             role="listbox"
             onKeyDown={(e) => {
               const items = e.currentTarget.querySelectorAll<HTMLButtonElement>('[role="option"]');
@@ -906,7 +894,7 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
                 key={brand}
                 role="option"
                 className="w-full flex items-center justify-between px-3 py-2.5 hover:bg-muted/30 focus:bg-muted/30 focus:outline-none transition-colors text-left group"
-                onClick={() => setPickerState(bowlIdx, { step: 'category', selectedBrand: brand })}
+                onClick={() => setPickerState({ step: 'category', selectedBrand: brand })}
               >
                 <span className="text-xs font-sans text-foreground">{brand}</span>
                 <div className="flex items-center gap-1.5">
@@ -928,11 +916,10 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
         : categories;
 
       return (
-        <div className="pt-2 space-y-1.5">
-          {/* Breadcrumb back */}
+        <div className="space-y-1.5">
           <button
             className="flex items-center gap-1 text-xs font-sans text-muted-foreground hover:text-foreground transition-colors"
-            onClick={() => setPickerState(bowlIdx, { step: 'brand', selectedBrand: null, selectedCategory: null })}
+            onClick={() => setPickerState({ step: 'brand', selectedBrand: null, selectedCategory: null, search: '' })}
           >
             <ChevronLeft className="w-3.5 h-3.5" />
             <span className="font-medium text-foreground">{picker.selectedBrand}</span>
@@ -943,12 +930,12 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
             <Input
               placeholder="Search categories..."
               value={picker.search}
-              onChange={(e) => setPickerState(bowlIdx, { search: e.target.value })}
+              onChange={(e) => setPickerState({ search: e.target.value })}
               className="h-8 text-xs pl-8"
             />
           </div>
           <div
-            className="max-h-48 overflow-y-auto rounded-lg border border-border/40 bg-background"
+            className="flex-1 overflow-y-auto rounded-lg border border-border/40 bg-background"
             role="listbox"
             onKeyDown={(e) => {
               const items = e.currentTarget.querySelectorAll<HTMLButtonElement>('[role="option"]');
@@ -965,7 +952,7 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
                 key={category}
                 role="option"
                 className="w-full flex items-center justify-between px-3 py-2.5 hover:bg-muted/30 focus:bg-muted/30 focus:outline-none transition-colors text-left group"
-                onClick={() => setPickerState(bowlIdx, { step: 'product', selectedCategory: category })}
+                onClick={() => setPickerState({ step: 'product', selectedCategory: category })}
               >
                 <span className="text-xs font-sans text-foreground">{formatCategoryLabel(category)}</span>
                 <div className="flex items-center gap-1.5">
@@ -987,31 +974,28 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
         : products;
 
       const bowl = bowls[bowlIdx];
-      const addedCount = bowl?.lines.length ?? 0;
       const addedProductIds = new Set(bowl?.lines.map((l) => l.productId) ?? []);
 
       return (
-        <div className="pt-2 space-y-1.5">
-          {/* Breadcrumb back + ingredient counter */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-1 text-xs font-sans text-muted-foreground">
-              <button
-                className="hover:text-foreground transition-colors flex items-center gap-0.5"
-                onClick={() => setPickerState(bowlIdx, { step: 'brand', selectedBrand: null, selectedCategory: null })}
-              >
-                <ChevronLeft className="w-3.5 h-3.5" />
-                Brands
-              </button>
-              <span className="text-muted-foreground/40">/</span>
-              <button
-                className="hover:text-foreground transition-colors"
-                onClick={() => setPickerState(bowlIdx, { step: 'category', selectedCategory: null })}
-              >
-                <span className="font-medium text-foreground">{picker.selectedBrand}</span>
-              </button>
-              <span className="text-muted-foreground/40">/</span>
-              <span className="font-medium text-foreground">{picker.selectedCategory ? formatCategoryLabel(picker.selectedCategory) : ''}</span>
-            </div>
+        <div className="space-y-1.5">
+          {/* Breadcrumb */}
+          <div className="flex items-center gap-1 text-xs font-sans text-muted-foreground">
+            <button
+              className="hover:text-foreground transition-colors flex items-center gap-0.5"
+              onClick={() => setPickerState({ step: 'brand', selectedBrand: null, selectedCategory: null, search: '' })}
+            >
+              <ChevronLeft className="w-3.5 h-3.5" />
+              Brands
+            </button>
+            <span className="text-muted-foreground/40">/</span>
+            <button
+              className="hover:text-foreground transition-colors"
+              onClick={() => setPickerState({ step: 'category', selectedCategory: null, search: '' })}
+            >
+              <span className="font-medium text-foreground">{picker.selectedBrand}</span>
+            </button>
+            <span className="text-muted-foreground/40">/</span>
+            <span className="font-medium text-foreground">{picker.selectedCategory ? formatCategoryLabel(picker.selectedCategory) : ''}</span>
           </div>
 
           <div className="relative">
@@ -1019,11 +1003,11 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
             <Input
               placeholder="Search products..."
               value={picker.search}
-              onChange={(e) => setPickerState(bowlIdx, { search: e.target.value })}
+              onChange={(e) => setPickerState({ search: e.target.value })}
               className="h-8 text-xs pl-8"
             />
           </div>
-          <div className="max-h-48 overflow-y-auto rounded-lg border border-border/40 bg-background">
+          <div className="flex-1 overflow-y-auto rounded-lg border border-border/40 bg-background">
             {filtered.length === 0 && (
               <div className="px-3 py-6 text-xs text-center text-muted-foreground">No products found</div>
             )}
@@ -1048,10 +1032,9 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
                     className="w-5 h-5 rounded-full border border-border/60 shrink-0"
                     style={{ backgroundColor: p.swatch_color || 'hsl(var(--muted))' }}
                   />
-                   <div className="flex-1 min-w-0">
+                  <div className="flex-1 min-w-0">
                     <div className="text-xs font-sans text-foreground truncate">
                       {p.name}
-                      {/* Cross-bowl indicator */}
                       {(() => {
                         const bowlLabels = productBowlMap.get(p.id) || [];
                         const currentBowlLabel = bowls[bowlIdx]?.label;
@@ -1089,43 +1072,23 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
               );
             })}
           </div>
-          {/* Action buttons */}
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              className="flex-1 h-8 text-xs"
-              onClick={() => setPickerState(bowlIdx, { step: 'brand', selectedBrand: null, selectedCategory: null, search: '' })}
-            >
-              + Add Another Product
-            </Button>
-            <Button
-              size="sm"
-              className="flex-1 h-8 text-xs"
-              onClick={() => setPickerState(bowlIdx, { step: 'closed' })}
-            >
-              Done Adding
-            </Button>
-          </div>
+          {/* Back to brands button */}
+          <Button
+            variant="outline"
+            size="sm"
+            className="w-full h-8 text-xs"
+            onClick={() => setPickerState({ step: 'brand', selectedBrand: null, selectedCategory: null, search: '' })}
+          >
+            + Add Another Product
+          </Button>
         </div>
-      );
-    }
-
-    if (picker.step === 'closed') {
-      return (
-        <Button
-          variant="outline"
-          size="sm"
-          className="w-full h-8 text-xs mt-2"
-          onClick={() => setPickerState(bowlIdx, { step: 'brand', selectedBrand: null, selectedCategory: null, search: '' })}
-        >
-          + Add Products
-        </Button>
       );
     }
 
     return null;
   };
+
+  // ─── Render ────────────────────────────────────────────────────────────────
 
   return (
     <>
@@ -1142,7 +1105,7 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
       }
       onOpenChange(newOpen);
     }}>
-      <DialogContent className="max-w-4xl max-h-[90vh] p-0 overflow-hidden flex flex-col">
+      <DialogContent className="max-w-5xl max-h-[90vh] p-0 overflow-hidden flex flex-col">
         <DialogHeader className="px-6 pt-5 pb-4 border-b border-border/40 shrink-0">
           <div className="flex items-center gap-2">
             <DialogTitle className={cn(tokens.card.title)}>Product Allowance Calculator</DialogTitle>
@@ -1156,7 +1119,8 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
           </DialogDescription>
         </DialogHeader>
 
-        <div className="flex-1 min-h-0 overflow-y-auto relative">
+        {/* Two-panel layout */}
+        <div className="flex-1 min-h-0 flex flex-col md:flex-row relative">
           {saving && (
             <div className="absolute inset-0 bg-background/60 backdrop-blur-[1px] z-10 flex items-center justify-center">
               <div className="flex items-center gap-2 text-sm font-sans text-muted-foreground">
@@ -1165,7 +1129,47 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
               </div>
             </div>
           )}
-          <div className="px-6 py-4 space-y-4">
+
+          {/* ─── Left Panel: Product Picker ─── */}
+          <div className="w-full md:w-[320px] shrink-0 border-b md:border-b-0 md:border-r border-border/40 p-4 flex flex-col gap-3 overflow-y-auto max-h-[40vh] md:max-h-none">
+            {/* Bowl selector */}
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-display tracking-[0.08em] uppercase text-muted-foreground">
+                Adding to
+              </label>
+              {bowls.length === 1 ? (
+                <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-muted/30 border border-border/40">
+                  {(() => { const Icon = VesselIcon(bowls[0]?.vesselType ?? 'bowl'); return <Icon className="w-3.5 h-3.5 text-primary" />; })()}
+                  <span className="text-sm font-sans font-medium text-foreground">{bowls[0]?.label ?? 'Bowl 1'}</span>
+                </div>
+              ) : (
+                <Select value={String(activeBowlIdx)} onValueChange={(v) => setActiveBowlIdx(Number(v))}>
+                  <SelectTrigger className="h-9 text-sm rounded-lg">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {bowls.map((b, idx) => (
+                      <SelectItem key={idx} value={String(idx)}>
+                        <div className="flex items-center gap-2">
+                          {(() => { const Icon = VesselIcon(b.vesselType); return <Icon className="w-3.5 h-3.5 text-primary" />; })()}
+                          <span>{b.label}</span>
+                          {b.lines.length > 0 && (
+                            <Badge variant="secondary" className="text-[10px] px-1.5 py-0">{b.lines.length}</Badge>
+                          )}
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            </div>
+
+            {/* Picker drill-down */}
+            {renderPickerPanel()}
+          </div>
+
+          {/* ─── Right Panel: Recipe / Bowls ─── */}
+          <div className="flex-1 min-w-0 overflow-y-auto p-4 space-y-4">
             {bowls.map((bowl, bowlIdx) => {
               const bowlWeight = getBowlWeight(bowl);
               const bowlCost = bowl.lines.reduce((s, l) => s + l.lineCost, 0);
@@ -1179,7 +1183,8 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
                   "rounded-xl border overflow-hidden",
                   bowl.vesselType === 'bottle'
                     ? "border-blue-500/20 bg-blue-500/5 dark:bg-blue-500/5"
-                    : "border-border/60 bg-card/50"
+                    : "border-border/60 bg-card/50",
+                  activeBowlIdx === bowlIdx && "ring-1 ring-primary/30"
                 )}>
                   {/* Vessel header */}
                   <div
@@ -1361,25 +1366,19 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
                         </div>
                       )}
 
-                      {/* Brand → Category → Product picker */}
-                      {renderPickerPanel(bowlIdx)}
-
-                      {/* Empty state */}
-                      {bowl.lines.length === 0 && !bowlPickers[bowlIdx] && (
-                        <div className="flex flex-col items-center py-4 text-center">
-                          <div className="w-10 h-10 rounded-full bg-muted/40 border border-border/60 flex items-center justify-center mb-3">
-                            <Palette className="w-5 h-5 text-muted-foreground" />
-                          </div>
-                          <p className="text-sm font-sans text-muted-foreground">
-                            Add benchmark products to calculate allowance
+                      {/* Empty state — compact */}
+                      {bowl.lines.length === 0 && (
+                        <button
+                          className="w-full py-4 text-center rounded-lg border border-dashed border-border/60 hover:border-primary/30 hover:bg-muted/20 transition-colors cursor-pointer"
+                          onClick={() => setActiveBowlIdx(bowlIdx)}
+                        >
+                          <p className="text-xs font-sans text-muted-foreground">
+                            Select products from the left panel
                           </p>
-                          <p className="text-xs font-sans text-muted-foreground/60 mt-1">
-                            These products set the dollar amount — stylists can mix any product during the service.
-                          </p>
-                        </div>
+                        </button>
                       )}
 
-                      {/* Color product lines — capped height with independent scroll */}
+                      {/* Color product lines */}
                       {colorLines.length > 0 && (
                       <div className="max-h-[240px] overflow-y-auto rounded-md border border-border/20 bg-background/50">
                       <AnimatePresence mode="popLayout">
@@ -1400,7 +1399,6 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
                           <div className="flex-1 min-w-0">
                             <div className="text-xs font-sans text-foreground truncate">
                               {line.productName}
-                              {/* Cross-bowl duplicate warning */}
                               {(() => {
                                 const bowlLabels = productBowlMap.get(line.productId) || [];
                                 const otherLabels = bowlLabels.filter(l => l !== bowl.label);
@@ -1509,7 +1507,6 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
                                 <div className="flex-1 min-w-0">
                                   <div className="text-xs font-sans text-foreground truncate">
                                     {line.productName}
-                                    {/* Cross-bowl indicator for developer lines */}
                                     {(() => {
                                       const bowlLabels = productBowlMap.get(line.productId) || [];
                                       const otherLabels = bowlLabels.filter(l => l !== bowl.label);
@@ -1838,7 +1835,6 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
 
           <AlertDialogDescription asChild>
             <div className="space-y-4 pt-2 font-sans text-sm text-muted-foreground">
-              {/* Price comparison */}
               <div className="flex items-center justify-center gap-4 p-4 rounded-xl bg-muted/50">
                 <div className="text-center">
                   <div className="text-[10px] text-muted-foreground">Current</div>
@@ -1851,7 +1847,6 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
                 </div>
               </div>
 
-              {/* Where it surfaces */}
               <div>
                 <p className="font-medium text-foreground text-xs mb-2">This change will be reflected on:</p>
                 <ul className="space-y-1.5 text-xs">
@@ -1862,7 +1857,6 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
                 </ul>
               </div>
 
-              {/* Rounding note */}
               <p className="text-[11px] text-muted-foreground/80">
                 Price is rounded up to the nearest $5 based on your retail product cost of ${grandTotal.toFixed(2)} and the 8% industry target.
               </p>
