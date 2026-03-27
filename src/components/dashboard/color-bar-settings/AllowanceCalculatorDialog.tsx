@@ -1764,7 +1764,7 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
                 </div>
               )}
             </div>
-            <div className="flex flex-col items-end gap-2 shrink-0">
+            <div className="flex flex-col items-stretch sm:items-end gap-2 shrink-0 w-full sm:w-auto">
               {hasExistingData && (
                 <Button
                   variant="ghost"
