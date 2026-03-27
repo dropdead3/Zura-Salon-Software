@@ -63,6 +63,7 @@ import {
   getPinnedCardId,
   toPinnedEntry,
 } from '@/hooks/useDashboardLayout';
+import { useGodModeTargetUserId } from '@/hooks/useGodModeTargetUserId';
 import { Link } from 'react-router-dom';
 import { usePermission } from '@/hooks/usePermission';
 import { useAuth } from '@/contexts/AuthContext';
