@@ -203,7 +203,10 @@ export function ColorBarDashboardOverview({ onNavigate, initialSubTab, triggerWi
                     <ShieldAlert className="w-5 h-5 text-primary" />
                   </div>
                   <div>
-                    <CardTitle className={tokens.card.title}>Control Tower</CardTitle>
+                    <div className="flex items-center gap-2">
+                      <CardTitle className={tokens.card.title}>Control Tower</CardTitle>
+                      <MetricInfoTooltip description="Real-time operational alerts for your color bar — cost spikes, stockouts, compliance gaps, and audit flags. Alerts are ranked by severity so you can address the highest-impact issues first." />
+                    </div>
                     <CardDescription>
                       {lastUpdatedAt ? `Updated ${formatRelativeTime(lastUpdatedAt)}` : 'Priority alerts requiring attention'}
                     </CardDescription>
