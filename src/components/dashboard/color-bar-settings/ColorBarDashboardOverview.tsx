@@ -245,7 +245,10 @@ export function ColorBarDashboardOverview({ onNavigate, initialSubTab, triggerWi
                     <Wallet className="w-5 h-5 text-primary" />
                   </div>
                   <div>
-                    <CardTitle className={tokens.card.title}>Procurement</CardTitle>
+                    <div className="flex items-center gap-2">
+                      <CardTitle className={tokens.card.title}>Procurement</CardTitle>
+                      <MetricInfoTooltip description="Tracks month-to-date procurement spend against your configured budget target. Includes next-month projections based on current usage velocity and flags when spend is trending over budget." />
+                    </div>
                     <CardDescription>Budget tracking & projections</CardDescription>
                   </div>
                 </div>
