@@ -247,42 +247,59 @@ export function DockServicesTab({ appointment, staff, effectiveServiceName }: Do
       setShowComplete(false);
       return;
     }
-    const session = sessions?.[0];
-    if (!session || !effectiveOrganization?.id) return;
+    if (!sessions?.length || !effectiveOrganization?.id) return;
+
+    // Process ALL non-terminal sessions (not just sessions[0])
+    const activeSessions = sessions.filter(
+      s => !isTerminalSessionStatus(s.status as any)
+    );
+
+    if (activeSessions.length === 0) {
+      toast.info('All sessions are already completed');
+      setShowComplete(false);
+      return;
+    }
+
+    const serviceNames = chemicalServices.length > 0
+      ? chemicalServices
+      : [effectiveServiceName ?? appointment.service_name].filter(Boolean) as string[];
 
     try {
-      // 1. Complete the session status
-      await completeSession.mutateAsync({
-        sessionId: session.id,
-        organizationId: effectiveOrganization.id,
-        locationId: appointment.location_id || undefined,
-        notes,
-      });
-
-      // 2. Deplete inventory for this session
-      await depleteInventory.mutateAsync({
-        sessionId: session.id,
-        organizationId: effectiveOrganization.id,
-        locationId: appointment.location_id || undefined,
-      });
-
-      // 3. Calculate charges per chemical service (handles multi-service appointments)
-      const serviceNames = chemicalServices.length > 0
-        ? chemicalServices
-        : [effectiveServiceName ?? appointment.service_name].filter(Boolean) as string[];
-
-      for (const svcName of serviceNames) {
-        await calculateOverage.mutateAsync({
+      for (const session of activeSessions) {
+        // 1. Complete the session status
+        await completeSession.mutateAsync({
           sessionId: session.id,
-          appointmentId: appointment.id,
           organizationId: effectiveOrganization.id,
-          serviceName: svcName,
+          locationId: appointment.location_id || undefined,
+          notes,
         });
+
+        // 2. Deplete inventory for this session
+        await depleteInventory.mutateAsync({
+          sessionId: session.id,
+          organizationId: effectiveOrganization.id,
+          locationId: appointment.location_id || undefined,
+        });
+
+        // 3. Calculate charges per chemical service
+        for (const svcName of serviceNames) {
+          await calculateOverage.mutateAsync({
+            sessionId: session.id,
+            appointmentId: appointment.id,
+            organizationId: effectiveOrganization.id,
+            serviceName: svcName,
+          });
+        }
+      }
+
+      // Show charge total after all sessions processed
+      const totalCharged = activeSessions.length;
+      if (totalCharged > 1) {
+        toast.success(`All ${totalCharged} sessions completed and charged`);
       }
 
       setShowComplete(false);
     } catch (err) {
-      // Individual hooks already toast errors; just keep sheet open
       console.error('Session completion chain error:', err);
     }
   };
