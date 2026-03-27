@@ -210,11 +210,24 @@ async function handlePartsAndLabor({
 
   const orgDefaultMarkup = billingSettings?.default_product_markup_pct ?? 0;
 
-  // 2. Aggregate bowl line costs (actual dispensed)
+  // 2. Get non-discarded bowl IDs for this session, then aggregate line costs
+  const { data: bowls, error: bowlErr } = await supabase
+    .from('mix_bowls')
+    .select('id')
+    .eq('mix_session_id', sessionId)
+    .neq('status', 'discarded');
+
+  if (bowlErr) throw bowlErr;
+
+  const bowlIds = (bowls ?? []).map(b => b.id);
+  if (bowlIds.length === 0) {
+    return { isOverage: false, chargeAmount: 0, chargeId: null, chargeType: 'product_cost' as const, overageQty: 0, unusedAllowance: 0 };
+  }
+
   const { data: bowlLines, error: lineErr } = await supabase
-    .from('mix_bowl_lines' as any)
+    .from('mix_bowl_lines')
     .select('dispensed_quantity, product_id, dispensed_cost_snapshot')
-    .eq('mix_session_id', sessionId);
+    .in('bowl_id', bowlIds);
 
   if (lineErr) throw lineErr;
 
