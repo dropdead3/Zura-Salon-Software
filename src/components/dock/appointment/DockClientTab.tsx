@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { format, parseISO, differenceInDays } from 'date-fns';
 import { useInstantFormulaMemory } from '@/hooks/backroom/useInstantFormulaMemory';
+import { useDockFeatureSettings } from '@/hooks/backroom/useDockFeatureSettings';
 import { useClientVisitHistory } from '@/hooks/useClientVisitHistory';
 import { useClientMemory } from '@/hooks/useClientMemory';
 import { useClientProductAffinity } from '@/hooks/useClientProductAffinity';
