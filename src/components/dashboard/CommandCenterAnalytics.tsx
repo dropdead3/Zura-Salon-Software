@@ -29,6 +29,8 @@ import { StaffPerformanceReport } from '@/components/dashboard/analytics/StaffPe
 import { ServiceProfitabilityCard } from '@/components/dashboard/analytics/ServiceProfitabilityCard';
 import { ColorBarControlTower } from '@/components/dashboard/color-bar/control-tower/ColorBarControlTower';
 import { PredictiveColorBarSummary } from '@/components/dashboard/color-bar/predictive-color-bar/PredictiveColorBarSummary';
+import { ClientExperienceCard } from '@/components/dashboard/sales/ClientExperienceCard';
+import { OperationsQuickStats } from '@/components/dashboard/operations/OperationsQuickStats';
 import { useDashboardVisibility } from '@/hooks/useDashboardVisibility';
 import { useDashboardLayout } from '@/hooks/useDashboardLayout';
 import { useSalesMetrics, useSalesByStylist } from '@/hooks/useSalesData';
