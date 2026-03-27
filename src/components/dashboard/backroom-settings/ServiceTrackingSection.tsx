@@ -977,8 +977,11 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                                   onCheckedChange={(v) => updateService.mutate({ id: service.id, updates: { formula_memory_enabled: v } })}
                                                 />
                                               </div>
-                                            </div>
-                                            {/* Price Recommendation inline alert */}
+                                             </div>
+                                                </div>
+                                              </div>
+
+                                             {/* Price Recommendation inline alert */}
                                             {(() => {
                                               const rec = priceRecMap.get(service.id);
                                               if (!rec) return null;
