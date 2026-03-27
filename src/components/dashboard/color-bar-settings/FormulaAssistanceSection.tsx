@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useSmartMixAssistSettings, useUpdateSmartMixAssistSettings } from '@/hooks/color-bar/useSmartMixAssist';
-import { useBackroomSetting, useUpsertBackroomSetting } from '@/hooks/color-bar/useColorBarSettings';
+import { useColorBarSetting, useUpsertColorBarSetting } from '@/hooks/color-bar/useColorBarSettings';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -26,9 +26,9 @@ export function FormulaAssistanceSection() {
   const orgId = effectiveOrganization?.id;
   const { data: settings, isLoading: settingsLoading } = useSmartMixAssistSettings();
   const updateSettings = useUpdateSmartMixAssistSettings();
-  const { data: disclaimerSetting, isLoading: disclaimerLoading } = useBackroomSetting('formula_disclaimer');
-  const { data: recallSetting, isLoading: recallLoading } = useBackroomSetting('formula_recall_config');
-  const upsert = useUpsertBackroomSetting();
+  const { data: disclaimerSetting, isLoading: disclaimerLoading } = useColorBarSetting('formula_disclaimer');
+  const { data: recallSetting, isLoading: recallLoading } = useColorBarSetting('formula_recall_config');
+  const upsert = useUpsertColorBarSetting();
 
   const [disclaimer, setDisclaimer] = useState<string | null>(null);
   const [recallConfig, setRecallConfig] = useState<Record<string, unknown> | null>(null);

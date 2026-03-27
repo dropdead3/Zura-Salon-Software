@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { toast } from 'sonner';
 
-export interface BackroomStation {
+export interface ColorBarStation {
   id: string;
   organization_id: string;
   location_id: string;
@@ -27,7 +27,7 @@ export function useColorBarStations(locationId?: string) {
 
   return useQuery({
     queryKey: ['color-bar-stations', orgId, locationId],
-    queryFn: async (): Promise<BackroomStation[]> => {
+    queryFn: async (): Promise<ColorBarStation[]> => {
       let query = supabase
         .from('backroom_stations')
         .select('*')
@@ -41,7 +41,7 @@ export function useColorBarStations(locationId?: string) {
 
       const { data, error } = await query;
       if (error) throw error;
-      return data as unknown as BackroomStation[];
+      return data as unknown as ColorBarStation[];
     },
     enabled: !!orgId,
     staleTime: 2 * 60 * 1000,
@@ -49,7 +49,7 @@ export function useColorBarStations(locationId?: string) {
   });
 }
 
-export function useCreateBackroomStation() {
+export function useCreateColorBarStation() {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -69,7 +69,7 @@ export function useCreateBackroomStation() {
         .single();
 
       if (error) throw error;
-      return data as unknown as BackroomStation;
+      return data as unknown as ColorBarStation;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['color-bar-stations'] });
@@ -81,7 +81,7 @@ export function useCreateBackroomStation() {
   });
 }
 
-export function useUpdateBackroomStation() {
+export function useUpdateColorBarStation() {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -106,7 +106,7 @@ export function useUpdateBackroomStation() {
         .single();
 
       if (error) throw error;
-      return data as unknown as BackroomStation;
+      return data as unknown as ColorBarStation;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['color-bar-stations'] });
@@ -118,7 +118,7 @@ export function useUpdateBackroomStation() {
   });
 }
 
-export function useDeleteBackroomStation() {
+export function useDeleteColorBarStation() {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -159,9 +159,9 @@ function getHealthColor(lastSeenAt: string | null): 'green' | 'yellow' | 'red' |
 export { getHealthColor };
 
 export function useStationHealthMonitor(
-  station: BackroomStation | null
+  station: ColorBarStation | null
 ): HealthStatus {
-  const updateStation = useUpdateBackroomStation();
+  const updateStation = useUpdateColorBarStation();
   const [lastSeenAt, setLastSeenAt] = useState<string | null>(
     station?.last_seen_at ?? null
   );

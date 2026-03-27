@@ -23,7 +23,7 @@ import { Loader2, Search, Package, ChevronRight, UserPlus, FileDown, FileText, S
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
-import { useColorBarInventoryTable, STOCK_STATUS_CONFIG, type BackroomInventoryRow } from '@/hooks/color-bar/useColorBarInventoryTable';
+import { useColorBarInventoryTable, STOCK_STATUS_CONFIG, type ColorBarInventoryRow } from '@/hooks/color-bar/useColorBarInventoryTable';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { useFormatNumber } from '@/hooks/useFormatNumber';
 import { useInlineStockEdit } from '@/hooks/color-bar/useInlineStockEdit';
@@ -54,15 +54,15 @@ interface StockTabProps {
 
 interface SupplierGroup {
   supplier: string;
-  products: BackroomInventoryRow[];
+  products: ColorBarInventoryRow[];
   estimatedTotal: number;
-  categories: Map<string, BackroomInventoryRow[]>;
+  categories: Map<string, ColorBarInventoryRow[]>;
 }
 
 // ─── PDF Export ──────────────────────────────────────────
 
 async function exportStockPdf(
-  rows: BackroomInventoryRow[],
+  rows: ColorBarInventoryRow[],
   orgName: string,
   logoUrl: string | null | undefined,
   formatCurrency: (n: number) => string,
@@ -154,7 +154,7 @@ export function StockTab({ locationId, pdfExportRef }: StockTabProps) {
   const [statusFilter, setStatusFilter] = useState('all');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [qtyOverrides, setQtyOverrides] = useState<Map<string, number>>(new Map());
-  const [supplierDialog, setSupplierDialog] = useState<{ open: boolean; brand: string; products: BackroomInventoryRow[] }>({ open: false, brand: '', products: [] });
+  const [supplierDialog, setSupplierDialog] = useState<{ open: boolean; brand: string; products: ColorBarInventoryRow[] }>({ open: false, brand: '', products: [] });
   const [auditDialog, setAuditDialog] = useState<{ open: boolean; productId: string | null; productName: string }>({ open: false, productId: null, productName: '' });
   const [autoPoDialog, setAutoPoDialog] = useState(false);
   const [autoParDialog, setAutoParDialog] = useState(false);
@@ -200,7 +200,7 @@ export function StockTab({ locationId, pdfExportRef }: StockTabProps) {
 
   // Group by supplier → category
   const supplierGroups = useMemo((): SupplierGroup[] => {
-    const map = new Map<string, BackroomInventoryRow[]>();
+    const map = new Map<string, ColorBarInventoryRow[]>();
     for (const row of filtered) {
       const supplier = row.supplier_name || '__unassigned__';
       const arr = map.get(supplier) ?? [];
@@ -221,7 +221,7 @@ export function StockTab({ locationId, pdfExportRef }: StockTabProps) {
           const cost = p.cost_price ?? p.cost_per_gram ?? 0;
           return sum + qty * cost;
         }, 0);
-        const categories = new Map<string, BackroomInventoryRow[]>();
+        const categories = new Map<string, ColorBarInventoryRow[]>();
         for (const p of products) {
           const cat = p.category || 'Other';
           const arr = categories.get(cat) ?? [];
@@ -268,7 +268,7 @@ export function StockTab({ locationId, pdfExportRef }: StockTabProps) {
   };
 
   // Single product quick reorder — respects override
-  const handleQuickReorder = (row: BackroomInventoryRow, overrideQty?: number) => {
+  const handleQuickReorder = (row: ColorBarInventoryRow, overrideQty?: number) => {
     const qty = overrideQty ?? qtyOverrides.get(row.id) ?? (row.recommended_order_qty > 0 ? row.recommended_order_qty : 1);
     if (!orgId || qty <= 0) return;
     createPO.mutate({
@@ -398,7 +398,7 @@ export function StockTab({ locationId, pdfExportRef }: StockTabProps) {
     ).length;
   }, [filtered, selectedIds]);
 
-  const getOrderQtyForEmail = useCallback((row: BackroomInventoryRow) => {
+  const getOrderQtyForEmail = useCallback((row: ColorBarInventoryRow) => {
     return qtyOverrides.get(row.id) ?? row.recommended_order_qty;
   }, [qtyOverrides]);
 
@@ -438,7 +438,7 @@ export function StockTab({ locationId, pdfExportRef }: StockTabProps) {
   }, [orgId, emailPreviewGroups, getOrderQtyForEmail, effectiveOrganization, batchCreatePOs]);
 
   /** Build the HTML email that suppliers will receive */
-  const buildEmailPreviewHtml = useCallback((group: { supplierName: string; supplierEmail: string | null; products: BackroomInventoryRow[] }) => {
+  const buildEmailPreviewHtml = useCallback((group: { supplierName: string; supplierEmail: string | null; products: ColorBarInventoryRow[] }) => {
     const orgName = businessSettings?.business_name || effectiveOrganization?.name || 'Organization';
     const selectedProducts = group.products.filter(p => selectedIds.has(p.id));
     if (selectedProducts.length === 0) return '';
@@ -891,9 +891,9 @@ function SupplierSection({ group, formatCurrency, orgId, locationId, adjustStock
   updateMinMax: ReturnType<typeof useInlineStockEdit>['updateMinMax'];
   selectedIds: Set<string>;
   onToggleSelect: (id: string) => void;
-  onSetSupplier: (products: BackroomInventoryRow[]) => void;
+  onSetSupplier: (products: ColorBarInventoryRow[]) => void;
   onAudit: (productId: string, productName: string) => void;
-  onQuickReorder: (row: BackroomInventoryRow, overrideQty?: number) => void;
+  onQuickReorder: (row: ColorBarInventoryRow, overrideQty?: number) => void;
   poHistoryMap?: Map<string, number[]>;
   qtyOverrides: Map<string, number>;
   onQtyOverride: (productId: string, qty: number | null) => void;
@@ -974,7 +974,7 @@ function SupplierSection({ group, formatCurrency, orgId, locationId, adjustStock
 
 function CategoryGroup({ category, rows, formatCurrency, orgId, locationId, adjustStock, updateMinMax, selectedIds, onToggleSelect, onAudit, onQuickReorder, poHistoryMap, qtyOverrides, onQtyOverride, intelligenceMap }: {
   category: string;
-  rows: BackroomInventoryRow[];
+  rows: ColorBarInventoryRow[];
   formatCurrency: (n: number) => string;
   orgId: string | undefined;
   locationId: string | undefined;
@@ -983,7 +983,7 @@ function CategoryGroup({ category, rows, formatCurrency, orgId, locationId, adju
   selectedIds: Set<string>;
   onToggleSelect: (id: string) => void;
   onAudit: (productId: string, productName: string) => void;
-  onQuickReorder: (row: BackroomInventoryRow, overrideQty?: number) => void;
+  onQuickReorder: (row: ColorBarInventoryRow, overrideQty?: number) => void;
   poHistoryMap?: Map<string, number[]>;
   qtyOverrides: Map<string, number>;
   onQtyOverride: (productId: string, qty: number | null) => void;

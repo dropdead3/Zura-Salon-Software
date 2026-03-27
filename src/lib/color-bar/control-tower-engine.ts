@@ -4,8 +4,8 @@
  */
 
 import type { InventoryRiskProjection } from '@/hooks/inventory/useInventoryRiskProjection';
-import type { BackroomException } from '@/hooks/color-bar/useColorBarExceptions';
-import type { StaffBackroomPerformance } from '@/hooks/color-bar/useStaffColorBarPerformance';
+import type { ColorBarException } from '@/hooks/color-bar/useColorBarExceptions';
+import type { StaffColorBarPerformance } from '@/hooks/color-bar/useStaffColorBarPerformance';
 import type { ProductDemandForecast, ForecastSummary } from '@/lib/color-bar/services/predictive-backroom-service';
 import type { MarginOutlier } from '@/lib/color-bar/appointment-profit-engine';
 
@@ -56,9 +56,9 @@ export interface AuditOverdueAlert {
 
 export interface ControlTowerSources {
   inventoryRisk: InventoryRiskProjection[];
-  exceptions: BackroomException[];
+  exceptions: ColorBarException[];
   marginOutliers: MarginOutlier[];
-  staffPerformance: StaffBackroomPerformance[];
+  staffPerformance: StaffColorBarPerformance[];
   forecastSummary: ForecastSummary | null;
   stockoutAlerts: ProductDemandForecast[];
   draftPOs?: DraftPOAlert[];
@@ -129,7 +129,7 @@ function buildInventoryAlerts(items: InventoryRiskProjection[]): ControlTowerAle
   });
 }
 
-function buildExceptionAlerts(items: BackroomException[]): ControlTowerAlert[] {
+function buildExceptionAlerts(items: ColorBarException[]): ControlTowerAlert[] {
   return items
     .filter((e) => e.status === 'open' || e.status === 'pending')
     .map((exc) => {
@@ -178,7 +178,7 @@ function buildProfitabilityAlerts(outliers: MarginOutlier[]): ControlTowerAlert[
   }));
 }
 
-function buildStaffAlerts(staff: StaffBackroomPerformance[]): ControlTowerAlert[] {
+function buildStaffAlerts(staff: StaffColorBarPerformance[]): ControlTowerAlert[] {
   const alerts: ControlTowerAlert[] = [];
 
   for (const s of staff) {

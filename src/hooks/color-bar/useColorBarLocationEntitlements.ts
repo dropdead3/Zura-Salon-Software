@@ -7,7 +7,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
-export interface BackroomLocationEntitlement {
+export interface ColorBarLocationEntitlement {
   id: string;
   organization_id: string;
   location_id: string;
@@ -30,7 +30,7 @@ export interface BackroomLocationEntitlement {
 export function useColorBarLocationEntitlements(organizationId: string | undefined) {
   const query = useQuery({
     queryKey: ['backroom-location-entitlements', organizationId],
-    queryFn: async (): Promise<BackroomLocationEntitlement[]> => {
+    queryFn: async (): Promise<ColorBarLocationEntitlement[]> => {
       const { data, error } = await supabase
         .from('backroom_location_entitlements')
         .select('*')
@@ -38,7 +38,7 @@ export function useColorBarLocationEntitlements(organizationId: string | undefin
         .order('created_at', { ascending: true });
 
       if (error) throw error;
-      return (data ?? []) as unknown as BackroomLocationEntitlement[];
+      return (data ?? []) as unknown as ColorBarLocationEntitlement[];
     },
     enabled: !!organizationId,
     staleTime: 60_000,

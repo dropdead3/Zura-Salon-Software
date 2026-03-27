@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { BACKROOM_BASE_PRICE, SCALE_LICENSE_MONTHLY } from '@/hooks/color-bar/useLocationStylistCounts';
+import { COLOR_BAR_BASE_PRICE, SCALE_LICENSE_MONTHLY } from '@/hooks/color-bar/useLocationStylistCounts';
 
 export interface BackroomBillingOrg {
   orgId: string;
@@ -87,7 +87,7 @@ export function useBackroomBillingHealth() {
           .reduce((s: number, e: any) => s + (e.scale_count || 0), 0);
 
         // MRR = $20/active location + $10/scale
-        const orgMRR = (activeCount * BACKROOM_BASE_PRICE) + (totalScales * SCALE_LICENSE_MONTHLY);
+        const orgMRR = (activeCount * COLOR_BAR_BASE_PRICE) + (totalScales * SCALE_LICENSE_MONTHLY);
 
         const subStatus = org?.subscription_status || null;
         if (activeCount > 0) totalActiveSubscriptions++;

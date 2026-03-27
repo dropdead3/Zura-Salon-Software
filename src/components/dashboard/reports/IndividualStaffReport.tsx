@@ -146,8 +146,8 @@ export function IndividualStaffReport({ dateFrom, dateTo, locationId, onClose, i
           ['New Clients', data.clientMetrics.newClients.toString(), Math.round(data.teamAverages.newClients).toString()],
           ['Commission Earned', formatCurrencyWhole(data.commission.totalCommission), ''],
           ['Experience Score', `${data.experienceScore.composite}/100`, ''],
-          ['Color Bar Compliance', `${data.backroomCompliance.complianceRate}%`, `${data.teamAverages.complianceRate}%`],
-          ['Color Appointments', `${data.backroomCompliance.totalColorAppointments} (${data.backroomCompliance.tracked} tracked)`, ''],
+          ['Color Bar Compliance', `${data.colorBarCompliance.complianceRate}%`, `${data.teamAverages.complianceRate}%`],
+          ['Color Appointments', `${data.colorBarCompliance.totalColorAppointments} (${data.colorBarCompliance.tracked} tracked)`, ''],
         ],
         theme: 'striped',
         headStyles: { fillColor: [51, 51, 51] },
@@ -230,8 +230,8 @@ export function IndividualStaffReport({ dateFrom, dateTo, locationId, onClose, i
     csv += `New Clients,${data.clientMetrics.newClients},${Math.round(data.teamAverages.newClients)}\n`;
     csv += `Commission Earned,${data.commission.totalCommission},\n`;
     csv += `Experience Score,${data.experienceScore.composite},\n`;
-    csv += `Color Bar Compliance,${data.backroomCompliance.complianceRate}%,${data.teamAverages.complianceRate}%\n`;
-    csv += `Color Appointments,${data.backroomCompliance.totalColorAppointments} (${data.backroomCompliance.tracked} tracked),\n`;
+    csv += `Color Bar Compliance,${data.colorBarCompliance.complianceRate}%,${data.teamAverages.complianceRate}%\n`;
+    csv += `Color Appointments,${data.colorBarCompliance.totalColorAppointments} (${data.colorBarCompliance.tracked} tracked),\n`;
     csv += '\nTop Services\nService,Count,Revenue,Avg Price\n';
     data.topServices.forEach(s => { csv += `"${s.name}",${s.count},${s.revenue},${s.avgPrice}\n`; });
     csv += '\nTop Clients\nClient,Visits,Revenue,Avg Ticket,Last Visit,Status\n';
@@ -286,12 +286,12 @@ export function IndividualStaffReport({ dateFrom, dateTo, locationId, onClose, i
     if (data.experienceScore.composite >= 70) strengths.push(`Experience score of ${data.experienceScore.composite}/100 shows strong overall performance`);
     else if (data.experienceScore.composite < 50 && data.experienceScore.composite > 0) improvements.push(`Experience score of ${data.experienceScore.composite}/100 needs focused improvement`);
 
-    // Backroom compliance
-    if (data.backroomCompliance.totalColorAppointments > 0) {
-      if (data.backroomCompliance.complianceRate === 100) strengths.push('100% color bar compliance — all color services tracked');
-      else if (data.backroomCompliance.complianceRate >= 90) strengths.push(`Strong color bar compliance at ${data.backroomCompliance.complianceRate}%`);
-      else if (data.backroomCompliance.complianceRate < 70) improvements.push(`Backroom compliance at ${data.backroomCompliance.complianceRate}% — ${data.backroomCompliance.missed} color services not tracked`);
-      else improvements.push(`Backroom compliance at ${data.backroomCompliance.complianceRate}% — review backroom habits`);
+    // Color Bar compliance
+    if (data.colorBarCompliance.totalColorAppointments > 0) {
+      if (data.colorBarCompliance.complianceRate === 100) strengths.push('100% color bar compliance — all color services tracked');
+      else if (data.colorBarCompliance.complianceRate >= 90) strengths.push(`Strong color bar compliance at ${data.colorBarCompliance.complianceRate}%`);
+      else if (data.colorBarCompliance.complianceRate < 70) improvements.push(`Color Bar compliance at ${data.colorBarCompliance.complianceRate}% — ${data.colorBarCompliance.missed} color services not tracked`);
+      else improvements.push(`Color Bar compliance at ${data.colorBarCompliance.complianceRate}% — review color bar habits`);
     }
   }
 
@@ -652,7 +652,7 @@ export function IndividualStaffReport({ dateFrom, dateTo, locationId, onClose, i
           )}
 
           {/* Section 8b: Color Bar Compliance */}
-          {data.backroomCompliance.totalColorAppointments > 0 && (
+          {data.colorBarCompliance.totalColorAppointments > 0 && (
             <Card>
               <CardHeader className="pb-2">
                 <div className="flex items-center gap-2">
@@ -665,20 +665,20 @@ export function IndividualStaffReport({ dateFrom, dateTo, locationId, onClose, i
                 <div className="grid grid-cols-4 gap-4">
                   <div className="space-y-1">
                     <p className="text-xs text-muted-foreground">Compliance Rate</p>
-                    <p className="text-xl font-display tabular-nums">{data.backroomCompliance.complianceRate}%</p>
+                    <p className="text-xl font-display tabular-nums">{data.colorBarCompliance.complianceRate}%</p>
                     <p className="text-[10px] text-muted-foreground">Team Avg: {data.teamAverages.complianceRate}%</p>
                   </div>
                   <div className="space-y-1">
                     <p className="text-xs text-muted-foreground">Color Appointments</p>
-                    <p className="text-xl font-display tabular-nums">{data.backroomCompliance.totalColorAppointments}</p>
+                    <p className="text-xl font-display tabular-nums">{data.colorBarCompliance.totalColorAppointments}</p>
                   </div>
                   <div className="space-y-1">
                     <p className="text-xs text-muted-foreground">Tracked</p>
-                    <p className="text-xl font-display tabular-nums">{data.backroomCompliance.tracked}</p>
+                    <p className="text-xl font-display tabular-nums">{data.colorBarCompliance.tracked}</p>
                   </div>
                   <div className="space-y-1">
                     <p className="text-xs text-muted-foreground">Missed</p>
-                    <p className={cn('text-xl font-display tabular-nums', data.backroomCompliance.missed > 0 && 'text-destructive')}>{data.backroomCompliance.missed}</p>
+                    <p className={cn('text-xl font-display tabular-nums', data.colorBarCompliance.missed > 0 && 'text-destructive')}>{data.colorBarCompliance.missed}</p>
                   </div>
                 </div>
               </CardContent>

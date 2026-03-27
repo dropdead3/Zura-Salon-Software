@@ -39,7 +39,7 @@ const PLAN_PRICES: Record<string, number> = {
   unlimited: 299,
 };
 
-export function useBackroomPlatformAnalytics() {
+export function useColorBarPlatformAnalytics() {
   return useQuery({
     queryKey: ['backroom-platform-analytics'],
     queryFn: async (): Promise<BackroomPlatformMetrics> => {
@@ -202,7 +202,7 @@ export function useBackroomPlatformAnalytics() {
       const { data: counterRow } = await supabase
         .from('platform_kpi_counters')
         .select('value')
-        .eq('key', 'backroom_coaching_emails_sent')
+        .eq('key', 'color_bar_coaching_emails_sent')
         .maybeSingle();
 
       const coachingEmailsSent = counterRow?.value ? Number(counterRow.value) : 0;

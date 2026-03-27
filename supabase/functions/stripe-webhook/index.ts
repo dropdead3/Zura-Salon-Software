@@ -377,7 +377,7 @@ async function handleCheckoutCompleted(
     .from('organization_feature_flags')
     .upsert({
       organization_id: orgId,
-      flag_key: 'backroom_plan',
+      flag_key: 'color_bar_plan',
       is_enabled: true,
       override_reason: JSON.stringify({
         location_plans: locationPlans,

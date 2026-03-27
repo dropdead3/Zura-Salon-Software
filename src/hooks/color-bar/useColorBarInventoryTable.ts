@@ -22,7 +22,7 @@ export interface OpenPoStatusCounts {
   partially_received: number;
 }
 
-export interface BackroomInventoryRow {
+export interface ColorBarInventoryRow {
   id: string;
   name: string;
   brand: string | null;
@@ -132,7 +132,7 @@ export function useColorBarInventoryTable(options?: { enabled?: boolean; locatio
 
   return useQuery({
     queryKey: ['backroom-inventory-table', orgId, locationId],
-    queryFn: async (): Promise<BackroomInventoryRow[]> => {
+    queryFn: async (): Promise<ColorBarInventoryRow[]> => {
       // Fetch supplier data and open PO quantities in parallel
       const [suppliersResult, openPoData] = await Promise.all([
         supabase
@@ -143,7 +143,7 @@ export function useColorBarInventoryTable(options?: { enabled?: boolean; locatio
       ]);
       const supplierMap = new Map((suppliersResult.data || []).map((s: any) => [s.product_id, s]));
 
-      function buildRow(p: any, parLevel: number | null, reorderLevel: number | null): BackroomInventoryRow {
+      function buildRow(p: any, parLevel: number | null, reorderLevel: number | null): ColorBarInventoryRow {
         const qty = p.quantity_on_hand ?? 0;
         const status = getStockStatus(qty, reorderLevel, parLevel);
         const openPoQty = openPoData.qtyMap.get(p.id) ?? 0;

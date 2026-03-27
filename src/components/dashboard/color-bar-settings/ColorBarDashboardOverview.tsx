@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { format, subDays, startOfMonth, endOfMonth, subMonths } from 'date-fns';
 import { useColorBarDashboard } from '@/hooks/color-bar/useColorBarDashboard';
-import { useBackroomSetting } from '@/hooks/color-bar/useColorBarSettings';
+import { useColorBarSetting } from '@/hooks/color-bar/useColorBarSettings';
 import { useColorBarSetupHealth } from '@/hooks/color-bar/useColorBarSetupHealth';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { useActiveLocations } from '@/hooks/useLocations';
@@ -63,7 +63,7 @@ export function ColorBarDashboardOverview({ onNavigate, initialSubTab, triggerWi
 
   const dashboard = useColorBarDashboard(effectiveLocationId, start, end);
   const { formatCurrency } = useFormatCurrency();
-  const { data: wizardSetting } = useBackroomSetting('setup_wizard_completed');
+  const { data: wizardSetting } = useColorBarSetting('setup_wizard_completed');
   const [showWizard, setShowWizard] = useState(false);
   const [activeSubTab, setActiveSubTab] = useState(initialSubTab || 'command-center');
   const wizardCompleted = !!(wizardSetting?.value as Record<string, unknown>)?.completed;

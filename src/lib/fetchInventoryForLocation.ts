@@ -8,7 +8,7 @@ import { supabase } from '@/integrations/supabase/client';
 import {
   getStockStatus,
   computeChargePerGram,
-  type BackroomInventoryRow,
+  type ColorBarInventoryRow,
   type StockState,
   type StockSeverity,
 } from '@/hooks/color-bar/useColorBarInventoryTable';
@@ -16,7 +16,7 @@ import {
 export async function fetchInventoryForLocation(
   orgId: string,
   locationId: string,
-): Promise<BackroomInventoryRow[]> {
+): Promise<ColorBarInventoryRow[]> {
   // Fetch supplier data and open PO quantities
   const [suppliersResult, openPOs] = await Promise.all([
     supabase
@@ -129,6 +129,6 @@ export async function fetchInventoryForLocation(
       charge_per_gram: chargePerGram,
       supplier_name: sup?.supplier_name ?? null,
       supplier_email: sup?.supplier_email ?? null,
-    } satisfies BackroomInventoryRow;
+    } satisfies ColorBarInventoryRow;
   });
 }

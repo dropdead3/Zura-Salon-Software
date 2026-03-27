@@ -9,7 +9,7 @@ import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { toast } from 'sonner';
 import { resolveException } from '@/lib/color-bar/services/exception-service';
 
-export interface BackroomException {
+export interface ColorBarException {
   id: string;
   organization_id: string;
   location_id: string | null;
@@ -45,7 +45,7 @@ export function useColorBarExceptions(filters?: ExceptionFilters) {
 
   return useQuery({
     queryKey: ['color-bar-exceptions', orgId, filters],
-    queryFn: async (): Promise<BackroomException[]> => {
+    queryFn: async (): Promise<ColorBarException[]> => {
       let query = supabase
         .from('backroom_exceptions' as any)
         .select('*')
@@ -62,7 +62,7 @@ export function useColorBarExceptions(filters?: ExceptionFilters) {
 
       const { data, error } = await query;
       if (error) throw error;
-      return (data ?? []) as unknown as BackroomException[];
+      return (data ?? []) as unknown as ColorBarException[];
     },
     enabled: !!orgId,
     staleTime: 60_000,

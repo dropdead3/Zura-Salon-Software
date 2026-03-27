@@ -6,7 +6,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useColorBarOrgId } from './useColorBarOrgId';
 import { buildRecommendation, calculateScalingRatio, type PriceRecommendation, type ProductCostInput } from '@/lib/color-bar/price-recommendation';
 import { toast } from 'sonner';
-import { useBackroomSetting, useUpsertBackroomSetting } from './useColorBarSettings';
+import { useColorBarSetting, useUpsertColorBarSetting } from './useColorBarSettings';
 
 // ─── Types ───────────────────────────────────────────────────
 export interface ServicePriceTarget {
@@ -47,14 +47,14 @@ const DEFAULT_MARGIN_KEY = 'price_default_target_margin';
 const FALLBACK_MARGIN = 60;
 
 export function useDefaultTargetMargin() {
-  const setting = useBackroomSetting(DEFAULT_MARGIN_KEY);
+  const setting = useColorBarSetting(DEFAULT_MARGIN_KEY);
   const margin = (setting.data?.value as { margin_pct?: number })?.margin_pct ?? FALLBACK_MARGIN;
   return { ...setting, margin };
 }
 
 export function useUpdateDefaultTargetMargin() {
   const orgId = useColorBarOrgId();
-  const upsert = useUpsertBackroomSetting();
+  const upsert = useUpsertColorBarSetting();
   
   return {
     ...upsert,

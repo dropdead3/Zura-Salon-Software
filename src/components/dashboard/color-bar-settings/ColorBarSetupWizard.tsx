@@ -19,8 +19,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useUpsertTrackingComponent } from '@/hooks/color-bar/useServiceTrackingComponents';
 import { useUpsertAllowancePolicy } from '@/hooks/billing/useServiceAllowancePolicies';
-import { useCreateBackroomStation } from '@/hooks/color-bar/useColorBarStations';
-import { useUpsertBackroomSetting } from '@/hooks/color-bar/useColorBarSettings';
+import { useCreateColorBarStation } from '@/hooks/color-bar/useColorBarStations';
+import { useUpsertColorBarSetting } from '@/hooks/color-bar/useColorBarSettings';
 import { useBatchUpsertSupplier } from '@/hooks/useProductSuppliers';
 import { useLocations } from '@/hooks/useLocations';
 import { toast } from 'sonner';
@@ -172,8 +172,8 @@ export function ColorBarSetupWizard({ onComplete, onCancel }: Props) {
 
   const upsertComponent = useUpsertTrackingComponent();
   const upsertAllowance = useUpsertAllowancePolicy();
-  const createStation = useCreateBackroomStation();
-  const upsertSetting = useUpsertBackroomSetting();
+  const createStation = useCreateColorBarStation();
+  const upsertSetting = useUpsertColorBarSetting();
   const batchUpsertSupplier = useBatchUpsertSupplier();
 
   // ─── Navigation ─────────────────────────────────────────────────────────────

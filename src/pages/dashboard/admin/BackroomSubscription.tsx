@@ -14,7 +14,7 @@ import { toast } from 'sonner';
 import { Loader2, CreditCard, Weight, Settings, Plus, Beaker } from 'lucide-react';
 import { AddScalesDialog } from '@/components/dashboard/color-bar-settings/AddScalesDialog';
 import { ColorBarROICard } from '@/components/dashboard/color-bar-settings/ColorBarROICard';
-import { BACKROOM_BASE_PRICE, BACKROOM_PER_SERVICE_FEE, SCALE_LICENSE_MONTHLY } from '@/hooks/color-bar/useLocationStylistCounts';
+import { COLOR_BAR_BASE_PRICE, BACKROOM_PER_SERVICE_FEE, SCALE_LICENSE_MONTHLY } from '@/hooks/color-bar/useLocationStylistCounts';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 
 
@@ -31,7 +31,7 @@ interface SubscriptionData {
   active_location_count?: number;
 }
 
-export default function BackroomSubscription() {
+export default function ColorBarSubscription() {
   const { dashPath } = useOrgDashboardPath();
   const { effectiveOrganization } = useOrganizationContext();
   const [portalLoading, setPortalLoading] = useState(false);
@@ -106,7 +106,7 @@ export default function BackroomSubscription() {
 
   const locationCount = sub.active_location_count || 1;
   const scaleCount = sub.scale_licenses || sub.scale_count || 0;
-  const baseCost = locationCount * BACKROOM_BASE_PRICE;
+  const baseCost = locationCount * COLOR_BAR_BASE_PRICE;
   const scaleLicenseCost = scaleCount * SCALE_LICENSE_MONTHLY;
   const renewalDate = sub.current_period_end
     ? new Date(sub.current_period_end).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
@@ -152,7 +152,7 @@ export default function BackroomSubscription() {
                     {locationCount} Location{locationCount !== 1 ? 's' : ''}
                   </span>
                   <Badge variant="outline" className="font-sans text-[10px]">
-                    ${BACKROOM_BASE_PRICE}/mo each
+                    ${COLOR_BAR_BASE_PRICE}/mo each
                   </Badge>
                 </div>
                 <div className="flex items-baseline gap-1">

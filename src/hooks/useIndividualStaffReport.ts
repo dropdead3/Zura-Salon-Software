@@ -125,7 +125,7 @@ export interface IndividualStaffReportData {
   commission: CommissionData;
   teamAverages: TeamAverages;
   multiPeriodTrend: MultiPeriodTrend;
-  backroomCompliance: BackroomCompliance;
+  colorBarCompliance: BackroomCompliance;
 }
 
 // ---------------------------------------------------------------------------
@@ -612,7 +612,7 @@ export function useIndividualStaffReport(staffUserId: string | null, dateFrom?: 
         commission,
         teamAverages,
         multiPeriodTrend,
-        backroomCompliance: brCompliance,
+        colorBarCompliance: brCompliance,
       };
     },
     enabled: !!staffUserId && !!dateFrom && !!dateTo,
@@ -643,6 +643,6 @@ function buildEmptyResult(profile: StaffProfile, calculateCommission: any): Indi
     commission: { serviceCommission: 0, productCommission: 0, totalCommission: 0, tierName: '' },
     teamAverages: { revenue: 0, avgTicket: 0, appointments: 0, rebookingRate: 0, retentionRate: 0, newClients: 0, experienceScore: 0, complianceRate: 0 },
     multiPeriodTrend: { revenue: [0, 0, 0], rebooking: [0, 0, 0], retention: [0, 0, 0] },
-    backroomCompliance: { complianceRate: 100, totalColorAppointments: 0, tracked: 0, missed: 0, reweighRate: 100, manualOverrides: 0 },
+    colorBarCompliance: { complianceRate: 100, totalColorAppointments: 0, tracked: 0, missed: 0, reweighRate: 100, manualOverrides: 0 },
   };
 }

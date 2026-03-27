@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useServiceAllowancePolicies, useUpsertAllowancePolicy, useDeleteAllowancePolicy } from '@/hooks/billing/useServiceAllowancePolicies';
 import { useAllowanceBuckets, useUpsertAllowanceBucket, useDeleteAllowanceBucket } from '@/hooks/color-bar/useAllowanceBuckets';
-import { useColorBarBillingSettings, useUpsertBackroomBillingSettings } from '@/hooks/billing/useColorBarBillingSettings';
+import { useColorBarBillingSettings, useUpsertColorBarBillingSettings } from '@/hooks/billing/useColorBarBillingSettings';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -53,7 +53,7 @@ export function AllowancesBillingSection({ onNavigate }: Props) {
   const upsertBucket = useUpsertAllowanceBucket();
   const deleteBucket = useDeleteAllowanceBucket();
   const { data: billingSettings } = useColorBarBillingSettings(orgId);
-  const upsertBillingSettings = useUpsertBackroomBillingSettings();
+  const upsertBillingSettings = useUpsertColorBarBillingSettings();
 
   const { data: servicesMap } = useQuery({
     queryKey: ['services-name-map', orgId],

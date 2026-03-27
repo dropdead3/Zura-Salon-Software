@@ -187,7 +187,7 @@ serve(async (req: Request): Promise<Response> => {
 
     // Increment counter
     await supabase.rpc("increment_platform_counter" as any, {
-      p_key: "backroom_coaching_emails_sent",
+      p_key: "color_bar_coaching_emails_sent",
     }).then(() => {}).catch(() => {
       // Fallback: direct update if RPC doesn't exist
       console.log("[send-coaching-email] RPC fallback — updating counter directly");
@@ -197,7 +197,7 @@ serve(async (req: Request): Promise<Response> => {
     const { data: currentCounter } = await supabase
       .from("platform_kpi_counters")
       .select("value")
-      .eq("key", "backroom_coaching_emails_sent")
+      .eq("key", "color_bar_coaching_emails_sent")
       .single();
 
     if (currentCounter) {
@@ -207,7 +207,7 @@ serve(async (req: Request): Promise<Response> => {
           value: (currentCounter.value as number) + 1,
           updated_at: new Date().toISOString(),
         })
-        .eq("key", "backroom_coaching_emails_sent");
+        .eq("key", "color_bar_coaching_emails_sent");
     }
 
     // Audit trail

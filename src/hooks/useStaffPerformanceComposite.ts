@@ -77,7 +77,7 @@ export function useStaffPerformanceComposite(
     }
 
     // Build backroom lookup by staff_id
-    const backroomMap = new Map<string, {
+    const colorBarMap = new Map<string, {
       avgCost: number;
       wasteRate: number;
       mixSessions: number;
@@ -85,7 +85,7 @@ export function useStaffPerformanceComposite(
       reweighComplianceRate: number;
     }>();
     for (const b of backroomData ?? []) {
-      const existing = backroomMap.get(b.staff_id);
+      const existing = colorBarMap.get(b.staff_id);
       if (existing) {
         existing.mixSessions += b.mix_session_count;
         existing.totalCost += b.total_product_cost;
@@ -94,7 +94,7 @@ export function useStaffPerformanceComposite(
         // weighted average reweigh compliance
         existing.reweighComplianceRate = (existing.reweighComplianceRate * (existing.mixSessions - b.mix_session_count) + b.reweigh_compliance_rate * b.mix_session_count) / existing.mixSessions;
       } else {
-        backroomMap.set(b.staff_id, {
+        colorBarMap.set(b.staff_id, {
           avgCost: b.mix_session_count > 0 ? b.total_product_cost / b.mix_session_count : 0,
           wasteRate: b.waste_rate,
           mixSessions: b.mix_session_count,
@@ -105,7 +105,7 @@ export function useStaffPerformanceComposite(
     }
 
     // Compute salon-wide averages for coaching signals
-    const allChemCosts = Array.from(backroomMap.values()).filter(v => v.mixSessions > 0).map(v => v.totalCost / v.mixSessions);
+    const allChemCosts = Array.from(colorBarMap.values()).filter(v => v.mixSessions > 0).map(v => v.totalCost / v.mixSessions);
     const salonAvgChemCost = allChemCosts.length > 0
       ? allChemCosts.reduce((a, b) => a + b, 0) / allChemCosts.length
       : 0;
@@ -117,7 +117,7 @@ export function useStaffPerformanceComposite(
 
     return experienceScores.map((score): StaffPerformanceRow => {
       const sales = salesMap.get(score.staffId);
-      const backroom = backroomMap.get(score.staffId);
+      const backroom = colorBarMap.get(score.staffId);
       const avgChem = backroom && backroom.mixSessions > 0
         ? backroom.totalCost / backroom.mixSessions
         : 0;

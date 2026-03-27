@@ -10,13 +10,13 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { X, Truck, Minus, Plus, Send, FileText, Trash2, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { tokens } from '@/lib/design-tokens';
-import { type BackroomInventoryRow } from '@/hooks/color-bar/useColorBarInventoryTable';
+import { type ColorBarInventoryRow } from '@/hooks/color-bar/useColorBarInventoryTable';
 import { stripSizeSuffix } from './CommandCenterRow';
 
 interface POBuilderPanelProps {
   open: boolean;
   onClose: () => void;
-  items: BackroomInventoryRow[];
+  items: ColorBarInventoryRow[];
   qtyOverrides: Map<string, number>;
   onQtyOverride: (productId: string, qty: number | null) => void;
   onRemoveItem: (productId: string) => void;
@@ -27,7 +27,7 @@ interface POBuilderPanelProps {
 
 export interface SupplierPOGroup {
   supplier: string;
-  items: BackroomInventoryRow[];
+  items: ColorBarInventoryRow[];
   totalCost: number;
 }
 
@@ -44,7 +44,7 @@ export function POBuilderPanel({
 }: POBuilderPanelProps) {
   // Group items by supplier
   const supplierGroups = useMemo((): SupplierPOGroup[] => {
-    const map = new Map<string, BackroomInventoryRow[]>();
+    const map = new Map<string, ColorBarInventoryRow[]>();
     for (const item of items) {
       const supplier = item.supplier_name || 'Unassigned';
       const arr = map.get(supplier) ?? [];

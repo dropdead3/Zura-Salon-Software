@@ -143,7 +143,7 @@ export function PricingAnalyticsContent({
             onClick={() => navigate(dashPath('/admin/color-bar-settings'))}
             className="font-sans gap-1"
           >
-            Explore Backroom <ArrowRight className="w-3.5 h-3.5" />
+            Explore Color Bar <ArrowRight className="w-3.5 h-3.5" />
           </Button>
         }
       />

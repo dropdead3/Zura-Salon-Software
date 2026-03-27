@@ -150,7 +150,7 @@ import PointsConfig from "./pages/dashboard/admin/PointsConfig";
 import DailyHuddle from "./pages/dashboard/admin/DailyHuddle";
 import ZuraConfigPage from "./pages/dashboard/admin/ZuraConfigPage";
 import ColorBarSettings from "./pages/dashboard/admin/ColorBarSettings";
-import BackroomSubscription from "./pages/dashboard/admin/BackroomSubscription";
+import ColorBarSubscription from "./pages/dashboard/admin/ColorBarSubscription";
 import PriceRecommendations from "./pages/dashboard/admin/PriceRecommendations";
 
 // V1 Zura Intelligence
@@ -307,7 +307,7 @@ function DashboardRoutes() {
 
       <Route path="admin/zura-config" element={<ProtectedRoute requiredPermission="manage_settings"><ZuraConfigPage /></ProtectedRoute>} />
       <Route path="admin/color-bar-settings" element={<ProtectedRoute requiredPermission="manage_settings"><ColorBarSettings /></ProtectedRoute>} />
-      <Route path="admin/backroom-subscription" element={<ProtectedRoute requiredPermission="manage_settings"><BackroomSubscription /></ProtectedRoute>} />
+      <Route path="admin/backroom-subscription" element={<ProtectedRoute requiredPermission="manage_settings"><ColorBarSubscription /></ProtectedRoute>} />
       <Route path="admin/price-recommendations" element={<Navigate to="admin/color-bar-settings?section=price-intelligence" replace />} />
       <Route path="admin/kpi-builder" element={<ProtectedRoute requiredPermission="manage_settings"><KpiBuilderPage /></ProtectedRoute>} />
       <Route path="admin/executive-brief" element={<ProtectedRoute requiredPermission="manage_settings"><ExecutiveBriefPage /></ProtectedRoute>} />

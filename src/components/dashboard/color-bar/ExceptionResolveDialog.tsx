@@ -14,10 +14,10 @@ import {
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { useResolveException, type BackroomException } from '@/hooks/color-bar/useColorBarExceptions';
+import { useResolveException, type ColorBarException } from '@/hooks/color-bar/useColorBarExceptions';
 
 interface ExceptionResolveDialogProps {
-  exception: BackroomException | null;
+  exception: ColorBarException | null;
   onClose: () => void;
 }
 

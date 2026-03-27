@@ -9,13 +9,13 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { Loader2, Package, Send, Save } from 'lucide-react';
 import { useBatchCreatePurchaseOrders } from '@/hooks/useBatchReorder';
-import type { BackroomInventoryRow } from '@/hooks/color-bar/useColorBarInventoryTable';
+import type { ColorBarInventoryRow } from '@/hooks/color-bar/useColorBarInventoryTable';
 
 interface ColorBarBulkReorderDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   orgId: string;
-  reorderItems: BackroomInventoryRow[];
+  reorderItems: ColorBarInventoryRow[];
 }
 
 interface ReorderLine {

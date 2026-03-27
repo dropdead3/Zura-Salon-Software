@@ -107,7 +107,7 @@ export function AuditComplianceTracker({ locationId }: AuditComplianceTrackerPro
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
           <p className={tokens.body.emphasis}>Audit Schedule</p>
-          <p className={tokens.body.muted}>Track periodic inventory audits and backroom manager compliance.</p>
+          <p className={tokens.body.muted}>Track periodic inventory audits and color bar manager compliance.</p>
         </div>
         <Button size="sm" onClick={handleScheduleNext} disabled={generateNext.isPending} className={tokens.button.cardAction}>
           {generateNext.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}

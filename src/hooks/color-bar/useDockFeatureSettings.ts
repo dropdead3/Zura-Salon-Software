@@ -6,12 +6,12 @@
  * - Smart Mix Assist: reads from existing `smart_mix_assist_settings.is_enabled`
  */
 
-import { useBackroomSetting } from './useColorBarSettings';
+import { useColorBarSetting } from './useColorBarSettings';
 import { useSmartMixAssistSettings } from './useSmartMixAssist';
 
 export function useDockFeatureSettings() {
-  const { data: assistantPrepSetting, isLoading: apLoading } = useBackroomSetting('dock_assistant_prep_enabled');
-  const { data: formulaMemorySetting, isLoading: fmLoading } = useBackroomSetting('dock_formula_memory_enabled');
+  const { data: assistantPrepSetting, isLoading: apLoading } = useColorBarSetting('dock_assistant_prep_enabled');
+  const { data: formulaMemorySetting, isLoading: fmLoading } = useColorBarSetting('dock_formula_memory_enabled');
   const { data: smartMixSettings, isLoading: smLoading } = useSmartMixAssistSettings();
 
   return {

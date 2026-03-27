@@ -8,9 +8,9 @@ import { useColorBarLocationEntitlements } from '@/hooks/color-bar/useColorBarLo
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { formatCurrency } from '@/hooks/useBillingCalculations';
-import { BACKROOM_BASE_PRICE, SCALE_LICENSE_MONTHLY } from '@/hooks/color-bar/useLocationStylistCounts';
+import { COLOR_BAR_BASE_PRICE, SCALE_LICENSE_MONTHLY } from '@/hooks/color-bar/useLocationStylistCounts';
 
-export function BackroomCostSummaryCard() {
+export function ColorBarCostSummaryCard() {
   const { effectiveOrganization } = useOrganizationContext();
   const orgId = effectiveOrganization?.id;
   const { entitlements, isLoading: entLoading } = useColorBarLocationEntitlements(orgId);
@@ -35,7 +35,7 @@ export function BackroomCostSummaryCard() {
 
   const activeEntitlements = entitlements.filter(e => e.status === 'active');
   const totalScales = activeEntitlements.reduce((s, e) => s + (e.scale_count || 0), 0);
-  const totalBaseCost = activeEntitlements.length * BACKROOM_BASE_PRICE;
+  const totalBaseCost = activeEntitlements.length * COLOR_BAR_BASE_PRICE;
   const totalScaleCost = totalScales * SCALE_LICENSE_MONTHLY;
   const grandTotal = totalBaseCost + totalScaleCost;
 
@@ -85,7 +85,7 @@ export function BackroomCostSummaryCard() {
                   )}
                 </div>
                 <span className="font-sans text-sm text-foreground">
-                  {formatCurrency(BACKROOM_BASE_PRICE + scaleCost)}/mo
+                  {formatCurrency(COLOR_BAR_BASE_PRICE + scaleCost)}/mo
                 </span>
               </div>
             );
@@ -99,7 +99,7 @@ export function BackroomCostSummaryCard() {
         <Separator />
 
         <div className="flex justify-between font-display text-sm tracking-wide">
-          <span>Backroom Base Total</span>
+          <span>Color Bar Base Total</span>
           <span className="text-foreground">{formatCurrency(grandTotal)}/mo</span>
         </div>
       </CardContent>

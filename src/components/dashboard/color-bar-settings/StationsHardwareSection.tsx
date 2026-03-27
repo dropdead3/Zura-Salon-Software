@@ -2,11 +2,11 @@ import { useState } from 'react';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import {
   useColorBarStations,
-  useCreateBackroomStation,
-  useUpdateBackroomStation,
-  useDeleteBackroomStation,
+  useCreateColorBarStation,
+  useUpdateColorBarStation,
+  useDeleteColorBarStation,
   getHealthColor,
-  type BackroomStation,
+  type ColorBarStation,
 } from '@/hooks/color-bar/useColorBarStations';
 import { useActiveLocations } from '@/hooks/useLocations';
 import { tokens } from '@/lib/design-tokens';
@@ -40,9 +40,9 @@ export function StationsHardwareSection({ onNavigate }: Props) {
   const { data: locations } = useActiveLocations();
   const [filterLocationId, setFilterLocationId] = useState('all');
   const { data: allStations, isLoading } = useColorBarStations();
-  const createStation = useCreateBackroomStation();
-  const updateStation = useUpdateBackroomStation();
-  const deleteStation = useDeleteBackroomStation();
+  const createStation = useCreateColorBarStation();
+  const updateStation = useUpdateColorBarStation();
+  const deleteStation = useDeleteColorBarStation();
 
   // Filter stations by selected location
   const stations = allStations?.filter((s) =>
@@ -51,7 +51,7 @@ export function StationsHardwareSection({ onNavigate }: Props) {
 
   const [showForm, setShowForm] = useState(false);
   const [showWizard, setShowWizard] = useState(false);
-  const [editingStation, setEditingStation] = useState<BackroomStation | null>(null);
+  const [editingStation, setEditingStation] = useState<ColorBarStation | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState({ station_name: '', location_id: '', assigned_device_id: '', assigned_scale_id: '' });
 
@@ -70,7 +70,7 @@ export function StationsHardwareSection({ onNavigate }: Props) {
     }
   };
 
-  const handleEdit = (station: BackroomStation) => { setEditingStation(station); setShowWizard(true); };
+  const handleEdit = (station: ColorBarStation) => { setEditingStation(station); setShowWizard(true); };
   const handleWizardClose = () => { setShowWizard(false); setEditingStation(null); };
 
   if (isLoading) {

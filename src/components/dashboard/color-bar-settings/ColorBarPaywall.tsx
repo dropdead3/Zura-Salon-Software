@@ -29,7 +29,7 @@ import { useColorBarPricingEstimate } from '@/hooks/color-bar/useColorBarPricing
 import { usePerLocationColorServices } from '@/hooks/color-bar/usePerLocationColorServices';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import {
-  BACKROOM_BASE_PRICE, BACKROOM_PER_SERVICE_FEE,
+  COLOR_BAR_BASE_PRICE, BACKROOM_PER_SERVICE_FEE,
   SCALE_LICENSE_MONTHLY, SCALE_HARDWARE_PRICE,
 } from '@/hooks/color-bar/useLocationStylistCounts';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -242,7 +242,7 @@ export function ColorBarPaywall() {
   }, [recommendedScales, manualScaleOverride, estimate]);
 
   // Cost calculations
-  const baseCost = locationCount * BACKROOM_BASE_PRICE;
+  const baseCost = locationCount * COLOR_BAR_BASE_PRICE;
   const scaleCost = scaleCount * SCALE_LICENSE_MONTHLY;
   const usageFee = estimate ? Math.round(estimate.monthlyColorServices * locationFraction * BACKROOM_PER_SERVICE_FEE) : 0;
   const monthlyTotal = baseCost + scaleCost + usageFee;
@@ -995,7 +995,7 @@ export function ColorBarPaywall() {
                 {/* ── Price headline ── */}
                 <div className="p-6 md:p-8 text-center space-y-2">
                   <p className="font-sans text-base text-foreground">
-                    <span className="font-display text-xl tracking-wide">${BACKROOM_BASE_PRICE}</span>
+                    <span className="font-display text-xl tracking-wide">${COLOR_BAR_BASE_PRICE}</span>
                     <span className="text-muted-foreground">/mo per location</span>
                     <span className="text-muted-foreground/40 mx-3">·</span>
                     <span className="font-display text-xl tracking-wide">${BACKROOM_PER_SERVICE_FEE.toFixed(2)}</span>
@@ -1036,7 +1036,7 @@ export function ColorBarPaywall() {
                               <span className="font-sans text-sm text-foreground truncate">{loc.name}</span>
                               {cityLabel && <span className="font-sans text-sm text-muted-foreground">{cityLabel}</span>}
                             </div>
-                            <span className="font-sans text-sm text-primary shrink-0">+${BACKROOM_BASE_PRICE}/mo</span>
+                            <span className="font-sans text-sm text-primary shrink-0">+${COLOR_BAR_BASE_PRICE}/mo</span>
                           </div>
                         );
                       })()
@@ -1060,7 +1060,7 @@ export function ColorBarPaywall() {
                                 {cityLabel && <span className="font-sans text-sm text-muted-foreground">{cityLabel}</span>}
                               </div>
                               {isChecked && (
-                                <span className="font-sans text-sm text-primary shrink-0">+${BACKROOM_BASE_PRICE}/mo</span>
+                                <span className="font-sans text-sm text-primary shrink-0">+${COLOR_BAR_BASE_PRICE}/mo</span>
                               )}
                             </div>
                           );

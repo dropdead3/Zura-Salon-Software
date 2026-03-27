@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
-import { useBackroomSetting, useUpsertBackroomSetting } from '@/hooks/color-bar/useColorBarSettings';
+import { useColorBarSetting, useUpsertColorBarSetting } from '@/hooks/color-bar/useColorBarSettings';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -11,7 +11,7 @@ import { Infotainer } from '@/components/ui/Infotainer';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 
 const PERMISSION_TOOLTIPS: Record<string, string> = {
-  view_backroom: 'Access to the Color Bar mixing dashboard.',
+  view_color_bar: 'Access to the Color Bar mixing dashboard.',
   mix_bowls: 'Ability to create and manage mixing bowls.',
   smart_mix_assist: 'Access to AI-powered formula suggestions during mixing.',
   formula_memory: 'View and recall past formulas for returning clients.',
@@ -40,7 +40,7 @@ const ROLES = [
 ] as const;
 
 const PERMISSIONS = [
-  { key: 'view_backroom', label: 'View Backroom', group: 'Access' },
+  { key: 'view_color_bar', label: 'View Backroom', group: 'Access' },
   { key: 'mix_bowls', label: 'Mix Bowls', group: 'Mixing' },
   { key: 'smart_mix_assist', label: 'Smart Mix Assist', group: 'Mixing' },
   { key: 'formula_memory', label: 'Formula Memory', group: 'Mixing' },
@@ -60,19 +60,19 @@ const PERMISSIONS = [
 const DEFAULT_PERMISSIONS: Record<string, string[]> = {
   owner: PERMISSIONS.map(p => p.key),
   manager: PERMISSIONS.filter(p => p.key !== 'configure_settings').map(p => p.key),
-  inventory_manager: ['view_backroom', 'view_costs', 'edit_inventory', 'perform_counts', 'receive_po', 'resolve_exceptions'],
-  front_desk: ['view_backroom', 'view_charges'],
-  stylist: ['view_backroom', 'mix_bowls', 'smart_mix_assist', 'formula_memory'],
-  assistant: ['view_backroom', 'mix_bowls', 'assistant_prep'],
-  independent_stylist: ['view_backroom', 'mix_bowls', 'smart_mix_assist', 'formula_memory'],
-  booth_renter: ['view_backroom', 'mix_bowls'],
+  inventory_manager: ['view_color_bar', 'view_costs', 'edit_inventory', 'perform_counts', 'receive_po', 'resolve_exceptions'],
+  front_desk: ['view_color_bar', 'view_charges'],
+  stylist: ['view_color_bar', 'mix_bowls', 'smart_mix_assist', 'formula_memory'],
+  assistant: ['view_color_bar', 'mix_bowls', 'assistant_prep'],
+  independent_stylist: ['view_color_bar', 'mix_bowls', 'smart_mix_assist', 'formula_memory'],
+  booth_renter: ['view_color_bar', 'mix_bowls'],
 };
 
 export function ColorBarPermissionsSection() {
   const { effectiveOrganization } = useOrganizationContext();
   const orgId = effectiveOrganization?.id;
-  const { data: setting, isLoading } = useBackroomSetting('backroom_permissions');
-  const upsert = useUpsertBackroomSetting();
+  const { data: setting, isLoading } = useColorBarSetting('backroom_permissions');
+  const upsert = useUpsertColorBarSetting();
 
   const savedPerms = (setting?.value || {}) as Record<string, string[]>;
   const [perms, setPerms] = useState<Record<string, string[]> | null>(null);

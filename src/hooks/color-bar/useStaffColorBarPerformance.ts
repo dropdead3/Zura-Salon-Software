@@ -7,7 +7,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 
-export interface StaffBackroomPerformance {
+export interface StaffColorBarPerformance {
   id: string;
   organization_id: string;
   staff_id: string;
@@ -35,7 +35,7 @@ export function useStaffColorBarPerformance(
 
   return useQuery({
     queryKey: ['staff-backroom-performance', orgId, periodStart, periodEnd, locationId, staffId],
-    queryFn: async (): Promise<StaffBackroomPerformance[]> => {
+    queryFn: async (): Promise<StaffColorBarPerformance[]> => {
       let query = supabase
         .from('staff_backroom_performance')
         .select('*')
@@ -48,7 +48,7 @@ export function useStaffColorBarPerformance(
 
       const { data, error } = await query;
       if (error) throw error;
-      return (data ?? []) as unknown as StaffBackroomPerformance[];
+      return (data ?? []) as unknown as StaffColorBarPerformance[];
     },
     enabled: !!orgId && !!periodStart && !!periodEnd,
     staleTime: 5 * 60_000,

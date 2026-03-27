@@ -7,7 +7,7 @@ import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useColorBarOrgId } from './useColorBarOrgId';
 import { toast } from 'sonner';
 
-export interface BackroomSetting {
+export interface ColorBarSetting {
   id: string;
   organization_id: string;
   location_id: string | null;
@@ -26,7 +26,7 @@ export function useColorBarSettingsAll() {
 
   return useQuery({
     queryKey: ['color-bar-settings', orgId],
-    queryFn: async (): Promise<BackroomSetting[]> => {
+    queryFn: async (): Promise<ColorBarSetting[]> => {
       const { data, error } = await supabase
         .from('backroom_settings')
         .select('*')
@@ -34,7 +34,7 @@ export function useColorBarSettingsAll() {
         .order('setting_key');
 
       if (error) throw error;
-      return (data || []) as unknown as BackroomSetting[];
+      return (data || []) as unknown as ColorBarSetting[];
     },
     enabled: !!orgId,
     staleTime: 60_000,
@@ -44,7 +44,7 @@ export function useColorBarSettingsAll() {
 /**
  * Resolve a single setting value with location→org fallback.
  */
-export function useBackroomSetting(key: string, locationId?: string | null) {
+export function useColorBarSetting(key: string, locationId?: string | null) {
   const orgId = useColorBarOrgId();
 
   return useQuery({
@@ -81,7 +81,7 @@ export function useBackroomSetting(key: string, locationId?: string | null) {
   });
 }
 
-export function useUpsertBackroomSetting() {
+export function useUpsertColorBarSetting() {
   const queryClient = useQueryClient();
 
   return useMutation({

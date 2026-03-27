@@ -15,7 +15,7 @@ import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
-import { useColorBarInventoryTable, type BackroomInventoryRow } from '@/hooks/color-bar/useColorBarInventoryTable';
+import { useColorBarInventoryTable, type ColorBarInventoryRow } from '@/hooks/color-bar/useColorBarInventoryTable';
 import { useCompleteCountSession, type CountSession } from '@/hooks/inventory/useCountSessions';
 import { postLedgerEntry } from '@/lib/color-bar/services/inventory-ledger-service';
 import { supabase } from '@/integrations/supabase/client';
@@ -59,7 +59,7 @@ export function CountEntryForm({ session, locationId, onClose }: CountEntryFormP
 
   // Group by brand
   const brandGroups = useMemo(() => {
-    const groups = new Map<string, BackroomInventoryRow[]>();
+    const groups = new Map<string, ColorBarInventoryRow[]>();
     for (const p of filteredProducts) {
       const brand = p.brand || 'Other';
       const list = groups.get(brand) || [];

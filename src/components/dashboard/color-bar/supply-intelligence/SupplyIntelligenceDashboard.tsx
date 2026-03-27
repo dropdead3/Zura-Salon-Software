@@ -19,7 +19,7 @@ import {
   useSupplyIntelligence,
   useRefreshSupplyIntelligence,
 } from '@/hooks/color-bar/useSupplyIntelligence';
-import { useBackroomSetting, useUpsertBackroomSetting } from '@/hooks/color-bar/useColorBarSettings';
+import { useColorBarSetting, useUpsertColorBarSetting } from '@/hooks/color-bar/useColorBarSettings';
 import { useColorBarOrgId } from '@/hooks/color-bar/useColorBarOrgId';
 import { SupplyKPICards } from './SupplyKPICards';
 import { SupplyInsightCard } from './SupplyInsightCard';
@@ -48,15 +48,15 @@ export function SupplyIntelligenceDashboard({ locationId }: SupplyIntelligenceDa
   const orgId = useColorBarOrgId();
 
   // Digest frequency setting
-  const { data: digestSetting } = useBackroomSetting('supply_digest_frequency');
+  const { data: digestSetting } = useColorBarSetting('supply_digest_frequency');
   const digestFrequency = (digestSetting?.value?.frequency as string) ?? 'weekly';
 
   // Cost alert threshold setting
-  const { data: alertSetting } = useBackroomSetting('cost_alert_threshold');
+  const { data: alertSetting } = useColorBarSetting('cost_alert_threshold');
   const alertEnabled = (alertSetting?.value?.enabled as boolean) ?? false;
   const alertThreshold = (alertSetting?.value?.threshold_pct as number) ?? 10;
 
-  const upsertSetting = useUpsertBackroomSetting();
+  const upsertSetting = useUpsertColorBarSetting();
 
   const handleDigestFrequencyChange = (frequency: string) => {
     if (!orgId) return;

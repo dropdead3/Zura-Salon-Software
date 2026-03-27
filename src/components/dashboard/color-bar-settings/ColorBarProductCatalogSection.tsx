@@ -2,7 +2,7 @@ import { useState, useMemo, useCallback, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useColorBarOrgId } from '@/hooks/color-bar/useColorBarOrgId';
-import { useColorBarInventoryTable, STOCK_STATUS_CONFIG, computeChargePerGram, type BackroomInventoryRow, type StockStatus } from '@/hooks/color-bar/useColorBarInventoryTable';
+import { useColorBarInventoryTable, STOCK_STATUS_CONFIG, computeChargePerGram, type ColorBarInventoryRow, type StockStatus } from '@/hooks/color-bar/useColorBarInventoryTable';
 import { useLocationProductSettingsMap, useUpsertLocationProductSetting, useBulkUpsertLocationProductSettings, useSyncCatalogToAllLocations } from '@/hooks/color-bar/useLocationProductSettings';
 import { useLocations } from '@/hooks/useLocations';
 import { postLedgerEntry } from '@/lib/color-bar/services/inventory-ledger-service';
@@ -141,7 +141,7 @@ const CATEGORIES = [
   'additive', 'backbar', 'foil', 'gloves', 'sanitation', 'misc consumables',
 ];
 
-interface BackroomProduct {
+interface ColorBarProduct {
   id: string;
   name: string;
   brand: string | null;
@@ -233,14 +233,14 @@ export function ColorBarProductCatalogSection({ onNavigate }: Props) {
         .eq('product_type', 'Supplies')
         .order('name');
       if (error) throw error;
-      return data as unknown as BackroomProduct[];
+      return data as unknown as ColorBarProduct[];
     },
     enabled: !!orgId,
   });
 
   /* ====== Mutations ====== */
   const updateMutation = useMutation({
-    mutationFn: async ({ id, updates }: { id: string; updates: Partial<BackroomProduct> }) => {
+    mutationFn: async ({ id, updates }: { id: string; updates: Partial<ColorBarProduct> }) => {
       const { error } = await supabase
         .from('products')
         .update({ ...updates, updated_at: new Date().toISOString() })
@@ -542,7 +542,7 @@ export function ColorBarProductCatalogSection({ onNavigate }: Props) {
 
   // Brand grouping for card grid
   const brandGroups = useMemo(() => {
-    const map = new Map<string, BackroomProduct[]>();
+    const map = new Map<string, ColorBarProduct[]>();
     allProducts.forEach((p) => {
       const b = p.brand || 'Uncategorized';
       if (!map.has(b)) map.set(b, []);
@@ -694,7 +694,7 @@ export function ColorBarProductCatalogSection({ onNavigate }: Props) {
         _ghostCost: p.cost_price == null ? match.wholesalePrice ?? null : null,
         _ghostMarkup: p.markup_pct == null ? match.defaultMarkupPct ?? null : null,
         _ghostSwatch: p.swatch_color == null ? match.swatchColor ?? null : null,
-      } as BackroomProduct & { _ghostCost?: number | null; _ghostMarkup?: number | null; _ghostSwatch?: string | null };
+      } as ColorBarProduct & { _ghostCost?: number | null; _ghostMarkup?: number | null; _ghostSwatch?: string | null };
     });
 
     if (SHADE_SORTED_CATEGORIES.has(selectedCategory)) {
@@ -1736,9 +1736,9 @@ function InventoryView({
   setFilterCategory: (v: string) => void;
   search: string;
   setSearch: (v: string) => void;
-  filteredInventory: BackroomInventoryRow[];
+  filteredInventory: ColorBarInventoryRow[];
   bulkProductIds: string[];
-  reorderItems: BackroomInventoryRow[];
+  reorderItems: ColorBarInventoryRow[];
   orgId: string | null;
   onUpdate: (id: string, updates: Record<string, any>) => void;
   onOpenPricing: () => void;
@@ -1865,7 +1865,7 @@ function InventoryTableRow({
   orgId,
   onUpdate,
 }: {
-  row: BackroomInventoryRow;
+  row: ColorBarInventoryRow;
   orgId: string;
   onUpdate: (u: Record<string, any>) => void;
 }) {

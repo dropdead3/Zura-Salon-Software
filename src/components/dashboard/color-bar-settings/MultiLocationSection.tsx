@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
-import { useColorBarSettingsAll, useUpsertBackroomSetting, type BackroomSetting } from '@/hooks/color-bar/useColorBarSettings';
-import { useColorBarAlertRules, useUpsertAlertRule, type BackroomAlertRule } from '@/hooks/color-bar/useColorBarAlertRules';
+import { useColorBarSettingsAll, useUpsertColorBarSetting, type ColorBarSetting } from '@/hooks/color-bar/useColorBarSettings';
+import { useColorBarAlertRules, useUpsertAlertRule, type ColorBarAlertRule } from '@/hooks/color-bar/useColorBarAlertRules';
 import { useActiveLocations } from '@/hooks/useLocations';
 import { supabase } from '@/integrations/supabase/client';
 import { tokens } from '@/lib/design-tokens';
@@ -27,7 +27,7 @@ export function MultiLocationSection() {
   const { data: allSettings, isLoading: settingsLoading } = useColorBarSettingsAll();
   const { data: orgAlertRules } = useColorBarAlertRules();
   const { data: locations, isLoading: locLoading } = useActiveLocations();
-  const upsert = useUpsertBackroomSetting();
+  const upsert = useUpsertColorBarSetting();
   const upsertRule = useUpsertAlertRule();
   const queryClient = useQueryClient();
 
@@ -43,7 +43,7 @@ export function MultiLocationSection() {
 
   const grouped = useMemo(() => {
     if (!allSettings) return {};
-    const map: Record<string, { orgDefault: BackroomSetting | null; overrides: BackroomSetting[] }> = {};
+    const map: Record<string, { orgDefault: ColorBarSetting | null; overrides: ColorBarSetting[] }> = {};
     for (const s of allSettings) {
       if (!map[s.setting_key]) map[s.setting_key] = { orgDefault: null, overrides: [] };
       if (!s.location_id) map[s.setting_key].orgDefault = s;

@@ -323,7 +323,7 @@ export function AlertSettingsCard() {
                         Scheduled audit reminders
                       </Label>
                       <p className="text-xs text-muted-foreground mt-0.5">
-                        Remind backroom managers when periodic inventory audits are due
+                        Remind color bar managers when periodic inventory audits are due
                       </p>
                     </div>
                     <Switch checked={auditReminderEnabled} onCheckedChange={setAuditReminderEnabled} />

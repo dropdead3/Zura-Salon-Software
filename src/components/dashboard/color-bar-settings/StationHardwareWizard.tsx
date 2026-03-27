@@ -11,9 +11,9 @@ import { cn } from '@/lib/utils';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useActiveLocations } from '@/hooks/useLocations';
 import {
-  useCreateBackroomStation,
-  useUpdateBackroomStation,
-  type BackroomStation,
+  useCreateColorBarStation,
+  useUpdateColorBarStation,
+  type ColorBarStation,
 } from '@/hooks/color-bar/useColorBarStations';
 import { ScaleConnectionStatus } from '@/components/dashboard/color-bar/ScaleConnectionStatus';
 import type { ConnectionState } from '@/lib/color-bar/weight-event-schema';
@@ -74,7 +74,7 @@ const slideTransition = {
   mass: 0.8,
 };
 
-function buildInitialState(station?: BackroomStation): WizardState {
+function buildInitialState(station?: ColorBarStation): WizardState {
   if (!station) {
     return {
       stationName: '',
@@ -101,7 +101,7 @@ function buildInitialState(station?: BackroomStation): WizardState {
 interface Props {
   onClose: () => void;
   /** When provided, wizard opens in edit mode with fields pre-filled. */
-  initialStation?: BackroomStation;
+  initialStation?: ColorBarStation;
 }
 
 export function StationHardwareWizard({ onClose, initialStation }: Props) {
@@ -109,8 +109,8 @@ export function StationHardwareWizard({ onClose, initialStation }: Props) {
   const { effectiveOrganization } = useOrganizationContext();
   const orgId = effectiveOrganization?.id;
   const { data: locations } = useActiveLocations();
-  const createStation = useCreateBackroomStation();
-  const updateStation = useUpdateBackroomStation();
+  const createStation = useCreateColorBarStation();
+  const updateStation = useUpdateColorBarStation();
 
   const [step, setStep] = useState(0);
   const [direction, setDirection] = useState(1);

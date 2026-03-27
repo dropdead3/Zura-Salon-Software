@@ -35,7 +35,7 @@ import { useColorBarSetupHealth } from '@/hooks/color-bar/useColorBarSetupHealth
 import { ColorBarDashboardOverview } from '@/components/dashboard/color-bar-settings/ColorBarDashboardOverview';
 import { ColorBarInsightsSection } from '@/components/dashboard/color-bar-settings/ColorBarInsightsSection';
 import { ColorBarSetupBanner } from '@/components/dashboard/color-bar-settings/ColorBarSetupBanner';
-import { useBackroomSetting } from '@/hooks/color-bar/useColorBarSettings';
+import { useColorBarSetting } from '@/hooks/color-bar/useColorBarSettings';
 import { ColorBarProductCatalogSection } from '@/components/dashboard/color-bar-settings/ColorBarProductCatalogSection';
 import { ServiceTrackingSection } from '@/components/dashboard/color-bar-settings/ServiceTrackingSection';
 import { RecipeBaselineSection } from '@/components/dashboard/color-bar-settings/RecipeBaselineSection';
@@ -53,7 +53,7 @@ import { PriceRecommendationsContent } from '@/pages/dashboard/admin/PriceRecomm
 import { ColorBarSavingsSection } from '@/components/dashboard/color-bar-settings/ColorBarSavingsSection';
 
 
-type BackroomSection =
+type ColorBarSection =
   | 'overview'
   | 'analytics'
   | 'products'
@@ -82,12 +82,12 @@ const GROUP_LABELS: Record<SectionGroup, string> = {
 const GROUP_ORDER: SectionGroup[] = ['operations', 'configuration', 'settings'];
 
 interface SectionMeta {
-  id: BackroomSection;
+  id: ColorBarSection;
   label: string;
   icon: typeof LayoutDashboard;
   tooltip: string;
   group: SectionGroup;
-  requires?: BackroomSection[];
+  requires?: ColorBarSection[];
   requiresLabel?: string;
 }
 
@@ -119,7 +119,7 @@ const sectionsByGroup = GROUP_ORDER.map(group => ({
   items: sections.filter(s => s.group === group),
 }));
 
-function getSectionStatus(sectionId: BackroomSection, health: ReturnType<typeof useColorBarSetupHealth>['data']): 'done' | 'warning' | 'none' {
+function getSectionStatus(sectionId: ColorBarSection, health: ReturnType<typeof useColorBarSetupHealth>['data']): 'done' | 'warning' | 'none' {
   if (!health) return 'none';
   switch (sectionId) {
     case 'products': return health.trackedProducts > 0 ? 'done' : 'none';
@@ -140,12 +140,12 @@ function isPrereqMet(section: SectionMeta, health: ReturnType<typeof useColorBar
 export default function ColorBarSettings() {
   const { dashPath } = useOrgDashboardPath();
   const [searchParams, setSearchParams] = useSearchParams();
-  const initialSection = (searchParams.get('section') as BackroomSection) || 'overview';
-  const [activeSection, setActiveSection] = useState<BackroomSection>(initialSection);
+  const initialSection = (searchParams.get('section') as ColorBarSection) || 'overview';
+  const [activeSection, setActiveSection] = useState<ColorBarSection>(initialSection);
   const [subTab, setSubTab] = useState<string | undefined>();
   const { data: health } = useColorBarSetupHealth();
   const { isEntitled, isLoading: entitlementLoading } = useColorBarEntitlement();
-  const { data: wizardSetting } = useBackroomSetting('setup_wizard_completed');
+  const { data: wizardSetting } = useColorBarSetting('setup_wizard_completed');
   const wizardCompleted = !!(wizardSetting?.value as Record<string, unknown>)?.completed;
   const [showWizardFromBanner, setShowWizardFromBanner] = useState(false);
   const navigate = useNavigate();
@@ -211,17 +211,17 @@ export default function ColorBarSettings() {
   const handleNavigate = useCallback((section: string) => {
     if (section.includes(':')) {
       const [sec, tab] = section.split(':');
-      setActiveSection(sec as BackroomSection);
+      setActiveSection(sec as ColorBarSection);
       setSubTab(tab);
     } else {
-      setActiveSection(section as BackroomSection);
+      setActiveSection(section as ColorBarSection);
       setSubTab(undefined);
     }
   }, []);
 
   const bannerHealth = useMemo(() => {
     if (!health) return undefined;
-    const stepSections: { label: string; section: BackroomSection }[] = [
+    const stepSections: { label: string; section: ColorBarSection }[] = [
       { label: 'Products', section: 'products' },
       { label: 'Services', section: 'services' },
       { label: 'Formulas', section: 'formulas' },
@@ -352,7 +352,7 @@ export default function ColorBarSettings() {
           <div className="lg:hidden w-full mb-4">
             <select
               value={activeSection}
-              onChange={(e) => setActiveSection(e.target.value as BackroomSection)}
+              onChange={(e) => setActiveSection(e.target.value as ColorBarSection)}
               className="w-full rounded-xl border border-border/60 bg-background px-4 py-2.5 text-sm font-sans text-foreground"
             >
               {sectionsByGroup.map((group) => (

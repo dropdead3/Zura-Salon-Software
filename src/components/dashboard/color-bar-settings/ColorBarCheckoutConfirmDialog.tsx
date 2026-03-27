@@ -8,7 +8,7 @@ import {
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { useOrgPaymentInfo } from '@/hooks/useOrgPaymentInfo';
 import {
-  BACKROOM_BASE_PRICE, BACKROOM_PER_SERVICE_FEE,
+  COLOR_BAR_BASE_PRICE, BACKROOM_PER_SERVICE_FEE,
   SCALE_LICENSE_MONTHLY, SCALE_HARDWARE_PRICE,
 } from '@/hooks/color-bar/useLocationStylistCounts';
 
@@ -33,7 +33,7 @@ export function ColorBarCheckoutConfirmDialog({
   const { formatCurrency } = useFormatCurrency();
   const { data: paymentInfo } = useOrgPaymentInfo(organizationId);
 
-  const baseCost = locationCount * BACKROOM_BASE_PRICE;
+  const baseCost = locationCount * COLOR_BAR_BASE_PRICE;
   const scaleLicenseCost = scaleCount * SCALE_LICENSE_MONTHLY;
   const estimatedUsage = Math.round(estimatedMonthlyServices * BACKROOM_PER_SERVICE_FEE);
   const monthlyRecurring = baseCost + scaleLicenseCost;
@@ -96,7 +96,7 @@ export function ColorBarCheckoutConfirmDialog({
               <div className="flex items-center justify-between px-3 py-2.5">
                 <span className="flex items-center gap-2 text-sm font-sans">
                   <MapPin className="w-3.5 h-3.5 text-primary" />
-                  {locationCount} location{locationCount !== 1 ? 's' : ''} × {formatCurrency(BACKROOM_BASE_PRICE)}
+                  {locationCount} location{locationCount !== 1 ? 's' : ''} × {formatCurrency(COLOR_BAR_BASE_PRICE)}
                 </span>
                 <span className="text-sm font-sans font-medium">{formatCurrency(baseCost)}</span>
               </div>
@@ -133,7 +133,7 @@ export function ColorBarCheckoutConfirmDialog({
               <div className="flex items-center justify-between px-3 py-2.5">
                 <span className="flex items-center gap-2 text-sm font-sans">
                   <MapPin className="w-3.5 h-3.5 text-primary" />
-                  {locationCount} location{locationCount !== 1 ? 's' : ''} × {formatCurrency(BACKROOM_BASE_PRICE)}/mo
+                  {locationCount} location{locationCount !== 1 ? 's' : ''} × {formatCurrency(COLOR_BAR_BASE_PRICE)}/mo
                 </span>
                 <span className="text-sm font-sans font-medium">{formatCurrency(baseCost)}</span>
               </div>

@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import {
   useColorBarExceptions,
   useResolveException,
-  type BackroomException,
+  type ColorBarException,
   type ExceptionFilters,
 } from '@/hooks/color-bar/useColorBarExceptions';
 import { ExceptionResolveDialog } from './ExceptionResolveDialog';
@@ -72,7 +72,7 @@ const TYPE_OPTIONS = [
 export function ColorBarExceptionInbox() {
   const [statusFilter, setStatusFilter] = useState('open');
   const [typeFilter, setTypeFilter] = useState('all');
-  const [resolveTarget, setResolveTarget] = useState<BackroomException | null>(null);
+  const [resolveTarget, setResolveTarget] = useState<ColorBarException | null>(null);
 
   const filters: ExceptionFilters = {};
   if (statusFilter !== 'all') filters.status = statusFilter;
@@ -81,14 +81,14 @@ export function ColorBarExceptionInbox() {
   const { data: exceptions = [], isLoading } = useColorBarExceptions(filters);
   const resolveException = useResolveException();
 
-  const handleAcknowledge = (exception: BackroomException) => {
+  const handleAcknowledge = (exception: ColorBarException) => {
     resolveException.mutate({
       exceptionId: exception.id,
       action: 'acknowledged',
     });
   };
 
-  const handleDismiss = (exception: BackroomException) => {
+  const handleDismiss = (exception: ColorBarException) => {
     resolveException.mutate({
       exceptionId: exception.id,
       action: 'dismissed',

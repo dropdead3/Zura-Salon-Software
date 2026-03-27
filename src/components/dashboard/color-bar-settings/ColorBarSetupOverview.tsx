@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useColorBarSetupHealth, type SetupWarning } from '@/hooks/color-bar/useColorBarSetupHealth';
-import { useBackroomSetting } from '@/hooks/color-bar/useColorBarSettings';
+import { useColorBarSetting } from '@/hooks/color-bar/useColorBarSettings';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -17,7 +17,7 @@ interface Props {
 
 export function ColorBarSetupOverview({ onNavigate }: Props) {
   const { data: health, isLoading } = useColorBarSetupHealth();
-  const { data: wizardSetting } = useBackroomSetting('setup_wizard_completed');
+  const { data: wizardSetting } = useColorBarSetting('setup_wizard_completed');
   const [showWizard, setShowWizard] = useState(false);
   const wizardCompleted = !!(wizardSetting?.value as Record<string, unknown>)?.completed;
 

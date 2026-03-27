@@ -22,13 +22,13 @@ import { cn } from '@/lib/utils';
 import { useCreateMultiLinePO } from '@/hooks/inventory/usePurchaseOrderLines';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { toast } from 'sonner';
-import type { BackroomInventoryRow } from '@/hooks/color-bar/useColorBarInventoryTable';
+import type { ColorBarInventoryRow } from '@/hooks/color-bar/useColorBarInventoryTable';
 import { SupplierAssignDialog } from './SupplierAssignDialog';
 
 interface SupplierGroup {
   supplierName: string;
   supplierEmail: string | null;
-  products: BackroomInventoryRow[];
+  products: ColorBarInventoryRow[];
   lineCount: number;
   estimatedCost: number;
 }
@@ -36,7 +36,7 @@ interface SupplierGroup {
 interface AutoCreatePODialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  products: BackroomInventoryRow[];
+  products: ColorBarInventoryRow[];
   organizationId: string;
   onSuccess?: () => void;
 }
@@ -51,11 +51,11 @@ export function AutoCreatePODialog({
   const createPO = useCreateMultiLinePO();
   const { formatCurrency } = useFormatCurrency();
   const [creating, setCreating] = useState(false);
-  const [supplierDialog, setSupplierDialog] = useState<{ open: boolean; brand: string; products: BackroomInventoryRow[] }>({ open: false, brand: '', products: [] });
+  const [supplierDialog, setSupplierDialog] = useState<{ open: boolean; brand: string; products: ColorBarInventoryRow[] }>({ open: false, brand: '', products: [] });
 
   const { supplierGroups, unassigned, unassignedByBrand } = useMemo(() => {
     const groupMap = new Map<string, SupplierGroup>();
-    const unassigned: BackroomInventoryRow[] = [];
+    const unassigned: ColorBarInventoryRow[] = [];
 
     for (const p of products) {
       const effectiveQty = p.recommended_order_qty > 0 ? p.recommended_order_qty : 1;
@@ -81,7 +81,7 @@ export function AutoCreatePODialog({
     }
 
     // Group unassigned by brand
-    const brandMap = new Map<string, BackroomInventoryRow[]>();
+    const brandMap = new Map<string, ColorBarInventoryRow[]>();
     for (const p of unassigned) {
       const brand = p.brand || 'Unknown';
       if (!brandMap.has(brand)) brandMap.set(brand, []);

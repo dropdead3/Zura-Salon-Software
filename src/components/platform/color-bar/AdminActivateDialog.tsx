@@ -21,7 +21,7 @@ import { MapPin, CreditCard, Weight, AlertTriangle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { BACKROOM_BASE_PRICE, SCALE_LICENSE_MONTHLY } from '@/hooks/color-bar/useLocationStylistCounts';
+import { COLOR_BAR_BASE_PRICE, SCALE_LICENSE_MONTHLY } from '@/hooks/color-bar/useLocationStylistCounts';
 
 interface LocationConfig {
   location_id: string;
@@ -80,8 +80,8 @@ export function AdminActivateDialog({
     const lines: Array<{ label: string; amount: number }> = [];
 
     for (const cfg of enabledConfigs) {
-      lines.push({ label: cfg.location_name, amount: BACKROOM_BASE_PRICE });
-      total += BACKROOM_BASE_PRICE;
+      lines.push({ label: cfg.location_name, amount: COLOR_BAR_BASE_PRICE });
+      total += COLOR_BAR_BASE_PRICE;
 
       if (cfg.scale_count > 0) {
         const scaleCost = cfg.scale_count * SCALE_LICENSE_MONTHLY;
@@ -138,7 +138,7 @@ export function AdminActivateDialog({
         <DialogHeader>
           <DialogTitle>Activate Backroom & Charge Card</DialogTitle>
           <DialogDescription>
-            Activate Zura Color Bar for <strong>{orgName}</strong> at ${BACKROOM_BASE_PRICE}/mo per location.
+            Activate Zura Color Bar for <strong>{orgName}</strong> at ${COLOR_BAR_BASE_PRICE}/mo per location.
           </DialogDescription>
         </DialogHeader>
 
@@ -175,7 +175,7 @@ export function AdminActivateDialog({
                         </div>
                       </td>
                       <td className="px-3 py-2">
-                        <span className="font-sans text-xs text-slate-300">${BACKROOM_BASE_PRICE}/mo</span>
+                        <span className="font-sans text-xs text-slate-300">${COLOR_BAR_BASE_PRICE}/mo</span>
                       </td>
                       <td className="px-3 py-2">
                         <div className="flex items-center gap-1">

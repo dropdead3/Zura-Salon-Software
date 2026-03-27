@@ -14,11 +14,11 @@ import {
 import { PlatformBadge } from '@/components/platform/ui/PlatformBadge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useMyCoachAssignments } from '@/hooks/platform/useCoachAssignments';
-import { useBackroomPlatformAnalytics } from '@/hooks/platform/useColorBarPlatformAnalytics';
+import { useColorBarPlatformAnalytics } from '@/hooks/platform/useColorBarPlatformAnalytics';
 
 export default function CoachDashboard() {
   const { data: assignments, isLoading: assignmentsLoading } = useMyCoachAssignments();
-  const { data: metrics, isLoading: metricsLoading } = useBackroomPlatformAnalytics();
+  const { data: metrics, isLoading: metricsLoading } = useColorBarPlatformAnalytics();
 
   const isLoading = assignmentsLoading || metricsLoading;
 

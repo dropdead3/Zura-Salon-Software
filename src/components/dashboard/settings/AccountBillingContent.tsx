@@ -2,7 +2,7 @@ import { BillingOverviewCard } from './BillingOverviewCard';
 import { PaymentMethodCard } from './PaymentMethodCard';
 import { OrgBillingHistoryCard } from './OrgBillingHistoryCard';
 import { PlanComparisonCard } from './PlanComparisonCard';
-import { BackroomCostSummaryCard } from './ColorBarCostSummaryCard';
+import { ColorBarCostSummaryCard } from './ColorBarCostSummaryCard';
 import { BillingAlertsBanner } from './BillingAlertsBanner';
 import { BillingAccessBanner, BillingOwnerToggleCard, BillingAccessDenied } from './BillingAccessGate';
 import { useBillingAccess } from '@/hooks/useBillingAccess';
@@ -41,7 +41,7 @@ export function AccountBillingContent() {
 
       {/* Row 3: Backroom + History */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <BackroomCostSummaryCard />
+        <ColorBarCostSummaryCard />
         <OrgBillingHistoryCard />
       </div>
     </div>

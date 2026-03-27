@@ -140,7 +140,7 @@ Deno.serve(async (req) => {
       metadata: {
         organization_id: org.id,
         addon_type: "backroom",
-        backroom_plan: "standard",
+        color_bar_plan: "standard",
         scale_count: String(totalScales),
         billing_interval: "monthly",
         location_ids: JSON.stringify(locationIds),

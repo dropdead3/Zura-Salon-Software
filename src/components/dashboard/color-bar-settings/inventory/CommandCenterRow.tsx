@@ -12,7 +12,7 @@ import { ChevronRight, History, ShoppingCart, Truck, RotateCcw } from 'lucide-re
 import { cn } from '@/lib/utils';
 import { tokens } from '@/lib/design-tokens';
 import { Badge } from '@/components/ui/badge';
-import { type BackroomInventoryRow, type StockSeverity } from '@/hooks/color-bar/useColorBarInventoryTable';
+import { type ColorBarInventoryRow, type StockSeverity } from '@/hooks/color-bar/useColorBarInventoryTable';
 import { TrendSparkline } from '@/components/dashboard/TrendSparkline';
 
 // ─── Severity visual config ──────────────────────
@@ -144,7 +144,7 @@ function DetailEditCell({
 // ─── Main Row ──────────────────────────────────
 
 interface CommandCenterRowProps {
-  row: BackroomInventoryRow;
+  row: ColorBarInventoryRow;
   isSelected: boolean;
   onToggleSelect: (id: string) => void;
   formatCurrency: (n: number) => string;
@@ -153,7 +153,7 @@ interface CommandCenterRowProps {
   adjustStock: any;
   updateMinMax: any;
   onAudit: (productId: string, productName: string) => void;
-  onQuickReorder: (row: BackroomInventoryRow, overrideQty?: number) => void;
+  onQuickReorder: (row: ColorBarInventoryRow, overrideQty?: number) => void;
   poHistory?: number[];
   /** Manual quantity override map — managed by parent */
   qtyOverride?: number | null;

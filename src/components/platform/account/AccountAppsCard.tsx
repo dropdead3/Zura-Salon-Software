@@ -47,7 +47,7 @@ export function AccountAppsCard({ organizationId }: AccountAppsCardProps) {
   }
 
   const backroomFlag = flags?.find((f) => f.flag_key === 'backroom_enabled');
-  const isBackroomEnabled = backroomFlag?.org_enabled ?? false;
+  const isColorBarEnabled = backroomFlag?.org_enabled ?? false;
   const activeLocations = entitlements.filter((e) => e.status === 'active').length;
 
   return (
@@ -66,7 +66,7 @@ export function AccountAppsCard({ organizationId }: AccountAppsCardProps) {
               <div>
                 <p className="font-medium text-[hsl(var(--platform-foreground))]">Zura Color Bar</p>
                 <p className="text-sm text-[hsl(var(--platform-foreground-muted))]">
-                  {isBackroomEnabled
+                  {isColorBarEnabled
                     ? `${activeLocations} active ${activeLocations === 1 ? 'location' : 'locations'}`
                     : '--'}
                 </p>
@@ -80,8 +80,8 @@ export function AccountAppsCard({ organizationId }: AccountAppsCardProps) {
                 <Play className="h-3 w-3" />
                 Launch Demo
               </button>
-              <PlatformBadge variant={isBackroomEnabled ? 'success' : 'default'}>
-                {isBackroomEnabled ? 'Active' : 'Not Enabled'}
+              <PlatformBadge variant={isColorBarEnabled ? 'success' : 'default'}>
+                {isColorBarEnabled ? 'Active' : 'Not Enabled'}
               </PlatformBadge>
             </div>
           </div>

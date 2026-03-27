@@ -121,7 +121,7 @@ Deno.serve(async (req) => {
     const sharedMetadata = {
       organization_id: org.id,
       addon_type: "backroom",
-      backroom_plan: "standard",
+      color_bar_plan: "standard",
       scale_count: String(scaleQty),
       billing_interval: "monthly",
       location_ids: JSON.stringify(resolvedLocationIds),

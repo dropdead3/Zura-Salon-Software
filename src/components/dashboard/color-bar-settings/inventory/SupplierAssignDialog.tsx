@@ -13,13 +13,13 @@ import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { useForm } from 'react-hook-form';
 import { useBatchUpsertSupplier } from '@/hooks/useProductSuppliers';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
-import type { BackroomInventoryRow } from '@/hooks/color-bar/useColorBarInventoryTable';
+import type { ColorBarInventoryRow } from '@/hooks/color-bar/useColorBarInventoryTable';
 
 interface SupplierAssignDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   brand: string;
-  products: BackroomInventoryRow[];
+  products: ColorBarInventoryRow[];
 }
 
 interface SupplierForm {

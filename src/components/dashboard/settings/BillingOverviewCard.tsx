@@ -9,7 +9,7 @@ import { useOrganizationBilling, useSubscriptionPlans } from '@/hooks/useOrganiz
 import { useBillingCalculations, formatCurrency, getBillingCycleLabel, getContractLengthLabel } from '@/hooks/useBillingCalculations';
 import { useTrialStatus } from '@/hooks/useTrialStatus';
 import { useColorBarLocationEntitlements } from '@/hooks/color-bar/useColorBarLocationEntitlements';
-import { BACKROOM_BASE_PRICE, SCALE_LICENSE_MONTHLY } from '@/hooks/color-bar/useLocationStylistCounts';
+import { COLOR_BAR_BASE_PRICE, SCALE_LICENSE_MONTHLY } from '@/hooks/color-bar/useLocationStylistCounts';
 
 export function BillingOverviewCard() {
   const { effectiveOrganization } = useOrganizationContext();
@@ -26,10 +26,10 @@ export function BillingOverviewCard() {
 
   const calculations = useBillingCalculations(billing, currentPlan);
 
-  // Calculate backroom costs: $20/location + $10/scale
-  const backroomTotal = useMemo(() => {
+  // Calculate color bar costs: $20/location + $10/scale
+  const colorBarTotal = useMemo(() => {
     const active = entitlements.filter(e => e.status === 'active');
-    const baseCost = active.length * BACKROOM_BASE_PRICE;
+    const baseCost = active.length * COLOR_BAR_BASE_PRICE;
     const scaleCost = active.reduce((sum, e) => sum + (e.scale_count || 0), 0) * SCALE_LICENSE_MONTHLY;
     return baseCost + scaleCost;
   }, [entitlements]);
@@ -46,7 +46,7 @@ export function BillingOverviewCard() {
     );
   }
 
-  const totalMonthly = calculations.effectiveMonthlyAmount + backroomTotal;
+  const totalMonthly = calculations.effectiveMonthlyAmount + colorBarTotal;
 
   return (
     <Card>
@@ -117,10 +117,10 @@ export function BillingOverviewCard() {
               </div>
             )}
 
-            {backroomTotal > 0 && (
+            {colorBarTotal > 0 && (
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Backroom add-ons</span>
-                <span className="text-foreground">{formatCurrency(backroomTotal)}/mo</span>
+                <span className="text-muted-foreground">Color Bar add-ons</span>
+                <span className="text-foreground">{formatCurrency(colorBarTotal)}/mo</span>
               </div>
             )}
 

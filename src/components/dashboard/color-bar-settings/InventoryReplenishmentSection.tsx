@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
-import { useBackroomSetting, useUpsertBackroomSetting } from '@/hooks/color-bar/useColorBarSettings';
+import { useColorBarSetting, useUpsertColorBarSetting } from '@/hooks/color-bar/useColorBarSettings';
 import { useInventoryAlertSettings, useUpsertInventoryAlertSettings } from '@/hooks/useInventoryAlertSettings';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
@@ -34,9 +34,9 @@ const DEFAULT_CONFIG: InventoryConfig = {
 export function InventoryReplenishmentSection() {
   const { effectiveOrganization } = useOrganizationContext();
   const orgId = effectiveOrganization?.id;
-  const { data: setting, isLoading } = useBackroomSetting('inventory_config');
+  const { data: setting, isLoading } = useColorBarSetting('inventory_config');
   const { data: alertSettings, isLoading: alertLoading } = useInventoryAlertSettings();
-  const upsert = useUpsertBackroomSetting();
+  const upsert = useUpsertColorBarSetting();
   const upsertAlerts = useUpsertInventoryAlertSettings();
 
   const [config, setConfig] = useState<InventoryConfig | null>(null);

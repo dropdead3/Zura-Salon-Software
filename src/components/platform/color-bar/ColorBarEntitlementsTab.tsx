@@ -45,7 +45,7 @@ import { useUpdateOrgFeatureFlag, useDeleteOrgFeatureFlag } from '@/hooks/useOrg
 import {
   useUpsertLocationEntitlement,
   useDeleteLocationEntitlement,
-  type BackroomLocationEntitlement,
+  type ColorBarLocationEntitlement,
 } from '@/hooks/color-bar/useColorBarLocationEntitlements';
 import { toast } from 'sonner';
 import { formatRelativeTime } from '@/lib/format';
@@ -153,14 +153,14 @@ export function ColorBarEntitlementsTab() {
   // Fetch location entitlements for the expanded org
   const { data: locEntitlements = [], isLoading: entsLoading } = useQuery({
     queryKey: ['backroom-location-entitlements', expandedOrg],
-    queryFn: async (): Promise<BackroomLocationEntitlement[]> => {
+    queryFn: async (): Promise<ColorBarLocationEntitlement[]> => {
       const { data, error } = await supabase
         .from('backroom_location_entitlements')
         .select('*')
         .eq('organization_id', expandedOrg!);
 
       if (error) throw error;
-      return (data ?? []) as unknown as BackroomLocationEntitlement[];
+      return (data ?? []) as unknown as ColorBarLocationEntitlement[];
     },
     enabled: !!expandedOrg,
   });
@@ -592,7 +592,7 @@ interface LocationPanelProps {
   orgEnabled: boolean;
   hasStripeCustomer: boolean;
   locations: OrgLocation[];
-  entitlementMap: Map<string, BackroomLocationEntitlement>;
+  entitlementMap: Map<string, ColorBarLocationEntitlement>;
   isLoading: boolean;
   onToggle: (orgId: string, locationId: string) => void;
   onUpdateEntitlement: (

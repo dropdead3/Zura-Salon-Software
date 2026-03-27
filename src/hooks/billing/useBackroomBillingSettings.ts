@@ -6,7 +6,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
-export interface BackroomBillingSettings {
+export interface ColorBarBillingSettings {
   id: string;
   organization_id: string;
   default_product_markup_pct: number;
@@ -21,7 +21,7 @@ export interface BackroomBillingSettings {
 export function useColorBarBillingSettings(organizationId: string | null | undefined) {
   return useQuery({
     queryKey: ['backroom-billing-settings', organizationId],
-    queryFn: async (): Promise<BackroomBillingSettings | null> => {
+    queryFn: async (): Promise<ColorBarBillingSettings | null> => {
       const { data, error } = await supabase
         .from('backroom_billing_settings')
         .select('*')
@@ -29,14 +29,14 @@ export function useColorBarBillingSettings(organizationId: string | null | undef
         .maybeSingle();
 
       if (error) throw error;
-      return data as unknown as BackroomBillingSettings | null;
+      return data as unknown as ColorBarBillingSettings | null;
     },
     enabled: !!organizationId,
     staleTime: 60_000,
   });
 }
 
-export function useUpsertBackroomBillingSettings() {
+export function useUpsertColorBarBillingSettings() {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -94,7 +94,7 @@ export function useUpsertBackroomBillingSettings() {
       }
 
       if (error) throw error;
-      return data as unknown as BackroomBillingSettings;
+      return data as unknown as ColorBarBillingSettings;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['backroom-billing-settings'] });

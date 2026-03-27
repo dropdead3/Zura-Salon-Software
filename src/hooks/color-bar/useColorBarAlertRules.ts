@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { toast } from 'sonner';
 
-export interface BackroomAlertRule {
+export interface ColorBarAlertRule {
   id: string;
   organization_id: string;
   location_id: string | null;
@@ -41,7 +41,7 @@ export function useColorBarAlertRules(locationId?: string | null) {
 
   return useQuery({
     queryKey: ['backroom-alert-rules', orgId, locationId],
-    queryFn: async (): Promise<BackroomAlertRule[]> => {
+    queryFn: async (): Promise<ColorBarAlertRule[]> => {
       let query = supabase
         .from('backroom_alert_rules')
         .select('*')
@@ -54,7 +54,7 @@ export function useColorBarAlertRules(locationId?: string | null) {
 
       const { data, error } = await query;
       if (error) throw error;
-      return data as unknown as BackroomAlertRule[];
+      return data as unknown as ColorBarAlertRule[];
     },
     enabled: !!orgId,
     staleTime: 60_000,
@@ -65,7 +65,7 @@ export function useUpsertAlertRule() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (rule: Partial<BackroomAlertRule> & { organization_id: string; rule_type: string; threshold_value: number }) => {
+    mutationFn: async (rule: Partial<ColorBarAlertRule> & { organization_id: string; rule_type: string; threshold_value: number }) => {
       const { id, created_at, updated_at, ...rest } = rule as any;
 
       if (id) {
