@@ -1,89 +1,52 @@
 
 
-## Rename "Backroom" → "Color Bar" Across Entire Codebase
+## Fix Post-Rename Breakage: Apps Section & Remaining "backroom" Code Identifiers
 
-### Scope Summary
-285 files contain "Backroom" or "backroom" references. This rename touches folders, file names, hook names, variable names, import paths, UI strings, comments, route paths, and nav labels.
+### Root Cause — Apps Section Disappeared
+The `organization_apps` table stores `app_key: 'backroom'` in the database. During the rename, the `APP_KEY_MAP` in `SidebarNavContent.tsx` was changed to look for `'color-bar'`, and `PricingAnalyticsContent.tsx` checks `hasApp('color-bar')`. Since the DB still has `'backroom'`, no match is found and the Apps section is hidden.
 
-**Not renamed** (would require DB migrations and break existing data):
-- Database table names (`backroom_settings`, `staff_backroom_performance`, etc.)
-- Database column names (`is_backroom_tracked`)
-- Supabase RPC function names
-- Setting keys stored in DB (`dock_assistant_prep_enabled` etc. — these don't contain "backroom")
+### Fix Strategy
+Since the plan explicitly preserved database values, the code must reference the DB value `'backroom'` when comparing against `organization_apps.app_key`. Two options:
 
-### Phase 1 — Folder & File Renames
+**Option A (recommended):** Revert the app_key references in code back to `'backroom'` so they match the DB.
+**Option B:** Run a migration to update the DB app_key from `'backroom'` to `'color-bar'`.
 
-| Current Path | New Path |
-|---|---|
-| `src/lib/backroom/` | `src/lib/color-bar/` |
-| `src/hooks/backroom/` | `src/hooks/color-bar/` |
-| `src/components/dashboard/backroom-settings/` | `src/components/dashboard/color-bar-settings/` |
-| `src/components/platform/backroom/` | `src/components/platform/color-bar/` |
-| `src/pages/dashboard/admin/BackroomSettings.tsx` | `src/pages/dashboard/admin/ColorBarSettings.tsx` |
-| `src/pages/dashboard/platform/BackroomAdmin.tsx` | `src/pages/dashboard/platform/ColorBarAdmin.tsx` |
+I recommend **Option A** — no migration needed, consistent with the "DB stays unchanged" rule.
 
-### Phase 2 — Import Path Updates (~200+ files)
+### Changes
 
-Every file importing from `@/lib/backroom/`, `@/hooks/backroom/`, or `@/components/dashboard/backroom-settings/` gets updated import paths. Example:
+**1. `src/components/dashboard/SidebarNavContent.tsx` (~line 571)**
+Change `APP_KEY_MAP` value from `'color-bar'` back to `'backroom'`:
 ```ts
-// Before
-import { supabase } from '@/lib/backroom/services/formula-service';
-// After
-import { supabase } from '@/lib/color-bar/services/formula-service';
+'/dashboard/admin/color-bar-settings': 'backroom',
 ```
 
-### Phase 3 — Identifier Renames
+**2. `src/components/dashboard/analytics/PricingAnalyticsContent.tsx` (~line 134)**
+Change `hasApp('color-bar')` back to `hasApp('backroom')`.
 
-Hooks, functions, variables, interfaces, and types containing "backroom" or "Backroom":
-- `useBackroomSetting` → `useColorBarSetting`
-- `useBackroomOrgId` → `useColorBarOrgId`
-- `useBackroomSavings` → `useColorBarSavings`
-- `useBackroomPricingEstimate` → `useColorBarPricingEstimate`
-- `useStaffBackroomPerformance` → `useStaffColorBarPerformance`
-- `BackroomSavingsSection` → `ColorBarSavingsSection`
-- `BackroomSetupWizard` → `ColorBarSetupWizard`
-- `BackroomSetupBanner` → `ColorBarSetupBanner`
-- `BackroomAnalyticsSection` → `ColorBarAnalyticsSection`
-- `BackroomOverviewSection` → `ColorBarOverviewSection`
-- (and ~50+ more identifiers following the same pattern)
+### Additional Missed Renames (Code Identifiers)
 
-### Phase 4 — User-Facing Strings
+These are code-level identifiers that should have been renamed but were missed:
 
-All display text updated:
-- `"Zura Backroom"` → `"Zura Color Bar"`
-- `"Backroom Hub"` → `"Color Bar Hub"`
-- `"backroom sessions"` → `"color bar sessions"`
-- `"backroom tracking"` → `"color bar tracking"`
-- Nav label: `"Zura Backroom"` → `"Zura Color Bar"` (in `dashboardNav.ts`, `SidebarPreview.tsx`)
-- Tooltips, descriptions, comments — all instances
+**3. `src/hooks/color-bar/useLocationStylistCounts.ts` (line 16)**
+Rename `BACKROOM_PER_SERVICE_FEE` → `COLOR_BAR_PER_SERVICE_FEE`. Update all 4 consumer files that import it:
+- `ColorBarCheckoutConfirmDialog.tsx`
+- `ColorBarPaywall.tsx`
+- `ColorBarSubscription.tsx`
+- `useLocationStylistCounts.ts` (definition)
 
-### Phase 5 — Route Paths
+### Edge Function Invocations (No Change Needed)
+The following edge function names remain as-is because they are deployed function names and renaming them would break the deployed functions:
+- `create-backroom-checkout`
+- `admin-activate-backroom`
+- `add-backroom-scales`
+- `get-backroom-subscription`
 
-| Current | New |
-|---|---|
-| `/dashboard/admin/backroom-settings` | `/dashboard/admin/color-bar-settings` |
-| Platform admin routes with "backroom" | Updated similarly |
+These are correct to leave unchanged — the function names match what's deployed.
 
-Router config, nav items, and all `href`/`navigate()` references updated.
-
-### Phase 6 — Comment Headers
-
-All file-level doc comments like `/** Zura Backroom — ... */` updated to `/** Zura Color Bar — ... */`.
-
-### What Stays Unchanged
-- **Database tables**: `backroom_settings`, `staff_backroom_performance`, `checkout_usage_projections` — these are DB-level and renaming requires migrations + risks data loss
-- **DB column names**: `is_backroom_tracked` etc. — referenced in queries but aliased in code
-- **Query keys**: Will be updated in code (e.g., `'backroom-pricing-estimate'` → `'color-bar-pricing-estimate'`)
-
-### Execution Strategy
-Due to the massive scope (~285 files), this will be executed in batches:
-1. Create new folders + move/rename files
-2. Bulk update imports across all consumers
-3. Rename identifiers within each file
-4. Update strings and comments
-5. Update routes and navigation
-
-### Risk
-- High file count but mechanical rename — no logic changes
-- DB table names remain as-is to avoid migration risk
+### Scope
+- 2 files fix the Apps section bug (critical)
+- 4 files rename `BACKROOM_PER_SERVICE_FEE` constant (cleanup)
+- No database migrations
+- No edge function changes
 
