@@ -25,7 +25,7 @@ const PERMISSION_TOOLTIPS: Record<string, string> = {
   perform_counts: 'Conduct physical inventory counts.',
   receive_po: 'Mark purchase orders as received and update stock.',
   resolve_exceptions: 'Review and resolve operational exception reports.',
-  configure_settings: 'Access and modify Backroom configuration settings.',
+  configure_settings: 'Access and modify Color Bar configuration settings.',
 };
 
 const ROLES = [
@@ -71,7 +71,7 @@ const DEFAULT_PERMISSIONS: Record<string, string[]> = {
 export function ColorBarPermissionsSection() {
   const { effectiveOrganization } = useOrganizationContext();
   const orgId = effectiveOrganization?.id;
-  const { data: setting, isLoading } = useColorBarSetting('backroom_permissions');
+  const { data: setting, isLoading } = useColorBarSetting('color_bar_permissions');
   const upsert = useUpsertColorBarSetting();
 
   const savedPerms = (setting?.value || {}) as Record<string, string[]>;
@@ -92,7 +92,7 @@ export function ColorBarPermissionsSection() {
 
   const handleSave = () => {
     if (!orgId) return;
-    upsert.mutate({ organization_id: orgId, setting_key: 'backroom_permissions', setting_value: matrix as Record<string, unknown> }, { onSuccess: () => setPerms(null) });
+    upsert.mutate({ organization_id: orgId, setting_key: 'color_bar_permissions', setting_value: matrix as Record<string, unknown> }, { onSuccess: () => setPerms(null) });
   };
 
   if (isLoading) {
@@ -103,7 +103,7 @@ export function ColorBarPermissionsSection() {
 
   return (
     <div className="space-y-6">
-      <Infotainer id="backroom-permissions-guide" title="Color Bar Permissions" description="Decide who can do what in Backroom — from mixing bowls to viewing costs to overriding charges. Each column is a role, each row is a capability." icon={<Shield className="h-4 w-4 text-primary" />} />
+      <Infotainer id="backroom-permissions-guide" title="Color Bar Permissions" description="Decide who can do what in Color Bar — from mixing bowls to viewing costs to overriding charges. Each column is a role, each row is a capability." icon={<Shield className="h-4 w-4 text-primary" />} />
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <div className="flex items-center gap-3">

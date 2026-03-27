@@ -1,5 +1,5 @@
 /**
- * useColorBarSetupHealth — Validates backroom configuration completeness.
+ * useColorBarSetupHealth — Validates color bar configuration completeness.
  * Returns typed health warnings for the overview dashboard.
  */
 import { useQuery } from '@tanstack/react-query';

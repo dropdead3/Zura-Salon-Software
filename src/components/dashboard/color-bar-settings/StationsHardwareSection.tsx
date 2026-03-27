@@ -92,7 +92,7 @@ export function StationsHardwareSection({ onNavigate }: Props) {
             </div>
             <div>
               <CardTitle className={tokens.card.title}>Mixing Stations</CardTitle>
-              <CardDescription>Manage backroom mixing stations and connected hardware.</CardDescription>
+              <CardDescription>Manage color bar mixing stations and connected hardware.</CardDescription>
             </div>
           </div>
           <div className="flex items-center gap-2">

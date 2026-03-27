@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
-export interface BackroomPlatformMetrics {
+export interface ColorBarPlatformMetrics {
   totalEnabledOrgs: number;
   totalTrialOrgs: number;
   estimatedMRR: number;
@@ -42,12 +42,12 @@ const PLAN_PRICES: Record<string, number> = {
 export function useColorBarPlatformAnalytics() {
   return useQuery({
     queryKey: ['backroom-platform-analytics'],
-    queryFn: async (): Promise<BackroomPlatformMetrics> => {
+    queryFn: async (): Promise<ColorBarPlatformMetrics> => {
       // Fetch enabled orgs
       const { data: flags, error: fErr } = await supabase
         .from('organization_feature_flags')
         .select('organization_id, is_enabled, override_reason, created_at')
-        .eq('flag_key', 'backroom_enabled')
+        .eq('flag_key', 'color_bar_enabled')
         .eq('is_enabled', true);
       if (fErr) throw fErr;
 

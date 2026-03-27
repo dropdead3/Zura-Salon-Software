@@ -23,7 +23,7 @@ import {
   CheckCircle2,
   XCircle,
 } from 'lucide-react';
-import { useBackroomBillingHealth, type BackroomBillingOrg } from '@/hooks/platform/useColorBarBillingHealth';
+import { useColorBarBillingHealth, type ColorBarBillingOrg } from '@/hooks/platform/useColorBarBillingHealth';
 
 function BillingKPICard({
   icon: Icon,
@@ -76,7 +76,7 @@ function subscriptionBadge(status: string | null) {
 }
 
 export function ColorBarBillingTab() {
-  const { data: metrics, isLoading } = useBackroomBillingHealth();
+  const { data: metrics, isLoading } = useColorBarBillingHealth();
   const [search, setSearch] = useState('');
   const [showAtRiskOnly, setShowAtRiskOnly] = useState(false);
 

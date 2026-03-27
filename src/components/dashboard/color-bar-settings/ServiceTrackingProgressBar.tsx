@@ -71,7 +71,7 @@ export function ServiceTrackingProgressBar({ milestones }: Props) {
                 Setup Complete
               </h3>
               <p className="text-sm text-muted-foreground max-w-xs">
-                All service tracking milestones are configured. Your backroom is ready for chemical tracking.
+                All service tracking milestones are configured. Your color bar is ready for chemical tracking.
               </p>
               <Button
                 variant="ghost"

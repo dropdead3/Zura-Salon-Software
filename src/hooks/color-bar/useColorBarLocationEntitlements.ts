@@ -1,5 +1,5 @@
 /**
- * useColorBarLocationEntitlements — Fetches per-location Backroom entitlements
+ * useColorBarLocationEntitlements — Fetches per-location Color Bar entitlements
  * and provides helpers for checking location-level access.
  */
 

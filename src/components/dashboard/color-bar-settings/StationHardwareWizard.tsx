@@ -454,7 +454,7 @@ function StepDeviceAssignment({
               <Input
                 value={state.deviceName}
                 onChange={(e) => setState((s) => ({ ...s, deviceName: e.target.value }))}
-                placeholder="e.g. Backroom iPad 1"
+                placeholder="e.g. Color Bar iPad 1"
                 className="mt-1"
               />
             </div>

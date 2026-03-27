@@ -178,7 +178,7 @@ export function ColorBarAnalyticsTab() {
               </div>
               <div>
                 <PlatformCardTitle>Adoption Timeline</PlatformCardTitle>
-                <PlatformCardDescription>Monthly backroom activations</PlatformCardDescription>
+                <PlatformCardDescription>Monthly color bar activations</PlatformCardDescription>
               </div>
             </div>
           </PlatformCardHeader>

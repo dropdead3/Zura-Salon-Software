@@ -11,13 +11,13 @@ import { toast } from 'sonner';
 import {
   fetchCachedInsights,
   refreshInsights,
-  type BackroomAIInsightsData,
+  type ColorBarAIInsightsData,
 } from '@/lib/color-bar/services/ai-insight-service';
 
 const STALE_TIME = 2 * 60 * 60 * 1000; // 2 hours
 const COOLDOWN_MS = 60 * 1000;
 
-export type { BackroomAIInsight, BackroomAIInsightsData } from '@/lib/color-bar/services/ai-insight-service';
+export type { ColorBarAIInsight, ColorBarAIInsightsData } from '@/lib/color-bar/services/ai-insight-service';
 
 export function useColorBarAIInsights(locationId?: string) {
   const { user } = useAuth();
@@ -58,7 +58,7 @@ export function useColorBarAIInsights(locationId?: string) {
       queryClient.invalidateQueries({ queryKey: ['ai-backroom-insights', orgId, locationId] });
       toast.success('Backroom insights refreshed');
     } catch (err) {
-      console.error('Failed to refresh backroom insights:', err);
+      console.error('Failed to refresh color bar insights:', err);
       toast.error(err instanceof Error ? err.message : 'Failed to refresh insights');
     } finally {
       setIsRefreshing(false);
@@ -68,7 +68,7 @@ export function useColorBarAIInsights(locationId?: string) {
   const cooldownRemaining = Math.max(0, COOLDOWN_MS - (Date.now() - lastRefreshTime));
 
   return {
-    data: data?.insights as BackroomAIInsightsData | undefined,
+    data: data?.insights as ColorBarAIInsightsData | undefined,
     generatedAt: data?.generated_at,
     expiresAt: data?.expires_at,
     isLoading,

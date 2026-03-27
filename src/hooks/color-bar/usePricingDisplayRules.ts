@@ -27,7 +27,7 @@ export function usePricingDisplayRules(serviceId?: string) {
     queryKey: ['pricing-display-rules', orgId, serviceId],
     queryFn: async (): Promise<PricingDisplayRule[]> => {
       let query = supabase
-        .from('backroom_pricing_display_rules')
+        .from('color_bar_pricing_display_rules')
         .select('*')
         .eq('organization_id', orgId!);
 
@@ -53,7 +53,7 @@ export function useUpsertPricingDisplayRule() {
 
       if (id) {
         const { data, error } = await supabase
-          .from('backroom_pricing_display_rules')
+          .from('color_bar_pricing_display_rules')
           .update(rest)
           .eq('id', id)
           .select()
@@ -63,7 +63,7 @@ export function useUpsertPricingDisplayRule() {
       }
 
       const { data, error } = await supabase
-        .from('backroom_pricing_display_rules')
+        .from('color_bar_pricing_display_rules')
         .insert(rest)
         .select()
         .single();

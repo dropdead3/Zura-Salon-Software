@@ -1,7 +1,7 @@
 /**
  * Command + Validation Layer — Shared Types
  *
- * All backroom commands carry a CommandMeta and return a CommandResult.
+ * All color bar commands carry a CommandMeta and return a CommandResult.
  * Validators return ValidationError[] (pure, no DB calls).
  * logCommandAudit() persists every command attempt to command_audit_log.
  */

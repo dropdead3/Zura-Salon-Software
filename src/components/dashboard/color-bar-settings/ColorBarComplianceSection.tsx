@@ -1,5 +1,5 @@
 /**
- * ColorBarComplianceSection — Compliance Reports dashboard for Backroom Settings.
+ * ColorBarComplianceSection — Compliance Reports dashboard for Color Bar Settings.
  * Enhanced with waste metrics and overage attachment rate.
  */
 

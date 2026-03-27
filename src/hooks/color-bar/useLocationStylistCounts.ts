@@ -11,7 +11,7 @@ export interface LocationStylistCount {
   count: number;
 }
 
-/** Flat pricing constants for Backroom */
+/** Flat pricing constants for Color Bar */
 export const COLOR_BAR_BASE_PRICE = 20;
 export const BACKROOM_PER_SERVICE_FEE = 0.50;
 export const SCALE_LICENSE_MONTHLY = 10;

@@ -98,7 +98,7 @@ export interface TeamAverages {
   complianceRate: number;
 }
 
-export interface BackroomCompliance {
+export interface ColorBarCompliance {
   complianceRate: number;
   totalColorAppointments: number;
   tracked: number;
@@ -125,7 +125,7 @@ export interface IndividualStaffReportData {
   commission: CommissionData;
   teamAverages: TeamAverages;
   multiPeriodTrend: MultiPeriodTrend;
-  colorBarCompliance: BackroomCompliance;
+  colorBarCompliance: ColorBarCompliance;
 }
 
 // ---------------------------------------------------------------------------
@@ -517,7 +517,7 @@ export function useIndividualStaffReport(staffUserId: string | null, dateFrom?: 
       const staffColorAppts = currentApts.filter((a: any) =>
         isColorOrChemicalService(a.service_name ?? null, a.service_category ?? null),
       );
-      let brCompliance: BackroomCompliance = {
+      let brCompliance: ColorBarCompliance = {
         complianceRate: 100, totalColorAppointments: 0, tracked: 0, missed: 0, reweighRate: 100, manualOverrides: 0,
       };
 

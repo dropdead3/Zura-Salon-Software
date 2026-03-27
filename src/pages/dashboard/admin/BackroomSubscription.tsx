@@ -83,7 +83,7 @@ export default function ColorBarSubscription() {
         <div className={tokens.layout.pageContainer}>
           <DashboardPageHeader
             title="Backroom Subscription"
-            description="You don't have an active Backroom subscription."
+            description="You don't have an active Color Bar subscription."
             backTo={dashPath('/admin/color-bar-settings')}
           />
           <Card className="bg-card/60 border-border/40 max-w-lg">
@@ -142,7 +142,7 @@ export default function ColorBarSubscription() {
                 </div>
                 <div>
                   <p className={cn(tokens.label.default, 'text-foreground')}>Subscription</p>
-                  <p className="text-xs text-muted-foreground font-sans">Active backroom plan</p>
+                  <p className="text-xs text-muted-foreground font-sans">Active color bar plan</p>
                 </div>
               </div>
 

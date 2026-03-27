@@ -1,5 +1,5 @@
 /**
- * useColorBarDashboard — Composition hook aggregating existing backroom hooks
+ * useColorBarDashboard — Composition hook aggregating existing color bar hooks
  * into a single shaped result for the overview command center.
  */
 

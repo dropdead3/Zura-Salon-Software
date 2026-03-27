@@ -57,7 +57,7 @@ export function AddScalesDialog({ open, onOpenChange }: AddScalesDialogProps) {
         <DialogHeader>
           <DialogTitle className={tokens.heading.section}>Add More Scales</DialogTitle>
           <DialogDescription className="font-sans text-sm">
-            Add scale licenses and hardware to your existing Backroom subscription.
+            Add scale licenses and hardware to your existing Color Bar subscription.
           </DialogDescription>
         </DialogHeader>
 

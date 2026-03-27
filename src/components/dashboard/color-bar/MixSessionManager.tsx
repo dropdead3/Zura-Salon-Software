@@ -481,7 +481,7 @@ export function MixSessionManager({
 
         <div className="rounded-xl border border-dashed border-border bg-muted/20 p-6 text-center space-y-4">
           <div>
-            <h3 className="font-display text-base tracking-wide">Start Backroom Session</h3>
+            <h3 className="font-display text-base tracking-wide">Start Color Bar Session</h3>
             <p className="font-sans text-sm text-muted-foreground mt-1">
               Create formulations, add products, capture weights, and save formulas
             </p>

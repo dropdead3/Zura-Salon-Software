@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { COLOR_BAR_BASE_PRICE, SCALE_LICENSE_MONTHLY } from '@/hooks/color-bar/useLocationStylistCounts';
 
-export interface BackroomBillingOrg {
+export interface ColorBarBillingOrg {
   orgId: string;
   orgName: string;
   billingEmail: string | null;
@@ -18,23 +18,23 @@ export interface BackroomBillingOrg {
   estimatedMRR: number;
 }
 
-export interface BackroomBillingMetrics {
+export interface ColorBarBillingMetrics {
   totalActiveSubscriptions: number;
   totalTrialOrgs: number;
   totalPastDueOrgs: number;
   totalMRR: number;
   mrrAtRisk: number;
-  orgs: BackroomBillingOrg[];
+  orgs: ColorBarBillingOrg[];
 }
 
-export function useBackroomBillingHealth() {
+export function useColorBarBillingHealth() {
   return useQuery({
     queryKey: ['backroom-billing-health'],
-    queryFn: async (): Promise<BackroomBillingMetrics> => {
+    queryFn: async (): Promise<ColorBarBillingMetrics> => {
       const { data: flags, error: fErr } = await supabase
         .from('organization_feature_flags')
         .select('organization_id')
-        .eq('flag_key', 'backroom_enabled')
+        .eq('flag_key', 'color_bar_enabled')
         .eq('is_enabled', true);
       if (fErr) throw fErr;
 
@@ -68,7 +68,7 @@ export function useBackroomBillingHealth() {
       let totalMRR = 0;
       let mrrAtRisk = 0;
 
-      const orgs: BackroomBillingOrg[] = enabledOrgIds.map((oid: string) => {
+      const orgs: ColorBarBillingOrg[] = enabledOrgIds.map((oid: string) => {
         const org = orgMap.get(oid);
         const ents = entByOrg.get(oid) || [];
 

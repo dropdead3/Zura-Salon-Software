@@ -136,7 +136,7 @@ export function AdminActivateDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle>Activate Backroom & Charge Card</DialogTitle>
+          <DialogTitle>Activate Color Bar & Charge Card</DialogTitle>
           <DialogDescription>
             Activate Zura Color Bar for <strong>{orgName}</strong> at ${COLOR_BAR_BASE_PRICE}/mo per location.
           </DialogDescription>

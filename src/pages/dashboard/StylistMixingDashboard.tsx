@@ -59,7 +59,7 @@ export default function StylistMixingDashboard() {
     <div className={tokens.layout.pageContainer}>
       <DashboardPageHeader
         title="My Mixing"
-        description="Your backroom mixing activity, formulas, and performance"
+        description="Your color bar mixing activity, formulas, and performance"
       />
 
       {/* ─── Performance Snapshot ────────────────────────────────────────── */}

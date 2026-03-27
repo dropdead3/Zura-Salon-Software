@@ -179,7 +179,7 @@ export default function ColorBarSettings() {
               .from('organization_feature_flags')
               .select('is_enabled')
               .eq('organization_id', orgId)
-              .eq('flag_key', 'backroom_enabled')
+              .eq('flag_key', 'color_bar_enabled')
               .maybeSingle();
 
             if (data?.is_enabled) {
@@ -200,7 +200,7 @@ export default function ColorBarSettings() {
         queryClient.invalidateQueries({ queryKey: ['color-bar-entitlement'] });
         queryClient.invalidateQueries({ queryKey: ['backroom-location-entitlements'] });
         queryClient.invalidateQueries({ queryKey: ['backroom-org-flag'] });
-        toast.success('Payment received! Your backroom access is being activated — please refresh in a moment.');
+        toast.success('Payment received! Your color bar access is being activated — please refresh in a moment.');
         pollingRef.current = false;
       };
 
@@ -287,7 +287,7 @@ export default function ColorBarSettings() {
             </Button>
             <div>
               <h1 className={tokens.heading.page}>Zura Color Bar</h1>
-              <p className="text-muted-foreground">Operational command center — monitor performance, track inventory, and manage backroom policies.</p>
+              <p className="text-muted-foreground">Operational command center — monitor performance, track inventory, and manage color bar policies.</p>
             </div>
           </div>
         </div>

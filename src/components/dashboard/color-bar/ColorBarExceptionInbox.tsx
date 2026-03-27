@@ -254,7 +254,7 @@ export function ColorBarExceptionInbox() {
               <CheckCircle className={tokens.empty.icon} />
               <h3 className={tokens.empty.heading}>No open exceptions</h3>
               <p className={tokens.empty.description}>
-                All backroom operations are running smoothly
+                All color bar operations are running smoothly
               </p>
             </div>
           )}

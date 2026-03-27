@@ -130,8 +130,8 @@ export function PricingAnalyticsContent({
     );
   }
 
-  // Backroom not activated — show empty state
-  if (!appsLoading && !hasApp('backroom')) {
+  // Color Bar not activated — show empty state
+  if (!appsLoading && !hasApp('color-bar')) {
     return (
       <EmptyState
         icon={Beaker}

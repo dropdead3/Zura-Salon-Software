@@ -39,7 +39,7 @@ export function AccountBillingContent() {
       {/* Row 2: Plan Comparison */}
       <PlanComparisonCard />
 
-      {/* Row 3: Backroom + History */}
+      {/* Row 3: Color Bar + History */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <ColorBarCostSummaryCard />
         <OrgBillingHistoryCard />

@@ -21,7 +21,7 @@ export interface SavingsCategory {
   zeroMessage?: string;
 }
 
-export interface BackroomSavingsData {
+export interface ColorBarSavingsData {
   totalSavings: number;
   categories: SavingsCategory[];
   avgCostPerService: number;
@@ -46,7 +46,7 @@ function computeSavings(
   charges: any[],
   days: number,
   subscriptionCost: number,
-): BackroomSavingsData {
+): ColorBarSavingsData {
   const count = snapshots.length;
 
   if (count < 7) {
@@ -92,7 +92,7 @@ function computeSavings(
       key: 'waste',
       label: 'Waste Reduction',
       amount: wasteSavings,
-      explanation: `Industry average waste is 12%. Your backroom tracks at ${avgWastePct.toFixed(1)}%. That difference saves you money every month on product that would have been thrown away.`,
+      explanation: `Industry average waste is 12%. Your color bar tracks at ${avgWastePct.toFixed(1)}%. That difference saves you money every month on product that would have been thrown away.`,
       formula: `(12% baseline − your waste%) × avg daily product cost × ${days} days`,
       zeroMessage: 'Your waste rate is already at or below the industry average — great job!',
     },
@@ -136,7 +136,7 @@ function computeSavings(
 export function useColorBarSavings(days: number = 30, subscriptionMonthlyCost: number = 0) {
   const orgId = useColorBarOrgId();
 
-  const periodQuery = useQuery<BackroomSavingsData>({
+  const periodQuery = useQuery<ColorBarSavingsData>({
     queryKey: ['color-bar-savings', orgId, days, subscriptionMonthlyCost],
     queryFn: async () => {
       if (!orgId) throw new Error('No org');

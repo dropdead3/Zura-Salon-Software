@@ -630,7 +630,7 @@ export function ColorBarPaywall() {
                                   <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[hsl(145,50%,55%)] opacity-75" />
                                   <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-[hsl(145,50%,55%)] shadow-[0_0_8px_2px_hsl(145_50%_55%/0.4)]" />
                                 </span>
-                                <p className="font-display text-lg text-[hsl(145,50%,55%)] uppercase tracking-wide font-medium">When Backroom Is Implemented</p>
+                                <p className="font-display text-lg text-[hsl(145,50%,55%)] uppercase tracking-wide font-medium">When Color Bar Is Implemented</p>
                               </div>
                               <p className="font-sans text-sm text-muted-foreground pl-5">Estimated annual savings based on your salon's current numbers</p>
                             </div>
@@ -1220,7 +1220,7 @@ export function ColorBarPaywall() {
                 <div>
                   <p className="font-sans text-base font-medium text-success">30-Day Money-Back Guarantee</p>
                   <p className="text-sm text-muted-foreground font-sans mt-1">
-                    If Backroom doesn't work for your salon, get a full refund within 30 days. No questions asked.
+                    If Color Bar doesn't work for your salon, get a full refund within 30 days. No questions asked.
                   </p>
                 </div>
               </CardContent>

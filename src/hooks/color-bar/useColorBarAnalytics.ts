@@ -1,5 +1,5 @@
 /**
- * useColorBarAnalytics — Aggregates backroom metrics for a date range.
+ * useColorBarAnalytics — Aggregates color bar metrics for a date range.
  * Real-time computation from raw tables; falls back to snapshots for historical.
  */
 
@@ -13,7 +13,7 @@ import {
   type StaffSessionData,
 } from '@/lib/color-bar/analytics-engine';
 
-export interface BackroomAnalyticsData {
+export interface ColorBarAnalyticsData {
   totalSessions: number;
   completedSessions: number;
   avgSessionDurationMinutes: number;
@@ -42,7 +42,7 @@ export function useColorBarAnalytics(
 
   return useQuery({
     queryKey: ['color-bar-analytics', orgId, startDate, endDate, locationId],
-    queryFn: async (): Promise<BackroomAnalyticsData> => {
+    queryFn: async (): Promise<ColorBarAnalyticsData> => {
       // 1. Fetch sessions in range
       let sessionsQuery = supabase
         .from('mix_sessions')
@@ -208,7 +208,7 @@ export function useColorBarAnalytics(
   });
 }
 
-function emptyResult(): BackroomAnalyticsData {
+function emptyResult(): ColorBarAnalyticsData {
   return {
     totalSessions: 0,
     completedSessions: 0,

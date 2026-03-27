@@ -75,7 +75,7 @@ export async function getServiceProfitability(
 }
 
 /**
- * Read staff backroom performance for a period.
+ * Read staff color bar performance for a period.
  */
 export async function getStaffPerformance(
   orgId: string,

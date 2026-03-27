@@ -1,5 +1,5 @@
 /**
- * useColorBarOrgId — Resolves the organization ID for backroom queries.
+ * useColorBarOrgId — Resolves the organization ID for color bar queries.
  * 
  * Falls back to the user's employee_profile.organization_id when
  * effectiveOrganization is null (common for platform users who also own an org).

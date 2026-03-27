@@ -7,7 +7,7 @@
 
 import { supabase } from '@/integrations/supabase/client';
 
-export interface BackroomAIInsight {
+export interface ColorBarAIInsight {
   category: string;
   title: string;
   description: string;
@@ -17,10 +17,10 @@ export interface BackroomAIInsight {
   suggestedAction?: string | null;
 }
 
-export interface BackroomAIInsightsData {
+export interface ColorBarAIInsightsData {
   summaryLine: string;
   overallSentiment: 'positive' | 'neutral' | 'concerning';
-  insights: BackroomAIInsight[];
+  insights: ColorBarAIInsight[];
 }
 
 /**

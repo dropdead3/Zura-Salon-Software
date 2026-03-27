@@ -50,7 +50,7 @@ import {
 import { toast } from 'sonner';
 import { formatRelativeTime } from '@/lib/format';
 
-interface OrgWithBackroom {
+interface OrgWithColorBar {
   id: string;
   name: string;
   backroom_enabled: boolean;
@@ -94,10 +94,10 @@ export function ColorBarEntitlementsTab() {
   const [backfilling, setBackfilling] = useState(false);
   const queryClient = useQueryClient();
 
-  // Fetch all orgs with their backroom flag
+  // Fetch all orgs with their color bar flag
   const { data: orgs = [], isLoading: orgsLoading } = useQuery({
     queryKey: ['platform-backroom-entitlements'],
-    queryFn: async (): Promise<OrgWithBackroom[]> => {
+    queryFn: async (): Promise<OrgWithColorBar[]> => {
       const { data: organizations, error: orgErr } = await supabase
         .from('organizations')
         .select('id, name, subscription_tier, created_at, stripe_customer_id, last_setup_link_sent_at')
@@ -108,7 +108,7 @@ export function ColorBarEntitlementsTab() {
       const { data: flags, error: flagErr } = await supabase
         .from('organization_feature_flags')
         .select('*')
-        .eq('flag_key', 'backroom_enabled');
+        .eq('flag_key', 'color_bar_enabled');
 
       if (flagErr) throw flagErr;
 
@@ -180,19 +180,19 @@ export function ColorBarEntitlementsTab() {
   const sendSetupLink = useSendPaymentSetupLink();
 
 
-  const toggleBackroom = (org: OrgWithBackroom) => {
+  const toggleColorBar = (org: OrgWithColorBar) => {
     if (org.backroom_enabled && org.override_id) {
       deleteFlag.mutate(
-        { organizationId: org.id, flagKey: 'backroom_enabled' },
+        { organizationId: org.id, flagKey: 'color_bar_enabled' },
         { onSuccess: () => toast.success(`Backroom disabled for ${org.name}`) }
       );
     } else {
       updateFlag.mutate(
         {
           organizationId: org.id,
-          flagKey: 'backroom_enabled',
+          flagKey: 'color_bar_enabled',
           isEnabled: true,
-          reason: 'Enabled via Platform Backroom Admin',
+          reason: 'Enabled via Platform Color Bar Admin',
         },
         {
           onSuccess: async () => {
@@ -257,12 +257,12 @@ export function ColorBarEntitlementsTab() {
     toEnable.forEach((org) => {
       updateFlag.mutate({
         organizationId: org.id,
-        flagKey: 'backroom_enabled',
+        flagKey: 'color_bar_enabled',
         isEnabled: true,
-        reason: 'Batch enabled via Platform Backroom Admin',
+        reason: 'Batch enabled via Platform Color Bar Admin',
       });
     });
-    toast.success(`Enabling backroom for ${toEnable.length} organizations`);
+    toast.success(`Enabling color bar for ${toEnable.length} organizations`);
     setSelected(new Set());
   };
 
@@ -271,9 +271,9 @@ export function ColorBarEntitlementsTab() {
       (o) => selected.has(o.id) && o.backroom_enabled && o.override_id
     );
     toDisable.forEach((org) => {
-      deleteFlag.mutate({ organizationId: org.id, flagKey: 'backroom_enabled' });
+      deleteFlag.mutate({ organizationId: org.id, flagKey: 'color_bar_enabled' });
     });
-    toast.success(`Disabling backroom for ${toDisable.length} organizations`);
+    toast.success(`Disabling color bar for ${toDisable.length} organizations`);
     setSelected(new Set());
   };
 
@@ -291,7 +291,7 @@ export function ColorBarEntitlementsTab() {
 
   const enabledCount = orgs.filter((o) => o.backroom_enabled).length;
 
-  // Detect orphaned orgs (backroom enabled but no location entitlements)
+  // Detect orphaned orgs (color bar enabled but no location entitlements)
   const orphanedOrgs = orgs.filter((o) => {
     if (!o.backroom_enabled) return false;
     // We only know entitlements for the expanded org — check all in a simpler way
@@ -382,7 +382,7 @@ export function ColorBarEntitlementsTab() {
                 <DialogHeader>
                   <DialogTitle>Backfill Location Entitlements</DialogTitle>
                   <DialogDescription>
-                    {orphanCount} organization{orphanCount > 1 ? 's have' : ' has'} Backroom enabled but no per-location
+                    {orphanCount} organization{orphanCount > 1 ? 's have' : ' has'} Color Bar enabled but no per-location
                     entitlements. This will create a Starter entitlement for every active location in these orgs.
                   </DialogDescription>
                 </DialogHeader>
@@ -544,7 +544,7 @@ export function ColorBarEntitlementsTab() {
                           <TableCell className="text-right pr-4" onClick={(e) => e.stopPropagation()}>
                             <Switch
                               checked={org.backroom_enabled}
-                              onCheckedChange={() => toggleBackroom(org)}
+                              onCheckedChange={() => toggleColorBar(org)}
                             />
                           </TableCell>
                         </TableRow>
@@ -841,7 +841,7 @@ function LocationEntitlementPanel({
             <DialogTitle>Process Refund</DialogTitle>
             <DialogDescription className="space-y-2">
               <p>
-                This will <strong>immediately revoke</strong> Backroom access for{' '}
+                This will <strong>immediately revoke</strong> Color Bar access for{' '}
                 <strong>{refundTarget?.locName}</strong>, cancel the Stripe subscription, and issue a
                 full refund for the most recent payment.
               </p>

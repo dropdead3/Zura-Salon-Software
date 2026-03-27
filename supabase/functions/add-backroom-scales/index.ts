@@ -55,7 +55,7 @@ Deno.serve(async (req) => {
       throw new Error("No active billing account found");
     }
 
-    // Find existing backroom subscription
+    // Find existing color bar subscription
     const subscriptions = await stripe.subscriptions.list({
       customer: org.stripe_customer_id,
       status: "active",
@@ -67,7 +67,7 @@ Deno.serve(async (req) => {
     );
 
     if (!colorBarSub) {
-      throw new Error("No active Backroom subscription found");
+      throw new Error("No active Color Bar subscription found");
     }
 
     // Check if scale license item already exists on the subscription

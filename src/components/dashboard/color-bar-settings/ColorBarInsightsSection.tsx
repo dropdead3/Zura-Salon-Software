@@ -148,7 +148,7 @@ export function ColorBarInsightsSection({ locationId: propLocationId, datePreset
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
           <h2 className={tokens.heading.section}>Color Bar Insights</h2>
-          <p className="text-sm text-muted-foreground mt-1">High-level backroom performance for {rangeLabel.toLowerCase()}</p>
+          <p className="text-sm text-muted-foreground mt-1">High-level color bar performance for {rangeLabel.toLowerCase()}</p>
         </div>
         {!hideFilters && (
           <div className="flex items-center gap-2">
@@ -230,7 +230,7 @@ export function ColorBarInsightsSection({ locationId: propLocationId, datePreset
                 <div>
                   <div className="flex items-center gap-2">
                     <CardTitle className={tokens.card.title}>Employee Performance</CardTitle>
-                    <MetricInfoTooltip description="Per-stylist backroom efficiency metrics including product usage, cost per service, reweigh compliance, and waste analysis." />
+                    <MetricInfoTooltip description="Per-stylist color bar efficiency metrics including product usage, cost per service, reweigh compliance, and waste analysis." />
                   </div>
                   <CardDescription className="text-xs">{rangeLabel}</CardDescription>
                 </div>

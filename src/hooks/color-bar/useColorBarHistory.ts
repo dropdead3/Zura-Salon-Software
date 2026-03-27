@@ -1,5 +1,5 @@
 /**
- * useColorBarHistory — Time-bucketed backroom metrics for trend charts.
+ * useColorBarHistory — Time-bucketed color bar metrics for trend charts.
  * Buckets mix_session data by day/week/month/year.
  */
 

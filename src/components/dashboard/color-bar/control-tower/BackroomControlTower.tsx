@@ -44,7 +44,7 @@ export function ColorBarControlTower({ locationId, className }: ColorBarControlT
             <div>
               <CardTitle className={tokens.card.title}>Control Tower</CardTitle>
               <CardDescription className={tokens.body.muted}>
-                Real-time backroom signals
+                Real-time color bar signals
               </CardDescription>
             </div>
           </div>

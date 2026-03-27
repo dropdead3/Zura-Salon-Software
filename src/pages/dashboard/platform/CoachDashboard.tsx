@@ -176,7 +176,7 @@ export default function CoachDashboard() {
                 </div>
                 <div>
                   <PlatformCardTitle>Organization Usage</PlatformCardTitle>
-                  <PlatformCardDescription>Detailed backroom metrics</PlatformCardDescription>
+                  <PlatformCardDescription>Detailed color bar metrics</PlatformCardDescription>
                 </div>
               </div>
             </PlatformCardHeader>

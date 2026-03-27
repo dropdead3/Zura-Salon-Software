@@ -1,5 +1,5 @@
 /**
- * ColorBarTab — Entry point for backroom functionality inside AppointmentDetailSheet.
+ * ColorBarTab — Entry point for color bar functionality inside AppointmentDetailSheet.
  * Loads appointment context and renders Instant Formula Memory + MixSessionManager.
  */
 
