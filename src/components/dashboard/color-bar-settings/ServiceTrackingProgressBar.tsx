@@ -21,7 +21,7 @@ interface Props {
   onQuickSetup?: () => void;
 }
 
-export function ServiceTrackingProgressBar({ milestones }: Props) {
+export function ServiceTrackingProgressBar({ milestones, onQuickSetup }: Props) {
   const completed = useMemo(() => milestones.filter(m => m.current >= m.total && m.total > 0), [milestones]);
   const remaining = useMemo(() => milestones.filter(m => m.current < m.total || m.total === 0), [milestones]);
 
