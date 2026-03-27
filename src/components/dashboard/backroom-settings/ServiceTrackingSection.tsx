@@ -38,10 +38,6 @@ interface ServiceRow {
   price: number | null;
   is_backroom_tracked: boolean;
   is_chemical_service: boolean | null;
-  assistant_prep_allowed: boolean;
-  smart_mix_assist_enabled: boolean;
-  formula_memory_enabled: boolean;
-  
   backroom_config_dismissed: boolean;
   container_types: ('bowl' | 'bottle')[];
 }
