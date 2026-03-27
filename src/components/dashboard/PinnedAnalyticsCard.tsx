@@ -11,6 +11,7 @@ import {
   Activity, MapPin, Scissors, ShoppingBag, CalendarCheck,
   Target, Gauge, FileText, Sparkles, Briefcase, UserPlus,
   LineChart, BarChart2, ChevronRight, CheckCircle2, AlertTriangle,
+  Beaker, Award, FlaskConical, Package,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { tokens } from '@/lib/design-tokens';
@@ -40,6 +41,13 @@ import { LocationsRollupCard } from '@/components/dashboard/analytics/LocationsR
 import { ServiceMixCard } from '@/components/dashboard/analytics/ServiceMixCard';
 import { RetailEffectivenessCard } from '@/components/dashboard/analytics/RetailEffectivenessCard';
 import { RebookingCard } from '@/components/dashboard/analytics/RebookingCard';
+import { CommissionSummaryCard } from '@/components/dashboard/sales/CommissionSummaryCard';
+import { StaffCommissionTable } from '@/components/dashboard/sales/StaffCommissionTable';
+import { TrueProfitCard } from '@/components/dashboard/sales/TrueProfitCard';
+import { StaffPerformanceReport } from '@/components/dashboard/analytics/StaffPerformanceReport';
+import { ServiceProfitabilityCard } from '@/components/dashboard/analytics/ServiceProfitabilityCard';
+import { ColorBarControlTower } from '@/components/dashboard/color-bar/control-tower/ColorBarControlTower';
+import { PredictiveColorBarSummary } from '@/components/dashboard/color-bar/predictive-color-bar/PredictiveColorBarSummary';
 import { useSalesMetrics, useSalesByStylist, useServiceMix } from '@/hooks/useSalesData';
 import { useTodayActualRevenue } from '@/hooks/useTodayActualRevenue';
 import { useRetailAttachmentRate } from '@/hooks/useRetailAttachmentRate';
@@ -98,6 +106,13 @@ const CARD_TO_TAB_MAP: Record<string, string> = {
   'retail_effectiveness': 'analytics_sales_tab',
   'rebooking': 'analytics_operations_tab',
   'client_experience_staff': 'analytics_sales_tab',
+  'commission_summary': 'analytics_sales_tab',
+  'staff_commission_breakdown': 'analytics_sales_tab',
+  'true_profit': 'analytics_sales_tab',
+  'staff_performance': 'analytics_sales_tab',
+  'service_profitability': 'analytics_sales_tab',
+  'control_tower': 'analytics_operations_tab',
+  'predictive_inventory': 'analytics_operations_tab',
 };
 
 // Map dashboard date range to Sales Overview date range
@@ -215,6 +230,13 @@ const CARD_META: Record<string, { icon: React.ElementType; label: string }> = {
   staffing_trends: { icon: BarChart2, label: 'Staffing Trends' },
   stylist_workload: { icon: Users, label: 'Stylist Workload' },
   client_experience_staff: { icon: Users, label: 'Client Experience' },
+  commission_summary: { icon: DollarSign, label: 'Commission Summary' },
+  staff_commission_breakdown: { icon: Users, label: 'Staff Commissions' },
+  true_profit: { icon: TrendingUp, label: 'True Profit' },
+  staff_performance: { icon: Award, label: 'Staff Performance' },
+  service_profitability: { icon: Scissors, label: 'Service Profitability' },
+  control_tower: { icon: FlaskConical, label: 'Control Tower' },
+  predictive_inventory: { icon: Package, label: 'Predictive Inventory' },
 };
 
 // Tooltip descriptions for compact bento tiles
@@ -240,6 +262,13 @@ const CARD_DESCRIPTIONS: Record<string, string> = {
   staffing_trends: 'Count of currently active staff members.',
   stylist_workload: 'Average utilization percentage across all stylists.',
   client_experience_staff: 'Client experience scores by staff member.',
+  commission_summary: 'Estimated commission payouts across all staff for the period.',
+  staff_commission_breakdown: 'Per-stylist commission breakdown based on revenue and commission model.',
+  true_profit: 'Revenue minus chemical cost, labor cost, and waste — your real bottom line.',
+  staff_performance: 'Unified stylist scorecard: revenue, rebooking, retail, and color bar metrics.',
+  service_profitability: 'Service-level profitability ranking by revenue minus product cost.',
+  control_tower: 'Real-time color bar alerts: waste, variance, and compliance issues.',
+  predictive_inventory: 'AI-forecasted color inventory needs based on booking trends.',
 };
 
 // Link mapping for compact bento tiles
@@ -265,6 +294,13 @@ const CARD_LINKS: Record<string, { label: string; href: string }> = {
   hiring_capacity: { label: 'Hiring', href: '/dashboard/admin/analytics?tab=operations' },
   operations_stats: { label: 'Queue', href: '/dashboard/admin/analytics?tab=operations' },
   client_experience_staff: { label: 'Experience', href: '/dashboard/admin/analytics?tab=sales' },
+  commission_summary: { label: 'Commissions', href: '/dashboard/admin/analytics?tab=sales' },
+  staff_commission_breakdown: { label: 'Commissions', href: '/dashboard/admin/analytics?tab=sales' },
+  true_profit: { label: 'Profit', href: '/dashboard/admin/analytics?tab=sales' },
+  staff_performance: { label: 'Performance', href: '/dashboard/admin/analytics?tab=sales' },
+  service_profitability: { label: 'Profitability', href: '/dashboard/admin/analytics?tab=sales' },
+  control_tower: { label: 'Control Tower', href: '/dashboard/admin/color-bar' },
+  predictive_inventory: { label: 'Inventory', href: '/dashboard/admin/color-bar' },
 };
 
 /**
@@ -506,6 +542,16 @@ export function PinnedAnalyticsCard({ cardId, filters, compact = false }: Pinned
         metricLabel = 'Average utilization across active staff';
         break;
       }
+      case 'commission_summary':
+      case 'staff_commission_breakdown':
+      case 'true_profit':
+      case 'staff_performance':
+      case 'service_profitability':
+      case 'control_tower':
+      case 'predictive_inventory':
+        metricValue = '--';
+        metricLabel = 'View full card for details';
+        break;
       default:
         metricValue = '--';
         metricLabel = '';
@@ -809,6 +855,80 @@ export function PinnedAnalyticsCard({ cardId, filters, compact = false }: Pinned
               workload={workload || []} 
               isLoading={isLoadingWorkload} 
             />
+          </PinnableCard>
+        </VisibilityGate>
+      );
+    case 'commission_summary':
+      return (
+        <VisibilityGate elementKey="commission_summary">
+          <PinnableCard elementKey="commission_summary" elementName="Commission Summary" category="Command Center" dateRange={filters.dateRange} locationName={selectedLocationName}>
+            <CommissionSummaryCard
+              stylistData={performers}
+              isLoading={isLoadingPerformers}
+            />
+          </PinnableCard>
+        </VisibilityGate>
+      );
+    case 'staff_commission_breakdown':
+      return (
+        <VisibilityGate elementKey="staff_commission_breakdown">
+          <PinnableCard elementKey="staff_commission_breakdown" elementName="Staff Commission Breakdown" category="Command Center" dateRange={filters.dateRange} locationName={selectedLocationName}>
+            <StaffCommissionTable
+              stylistData={performers}
+              isLoading={isLoadingPerformers}
+            />
+          </PinnableCard>
+        </VisibilityGate>
+      );
+    case 'true_profit':
+      return (
+        <VisibilityGate elementKey="true_profit">
+          <PinnableCard elementKey="true_profit" elementName="True Profit" category="Command Center" dateRange={filters.dateRange} locationName={selectedLocationName}>
+            <TrueProfitCard
+              dateFrom={filters.dateFrom}
+              dateTo={filters.dateTo}
+              locationId={locationFilter}
+            />
+          </PinnableCard>
+        </VisibilityGate>
+      );
+    case 'staff_performance':
+      return (
+        <VisibilityGate elementKey="staff_performance">
+          <PinnableCard elementKey="staff_performance" elementName="Staff Performance" category="Command Center" dateRange={filters.dateRange} locationName={selectedLocationName}>
+            <StaffPerformanceReport
+              dateFrom={filters.dateFrom}
+              dateTo={filters.dateTo}
+              locationId={locationFilter}
+            />
+          </PinnableCard>
+        </VisibilityGate>
+      );
+    case 'service_profitability':
+      return (
+        <VisibilityGate elementKey="service_profitability">
+          <PinnableCard elementKey="service_profitability" elementName="Service Profitability" category="Command Center" dateRange={filters.dateRange} locationName={selectedLocationName}>
+            <ServiceProfitabilityCard
+              dateFrom={filters.dateFrom}
+              dateTo={filters.dateTo}
+              locationId={locationFilter}
+            />
+          </PinnableCard>
+        </VisibilityGate>
+      );
+    case 'control_tower':
+      return (
+        <VisibilityGate elementKey="control_tower">
+          <PinnableCard elementKey="control_tower" elementName="Control Tower" category="Command Center" dateRange={filters.dateRange} locationName={selectedLocationName}>
+            <ColorBarControlTower locationId={locationFilter} />
+          </PinnableCard>
+        </VisibilityGate>
+      );
+    case 'predictive_inventory':
+      return (
+        <VisibilityGate elementKey="predictive_inventory">
+          <PinnableCard elementKey="predictive_inventory" elementName="Predictive Inventory" category="Command Center" dateRange={filters.dateRange} locationName={selectedLocationName}>
+            <PredictiveColorBarSummary locationId={locationFilter} />
           </PinnableCard>
         </VisibilityGate>
       );
