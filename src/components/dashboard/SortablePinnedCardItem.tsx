@@ -22,8 +22,8 @@ interface PinnedCardItemRowProps extends SortablePinnedCardItemProps {
   rawCardId: string;
   style?: CSSProperties;
   setNodeRef?: (node: HTMLElement | null) => void;
-  dragAttributes?: Record<string, unknown>;
-  dragListeners?: Record<string, unknown>;
+  dragAttributes?: Record<string, any>;
+  dragListeners?: Record<string, any>;
   isDragging?: boolean;
 }
 
