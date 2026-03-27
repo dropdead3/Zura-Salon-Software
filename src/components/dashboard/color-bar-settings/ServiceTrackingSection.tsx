@@ -241,6 +241,59 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
     onError: (e) => toast.error(e.message),
   });
 
+  const handleReset = useCallback(async (serviceId: string) => {
+    if (!window.confirm('Reset all tracking and billing configuration for this service?')) return;
+    try {
+      // 1. Clear service flags
+      const { error: svcErr } = await supabase
+        .from('services')
+        .update({
+          is_backroom_tracked: false,
+          is_chemical_service: false,
+          container_types: [],
+          backroom_config_dismissed: false,
+        } as Record<string, unknown>)
+        .eq('id', serviceId);
+      if (svcErr) throw svcErr;
+
+      // 2. Delete allowance policy if one exists
+      const policy = allowanceByService.get(serviceId);
+      if (policy) {
+        await deletePolicy.mutateAsync(policy.id);
+      }
+
+      // 3. Delete all recipe baselines for this service
+      if (orgId) {
+        const { error: baseErr } = await supabase
+          .from('service_recipe_baselines')
+          .delete()
+          .eq('service_id', serviceId)
+          .eq('organization_id', orgId);
+        if (baseErr) throw baseErr;
+      }
+
+      // 4. Invalidate queries
+      queryClient.invalidateQueries({ queryKey: ['color-bar-services'] });
+      queryClient.invalidateQueries({ queryKey: ['color-bar-setup-health'] });
+      queryClient.invalidateQueries({ queryKey: ['services'] });
+      queryClient.invalidateQueries({ queryKey: ['org-services'] });
+      queryClient.invalidateQueries({ queryKey: ['service-lookup-map'] });
+      queryClient.invalidateQueries({ queryKey: ['service-allowance-policies'] });
+      queryClient.invalidateQueries({ queryKey: ['service-recipe-baselines'] });
+
+      // 5. Collapse row
+      setExpandedIds(prev => {
+        const next = new Set(prev);
+        next.delete(serviceId);
+        return next;
+      });
+
+      toast.success('Service reset to unconfigured');
+    } catch (err: any) {
+      toast.error('Failed to reset: ' + err.message);
+    }
+  }, [allowanceByService, deletePolicy, orgId, queryClient]);
+
   // Derived data
   const allServices = services || [];
 
