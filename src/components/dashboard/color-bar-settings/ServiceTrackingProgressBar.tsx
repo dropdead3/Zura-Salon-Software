@@ -42,7 +42,7 @@ export function ServiceTrackingProgressBar({ milestones }: Props) {
   let remainingIndex = 0;
 
   return (
-    <div className="space-y-4">
+    <div className="rounded-xl border border-amber-500/30 dark:border-amber-500/50 bg-amber-50 dark:bg-amber-500/[0.08] p-5 space-y-4">
       {/* Celebration overlay */}
       <AnimatePresence>
         {showCelebration && (
@@ -51,14 +51,14 @@ export function ServiceTrackingProgressBar({ milestones }: Props) {
             animate={reduceMotion ? undefined : { opacity: 1, scale: 1 }}
             exit={reduceMotion ? undefined : { opacity: 0, scale: 0.96 }}
             transition={{ duration: 0.22, ease: 'easeOut' }}
-            className="rounded-xl border border-primary/20 bg-primary/5 p-6"
+            className="rounded-xl border border-amber-500/30 bg-amber-50 dark:bg-amber-500/[0.08] p-6"
           >
             <div className="flex flex-col items-center text-center gap-3">
               <motion.div
                 initial={reduceMotion ? false : { scale: 0.92, opacity: 0 }}
                 animate={reduceMotion ? undefined : { scale: 1, opacity: 1 }}
                 transition={{ duration: 0.22, ease: 'easeOut' }}
-                className="flex h-12 w-12 items-center justify-center rounded-full border border-primary/20 bg-primary/10"
+                className="flex h-12 w-12 items-center justify-center rounded-full border border-amber-500/30 bg-amber-500/10"
               >
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                   <motion.path
@@ -70,7 +70,7 @@ export function ServiceTrackingProgressBar({ milestones }: Props) {
                     initial={reduceMotion ? false : { pathLength: 0, opacity: 0 }}
                     animate={reduceMotion ? undefined : { pathLength: 1, opacity: 1 }}
                     transition={{ duration: 0.28, ease: 'easeOut', delay: 0.05 }}
-                    className="text-primary"
+                    className="text-amber-500"
                   />
                 </svg>
               </motion.div>
@@ -106,7 +106,7 @@ export function ServiceTrackingProgressBar({ milestones }: Props) {
         <Progress
           value={overallPct}
           className="h-1.5"
-          indicatorClassName="bg-primary"
+          indicatorClassName="bg-amber-500"
         />
       </div>
 
@@ -116,14 +116,14 @@ export function ServiceTrackingProgressBar({ milestones }: Props) {
           <span className="font-display text-[10px] tracking-[0.08em] uppercase text-muted-foreground/60">
             Completed
           </span>
-          <div className="rounded-lg bg-primary/5 divide-y divide-primary/10">
+          <div className="rounded-lg bg-amber-500/10 dark:bg-amber-500/10 divide-y divide-amber-500/20">
             {completed.map((m, i) => (
               <div key={i} className="flex items-center justify-between px-3 py-2">
                 <div className="flex items-center gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-primary shrink-0" />
-                  <span className="text-sm font-sans text-primary">{m.label}</span>
+                  <CheckCircle2 className="w-4 h-4 text-amber-500 shrink-0" />
+                  <span className="text-sm font-sans text-amber-600 dark:text-amber-400">{m.label}</span>
                 </div>
-                <span className="text-xs tabular-nums font-sans text-primary">
+                <span className="text-xs tabular-nums font-sans text-amber-600 dark:text-amber-400">
                   {m.current} of {m.total}
                 </span>
               </div>
