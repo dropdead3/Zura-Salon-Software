@@ -146,8 +146,8 @@ export function RevenueDonutChart({
               const subPct = total > 0 ? Math.round((sub.value / total) * 100) : 0;
               return (
                 <div key={sub.label} className="flex items-center justify-between gap-2 pl-4">
-                  <span className="text-muted-foreground/70 text-[11px]">{sub.label}</span>
-                  <span className="text-muted-foreground tabular-nums text-[11px]">{subPct}%</span>
+                  <span className="text-muted-foreground/70 text-xs">{sub.label}</span>
+                  <span className="text-muted-foreground tabular-nums text-xs">{subPct}%</span>
                 </div>
               );
             })}
