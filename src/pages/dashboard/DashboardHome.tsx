@@ -49,7 +49,7 @@ import { AnnouncementsDrawer } from '@/components/dashboard/AnnouncementsDrawer'
 import { LiveSessionIndicator } from '@/components/dashboard/LiveSessionIndicator';
 import { DashboardSetupWizard } from '@/components/dashboard/DashboardSetupWizard';
 import { DashboardCustomizeMenu, getCardSize } from '@/components/dashboard/DashboardCustomizeMenu';
-import { useDashboardLayout, isPinnedCardEntry, getPinnedCardId, PINNABLE_CARD_IDS } from '@/hooks/useDashboardLayout';
+import { useDashboardLayout, isPinnedCardEntry, getPinnedCardId, getPinnedVisibilityKey, PINNABLE_CARD_IDS } from '@/hooks/useDashboardLayout';
 import { TodaysQueueSection } from '@/components/dashboard/TodaysQueueSection';
 import { OperationsQuickStats } from '@/components/dashboard/operations/OperationsQuickStats';
 import { PinnedAnalyticsCard, getDateRange, type AnalyticsFilters, type DateRangeType } from '@/components/dashboard/PinnedAnalyticsCard';

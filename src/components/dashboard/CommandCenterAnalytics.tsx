@@ -32,7 +32,7 @@ import { PredictiveColorBarSummary } from '@/components/dashboard/color-bar/pred
 import { ClientExperienceCard } from '@/components/dashboard/sales/ClientExperienceCard';
 import { OperationsQuickStats } from '@/components/dashboard/operations/OperationsQuickStats';
 import { useDashboardVisibility } from '@/hooks/useDashboardVisibility';
-import { useDashboardLayout } from '@/hooks/useDashboardLayout';
+import { useDashboardLayout, getPinnedVisibilityKey } from '@/hooks/useDashboardLayout';
 import { useSalesMetrics, useSalesByStylist } from '@/hooks/useSalesData';
 import { useStaffUtilization } from '@/hooks/useStaffUtilization';
 import { useActiveLocations } from '@/hooks/useLocations';

@@ -61,6 +61,7 @@ import {
   useSaveDashboardLayout,
   isPinnedCardEntry,
   getPinnedCardId,
+  getPinnedVisibilityKey,
   toPinnedEntry,
 } from '@/hooks/useDashboardLayout';
 import { useGodModeTargetUserId } from '@/hooks/useGodModeTargetUserId';
