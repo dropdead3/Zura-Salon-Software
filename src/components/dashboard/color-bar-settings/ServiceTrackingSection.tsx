@@ -345,7 +345,10 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
   const milestones: ProgressMilestone[] = useMemo(() => {
     const chemicalOrSuggested = allServices.filter(s => getServiceType(s) !== 'standard');
     const tracked = allServices.filter(s => s.is_backroom_tracked);
-    const withPolicy = tracked.filter(s => allowanceByService.has(s.id));
+    const withPolicy = tracked.filter(s => {
+      const p = allowanceByService.get(s.id);
+      return p && p.billing_mode !== null && p.billing_mode !== undefined;
+    });
     const configured = tracked.filter(s => {
       const policy = allowanceByService.get(s.id);
       return policy?.is_active === true;
