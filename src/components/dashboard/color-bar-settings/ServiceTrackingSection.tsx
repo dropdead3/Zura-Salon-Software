@@ -1195,6 +1195,15 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
                                         ) : (
                                           /* Untracked service drill-down */
                                           <div className="space-y-3">
+                                            {/* Toggle row for narrow widths — untracked state */}
+                                            <div className="@[600px]:hidden flex items-center justify-between py-2" onClick={(e) => e.stopPropagation()}>
+                                              <span className="text-xs font-sans text-muted-foreground">Enable Product Billing</span>
+                                              <Switch
+                                                checked={service.is_backroom_tracked}
+                                                onCheckedChange={(v) => toggleTracking.mutate({ id: service.id, tracked: v })}
+                                                className="scale-90 shrink-0"
+                                              />
+                                            </div>
                                             {(type === 'chemical' || type === 'suggested') && !service.is_chemical_service && (
                                               <p className="text-xs text-amber-600 dark:text-amber-400">This service appears to use chemicals — consider enabling tracking.</p>
                                             )}
