@@ -168,6 +168,15 @@ export function AggregateSalesCard({
     setActiveDrilldown(null); // Close others when opening tips
   };
 
+  const handleTipsCardToggle = () => {
+    setTipsCardExpanded(prev => {
+      if (prev) {
+        setTipsDrilldownOpen(false);
+      }
+      return !prev;
+    });
+  };
+
   const handleLocationMetricClick = (
     e: React.MouseEvent,
     type: LocationDrilldownType,
