@@ -339,8 +339,31 @@ export function ServiceTrackingSection({ onNavigate }: Props) {
     return 'standard';
   };
 
+  /**
+   * Derived "truly configured" check — combines backroom_config_dismissed with
+   * actual billing completeness. A service is only truly configured when:
+   * - backroom_config_dismissed === true AND
+   *   - billing_mode is 'parts_and_labor' (always complete), OR
+   *   - billing_mode is 'allowance' with actual values set, OR
+   *   - no policy exists (intentionally dismissed as non-chemical)
+   */
+  const isTrulyConfigured = useCallback((s: ServiceRow): boolean => {
+    if (!s.backroom_config_dismissed) return false;
+    const policy = allowanceByService.get(s.id);
+    // No policy = intentionally dismissed (not a chemical service)
+    if (!policy) return true;
+    // P&L is always complete once selected
+    if (policy.billing_mode === 'parts_and_labor') return true;
+    // Allowance mode requires actual values
+    if (policy.billing_mode === 'allowance') {
+      return policy.is_active === true && (policy.included_allowance_qty > 0 || policy.overage_rate > 0);
+    }
+    // No billing mode set yet = not configured
+    return false;
+  }, [allowanceByService]);
+
   const needsAttention = (s: ServiceRow): boolean => {
-    if (s.backroom_config_dismissed) return false;
+    if (isTrulyConfigured(s)) return false;
     const type = getServiceType(s);
     // Chemical but not tracked
     if ((type === 'chemical' || type === 'suggested') && !s.is_backroom_tracked) return true;
