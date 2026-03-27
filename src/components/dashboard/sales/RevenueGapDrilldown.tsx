@@ -24,7 +24,7 @@ const REASON_CONFIG: Record<GapReason, {
   badgeClass: string;
 }> = {
   not_concluded: {
-    label: 'Not concluded',
+    label: 'Appt not concluded',
     icon: Clock,
     badgeClass: 'bg-muted text-muted-foreground border-border/40',
   },
