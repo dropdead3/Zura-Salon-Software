@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { SilverShineButton } from '@/components/dashboard/SilverShineButton';
 import { Button } from '@/components/ui/button';
 import { PLATFORM_NAME } from '@/lib/brand';
@@ -18,6 +18,7 @@ import { WeeklyLeverBrief } from '@/components/executive-brief/WeeklyLeverBrief'
 import { SilenceState } from '@/components/executive-brief/SilenceState';
 import { EnforcementGateBanner } from '@/components/enforcement/EnforcementGateBanner';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { TogglePill } from '@/components/ui/toggle-pill';
 import { Loader2 } from 'lucide-react';
 import { tokens } from '@/lib/design-tokens';
 
@@ -25,7 +26,6 @@ import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { analyticsHubUrl } from '@/config/dashboardNav';
 import {
   Brain,
@@ -48,14 +48,14 @@ import {
   Zap,
   ThumbsUp,
   BarChart3,
+  ShieldAlert,
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { ZuraAvatar } from '@/components/ui/ZuraAvatar';
 
-type InsightTab = 'insights' | 'action_items' | 'suggestions';
+type ViewMode = 'all' | 'insights' | 'actions' | 'suggestions';
 
 const severityOrder: Record<InsightItem['severity'], number> = { critical: 0, warning: 1, info: 2 };
-// Priority score sort is now primary; severity is fallback
 const priorityOrder: Record<ActionItem['priority'], number> = { high: 0, medium: 1, low: 2 };
 
 const categoryToAnalyticsTab: Partial<Record<InsightItem['category'], string>> = {
@@ -75,6 +75,16 @@ const categoryConfig: Record<InsightItem['category'], { icon: typeof TrendingUp;
   client_health: { icon: HeartPulse, label: 'Client Health' },
   anomaly: { icon: AlertTriangle, label: 'Anomaly' },
 };
+
+/** Category filter config for the pill chips */
+const CATEGORY_FILTERS: { key: InsightItem['category']; label: string; icon: typeof DollarSign }[] = [
+  { key: 'revenue_pulse', label: 'Revenue', icon: DollarSign },
+  { key: 'client_health', label: 'Retention', icon: HeartPulse },
+  { key: 'cash_flow', label: 'Retail', icon: TrendingUp },
+  { key: 'capacity', label: 'Capacity', icon: Activity },
+  { key: 'staffing', label: 'Staffing', icon: Users },
+  { key: 'anomaly', label: 'Anomaly', icon: AlertTriangle },
+];
 
 const severityStyles: Record<InsightItem['severity'], string> = {
   info: 'border-l-blue-500/60 bg-blue-500/5',
@@ -146,7 +156,6 @@ function GuidanceTrigger({ label, onClick, icon: IconOverride, hideIcon }: { lab
 function InsightCard({ insight, onRequestGuidance, drillDownHref }: { insight: InsightItem; onRequestGuidance: (req: GuidanceRequest) => void; drillDownHref?: string }) {
   const config = categoryConfig[insight.category];
   const Icon = config?.icon || Activity;
-  const isCritical = insight.severity === 'critical';
 
   const hasMeta = insight.estimatedImpact || insight.trendDirection || insight.comparisonContext || insight.actByDate || insight.effortLevel || (insight.staffMentions && insight.staffMentions.length > 0);
 
@@ -161,14 +170,12 @@ function InsightCard({ insight, onRequestGuidance, drillDownHref }: { insight: I
     <div className={cn(
       'rounded-xl border-l-[3px] border border-border/50 p-3.5 transition-colors shadow-sm',
       severityStyles[insight.severity],
-      isCritical && 'lg:col-span-2',
     )}>
       <div className="flex items-start gap-2.5">
         <div className={cn('mt-0.5 flex-shrink-0', severityIconColor[insight.severity])}>
           <Icon className="w-4 h-4" />
         </div>
         <div className="flex-1 min-w-0">
-          {/* Impact-led header: show dollar impact prominently when available */}
           {insight.impactEstimateNumeric != null && insight.impactEstimateNumeric > 0 ? (
             <div className="flex items-baseline gap-2 mb-1">
               <span className="text-lg font-display tracking-wide">
@@ -190,15 +197,13 @@ function InsightCard({ insight, onRequestGuidance, drillDownHref }: { insight: I
               </span>
             </div>
           )}
-          <p className={cn('text-sm font-medium leading-snug', isCritical && 'text-base')}>{insight.title}</p>
+          <p className="text-sm font-medium leading-snug">{insight.title}</p>
           <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">
             <InsightDescriptionWithLinks description={insight.description} />
           </p>
 
-          {/* Enrichment metadata rows */}
           {hasMeta && (
             <div className="mt-2 space-y-1">
-              {/* Row 1: Trend + Impact + Comparison */}
               {(insight.trendDirection || insight.estimatedImpact || insight.comparisonContext) && (
                 <div className="flex flex-wrap items-center gap-1.5 text-[11px]">
                   {insight.trendDirection && (
@@ -229,7 +234,6 @@ function InsightCard({ insight, onRequestGuidance, drillDownHref }: { insight: I
                 </div>
               )}
 
-              {/* Row 2: Effort + Act By + Staff */}
               {(insight.effortLevel || insight.actByDate || (insight.staffMentions && insight.staffMentions.length > 0)) && (
                 <div className="flex flex-wrap items-center gap-1.5 text-[11px]">
                   {insight.effortLevel && (
@@ -290,6 +294,7 @@ function InsightCard({ insight, onRequestGuidance, drillDownHref }: { insight: I
     </div>
   );
 }
+
 function ActionItemCard({ item, index, onRequestGuidance, isEven }: { item: ActionItem; index: number; onRequestGuidance: (req: GuidanceRequest) => void; isEven?: boolean }) {
   return (
     <div className={cn('py-2 px-3 rounded-lg', isEven && 'bg-muted/20')}>
@@ -317,119 +322,63 @@ function ActionItemCard({ item, index, onRequestGuidance, isEven }: { item: Acti
   );
 }
 
-/** Business Health Summary Strip — derived dynamically from active insights */
-function BusinessHealthStrip({ insights }: { insights: InsightItem[] }) {
-  const healthCategories = [
-    { key: 'revenue_pulse' as const, label: 'Revenue', icon: DollarSign },
-    { key: 'client_health' as const, label: 'Retention', icon: HeartPulse },
-    { key: 'cash_flow' as const, label: 'Retail', icon: TrendingUp },
-    { key: 'capacity' as const, label: 'Capacity', icon: Activity },
-    { key: 'staffing' as const, label: 'Staffing', icon: Users },
-  ];
-
-  const categoryHealth = (cat: InsightItem['category']) => {
-    const catInsights = insights.filter(i => i.category === cat);
-    if (catInsights.length === 0) return { severity: 'none' as const, trend: null as string | null };
-    // Worst severity wins
-    const worst = catInsights.some(i => i.severity === 'critical') ? 'critical'
-      : catInsights.some(i => i.severity === 'warning') ? 'warning' : 'info';
-    // Dominant trend
-    const trends = catInsights.map(i => i.trendDirection).filter(Boolean);
-    const trend = trends.length > 0 ? (trends.filter(t => t === 'declining').length > trends.length / 2 ? 'declining'
-      : trends.filter(t => t === 'improving').length > trends.length / 2 ? 'improving' : 'stable') : null;
-    return { severity: worst, trend };
-  };
-
-  const severityDot: Record<string, string> = {
+/** Category filter chip with severity dot indicator */
+function CategoryFilterChip({
+  label,
+  icon: Icon,
+  isActive,
+  severityLevel,
+  onClick,
+}: {
+  label: string;
+  icon: typeof DollarSign;
+  isActive: boolean;
+  severityLevel: 'critical' | 'warning' | 'info' | 'none';
+  onClick: () => void;
+}) {
+  const dotColor: Record<string, string> = {
     critical: 'bg-red-500',
     warning: 'bg-amber-500',
     info: 'bg-blue-500',
-    none: 'bg-muted-foreground/20',
-  };
-
-  const trendIcon = (trend: string | null) => {
-    if (trend === 'improving') return <TrendingUp className="w-3 h-3 text-emerald-500" />;
-    if (trend === 'declining') return <TrendingDown className="w-3 h-3 text-red-500" />;
-    if (trend === 'stable') return <Activity className="w-3 h-3 text-muted-foreground" />;
-    return null;
+    none: '',
   };
 
   return (
-    <div className="flex items-center gap-1 overflow-x-auto py-1">
-      {healthCategories.map(({ key, label, icon: CatIcon }) => {
-        const health = categoryHealth(key);
-        return (
-          <div key={key} className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-muted/30 min-w-0 shrink-0">
-            <CatIcon className="w-3 h-3 text-muted-foreground shrink-0" />
-            <span className="text-[10px] font-display tracking-wider uppercase text-muted-foreground">{label}</span>
-            <span className={cn('w-1.5 h-1.5 rounded-full shrink-0', severityDot[health.severity])} />
-            {trendIcon(health.trend)}
-          </div>
-        );
-      })}
-    </div>
-  );
-}
-
-function SeverityCounts({ insights }: { insights: InsightItem[] }) {
-  const counts = { critical: 0, warning: 0, info: 0 };
-  insights.forEach(i => counts[i.severity]++);
-  
-  return (
-    <div className="flex items-center gap-3 text-[11px] text-muted-foreground">
-      {counts.critical > 0 && (
-        <span className="flex items-center gap-1">
-          <span className="w-2 h-2 rounded-full bg-destructive" />
-          {counts.critical} critical
-        </span>
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-200 shrink-0',
+        isActive
+          ? 'bg-foreground text-background'
+          : 'bg-muted/40 text-muted-foreground hover:bg-muted/60',
       )}
-      {counts.warning > 0 && (
-        <span className="flex items-center gap-1">
-          <span className="w-2 h-2 rounded-full bg-amber-500" />
-          {counts.warning} warning
-        </span>
+    >
+      <Icon className="w-3 h-3" />
+      <span>{label}</span>
+      {severityLevel !== 'none' && (
+        <span className={cn('w-1.5 h-1.5 rounded-full', dotColor[severityLevel])} />
       )}
-      {counts.info > 0 && (
-        <span className="flex items-center gap-1">
-          <span className="w-2 h-2 rounded-full bg-blue-500" />
-          {counts.info} info
-        </span>
-      )}
-    </div>
+    </button>
   );
 }
 
 interface AIInsightsDrawerProps {
-  /** Override the collapsed trigger label. Defaults to `${PLATFORM_NAME} Insights`. */
   label?: string;
-  /** Controlled expanded state — when provided, component operates in controlled mode */
   expanded?: boolean;
-  /** Toggle callback for controlled mode */
   onToggle?: () => void;
 }
 
-/** Self-contained expandable card widget for AI Business Insights.
- *  When `expanded`/`onToggle` are provided, renders only the trigger button.
- *  The panel content is rendered separately via `AIInsightsPanel`.
- */
 export function AIInsightsDrawer({ label, expanded: controlledExpanded, onToggle }: AIInsightsDrawerProps) {
   const isControlled = onToggle !== undefined;
   const [internalExpanded, setInternalExpanded] = useState(false);
   const expanded = isControlled ? (controlledExpanded ?? false) : internalExpanded;
   const setExpanded = isControlled ? () => onToggle?.() : setInternalExpanded;
 
-  // In controlled mode, only render the trigger button
   if (isControlled) {
     return (
-      <VisibilityGate
-        elementKey="ai_business_insights"
-        elementName="AI Business Insights"
-        elementCategory="Dashboard Home"
-      >
-        <SilverShineButton
-          onClick={onToggle}
-          className={expanded ? 'ring-1 ring-accent/50' : undefined}
-        >
+      <VisibilityGate elementKey="ai_business_insights" elementName="AI Business Insights" elementCategory="Dashboard Home">
+        <SilverShineButton onClick={onToggle} className={expanded ? 'ring-1 ring-accent/50' : undefined}>
           <div className="w-5 h-5 rounded-md bg-primary/10 flex items-center justify-center shrink-0">
             <Brain className="w-3 h-3 text-primary" />
           </div>
@@ -444,13 +393,8 @@ export function AIInsightsDrawer({ label, expanded: controlledExpanded, onToggle
     );
   }
 
-  // Uncontrolled mode — original inline behavior (legacy fallback)
   return (
-    <VisibilityGate
-      elementKey="ai_business_insights"
-      elementName="AI Business Insights"
-      elementCategory="Dashboard Home"
-    >
+    <VisibilityGate elementKey="ai_business_insights" elementName="AI Business Insights" elementCategory="Dashboard Home">
       <SilverShineButton onClick={() => setExpanded(!expanded)}>
         <div className="w-5 h-5 rounded-md bg-primary/10 flex items-center justify-center shrink-0">
           <Brain className="w-3 h-3 text-primary" />
@@ -462,16 +406,19 @@ export function AIInsightsDrawer({ label, expanded: controlledExpanded, onToggle
   );
 }
 
-/** Full-width panel for AI Business Insights — rendered outside the control row */
+/** Full-width panel for AI Business Insights — redesigned for instant clarity */
 export function AIInsightsPanel({ onClose }: { onClose: () => void }) {
-  const [activeTab, setActiveTab] = useState<InsightTab>('insights');
+  const [viewMode, setViewMode] = useState<ViewMode>('all');
   const [leverOpen, setLeverOpen] = useState(false);
+  const [selectedCategories, setSelectedCategories] = useState<Set<InsightItem['category']>>(
+    new Set(CATEGORY_FILTERS.map(f => f.key))
+  );
   const { data, generatedAt, isLoading, isRefreshing, isStale, refresh, cooldownRemaining } = useAIInsights();
   const { dismissedKeys, dismiss } = useDismissedSuggestions();
+  const { createTask } = useTasks();
   const roles = useEffectiveRoles();
   const isLeadership = roles.includes('super_admin');
   const { data: leverRecommendation, isLoading: isLeverLoading } = useActiveRecommendation();
-  const { createTask } = useTasks();
   const [cooldown, setCooldown] = useState(0);
   const [activeGuidance, setActiveGuidance] = useState<GuidanceRequest | null>(null);
   const [guidanceText, setGuidanceText] = useState<string | null>(null);
@@ -482,23 +429,64 @@ export function AIInsightsPanel({ onClose }: { onClose: () => void }) {
   const hasInsights = (data?.insights?.length ?? 0) > 0;
   const hasActionItems = (data?.actionItems?.length ?? 0) > 0;
   const hasSuggestions = visibleSuggestions.length > 0;
-  // Sort by priorityScore (descending), fallback to severity
-  const sortedInsights = data?.insights ? [...data.insights].sort((a, b) => {
-    const scoreA = a.priorityScore ?? 0;
-    const scoreB = b.priorityScore ?? 0;
-    if (scoreB !== scoreA) return scoreB - scoreA;
-    return severityOrder[a.severity] - severityOrder[b.severity];
-  }) : [];
-  const sortedActionItems = data?.actionItems ? [...data.actionItems].sort((a, b) => priorityOrder[a.priority] - priorityOrder[b.priority]) : [];
 
-  const tabCount = [hasInsights, hasActionItems, hasSuggestions].filter(Boolean).length;
-  useEffect(() => {
-    if (!data || tabCount === 0) return;
-    const currentValid = (activeTab === 'insights' && hasInsights) || (activeTab === 'action_items' && hasActionItems) || (activeTab === 'suggestions' && hasSuggestions);
-    if (!currentValid) {
-      setActiveTab(hasInsights ? 'insights' : hasActionItems ? 'action_items' : 'suggestions');
+  // Sort by priorityScore (descending), fallback to severity
+  const sortedInsights = useMemo(() => {
+    if (!data?.insights) return [];
+    return [...data.insights].sort((a, b) => {
+      const scoreA = a.priorityScore ?? 0;
+      const scoreB = b.priorityScore ?? 0;
+      if (scoreB !== scoreA) return scoreB - scoreA;
+      return severityOrder[a.severity] - severityOrder[b.severity];
+    });
+  }, [data?.insights]);
+
+  const sortedActionItems = useMemo(() => {
+    if (!data?.actionItems) return [];
+    return [...data.actionItems].sort((a, b) => priorityOrder[a.priority] - priorityOrder[b.priority]);
+  }, [data?.actionItems]);
+
+  // Split insights into urgent (critical/warning) and informational
+  const urgentInsights = useMemo(() => sortedInsights.filter(i => i.severity === 'critical' || i.severity === 'warning'), [sortedInsights]);
+  const infoInsights = useMemo(() => sortedInsights.filter(i => i.severity === 'info'), [sortedInsights]);
+
+  // Filter info insights by selected categories
+  const filteredInfoInsights = useMemo(
+    () => infoInsights.filter(i => selectedCategories.has(i.category)),
+    [infoInsights, selectedCategories]
+  );
+
+  // Category severity map for filter chips
+  const categorySeverityMap = useMemo(() => {
+    const map: Record<string, 'critical' | 'warning' | 'info' | 'none'> = {};
+    for (const f of CATEGORY_FILTERS) {
+      const catInsights = sortedInsights.filter(i => i.category === f.key);
+      if (catInsights.length === 0) { map[f.key] = 'none'; continue; }
+      if (catInsights.some(i => i.severity === 'critical')) map[f.key] = 'critical';
+      else if (catInsights.some(i => i.severity === 'warning')) map[f.key] = 'warning';
+      else map[f.key] = 'info';
     }
-  }, [data, hasInsights, hasActionItems, hasSuggestions, tabCount, activeTab]);
+    return map;
+  }, [sortedInsights]);
+
+  // Only show categories that have at least one insight
+  const activeCategoryFilters = useMemo(
+    () => CATEGORY_FILTERS.filter(f => categorySeverityMap[f.key] !== 'none'),
+    [categorySeverityMap]
+  );
+
+  const toggleCategory = useCallback((key: InsightItem['category']) => {
+    setSelectedCategories(prev => {
+      const next = new Set(prev);
+      if (next.has(key)) {
+        // Don't allow deselecting all
+        if (next.size > 1) next.delete(key);
+      } else {
+        next.add(key);
+      }
+      return next;
+    });
+  }, []);
 
   // Restore saved Zura navigation state on mount
   useEffect(() => {
@@ -511,11 +499,8 @@ export function AIInsightsPanel({ onClose }: { onClose: () => void }) {
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Escape key closes panel
   useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-    };
+    const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
     document.addEventListener('keydown', handler);
     return () => document.removeEventListener('keydown', handler);
   }, [onClose]);
@@ -556,15 +541,54 @@ export function AIInsightsPanel({ onClose }: { onClose: () => void }) {
   const sentiment = data?.overallSentiment ? sentimentConfig[data.overallSentiment] : null;
   const SentimentIcon = sentiment?.icon || Activity;
 
+  // Severity counts for header inline display
+  const severityCounts = useMemo(() => {
+    const counts = { critical: 0, warning: 0, info: 0 };
+    (data?.insights || []).forEach(i => counts[i.severity]++);
+    return counts;
+  }, [data?.insights]);
+
+  const viewOptions = useMemo(() => {
+    const opts = [{ value: 'all' as ViewMode, label: 'All' }];
+    if (hasInsights) opts.push({ value: 'insights' as ViewMode, label: 'Insights' });
+    if (hasActionItems) opts.push({ value: 'actions' as ViewMode, label: 'Actions' });
+    if (hasSuggestions) opts.push({ value: 'suggestions' as ViewMode, label: 'Suggestions' });
+    return opts;
+  }, [hasInsights, hasActionItems, hasSuggestions]);
+
   return (
     <div className="w-full rounded-xl shadow-lg border border-border/40 bg-card overflow-hidden">
       <div className="h-px bg-gradient-to-r from-transparent via-border/40 to-transparent" />
 
       {!activeGuidance && (
         <div className="p-5 pb-3">
-          <div className="flex items-center justify-between mb-3">
-            <span className="font-display text-sm tracking-[0.15em]">{PLATFORM_NAME.toUpperCase()} BUSINESS INSIGHTS</span>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <span className="font-display text-sm tracking-[0.15em]">{PLATFORM_NAME.toUpperCase()} BUSINESS INSIGHTS</span>
+              {/* Inline severity dots */}
+              <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
+                {severityCounts.critical > 0 && (
+                  <span className="flex items-center gap-1">
+                    <span className="w-2 h-2 rounded-full bg-destructive" />
+                    {severityCounts.critical}
+                  </span>
+                )}
+                {severityCounts.warning > 0 && (
+                  <span className="flex items-center gap-1">
+                    <span className="w-2 h-2 rounded-full bg-amber-500" />
+                    {severityCounts.warning}
+                  </span>
+                )}
+                {severityCounts.info > 0 && (
+                  <span className="flex items-center gap-1">
+                    <span className="w-2 h-2 rounded-full bg-blue-500" />
+                    {severityCounts.info}
+                  </span>
+                )}
+              </div>
+            </div>
             <div className="flex items-center gap-1">
+              {cooldown > 0 && <span className="text-[10px] text-muted-foreground/50 mr-1">{cooldown}s</span>}
               <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => refresh(true)} disabled={isRefreshing || cooldown > 0}>
                 <RefreshCw className={cn('w-3.5 h-3.5', isRefreshing && 'animate-spin')} />
               </Button>
@@ -586,10 +610,8 @@ export function AIInsightsPanel({ onClose }: { onClose: () => void }) {
               exit={{ opacity: 0 }}
               transition={{ duration: 0.2 }}
             >
-              <div
-                className="max-h-[60vh] overflow-y-auto"
-                onWheel={(e) => e.stopPropagation()}
-              >
+              <div className="max-h-[60vh] overflow-y-auto" onWheel={(e) => e.stopPropagation()}>
+                {/* Summary strip */}
                 {data && (
                   <div className="px-5 pb-3">
                     <div className="flex items-center gap-3 rounded-lg bg-muted/30 backdrop-blur-sm px-3.5 py-2.5">
@@ -606,57 +628,14 @@ export function AIInsightsPanel({ onClose }: { onClose: () => void }) {
                         </span>
                       )}
                     </div>
-                    {/* Business Health Summary Strip */}
-                    <div className="mt-2">
-                      <BusinessHealthStrip insights={data.insights || []} />
-                    </div>
-                    <div className="flex items-center justify-between mt-2">
-                      <SeverityCounts insights={data.insights || []} />
-                      {cooldown > 0 && <span className="text-[10px] text-muted-foreground/50">{cooldown}s cooldown</span>}
-                    </div>
                     {isStale && (
-                      <p className="text-[10px] text-amber-600 dark:text-amber-400 mt-1 flex items-center gap-1">
+                      <p className="text-[10px] text-amber-600 dark:text-amber-400 mt-1.5 flex items-center gap-1">
                         Insights are over 2 hours old
                         <button type="button" onClick={() => refresh(true)} disabled={isRefreshing || cooldown > 0} className="underline hover:no-underline">
                           Refresh for latest
                         </button>
                       </p>
                     )}
-                  </div>
-                )}
-
-                {/* Weekly Lever — leadership only, collapsible */}
-                {isLeadership && (
-                  <div className="px-5 pb-3">
-                    <Collapsible open={leverOpen} onOpenChange={setLeverOpen}>
-                      <CollapsibleTrigger className="flex w-full items-center gap-2 rounded-lg border border-border/50 px-3 py-2.5 text-left hover:bg-accent/50 transition-colors">
-                        {isLeverLoading ? (
-                          <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-                        ) : leverRecommendation ? (
-                          <>
-                            <Zap className="h-4 w-4 shrink-0 text-amber-500" />
-                            <span className="text-sm font-medium truncate">{leverRecommendation.title}</span>
-                          </>
-                        ) : (
-                          <SilenceState compact />
-                        )}
-                        <ChevronDown className={cn('ml-auto h-4 w-4 shrink-0 text-muted-foreground transition-transform', leverOpen && 'rotate-180')} />
-                      </CollapsibleTrigger>
-                      <CollapsibleContent>
-                        <div className="pt-3">
-                          <EnforcementGateBanner gateKey="gate_kpi_architecture">
-                            {leverRecommendation ? (
-                              <WeeklyLeverBrief recommendation={leverRecommendation} />
-                            ) : (
-                              <div className="text-sm text-muted-foreground space-y-1 px-1">
-                                <p>No high-confidence lever detected this period.</p>
-                                <p className="text-xs">Last reviewed: {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}</p>
-                              </div>
-                            )}
-                          </EnforcementGateBanner>
-                        </div>
-                      </CollapsibleContent>
-                    </Collapsible>
                   </div>
                 )}
 
@@ -682,151 +661,173 @@ export function AIInsightsPanel({ onClose }: { onClose: () => void }) {
                       </Button>
                     </div>
                   ) : (hasInsights || hasActionItems || hasSuggestions) ? (
-                    <>
-                      {/* "One Thing Today" — top priority insight as prominent standalone card */}
-                      {sortedInsights.length > 0 && (() => {
-                        const topInsight = sortedInsights[0];
-                        const topConfig = categoryConfig[topInsight.category];
-                        const TopIcon = topConfig?.icon || Activity;
-                        const impactTypeLabel: Record<string, string> = { at_risk: 'At Risk', opportunity: 'Opportunity', inefficiency: 'Inefficiency' };
-                        const impactTypeColor: Record<string, string> = {
-                          at_risk: 'text-red-600 dark:text-red-400',
-                          opportunity: 'text-emerald-600 dark:text-emerald-400',
-                          inefficiency: 'text-amber-600 dark:text-amber-400',
-                        };
-                        return (
-                          <div className="mb-4 rounded-xl border border-primary/20 bg-gradient-to-br from-primary/5 via-background to-primary/5 p-4 shadow-sm">
-                            <div className="flex items-center gap-1.5 mb-2">
-                              <Zap className="w-3.5 h-3.5 text-amber-500" />
-                              <span className="text-[10px] font-display tracking-[0.15em] uppercase text-amber-600 dark:text-amber-400">One Thing Today</span>
-                            </div>
-                            <div className="flex items-start gap-3">
-                              <div className={cn('mt-0.5 flex-shrink-0 w-9 h-9 rounded-lg flex items-center justify-center', severityStyles[topInsight.severity])}>
-                                <TopIcon className={cn('w-4.5 h-4.5', severityIconColor[topInsight.severity])} />
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                {topInsight.impactEstimateNumeric != null && topInsight.impactEstimateNumeric > 0 && (
-                                  <div className="flex items-baseline gap-2 mb-1">
-                                    <span className="text-2xl font-display tracking-wide">
-                                      <BlurredAmount>${topInsight.impactEstimateNumeric.toLocaleString()}</BlurredAmount>
-                                    </span>
-                                    {topInsight.impactType && (
-                                      <span className={cn('text-[10px] uppercase tracking-wider font-display', impactTypeColor[topInsight.impactType])}>
-                                        {impactTypeLabel[topInsight.impactType]}
-                                      </span>
-                                    )}
-                                  </div>
-                                )}
-                                <p className="text-sm font-medium leading-snug">{topInsight.title}</p>
-                                <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">
-                                  <InsightDescriptionWithLinks description={topInsight.description} />
-                                </p>
-                                <div className="flex flex-wrap items-center gap-2 mt-2.5">
-                                  <GuidanceTrigger
-                                    label="How to improve"
-                                    icon={Lightbulb}
-                                    onClick={() => handleRequestGuidance({ type: 'insight', title: topInsight.title, description: topInsight.description, category: topInsight.category })}
-                                  />
-                                  {categoryToAnalyticsTab[topInsight.category] && (
-                                    <a
-                                      href={analyticsHubUrl(categoryToAnalyticsTab[topInsight.category]!)}
-                                      className="group inline-flex items-center justify-center gap-1.5 h-8 pl-3 pr-3 rounded-md border border-border/60 bg-muted/30 text-xs font-medium text-muted-foreground hover:bg-primary/10 hover:border-primary/30 hover:text-primary transition-[color,background-color,border-color] duration-200"
-                                    >
-                                      <BarChart3 className="w-3.5 h-3.5 shrink-0" />
-                                      <span>See in Analytics</span>
-                                    </a>
-                                  )}
-                                </div>
-                              </div>
-                            </div>
+                    <div className="space-y-4">
+                      {/* ── NEEDS ATTENTION ── */}
+                      {urgentInsights.length > 0 && (
+                        <div>
+                          <div className="flex items-center gap-2 mb-2.5">
+                            <ShieldAlert className="w-3.5 h-3.5 text-amber-500" />
+                            <span className="text-[10px] font-display tracking-[0.15em] uppercase text-amber-600 dark:text-amber-400">
+                              Needs Attention
+                            </span>
+                            <div className="flex-1 h-px bg-border/40" />
                           </div>
-                        );
-                      })()}
-                    <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as InsightTab)} className="w-full">
-                      <TabsList className="w-full grid rounded-lg p-1 h-auto" style={{ gridTemplateColumns: tabCount ? `repeat(${tabCount}, 1fr)` : undefined }}>
-                        {hasInsights && <TabsTrigger value="insights" className="text-xs py-2">Key Insights</TabsTrigger>}
-                        {hasActionItems && <TabsTrigger value="action_items" className="text-xs py-2">Action Items</TabsTrigger>}
-                        {hasSuggestions && <TabsTrigger value="suggestions" className="text-xs py-2">More suggestions</TabsTrigger>}
-                      </TabsList>
-                      {hasInsights && (
-                        <TabsContent value="insights" className="mt-3">
-                          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-                            {/* Skip first insight since it's shown in "One Thing Today" */}
-                            {sortedInsights.slice(1).map((insight, i) => (
+                          <div className="space-y-2.5">
+                            {urgentInsights.map((insight, i) => (
                               <InsightCard
-                                key={i}
+                                key={`urgent-${i}`}
                                 insight={insight}
                                 onRequestGuidance={handleRequestGuidance}
                                 drillDownHref={categoryToAnalyticsTab[insight.category] ? analyticsHubUrl(categoryToAnalyticsTab[insight.category]!) : undefined}
                               />
                             ))}
                           </div>
-                        </TabsContent>
+                        </div>
                       )}
-                      {hasActionItems && (
-                        <TabsContent value="action_items" className="mt-3">
+
+                      {/* ── CATEGORY FILTERS ── */}
+                      {activeCategoryFilters.length > 1 && (
+                        <div className="flex items-center gap-1.5 overflow-x-auto py-0.5">
+                          {activeCategoryFilters.map(f => (
+                            <CategoryFilterChip
+                              key={f.key}
+                              label={f.label}
+                              icon={f.icon}
+                              isActive={selectedCategories.has(f.key)}
+                              severityLevel={categorySeverityMap[f.key]}
+                              onClick={() => toggleCategory(f.key)}
+                            />
+                          ))}
+                        </div>
+                      )}
+
+                      {/* ── VIEW TOGGLE ── */}
+                      {viewOptions.length > 2 && (
+                        <div className="flex justify-center">
+                          <TogglePill
+                            options={viewOptions.map(o => ({ value: o.value, label: o.label }))}
+                            value={viewMode}
+                            onChange={(v) => setViewMode(v as ViewMode)}
+                            size="sm"
+                            variant="solid"
+                          />
+                        </div>
+                      )}
+
+                      {/* ── FEED ── */}
+                      <div className="space-y-2.5">
+                        {/* Info insights (filtered by category) */}
+                        {(viewMode === 'all' || viewMode === 'insights') && filteredInfoInsights.map((insight, i) => (
+                          <InsightCard
+                            key={`info-${i}`}
+                            insight={insight}
+                            onRequestGuidance={handleRequestGuidance}
+                            drillDownHref={categoryToAnalyticsTab[insight.category] ? analyticsHubUrl(categoryToAnalyticsTab[insight.category]!) : undefined}
+                          />
+                        ))}
+
+                        {/* Action items */}
+                        {(viewMode === 'all' || viewMode === 'actions') && sortedActionItems.length > 0 && (
                           <div className="rounded-lg border border-border/40 overflow-hidden">
                             {sortedActionItems.map((item, i) => (
                               <ActionItemCard key={i} item={item} index={i} isEven={i % 2 === 0} onRequestGuidance={handleRequestGuidance} />
                             ))}
                           </div>
-                        </TabsContent>
-                      )}
-                      {hasSuggestions && (
-                        <TabsContent value="suggestions" className="mt-3 space-y-2">
-                          <AnimatePresence>
-                            {visibleSuggestions.map((suggestion) => (
-                              <motion.div
-                                key={suggestion.suggestionKey}
-                                initial={{ opacity: 1, height: 'auto' }}
-                                exit={{ opacity: 0, height: 0, marginBottom: 0 }}
-                                transition={{ duration: 0.3 }}
-                                className="relative border border-dashed border-amber-500/30 rounded-lg p-3 bg-gradient-to-br from-amber-500/5 to-orange-500/5"
-                              >
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <button
-                                      onClick={() => dismiss(suggestion.suggestionKey)}
-                                      className="absolute top-2 right-2 w-5 h-5 rounded-full flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
-                                    >
-                                      <X className="w-3 h-3" />
-                                    </button>
-                                  </TooltipTrigger>
-                                  <TooltipContent side="left">Dismiss for 30 days</TooltipContent>
-                                </Tooltip>
-                                <div className="flex items-start gap-2.5 pr-5">
-                                  <Zap className="w-4 h-4 text-amber-500 mt-0.5 flex-shrink-0" />
-                                  <div className="flex-1 min-w-0">
-                                    <div className="flex items-center gap-2 mb-0.5">
-                                      <span className="text-sm font-medium">{suggestion.featureName}</span>
-                                      <span className={cn(
-                                        'text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded font-display',
-                                        priorityBadge[suggestion.priority],
-                                      )}>
-                                        {suggestion.priority}
-                                      </span>
-                                    </div>
-                                    <p className="text-xs text-muted-foreground leading-relaxed">{suggestion.whyItHelps}</p>
-                                    <p className="text-xs text-muted-foreground/70 mt-1 italic">{suggestion.howToStart}</p>
-                                    <GuidanceTrigger
-                                      label="Learn more"
-                                      hideIcon
-                                      onClick={() => handleRequestGuidance({
-                                        type: 'action',
-                                        title: `Enable ${suggestion.featureName}`,
-                                        description: `${suggestion.whyItHelps} ${suggestion.howToStart}`,
-                                      })}
-                                    />
-                                  </div>
-                                </div>
-                              </motion.div>
-                            ))}
-                          </AnimatePresence>
-                        </TabsContent>
-                      )}
-                    </Tabs>
-                    </>
+                        )}
 
+                        {/* Suggestions */}
+                        {(viewMode === 'all' || viewMode === 'suggestions') && visibleSuggestions.length > 0 && (
+                          <div className="space-y-2">
+                            <AnimatePresence>
+                              {visibleSuggestions.map((suggestion) => (
+                                <motion.div
+                                  key={suggestion.suggestionKey}
+                                  initial={{ opacity: 1, height: 'auto' }}
+                                  exit={{ opacity: 0, height: 0, marginBottom: 0 }}
+                                  transition={{ duration: 0.3 }}
+                                  className="relative border border-dashed border-amber-500/30 rounded-lg p-3 bg-gradient-to-br from-amber-500/5 to-orange-500/5"
+                                >
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <button
+                                        onClick={() => dismiss(suggestion.suggestionKey)}
+                                        className="absolute top-2 right-2 w-5 h-5 rounded-full flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+                                      >
+                                        <X className="w-3 h-3" />
+                                      </button>
+                                    </TooltipTrigger>
+                                    <TooltipContent side="left">Dismiss for 30 days</TooltipContent>
+                                  </Tooltip>
+                                  <div className="flex items-start gap-2.5 pr-5">
+                                    <Zap className="w-4 h-4 text-amber-500 mt-0.5 flex-shrink-0" />
+                                    <div className="flex-1 min-w-0">
+                                      <div className="flex items-center gap-2 mb-0.5">
+                                        <span className="text-sm font-medium">{suggestion.featureName}</span>
+                                        <span className={cn(
+                                          'text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded font-display',
+                                          priorityBadge[suggestion.priority],
+                                        )}>
+                                          {suggestion.priority}
+                                        </span>
+                                      </div>
+                                      <p className="text-xs text-muted-foreground leading-relaxed">{suggestion.whyItHelps}</p>
+                                      <p className="text-xs text-muted-foreground/70 mt-1 italic">{suggestion.howToStart}</p>
+                                      <GuidanceTrigger
+                                        label="Learn more"
+                                        hideIcon
+                                        onClick={() => handleRequestGuidance({
+                                          type: 'action',
+                                          title: `Enable ${suggestion.featureName}`,
+                                          description: `${suggestion.whyItHelps} ${suggestion.howToStart}`,
+                                        })}
+                                      />
+                                    </div>
+                                  </div>
+                                </motion.div>
+                              ))}
+                            </AnimatePresence>
+                          </div>
+                        )}
+
+                        {/* Empty state for filtered view */}
+                        {viewMode === 'insights' && filteredInfoInsights.length === 0 && urgentInsights.length === 0 && (
+                          <p className="text-sm text-muted-foreground text-center py-6">No insights match selected categories</p>
+                        )}
+                      </div>
+
+                      {/* ── WEEKLY LEVER — leadership only, collapsible, at bottom ── */}
+                      {isLeadership && (
+                        <Collapsible open={leverOpen} onOpenChange={setLeverOpen}>
+                          <CollapsibleTrigger className="flex w-full items-center gap-2 rounded-lg border border-border/50 px-3 py-2.5 text-left hover:bg-accent/50 transition-colors">
+                            {isLeverLoading ? (
+                              <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                            ) : leverRecommendation ? (
+                              <>
+                                <Zap className="h-4 w-4 shrink-0 text-amber-500" />
+                                <span className="text-sm font-medium truncate">{leverRecommendation.title}</span>
+                              </>
+                            ) : (
+                              <SilenceState compact />
+                            )}
+                            <ChevronDown className={cn('ml-auto h-4 w-4 shrink-0 text-muted-foreground transition-transform', leverOpen && 'rotate-180')} />
+                          </CollapsibleTrigger>
+                          <CollapsibleContent>
+                            <div className="pt-3">
+                              <EnforcementGateBanner gateKey="gate_kpi_architecture">
+                                {leverRecommendation ? (
+                                  <WeeklyLeverBrief recommendation={leverRecommendation} />
+                                ) : (
+                                  <div className="text-sm text-muted-foreground space-y-1 px-1">
+                                    <p>No high-confidence lever detected this period.</p>
+                                    <p className="text-xs">Last reviewed: {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}</p>
+                                  </div>
+                                )}
+                              </EnforcementGateBanner>
+                            </div>
+                          </CollapsibleContent>
+                        </Collapsible>
+                      )}
+                    </div>
                   ) : (
                     <div className="text-center py-10">
                       <p className="text-sm text-muted-foreground">No insights or actions right now</p>
