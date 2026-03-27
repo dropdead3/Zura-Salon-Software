@@ -31,15 +31,15 @@ interface OverageChargeParams {
  * mismatched UUIDs and break all policy lookups.
  */
 async function resolveServiceId(serviceName: string, organizationId: string): Promise<string | null> {
-  const { data } = await supabase
+  const { data } = await (supabase
     .from('services' as any)
     .select('id')
     .eq('name', serviceName)
     .eq('organization_id', organizationId)
     .eq('is_active', true)
     .limit(1)
-    .maybeSingle();
-  return data?.id ?? null;
+    .maybeSingle() as any);
+  return (data as any)?.id ?? null;
 }
 
 export function useCalculateOverageCharge() {
