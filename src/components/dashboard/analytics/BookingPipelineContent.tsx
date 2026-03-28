@@ -318,7 +318,7 @@ export function BookingPipelineContent({ locationId, dateRange }: BookingPipelin
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="rounded-full px-3 h-6 text-[10px] font-sans bg-destructive/15 border border-destructive/60 text-destructive hover:bg-destructive/25 hover:text-destructive"
+                    className="rounded-full px-4 h-7 text-xs font-sans gap-1.5 bg-destructive/20 border border-destructive/70 text-destructive hover:bg-destructive/30 hover:text-destructive active:scale-[0.97] cursor-pointer transition-all"
                     onClick={(e) => {
                       e.stopPropagation();
                       setActionGuideForwardCount(loc.forwardCount);
@@ -326,6 +326,7 @@ export function BookingPipelineContent({ locationId, dateRange }: BookingPipelin
                     }}
                   >
                     Take Action
+                    <ArrowRight className="w-3 h-3" />
                   </Button>
                 </div>
               )}
