@@ -895,12 +895,14 @@ export function AggregateSalesCard({
                         )}
 
                         {/* Progress bar: actual vs expected */}
-                        {todayActual?.hasActualData ? (
+                        {todayActual?.hasActualData ? (() => {
+                          const exceededTotal = displayExpected > 0 && todayActual.actualRevenue > displayExpected;
+                          return (
                           <div className="space-y-1.5">
                             <div className="flex items-center justify-between text-xs">
                               <span className="text-muted-foreground">{t('sales.actual_revenue')}</span>
                               <BlurredAmount>
-                                <span className={cn("font-medium", exceededExpected && "text-success-foreground")}>
+                                <span className={cn("font-medium", exceededTotal && "text-success-foreground")}>
                                   {formatCurrency(todayActual.actualRevenue)}
                                 </span>
                               </BlurredAmount>
@@ -911,9 +913,9 @@ export function AggregateSalesCard({
                                 : 0
                               }
                               className="h-1.5"
-                              indicatorClassName={exceededExpected ? "bg-success-foreground" : undefined}
+                              indicatorClassName={exceededTotal ? "bg-success-foreground" : undefined}
                             />
-                            {exceededExpected && allAppointmentsComplete ? (
+                            {exceededTotal && allAppointmentsComplete ? (
                               <div className="flex items-center justify-center gap-3 text-xs text-success-foreground">
                                 <span className="flex items-center gap-1">
                                   <CheckCircle2 className="w-3.5 h-3.5" />
@@ -925,14 +927,15 @@ export function AggregateSalesCard({
                                   Exceeded
                                 </span>
                               </div>
-                            ) : exceededExpected ? (
+                            ) : exceededTotal ? (
                               <div className="flex items-center justify-center gap-1 text-xs text-success-foreground">
                                 <CheckCircle2 className="w-3.5 h-3.5" />
                                 <span>Exceeded</span>
                               </div>
                             ) : null}
                           </div>
-                        ) : null}
+                          );
+                        })() : null}
 
                         {!exceededExpected && allAppointmentsComplete ? (
                           <div className="flex items-center justify-center gap-1.5 text-xs text-success-foreground">
