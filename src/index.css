@@ -107,8 +107,8 @@ html, body, #root {
     --destructive: 0 62% 50%;
     --destructive-foreground: 40 30% 96%;
 
-    --border: 40 10% 72%;
-    --input: 40 10% 80%;
+    --border: 40 8% 65%;
+    --input: 40 8% 74%;
     --ring: 0 0% 8%;
 
     --radius: 0.75rem;
@@ -144,17 +144,17 @@ html, body, #root {
     --leading-loose: 2;
 
     /* Sidebar */
-    --sidebar-background: 40 18% 91%;
-    --sidebar-foreground: 0 0% 8%;
+    --sidebar-background: 40 12% 83%;
+    --sidebar-foreground: 0 0% 6%;
     --sidebar-primary: 0 0% 8%;
     --sidebar-primary-foreground: 40 30% 96%;
-    --sidebar-accent: 40 14% 84%;
-    --sidebar-accent-foreground: 0 0% 8%;
-    --sidebar-border: 40 10% 72%;
+    --sidebar-accent: 40 10% 78%;
+    --sidebar-accent-foreground: 0 0% 6%;
+    --sidebar-border: 40 8% 65%;
     --sidebar-ring: 0 0% 8%;
 
-    --card-inner: 40 12% 89%;
-    --card-inner-deep: 40 8% 86%;
+    --card-inner: 40 8% 80%;
+    --card-inner-deep: 40 5% 76%;
   }
 
   .dark.theme-cream,
