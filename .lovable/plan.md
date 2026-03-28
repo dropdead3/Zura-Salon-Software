@@ -2,56 +2,19 @@
 
 ## Problem
 
-The Rev/Hour KPI tile shows `$0.00` for the "Today" view. The root cause is in `useTodayActualRevenue.tsx` line 302 — `actualServiceHours` is hardcoded to `0`. The display logic in `AggregateSalesCard.tsx` checks `todayActual.actualServiceHours > 0` before calculating, so it always falls through to `0`.
+The Top Performers toggle labels say "Revenue" / "Retail" but should say "Service" / "Retail" to clearly separate the two revenue categories.
 
 ## Plan
 
-**File: `src/hooks/useTodayActualRevenue.tsx`**
+**File: `src/components/dashboard/sales/TopPerformersCard.tsx`**
 
-### 1. Add a query to fetch today's service hours from appointments
-
-Add a new `useQuery` that calculates total service hours from today's completed appointments using `start_time` and `end_time` (same approach as `useSalesData.ts` line 358):
-
-```ts
-const serviceHoursQuery = useQuery({
-  queryKey: ['today-service-hours', today],
-  queryFn: async () => {
-    const { data, error } = await supabase
-      .from('phorest_appointments')
-      .select('start_time, end_time')
-      .eq('appointment_date', today)
-      .not('status', 'in', '("cancelled","no_show")')
-      .not('start_time', 'is', null)
-      .not('end_time', 'is', null);
-
-    if (error) throw error;
-    if (!data || data.length === 0) return 0;
-
-    return data.reduce((sum, apt) => {
-      const start = new Date(apt.start_time).getTime();
-      const end = new Date(apt.end_time).getTime();
-      const hours = (end - start) / (1000 * 60 * 60);
-      return sum + (hours > 0 ? hours : 0);
-    }, 0);
-  },
-  enabled,
-  refetchInterval: 5 * 60 * 1000,
-});
-```
-
-### 2. Wire `actualServiceHours` to the query result
-
-Line 302: Replace the hardcoded `0`:
-
-```ts
-actualServiceHours: serviceHoursQuery.data ?? 0,
-```
-
-### Result
-- Today's Rev/Hour will correctly calculate `actualRevenue / actualServiceHours`
-- The KPI tile will show the real revenue per service hour
-- Reuses the same duration calculation pattern as `useSalesData.ts`
-
-### Files modified
-- `src/hooks/useTodayActualRevenue.tsx`
+1. Rename `SortMode` type from `'totalRevenue' | 'retail'` to `'service' | 'retail'`
+2. Update `SORT_OPTIONS` labels: `"Service"` and `"Retail"`
+3. Update `FilterTabsTrigger` values to `"service"` / `"retail"`
+4. Update default state from `'totalRevenue'` to `'service'`
+5. Update sorting logic: when mode is `'service'`, sort by `serviceRevenue` (calculated as `totalRevenue - productRevenue`)
+6. Update `displayValue` calculation: when mode is `'service'`, show `serviceRevenue`; when `'retail'`, show `productRevenue`
+7. Update `totalTeamRevenue` to sum the correct field per mode
+8. Update share label text: "of total service" / "of total retail"
+9. Hide the service/retail split subtitle when in either mode (it's redundant — only show it if we ever restore a "total" view)
 
