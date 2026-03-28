@@ -507,14 +507,11 @@ export function ExecutiveSummaryCard() {
                   >
                     <span className="text-sm truncate mr-4">{loc.name}</span>
                     <div className="flex items-center gap-3 shrink-0">
-                      <div className="w-20 h-1.5 rounded-full bg-border/40 overflow-hidden">
-                        <div
-                          className="h-full rounded-full bg-primary/40"
-                          style={{ width: `${pct}%` }}
-                        />
-                      </div>
                       <span className="text-sm font-display tabular-nums">
                         <BlurredAmount>{formatCurrencyWhole(loc.totalRevenue)}</BlurredAmount>
+                      </span>
+                      <span className="text-xs text-muted-foreground tabular-nums w-10 text-right">
+                        {Math.round(pct)}%
                       </span>
                     </div>
                   </div>
