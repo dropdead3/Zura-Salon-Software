@@ -139,7 +139,7 @@ export function CollapsibleNavGroup({
                 "transition-all duration-200 ease-out text-sm",
                 isActive 
                   ? "bg-foreground text-background shadow-sm dark:bg-muted dark:text-foreground dark:shadow-none" 
-                  : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
+                  : "text-muted-foreground hover:text-foreground hover:bg-foreground/10"
               )}
             >
               <Icon className="w-4 h-4" />
@@ -160,7 +160,7 @@ export function CollapsibleNavGroup({
           isNested ? "px-3 py-2 mx-3 pl-9" : "px-3 py-2.5 mx-3",
           isActive 
             ? "bg-foreground text-background shadow-sm dark:bg-muted dark:text-foreground dark:shadow-none" 
-            : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
+            : "text-muted-foreground hover:text-foreground hover:bg-foreground/10"
         )}
       >
         <Icon className="w-4 h-4 shrink-0" />
@@ -186,7 +186,7 @@ export function CollapsibleNavGroup({
                     "transition-all duration-200 text-sm",
                     active
                       ? "bg-foreground/10 text-foreground"
-                      : "text-foreground/50 hover:text-foreground hover:bg-muted/60"
+                      : "text-foreground/50 hover:text-foreground hover:bg-foreground/10"
                   )}
                   style={{ width: 'calc(100% - 16px)' }}
                 >
@@ -215,7 +215,7 @@ export function CollapsibleNavGroup({
                         "transition-all duration-200 cursor-pointer",
                         isActive
                           ? "bg-foreground text-background shadow-sm dark:bg-muted dark:text-foreground dark:shadow-none"
-                          : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
+                          : "text-muted-foreground hover:text-foreground hover:bg-foreground/10"
                       )}
                     >
                       <Icon className="w-4 h-4 shrink-0" />
@@ -250,7 +250,7 @@ export function CollapsibleNavGroup({
                 className={cn(
                   "w-full flex items-center gap-3 px-3 py-2 mx-3 rounded-lg",
                   "text-sm font-sans transition-all duration-200 ease-out",
-                  "hover:bg-muted/60",
+                  "hover:bg-foreground/10",
                   active && !isOpen 
                     ? "text-foreground font-medium" 
                     : "text-muted-foreground"
@@ -310,7 +310,7 @@ export function CollapsibleNavGroup({
                                     "px-3 py-1.5 mx-3 pl-14",
                                     isCategoryActive
                                       ? "bg-foreground text-background shadow-sm dark:bg-muted dark:text-foreground dark:shadow-none"
-                                      : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
+                                      : "text-muted-foreground hover:text-foreground hover:bg-foreground/10"
                                   )}
                                 >
                                   <ChevronRight className={cn("w-3 h-3 flex-shrink-0", isCategoryActive ? "" : "text-muted-foreground/50")} />
@@ -341,7 +341,7 @@ export function CollapsibleNavGroup({
                                       "px-3 py-1.5 mx-3 pl-14",
                                       isSubActive
                                         ? "bg-foreground text-background shadow-sm dark:bg-muted dark:text-foreground dark:shadow-none"
-                                        : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
+                                        : "text-muted-foreground hover:text-foreground hover:bg-foreground/10"
                                     )}
                                   >
                                     <ChevronRight className={cn("w-3 h-3 flex-shrink-0", isSubActive ? "" : "text-muted-foreground/50")} />

@@ -36,7 +36,7 @@ export function SidebarClockButton({ isCollapsed = false, inFooter = true }: Sid
           : cn("px-3 py-2.5", inFooter ? "mx-0" : "mx-3"),
         isClockedIn
           ? "text-success-foreground hover:bg-success/30"
-          : "text-muted-foreground hover:text-foreground hover:bg-muted/60",
+          : "text-muted-foreground hover:text-foreground hover:bg-foreground/10",
         busy && "opacity-60 pointer-events-none"
       )}
     >

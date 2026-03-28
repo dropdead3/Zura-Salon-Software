@@ -309,8 +309,8 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
           isActive 
             ? "bg-muted/80 text-foreground ring-1 ring-border/40 shadow-sm backdrop-blur-sm" 
             : isCollapsed
-              ? "text-foreground/60 hover:text-foreground hover:bg-muted/60"
-              : "text-muted-foreground hover:text-foreground hover:bg-muted/60 hover:translate-x-0.5"
+              ? "text-foreground/60 hover:text-foreground hover:bg-foreground/10"
+              : "text-muted-foreground hover:text-foreground hover:bg-foreground/10 hover:translate-x-0.5"
         )}
       >
         <Icon className="w-4 h-4 shrink-0" />
@@ -442,7 +442,7 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
                       "transition-all duration-300 ease-out rounded-full",
                       location.pathname === '/dashboard/onboarding'
                         ? "bg-muted/80 text-foreground ring-1 ring-border/40 shadow-sm backdrop-blur-sm" 
-                        : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
+                        : "text-muted-foreground hover:text-foreground hover:bg-foreground/10"
                     )}
                   >
                     <Rocket className="w-4 h-4" />
@@ -461,7 +461,7 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
                   "transition-all duration-300 ease-out rounded-lg",
                   location.pathname === '/dashboard/onboarding'
                     ? "bg-muted/80 text-foreground ring-1 ring-border/40 shadow-sm backdrop-blur-sm" 
-                    : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
+                    : "text-muted-foreground hover:text-foreground hover:bg-foreground/10"
                 )}
               >
                 <Rocket className="w-4 h-4" />
@@ -627,7 +627,7 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
                             "transition-all duration-300 text-sm",
                             isAnyActive
                               ? "bg-foreground/10 text-foreground"
-                              : "text-foreground/50 hover:text-foreground hover:bg-muted/60"
+                              : "text-foreground/50 hover:text-foreground hover:bg-foreground/10"
                           )}
                           style={{ width: 'calc(100% - 16px)' }}
                         >
@@ -660,7 +660,7 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
                                 "transition-all duration-300 cursor-pointer",
                                 isActive
                                   ? "bg-muted/80 text-foreground ring-1 ring-border/40 shadow-sm backdrop-blur-sm"
-                                  : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
+                                  : "text-muted-foreground hover:text-foreground hover:bg-foreground/10"
                               )}
                             >
                               <Icon className="w-4 h-4 shrink-0" />
