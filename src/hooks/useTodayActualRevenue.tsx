@@ -64,6 +64,32 @@ export function useTodayActualRevenue(enabled: boolean) {
     };
   }, [enabled, queryClient]);
 
+  // Today's service hours from appointments
+  const serviceHoursQuery = useQuery({
+    queryKey: ['today-service-hours', today],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('phorest_appointments')
+        .select('start_time, end_time')
+        .eq('appointment_date', today)
+        .not('status', 'in', '("cancelled","no_show")')
+        .not('start_time', 'is', null)
+        .not('end_time', 'is', null);
+
+      if (error) throw error;
+      if (!data || data.length === 0) return 0;
+
+      return data.reduce((sum, apt) => {
+        const start = new Date(apt.start_time).getTime();
+        const end = new Date(apt.end_time).getTime();
+        const hours = (end - start) / (1000 * 60 * 60);
+        return sum + (hours > 0 ? hours : 0);
+      }, 0);
+    },
+    enabled,
+    refetchInterval: 5 * 60 * 1000,
+  });
+
   // Primary: POS daily sales summary
   const actualRevenueQuery = useQuery({
     queryKey: ['today-actual-revenue', today],
@@ -299,7 +325,7 @@ export function useTodayActualRevenue(enabled: boolean) {
     actualServiceRevenue: actualRevenueQuery.data?.serviceRevenue ?? 0,
     actualProductRevenue: actualRevenueQuery.data?.productRevenue ?? 0,
     actualTransactions,
-    actualServiceHours: 0,
+    actualServiceHours: serviceHoursQuery.data ?? 0,
     actualAverageTicket: actualTransactions > 0 ? actualRevenue / actualTransactions : 0,
     lastAppointmentEndTime: lastAppointmentQuery.data ?? null,
     hasActualData,
@@ -308,7 +334,7 @@ export function useTodayActualRevenue(enabled: boolean) {
   return {
     data: result,
     locationActuals,
-    isLoading: actualRevenueQuery.isLoading || lastAppointmentQuery.isLoading,
+    isLoading: actualRevenueQuery.isLoading || lastAppointmentQuery.isLoading || serviceHoursQuery.isLoading,
     dataUpdatedAt: actualRevenueQuery.dataUpdatedAt,
   };
 }
