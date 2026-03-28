@@ -116,7 +116,7 @@ export function ViewAsPopover() {
       <PopoverContent
         align="end"
         sideOffset={16}
-        className="w-80 p-0 bg-card/80 backdrop-blur-xl backdrop-saturate-150 border border-border/30 rounded-xl shadow-2xl max-h-[var(--radix-popover-content-available-height)] overflow-hidden flex flex-col"
+        className="w-80 p-0 bg-card/80 backdrop-blur-xl backdrop-saturate-150 border border-border/30 rounded-xl shadow-2xl h-[420px] max-h-[var(--radix-popover-content-available-height)] overflow-hidden flex flex-col"
       >
         <Tabs defaultValue="roles" className="w-full flex flex-col overflow-hidden flex-1 min-h-0">
           {/* Header */}
@@ -241,21 +241,23 @@ export function ViewAsPopover() {
           </TabsContent>
 
           {/* === Test Accounts Tab === */}
-          <TabsContent value="test" className="mt-0">
-            <div className="px-6 py-8 text-center">
-              <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full border border-border/60 bg-muted/40">
-                <FlaskConical className="h-5 w-5 text-muted-foreground" />
+          <TabsContent value="test" className="mt-0 overflow-hidden flex-1 min-h-0 flex flex-col">
+            <ScrollArea className="flex-1 min-h-0">
+              <div className="px-6 py-8 text-center">
+                <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full border border-border/60 bg-muted/40">
+                  <FlaskConical className="h-5 w-5 text-muted-foreground" />
+                </div>
+                <h3 className="font-display text-[11px] tracking-[0.12em] uppercase text-foreground mb-1">
+                  Test Accounts
+                </h3>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  Simulate the platform safely without affecting real data. Coming soon.
+                </p>
+                <Badge variant="outline" className="mt-3 text-[10px] rounded-full">
+                  Coming Soon
+                </Badge>
               </div>
-              <h3 className="font-display text-[11px] tracking-[0.12em] uppercase text-foreground mb-1">
-                Test Accounts
-              </h3>
-              <p className="text-xs text-muted-foreground leading-relaxed">
-                Simulate the platform safely without affecting real data. Coming soon.
-              </p>
-              <Badge variant="outline" className="mt-3 text-[10px] rounded-full">
-                Coming Soon
-              </Badge>
-            </div>
+            </ScrollArea>
           </TabsContent>
         </Tabs>
       </PopoverContent>
