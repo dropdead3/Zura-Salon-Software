@@ -44,6 +44,8 @@ export function NewBookingsCard({
   const pipeline = useBookingPipeline(locationIdForPipeline);
   const { locations: pipelineLocations } = useBookingPipelineByLocation(locationIdForPipeline);
   const [drilldown, setDrilldown] = useState<'new' | 'returning' | null>(null);
+  const [showActionGuide, setShowActionGuide] = useState(false);
+  const showPipelineAction = pipeline.status === 'critical' || pipeline.status === 'slowing';
 
   const showLocationBreakdown = !filterContext?.locationId || filterContext.locationId === 'all';
   const heroLabel = RANGE_LABELS[dateRange] || 'Booked';
