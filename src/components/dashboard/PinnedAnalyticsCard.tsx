@@ -211,7 +211,7 @@ const TIME_INDEPENDENT_CARDS = new Set([
 // Icon + label mapping for each card in compact mode
 const CARD_META: Record<string, { icon: React.ElementType; label: string }> = {
   executive_summary: { icon: Sparkles, label: 'Executive Summary' },
-  daily_brief: { icon: FileText, label: 'Daily Brief' },
+  daily_brief: { icon: FileText, label: 'Appointments Summary' },
   sales_overview: { icon: DollarSign, label: 'Sales Overview' },
   top_performers: { icon: TrendingUp, label: 'Top Performers' },
   operations_stats: { icon: Clock, label: 'Operations' },
@@ -777,7 +777,7 @@ export function PinnedAnalyticsCard({ cardId, filters, compact = false }: Pinned
     case 'daily_brief':
       return (
         <VisibilityGate elementKey="daily_brief">
-          <PinnableCard elementKey="daily_brief" elementName="Daily Brief" category="Command Center" dateRange={filters.dateRange} locationName={selectedLocationName}>
+          <PinnableCard elementKey="daily_brief" elementName="Appointments Summary" category="Command Center" dateRange={filters.dateRange} locationName={selectedLocationName}>
             <DailyBriefCard filterContext={filterContext} locationId={filters.locationId} />
           </PinnableCard>
         </VisibilityGate>

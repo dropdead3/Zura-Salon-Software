@@ -81,7 +81,7 @@ function ExecutiveSummaryPreview() {
 function DailyBriefPreview() {
   return (
     <div className="space-y-3">
-      <MiniHeader icon={Sun} title="DAILY BRIEF" />
+      <MiniHeader icon={Sun} title="APPOINTMENTS SUMMARY" />
       <div className="space-y-1.5">
         <StatRow label="Today's appointments" value="24" />
         <StatRow label="Projected revenue" value="$4,800" />

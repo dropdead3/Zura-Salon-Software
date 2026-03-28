@@ -46,7 +46,7 @@ export function DailyBriefCard({ filterContext, locationId }: DailyBriefCardProp
         <CardContent className="p-5">
           <div className="flex items-center gap-2 text-destructive text-sm">
             <AlertCircle className="w-4 h-4 shrink-0" />
-            <span>Failed to load daily brief.</span>
+            <span>Failed to load appointments summary.</span>
           </div>
           <Button variant="outline" size={tokens.button.card} className="mt-3" onClick={() => refetch()}>
             Retry
@@ -87,7 +87,7 @@ export function DailyBriefCard({ filterContext, locationId }: DailyBriefCardProp
             </div>
             <div className="flex items-center gap-2">
               <h3 className="font-display text-sm tracking-wide text-muted-foreground uppercase truncate">
-                Daily Brief
+                Appointments Summary
               </h3>
               <MetricInfoTooltip description="Today's real-time operational snapshot: scheduled vs completed appointments, no-show count and rate, completion percentage, and rebooking performance per appointment." />
             </div>
