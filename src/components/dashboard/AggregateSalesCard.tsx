@@ -810,6 +810,7 @@ export function AggregateSalesCard({
                 <div className="mt-4 mx-auto max-w-sm space-y-3">
                   {(() => {
                     const displayExpected = todayExpectedDisplay;
+                    const remainingExpected = adjustedExpected ? Math.max(0, displayExpected - (todayActual?.actualRevenue ?? 0)) : displayExpected;
                     const exceededExpected = !!(todayActual?.hasActualData && displayExpected > 0 && todayActual.actualRevenue > displayExpected);
                     return (
                       <>
@@ -823,10 +824,10 @@ export function AggregateSalesCard({
                               >
                                 <Clock className="w-4 h-4" />
                                 <BlurredAmount disableTooltip>
-                                  <span>{formatCurrency(displayExpected)}</span>
+                                  <span>{formatCurrency(exceededExpected ? 0 : remainingExpected)}</span>
                                 </BlurredAmount>
-                                <span>Expected Today</span>
-                                {adjustedExpected && adjustedExpected.pendingCount > 0 && (
+                                <span>{exceededExpected ? 'Exceeded' : 'More Expected Today'}</span>
+                                {!exceededExpected && adjustedExpected && adjustedExpected.pendingCount > 0 && (
                                   <span className="text-[10px] opacity-60 ml-0.5">
                                     · {adjustedExpected.pendingCount} pending
                                   </span>
