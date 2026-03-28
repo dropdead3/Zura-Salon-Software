@@ -29,13 +29,13 @@ export function ExtensionsPreview({ config }: ExtensionsPreviewProps) {
       <div className="max-w-4xl mx-auto">
         {/* Badge */}
         <div className="flex justify-center mb-6">
-          <span className="px-4 py-1.5 bg-background/10 rounded-full text-xs uppercase tracking-wider text-background/80">
+          <span className="px-4 py-1.5 bg-background/10 rounded-full text-xs font-display uppercase tracking-wider text-background/80">
             {config.badge_text}
           </span>
         </div>
 
         {/* Eyebrow */}
-        <p className="text-center text-sm uppercase tracking-wider text-background/60 mb-4">
+        <p className="text-center text-sm font-display uppercase tracking-wider text-background/60 mb-4">
           {config.eyebrow}
         </p>
 

@@ -68,7 +68,7 @@ function ClearanceBurnDown({ products }: { products: Product[] }) {
     <Card>
       <CardContent className="p-4">
         <div className="flex items-center justify-between mb-3">
-          <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Clearance Burn-Down</p>
+          <p className="text-xs text-muted-foreground font-medium font-display uppercase tracking-wider">Clearance Burn-Down</p>
           <MetricInfoTooltip description="Shows the decline in clearance inventory over time. The goal is to reach zero — all clearance items sold or liquidated." />
         </div>
         <div className="h-32">

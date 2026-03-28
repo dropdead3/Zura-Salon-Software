@@ -128,7 +128,7 @@ export function LocationsRollupCard({ filterContext, dateFrom, dateTo }: Locatio
         </div>
         {locations.length > 0 && (
           <div className="mt-3 pt-3 border-t border-border/50 flex justify-between items-center">
-            <span className="text-xs font-medium text-muted-foreground uppercase">Total</span>
+            <span className="text-xs font-medium text-muted-foreground font-display uppercase">Total</span>
             <span className="tabular-nums font-medium">
               <BlurredAmount>{formatCurrencyWhole(totalRevenue)}</BlurredAmount>
             </span>

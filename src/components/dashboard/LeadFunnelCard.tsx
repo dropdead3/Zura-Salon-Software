@@ -85,14 +85,14 @@ export function LeadFunnelCard({ locationId, dateRange }: LeadFunnelCardProps) {
           <div className="p-4 bg-muted/30 rounded-lg">
             <div className="flex items-center gap-2 mb-2">
               <Users className="w-4 h-4 text-muted-foreground" />
-              <span className="text-xs text-muted-foreground uppercase tracking-wide">Total Leads</span>
+              <span className="text-xs text-muted-foreground font-display uppercase tracking-wide">Total Leads</span>
             </div>
             <p className="font-display text-2xl">{summary.totalLeads}</p>
           </div>
           <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
             <div className="flex items-center gap-2 mb-2">
               <Clock className="w-4 h-4 text-blue-600" />
-              <span className="text-xs text-blue-600 uppercase tracking-wide">Avg Response</span>
+              <span className="text-xs text-blue-600 font-display uppercase tracking-wide">Avg Response</span>
             </div>
             <p className="font-display text-2xl text-blue-700 dark:text-blue-400">
               {summary.avgResponseTimeMinutes > 0 ? `${summary.avgResponseTimeMinutes}m` : 'N/A'}
@@ -101,7 +101,7 @@ export function LeadFunnelCard({ locationId, dateRange }: LeadFunnelCardProps) {
           <div className="p-4 bg-amber-50 dark:bg-amber-900/20 rounded-lg">
             <div className="flex items-center gap-2 mb-2">
               <MessageSquare className="w-4 h-4 text-amber-600" />
-              <span className="text-xs text-amber-600 uppercase tracking-wide">Consult Rate</span>
+              <span className="text-xs text-amber-600 font-display uppercase tracking-wide">Consult Rate</span>
             </div>
             <p className="font-display text-2xl text-amber-700 dark:text-amber-400">
               {summary.consultationRate.toFixed(1)}%
@@ -110,7 +110,7 @@ export function LeadFunnelCard({ locationId, dateRange }: LeadFunnelCardProps) {
           <div className="p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
             <div className="flex items-center gap-2 mb-2">
               <CheckCircle className="w-4 h-4 text-green-600" />
-              <span className="text-xs text-green-600 uppercase tracking-wide">Conversion</span>
+              <span className="text-xs text-green-600 font-display uppercase tracking-wide">Conversion</span>
             </div>
             <p className="font-display text-2xl text-green-700 dark:text-green-400">
               {summary.conversionRate.toFixed(1)}%

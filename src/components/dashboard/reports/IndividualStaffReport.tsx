@@ -380,7 +380,7 @@ export function IndividualStaffReport({ dateFrom, dateTo, locationId, onClose, i
                     <Badge variant="outline" className="text-xs"><Wallet className="w-3 h-3 mr-1" />{data.commission.tierName}</Badge>
                   )}
                   <div className="text-center">
-                    <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-0.5">Experience</p>
+                    <p className="text-[10px] text-muted-foreground font-display uppercase tracking-wider mb-0.5">Experience</p>
                     <ScoreBadge score={data.experienceScore.composite} status={data.experienceScore.status} />
                   </div>
                 </div>
@@ -397,7 +397,7 @@ export function IndividualStaffReport({ dateFrom, dateTo, locationId, onClose, i
                   <CardContent className="p-4">
                     <div className="flex items-center gap-1.5 mb-2">
                       <Icon className="w-3.5 h-3.5 text-muted-foreground" />
-                      <p className="text-[11px] text-muted-foreground font-medium uppercase tracking-wider">{kpi.label}</p>
+                      <p className="text-[11px] text-muted-foreground font-medium font-display uppercase tracking-wider">{kpi.label}</p>
                       <MetricInfoTooltip description={kpi.tooltip} />
                     </div>
                     <div className="flex items-end gap-2">
@@ -422,15 +422,15 @@ export function IndividualStaffReport({ dateFrom, dateTo, locationId, onClose, i
             <CardContent className="p-4">
               <div className="grid grid-cols-3 gap-6">
                 <div>
-                  <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Revenue Trend (3 periods)</p>
+                  <p className="text-[10px] text-muted-foreground font-display uppercase tracking-wider mb-1">Revenue Trend (3 periods)</p>
                   <TrendIndicator values={data.multiPeriodTrend.revenue.map(v => Math.round(v)) as [number, number, number]} />
                 </div>
                 <div>
-                  <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Rebooking Trend</p>
+                  <p className="text-[10px] text-muted-foreground font-display uppercase tracking-wider mb-1">Rebooking Trend</p>
                   <TrendIndicator values={data.multiPeriodTrend.rebooking.map(v => Math.round(v * 10) / 10) as [number, number, number]} />
                 </div>
                 <div>
-                  <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Retention Trend</p>
+                  <p className="text-[10px] text-muted-foreground font-display uppercase tracking-wider mb-1">Retention Trend</p>
                   <TrendIndicator values={data.multiPeriodTrend.retention.map(v => Math.round(v * 10) / 10) as [number, number, number]} />
                 </div>
               </div>

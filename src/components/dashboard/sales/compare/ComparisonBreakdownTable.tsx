@@ -125,8 +125,8 @@ export function ComparisonBreakdownTable({
                 >
                   <TableCell className="font-medium">
                     {row.metric}
-                    {isBest && <span className="ml-1.5 text-[9px] text-chart-2 font-medium uppercase tracking-wider">Best</span>}
-                    {isWorst && <span className="ml-1.5 text-[9px] text-destructive font-medium uppercase tracking-wider">Worst</span>}
+                    {isBest && <span className="ml-1.5 text-[9px] text-chart-2 font-medium font-display uppercase tracking-wider">Best</span>}
+                    {isWorst && <span className="ml-1.5 text-[9px] text-destructive font-medium font-display uppercase tracking-wider">Worst</span>}
                   </TableCell>
                   <TableCell className="text-right font-display">{row.format(row.periodA)}</TableCell>
                   <TableCell className="text-right text-muted-foreground">{row.format(row.periodB)}</TableCell>

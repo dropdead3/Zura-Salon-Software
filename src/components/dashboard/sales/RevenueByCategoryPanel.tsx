@@ -161,7 +161,7 @@ function CategoryRow({ category, index }: { category: CategoryBreakdownData; ind
             <div className="px-3 pb-3 pl-6 border-l-2 border-primary/20 ml-4">
               <div className="flex items-center gap-2 mb-2 pt-1">
                 <Layers className="w-3 h-3 text-muted-foreground" />
-                <span className="text-xs tracking-[0.1em] uppercase text-muted-foreground font-medium">
+                <span className="text-xs tracking-[0.1em] font-display uppercase text-muted-foreground font-medium">
                   Top Stylists
                 </span>
               </div>

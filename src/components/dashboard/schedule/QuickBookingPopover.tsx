@@ -1495,7 +1495,7 @@ export function QuickBookingPopover({
               ) : selectedCategory === ADDONS_CATEGORY ? (
                 <>
                   <div className="bg-muted -mx-3 px-3 py-1.5 mb-2">
-                    <h4 className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
+                    <h4 className="text-[10px] font-medium text-muted-foreground font-display uppercase tracking-wider">
                       Add-Ons & Extras
                     </h4>
                   </div>
@@ -1539,7 +1539,7 @@ export function QuickBookingPopover({
               ) : (
                 <>
                   <div className="bg-muted -mx-3 px-3 py-1.5 mb-2">
-                    <h4 className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
+                    <h4 className="text-[10px] font-medium text-muted-foreground font-display uppercase tracking-wider">
                       {selectedCategory}
                     </h4>
                   </div>
@@ -1982,7 +1982,7 @@ export function QuickBookingPopover({
                 </div>
               </div>
               <div>
-                <h4 className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-1.5">Services</h4>
+                <h4 className="text-[10px] font-medium text-muted-foreground font-display uppercase tracking-wider mb-1.5">Services</h4>
                 <div className="bg-card border border-border rounded-lg divide-y divide-border">
                   {selectedServiceDetails.map((service) => (
                     <div key={service.id} className="flex items-center justify-between p-2.5">
@@ -2019,7 +2019,7 @@ export function QuickBookingPopover({
                 </div>
               </div>
               <div>
-                <h4 className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-1.5">Stylist</h4>
+                <h4 className="text-[10px] font-medium text-muted-foreground font-display uppercase tracking-wider mb-1.5">Stylist</h4>
                 <div className="bg-card border border-border rounded-lg p-2.5">
                   <div className="flex items-center gap-2">
                     <Avatar className="h-8 w-8">
@@ -2039,7 +2039,7 @@ export function QuickBookingPopover({
               {/* Estimated Product Cost (parts_and_labor services) */}
               {estimatedProductCharge?.isEnabled && (
                 <div>
-                  <h4 className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-1.5">
+                  <h4 className="text-[10px] font-medium text-muted-foreground font-display uppercase tracking-wider mb-1.5">
                     Estimated Product Cost
                   </h4>
                   <div className="bg-card border border-border rounded-lg divide-y divide-border">
@@ -2107,7 +2107,7 @@ export function QuickBookingPopover({
                   <div className="space-y-2.5 pt-1">
                     {/* Reason */}
                     <div className="space-y-1">
-                      <Label className="text-[10px] text-muted-foreground uppercase tracking-wider">
+                      <Label className="text-[10px] text-muted-foreground font-display uppercase tracking-wider">
                         Reason {redoPolicy?.redo_reason_required && <span className="text-destructive">*</span>}
                       </Label>
                       <Select value={redoReason} onValueChange={setRedoReason}>
@@ -2132,7 +2132,7 @@ export function QuickBookingPopover({
 
                     {/* Original Appointment Picker */}
                     <div className="space-y-1">
-                      <Label className="text-[10px] text-muted-foreground uppercase tracking-wider">
+                      <Label className="text-[10px] text-muted-foreground font-display uppercase tracking-wider">
                         Original Appointment
                       </Label>
                       {!selectedClient ? (
@@ -2205,7 +2205,7 @@ export function QuickBookingPopover({
                     {/* Manager override */}
                     {isManagerOrAdmin && (
                       <div className="space-y-1">
-                        <Label className="text-[10px] text-muted-foreground uppercase tracking-wider">
+                        <Label className="text-[10px] text-muted-foreground font-display uppercase tracking-wider">
                           Price Override (optional)
                         </Label>
                         <Input
@@ -2241,7 +2241,7 @@ export function QuickBookingPopover({
                   </button>
                 ) : (
                   <div className="space-y-1.5">
-                    <h4 className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Notes</h4>
+                    <h4 className="text-[10px] font-medium text-muted-foreground font-display uppercase tracking-wider">Notes</h4>
                     <Textarea
                       placeholder="Special instructions, pricing notes, promo codes..."
                       value={bookingNotes}

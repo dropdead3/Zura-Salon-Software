@@ -61,7 +61,7 @@ export function ProviderDetailSheet({
         <Separator />
 
         <div className="space-y-4">
-          <h4 className="font-medium uppercase text-xs tracking-wider text-muted-foreground">
+          <h4 className="font-medium font-display uppercase text-xs tracking-wider text-muted-foreground">
             Key Features
           </h4>
           <div className="space-y-3">
@@ -84,7 +84,7 @@ export function ProviderDetailSheet({
         <Separator />
 
         <div className="space-y-4">
-          <h4 className="font-medium uppercase text-xs tracking-wider text-muted-foreground">
+          <h4 className="font-medium font-display uppercase text-xs tracking-wider text-muted-foreground">
             Best For
           </h4>
           <div className="space-y-2">
@@ -100,7 +100,7 @@ export function ProviderDetailSheet({
         <Separator />
 
         <div className="space-y-4">
-          <h4 className="font-medium uppercase text-xs tracking-wider text-muted-foreground">
+          <h4 className="font-medium font-display uppercase text-xs tracking-wider text-muted-foreground">
             Integrations
           </h4>
           <div className="flex flex-wrap gap-2">
@@ -115,7 +115,7 @@ export function ProviderDetailSheet({
         <Separator />
 
         <div className="space-y-4">
-          <h4 className="font-medium uppercase text-xs tracking-wider text-muted-foreground">
+          <h4 className="font-medium font-display uppercase text-xs tracking-wider text-muted-foreground">
             Pricing
           </h4>
           <div 

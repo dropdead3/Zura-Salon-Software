@@ -129,7 +129,7 @@ export function VoucherFormDialog({
                       <Input 
                         placeholder="GIFT-XXXX" 
                         {...field}
-                        className="uppercase font-mono"
+                        className="font-display uppercase font-mono"
                       />
                     </FormControl>
                     <Button type="button" variant="outline" onClick={generateCode}>

@@ -55,7 +55,7 @@ export function ReportPreviewModal({
                 className="h-8 w-auto max-w-[160px] object-contain"
               />
             )}
-            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+            <p className="text-xs font-medium text-muted-foreground font-display uppercase tracking-wider">
               {orgName}
             </p>
           </div>

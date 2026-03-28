@@ -133,7 +133,7 @@ export function ApplicantDetailSheet({
         <div className="p-6 space-y-6">
           {/* Contact Info */}
           <div className="space-y-3">
-            <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
+            <h3 className="text-sm font-medium text-muted-foreground font-display uppercase tracking-wider">
               Contact
             </h3>
             <div className="space-y-2">
@@ -169,7 +169,7 @@ export function ApplicantDetailSheet({
 
           {/* Application Details */}
           <div className="space-y-3">
-            <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
+            <h3 className="text-sm font-medium text-muted-foreground font-display uppercase tracking-wider">
               Application Details
             </h3>
             <div className="grid grid-cols-2 gap-4">
@@ -192,7 +192,7 @@ export function ApplicantDetailSheet({
 
           {/* Specialties */}
           <div className="space-y-3">
-            <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
+            <h3 className="text-sm font-medium text-muted-foreground font-display uppercase tracking-wider">
               Specialties
             </h3>
             <p className="text-sm">{applicant.specialties}</p>
@@ -202,7 +202,7 @@ export function ApplicantDetailSheet({
 
           {/* Why Us */}
           <div className="space-y-3">
-            <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider flex items-center gap-2">
+            <h3 className="text-sm font-medium text-muted-foreground font-display uppercase tracking-wider flex items-center gap-2">
               <Sparkles className="h-4 w-4" />
               Why Us?
             </h3>
@@ -213,7 +213,7 @@ export function ApplicantDetailSheet({
             <>
               <Separator />
               <div className="space-y-3">
-                <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
+                <h3 className="text-sm font-medium text-muted-foreground font-display uppercase tracking-wider">
                   Additional Message
                 </h3>
                 <p className="text-sm">{applicant.message}</p>
@@ -225,7 +225,7 @@ export function ApplicantDetailSheet({
 
           {/* Notes Section */}
           <div className="space-y-4">
-            <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider flex items-center gap-2">
+            <h3 className="text-sm font-medium text-muted-foreground font-display uppercase tracking-wider flex items-center gap-2">
               <MessageSquare className="h-4 w-4" />
               Notes ({notes.length})
             </h3>

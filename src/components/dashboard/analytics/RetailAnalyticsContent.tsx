@@ -768,7 +768,7 @@ export function RetailAnalyticsContent({
                       <Icon className="w-4 h-4 text-primary" />
                     </div>
                     <div className="flex items-center gap-1">
-                      <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">{kpi.label}</p>
+                      <p className="text-xs text-muted-foreground font-medium font-display uppercase tracking-wider">{kpi.label}</p>
                       <MetricInfoTooltip description={kpi.tooltip} />
                     </div>
                   </div>
@@ -1385,7 +1385,7 @@ export function RetailAnalyticsContent({
                                 <AvatarFallback className="text-[10px]">{getInitials(s.name)}</AvatarFallback>
                               </Avatar>
                               <span className="font-medium text-sm">{s.name}</span>
-                              {isTop && <span className="text-[9px] text-chart-2 font-medium uppercase tracking-wider">Top</span>}
+                              {isTop && <span className="text-[9px] text-chart-2 font-medium font-display uppercase tracking-wider">Top</span>}
                             </div>
                           </TableCell>
                           <TableCell className="text-right tabular-nums font-medium"><BlurredAmount>{formatCurrencyWhole(s.productRevenue)}</BlurredAmount></TableCell>
@@ -1716,7 +1716,7 @@ export function RetailAnalyticsContent({
               {/* Staff Breakdown Table */}
               {goalProgress.staffBreakdown.length > 0 && goalProgress.isStaffDriven && (
                 <div className="pt-2 border-t">
-                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">Staff Retail Commitments</p>
+                  <p className="text-xs font-medium text-muted-foreground font-display uppercase tracking-wider mb-2">Staff Retail Commitments</p>
                   <div className="overflow-x-auto">
                     <Table>
                       <TableHeader>

@@ -103,13 +103,13 @@ export function PaymentsTabContent({ organizationId }: PaymentsTabContentProps) 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Card className="bg-card/50">
           <CardContent className="p-4">
-            <p className="text-xs text-muted-foreground uppercase tracking-wider">Total Due</p>
+            <p className="text-xs text-muted-foreground font-display uppercase tracking-wider">Total Due</p>
             <p className="text-2xl font-medium mt-1">{formatCurrency(summary?.totalDue || 0)}</p>
           </CardContent>
         </Card>
         <Card className="bg-card/50">
           <CardContent className="p-4">
-            <p className="text-xs text-muted-foreground uppercase tracking-wider">Collected</p>
+            <p className="text-xs text-muted-foreground font-display uppercase tracking-wider">Collected</p>
             <p className="text-2xl font-medium mt-1 text-emerald-400">
               {formatCurrency(summary?.totalCollected || 0)}
             </p>
@@ -117,7 +117,7 @@ export function PaymentsTabContent({ organizationId }: PaymentsTabContentProps) 
         </Card>
         <Card className="bg-card/50">
           <CardContent className="p-4">
-            <p className="text-xs text-muted-foreground uppercase tracking-wider">Outstanding</p>
+            <p className="text-xs text-muted-foreground font-display uppercase tracking-wider">Outstanding</p>
             <p className="text-2xl font-medium mt-1 text-amber-400">
               {formatCurrency(summary?.totalOutstanding || 0)}
             </p>
@@ -125,7 +125,7 @@ export function PaymentsTabContent({ organizationId }: PaymentsTabContentProps) 
         </Card>
         <Card className="bg-card/50">
           <CardContent className="p-4">
-            <p className="text-xs text-muted-foreground uppercase tracking-wider">Overdue</p>
+            <p className="text-xs text-muted-foreground font-display uppercase tracking-wider">Overdue</p>
             <p className="text-2xl font-medium mt-1 text-red-400">
               {formatCurrency(summary?.overdueAmount || 0)}
               {(summary?.overdueCount || 0) > 0 && (

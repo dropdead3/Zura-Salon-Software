@@ -38,7 +38,7 @@ export function ServiceAddonToast({
           <div className="flex items-center justify-between px-3 py-2 border-b border-primary/10">
             <div className="flex items-center gap-1.5">
               <Sparkles className="h-3.5 w-3.5 text-primary" />
-              <span className="text-[11px] font-medium text-primary uppercase tracking-wider">
+              <span className="text-[11px] font-medium text-primary font-display uppercase tracking-wider">
                 Frequently added with {categoryName}
               </span>
             </div>

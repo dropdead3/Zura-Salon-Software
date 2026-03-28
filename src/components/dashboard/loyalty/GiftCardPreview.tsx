@@ -61,7 +61,7 @@ export function GiftCardPreview({
         <div className="flex items-start justify-between">
           <div>
             <p 
-              className="text-xs uppercase tracking-widest opacity-70"
+              className="text-xs font-display uppercase tracking-widest opacity-70"
               style={{ color: textColor }}
             >
               Gift Card

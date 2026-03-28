@@ -79,7 +79,7 @@ export function StylistStep({
         <div className="p-4 space-y-6">
           {/* Stylist Selection */}
           <div>
-            <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3">
+            <h3 className="text-xs font-medium text-muted-foreground font-display uppercase tracking-wider mb-3">
               Available Stylists
               {qualificationInfo?.hasData && (
                 <span className="text-xs font-normal text-muted-foreground/70 ml-2">
@@ -127,7 +127,7 @@ export function StylistStep({
           {/* Date Selection */}
           <div>
             <div className="flex items-center justify-between mb-3">
-              <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+              <h3 className="text-xs font-medium text-muted-foreground font-display uppercase tracking-wider">
                 Select Date
               </h3>
               <Button
@@ -186,7 +186,7 @@ export function StylistStep({
 
           {/* Time Selection */}
           <div>
-            <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3">
+            <h3 className="text-xs font-medium text-muted-foreground font-display uppercase tracking-wider mb-3">
               Select Time
             </h3>
             <div className="grid grid-cols-4 gap-2">

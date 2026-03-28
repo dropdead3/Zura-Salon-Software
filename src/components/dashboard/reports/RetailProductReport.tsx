@@ -144,20 +144,20 @@ export function RetailProductReport({ dateFrom, dateTo, locationId, onClose }: R
       {/* KPI row */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Card><CardContent className="p-4">
-          <p className="text-[11px] text-muted-foreground uppercase tracking-wider mb-1">Product Revenue</p>
+          <p className="text-[11px] text-muted-foreground font-display uppercase tracking-wider mb-1">Product Revenue</p>
           <p className="text-xl font-display tabular-nums"><BlurredAmount>{formatCurrencyWhole(data.summary.totalRevenue)}</BlurredAmount></p>
           {data.summary.revenueChange !== 0 && <p className={cn('text-xs tabular-nums', data.summary.revenueChange > 0 ? 'text-emerald-600' : 'text-red-500')}>{data.summary.revenueChange > 0 ? '+' : ''}{Math.round(data.summary.revenueChange)}% vs prior</p>}
         </CardContent></Card>
         <Card><CardContent className="p-4">
-          <p className="text-[11px] text-muted-foreground uppercase tracking-wider mb-1">Units Sold</p>
+          <p className="text-[11px] text-muted-foreground font-display uppercase tracking-wider mb-1">Units Sold</p>
           <p className="text-xl font-display tabular-nums">{data.summary.totalUnits.toLocaleString()}</p>
         </CardContent></Card>
         <Card><CardContent className="p-4">
-          <p className="text-[11px] text-muted-foreground uppercase tracking-wider mb-1">Attachment Rate</p>
+          <p className="text-[11px] text-muted-foreground font-display uppercase tracking-wider mb-1">Attachment Rate</p>
           <p className="text-xl font-display tabular-nums">{data.summary.attachmentRate}%</p>
         </CardContent></Card>
         <Card><CardContent className="p-4">
-          <p className="text-[11px] text-muted-foreground uppercase tracking-wider mb-1">Products Sold</p>
+          <p className="text-[11px] text-muted-foreground font-display uppercase tracking-wider mb-1">Products Sold</p>
           <p className="text-xl font-display tabular-nums">{data.summary.uniqueProducts}</p>
         </CardContent></Card>
       </div>

@@ -168,7 +168,7 @@ export function SmsTemplateEditor({ template, onSave, onCancel, isLoading }: Sms
             <DropdownMenuContent align="end" className="w-64 max-h-80 overflow-y-auto">
               {filteredCategories.map(([category, vars]) => (
                 <div key={category}>
-                  <DropdownMenuLabel className="text-xs uppercase text-muted-foreground">
+                  <DropdownMenuLabel className="text-xs font-display uppercase text-muted-foreground">
                     {category}
                   </DropdownMenuLabel>
                   {vars.filter(v => v.is_active).map((v) => (

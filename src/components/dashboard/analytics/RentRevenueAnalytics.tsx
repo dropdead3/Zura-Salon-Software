@@ -44,7 +44,7 @@ export function RentRevenueAnalytics({ organizationId }: RentRevenueAnalyticsPro
           <CardContent className="p-4">
             <div className="flex items-center gap-2 text-muted-foreground mb-2">
               <DollarSign className="h-4 w-4" />
-              <span className="text-xs uppercase tracking-wider">Monthly Revenue</span>
+              <span className="text-xs font-display uppercase tracking-wider">Monthly Revenue</span>
             </div>
             <p className="text-2xl font-medium text-primary tabular-nums">
               <AnimatedNumber
@@ -59,7 +59,7 @@ export function RentRevenueAnalytics({ organizationId }: RentRevenueAnalyticsPro
           <CardContent className="p-4">
             <div className="flex items-center gap-2 text-muted-foreground mb-2">
               <TrendingUp className="h-4 w-4" />
-              <span className="text-xs uppercase tracking-wider">YTD Revenue</span>
+              <span className="text-xs font-display uppercase tracking-wider">YTD Revenue</span>
             </div>
             <p className="text-2xl font-medium tabular-nums">
               <AnimatedNumber
@@ -74,7 +74,7 @@ export function RentRevenueAnalytics({ organizationId }: RentRevenueAnalyticsPro
           <CardContent className="p-4">
             <div className="flex items-center gap-2 text-muted-foreground mb-2">
               <TrendingUp className="h-4 w-4" />
-              <span className="text-xs uppercase tracking-wider">Collection Rate</span>
+              <span className="text-xs font-display uppercase tracking-wider">Collection Rate</span>
             </div>
             <p className={`text-2xl font-medium ${metrics.collectionRate >= 95 ? 'text-emerald-400' : metrics.collectionRate >= 80 ? 'text-amber-400' : 'text-red-400'}`}>
               {metrics.collectionRate.toFixed(1)}%
@@ -86,7 +86,7 @@ export function RentRevenueAnalytics({ organizationId }: RentRevenueAnalyticsPro
           <CardContent className="p-4">
             <div className="flex items-center gap-2 text-muted-foreground mb-2">
               <AlertTriangle className="h-4 w-4" />
-              <span className="text-xs uppercase tracking-wider">Overdue</span>
+              <span className="text-xs font-display uppercase tracking-wider">Overdue</span>
             </div>
             <p className="text-2xl font-medium text-red-400 tabular-nums">
               <AnimatedNumber
@@ -104,7 +104,7 @@ export function RentRevenueAnalytics({ organizationId }: RentRevenueAnalyticsPro
           <CardContent className="p-4">
             <div className="flex items-center gap-2 text-muted-foreground mb-2">
               <Users className="h-4 w-4" />
-              <span className="text-xs uppercase tracking-wider">Active Renters</span>
+              <span className="text-xs font-display uppercase tracking-wider">Active Renters</span>
             </div>
             <p className="text-2xl font-medium">{metrics.activeRenterCount}</p>
           </CardContent>

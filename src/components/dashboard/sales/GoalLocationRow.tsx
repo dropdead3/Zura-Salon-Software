@@ -158,27 +158,27 @@ export function GoalLocationRow({
             <div className="px-4 pb-4 pt-1 space-y-3 border-t border-border/30">
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-0.5">Earned</p>
+                  <p className="text-[10px] font-display uppercase tracking-wider text-muted-foreground mb-0.5">Earned</p>
                   <p className="text-sm font-medium"><AnimatedBlurredAmount value={revenue} currency={currency} /></p>
                 </div>
                 <div>
-                  <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-0.5">Target</p>
+                  <p className="text-[10px] font-display uppercase tracking-wider text-muted-foreground mb-0.5">Target</p>
                   <p className="text-sm font-medium"><BlurredAmount>{formatCurrencyWhole(target)}</BlurredAmount></p>
                 </div>
                 <div>
-                  <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-0.5">Daily Run Rate</p>
+                  <p className="text-[10px] font-display uppercase tracking-wider text-muted-foreground mb-0.5">Daily Run Rate</p>
                   <p className="text-sm font-medium"><AnimatedBlurredAmount value={dailyRunRate} currency={currency} /></p>
                 </div>
                 <div>
-                  <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-0.5">Required/Day</p>
+                  <p className="text-[10px] font-display uppercase tracking-wider text-muted-foreground mb-0.5">Required/Day</p>
                   <p className="text-sm font-medium"><BlurredAmount>{formatCurrencyWhole(Math.round(requiredDailyRate))}</BlurredAmount></p>
                 </div>
                 <div>
-                  <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-0.5">Open Days Left</p>
+                  <p className="text-[10px] font-display uppercase tracking-wider text-muted-foreground mb-0.5">Open Days Left</p>
                   <p className="text-sm font-medium">{daysRemaining}</p>
                 </div>
                 <div>
-                  <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-0.5">Projected</p>
+                  <p className="text-[10px] font-display uppercase tracking-wider text-muted-foreground mb-0.5">Projected</p>
                   <p className={cn('text-sm font-medium', projectedRevenue >= target ? 'text-chart-2' : 'text-destructive')}>
                     <AnimatedBlurredAmount value={projectedRevenue} currency={currency} />
                   </p>

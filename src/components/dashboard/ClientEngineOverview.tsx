@@ -162,7 +162,7 @@ export function ClientEngineOverview() {
           </div>
           <p className="text-lg font-medium">{stats.enrolled}</p>
           <div className="flex items-center gap-0.5 justify-center">
-            <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Enrolled</p>
+            <p className="text-[10px] text-muted-foreground font-display uppercase tracking-wide">Enrolled</p>
             <MetricInfoTooltip description="Total number of team members currently enrolled in the Client Engine." />
           </div>
         </div>
@@ -172,7 +172,7 @@ export function ClientEngineOverview() {
           </div>
           <p className="text-lg font-medium text-green-600">{stats.active}</p>
           <div className="flex items-center gap-0.5 justify-center">
-            <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Active</p>
+            <p className="text-[10px] text-muted-foreground font-display uppercase tracking-wide">Active</p>
             <MetricInfoTooltip description="Members who have started but not yet completed the program." />
           </div>
         </div>
@@ -182,7 +182,7 @@ export function ClientEngineOverview() {
           </div>
           <p className="text-lg font-medium text-blue-600">{stats.completed}</p>
           <div className="flex items-center gap-0.5 justify-center">
-            <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Done</p>
+            <p className="text-[10px] text-muted-foreground font-display uppercase tracking-wide">Done</p>
             <MetricInfoTooltip description="Members who have finished all 75 days of the Client Engine." />
           </div>
         </div>
@@ -192,7 +192,7 @@ export function ClientEngineOverview() {
           </div>
           <p className="text-lg font-medium text-yellow-600">{stats.paused}</p>
           <div className="flex items-center gap-0.5 justify-center">
-            <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Paused</p>
+            <p className="text-[10px] text-muted-foreground font-display uppercase tracking-wide">Paused</p>
             <MetricInfoTooltip description="Members with enrollment temporarily on hold." />
           </div>
         </div>

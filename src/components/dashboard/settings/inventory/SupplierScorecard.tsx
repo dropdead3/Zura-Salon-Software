@@ -22,7 +22,7 @@ export function SupplierScorecard({ metrics }: SupplierScorecardProps) {
     <Card className="border-dashed">
       <CardContent className="p-4 space-y-3">
         <div className="flex items-center justify-between">
-          <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Supplier Performance</p>
+          <p className="text-xs text-muted-foreground font-medium font-display uppercase tracking-wider">Supplier Performance</p>
           <div className="flex items-center gap-1.5">
             {metrics.riskLevel !== 'none' && (
               <Badge variant="outline" className={cn(

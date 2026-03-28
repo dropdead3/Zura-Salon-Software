@@ -463,7 +463,7 @@ export function WebsiteEditorSidebar({
       </div>
 
       <div className="p-3 border-b border-border/40 space-y-2">
-        <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider px-1">Editing Page</p>
+        <p className="text-[10px] font-medium text-muted-foreground font-display uppercase tracking-wider px-1">Editing Page</p>
         <div className="flex items-center gap-2">
           <Select value={selectedPageId} onValueChange={v => onPageChange?.(v)}>
             <SelectTrigger className="h-8 text-xs flex-1">
@@ -556,7 +556,7 @@ export function WebsiteEditorSidebar({
             <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
               <SortableContext items={localSections.map(s => s.id)} strategy={verticalListSortingStrategy}>
                 <div className="mb-1">
-                  <p className="px-4 py-1 text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
+                  <p className="px-4 py-1 text-[10px] font-medium text-muted-foreground font-display uppercase tracking-wider">
                     Homepage Layout
                   </p>
                 </div>

@@ -135,7 +135,7 @@ function SortableBrandItem({ brand, onUpdate, onRemove, onImageUpload, onImageRe
               value={brand.display_text}
               onChange={(e) => onUpdate(brand.id, { display_text: e.target.value })}
               placeholder="BRAND NAME"
-              className="h-9 uppercase"
+              className="h-9 font-display uppercase"
             />
           </div>
         </div>

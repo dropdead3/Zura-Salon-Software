@@ -64,7 +64,7 @@ export function IncomeForecastCard({ className }: IncomeForecastCardProps) {
         {/* Secondary metrics */}
         <div className="grid grid-cols-2 gap-3">
           <div className="rounded-lg border border-border/60 p-3 space-y-1">
-            <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
+            <span className="text-[10px] font-medium text-muted-foreground font-display uppercase tracking-wider">
               Est. Earnings
             </span>
             <p className="text-sm font-medium">
@@ -80,7 +80,7 @@ export function IncomeForecastCard({ className }: IncomeForecastCardProps) {
           </div>
 
           <div className="rounded-lg border border-border/60 p-3 space-y-1">
-            <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
+            <span className="text-[10px] font-medium text-muted-foreground font-display uppercase tracking-wider">
               Appointments
             </span>
             <p className="text-sm font-medium">{data.appointmentCount}</p>

@@ -174,7 +174,7 @@ export function TipsDrilldownPanel({ isOpen, parentLocationId, dateFrom, dateTo 
                 <div className="space-y-4">
                   <div className="flex items-center gap-2 mb-1">
                     <User className="w-3.5 h-3.5 text-primary" />
-                    <span className="text-xs tracking-wide uppercase text-muted-foreground font-medium">
+                    <span className="text-xs tracking-wide font-display uppercase text-muted-foreground font-medium">
                       Your Tip Performance
                     </span>
                     {selfRank && (
@@ -347,7 +347,7 @@ export function TipsDrilldownPanel({ isOpen, parentLocationId, dateFrom, dateTo 
                   <div>
                     <div className="flex items-center gap-2 mb-2">
                       <TrendingDown className="w-3.5 h-3.5 text-destructive" />
-                      <span className="text-xs tracking-wide uppercase text-muted-foreground font-medium">
+                      <span className="text-xs tracking-wide font-display uppercase text-muted-foreground font-medium">
                         Coaching Opportunities
                       </span>
                       <span className="text-xs text-muted-foreground">

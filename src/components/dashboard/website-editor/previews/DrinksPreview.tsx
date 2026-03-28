@@ -50,7 +50,7 @@ export function DrinksPreview({ config }: DrinksPreviewProps) {
     <section data-theme="light" className="bg-background py-20 px-6 overflow-hidden">
       <div className="max-w-4xl mx-auto">
         {/* Eyebrow Header */}
-        <p className="text-center text-sm uppercase tracking-wider text-muted-foreground mb-12">
+        <p className="text-center text-sm font-display uppercase tracking-wider text-muted-foreground mb-12">
           {config.eyebrow}{' '}
           <span className="underline underline-offset-4 decoration-foreground/30">
             {config.eyebrow_highlight}

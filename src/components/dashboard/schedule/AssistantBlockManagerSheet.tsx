@@ -208,7 +208,7 @@ function BlocksByDate({
     <div className="space-y-4">
       {grouped.map(([dateStr, dateBlocks]) => (
         <div key={dateStr} className="space-y-2">
-          <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+          <h4 className="text-xs font-medium text-muted-foreground font-display uppercase tracking-wide">
             {format(new Date(dateStr + 'T12:00:00'), 'EEEE, MMM d, yyyy')}
           </h4>
           {dateBlocks

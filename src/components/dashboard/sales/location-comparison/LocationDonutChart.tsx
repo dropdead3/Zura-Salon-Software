@@ -36,7 +36,7 @@ function CenterLabel({ viewBox, totalRevenue }: any) {
   const { cx, cy } = viewBox;
   return (
     <g>
-      <text x={cx} y={cy - 6} textAnchor="middle" fill="hsl(var(--foreground))" fontSize={10} className="uppercase tracking-wider">
+      <text x={cx} y={cy - 6} textAnchor="middle" fill="hsl(var(--foreground))" fontSize={10} className="font-display uppercase tracking-wider">
         Total
       </text>
       <text x={cx} y={cy + 14} textAnchor="middle" fill="hsl(var(--foreground))" fontSize={16} fontWeight={500} className="font-display">

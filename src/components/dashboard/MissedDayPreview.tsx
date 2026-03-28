@@ -102,7 +102,7 @@ export function MissedDayPreview() {
       {/* Live Preview */}
       <Card className="overflow-hidden border-2 border-dashed border-oat/50">
         <CardHeader className="bg-oat/20 border-b border-oat/30">
-          <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
+          <CardTitle className="text-sm font-medium text-muted-foreground font-display uppercase tracking-wide">
             Live Preview
           </CardTitle>
         </CardHeader>
@@ -278,7 +278,7 @@ export function MissedDayPreview() {
       {/* Current Settings Info */}
       <Card className="bg-card border-oat/30">
         <CardHeader className="pb-3">
-          <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
+          <CardTitle className="text-sm font-medium text-muted-foreground font-display uppercase tracking-wide">
             Current Program Settings
           </CardTitle>
         </CardHeader>

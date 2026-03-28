@@ -115,7 +115,7 @@ export function CalendarFiltersPopover({
         <div className="p-3 space-y-4 max-h-[400px] overflow-y-auto">
           {/* Client Type */}
           <div>
-            <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">
+            <h4 className="text-xs font-medium text-muted-foreground font-display uppercase tracking-wider mb-2">
               Client Type
             </h4>
             <div className="space-y-1">
@@ -137,7 +137,7 @@ export function CalendarFiltersPopover({
 
           {/* Confirmation Status */}
           <div>
-            <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">
+            <h4 className="text-xs font-medium text-muted-foreground font-display uppercase tracking-wider mb-2">
               Confirmation Status
             </h4>
             <div className="space-y-1">
@@ -159,7 +159,7 @@ export function CalendarFiltersPopover({
 
           {/* Lead Source */}
           <div>
-            <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">
+            <h4 className="text-xs font-medium text-muted-foreground font-display uppercase tracking-wider mb-2">
               Lead Source
             </h4>
             <div className="space-y-1">

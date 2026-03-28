@@ -207,7 +207,7 @@ export function ServiceAddonAssignmentsCard({ organizationId, categories, servic
                 </Button>
               </PopoverTrigger>
               <PopoverContent align="end" className="w-56 p-2">
-                <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider px-2 pb-1.5">
+                <p className="text-[11px] font-medium text-muted-foreground font-display uppercase tracking-wider px-2 pb-1.5">
                   Pick an add-on to assign to all {categories.length} categories
                 </p>
                 <div className="space-y-0.5 max-h-48 overflow-y-auto">
@@ -277,7 +277,7 @@ export function ServiceAddonAssignmentsCard({ organizationId, categories, servic
                     <div>
                       <div className="flex items-center gap-1.5 mb-2">
                         <FolderOpen className="h-3.5 w-3.5 text-muted-foreground" />
-                        <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
+                        <span className="text-[11px] font-medium text-muted-foreground font-display uppercase tracking-wider">
                           Category-level (any {cat.category_name} service)
                         </span>
                       </div>
@@ -298,7 +298,7 @@ export function ServiceAddonAssignmentsCard({ organizationId, categories, servic
                       <div>
                         <div className="flex items-center gap-1.5 mb-2">
                           <Link2 className="h-3.5 w-3.5 text-muted-foreground" />
-                          <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
+                          <span className="text-[11px] font-medium text-muted-foreground font-display uppercase tracking-wider">
                             Service-level (specific services)
                           </span>
                         </div>

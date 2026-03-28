@@ -133,7 +133,7 @@ export function AddUserSeatsDialog({
 
           {/* New Cost Breakdown */}
           <div className="rounded-lg border p-4 space-y-3">
-            <h4 className="font-medium text-sm uppercase tracking-wide text-muted-foreground">
+            <h4 className="font-medium text-sm font-display uppercase tracking-wide text-muted-foreground">
               New Monthly Cost
             </h4>
             <div className="space-y-2">

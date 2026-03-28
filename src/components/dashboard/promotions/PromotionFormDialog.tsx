@@ -318,7 +318,7 @@ export function PromotionFormDialog({
                         <Input 
                           placeholder="SPRING20" 
                           {...field}
-                          className="uppercase"
+                          className="font-display uppercase"
                         />
                       </FormControl>
                       <Button type="button" variant="outline" onClick={generateCode}>

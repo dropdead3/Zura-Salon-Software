@@ -179,21 +179,21 @@ export function PayrollSummaryReport({ dateFrom, dateTo, locationId, onClose }: 
       {/* Summary KPIs */}
       <div className={cn("grid grid-cols-2 gap-4", hasRenters ? "md:grid-cols-4" : "md:grid-cols-2")}>
         <Card><CardContent className="p-4">
-          <div className="flex items-center gap-1.5 mb-1"><Wallet className="w-3.5 h-3.5 text-muted-foreground" /><p className="text-[11px] text-muted-foreground uppercase tracking-wider">Commission Liability</p></div>
+          <div className="flex items-center gap-1.5 mb-1"><Wallet className="w-3.5 h-3.5 text-muted-foreground" /><p className="text-[11px] text-muted-foreground font-display uppercase tracking-wider">Commission Liability</p></div>
           <p className="text-xl font-display tabular-nums"><BlurredAmount>{formatCurrencyWhole(totalCommission)}</BlurredAmount></p>
         </CardContent></Card>
         <Card><CardContent className="p-4">
-          <div className="flex items-center gap-1.5 mb-1"><Users className="w-3.5 h-3.5 text-muted-foreground" /><p className="text-[11px] text-muted-foreground uppercase tracking-wider">Staff Count</p></div>
+          <div className="flex items-center gap-1.5 mb-1"><Users className="w-3.5 h-3.5 text-muted-foreground" /><p className="text-[11px] text-muted-foreground font-display uppercase tracking-wider">Staff Count</p></div>
           <p className="text-xl font-display tabular-nums">{commissionRows.length}</p>
         </CardContent></Card>
         {hasRenters && (
           <>
             <Card><CardContent className="p-4">
-              <div className="flex items-center gap-1.5 mb-1"><Building2 className="w-3.5 h-3.5 text-muted-foreground" /><p className="text-[11px] text-muted-foreground uppercase tracking-wider">Expected Rent</p></div>
+              <div className="flex items-center gap-1.5 mb-1"><Building2 className="w-3.5 h-3.5 text-muted-foreground" /><p className="text-[11px] text-muted-foreground font-display uppercase tracking-wider">Expected Rent</p></div>
               <p className="text-xl font-display tabular-nums"><BlurredAmount>{formatCurrencyWhole(rentData?.expectedRent || 0)}</BlurredAmount></p>
             </CardContent></Card>
             <Card><CardContent className="p-4">
-              <div className="flex items-center gap-1.5 mb-1"><DollarSign className="w-3.5 h-3.5 text-muted-foreground" /><p className="text-[11px] text-muted-foreground uppercase tracking-wider">Collected Rent</p></div>
+              <div className="flex items-center gap-1.5 mb-1"><DollarSign className="w-3.5 h-3.5 text-muted-foreground" /><p className="text-[11px] text-muted-foreground font-display uppercase tracking-wider">Collected Rent</p></div>
               <p className="text-xl font-display tabular-nums"><BlurredAmount>{formatCurrencyWhole(rentData?.collectedRent || 0)}</BlurredAmount></p>
               {rentData && rentData.collectionRate < 100 && <p className="text-[10px] text-amber-600 dark:text-amber-400 mt-0.5">{rentData.collectionRate}% collected</p>}
             </CardContent></Card>

@@ -1079,7 +1079,7 @@ export function SidebarLayoutEditor({ externalSelectedRole }: SidebarLayoutEdito
         {/* Role Selector Tabs - only show if not controlled externally */}
         {externalSelectedRole === undefined && (
           <div className="space-y-2">
-            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+            <p className="text-xs font-medium text-muted-foreground font-display uppercase tracking-wider">
               Visibility Mode
             </p>
             <Tabs value={selectedRole} onValueChange={setInternalSelectedRole}>
@@ -1173,7 +1173,7 @@ export function SidebarLayoutEditor({ externalSelectedRole }: SidebarLayoutEdito
           {/* Editor Panel */}
           <div className="space-y-3">
             <div className="flex items-center justify-between mb-3">
-              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+              <p className="text-xs font-medium text-muted-foreground font-display uppercase tracking-wider">
                 Editor {selectedRole !== 'global' && `(${roles.find(r => r.name === selectedRole)?.display_name})`}
               </p>
               <div className="flex items-center gap-2">
@@ -1291,7 +1291,7 @@ export function SidebarLayoutEditor({ externalSelectedRole }: SidebarLayoutEdito
 
           {/* Preview Panel */}
           <div>
-            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3">
+            <p className="text-xs font-medium text-muted-foreground font-display uppercase tracking-wider mb-3">
               Live Preview {selectedRole !== 'global' && `(${roles.find(r => r.name === selectedRole)?.display_name})`}
             </p>
             <SidebarPreview

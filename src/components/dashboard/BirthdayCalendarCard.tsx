@@ -206,7 +206,7 @@ export function BirthdayCalendarCard() {
             {/* Upcoming Birthdays List - Compact */}
             {!loadingUpcoming && upcomingBirthdays && upcomingBirthdays.length > 0 && (
               <div className="pt-2 border-t">
-                <h4 className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-2 flex items-center gap-1">
+                <h4 className="text-[10px] font-medium text-muted-foreground font-display uppercase tracking-wider mb-2 flex items-center gap-1">
                   <Gift className="w-3 h-3" />
                   Coming Up
                 </h4>

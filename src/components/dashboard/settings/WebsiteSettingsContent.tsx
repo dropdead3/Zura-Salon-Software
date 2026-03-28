@@ -869,7 +869,7 @@ function RetailTab() {
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
                   <QrCode className="w-4 h-4 text-muted-foreground" />
-                  <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">QR Code</span>
+                  <span className="text-xs font-medium font-display uppercase tracking-wider text-muted-foreground">QR Code</span>
                 </div>
                 <Button
                   variant="outline"

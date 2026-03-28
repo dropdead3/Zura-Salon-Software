@@ -78,7 +78,7 @@ export function OperationsTabContent({ filters, subTab = 'overview', onSubTabCha
     <div className="space-y-6">
       {/* Sub-tabs */}
       <div className="space-y-2">
-        <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+        <span className="text-xs font-medium text-muted-foreground font-display uppercase tracking-wider">
           View
         </span>
         <Tabs value={subTab} onValueChange={onSubTabChange}>

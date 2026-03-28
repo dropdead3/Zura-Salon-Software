@@ -120,23 +120,23 @@ function EmployeeRow({ employee, isExpanded, onToggle }: EmployeeRowProps) {
           <TableCell colSpan={5} className="bg-muted/30 p-4">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div>
-                <p className="text-xs text-muted-foreground uppercase tracking-wide">Base Pay</p>
+                <p className="text-xs text-muted-foreground font-display uppercase tracking-wide">Base Pay</p>
                 <p className="font-medium">{formatCurrency(employee.projectedCompensation.basePay)}</p>
               </div>
               <div>
-                <p className="text-xs text-muted-foreground uppercase tracking-wide">Service Commission</p>
+                <p className="text-xs text-muted-foreground font-display uppercase tracking-wide">Service Commission</p>
                 <p className="font-medium text-blue-600">
                   {formatCurrency(employee.projectedCompensation.serviceCommission)}
                 </p>
               </div>
               <div>
-                <p className="text-xs text-muted-foreground uppercase tracking-wide">Product Commission</p>
+                <p className="text-xs text-muted-foreground font-display uppercase tracking-wide">Product Commission</p>
                 <p className="font-medium text-purple-600">
                   {formatCurrency(employee.projectedCompensation.productCommission)}
                 </p>
               </div>
               <div>
-                <p className="text-xs text-muted-foreground uppercase tracking-wide">Projected Total</p>
+                <p className="text-xs text-muted-foreground font-display uppercase tracking-wide">Projected Total</p>
                 <p className="font-medium text-lg">
                   {formatCurrency(employee.projectedCompensation.totalGross)}
                 </p>

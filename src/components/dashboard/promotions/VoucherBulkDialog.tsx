@@ -140,7 +140,7 @@ export function VoucherBulkDialog({
                         placeholder="SPRING"
                         maxLength={10}
                         {...field}
-                        className="uppercase"
+                        className="font-display uppercase"
                       />
                     </FormControl>
                     <FormDescription>e.g., SPRING-XXXXX</FormDescription>

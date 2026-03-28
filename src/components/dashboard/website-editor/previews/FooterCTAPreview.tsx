@@ -16,7 +16,7 @@ export function FooterCTAPreview({ config }: FooterCTAPreviewProps) {
     <section data-theme="light" className="bg-background py-24 px-6">
       <div className="max-w-3xl mx-auto text-center">
         {/* Eyebrow */}
-        <p className="text-sm uppercase tracking-wider text-muted-foreground mb-6">
+        <p className="text-sm font-display uppercase tracking-wider text-muted-foreground mb-6">
           {config.eyebrow}
         </p>
 

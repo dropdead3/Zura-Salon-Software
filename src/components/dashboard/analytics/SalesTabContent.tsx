@@ -211,7 +211,7 @@ export function SalesTabContent({
 
       {/* Sub-tabs for detailed views */}
       <div className="space-y-2">
-        <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+        <span className="text-xs font-medium text-muted-foreground font-display uppercase tracking-wider">
           View
         </span>
         <Tabs value={subTab} onValueChange={onSubTabChange}>

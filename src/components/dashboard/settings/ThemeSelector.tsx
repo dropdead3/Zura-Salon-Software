@@ -176,7 +176,7 @@ export function ThemeSelector({ currentColors }: ThemeSelectorProps) {
                   
                   {/* Default badge */}
                   {theme.is_default && (
-                    <span className="text-[10px] uppercase tracking-wider text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
+                    <span className="text-[10px] font-display uppercase tracking-wider text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
                       Default
                     </span>
                   )}

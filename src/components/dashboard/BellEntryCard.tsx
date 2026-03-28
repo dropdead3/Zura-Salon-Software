@@ -155,7 +155,7 @@ export function BellEntryCard({
         <div className="space-y-4">
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
-              <Label className="text-xs uppercase tracking-wider">Service Booked</Label>
+              <Label className="text-xs font-display uppercase tracking-wider">Service Booked</Label>
               <Input
                 value={editService}
                 onChange={(e) => setEditService(e.target.value)}
@@ -163,7 +163,7 @@ export function BellEntryCard({
               />
             </div>
             <div className="space-y-2">
-              <Label className="text-xs uppercase tracking-wider">Ticket Value</Label>
+              <Label className="text-xs font-display uppercase tracking-wider">Ticket Value</Label>
               <div className="relative">
                 <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
@@ -178,7 +178,7 @@ export function BellEntryCard({
             </div>
           </div>
           <div className="space-y-2">
-            <Label className="text-xs uppercase tracking-wider">Lead Source</Label>
+            <Label className="text-xs font-display uppercase tracking-wider">Lead Source</Label>
             <Select value={editLeadSource} onValueChange={setEditLeadSource}>
               <SelectTrigger>
                 <SelectValue placeholder="How did they find you?" />
@@ -193,7 +193,7 @@ export function BellEntryCard({
             </Select>
           </div>
           <div className="space-y-2">
-            <Label className="text-xs uppercase tracking-wider">What Closed the Deal? (Optional)</Label>
+            <Label className="text-xs font-display uppercase tracking-wider">What Closed the Deal? (Optional)</Label>
             <Textarea
               value={editClosingScript}
               onChange={(e) => setEditClosingScript(e.target.value)}
@@ -291,7 +291,7 @@ export function BellEntryCard({
               {/* Coach Note Display */}
               {entry.coach_note && !isEditingNote && (
                 <div className="mt-4 p-3 bg-accent/50 rounded-lg border border-accent">
-                  <p className="text-xs uppercase tracking-wider text-muted-foreground mb-1 flex items-center gap-1">
+                  <p className="text-xs font-display uppercase tracking-wider text-muted-foreground mb-1 flex items-center gap-1">
                     <MessageSquare className="w-3 h-3" /> Coach Note
                   </p>
                   <p className="text-sm font-sans">{entry.coach_note}</p>

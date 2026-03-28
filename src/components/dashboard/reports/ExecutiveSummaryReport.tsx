@@ -191,7 +191,7 @@ export function ExecutiveSummaryReport({ dateFrom, dateTo, locationId, onClose }
         <CardContent className="space-y-6">
           {/* Key Metrics */}
           <div>
-            <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3">Organization Overview</h4>
+            <h4 className="text-xs font-medium text-muted-foreground font-display uppercase tracking-wider mb-3">Organization Overview</h4>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {[
                 { label: 'Total Revenue', value: formatCurrency(metrics?.totalRevenue ?? 0) },
@@ -212,7 +212,7 @@ export function ExecutiveSummaryReport({ dateFrom, dateTo, locationId, onClose }
           {/* Revenue by Location */}
           {isMultiLocation && locationData && locationData.length > 0 && (
             <div>
-              <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3">Revenue by Location</h4>
+              <h4 className="text-xs font-medium text-muted-foreground font-display uppercase tracking-wider mb-3">Revenue by Location</h4>
               <Table>
                 <TableHeader>
                   <TableRow>
