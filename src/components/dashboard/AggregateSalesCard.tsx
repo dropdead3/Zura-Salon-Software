@@ -852,7 +852,7 @@ export function AggregateSalesCard({
                         {/* Appointment completion fraction */}
                         {adjustedExpected && (adjustedExpected.resolvedCount + adjustedExpected.pendingCount + adjustedExpected.cancelledCount + adjustedExpected.noShowCount) > 0 && (
                           <p className="text-xs text-muted-foreground/70 text-center">
-                            {adjustedExpected.resolvedCount} of {adjustedExpected.resolvedCount + adjustedExpected.pendingCount + adjustedExpected.cancelledCount + adjustedExpected.noShowCount} appointments completed
+                            {adjustedExpected.resolvedCount} of {adjustedExpected.resolvedCount + adjustedExpected.pendingCount + adjustedExpected.cancelledCount + adjustedExpected.noShowCount} appointments completed{adjustedExpected.pendingCount > 0 && ` · ${adjustedExpected.pendingCount} pending`}
                           </p>
                         )}
 
@@ -870,11 +870,6 @@ export function AggregateSalesCard({
                                   <BlurredAmount disableTooltip>
                                     <span>{formatCurrency(remainingExpected)}</span>
                                   </BlurredAmount>
-                                  {adjustedExpected && adjustedExpected.pendingCount > 0 && (
-                                    <span className="text-[10px] opacity-60 ml-0.5">
-                                      · {adjustedExpected.pendingCount} pending
-                                    </span>
-                                  )}
                                 </Badge>
                               </TooltipTrigger>
                               <TooltipContent>Click to see Gap Report</TooltipContent>
