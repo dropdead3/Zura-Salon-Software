@@ -934,7 +934,7 @@ export function AggregateSalesCard({
                           </Badge>
                           <Tooltip>
                             <TooltipTrigger asChild>
-                              <Info className="w-3.5 h-3.5 text-muted-foreground cursor-help" />
+                              <Info className="w-4 h-4 text-muted-foreground cursor-help" />
                             </TooltipTrigger>
                             <TooltipContent side="bottom" className="max-w-[220px] text-xs">
                               Total revenue from all originally-booked appointments — before cancellations, no-shows, and POS discrepancies. Click to see gap analysis.
