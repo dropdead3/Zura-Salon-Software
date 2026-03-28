@@ -396,13 +396,13 @@ html, body, #root {
     --sidebar-foreground: 145 20% 12%;
     --sidebar-primary: 145 45% 42%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 145 18% 92%;
+    --sidebar-accent: 145 18% 89%;
     --sidebar-accent-foreground: 145 20% 12%;
-    --sidebar-border: 145 12% 85%;
+    --sidebar-border: 145 12% 80%;
     --sidebar-ring: 145 45% 42%;
 
-    --card-inner: 145 12% 99%;
-    --card-inner-deep: 145 8% 100%;
+    --card-inner: 145 12% 95%;
+    --card-inner-deep: 145 8% 93%;
   }
 
   .dark.theme-sage {
