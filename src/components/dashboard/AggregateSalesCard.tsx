@@ -42,6 +42,7 @@ import { useTodayActualRevenue } from '@/hooks/useTodayActualRevenue';
 import { useActualRevenue } from '@/hooks/useActualRevenue';
 import { useRetailBreakdown } from '@/hooks/useRetailBreakdown';
 import { useRevenueGapAnalysis, useScheduledRevenue } from '@/hooks/useRevenueGapAnalysis';
+import { useAdjustedExpectedRevenue } from '@/hooks/useAdjustedExpectedRevenue';
 import { RevenueGapDrilldown } from './sales/RevenueGapDrilldown';
 import { useRetailAttachmentRate } from '@/hooks/useRetailAttachmentRate';
 import { useSalesGoals } from '@/hooks/useSalesGoals';
