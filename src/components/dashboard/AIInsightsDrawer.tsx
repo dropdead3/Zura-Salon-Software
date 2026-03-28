@@ -713,7 +713,7 @@ export function AIInsightsPanel({ onClose }: { onClose: () => void }) {
   }, [hasInsights, hasActionItems, hasSuggestions]);
 
   return (
-    <div className="w-full rounded-xl border border-border/60 bg-card overflow-hidden">
+    <div className="w-full rounded-xl border border-border/60 bg-card shadow-[0_2px_8px_0_rgba(0,0,0,0.06)] overflow-hidden">
       <div className="h-px bg-gradient-to-r from-transparent via-border/60 to-transparent" />
 
       {!activeGuidance && (
