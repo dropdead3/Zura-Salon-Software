@@ -103,7 +103,7 @@ export function RevPerHourByStylistPanel({ isOpen, stylistData, totalServiceHour
                         initial={{ opacity: 0, x: -8 }}
                         animate={{ opacity: 1, x: 0 }}
                         transition={{ delay: index * 0.04 }}
-                        className="grid grid-cols-[120px_1fr_80px] items-center gap-3 py-1.5 px-2 rounded-md hover:bg-muted/30 transition-colors"
+                        className="grid grid-cols-[120px_1fr_100px] items-center gap-3 py-1.5 px-2 rounded-md hover:bg-muted/30 transition-colors"
                       >
                         <span className="text-sm text-foreground font-medium truncate">
                           {stylist.name}
