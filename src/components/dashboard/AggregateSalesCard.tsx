@@ -894,13 +894,20 @@ export function AggregateSalesCard({
                           </div>
                         )}
 
-                        {/* Progress bar: actual vs expected */}
+                        {/* Progress bar: earned % of scheduled + projection */}
                         {todayActual?.hasActualData ? (() => {
                           const exceededTotal = displayExpected > 0 && todayActual.actualRevenue > displayExpected;
+                          const earnedPct = displayExpected > 0 
+                            ? Math.round((todayActual.actualRevenue / displayExpected) * 100) 
+                            : 0;
+                          const projectedFinish = (adjustedExpected?.completedActualRevenue ?? 0) + (adjustedExpected?.pendingScheduledRevenue ?? 0);
+                          const excessAmount = todayActual.actualRevenue - displayExpected;
                           return (
                           <div className="space-y-1.5">
                             <div className="flex items-center justify-between text-xs">
-                              <span className="text-muted-foreground">{t('sales.actual_revenue')}</span>
+                              <span className="text-muted-foreground">
+                                Earned {exceededTotal ? '100' : earnedPct}% of scheduled services today
+                              </span>
                               <BlurredAmount>
                                 <span className={cn("font-medium", exceededTotal && "text-success-foreground")}>
                                   {formatCurrency(todayActual.actualRevenue)}
@@ -915,24 +922,27 @@ export function AggregateSalesCard({
                               className="h-1.5"
                               indicatorClassName={exceededTotal ? "bg-success-foreground" : undefined}
                             />
-                            {exceededTotal && allAppointmentsComplete ? (
-                              <div className="flex items-center justify-center gap-3 text-xs text-success-foreground">
-                                <span className="flex items-center gap-1">
+                            <div className="text-xs text-center text-muted-foreground">
+                              {exceededTotal ? (
+                                <span className="text-success-foreground flex items-center justify-center gap-1">
                                   <CheckCircle2 className="w-3.5 h-3.5" />
-                                  All appointments complete
+                                  <BlurredAmount disableTooltip>
+                                    <span>Exceeded scheduled by {formatCurrency(excessAmount)}</span>
+                                  </BlurredAmount>
                                 </span>
-                                <span className="text-success-foreground/40">·</span>
-                                <span className="flex items-center gap-1">
-                                  <CheckCircle2 className="w-3.5 h-3.5" />
-                                  Exceeded
+                              ) : allAppointmentsComplete ? (
+                                <span className="flex items-center justify-center gap-1">
+                                  <CheckCircle2 className="w-3.5 h-3.5 text-success-foreground" />
+                                  <BlurredAmount disableTooltip>
+                                    <span>Final: {formatCurrency(todayActual.actualRevenue)} service revenue</span>
+                                  </BlurredAmount>
                                 </span>
-                              </div>
-                            ) : exceededTotal ? (
-                              <div className="flex items-center justify-center gap-1 text-xs text-success-foreground">
-                                <CheckCircle2 className="w-3.5 h-3.5" />
-                                <span>Exceeded</span>
-                              </div>
-                            ) : null}
+                              ) : (
+                                <BlurredAmount disableTooltip>
+                                  <span>On track to finish at {formatCurrency(projectedFinish)} service revenue</span>
+                                </BlurredAmount>
+                              )}
+                            </div>
                           </div>
                           );
                         })() : null}
