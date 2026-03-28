@@ -2,51 +2,22 @@
 
 ## Problem
 
-The pin icon on analytics cards (`CommandCenterVisibilityToggle`) only updates the `dashboard_element_visibility` table but does not update the user's `dashboard_layout` (which tracks `pinnedCards` and `sectionOrder`). This means:
-
-1. Pinning via the card icon doesn't show the card as toggled on in the Dashboard Customizer
-2. The pin icon doesn't reflect the card's actual pinned state from the layout
-3. Unpinning via the card icon doesn't remove it from the customizer either
-
-The customizer's `handleTogglePinnedCard` already does both — it updates visibility AND layout. The card-level pin icon needs the same dual-write behavior.
+The "View As" popover content overflows the viewport when there are many roles/team members, and the content below the visible area is inaccessible. While `ScrollArea` is used inside each tab, the popover itself has no max-height constraint relative to the viewport, so it can extend beyond the screen.
 
 ## Plan
 
-### 1. Update `CommandCenterVisibilityToggle` to also update `dashboard_layout`
+**File:** `src/components/dashboard/ViewAsPopover.tsx`
 
-**File:** `src/components/dashboard/CommandCenterVisibilityToggle.tsx`
+1. Add a viewport-aware max-height to the `PopoverContent` using Radix's CSS custom property `--radix-popover-content-available-height`, which automatically provides the remaining space between the trigger and the viewport edge.
 
-- Import `useDashboardLayout`, `useSaveDashboardLayout`, `isPinnedInLayout`, `toPinnedEntry`, `getPinnedVisibilityKey` from the layout hook
-- Derive `isVisibleToLeadership` from BOTH the visibility table AND the layout's `pinnedCards` (union of both sources, matching how the customizer's `isCardPinned` works)
-- In `handleToggle`, after upserting visibility rows, also mutate the layout:
-  - **Pin:** Add `cardId` to `pinnedCards` and `pinned:{cardId}` to `sectionOrder`
-  - **Unpin:** Remove from both `pinnedCards` and `sectionOrder`
-- Remove debug `fetch` logging calls (cleanup)
+2. Make the inner layout flex-based so the `ScrollArea` in each tab fills available space and scrolls properly.
 
-### 2. Clean up debug logging
+### Changes
 
-Remove all the `#region agent log` fetch calls from `CommandCenterVisibilityToggle.tsx` that were left from prior debugging sessions.
+- On `PopoverContent` (line 116-120): add `max-h-[--radix-popover-content-available-height] overflow-hidden flex flex-col`
+- On the `Tabs` wrapper (line 121): add `flex flex-col overflow-hidden flex-1 min-h-0`
+- On each `TabsContent`: add `overflow-hidden flex-1 min-h-0 flex flex-col`
+- On each `ScrollArea`: change from fixed `max-h-[420px]` / `max-h-[380px]` to `flex-1 min-h-0` so it fills and scrolls within the constrained popover
 
-## Technical Details
-
-The key change is in `handleToggle` — after the existing visibility upsert, add layout sync:
-
-```typescript
-// After visibility upsert succeeds...
-const currentLayout = layoutData; // from useDashboardLayout
-if (checked) {
-  const pinnedEntry = toPinnedEntry(elementKey);
-  const newPinnedCards = [...new Set([...(currentLayout.pinnedCards || []), elementKey])];
-  const newSectionOrder = [...(currentLayout.sectionOrder || []), pinnedEntry]
-    .filter((v, i, a) => a.indexOf(v) === i); // dedupe
-  saveLayout.mutate({ ...currentLayout, pinnedCards: newPinnedCards, sectionOrder: newSectionOrder });
-} else {
-  const pinnedEntry = toPinnedEntry(elementKey);
-  const newPinnedCards = (currentLayout.pinnedCards || []).filter(id => id !== elementKey);
-  const newSectionOrder = (currentLayout.sectionOrder || []).filter(id => id !== pinnedEntry);
-  saveLayout.mutate({ ...currentLayout, pinnedCards: newPinnedCards, sectionOrder: newSectionOrder });
-}
-```
-
-The pin icon's visual state (`isVisibleToLeadership`) will also check `isPinnedInLayout(layout, elementKey)` so it correctly reflects pinned state from either source.
+This ensures the popover never exceeds available viewport space and all content is scrollable.
 
