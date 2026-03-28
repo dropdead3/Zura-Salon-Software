@@ -127,7 +127,7 @@ export function ViewAsPopover() {
       <PopoverContent
         align="end"
         sideOffset={16}
-        className="w-80 p-0 bg-card/80 backdrop-blur-xl backdrop-saturate-150 border border-border/30 rounded-xl shadow-2xl overflow-hidden flex flex-col"
+        className="z-[46] w-80 p-0 bg-card/80 backdrop-blur-xl backdrop-saturate-150 border border-border/30 rounded-xl shadow-2xl overflow-hidden flex flex-col"
         style={{ maxHeight: 'min(420px, var(--radix-popover-content-available-height))' }}
       >
         <Tabs defaultValue="roles" className="w-full flex flex-col overflow-hidden flex-1 min-h-0">
