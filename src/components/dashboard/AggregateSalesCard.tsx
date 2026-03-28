@@ -382,8 +382,8 @@ export function AggregateSalesCard({
     isToday
   );
 
-  // For the today badge: use adjusted expected if available, otherwise fall back to scheduled
-  const todayExpectedDisplay = adjustedExpected?.adjustedExpected ?? scheduledRevenue ?? 0;
+  // For the today badge: use original scheduled total (what was on the books)
+  const todayExpectedDisplay = adjustedExpected?.originalExpected ?? scheduledRevenue ?? 0;
 
   // Gap analysis — lazy, only fetched when drill-down is open
   const { data: gapAnalysis, isLoading: gapLoading } = useRevenueGapAnalysis(
@@ -813,9 +813,8 @@ export function AggregateSalesCard({
                   {(() => {
                     const displayExpected = todayExpectedDisplay;
                     const remainingExpected = adjustedExpected ? adjustedExpected.pendingScheduledRevenue : displayExpected;
-                    const exceededExpected = !!(todayActual?.hasActualData && displayExpected > 0 && todayActual.actualRevenue > displayExpected);
                     
-                    // Shortfall/surplus: compare what completed appts were scheduled for vs what they actually brought in
+                    // Tracking: compare actual POS revenue against what completed appointments were scheduled for
                     const completedScheduled = adjustedExpected?.completedScheduledRevenue ?? 0;
                     const completedActual = adjustedExpected?.completedActualRevenue ?? 0;
                     const serviceDelta = completedActual - completedScheduled;
@@ -837,12 +836,12 @@ export function AggregateSalesCard({
                               <Info className="w-3.5 h-3.5 text-muted-foreground/60 cursor-help" />
                             </TooltipTrigger>
                             <TooltipContent side="bottom" className="max-w-[280px] text-xs">
-                              {adjustedExpected ? (
+                                {adjustedExpected ? (
                                 <div className="space-y-1">
-                                  <p>Service revenue from today's appointments. Completed appointments use actual POS totals; pending appointments use their scheduled price. Cancellations and no-shows are excluded.</p>
-                                  <p>{adjustedExpected.resolvedCount} completed ({formatCurrency(adjustedExpected.completedActualRevenue)} actual) + {adjustedExpected.pendingCount} pending ({formatCurrency(adjustedExpected.pendingScheduledRevenue)} scheduled)</p>
+                                  <p>Total service revenue originally booked for today. Completed appointments show actual POS totals; pending appointments use their scheduled price.</p>
+                                  <p>{adjustedExpected.resolvedCount} completed ({formatCurrency(adjustedExpected.completedActualRevenue)} actual vs {formatCurrency(adjustedExpected.completedScheduledRevenue)} scheduled) · {adjustedExpected.pendingCount} pending ({formatCurrency(adjustedExpected.pendingScheduledRevenue)} scheduled)</p>
                                   {(adjustedExpected.cancelledCount > 0 || adjustedExpected.noShowCount > 0) && (
-                                    <p className="text-muted-foreground/70">{adjustedExpected.cancelledCount} cancelled, {adjustedExpected.noShowCount} no-shows excluded</p>
+                                    <p className="text-muted-foreground/70">{adjustedExpected.cancelledCount} cancelled, {adjustedExpected.noShowCount} no-shows included in total</p>
                                   )}
                                 </div>
                               ) : (
@@ -853,7 +852,7 @@ export function AggregateSalesCard({
                         </div>
 
                         {/* Line 2: Remaining service revenue badge */}
-                        {!exceededExpected && remainingExpected > 0 && (
+                        {remainingExpected > 0 && (
                           <div className="flex items-center justify-center">
                             <Tooltip>
                               <TooltipTrigger asChild>
@@ -878,20 +877,6 @@ export function AggregateSalesCard({
                           </div>
                         )}
 
-                        {/* Line 2 alt: Exceeded badge */}
-                        {exceededExpected && (
-                          <div className="flex items-center justify-center">
-                            <Badge 
-                              variant="outline" 
-                              className="text-sm font-normal gap-1 px-3 py-1.5 bg-success/10 text-success-foreground border-success/30 cursor-pointer"
-                              onClick={() => toggleDrilldown('expectedGap')}
-                            >
-                              <CheckCircle2 className="w-4 h-4" />
-                              <span>Exceeded Scheduled Services</span>
-                            </Badge>
-                          </div>
-                        )}
-
                         {/* Line 3: Shortfall/surplus tracking indicator */}
                         {hasResolvedAppts && serviceDelta !== 0 && (
                           <div className={cn(
@@ -910,12 +895,14 @@ export function AggregateSalesCard({
                         )}
 
                         {/* Progress bar: actual vs expected */}
-                        {todayActual?.hasActualData ? (
+                        {todayActual?.hasActualData ? (() => {
+                          const exceededTotal = displayExpected > 0 && todayActual.actualRevenue > displayExpected;
+                          return (
                           <div className="space-y-1.5">
                             <div className="flex items-center justify-between text-xs">
                               <span className="text-muted-foreground">{t('sales.actual_revenue')}</span>
                               <BlurredAmount>
-                                <span className={cn("font-medium", exceededExpected && "text-success-foreground")}>
+                                <span className={cn("font-medium", exceededTotal && "text-success-foreground")}>
                                   {formatCurrency(todayActual.actualRevenue)}
                                 </span>
                               </BlurredAmount>
@@ -926,9 +913,9 @@ export function AggregateSalesCard({
                                 : 0
                               }
                               className="h-1.5"
-                              indicatorClassName={exceededExpected ? "bg-success-foreground" : undefined}
+                              indicatorClassName={exceededTotal ? "bg-success-foreground" : undefined}
                             />
-                            {exceededExpected && allAppointmentsComplete ? (
+                            {exceededTotal && allAppointmentsComplete ? (
                               <div className="flex items-center justify-center gap-3 text-xs text-success-foreground">
                                 <span className="flex items-center gap-1">
                                   <CheckCircle2 className="w-3.5 h-3.5" />
@@ -940,16 +927,17 @@ export function AggregateSalesCard({
                                   Exceeded
                                 </span>
                               </div>
-                            ) : exceededExpected ? (
+                            ) : exceededTotal ? (
                               <div className="flex items-center justify-center gap-1 text-xs text-success-foreground">
                                 <CheckCircle2 className="w-3.5 h-3.5" />
                                 <span>Exceeded</span>
                               </div>
                             ) : null}
                           </div>
-                        ) : null}
+                          );
+                        })() : null}
 
-                        {!exceededExpected && allAppointmentsComplete ? (
+                        {remainingExpected <= 0 && allAppointmentsComplete ? (
                           <div className="flex items-center justify-center gap-1.5 text-xs text-success-foreground">
                             <CheckCircle2 className="w-3.5 h-3.5" />
                             <span>All appointments complete</span>
