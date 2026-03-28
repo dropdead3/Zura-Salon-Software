@@ -265,21 +265,21 @@ html, body, #root {
     --destructive: 0 62% 50%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 350 8% 72%;
-    --input: 350 8% 80%;
+    --border: 350 6% 65%;
+    --input: 350 6% 74%;
     --ring: 350 60% 55%;
 
-    --sidebar-background: 350 16% 91%;
-    --sidebar-foreground: 350 25% 12%;
+    --sidebar-background: 350 10% 83%;
+    --sidebar-foreground: 350 20% 8%;
     --sidebar-primary: 350 60% 55%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 350 12% 84%;
-    --sidebar-accent-foreground: 350 25% 12%;
-    --sidebar-border: 350 8% 72%;
+    --sidebar-accent: 350 8% 78%;
+    --sidebar-accent-foreground: 350 20% 8%;
+    --sidebar-border: 350 6% 65%;
     --sidebar-ring: 350 60% 55%;
 
-    --card-inner: 350 8% 89%;
-    --card-inner-deep: 350 5% 86%;
+    --card-inner: 350 6% 80%;
+    --card-inner-deep: 350 4% 76%;
   }
 
   .dark.theme-rose {
