@@ -148,13 +148,13 @@ html, body, #root {
     --sidebar-foreground: 0 0% 8%;
     --sidebar-primary: 0 0% 8%;
     --sidebar-primary-foreground: 40 30% 96%;
-    --sidebar-accent: 40 20% 92%;
+    --sidebar-accent: 40 20% 89%;
     --sidebar-accent-foreground: 0 0% 8%;
-    --sidebar-border: 40 15% 85%;
+    --sidebar-border: 40 15% 80%;
     --sidebar-ring: 0 0% 8%;
 
-    --card-inner: 40 20% 99%;
-    --card-inner-deep: 40 15% 100%;
+    --card-inner: 40 20% 95%;
+    --card-inner-deep: 40 15% 93%;
   }
 
   .dark.theme-cream,
