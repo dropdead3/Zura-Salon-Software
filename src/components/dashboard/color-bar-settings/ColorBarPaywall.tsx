@@ -503,7 +503,7 @@ export function ColorBarPaywall() {
             ═══════════════════════════════════════════ */}
         <div className="pb-16 md:pb-20 max-w-3xl mx-auto space-y-8">
           {/* Quantified result line */}
-          <p className="text-center font-sans text-sm text-muted-foreground/60 uppercase tracking-wider">
+          <p className="text-center font-display text-sm text-muted-foreground/60 uppercase tracking-wide">
             Salon owners recover an average of $2,400/mo in color costs
           </p>
 
