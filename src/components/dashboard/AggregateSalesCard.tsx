@@ -1255,6 +1255,18 @@ export function AggregateSalesCard({
 
             return (
               <div className="mt-6 space-y-3">
+                <div>
+                  <div className="text-center p-3 sm:p-4 bg-card-inner rounded-lg border border-border/40">
+                    <div className="flex justify-center mb-2">
+                      <DollarSign className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
+                    </div>
+                    <AnimatedBlurredAmount value={Math.round(dailyAverage)} currency={currency} className="text-lg sm:text-xl md:text-2xl font-display tabular-nums" />
+                    <div className="flex items-center gap-1 justify-center mt-1">
+                      <p className="text-xs text-muted-foreground">{t('sales.daily_avg')}</p>
+                      <MetricInfoTooltip description="Average daily revenue across days with recorded sales." />
+                    </div>
+                  </div>
+                </div>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                   <div 
                     className={cn(
@@ -1311,18 +1323,6 @@ export function AggregateSalesCard({
                       <p className="text-xs text-muted-foreground">{t('sales.rev_per_hour')}</p>
                       <ChevronDown className={cn("w-3 h-3 text-muted-foreground transition-transform duration-200", activeDrilldown === 'revPerHour' && "rotate-180")} />
                       <MetricInfoTooltip description="Total Revenue (excluding tips) ÷ Service Hours. Click for stylist breakdown." />
-                    </div>
-                  </div>
-                </div>
-                <div>
-                  <div className="text-center p-3 sm:p-4 bg-card-inner rounded-lg border border-border/40">
-                    <div className="flex justify-center mb-2">
-                      <DollarSign className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
-                    </div>
-                    <AnimatedBlurredAmount value={Math.round(dailyAverage)} currency={currency} className="text-lg sm:text-xl md:text-2xl font-display tabular-nums" />
-                    <div className="flex items-center gap-1 justify-center mt-1">
-                      <p className="text-xs text-muted-foreground">{t('sales.daily_avg')}</p>
-                      <MetricInfoTooltip description="Average daily revenue across days with recorded sales." />
                     </div>
                   </div>
                 </div>
