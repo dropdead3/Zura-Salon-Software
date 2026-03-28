@@ -387,14 +387,50 @@ export function DashboardCustomizeMenu({ variant = 'icon', roleContext }: Dashbo
         is_visible: newIsVisible,
       }));
 
+      // Optimistically update the visibility cache so UI reflects immediately
+      queryClient.setQueryData<DashboardElementVisibility[]>(['dashboard-visibility'], (old) => {
+        if (!old) return old;
+        const updated = [...old];
+        for (const row of rows) {
+          const idx = updated.findIndex(v => v.element_key === row.element_key && v.role === row.role);
+          if (idx >= 0) {
+            updated[idx] = { ...updated[idx], is_visible: row.is_visible };
+          } else {
+            updated.push({
+              id: `optimistic-${row.element_key}-${row.role}`,
+              element_key: row.element_key,
+              element_name: row.element_name,
+              element_category: row.element_category,
+              role: row.role as any,
+              is_visible: row.is_visible,
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString(),
+            });
+          }
+        }
+        return updated;
+      });
+
+      // Also optimistically update the per-role visibility map
+      queryClient.setQueriesData<Record<string, boolean>>(
+        { queryKey: ['dashboard-visibility', 'my'] },
+        (old) => {
+          if (!old) return old;
+          return { ...old, [visibilityKey]: newIsVisible };
+        }
+      );
+
       const { error } = await supabase
         .from('dashboard_element_visibility')
         .upsert(rows, { onConflict: 'element_key,role' });
 
       if (error) throw error;
 
-      queryClient.invalidateQueries({ queryKey: ['dashboard-visibility'] });
+      // Refetch to get authoritative server data
+      await queryClient.invalidateQueries({ queryKey: ['dashboard-visibility'] });
     } catch (err: any) {
+      // Revert optimistic update on error
+      queryClient.invalidateQueries({ queryKey: ['dashboard-visibility'] });
       toast({ title: 'Failed to update pinned card', description: err?.message || 'Unknown error', variant: 'destructive' });
     } finally {
       setIsTogglingPin(false);
