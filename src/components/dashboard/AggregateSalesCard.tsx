@@ -976,8 +976,8 @@ export function AggregateSalesCard({
               {/* Expected revenue badge for todayToEom (non-today future) */}
               {dateRange === 'todayToEom' && (
                 <div className="flex items-center justify-center gap-1.5 mt-2">
-                  <Badge variant="outline" className="text-xs font-normal bg-warning/10 text-warning border-warning/30">
-                    <Clock className="w-3 h-3 mr-1" />
+                  <Badge variant="outline" className="text-sm font-normal px-3 py-1.5 bg-warning/10 text-warning border-warning/30">
+                    <Clock className="w-4 h-4 mr-1" />
                     {t('sales.expected_revenue')}
                   </Badge>
                   <Tooltip>
