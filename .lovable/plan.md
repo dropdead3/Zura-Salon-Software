@@ -2,30 +2,29 @@
 
 ## Problem
 
-The top bar wrapper (`dashboard-top-bar`) has `z-30` in sticky mode, but the popover's backdrop overlay is `z-[45]`. Since the overlay sits above the top bar in the stacking order, it darkens the padding area around the rounded-full pill — which has a white/background color in light mode. This creates the appearance of a flat white bar above the content.
+Sidebar nav link hover states use `hover:bg-muted/60` which is too subtle in light mode — the fill is barely visible against the light sidebar background.
 
 ## Plan
 
-**File:** `src/components/dashboard/SuperAdminTopBar.tsx`
+**File:** `src/components/dashboard/CollapsibleNavGroup.tsx`
 
-Raise the top bar's z-index above the backdrop overlay so the entire top bar area (including its padding) floats over the darkened content:
+Replace all instances of `hover:bg-muted/60` with `hover:bg-foreground/10` for non-active nav items. This uses a dark-on-light translucent overlay that provides visible contrast in light mode while remaining appropriate in dark mode (matching the memory note on button hover standards).
 
-- Change `z-30` to `z-[48]` on the outer wrapper (line 148)
-- This keeps it below the popover content (`z-[46]`) — wait, we need it above the overlay (`z-[45]`) but below the popover (`z-[46]`). Actually the popover is already portaled and at `z-[46]`, so the top bar at `z-[48]` would cover the popover. Instead, raise it to exactly `z-[46]` — same plane as the popover, which is fine since the popover is portaled and positioned absolutely.
+Affected hover classes (all non-active states):
+- ~8 occurrences of `hover:bg-muted/60` → `hover:bg-foreground/10`
 
-Actually, simplest approach:
+**File:** `src/components/dashboard/SidebarNavContent.tsx`
 
-**File:** `src/components/dashboard/ViewAsPopover.tsx`
+Same replacement for the main nav items and onboarding link:
+- ~3 occurrences of `hover:bg-muted/60` → `hover:bg-foreground/10`
 
-- Change the backdrop overlay to start from `top: 0` instead of measuring the top bar bottom
-- Lower the overlay z-index to `z-[28]` (below the top bar's `z-30`)
-- The top bar naturally sits above the overlay, and the rounded-full pill floats cleanly over the darkened page
-- Keep the popover content at `z-[46]` (already above everything)
+**File:** `src/components/dashboard/SidebarFeedbackButtons.tsx`
 
-This way:
-- Overlay: `z-[28]` — below top bar, covers full page
-- Top bar: `z-30` — above overlay, pill floats naturally
-- Popover: `z-[46]` — above everything
+- 3 occurrences of `hover:bg-muted/60` → `hover:bg-foreground/10`
 
-The darkened/blurred effect covers the full viewport behind the top bar, and the top bar's transparent padding area is no longer affected.
+**File:** `src/components/dashboard/SidebarClockButton.tsx`
+
+- 1 occurrence of `hover:bg-muted/60` → `hover:bg-foreground/10`
+
+This aligns with the project's established hover standard: *"Ghost and Outline button variants must use a translucent `hover:bg-foreground/10` overlay rather than a solid light/accent background."*
 
