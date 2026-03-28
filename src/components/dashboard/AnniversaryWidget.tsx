@@ -104,7 +104,7 @@ export function AnniversaryWidget() {
             {hasTodayAnniversaries && (
               <div className="border-t border-border pt-2 mt-2" />
             )}
-            <p className="text-xs text-muted-foreground uppercase tracking-wide mb-2">
+            <p className="text-xs text-muted-foreground font-display uppercase tracking-wide mb-2">
               Coming Up
             </p>
             <div className="space-y-1.5">

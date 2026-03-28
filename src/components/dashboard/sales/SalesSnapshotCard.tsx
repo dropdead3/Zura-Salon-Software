@@ -87,7 +87,7 @@ export function SalesSnapshotCard({
         <div>
           <div className="flex items-center gap-1.5 mb-2">
             <Trophy className="w-4 h-4 text-chart-4" />
-            <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+            <h4 className="text-xs font-medium text-muted-foreground font-display uppercase tracking-wide">
               Top Performers
             </h4>
             <MetricInfoTooltip description="Ranked by total service + product revenue for the selected period." />
@@ -155,7 +155,7 @@ export function SalesSnapshotCard({
         <div>
           <div className="flex items-center gap-1.5 mb-2">
             <PieChartIcon className="w-4 h-4 text-chart-2" />
-            <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+            <h4 className="text-xs font-medium text-muted-foreground font-display uppercase tracking-wide">
               Revenue Mix
             </h4>
           </div>

@@ -168,7 +168,7 @@ export function StaffCommissionTable({ stylistData, isLoading }: StaffCommission
                         </Avatar>
                         <span className="font-medium text-sm">{row.name}</span>
                         {isTop && (
-                          <span className="text-[9px] text-chart-2 font-medium uppercase tracking-wider">Top</span>
+                          <span className="text-[9px] text-chart-2 font-medium font-display uppercase tracking-wider">Top</span>
                         )}
                       </div>
                     </TableCell>

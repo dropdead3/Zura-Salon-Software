@@ -94,7 +94,7 @@ export function ClientMarketingStatus({ clientId, organizationId }: ClientMarket
 
   return (
     <div className="space-y-3">
-      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Marketing Preferences</p>
+      <p className="text-xs font-medium text-muted-foreground font-display uppercase tracking-wide">Marketing Preferences</p>
       
       {/* Email Marketing */}
       <div className="flex items-center justify-between">

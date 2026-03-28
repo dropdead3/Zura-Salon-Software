@@ -185,7 +185,7 @@ export function ProviderCard({
         {/* Pricing */}
         <div className="pt-4 border-t border-border/50">
           <div className="flex items-baseline gap-1">
-            <span className="text-xs text-muted-foreground uppercase tracking-wider">From</span>
+            <span className="text-xs text-muted-foreground font-display uppercase tracking-wider">From</span>
             <span className="text-lg font-medium">{provider.pricing.pricingModel}</span>
           </div>
         </div>

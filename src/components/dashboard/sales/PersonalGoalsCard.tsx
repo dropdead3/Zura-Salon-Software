@@ -111,7 +111,7 @@ export function PersonalGoalsCard({
           <div className="space-y-5">
             {/* Service Revenue Section */}
             <div className="space-y-3">
-              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Service Revenue</p>
+              <p className="text-xs font-medium text-muted-foreground font-display uppercase tracking-wider">Service Revenue</p>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="monthly">Monthly Target</Label>
@@ -145,7 +145,7 @@ export function PersonalGoalsCard({
             {/* Retail Revenue Section */}
             <div className="space-y-3">
               <div className="flex items-center gap-2">
-                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Retail Revenue</p>
+                <p className="text-xs font-medium text-muted-foreground font-display uppercase tracking-wider">Retail Revenue</p>
                 <ShoppingBag className="w-3 h-3 text-muted-foreground" />
               </div>
               <div className="grid grid-cols-2 gap-4">
@@ -197,7 +197,7 @@ export function PersonalGoalsCard({
               {/* Service Goals */}
               {hasServiceGoals && (
                 <div className="space-y-3">
-                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Service</p>
+                  <p className="text-xs font-medium text-muted-foreground font-display uppercase tracking-wider">Service</p>
                   <div className="space-y-2">
                     <div className="flex justify-between text-sm">
                       <span className="text-muted-foreground">Monthly</span>
@@ -231,7 +231,7 @@ export function PersonalGoalsCard({
               {hasRetailGoals && (
                 <div className="space-y-3">
                   <div className="flex items-center gap-1.5">
-                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Retail</p>
+                    <p className="text-xs font-medium text-muted-foreground font-display uppercase tracking-wider">Retail</p>
                     <ShoppingBag className="w-3 h-3 text-muted-foreground" />
                   </div>
                   <div className="space-y-2">

@@ -189,7 +189,7 @@ export function TodaysQueueSection({
               <div>
                 <div className="flex items-center gap-2 mb-3">
                   <Users className="w-4 h-4 text-amber-600" />
-                  <h3 className="font-medium text-sm uppercase tracking-wide text-amber-700 dark:text-amber-400">
+                  <h3 className="font-medium text-sm font-display uppercase tracking-wide text-amber-700 dark:text-amber-400">
                     Arrivals ({queueData.waiting.length})
                   </h3>
                 </div>
@@ -216,7 +216,7 @@ export function TodaysQueueSection({
               <div>
                 <div className="flex items-center gap-2 mb-3">
                   <Clock className="w-4 h-4 text-blue-600" />
-                  <h3 className="font-medium text-sm uppercase tracking-wide text-blue-700 dark:text-blue-400">
+                  <h3 className="font-medium text-sm font-display uppercase tracking-wide text-blue-700 dark:text-blue-400">
                     In Service ({queueData.inService.length})
                   </h3>
                 </div>
@@ -243,7 +243,7 @@ export function TodaysQueueSection({
               <div>
                 <div className="flex items-center gap-2 mb-3">
                   <Clock className="w-4 h-4 text-muted-foreground" />
-                  <h3 className="font-medium text-sm uppercase tracking-wide text-muted-foreground">
+                  <h3 className="font-medium text-sm font-display uppercase tracking-wide text-muted-foreground">
                     Upcoming ({queueData.upcoming.length})
                   </h3>
                 </div>

@@ -1044,7 +1044,7 @@ export function AppointmentDetailSheet({
                             isActive ? 'bg-primary' : 'bg-muted'
                           )} />
                           {isCurrent && (
-                            <span className="text-[9px] font-medium text-primary uppercase tracking-wider whitespace-nowrap">
+                            <span className="text-[9px] font-medium text-primary font-display uppercase tracking-wider whitespace-nowrap">
                               {STATUS_CONFIG[step].label}
                             </span>
                           )}

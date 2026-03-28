@@ -975,7 +975,7 @@ export function ClientDetailSheet({ client, open, onOpenChange, locationName, on
               {/* Reminder Consent */}
               <div className="space-y-3">
                 <div className="flex items-center justify-between pt-2 border-t border-border/40">
-                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Reminder Consent</p>
+                  <p className="text-xs font-medium text-muted-foreground font-display uppercase tracking-wide">Reminder Consent</p>
                   {canEdit && !isEditingReminders && (
                     <Button variant="ghost" size="sm" onClick={startEditingReminders} className="h-7 px-2">
                       <Pencil className="w-3.5 h-3.5" />

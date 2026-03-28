@@ -112,7 +112,7 @@ export function ClientMemoryPanel({ clientId, serviceName, orgId, className, onV
               <div className={cn('h-5 w-5 rounded flex items-center justify-center', item.bg)}>
                 <item.icon className={cn('h-3 w-3', item.accent)} />
               </div>
-              <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
+              <span className="text-[10px] font-medium text-muted-foreground font-display uppercase tracking-wider">
                 {item.label}
               </span>
               {'count' in item && (item as any).count > 0 && (

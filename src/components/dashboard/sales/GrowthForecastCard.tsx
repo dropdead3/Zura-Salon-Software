@@ -512,7 +512,7 @@ export function GrowthForecastCard() {
 
           {/* Scenario Toggle */}
           <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Scenario</span>
+            <span className="text-xs font-medium text-muted-foreground font-display uppercase tracking-wider">Scenario</span>
             <Tabs value={scenario} onValueChange={(v) => v && setScenario(v as Scenario)}>
               <FilterTabsList>
                 <FilterTabsTrigger value="conservative">Conservative</FilterTabsTrigger>

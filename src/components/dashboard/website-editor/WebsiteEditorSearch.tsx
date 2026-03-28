@@ -244,7 +244,7 @@ export function WebsiteEditorSearch({ onSelectResult }: WebsiteEditorSearchProps
                   if (items.length === 0) return null;
                   return (
                     <div key={type} className="mb-3 last:mb-0">
-                      <div className="flex items-center gap-2 px-2 py-1.5 text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                      <div className="flex items-center gap-2 px-2 py-1.5 text-xs font-medium text-muted-foreground font-display uppercase tracking-wider">
                         {getIcon(type as SearchResult['type'])}
                         {getTypeLabel(type as SearchResult['type'])}
                         <Badge variant="secondary" className="ml-auto text-[10px] h-4 px-1.5">

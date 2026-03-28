@@ -71,7 +71,7 @@ export function AtRiskClientsList({ clients }: AtRiskClientsListProps) {
   return (
     <div className="space-y-4">
       {/* Table Header */}
-      <div className="hidden md:grid grid-cols-12 gap-4 px-4 py-2 text-xs font-medium text-muted-foreground uppercase tracking-wide border-b">
+      <div className="hidden md:grid grid-cols-12 gap-4 px-4 py-2 text-xs font-medium text-muted-foreground font-display uppercase tracking-wide border-b">
         <div className="col-span-4">Client</div>
         <div className="col-span-2">Last Visit</div>
         <div className="col-span-2">Overdue</div>

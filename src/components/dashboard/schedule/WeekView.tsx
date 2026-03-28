@@ -259,7 +259,7 @@ export function WeekView({
                     onDoubleClick={() => onDayDoubleClick?.(day)}
                   >
                     <div className={cn(
-                      'text-[10px] uppercase tracking-wider font-medium',
+                      'text-[10px] font-display uppercase tracking-wider font-medium',
                       dayIsToday ? 'text-primary' : 'text-muted-foreground'
                     )}>
                       {format(day, 'EEE')}{dayIsToday ? ' · Today' : dayIsTomorrow ? ' · Tomorrow' : ''}

@@ -217,7 +217,7 @@ export function ScheduleCalendar({ requests, isStylistView }: ScheduleCalendarPr
                   isToday(day) && 'bg-primary/10'
                 )}
               >
-                <div className="text-xs text-muted-foreground uppercase">
+                <div className="text-xs text-muted-foreground font-display uppercase">
                   {format(day, 'EEE')}
                 </div>
                 <div className={cn(

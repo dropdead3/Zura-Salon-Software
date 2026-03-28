@@ -167,25 +167,25 @@ export function GoalTrackerCard() {
 
                   <div className="grid grid-cols-2 gap-2">
                     <div>
-                      <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Earned</p>
+                      <p className="text-[10px] font-display uppercase tracking-wider text-muted-foreground">Earned</p>
                       <p className="text-sm md:text-base font-medium">
                         <AnimatedBlurredAmount value={orgMetrics.revenue} currency={currency} />
                       </p>
                     </div>
                     <div>
-                      <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Target</p>
+                      <p className="text-[10px] font-display uppercase tracking-wider text-muted-foreground">Target</p>
                       <p className="text-sm md:text-base font-medium">
                         <BlurredAmount>{formatCurrencyWhole(orgMetrics.target)}</BlurredAmount>
                       </p>
                     </div>
                     <div>
-                      <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Projected</p>
+                      <p className="text-[10px] font-display uppercase tracking-wider text-muted-foreground">Projected</p>
                       <p className={cn('text-sm md:text-base font-medium', orgMetrics.projectedRevenue >= orgMetrics.target ? 'text-chart-2' : 'text-destructive')}>
                         <AnimatedBlurredAmount value={orgMetrics.projectedRevenue} currency={currency} />
                       </p>
                     </div>
                     <div>
-                      <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Days Left</p>
+                      <p className="text-[10px] font-display uppercase tracking-wider text-muted-foreground">Days Left</p>
                       <p className="text-sm md:text-base font-medium">{orgMetrics.daysRemaining}</p>
                     </div>
                   </div>

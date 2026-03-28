@@ -47,7 +47,7 @@ export function ComparisonResultsGrid({ data, isLoading, periodALabel = 'Period 
       <div className="grid grid-cols-2 gap-4">
         {/* Period A */}
         <div className="bg-card rounded-lg p-4 border border-l-2 border-l-primary">
-          <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide mb-1">
+          <p className="text-[10px] font-medium text-muted-foreground font-display uppercase tracking-wide mb-1">
             {periodALabel}
           </p>
           <p className="text-2xl font-display tabular-nums">
@@ -61,7 +61,7 @@ export function ComparisonResultsGrid({ data, isLoading, periodALabel = 'Period 
 
         {/* Period B */}
         <div className="bg-card rounded-lg p-4 border border-l-2 border-l-muted-foreground/30">
-          <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide mb-1">
+          <p className="text-[10px] font-medium text-muted-foreground font-display uppercase tracking-wide mb-1">
             {periodBLabel}
           </p>
           <p className="text-2xl font-display tabular-nums text-muted-foreground">

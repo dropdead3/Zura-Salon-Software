@@ -131,19 +131,19 @@ export function RetailStaffReport({ dateFrom, dateTo, locationId, onClose }: Ret
       {/* KPI row */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Card><CardContent className="p-4">
-          <p className="text-[11px] text-muted-foreground uppercase tracking-wider mb-1">Product Revenue</p>
+          <p className="text-[11px] text-muted-foreground font-display uppercase tracking-wider mb-1">Product Revenue</p>
           <p className="text-xl font-display tabular-nums"><BlurredAmount>{formatCurrencyWhole(data.summary.totalRevenue)}</BlurredAmount></p>
         </CardContent></Card>
         <Card><CardContent className="p-4">
-          <p className="text-[11px] text-muted-foreground uppercase tracking-wider mb-1">Units Sold</p>
+          <p className="text-[11px] text-muted-foreground font-display uppercase tracking-wider mb-1">Units Sold</p>
           <p className="text-xl font-display tabular-nums">{data.summary.totalUnits.toLocaleString()}</p>
         </CardContent></Card>
         <Card><CardContent className="p-4">
-          <p className="text-[11px] text-muted-foreground uppercase tracking-wider mb-1">Attachment Rate</p>
+          <p className="text-[11px] text-muted-foreground font-display uppercase tracking-wider mb-1">Attachment Rate</p>
           <p className="text-xl font-display tabular-nums">{data.summary.attachmentRate}%</p>
         </CardContent></Card>
         <Card><CardContent className="p-4">
-          <p className="text-[11px] text-muted-foreground uppercase tracking-wider mb-1">Team Members</p>
+          <p className="text-[11px] text-muted-foreground font-display uppercase tracking-wider mb-1">Team Members</p>
           <p className="text-xl font-display tabular-nums">{data.staffRetail.length}</p>
         </CardContent></Card>
       </div>
@@ -189,7 +189,7 @@ export function RetailStaffReport({ dateFrom, dateTo, locationId, onClose }: Ret
                             <AvatarFallback className="text-[10px]">{getInitials(s.name)}</AvatarFallback>
                           </Avatar>
                           <span className="font-medium text-sm">{s.name}</span>
-                          {isTop && <span className="text-[9px] text-chart-2 font-medium uppercase tracking-wider">Top</span>}
+                          {isTop && <span className="text-[9px] text-chart-2 font-medium font-display uppercase tracking-wider">Top</span>}
                         </div>
                       </TableCell>
                       <TableCell className="text-right tabular-nums font-medium"><BlurredAmount>{formatCurrencyWhole(s.productRevenue)}</BlurredAmount></TableCell>

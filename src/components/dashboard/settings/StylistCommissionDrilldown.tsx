@@ -165,7 +165,7 @@ export function StylistCommissionDrilldown({
         <div className="flex-1 overflow-y-auto px-5 py-4 space-y-5">
           {/* Section 1: Level */}
           <section className="space-y-2">
-            <Label className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium">Level</Label>
+            <Label className="text-[11px] font-display uppercase tracking-wider text-muted-foreground font-medium">Level</Label>
             <Select
               value={member.stylist_level && slugToLevel.has(member.stylist_level) ? member.stylist_level : '__unassign'}
               onValueChange={handleLevelChange}
@@ -200,7 +200,7 @@ export function StylistCommissionDrilldown({
           {/* Section 2: Override */}
           <section className="space-y-3">
             <div className="flex items-center justify-between">
-              <Label className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium">Commission Override</Label>
+              <Label className="text-[11px] font-display uppercase tracking-wider text-muted-foreground font-medium">Commission Override</Label>
               {override && (
                 <Button
                   variant="ghost"
@@ -277,7 +277,7 @@ export function StylistCommissionDrilldown({
           <section className="rounded-lg bg-muted/50 border border-border/50 p-3 space-y-2">
             <div className="flex items-center gap-1.5">
               <Info className="w-3.5 h-3.5 text-muted-foreground" />
-              <Label className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium">Effective Rates</Label>
+              <Label className="text-[11px] font-display uppercase tracking-wider text-muted-foreground font-medium">Effective Rates</Label>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>

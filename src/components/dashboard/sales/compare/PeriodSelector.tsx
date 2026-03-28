@@ -92,7 +92,7 @@ export function PeriodSelector({ periodA, periodB, onPeriodsChange, mode }: Peri
         )}>
           {/* Period A */}
           <div className="flex-1 rounded-lg border-l-2 border-l-primary border border-border/50 bg-muted/20 p-3">
-            <p className="text-[10px] font-medium text-primary uppercase tracking-wide mb-2">
+            <p className="text-[10px] font-medium text-primary font-display uppercase tracking-wide mb-2">
               {showSinglePeriod ? 'Period' : 'Period A'}
             </p>
             <div className="flex gap-1.5">
@@ -146,7 +146,7 @@ export function PeriodSelector({ periodA, periodB, onPeriodsChange, mode }: Peri
               </div>
 
               <div className="flex-1 rounded-lg border-l-2 border-l-muted-foreground/30 border border-border/50 bg-muted/20 p-3">
-                <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide mb-2">Period B</p>
+                <p className="text-[10px] font-medium text-muted-foreground font-display uppercase tracking-wide mb-2">Period B</p>
                 <div className="flex gap-1.5">
                   <Popover>
                     <PopoverTrigger asChild>

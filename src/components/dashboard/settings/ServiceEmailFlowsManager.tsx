@@ -180,7 +180,7 @@ function ServiceFlowsList() {
         <div className="grid gap-3">
           {groupFlowsByCategory(flows).map(([category, categoryFlows]) => (
             <div key={category}>
-              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">
+              <p className="text-xs font-medium text-muted-foreground font-display uppercase tracking-wider mb-2">
                 {category || 'Uncategorized'}
               </p>
               {categoryFlows.map(flow => (

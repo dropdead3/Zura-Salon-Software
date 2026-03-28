@@ -126,7 +126,7 @@ function SortableAddonRow({
               </Button>
             </PopoverTrigger>
             <PopoverContent align="end" className="w-52 p-2">
-              <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider px-2 pb-1.5">Assign to category</p>
+              <p className="text-[11px] font-medium text-muted-foreground font-display uppercase tracking-wider px-2 pb-1.5">Assign to category</p>
               <div className="space-y-0.5 max-h-48 overflow-y-auto">
                 {categories.map(cat => (
                   <button
@@ -325,7 +325,7 @@ export function ServiceAddonsLibrary({ organizationId, categories = [] }: Servic
 
   const renderAssignmentPicker = () => (
     <div className="col-span-2 space-y-2">
-      <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Apply to Category / Service</p>
+      <p className="text-[11px] font-medium text-muted-foreground font-display uppercase tracking-wider">Apply to Category / Service</p>
       <Popover>
         <PopoverTrigger asChild>
           <Button
@@ -411,7 +411,7 @@ export function ServiceAddonsLibrary({ organizationId, categories = [] }: Servic
 
   const renderForm = (isNew: boolean) => (
     <div className="mb-4 p-3 rounded-lg border border-primary/20 bg-primary/5 space-y-3">
-      <p className="text-xs font-medium text-primary uppercase tracking-wider">{isNew ? 'New Add-On' : 'Edit Add-On'}</p>
+      <p className="text-xs font-medium text-primary font-display uppercase tracking-wider">{isNew ? 'New Add-On' : 'Edit Add-On'}</p>
       <div className="grid grid-cols-2 gap-2">
         <Input
           placeholder="Name (e.g. Olaplex Treatment)"

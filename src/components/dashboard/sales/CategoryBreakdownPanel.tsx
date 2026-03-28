@@ -79,7 +79,7 @@ export function CategoryBreakdownPanel({ data, mode, dayCount, isOpen, breakdown
           <div className="pt-3 pb-1 space-y-1.5">
             <div className="flex items-center gap-2 mb-2">
               <div className="w-1.5 h-1.5 rounded-full bg-primary" />
-              <span className="text-xs tracking-wide uppercase text-muted-foreground font-medium">
+              <span className="text-xs tracking-wide font-display uppercase text-muted-foreground font-medium">
                 {getSectionLabel(mode, breakdownType)}
               </span>
             </div>

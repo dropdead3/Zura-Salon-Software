@@ -48,7 +48,7 @@ export function LocationTrendPanel({
     <div className="pt-2">
       <div className="flex items-center gap-2 mb-3">
         <div className="w-1.5 h-1.5 rounded-full bg-primary" />
-        <span className="text-xs tracking-wide uppercase text-muted-foreground font-medium">
+        <span className="text-xs tracking-wide font-display uppercase text-muted-foreground font-medium">
           Daily Revenue Trend
         </span>
       </div>

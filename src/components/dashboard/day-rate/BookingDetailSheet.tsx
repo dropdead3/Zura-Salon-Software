@@ -113,7 +113,7 @@ export function BookingDetailSheet({ booking, locationName, onClose }: BookingDe
 
         {/* Booking Details */}
         <div className="space-y-4">
-          <h4 className="font-medium text-sm text-muted-foreground uppercase tracking-wide">
+          <h4 className="font-medium text-sm text-muted-foreground font-display uppercase tracking-wide">
             Booking Details
           </h4>
 
@@ -150,7 +150,7 @@ export function BookingDetailSheet({ booking, locationName, onClose }: BookingDe
 
         {/* Contact Info */}
         <div className="space-y-4">
-          <h4 className="font-medium text-sm text-muted-foreground uppercase tracking-wide">
+          <h4 className="font-medium text-sm text-muted-foreground font-display uppercase tracking-wide">
             Contact Information
           </h4>
 
@@ -189,7 +189,7 @@ export function BookingDetailSheet({ booking, locationName, onClose }: BookingDe
 
         {/* License Info */}
         <div className="space-y-4">
-          <h4 className="font-medium text-sm text-muted-foreground uppercase tracking-wide">
+          <h4 className="font-medium text-sm text-muted-foreground font-display uppercase tracking-wide">
             License Information
           </h4>
 
@@ -208,7 +208,7 @@ export function BookingDetailSheet({ booking, locationName, onClose }: BookingDe
         {booking.agreement_signed_at && (
           <>
             <div className="space-y-4">
-              <h4 className="font-medium text-sm text-muted-foreground uppercase tracking-wide">
+              <h4 className="font-medium text-sm text-muted-foreground font-display uppercase tracking-wide">
                 Agreement
               </h4>
 
@@ -229,7 +229,7 @@ export function BookingDetailSheet({ booking, locationName, onClose }: BookingDe
 
         {/* Notes */}
         <div className="space-y-4">
-          <h4 className="font-medium text-sm text-muted-foreground uppercase tracking-wide">
+          <h4 className="font-medium text-sm text-muted-foreground font-display uppercase tracking-wide">
             Admin Notes
           </h4>
 

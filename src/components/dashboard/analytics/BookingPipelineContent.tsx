@@ -116,15 +116,15 @@ function PipelineTimelineChart({ locationId, status }: { locationId: string; sta
       </div>
       <div className="grid grid-cols-3 gap-3 pt-2 border-t border-border/50">
         <div className="text-center">
-          <p className="text-[10px] text-muted-foreground tracking-wide uppercase">Trailing Avg</p>
+          <p className="text-[10px] text-muted-foreground tracking-wide font-display uppercase">Trailing Avg</p>
           <p className="text-sm font-display tabular-nums">{trailingAvg.toFixed(1)}/day</p>
         </div>
         <div className="text-center">
-          <p className="text-[10px] text-muted-foreground tracking-wide uppercase">Forward Avg</p>
+          <p className="text-[10px] text-muted-foreground tracking-wide font-display uppercase">Forward Avg</p>
           <p className="text-sm font-display tabular-nums">{forwardAvg.toFixed(1)}/day</p>
         </div>
         <div className="text-center">
-          <p className="text-[10px] text-muted-foreground tracking-wide uppercase">Empty Days</p>
+          <p className="text-[10px] text-muted-foreground tracking-wide font-display uppercase">Empty Days</p>
           <p className="text-sm font-display tabular-nums">{emptyDays}</p>
         </div>
       </div>

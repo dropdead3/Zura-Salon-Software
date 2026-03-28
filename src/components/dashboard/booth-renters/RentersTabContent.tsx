@@ -117,13 +117,13 @@ export function RentersTabContent({
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Card className="bg-card/50">
           <CardContent className="p-4">
-            <p className="text-xs text-muted-foreground uppercase tracking-wider">Total Renters</p>
+            <p className="text-xs text-muted-foreground font-display uppercase tracking-wider">Total Renters</p>
             <p className="text-2xl font-medium mt-1">{renters?.length || 0}</p>
           </CardContent>
         </Card>
         <Card className="bg-card/50">
           <CardContent className="p-4">
-            <p className="text-xs text-muted-foreground uppercase tracking-wider">Active</p>
+            <p className="text-xs text-muted-foreground font-display uppercase tracking-wider">Active</p>
             <p className="text-2xl font-medium mt-1 text-emerald-400">
               {renters?.filter(r => r.status === 'active').length || 0}
             </p>
@@ -131,7 +131,7 @@ export function RentersTabContent({
         </Card>
         <Card className="bg-card/50">
           <CardContent className="p-4">
-            <p className="text-xs text-muted-foreground uppercase tracking-wider">Pending</p>
+            <p className="text-xs text-muted-foreground font-display uppercase tracking-wider">Pending</p>
             <p className="text-2xl font-medium mt-1 text-amber-400">
               {renters?.filter(r => r.status === 'pending').length || 0}
             </p>
@@ -139,7 +139,7 @@ export function RentersTabContent({
         </Card>
         <Card className="bg-card/50">
           <CardContent className="p-4">
-            <p className="text-xs text-muted-foreground uppercase tracking-wider">Monthly Revenue</p>
+            <p className="text-xs text-muted-foreground font-display uppercase tracking-wider">Monthly Revenue</p>
             <p className="text-2xl font-medium mt-1 text-primary">
               {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(
                 renters?.reduce((sum, r) => sum + (r.active_contract?.rent_amount || 0), 0) || 0

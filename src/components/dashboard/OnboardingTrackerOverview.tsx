@@ -243,7 +243,7 @@ export function OnboardingTrackerOverview() {
           </div>
           <p className="text-lg font-medium">{stats.total}</p>
           <div className="flex items-center gap-0.5 justify-center">
-            <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Total</p>
+            <p className="text-[10px] text-muted-foreground font-display uppercase tracking-wide">Total</p>
             <MetricInfoTooltip description="Count of all active employees in the onboarding process." />
           </div>
         </div>
@@ -253,7 +253,7 @@ export function OnboardingTrackerOverview() {
           </div>
           <p className="text-lg font-medium text-green-600">{stats.complete}</p>
           <div className="flex items-center gap-0.5 justify-center">
-            <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Done</p>
+            <p className="text-[10px] text-muted-foreground font-display uppercase tracking-wide">Done</p>
             <MetricInfoTooltip description="Employees who have completed 100% of their onboarding items." />
           </div>
         </div>
@@ -263,7 +263,7 @@ export function OnboardingTrackerOverview() {
           </div>
           <p className="text-lg font-medium text-yellow-600">{stats.inProgress}</p>
           <div className="flex items-center gap-0.5 justify-center">
-            <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Active</p>
+            <p className="text-[10px] text-muted-foreground font-display uppercase tracking-wide">Active</p>
             <MetricInfoTooltip description="Employees currently working through their onboarding checklist." />
           </div>
         </div>
@@ -273,7 +273,7 @@ export function OnboardingTrackerOverview() {
           </div>
           <p className="text-lg font-medium text-red-600">{stats.notStarted}</p>
           <div className="flex items-center gap-0.5 justify-center">
-            <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Pending</p>
+            <p className="text-[10px] text-muted-foreground font-display uppercase tracking-wide">Pending</p>
             <MetricInfoTooltip description="Employees who haven't started any onboarding items yet." />
           </div>
         </div>

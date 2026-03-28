@@ -162,7 +162,7 @@ export function ServiceFormLinkDialog({ open, onOpenChange, template }: ServiceF
               <div className="space-y-4">
                 {Object.entries(filteredGroups).map(([category, services]) => (
                   <div key={category}>
-                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">
+                    <p className="text-xs font-medium text-muted-foreground font-display uppercase tracking-wide mb-2">
                       {category}
                     </p>
                     <div className="space-y-1">

@@ -14,7 +14,7 @@ function BrandItem({ brand }: { brand: Brand }) {
           className="h-8 w-auto object-contain opacity-70"
         />
       ) : (
-        <span className="text-sm font-medium tracking-wider text-muted-foreground uppercase whitespace-nowrap">
+        <span className="text-sm font-medium tracking-wider text-muted-foreground font-display uppercase whitespace-nowrap">
           {brand.display_text || brand.name}
         </span>
       )}

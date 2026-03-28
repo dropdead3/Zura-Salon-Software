@@ -121,7 +121,7 @@ export function LocationDrilldownPanel({
             <div>
               <div className="flex items-center gap-2 mb-2">
                 <div className="w-1.5 h-1.5 rounded-full bg-primary" />
-                <span className="text-xs tracking-[0.15em] uppercase text-muted-foreground font-medium">
+                <span className="text-xs tracking-[0.15em] font-display uppercase text-muted-foreground font-medium">
                   Revenue Split
                 </span>
               </div>
@@ -149,7 +149,7 @@ export function LocationDrilldownPanel({
             <div>
               <div className="flex items-center gap-2 mb-2">
                 <div className="w-1.5 h-1.5 rounded-full bg-primary" />
-                <span className="text-xs tracking-[0.15em] uppercase text-muted-foreground font-medium">
+                <span className="text-xs tracking-[0.15em] font-display uppercase text-muted-foreground font-medium">
                   Top Stylists
                 </span>
               </div>

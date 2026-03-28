@@ -628,7 +628,7 @@ export function ServicePopularityChart({ dateFrom, dateTo, locationId, filterCon
             {/* Expandable service detail rows */}
             {sortedServiceData.length > 0 && (
               <div className="mt-4 space-y-1">
-                <p className="text-xs tracking-[0.15em] uppercase text-muted-foreground mb-2">
+                <p className="text-xs tracking-[0.15em] font-display uppercase text-muted-foreground mb-2">
                   STYLIST BREAKDOWN
                 </p>
                 {sortedServiceData.slice(0, 5).map((svc, i) => (
@@ -644,7 +644,7 @@ export function ServicePopularityChart({ dateFrom, dateTo, locationId, filterCon
                         />
                         <span className="text-sm font-medium">{svc.name}</span>
                         {svc.category && (
-                          <span className="text-[10px] text-muted-foreground/60 uppercase tracking-wider">{svc.category}</span>
+                          <span className="text-[10px] text-muted-foreground/60 font-display uppercase tracking-wider">{svc.category}</span>
                         )}
                       </div>
                       <div className="flex items-center gap-2">
@@ -696,7 +696,7 @@ export function ServicePopularityChart({ dateFrom, dateTo, locationId, filterCon
             {/* Category drill-down rows */}
             {sortedCategoryData.length > 0 && (
               <div className="mt-4 space-y-1">
-                <p className="text-xs tracking-[0.15em] uppercase text-muted-foreground mb-2">
+                <p className="text-xs tracking-[0.15em] font-display uppercase text-muted-foreground mb-2">
                   CATEGORY DRILL-DOWN
                 </p>
                 {sortedCategoryData.map((cat, i) => {
@@ -759,7 +759,7 @@ export function ServicePopularityChart({ dateFrom, dateTo, locationId, filterCon
 
                               {/* Stylist breakdown */}
                               <div>
-                                <p className="text-[10px] tracking-[0.15em] uppercase text-muted-foreground mb-1.5">STYLIST BREAKDOWN</p>
+                                <p className="text-[10px] tracking-[0.15em] font-display uppercase text-muted-foreground mb-1.5">STYLIST BREAKDOWN</p>
                                 {cat.stylists.length === 0 ? (
                                   <p className="text-sm text-muted-foreground py-2">No stylist data</p>
                                 ) : (

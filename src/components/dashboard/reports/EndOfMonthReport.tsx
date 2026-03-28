@@ -167,23 +167,23 @@ export function EndOfMonthReport({ dateFrom, dateTo, locationId, onClose }: EndO
       {/* Revenue KPIs */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
         <Card><CardContent className="p-4">
-          <div className="flex items-center gap-1.5 mb-1"><DollarSign className="w-3.5 h-3.5 text-muted-foreground" /><p className="text-[11px] text-muted-foreground uppercase tracking-wider">Total Revenue</p></div>
+          <div className="flex items-center gap-1.5 mb-1"><DollarSign className="w-3.5 h-3.5 text-muted-foreground" /><p className="text-[11px] text-muted-foreground font-display uppercase tracking-wider">Total Revenue</p></div>
           <p className="text-xl font-display tabular-nums"><BlurredAmount>{formatCurrencyWhole(metrics?.totalRevenue || 0)}</BlurredAmount></p>
         </CardContent></Card>
         <Card><CardContent className="p-4">
-          <p className="text-[11px] text-muted-foreground uppercase tracking-wider mb-1">Service Revenue</p>
+          <p className="text-[11px] text-muted-foreground font-display uppercase tracking-wider mb-1">Service Revenue</p>
           <p className="text-xl font-display tabular-nums"><BlurredAmount>{formatCurrencyWhole(metrics?.serviceRevenue || 0)}</BlurredAmount></p>
         </CardContent></Card>
         <Card><CardContent className="p-4">
-          <div className="flex items-center gap-1.5 mb-1"><ShoppingBag className="w-3.5 h-3.5 text-muted-foreground" /><p className="text-[11px] text-muted-foreground uppercase tracking-wider">Product Revenue</p></div>
+          <div className="flex items-center gap-1.5 mb-1"><ShoppingBag className="w-3.5 h-3.5 text-muted-foreground" /><p className="text-[11px] text-muted-foreground font-display uppercase tracking-wider">Product Revenue</p></div>
           <p className="text-xl font-display tabular-nums"><BlurredAmount>{formatCurrencyWhole(metrics?.productRevenue || 0)}</BlurredAmount></p>
         </CardContent></Card>
         <Card><CardContent className="p-4">
-          <p className="text-[11px] text-muted-foreground uppercase tracking-wider mb-1">Avg Ticket</p>
+          <p className="text-[11px] text-muted-foreground font-display uppercase tracking-wider mb-1">Avg Ticket</p>
           <p className="text-xl font-display tabular-nums"><BlurredAmount>{formatCurrencyWhole(metrics?.averageTicket || 0)}</BlurredAmount></p>
         </CardContent></Card>
         <Card><CardContent className="p-4">
-          <div className="flex items-center gap-1.5 mb-1"><Target className="w-3.5 h-3.5 text-muted-foreground" /><p className="text-[11px] text-muted-foreground uppercase tracking-wider">Goal Progress</p></div>
+          <div className="flex items-center gap-1.5 mb-1"><Target className="w-3.5 h-3.5 text-muted-foreground" /><p className="text-[11px] text-muted-foreground font-display uppercase tracking-wider">Goal Progress</p></div>
           <p className="text-xl font-display tabular-nums">{goalTarget > 0 ? `${Math.round(goalProgress)}%` : 'N/A'}</p>
           {goalTarget > 0 && <p className="text-[10px] text-muted-foreground mt-0.5">of {formatCurrencyWhole(goalTarget)}</p>}
         </CardContent></Card>

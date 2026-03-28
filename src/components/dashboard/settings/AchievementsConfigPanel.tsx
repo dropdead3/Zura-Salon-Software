@@ -217,7 +217,7 @@ export function AchievementsConfigPanel() {
         <CardContent className="space-y-6">
           {Object.entries(groupedAchievements || {}).map(([category, categoryAchievements]) => (
             <div key={category} className="space-y-3">
-              <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
+              <h3 className="text-sm font-medium text-muted-foreground font-display uppercase tracking-wider">
                 {category}
               </h3>
               <div className="space-y-2">

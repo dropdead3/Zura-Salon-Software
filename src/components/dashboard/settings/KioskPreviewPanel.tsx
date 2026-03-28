@@ -162,7 +162,7 @@ export function KioskPreviewPanel({ settings, businessSettings, className, locat
     } else if (businessName) {
       return (
         <motion.p
-          className="text-xs font-light tracking-widest uppercase mb-4"
+          className="text-xs font-light tracking-widest font-display uppercase mb-4"
           style={{ color: settings.text_color }}
           initial={{ opacity: 0 }}
           animate={{ opacity: 0.8 }}

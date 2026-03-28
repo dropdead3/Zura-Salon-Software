@@ -3216,7 +3216,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                     <div className="mb-4">
                       <div className="flex items-center gap-2 mb-3">
                         <Sparkles className="w-4 h-4 text-amber-500" />
-                        <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Recommended</span>
+                        <span className="text-xs font-medium font-display uppercase tracking-wide text-muted-foreground">Recommended</span>
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
                         {recommendedVars.map((v) => {
@@ -3310,7 +3310,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                       <div key={category}>
                         <div className="flex items-center gap-2 mb-2">
                           <span className="text-sm">{categoryStyles[category]?.icon || '📦'}</span>
-                          <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{category}</span>
+                          <span className="text-xs font-medium font-display uppercase tracking-wide text-muted-foreground">{category}</span>
                           <span className="text-[10px] text-muted-foreground/60">({vars.length})</span>
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
@@ -3357,7 +3357,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
               <div className="lg:col-span-1">
                 <Card className="mt-4 border-border/50 shadow-sm">
                   <CardContent className="p-3 space-y-3">
-                    <div className="font-medium text-xs uppercase tracking-wide text-muted-foreground">{selectedBlock.type} Settings</div>
+                    <div className="font-medium text-xs font-display uppercase tracking-wide text-muted-foreground">{selectedBlock.type} Settings</div>
                     
                     {(selectedBlock.type === 'heading' || selectedBlock.type === 'text') && (
                       <>

@@ -163,7 +163,7 @@ export function StoreAppearanceConfigurator({ storeUrl }: StoreAppearanceConfigu
         <CardContent className="space-y-6">
           {/* Base Theme Swatches */}
           <div className="space-y-2">
-            <Label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Base Theme</Label>
+            <Label className="text-xs font-medium font-display uppercase tracking-wider text-muted-foreground">Base Theme</Label>
             <div className="flex gap-3">
               {Object.entries(THEME_PRESETS).map(([key, { label, swatch }]) => (
                 <button
@@ -186,7 +186,7 @@ export function StoreAppearanceConfigurator({ storeUrl }: StoreAppearanceConfigu
 
           {/* Custom Colors */}
           <div className="space-y-3">
-            <Label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Custom Brand Colors</Label>
+            <Label className="text-xs font-medium font-display uppercase tracking-wider text-muted-foreground">Custom Brand Colors</Label>
             <div className="grid grid-cols-2 gap-3">
               {([
                 { key: 'primary' as const, label: 'Primary (buttons, links)' },

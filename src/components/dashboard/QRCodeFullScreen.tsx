@@ -68,7 +68,7 @@ export function QRCodeFullScreen({ isOpen, onClose, url }: QRCodeFullScreenProps
                 alt="Staff Portal" 
                 className="h-8 mx-auto"
               />
-              <p className="text-[hsl(40,30%,70%)] text-sm tracking-[0.3em] uppercase font-medium">
+              <p className="text-[hsl(40,30%,70%)] text-sm tracking-[0.3em] font-display uppercase font-medium">
                 Staff Portal
               </p>
             </div>

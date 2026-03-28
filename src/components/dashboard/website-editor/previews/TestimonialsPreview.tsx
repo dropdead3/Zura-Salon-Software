@@ -42,7 +42,7 @@ export function TestimonialsPreview({ config }: TestimonialsPreviewProps) {
         {/* Header */}
         <div className="text-center mb-12">
           {/* Eyebrow */}
-          <p className="text-sm uppercase tracking-wider text-muted-foreground mb-4">
+          <p className="text-sm font-display uppercase tracking-wider text-muted-foreground mb-4">
             {config.eyebrow}
           </p>
 

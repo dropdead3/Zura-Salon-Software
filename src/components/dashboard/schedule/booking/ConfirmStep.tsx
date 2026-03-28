@@ -94,7 +94,7 @@ export function ConfirmStep({
 
           {/* Appointment Details */}
           <div className="space-y-3">
-            <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+            <h3 className="text-xs font-medium text-muted-foreground font-display uppercase tracking-wider">
               Appointment Details
             </h3>
 
@@ -151,7 +151,7 @@ export function ConfirmStep({
 
           {/* Services */}
           <div className="space-y-3">
-            <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+            <h3 className="text-xs font-medium text-muted-foreground font-display uppercase tracking-wider">
               Services
             </h3>
             <div className="bg-card border border-border rounded-xl divide-y divide-border">
@@ -178,7 +178,7 @@ export function ConfirmStep({
           <div className="space-y-3">
             <div className="flex items-center gap-2">
               <StickyNote className="h-4 w-4 text-muted-foreground" />
-              <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+              <h3 className="text-xs font-medium text-muted-foreground font-display uppercase tracking-wider">
                 Notes (optional)
               </h3>
             </div>

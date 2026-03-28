@@ -349,13 +349,13 @@ export function KioskLocationSettingsForm({ locationId, orgId, locationName, onP
       <div className="space-y-6">
         {/* Features Section */}
         <div>
-          <h4 className="text-xs font-medium uppercase tracking-wider text-muted-foreground mb-3">Features</h4>
+          <h4 className="text-xs font-medium font-display uppercase tracking-wider text-muted-foreground mb-3">Features</h4>
           <KioskFeatureToggles localSettings={localSettings} updateField={updateField} />
         </div>
 
       {/* Settings Tabs */}
       <div>
-        <h4 className="text-xs font-medium uppercase tracking-wider text-muted-foreground mb-3">Settings</h4>
+        <h4 className="text-xs font-medium font-display uppercase tracking-wider text-muted-foreground mb-3">Settings</h4>
         <Tabs defaultValue="appearance" className="w-full">
           <TabsList className="grid w-full grid-cols-3 mb-4">
             <TabsTrigger value="appearance">Appearance</TabsTrigger>
@@ -539,7 +539,7 @@ export function KioskLocationSettingsForm({ locationId, orgId, locationName, onP
                       key={size}
                       type="button"
                       className={cn(
-                        "flex items-center justify-center px-2 py-2 rounded-lg border transition-colors text-xs font-medium uppercase",
+                        "flex items-center justify-center px-2 py-2 rounded-lg border transition-colors text-xs font-display font-medium uppercase",
                         localSettings.logo_size === size ? "border-primary bg-primary/10 text-foreground" : "border-border hover:border-primary/50"
                       )}
                       onClick={() => updateField('logo_size', size)}
@@ -741,7 +741,7 @@ export function KioskLocationSettingsForm({ locationId, orgId, locationName, onP
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
             <Eye className="w-4 h-4 text-muted-foreground" />
-            <h4 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Live Preview</h4>
+            <h4 className="text-xs font-medium font-display uppercase tracking-wider text-muted-foreground">Live Preview</h4>
           </div>
           {onPreviewOpen && (
             <Button

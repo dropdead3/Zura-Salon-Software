@@ -420,7 +420,7 @@ export function ReportsTabContent({ filters }: ReportsTabContentProps) {
 
       {/* Category Label + Sub-tabs */}
       <div className="space-y-2">
-        <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+        <span className="text-xs font-medium text-muted-foreground font-display uppercase tracking-wider">
           All Reports
         </span>
         <Tabs value={activeCategory} onValueChange={setActiveCategory}>

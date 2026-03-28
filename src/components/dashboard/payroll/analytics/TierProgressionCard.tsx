@@ -109,12 +109,12 @@ export function TierProgressionCard({ opportunities, impactAnalysis, isLoading }
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <p className="text-xs text-muted-foreground uppercase tracking-wide">Current Period</p>
+                  <p className="text-xs text-muted-foreground font-display uppercase tracking-wide">Current Period</p>
                   <p className="text-lg font-medium">{formatCurrency(impactAnalysis.currentPeriodCommissions)}</p>
                   <p className="text-xs text-muted-foreground">in commissions</p>
                 </div>
                 <div>
-                  <p className="text-xs text-muted-foreground uppercase tracking-wide">If All Hit Next Tier</p>
+                  <p className="text-xs text-muted-foreground font-display uppercase tracking-wide">If All Hit Next Tier</p>
                   <p className="text-lg font-medium text-success-foreground">
                     +{formatCurrency(impactAnalysis.potentialAdditional)}
                   </p>

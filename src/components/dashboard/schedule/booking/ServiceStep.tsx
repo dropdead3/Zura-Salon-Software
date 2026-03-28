@@ -95,7 +95,7 @@ export function ServiceStep({
             Object.entries(servicesByCategory).map(([category, services]) => (
               <div key={category}>
                 <div className="bg-muted -mx-4 px-4 py-2 mb-2 border-y border-border/40">
-                  <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                  <h3 className="text-xs font-medium text-muted-foreground font-display uppercase tracking-wider">
                     {category}
                   </h3>
                 </div>
