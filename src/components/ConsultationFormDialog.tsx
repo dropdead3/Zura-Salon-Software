@@ -133,7 +133,7 @@ export function ConsultationFormDialog({ open, onOpenChange }: ConsultationFormD
         
         <DialogHeader className="p-6 pb-4 sticky top-0 bg-background z-10">
           <div>
-            <span className="text-xs uppercase tracking-[0.2em] text-muted-foreground font-sans block mb-2">
+            <span className="text-xs uppercase tracking-wide text-muted-foreground font-display block mb-2">
               New Client
             </span>
             <DialogTitle className="font-serif text-2xl md:text-3xl font-normal text-foreground">
