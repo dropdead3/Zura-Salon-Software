@@ -1,32 +1,34 @@
 
 
-## Rename "Daily Brief" → "Appointments Summary"
+## Rename Forecasting Total Labels to "Next X" and Make Tooltips Dynamic
 
-### Scope
-
-Update the display label in 5 files. The `elementKey` (`daily_brief`) stays unchanged to preserve existing visibility/pinning data in the database.
+### Problem
+The total label inside the Forecasting card says "7-Day Total" (or "30-Day Total", etc.) but should say **"Next 7-Day Total"** to clarify it's forward-looking. The tooltip should also dynamically reflect the selected time range with "over the next X days" language.
 
 ### Changes
 
-**1. `src/components/dashboard/analytics/DailyBriefCard.tsx`**
-- Line 49: `"Failed to load daily brief."` → `"Failed to load appointments summary."`
-- Line 90: `Daily Brief` → `Appointments Summary`
+**File: `src/components/dashboard/sales/ForecastingCard.tsx`**
 
-**2. `src/components/dashboard/CommandCenterAnalytics.tsx`**
-- Line 221: `elementName="Daily Brief"` → `elementName="Appointments Summary"`
+1. Update `PERIOD_TOTAL_LABELS` to prefix with "Next":
+   - `'tomorrow'` → `'Tomorrow Total'` (unchanged — already clear)
+   - `'todayToEom'` → `'Rest of Month Total'`
+   - `'7days'` → `'Next 7-Day Total'`
+   - `'30days'` → `'Next 30-Day Total'`
+   - `'60days'` → `'Next 60-Day Total'`
 
-**3. `src/components/dashboard/PinnedAnalyticsCard.tsx`**
-- Line 214: `label: 'Daily Brief'` → `label: 'Appointments Summary'`
-- Line 780: `elementName="Daily Brief"` → `elementName="Appointments Summary"`
+2. Update `PERIOD_DESCRIPTIONS` and the inline `totalTooltip` (~line 617) to use "over the next" phrasing dynamically:
+   - Scheduled mode: `"Sum of projected revenue from all scheduled appointments over the next {period label}."`
+   - Predicted mode: keep the realization rate explanation as-is
 
-**4. `src/components/dashboard/DashboardCustomizeMenu.tsx`**
-- Line 184: `label: 'Daily Brief'` → `label: 'Appointments Summary'`
+3. Update `avgTooltip` references that use `PERIOD_TOTAL_LABELS` to stay consistent with the new names.
 
-**5. `src/components/dashboard/previews/AnalyticsCardPreview.tsx`**
-- Line 81: Rename function `DailyBriefPreview` (optional, internal)
-- Line 84: `title="DAILY BRIEF"` → `title="APPOINTMENTS SUMMARY"`
+**File: `src/components/dashboard/sales/WeekAheadForecast.tsx`**
 
-### What stays the same
-- `elementKey: "daily_brief"` — unchanged everywhere so existing DB visibility rows and pinned layout entries continue to work
-- File name `DailyBriefCard.tsx` — cosmetic, no functional impact, avoids import churn
+4. Update the hardcoded `'7-Day Total'` (line 422) → `'Next 7-Day Total'`
+5. Update the hardcoded `'7-Day Predicted'` → `'Next 7-Day Predicted'`
+6. Update the tooltip description (line 426) from `"over the 7 days"` → `"over the next 7 days"`
+
+### Files modified
+- `src/components/dashboard/sales/ForecastingCard.tsx`
+- `src/components/dashboard/sales/WeekAheadForecast.tsx`
 
