@@ -334,7 +334,7 @@ export function useTodayActualRevenue(enabled: boolean) {
   return {
     data: result,
     locationActuals,
-    isLoading: actualRevenueQuery.isLoading || lastAppointmentQuery.isLoading,
+    isLoading: actualRevenueQuery.isLoading || lastAppointmentQuery.isLoading || serviceHoursQuery.isLoading,
     dataUpdatedAt: actualRevenueQuery.dataUpdatedAt,
   };
 }
