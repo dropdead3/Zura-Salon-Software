@@ -76,7 +76,7 @@ export function TransactionsByHourPanel({ isOpen, dateFrom, dateTo, locationId }
                       transition={{ delay: index * 0.03 }}
                       className={cn(
                         "grid grid-cols-[50px_1fr_36px_auto] items-center gap-3 py-1 px-2 rounded-md hover:bg-muted/30 transition-colors",
-                        index % 2 === 0 && "bg-muted/15"
+                        index % 2 === 0 && "bg-muted/40"
                       )}
                     >
                       <span className="text-xs text-muted-foreground tabular-nums text-right">
