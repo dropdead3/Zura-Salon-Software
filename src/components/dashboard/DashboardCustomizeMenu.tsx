@@ -59,6 +59,8 @@ import {
   useDashboardLayout, 
   useResetToDefault, 
   useSaveDashboardLayout,
+  getPinnedCardIdsFromLayout,
+  isPinnedInLayout,
   isPinnedCardEntry,
   getPinnedCardId,
   getPinnedVisibilityKey,
@@ -259,8 +261,10 @@ export function DashboardCustomizeMenu({ variant = 'icon', roleContext }: Dashbo
   );
 
   const leadershipRoles: AppRole[] = ['super_admin', 'admin', 'manager'];
+  const effectivePinnedCardIds = useMemo(() => getPinnedCardIdsFromLayout(layout), [layout]);
   
   const isCardPinned = (cardId: string): boolean => {
+    if (isPinnedInLayout(layout, cardId)) return true;
     if (!visibilityData) return false;
     const visibilityKey = getPinnedVisibilityKey(cardId);
     return leadershipRoles.some(role => 
@@ -271,7 +275,9 @@ export function DashboardCustomizeMenu({ variant = 'icon', roleContext }: Dashbo
   const orderedUnifiedItems = useMemo(() => {
     const savedOrder = layout.sectionOrder || [];
     const sectionIds = SECTIONS.map(s => s.id);
-    const pinnedCardIds = PINNABLE_CARDS.map(c => c.id).filter(id => isCardPinned(id));
+    const pinnedCardIds = PINNABLE_CARDS
+      .map(c => c.id)
+      .filter(id => effectivePinnedCardIds.includes(id) || isCardPinned(id));
     const pinnedEntries = pinnedCardIds.map(id => toPinnedEntry(id));
     
     const result: string[] = [];
@@ -301,7 +307,7 @@ export function DashboardCustomizeMenu({ variant = 'icon', roleContext }: Dashbo
     }
     
     return result;
-  }, [layout.sectionOrder, SECTIONS, visibilityData]);
+  }, [layout.sectionOrder, SECTIONS, visibilityData, effectivePinnedCardIds]);
 
   const orderedWidgets = useMemo(() => {
     const savedWidgetOrder = layout.widgetOrder || [];
