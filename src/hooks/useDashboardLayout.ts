@@ -298,7 +298,7 @@ export function useDashboardLayout(overrideUserId?: string) {
 // Save dashboard layout
 export function useSaveDashboardLayout(overrideUserId?: string) {
   const queryClient = useQueryClient();
-  const godModeTargetUserId = useGodModeTargetUserId();
+  const { targetUserId: godModeTargetUserId } = useGodModeTargetUserId();
 
   return useMutation({
     mutationFn: async (layout: DashboardLayout) => {
