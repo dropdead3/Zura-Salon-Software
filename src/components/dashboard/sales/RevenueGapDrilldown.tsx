@@ -83,11 +83,19 @@ function GapItemRow({ item, showDates, formatCurrency }: {
           </span>
           <span className="font-sans text-foreground font-medium truncate min-w-0">{item.clientName}</span>
         </div>
-        <BlurredAmount>
-          <span className="font-sans text-sm text-destructive/90 whitespace-nowrap shrink-0 tabular-nums">
-            -{formatCurrency(item.variance)}
-          </span>
-        </BlurredAmount>
+        {item.reason === 'not_concluded' ? (
+          <BlurredAmount>
+            <span className="font-sans text-sm text-emerald-500/80 whitespace-nowrap shrink-0 tabular-nums">
+              {formatCurrency(item.variance)} expected
+            </span>
+          </BlurredAmount>
+        ) : (
+          <BlurredAmount>
+            <span className="font-sans text-sm text-destructive/90 whitespace-nowrap shrink-0 tabular-nums">
+              -{formatCurrency(item.variance)}
+            </span>
+          </BlurredAmount>
+        )}
       </div>
 
       {/* Row 2: Service · stylist */}
