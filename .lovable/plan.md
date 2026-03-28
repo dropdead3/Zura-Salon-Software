@@ -1,25 +1,56 @@
 
 
-## Move "Take Action" Button Outside Pipeline Container
+## Real-Time Adjusted Expected Revenue
 
 ### Problem
-The "Take Action" button currently sits inside the pipeline health container (`bg-card-inner rounded-lg border`), making the row feel cramped. The user wants it placed outside to the right of the container, matching its height and border radius for a cleaner side-by-side layout.
+The "Expected" revenue badge on the Sales Overview shows the **original booking total** regardless of appointment outcomes. It does not adjust for no-shows, cancellations, or service changes throughout the day. This creates a misleading expectation gap for operators watching revenue in real time.
 
 ### Solution
-Wrap the pipeline `<Link>` container and the "Take Action" button in a `flex` row. The button moves from inside the `<Link>` to a sibling element beside it, matching the container's height and radii.
+Create an "Adjusted Expected" calculation that blends actual POS outcomes for resolved appointments with scheduled prices for remaining appointments.
 
-### File modified
-**`src/components/dashboard/NewBookingsCard.tsx`**
+### Logic
 
-#### Layout change (lines 96-135)
-- Wrap the pipeline section in a `<div className="flex gap-2 mb-4">` container
-- The `<Link>` keeps its existing styles but gains `flex-1` to fill available space; remove `mb-4` (parent handles margin now)
-- Remove the `Take Action` button from inside the `<Link>`
-- Add the button as a sibling after the `</Link>`, only rendered when `showPipelineAction` is true
-- Button styling: `self-stretch rounded-lg bg-destructive/20 border border-destructive/70 text-destructive hover:bg-destructive/30 px-4 text-xs font-sans gap-1.5 cursor-pointer transition-all active:scale-[0.97] flex items-center`
-- This ensures the button matches the container's height (via `self-stretch`) and uses the same `rounded-lg` radius
+```text
+Adjusted Expected = 
+  SUM(actual POS revenue for completed appointments today)
+  + SUM(scheduled price for appointments still pending/in-progress today)
+  
+Excluded entirely:
+  - Cancelled appointments
+  - No-show appointments (configurable: could include at 0 or exclude)
+```
 
-#### Content inside the Link
-- Remove the `Take Action` button and its conditional block (lines 114-128)
-- The pipeline label, dot, info tooltip, and trailing count remain unchanged inside the Link
+This means as the day progresses:
+- A $2,000 extension that became an $80 haircut → contributes $80 (actual POS)
+- A no-show → contributes $0
+- A 3pm appointment not yet started → contributes its scheduled price
+- A cancellation → contributes $0
+
+### Implementation
+
+#### 1. New hook: `useAdjustedExpectedRevenue.ts`
+- Query `phorest_appointments` for today, partitioned by status
+- For `completed`/`checked_out` statuses: match against `phorest_transaction_items` to get actual POS revenue
+- For `confirmed`/`arrived`/`in_progress` statuses: use `total_price` from the appointment
+- For `cancelled`/`no_show`: contribute $0
+- Return `{ adjustedExpected, originalExpected, resolvedCount, pendingCount }`
+
+#### 2. Update `AggregateSalesCard.tsx`
+- Replace the static `scheduledRevenue` in the Expected badge with `adjustedExpected` when viewing "today"
+- Keep the original scheduled revenue available for the gap analysis drilldown (it still needs "what was on the books")
+- Add a subtle indicator showing how many appointments are resolved vs pending (e.g., "12/18 resolved")
+
+#### 3. Update the Expected badge tooltip
+- Show breakdown: "Based on X completed ($Y actual) + Z pending ($W scheduled)"
+- This gives operators transparency into how the number is computed
+
+### Files to create/modify
+- **New**: `src/hooks/useAdjustedExpectedRevenue.ts`
+- **Modify**: `src/components/dashboard/AggregateSalesCard.tsx` — swap expected badge source for today view
+- **Modify**: Tooltip content for the expected badge
+
+### What stays the same
+- Gap analysis drilldown continues using `useScheduledRevenue` (original book value) as its baseline
+- Past date ranges continue showing original scheduled vs actual (historical comparison)
+- The hero "Revenue So Far Today" number remains actual POS revenue (unchanged)
 
