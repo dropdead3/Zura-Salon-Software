@@ -227,7 +227,7 @@ export function RevenueByCategoryPanel({ isOpen, dateFrom, dateTo, locationId }:
           <div className="mt-4 space-y-3">
             <div className="flex items-center gap-2">
               <div className="w-1.5 h-1.5 rounded-full bg-primary" />
-              <span className="text-xs tracking-[0.15em] uppercase text-muted-foreground font-medium">
+              <span className="font-display text-xs tracking-wide uppercase text-muted-foreground">
                 Revenue by Category
               </span>
             </div>
