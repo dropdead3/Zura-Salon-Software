@@ -131,7 +131,7 @@ export function ViewAsPopover() {
         className="z-[46] w-80 p-0 silver-shine-border rounded-xl shadow-2xl overflow-hidden"
         style={{ maxHeight: 'min(420px, var(--radix-popover-content-available-height))' }}
       >
-        <div className="silver-shine-inner block bg-background rounded-[calc(theme(borderRadius.xl)-1px)] overflow-hidden flex flex-col" style={{ maxHeight: 'inherit' }}>
+        <div className="silver-shine-inner block bg-card rounded-[calc(theme(borderRadius.xl)-1px)] overflow-hidden flex flex-col" style={{ maxHeight: 'inherit' }}>
         <Tabs defaultValue="roles" className="w-full flex flex-col overflow-hidden flex-1 min-h-0">
           {/* Header */}
           <div className="px-3 pt-3 pb-2">
