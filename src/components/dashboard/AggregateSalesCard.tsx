@@ -925,7 +925,7 @@ export function AggregateSalesCard({
                                 <span className="flex items-center justify-center gap-1">
                                   <CheckCircle2 className="w-3.5 h-3.5 text-success-foreground" />
                                   <BlurredAmount disableTooltip>
-                                    <span>Final: {formatCurrency(todayActual.actualRevenue)} service revenue</span>
+                                    <span>Final: {formatCurrency(serviceRevenue)} service revenue</span>
                                   </BlurredAmount>
                                 </span>
                               ) : (
