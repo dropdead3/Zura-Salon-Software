@@ -1,28 +1,36 @@
 
 
-## Fix Dollar Amount Overflow in Bar Chart Panels
+## Add Zebra-Stripe Row Backgrounds for Long Lists
 
 ### Problem
-The value column is set to a fixed `90px` width, which isn't wide enough for larger formatted amounts like `$5,842.00`. Text spills out of view.
+With 20+ rows in the stylist breakdown (and other long lists), it's hard to track which name corresponds to which value across the wide gap. The rows visually blur together.
 
 ### Solution
-Widen the value column from `90px` to `110px` across all four bar-chart panels. This accommodates amounts up to `$99,999.00` comfortably.
+Add **alternating row backgrounds** (zebra striping) to all bar-chart/ranked-list panels. Even-indexed rows get a subtle `bg-muted/15` background, odd rows stay transparent. This is the standard readability pattern for data tables.
 
 ### Changes
 
 **1. `src/components/dashboard/sales/CategoryBreakdownPanel.tsx`**
-- Line 98: `grid-cols-[28px_1fr_48px_90px]` → `grid-cols-[28px_1fr_48px_110px]`
-- Line 99: `grid-cols-[140px_1fr_48px_90px]` → `grid-cols-[140px_1fr_48px_110px]`
+- Add alternating background to the row `className`: `index % 2 === 0 ? 'bg-muted/15' : ''`
 
 **2. `src/components/dashboard/sales/RevPerHourByStylistPanel.tsx`**
-- Widen the value column from `80px` → `100px`
+- Same alternating background on each stylist row
 
-**3. `src/components/dashboard/sales/TicketDistributionPanel.tsx`**
-- No value column to fix (count-based), but verify no clipping on the count column
+**3. `src/components/dashboard/sales/TransactionsByHourPanel.tsx`**
+- Same alternating background on each hour row
 
-**4. `src/components/dashboard/sales/TransactionsByHourPanel.tsx`**
-- Verify count column width is sufficient
+**4. `src/components/dashboard/sales/TicketDistributionPanel.tsx`**
+- Same alternating background on each bucket row
+
+### Pattern applied to each row
+```tsx
+className={cn(
+  "grid items-center gap-3 py-1.5 px-2 rounded-md hover:bg-muted/30 transition-colors",
+  index % 2 === 0 && "bg-muted/15",
+  // ...existing grid-cols
+)}
+```
 
 ### What stays the same
-- Grid structure, animations, hover states, BlurredAmount wrapping — all unchanged
+- Grid column structure, animations, hover states, BlurredAmount, section headers — all unchanged
 
