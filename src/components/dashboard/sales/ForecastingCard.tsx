@@ -73,10 +73,10 @@ const PERIOD_LABELS: Record<ForecastPeriod, string> = {
 
 const PERIOD_TOTAL_LABELS: Record<ForecastPeriod, string> = {
   'tomorrow': 'Tomorrow Total',
-  'todayToEom': 'Month Total',
-  '7days': '7-Day Total',
-  '30days': '30-Day Total',
-  '60days': '60-Day Total',
+  'todayToEom': 'Rest of Month Total',
+  '7days': 'Next 7-Day Total',
+  '30days': 'Next 30-Day Total',
+  '60days': 'Next 60-Day Total',
 };
 
 const PERIOD_AVG_LABELS: Record<ForecastPeriod, string> = {
