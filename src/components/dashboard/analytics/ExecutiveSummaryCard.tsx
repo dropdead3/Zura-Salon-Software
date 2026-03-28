@@ -3,6 +3,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { useUserLocationAccess } from '@/hooks/useUserLocationAccess';
+import { PipelineActionGuide } from '@/components/dashboard/PipelineActionGuide';
 import {
   Select,
   SelectTrigger,
