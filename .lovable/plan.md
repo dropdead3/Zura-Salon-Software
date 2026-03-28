@@ -1,56 +1,25 @@
 
-Positive catch — your prompt is clear and the screenshot made the issue easy to isolate. The better prompt pattern next time would be: “On the Goal Tracker card, the location scoreboard status badge (‘AHEAD’) is still using Termina in `GoalLocationRow.tsx`; switch it to Aeonik and keep the visual style.” That identifies the exact subcomponent and avoids us fixing the wrong badge again.
 
-## Why it’s still in Termina
-The badge you’re pointing to is not the top summary badge in `GoalTrackerCard.tsx`.
+## Move "Take Action" Button Outside Pipeline Container
 
-It’s the location-row badge in:
-- `src/components/dashboard/sales/GoalLocationRow.tsx`
+### Problem
+The "Take Action" button currently sits inside the pipeline health container (`bg-card-inner rounded-lg border`), making the row feel cramped. The user wants it placed outside to the right of the container, matching its height and border radius for a cleaner side-by-side layout.
 
-That badge is explicitly styled with:
-- `font-display`
-- `uppercase`
+### Solution
+Wrap the pipeline `<Link>` container and the "Take Action" button in a `flex` row. The button moves from inside the `<Link>` to a sibling element beside it, matching the container's height and radii.
 
-So even after fixing `GoalTrackerCard.tsx`, this badge would still render in Termina.
+### File modified
+**`src/components/dashboard/NewBookingsCard.tsx`**
 
-## Fix plan
-Update the location scoreboard badge in `GoalLocationRow.tsx` so it uses Aeonik:
+#### Layout change (lines 96-135)
+- Wrap the pipeline section in a `<div className="flex gap-2 mb-4">` container
+- The `<Link>` keeps its existing styles but gains `flex-1` to fill available space; remove `mb-4` (parent handles margin now)
+- Remove the `Take Action` button from inside the `<Link>`
+- Add the button as a sibling after the `</Link>`, only rendered when `showPipelineAction` is true
+- Button styling: `self-stretch rounded-lg bg-destructive/20 border border-destructive/70 text-destructive hover:bg-destructive/30 px-4 text-xs font-sans gap-1.5 cursor-pointer transition-all active:scale-[0.97] flex items-center`
+- This ensures the button matches the container's height (via `self-stretch`) and uses the same `rounded-lg` radius
 
-1. Replace `font-display` with `font-sans`
-2. Remove `uppercase` so the text can remain proper Aeonik UI copy
-3. Keep the existing color/status logic and pill styling
-4. Render labels as title case:
-   - `Ahead`
-   - `On Track`
-   - `Behind`
+#### Content inside the Link
+- Remove the `Take Action` button and its conditional block (lines 114-128)
+- The pipeline label, dot, info tooltip, and trailing count remain unchanged inside the Link
 
-## File to modify
-- `src/components/dashboard/sales/GoalLocationRow.tsx`
-
-## Exact change
-Current badge class:
-```tsx
-'text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded-full font-display'
-```
-
-Planned update:
-```tsx
-'text-[10px] font-sans font-medium px-1.5 py-0.5 rounded-full whitespace-nowrap'
-```
-
-And keep the existing label text in title case instead of forcing uppercase.
-
-## Why this is the right fix
-- It targets the actual badge shown in your screenshot
-- It aligns the badge with Aeonik-based UI label rules
-- It avoids the typography conflict of trying to force Aeonik into all-caps badge text
-- It keeps the badge color and hierarchy intact without changing card behavior
-
-## Small enhancement suggestion
-If you want, I’d make all goal-status pills follow one shared badge pattern across:
-- `GoalTrackerCard.tsx`
-- `GoalLocationRow.tsx`
-- `GoalLocationsDrilldown.tsx`
-- goal cards under `src/components/dashboard/goals/`
-
-That would prevent this exact font drift from happening again.
