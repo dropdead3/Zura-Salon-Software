@@ -519,13 +519,13 @@ html, body, #root {
     --sidebar-foreground: 210 25% 12%;
     --sidebar-primary: 210 60% 50%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 210 20% 93%;
+    --sidebar-accent: 210 20% 90%;
     --sidebar-accent-foreground: 210 25% 12%;
-    --sidebar-border: 210 15% 88%;
+    --sidebar-border: 210 15% 82%;
     --sidebar-ring: 210 60% 50%;
 
-    --card-inner: 210 15% 99%;
-    --card-inner-deep: 210 10% 100%;
+    --card-inner: 210 15% 95%;
+    --card-inner-deep: 210 10% 93%;
   }
 
   .dark.theme-ocean {
