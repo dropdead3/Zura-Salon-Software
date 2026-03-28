@@ -154,9 +154,9 @@ const CATEGORY_FILTERS: { key: InsightItem['category']; label: string; icon: typ
 ];
 
 const severityStyles: Record<InsightItem['severity'], string> = {
-  info: 'border-l-blue-500/60 bg-blue-500/[0.08]',
-  warning: 'border-l-amber-500/60 bg-amber-500/[0.08]',
-  critical: 'border-l-red-500/60 bg-red-500/[0.08]',
+  info: 'border-l-blue-500/60 bg-blue-500/[0.12]',
+  warning: 'border-l-amber-500/60 bg-amber-500/[0.12]',
+  critical: 'border-l-red-500/60 bg-red-500/[0.12]',
 };
 
 const severityIconColor: Record<InsightItem['severity'], string> = {
@@ -235,7 +235,7 @@ function InsightCard({ insight, onRequestGuidance, drillDownHref }: { insight: I
 
   return (
     <div className={cn(
-      'rounded-xl border-l-[3px] border border-border/70 p-3.5 transition-colors shadow-sm',
+      'rounded-xl border-l-[3px] border border-border/70 p-3.5 transition-colors shadow-[0_1px_3px_0_rgba(0,0,0,0.06)]',
       severityStyles[insight.severity],
     )}>
       <div className="flex items-start gap-2.5">
@@ -461,7 +461,7 @@ function WizardIntentPicker({
                 isEmpty
                   ? 'border-border/30 bg-muted/10 opacity-50 cursor-not-allowed'
                   : cn(
-                      'border-border/70 bg-card hover:bg-accent/40 hover:border-foreground/30 hover:shadow-sm cursor-pointer',
+                      'border-border/70 bg-muted/30 hover:bg-accent/50 hover:border-foreground/30 hover:shadow-md cursor-pointer',
                       intent.accentClass,
                       hasUrgent && 'border-red-500/20 bg-red-500/[0.02]'
                     ),
@@ -713,7 +713,7 @@ export function AIInsightsPanel({ onClose }: { onClose: () => void }) {
   }, [hasInsights, hasActionItems, hasSuggestions]);
 
   return (
-    <div className="w-full rounded-xl border border-border/60 bg-card overflow-hidden">
+    <div className="w-full rounded-xl border border-border/60 bg-card shadow-[0_2px_8px_0_rgba(0,0,0,0.06)] overflow-hidden">
       <div className="h-px bg-gradient-to-r from-transparent via-border/60 to-transparent" />
 
       {!activeGuidance && (
@@ -787,7 +787,7 @@ export function AIInsightsPanel({ onClose }: { onClose: () => void }) {
                 {/* Summary strip */}
                 {data && (
                   <div className="px-5 pb-3">
-                    <div className="flex items-center gap-3 rounded-lg bg-muted/60 px-3.5 py-2.5">
+                    <div className="flex items-center gap-3 rounded-lg bg-muted/80 px-3.5 py-2.5">
                       <div className={cn('flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center', sentiment?.bg)}>
                         <SentimentIcon className={cn('w-3.5 h-3.5', sentiment?.color)} />
                       </div>
