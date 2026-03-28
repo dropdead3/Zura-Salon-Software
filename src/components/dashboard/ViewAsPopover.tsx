@@ -1,4 +1,5 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo } from 'react';
+import '@/styles/silver-shine.css';
 import { createPortal } from 'react-dom';
 import { cn, formatDisplayName } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
@@ -127,9 +128,10 @@ export function ViewAsPopover() {
       <PopoverContent
         align="end"
         sideOffset={16}
-        className="z-[46] w-80 p-0 bg-card/80 backdrop-blur-xl backdrop-saturate-150 border border-border/30 rounded-xl shadow-2xl overflow-hidden flex flex-col"
+        className="z-[46] w-80 p-0 silver-shine-border rounded-xl shadow-2xl overflow-hidden"
         style={{ maxHeight: 'min(420px, var(--radix-popover-content-available-height))' }}
       >
+        <div className="silver-shine-inner block bg-card/80 backdrop-blur-xl backdrop-saturate-150 rounded-[calc(theme(borderRadius.xl)-1px)] overflow-hidden flex flex-col" style={{ maxHeight: 'inherit' }}>
         <Tabs defaultValue="roles" className="w-full flex flex-col overflow-hidden flex-1 min-h-0">
           {/* Header */}
           <div className="px-3 pt-3 pb-2">
@@ -272,6 +274,7 @@ export function ViewAsPopover() {
             </ScrollArea>
           </TabsContent>
         </Tabs>
+        </div>
       </PopoverContent>
     </Popover>
   );
