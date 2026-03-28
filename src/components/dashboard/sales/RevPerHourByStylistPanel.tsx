@@ -75,7 +75,7 @@ export function RevPerHourByStylistPanel({ isOpen, stylistData, totalServiceHour
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <div className="w-1.5 h-1.5 rounded-full bg-primary" />
-                <span className="text-xs tracking-wide uppercase text-muted-foreground font-medium">
+                <span className="font-display text-xs tracking-wide uppercase text-muted-foreground">
                   Efficiency by Stylist
                 </span>
               </div>
