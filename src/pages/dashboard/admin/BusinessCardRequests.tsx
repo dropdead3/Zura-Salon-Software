@@ -238,7 +238,7 @@ export default function BusinessCardRequests() {
             <p className="font-display text-2xl mt-1">{stats.pending}</p>
           </Card>
           <Card className="p-4 border-blue-500/30">
-            <p className="text-xs text-blue-500 font-sans uppercase tracking-wider">Processing</p>
+            <p className="text-xs text-blue-500 font-display uppercase tracking-wide">Processing</p>
             <p className="font-display text-2xl mt-1">{stats.processing}</p>
           </Card>
           <Card className="p-4 border-green-500/30">
