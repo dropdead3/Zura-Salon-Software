@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Progress } from '@/components/ui/progress';
-import { CalendarPlus, UserPlus, RefreshCw, TrendingUp, TrendingDown, Minus, MapPin, CalendarCheck } from 'lucide-react';
+import { CalendarPlus, UserPlus, RefreshCw, TrendingUp, TrendingDown, Minus, MapPin, CalendarCheck, ArrowRight } from 'lucide-react';
 import { useNewBookings } from '@/hooks/useNewBookings';
 import { useBookingPipeline } from '@/hooks/useBookingPipeline';
 import { useBookingPipelineByLocation } from '@/hooks/useBookingPipelineByLocation';
