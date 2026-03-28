@@ -362,7 +362,7 @@ function GeneralTab() {
           <div className="rounded-lg border bg-muted/30 p-4 mt-4 space-y-3">
             <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Live Preview</p>
             <div className="rounded-md p-3">
-              <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground font-sans mb-3">Connect</p>
+              <p className="text-xs uppercase tracking-wide text-muted-foreground font-display mb-3">Connect</p>
               <div className="space-y-2">
                 {SOCIAL_FIELDS.map(({ key, icon: Icon, label }) => {
                   const hasUrl = !!(socialLocal[key]);

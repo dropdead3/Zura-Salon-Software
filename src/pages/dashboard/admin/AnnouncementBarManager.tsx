@@ -101,7 +101,7 @@ export default function AnnouncementBarManager() {
                   <span className="font-medium">{formData.message_highlight}</span>{' '}
                   {formData.message_suffix}
                 </p>
-                <span className="group inline-flex items-center gap-1.5 text-sm font-sans font-medium text-foreground uppercase tracking-wider">
+                <span className="group inline-flex items-center gap-1.5 text-sm font-display text-foreground uppercase tracking-wide">
                   {formData.cta_text}
                   <ArrowRight size={14} className="transition-transform duration-300 group-hover:translate-x-1" />
                 </span>

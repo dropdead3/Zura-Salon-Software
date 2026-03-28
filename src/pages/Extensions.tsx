@@ -1530,7 +1530,7 @@ export default function Extensions() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.6 }}
-            className="text-xs uppercase tracking-[0.3em] text-background/60 font-sans block mb-4"
+            className="text-xs uppercase tracking-wide text-background/60 font-display block mb-4"
           >
             Your Visit
           </motion.span>

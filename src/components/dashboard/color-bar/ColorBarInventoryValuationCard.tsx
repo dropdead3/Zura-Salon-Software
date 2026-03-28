@@ -154,7 +154,7 @@ export function ColorBarInventoryValuationCard({ locationId }: { locationId?: st
             <p className="font-display text-lg tabular-nums"><BlurredAmount>{formatCurrency(totals?.retail ?? 0)}</BlurredAmount></p>
           </div>
           <div className="text-center">
-            <p className="text-[10px] font-sans text-muted-foreground uppercase tracking-wider">Margin</p>
+            <p className="text-[10px] font-display text-muted-foreground uppercase tracking-wide">Margin</p>
             <p className="font-display text-lg tabular-nums">
               {totals && totals.retail > 0 ? (((totals.retail - totals.cost) / totals.retail) * 100).toFixed(1) : '0'}%
             </p>

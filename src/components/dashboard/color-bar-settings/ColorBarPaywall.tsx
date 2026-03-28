@@ -638,7 +638,7 @@ export function ColorBarPaywall() {
                             {/* Body */}
                             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-8">
                               <div className="space-y-1">
-                                <p className="font-sans text-xs text-[hsl(145,50%,55%)]/80 uppercase tracking-widest">You could recover</p>
+                                <p className="font-display text-xs text-[hsl(145,50%,55%)]/80 uppercase tracking-wide">You could recover</p>
                                 <p className="font-display text-5xl md:text-6xl font-medium tracking-wide text-[hsl(145,50%,55%)] tabular-nums leading-none">
                                   <AnimatedNumber
                                     value={yearlySavings}

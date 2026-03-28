@@ -927,7 +927,7 @@ export function AppointmentDetailSheet({
                         {(availableTransitions.includes('no_show') || (availableTransitions.includes('cancelled') && canCancel) || (isManagerOrAdmin && appointment.status === 'confirmed')) && (
                           <>
                             <DropdownMenuSeparator />
-                            <DropdownMenuLabel className="font-sans text-[10px] text-muted-foreground uppercase tracking-wider">Status Override</DropdownMenuLabel>
+                            <DropdownMenuLabel className="font-display text-[10px] text-muted-foreground uppercase tracking-wide">Status Override</DropdownMenuLabel>
                             {availableTransitions.includes('no_show') && (
                               <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={() => handleStatusChange('no_show')} disabled={isUpdating}>
                                 <AlertTriangle className="h-3.5 w-3.5 mr-2" />

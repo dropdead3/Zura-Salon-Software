@@ -1651,7 +1651,7 @@ export function AllowanceCalculatorDialog({ open, onOpenChange, serviceId, servi
         <div className="px-4 py-4 sm:px-6 border-t border-border/40 bg-muted/30 shrink-0">
           <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
             <div className="flex-1 min-w-0">
-              <div className="text-[11px] font-sans font-medium tracking-wide text-muted-foreground uppercase">Total Allowance (Retail)</div>
+              <div className="text-[11px] font-display tracking-wide text-muted-foreground uppercase">Total Allowance (Retail)</div>
               <div className="text-2xl font-sans font-medium text-foreground tabular-nums mt-0.5">
                 ${grandTotal.toFixed(2)}
               </div>

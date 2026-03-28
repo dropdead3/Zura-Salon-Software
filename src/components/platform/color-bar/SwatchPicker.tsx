@@ -354,7 +354,7 @@ export function SwatchPicker({ value, suggestedValue, onChange, disabled }: Swat
 
               {/* Custom Color Picker */}
               <div className="pt-1 border-t border-[hsl(var(--platform-border)/0.3)]">
-                <span className="font-sans text-[9px] text-[hsl(var(--platform-foreground-muted)/0.6)] tracking-wider uppercase block mb-1.5">
+                <span className="font-display text-[9px] text-[hsl(var(--platform-foreground-muted)/0.6)] tracking-wide uppercase block mb-1.5">
                   Custom Color
                 </span>
                 <div className="flex items-center gap-2">

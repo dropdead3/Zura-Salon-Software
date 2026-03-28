@@ -242,7 +242,7 @@ export default function BusinessCardRequests() {
             <p className="font-display text-2xl mt-1">{stats.processing}</p>
           </Card>
           <Card className="p-4 border-green-500/30">
-            <p className="text-xs text-green-500 font-sans uppercase tracking-wider">Completed</p>
+            <p className="text-xs text-green-500 font-display uppercase tracking-wide">Completed</p>
             <p className="font-display text-2xl mt-1">{stats.completed}</p>
           </Card>
         </div>

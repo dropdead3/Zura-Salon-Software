@@ -91,7 +91,7 @@ const DrinkCard = ({ drink, index = 0, isInView = true, animated = true }: Drink
               <motion.button 
                 layout
                 onClick={handleToggle}
-                className="mt-2 text-[10px] uppercase tracking-[0.15em] text-background/70 hover:text-background transition-colors font-sans underline underline-offset-2"
+                className="mt-2 text-[10px] uppercase tracking-wide text-background/70 hover:text-background transition-colors font-display underline underline-offset-2"
               >
                 {isExpanded ? "See less" : "See more"}
               </motion.button>

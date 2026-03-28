@@ -527,7 +527,7 @@ function HealthStat({ label, count, color }: { label: string; count: number; col
       <p className={cn('text-2xl font-display font-medium tabular-nums', count > 0 ? color : 'text-muted-foreground')}>
         {count}
       </p>
-      <p className="text-[10px] font-sans text-muted-foreground uppercase tracking-wider mt-1">{label}</p>
+      <p className="text-[10px] font-display text-muted-foreground uppercase tracking-wide mt-1">{label}</p>
     </div>
   );
 }
