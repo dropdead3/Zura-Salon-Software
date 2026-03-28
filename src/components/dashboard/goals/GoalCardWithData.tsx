@@ -178,7 +178,7 @@ export function GoalCardWithData({ goal, onEdit, onDelete }: GoalCardWithDataPro
             indicatorClassName={achieved ? 'bg-emerald-500' : STATUS_COLORS[status]}
           />
           <span className={cn(
-            'text-[10px] font-medium px-1.5 py-0.5 rounded-full whitespace-nowrap',
+            'text-[10px] font-sans font-medium px-1.5 py-0.5 rounded-full whitespace-nowrap',
             achieved && 'bg-emerald-500/10 text-emerald-600',
             !achieved && status === 'on-track' && 'bg-emerald-500/10 text-emerald-600',
             !achieved && status === 'warning' && 'bg-amber-500/10 text-amber-600',
