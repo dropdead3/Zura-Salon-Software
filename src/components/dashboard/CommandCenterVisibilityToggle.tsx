@@ -7,6 +7,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip';
 import { Pin, Eye, EyeOff, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useEmployeeProfile } from '@/hooks/useEmployeeProfile';
