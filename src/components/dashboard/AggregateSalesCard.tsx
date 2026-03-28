@@ -807,7 +807,7 @@ export function AggregateSalesCard({
                             <TooltipTrigger asChild>
                               <Badge 
                                 variant="outline" 
-                                className={cn("text-xs font-normal gap-1 cursor-pointer", exceededExpected ? "bg-success/10 text-success-foreground border-success/30" : "bg-warning/10 text-warning border-warning/30")}
+                                className={cn("text-sm font-normal gap-1 cursor-pointer px-3 py-1.5", exceededExpected ? "bg-success/10 text-success-foreground border-success/30" : "bg-warning/10 text-warning border-warning/30")}
                                 onClick={() => toggleDrilldown('expectedGap')}
                               >
                                 <Clock className="w-3 h-3" />
