@@ -511,8 +511,8 @@ html, body, #root {
     --destructive: 0 62% 50%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 210 15% 88%;
-    --input: 210 15% 92%;
+    --border: 210 15% 82%;
+    --input: 210 15% 88%;
     --ring: 210 60% 50%;
 
     --sidebar-background: 210 25% 98%;
