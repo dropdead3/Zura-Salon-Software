@@ -2,31 +2,21 @@
 
 ## Problem
 
-When the "View As" popover is open, the page content behind it remains fully visible, which is distracting. The user wants a backdrop overlay (blurred and darkened) similar to a dialog/modal effect.
+The backdrop overlay uses `fixed inset-0 z-40`, which covers the entire viewport including the top navigation bar. Since the "View As" popover lives inside the top bar, the blur/darken effect incorrectly obscures the nav bar instead of just the page content below it.
 
 ## Plan
 
 **File:** `src/components/dashboard/ViewAsPopover.tsx`
 
-1. When `open` is true, render a full-screen backdrop overlay `div` behind the popover content. This overlay will have `bg-black/40 backdrop-blur-sm` to darken and blur the page content.
-
-2. Place this overlay as a sibling inside the `Popover` component, rendered conditionally when `open` is true. It should be a fixed full-screen div with a high z-index (below the popover content's z-50 but above everything else), e.g. `fixed inset-0 z-40`.
-
-3. Clicking the overlay should close the popover by calling `setOpen(false)`.
-
-### Change
-
-After the `</Tooltip>` closing tag (~line 114) and before `<PopoverContent>`, add:
+1. Change the backdrop overlay to start below the top bar instead of covering the full viewport. Replace `inset-0` with `top-[60px] left-0 right-0 bottom-0` (matching the approximate top bar height) and increase z-index reasoning:
 
 ```tsx
-{open && (
-  <div
-    className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm animate-in fade-in-0 duration-200"
-    aria-hidden="true"
-    onClick={() => setOpen(false)}
-  />
-)}
+// Before
+<div className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm ..." />
+
+// After  
+<div className="fixed top-[60px] left-0 right-0 bottom-0 z-40 bg-black/40 backdrop-blur-sm ..." />
 ```
 
-This gives the same darkened + blurred backdrop effect as a dialog overlay, focusing attention on the popover.
+This keeps the top navigation bar fully visible and unblurred while darkening and blurring only the page content area below it. The `top-[60px]` value aligns with the top bar's height (pt-3 + pb-3 + inner content ≈ 60px).
 
