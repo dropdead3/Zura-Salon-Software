@@ -1,7 +1,9 @@
 import { useState, useMemo } from 'react';
 import { Progress } from '@/components/ui/progress';
+import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ChevronDown, ChevronRight, ArrowRight } from 'lucide-react';
+import { PipelineActionGuide } from '@/components/dashboard/PipelineActionGuide';
 import { useBookingPipelineByLocation, type LocationPipelineStatus, type LocationPipeline } from '@/hooks/useBookingPipelineByLocation';
 import { useLocationPipelineTimeline } from '@/hooks/useLocationPipelineTimeline';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -144,6 +146,8 @@ export function BookingPipelineContent({ locationId, dateRange }: BookingPipelin
     new Set(['critical', 'slowing', 'healthy', 'no_data'])
   );
   const [showAll, setShowAll] = useState(false);
+  const [showActionGuide, setShowActionGuide] = useState(false);
+  const [actionGuideForwardCount, setActionGuideForwardCount] = useState(0);
 
   const [expandedLocationId, setExpandedLocationId] = useState<string | null>(null);
 
@@ -308,16 +312,21 @@ export function BookingPipelineContent({ locationId, dateRange }: BookingPipelin
                 )}
               </AnimatePresence>
 
-              {/* Boost Bookings CTA for critical/slowing */}
+              {/* Take Action CTA for critical/slowing */}
               {(loc.status === 'critical' || loc.status === 'slowing') && (
                 <div className="flex justify-end">
-                  <Link
-                    to={`/dashboard/admin/analytics?tab=marketing`}
-                    className="text-xs text-muted-foreground hover:text-foreground inline-flex items-center gap-1 transition-colors"
-                    onClick={(e) => e.stopPropagation()}
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    className="rounded-full px-3 h-6 text-[10px] font-sans"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setActionGuideForwardCount(loc.forwardCount);
+                      setShowActionGuide(true);
+                    }}
                   >
-                    Boost Bookings <ArrowRight className="w-3 h-3" />
-                  </Link>
+                    Take Action
+                  </Button>
                 </div>
               )}
             </div>
@@ -336,6 +345,11 @@ export function BookingPipelineContent({ locationId, dateRange }: BookingPipelin
           {showAll ? 'Show less' : `Show all ${sorted.length} locations`}
         </button>
       )}
+      <PipelineActionGuide
+        open={showActionGuide}
+        onOpenChange={setShowActionGuide}
+        forwardCount={actionGuideForwardCount}
+      />
     </div>
   );
 }

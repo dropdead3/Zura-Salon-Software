@@ -8,9 +8,11 @@ import { useBookingPipeline } from '@/hooks/useBookingPipeline';
 import { useBookingPipelineByLocation } from '@/hooks/useBookingPipelineByLocation';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { NewBookingsDrilldown } from './NewBookingsDrilldown';
+import { PipelineActionGuide } from './PipelineActionGuide';
 import { cn } from '@/lib/utils';
 import { tokens } from '@/lib/design-tokens';
 import { Link } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
 
 import { AnalyticsFilterBadge, type FilterContext } from '@/components/dashboard/AnalyticsFilterBadge';
 import type { DateRangeType } from '@/components/dashboard/PinnedAnalyticsCard';
@@ -42,6 +44,8 @@ export function NewBookingsCard({
   const pipeline = useBookingPipeline(locationIdForPipeline);
   const { locations: pipelineLocations } = useBookingPipelineByLocation(locationIdForPipeline);
   const [drilldown, setDrilldown] = useState<'new' | 'returning' | null>(null);
+  const [showActionGuide, setShowActionGuide] = useState(false);
+  const showPipelineAction = pipeline.status === 'critical' || pipeline.status === 'slowing';
 
   const showLocationBreakdown = !filterContext?.locationId || filterContext.locationId === 'all';
   const heroLabel = RANGE_LABELS[dateRange] || 'Booked';
@@ -107,6 +111,20 @@ export function NewBookingsCard({
               )} />
               <span className="text-sm font-medium">Pipeline: {pipeline.label}</span>
               <MetricInfoTooltip description="Compares confirmed appointments in the next 14 days against the trailing 14 days. Healthy ≥ 90%, Slowing ≥ 70%, Critical < 70%." />
+              {showPipelineAction && (
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  className="rounded-full px-3 h-6 text-[10px] font-sans ml-2"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setShowActionGuide(true);
+                  }}
+                >
+                  Take Action
+                </Button>
+              )}
             </div>
             <span className="text-xs text-muted-foreground tabular-nums">
               {pipeline.forwardCount} next 14d vs {pipeline.baselineCount} trailing
@@ -260,6 +278,11 @@ export function NewBookingsCard({
         onClose={() => setDrilldown(null)}
         newClientsByStaff={data?.newClientsByStaff || []}
         returningClientsByStaff={data?.returningClientsByStaff || []}
+      />
+      <PipelineActionGuide
+        open={showActionGuide}
+        onOpenChange={setShowActionGuide}
+        forwardCount={pipeline.forwardCount}
       />
     </Card>
   );

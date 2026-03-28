@@ -3,6 +3,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { useUserLocationAccess } from '@/hooks/useUserLocationAccess';
+import { PipelineActionGuide } from '@/components/dashboard/PipelineActionGuide';
 import {
   Select,
   SelectTrigger,
@@ -67,6 +68,7 @@ interface KpiData {
   valueColor?: string;
   subtitle?: string;
   badge?: { label: string; color: string };
+  actionBadge?: { label: string; onClick: () => void };
   tooltip: string;
 }
 
@@ -111,6 +113,20 @@ function KpiTile({ kpi }: { kpi: KpiData }) {
               {kpi.badge.label}
             </span>
           )}
+          {kpi.actionBadge && (
+            <Button
+              variant="destructive"
+              size="sm"
+              className="rounded-full px-3 h-6 text-[10px] font-sans w-fit"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                kpi.actionBadge!.onClick();
+              }}
+            >
+              {kpi.actionBadge.label}
+            </Button>
+          )}
           {kpi.subtitle && (
             <span className="text-[10px] text-muted-foreground/70 mt-0.5">
               {kpi.subtitle}
@@ -130,6 +146,7 @@ export function ExecutiveSummaryCard() {
   const { dashPath } = useOrgDashboardPath();
   const { formatCurrencyWhole } = useFormatCurrency();
   const { data: hasRenters = false } = useHasRenters();
+  const [showActionGuide, setShowActionGuide] = useState(false);
 
   // Internal date range state with persistence
   const [range, setRange] = useState<SummaryRange>(() => {
@@ -392,6 +409,7 @@ export function ExecutiveSummaryCard() {
       change: null,
       subtitle: `${pipeline.forwardCount} appts next 14d vs ${pipeline.baselineCount} avg`,
       tooltip: 'Compares appointments booked for the next 14 days against your trailing 14-day average. Flags slowdowns before they impact revenue.',
+      actionBadge: pipeline.status !== 'healthy' ? { label: 'Take Action', onClick: () => setShowActionGuide(true) } : undefined,
     },
   ];
 
@@ -527,6 +545,11 @@ export function ExecutiveSummaryCard() {
           </span>
         </div>
       </CardContent>
+      <PipelineActionGuide
+        open={showActionGuide}
+        onOpenChange={setShowActionGuide}
+        forwardCount={pipeline.forwardCount}
+      />
     </Card>
   );
 }
