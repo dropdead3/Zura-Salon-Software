@@ -1,10 +1,10 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface StylistData {
   user_id: string;
@@ -21,9 +21,12 @@ interface RevPerHourByStylistPanelProps {
   isLoading: boolean;
 }
 
+const PAGE_SIZE = 30;
+
 export function RevPerHourByStylistPanel({ isOpen, stylistData, totalServiceHours, isLoading }: RevPerHourByStylistPanelProps) {
   const { formatCurrencyWhole } = useFormatCurrency();
-  // Calculate salon-wide rev/hour and per-stylist rev/hour
+  const [page, setPage] = useState(0);
+
   const { stylists, salonAvg, maxRevPerHour } = useMemo(() => {
     if (!stylistData || stylistData.length === 0 || totalServiceHours === 0) {
       return { stylists: [], salonAvg: 0, maxRevPerHour: 0 };
@@ -32,7 +35,6 @@ export function RevPerHourByStylistPanel({ isOpen, stylistData, totalServiceHour
     const totalRev = stylistData.reduce((s, st) => s + st.totalRevenue, 0);
     const avg = totalRev / totalServiceHours;
 
-    // Estimate per-stylist hours proportionally by their service count
     const totalServices = stylistData.reduce((s, st) => s + st.totalServices, 0);
     
     const mapped = stylistData
@@ -58,7 +60,13 @@ export function RevPerHourByStylistPanel({ isOpen, stylistData, totalServiceHour
     };
   }, [stylistData, totalServiceHours]);
 
+  // Reset page when data changes
+  useMemo(() => { setPage(0); }, [stylistData, totalServiceHours]);
+
   const hasData = stylists.length > 0;
+  const totalPages = Math.ceil(stylists.length / PAGE_SIZE);
+  const isPaginated = stylists.length > PAGE_SIZE;
+  const pageItems = isPaginated ? stylists.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE) : stylists;
 
   return (
     <AnimatePresence mode="wait">
@@ -93,19 +101,19 @@ export function RevPerHourByStylistPanel({ isOpen, stylistData, totalServiceHour
             ) : !hasData ? (
               <p className="text-xs text-muted-foreground py-4 text-center">No stylist data for this period</p>
             ) : (
-              <ScrollArea className="max-h-[400px]">
-                <div className="space-y-1 pr-2">
-                  {stylists.map((stylist, index) => {
+              <>
+                <div className="space-y-1">
+                  {pageItems.map((stylist, idx) => {
                     const pct = maxRevPerHour > 0 ? (stylist.revPerHour / maxRevPerHour) * 100 : 0;
                     return (
                       <motion.div
                         key={stylist.user_id}
                         initial={{ opacity: 0, x: -8 }}
                         animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: index * 0.04 }}
+                        transition={{ delay: idx * 0.02 }}
                         className={cn(
                           "grid grid-cols-[120px_1fr_100px] items-center gap-3 py-1.5 px-2 rounded-md hover:bg-muted/30 transition-colors",
-                          index % 2 === 0 && "bg-muted/15"
+                          idx % 2 === 0 && "bg-muted/15"
                         )}
                       >
                         <span className="text-sm text-foreground font-medium truncate">
@@ -125,7 +133,7 @@ export function RevPerHourByStylistPanel({ isOpen, stylistData, totalServiceHour
                             )}
                             initial={{ width: 0 }}
                             animate={{ width: `${pct}%` }}
-                            transition={{ duration: 0.5, delay: index * 0.04, ease: 'easeOut' }}
+                            transition={{ duration: 0.5, delay: idx * 0.02, ease: 'easeOut' }}
                           />
                         </div>
                         <span className="text-sm font-display tabular-nums text-right">
@@ -135,7 +143,29 @@ export function RevPerHourByStylistPanel({ isOpen, stylistData, totalServiceHour
                     );
                   })}
                 </div>
-              </ScrollArea>
+
+                {isPaginated && (
+                  <div className="flex items-center justify-center gap-3 pt-2 pb-1">
+                    <button
+                      onClick={() => setPage(p => Math.max(0, p - 1))}
+                      disabled={page === 0}
+                      className="p-1 rounded-md hover:bg-muted/40 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                    >
+                      <ChevronLeft className="w-4 h-4 text-muted-foreground" />
+                    </button>
+                    <span className="text-xs text-muted-foreground tabular-nums">
+                      {page + 1} / {totalPages}
+                    </span>
+                    <button
+                      onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
+                      disabled={page >= totalPages - 1}
+                      className="p-1 rounded-md hover:bg-muted/40 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                    >
+                      <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                    </button>
+                  </div>
+                )}
+              </>
             )}
           </div>
         </motion.div>
