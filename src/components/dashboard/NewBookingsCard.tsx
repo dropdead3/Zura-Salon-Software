@@ -113,9 +113,9 @@ export function NewBookingsCard({
               <MetricInfoTooltip description="Compares confirmed appointments in the next 14 days against the trailing 14 days. Healthy ≥ 90%, Slowing ≥ 70%, Critical < 70%." />
               {showPipelineAction && (
                 <Button
-                  variant="destructive"
+                  variant="ghost"
                   size="sm"
-                  className="rounded-full px-3 h-6 text-[10px] font-sans ml-2"
+                  className="rounded-full px-3 h-6 text-[10px] font-sans text-destructive hover:bg-destructive/10 hover:text-destructive ml-2"
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
