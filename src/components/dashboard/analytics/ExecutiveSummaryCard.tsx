@@ -113,6 +113,20 @@ function KpiTile({ kpi }: { kpi: KpiData }) {
               {kpi.badge.label}
             </span>
           )}
+          {kpi.actionBadge && (
+            <Button
+              variant="destructive"
+              size="sm"
+              className="rounded-full px-3 h-6 text-[10px] font-sans w-fit"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                kpi.actionBadge!.onClick();
+              }}
+            >
+              {kpi.actionBadge.label}
+            </Button>
+          )}
           {kpi.subtitle && (
             <span className="text-[10px] text-muted-foreground/70 mt-0.5">
               {kpi.subtitle}
