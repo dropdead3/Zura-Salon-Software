@@ -2,24 +2,36 @@
 
 ## Problem
 
-In `TicketDistributionPanel.tsx` and `AvgTicketByStylistPanel.tsx`, several uppercase labels use the default font (Aeonik Pro) instead of `font-display` (Termina). Visible violations from the screenshot:
-
-- "TICKET DISTRIBUTION" — line 36
-- "MEDIAN", "AVERAGE", "ABOVE AVG" — lines 52, 59, 66
-- "AVG TICKET BY STYLIST" — `AvgTicketByStylistPanel.tsx` line 131
+The category rows show small progress bars that add visual noise without conveying information the percentage number doesn't already provide. The user wants a cleaner layout with just the percentage.
 
 ## Plan
 
-**File: `src/components/dashboard/sales/TicketDistributionPanel.tsx`**
+**File: `src/components/dashboard/sales/RevenueByCategoryPanel.tsx`**
 
-1. **Line 36** — Section label: Add `font-display` to the span class
-2. **Lines 52, 59, 66** — Stat labels ("Median", "Average", "Above Avg"): Add `font-display` to each `<p>` class
+In the `CategoryRow` component (lines 141-148), remove the `Progress` bar and restructure the subtitle line to show `{sharePercent}% · {count} appointments` as a single text line — matching the pattern used in `StylistRow` (line 94).
 
-**File: `src/components/dashboard/sales/AvgTicketByStylistPanel.tsx`**
+### Before (lines 137-148):
+```tsx
+<div className="flex items-center gap-2">
+  <span className="text-sm font-medium">{category.category}</span>
+  <span className="text-xs text-muted-foreground">{category.sharePercent}%</span>
+</div>
+<div className="flex items-center gap-2 mt-0.5">
+  <Progress ... />
+  <span className="text-xs text-muted-foreground">{category.count} appointments</span>
+</div>
+```
 
-3. **Line 131** — Section label: Add `font-display`, normalize tracking from `tracking-[0.15em]` to `tracking-wide`
+### After:
+```tsx
+<span className="text-sm font-medium">{category.category}</span>
+<p className="text-xs text-muted-foreground">
+  {category.sharePercent}% · {category.count} appointment{category.count !== 1 ? 's' : ''}
+</p>
+```
+
+Also remove the unused `Progress` import (line 5).
 
 ### Files modified
-- `src/components/dashboard/sales/TicketDistributionPanel.tsx`
-- `src/components/dashboard/sales/AvgTicketByStylistPanel.tsx`
+- `src/components/dashboard/sales/RevenueByCategoryPanel.tsx`
 
