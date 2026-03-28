@@ -187,7 +187,7 @@ export function ViewAsPopover() {
                 />
               </div>
             </div>
-            <ScrollArea className="max-h-[380px]">
+            <ScrollArea className="flex-1 min-h-0">
               <div className="px-3 pb-3 space-y-0.5">
                 {usersLoading ? (
                   <p className="text-xs text-muted-foreground text-center py-6">Loading team…</p>
