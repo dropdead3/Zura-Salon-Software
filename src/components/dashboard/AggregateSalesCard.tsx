@@ -28,8 +28,6 @@ import {
   Check,
   CheckCircle2,
   Moon,
-  TrendingDown,
-  TrendingUp,
 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
