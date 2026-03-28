@@ -165,7 +165,7 @@ export function StylistStep({
                       onClick={() => onDateChange(date)}
                     >
                       <span className={cn(
-                        'text-[10px] uppercase',
+                        'text-[10px] font-display uppercase',
                         isSelected ? 'text-primary-foreground/80' : 'text-muted-foreground'
                       )}>
                         {isToday ? 'Today' : formatDate(date, 'EEE')}

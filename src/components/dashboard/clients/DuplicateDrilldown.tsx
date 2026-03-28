@@ -166,7 +166,7 @@ export function DuplicateDrilldown({ client, canonicalClientId, duplicateReasons
           >
             <div className="flex items-center justify-between">
               <span className={cn(
-                "text-[10px] font-medium tracking-wide uppercase",
+                "text-[10px] font-display font-medium tracking-wide uppercase",
                 isDuplicate ? "text-amber-500" : "text-muted-foreground"
               )}>
                 {label}

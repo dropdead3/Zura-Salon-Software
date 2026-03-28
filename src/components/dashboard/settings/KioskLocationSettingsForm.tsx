@@ -539,7 +539,7 @@ export function KioskLocationSettingsForm({ locationId, orgId, locationName, onP
                       key={size}
                       type="button"
                       className={cn(
-                        "flex items-center justify-center px-2 py-2 rounded-lg border transition-colors text-xs font-medium uppercase",
+                        "flex items-center justify-center px-2 py-2 rounded-lg border transition-colors text-xs font-display font-medium uppercase",
                         localSettings.logo_size === size ? "border-primary bg-primary/10 text-foreground" : "border-border hover:border-primary/50"
                       )}
                       onClick={() => updateField('logo_size', size)}
