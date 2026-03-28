@@ -1,40 +1,40 @@
 
 
-## Fix Contradictory Service Revenue Metrics
+## Fix Confusing "Tracking below scheduled" Line
 
 ### Problem
-The three data points currently contradict each other because they use different baselines:
-- "Scheduled Services Today: $402" uses the **adjusted** number (actual completed + pending scheduled)
-- "Exceeded" compares **total POS revenue** ($1,905) against that $402
-- "Tracking $3,423 below" compares completed actual vs completed scheduled
-
-This creates an impossible read: "You exceeded expectations" AND "You're $3,423 below." The metrics are answering different questions with different denominators.
+"Tracking $3,423 below scheduled" compares only **completed appointments' actual POS revenue** vs **those same appointments' original scheduled price**. But the user has no way to know this is scoped to completed-only — it reads as a nonsensical number relative to the other visible metrics ($1,905 actual, $3,825 scheduled, $402 pending).
 
 ### Solution
-Align all three lines to a single, intuitive story using the **original scheduled total** as the anchor:
+Replace the tracking line with a simple, intuitive **shortfall/surplus** that the user can instantly verify:
 
-1. **Scheduled Services Today: $X** → Use `originalExpected` (the full sum of all appointments originally booked, before cancellations/no-shows). This is "what was on the books."
+**Collected vs What Should Have Been Collected So Far**
 
-2. **Remaining badge** → Show `pendingScheduledRevenue` as "More Expected" — appointments not yet completed. This answers "how much is left to collect."
+- Calculate: `shortfall = completedScheduledRevenue - completedActualRevenue`
+- Display (only when resolved appointments exist and delta ≠ 0):
+  - If shortfall > 0: "Completed appointments brought in $X less than booked" (destructive color)
+  - If surplus: "Completed appointments brought in $X more than booked" (success color)
 
-3. **Tracking indicator** → Compare `todayActual.actualRevenue` (total POS collected so far) against `originalExpected - pendingScheduledRevenue` (what should have been collected by now based on resolved appointments). OR simpler: compare total actual vs total original scheduled to show "on track / behind / ahead" for the full day.
+This makes the scope explicit — it's about **completed appointments specifically**, and tells the operator whether clients are downgrading or upgrading from their booked services.
 
-### Changes in `AggregateSalesCard.tsx` (lines ~810-910)
+### Changes in `AggregateSalesCard.tsx` (lines ~880-895)
 
-- **Line 1**: Change `displayExpected` from `adjustedExpected.adjustedExpected` to `adjustedExpected.originalExpected` — show the original booking total
-- **Exceeded check**: Compare actual revenue against `originalExpected` (not adjusted), so "Exceeded" only shows when you've truly surpassed what was booked
-- **Remaining**: Keep using `pendingScheduledRevenue` — this correctly shows what's still outstanding
-- **Tracking line**: Compare actual revenue collected so far against `completedScheduledRevenue` (what completed appointments were supposed to bring in). This cleanly answers "are completed appointments delivering what was booked?"
-- **Remove the separate "Exceeded Scheduled Services" badge** — fold this into the tracking line logic (if actual > scheduled for completed, show "above"; if not, show "below")
+Replace:
+```
+Tracking $3,423.00 below scheduled
+```
 
-### Result
-The user sees one coherent narrative:
-- "Scheduled Services Today: $5,325" (original total booked)
-- "$402 More Expected" (pending appointments)
-- "Tracking $3,423 below scheduled" (completed appointments underdelivered)
+With copy like:
+```
+↓ Completed appts collected $X less than booked
+```
+or
+```
+↑ Completed appts collected $X more than booked
+```
 
-No contradictions. One baseline. Clear story.
+The key difference: the word "completed" + "than booked" makes the comparison self-explanatory. No ambiguity about what's being compared.
 
-### Files
-- `src/components/dashboard/AggregateSalesCard.tsx` — update the service revenue info block logic
+### File
+- `src/components/dashboard/AggregateSalesCard.tsx` — update lines ~880-895
 
