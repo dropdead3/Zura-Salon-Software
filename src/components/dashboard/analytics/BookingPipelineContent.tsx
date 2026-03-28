@@ -312,16 +312,21 @@ export function BookingPipelineContent({ locationId, dateRange }: BookingPipelin
                 )}
               </AnimatePresence>
 
-              {/* Boost Bookings CTA for critical/slowing */}
+              {/* Take Action CTA for critical/slowing */}
               {(loc.status === 'critical' || loc.status === 'slowing') && (
                 <div className="flex justify-end">
-                  <Link
-                    to={`/dashboard/admin/analytics?tab=marketing`}
-                    className="text-xs text-muted-foreground hover:text-foreground inline-flex items-center gap-1 transition-colors"
-                    onClick={(e) => e.stopPropagation()}
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    className="rounded-full px-3 h-6 text-[10px] font-sans"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setActionGuideForwardCount(loc.forwardCount);
+                      setShowActionGuide(true);
+                    }}
                   >
-                    Boost Bookings <ArrowRight className="w-3 h-3" />
-                  </Link>
+                    Take Action
+                  </Button>
                 </div>
               )}
             </div>
