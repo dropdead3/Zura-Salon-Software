@@ -1465,16 +1465,19 @@ export function AggregateSalesCard({
                   onClick={handleTipsCardToggle}
                 >
                   {!tipsCardExpanded && (
-                    <span className="text-sm font-display tabular-nums text-muted-foreground">
-                      {(() => {
-                        const tipDenominator = isToday && todayActual?.hasActualData
-                          ? todayActual.actualRevenue
-                          : displayMetrics.totalRevenue;
-                        const tips = metrics?.totalTips ?? 0;
-                        return tipDenominator > 0 && tips > 0
-                          ? `${(tips / tipDenominator * 100).toFixed(1)}% Avg Tip Rate`
-                          : '— Avg Tip Rate';
-                      })()}
+                    <span className="flex items-center gap-2 text-sm">
+                      <span className="font-display tabular-nums text-foreground">
+                        {(() => {
+                          const tipDenominator = isToday && todayActual?.hasActualData
+                            ? todayActual.actualRevenue
+                            : displayMetrics.totalRevenue;
+                          const tips = metrics?.totalTips ?? 0;
+                          return tipDenominator > 0 && tips > 0
+                            ? `${(tips / tipDenominator * 100).toFixed(1)}%`
+                            : '—';
+                        })()}
+                      </span>
+                      <span className="font-sans text-muted-foreground">Average Tip Rate</span>
                     </span>
                   )}
                   <ChevronDown className={cn("w-4 h-4 text-muted-foreground transition-transform duration-200", tipsCardExpanded && "rotate-180")} />
