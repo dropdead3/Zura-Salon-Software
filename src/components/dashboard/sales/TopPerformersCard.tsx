@@ -63,7 +63,7 @@ const SORT_OPTIONS: { value: SortMode; label: string }[] = [
 const INITIAL_COUNT = 3;
 
 export function TopPerformersCard({ performers, isLoading, showInfoTooltip = false, filterContext }: TopPerformersCardProps) {
-  const [sortMode, setSortMode] = useState<SortMode>('totalRevenue');
+  const [sortMode, setSortMode] = useState<SortMode>('service');
   const [showAll, setShowAll] = useState(false);
   const { formatCurrencyWhole } = useFormatCurrency();
 
