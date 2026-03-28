@@ -812,7 +812,7 @@ export function AggregateSalesCard({
                               >
                                 <Clock className="w-3 h-3" />
                                 <BlurredAmount disableTooltip>
-                                  <span>{formatCurrency(displayMetrics.totalRevenue)}</span>
+                                  <span>{formatCurrency(scheduledRevenue ?? 0)}</span>
                                 </BlurredAmount>
                                 <span>Expected</span>
                               </Badge>
