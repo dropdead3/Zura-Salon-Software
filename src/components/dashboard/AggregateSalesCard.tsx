@@ -836,12 +836,12 @@ export function AggregateSalesCard({
                               <Info className="w-3.5 h-3.5 text-muted-foreground/60 cursor-help" />
                             </TooltipTrigger>
                             <TooltipContent side="bottom" className="max-w-[280px] text-xs">
-                              {adjustedExpected ? (
+                                {adjustedExpected ? (
                                 <div className="space-y-1">
-                                  <p>Service revenue from today's appointments. Completed appointments use actual POS totals; pending appointments use their scheduled price. Cancellations and no-shows are excluded.</p>
-                                  <p>{adjustedExpected.resolvedCount} completed ({formatCurrency(adjustedExpected.completedActualRevenue)} actual) + {adjustedExpected.pendingCount} pending ({formatCurrency(adjustedExpected.pendingScheduledRevenue)} scheduled)</p>
+                                  <p>Total service revenue originally booked for today. Completed appointments show actual POS totals; pending appointments use their scheduled price.</p>
+                                  <p>{adjustedExpected.resolvedCount} completed ({formatCurrency(adjustedExpected.completedActualRevenue)} actual vs {formatCurrency(adjustedExpected.completedScheduledRevenue)} scheduled) · {adjustedExpected.pendingCount} pending ({formatCurrency(adjustedExpected.pendingScheduledRevenue)} scheduled)</p>
                                   {(adjustedExpected.cancelledCount > 0 || adjustedExpected.noShowCount > 0) && (
-                                    <p className="text-muted-foreground/70">{adjustedExpected.cancelledCount} cancelled, {adjustedExpected.noShowCount} no-shows excluded</p>
+                                    <p className="text-muted-foreground/70">{adjustedExpected.cancelledCount} cancelled, {adjustedExpected.noShowCount} no-shows included in total</p>
                                   )}
                                 </div>
                               ) : (
