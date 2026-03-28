@@ -787,7 +787,7 @@ export function AIInsightsPanel({ onClose }: { onClose: () => void }) {
                 {/* Summary strip */}
                 {data && (
                   <div className="px-5 pb-3">
-                    <div className="flex items-center gap-3 rounded-lg bg-muted/30 backdrop-blur-sm px-3.5 py-2.5">
+                    <div className="flex items-center gap-3 rounded-lg bg-muted/40 px-3.5 py-2.5">
                       <div className={cn('flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center', sentiment?.bg)}>
                         <SentimentIcon className={cn('w-3.5 h-3.5', sentiment?.color)} />
                       </div>
