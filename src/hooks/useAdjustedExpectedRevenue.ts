@@ -8,6 +8,7 @@ export interface AdjustedExpectedResult {
   resolvedCount: number;
   pendingCount: number;
   completedActualRevenue: number;
+  completedScheduledRevenue: number;
   pendingScheduledRevenue: number;
   cancelledCount: number;
   noShowCount: number;
