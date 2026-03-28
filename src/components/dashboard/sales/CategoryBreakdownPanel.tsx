@@ -85,25 +85,38 @@ export function CategoryBreakdownPanel({ data, mode, dayCount, isOpen, breakdown
             </div>
             {sorted.map((entry, index) => {
               const pct = total > 0 ? (entry.sortVal / total) * 100 : 0;
+              const isStylist = breakdownType === 'stylist';
               return (
                 <motion.div
                   key={entry.name}
                   initial={{ opacity: 0, x: -8 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: index * 0.04 }}
-                  className="grid grid-cols-[140px_1fr_48px_90px] items-center gap-3 py-1.5 px-2 rounded-md hover:bg-muted/30 transition-colors"
+                  className={cn(
+                    "grid items-center gap-3 py-1.5 px-2 rounded-md hover:bg-muted/30 transition-colors",
+                    isStylist
+                      ? "grid-cols-[28px_1fr_48px_90px]"
+                      : "grid-cols-[140px_1fr_48px_90px]"
+                  )}
                 >
+                  {isStylist ? (
+                    <span className="text-xs text-muted-foreground tabular-nums text-center">
+                      {index + 1}
+                    </span>
+                  ) : null}
                   <span className="text-sm text-foreground font-medium truncate">
                     {entry.name}
                   </span>
-                  <div className="h-2 bg-muted/50 rounded-full overflow-hidden">
-                    <motion.div
-                      className="h-full bg-primary/70 rounded-full"
-                      initial={{ width: 0 }}
-                      animate={{ width: `${pct}%` }}
-                      transition={{ duration: 0.5, delay: index * 0.04, ease: 'easeOut' }}
-                    />
-                  </div>
+                  {!isStylist && (
+                    <div className="h-2 bg-muted/50 rounded-full overflow-hidden">
+                      <motion.div
+                        className="h-full bg-primary/70 rounded-full"
+                        initial={{ width: 0 }}
+                        animate={{ width: `${pct}%` }}
+                        transition={{ duration: 0.5, delay: index * 0.04, ease: 'easeOut' }}
+                      />
+                    </div>
+                  )}
                   <span className="text-xs text-muted-foreground tabular-nums text-right">
                     {Math.round(pct)}%
                   </span>
