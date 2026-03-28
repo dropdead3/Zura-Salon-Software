@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ChevronDown, Users, UserPlus, UserCheck, Layers } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Progress } from '@/components/ui/progress';
+
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { ZuraAvatar } from '@/components/ui/ZuraAvatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
