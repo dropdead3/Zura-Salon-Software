@@ -235,7 +235,7 @@ function InsightCard({ insight, onRequestGuidance, drillDownHref }: { insight: I
 
   return (
     <div className={cn(
-      'rounded-xl border-l-[3px] border border-border/70 p-3.5 transition-colors shadow-sm',
+      'rounded-xl border-l-[3px] border border-border/70 p-3.5 transition-colors shadow-[0_1px_3px_0_rgba(0,0,0,0.06)]',
       severityStyles[insight.severity],
     )}>
       <div className="flex items-start gap-2.5">
