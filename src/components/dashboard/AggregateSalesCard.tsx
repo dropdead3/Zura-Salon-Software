@@ -799,7 +799,7 @@ export function AggregateSalesCard({
               {isToday && scheduledRevenue != null && scheduledRevenue > 0 && (
                 <div className="mt-4 mx-auto max-w-sm space-y-3">
                   {(() => {
-                    const exceededExpected = !!(todayActual?.hasActualData && todayActual.actualRevenue > displayMetrics.totalRevenue && displayMetrics.totalRevenue > 0);
+                    const exceededExpected = !!(todayActual?.hasActualData && scheduledRevenue != null && todayActual.actualRevenue > scheduledRevenue && scheduledRevenue > 0);
                     return (
                       <>
                         <div className="flex items-center justify-center gap-1.5">
