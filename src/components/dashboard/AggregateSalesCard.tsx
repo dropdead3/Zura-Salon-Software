@@ -852,7 +852,7 @@ export function AggregateSalesCard({
                         {/* Appointment completion fraction */}
                         {adjustedExpected && (adjustedExpected.resolvedCount + adjustedExpected.pendingCount + adjustedExpected.cancelledCount + adjustedExpected.noShowCount) > 0 && (
                           <p className="text-xs text-muted-foreground/70 text-center">
-                            {adjustedExpected.resolvedCount} of {adjustedExpected.resolvedCount + adjustedExpected.pendingCount + adjustedExpected.cancelledCount + adjustedExpected.noShowCount} appointments completed
+                            {adjustedExpected.resolvedCount} of {adjustedExpected.resolvedCount + adjustedExpected.pendingCount + adjustedExpected.cancelledCount + adjustedExpected.noShowCount} appointments completed{adjustedExpected.pendingCount > 0 && ` · ${adjustedExpected.pendingCount} pending`}
                           </p>
                         )}
 
