@@ -889,7 +889,7 @@ export function AggregateSalesCard({
                               <TrendingUp className="w-3.5 h-3.5" />
                             )}
                             <BlurredAmount disableTooltip>
-                              <span>Tracking {formatCurrency(Math.abs(serviceDelta))} {serviceDelta < 0 ? 'below' : 'above'} scheduled</span>
+                              <span>Completed appts collected {formatCurrency(Math.abs(serviceDelta))} {serviceDelta < 0 ? 'less' : 'more'} than booked</span>
                             </BlurredAmount>
                           </div>
                         )}
