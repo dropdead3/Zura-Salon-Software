@@ -821,7 +821,7 @@ export function AggregateSalesCard({
                           </Tooltip>
                           <Tooltip>
                             <TooltipTrigger asChild>
-                              <Info className="w-3.5 h-3.5 text-muted-foreground cursor-help" />
+                              <Info className="w-4 h-4 text-muted-foreground cursor-help" />
                             </TooltipTrigger>
                             <TooltipContent side="bottom" className="max-w-[200px] text-xs">
                               Based on scheduled appointments. Final revenue may differ as appointments are completed, cancelled, or added.
