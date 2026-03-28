@@ -1,40 +1,35 @@
 
 
-## Fix Confusing "Tracking below scheduled" Line
+## Fix: Date Filter Bug in Adjusted Expected Revenue
 
-### Problem
-"Tracking $3,423 below scheduled" compares only **completed appointments' actual POS revenue** vs **those same appointments' original scheduled price**. But the user has no way to know this is scoped to completed-only — it reads as a nonsensical number relative to the other visible metrics ($1,905 actual, $3,825 scheduled, $402 pending).
-
-### Solution
-Replace the tracking line with a simple, intuitive **shortfall/surplus** that the user can instantly verify:
-
-**Collected vs What Should Have Been Collected So Far**
-
-- Calculate: `shortfall = completedScheduledRevenue - completedActualRevenue`
-- Display (only when resolved appointments exist and delta ≠ 0):
-  - If shortfall > 0: "Completed appointments brought in $X less than booked" (destructive color)
-  - If surplus: "Completed appointments brought in $X more than booked" (success color)
-
-This makes the scope explicit — it's about **completed appointments specifically**, and tells the operator whether clients are downgrading or upgrading from their booked services.
-
-### Changes in `AggregateSalesCard.tsx` (lines ~880-895)
-
-Replace:
+### Root Cause
+In `useAdjustedExpectedRevenue.ts` line 80, the query uses:
 ```
-Tracking $3,423.00 below scheduled
+.lt('transaction_date', '2026-03-28T23:59:59')
 ```
+Since `transaction_date` is a **date** column (not timestamp), Postgres casts the timestamp string to `2026-03-28`, producing `WHERE transaction_date < '2026-03-28'` — which excludes today entirely. Result: `completedActualRevenue = $0`, creating the false "$3,423 less than booked" message.
 
-With copy like:
+### Fix
+**File: `src/hooks/useAdjustedExpectedRevenue.ts`** (line 79-80)
+
+Change:
+```typescript
+.gte('transaction_date', todayStr)
+.lt('transaction_date', todayStr + 'T23:59:59')
 ```
-↓ Completed appts collected $X less than booked
-```
-or
-```
-↑ Completed appts collected $X more than booked
+To:
+```typescript
+.gte('transaction_date', todayStr)
+.lte('transaction_date', todayStr)
 ```
 
-The key difference: the word "completed" + "than booked" makes the comparison self-explanatory. No ambiguity about what's being compared.
+This matches how `useTodayActualRevenue` successfully queries the same table.
 
-### File
-- `src/components/dashboard/AggregateSalesCard.tsx` — update lines ~880-895
+### Expected Result After Fix
+- **completedActualRevenue** will correctly reflect today's POS total for completed appointment clients (~$1,905.87)
+- The tracking line will show the **real** delta between what completed appointments collected vs what they were booked for
+- All three metrics (scheduled $3,825 / pending $402 / tracking indicator) will be consistent and accurate
+
+### Files
+- `src/hooks/useAdjustedExpectedRevenue.ts` — fix date range filter (1 line change)
 
