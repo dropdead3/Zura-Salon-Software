@@ -370,16 +370,16 @@ export function AggregateSalesCard({
     dateFilters.dateFrom,
     dateFilters.dateTo,
     filterContext?.locationId,
-    isPastRange
+    isPastRange || isToday
   );
 
   // Gap analysis — lazy, only fetched when drill-down is open
   const { data: gapAnalysis, isLoading: gapLoading } = useRevenueGapAnalysis(
     dateFilters.dateFrom,
     dateFilters.dateTo,
-    isToday ? (metrics?.totalRevenue ?? 0) : (scheduledRevenue ?? 0),
+    isToday ? (scheduledRevenue ?? 0) : (scheduledRevenue ?? 0),
     isToday ? (todayActual?.actualRevenue ?? 0) : (pastActual?.actualRevenue ?? 0),
-    (isPastRange || isToday) && activeDrilldown === 'expectedGap' && (isToday || scheduledRevenue != null),
+    (isPastRange || isToday) && activeDrilldown === 'expectedGap' && scheduledRevenue != null,
     filterContext?.locationId
   );
 
@@ -796,10 +796,10 @@ export function AggregateSalesCard({
               </div>
 
               {/* Expected Revenue - secondary badge (today + past ranges with actual POS data) */}
-              {isToday && (
+              {isToday && scheduledRevenue != null && scheduledRevenue > 0 && (
                 <div className="mt-4 mx-auto max-w-sm space-y-3">
                   {(() => {
-                    const exceededExpected = !!(todayActual?.hasActualData && todayActual.actualRevenue > displayMetrics.totalRevenue && displayMetrics.totalRevenue > 0);
+                    const exceededExpected = !!(todayActual?.hasActualData && scheduledRevenue != null && todayActual.actualRevenue > scheduledRevenue && scheduledRevenue > 0);
                     return (
                       <>
                         <div className="flex items-center justify-center gap-1.5">
@@ -812,7 +812,7 @@ export function AggregateSalesCard({
                               >
                                 <Clock className="w-3 h-3" />
                                 <BlurredAmount disableTooltip>
-                                  <span>{formatCurrency(displayMetrics.totalRevenue)}</span>
+                                  <span>{formatCurrency(scheduledRevenue ?? 0)}</span>
                                 </BlurredAmount>
                                 <span>Expected</span>
                               </Badge>
@@ -841,10 +841,10 @@ export function AggregateSalesCard({
                               </BlurredAmount>
                             </div>
                             <Progress 
-                              value={displayMetrics.totalRevenue > 0 
-                                ? Math.min((todayActual.actualRevenue / displayMetrics.totalRevenue) * 100, 100) 
+                              value={scheduledRevenue && scheduledRevenue > 0 
+                                ? Math.min((todayActual.actualRevenue / scheduledRevenue) * 100, 100) 
                                 : 0
-                              } 
+                              }
                               className="h-1.5"
                               indicatorClassName={exceededExpected ? "bg-success-foreground" : undefined}
                             />
