@@ -813,9 +813,8 @@ export function AggregateSalesCard({
                   {(() => {
                     const displayExpected = todayExpectedDisplay;
                     const remainingExpected = adjustedExpected ? adjustedExpected.pendingScheduledRevenue : displayExpected;
-                    const exceededExpected = !!(todayActual?.hasActualData && displayExpected > 0 && todayActual.actualRevenue > displayExpected);
                     
-                    // Shortfall/surplus: compare what completed appts were scheduled for vs what they actually brought in
+                    // Tracking: compare actual POS revenue against what completed appointments were scheduled for
                     const completedScheduled = adjustedExpected?.completedScheduledRevenue ?? 0;
                     const completedActual = adjustedExpected?.completedActualRevenue ?? 0;
                     const serviceDelta = completedActual - completedScheduled;
