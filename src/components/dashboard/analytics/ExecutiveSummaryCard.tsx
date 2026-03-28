@@ -28,6 +28,7 @@ import {
   Building2,
   Wallet,
   CalendarCheck2,
+  ArrowRight,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useSalesMetrics, useSalesByLocation, useSalesByStylist } from '@/hooks/useSalesData';
