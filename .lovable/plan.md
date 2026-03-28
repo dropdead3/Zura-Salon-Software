@@ -2,29 +2,21 @@
 
 ## Problem
 
-Sidebar nav link hover states use `hover:bg-muted/60` which is too subtle in light mode — the fill is barely visible against the light sidebar background.
+The Zura Insights expansion panel has visible shadow/corner artifacts caused by two issues:
+
+1. **Shadow clipping**: The `AIInsightsPanel` uses `shadow-lg` on its container (line 716), but the parent `motion.div` in `CommandCenterControlRow.tsx` (line 166) uses `overflow-hidden` for the height animation. This clips the box-shadow, creating visible artifacts at the rounded corners.
+
+2. **Backdrop blur ghosting**: A `backdrop-blur-sm` on the summary strip inside the panel (line 790) can cause per-frame re-sampling artifacts during animation.
 
 ## Plan
 
-**File:** `src/components/dashboard/CollapsibleNavGroup.tsx`
+**File: `src/components/dashboard/CommandCenterControlRow.tsx`**
 
-Replace all instances of `hover:bg-muted/60` with `hover:bg-foreground/10` for non-active nav items. This uses a dark-on-light translucent overlay that provides visible contrast in light mode while remaining appropriate in dark mode (matching the memory note on button hover standards).
+Change `overflow-hidden` to `overflow-clip` on both expansion `motion.div` containers (lines 166, 183). `overflow-clip` prevents content overflow without creating a new stacking context that clips box-shadows, and it avoids the compositing issues that `overflow-hidden` can cause with backdrop-blur children.
 
-Affected hover classes (all non-active states):
-- ~8 occurrences of `hover:bg-muted/60` → `hover:bg-foreground/10`
+**File: `src/components/dashboard/AIInsightsDrawer.tsx`**
 
-**File:** `src/components/dashboard/SidebarNavContent.tsx`
+1. Line 716: Remove `shadow-lg` from the panel container — the border is sufficient, and removing the shadow eliminates the clipping source entirely. The panel sits in document flow (not floating), so a heavy shadow is unnecessary.
 
-Same replacement for the main nav items and onboarding link:
-- ~3 occurrences of `hover:bg-muted/60` → `hover:bg-foreground/10`
-
-**File:** `src/components/dashboard/SidebarFeedbackButtons.tsx`
-
-- 3 occurrences of `hover:bg-muted/60` → `hover:bg-foreground/10`
-
-**File:** `src/components/dashboard/SidebarClockButton.tsx`
-
-- 1 occurrence of `hover:bg-muted/60` → `hover:bg-foreground/10`
-
-This aligns with the project's established hover standard: *"Ghost and Outline button variants must use a translucent `hover:bg-foreground/10` overlay rather than a solid light/accent background."*
+2. Line 790: Remove `backdrop-blur-sm` from the summary strip — replace with a solid `bg-muted/40` to eliminate the per-frame blur compositing artifacts.
 
