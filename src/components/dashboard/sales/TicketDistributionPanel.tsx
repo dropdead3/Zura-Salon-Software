@@ -49,7 +49,7 @@ export function TicketDistributionPanel({ isOpen, dateFrom, dateTo, locationId }
                 {/* Median vs Average comparison */}
                 <div className="flex items-center gap-4 px-2 py-2 bg-muted/20 rounded-lg">
                   <div className="flex-1 text-center">
-                    <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Median</p>
+                    <p className="font-display text-[10px] uppercase tracking-wide text-muted-foreground">Median</p>
                     <p className="text-sm font-display tabular-nums">
                       <BlurredAmount>{formatCurrencyWhole(Math.round(data!.median))}</BlurredAmount>
                     </p>
