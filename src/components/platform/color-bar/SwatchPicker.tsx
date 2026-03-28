@@ -299,7 +299,7 @@ export function SwatchPicker({ value, suggestedValue, onChange, disabled }: Swat
         sideOffset={8}
       >
         <div className="space-y-1">
-          <span className="font-sans text-[10px] text-[hsl(var(--platform-foreground-muted))] tracking-wide uppercase">
+          <span className="font-display text-[10px] text-[hsl(var(--platform-foreground-muted))] tracking-wide uppercase">
             Tone Swatch
           </span>
           {isSuggested && suggestedValue && (
@@ -321,7 +321,7 @@ export function SwatchPicker({ value, suggestedValue, onChange, disabled }: Swat
             <div className="space-y-2 pr-2">
               {HAIR_COLOR_SECTIONS.map((section) => (
                 <div key={section.label}>
-                  <span className="font-sans text-[9px] text-[hsl(var(--platform-foreground-muted)/0.6)] tracking-wider uppercase block mb-1">
+                  <span className="font-display text-[9px] text-[hsl(var(--platform-foreground-muted)/0.6)] tracking-wide uppercase block mb-1">
                     {section.label}
                   </span>
                   <div className="grid grid-cols-8 gap-1">
@@ -354,7 +354,7 @@ export function SwatchPicker({ value, suggestedValue, onChange, disabled }: Swat
 
               {/* Custom Color Picker */}
               <div className="pt-1 border-t border-[hsl(var(--platform-border)/0.3)]">
-                <span className="font-sans text-[9px] text-[hsl(var(--platform-foreground-muted)/0.6)] tracking-wider uppercase block mb-1.5">
+                <span className="font-display text-[9px] text-[hsl(var(--platform-foreground-muted)/0.6)] tracking-wide uppercase block mb-1.5">
                   Custom Color
                 </span>
                 <div className="flex items-center gap-2">

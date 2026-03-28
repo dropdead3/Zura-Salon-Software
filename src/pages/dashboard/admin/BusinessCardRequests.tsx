@@ -230,19 +230,19 @@ export default function BusinessCardRequests() {
         {/* Stats Cards */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
           <Card className="p-4">
-            <p className="text-xs text-muted-foreground font-sans uppercase tracking-wider">Total</p>
+            <p className="text-xs text-muted-foreground font-display uppercase tracking-wide">Total</p>
             <p className="font-display text-2xl mt-1">{stats.total}</p>
           </Card>
           <Card className="p-4 border-yellow-500/30">
-            <p className="text-xs text-yellow-500 font-sans uppercase tracking-wider">Pending</p>
+            <p className="text-xs text-yellow-500 font-display uppercase tracking-wide">Pending</p>
             <p className="font-display text-2xl mt-1">{stats.pending}</p>
           </Card>
           <Card className="p-4 border-blue-500/30">
-            <p className="text-xs text-blue-500 font-sans uppercase tracking-wider">Processing</p>
+            <p className="text-xs text-blue-500 font-display uppercase tracking-wide">Processing</p>
             <p className="font-display text-2xl mt-1">{stats.processing}</p>
           </Card>
           <Card className="p-4 border-green-500/30">
-            <p className="text-xs text-green-500 font-sans uppercase tracking-wider">Completed</p>
+            <p className="text-xs text-green-500 font-display uppercase tracking-wide">Completed</p>
             <p className="font-display text-2xl mt-1">{stats.completed}</p>
           </Card>
         </div>

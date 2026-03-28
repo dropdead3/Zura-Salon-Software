@@ -133,7 +133,7 @@ export function ConsultationFormDialog({ open, onOpenChange }: ConsultationFormD
         
         <DialogHeader className="p-6 pb-4 sticky top-0 bg-background z-10">
           <div>
-            <span className="text-xs uppercase tracking-[0.2em] text-muted-foreground font-sans block mb-2">
+            <span className="text-xs uppercase tracking-wide text-muted-foreground font-display block mb-2">
               New Client
             </span>
             <DialogTitle className="font-serif text-2xl md:text-3xl font-normal text-foreground">
@@ -153,7 +153,7 @@ export function ConsultationFormDialog({ open, onOpenChange }: ConsultationFormD
             <div className="flex items-start gap-3">
               <AlertCircle size={18} className="text-foreground flex-shrink-0 mt-0.5" />
               <div>
-                <h3 className="text-xs uppercase tracking-[0.15em] text-foreground font-sans mb-1.5">
+                <h3 className="text-xs uppercase tracking-wide text-foreground font-display mb-1.5">
                   New Clients
                 </h3>
                 <p className="text-xs text-muted-foreground font-sans font-light leading-relaxed">
@@ -186,7 +186,7 @@ export function ConsultationFormDialog({ open, onOpenChange }: ConsultationFormD
           <div>
             <label
               htmlFor="dialog-name"
-              className="block text-xs uppercase tracking-[0.2em] text-muted-foreground font-sans mb-2"
+              className="block text-xs uppercase tracking-wide text-muted-foreground font-display mb-2"
             >
               Name
             </label>
@@ -205,7 +205,7 @@ export function ConsultationFormDialog({ open, onOpenChange }: ConsultationFormD
           <div>
             <label
               htmlFor="dialog-email"
-              className="block text-xs uppercase tracking-[0.2em] text-muted-foreground font-sans mb-2"
+              className="block text-xs uppercase tracking-wide text-muted-foreground font-display mb-2"
             >
               Email
             </label>
@@ -224,7 +224,7 @@ export function ConsultationFormDialog({ open, onOpenChange }: ConsultationFormD
           <div>
             <label
               htmlFor="dialog-phone"
-              className="block text-xs uppercase tracking-[0.2em] text-muted-foreground font-sans mb-2"
+              className="block text-xs uppercase tracking-wide text-muted-foreground font-display mb-2"
             >
               Phone
             </label>
@@ -242,7 +242,7 @@ export function ConsultationFormDialog({ open, onOpenChange }: ConsultationFormD
           <div className="relative">
             <label
               htmlFor="dialog-location"
-              className="block text-xs uppercase tracking-[0.2em] text-muted-foreground font-sans mb-2"
+              className="block text-xs uppercase tracking-wide text-muted-foreground font-display mb-2"
             >
               Preferred Location
             </label>
@@ -267,7 +267,7 @@ export function ConsultationFormDialog({ open, onOpenChange }: ConsultationFormD
           <div className="relative">
             <label
               htmlFor="dialog-service"
-              className="block text-xs uppercase tracking-[0.2em] text-muted-foreground font-sans mb-2"
+              className="block text-xs uppercase tracking-wide text-muted-foreground font-display mb-2"
             >
               Service Interest
             </label>
@@ -292,7 +292,7 @@ export function ConsultationFormDialog({ open, onOpenChange }: ConsultationFormD
           <div className="relative">
             <label
               htmlFor="dialog-stylist"
-              className="block text-xs uppercase tracking-[0.2em] text-muted-foreground font-sans mb-2"
+              className="block text-xs uppercase tracking-wide text-muted-foreground font-display mb-2"
             >
               Preferred Stylist
             </label>
@@ -323,7 +323,7 @@ export function ConsultationFormDialog({ open, onOpenChange }: ConsultationFormD
           <div className="relative">
             <label
               htmlFor="dialog-referral"
-              className="block text-xs uppercase tracking-[0.2em] text-muted-foreground font-sans mb-2"
+              className="block text-xs uppercase tracking-wide text-muted-foreground font-display mb-2"
             >
               How Did You Hear About Us?
             </label>
@@ -347,7 +347,7 @@ export function ConsultationFormDialog({ open, onOpenChange }: ConsultationFormD
           <div>
             <label
               htmlFor="dialog-message"
-              className="block text-xs uppercase tracking-[0.2em] text-muted-foreground font-sans mb-2"
+              className="block text-xs uppercase tracking-wide text-muted-foreground font-display mb-2"
             >
               Tell Us About Your Hair Goals
             </label>

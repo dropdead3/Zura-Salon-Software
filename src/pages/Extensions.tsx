@@ -856,7 +856,7 @@ export default function Extensions() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.6 }}
-              className="text-xs uppercase tracking-[0.3em] text-muted-foreground font-sans block mb-4"
+              className="text-xs uppercase tracking-wide text-muted-foreground font-display block mb-4"
             >
               Find Out
             </motion.span>
@@ -936,7 +936,7 @@ export default function Extensions() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.6 }}
-            className="text-xs uppercase tracking-[0.3em] text-muted-foreground font-sans block mb-4"
+            className="text-xs uppercase tracking-wide text-muted-foreground font-display block mb-4"
           >
             Investment
           </motion.span>
@@ -1128,7 +1128,7 @@ export default function Extensions() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.6 }}
-            className="text-xs uppercase tracking-[0.3em] text-muted-foreground font-sans block mb-4"
+            className="text-xs uppercase tracking-wide text-muted-foreground font-display block mb-4"
           >
             Why Choose Us
           </motion.span>
@@ -1213,7 +1213,7 @@ export default function Extensions() {
             viewport={{ once: true }}
             transition={{ duration: 0.6 }}
           >
-            <span className="text-xs uppercase tracking-[0.3em] text-background/60 font-sans block mb-4">
+            <span className="text-xs uppercase tracking-wide text-background/60 font-display block mb-4">
               The Process
             </span>
             <h2 className="font-display text-2xl md:text-3xl lg:text-4xl font-normal tracking-tight leading-[1.1] mb-6">
@@ -1341,7 +1341,7 @@ export default function Extensions() {
             transition={{ duration: 0.6 }}
             className="lg:sticky lg:top-32"
           >
-            <span className="text-xs uppercase tracking-[0.3em] text-muted-foreground font-sans block mb-4">
+            <span className="text-xs uppercase tracking-wide text-muted-foreground font-display block mb-4">
               Aftercare
             </span>
             <h2 className="font-display text-2xl md:text-3xl lg:text-4xl font-normal tracking-tight text-foreground leading-[1.1] mb-6">
@@ -1477,7 +1477,7 @@ export default function Extensions() {
             viewport={{ once: true }}
             transition={{ duration: 0.6 }}
           >
-            <span className="text-xs uppercase tracking-[0.3em] text-muted-foreground font-sans block mb-4">
+            <span className="text-xs uppercase tracking-wide text-muted-foreground font-display block mb-4">
               Extension Care
             </span>
             <h2 className="font-display text-2xl md:text-3xl lg:text-4xl font-normal tracking-tight text-foreground leading-[1.1] mb-6">
@@ -1530,7 +1530,7 @@ export default function Extensions() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.6 }}
-            className="text-xs uppercase tracking-[0.3em] text-background/60 font-sans block mb-4"
+            className="text-xs uppercase tracking-wide text-background/60 font-display block mb-4"
           >
             Your Visit
           </motion.span>

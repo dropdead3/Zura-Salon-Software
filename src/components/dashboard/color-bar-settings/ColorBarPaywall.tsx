@@ -503,7 +503,7 @@ export function ColorBarPaywall() {
             ═══════════════════════════════════════════ */}
         <div className="pb-16 md:pb-20 max-w-3xl mx-auto space-y-8">
           {/* Quantified result line */}
-          <p className="text-center font-sans text-sm text-muted-foreground/60 uppercase tracking-wider">
+          <p className="text-center font-display text-sm text-muted-foreground/60 uppercase tracking-wide">
             Salon owners recover an average of $2,400/mo in color costs
           </p>
 
@@ -638,7 +638,7 @@ export function ColorBarPaywall() {
                             {/* Body */}
                             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-8">
                               <div className="space-y-1">
-                                <p className="font-sans text-xs text-[hsl(145,50%,55%)]/80 uppercase tracking-widest">You could recover</p>
+                                <p className="font-display text-xs text-[hsl(145,50%,55%)]/80 uppercase tracking-wide">You could recover</p>
                                 <p className="font-display text-5xl md:text-6xl font-medium tracking-wide text-[hsl(145,50%,55%)] tabular-nums leading-none">
                                   <AnimatedNumber
                                     value={yearlySavings}

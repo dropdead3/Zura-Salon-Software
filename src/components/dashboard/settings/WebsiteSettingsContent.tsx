@@ -303,7 +303,7 @@ function GeneralTab() {
 
           {/* Live Preview */}
           <div className="rounded-lg border bg-muted/30 p-4 space-y-3 mt-2">
-            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Live Preview</p>
+            <p className="text-xs font-display text-muted-foreground uppercase tracking-wide">Live Preview</p>
             <div className={cn(
               "rounded-md overflow-hidden transition-opacity",
               !annLocal.enabled && "opacity-40"
@@ -318,7 +318,7 @@ function GeneralTab() {
                   <span>{annLocal.message_suffix || 'looking for our extensions?'}</span>
                 </div>
                 {annLocal.cta_text && (
-                  <div className={cn("flex items-center gap-1 uppercase tracking-wider text-xs font-sans font-medium shrink-0 ml-4", annLocal.bg_color && /hsl\(\d+,?\s*\d+%?,?\s*(\d+)%?\)/.test(annLocal.bg_color) && parseInt(annLocal.bg_color.match(/(\d+)%?\)$/)?.[1] || '100') < 40 ? "text-white" : "text-foreground")}>
+                  <div className={cn("flex items-center gap-1 uppercase tracking-wide text-xs font-display shrink-0 ml-4", annLocal.bg_color && /hsl\(\d+,?\s*\d+%?,?\s*(\d+)%?\)/.test(annLocal.bg_color) && parseInt(annLocal.bg_color.match(/(\d+)%?\)$/)?.[1] || '100') < 40 ? "text-white" : "text-foreground")}>
                     {annLocal.cta_text}
                     <ArrowRight className="w-3 h-3" />
                   </div>
@@ -360,9 +360,9 @@ function GeneralTab() {
 
           {/* Social Links Preview */}
           <div className="rounded-lg border bg-muted/30 p-4 mt-4 space-y-3">
-            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Live Preview</p>
+            <p className="text-xs font-display text-muted-foreground uppercase tracking-wide">Live Preview</p>
             <div className="rounded-md p-3">
-              <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground font-sans mb-3">Connect</p>
+              <p className="text-xs uppercase tracking-wide text-muted-foreground font-display mb-3">Connect</p>
               <div className="space-y-2">
                 {SOCIAL_FIELDS.map(({ key, icon: Icon, label }) => {
                   const hasUrl = !!(socialLocal[key]);
@@ -793,7 +793,7 @@ function RetailTab() {
           </div>
 
           <div className="space-y-3 pl-1">
-            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Fulfillment Options</p>
+            <p className="text-xs font-display text-muted-foreground uppercase tracking-wide">Fulfillment Options</p>
             {[
               { key: 'pickup' as const, label: 'In-store pickup', desc: 'Clients collect orders at your location' },
               { key: 'delivery' as const, label: 'Local delivery', desc: 'Deliver within a set radius' },

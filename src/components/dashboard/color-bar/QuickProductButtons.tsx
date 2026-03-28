@@ -21,7 +21,7 @@ export function QuickProductButtons({ onSelect }: QuickProductButtonsProps) {
     <div className="space-y-1.5">
       <div className="flex items-center gap-1.5">
         <Zap className="w-3 h-3 text-primary" />
-        <span className="font-sans text-[10px] text-muted-foreground uppercase tracking-wider">
+        <span className="font-display text-[10px] text-muted-foreground uppercase tracking-wide">
           Quick Add
         </span>
       </div>

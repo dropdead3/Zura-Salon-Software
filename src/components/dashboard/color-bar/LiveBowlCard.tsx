@@ -115,7 +115,7 @@ export function LiveBowlCard({
           className="text-center py-4 rounded-xl bg-muted/30 border border-border/50"
           layout
         >
-          <p className="font-sans text-xs text-muted-foreground uppercase tracking-wider mb-1">
+          <p className="font-display text-xs text-muted-foreground uppercase tracking-wide mb-1">
             Total Dispensed
           </p>
           <div className="flex items-baseline justify-center gap-1.5">

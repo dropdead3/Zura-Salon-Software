@@ -59,7 +59,7 @@ export function Footer() {
 
           {/* Navigation */}
           <div className="space-y-4 md:space-y-6 text-center md:text-left">
-            <h4 className="text-xs uppercase tracking-[0.2em] text-muted-foreground font-sans">
+            <h4 className="text-xs uppercase tracking-wide text-muted-foreground font-display">
               Navigate
             </h4>
             <nav className="flex flex-row justify-center md:justify-start md:flex-col gap-6 md:gap-3">
@@ -82,7 +82,7 @@ export function Footer() {
 
           {/* Locations */}
           <div className="space-y-4 md:space-y-6 lg:col-span-2 text-center md:text-left">
-            <h4 className="text-xs uppercase tracking-[0.2em] text-muted-foreground font-sans">
+            <h4 className="text-xs uppercase tracking-wide text-muted-foreground font-display">
               Locations
             </h4>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2 gap-6">
@@ -138,7 +138,7 @@ export function Footer() {
 
           {/* Contact */}
           <div className="space-y-4 md:space-y-6 text-center md:text-left flex flex-col items-center md:items-start">
-            <h4 className="text-xs uppercase tracking-[0.2em] text-muted-foreground font-sans">
+            <h4 className="text-xs uppercase tracking-wide text-muted-foreground font-display">
               Connect
             </h4>
             <div className="space-y-4 flex flex-col items-center md:items-start">

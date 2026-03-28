@@ -101,7 +101,7 @@ export function AddProductToBowl({ bowlId, onAdd, onCancel, inline = false }: Ad
             </div>
             {substitutions.length > 0 && (
               <div className="space-y-1">
-                <p className="font-sans text-[10px] text-muted-foreground uppercase tracking-wider">
+                <p className="font-display text-[10px] text-muted-foreground uppercase tracking-wide">
                   Suggested Substitutes
                 </p>
                 {substitutions.map((sub) => (

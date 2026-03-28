@@ -131,7 +131,7 @@ export default function Booking() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6 }}
-              className="text-xs uppercase tracking-[0.3em] text-muted-foreground font-sans block mb-6"
+              className="text-xs uppercase tracking-wide text-muted-foreground font-display block mb-6"
             >
               New Clients
             </motion.span>
@@ -163,7 +163,7 @@ export default function Booking() {
               <div className="flex items-start gap-3">
                 <AlertCircle size={20} className="text-foreground flex-shrink-0 mt-0.5" />
                 <div>
-                  <h3 className="text-sm uppercase tracking-[0.15em] text-foreground font-sans mb-2">
+                  <h3 className="text-sm uppercase tracking-wide text-foreground font-display mb-2">
                     New Clients
                   </h3>
                   <p className="text-sm text-muted-foreground font-sans font-light leading-relaxed">
@@ -212,7 +212,7 @@ export default function Booking() {
               <div>
                 <label
                   htmlFor="name"
-                  className="block text-xs uppercase tracking-[0.2em] text-muted-foreground font-sans mb-3"
+                  className="block text-xs uppercase tracking-wide text-muted-foreground font-display mb-3"
                 >
                   Name
                 </label>
@@ -231,7 +231,7 @@ export default function Booking() {
               <div>
                 <label
                   htmlFor="email"
-                  className="block text-xs uppercase tracking-[0.2em] text-muted-foreground font-sans mb-3"
+                  className="block text-xs uppercase tracking-wide text-muted-foreground font-display mb-3"
                 >
                   Email
                 </label>
@@ -250,7 +250,7 @@ export default function Booking() {
               <div>
                 <label
                   htmlFor="phone"
-                  className="block text-xs uppercase tracking-[0.2em] text-muted-foreground font-sans mb-3"
+                  className="block text-xs uppercase tracking-wide text-muted-foreground font-display mb-3"
                 >
                   Phone
                 </label>
@@ -268,7 +268,7 @@ export default function Booking() {
               <div className="relative">
                 <label
                   htmlFor="location"
-                  className="block text-xs uppercase tracking-[0.2em] text-muted-foreground font-sans mb-3"
+                  className="block text-xs uppercase tracking-wide text-muted-foreground font-display mb-3"
                 >
                   Which Location Do You Prefer?
                 </label>
@@ -293,7 +293,7 @@ export default function Booking() {
               <div className="relative">
                 <label
                   htmlFor="service"
-                  className="block text-xs uppercase tracking-[0.2em] text-muted-foreground font-sans mb-3"
+                  className="block text-xs uppercase tracking-wide text-muted-foreground font-display mb-3"
                 >
                   Service Interest
                 </label>
@@ -318,7 +318,7 @@ export default function Booking() {
               <div className="relative">
                 <label
                   htmlFor="stylist"
-                  className="block text-xs uppercase tracking-[0.2em] text-muted-foreground font-sans mb-3"
+                  className="block text-xs uppercase tracking-wide text-muted-foreground font-display mb-3"
                 >
                   Preferred Stylist
                 </label>
@@ -349,7 +349,7 @@ export default function Booking() {
               <div className="relative">
                 <label
                   htmlFor="referralSource"
-                  className="block text-xs uppercase tracking-[0.2em] text-muted-foreground font-sans mb-3"
+                  className="block text-xs uppercase tracking-wide text-muted-foreground font-display mb-3"
                 >
                   How Did You Hear About Us?
                 </label>
@@ -373,7 +373,7 @@ export default function Booking() {
               <div>
                 <label
                   htmlFor="message"
-                  className="block text-xs uppercase tracking-[0.2em] text-muted-foreground font-sans mb-3"
+                  className="block text-xs uppercase tracking-wide text-muted-foreground font-display mb-3"
                 >
                   Message
                 </label>
@@ -421,7 +421,7 @@ export default function Booking() {
                 <div className="flex items-start gap-4">
                   <MapPin size={20} className="text-muted-foreground mt-1 flex-shrink-0" />
                   <div>
-                    <h3 className="text-sm uppercase tracking-[0.15em] text-foreground font-sans mb-2">
+                    <h3 className="text-sm uppercase tracking-wide text-foreground font-display mb-2">
                       North Mesa
                     </h3>
                     <p className="text-muted-foreground font-sans font-light">
@@ -446,7 +446,7 @@ export default function Booking() {
                 <div className="flex items-start gap-4">
                   <MapPin size={20} className="text-muted-foreground mt-1 flex-shrink-0" />
                   <div>
-                    <h3 className="text-sm uppercase tracking-[0.15em] text-foreground font-sans mb-2">
+                    <h3 className="text-sm uppercase tracking-wide text-foreground font-display mb-2">
                       Val Vista Lakes
                     </h3>
                     <p className="text-muted-foreground font-sans font-light">
@@ -472,7 +472,7 @@ export default function Booking() {
               <div className="flex items-start gap-4">
                 <Clock size={20} className="text-muted-foreground mt-1 flex-shrink-0" />
                 <div>
-                  <h3 className="text-sm uppercase tracking-[0.15em] text-foreground font-sans mb-2">
+                  <h3 className="text-sm uppercase tracking-wide text-foreground font-display mb-2">
                     Hours
                   </h3>
                   <div className="text-muted-foreground font-sans font-light space-y-1">
@@ -486,7 +486,7 @@ export default function Booking() {
               <div className="flex items-start gap-4">
                 <Mail size={20} className="text-muted-foreground mt-1 flex-shrink-0" />
                 <div>
-                  <h3 className="text-sm uppercase tracking-[0.15em] text-foreground font-sans mb-2">
+                  <h3 className="text-sm uppercase tracking-wide text-foreground font-display mb-2">
                     Email
                   </h3>
                   <a

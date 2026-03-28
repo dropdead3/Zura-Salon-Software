@@ -356,7 +356,7 @@ export const BeforeAfterSlider = forwardRef<BeforeAfterSliderHandle, BeforeAfter
           {/* Hint - positioned below the labels */}
           <div className="absolute top-12 left-1/2 -translate-x-1/2 z-20 pointer-events-none">
             <motion.span 
-              className="text-[10px] uppercase tracking-[0.15em] font-sans px-2 py-1 bg-black/50 rounded-full text-white/90 backdrop-blur-sm"
+              className="text-[10px] uppercase tracking-wide font-display px-2 py-1 bg-black/50 rounded-full text-white/90 backdrop-blur-sm"
               initial={{ opacity: 1 }}
               animate={{ opacity: hasInteracted ? 0 : 1 }}
               transition={{ duration: 0.3 }}
