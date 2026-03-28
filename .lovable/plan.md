@@ -1,17 +1,13 @@
 
 
-## Fix Goal Tracker Status Badges — Use Aeonik Pro Instead of Termina
+## Fix Goal Tracker Status Badge Font — Add `font-sans`
 
 ### Problem
-The status badges ("Ahead", "Behind", "On Track", etc.) on the Goal Tracker card are rendering in Termina (uppercase) instead of Aeonik Pro. Per typography doctrine, these are UI labels and must use `font-sans`.
+The pace status badge ("Ahead", "On Track", "Behind") on `GoalTrackerCard.tsx` is still rendering in Termina because it lacks an explicit `font-sans` class.
 
 ### Solution
-Add explicit `font-sans` class to the status badge `<span>` elements in both goal card components to ensure they render in Aeonik Pro.
+Add `font-sans` to the badge `<span>` class string at line 151 of `GoalTrackerCard.tsx`.
 
-### Files modified
-
-1. **`src/components/dashboard/goals/GoalCardWithData.tsx`** — line 181: add `font-sans` to the status badge class string
-2. **`src/components/dashboard/goals/GoalCard.tsx`** — line ~121: add `font-sans` to the equivalent status badge class string
-
-Both changes are identical: inserting `font-sans` into the existing `cn(...)` class list on the status badge span.
+### File modified
+**`src/components/dashboard/sales/GoalTrackerCard.tsx`** — line 151: add `font-sans` to the `cn(...)` call on the pace status badge.
 
