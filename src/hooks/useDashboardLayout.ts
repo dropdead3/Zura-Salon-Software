@@ -288,7 +288,7 @@ export function useDashboardLayout(overrideUserId?: string) {
   return {
     layout,
     hasCompletedSetup,
-    isLoading: prefsLoading || templateLoading,
+    isLoading: prefsLoading || templateLoading || (!overrideUserId && isResolvingTarget),
     roleTemplate,
     templateKey,
     isLeadership,
