@@ -419,7 +419,7 @@ export function WeekAheadForecast() {
               />
               <div className="flex items-center gap-1 justify-center">
                 <p className="text-xs text-muted-foreground">
-                  {isPredictedMode ? '7-Day Predicted' : '7-Day Total'}
+                  {isPredictedMode ? 'Next 7-Day Predicted' : 'Next 7-Day Total'}
                 </p>
                 <MetricInfoTooltip description={isPredictedMode
                   ? `Scheduled revenue adjusted by ${Math.round(realizationRate!)}% realization rate. Accounts for cancellations, no-shows, and pricing differences.`
