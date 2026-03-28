@@ -431,7 +431,7 @@ export function DashboardCustomizeMenu({ variant = 'icon', roleContext }: Dashbo
     } catch (err: any) {
       // Revert optimistic update on error
       queryClient.invalidateQueries({ queryKey: ['dashboard-visibility'] });
-      toast.error('Failed to update pinned card', { description: err?.message || 'Unknown error' });
+      toast({ title: 'Failed to update pinned card', description: err?.message || 'Unknown error', variant: 'destructive' });
     } finally {
       setIsTogglingPin(false);
     }
