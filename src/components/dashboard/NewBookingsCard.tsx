@@ -8,9 +8,11 @@ import { useBookingPipeline } from '@/hooks/useBookingPipeline';
 import { useBookingPipelineByLocation } from '@/hooks/useBookingPipelineByLocation';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { NewBookingsDrilldown } from './NewBookingsDrilldown';
+import { PipelineActionGuide } from './PipelineActionGuide';
 import { cn } from '@/lib/utils';
 import { tokens } from '@/lib/design-tokens';
 import { Link } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
 
 import { AnalyticsFilterBadge, type FilterContext } from '@/components/dashboard/AnalyticsFilterBadge';
 import type { DateRangeType } from '@/components/dashboard/PinnedAnalyticsCard';
