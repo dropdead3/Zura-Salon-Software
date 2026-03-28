@@ -98,7 +98,7 @@ export function TopPerformersCard({ performers, isLoading, showInfoTooltip = fal
       </div>
       <div className="flex items-center gap-2">
         <FilterTabsList>
-          <FilterTabsTrigger value="totalRevenue">Revenue</FilterTabsTrigger>
+          <FilterTabsTrigger value="service">Service</FilterTabsTrigger>
           <FilterTabsTrigger value="retail">Retail</FilterTabsTrigger>
         </FilterTabsList>
         {filterContext && (
