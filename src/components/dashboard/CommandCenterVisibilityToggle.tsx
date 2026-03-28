@@ -82,7 +82,7 @@ export function CommandCenterVisibilityToggle({
       if (error) throw error;
 
       // Sync to dashboard_layout so Customizer stays in sync
-      const currentLayout = layout || { pinnedCards: [], sectionOrder: [] };
+      const currentLayout = layout ?? { sections: [], widgets: [], hasCompletedSetup: false, pinnedCards: [], sectionOrder: [] };
       const pinnedEntry = toPinnedEntry(elementKey);
 
       if (checked) {
