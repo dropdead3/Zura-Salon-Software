@@ -95,8 +95,8 @@ export function CategoryBreakdownPanel({ data, mode, dayCount, isOpen, breakdown
                   className={cn(
                     "grid items-center gap-3 py-1.5 px-2 rounded-md hover:bg-muted/30 transition-colors",
                     isStylist
-                      ? "grid-cols-[28px_1fr_48px_90px]"
-                      : "grid-cols-[140px_1fr_48px_90px]"
+                      ? "grid-cols-[28px_1fr_48px_110px]"
+                      : "grid-cols-[140px_1fr_48px_110px]"
                   )}
                 >
                   {isStylist ? (
