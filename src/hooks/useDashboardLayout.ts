@@ -218,7 +218,7 @@ export function useDashboardTemplates() {
 // Fetch user's dashboard layout
 export function useDashboardLayout(overrideUserId?: string) {
   const roles = useEffectiveRoles();
-  const godModeTargetUserId = useGodModeTargetUserId();
+  const { targetUserId: godModeTargetUserId, isResolvingTarget } = useGodModeTargetUserId();
   const targetUserId = overrideUserId || godModeTargetUserId;
 
   const { data: userPrefs, isLoading: prefsLoading } = useQuery({
