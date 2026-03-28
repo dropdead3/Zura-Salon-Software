@@ -318,7 +318,7 @@ function GeneralTab() {
                   <span>{annLocal.message_suffix || 'looking for our extensions?'}</span>
                 </div>
                 {annLocal.cta_text && (
-                  <div className={cn("flex items-center gap-1 uppercase tracking-wider text-xs font-sans font-medium shrink-0 ml-4", annLocal.bg_color && /hsl\(\d+,?\s*\d+%?,?\s*(\d+)%?\)/.test(annLocal.bg_color) && parseInt(annLocal.bg_color.match(/(\d+)%?\)$/)?.[1] || '100') < 40 ? "text-white" : "text-foreground")}>
+                  <div className={cn("flex items-center gap-1 uppercase tracking-wide text-xs font-display shrink-0 ml-4", annLocal.bg_color && /hsl\(\d+,?\s*\d+%?,?\s*(\d+)%?\)/.test(annLocal.bg_color) && parseInt(annLocal.bg_color.match(/(\d+)%?\)$/)?.[1] || '100') < 40 ? "text-white" : "text-foreground")}>
                     {annLocal.cta_text}
                     <ArrowRight className="w-3 h-3" />
                   </div>
