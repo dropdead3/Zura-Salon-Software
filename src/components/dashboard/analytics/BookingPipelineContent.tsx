@@ -345,6 +345,11 @@ export function BookingPipelineContent({ locationId, dateRange }: BookingPipelin
           {showAll ? 'Show less' : `Show all ${sorted.length} locations`}
         </button>
       )}
+      <PipelineActionGuide
+        open={showActionGuide}
+        onOpenChange={setShowActionGuide}
+        forwardCount={actionGuideForwardCount}
+      />
     </div>
   );
 }
