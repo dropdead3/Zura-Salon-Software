@@ -1466,6 +1466,7 @@ export function AggregateSalesCard({
                 >
                   {!tipsCardExpanded && (
                     <span className="flex items-center gap-2 text-sm">
+                      <span className="font-sans text-muted-foreground">Average Tip Rate</span>
                       <span className="font-display tabular-nums text-foreground">
                         {(() => {
                           const tipDenominator = isToday && todayActual?.hasActualData
@@ -1477,7 +1478,6 @@ export function AggregateSalesCard({
                             : '—';
                         })()}
                       </span>
-                      <span className="font-sans text-muted-foreground">Average Tip Rate</span>
                     </span>
                   )}
                   <ChevronDown className={cn("w-4 h-4 text-muted-foreground transition-transform duration-200", tipsCardExpanded && "rotate-180")} />
