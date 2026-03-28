@@ -859,21 +859,15 @@ export function AggregateSalesCard({
                         {/* Remaining service revenue badge */}
                         {remainingExpected > 0 && (
                           <div className="flex items-center justify-center">
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Badge 
-                                  variant="outline" 
-                                  className="text-sm font-normal gap-1 cursor-pointer px-3 py-1.5 bg-warning/10 text-warning border-warning/30"
-                                  onClick={() => toggleDrilldown('expectedGap')}
-                                >
-                                  <span>Service revenue still expected to collect:</span>
-                                  <BlurredAmount disableTooltip>
-                                    <span>{formatCurrency(remainingExpected)}</span>
-                                  </BlurredAmount>
-                                </Badge>
-                              </TooltipTrigger>
-                              <TooltipContent>Click to see Gap Report</TooltipContent>
-                            </Tooltip>
+                            <Badge 
+                              variant="outline" 
+                              className="text-sm font-normal gap-1 px-3 py-1.5 bg-warning/10 text-warning border-warning/30"
+                            >
+                              <span>Service revenue still expected to collect:</span>
+                              <BlurredAmount disableTooltip>
+                                <span>{formatCurrency(remainingExpected)}</span>
+                              </BlurredAmount>
+                            </Badge>
                           </div>
                         )}
 
