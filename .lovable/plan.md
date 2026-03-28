@@ -2,33 +2,18 @@
 
 ## Problem
 
-The Rev/Hour KPI tile shows `$0.00` for today, but the "Efficiency by Stylist" panel directly below it correctly shows `$77/hr` salon average. Both should show the same value.
+The "Efficiency by Stylist" panel shows all stylists at once, which creates an excessively long list for organizations with large rosters (18+ staff visible in screenshot). Needs to cap at 10 visible rows with scroll for the rest.
 
-The KPI tile (line 1244) uses `todayActual.actualServiceHours` from the new appointments query we just added, while the efficiency panel uses `metrics?.totalServiceHours` from `useSalesData`. The `useSalesData` query works (the panel proves it), but the today-specific query likely returns 0 due to filter mismatches.
+## Plan
 
-## Fix
+**File: `src/components/dashboard/sales/RevPerHourByStylistPanel.tsx`**
 
-**File: `src/components/dashboard/AggregateSalesCard.tsx`** (lines 1244 and 1309)
+1. Wrap the stylist list in a `ScrollArea` with `max-h` set to accommodate ~10 rows (~400px based on ~40px per row)
+2. Keep the header ("Efficiency by Stylist" + "Salon avg") outside the scroll area so it stays fixed
+3. Import `ScrollArea` from `@/components/ui/scroll-area`
 
-For the today Rev/Hour calculation, fall back to `metrics?.totalServiceHours` when `todayActual.actualServiceHours` is 0. This uses the same data source as the efficiency panel:
-
-```tsx
-// Before (line 1244 and 1309):
-isToday ? (todayActual?.hasActualData && todayActual.actualServiceHours > 0 
-  ? todayActual.actualRevenue / todayActual.actualServiceHours : 0)
-
-// After:
-isToday ? (() => {
-  const hours = todayActual?.actualServiceHours > 0 
-    ? todayActual.actualServiceHours 
-    : (metrics?.totalServiceHours || 0);
-  const rev = todayActual?.hasActualData ? todayActual.actualRevenue : (metrics?.totalRevenue || 0);
-  return hours > 0 ? rev / hours : 0;
-})()
-```
-
-This ensures the KPI tile uses the same hours data that powers the efficiency panel, eliminating the mismatch.
+The change is ~5 lines — wrap the existing `div.space-y-1` containing the `.map()` in a `ScrollArea` with a max height constraint.
 
 ### Files modified
-- `src/components/dashboard/AggregateSalesCard.tsx` — two lines (1244 and 1309)
+- `src/components/dashboard/sales/RevPerHourByStylistPanel.tsx`
 
