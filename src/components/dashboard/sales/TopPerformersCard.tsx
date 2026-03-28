@@ -56,8 +56,8 @@ const getRankStyles = (rank: number) => {
 };
 
 const SORT_OPTIONS: { value: SortMode; label: string }[] = [
-  { value: 'totalRevenue', label: 'Total Revenue' },
-  { value: 'retail', label: 'Retail Sales' },
+  { value: 'service', label: 'Service' },
+  { value: 'retail', label: 'Retail' },
 ];
 
 const INITIAL_COUNT = 3;
