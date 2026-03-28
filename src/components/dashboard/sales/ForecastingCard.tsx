@@ -614,7 +614,7 @@ export function ForecastingCard() {
   // Tooltip descriptions based on period
   const totalTooltip = viewMode === 'predicted' && hasRealization
     ? `Scheduled revenue adjusted by ${Math.round(realizationRate!)}% realization rate. Accounts for cancellations, no-shows, and pricing differences.`
-    : `Sum of projected revenue from all scheduled appointments over the ${PERIOD_LABELS[period].toLowerCase()}.`;
+    : `Sum of projected revenue from all scheduled appointments over the next ${PERIOD_LABELS[period].toLowerCase()}.`;
   const avgTooltip = period === 'tomorrow' 
     ? 'Total projected revenue for tomorrow.'
     : (period === '7days' || period === 'todayToEom'
