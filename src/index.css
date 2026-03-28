@@ -72,13 +72,13 @@ html, body, #root {
     --primary: 0 0% 8%;
     --primary-foreground: 40 30% 96%;
 
-    --secondary: 40 20% 92%;
+    --secondary: 40 20% 89%;
     --secondary-foreground: 0 0% 8%;
 
-    --muted: 40 15% 88%;
-    --muted-foreground: 0 0% 45%;
+    --muted: 40 15% 85%;
+    --muted-foreground: 0 0% 40%;
 
-    --accent: 40 25% 90%;
+    --accent: 40 25% 87%;
     --accent-foreground: 0 0% 8%;
 
     /* Oat/Tan accent - soft warm neutral */
