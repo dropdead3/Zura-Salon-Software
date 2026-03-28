@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Badge } from '@/components/ui/badge';
 import { useTransactionsByHour } from '@/hooks/useTransactionsByHour';
 import { Skeleton } from '@/components/ui/skeleton';
+import { cn } from '@/lib/utils';
 
 interface TransactionsByHourPanelProps {
   isOpen: boolean;

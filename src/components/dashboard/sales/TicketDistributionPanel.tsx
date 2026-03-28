@@ -4,6 +4,7 @@ import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { useTicketDistribution } from '@/hooks/useTicketDistribution';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
+import { cn } from '@/lib/utils';
 
 interface TicketDistributionPanelProps {
   isOpen: boolean;
