@@ -867,8 +867,8 @@ export function AggregateSalesCard({
                               </BlurredAmount>
                             </div>
                             <Progress 
-                              value={scheduledRevenue && scheduledRevenue > 0 
-                                ? Math.min((todayActual.actualRevenue / scheduledRevenue) * 100, 100) 
+                              value={displayExpected > 0 
+                                ? Math.min((todayActual.actualRevenue / displayExpected) * 100, 100) 
                                 : 0
                               }
                               className="h-1.5"
