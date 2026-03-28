@@ -114,12 +114,14 @@ export function ViewAsPopover() {
         <TooltipContent side="bottom">Impersonate a role or team member</TooltipContent>
       </Tooltip>
 
-      {open && (
+      {open && createPortal(
         <div
-          className="fixed top-[60px] left-0 right-0 bottom-0 z-40 bg-black/40 backdrop-blur-sm animate-in fade-in-0 duration-200"
+          className="fixed left-0 right-0 bottom-0 z-[45] bg-black/40 backdrop-blur-sm animate-in fade-in-0 duration-200"
+          style={{ top: document.querySelector('.dashboard-top-bar')?.getBoundingClientRect().bottom ?? 60 }}
           aria-hidden="true"
           onClick={() => setOpen(false)}
-        />
+        />,
+        document.body
       )}
 
       <PopoverContent
