@@ -21,7 +21,7 @@ interface Performer {
   productRevenue?: number;
 }
 
-type SortMode = 'totalRevenue' | 'retail';
+type SortMode = 'service' | 'retail';
 
 interface TopPerformersCardProps {
   performers: Performer[];
