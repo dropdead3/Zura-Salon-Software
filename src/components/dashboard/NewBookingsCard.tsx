@@ -279,6 +279,11 @@ export function NewBookingsCard({
         newClientsByStaff={data?.newClientsByStaff || []}
         returningClientsByStaff={data?.returningClientsByStaff || []}
       />
+      <PipelineActionGuide
+        open={showActionGuide}
+        onOpenChange={setShowActionGuide}
+        forwardCount={pipeline.forwardCount}
+      />
     </Card>
   );
 }

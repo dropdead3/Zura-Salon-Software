@@ -1,7 +1,9 @@
 import { useState, useMemo } from 'react';
 import { Progress } from '@/components/ui/progress';
+import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ChevronDown, ChevronRight, ArrowRight } from 'lucide-react';
+import { PipelineActionGuide } from '@/components/dashboard/PipelineActionGuide';
 import { useBookingPipelineByLocation, type LocationPipelineStatus, type LocationPipeline } from '@/hooks/useBookingPipelineByLocation';
 import { useLocationPipelineTimeline } from '@/hooks/useLocationPipelineTimeline';
 import { Skeleton } from '@/components/ui/skeleton';

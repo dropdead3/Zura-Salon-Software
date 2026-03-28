@@ -546,6 +546,11 @@ export function ExecutiveSummaryCard() {
           </span>
         </div>
       </CardContent>
+      <PipelineActionGuide
+        open={showActionGuide}
+        onOpenChange={setShowActionGuide}
+        forwardCount={pipeline.forwardCount}
+      />
     </Card>
   );
 }
