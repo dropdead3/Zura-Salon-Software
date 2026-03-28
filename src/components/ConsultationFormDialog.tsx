@@ -153,7 +153,7 @@ export function ConsultationFormDialog({ open, onOpenChange }: ConsultationFormD
             <div className="flex items-start gap-3">
               <AlertCircle size={18} className="text-foreground flex-shrink-0 mt-0.5" />
               <div>
-                <h3 className="text-xs uppercase tracking-[0.15em] text-foreground font-sans mb-1.5">
+                <h3 className="text-xs uppercase tracking-wide text-foreground font-display mb-1.5">
                   New Clients
                 </h3>
                 <p className="text-xs text-muted-foreground font-sans font-light leading-relaxed">
