@@ -118,7 +118,7 @@ function KpiTile({ kpi }: { kpi: KpiData }) {
             <Button
               variant="ghost"
               size="sm"
-              className="rounded-full px-3 h-6 text-[10px] font-sans w-fit bg-destructive/15 border border-destructive/60 text-destructive hover:bg-destructive/25 hover:text-destructive"
+              className="rounded-full px-4 h-7 text-xs font-sans gap-1.5 w-fit bg-destructive/20 border border-destructive/70 text-destructive hover:bg-destructive/30 hover:text-destructive active:scale-[0.97] cursor-pointer transition-all"
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
@@ -126,6 +126,7 @@ function KpiTile({ kpi }: { kpi: KpiData }) {
               }}
             >
               {kpi.actionBadge.label}
+              <ArrowRight className="w-3 h-3" />
             </Button>
           )}
           {kpi.subtitle && (
