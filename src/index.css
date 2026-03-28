@@ -60,29 +60,29 @@ html, body, #root {
   :root,
   .theme-cream {
     /* Light cream luxury palette */
-    --background: 40 30% 96%;
+    --background: 40 20% 90%;
     --foreground: 0 0% 8%;
 
-    --card: 40 25% 97%;
+    --card: 40 18% 93%;
     --card-foreground: 0 0% 8%;
 
-    --popover: 40 25% 97%;
+    --popover: 40 18% 93%;
     --popover-foreground: 0 0% 8%;
 
     --primary: 0 0% 8%;
     --primary-foreground: 40 30% 96%;
 
-    --secondary: 40 20% 89%;
+    --secondary: 40 14% 84%;
     --secondary-foreground: 0 0% 8%;
 
-    --muted: 40 15% 85%;
-    --muted-foreground: 0 0% 40%;
+    --muted: 40 10% 78%;
+    --muted-foreground: 0 0% 35%;
 
-    --accent: 40 25% 87%;
+    --accent: 40 18% 82%;
     --accent-foreground: 0 0% 8%;
 
     /* Oat/Tan accent - soft warm neutral */
-    --oat: 35 35% 82%;
+    --oat: 35 25% 75%;
     --oat-foreground: 30 20% 25%;
 
     /* Gold accent - for premium badges */
@@ -107,8 +107,8 @@ html, body, #root {
     --destructive: 0 62% 50%;
     --destructive-foreground: 40 30% 96%;
 
-    --border: 40 15% 80%;
-    --input: 40 15% 87%;
+    --border: 40 10% 72%;
+    --input: 40 10% 80%;
     --ring: 0 0% 8%;
 
     --radius: 0.75rem;
@@ -144,17 +144,17 @@ html, body, #root {
     --leading-loose: 2;
 
     /* Sidebar */
-    --sidebar-background: 40 25% 97%;
+    --sidebar-background: 40 18% 91%;
     --sidebar-foreground: 0 0% 8%;
     --sidebar-primary: 0 0% 8%;
     --sidebar-primary-foreground: 40 30% 96%;
-    --sidebar-accent: 40 20% 89%;
+    --sidebar-accent: 40 14% 84%;
     --sidebar-accent-foreground: 0 0% 8%;
-    --sidebar-border: 40 15% 80%;
+    --sidebar-border: 40 10% 72%;
     --sidebar-ring: 0 0% 8%;
 
-    --card-inner: 40 20% 95%;
-    --card-inner-deep: 40 15% 93%;
+    --card-inner: 40 12% 89%;
+    --card-inner-deep: 40 8% 86%;
   }
 
   .dark.theme-cream,
@@ -222,28 +222,28 @@ html, body, #root {
 
   /* ===== THEME: ROSE (Blush Pink Pastel) ===== */
   .theme-rose {
-    --background: 350 30% 97%;
+    --background: 350 18% 90%;
     --foreground: 350 25% 12%;
 
-    --card: 350 25% 97%;
+    --card: 350 16% 93%;
     --card-foreground: 350 25% 12%;
 
-    --popover: 350 25% 97%;
+    --popover: 350 16% 93%;
     --popover-foreground: 350 25% 12%;
 
     --primary: 350 60% 55%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 350 20% 90%;
+    --secondary: 350 12% 84%;
     --secondary-foreground: 350 25% 12%;
 
-    --muted: 350 15% 86%;
-    --muted-foreground: 350 10% 40%;
+    --muted: 350 8% 78%;
+    --muted-foreground: 350 6% 35%;
 
-    --accent: 350 25% 88%;
+    --accent: 350 16% 82%;
     --accent-foreground: 350 25% 12%;
 
-    --oat: 350 30% 85%;
+    --oat: 350 20% 75%;
     --oat-foreground: 350 20% 25%;
 
     --gold: 38 70% 38%;
@@ -265,21 +265,21 @@ html, body, #root {
     --destructive: 0 62% 50%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 350 15% 82%;
-    --input: 350 15% 88%;
+    --border: 350 8% 72%;
+    --input: 350 8% 80%;
     --ring: 350 60% 55%;
 
-    --sidebar-background: 350 25% 98%;
+    --sidebar-background: 350 16% 91%;
     --sidebar-foreground: 350 25% 12%;
     --sidebar-primary: 350 60% 55%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 350 20% 90%;
+    --sidebar-accent: 350 12% 84%;
     --sidebar-accent-foreground: 350 25% 12%;
-    --sidebar-border: 350 15% 82%;
+    --sidebar-border: 350 8% 72%;
     --sidebar-ring: 350 60% 55%;
 
-    --card-inner: 350 15% 95%;
-    --card-inner-deep: 350 10% 93%;
+    --card-inner: 350 8% 89%;
+    --card-inner-deep: 350 5% 86%;
   }
 
   .dark.theme-rose {
@@ -345,28 +345,28 @@ html, body, #root {
 
   /* ===== THEME: SAGE (Mint Green Pastel) ===== */
   .theme-sage {
-    --background: 145 25% 96%;
+    --background: 145 15% 90%;
     --foreground: 145 20% 12%;
 
-    --card: 145 20% 97%;
+    --card: 145 12% 93%;
     --card-foreground: 145 20% 12%;
 
-    --popover: 145 20% 97%;
+    --popover: 145 12% 93%;
     --popover-foreground: 145 20% 12%;
 
     --primary: 145 45% 42%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 145 18% 89%;
+    --secondary: 145 10% 84%;
     --secondary-foreground: 145 20% 12%;
 
-    --muted: 145 12% 85%;
-    --muted-foreground: 145 10% 40%;
+    --muted: 145 6% 78%;
+    --muted-foreground: 145 5% 35%;
 
-    --accent: 145 20% 87%;
+    --accent: 145 12% 82%;
     --accent-foreground: 145 20% 12%;
 
-    --oat: 145 25% 82%;
+    --oat: 145 15% 75%;
     --oat-foreground: 145 18% 25%;
 
     --gold: 38 70% 38%;
@@ -388,21 +388,21 @@ html, body, #root {
     --destructive: 0 62% 50%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 145 12% 80%;
-    --input: 145 12% 87%;
+    --border: 145 6% 72%;
+    --input: 145 6% 80%;
     --ring: 145 45% 42%;
 
-    --sidebar-background: 145 20% 97%;
+    --sidebar-background: 145 12% 91%;
     --sidebar-foreground: 145 20% 12%;
     --sidebar-primary: 145 45% 42%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 145 18% 89%;
+    --sidebar-accent: 145 10% 84%;
     --sidebar-accent-foreground: 145 20% 12%;
-    --sidebar-border: 145 12% 80%;
+    --sidebar-border: 145 6% 72%;
     --sidebar-ring: 145 45% 42%;
 
-    --card-inner: 145 12% 95%;
-    --card-inner-deep: 145 8% 93%;
+    --card-inner: 145 6% 89%;
+    --card-inner-deep: 145 4% 86%;
   }
 
   .dark.theme-sage {
@@ -468,28 +468,28 @@ html, body, #root {
 
   /* ===== THEME: OCEAN (Soft Blue Pastel) ===== */
   .theme-ocean {
-    --background: 210 30% 97%;
+    --background: 210 18% 90%;
     --foreground: 210 25% 12%;
 
-    --card: 210 25% 97%;
+    --card: 210 15% 93%;
     --card-foreground: 210 25% 12%;
 
-    --popover: 210 25% 97%;
+    --popover: 210 15% 93%;
     --popover-foreground: 210 25% 12%;
 
     --primary: 210 60% 50%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 210 20% 90%;
+    --secondary: 210 12% 84%;
     --secondary-foreground: 210 25% 12%;
 
-    --muted: 210 15% 86%;
-    --muted-foreground: 210 12% 40%;
+    --muted: 210 8% 78%;
+    --muted-foreground: 210 6% 35%;
 
-    --accent: 210 22% 88%;
+    --accent: 210 14% 82%;
     --accent-foreground: 210 25% 12%;
 
-    --oat: 210 28% 85%;
+    --oat: 210 18% 75%;
     --oat-foreground: 210 20% 25%;
 
     --gold: 38 70% 38%;
@@ -511,21 +511,21 @@ html, body, #root {
     --destructive: 0 62% 50%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 210 15% 82%;
-    --input: 210 15% 88%;
+    --border: 210 8% 72%;
+    --input: 210 8% 80%;
     --ring: 210 60% 50%;
 
-    --sidebar-background: 210 25% 98%;
+    --sidebar-background: 210 15% 91%;
     --sidebar-foreground: 210 25% 12%;
     --sidebar-primary: 210 60% 50%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 210 20% 90%;
+    --sidebar-accent: 210 12% 84%;
     --sidebar-accent-foreground: 210 25% 12%;
-    --sidebar-border: 210 15% 82%;
+    --sidebar-border: 210 8% 72%;
     --sidebar-ring: 210 60% 50%;
 
-    --card-inner: 210 15% 95%;
-    --card-inner-deep: 210 10% 93%;
+    --card-inner: 210 8% 89%;
+    --card-inner-deep: 210 5% 86%;
   }
 
   .dark.theme-ocean {
