@@ -103,12 +103,12 @@ export function RevPerHourByStylistPanel({ isOpen, stylistData, totalServiceHour
                         initial={{ opacity: 0, x: -8 }}
                         animate={{ opacity: 1, x: 0 }}
                         transition={{ delay: index * 0.04 }}
-                        className="flex items-center gap-3 py-1.5 px-2 rounded-md hover:bg-muted/30 transition-colors"
+                        className="grid grid-cols-[120px_1fr_80px] items-center gap-3 py-1.5 px-2 rounded-md hover:bg-muted/30 transition-colors"
                       >
-                        <span className="text-sm text-foreground font-medium min-w-[100px] truncate">
+                        <span className="text-sm text-foreground font-medium truncate">
                           {stylist.name}
                         </span>
-                        <div className="flex-1 h-2 bg-muted/50 rounded-full overflow-hidden relative">
+                        <div className="h-2 bg-muted/50 rounded-full overflow-hidden relative">
                           {maxRevPerHour > 0 && (
                             <div
                               className="absolute top-0 bottom-0 w-px bg-foreground/30 z-10"
@@ -125,7 +125,7 @@ export function RevPerHourByStylistPanel({ isOpen, stylistData, totalServiceHour
                             transition={{ duration: 0.5, delay: index * 0.04, ease: 'easeOut' }}
                           />
                         </div>
-                        <span className="text-sm font-display tabular-nums min-w-[60px] text-right">
+                        <span className="text-sm font-display tabular-nums text-right">
                           <BlurredAmount>{formatCurrencyWhole(Math.round(stylist.revPerHour))}/hr</BlurredAmount>
                         </span>
                       </motion.div>
