@@ -98,6 +98,9 @@ export function useAdjustedExpectedRevenue(
       const walkInRevenue = walkInCompleted.reduce((s, a) => s + (Number(a.total_price) || 0), 0);
       completedActualRevenue += walkInRevenue;
 
+      // Sum of total_price for completed appointments (what was originally on the books)
+      const completedScheduledRevenue = resolved.reduce((s, a) => s + (Number(a.total_price) || 0), 0);
+
       const adjustedExpected = completedActualRevenue + pendingScheduledRevenue;
 
       return {
@@ -106,6 +109,7 @@ export function useAdjustedExpectedRevenue(
         resolvedCount: resolved.length,
         pendingCount: pending.length,
         completedActualRevenue,
+        completedScheduledRevenue,
         pendingScheduledRevenue,
         cancelledCount: cancelled.length,
         noShowCount: noShow.length,
