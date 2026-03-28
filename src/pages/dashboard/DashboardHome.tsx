@@ -49,7 +49,7 @@ import { AnnouncementsDrawer } from '@/components/dashboard/AnnouncementsDrawer'
 import { LiveSessionIndicator } from '@/components/dashboard/LiveSessionIndicator';
 import { DashboardSetupWizard } from '@/components/dashboard/DashboardSetupWizard';
 import { DashboardCustomizeMenu, getCardSize } from '@/components/dashboard/DashboardCustomizeMenu';
-import { useDashboardLayout, isPinnedCardEntry, getPinnedCardId, getPinnedVisibilityKey, PINNABLE_CARD_IDS } from '@/hooks/useDashboardLayout';
+import { useDashboardLayout, isPinnedCardEntry, getPinnedCardId, getPinnedVisibilityKey, PINNABLE_CARD_IDS, getPinnedCardIdsFromLayout, isPinnedInLayout } from '@/hooks/useDashboardLayout';
 import { TodaysQueueSection } from '@/components/dashboard/TodaysQueueSection';
 import { OperationsQuickStats } from '@/components/dashboard/operations/OperationsQuickStats';
 import { PinnedAnalyticsCard, getDateRange, type AnalyticsFilters, type DateRangeType } from '@/components/dashboard/PinnedAnalyticsCard';
@@ -404,8 +404,10 @@ function DashboardSections({
   // Fetch visibility data to check if cards are pinned
   const { data: visibilityData } = useDashboardVisibility();
   const leadershipRoles = ['super_admin', 'admin', 'manager'];
+  const effectivePinnedCardIds = useMemo(() => getPinnedCardIdsFromLayout(layout), [layout]);
   
   const isCardPinned = (cardId: string): boolean => {
+    if (isPinnedInLayout(layout, cardId)) return true;
     if (!visibilityData) return false;
     const visibilityKey = getPinnedVisibilityKey(cardId);
     return leadershipRoles.some(role => 
@@ -418,7 +420,7 @@ function DashboardSections({
     const orderedIds = layout.sectionOrder || [];
     const existingPinnedIds = orderedIds.filter(isPinnedCardEntry).map(getPinnedCardId);
     return PINNABLE_CARD_IDS.filter(id => isCardPinned(id) && !existingPinnedIds.includes(id));
-  }, [layout.sectionOrder, visibilityData]);
+  }, [layout.sectionOrder, visibilityData, effectivePinnedCardIds]);
 
   // Check if there are any pinned analytics in the layout or missing from layout
   const hasPinnedAnalytics = useMemo(() => {
