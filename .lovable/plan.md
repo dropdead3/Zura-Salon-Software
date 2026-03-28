@@ -1,35 +1,27 @@
 
 
-## Fix: Date Filter Bug in Adjusted Expected Revenue
+## Improve Progress Bar: Earned % + Projected Finish
 
-### Root Cause
-In `useAdjustedExpectedRevenue.ts` line 80, the query uses:
-```
-.lt('transaction_date', '2026-03-28T23:59:59')
-```
-Since `transaction_date` is a **date** column (not timestamp), Postgres casts the timestamp string to `2026-03-28`, producing `WHERE transaction_date < '2026-03-28'` — which excludes today entirely. Result: `completedActualRevenue = $0`, creating the false "$3,423 less than booked" message.
+### Problem
+The progress bar currently just shows "Actual Revenue: $1,905.87" with a bar — it doesn't tell the operator what percentage of today's scheduled appointments have been earned, or where the day is heading.
 
-### Fix
-**File: `src/hooks/useAdjustedExpectedRevenue.ts`** (line 79-80)
+### Solution
+Replace the progress bar label and add a projection line:
 
-Change:
-```typescript
-.gte('transaction_date', todayStr)
-.lt('transaction_date', todayStr + 'T23:59:59')
-```
-To:
-```typescript
-.gte('transaction_date', todayStr)
-.lte('transaction_date', todayStr)
-```
+1. **Bar label**: Change from "Actual Revenue → $1,905.87" to **"Earned X% of scheduled services today"** where X = `(todayActual.actualRevenue / displayExpected) * 100`. Keep the dollar amount right-aligned.
 
-This matches how `useTodayActualRevenue` successfully queries the same table.
+2. **Projection line**: Below the bar, replace the "Exceeded" badges with: **"On track to finish at $Y service revenue"** — calculated as:
+   - If pending appointments remain: `completedActualRevenue + pendingScheduledRevenue` (what's already collected + what's still on the books)
+   - If all appointments complete: show "Final: $X" instead of a projection
 
-### Expected Result After Fix
-- **completedActualRevenue** will correctly reflect today's POS total for completed appointment clients (~$1,905.87)
-- The tracking line will show the **real** delta between what completed appointments collected vs what they were booked for
-- All three metrics (scheduled $3,825 / pending $402 / tracking indicator) will be consistent and accurate
+3. **Exceeded state**: If actual already exceeds scheduled, the bar fills to 100% with success color, and the projection line says "Exceeded scheduled by $Z"
 
-### Files
-- `src/hooks/useAdjustedExpectedRevenue.ts` — fix date range filter (1 line change)
+### Changes in `AggregateSalesCard.tsx` (lines ~897-938)
+
+- Replace "Actual Revenue" label with "Earned X% of scheduled services" (left) + formatted amount (right)
+- Replace "Exceeded" / "All appointments complete" badges below the bar with a single projection line: "On track to finish at $Y service revenue" using `adjustedExpected.adjustedExpected` (actual completed + pending scheduled)
+- Keep the estimated final transaction time line below
+
+### File
+- `src/components/dashboard/AggregateSalesCard.tsx`
 
