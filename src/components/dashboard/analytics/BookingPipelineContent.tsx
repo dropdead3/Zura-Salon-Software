@@ -146,6 +146,8 @@ export function BookingPipelineContent({ locationId, dateRange }: BookingPipelin
     new Set(['critical', 'slowing', 'healthy', 'no_data'])
   );
   const [showAll, setShowAll] = useState(false);
+  const [showActionGuide, setShowActionGuide] = useState(false);
+  const [actionGuideForwardCount, setActionGuideForwardCount] = useState(0);
 
   const [expandedLocationId, setExpandedLocationId] = useState<string | null>(null);
 
