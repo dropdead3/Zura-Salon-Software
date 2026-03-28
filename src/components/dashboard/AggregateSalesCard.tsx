@@ -806,10 +806,11 @@ export function AggregateSalesCard({
               </div>
 
               {/* Expected Revenue - secondary badge (today + past ranges with actual POS data) */}
-              {isToday && scheduledRevenue != null && scheduledRevenue > 0 && (
+              {isToday && (todayExpectedDisplay > 0 || (scheduledRevenue != null && scheduledRevenue > 0)) && (
                 <div className="mt-4 mx-auto max-w-sm space-y-3">
                   {(() => {
-                    const exceededExpected = !!(todayActual?.hasActualData && scheduledRevenue != null && todayActual.actualRevenue > scheduledRevenue && scheduledRevenue > 0);
+                    const displayExpected = todayExpectedDisplay;
+                    const exceededExpected = !!(todayActual?.hasActualData && displayExpected > 0 && todayActual.actualRevenue > displayExpected);
                     return (
                       <>
                         <div className="flex items-center justify-center gap-1.5">
@@ -822,9 +823,14 @@ export function AggregateSalesCard({
                               >
                                 <Clock className="w-4 h-4" />
                                 <BlurredAmount disableTooltip>
-                                  <span>{formatCurrency(scheduledRevenue ?? 0)}</span>
+                                  <span>{formatCurrency(displayExpected)}</span>
                                 </BlurredAmount>
                                 <span>Expected</span>
+                                {adjustedExpected && (
+                                  <span className="text-[10px] opacity-60 ml-0.5">
+                                    ({adjustedExpected.resolvedCount}/{adjustedExpected.resolvedCount + adjustedExpected.pendingCount} resolved)
+                                  </span>
+                                )}
                               </Badge>
                             </TooltipTrigger>
                             <TooltipContent>Click to see Gap Report</TooltipContent>
@@ -833,8 +839,18 @@ export function AggregateSalesCard({
                             <TooltipTrigger asChild>
                               <Info className="w-4 h-4 text-muted-foreground cursor-help" />
                             </TooltipTrigger>
-                            <TooltipContent side="bottom" className="max-w-[200px] text-xs">
-                              Based on scheduled appointments. Final revenue may differ as appointments are completed, cancelled, or added.
+                            <TooltipContent side="bottom" className="max-w-[260px] text-xs">
+                              {adjustedExpected ? (
+                                <div className="space-y-1">
+                                  <p>Adjusted in real time as appointments resolve.</p>
+                                  <p>{adjustedExpected.resolvedCount} completed ({formatCurrency(adjustedExpected.completedActualRevenue)} actual) + {adjustedExpected.pendingCount} pending ({formatCurrency(adjustedExpected.pendingScheduledRevenue)} scheduled)</p>
+                                  {(adjustedExpected.cancelledCount > 0 || adjustedExpected.noShowCount > 0) && (
+                                    <p className="text-muted-foreground/70">{adjustedExpected.cancelledCount} cancelled, {adjustedExpected.noShowCount} no-shows excluded</p>
+                                  )}
+                                </div>
+                              ) : (
+                                'Based on scheduled appointments. Final revenue may differ as appointments are completed, cancelled, or added.'
+                              )}
                             </TooltipContent>
                           </Tooltip>
                         </div>
