@@ -134,18 +134,10 @@ function CategoryRow({ category, index }: { category: CategoryBreakdownData; ind
       >
         <div className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: color }} />
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-medium">{category.category}</span>
-            <span className="text-xs text-muted-foreground">{category.sharePercent}%</span>
-          </div>
-          <div className="flex items-center gap-2 mt-0.5">
-            <Progress
-              value={category.sharePercent}
-              className="h-1 flex-1 max-w-[120px]"
-              indicatorStyle={{ backgroundColor: color }}
-            />
-            <span className="text-xs text-muted-foreground">{category.count} appointments</span>
-          </div>
+          <span className="text-sm font-medium">{category.category}</span>
+          <p className="text-xs text-muted-foreground">
+            {category.sharePercent}% · {category.count} appointment{category.count !== 1 ? 's' : ''}
+          </p>
         </div>
         <span className="text-base font-display tabular-nums">
           <BlurredAmount>{fmtWhole(Math.round(category.revenue))}</BlurredAmount>
