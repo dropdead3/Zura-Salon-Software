@@ -164,7 +164,7 @@ export function TopPerformersCard({ performers, isLoading, showInfoTooltip = fal
                 const displayValue = sortMode === 'retail'
                   ? (performer.productRevenue ?? 0)
                   : performer.totalRevenue;
-                const progressPercent = topRevenue > 0 ? (displayValue / topRevenue) * 100 : 0;
+                const revenueSharePct = totalTeamRevenue > 0 ? (displayValue / totalTeamRevenue) * 100 : 0;
 
                 const serviceRev = performer.serviceRevenue ?? (performer.totalRevenue - (performer.productRevenue ?? 0));
                 const retailRev = performer.productRevenue ?? 0;
