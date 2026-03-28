@@ -1,4 +1,5 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo } from 'react';
+import '@/styles/silver-shine.css';
 import { createPortal } from 'react-dom';
 import { cn, formatDisplayName } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
