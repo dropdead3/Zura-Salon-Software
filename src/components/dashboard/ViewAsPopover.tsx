@@ -113,6 +113,14 @@ export function ViewAsPopover() {
         <TooltipContent side="bottom">Impersonate a role or team member</TooltipContent>
       </Tooltip>
 
+      {open && (
+        <div
+          className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm animate-in fade-in-0 duration-200"
+          aria-hidden="true"
+          onClick={() => setOpen(false)}
+        />
+      )}
+
       <PopoverContent
         align="end"
         sideOffset={16}
