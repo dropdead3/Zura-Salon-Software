@@ -926,7 +926,7 @@ export function AggregateSalesCard({
                               : "bg-warning/10 text-warning border-warning/30",
                             activeDrilldown === 'expectedGap' && "ring-1 ring-primary/30"
                           )}>
-                            <Clock className="w-3 h-3" />
+                            <Clock className="w-4 h-4" />
                             <BlurredAmount>
                               <span>{formatCurrency(scheduledRevenue)}</span>
                             </BlurredAmount>
