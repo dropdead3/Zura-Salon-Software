@@ -841,10 +841,10 @@ export function AggregateSalesCard({
                               </BlurredAmount>
                             </div>
                             <Progress 
-                              value={displayMetrics.totalRevenue > 0 
-                                ? Math.min((todayActual.actualRevenue / displayMetrics.totalRevenue) * 100, 100) 
+                              value={scheduledRevenue && scheduledRevenue > 0 
+                                ? Math.min((todayActual.actualRevenue / scheduledRevenue) * 100, 100) 
                                 : 0
-                              } 
+                              }
                               className="h-1.5"
                               indicatorClassName={exceededExpected ? "bg-success-foreground" : undefined}
                             />
