@@ -821,7 +821,7 @@ export function AggregateSalesCard({
                     return (
                       <>
                         {/* Line 1: Scheduled Services Today total */}
-                        <div className="flex items-center justify-center gap-1.5">
+                        <div className="flex items-center justify-center gap-1.5 cursor-pointer" onClick={() => toggleDrilldown('expectedGap')}>
                           <div className="flex items-center gap-2 text-sm text-muted-foreground">
                             <Clock className="w-3.5 h-3.5" />
                             <span>Scheduled Services Today:</span>
