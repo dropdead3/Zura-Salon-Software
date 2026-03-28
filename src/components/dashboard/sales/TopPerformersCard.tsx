@@ -77,7 +77,10 @@ export function TopPerformersCard({ performers, isLoading, showInfoTooltip = fal
   }), [performers, sortMode]);
 
   const totalTeamRevenue = useMemo(() =>
-    sorted.reduce((acc, p) => acc + (sortMode === 'retail' ? (p.productRevenue ?? 0) : p.totalRevenue), 0),
+    sorted.reduce((acc, p) => {
+      if (sortMode === 'retail') return acc + (p.productRevenue ?? 0);
+      return acc + (p.totalRevenue - (p.productRevenue ?? 0));
+    }, 0),
     [sorted, sortMode]
   );
 
