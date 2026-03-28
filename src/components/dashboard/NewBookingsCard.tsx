@@ -94,45 +94,42 @@ export function NewBookingsCard({
       </div>
 
       {/* Booking Pipeline Health */}
-      <Link
-        to={dashPath('/admin/analytics?tab=operations&subtab=booking-pipeline')}
-        className="block p-3 bg-card-inner rounded-lg border border-border/50 mb-4 hover:bg-muted/50 transition-colors"
-      >
-        {pipeline.isLoading ? (
-          <Skeleton className="h-5 w-full" />
-        ) : (
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className={cn(
-                "w-2 h-2 rounded-full shrink-0",
-                pipeline.status === 'healthy' && 'bg-emerald-500',
-                pipeline.status === 'slowing' && 'bg-amber-500',
-                pipeline.status === 'critical' && 'bg-destructive',
-              )} />
-              <span className="text-sm font-medium">Pipeline: {pipeline.label}</span>
-              <MetricInfoTooltip description="Compares confirmed appointments in the next 14 days against the trailing 14 days. Healthy ≥ 90%, Slowing ≥ 70%, Critical < 70%." />
-              {showPipelineAction && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="rounded-full px-4 h-7 text-xs font-sans gap-1.5 bg-destructive/20 border border-destructive/70 text-destructive hover:bg-destructive/30 hover:text-destructive active:scale-[0.97] cursor-pointer transition-all ml-2"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    setShowActionGuide(true);
-                  }}
-                >
-                  Take Action
-                  <ArrowRight className="w-3 h-3" />
-                </Button>
-              )}
+      <div className="flex gap-2 mb-4">
+        <Link
+          to={dashPath('/admin/analytics?tab=operations&subtab=booking-pipeline')}
+          className="flex-1 block p-3 bg-card-inner rounded-lg border border-border/50 hover:bg-muted/50 transition-colors"
+        >
+          {pipeline.isLoading ? (
+            <Skeleton className="h-5 w-full" />
+          ) : (
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className={cn(
+                  "w-2 h-2 rounded-full shrink-0",
+                  pipeline.status === 'healthy' && 'bg-emerald-500',
+                  pipeline.status === 'slowing' && 'bg-amber-500',
+                  pipeline.status === 'critical' && 'bg-destructive',
+                )} />
+                <span className="text-sm font-medium">Pipeline: {pipeline.label}</span>
+                <MetricInfoTooltip description="Compares confirmed appointments in the next 14 days against the trailing 14 days. Healthy ≥ 90%, Slowing ≥ 70%, Critical < 70%." />
+              </div>
+              <span className="text-xs text-muted-foreground tabular-nums">
+                {pipeline.forwardCount} next 14d vs {pipeline.baselineCount} trailing
+              </span>
             </div>
-            <span className="text-xs text-muted-foreground tabular-nums">
-              {pipeline.forwardCount} next 14d vs {pipeline.baselineCount} trailing
-            </span>
-          </div>
+          )}
+        </Link>
+        {showPipelineAction && (
+          <button
+            type="button"
+            onClick={() => setShowActionGuide(true)}
+            className="self-stretch rounded-lg bg-destructive/20 border border-destructive/70 text-destructive hover:bg-destructive/30 px-4 text-xs font-sans font-medium gap-1.5 cursor-pointer transition-all active:scale-[0.97] flex items-center"
+          >
+            Take Action
+            <ArrowRight className="w-3 h-3" />
+          </button>
         )}
-      </Link>
+      </div>
 
       {/* Breakdown: New vs Returning */}
       <div className="grid grid-cols-2 gap-4 mb-4">
