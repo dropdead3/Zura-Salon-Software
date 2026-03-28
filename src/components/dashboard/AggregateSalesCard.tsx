@@ -825,10 +825,10 @@ export function AggregateSalesCard({
                                 <BlurredAmount disableTooltip>
                                   <span>{formatCurrency(displayExpected)}</span>
                                 </BlurredAmount>
-                                <span>Expected</span>
-                                {adjustedExpected && (
+                                <span>Expected Today</span>
+                                {adjustedExpected && adjustedExpected.pendingCount > 0 && (
                                   <span className="text-[10px] opacity-60 ml-0.5">
-                                    ({adjustedExpected.resolvedCount}/{adjustedExpected.resolvedCount + adjustedExpected.pendingCount} resolved)
+                                    · {adjustedExpected.pendingCount} pending
                                   </span>
                                 )}
                               </Badge>
