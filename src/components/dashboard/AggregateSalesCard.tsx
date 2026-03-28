@@ -370,16 +370,16 @@ export function AggregateSalesCard({
     dateFilters.dateFrom,
     dateFilters.dateTo,
     filterContext?.locationId,
-    isPastRange
+    isPastRange || isToday
   );
 
   // Gap analysis — lazy, only fetched when drill-down is open
   const { data: gapAnalysis, isLoading: gapLoading } = useRevenueGapAnalysis(
     dateFilters.dateFrom,
     dateFilters.dateTo,
-    isToday ? (metrics?.totalRevenue ?? 0) : (scheduledRevenue ?? 0),
+    isToday ? (scheduledRevenue ?? 0) : (scheduledRevenue ?? 0),
     isToday ? (todayActual?.actualRevenue ?? 0) : (pastActual?.actualRevenue ?? 0),
-    (isPastRange || isToday) && activeDrilldown === 'expectedGap' && (isToday || scheduledRevenue != null),
+    (isPastRange || isToday) && activeDrilldown === 'expectedGap' && scheduledRevenue != null,
     filterContext?.locationId
   );
 
