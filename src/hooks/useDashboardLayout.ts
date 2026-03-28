@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useEffectiveRoles } from './useEffectiveUser';
+import { useGodModeTargetUserId } from './useGodModeTargetUserId';
 import { toast } from 'sonner';
 
 export interface DashboardLayout {
@@ -216,9 +217,9 @@ export function useDashboardTemplates() {
 
 // Fetch user's dashboard layout
 export function useDashboardLayout(overrideUserId?: string) {
-  const { user } = useAuth();
   const roles = useEffectiveRoles();
-  const targetUserId = overrideUserId || user?.id;
+  const godModeTargetUserId = useGodModeTargetUserId();
+  const targetUserId = overrideUserId || godModeTargetUserId;
 
   const { data: userPrefs, isLoading: prefsLoading } = useQuery({
     queryKey: ['user-preferences', targetUserId],
@@ -296,12 +297,12 @@ export function useDashboardLayout(overrideUserId?: string) {
 
 // Save dashboard layout
 export function useSaveDashboardLayout(overrideUserId?: string) {
-  const { user } = useAuth();
   const queryClient = useQueryClient();
+  const godModeTargetUserId = useGodModeTargetUserId();
 
   return useMutation({
     mutationFn: async (layout: DashboardLayout) => {
-      const targetId = overrideUserId || user?.id;
+      const targetId = overrideUserId || godModeTargetUserId;
       if (!targetId) throw new Error('User not authenticated');
 
       const sanitizedLayout = sanitizeDashboardLayout(layout);
