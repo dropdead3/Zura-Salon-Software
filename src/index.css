@@ -222,28 +222,28 @@ html, body, #root {
 
   /* ===== THEME: ROSE (Blush Pink Pastel) ===== */
   .theme-rose {
-    --background: 350 18% 90%;
-    --foreground: 350 25% 12%;
+    --background: 350 12% 82%;
+    --foreground: 350 20% 8%;
 
-    --card: 350 16% 93%;
-    --card-foreground: 350 25% 12%;
+    --card: 350 10% 85%;
+    --card-foreground: 350 20% 8%;
 
-    --popover: 350 16% 93%;
-    --popover-foreground: 350 25% 12%;
+    --popover: 350 10% 85%;
+    --popover-foreground: 350 20% 8%;
 
     --primary: 350 60% 55%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 350 12% 84%;
-    --secondary-foreground: 350 25% 12%;
+    --secondary: 350 8% 78%;
+    --secondary-foreground: 350 20% 8%;
 
-    --muted: 350 8% 78%;
-    --muted-foreground: 350 6% 35%;
+    --muted: 350 6% 72%;
+    --muted-foreground: 350 5% 30%;
 
-    --accent: 350 16% 82%;
-    --accent-foreground: 350 25% 12%;
+    --accent: 350 10% 76%;
+    --accent-foreground: 350 20% 8%;
 
-    --oat: 350 20% 75%;
+    --oat: 350 14% 68%;
     --oat-foreground: 350 20% 25%;
 
     --gold: 38 70% 38%;
