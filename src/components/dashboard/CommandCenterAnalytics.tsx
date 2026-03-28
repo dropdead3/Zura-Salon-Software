@@ -218,7 +218,7 @@ export function CommandCenterAnalytics() {
       case 'daily_brief':
         return (
           <VisibilityGate key={cardId} elementKey="daily_brief">
-            <PinnableCard elementKey="daily_brief" elementName="Daily Brief" category="Command Center">
+            <PinnableCard elementKey="daily_brief" elementName="Appointments Summary" category="Command Center">
               <DailyBriefCard
                 filterContext={{
                   locationId,

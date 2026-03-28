@@ -181,7 +181,7 @@ const WIDGETS = [
 const PINNABLE_CARDS = [
   // Executive
   { id: 'executive_summary', label: 'Executive Summary', category: 'Executive', icon: <FileText className="w-4 h-4" />, size: 'full' as const },
-  { id: 'daily_brief', label: 'Daily Brief', category: 'Executive', icon: <Sun className="w-4 h-4" />, size: 'full' as const },
+  { id: 'daily_brief', label: 'Appointments Summary', category: 'Executive', icon: <Sun className="w-4 h-4" />, size: 'full' as const },
   // Sales
   { id: 'sales_overview', label: 'Sales Overview', category: 'Sales', icon: <DollarSign className="w-4 h-4" />, size: 'full' as const },
   { id: 'revenue_breakdown', label: 'Revenue Breakdown', category: 'Sales', icon: <PieChart className="w-4 h-4" />, size: 'half' as const },

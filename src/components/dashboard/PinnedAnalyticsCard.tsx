@@ -777,7 +777,7 @@ export function PinnedAnalyticsCard({ cardId, filters, compact = false }: Pinned
     case 'daily_brief':
       return (
         <VisibilityGate elementKey="daily_brief">
-          <PinnableCard elementKey="daily_brief" elementName="Daily Brief" category="Command Center" dateRange={filters.dateRange} locationName={selectedLocationName}>
+          <PinnableCard elementKey="daily_brief" elementName="Appointments Summary" category="Command Center" dateRange={filters.dateRange} locationName={selectedLocationName}>
             <DailyBriefCard filterContext={filterContext} locationId={filters.locationId} />
           </PinnableCard>
         </VisibilityGate>

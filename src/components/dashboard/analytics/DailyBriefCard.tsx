@@ -87,7 +87,7 @@ export function DailyBriefCard({ filterContext, locationId }: DailyBriefCardProp
             </div>
             <div className="flex items-center gap-2">
               <h3 className="font-display text-sm tracking-wide text-muted-foreground uppercase truncate">
-                Daily Brief
+                Appointments Summary
               </h3>
               <MetricInfoTooltip description="Today's real-time operational snapshot: scheduled vs completed appointments, no-show count and rate, completion percentage, and rebooking performance per appointment." />
             </div>
