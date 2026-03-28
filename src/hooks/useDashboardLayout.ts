@@ -74,6 +74,25 @@ export const PINNABLE_CARD_IDS = [
 
 const VALID_PINNABLE_CARD_IDS = new Set<string>(PINNABLE_CARD_IDS);
 
+export function getPinnedCardIdsFromLayout(
+  layout: Pick<DashboardLayout, 'pinnedCards' | 'sectionOrder'> | null | undefined
+): string[] {
+  const fromPinnedCards = (layout?.pinnedCards || []).filter((id) => VALID_PINNABLE_CARD_IDS.has(id));
+  const fromSectionOrder = (layout?.sectionOrder || [])
+    .filter(isPinnedCardEntry)
+    .map(getPinnedCardId)
+    .filter((id) => VALID_PINNABLE_CARD_IDS.has(id));
+
+  return [...new Set([...fromPinnedCards, ...fromSectionOrder])];
+}
+
+export function isPinnedInLayout(
+  layout: Pick<DashboardLayout, 'pinnedCards' | 'sectionOrder'> | null | undefined,
+  cardId: string
+): boolean {
+  return getPinnedCardIdsFromLayout(layout).includes(cardId);
+}
+
 function dedupe<T>(items: T[] | undefined): T[] | undefined {
   return items ? [...new Set(items)] : undefined;
 }
@@ -343,10 +362,37 @@ export function useSaveDashboardLayout(overrideUserId?: string) {
         if (error) throw error;
       }
     },
+    onMutate: async (layout) => {
+      const targetId = overrideUserId || godModeTargetUserId;
+      if (!targetId) return;
+
+      const sanitizedLayout = sanitizeDashboardLayout(layout);
+      const layoutJson = {
+        sections: sanitizedLayout.sections,
+        sectionOrder: sanitizedLayout.sectionOrder,
+        pinnedCards: sanitizedLayout.pinnedCards,
+        widgets: sanitizedLayout.widgets,
+        hasCompletedSetup: sanitizedLayout.hasCompletedSetup,
+        hubOrder: sanitizedLayout.hubOrder,
+        enabledHubs: sanitizedLayout.enabledHubs,
+      };
+
+      await queryClient.cancelQueries({ queryKey: ['user-preferences', targetId] });
+      const previousUserPrefs = queryClient.getQueryData(['user-preferences', targetId]);
+
+      queryClient.setQueryData(['user-preferences', targetId], {
+        dashboard_layout: layoutJson,
+      });
+
+      return { previousUserPrefs, targetId };
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['user-preferences'] });
     },
-    onError: (error) => {
+    onError: (error, _layout, context) => {
+      if (context?.targetId) {
+        queryClient.setQueryData(['user-preferences', context.targetId], context.previousUserPrefs);
+      }
       toast.error('Failed to save dashboard layout', { description: error.message });
     },
   });
