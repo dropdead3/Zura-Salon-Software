@@ -56,7 +56,7 @@ export function TicketDistributionPanel({ isOpen, dateFrom, dateTo, locationId }
                   </div>
                   <div className="w-px h-8 bg-border/50" />
                   <div className="flex-1 text-center">
-                    <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Average</p>
+                    <p className="font-display text-[10px] uppercase tracking-wide text-muted-foreground">Average</p>
                     <p className="text-sm font-display tabular-nums">
                       <BlurredAmount>{formatCurrencyWhole(Math.round(data!.average))}</BlurredAmount>
                     </p>
