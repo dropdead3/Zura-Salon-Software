@@ -77,7 +77,7 @@ export function useAdjustedExpectedRevenue(
             .select('total_amount, tax_amount')
             .in('phorest_client_id', chunk)
             .gte('transaction_date', todayStr)
-            .lt('transaction_date', todayStr + 'T23:59:59');
+            .lte('transaction_date', todayStr);
 
           if (locationId && locationId !== 'all') {
             posQuery = posQuery.eq('location_id', locationId);
