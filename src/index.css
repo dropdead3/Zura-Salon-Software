@@ -60,29 +60,29 @@ html, body, #root {
   :root,
   .theme-cream {
     /* Light cream luxury palette */
-    --background: 40 20% 90%;
-    --foreground: 0 0% 8%;
+    --background: 40 15% 82%;
+    --foreground: 0 0% 6%;
 
-    --card: 40 18% 93%;
-    --card-foreground: 0 0% 8%;
+    --card: 40 12% 85%;
+    --card-foreground: 0 0% 6%;
 
-    --popover: 40 18% 93%;
-    --popover-foreground: 0 0% 8%;
+    --popover: 40 12% 85%;
+    --popover-foreground: 0 0% 6%;
 
     --primary: 0 0% 8%;
     --primary-foreground: 40 30% 96%;
 
-    --secondary: 40 14% 84%;
-    --secondary-foreground: 0 0% 8%;
+    --secondary: 40 10% 78%;
+    --secondary-foreground: 0 0% 6%;
 
-    --muted: 40 10% 78%;
-    --muted-foreground: 0 0% 35%;
+    --muted: 40 8% 72%;
+    --muted-foreground: 0 0% 30%;
 
-    --accent: 40 18% 82%;
-    --accent-foreground: 0 0% 8%;
+    --accent: 40 12% 76%;
+    --accent-foreground: 0 0% 6%;
 
     /* Oat/Tan accent - soft warm neutral */
-    --oat: 35 25% 75%;
+    --oat: 35 18% 68%;
     --oat-foreground: 30 20% 25%;
 
     /* Gold accent - for premium badges */
