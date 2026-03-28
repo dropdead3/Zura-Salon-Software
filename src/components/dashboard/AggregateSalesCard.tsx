@@ -877,21 +877,11 @@ export function AggregateSalesCard({
                           </div>
                         )}
 
-                        {/* Line 3: Shortfall/surplus tracking indicator */}
-                        {hasResolvedAppts && serviceDelta !== 0 && (
-                          <div className={cn(
-                            "flex items-center justify-center gap-1 text-xs",
-                            serviceDelta < 0 ? "text-destructive" : "text-success-foreground"
-                          )}>
-                            {serviceDelta < 0 ? (
-                              <TrendingDown className="w-3.5 h-3.5" />
-                            ) : (
-                              <TrendingUp className="w-3.5 h-3.5" />
-                            )}
-                            <BlurredAmount disableTooltip>
-                              <span>Completed appts collected {formatCurrency(Math.abs(serviceDelta))} {serviceDelta < 0 ? 'less' : 'more'} than booked</span>
-                            </BlurredAmount>
-                          </div>
+                        {/* Appointment completion fraction */}
+                        {adjustedExpected && (adjustedExpected.resolvedCount + adjustedExpected.pendingCount + adjustedExpected.cancelledCount + adjustedExpected.noShowCount) > 0 && (
+                          <p className="text-xs text-muted-foreground/70 text-center">
+                            {adjustedExpected.resolvedCount} of {adjustedExpected.resolvedCount + adjustedExpected.pendingCount + adjustedExpected.cancelledCount + adjustedExpected.noShowCount} appointments completed
+                          </p>
                         )}
 
                         {/* Progress bar: earned % of scheduled + projection */}
