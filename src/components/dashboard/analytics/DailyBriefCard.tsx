@@ -46,7 +46,7 @@ export function DailyBriefCard({ filterContext, locationId }: DailyBriefCardProp
         <CardContent className="p-5">
           <div className="flex items-center gap-2 text-destructive text-sm">
             <AlertCircle className="w-4 h-4 shrink-0" />
-            <span>Failed to load daily brief.</span>
+            <span>Failed to load appointments summary.</span>
           </div>
           <Button variant="outline" size={tokens.button.card} className="mt-3" onClick={() => refetch()}>
             Retry
