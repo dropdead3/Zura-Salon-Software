@@ -906,7 +906,7 @@ export function AppointmentDetailSheet({
 
                         {/* ── Navigate ── */}
                         <DropdownMenuSeparator />
-                        <DropdownMenuLabel className="font-sans text-[10px] text-muted-foreground uppercase tracking-wider">Navigate</DropdownMenuLabel>
+                        <DropdownMenuLabel className="font-display text-[10px] text-muted-foreground uppercase tracking-wide">Navigate</DropdownMenuLabel>
                         {resolvedClientId && (
                           <DropdownMenuItem onClick={() => {
                             handleClose();
