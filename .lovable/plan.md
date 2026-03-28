@@ -1,33 +1,40 @@
 
 
-## Clarify Expected Badge: Service Revenue Focus
+## Fix Contradictory Service Revenue Metrics
 
 ### Problem
-The "More Expected Today" badge is ambiguous — it shows a remaining total but doesn't clarify what was originally scheduled, what's been collected in services, and whether the day is tracking ahead or behind on service revenue specifically.
+The three data points currently contradict each other because they use different baselines:
+- "Scheduled Services Today: $402" uses the **adjusted** number (actual completed + pending scheduled)
+- "Exceeded" compares **total POS revenue** ($1,905) against that $402
+- "Tracking $3,423 below" compares completed actual vs completed scheduled
+
+This creates an impossible read: "You exceeded expectations" AND "You're $3,423 below." The metrics are answering different questions with different denominators.
 
 ### Solution
-Restructure the Expected badge area to show three clear data points focused on **service revenue**:
+Align all three lines to a single, intuitive story using the **original scheduled total** as the anchor:
 
-1. **Scheduled Services Today**: The original total of all service appointments booked (from `originalExpected` in the adjusted hook — appointment prices are service prices)
-2. **Remaining badge**: Show `pendingScheduledRevenue` as "More Service Revenue Expected" — this is the sum of appointments not yet completed
-3. **Shortfall/Surplus indicator**: Compare `completedActualRevenue` (what completed appointments actually brought in) against what those same completed appointments were originally scheduled for. If actual < scheduled for completed appointments, show a shortfall warning like "Tracking $X below scheduled"
+1. **Scheduled Services Today: $X** → Use `originalExpected` (the full sum of all appointments originally booked, before cancellations/no-shows). This is "what was on the books."
 
-### Changes
+2. **Remaining badge** → Show `pendingScheduledRevenue` as "More Expected" — appointments not yet completed. This answers "how much is left to collect."
 
-#### `src/hooks/useAdjustedExpectedRevenue.ts`
-- Add `completedScheduledRevenue` to the return — the sum of `total_price` for completed appointments (so we can compare scheduled vs actual for resolved appointments)
-- This enables: shortfall = `completedScheduledRevenue - completedActualRevenue`
+3. **Tracking indicator** → Compare `todayActual.actualRevenue` (total POS collected so far) against `originalExpected - pendingScheduledRevenue` (what should have been collected by now based on resolved appointments). OR simpler: compare total actual vs total original scheduled to show "on track / behind / ahead" for the full day.
 
-#### `src/components/dashboard/AggregateSalesCard.tsx` (lines ~808-857)
-- Replace the single badge with a small stacked info block:
-  - Line 1: "Scheduled Services Today: $X" (muted, using `originalExpected` minus cancelled/no-show scheduled — i.e. `adjustedExpected.adjustedExpected`)
-  - Line 2: Badge showing `pendingScheduledRevenue` → "$Y More Service Revenue Expected" (with pending count)
-  - Line 3 (conditional): If `completedActualRevenue < completedScheduledRevenue`, show a subtle shortfall indicator: "Tracking $Z below scheduled" in destructive/warning color. If ahead, show "Tracking $Z above scheduled" in success color.
-- Update the info tooltip to explain: "Service revenue from today's appointments. Completed appointments use actual POS totals; pending appointments use their scheduled price. Cancellations and no-shows are excluded."
-- Keep the click-to-drilldown behavior for Gap Report
+### Changes in `AggregateSalesCard.tsx` (lines ~810-910)
 
-### What stays the same
-- Progress bar logic unchanged
-- Gap analysis drilldown unchanged
-- The hero "Revenue So Far Today" number remains total POS revenue (services + retail)
+- **Line 1**: Change `displayExpected` from `adjustedExpected.adjustedExpected` to `adjustedExpected.originalExpected` — show the original booking total
+- **Exceeded check**: Compare actual revenue against `originalExpected` (not adjusted), so "Exceeded" only shows when you've truly surpassed what was booked
+- **Remaining**: Keep using `pendingScheduledRevenue` — this correctly shows what's still outstanding
+- **Tracking line**: Compare actual revenue collected so far against `completedScheduledRevenue` (what completed appointments were supposed to bring in). This cleanly answers "are completed appointments delivering what was booked?"
+- **Remove the separate "Exceeded Scheduled Services" badge** — fold this into the tracking line logic (if actual > scheduled for completed, show "above"; if not, show "below")
+
+### Result
+The user sees one coherent narrative:
+- "Scheduled Services Today: $5,325" (original total booked)
+- "$402 More Expected" (pending appointments)
+- "Tracking $3,423 below scheduled" (completed appointments underdelivered)
+
+No contradictions. One baseline. Clear story.
+
+### Files
+- `src/components/dashboard/AggregateSalesCard.tsx` — update the service revenue info block logic
 
