@@ -212,7 +212,7 @@ export function TopPerformersCard({ performers, isLoading, showInfoTooltip = fal
                             </BlurredAmount>
                             <div className="text-[10px] text-muted-foreground mt-0.5">
                               <span className="font-medium text-foreground/70">{revenueSharePct.toFixed(1)}%</span>
-                              <span> of total{sortMode === 'retail' ? ' retail' : ''}</span>
+                              <span> of total {sortMode === 'retail' ? 'retail' : 'service'}</span>
                             </div>
                           </div>
                         </div>
