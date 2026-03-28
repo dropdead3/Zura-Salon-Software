@@ -886,12 +886,13 @@ export function AggregateSalesCard({
 
                         {/* Progress bar: earned % of scheduled + projection */}
                         {todayActual?.hasActualData ? (() => {
-                          const exceededTotal = displayExpected > 0 && todayActual.actualRevenue > displayExpected;
+                          const serviceRevenue = completedActual;
+                          const exceededTotal = displayExpected > 0 && serviceRevenue > displayExpected;
                           const earnedPct = displayExpected > 0 
-                            ? Math.round((todayActual.actualRevenue / displayExpected) * 100) 
+                            ? Math.round((serviceRevenue / displayExpected) * 100) 
                             : 0;
                           const projectedFinish = (adjustedExpected?.completedActualRevenue ?? 0) + (adjustedExpected?.pendingScheduledRevenue ?? 0);
-                          const excessAmount = todayActual.actualRevenue - displayExpected;
+                          const excessAmount = serviceRevenue - displayExpected;
                           return (
                           <div className="space-y-1.5">
                             <div className="flex items-center justify-between text-xs">
@@ -900,13 +901,13 @@ export function AggregateSalesCard({
                               </span>
                               <BlurredAmount>
                                 <span className={cn("font-medium", exceededTotal && "text-success-foreground")}>
-                                  {formatCurrency(todayActual.actualRevenue)}
+                                  {formatCurrency(serviceRevenue)}
                                 </span>
                               </BlurredAmount>
                             </div>
                             <Progress 
                               value={displayExpected > 0 
-                                ? Math.min((todayActual.actualRevenue / displayExpected) * 100, 100) 
+                                ? Math.min((serviceRevenue / displayExpected) * 100, 100) 
                                 : 0
                               }
                               className="h-1.5"
