@@ -130,7 +130,7 @@ export function GoalLocationRow({
               </div>
               <span className="text-xs font-medium w-10 text-right">{percentage.toFixed(0)}%</span>
               <span className={cn(
-                'text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded-full font-display',
+                'text-[10px] font-sans font-medium px-1.5 py-0.5 rounded-full whitespace-nowrap',
                 paceStatus === 'ahead' && 'bg-chart-2/10 text-chart-2',
                 paceStatus === 'on-track' && 'bg-primary/10 text-primary',
                 paceStatus === 'behind' && 'bg-destructive/10 text-destructive',
