@@ -274,6 +274,7 @@ export function ViewAsPopover() {
             </ScrollArea>
           </TabsContent>
         </Tabs>
+        </div>
       </PopoverContent>
     </Popover>
   );
