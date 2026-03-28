@@ -410,6 +410,7 @@ export function ExecutiveSummaryCard() {
       change: null,
       subtitle: `${pipeline.forwardCount} appts next 14d vs ${pipeline.baselineCount} avg`,
       tooltip: 'Compares appointments booked for the next 14 days against your trailing 14-day average. Flags slowdowns before they impact revenue.',
+      actionBadge: pipeline.status !== 'healthy' ? { label: 'Take Action', onClick: () => setShowActionGuide(true) } : undefined,
     },
   ];
 
