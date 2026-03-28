@@ -146,7 +146,7 @@ export function ColorBarInventoryValuationCard({ locationId }: { locationId?: st
         {/* Summary strip */}
         <div className="grid grid-cols-3 gap-4 mb-4 p-3 rounded-lg bg-muted/30 border border-border/40">
           <div className="text-center">
-            <p className="text-[10px] font-sans text-muted-foreground uppercase tracking-wider">At Cost</p>
+            <p className="text-[10px] font-display text-muted-foreground uppercase tracking-wide">At Cost</p>
             <p className="font-display text-lg tabular-nums"><BlurredAmount>{formatCurrency(totals?.cost ?? 0)}</BlurredAmount></p>
           </div>
           <div className="text-center">
