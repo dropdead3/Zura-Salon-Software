@@ -234,13 +234,13 @@ html, body, #root {
     --primary: 350 60% 55%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 350 20% 93%;
+    --secondary: 350 20% 90%;
     --secondary-foreground: 350 25% 12%;
 
-    --muted: 350 15% 90%;
-    --muted-foreground: 350 10% 45%;
+    --muted: 350 15% 86%;
+    --muted-foreground: 350 10% 40%;
 
-    --accent: 350 25% 92%;
+    --accent: 350 25% 88%;
     --accent-foreground: 350 25% 12%;
 
     --oat: 350 30% 85%;
