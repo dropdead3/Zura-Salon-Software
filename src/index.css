@@ -388,21 +388,21 @@ html, body, #root {
     --destructive: 0 62% 50%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 145 6% 72%;
-    --input: 145 6% 80%;
+    --border: 145 5% 65%;
+    --input: 145 5% 74%;
     --ring: 145 45% 42%;
 
-    --sidebar-background: 145 12% 91%;
-    --sidebar-foreground: 145 20% 12%;
+    --sidebar-background: 145 8% 83%;
+    --sidebar-foreground: 145 15% 8%;
     --sidebar-primary: 145 45% 42%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 145 10% 84%;
-    --sidebar-accent-foreground: 145 20% 12%;
-    --sidebar-border: 145 6% 72%;
+    --sidebar-accent: 145 7% 78%;
+    --sidebar-accent-foreground: 145 15% 8%;
+    --sidebar-border: 145 5% 65%;
     --sidebar-ring: 145 45% 42%;
 
-    --card-inner: 145 6% 89%;
-    --card-inner-deep: 145 4% 86%;
+    --card-inner: 145 5% 80%;
+    --card-inner-deep: 145 3% 76%;
   }
 
   .dark.theme-sage {
