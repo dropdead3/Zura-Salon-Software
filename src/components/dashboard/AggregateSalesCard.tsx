@@ -374,6 +374,15 @@ export function AggregateSalesCard({
     isPastRange || isToday
   );
 
+  // Adjusted expected revenue (real-time, today only)
+  const { data: adjustedExpected } = useAdjustedExpectedRevenue(
+    filterContext?.locationId,
+    isToday
+  );
+
+  // For the today badge: use adjusted expected if available, otherwise fall back to scheduled
+  const todayExpectedDisplay = adjustedExpected?.adjustedExpected ?? scheduledRevenue ?? 0;
+
   // Gap analysis — lazy, only fetched when drill-down is open
   const { data: gapAnalysis, isLoading: gapLoading } = useRevenueGapAnalysis(
     dateFilters.dateFrom,
