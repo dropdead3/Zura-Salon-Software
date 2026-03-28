@@ -116,9 +116,9 @@ export function ViewAsPopover() {
       <PopoverContent
         align="end"
         sideOffset={16}
-        className="w-80 p-0 bg-card/80 backdrop-blur-xl backdrop-saturate-150 border border-border/30 rounded-xl shadow-2xl"
+        className="w-80 p-0 bg-card/80 backdrop-blur-xl backdrop-saturate-150 border border-border/30 rounded-xl shadow-2xl max-h-[--radix-popover-content-available-height] overflow-hidden flex flex-col"
       >
-        <Tabs defaultValue="roles" className="w-full">
+        <Tabs defaultValue="roles" className="w-full flex flex-col overflow-hidden flex-1 min-h-0">
           {/* Header */}
           <div className="px-3 pt-3 pb-2">
             <TabsList className="grid w-full grid-cols-3 h-10">
@@ -138,8 +138,8 @@ export function ViewAsPopover() {
           </div>
 
           {/* === Roles Tab === */}
-          <TabsContent value="roles" className="mt-0">
-            <ScrollArea className="max-h-[420px]">
+          <TabsContent value="roles" className="mt-0 overflow-hidden flex-1 min-h-0 flex flex-col">
+            <ScrollArea className="flex-1 min-h-0">
               <div className="p-3 space-y-3">
                 {grouped.map(group => (
                   <div key={group.value}>
@@ -174,7 +174,7 @@ export function ViewAsPopover() {
           </TabsContent>
 
           {/* === Team Tab === */}
-          <TabsContent value="team" className="mt-0">
+          <TabsContent value="team" className="mt-0 overflow-hidden flex-1 min-h-0 flex flex-col">
             <div className="p-3 pb-1">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
@@ -187,7 +187,7 @@ export function ViewAsPopover() {
                 />
               </div>
             </div>
-            <ScrollArea className="max-h-[380px]">
+            <ScrollArea className="flex-1 min-h-0">
               <div className="px-3 pb-3 space-y-0.5">
                 {usersLoading ? (
                   <p className="text-xs text-muted-foreground text-center py-6">Loading team…</p>
