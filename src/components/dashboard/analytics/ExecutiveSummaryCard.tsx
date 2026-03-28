@@ -68,6 +68,7 @@ interface KpiData {
   valueColor?: string;
   subtitle?: string;
   badge?: { label: string; color: string };
+  actionBadge?: { label: string; onClick: () => void };
   tooltip: string;
 }
 
