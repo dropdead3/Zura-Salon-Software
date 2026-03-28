@@ -115,9 +115,9 @@ function KpiTile({ kpi }: { kpi: KpiData }) {
           )}
           {kpi.actionBadge && (
             <Button
-              variant="destructive"
+              variant="ghost"
               size="sm"
-              className="rounded-full px-3 h-6 text-[10px] font-sans w-fit"
+              className="rounded-full px-3 h-6 text-[10px] font-sans w-fit text-destructive hover:bg-destructive/10 hover:text-destructive"
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();

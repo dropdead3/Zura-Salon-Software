@@ -316,9 +316,9 @@ export function BookingPipelineContent({ locationId, dateRange }: BookingPipelin
               {(loc.status === 'critical' || loc.status === 'slowing') && (
                 <div className="flex justify-end">
                   <Button
-                    variant="destructive"
+                    variant="ghost"
                     size="sm"
-                    className="rounded-full px-3 h-6 text-[10px] font-sans"
+                    className="rounded-full px-3 h-6 text-[10px] font-sans text-destructive hover:bg-destructive/10 hover:text-destructive"
                     onClick={(e) => {
                       e.stopPropagation();
                       setActionGuideForwardCount(loc.forwardCount);
