@@ -207,26 +207,21 @@ export function TopPerformersCard({ performers, isLoading, showInfoTooltip = fal
                           </BlurredAmount>
                         </div>
 
-                        {/* Row 2: Progress bar */}
-                        <div className="h-1 w-full bg-primary/15 rounded-full overflow-hidden">
-                          <motion.div
-                            className={cn("h-full rounded-full", rank === 1 ? "bg-primary" : "bg-primary/70")}
-                            initial={{ width: 0 }}
-                            animate={{ width: `${progressPercent}%` }}
-                            transition={{ duration: 0.6, delay: 0.15 + idx * 0.05, ease: 'easeOut' }}
-                          />
+                        {/* Row 2: Revenue share + optional split */}
+                        <div className="flex items-center gap-1 mt-0.5 text-[10px] text-muted-foreground">
+                          <span className="font-medium text-foreground/70">{revenueSharePct.toFixed(1)}%</span>
+                          <span>of total{sortMode === 'retail' ? ' retail' : ''}</span>
+                          {showSplit && (
+                            <>
+                              <span className="text-border">·</span>
+                              <BlurredAmount>{formatCurrencyWhole(serviceRev)}</BlurredAmount>
+                              <span>service</span>
+                              <span className="text-border">·</span>
+                              <BlurredAmount>{formatCurrencyWhole(retailRev)}</BlurredAmount>
+                              <span>retail</span>
+                            </>
+                          )}
                         </div>
-
-                        {/* Row 3: Service · Retail split */}
-                        {showSplit && (
-                          <div className="flex items-center gap-1 mt-1 text-[10px] text-muted-foreground">
-                            <BlurredAmount>{formatCurrencyWhole(serviceRev)}</BlurredAmount>
-                            <span>service</span>
-                            <span className="text-border">·</span>
-                            <BlurredAmount>{formatCurrencyWhole(retailRev)}</BlurredAmount>
-                            <span>retail</span>
-                          </div>
-                        )}
                       </div>
                     </div>
                   </motion.div>
