@@ -204,15 +204,7 @@ export function TopPerformersCard({ performers, isLoading, showInfoTooltip = fal
                         <div className="flex items-start justify-between gap-2">
                           <div className="min-w-0">
                             <p className="text-sm font-medium truncate">{performer.name}</p>
-                            {showSplit && (
-                              <div className="flex items-center gap-1 mt-0.5 text-[10px] text-muted-foreground">
-                                <BlurredAmount>{formatCurrencyWhole(serviceRev)}</BlurredAmount>
-                                <span>service</span>
-                                <span className="text-border">·</span>
-                                <BlurredAmount>{formatCurrencyWhole(retailRev)}</BlurredAmount>
-                                <span>retail</span>
-                              </div>
-                            )}
+                            
                           </div>
                           <div className="shrink-0 text-right">
                             <BlurredAmount className={cn("font-display text-sm whitespace-nowrap", rank === 1 && "text-foreground")}>
