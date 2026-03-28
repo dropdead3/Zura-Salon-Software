@@ -91,12 +91,12 @@ export function CategoryBreakdownPanel({ data, mode, dayCount, isOpen, breakdown
                   initial={{ opacity: 0, x: -8 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: index * 0.04 }}
-                  className="flex items-center gap-3 py-1.5 px-2 rounded-md hover:bg-muted/30 transition-colors"
+                  className="grid grid-cols-[140px_1fr_48px_90px] items-center gap-3 py-1.5 px-2 rounded-md hover:bg-muted/30 transition-colors"
                 >
-                  <span className="text-sm text-foreground font-medium min-w-[100px] truncate">
+                  <span className="text-sm text-foreground font-medium truncate">
                     {entry.name}
                   </span>
-                  <div className="flex-1 h-2 bg-muted/50 rounded-full overflow-hidden">
+                  <div className="h-2 bg-muted/50 rounded-full overflow-hidden">
                     <motion.div
                       className="h-full bg-primary/70 rounded-full"
                       initial={{ width: 0 }}
@@ -104,10 +104,10 @@ export function CategoryBreakdownPanel({ data, mode, dayCount, isOpen, breakdown
                       transition={{ duration: 0.5, delay: index * 0.04, ease: 'easeOut' }}
                     />
                   </div>
-                  <span className="text-xs text-muted-foreground tabular-nums w-[38px] text-right">
+                  <span className="text-xs text-muted-foreground tabular-nums text-right">
                     {Math.round(pct)}%
                   </span>
-                  <span className="text-sm font-display tabular-nums min-w-[80px] text-right">
+                  <span className="text-sm font-display tabular-nums text-right">
                     {mode === 'count' ? (
                       formatValue(mode, entry, dayCount)
                     ) : (

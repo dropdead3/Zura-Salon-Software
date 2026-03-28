@@ -73,12 +73,12 @@ export function TransactionsByHourPanel({ isOpen, dateFrom, dateTo, locationId }
                       initial={{ opacity: 0, x: -8 }}
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: index * 0.03 }}
-                      className="flex items-center gap-3 py-1 px-2 rounded-md hover:bg-muted/30 transition-colors"
+                      className="grid grid-cols-[50px_1fr_36px_auto] items-center gap-3 py-1 px-2 rounded-md hover:bg-muted/30 transition-colors"
                     >
-                      <span className="text-xs text-muted-foreground tabular-nums w-[46px] text-right">
+                      <span className="text-xs text-muted-foreground tabular-nums text-right">
                         {formatHour(entry.hour)}
                       </span>
-                      <div className="flex-1 h-2 bg-muted/50 rounded-full overflow-hidden">
+                      <div className="h-2 bg-muted/50 rounded-full overflow-hidden">
                         <motion.div
                           className={`h-full rounded-full ${isPeak ? 'bg-primary' : 'bg-primary/60'}`}
                           initial={{ width: 0 }}
@@ -86,14 +86,16 @@ export function TransactionsByHourPanel({ isOpen, dateFrom, dateTo, locationId }
                           transition={{ duration: 0.5, delay: index * 0.03, ease: 'easeOut' }}
                         />
                       </div>
-                      <span className="text-xs tabular-nums w-[32px] text-right font-medium">
+                      <span className="text-xs tabular-nums text-right font-medium">
                         {entry.count}
                       </span>
-                      {isPeak && (
-                        <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 border-primary/30 text-primary">
-                          Peak
-                        </Badge>
-                      )}
+                      <span className="w-[60px]">
+                        {isPeak && (
+                          <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 border-primary/30 text-primary">
+                            Peak
+                          </Badge>
+                        )}
+                      </span>
                     </motion.div>
                   );
                 })}

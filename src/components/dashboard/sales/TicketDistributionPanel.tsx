@@ -79,12 +79,12 @@ export function TicketDistributionPanel({ isOpen, dateFrom, dateTo, locationId }
                         initial={{ opacity: 0, x: -8 }}
                         animate={{ opacity: 1, x: 0 }}
                         transition={{ delay: index * 0.04 }}
-                        className="flex items-center gap-3 py-1 px-2 rounded-md hover:bg-muted/30 transition-colors"
+                        className="grid grid-cols-[64px_1fr_36px_auto] items-center gap-3 py-1 px-2 rounded-md hover:bg-muted/30 transition-colors"
                       >
-                        <span className="text-xs text-muted-foreground tabular-nums w-[60px] text-right">
+                        <span className="text-xs text-muted-foreground tabular-nums text-right">
                           {bucket.label}
                         </span>
-                        <div className="flex-1 h-2 bg-muted/50 rounded-full overflow-hidden">
+                        <div className="h-2 bg-muted/50 rounded-full overflow-hidden">
                           <motion.div
                             className={`h-full rounded-full ${isSweetSpot ? 'bg-primary' : 'bg-primary/60'}`}
                             initial={{ width: 0 }}
@@ -92,14 +92,16 @@ export function TicketDistributionPanel({ isOpen, dateFrom, dateTo, locationId }
                             transition={{ duration: 0.5, delay: index * 0.04, ease: 'easeOut' }}
                           />
                         </div>
-                        <span className="text-xs tabular-nums w-[32px] text-right font-medium">
+                        <span className="text-xs tabular-nums text-right font-medium">
                           {bucket.count}
                         </span>
-                        {isSweetSpot && (
-                          <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 border-primary/30 text-primary">
-                            Sweet Spot
-                          </Badge>
-                        )}
+                        <span className="w-[72px]">
+                          {isSweetSpot && (
+                            <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 border-primary/30 text-primary">
+                              Sweet Spot
+                            </Badge>
+                          )}
+                        </span>
                       </motion.div>
                     );
                   })}
