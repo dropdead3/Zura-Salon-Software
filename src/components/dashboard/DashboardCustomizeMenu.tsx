@@ -88,7 +88,7 @@ import { SortableWidgetItem } from './SortableWidgetItem';
 import { SortablePinnedCardItem } from './SortablePinnedCardItem';
 import { SortableHubItem } from './SortableHubItem';
 import { hubLinks } from './HubQuickLinks';
-import { useDashboardVisibility, useRegisterVisibilityElement } from '@/hooks/useDashboardVisibility';
+import { useDashboardVisibility, useRegisterVisibilityElement, type DashboardElementVisibility } from '@/hooks/useDashboardVisibility';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 import type { Database } from '@/integrations/supabase/types';
