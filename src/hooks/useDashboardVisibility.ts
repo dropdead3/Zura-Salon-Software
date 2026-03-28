@@ -2,7 +2,9 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useViewAs } from '@/contexts/ViewAsContext';
+import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useEffectiveUserId } from './useEffectiveUser';
+import { useGodModeTargetUserId } from './useGodModeTargetUserId';
 import { toast } from 'sonner';
 import type { Database } from '@/integrations/supabase/types';
 
@@ -82,30 +84,44 @@ export function useVisibilityCategories() {
   });
 }
 
-// Fetch visibility settings for the current user's roles (respects impersonation)
+// Fetch visibility settings for the current effective dashboard context.
+// In God Mode, this resolves roles from the impersonated org owner's profile.
 export function useMyDashboardVisibility() {
   const { roles: actualRoles } = useAuth();
   const { isViewingAsUser, viewAsRole } = useViewAs();
+  const { isImpersonating } = useOrganizationContext();
+  const { targetUserId: godModeTargetUserId, isResolvingTarget } = useGodModeTargetUserId();
   const effectiveUserId = useEffectiveUserId();
+  const roleSourceUserId = isImpersonating ? godModeTargetUserId : effectiveUserId;
 
-  // Fetch roles and visibility in a single query that handles impersonation
   return useQuery({
-    queryKey: ['dashboard-visibility', 'my', effectiveUserId, viewAsRole, isViewingAsUser, actualRoles],
+    queryKey: ['dashboard-visibility', 'my', roleSourceUserId, viewAsRole, isViewingAsUser, isImpersonating, actualRoles],
     queryFn: async () => {
       let rolesToCheck: AppRole[] = actualRoles as AppRole[];
 
-      // If viewing as a specific user, fetch their roles
-      if (isViewingAsUser && effectiveUserId) {
-        const { data: userRoles, error: rolesError } = await supabase
-          .from('user_roles')
-          .select('role')
-          .eq('user_id', effectiveUserId);
+      if ((isViewingAsUser || isImpersonating) && roleSourceUserId) {
+        rolesToCheck = [];
+
+        const [{ data: userRoles, error: rolesError }, { data: profile, error: profileError }] = await Promise.all([
+          supabase
+            .from('user_roles')
+            .select('role')
+            .eq('user_id', roleSourceUserId),
+          supabase
+            .from('employee_profiles')
+            .select('is_super_admin')
+            .eq('user_id', roleSourceUserId)
+            .maybeSingle(),
+        ]);
 
         if (!rolesError && userRoles && userRoles.length > 0) {
-          rolesToCheck = userRoles.map(r => r.role);
+          rolesToCheck = userRoles.map((r) => r.role);
+        }
+
+        if (!profileError && profile?.is_super_admin) {
+          rolesToCheck = Array.from(new Set([...rolesToCheck, 'super_admin' as AppRole]));
         }
       } else if (viewAsRole) {
-        // If viewing as a role (not a specific user)
         rolesToCheck = [viewAsRole];
       }
 
@@ -118,21 +134,22 @@ export function useMyDashboardVisibility() {
 
       if (error) throw error;
 
-      // Create a map of element_key -> is_visible (true if ANY of user's roles has it visible)
       const visibilityMap: Record<string, boolean> = {};
-      
+
       (data as DashboardElementVisibility[]).forEach((item) => {
         if (visibilityMap[item.element_key] === undefined) {
           visibilityMap[item.element_key] = item.is_visible;
         } else {
-          // If any role has it visible, show it
           visibilityMap[item.element_key] = visibilityMap[item.element_key] || item.is_visible;
         }
       });
 
       return visibilityMap;
     },
-    enabled: actualRoles.length > 0 || isViewingAsUser || !!viewAsRole,
+    enabled: !isResolvingTarget && (
+      (isImpersonating && !!roleSourceUserId) ||
+      (!isImpersonating && (actualRoles.length > 0 || isViewingAsUser || !!viewAsRole))
+    ),
   });
 }
 
