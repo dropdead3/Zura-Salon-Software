@@ -796,7 +796,7 @@ export function AggregateSalesCard({
               </div>
 
               {/* Expected Revenue - secondary badge (today + past ranges with actual POS data) */}
-              {isToday && (
+              {isToday && scheduledRevenue != null && scheduledRevenue > 0 && (
                 <div className="mt-4 mx-auto max-w-sm space-y-3">
                   {(() => {
                     const exceededExpected = !!(todayActual?.hasActualData && todayActual.actualRevenue > displayMetrics.totalRevenue && displayMetrics.totalRevenue > 0);
