@@ -28,8 +28,6 @@ import {
   Check,
   CheckCircle2,
   Moon,
-  TrendingDown,
-  TrendingUp,
 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
@@ -877,31 +875,22 @@ export function AggregateSalesCard({
                           </div>
                         )}
 
-                        {/* Line 3: Shortfall/surplus tracking indicator */}
-                        {hasResolvedAppts && serviceDelta !== 0 && (
-                          <div className={cn(
-                            "flex items-center justify-center gap-1 text-xs",
-                            serviceDelta < 0 ? "text-destructive" : "text-success-foreground"
-                          )}>
-                            {serviceDelta < 0 ? (
-                              <TrendingDown className="w-3.5 h-3.5" />
-                            ) : (
-                              <TrendingUp className="w-3.5 h-3.5" />
-                            )}
-                            <BlurredAmount disableTooltip>
-                              <span>Completed appts collected {formatCurrency(Math.abs(serviceDelta))} {serviceDelta < 0 ? 'less' : 'more'} than booked</span>
-                            </BlurredAmount>
-                          </div>
+                        {/* Appointment completion fraction */}
+                        {adjustedExpected && (adjustedExpected.resolvedCount + adjustedExpected.pendingCount + adjustedExpected.cancelledCount + adjustedExpected.noShowCount) > 0 && (
+                          <p className="text-xs text-muted-foreground/70 text-center">
+                            {adjustedExpected.resolvedCount} of {adjustedExpected.resolvedCount + adjustedExpected.pendingCount + adjustedExpected.cancelledCount + adjustedExpected.noShowCount} appointments completed
+                          </p>
                         )}
 
                         {/* Progress bar: earned % of scheduled + projection */}
                         {todayActual?.hasActualData ? (() => {
-                          const exceededTotal = displayExpected > 0 && todayActual.actualRevenue > displayExpected;
+                          const serviceRevenue = completedActual;
+                          const exceededTotal = displayExpected > 0 && serviceRevenue > displayExpected;
                           const earnedPct = displayExpected > 0 
-                            ? Math.round((todayActual.actualRevenue / displayExpected) * 100) 
+                            ? Math.round((serviceRevenue / displayExpected) * 100) 
                             : 0;
                           const projectedFinish = (adjustedExpected?.completedActualRevenue ?? 0) + (adjustedExpected?.pendingScheduledRevenue ?? 0);
-                          const excessAmount = todayActual.actualRevenue - displayExpected;
+                          const excessAmount = serviceRevenue - displayExpected;
                           return (
                           <div className="space-y-1.5">
                             <div className="flex items-center justify-between text-xs">
@@ -910,13 +899,13 @@ export function AggregateSalesCard({
                               </span>
                               <BlurredAmount>
                                 <span className={cn("font-medium", exceededTotal && "text-success-foreground")}>
-                                  {formatCurrency(todayActual.actualRevenue)}
+                                  {formatCurrency(serviceRevenue)}
                                 </span>
                               </BlurredAmount>
                             </div>
                             <Progress 
                               value={displayExpected > 0 
-                                ? Math.min((todayActual.actualRevenue / displayExpected) * 100, 100) 
+                                ? Math.min((serviceRevenue / displayExpected) * 100, 100) 
                                 : 0
                               }
                               className="h-1.5"
@@ -934,7 +923,7 @@ export function AggregateSalesCard({
                                 <span className="flex items-center justify-center gap-1">
                                   <CheckCircle2 className="w-3.5 h-3.5 text-success-foreground" />
                                   <BlurredAmount disableTooltip>
-                                    <span>Final: {formatCurrency(todayActual.actualRevenue)} service revenue</span>
+                                    <span>Final: {formatCurrency(serviceRevenue)} service revenue</span>
                                   </BlurredAmount>
                                 </span>
                               ) : (
