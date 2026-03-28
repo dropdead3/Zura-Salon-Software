@@ -480,13 +480,13 @@ html, body, #root {
     --primary: 210 60% 50%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 210 20% 93%;
+    --secondary: 210 20% 90%;
     --secondary-foreground: 210 25% 12%;
 
-    --muted: 210 15% 90%;
-    --muted-foreground: 210 12% 45%;
+    --muted: 210 15% 86%;
+    --muted-foreground: 210 12% 40%;
 
-    --accent: 210 22% 92%;
+    --accent: 210 22% 88%;
     --accent-foreground: 210 25% 12%;
 
     --oat: 210 28% 85%;
