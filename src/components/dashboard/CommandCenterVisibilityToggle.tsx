@@ -16,6 +16,12 @@ import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import type { Database } from '@/integrations/supabase/types';
+import {
+  useDashboardLayout,
+  useSaveDashboardLayout,
+  isPinnedInLayout,
+  toPinnedEntry,
+} from '@/hooks/useDashboardLayout';
 
 type AppRole = Database['public']['Enums']['app_role'];
 
@@ -38,6 +44,8 @@ export function CommandCenterVisibilityToggle({
   const [isToggling, setIsToggling] = useState(false);
   
   const { data: visibilityData, isLoading } = useDashboardVisibility();
+  const { layout } = useDashboardLayout();
+  const saveLayout = useSaveDashboardLayout();
   const queryClient = useQueryClient();
 
   // Only show for Super Admins
@@ -48,19 +56,13 @@ export function CommandCenterVisibilityToggle({
     v => v.element_key === elementKey
   ) || [];
 
-  // Match Command Center logic: card is pinned if ANY leadership role has it visible
-  const isVisibleToLeadership = LEADERSHIP_ROLES.some(role => 
+  // Card is pinned if ANY leadership role has it visible OR it's in the layout's pinnedCards
+  const isVisibleViaRoles = LEADERSHIP_ROLES.some(role => 
     elementVisibility.find(v => v.role === role)?.is_visible === true
   );
-
-  // #region agent log — H5: check visibility data on render
-  fetch('http://127.0.0.1:7242/ingest/9caa1fd3-4fc1-4530-b70d-2ec8970af2be',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'CommandCenterVisibilityToggle.tsx:RENDER',message:'render state',data:{elementKey,elementCategory,isLoading,isToggling,visibilityDataLength:visibilityData?.length,elementVisibilityCount:elementVisibility.length,elementVisibilityRoles:elementVisibility.map(v=>({role:v.role,is_visible:v.is_visible})),isVisibleToLeadership},timestamp:Date.now(),hypothesisId:'H5'})}).catch(()=>{});
-  // #endregion
+  const isVisibleToLeadership = isVisibleViaRoles || isPinnedInLayout(layout, elementKey);
 
   const handleToggle = async (checked: boolean) => {
-    // #region agent log — H3: check if handleToggle fires
-    fetch('http://127.0.0.1:7242/ingest/9caa1fd3-4fc1-4530-b70d-2ec8970af2be',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'CommandCenterVisibilityToggle.tsx:handleToggle:ENTRY',message:'handleToggle called',data:{checked,elementKey,elementName,elementCategory},timestamp:Date.now(),hypothesisId:'H3'})}).catch(()=>{});
-    // #endregion
     setIsToggling(true);
     try {
       // Upsert all leadership roles in a single batch call
@@ -72,26 +74,30 @@ export function CommandCenterVisibilityToggle({
         is_visible: checked,
       }));
 
-      const { error, data, status, statusText } = await supabase
+      const { error } = await supabase
         .from('dashboard_element_visibility')
         .upsert(rows, { onConflict: 'element_key,role' })
         .select();
 
-      // #region agent log — H1/H2: check upsert result
-      fetch('http://127.0.0.1:7242/ingest/9caa1fd3-4fc1-4530-b70d-2ec8970af2be',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'CommandCenterVisibilityToggle.tsx:handleToggle:UPSERT_RESULT',message:'upsert result',data:{error:error?{message:error.message,code:error.code,details:error.details,hint:error.hint}:null,dataLength:data?.length,status,statusText,returnedRows:data?.map((r:any)=>({element_key:r.element_key,role:r.role,is_visible:r.is_visible}))},timestamp:Date.now(),hypothesisId:'H1_H2'})}).catch(()=>{});
-      // #endregion
-
       if (error) throw error;
 
+      // Sync to dashboard_layout so Customizer stays in sync
+      const currentLayout = layout || { pinnedCards: [], sectionOrder: [] };
+      const pinnedEntry = toPinnedEntry(elementKey);
+
+      if (checked) {
+        const newPinnedCards = [...new Set([...(currentLayout.pinnedCards || []), elementKey])];
+        const newSectionOrder = [...new Set([...(currentLayout.sectionOrder || []), pinnedEntry])];
+        saveLayout.mutate({ ...currentLayout, pinnedCards: newPinnedCards, sectionOrder: newSectionOrder });
+      } else {
+        const newPinnedCards = (currentLayout.pinnedCards || []).filter(id => id !== elementKey);
+        const newSectionOrder = (currentLayout.sectionOrder || []).filter(id => id !== pinnedEntry);
+        saveLayout.mutate({ ...currentLayout, pinnedCards: newPinnedCards, sectionOrder: newSectionOrder });
+      }
+
       // Invalidate all visibility queries so UI updates everywhere
-      // #region agent log — H4: check invalidation
-      fetch('http://127.0.0.1:7242/ingest/9caa1fd3-4fc1-4530-b70d-2ec8970af2be',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'CommandCenterVisibilityToggle.tsx:handleToggle:BEFORE_INVALIDATE',message:'about to invalidate queries',data:{queryKey:'dashboard-visibility'},timestamp:Date.now(),hypothesisId:'H4'})}).catch(()=>{});
-      // #endregion
       queryClient.invalidateQueries({ queryKey: ['dashboard-visibility'] });
     } catch (error: any) {
-      // #region agent log — H1/H2: catch block
-      fetch('http://127.0.0.1:7242/ingest/9caa1fd3-4fc1-4530-b70d-2ec8970af2be',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'CommandCenterVisibilityToggle.tsx:handleToggle:CATCH',message:'toggle error caught',data:{errorMessage:error?.message,errorCode:error?.code},timestamp:Date.now(),hypothesisId:'H1_H2'})}).catch(()=>{});
-      // #endregion
       toast.error('Failed to update visibility', { description: error.message });
     } finally {
       setIsToggling(false);
