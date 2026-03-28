@@ -8,11 +8,11 @@ import { useOrganizationContext } from '@/contexts/OrganizationContext';
  * In God Mode, returns the org's primary owner user_id.
  * Otherwise, returns the current authenticated user's ID.
  */
-export function useGodModeTargetUserId(): string | undefined {
+export function useGodModeTargetUserId(): { targetUserId: string | undefined; isResolvingTarget: boolean } {
   const { user } = useAuth();
   const { isImpersonating, selectedOrganization } = useOrganizationContext();
 
-  const { data: ownerUserId } = useQuery({
+  const { data: ownerUserId, isLoading } = useQuery({
     queryKey: ['org-primary-owner', selectedOrganization?.id],
     queryFn: async () => {
       const { data } = await supabase
@@ -27,6 +27,6 @@ export function useGodModeTargetUserId(): string | undefined {
     staleTime: 5 * 60 * 1000,
   });
 
-  if (!isImpersonating) return user?.id;
-  return ownerUserId ?? user?.id;
+  if (!isImpersonating) return { targetUserId: user?.id, isResolvingTarget: false };
+  return { targetUserId: ownerUserId ?? undefined, isResolvingTarget: isLoading };
 }
