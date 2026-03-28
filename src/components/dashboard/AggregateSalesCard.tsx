@@ -920,7 +920,7 @@ export function AggregateSalesCard({
                           onClick={(e) => { e.stopPropagation(); toggleDrilldown('expectedGap'); }}
                         >
                           <Badge variant="outline" className={cn(
-                            "text-xs font-normal gap-1 transition-colors",
+                            "text-sm font-normal gap-1 px-3 py-1.5 transition-colors",
                             exceededScheduled
                               ? "bg-success/10 text-success-foreground border-success/30"
                               : "bg-warning/10 text-warning border-warning/30",
