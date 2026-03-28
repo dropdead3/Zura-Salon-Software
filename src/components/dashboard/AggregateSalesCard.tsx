@@ -866,10 +866,10 @@ export function AggregateSalesCard({
                                   className="text-sm font-normal gap-1 cursor-pointer px-3 py-1.5 bg-warning/10 text-warning border-warning/30"
                                   onClick={() => toggleDrilldown('expectedGap')}
                                 >
+                                  <span>Service revenue still expected to collect:</span>
                                   <BlurredAmount disableTooltip>
                                     <span>{formatCurrency(remainingExpected)}</span>
                                   </BlurredAmount>
-                                  <span>More Service Revenue Expected</span>
                                   {adjustedExpected && adjustedExpected.pendingCount > 0 && (
                                     <span className="text-[10px] opacity-60 ml-0.5">
                                       · {adjustedExpected.pendingCount} pending
