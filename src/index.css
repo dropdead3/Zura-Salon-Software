@@ -63,22 +63,22 @@ html, body, #root {
     --background: 40 30% 96%;
     --foreground: 0 0% 8%;
 
-    --card: 40 25% 98%;
+    --card: 40 25% 97%;
     --card-foreground: 0 0% 8%;
 
-    --popover: 40 25% 98%;
+    --popover: 40 25% 97%;
     --popover-foreground: 0 0% 8%;
 
     --primary: 0 0% 8%;
     --primary-foreground: 40 30% 96%;
 
-    --secondary: 40 20% 92%;
+    --secondary: 40 20% 89%;
     --secondary-foreground: 0 0% 8%;
 
-    --muted: 40 15% 88%;
-    --muted-foreground: 0 0% 45%;
+    --muted: 40 15% 85%;
+    --muted-foreground: 0 0% 40%;
 
-    --accent: 40 25% 90%;
+    --accent: 40 25% 87%;
     --accent-foreground: 0 0% 8%;
 
     /* Oat/Tan accent - soft warm neutral */
@@ -107,8 +107,8 @@ html, body, #root {
     --destructive: 0 62% 50%;
     --destructive-foreground: 40 30% 96%;
 
-    --border: 40 15% 85%;
-    --input: 40 15% 90%;
+    --border: 40 15% 80%;
+    --input: 40 15% 87%;
     --ring: 0 0% 8%;
 
     --radius: 0.75rem;
@@ -148,13 +148,13 @@ html, body, #root {
     --sidebar-foreground: 0 0% 8%;
     --sidebar-primary: 0 0% 8%;
     --sidebar-primary-foreground: 40 30% 96%;
-    --sidebar-accent: 40 20% 92%;
+    --sidebar-accent: 40 20% 89%;
     --sidebar-accent-foreground: 0 0% 8%;
-    --sidebar-border: 40 15% 85%;
+    --sidebar-border: 40 15% 80%;
     --sidebar-ring: 0 0% 8%;
 
-    --card-inner: 40 20% 99%;
-    --card-inner-deep: 40 15% 100%;
+    --card-inner: 40 20% 95%;
+    --card-inner-deep: 40 15% 93%;
   }
 
   .dark.theme-cream,
@@ -225,22 +225,22 @@ html, body, #root {
     --background: 350 30% 97%;
     --foreground: 350 25% 12%;
 
-    --card: 350 25% 99%;
+    --card: 350 25% 97%;
     --card-foreground: 350 25% 12%;
 
-    --popover: 350 25% 99%;
+    --popover: 350 25% 97%;
     --popover-foreground: 350 25% 12%;
 
     --primary: 350 60% 55%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 350 20% 93%;
+    --secondary: 350 20% 90%;
     --secondary-foreground: 350 25% 12%;
 
-    --muted: 350 15% 90%;
-    --muted-foreground: 350 10% 45%;
+    --muted: 350 15% 86%;
+    --muted-foreground: 350 10% 40%;
 
-    --accent: 350 25% 92%;
+    --accent: 350 25% 88%;
     --accent-foreground: 350 25% 12%;
 
     --oat: 350 30% 85%;
@@ -265,21 +265,21 @@ html, body, #root {
     --destructive: 0 62% 50%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 350 15% 88%;
-    --input: 350 15% 92%;
+    --border: 350 15% 82%;
+    --input: 350 15% 88%;
     --ring: 350 60% 55%;
 
     --sidebar-background: 350 25% 98%;
     --sidebar-foreground: 350 25% 12%;
     --sidebar-primary: 350 60% 55%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 350 20% 93%;
+    --sidebar-accent: 350 20% 90%;
     --sidebar-accent-foreground: 350 25% 12%;
-    --sidebar-border: 350 15% 88%;
+    --sidebar-border: 350 15% 82%;
     --sidebar-ring: 350 60% 55%;
 
-    --card-inner: 350 15% 99%;
-    --card-inner-deep: 350 10% 100%;
+    --card-inner: 350 15% 95%;
+    --card-inner-deep: 350 10% 93%;
   }
 
   .dark.theme-rose {
@@ -348,22 +348,22 @@ html, body, #root {
     --background: 145 25% 96%;
     --foreground: 145 20% 12%;
 
-    --card: 145 20% 98%;
+    --card: 145 20% 97%;
     --card-foreground: 145 20% 12%;
 
-    --popover: 145 20% 98%;
+    --popover: 145 20% 97%;
     --popover-foreground: 145 20% 12%;
 
     --primary: 145 45% 42%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 145 18% 92%;
+    --secondary: 145 18% 89%;
     --secondary-foreground: 145 20% 12%;
 
-    --muted: 145 12% 88%;
-    --muted-foreground: 145 10% 45%;
+    --muted: 145 12% 85%;
+    --muted-foreground: 145 10% 40%;
 
-    --accent: 145 20% 90%;
+    --accent: 145 20% 87%;
     --accent-foreground: 145 20% 12%;
 
     --oat: 145 25% 82%;
@@ -388,21 +388,21 @@ html, body, #root {
     --destructive: 0 62% 50%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 145 12% 85%;
-    --input: 145 12% 90%;
+    --border: 145 12% 80%;
+    --input: 145 12% 87%;
     --ring: 145 45% 42%;
 
     --sidebar-background: 145 20% 97%;
     --sidebar-foreground: 145 20% 12%;
     --sidebar-primary: 145 45% 42%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 145 18% 92%;
+    --sidebar-accent: 145 18% 89%;
     --sidebar-accent-foreground: 145 20% 12%;
-    --sidebar-border: 145 12% 85%;
+    --sidebar-border: 145 12% 80%;
     --sidebar-ring: 145 45% 42%;
 
-    --card-inner: 145 12% 99%;
-    --card-inner-deep: 145 8% 100%;
+    --card-inner: 145 12% 95%;
+    --card-inner-deep: 145 8% 93%;
   }
 
   .dark.theme-sage {
@@ -471,22 +471,22 @@ html, body, #root {
     --background: 210 30% 97%;
     --foreground: 210 25% 12%;
 
-    --card: 210 25% 99%;
+    --card: 210 25% 97%;
     --card-foreground: 210 25% 12%;
 
-    --popover: 210 25% 99%;
+    --popover: 210 25% 97%;
     --popover-foreground: 210 25% 12%;
 
     --primary: 210 60% 50%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 210 20% 93%;
+    --secondary: 210 20% 90%;
     --secondary-foreground: 210 25% 12%;
 
-    --muted: 210 15% 90%;
-    --muted-foreground: 210 12% 45%;
+    --muted: 210 15% 86%;
+    --muted-foreground: 210 12% 40%;
 
-    --accent: 210 22% 92%;
+    --accent: 210 22% 88%;
     --accent-foreground: 210 25% 12%;
 
     --oat: 210 28% 85%;
@@ -511,21 +511,21 @@ html, body, #root {
     --destructive: 0 62% 50%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 210 15% 88%;
-    --input: 210 15% 92%;
+    --border: 210 15% 82%;
+    --input: 210 15% 88%;
     --ring: 210 60% 50%;
 
     --sidebar-background: 210 25% 98%;
     --sidebar-foreground: 210 25% 12%;
     --sidebar-primary: 210 60% 50%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 210 20% 93%;
+    --sidebar-accent: 210 20% 90%;
     --sidebar-accent-foreground: 210 25% 12%;
-    --sidebar-border: 210 15% 88%;
+    --sidebar-border: 210 15% 82%;
     --sidebar-ring: 210 60% 50%;
 
-    --card-inner: 210 15% 99%;
-    --card-inner-deep: 210 10% 100%;
+    --card-inner: 210 15% 95%;
+    --card-inner-deep: 210 10% 93%;
   }
 
   .dark.theme-ocean {
