@@ -1,4 +1,5 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { cn, formatDisplayName } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { useViewAs } from '@/contexts/ViewAsContext';
@@ -113,18 +114,20 @@ export function ViewAsPopover() {
         <TooltipContent side="bottom">Impersonate a role or team member</TooltipContent>
       </Tooltip>
 
-      {open && (
+      {open && createPortal(
         <div
-          className="fixed top-[60px] left-0 right-0 bottom-0 z-40 bg-black/40 backdrop-blur-sm animate-in fade-in-0 duration-200"
+          className="fixed left-0 right-0 bottom-0 z-[45] bg-black/40 backdrop-blur-sm animate-in fade-in-0 duration-200"
+          style={{ top: document.querySelector('.dashboard-top-bar')?.getBoundingClientRect().bottom ?? 60 }}
           aria-hidden="true"
           onClick={() => setOpen(false)}
-        />
+        />,
+        document.body
       )}
 
       <PopoverContent
         align="end"
         sideOffset={16}
-        className="w-80 p-0 bg-card/80 backdrop-blur-xl backdrop-saturate-150 border border-border/30 rounded-xl shadow-2xl overflow-hidden flex flex-col"
+        className="z-[46] w-80 p-0 bg-card/80 backdrop-blur-xl backdrop-saturate-150 border border-border/30 rounded-xl shadow-2xl overflow-hidden flex flex-col"
         style={{ maxHeight: 'min(420px, var(--radix-popover-content-available-height))' }}
       >
         <Tabs defaultValue="roles" className="w-full flex flex-col overflow-hidden flex-1 min-h-0">
