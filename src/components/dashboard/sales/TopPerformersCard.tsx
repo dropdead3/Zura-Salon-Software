@@ -107,7 +107,7 @@ export function TopPerformersCard({ performers, isLoading, showInfoTooltip = fal
             dateRange={filterContext.dateRange} 
           />
         )}
-        <MetricInfoTooltip description="Ranks your team by total revenue or retail sales in the selected period." />
+        <MetricInfoTooltip description="Ranks your team by service revenue or retail sales in the selected period." />
       </div>
     </div>
   );
