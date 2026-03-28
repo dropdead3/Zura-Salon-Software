@@ -111,6 +111,20 @@ export function NewBookingsCard({
               )} />
               <span className="text-sm font-medium">Pipeline: {pipeline.label}</span>
               <MetricInfoTooltip description="Compares confirmed appointments in the next 14 days against the trailing 14 days. Healthy ≥ 90%, Slowing ≥ 70%, Critical < 70%." />
+              {showPipelineAction && (
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  className="rounded-full px-3 h-6 text-[10px] font-sans ml-2"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setShowActionGuide(true);
+                  }}
+                >
+                  Take Action
+                </Button>
+              )}
             </div>
             <span className="text-xs text-muted-foreground tabular-nums">
               {pipeline.forwardCount} next 14d vs {pipeline.baselineCount} trailing
