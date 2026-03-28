@@ -115,7 +115,7 @@ export function ViewAsPopover() {
 
       {open && (
         <div
-          className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm animate-in fade-in-0 duration-200"
+          className="fixed top-[60px] left-0 right-0 bottom-0 z-40 bg-black/40 backdrop-blur-sm animate-in fade-in-0 duration-200"
           aria-hidden="true"
           onClick={() => setOpen(false)}
         />
