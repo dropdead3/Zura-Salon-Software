@@ -107,8 +107,8 @@ html, body, #root {
     --destructive: 0 62% 50%;
     --destructive-foreground: 40 30% 96%;
 
-    --border: 40 15% 85%;
-    --input: 40 15% 90%;
+    --border: 40 15% 80%;
+    --input: 40 15% 87%;
     --ring: 0 0% 8%;
 
     --radius: 0.75rem;
