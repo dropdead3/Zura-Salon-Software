@@ -295,6 +295,18 @@ export function useSalesMetrics(filters: SalesFilters = {}) {
       }
       const posTransactionCount = posClientIds.size;
 
+      // Derive total revenue from transaction items (actual POS data, the single source of truth)
+      let txServiceRevenue = 0;
+      let txTotalRevenue = 0;
+      for (const item of txItems) {
+        const amount = (Number(item.total_amount) || 0) + (Number(item.tax_amount) || 0);
+        txTotalRevenue += amount;
+        const itemType = (item.item_type || '').toLowerCase();
+        if (itemType === 'service' || itemType === 'sale_fee') {
+          txServiceRevenue += amount;
+        }
+      }
+
       // Sum tips from appointments, deduplicating multi-service appointments
       // Phorest duplicates the same tip on every service line item within one visit
       const seenTipKeys = new Set<string>();
@@ -309,13 +321,17 @@ export function useSalesMetrics(filters: SalesFilters = {}) {
         }
       }
 
-      if (data.length === 0) {
+      // Use transaction items as the authoritative revenue source when available;
+      // fall back to appointments only if no transaction data exists at all.
+      const hasTransactionData = txItems.length > 0;
+
+      if (data.length === 0 && !hasTransactionData) {
         return {
-          totalRevenue: productRevenue,
+          totalRevenue: 0,
           serviceRevenue: 0,
-          productRevenue,
+          productRevenue: 0,
           totalServices: 0,
-          totalProducts,
+          totalProducts: 0,
           totalTransactions: 0,
           averageTicket: 0,
           totalDiscounts: 0,
@@ -327,11 +343,13 @@ export function useSalesMetrics(filters: SalesFilters = {}) {
         };
       }
 
-      // appointment total_price already includes bundled products — do NOT add productRevenue again
-      const appointmentRevenue = data.reduce((sum, apt) => sum + (Number(apt.total_price) || 0), 0);
-      const totalRevenue = appointmentRevenue;
-      // derive service-only revenue by subtracting product revenue (for breakdown display)
-      const serviceRevenue = Math.max(0, appointmentRevenue - productRevenue);
+      // Revenue from actual POS transactions (single source of truth per sales-analytics-data-integrity-standards)
+      const totalRevenue = hasTransactionData
+        ? txTotalRevenue
+        : data.reduce((sum, apt) => sum + (Number(apt.total_price) || 0), 0);
+      const serviceRevenue = hasTransactionData
+        ? txServiceRevenue
+        : Math.max(0, totalRevenue - productRevenue);
       const totalServices = data.length;
       const uniqueVisits = new Set(data.map(d => `${d.phorest_client_id}|${d.appointment_date}`).filter(k => !k.startsWith('null'))).size;
       const daysWithSales = new Set(data.map(d => d.appointment_date).filter(Boolean)).size;
