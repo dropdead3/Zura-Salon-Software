@@ -4,6 +4,7 @@ import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { useTicketDistribution } from '@/hooks/useTicketDistribution';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
+import { cn } from '@/lib/utils';
 
 interface TicketDistributionPanelProps {
   isOpen: boolean;
@@ -79,7 +80,10 @@ export function TicketDistributionPanel({ isOpen, dateFrom, dateTo, locationId }
                         initial={{ opacity: 0, x: -8 }}
                         animate={{ opacity: 1, x: 0 }}
                         transition={{ delay: index * 0.04 }}
-                        className="grid grid-cols-[64px_1fr_36px_auto] items-center gap-3 py-1 px-2 rounded-md hover:bg-muted/30 transition-colors"
+                        className={cn(
+                          "grid grid-cols-[64px_1fr_36px_auto] items-center gap-3 py-1 px-2 rounded-md hover:bg-muted/30 transition-colors",
+                          index % 2 === 0 && "bg-muted/15"
+                        )}
                       >
                         <span className="text-xs text-muted-foreground tabular-nums text-right">
                           {bucket.label}
