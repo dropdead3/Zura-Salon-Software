@@ -357,13 +357,13 @@ html, body, #root {
     --primary: 145 45% 42%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 145 18% 92%;
+    --secondary: 145 18% 89%;
     --secondary-foreground: 145 20% 12%;
 
-    --muted: 145 12% 88%;
-    --muted-foreground: 145 10% 45%;
+    --muted: 145 12% 85%;
+    --muted-foreground: 145 10% 40%;
 
-    --accent: 145 20% 90%;
+    --accent: 145 20% 87%;
     --accent-foreground: 145 20% 12%;
 
     --oat: 145 25% 82%;
