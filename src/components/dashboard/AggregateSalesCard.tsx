@@ -939,6 +939,15 @@ export function AggregateSalesCard({
                           </p>
                         ) : null}
 
+                        {/* Gap analysis drill-down trigger */}
+                        <div 
+                          className="flex items-center justify-center gap-1 text-xs text-muted-foreground/60 hover:text-muted-foreground cursor-pointer transition-colors"
+                          onClick={() => toggleDrilldown('expectedGap')}
+                        >
+                          <ChevronDown className={cn("w-3 h-3 transition-transform duration-200", activeDrilldown === 'expectedGap' && "rotate-180")} />
+                          <span>{activeDrilldown === 'expectedGap' ? 'Hide' : 'View'} gap analysis</span>
+                        </div>
+
                         {/* Gap analysis drill-down (today) */}
                         <RevenueGapDrilldown
                           isOpen={activeDrilldown === 'expectedGap'}
