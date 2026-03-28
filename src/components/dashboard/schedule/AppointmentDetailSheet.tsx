@@ -884,7 +884,7 @@ export function AppointmentDetailSheet({
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end" className="w-52">
                         {/* ── Actions ── */}
-                        <DropdownMenuLabel className="font-sans text-[10px] text-muted-foreground uppercase tracking-wider">Actions</DropdownMenuLabel>
+                        <DropdownMenuLabel className="font-display text-[10px] text-muted-foreground uppercase tracking-wide">Actions</DropdownMenuLabel>
                         {onReschedule && !['completed', 'cancelled', 'no_show'].includes(appointment.status) && (
                           <DropdownMenuItem onClick={() => onReschedule(appointment)}>
                             <CalendarClock className="h-3.5 w-3.5 mr-2" />
