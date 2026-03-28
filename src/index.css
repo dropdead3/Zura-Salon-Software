@@ -468,28 +468,28 @@ html, body, #root {
 
   /* ===== THEME: OCEAN (Soft Blue Pastel) ===== */
   .theme-ocean {
-    --background: 210 18% 90%;
-    --foreground: 210 25% 12%;
+    --background: 210 12% 82%;
+    --foreground: 210 20% 8%;
 
-    --card: 210 15% 93%;
-    --card-foreground: 210 25% 12%;
+    --card: 210 10% 85%;
+    --card-foreground: 210 20% 8%;
 
-    --popover: 210 15% 93%;
-    --popover-foreground: 210 25% 12%;
+    --popover: 210 10% 85%;
+    --popover-foreground: 210 20% 8%;
 
     --primary: 210 60% 50%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 210 12% 84%;
-    --secondary-foreground: 210 25% 12%;
+    --secondary: 210 8% 78%;
+    --secondary-foreground: 210 20% 8%;
 
-    --muted: 210 8% 78%;
-    --muted-foreground: 210 6% 35%;
+    --muted: 210 6% 72%;
+    --muted-foreground: 210 5% 30%;
 
-    --accent: 210 14% 82%;
-    --accent-foreground: 210 25% 12%;
+    --accent: 210 10% 76%;
+    --accent-foreground: 210 20% 8%;
 
-    --oat: 210 18% 75%;
+    --oat: 210 12% 68%;
     --oat-foreground: 210 20% 25%;
 
     --gold: 38 70% 38%;
