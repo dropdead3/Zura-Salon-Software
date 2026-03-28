@@ -84,7 +84,7 @@ export function TopPerformersCard({ performers, isLoading, showInfoTooltip = fal
     [sorted, sortMode]
   );
 
-  const currentLabel = SORT_OPTIONS.find(o => o.value === sortMode)?.label ?? 'Total Revenue';
+  const currentLabel = SORT_OPTIONS.find(o => o.value === sortMode)?.label ?? 'Service';
   const displayList = showAll ? sorted : sorted.slice(0, INITIAL_COUNT);
   const hasMore = sorted.length > INITIAL_COUNT;
 
