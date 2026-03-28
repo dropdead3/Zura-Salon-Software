@@ -2,31 +2,32 @@
 
 ## Problem
 
-Light mode across all four themes is still too bright and white. The background sits at 96-97% lightness and cards at 97% — everything reads as near-white. The user wants a more muted, grayed-down aesthetic with very little pure white.
+Light mode is still too bright at 90-93% lightness. The user wants significantly darker, more muted surfaces — closer to a true gray UI with almost no white.
 
-## Strategy: Shift to a warm-gray foundation
+## Strategy: Push to "dark gray" light mode
 
-Drop all light mode surfaces significantly — think "warm stone" not "cream paper." The page canvas should feel like a soft gray, cards like slightly lighter panels on that gray, and inner surfaces darker still.
+Drop everything another 6-8% lightness. The lightest surface (card) should be ~85%, background ~82%, and deep nesting down to ~76%. This creates a UI that feels like a warm mid-gray workspace.
 
 ### Target lightness hierarchy
 
 | Token | Current | New | Effect |
 |-------|---------|-----|--------|
-| `--background` | 96% | **90%** | Distinctly gray canvas |
-| `--card` | 97% | **93%** | Visible panels on gray bg |
-| `--popover` | 97% | **93%** | Match card |
-| `--sidebar-background` | 97-98% | **91%** | Sidebar reads as surface |
-| `--card-inner` | 95% | **89%** | Nested surfaces darker |
-| `--card-inner-deep` | 93% | **86%** | Deep nesting visible |
-| `--secondary` | 89% | **84%** | Clear secondary fills |
-| `--muted` | 85% | **78%** | Strong muted fills |
-| `--accent` | 87% | **82%** | Visible hover/active |
-| `--border` | 80% | **72%** | Crisp borders |
-| `--input` | 87% | **80%** | Inputs clearly bounded |
-| `--oat` | 82% | **75%** | Stronger accent |
-| `--sidebar-accent` | 89% | **84%** | Match secondary |
-| `--sidebar-border` | 80% | **72%** | Match border |
-| `--muted-foreground` | 40% | **35%** | Darker secondary text |
+| `--background` | 90% | **82%** | Mid-gray canvas |
+| `--card` | 93% | **85%** | Panels visible but not bright |
+| `--popover` | 93% | **85%** | Match card |
+| `--sidebar-background` | 91% | **83%** | Sidebar reads as distinct surface |
+| `--card-inner` | 89% | **80%** | Nested surfaces clearly darker |
+| `--card-inner-deep` | 86% | **76%** | Deep nesting unmistakable |
+| `--secondary` | 84% | **78%** | Clear secondary fills |
+| `--muted` | 78% | **72%** | Strong muted fills |
+| `--accent` | 82% | **76%** | Visible hover/active |
+| `--border` | 72% | **65%** | Very crisp borders |
+| `--input` | 80% | **74%** | Inputs clearly bounded |
+| `--oat` | 75% | **68%** | Stronger accent |
+| `--sidebar-accent` | 84% | **78%** | Match secondary |
+| `--sidebar-border` | 72% | **65%** | Match border |
+| `--muted-foreground` | 35% | **30%** | Darker secondary text |
+| `--foreground` | 8% | **6%** | Slightly richer primary text |
 
 ### Per-theme values
 
@@ -34,88 +35,102 @@ Drop all light mode surfaces significantly — think "warm stone" not "cream pap
 
 **Cream (`:root` / `.theme-cream`):**
 ```
---background: 40 20% 90%;
---card: 40 18% 93%;
---popover: 40 18% 93%;
---secondary: 40 14% 84%;
---muted: 40 10% 78%;
---muted-foreground: 0 0% 35%;
---accent: 40 18% 82%;
---oat: 35 25% 75%;
---border: 40 10% 72%;
---input: 40 10% 80%;
---sidebar-background: 40 18% 91%;
---sidebar-accent: 40 14% 84%;
---sidebar-border: 40 10% 72%;
---card-inner: 40 12% 89%;
---card-inner-deep: 40 8% 86%;
+--background: 40 15% 82%;
+--foreground: 0 0% 6%;
+--card: 40 12% 85%;
+--card-foreground: 0 0% 6%;
+--popover: 40 12% 85%;
+--popover-foreground: 0 0% 6%;
+--secondary: 40 10% 78%;
+--muted: 40 8% 72%;
+--muted-foreground: 0 0% 30%;
+--accent: 40 12% 76%;
+--oat: 35 18% 68%;
+--border: 40 8% 65%;
+--input: 40 8% 74%;
+--sidebar-background: 40 12% 83%;
+--sidebar-accent: 40 10% 78%;
+--sidebar-border: 40 8% 65%;
+--card-inner: 40 8% 80%;
+--card-inner-deep: 40 5% 76%;
 ```
 
 **Rose (`.theme-rose`):**
 ```
---background: 350 18% 90%;
---card: 350 16% 93%;
---popover: 350 16% 93%;
---secondary: 350 12% 84%;
---muted: 350 8% 78%;
---muted-foreground: 350 6% 35%;
---accent: 350 16% 82%;
---oat: 350 20% 75%;
---border: 350 8% 72%;
---input: 350 8% 80%;
---sidebar-background: 350 16% 91%;
---sidebar-accent: 350 12% 84%;
---sidebar-border: 350 8% 72%;
---card-inner: 350 8% 89%;
---card-inner-deep: 350 5% 86%;
+--background: 350 12% 82%;
+--foreground: 350 20% 8%;
+--card: 350 10% 85%;
+--card-foreground: 350 20% 8%;
+--popover: 350 10% 85%;
+--popover-foreground: 350 20% 8%;
+--secondary: 350 8% 78%;
+--muted: 350 6% 72%;
+--muted-foreground: 350 5% 30%;
+--accent: 350 10% 76%;
+--oat: 350 14% 68%;
+--border: 350 6% 65%;
+--input: 350 6% 74%;
+--sidebar-background: 350 10% 83%;
+--sidebar-accent: 350 8% 78%;
+--sidebar-border: 350 6% 65%;
+--card-inner: 350 6% 80%;
+--card-inner-deep: 350 4% 76%;
 ```
 
 **Sage (`.theme-sage`):**
 ```
---background: 145 15% 90%;
---card: 145 12% 93%;
---popover: 145 12% 93%;
---secondary: 145 10% 84%;
---muted: 145 6% 78%;
---muted-foreground: 145 5% 35%;
---accent: 145 12% 82%;
---oat: 145 15% 75%;
---border: 145 6% 72%;
---input: 145 6% 80%;
---sidebar-background: 145 12% 91%;
---sidebar-accent: 145 10% 84%;
---sidebar-border: 145 6% 72%;
---card-inner: 145 6% 89%;
---card-inner-deep: 145 4% 86%;
+--background: 145 10% 82%;
+--foreground: 145 15% 8%;
+--card: 145 8% 85%;
+--card-foreground: 145 15% 8%;
+--popover: 145 8% 85%;
+--popover-foreground: 145 15% 8%;
+--secondary: 145 7% 78%;
+--muted: 145 5% 72%;
+--muted-foreground: 145 4% 30%;
+--accent: 145 8% 76%;
+--oat: 145 10% 68%;
+--border: 145 5% 65%;
+--input: 145 5% 74%;
+--sidebar-background: 145 8% 83%;
+--sidebar-accent: 145 7% 78%;
+--sidebar-border: 145 5% 65%;
+--card-inner: 145 5% 80%;
+--card-inner-deep: 145 3% 76%;
 ```
 
 **Ocean (`.theme-ocean`):**
 ```
---background: 210 18% 90%;
---card: 210 15% 93%;
---popover: 210 15% 93%;
---secondary: 210 12% 84%;
---muted: 210 8% 78%;
---muted-foreground: 210 6% 35%;
---accent: 210 14% 82%;
---oat: 210 18% 75%;
---border: 210 8% 72%;
---input: 210 8% 80%;
---sidebar-background: 210 15% 91%;
---sidebar-accent: 210 12% 84%;
---sidebar-border: 210 8% 72%;
---card-inner: 210 8% 89%;
---card-inner-deep: 210 5% 86%;
+--background: 210 12% 82%;
+--foreground: 210 20% 8%;
+--card: 210 10% 85%;
+--card-foreground: 210 20% 8%;
+--popover: 210 10% 85%;
+--popover-foreground: 210 20% 8%;
+--secondary: 210 8% 78%;
+--muted: 210 6% 72%;
+--muted-foreground: 210 5% 30%;
+--accent: 210 10% 76%;
+--oat: 210 12% 68%;
+--border: 210 6% 65%;
+--input: 210 6% 74%;
+--sidebar-background: 210 10% 83%;
+--sidebar-accent: 210 8% 78%;
+--sidebar-border: 210 6% 65%;
+--card-inner: 210 6% 80%;
+--card-inner-deep: 210 4% 76%;
 ```
 
 ### What changes
-- The entire light mode shifts from "bright white paper" to "warm stone/gray"
-- Cards are lighter than the background (93 vs 90), creating visible lifted panels
-- Borders at 72% are clearly defined
-- Muted fills at 78% are unmistakable
-- Very little white anywhere — the lightest surface is 93%
-- Dark mode is completely untouched
+- The lightest surface is now 85% — no white anywhere
+- Background at 82% feels like a true warm gray workspace
+- Cards at 85% are lighter panels on the gray canvas (3% lift)
+- Borders at 65% are sharp and unmistakable
+- Deep nesting at 76% creates clear visual hierarchy
+- Foreground text darkened to 6-8% for maximum contrast on gray
+- Muted foreground at 30% for strong secondary text
+- Dark mode completely untouched
 
 ### Files modified
-- `src/index.css` — all four light theme blocks (cream, rose, sage, ocean)
+- `src/index.css` — all four light theme blocks
 
