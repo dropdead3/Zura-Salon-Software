@@ -1,18 +1,31 @@
 
 
-## Enlarge Expected Revenue Badge on Sales Overview
+## Make "Take Action" Buttons Look Like Actionable CTAs
 
 ### Problem
-The "Expected" revenue badge (clock icon + amount + "Expected" label) is too small — hard to read at a glance on the sales overview card.
+Current styling (`h-6 text-[10px] rounded-full bg-destructive/15 border-destructive/60`) reads as a passive badge — too small, no arrow affordance, no interactive signal.
 
 ### Solution
-Increase the badge size across all instances in `AggregateSalesCard.tsx`:
+Upgrade all three instances to feel like proper action buttons:
 
-- **Badge text**: `text-xs` → `text-sm`
-- **Badge padding**: add `px-3 py-1.5` for more breathing room
-- **Clock icon**: `w-3 h-3` → `w-4 h-4`
-- **Info icon** next to it: `w-3.5 h-3.5` → `w-4 h-4`
+- **Size up**: `h-7 px-4 text-xs` (from `h-6 px-3 text-[10px]`)
+- **Add arrow icon**: Append `ArrowRight` icon (`w-3 h-3`) to signal clickability
+- **Stronger fill + hover**: `bg-destructive/20 hover:bg-destructive/30` with `border-destructive/70`
+- **Cursor + scale**: add `cursor-pointer active:scale-[0.97]` for tactile feedback
+- **Keep** `font-sans rounded-full text-destructive` for brand consistency
 
-### File modified
-**`src/components/dashboard/AggregateSalesCard.tsx`** — all expected revenue badge instances (today, past range, todayToEom)
+Result class:
+```
+rounded-full px-4 h-7 text-xs font-sans gap-1.5
+bg-destructive/20 border border-destructive/70 text-destructive
+hover:bg-destructive/30 hover:text-destructive
+active:scale-[0.97] cursor-pointer
+```
+
+Content becomes: `Take Action <ArrowRight className="w-3 h-3" />`
+
+### Files modified (same change, 3 locations)
+1. `src/components/dashboard/NewBookingsCard.tsx` — line 115-126
+2. `src/components/dashboard/analytics/BookingPipelineContent.tsx` — line 318-329
+3. `src/components/dashboard/analytics/ExecutiveSummaryCard.tsx` — line 117-128
 
