@@ -154,9 +154,9 @@ const CATEGORY_FILTERS: { key: InsightItem['category']; label: string; icon: typ
 ];
 
 const severityStyles: Record<InsightItem['severity'], string> = {
-  info: 'border-l-blue-500/60 bg-blue-500/[0.08]',
-  warning: 'border-l-amber-500/60 bg-amber-500/[0.08]',
-  critical: 'border-l-red-500/60 bg-red-500/[0.08]',
+  info: 'border-l-blue-500/60 bg-blue-500/[0.12]',
+  warning: 'border-l-amber-500/60 bg-amber-500/[0.12]',
+  critical: 'border-l-red-500/60 bg-red-500/[0.12]',
 };
 
 const severityIconColor: Record<InsightItem['severity'], string> = {
