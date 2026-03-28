@@ -810,7 +810,7 @@ export function AggregateSalesCard({
                                 className={cn("text-sm font-normal gap-1 cursor-pointer px-3 py-1.5", exceededExpected ? "bg-success/10 text-success-foreground border-success/30" : "bg-warning/10 text-warning border-warning/30")}
                                 onClick={() => toggleDrilldown('expectedGap')}
                               >
-                                <Clock className="w-3 h-3" />
+                                <Clock className="w-4 h-4" />
                                 <BlurredAmount disableTooltip>
                                   <span>{formatCurrency(scheduledRevenue ?? 0)}</span>
                                 </BlurredAmount>
