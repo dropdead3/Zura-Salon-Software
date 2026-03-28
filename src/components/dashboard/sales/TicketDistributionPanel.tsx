@@ -33,7 +33,7 @@ export function TicketDistributionPanel({ isOpen, dateFrom, dateTo, locationId }
           <div className="pt-3 pb-1 space-y-2">
             <div className="flex items-center gap-2">
               <div className="w-1.5 h-1.5 rounded-full bg-primary" />
-              <span className="text-xs tracking-wide uppercase text-muted-foreground font-medium">
+              <span className="font-display text-xs tracking-wide uppercase text-muted-foreground">
                 Ticket Distribution
               </span>
             </div>
@@ -49,21 +49,21 @@ export function TicketDistributionPanel({ isOpen, dateFrom, dateTo, locationId }
                 {/* Median vs Average comparison */}
                 <div className="flex items-center gap-4 px-2 py-2 bg-muted/20 rounded-lg">
                   <div className="flex-1 text-center">
-                    <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Median</p>
+                    <p className="font-display text-[10px] uppercase tracking-wide text-muted-foreground">Median</p>
                     <p className="text-sm font-display tabular-nums">
                       <BlurredAmount>{formatCurrencyWhole(Math.round(data!.median))}</BlurredAmount>
                     </p>
                   </div>
                   <div className="w-px h-8 bg-border/50" />
                   <div className="flex-1 text-center">
-                    <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Average</p>
+                    <p className="font-display text-[10px] uppercase tracking-wide text-muted-foreground">Average</p>
                     <p className="text-sm font-display tabular-nums">
                       <BlurredAmount>{formatCurrencyWhole(Math.round(data!.average))}</BlurredAmount>
                     </p>
                   </div>
                   <div className="w-px h-8 bg-border/50" />
                   <div className="flex-1 text-center">
-                    <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Above Avg</p>
+                    <p className="font-display text-[10px] uppercase tracking-wide text-muted-foreground">Above Avg</p>
                     <p className="text-sm font-display tabular-nums">{data!.aboveAvgPct}%</p>
                   </div>
                 </div>
