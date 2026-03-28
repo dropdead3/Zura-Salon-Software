@@ -1,8 +1,9 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { formatCurrencyWhole } from '@/lib/formatCurrency';
 import { cn } from '@/lib/utils';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 export type BreakdownMode = 'revenue' | 'dailyAvg' | 'count';
 
@@ -22,11 +23,7 @@ const BREAKDOWN_TYPE_LABELS: Record<BreakdownType, string> = {
   stylist: 'Service Provider',
 };
 
-const MODE_LABELS: Record<BreakdownMode, string> = {
-  revenue: 'Revenue by Category',
-  dailyAvg: 'Daily Operating Avg by Category',
-  count: 'Appointments by Category',
-};
+const PAGE_SIZE = 30;
 
 function getSectionLabel(mode: BreakdownMode, breakdownType?: BreakdownType): string {
   const typeLabel = breakdownType ? BREAKDOWN_TYPE_LABELS[breakdownType] : 'Category';
@@ -51,6 +48,8 @@ function getSortValue(mode: BreakdownMode, entry: { revenue: number; count: numb
 }
 
 export function CategoryBreakdownPanel({ data, mode, dayCount, isOpen, breakdownType = 'category' }: CategoryBreakdownPanelProps) {
+  const [page, setPage] = useState(0);
+
   const sorted = useMemo(() => {
     const entries = Object.entries(data).map(([name, vals]) => ({
       name,
@@ -64,6 +63,13 @@ export function CategoryBreakdownPanel({ data, mode, dayCount, isOpen, breakdown
   const total = useMemo(() => {
     return sorted.reduce((sum, e) => sum + e.sortVal, 0);
   }, [sorted]);
+
+  const totalPages = Math.ceil(sorted.length / PAGE_SIZE);
+  const isPaginated = sorted.length > PAGE_SIZE;
+  const pageItems = isPaginated ? sorted.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE) : sorted;
+
+  // Reset page when data changes
+  useMemo(() => { setPage(0); }, [data, mode]);
 
   return (
     <AnimatePresence mode="wait">
@@ -82,8 +88,14 @@ export function CategoryBreakdownPanel({ data, mode, dayCount, isOpen, breakdown
               <span className="text-xs tracking-wide font-display uppercase text-muted-foreground font-medium">
                 {getSectionLabel(mode, breakdownType)}
               </span>
+              {isPaginated && (
+                <span className="text-[10px] text-muted-foreground ml-auto">
+                  {sorted.length} total
+                </span>
+              )}
             </div>
-            {sorted.map((entry, index) => {
+            {pageItems.map((entry, idx) => {
+              const globalIndex = page * PAGE_SIZE + idx;
               const pct = total > 0 ? (entry.sortVal / total) * 100 : 0;
               const isStylist = breakdownType === 'stylist';
               return (
@@ -91,10 +103,10 @@ export function CategoryBreakdownPanel({ data, mode, dayCount, isOpen, breakdown
                   key={entry.name}
                   initial={{ opacity: 0, x: -8 }}
                   animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: index * 0.04 }}
+                  transition={{ delay: idx * 0.02 }}
                   className={cn(
                     "grid items-center gap-3 py-1.5 px-2 rounded-md hover:bg-muted/30 transition-colors",
-                    index % 2 === 0 && "bg-muted/15",
+                    idx % 2 === 0 && "bg-muted/15",
                     isStylist
                       ? "grid-cols-[28px_1fr_48px_110px]"
                       : "grid-cols-[140px_1fr_48px_110px]"
@@ -102,7 +114,7 @@ export function CategoryBreakdownPanel({ data, mode, dayCount, isOpen, breakdown
                 >
                   {isStylist ? (
                     <span className="text-xs text-muted-foreground tabular-nums text-center">
-                      {index + 1}
+                      {globalIndex + 1}
                     </span>
                   ) : null}
                   <span className="text-sm text-foreground font-medium truncate">
@@ -114,7 +126,7 @@ export function CategoryBreakdownPanel({ data, mode, dayCount, isOpen, breakdown
                         className="h-full bg-primary/70 rounded-full"
                         initial={{ width: 0 }}
                         animate={{ width: `${pct}%` }}
-                        transition={{ duration: 0.5, delay: index * 0.04, ease: 'easeOut' }}
+                        transition={{ duration: 0.5, delay: idx * 0.02, ease: 'easeOut' }}
                       />
                     </div>
                   )}
@@ -131,6 +143,28 @@ export function CategoryBreakdownPanel({ data, mode, dayCount, isOpen, breakdown
                 </motion.div>
               );
             })}
+
+            {isPaginated && (
+              <div className="flex items-center justify-center gap-3 pt-2 pb-1">
+                <button
+                  onClick={() => setPage(p => Math.max(0, p - 1))}
+                  disabled={page === 0}
+                  className="p-1 rounded-md hover:bg-muted/40 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                >
+                  <ChevronLeft className="w-4 h-4 text-muted-foreground" />
+                </button>
+                <span className="text-xs text-muted-foreground tabular-nums">
+                  {page + 1} / {totalPages}
+                </span>
+                <button
+                  onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
+                  disabled={page >= totalPages - 1}
+                  className="p-1 rounded-md hover:bg-muted/40 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                >
+                  <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                </button>
+              </div>
+            )}
           </div>
         </motion.div>
       )}
