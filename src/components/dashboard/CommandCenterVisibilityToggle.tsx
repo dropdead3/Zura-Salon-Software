@@ -100,23 +100,34 @@ export function CommandCenterVisibilityToggle({
 
   return (
     <Popover open={isOpen} onOpenChange={setIsOpen}>
-      <PopoverTrigger asChild>
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          className={cn(
-            "h-7 w-7 rounded-full",
-            isVisibleToLeadership 
-              ? "text-primary" 
-              : "text-muted-foreground hover:text-foreground hover:bg-muted"
+      <TooltipProvider delayDuration={300}>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <PopoverTrigger asChild>
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className={cn(
+                  "h-7 w-7 rounded-full",
+                  isVisibleToLeadership 
+                    ? "text-primary" 
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                )}
+              >
+                <Pin className={cn(
+                  "h-4 w-4 transition-transform",
+                  isVisibleToLeadership && "fill-current rotate-[-45deg]"
+                )} />
+              </Button>
+            </PopoverTrigger>
+          </TooltipTrigger>
+          {!isOpen && (
+            <TooltipContent side="bottom" className="text-xs">
+              {isVisibleToLeadership ? 'Unpin from Command Center' : 'Pin to Command Center'}
+            </TooltipContent>
           )}
-        >
-          <Pin className={cn(
-            "h-4 w-4 transition-transform",
-            isVisibleToLeadership && "fill-current rotate-[-45deg]"
-          )} />
-        </Button>
-      </PopoverTrigger>
+        </Tooltip>
+      </TooltipProvider>
       <PopoverContent className="w-72" align="end">
         <div className="space-y-4">
           <div className="space-y-1">
