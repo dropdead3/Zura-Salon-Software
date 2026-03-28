@@ -163,7 +163,7 @@ export function CommandCenterControlRow({
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.25, ease: [0.4, 0, 0.2, 1] }}
-            className="overflow-hidden"
+            className="overflow-clip"
           >
             <div className="pt-3">
               {isLeadership ? (
@@ -181,7 +181,7 @@ export function CommandCenterControlRow({
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.25, ease: [0.4, 0, 0.2, 1] }}
-            className="overflow-hidden"
+            className="overflow-clip"
           >
             <div className="pt-3">
               <AnnouncementsPanel isLeadership={isLeadership} onClose={closePanel} />
