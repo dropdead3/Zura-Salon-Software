@@ -147,7 +147,6 @@ export function ExecutiveSummaryCard() {
   const { formatCurrencyWhole } = useFormatCurrency();
   const { data: hasRenters = false } = useHasRenters();
   const [showActionGuide, setShowActionGuide] = useState(false);
-  const { data: hasRenters = false } = useHasRenters();
 
   // Internal date range state with persistence
   const [range, setRange] = useState<SummaryRange>(() => {
