@@ -115,7 +115,7 @@ export function NewBookingsCard({
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="rounded-full px-3 h-6 text-[10px] font-sans text-destructive hover:bg-destructive/10 hover:text-destructive ml-2"
+                  className="rounded-full px-3 h-6 text-[10px] font-sans bg-destructive/15 border border-destructive/60 text-destructive hover:bg-destructive/25 hover:text-destructive ml-2"
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();

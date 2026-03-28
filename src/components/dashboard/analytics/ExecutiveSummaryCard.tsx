@@ -117,7 +117,7 @@ function KpiTile({ kpi }: { kpi: KpiData }) {
             <Button
               variant="ghost"
               size="sm"
-              className="rounded-full px-3 h-6 text-[10px] font-sans w-fit text-destructive hover:bg-destructive/10 hover:text-destructive"
+              className="rounded-full px-3 h-6 text-[10px] font-sans w-fit bg-destructive/15 border border-destructive/60 text-destructive hover:bg-destructive/25 hover:text-destructive"
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
