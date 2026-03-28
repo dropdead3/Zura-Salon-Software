@@ -148,7 +148,7 @@ export function GoalTrackerCard() {
                   {/* Pace badge + required daily rate */}
                   <div className="space-y-1">
                     <div className={cn(
-                      'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium',
+                      'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-sans font-medium',
                       orgMetrics.paceStatus === 'ahead' && 'bg-chart-2/10 text-chart-2',
                       orgMetrics.paceStatus === 'on-track' && 'bg-primary/10 text-primary',
                       orgMetrics.paceStatus === 'behind' && 'bg-destructive/10 text-destructive',
