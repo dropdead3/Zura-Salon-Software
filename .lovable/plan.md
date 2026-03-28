@@ -2,17 +2,21 @@
 
 ## Problem
 
-In `AggregateSalesCard.tsx`, when a multi-day date range is selected, the "Daily Avg" card renders **below** the Transactions/Avg Ticket/Rev/Hour row. User wants it **above** those three cards.
+Daily Brief's "Today's Revenue" tile is a pure duplicate of what Sales Overview and Executive Summary already show with more context. Removing it makes Daily Brief a focused operational card and eliminates redundancy regardless of which card combination is toggled on.
 
 ## Plan
 
-**File: `src/components/dashboard/sales/AggregateSalesCard.tsx`**
+**File: `src/components/dashboard/analytics/DailyBriefCard.tsx`**
 
-In the `showDailyAvg` branch (lines 1256-1330), swap the order of the two child divs inside `space-y-3`:
+1. **Remove the revenue tile** (lines 100-107) from the 4-column grid
+2. **Change grid from 4 columns to 3** — update `grid-cols-2 md:grid-cols-4` to `grid-cols-3`
+3. **Remove unused imports**: `DollarSign`, `useFormatCurrency`, `BlurredAmount`, `useSalesMetrics`
+4. **Remove revenue-related state/hooks**: the `useSalesMetrics` call (lines 27-31), `revenue` variable, `revenueLoading`/`revenueError`/`refetchRevenue` destructuring
+5. **Update MetricInfoTooltip description** to remove mention of "total revenue"
+6. **Update error/retry handler** to only reference appointments (remove `refetchRevenue`)
 
-1. Move the Daily Avg card block (lines 1317-1328) **above** the 3-column grid (lines 1258-1316)
-2. No other changes needed — just reorder the two sibling `<div>` elements
+The Daily Brief becomes a clean 3-tile operational card: **Appointments** | **No-Shows** | **Completion Rate**
 
 ### Files modified
-- `src/components/dashboard/AggregateSalesCard.tsx`
+- `src/components/dashboard/analytics/DailyBriefCard.tsx`
 
