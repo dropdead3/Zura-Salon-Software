@@ -810,6 +810,7 @@ export function AggregateSalesCard({
                 <div className="mt-4 mx-auto max-w-sm space-y-3">
                   {(() => {
                     const displayExpected = todayExpectedDisplay;
+                    const remainingExpected = adjustedExpected ? Math.max(0, displayExpected - (todayActual?.actualRevenue ?? 0)) : displayExpected;
                     const exceededExpected = !!(todayActual?.hasActualData && displayExpected > 0 && todayActual.actualRevenue > displayExpected);
                     return (
                       <>
