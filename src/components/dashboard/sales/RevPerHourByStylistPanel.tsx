@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
@@ -92,45 +93,46 @@ export function RevPerHourByStylistPanel({ isOpen, stylistData, totalServiceHour
             ) : !hasData ? (
               <p className="text-xs text-muted-foreground py-4 text-center">No stylist data for this period</p>
             ) : (
-              <div className="space-y-1">
-                {stylists.map((stylist, index) => {
-                  const pct = maxRevPerHour > 0 ? (stylist.revPerHour / maxRevPerHour) * 100 : 0;
-                  return (
-                    <motion.div
-                      key={stylist.user_id}
-                      initial={{ opacity: 0, x: -8 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: index * 0.04 }}
-                      className="flex items-center gap-3 py-1.5 px-2 rounded-md hover:bg-muted/30 transition-colors"
-                    >
-                      <span className="text-sm text-foreground font-medium min-w-[100px] truncate">
-                        {stylist.name}
-                      </span>
-                      <div className="flex-1 h-2 bg-muted/50 rounded-full overflow-hidden relative">
-                        {/* Salon average marker */}
-                        {maxRevPerHour > 0 && (
-                          <div
-                            className="absolute top-0 bottom-0 w-px bg-foreground/30 z-10"
-                            style={{ left: `${(salonAvg / maxRevPerHour) * 100}%` }}
-                          />
-                        )}
-                        <motion.div
-                          className={cn(
-                            "h-full rounded-full",
-                            stylist.aboveAvg ? "bg-primary/70" : "bg-muted-foreground/40"
+              <ScrollArea className="max-h-[400px]">
+                <div className="space-y-1 pr-2">
+                  {stylists.map((stylist, index) => {
+                    const pct = maxRevPerHour > 0 ? (stylist.revPerHour / maxRevPerHour) * 100 : 0;
+                    return (
+                      <motion.div
+                        key={stylist.user_id}
+                        initial={{ opacity: 0, x: -8 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: index * 0.04 }}
+                        className="flex items-center gap-3 py-1.5 px-2 rounded-md hover:bg-muted/30 transition-colors"
+                      >
+                        <span className="text-sm text-foreground font-medium min-w-[100px] truncate">
+                          {stylist.name}
+                        </span>
+                        <div className="flex-1 h-2 bg-muted/50 rounded-full overflow-hidden relative">
+                          {maxRevPerHour > 0 && (
+                            <div
+                              className="absolute top-0 bottom-0 w-px bg-foreground/30 z-10"
+                              style={{ left: `${(salonAvg / maxRevPerHour) * 100}%` }}
+                            />
                           )}
-                          initial={{ width: 0 }}
-                          animate={{ width: `${pct}%` }}
-                          transition={{ duration: 0.5, delay: index * 0.04, ease: 'easeOut' }}
-                        />
-                      </div>
-                      <span className="text-sm font-display tabular-nums min-w-[60px] text-right">
-                        <BlurredAmount>{formatCurrencyWhole(Math.round(stylist.revPerHour))}/hr</BlurredAmount>
-                      </span>
-                    </motion.div>
-                  );
-                })}
-              </div>
+                          <motion.div
+                            className={cn(
+                              "h-full rounded-full",
+                              stylist.aboveAvg ? "bg-primary/70" : "bg-muted-foreground/40"
+                            )}
+                            initial={{ width: 0 }}
+                            animate={{ width: `${pct}%` }}
+                            transition={{ duration: 0.5, delay: index * 0.04, ease: 'easeOut' }}
+                          />
+                        </div>
+                        <span className="text-sm font-display tabular-nums min-w-[60px] text-right">
+                          <BlurredAmount>{formatCurrencyWhole(Math.round(stylist.revPerHour))}/hr</BlurredAmount>
+                        </span>
+                      </motion.div>
+                    );
+                  })}
+                </div>
+              </ScrollArea>
             )}
           </div>
         </motion.div>
