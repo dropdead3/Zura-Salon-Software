@@ -1650,6 +1650,15 @@ export function AggregateSalesCard({
                               })()}
                             </BlurredAmount>
                           </span>
+                          {(() => {
+                            const totalAllLocs = (filteredLocationData || []).reduce((sum, l) => sum + l.totalRevenue, 0) || 1;
+                            const pct = Math.round((location.totalRevenue / totalAllLocs) * 100);
+                            return (
+                              <span className="text-xs text-muted-foreground tabular-nums w-10 text-right">
+                                {pct}%
+                              </span>
+                            );
+                          })()}
                           <ChevronRight className={`w-4 h-4 text-muted-foreground transition-transform duration-200 ${isExpanded ? 'rotate-90' : ''}`} />
                         </div>
                       </button>
