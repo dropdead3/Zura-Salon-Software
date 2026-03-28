@@ -4,10 +4,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { tokens } from '@/lib/design-tokens';
 import { AnalyticsFilterBadge, type FilterContext } from '@/components/dashboard/AnalyticsFilterBadge';
-import { BlurredAmount } from '@/contexts/HideNumbersContext';
-import { useFormatCurrency } from '@/hooks/useFormatCurrency';
-import { Calendar, DollarSign, XCircle, CheckCircle, AlertCircle } from 'lucide-react';
-import { useSalesMetrics } from '@/hooks/useSalesData';
+import { Calendar, XCircle, CheckCircle, AlertCircle } from 'lucide-react';
 import { useAppointmentSummary } from '@/hooks/useOperationalAnalytics';
 import { cn } from '@/lib/utils';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
@@ -17,26 +14,17 @@ export interface DailyBriefCardProps {
   locationId: string;
 }
 
-/** Always shows today's snapshot: revenue, appointments (completed vs scheduled), no-shows. */
+/** Always shows today's operational snapshot: appointments (completed vs scheduled), no-shows, completion rate. */
 export function DailyBriefCard({ filterContext, locationId }: DailyBriefCardProps) {
   const today = format(new Date(), 'yyyy-MM-dd');
   const locationFilter = locationId === 'all' ? undefined : locationId;
-  const { formatCurrencyWhole } = useFormatCurrency();
 
-  const { data: metrics, isLoading: revenueLoading, isError: revenueError, refetch: refetchRevenue } = useSalesMetrics({
-    dateFrom: today,
-    dateTo: today,
-    locationId: locationFilter,
-  });
-  const { data: appointmentSummary, isLoading: appointmentsLoading, isError: appointmentsError, refetch: refetchAppointments } = useAppointmentSummary(
+  const { data: appointmentSummary, isLoading, isError, refetch } = useAppointmentSummary(
     today,
     today,
     locationFilter
   );
 
-  const isLoading = revenueLoading || appointmentsLoading;
-  const isError = revenueError || appointmentsError;
-  const revenue = metrics?.totalRevenue ?? 0;
   const total = appointmentSummary?.total ?? 0;
   const completed = appointmentSummary?.completed ?? 0;
   const noShow = appointmentSummary?.noShow ?? 0;
@@ -50,7 +38,7 @@ export function DailyBriefCard({ filterContext, locationId }: DailyBriefCardProp
             <AlertCircle className="w-4 h-4 shrink-0" />
             <span>Failed to load daily brief.</span>
           </div>
-          <Button variant="outline" size={tokens.button.card} className="mt-3" onClick={() => { refetchRevenue(); refetchAppointments(); }}>
+          <Button variant="outline" size={tokens.button.card} className="mt-3" onClick={() => refetch()}>
             Retry
           </Button>
         </CardContent>
@@ -66,8 +54,8 @@ export function DailyBriefCard({ filterContext, locationId }: DailyBriefCardProp
             <Skeleton className="h-5 w-28" />
             <Skeleton className="h-6 w-20" />
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {[1, 2, 3, 4].map((i) => (
+          <div className="grid grid-cols-3 gap-4">
+            {[1, 2, 3].map((i) => (
               <Skeleton key={i} className="h-16 rounded-lg" />
             ))}
           </div>
@@ -91,21 +79,12 @@ export function DailyBriefCard({ filterContext, locationId }: DailyBriefCardProp
               <h3 className="font-display text-sm tracking-wide text-muted-foreground uppercase truncate">
                 Daily Brief
               </h3>
-              <MetricInfoTooltip description="Today's real-time snapshot: total revenue, scheduled vs completed appointments, and no-show rate. Revenue is from completed transactions only." />
+              <MetricInfoTooltip description="Today's real-time operational snapshot: scheduled vs completed appointments, no-show count and rate, and overall completion percentage." />
             </div>
           </div>
           <AnalyticsFilterBadge locationId={filterContext.locationId} dateRange="today" />
         </div>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="p-3 rounded-lg border border-border/50 bg-muted/30">
-            <div className="flex items-center gap-2 mb-1">
-              <DollarSign className="w-4 h-4 text-primary" />
-              <span className="text-xs text-muted-foreground">Today&apos;s Revenue</span>
-            </div>
-            <p className="font-medium text-lg tabular-nums">
-              <BlurredAmount>{formatCurrencyWhole(revenue)}</BlurredAmount>
-            </p>
-          </div>
+        <div className="grid grid-cols-3 gap-4">
           <div className="p-3 rounded-lg border border-border/50 bg-muted/30">
             <div className="flex items-center gap-2 mb-1">
               <Calendar className="w-4 h-4 text-primary" />
