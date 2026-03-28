@@ -849,7 +849,14 @@ export function AggregateSalesCard({
                           </Tooltip>
                         </div>
 
-                        {/* Line 2: Remaining service revenue badge */}
+                        {/* Appointment completion fraction */}
+                        {adjustedExpected && (adjustedExpected.resolvedCount + adjustedExpected.pendingCount + adjustedExpected.cancelledCount + adjustedExpected.noShowCount) > 0 && (
+                          <p className="text-xs text-muted-foreground/70 text-center">
+                            {adjustedExpected.resolvedCount} of {adjustedExpected.resolvedCount + adjustedExpected.pendingCount + adjustedExpected.cancelledCount + adjustedExpected.noShowCount} appointments completed
+                          </p>
+                        )}
+
+                        {/* Remaining service revenue badge */}
                         {remainingExpected > 0 && (
                           <div className="flex items-center justify-center">
                             <Tooltip>
@@ -873,13 +880,6 @@ export function AggregateSalesCard({
                               <TooltipContent>Click to see Gap Report</TooltipContent>
                             </Tooltip>
                           </div>
-                        )}
-
-                        {/* Appointment completion fraction */}
-                        {adjustedExpected && (adjustedExpected.resolvedCount + adjustedExpected.pendingCount + adjustedExpected.cancelledCount + adjustedExpected.noShowCount) > 0 && (
-                          <p className="text-xs text-muted-foreground/70 text-center">
-                            {adjustedExpected.resolvedCount} of {adjustedExpected.resolvedCount + adjustedExpected.pendingCount + adjustedExpected.cancelledCount + adjustedExpected.noShowCount} appointments completed
-                          </p>
                         )}
 
                         {/* Progress bar: earned % of scheduled + projection */}
