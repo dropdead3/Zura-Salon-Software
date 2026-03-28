@@ -60,29 +60,29 @@ html, body, #root {
   :root,
   .theme-cream {
     /* Light cream luxury palette */
-    --background: 40 30% 96%;
+    --background: 40 20% 90%;
     --foreground: 0 0% 8%;
 
-    --card: 40 25% 97%;
+    --card: 40 18% 93%;
     --card-foreground: 0 0% 8%;
 
-    --popover: 40 25% 97%;
+    --popover: 40 18% 93%;
     --popover-foreground: 0 0% 8%;
 
     --primary: 0 0% 8%;
     --primary-foreground: 40 30% 96%;
 
-    --secondary: 40 20% 89%;
+    --secondary: 40 14% 84%;
     --secondary-foreground: 0 0% 8%;
 
-    --muted: 40 15% 85%;
-    --muted-foreground: 0 0% 40%;
+    --muted: 40 10% 78%;
+    --muted-foreground: 0 0% 35%;
 
-    --accent: 40 25% 87%;
+    --accent: 40 18% 82%;
     --accent-foreground: 0 0% 8%;
 
     /* Oat/Tan accent - soft warm neutral */
-    --oat: 35 35% 82%;
+    --oat: 35 25% 75%;
     --oat-foreground: 30 20% 25%;
 
     /* Gold accent - for premium badges */
@@ -107,8 +107,8 @@ html, body, #root {
     --destructive: 0 62% 50%;
     --destructive-foreground: 40 30% 96%;
 
-    --border: 40 15% 80%;
-    --input: 40 15% 87%;
+    --border: 40 10% 72%;
+    --input: 40 10% 80%;
     --ring: 0 0% 8%;
 
     --radius: 0.75rem;
@@ -144,17 +144,17 @@ html, body, #root {
     --leading-loose: 2;
 
     /* Sidebar */
-    --sidebar-background: 40 25% 97%;
+    --sidebar-background: 40 18% 91%;
     --sidebar-foreground: 0 0% 8%;
     --sidebar-primary: 0 0% 8%;
     --sidebar-primary-foreground: 40 30% 96%;
-    --sidebar-accent: 40 20% 89%;
+    --sidebar-accent: 40 14% 84%;
     --sidebar-accent-foreground: 0 0% 8%;
-    --sidebar-border: 40 15% 80%;
+    --sidebar-border: 40 10% 72%;
     --sidebar-ring: 0 0% 8%;
 
-    --card-inner: 40 20% 95%;
-    --card-inner-deep: 40 15% 93%;
+    --card-inner: 40 12% 89%;
+    --card-inner-deep: 40 8% 86%;
   }
 
   .dark.theme-cream,
