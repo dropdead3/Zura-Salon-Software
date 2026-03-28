@@ -807,10 +807,10 @@ export function AggregateSalesCard({
                             <TooltipTrigger asChild>
                               <Badge 
                                 variant="outline" 
-                                className={cn("text-xs font-normal gap-1 cursor-pointer", exceededExpected ? "bg-success/10 text-success-foreground border-success/30" : "bg-warning/10 text-warning border-warning/30")}
+                                className={cn("text-sm font-normal gap-1 cursor-pointer px-3 py-1.5", exceededExpected ? "bg-success/10 text-success-foreground border-success/30" : "bg-warning/10 text-warning border-warning/30")}
                                 onClick={() => toggleDrilldown('expectedGap')}
                               >
-                                <Clock className="w-3 h-3" />
+                                <Clock className="w-4 h-4" />
                                 <BlurredAmount disableTooltip>
                                   <span>{formatCurrency(scheduledRevenue ?? 0)}</span>
                                 </BlurredAmount>
@@ -821,7 +821,7 @@ export function AggregateSalesCard({
                           </Tooltip>
                           <Tooltip>
                             <TooltipTrigger asChild>
-                              <Info className="w-3.5 h-3.5 text-muted-foreground cursor-help" />
+                              <Info className="w-4 h-4 text-muted-foreground cursor-help" />
                             </TooltipTrigger>
                             <TooltipContent side="bottom" className="max-w-[200px] text-xs">
                               Based on scheduled appointments. Final revenue may differ as appointments are completed, cancelled, or added.
@@ -920,13 +920,13 @@ export function AggregateSalesCard({
                           onClick={(e) => { e.stopPropagation(); toggleDrilldown('expectedGap'); }}
                         >
                           <Badge variant="outline" className={cn(
-                            "text-xs font-normal gap-1 transition-colors",
+                            "text-sm font-normal gap-1 px-3 py-1.5 transition-colors",
                             exceededScheduled
                               ? "bg-success/10 text-success-foreground border-success/30"
                               : "bg-warning/10 text-warning border-warning/30",
                             activeDrilldown === 'expectedGap' && "ring-1 ring-primary/30"
                           )}>
-                            <Clock className="w-3 h-3" />
+                            <Clock className="w-4 h-4" />
                             <BlurredAmount>
                               <span>{formatCurrency(scheduledRevenue)}</span>
                             </BlurredAmount>
@@ -934,7 +934,7 @@ export function AggregateSalesCard({
                           </Badge>
                           <Tooltip>
                             <TooltipTrigger asChild>
-                              <Info className="w-3.5 h-3.5 text-muted-foreground cursor-help" />
+                              <Info className="w-4 h-4 text-muted-foreground cursor-help" />
                             </TooltipTrigger>
                             <TooltipContent side="bottom" className="max-w-[220px] text-xs">
                               Total revenue from all originally-booked appointments — before cancellations, no-shows, and POS discrepancies. Click to see gap analysis.
@@ -976,13 +976,13 @@ export function AggregateSalesCard({
               {/* Expected revenue badge for todayToEom (non-today future) */}
               {dateRange === 'todayToEom' && (
                 <div className="flex items-center justify-center gap-1.5 mt-2">
-                  <Badge variant="outline" className="text-xs font-normal bg-warning/10 text-warning border-warning/30">
-                    <Clock className="w-3 h-3 mr-1" />
+                  <Badge variant="outline" className="text-sm font-normal px-3 py-1.5 bg-warning/10 text-warning border-warning/30">
+                    <Clock className="w-4 h-4 mr-1" />
                     {t('sales.expected_revenue')}
                   </Badge>
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <Info className="w-3.5 h-3.5 text-muted-foreground cursor-help" />
+                      <Info className="w-4 h-4 text-muted-foreground cursor-help" />
                     </TooltipTrigger>
                     <TooltipContent side="bottom" className="max-w-[200px] text-xs">
                       Based on scheduled appointments. Final revenue may differ as appointments are completed, cancelled, or added.
