@@ -2,36 +2,17 @@
 
 ## Problem
 
-The category rows show small progress bars that add visual noise without conveying information the percentage number doesn't already provide. The user wants a cleaner layout with just the percentage.
+In `AggregateSalesCard.tsx`, when a multi-day date range is selected, the "Daily Avg" card renders **below** the Transactions/Avg Ticket/Rev/Hour row. User wants it **above** those three cards.
 
 ## Plan
 
-**File: `src/components/dashboard/sales/RevenueByCategoryPanel.tsx`**
+**File: `src/components/dashboard/sales/AggregateSalesCard.tsx`**
 
-In the `CategoryRow` component (lines 141-148), remove the `Progress` bar and restructure the subtitle line to show `{sharePercent}% · {count} appointments` as a single text line — matching the pattern used in `StylistRow` (line 94).
+In the `showDailyAvg` branch (lines 1256-1330), swap the order of the two child divs inside `space-y-3`:
 
-### Before (lines 137-148):
-```tsx
-<div className="flex items-center gap-2">
-  <span className="text-sm font-medium">{category.category}</span>
-  <span className="text-xs text-muted-foreground">{category.sharePercent}%</span>
-</div>
-<div className="flex items-center gap-2 mt-0.5">
-  <Progress ... />
-  <span className="text-xs text-muted-foreground">{category.count} appointments</span>
-</div>
-```
-
-### After:
-```tsx
-<span className="text-sm font-medium">{category.category}</span>
-<p className="text-xs text-muted-foreground">
-  {category.sharePercent}% · {category.count} appointment{category.count !== 1 ? 's' : ''}
-</p>
-```
-
-Also remove the unused `Progress` import (line 5).
+1. Move the Daily Avg card block (lines 1317-1328) **above** the 3-column grid (lines 1258-1316)
+2. No other changes needed — just reorder the two sibling `<div>` elements
 
 ### Files modified
-- `src/components/dashboard/sales/RevenueByCategoryPanel.tsx`
+- `src/components/dashboard/AggregateSalesCard.tsx`
 
