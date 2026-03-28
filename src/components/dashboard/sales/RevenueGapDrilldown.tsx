@@ -26,7 +26,7 @@ const REASON_CONFIG: Record<GapReason, {
   not_concluded: {
     label: 'In progress',
     icon: Clock,
-    badgeClass: 'bg-primary/10 text-primary/80 border-primary/20',
+    badgeClass: 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20',
   },
   cancelled: {
     label: 'Cancelled',
@@ -83,11 +83,19 @@ function GapItemRow({ item, showDates, formatCurrency }: {
           </span>
           <span className="font-sans text-foreground font-medium truncate min-w-0">{item.clientName}</span>
         </div>
-        <BlurredAmount>
-          <span className="font-sans text-sm text-destructive/90 whitespace-nowrap shrink-0 tabular-nums">
-            -{formatCurrency(item.variance)}
-          </span>
-        </BlurredAmount>
+        {item.reason === 'not_concluded' ? (
+          <BlurredAmount>
+            <span className="font-sans text-sm text-emerald-500/80 whitespace-nowrap shrink-0 tabular-nums">
+              {formatCurrency(item.variance)} expected
+            </span>
+          </BlurredAmount>
+        ) : (
+          <BlurredAmount>
+            <span className="font-sans text-sm text-destructive/90 whitespace-nowrap shrink-0 tabular-nums">
+              -{formatCurrency(item.variance)}
+            </span>
+          </BlurredAmount>
+        )}
       </div>
 
       {/* Row 2: Service · stylist */}
