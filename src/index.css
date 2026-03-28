@@ -388,8 +388,8 @@ html, body, #root {
     --destructive: 0 62% 50%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 145 12% 85%;
-    --input: 145 12% 90%;
+    --border: 145 12% 80%;
+    --input: 145 12% 87%;
     --ring: 145 45% 42%;
 
     --sidebar-background: 145 20% 97%;
