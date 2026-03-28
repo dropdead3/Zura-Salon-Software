@@ -1,27 +1,44 @@
 
 
-## Improve Progress Bar: Earned % + Projected Finish
+## Add Clarity to Service Revenue Block
 
-### Problem
-The progress bar currently just shows "Actual Revenue: $1,905.87" with a bar — it doesn't tell the operator what percentage of today's scheduled appointments have been earned, or where the day is heading.
+### Problems Identified
 
-### Solution
-Replace the progress bar label and add a projection line:
+1. **Apples-to-oranges comparison**: The progress bar says "Earned 50% of scheduled services" using `$1,905.87` — but that's **total POS revenue** (services + retail + everything), compared against **service-only scheduled** ($3,825). The percentage is misleading.
 
-1. **Bar label**: Change from "Actual Revenue → $1,905.87" to **"Earned X% of scheduled services today"** where X = `(todayActual.actualRevenue / displayExpected) * 100`. Keep the dollar amount right-aligned.
+2. **Redundancy**: The "Completed appts collected $1,517 less than booked" line and the progress bar projection tell overlapping stories. Three separate elements (tracking line, progress bar, projection) compete for attention.
 
-2. **Projection line**: Below the bar, replace the "Exceeded" badges with: **"On track to finish at $Y service revenue"** — calculated as:
-   - If pending appointments remain: `completedActualRevenue + pendingScheduledRevenue` (what's already collected + what's still on the books)
-   - If all appointments complete: show "Final: $X" instead of a projection
+3. **Missing operational context**: No appointment completion fraction (e.g., "31 of 34 appointments done") — the operator can't gauge how far through the day they are operationally.
 
-3. **Exceeded state**: If actual already exceeds scheduled, the bar fills to 100% with success color, and the projection line says "Exceeded scheduled by $Z"
+### Proposed Changes
 
-### Changes in `AggregateSalesCard.tsx` (lines ~897-938)
+#### 1. Fix the progress bar comparison
+Use `completedActualRevenue` (POS revenue from completed appointment clients) instead of `todayActual.actualRevenue` (total POS) for the percentage and bar fill. This makes the comparison honest: service-attributable revenue vs scheduled service revenue.
 
-- Replace "Actual Revenue" label with "Earned X% of scheduled services" (left) + formatted amount (right)
-- Replace "Exceeded" / "All appointments complete" badges below the bar with a single projection line: "On track to finish at $Y service revenue" using `adjustedExpected.adjustedExpected` (actual completed + pending scheduled)
-- Keep the estimated final transaction time line below
+- Label: "Earned X% of scheduled services today" — now accurate
+- Right-aligned amount: show `completedActualRevenue` (not total POS) so the number matches the percentage
+
+#### 2. Remove the redundant tracking line
+Delete the "Completed appts collected $X less/more than booked" line (lines 880-895). The progress bar already communicates this — if you've earned 50% of scheduled, the shortfall is self-evident. This reduces noise.
+
+#### 3. Add appointment completion fraction
+Below the "More Expected" badge, add a subtle line: **"31 of 34 appointments completed"** — gives instant operational progress without doing math.
+
+#### 4. Keep the projection line as-is
+"On track to finish at $2,307.87 service revenue" remains — it's the forward-looking complement to the earned percentage.
+
+### Result
+The block becomes:
+```text
+Scheduled Services Today: $3,825.00 ⓘ
+[$402 More Service Revenue Expected · 3 pending]
+31 of 34 appointments completed
+Earned 50% of scheduled services today    $1,905.87
+[████████░░░░░░░░░░░░]
+On track to finish at $2,307.87 service revenue
+Estimated final transaction at 7:00 PM
+```
 
 ### File
-- `src/components/dashboard/AggregateSalesCard.tsx`
+- `src/components/dashboard/AggregateSalesCard.tsx` — update lines ~880-948
 
