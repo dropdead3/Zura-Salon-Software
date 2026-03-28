@@ -807,56 +807,107 @@ export function AggregateSalesCard({
                 <p className="text-xs text-muted-foreground/50">Excludes Tips</p>
               </div>
 
-              {/* Expected Revenue - secondary badge (today + past ranges with actual POS data) */}
+              {/* Expected Service Revenue — stacked info block (today only) */}
               {isToday && (todayExpectedDisplay > 0 || (scheduledRevenue != null && scheduledRevenue > 0)) && (
                 <div className="mt-4 mx-auto max-w-sm space-y-3">
                   {(() => {
                     const displayExpected = todayExpectedDisplay;
-                    const remainingExpected = adjustedExpected ? Math.max(0, displayExpected - (todayActual?.actualRevenue ?? 0)) : displayExpected;
+                    const remainingExpected = adjustedExpected ? adjustedExpected.pendingScheduledRevenue : displayExpected;
                     const exceededExpected = !!(todayActual?.hasActualData && displayExpected > 0 && todayActual.actualRevenue > displayExpected);
+                    
+                    // Shortfall/surplus: compare what completed appts were scheduled for vs what they actually brought in
+                    const completedScheduled = adjustedExpected?.completedScheduledRevenue ?? 0;
+                    const completedActual = adjustedExpected?.completedActualRevenue ?? 0;
+                    const serviceDelta = completedActual - completedScheduled;
+                    const hasResolvedAppts = (adjustedExpected?.resolvedCount ?? 0) > 0;
+                    
                     return (
                       <>
+                        {/* Line 1: Scheduled Services Today total */}
                         <div className="flex items-center justify-center gap-1.5">
+                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <Clock className="w-3.5 h-3.5" />
+                            <span>Scheduled Services Today:</span>
+                            <BlurredAmount disableTooltip>
+                              <span className="text-foreground font-medium">{formatCurrency(displayExpected)}</span>
+                            </BlurredAmount>
+                          </div>
                           <Tooltip>
                             <TooltipTrigger asChild>
-                              <Badge 
-                                variant="outline" 
-                                className={cn("text-sm font-normal gap-1 cursor-pointer px-3 py-1.5", exceededExpected ? "bg-success/10 text-success-foreground border-success/30" : "bg-warning/10 text-warning border-warning/30")}
-                                onClick={() => toggleDrilldown('expectedGap')}
-                              >
-                                <Clock className="w-4 h-4" />
-                                <BlurredAmount disableTooltip>
-                                  <span>{formatCurrency(exceededExpected ? 0 : remainingExpected)}</span>
-                                </BlurredAmount>
-                                <span>{exceededExpected ? 'Exceeded' : 'More Expected Today'}</span>
-                                {!exceededExpected && adjustedExpected && adjustedExpected.pendingCount > 0 && (
-                                  <span className="text-[10px] opacity-60 ml-0.5">
-                                    · {adjustedExpected.pendingCount} pending
-                                  </span>
-                                )}
-                              </Badge>
+                              <Info className="w-3.5 h-3.5 text-muted-foreground/60 cursor-help" />
                             </TooltipTrigger>
-                            <TooltipContent>Click to see Gap Report</TooltipContent>
-                          </Tooltip>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Info className="w-4 h-4 text-muted-foreground cursor-help" />
-                            </TooltipTrigger>
-                            <TooltipContent side="bottom" className="max-w-[260px] text-xs">
+                            <TooltipContent side="bottom" className="max-w-[280px] text-xs">
                               {adjustedExpected ? (
                                 <div className="space-y-1">
-                                  <p>Adjusted in real time as appointments resolve.</p>
+                                  <p>Service revenue from today's appointments. Completed appointments use actual POS totals; pending appointments use their scheduled price. Cancellations and no-shows are excluded.</p>
                                   <p>{adjustedExpected.resolvedCount} completed ({formatCurrency(adjustedExpected.completedActualRevenue)} actual) + {adjustedExpected.pendingCount} pending ({formatCurrency(adjustedExpected.pendingScheduledRevenue)} scheduled)</p>
                                   {(adjustedExpected.cancelledCount > 0 || adjustedExpected.noShowCount > 0) && (
                                     <p className="text-muted-foreground/70">{adjustedExpected.cancelledCount} cancelled, {adjustedExpected.noShowCount} no-shows excluded</p>
                                   )}
                                 </div>
                               ) : (
-                                'Based on scheduled appointments. Final revenue may differ as appointments are completed, cancelled, or added.'
+                                'Total service revenue scheduled for today based on appointment bookings.'
                               )}
                             </TooltipContent>
                           </Tooltip>
                         </div>
+
+                        {/* Line 2: Remaining service revenue badge */}
+                        {!exceededExpected && remainingExpected > 0 && (
+                          <div className="flex items-center justify-center">
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Badge 
+                                  variant="outline" 
+                                  className="text-sm font-normal gap-1 cursor-pointer px-3 py-1.5 bg-warning/10 text-warning border-warning/30"
+                                  onClick={() => toggleDrilldown('expectedGap')}
+                                >
+                                  <BlurredAmount disableTooltip>
+                                    <span>{formatCurrency(remainingExpected)}</span>
+                                  </BlurredAmount>
+                                  <span>More Service Revenue Expected</span>
+                                  {adjustedExpected && adjustedExpected.pendingCount > 0 && (
+                                    <span className="text-[10px] opacity-60 ml-0.5">
+                                      · {adjustedExpected.pendingCount} pending
+                                    </span>
+                                  )}
+                                </Badge>
+                              </TooltipTrigger>
+                              <TooltipContent>Click to see Gap Report</TooltipContent>
+                            </Tooltip>
+                          </div>
+                        )}
+
+                        {/* Line 2 alt: Exceeded badge */}
+                        {exceededExpected && (
+                          <div className="flex items-center justify-center">
+                            <Badge 
+                              variant="outline" 
+                              className="text-sm font-normal gap-1 px-3 py-1.5 bg-success/10 text-success-foreground border-success/30 cursor-pointer"
+                              onClick={() => toggleDrilldown('expectedGap')}
+                            >
+                              <CheckCircle2 className="w-4 h-4" />
+                              <span>Exceeded Scheduled Services</span>
+                            </Badge>
+                          </div>
+                        )}
+
+                        {/* Line 3: Shortfall/surplus tracking indicator */}
+                        {hasResolvedAppts && serviceDelta !== 0 && (
+                          <div className={cn(
+                            "flex items-center justify-center gap-1 text-xs",
+                            serviceDelta < 0 ? "text-destructive" : "text-success-foreground"
+                          )}>
+                            {serviceDelta < 0 ? (
+                              <TrendingDown className="w-3.5 h-3.5" />
+                            ) : (
+                              <TrendingUp className="w-3.5 h-3.5" />
+                            )}
+                            <BlurredAmount disableTooltip>
+                              <span>Tracking {formatCurrency(Math.abs(serviceDelta))} {serviceDelta < 0 ? 'below' : 'above'} scheduled</span>
+                            </BlurredAmount>
+                          </div>
+                        )}
 
                         {/* Progress bar: actual vs expected */}
                         {todayActual?.hasActualData ? (
