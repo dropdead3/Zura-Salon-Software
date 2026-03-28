@@ -211,7 +211,7 @@ const TIME_INDEPENDENT_CARDS = new Set([
 // Icon + label mapping for each card in compact mode
 const CARD_META: Record<string, { icon: React.ElementType; label: string }> = {
   executive_summary: { icon: Sparkles, label: 'Executive Summary' },
-  daily_brief: { icon: FileText, label: 'Daily Brief' },
+  daily_brief: { icon: FileText, label: 'Appointments Summary' },
   sales_overview: { icon: DollarSign, label: 'Sales Overview' },
   top_performers: { icon: TrendingUp, label: 'Top Performers' },
   operations_stats: { icon: Clock, label: 'Operations' },
