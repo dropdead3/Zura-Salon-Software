@@ -821,7 +821,7 @@ export function AggregateSalesCard({
                     return (
                       <>
                         {/* Line 1: Scheduled Services Today total */}
-                        <div className="flex items-center justify-center gap-1.5">
+                        <div className="flex items-center justify-center gap-1.5 cursor-pointer" onClick={() => toggleDrilldown('expectedGap')}>
                           <div className="flex items-center gap-2 text-sm text-muted-foreground">
                             <Clock className="w-3.5 h-3.5" />
                             <span>Scheduled Services Today:</span>
@@ -859,21 +859,15 @@ export function AggregateSalesCard({
                         {/* Remaining service revenue badge */}
                         {remainingExpected > 0 && (
                           <div className="flex items-center justify-center">
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Badge 
-                                  variant="outline" 
-                                  className="text-sm font-normal gap-1 cursor-pointer px-3 py-1.5 bg-warning/10 text-warning border-warning/30"
-                                  onClick={() => toggleDrilldown('expectedGap')}
-                                >
-                                  <span>Service revenue still expected to collect:</span>
-                                  <BlurredAmount disableTooltip>
-                                    <span>{formatCurrency(remainingExpected)}</span>
-                                  </BlurredAmount>
-                                </Badge>
-                              </TooltipTrigger>
-                              <TooltipContent>Click to see Gap Report</TooltipContent>
-                            </Tooltip>
+                            <Badge 
+                              variant="outline" 
+                              className="text-sm font-normal gap-1 px-3 py-1.5 bg-warning/10 text-warning border-warning/30"
+                            >
+                              <span>Service revenue still expected to collect:</span>
+                              <BlurredAmount disableTooltip>
+                                <span>{formatCurrency(remainingExpected)}</span>
+                              </BlurredAmount>
+                            </Badge>
                           </div>
                         )}
 
@@ -944,6 +938,15 @@ export function AggregateSalesCard({
                             </span>
                           </p>
                         ) : null}
+
+                        {/* Gap analysis drill-down trigger */}
+                        <div 
+                          className="flex items-center justify-center gap-1 text-xs text-muted-foreground/60 hover:text-muted-foreground cursor-pointer transition-colors"
+                          onClick={() => toggleDrilldown('expectedGap')}
+                        >
+                          <ChevronDown className={cn("w-3 h-3 transition-transform duration-200", activeDrilldown === 'expectedGap' && "rotate-180")} />
+                          <span>{activeDrilldown === 'expectedGap' ? 'Hide' : 'View'} gap analysis</span>
+                        </div>
 
                         {/* Gap analysis drill-down (today) */}
                         <RevenueGapDrilldown
