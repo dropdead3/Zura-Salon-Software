@@ -74,9 +74,10 @@ export function TopPerformersCard({ performers, isLoading, showInfoTooltip = fal
     return b.totalRevenue - a.totalRevenue;
   }), [performers, sortMode]);
 
-  const topRevenue = sorted[0]
-    ? (sortMode === 'retail' ? (sorted[0].productRevenue ?? 0) : sorted[0].totalRevenue)
-    : 0;
+  const totalTeamRevenue = useMemo(() =>
+    sorted.reduce((acc, p) => acc + (sortMode === 'retail' ? (p.productRevenue ?? 0) : p.totalRevenue), 0),
+    [sorted, sortMode]
+  );
 
   const currentLabel = SORT_OPTIONS.find(o => o.value === sortMode)?.label ?? 'Total Revenue';
   const displayList = showAll ? sorted : sorted.slice(0, INITIAL_COUNT);
