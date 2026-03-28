@@ -21,7 +21,7 @@ interface Performer {
   productRevenue?: number;
 }
 
-type SortMode = 'totalRevenue' | 'retail';
+type SortMode = 'service' | 'retail';
 
 interface TopPerformersCardProps {
   performers: Performer[];
@@ -56,14 +56,14 @@ const getRankStyles = (rank: number) => {
 };
 
 const SORT_OPTIONS: { value: SortMode; label: string }[] = [
-  { value: 'totalRevenue', label: 'Total Revenue' },
-  { value: 'retail', label: 'Retail Sales' },
+  { value: 'service', label: 'Service' },
+  { value: 'retail', label: 'Retail' },
 ];
 
 const INITIAL_COUNT = 3;
 
 export function TopPerformersCard({ performers, isLoading, showInfoTooltip = false, filterContext }: TopPerformersCardProps) {
-  const [sortMode, setSortMode] = useState<SortMode>('totalRevenue');
+  const [sortMode, setSortMode] = useState<SortMode>('service');
   const [showAll, setShowAll] = useState(false);
   const { formatCurrencyWhole } = useFormatCurrency();
 
@@ -71,15 +71,20 @@ export function TopPerformersCard({ performers, isLoading, showInfoTooltip = fal
     if (sortMode === 'retail') {
       return (b.productRevenue ?? 0) - (a.productRevenue ?? 0);
     }
-    return b.totalRevenue - a.totalRevenue;
+    const aService = a.totalRevenue - (a.productRevenue ?? 0);
+    const bService = b.totalRevenue - (b.productRevenue ?? 0);
+    return bService - aService;
   }), [performers, sortMode]);
 
   const totalTeamRevenue = useMemo(() =>
-    sorted.reduce((acc, p) => acc + (sortMode === 'retail' ? (p.productRevenue ?? 0) : p.totalRevenue), 0),
+    sorted.reduce((acc, p) => {
+      if (sortMode === 'retail') return acc + (p.productRevenue ?? 0);
+      return acc + (p.totalRevenue - (p.productRevenue ?? 0));
+    }, 0),
     [sorted, sortMode]
   );
 
-  const currentLabel = SORT_OPTIONS.find(o => o.value === sortMode)?.label ?? 'Total Revenue';
+  const currentLabel = SORT_OPTIONS.find(o => o.value === sortMode)?.label ?? 'Service';
   const displayList = showAll ? sorted : sorted.slice(0, INITIAL_COUNT);
   const hasMore = sorted.length > INITIAL_COUNT;
 
@@ -93,7 +98,7 @@ export function TopPerformersCard({ performers, isLoading, showInfoTooltip = fal
       </div>
       <div className="flex items-center gap-2">
         <FilterTabsList>
-          <FilterTabsTrigger value="totalRevenue">Revenue</FilterTabsTrigger>
+          <FilterTabsTrigger value="service">Service</FilterTabsTrigger>
           <FilterTabsTrigger value="retail">Retail</FilterTabsTrigger>
         </FilterTabsList>
         {filterContext && (
@@ -102,7 +107,7 @@ export function TopPerformersCard({ performers, isLoading, showInfoTooltip = fal
             dateRange={filterContext.dateRange} 
           />
         )}
-        <MetricInfoTooltip description="Ranks your team by total revenue or retail sales in the selected period." />
+        <MetricInfoTooltip description="Ranks your team by service revenue or retail sales in the selected period." />
       </div>
     </div>
   );
@@ -161,14 +166,10 @@ export function TopPerformersCard({ performers, isLoading, showInfoTooltip = fal
                   .map(n => n[0])
                   .join('')
                   .toUpperCase() || '?';
-                const displayValue = sortMode === 'retail'
-                  ? (performer.productRevenue ?? 0)
-                  : performer.totalRevenue;
-                const revenueSharePct = totalTeamRevenue > 0 ? (displayValue / totalTeamRevenue) * 100 : 0;
-
-                const serviceRev = performer.serviceRevenue ?? (performer.totalRevenue - (performer.productRevenue ?? 0));
+                const serviceRev = performer.totalRevenue - (performer.productRevenue ?? 0);
                 const retailRev = performer.productRevenue ?? 0;
-                const showSplit = sortMode === 'totalRevenue' && serviceRev > 0 && retailRev > 0;
+                const displayValue = sortMode === 'retail' ? retailRev : serviceRev;
+                const revenueSharePct = totalTeamRevenue > 0 ? (displayValue / totalTeamRevenue) * 100 : 0;
 
                 return (
                   <motion.div
@@ -203,15 +204,7 @@ export function TopPerformersCard({ performers, isLoading, showInfoTooltip = fal
                         <div className="flex items-start justify-between gap-2">
                           <div className="min-w-0">
                             <p className="text-sm font-medium truncate">{performer.name}</p>
-                            {showSplit && (
-                              <div className="flex items-center gap-1 mt-0.5 text-[10px] text-muted-foreground">
-                                <BlurredAmount>{formatCurrencyWhole(serviceRev)}</BlurredAmount>
-                                <span>service</span>
-                                <span className="text-border">·</span>
-                                <BlurredAmount>{formatCurrencyWhole(retailRev)}</BlurredAmount>
-                                <span>retail</span>
-                              </div>
-                            )}
+                            
                           </div>
                           <div className="shrink-0 text-right">
                             <BlurredAmount className={cn("font-display text-sm whitespace-nowrap", rank === 1 && "text-foreground")}>
@@ -219,7 +212,7 @@ export function TopPerformersCard({ performers, isLoading, showInfoTooltip = fal
                             </BlurredAmount>
                             <div className="text-[10px] text-muted-foreground mt-0.5">
                               <span className="font-medium text-foreground/70">{revenueSharePct.toFixed(1)}%</span>
-                              <span> of total{sortMode === 'retail' ? ' retail' : ''}</span>
+                              <span> of total {sortMode === 'retail' ? 'retail' : 'service'}</span>
                             </div>
                           </div>
                         </div>
