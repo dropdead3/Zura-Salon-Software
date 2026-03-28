@@ -241,7 +241,7 @@ export function DashboardCustomizeMenu({ variant = 'icon', roleContext }: Dashbo
       return section.isVisible(roleContext);
     });
   }, [roleContext]);
-  const targetUserId = useGodModeTargetUserId();
+  const { targetUserId } = useGodModeTargetUserId();
   const { layout, isLoading, roleTemplate } = useDashboardLayout(targetUserId);
   const resetToDefault = useResetToDefault(targetUserId);
   const saveLayout = useSaveDashboardLayout(targetUserId);
