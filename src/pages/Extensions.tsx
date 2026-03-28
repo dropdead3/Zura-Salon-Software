@@ -1213,7 +1213,7 @@ export default function Extensions() {
             viewport={{ once: true }}
             transition={{ duration: 0.6 }}
           >
-            <span className="text-xs uppercase tracking-[0.3em] text-background/60 font-sans block mb-4">
+            <span className="text-xs uppercase tracking-wide text-background/60 font-display block mb-4">
               The Process
             </span>
             <h2 className="font-display text-2xl md:text-3xl lg:text-4xl font-normal tracking-tight leading-[1.1] mb-6">
