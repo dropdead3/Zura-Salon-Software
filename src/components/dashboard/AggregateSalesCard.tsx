@@ -382,8 +382,8 @@ export function AggregateSalesCard({
     isToday
   );
 
-  // For the today badge: use adjusted expected if available, otherwise fall back to scheduled
-  const todayExpectedDisplay = adjustedExpected?.adjustedExpected ?? scheduledRevenue ?? 0;
+  // For the today badge: use original scheduled total (what was on the books)
+  const todayExpectedDisplay = adjustedExpected?.originalExpected ?? scheduledRevenue ?? 0;
 
   // Gap analysis — lazy, only fetched when drill-down is open
   const { data: gapAnalysis, isLoading: gapLoading } = useRevenueGapAnalysis(
