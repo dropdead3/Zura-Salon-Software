@@ -461,7 +461,7 @@ function WizardIntentPicker({
                 isEmpty
                   ? 'border-border/30 bg-muted/10 opacity-50 cursor-not-allowed'
                   : cn(
-                      'border-border/70 bg-card hover:bg-accent/40 hover:border-foreground/30 hover:shadow-sm cursor-pointer',
+                      'border-border/70 bg-muted/30 hover:bg-accent/50 hover:border-foreground/30 hover:shadow-md cursor-pointer',
                       intent.accentClass,
                       hasUrgent && 'border-red-500/20 bg-red-500/[0.02]'
                     ),
