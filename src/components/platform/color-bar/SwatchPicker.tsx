@@ -299,7 +299,7 @@ export function SwatchPicker({ value, suggestedValue, onChange, disabled }: Swat
         sideOffset={8}
       >
         <div className="space-y-1">
-          <span className="font-sans text-[10px] text-[hsl(var(--platform-foreground-muted))] tracking-wide uppercase">
+          <span className="font-display text-[10px] text-[hsl(var(--platform-foreground-muted))] tracking-wide uppercase">
             Tone Swatch
           </span>
           {isSuggested && suggestedValue && (
