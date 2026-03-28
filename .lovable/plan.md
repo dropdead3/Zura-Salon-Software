@@ -1,31 +1,18 @@
 
 
-## Improve "Take Action" Button Styling — Red Fill + Bright Outline
+## Enlarge Expected Revenue Badge on Sales Overview
 
 ### Problem
-Current ghost styling is too subtle — just red text on transparent background. Needs more visual weight with a red fill and bright red border.
+The "Expected" revenue badge (clock icon + amount + "Expected" label) is too small — hard to read at a glance on the sales overview card.
 
 ### Solution
-Update the className on all three "Take Action" buttons to use a red-filled, outlined style:
+Increase the badge size across all instances in `AggregateSalesCard.tsx`:
 
-```
-bg-destructive/15 border border-destructive/60 text-destructive hover:bg-destructive/25
-```
+- **Badge text**: `text-xs` → `text-sm`
+- **Badge padding**: add `px-3 py-1.5` for more breathing room
+- **Clock icon**: `w-3 h-3` → `w-4 h-4`
+- **Info icon** next to it: `w-3.5 h-3.5` → `w-4 h-4`
 
-This gives a tinted red background, visible red border, and red text — without being as heavy as a solid destructive button.
-
-### Files modified (3 locations, same class change)
-
-1. **`src/components/dashboard/NewBookingsCard.tsx`** line 118
-2. **`src/components/dashboard/analytics/BookingPipelineContent.tsx`** line 321
-3. **`src/components/dashboard/analytics/ExecutiveSummaryCard.tsx`** line 120
-
-All change from:
-```
-text-destructive hover:bg-destructive/10 hover:text-destructive
-```
-To:
-```
-bg-destructive/15 border border-destructive/60 text-destructive hover:bg-destructive/25 hover:text-destructive
-```
+### File modified
+**`src/components/dashboard/AggregateSalesCard.tsx`** — all expected revenue badge instances (today, past range, todayToEom)
 
