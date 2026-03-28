@@ -273,13 +273,13 @@ html, body, #root {
     --sidebar-foreground: 350 25% 12%;
     --sidebar-primary: 350 60% 55%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 350 20% 93%;
+    --sidebar-accent: 350 20% 90%;
     --sidebar-accent-foreground: 350 25% 12%;
-    --sidebar-border: 350 15% 88%;
+    --sidebar-border: 350 15% 82%;
     --sidebar-ring: 350 60% 55%;
 
-    --card-inner: 350 15% 99%;
-    --card-inner-deep: 350 10% 100%;
+    --card-inner: 350 15% 95%;
+    --card-inner-deep: 350 10% 93%;
   }
 
   .dark.theme-rose {
