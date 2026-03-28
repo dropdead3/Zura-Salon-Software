@@ -128,7 +128,7 @@ export function GoalCard({ goal, currentValue = null, onEdit, onDelete }: GoalCa
             indicatorClassName={STATUS_COLORS[status]}
           />
           <span className={cn(
-            'text-[10px] font-medium px-1.5 py-0.5 rounded-full whitespace-nowrap',
+            'text-[10px] font-sans font-medium px-1.5 py-0.5 rounded-full whitespace-nowrap',
             status === 'on-track' && 'bg-emerald-500/10 text-emerald-600',
             status === 'warning' && 'bg-amber-500/10 text-amber-600',
             status === 'behind' && 'bg-amber-500/10 text-amber-600',

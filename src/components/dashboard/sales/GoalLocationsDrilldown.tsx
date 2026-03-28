@@ -53,7 +53,7 @@ function LocationMiniRow({ locationId, locationName, target, period, closedReaso
               {percentage.toFixed(0)}%
             </BlurredAmount>
             <span className={cn(
-              'inline-flex items-center gap-0.5 text-[10px] font-medium px-1.5 py-0.5 rounded-full',
+              'inline-flex items-center gap-0.5 text-[10px] font-sans font-medium px-1.5 py-0.5 rounded-full',
               paceStatus === 'ahead' && 'bg-chart-2/10 text-chart-2',
               paceStatus === 'on-track' && 'bg-muted text-muted-foreground',
               paceStatus === 'behind' && 'bg-destructive/10 text-destructive',
