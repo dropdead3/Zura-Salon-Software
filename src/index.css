@@ -265,8 +265,8 @@ html, body, #root {
     --destructive: 0 62% 50%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 350 15% 88%;
-    --input: 350 15% 92%;
+    --border: 350 15% 82%;
+    --input: 350 15% 88%;
     --ring: 350 60% 55%;
 
     --sidebar-background: 350 25% 98%;
