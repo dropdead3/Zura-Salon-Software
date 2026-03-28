@@ -2,21 +2,30 @@
 
 ## Problem
 
-The popover's inner content uses a glass aesthetic (`bg-card/80 backdrop-blur-xl backdrop-saturate-150`) which differs from the menu bar and main cards that use the standard `tokens.shine.inner` — solid `bg-background` with no blur/transparency.
+The top bar wrapper (`dashboard-top-bar`) has `z-30` in sticky mode, but the popover's backdrop overlay is `z-[45]`. Since the overlay sits above the top bar in the stacking order, it darkens the padding area around the rounded-full pill — which has a white/background color in light mode. This creates the appearance of a flat white bar above the content.
 
 ## Plan
 
-**File:** `src/components/dashboard/ViewAsPopover.tsx` (line 134)
+**File:** `src/components/dashboard/SuperAdminTopBar.tsx`
 
-Replace the glass inner wrapper classes with the standard token classes:
+Raise the top bar's z-index above the backdrop overlay so the entire top bar area (including its padding) floats over the darkened content:
 
-```
-// Before
-"silver-shine-inner block bg-card/80 backdrop-blur-xl backdrop-saturate-150 rounded-[calc(theme(borderRadius.xl)-1px)] overflow-hidden flex flex-col"
+- Change `z-30` to `z-[48]` on the outer wrapper (line 148)
+- This keeps it below the popover content (`z-[46]`) — wait, we need it above the overlay (`z-[45]`) but below the popover (`z-[46]`). Actually the popover is already portaled and at `z-[46]`, so the top bar at `z-[48]` would cover the popover. Instead, raise it to exactly `z-[46]` — same plane as the popover, which is fine since the popover is portaled and positioned absolutely.
 
-// After
-"silver-shine-inner block bg-background rounded-[calc(theme(borderRadius.xl)-1px)] overflow-hidden flex flex-col"
-```
+Actually, simplest approach:
 
-This matches `tokens.shine.inner` (`bg-background`) — the same solid background treatment used by the nav bar and dashboard cards — while keeping the animated silver-shine stroke on the outer border.
+**File:** `src/components/dashboard/ViewAsPopover.tsx`
+
+- Change the backdrop overlay to start from `top: 0` instead of measuring the top bar bottom
+- Lower the overlay z-index to `z-[28]` (below the top bar's `z-30`)
+- The top bar naturally sits above the overlay, and the rounded-full pill floats cleanly over the darkened page
+- Keep the popover content at `z-[46]` (already above everything)
+
+This way:
+- Overlay: `z-[28]` — below top bar, covers full page
+- Top bar: `z-30` — above overlay, pill floats naturally
+- Popover: `z-[46]` — above everything
+
+The darkened/blurred effect covers the full viewport behind the top bar, and the top bar's transparent padding area is no longer affected.
 
