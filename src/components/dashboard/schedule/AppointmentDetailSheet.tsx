@@ -953,7 +953,7 @@ export function AppointmentDetailSheet({
                         {canDelete && (
                           <>
                             <DropdownMenuSeparator />
-                            <DropdownMenuLabel className="font-sans text-[10px] text-muted-foreground uppercase tracking-wider">Admin</DropdownMenuLabel>
+                            <DropdownMenuLabel className="font-display text-[10px] text-muted-foreground uppercase tracking-wide">Admin</DropdownMenuLabel>
                             <DropdownMenuItem
                               className="text-destructive focus:text-destructive"
                               onClick={handleDeleteAppointment}
