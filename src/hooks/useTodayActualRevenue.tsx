@@ -325,7 +325,7 @@ export function useTodayActualRevenue(enabled: boolean) {
     actualServiceRevenue: actualRevenueQuery.data?.serviceRevenue ?? 0,
     actualProductRevenue: actualRevenueQuery.data?.productRevenue ?? 0,
     actualTransactions,
-    actualServiceHours: 0,
+    actualServiceHours: serviceHoursQuery.data ?? 0,
     actualAverageTicket: actualTransactions > 0 ? actualRevenue / actualTransactions : 0,
     lastAppointmentEndTime: lastAppointmentQuery.data ?? null,
     hasActualData,
