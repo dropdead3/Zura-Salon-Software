@@ -179,11 +179,6 @@ export function RevenueDonutChart({
                   <MetricInfoTooltip description="Percentage of service clients who also purchased a retail product (excluding extensions) in this period. Extensions are service inputs and not counted as cross-sells." />
                 </div>
                 <div className="flex items-center gap-1.5">
-                  {!retailAttachmentLoading && retailAttachmentRate !== undefined && (
-                    <span className="hidden lg:inline text-muted-foreground text-[11px]">
-                      {(retailAttachmentRate / 10).toFixed(1)} of every 10 purchase retail (excl. extensions)
-                    </span>
-                  )}
                   <span className="font-medium text-foreground tabular-nums">
                     {retailAttachmentLoading ? '…' : retailAttachmentRate !== undefined ? `${retailAttachmentRate}%` : '—'}
                   </span>
