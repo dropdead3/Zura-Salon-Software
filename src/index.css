@@ -222,28 +222,28 @@ html, body, #root {
 
   /* ===== THEME: ROSE (Blush Pink Pastel) ===== */
   .theme-rose {
-    --background: 350 30% 97%;
+    --background: 350 18% 90%;
     --foreground: 350 25% 12%;
 
-    --card: 350 25% 97%;
+    --card: 350 16% 93%;
     --card-foreground: 350 25% 12%;
 
-    --popover: 350 25% 97%;
+    --popover: 350 16% 93%;
     --popover-foreground: 350 25% 12%;
 
     --primary: 350 60% 55%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 350 20% 90%;
+    --secondary: 350 12% 84%;
     --secondary-foreground: 350 25% 12%;
 
-    --muted: 350 15% 86%;
-    --muted-foreground: 350 10% 40%;
+    --muted: 350 8% 78%;
+    --muted-foreground: 350 6% 35%;
 
-    --accent: 350 25% 88%;
+    --accent: 350 16% 82%;
     --accent-foreground: 350 25% 12%;
 
-    --oat: 350 30% 85%;
+    --oat: 350 20% 75%;
     --oat-foreground: 350 20% 25%;
 
     --gold: 38 70% 38%;
@@ -265,21 +265,21 @@ html, body, #root {
     --destructive: 0 62% 50%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 350 15% 82%;
-    --input: 350 15% 88%;
+    --border: 350 8% 72%;
+    --input: 350 8% 80%;
     --ring: 350 60% 55%;
 
-    --sidebar-background: 350 25% 98%;
+    --sidebar-background: 350 16% 91%;
     --sidebar-foreground: 350 25% 12%;
     --sidebar-primary: 350 60% 55%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 350 20% 90%;
+    --sidebar-accent: 350 12% 84%;
     --sidebar-accent-foreground: 350 25% 12%;
-    --sidebar-border: 350 15% 82%;
+    --sidebar-border: 350 8% 72%;
     --sidebar-ring: 350 60% 55%;
 
-    --card-inner: 350 15% 95%;
-    --card-inner-deep: 350 10% 93%;
+    --card-inner: 350 8% 89%;
+    --card-inner-deep: 350 5% 86%;
   }
 
   .dark.theme-rose {
