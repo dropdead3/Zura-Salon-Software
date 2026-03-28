@@ -145,6 +145,8 @@ export function GoalTrackerCard() {
 
                 {/* Stats */}
                 <div className="flex-1 space-y-3">
+                  {/* Scope label */}
+                  <p className="text-[10px] font-display uppercase tracking-wider text-muted-foreground">All Locations</p>
                   {/* Pace badge + required daily rate */}
                   <div className="space-y-1">
                     <div className={cn(
