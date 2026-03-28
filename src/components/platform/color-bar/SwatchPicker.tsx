@@ -321,7 +321,7 @@ export function SwatchPicker({ value, suggestedValue, onChange, disabled }: Swat
             <div className="space-y-2 pr-2">
               {HAIR_COLOR_SECTIONS.map((section) => (
                 <div key={section.label}>
-                  <span className="font-sans text-[9px] text-[hsl(var(--platform-foreground-muted)/0.6)] tracking-wider uppercase block mb-1">
+                  <span className="font-display text-[9px] text-[hsl(var(--platform-foreground-muted)/0.6)] tracking-wide uppercase block mb-1">
                     {section.label}
                   </span>
                   <div className="grid grid-cols-8 gap-1">
