@@ -166,14 +166,10 @@ export function TopPerformersCard({ performers, isLoading, showInfoTooltip = fal
                   .map(n => n[0])
                   .join('')
                   .toUpperCase() || '?';
-                const displayValue = sortMode === 'retail'
-                  ? (performer.productRevenue ?? 0)
-                  : performer.totalRevenue;
-                const revenueSharePct = totalTeamRevenue > 0 ? (displayValue / totalTeamRevenue) * 100 : 0;
-
-                const serviceRev = performer.serviceRevenue ?? (performer.totalRevenue - (performer.productRevenue ?? 0));
+                const serviceRev = performer.totalRevenue - (performer.productRevenue ?? 0);
                 const retailRev = performer.productRevenue ?? 0;
-                const showSplit = sortMode === 'totalRevenue' && serviceRev > 0 && retailRev > 0;
+                const displayValue = sortMode === 'retail' ? retailRev : serviceRev;
+                const revenueSharePct = totalTeamRevenue > 0 ? (displayValue / totalTeamRevenue) * 100 : 0;
 
                 return (
                   <motion.div
