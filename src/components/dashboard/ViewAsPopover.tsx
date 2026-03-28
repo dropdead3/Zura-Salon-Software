@@ -116,7 +116,7 @@ export function ViewAsPopover() {
       <PopoverContent
         align="end"
         sideOffset={16}
-        className="w-80 p-0 bg-card/80 backdrop-blur-xl backdrop-saturate-150 border border-border/30 rounded-xl shadow-2xl h-[420px] max-h-[var(--radix-popover-content-available-height)] overflow-hidden flex flex-col"
+        className="w-80 p-0 bg-card/80 backdrop-blur-xl backdrop-saturate-150 border border-border/30 rounded-xl shadow-2xl max-h-[min(420px,var(--radix-popover-content-available-height))] overflow-hidden flex flex-col"
       >
         <Tabs defaultValue="roles" className="w-full flex flex-col overflow-hidden flex-1 min-h-0">
           {/* Header */}
