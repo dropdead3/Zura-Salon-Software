@@ -26,7 +26,7 @@ const REASON_CONFIG: Record<GapReason, {
   not_concluded: {
     label: 'In progress',
     icon: Clock,
-    badgeClass: 'bg-primary/10 text-primary/80 border-primary/20',
+    badgeClass: 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20',
   },
   cancelled: {
     label: 'Cancelled',
