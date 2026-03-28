@@ -329,20 +329,21 @@ export function ExecutiveSummaryCard() {
       change: revenueChange,
       tooltip: 'Total service and product revenue from completed appointments in the selected date range.',
     },
-    ...(hasRenters ? [{
+    {
       icon: Building2,
       label: 'Rent Revenue',
-      value: <BlurredAmount>{formatCurrencyWhole(expectedRent)}</BlurredAmount>,
+      value: <BlurredAmount>{formatCurrencyWhole(hasRenters ? expectedRent : 0)}</BlurredAmount>,
       drillDown: '/dashboard/admin/booth-renters',
       drillLabel: 'View Renters',
       change: null,
       tooltip: 'Expected rent from active booth rental contracts, pro-rated to the selected date range. Collection rate shows how much has actually been paid.',
-      subtitle: rentData?.activeRenterCount ? `${rentData.activeRenterCount} active renters` : undefined,
-      badge: expectedRent > 0 ? {
-        label: `${collectionRate}% collected`,
-        color: collectionRate >= 90 ? 'bg-chart-2/10 text-chart-2' : collectionRate >= 50 ? 'bg-amber-500/10 text-amber-500' : 'bg-destructive/10 text-destructive',
-      } : undefined,
-    } as KpiData] : []),
+      subtitle: hasRenters && rentData?.activeRenterCount ? `${rentData.activeRenterCount} active renters` : undefined,
+      badge: !hasRenters
+        ? { label: 'No booth renters', color: 'bg-muted text-muted-foreground' }
+        : expectedRent > 0
+          ? { label: `${collectionRate}% collected`, color: collectionRate >= 90 ? 'bg-chart-2/10 text-chart-2' : collectionRate >= 50 ? 'bg-amber-500/10 text-amber-500' : 'bg-destructive/10 text-destructive' }
+          : undefined,
+    },
     {
       icon: Wallet,
       label: 'Commission Liability',
