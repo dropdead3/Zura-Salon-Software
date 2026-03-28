@@ -345,28 +345,28 @@ html, body, #root {
 
   /* ===== THEME: SAGE (Mint Green Pastel) ===== */
   .theme-sage {
-    --background: 145 15% 90%;
-    --foreground: 145 20% 12%;
+    --background: 145 10% 82%;
+    --foreground: 145 15% 8%;
 
-    --card: 145 12% 93%;
-    --card-foreground: 145 20% 12%;
+    --card: 145 8% 85%;
+    --card-foreground: 145 15% 8%;
 
-    --popover: 145 12% 93%;
-    --popover-foreground: 145 20% 12%;
+    --popover: 145 8% 85%;
+    --popover-foreground: 145 15% 8%;
 
     --primary: 145 45% 42%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 145 10% 84%;
-    --secondary-foreground: 145 20% 12%;
+    --secondary: 145 7% 78%;
+    --secondary-foreground: 145 15% 8%;
 
-    --muted: 145 6% 78%;
-    --muted-foreground: 145 5% 35%;
+    --muted: 145 5% 72%;
+    --muted-foreground: 145 4% 30%;
 
-    --accent: 145 12% 82%;
-    --accent-foreground: 145 20% 12%;
+    --accent: 145 8% 76%;
+    --accent-foreground: 145 15% 8%;
 
-    --oat: 145 15% 75%;
+    --oat: 145 10% 68%;
     --oat-foreground: 145 18% 25%;
 
     --gold: 38 70% 38%;
