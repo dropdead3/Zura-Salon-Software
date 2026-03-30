@@ -200,17 +200,15 @@ export function TopPerformersCard({ performers, isLoading, showInfoTooltip = fal
 
                       {/* Content zone */}
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-start justify-between gap-1">
-                          <p className="text-sm font-medium truncate min-w-0">{performer.name}</p>
-                          <div className="shrink-0 text-right">
-                            <BlurredAmount className={cn("font-display text-sm", rank === 1 && "text-foreground")}>
-                              {formatCurrencyWhole(displayValue)}
-                            </BlurredAmount>
-                          </div>
-                        </div>
-                        <div className="text-[10px] text-muted-foreground text-right mt-0.5">
-                          <span className="font-medium text-foreground/70">{revenueSharePct.toFixed(1)}%</span>
-                          <span className="hidden @[320px]:inline"> of total {sortMode === 'retail' ? 'retail' : 'service'}</span>
+                        <p className="text-sm font-medium truncate">{performer.name}</p>
+                        <div className="flex items-baseline justify-between gap-2 mt-0.5">
+                          <BlurredAmount className={cn("font-display text-sm", rank === 1 && "text-foreground")}>
+                            {formatCurrencyWhole(displayValue)}
+                          </BlurredAmount>
+                          <span className="text-[10px] text-muted-foreground shrink-0">
+                            <span className="font-medium text-foreground/70">{revenueSharePct.toFixed(1)}%</span>
+                            <span className="hidden @[320px]:inline"> of total {sortMode === 'retail' ? 'retail' : 'service'}</span>
+                          </span>
                         </div>
                       </div>
                     </div>
