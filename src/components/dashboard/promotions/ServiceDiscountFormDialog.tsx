@@ -93,9 +93,11 @@ export function ServiceDiscountFormDialog({
         { onSuccess: () => onOpenChange(false) }
       );
     } else {
-      createMutation.mutate(values, {
-        onSuccess: () => onOpenChange(false),
-      });
+      createMutation.mutate(
+        { name: values.name, discount_type: values.discount_type, discount_value: values.discount_value, applies_to: values.applies_to, is_active: values.is_active },
+        { onSuccess: () => onOpenChange(false) }
+      );
+    }
     }
   };
 
