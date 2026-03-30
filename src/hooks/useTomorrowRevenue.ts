@@ -16,7 +16,14 @@ export function useTomorrowRevenue(locationId?: string) {
         .eq('appointment_date', tomorrowStr)
         .not('status', 'in', '("cancelled","no_show")');
 
-      query = applyLocationFilter(query, locationId);
+      if (!isAllLocations(locationId)) {
+        const ids = locationId!.split(',').filter(Boolean);
+        if (ids.length === 1) {
+          query = query.eq('location_id', ids[0]);
+        } else {
+          query = query.in('location_id', ids);
+        }
+      }
 
       const { data, error } = await query;
 
