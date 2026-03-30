@@ -585,6 +585,9 @@ export function AggregateSalesCard({
     // If anyone is still in session by time-window, revenue is not finalized
     if (liveSession.inSessionCount > 0) return false;
 
+    // If any appointments are still in a non-terminal status, not complete
+    if (adjustedExpected && adjustedExpected.pendingCount > 0) return false;
+
     const now = new Date();
 
     // Path 1: All locations are past their closing time
@@ -606,7 +609,7 @@ export function AggregateSalesCard({
     }
 
     return false;
-  }, [isToday, locations, todayActual, liveSession.inSessionCount]);
+  }, [isToday, locations, todayActual, liveSession.inSessionCount, adjustedExpected]);
 
   if (isLoading) {
     return (
