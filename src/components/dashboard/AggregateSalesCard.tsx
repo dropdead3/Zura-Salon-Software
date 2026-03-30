@@ -55,7 +55,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import { Package, Shirt, Gem as GemIcon, Gift } from 'lucide-react';
 
 import { ServiceProductDrilldown } from './ServiceProductDrilldown';
