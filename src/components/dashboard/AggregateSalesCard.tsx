@@ -894,7 +894,7 @@ export function AggregateSalesCard({
                           const earnedPct = displayExpected > 0 
                             ? Math.round((serviceRevenue / displayExpected) * 100) 
                             : 0;
-                          const projectedFinish = (adjustedExpected?.completedActualRevenue ?? 0) + (adjustedExpected?.pendingScheduledRevenue ?? 0);
+                          const projectedFinish = (adjustedExpected?.completedActualRevenue ?? 0) + (adjustedExpected?.pendingExpectedRevenue ?? 0);
                           const excessAmount = serviceRevenue - displayExpected;
                           return (
                           <div className="space-y-1.5">
