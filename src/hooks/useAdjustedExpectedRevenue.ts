@@ -10,8 +10,11 @@ export interface AdjustedExpectedResult {
   completedActualRevenue: number;
   completedScheduledRevenue: number;
   pendingScheduledRevenue: number;
+  pendingExpectedRevenue: number;
   cancelledCount: number;
   noShowCount: number;
+  discountedAppointmentCount: number;
+  totalDiscountAmount: number;
 }
 
 /**
