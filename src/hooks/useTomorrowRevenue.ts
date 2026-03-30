@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { format, addDays } from 'date-fns';
-import { applyLocationFilter, isAllLocations } from '@/lib/locationFilter';
+import { isAllLocations } from '@/lib/locationFilter';
 
 export function useTomorrowRevenue(locationId?: string) {
   const tomorrow = addDays(new Date(), 1);
