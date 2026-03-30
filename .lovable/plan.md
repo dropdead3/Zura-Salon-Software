@@ -1,42 +1,45 @@
 
 
-## Collapse Sales Overview Card When All Locations Are Closed
+## Surface Tomorrow's Expected Revenue in the Closed-State Sales Overview
 
-### Problem
-When all locations are closed, the Sales Overview card displays a large empty state with `py-16` padding, a moon icon, and descriptive text — taking up significant vertical space for zero-value information.
+### What changes
 
-### Solution
-Replace the tall empty state with a compact, single-row inline closed indicator. The card header stays as-is (it already shows a "Closed" badge), and the body collapses to a minimal height.
+**1. Update `useTomorrowRevenue` hook to support location filtering**
 
-### Change
+Add an optional `locationId` parameter so the query respects the dashboard's current location scope. Add `location_id` filter when not `'all'`.
 
-**File: `src/components/dashboard/AggregateSalesCard.tsx`** — Lines 731-742
+**File:** `src/hooks/useTomorrowRevenue.ts`
 
-Replace the current tall closed state:
+**2. Enhance the compact closed-state row with tomorrow's preview**
+
+When `allLocationsClosed` is true and `tomorrowData` has revenue > 0, append a second line (or inline element) showing tomorrow's expected revenue and appointment count.
+
+**File:** `src/components/dashboard/AggregateSalesCard.tsx` — lines 731-738
+
+Replace with:
 ```tsx
 {allLocationsClosed ? (
-  <div className="bg-card-inner rounded-xl border border-border/40 py-16 text-center">
-    <div className="mx-auto mb-4 flex h-12 w-12 ...">
-      <Moon ... />
+  <div className="bg-card-inner rounded-xl border border-border/40 py-4 px-5 space-y-2">
+    <div className="flex items-center gap-3">
+      <Moon className="h-4 w-4 text-muted-foreground shrink-0" />
+      <p className="text-sm text-muted-foreground">
+        No sales activity — all {locations?.length ?? 0} locations
+        {dateRange === 'yesterday' ? ' were closed yesterday' : ' are closed today'}.
+      </p>
     </div>
-    <h3 className="font-display text-lg ...">All locations closed ...</h3>
-    <p className="...">No sales activity — all N locations ...</p>
+    {tomorrowData && tomorrowData.revenue > 0 && (
+      <div className="flex items-center gap-3 pl-7">
+        <Clock className="h-4 w-4 text-primary shrink-0" />
+        <p className="text-sm text-muted-foreground">
+          Tomorrow: <BlurredAmount disableTooltip>
+            <span className="text-foreground font-medium">{formatCurrency(tomorrowData.revenue)}</span>
+          </BlurredAmount> expected across {tomorrowData.appointmentCount} appointment{tomorrowData.appointmentCount !== 1 ? 's' : ''}
+        </p>
+      </div>
+    )}
   </div>
 ) : (
 ```
 
-With a compact single-line version:
-```tsx
-{allLocationsClosed ? (
-  <div className="bg-card-inner rounded-xl border border-border/40 py-4 px-5 flex items-center gap-3">
-    <Moon className="h-4 w-4 text-muted-foreground shrink-0" />
-    <p className="text-sm text-muted-foreground">
-      No sales activity — all {locations?.length ?? 0} locations
-      {dateRange === 'yesterday' ? ' were closed yesterday' : ' are closed today'}.
-    </p>
-  </div>
-) : (
-```
-
-This reduces the closed state from ~160px tall to ~48px — a single line with the moon icon inline, keeping the card minimal and informative without the large centered empty-state treatment.
+This keeps the collapsed card minimal but surfaces actionable forward-looking data — tomorrow's scheduled revenue and count — when there is activity on the books.
 
