@@ -866,6 +866,9 @@ export function AggregateSalesCard({
                         {adjustedExpected && (adjustedExpected.resolvedCount + adjustedExpected.pendingCount + adjustedExpected.cancelledCount + adjustedExpected.noShowCount) > 0 && (
                           <p className="text-xs text-muted-foreground/70 text-center">
                             {adjustedExpected.resolvedCount} of {adjustedExpected.resolvedCount + adjustedExpected.pendingCount + adjustedExpected.cancelledCount + adjustedExpected.noShowCount} appointments completed{adjustedExpected.pendingCount > 0 && ` · ${adjustedExpected.pendingCount} pending`}
+                            {adjustedExpected.discountedAppointmentCount > 0 && (
+                              <span className="text-accent-foreground/70"> · {adjustedExpected.discountedAppointmentCount} discount{adjustedExpected.discountedAppointmentCount !== 1 ? 's' : ''} applied</span>
+                            )}
                           </p>
                         )}
 
