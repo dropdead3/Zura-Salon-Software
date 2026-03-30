@@ -21,7 +21,7 @@ export function useScheduledRevenue(
     queryFn: async () => {
       let query = supabase
         .from('phorest_appointments')
-        .select('total_price')
+        .select('total_price, expected_price')
         .gte('appointment_date', dateFrom)
         .lte('appointment_date', dateTo)
         .not('total_price', 'is', null);
@@ -32,7 +32,8 @@ export function useScheduledRevenue(
 
       const { data, error } = await query;
       if (error) throw error;
-      return data?.reduce((sum, r) => sum + (Number(r.total_price) || 0), 0) ?? 0;
+      // Use expected_price (discount-adjusted) when available, fall back to total_price
+      return data?.reduce((sum, r) => sum + (Number(r.expected_price) || Number(r.total_price) || 0), 0) ?? 0;
     },
     enabled,
     staleTime: 2 * 60 * 1000,
