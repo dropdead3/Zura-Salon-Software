@@ -1,36 +1,44 @@
 
 
-## Adaptive Compact Numbers for Sales Overview Card
+## Auto-Compact Numbers Everywhere via Self-Aware AnimatedBlurredAmount
 
 ### Problem
-When the Sales Overview card is rendered in a narrow column, large currency values ($81,073.25, $67,698.60, etc.) overflow or clip because there's not enough horizontal space for the full formatted number.
+Only the Sales Overview card currently switches to compact numbers when space is tight. Every other card with `AnimatedBlurredAmount` (16 files, ~30+ instances) still overflows at narrow widths.
 
 ### Solution
-Use a container-width-aware approach that switches `AnimatedBlurredAmount` to compact notation ($81.1K, $67.7K) when the card is narrow.
+Instead of adding ResizeObserver to every parent component, make `AnimatedBlurredAmount` **self-aware** of overflow. The component will measure its own rendered text against its container and automatically switch to compact notation when it detects the text would clip.
 
 ### Implementation
 
-**1. Add `compact` prop to `AnimatedBlurredAmount`** (`src/components/ui/AnimatedBlurredAmount.tsx`)
-- Accept optional `compact?: boolean` prop
-- When `compact` is true, format using `formatCurrency(value, currency, { compact: true })` via the unified `format.ts` (which already supports `notation: 'compact'`)
-- For non-currency values, use `Intl.NumberFormat` with compact notation
+**1. Add auto-compact logic inside `AnimatedBlurredAmount`** (`src/components/ui/AnimatedBlurredAmount.tsx`)
 
-**2. Add container width detection to `AggregateSalesCard`** (`src/components/dashboard/AggregateSalesCard.tsx`)
-- Add a `ref` on the card's inner content container
-- Use a `ResizeObserver` (via a small `useContainerCompact` hook or inline) to track container width
-- Set a `compactNumbers` boolean state: `true` when container width < ~400px
-- Pass `compact={compactNumbers}` to every `AnimatedBlurredAmount` in the card (hero total, services, retail, daily avg, avg ticket, rev/hour)
-- Also apply compact formatting to any inline `formatCurrency()` calls (e.g. scheduled badge, remaining badge) using a conditional
+- Keep the existing `compact` prop as an explicit override
+- Add a new `autoCompact` prop (default `true` for currency values) that enables self-measurement
+- Use a `ResizeObserver` on the `<span>` element itself combined with a check: if `scrollWidth > clientWidth` (text is clipping), flip to compact formatting
+- Implementation approach:
+  - Render normally first
+  - On mount and resize, check if the span is overflowing
+  - If overflowing and value ≥ 1000 (compact only makes sense for large numbers), re-render with compact notation
+  - Store `isAutoCompact` in local state
+
+**2. Remove per-card ResizeObserver from `AggregateSalesCard`** (`src/components/dashboard/AggregateSalesCard.tsx`)
+
+- Remove the `cardRef`, `compactNumbers` state, and `ResizeObserver` useEffect added in the previous change
+- Remove all `compact={compactNumbers}` props from `AnimatedBlurredAmount` instances (the component now handles this internally)
+- This simplifies the card back to its original structure
 
 **3. Files changed:**
+
 | File | Change |
 |------|--------|
-| `src/components/ui/AnimatedBlurredAmount.tsx` | Add `compact` prop; use compact `formatCurrency` when true |
-| `src/components/dashboard/AggregateSalesCard.tsx` | Add ResizeObserver on content container; derive `compactNumbers` state; pass to all `AnimatedBlurredAmount` instances and inline `formatCurrency` calls |
+| `src/components/ui/AnimatedBlurredAmount.tsx` | Add `autoCompact` self-measurement logic using overflow detection; keep `compact` as explicit override |
+| `src/components/dashboard/AggregateSalesCard.tsx` | Remove ResizeObserver, `compactNumbers` state, and `compact={compactNumbers}` from all instances |
 
 ### Technical Detail
-- `formatCurrency` in `src/lib/format.ts` already supports `compact: true` → uses `Intl.NumberFormat({ notation: 'compact', compactDisplay: 'short' })` producing `$81.1K`, `$3.5K`, etc.
-- The `AnimatedBlurredAmount` currently imports `formatCurrency` from `src/lib/formatCurrency.ts` (legacy wrapper). The compact path will call the unified `format.ts` version directly.
-- ResizeObserver threshold of ~400px chosen because at that width, 5+ digit currency values start clipping in `text-2xl`+ sizes.
-- No changes needed to `format.ts` — the compact formatting infrastructure is already there.
+
+- Overflow detection: the `<span>` gets `overflow-hidden text-ellipsis whitespace-nowrap` styles, then `scrollWidth > clientWidth` reliably detects clipping
+- Only triggers for values ≥ 1000 (below that, compact notation is identical to standard)
+- Uses `ResizeObserver` on the span itself (not a parent), so it works regardless of which card/layout hosts it
+- The auto-compact check runs after each value animation frame settles, not during animation, to avoid flicker
+- Every `AnimatedBlurredAmount` with `currency` set will automatically benefit — no changes needed in the 16 consumer files
 
