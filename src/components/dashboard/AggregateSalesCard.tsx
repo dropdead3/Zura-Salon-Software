@@ -650,7 +650,7 @@ export function AggregateSalesCard({
     );
 
   return (
-    <Card ref={cardRef} className="p-6">
+    <Card className="p-6">
       {/* Header: left = title, middle = metadata, right = actions */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div className="flex items-center gap-3">
