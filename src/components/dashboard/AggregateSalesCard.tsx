@@ -158,6 +158,19 @@ export function AggregateSalesCard({
   const [servicesExpanded, setServicesExpanded] = useState(false);
   const [retailCategoryDrilldown, setRetailCategoryDrilldown] = useState<'Products' | 'Merch' | 'Gift Cards' | 'Extensions' | null>(null);
 
+  // Container-width-aware compact number formatting
+  const cardRef = useRef<HTMLDivElement>(null);
+  const [compactNumbers, setCompactNumbers] = useState(false);
+  useEffect(() => {
+    const el = cardRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver(([entry]) => {
+      setCompactNumbers(entry.contentRect.width < 400);
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
   // Toggle a secondary KPI drilldown with mutual exclusivity
   const toggleDrilldown = (panel: 'revenue' | 'transactions' | 'avgTicket' | 'revPerHour' | 'goals' | 'expectedGap') => {
     setActiveDrilldown(prev => prev === panel ? null : panel);
