@@ -21,7 +21,7 @@ export function useScheduledRevenue(
     queryFn: async () => {
       let query = supabase
         .from('phorest_appointments')
-        .select('total_price')
+        .select('total_price, expected_price')
         .gte('appointment_date', dateFrom)
         .lte('appointment_date', dateTo)
         .not('total_price', 'is', null);
@@ -32,7 +32,8 @@ export function useScheduledRevenue(
 
       const { data, error } = await query;
       if (error) throw error;
-      return data?.reduce((sum, r) => sum + (Number(r.total_price) || 0), 0) ?? 0;
+      // Use expected_price (discount-adjusted) when available, fall back to total_price
+      return data?.reduce((sum, r) => sum + (Number(r.expected_price) || Number(r.total_price) || 0), 0) ?? 0;
     },
     enabled,
     staleTime: 2 * 60 * 1000,
@@ -103,7 +104,7 @@ export function useRevenueGapAnalysis(
       // ── Fetch all gap-relevant appointments in one go ──
       let apptQuery = supabase
         .from('phorest_appointments')
-        .select('id, service_name, client_name, total_price, appointment_date, start_time, phorest_staff_id, phorest_client_id, status')
+        .select('id, service_name, client_name, total_price, expected_price, discount_amount, discount_reason, appointment_date, start_time, phorest_staff_id, phorest_client_id, status')
         .gte('appointment_date', dateFrom)
         .lte('appointment_date', dateTo)
         .in('status', ['cancelled', 'no_show', 'completed', 'confirmed', 'pending', 'arrived', 'started']);
@@ -150,7 +151,7 @@ export function useRevenueGapAnalysis(
       const gapItems: GapItem[] = [];
 
       cancelled.forEach(a => {
-        const price = Number(a.total_price) || 0;
+        const price = Number(a.expected_price) || Number(a.total_price) || 0;
         if (price <= 0) return;
         gapItems.push({
           id: a.id,
@@ -166,7 +167,7 @@ export function useRevenueGapAnalysis(
       });
 
       noShows.forEach(a => {
-        const price = Number(a.total_price) || 0;
+        const price = Number(a.expected_price) || Number(a.total_price) || 0;
         if (price <= 0) return;
         gapItems.push({
           id: a.id,
@@ -183,7 +184,7 @@ export function useRevenueGapAnalysis(
 
       // ── Not-yet-concluded appointments (today filter) ──
       notConcluded.forEach(a => {
-        const price = Number(a.total_price) || 0;
+        const price = Number(a.expected_price) || Number(a.total_price) || 0;
         if (price <= 0) return;
         gapItems.push({
           id: a.id,
@@ -247,7 +248,7 @@ export function useRevenueGapAnalysis(
       completed.forEach(a => {
         // Null-client appointments can never match POS — emit as individual gap items
         if (!a.phorest_client_id) {
-          const price = Number(a.total_price) || 0;
+          const price = Number(a.expected_price) || Number(a.total_price) || 0;
           const isApptToday = rangeIncludesToday && a.appointment_date === todayStr;
           if (price > 0) {
             gapItems.push({
@@ -269,14 +270,14 @@ export function useRevenueGapAnalysis(
         const existing = clientDayScheduled.get(key);
         if (existing) {
           existing.services.push(a.service_name || 'Unknown service');
-          existing.totalScheduled += Number(a.total_price) || 0;
+          existing.totalScheduled += Number(a.expected_price) || Number(a.total_price) || 0;
           existing.ids.push(a.id);
           if (!existing.stylistName && stylist) existing.stylistName = stylist;
         } else {
           clientDayScheduled.set(key, {
             clientName: resolveClient(a),
             services: [a.service_name || 'Unknown service'],
-            totalScheduled: Number(a.total_price) || 0,
+            totalScheduled: Number(a.expected_price) || Number(a.total_price) || 0,
             appointmentDate: a.appointment_date,
             stylistName: stylist,
             ids: [a.id],

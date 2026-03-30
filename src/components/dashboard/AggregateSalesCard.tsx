@@ -823,7 +823,7 @@ export function AggregateSalesCard({
                 <div className="mt-4 mx-auto max-w-sm space-y-3">
                   {(() => {
                     const displayExpected = todayExpectedDisplay;
-                    const remainingExpected = adjustedExpected ? adjustedExpected.pendingScheduledRevenue : displayExpected;
+                    const remainingExpected = adjustedExpected ? adjustedExpected.pendingExpectedRevenue : displayExpected;
                     
                     // Tracking: compare actual POS revenue against what completed appointments were scheduled for
                     const completedScheduled = adjustedExpected?.completedScheduledRevenue ?? 0;
@@ -866,6 +866,9 @@ export function AggregateSalesCard({
                         {adjustedExpected && (adjustedExpected.resolvedCount + adjustedExpected.pendingCount + adjustedExpected.cancelledCount + adjustedExpected.noShowCount) > 0 && (
                           <p className="text-xs text-muted-foreground/70 text-center">
                             {adjustedExpected.resolvedCount} of {adjustedExpected.resolvedCount + adjustedExpected.pendingCount + adjustedExpected.cancelledCount + adjustedExpected.noShowCount} appointments completed{adjustedExpected.pendingCount > 0 && ` · ${adjustedExpected.pendingCount} pending`}
+                            {adjustedExpected.discountedAppointmentCount > 0 && (
+                              <span className="text-accent-foreground/70"> · {adjustedExpected.discountedAppointmentCount} discount{adjustedExpected.discountedAppointmentCount !== 1 ? 's' : ''} applied</span>
+                            )}
                           </p>
                         )}
 
@@ -891,7 +894,7 @@ export function AggregateSalesCard({
                           const earnedPct = displayExpected > 0 
                             ? Math.round((serviceRevenue / displayExpected) * 100) 
                             : 0;
-                          const projectedFinish = (adjustedExpected?.completedActualRevenue ?? 0) + (adjustedExpected?.pendingScheduledRevenue ?? 0);
+                          const projectedFinish = (adjustedExpected?.completedActualRevenue ?? 0) + (adjustedExpected?.pendingExpectedRevenue ?? 0);
                           const excessAmount = serviceRevenue - displayExpected;
                           return (
                           <div className="space-y-1.5">
