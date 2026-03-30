@@ -12307,7 +12307,13 @@ export type Database = {
           deposit_required: boolean
           deposit_status: string | null
           deposit_stripe_payment_id: string | null
+          discount_amount: number | null
+          discount_id: string | null
+          discount_reason: string | null
+          discount_type: string | null
+          discount_value: number | null
           end_time: string
+          expected_price: number | null
           id: string
           is_demo: boolean
           is_new_client: boolean | null
@@ -12355,7 +12361,13 @@ export type Database = {
           deposit_required?: boolean
           deposit_status?: string | null
           deposit_stripe_payment_id?: string | null
+          discount_amount?: number | null
+          discount_id?: string | null
+          discount_reason?: string | null
+          discount_type?: string | null
+          discount_value?: number | null
           end_time: string
+          expected_price?: number | null
           id?: string
           is_demo?: boolean
           is_new_client?: boolean | null
@@ -12403,7 +12415,13 @@ export type Database = {
           deposit_required?: boolean
           deposit_status?: string | null
           deposit_stripe_payment_id?: string | null
+          discount_amount?: number | null
+          discount_id?: string | null
+          discount_reason?: string | null
+          discount_type?: string | null
+          discount_value?: number | null
           end_time?: string
+          expected_price?: number | null
           id?: string
           is_demo?: boolean
           is_new_client?: boolean | null
@@ -12438,6 +12456,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "fk_phorest_appointments_discount"
+            columns: ["discount_id"]
+            isOneToOne: false
+            referencedRelation: "service_discounts"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "phorest_appointments_location_id_fkey"
             columns: ["location_id"]
@@ -18203,6 +18228,59 @@ export type Database = {
             columns: ["sms_template_id"]
             isOneToOne: false
             referencedRelation: "sms_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      service_discounts: {
+        Row: {
+          applicable_categories: string[] | null
+          applicable_service_ids: string[] | null
+          applies_to: string | null
+          created_at: string | null
+          created_by: string | null
+          discount_type: string
+          discount_value: number
+          id: string
+          is_active: boolean | null
+          name: string
+          organization_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          applicable_categories?: string[] | null
+          applicable_service_ids?: string[] | null
+          applies_to?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          discount_type: string
+          discount_value: number
+          id?: string
+          is_active?: boolean | null
+          name: string
+          organization_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          applicable_categories?: string[] | null
+          applicable_service_ids?: string[] | null
+          applies_to?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          discount_type?: string
+          discount_value?: number
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          organization_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_discounts_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
         ]
