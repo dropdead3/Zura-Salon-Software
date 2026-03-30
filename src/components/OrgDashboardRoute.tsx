@@ -49,6 +49,7 @@ export function OrgDashboardRoute() {
 export function LegacyDashboardRedirect() {
   const { '*': splat } = useParams();
   const { effectiveOrganization } = useOrganizationContext();
+  const { user, loading } = useAuth();
   const path = splat || '';
 
   // /dashboard/platform/* → /platform/*
@@ -57,12 +58,26 @@ export function LegacyDashboardRedirect() {
     return <Navigate to={`/platform/${rest}`} replace />;
   }
 
+  // Auth still resolving — show spinner
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  // Not authenticated — redirect to login
+  if (!user) {
+    return <Navigate to="/login" state={{ from: `/dashboard/${path}`, message: 'Please sign in to access your dashboard.' }} replace />;
+  }
+
   // /dashboard/* → /org/:slug/dashboard/*
   if (effectiveOrganization?.slug) {
     return <Navigate to={`/org/${effectiveOrganization.slug}/dashboard/${path}`} replace />;
   }
 
-  // No org yet — wait for context or show login
+  // Authenticated but org not yet resolved — wait
   return (
     <div className="min-h-screen bg-background flex items-center justify-center">
       <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
