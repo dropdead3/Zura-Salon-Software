@@ -100,6 +100,16 @@ export default function UnifiedLogin() {
 
   const from = location.state?.from?.pathname || '/dashboard';
 
+  // Show redirect message as toast (e.g. "Please sign in to access your dashboard")
+  useEffect(() => {
+    const message = location.state?.message;
+    if (message && typeof message === 'string') {
+      sonnerToast.info(message);
+      // Clear the message from state so it doesn't re-show on re-renders
+      window.history.replaceState({}, '');
+    }
+  }, [location.state?.message]);
+
   // Set signup mode if platform invitation
   useEffect(() => {
     if (platformInvitation && platformInvitation.status === 'pending') {
