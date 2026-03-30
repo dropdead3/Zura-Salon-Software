@@ -247,7 +247,7 @@ export function useRevenueGapAnalysis(
       completed.forEach(a => {
         // Null-client appointments can never match POS — emit as individual gap items
         if (!a.phorest_client_id) {
-          const price = Number(a.total_price) || 0;
+          const price = Number(a.expected_price) || Number(a.total_price) || 0;
           const isApptToday = rangeIncludesToday && a.appointment_date === todayStr;
           if (price > 0) {
             gapItems.push({
