@@ -269,7 +269,7 @@ export function AggregateSalesCard({
   const { data: stylistData, isLoading: stylistLoading } = useSalesByStylist(dateFilters.dateFrom, dateFilters.dateTo, filterContext?.locationId);
   const { data: trendData, isLoading: trendLoading } = useSalesTrend(dateFilters.dateFrom, dateFilters.dateTo);
   const { data: comparison, isLoading: comparisonLoading } = useSalesComparison(dateFilters.dateFrom, dateFilters.dateTo);
-  const { data: tomorrowData } = useTomorrowRevenue();
+  const { data: tomorrowData } = useTomorrowRevenue(filterContext?.locationId);
   const { goals } = useSalesGoals();
   const { data: locations } = useActiveLocations();
   const rangeIncludesToday = dateFilters.dateTo === format(new Date(), 'yyyy-MM-dd');
@@ -729,12 +729,26 @@ export function AggregateSalesCard({
       </div>
 
       {allLocationsClosed ? (
-        <div className="bg-card-inner rounded-xl border border-border/40 py-4 px-5 flex items-center gap-3">
-          <Moon className="h-4 w-4 text-muted-foreground shrink-0" />
-          <p className="text-sm text-muted-foreground">
-            No sales activity — all {locations?.length ?? 0} locations
-            {dateRange === 'yesterday' ? ' were closed yesterday' : ' are closed today'}.
-          </p>
+        <div className="bg-card-inner rounded-xl border border-border/40 py-4 px-5 space-y-2">
+          <div className="flex items-center gap-3">
+            <Moon className="h-4 w-4 text-muted-foreground shrink-0" />
+            <p className="text-sm text-muted-foreground">
+              No sales activity — all {locations?.length ?? 0} locations
+              {dateRange === 'yesterday' ? ' were closed yesterday' : ' are closed today'}.
+            </p>
+          </div>
+          {tomorrowData && tomorrowData.revenue > 0 && (
+            <div className="flex items-center gap-3 pl-7">
+              <Clock className="h-4 w-4 text-primary shrink-0" />
+              <p className="text-sm text-muted-foreground">
+                Tomorrow:{' '}
+                <BlurredAmount disableTooltip>
+                  <span className="text-foreground font-medium">{formatCurrency(tomorrowData.revenue)}</span>
+                </BlurredAmount>
+                {' '}expected across {tomorrowData.appointmentCount} appointment{tomorrowData.appointmentCount !== 1 ? 's' : ''}
+              </p>
+            </div>
+          )}
         </div>
       ) : (
       <>
