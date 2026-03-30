@@ -269,7 +269,7 @@ export function AggregateSalesCard({
   const { data: stylistData, isLoading: stylistLoading } = useSalesByStylist(dateFilters.dateFrom, dateFilters.dateTo, filterContext?.locationId);
   const { data: trendData, isLoading: trendLoading } = useSalesTrend(dateFilters.dateFrom, dateFilters.dateTo);
   const { data: comparison, isLoading: comparisonLoading } = useSalesComparison(dateFilters.dateFrom, dateFilters.dateTo);
-  const { data: tomorrowData } = useTomorrowRevenue();
+  const { data: tomorrowData } = useTomorrowRevenue(locationId);
   const { goals } = useSalesGoals();
   const { data: locations } = useActiveLocations();
   const rangeIncludesToday = dateFilters.dateTo === format(new Date(), 'yyyy-MM-dd');
