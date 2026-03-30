@@ -58,11 +58,22 @@ export function useAdjustedExpectedRevenue(
       const cancelled = allAppts.filter(a => a.status === 'cancelled');
       const noShow = allAppts.filter(a => a.status === 'no_show');
 
-      // Original expected = sum of ALL appointments (for reference)
+      // Helper: get expected price (discount-aware) for an appointment
+      const getExpectedPrice = (a: typeof allAppts[0]) => Number(a.expected_price) || Number(a.total_price) || 0;
+
+      // Original expected = sum of ALL appointments' full price (for reference)
       const originalExpected = allAppts.reduce((s, a) => s + (Number(a.total_price) || 0), 0);
 
-      // Pending scheduled revenue (not yet completed)
+      // Pending scheduled revenue (not yet completed) — uses full price
       const pendingScheduledRevenue = pending.reduce((s, a) => s + (Number(a.total_price) || 0), 0);
+
+      // Pending expected revenue — uses discount-adjusted price
+      const pendingExpectedRevenue = pending.reduce((s, a) => s + getExpectedPrice(a), 0);
+
+      // Count discounted appointments and total discount amount
+      const discountedAppts = allAppts.filter(a => (Number(a.discount_amount) || 0) > 0);
+      const discountedAppointmentCount = discountedAppts.length;
+      const totalDiscountAmount = discountedAppts.reduce((s, a) => s + (Number(a.discount_amount) || 0), 0);
 
       // 2. For completed appointments, get actual POS revenue
       const completedClientIds = [
@@ -104,7 +115,8 @@ export function useAdjustedExpectedRevenue(
       // Sum of total_price for completed appointments (what was originally on the books)
       const completedScheduledRevenue = resolved.reduce((s, a) => s + (Number(a.total_price) || 0), 0);
 
-      const adjustedExpected = completedActualRevenue + pendingScheduledRevenue;
+      // Adjusted expected uses discount-aware pending price
+      const adjustedExpected = completedActualRevenue + pendingExpectedRevenue;
 
       return {
         adjustedExpected,
@@ -114,8 +126,11 @@ export function useAdjustedExpectedRevenue(
         completedActualRevenue,
         completedScheduledRevenue,
         pendingScheduledRevenue,
+        pendingExpectedRevenue,
         cancelledCount: cancelled.length,
         noShowCount: noShow.length,
+        discountedAppointmentCount,
+        totalDiscountAmount,
       };
     },
     enabled,
