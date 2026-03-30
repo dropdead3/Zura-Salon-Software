@@ -1,47 +1,36 @@
 
 
-## Fix Top Performers Card Header Responsiveness
+## Adaptive Compact Numbers for Sales Overview Card
 
 ### Problem
-The card header has a fixed `flex items-center justify-between` row with the icon+title on the left and the Service/Retail toggle + filter badge + info tooltip on the right. At narrow widths (e.g., inside the sidebar column of the sales overview), the toggle spills out of view.
+When the Sales Overview card is rendered in a narrow column, large currency values ($81,073.25, $67,698.60, etc.) overflow or clip because there's not enough horizontal space for the full formatted number.
 
 ### Solution
-Make the header wrap responsively using `flex-wrap` so the toggle row breaks below the title when space is tight.
+Use a container-width-aware approach that switches `AnimatedBlurredAmount` to compact notation ($81.1K, $67.7K) when the card is narrow.
 
-**File:** `src/components/dashboard/sales/TopPerformersCard.tsx` — lines 91-113
+### Implementation
 
-Replace the header layout:
+**1. Add `compact` prop to `AnimatedBlurredAmount`** (`src/components/ui/AnimatedBlurredAmount.tsx`)
+- Accept optional `compact?: boolean` prop
+- When `compact` is true, format using `formatCurrency(value, currency, { compact: true })` via the unified `format.ts` (which already supports `notation: 'compact'`)
+- For non-currency values, use `Intl.NumberFormat` with compact notation
 
-```tsx
-const headerContent = (
-  <div className="flex flex-wrap items-center justify-between gap-2 w-full">
-    <div className="flex items-center gap-3">
-      <div className="w-10 h-10 bg-muted flex items-center justify-center rounded-lg shrink-0">
-        <Trophy className="w-5 h-5 text-primary" />
-      </div>
-      <CardTitle className="font-display text-sm tracking-wide">TOP PERFORMERS</CardTitle>
-    </div>
-    <div className="flex items-center gap-2">
-      <FilterTabsList>
-        <FilterTabsTrigger value="service">Service</FilterTabsTrigger>
-        <FilterTabsTrigger value="retail">Retail</FilterTabsTrigger>
-      </FilterTabsList>
-      {filterContext && (
-        <AnalyticsFilterBadge 
-          locationId={filterContext.locationId} 
-          dateRange={filterContext.dateRange} 
-        />
-      )}
-      <MetricInfoTooltip description="Ranks your team by service revenue or retail sales in the selected period." />
-    </div>
-  </div>
-);
-```
+**2. Add container width detection to `AggregateSalesCard`** (`src/components/dashboard/AggregateSalesCard.tsx`)
+- Add a `ref` on the card's inner content container
+- Use a `ResizeObserver` (via a small `useContainerCompact` hook or inline) to track container width
+- Set a `compactNumbers` boolean state: `true` when container width < ~400px
+- Pass `compact={compactNumbers}` to every `AnimatedBlurredAmount` in the card (hero total, services, retail, daily avg, avg ticket, rev/hour)
+- Also apply compact formatting to any inline `formatCurrency()` calls (e.g. scheduled badge, remaining badge) using a conditional
 
-Key changes:
-- Add `flex-wrap` to the outer container so the right-side controls wrap below the title when the card is narrow
-- Add `gap-2` for clean vertical spacing when wrapped
-- Add `shrink-0` to the icon container to prevent it from collapsing
+**3. Files changed:**
+| File | Change |
+|------|--------|
+| `src/components/ui/AnimatedBlurredAmount.tsx` | Add `compact` prop; use compact `formatCurrency` when true |
+| `src/components/dashboard/AggregateSalesCard.tsx` | Add ResizeObserver on content container; derive `compactNumbers` state; pass to all `AnimatedBlurredAmount` instances and inline `formatCurrency` calls |
 
-Single file, single region edit.
+### Technical Detail
+- `formatCurrency` in `src/lib/format.ts` already supports `compact: true` → uses `Intl.NumberFormat({ notation: 'compact', compactDisplay: 'short' })` producing `$81.1K`, `$3.5K`, etc.
+- The `AnimatedBlurredAmount` currently imports `formatCurrency` from `src/lib/formatCurrency.ts` (legacy wrapper). The compact path will call the unified `format.ts` version directly.
+- ResizeObserver threshold of ~400px chosen because at that width, 5+ digit currency values start clipping in `text-2xl`+ sizes.
+- No changes needed to `format.ts` — the compact formatting infrastructure is already there.
 
