@@ -169,7 +169,7 @@ export function RevenueGapDrilldown({ isOpen, data, isLoading, showDates = false
                 {data.gapAmount > 0 && data.gapItems.length > 0 && (
                   <div className="space-y-2">
                     <p className="text-xs font-display tracking-wide text-muted-foreground">
-                      WHERE THE GAP CAME FROM
+                      Service Revenue Gap Breakdown
                     </p>
 
                     <ScrollArea className={cn(showAll && data.gapItems.length > 7 ? 'h-[350px]' : '')}>
