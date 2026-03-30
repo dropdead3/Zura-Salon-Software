@@ -150,7 +150,7 @@ export function useRevenueGapAnalysis(
       const gapItems: GapItem[] = [];
 
       cancelled.forEach(a => {
-        const price = Number(a.total_price) || 0;
+        const price = Number(a.expected_price) || Number(a.total_price) || 0;
         if (price <= 0) return;
         gapItems.push({
           id: a.id,
