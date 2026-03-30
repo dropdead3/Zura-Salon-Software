@@ -1,45 +1,34 @@
 
 
-## Surface Tomorrow's Expected Revenue in the Closed-State Sales Overview
+## Fix: `allAppointmentsComplete` Must Check Actual Appointment Statuses
 
-### What changes
+### Problem
+`allAppointmentsComplete` in `AggregateSalesCard.tsx` (line 582) only checks:
+1. Whether all locations are past closing time
+2. Whether the last appointment's end time has passed
+3. Whether `liveSession.inSessionCount > 0`
 
-**1. Update `useTomorrowRevenue` hook to support location filtering**
+It never checks `adjustedExpected.pendingCount`. So when an appointment has status `in_progress`, `started`, `arrived`, etc., the card can still show "All appointments complete" if it's past closing time — directly contradicting the gap breakdown which correctly shows the appointment as in-progress.
 
-Add an optional `locationId` parameter so the query respects the dashboard's current location scope. Add `location_id` filter when not `'all'`.
+### Fix
 
-**File:** `src/hooks/useTomorrowRevenue.ts`
+**File:** `src/components/dashboard/AggregateSalesCard.tsx` — line 582-609
 
-**2. Enhance the compact closed-state row with tomorrow's preview**
+Add `adjustedExpected?.pendingCount === 0` as a required condition. If any appointments are still in a non-terminal status (`booked`, `confirmed`, `arrived`, `started`, `in_progress`), the card must not declare completion.
 
-When `allLocationsClosed` is true and `tomorrowData` has revenue > 0, append a second line (or inline element) showing tomorrow's expected revenue and appointment count.
-
-**File:** `src/components/dashboard/AggregateSalesCard.tsx` — lines 731-738
-
-Replace with:
 ```tsx
-{allLocationsClosed ? (
-  <div className="bg-card-inner rounded-xl border border-border/40 py-4 px-5 space-y-2">
-    <div className="flex items-center gap-3">
-      <Moon className="h-4 w-4 text-muted-foreground shrink-0" />
-      <p className="text-sm text-muted-foreground">
-        No sales activity — all {locations?.length ?? 0} locations
-        {dateRange === 'yesterday' ? ' were closed yesterday' : ' are closed today'}.
-      </p>
-    </div>
-    {tomorrowData && tomorrowData.revenue > 0 && (
-      <div className="flex items-center gap-3 pl-7">
-        <Clock className="h-4 w-4 text-primary shrink-0" />
-        <p className="text-sm text-muted-foreground">
-          Tomorrow: <BlurredAmount disableTooltip>
-            <span className="text-foreground font-medium">{formatCurrency(tomorrowData.revenue)}</span>
-          </BlurredAmount> expected across {tomorrowData.appointmentCount} appointment{tomorrowData.appointmentCount !== 1 ? 's' : ''}
-        </p>
-      </div>
-    )}
-  </div>
-) : (
+const allAppointmentsComplete = useMemo(() => {
+  if (!isToday) return false;
+  if (liveSession.inSessionCount > 0) return false;
+
+  // NEW: If we have appointment status data showing pending items, not complete
+  if (adjustedExpected && adjustedExpected.pendingCount > 0) return false;
+
+  // ... rest of existing time-based logic unchanged ...
+}, [isToday, locations, todayActual, liveSession.inSessionCount, adjustedExpected]);
 ```
 
-This keeps the collapsed card minimal but surfaces actionable forward-looking data — tomorrow's scheduled revenue and count — when there is activity on the books.
+This ensures the completion badge and "Final Revenue Today" label only appear when appointments are actually in terminal states (completed, cancelled, no_show) — not just when the clock says the salon should be closed.
+
+Single line addition, single file change.
 
