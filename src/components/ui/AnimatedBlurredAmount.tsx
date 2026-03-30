@@ -2,7 +2,8 @@ import { useState, useEffect, useRef, ReactNode } from 'react';
 import { useHideNumbers } from '@/contexts/HideNumbersContext';
 import { cn } from '@/lib/utils';
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/components/ui/tooltip';
-import { formatCurrency } from '@/lib/formatCurrency';
+import { formatCurrency as formatCurrencyLegacy } from '@/lib/formatCurrency';
+import { formatCurrency as formatCurrencyUnified } from '@/lib/format';
 
 interface AnimatedBlurredAmountProps {
   value: number;
@@ -13,6 +14,8 @@ interface AnimatedBlurredAmountProps {
   duration?: number;
   decimals?: number;
   className?: string;
+  /** Use compact notation ($81.1K) instead of full numbers */
+  compact?: boolean;
   children?: ReactNode;
 }
 
@@ -24,6 +27,7 @@ export function AnimatedBlurredAmount({
   duration = 1200,
   decimals,
   className = '',
+  compact = false,
 }: AnimatedBlurredAmountProps) {
   const { hideNumbers, requestUnhide, quickHide } = useHideNumbers();
   const [displayValue, setDisplayValue] = useState(0);
@@ -75,11 +79,20 @@ export function AnimatedBlurredAmount({
 
   const resolvedDecimals = decimals ?? (currency ? 2 : 0);
 
-  const formattedValue = currency
-    ? formatCurrency(displayValue, currency, { maximumFractionDigits: resolvedDecimals, minimumFractionDigits: resolvedDecimals })
-    : resolvedDecimals > 0
+  const formattedValue = (() => {
+    if (currency && compact) {
+      return formatCurrencyUnified(displayValue, { currency, compact: true, noCents: true });
+    }
+    if (currency) {
+      return formatCurrencyLegacy(displayValue, currency, { maximumFractionDigits: resolvedDecimals, minimumFractionDigits: resolvedDecimals });
+    }
+    if (compact) {
+      return new Intl.NumberFormat('en-US', { notation: 'compact', compactDisplay: 'short', maximumFractionDigits: 1 }).format(displayValue);
+    }
+    return resolvedDecimals > 0
       ? displayValue.toFixed(resolvedDecimals)
       : Math.round(displayValue).toLocaleString();
+  })();
 
   const handleClick = () => { if (hideNumbers) requestUnhide(); };
   const handleDoubleClick = () => { if (!hideNumbers) quickHide(); };
