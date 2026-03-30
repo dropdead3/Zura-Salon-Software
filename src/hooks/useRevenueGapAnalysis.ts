@@ -183,7 +183,7 @@ export function useRevenueGapAnalysis(
 
       // ── Not-yet-concluded appointments (today filter) ──
       notConcluded.forEach(a => {
-        const price = Number(a.total_price) || 0;
+        const price = Number(a.expected_price) || Number(a.total_price) || 0;
         if (price <= 0) return;
         gapItems.push({
           id: a.id,
