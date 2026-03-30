@@ -88,10 +88,10 @@ export function RevenueDonutChart({
 
 
   return (
-    <Card className="overflow-hidden border-border/40">
+    <Card className="@container overflow-hidden border-border/40">
       <CardHeader className="px-4 pt-4 pb-1">{headerContent}</CardHeader>
       <CardContent className="px-4 pb-3 pt-0">
-        <div className="flex items-center gap-4 w-full">
+        <div className="flex flex-col @[280px]:flex-row items-center gap-4 w-full">
           <div className="shrink-0" style={{ width: size, height: size }}>
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
