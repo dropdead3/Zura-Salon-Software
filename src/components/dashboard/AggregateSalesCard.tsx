@@ -823,7 +823,7 @@ export function AggregateSalesCard({
                 <div className="mt-4 mx-auto max-w-sm space-y-3">
                   {(() => {
                     const displayExpected = todayExpectedDisplay;
-                    const remainingExpected = adjustedExpected ? adjustedExpected.pendingScheduledRevenue : displayExpected;
+                    const remainingExpected = adjustedExpected ? adjustedExpected.pendingExpectedRevenue : displayExpected;
                     
                     // Tracking: compare actual POS revenue against what completed appointments were scheduled for
                     const completedScheduled = adjustedExpected?.completedScheduledRevenue ?? 0;
