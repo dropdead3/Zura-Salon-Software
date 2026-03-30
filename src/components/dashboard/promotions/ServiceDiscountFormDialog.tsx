@@ -98,7 +98,6 @@ export function ServiceDiscountFormDialog({
         { onSuccess: () => onOpenChange(false) }
       );
     }
-    }
   };
 
   const discountType = form.watch('discount_type');
