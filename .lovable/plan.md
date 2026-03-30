@@ -1,12 +1,23 @@
 
 
-## Relabel Gap Drilldown Section Header
+## Add Timeout Redirect to Login from Legacy Dashboard Spinner
 
-### Change
+### Problem
+When an unauthenticated user hits `/dashboard/*`, `LegacyDashboardRedirect` waits for `effectiveOrganization` which never resolves without a session. The result is an infinite spinner with no explanation.
 
-**File: `src/components/dashboard/sales/RevenueGapDrilldown.tsx`** — Line 172
+### Solution
+Add auth awareness to `LegacyDashboardRedirect`. If no user session exists after auth loading completes, redirect to `/login` with a toast or state message explaining why.
 
-Change the section header text from `WHERE THE GAP CAME FROM` to `SERVICE REVENUE GAP BREAKDOWN`.
+### Changes
 
-Single-line text change, no logic or styling modifications needed — the existing `font-display tracking-wide` classes will handle the uppercase rendering.
+**File: `src/components/OrgDashboardRoute.tsx`**
+
+1. Import `useAuth` from `@/contexts/AuthContext` and `Navigate` (already imported).
+2. In `LegacyDashboardRedirect`, after the platform redirect check:
+   - Read `{ user, loading }` from `useAuth()`
+   - If `loading` is true, show the spinner (auth still resolving)
+   - If `loading` is false and `user` is null, redirect to `/login` with location state so the login page can show a message like "Please sign in to access your dashboard"
+   - Otherwise, keep existing behavior (wait for org slug, then redirect)
+
+This is a ~10-line change in a single file. No new components needed — the login page already accepts `state.from` for post-login redirect.
 
