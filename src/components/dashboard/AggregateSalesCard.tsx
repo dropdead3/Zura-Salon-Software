@@ -729,15 +729,11 @@ export function AggregateSalesCard({
       </div>
 
       {allLocationsClosed ? (
-        <div className="bg-card-inner rounded-xl border border-border/40 py-16 text-center">
-          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full border border-border/60 bg-muted/40">
-            <Moon className="h-6 w-6 text-muted-foreground" />
-          </div>
-          <h3 className="font-display text-lg text-foreground">
-            All locations closed {dateRange === 'yesterday' ? 'yesterday' : 'today'}
-          </h3>
-          <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
-            No sales activity — all {locations?.length ?? 0} locations {dateRange === 'yesterday' ? 'were' : 'are'} closed {dateRange === 'yesterday' ? 'yesterday' : 'today'}.
+        <div className="bg-card-inner rounded-xl border border-border/40 py-4 px-5 flex items-center gap-3">
+          <Moon className="h-4 w-4 text-muted-foreground shrink-0" />
+          <p className="text-sm text-muted-foreground">
+            No sales activity — all {locations?.length ?? 0} locations
+            {dateRange === 'yesterday' ? ' were closed yesterday' : ' are closed today'}.
           </p>
         </div>
       ) : (
