@@ -269,14 +269,14 @@ export function useRevenueGapAnalysis(
         const existing = clientDayScheduled.get(key);
         if (existing) {
           existing.services.push(a.service_name || 'Unknown service');
-          existing.totalScheduled += Number(a.total_price) || 0;
+          existing.totalScheduled += Number(a.expected_price) || Number(a.total_price) || 0;
           existing.ids.push(a.id);
           if (!existing.stylistName && stylist) existing.stylistName = stylist;
         } else {
           clientDayScheduled.set(key, {
             clientName: resolveClient(a),
             services: [a.service_name || 'Unknown service'],
-            totalScheduled: Number(a.total_price) || 0,
+            totalScheduled: Number(a.expected_price) || Number(a.total_price) || 0,
             appointmentDate: a.appointment_date,
             stylistName: stylist,
             ids: [a.id],
