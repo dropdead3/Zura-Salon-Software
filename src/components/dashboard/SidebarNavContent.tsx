@@ -322,30 +322,25 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
             {isCollapsed ? (
               <Tooltip>
                 <TooltipTrigger asChild>
-                  {hasCustomIcon(true) ? (
-                    <img 
-                      src={getIcon(true)} 
-                      alt={businessSettings?.business_name || 'Salon'} 
-                      className="h-6 w-auto max-w-[32px] object-contain"
-                    />
-                  ) : (
-                    <div className="w-7 h-7 rounded-full bg-muted dark:bg-white/10 text-foreground/80 dark:text-white flex items-center justify-center font-display text-xs">
-                      {(businessSettings?.business_name || 'DD').substring(0, 2).toUpperCase()}
-                    </div>
-                  )}
+                  <OrganizationLogo
+                    variant="sidebar-icon"
+                    logoUrl={orgLogoUrl}
+                    iconUrl={orgIconUrl}
+                    theme={orgLogoTheme}
+                    alt={orgName}
+                    className="h-6 w-auto max-w-[32px]"
+                  />
                 </TooltipTrigger>
-                <TooltipContent side="right">{businessSettings?.business_name || 'Salon'}</TooltipContent>
+                <TooltipContent side="right">{orgName}</TooltipContent>
               </Tooltip>
-            ) : hasCustomLogo() ? (
-              <img
-                src={getLogo()} 
-                alt={businessSettings?.business_name || 'Salon'} 
-                className="h-7 w-auto max-w-[160px] object-contain" 
-              />
             ) : (
-              <span className="font-display text-sm uppercase tracking-wider text-foreground">
-                {businessSettings?.business_name || 'Salon'}
-              </span>
+              <OrganizationLogo
+                variant="sidebar"
+                logoUrl={orgLogoUrl}
+                theme={orgLogoTheme}
+                alt={orgName}
+                className="h-7 w-auto max-w-[160px]"
+              />
             )}
           </Link>
           {isCollapsed ? (
