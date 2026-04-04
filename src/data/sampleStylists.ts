@@ -19,7 +19,7 @@ import ellaGarcia from "@/assets/sample-stylists/ella-garcia.jpg";
 import scarlettLee from "@/assets/sample-stylists/scarlett-lee.jpg";
 
 // Sample stylists for preview purposes when no real stylists are visible
-// 7 for North Mesa, 9 for Val Vista Lakes
+// 7 for Location 1, 9 for Location 2
 // Note: highlighted_services should match specialty filter names (uppercase)
 export const sampleStylists: Stylist[] = [
   // North Mesa (7)
