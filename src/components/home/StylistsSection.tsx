@@ -28,7 +28,8 @@ import { useHomepageStylistsSettings } from "@/hooks/useSiteSettings";
 import { useSpecialtyOptions } from "@/hooks/useSpecialtyOptions";
 import { sampleStylists } from "@/data/sampleStylists";
 
-import { locations as staticLocations, stylistLevels, getLocationName, type Stylist, type Location } from "@/data/stylists";
+import { locations as staticLocations, stylistLevels, type Stylist, type Location } from "@/data/stylists";
+import { useLocationName } from "@/hooks/useLocationName";
 import { useStylistLevels } from "@/hooks/useStylistLevels";
 
 // Helper to convert text to title case

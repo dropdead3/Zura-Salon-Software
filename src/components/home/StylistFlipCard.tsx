@@ -10,7 +10,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import type { Stylist, Location } from "@/data/stylists";
-import { getLocationName } from "@/data/stylists";
+import { useLocationName } from "@/hooks/useLocationName";
 
 // Helper to convert text to title case
 const toTitleCase = (str: string) => {
