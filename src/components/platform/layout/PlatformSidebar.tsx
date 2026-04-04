@@ -14,7 +14,7 @@ import { cn } from '@/lib/utils';
 import { getAvatarStyle } from '@/lib/avatar-utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { useState, useEffect } from 'react';
-import { usePlatformBranding } from '@/hooks/usePlatformBranding';
+import { PlatformLogo } from '@/components/brand/PlatformLogo';
 import { usePlatformTheme } from '@/contexts/PlatformThemeContext';
 import { useEmployeeProfile } from '@/hooks/useEmployeeProfile';
 import { usePlatformPresenceContext } from '@/contexts/PlatformPresenceContext';
