@@ -158,6 +158,7 @@ export default function UnifiedLogin() {
   // Dual-role interstitial state
   const [dualRoleInfo, setDualRoleInfo] = useState<DualRoleInfo | null>(null);
   const [showDualRoleInterstitial, setShowDualRoleInterstitial] = useState(false);
+  const [rememberChoice, setRememberChoice] = useState(false);
 
   const { signIn, signUp, resetPassword, user } = useAuth();
   const navigate = useNavigate();
