@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { DashboardPageHeader } from '@/components/dashboard/DashboardPageHeader';
@@ -14,7 +14,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useFormatDate } from '@/hooks/useFormatDate';
-import { getLocationName, type Location } from '@/data/stylists';
+import { useLocationName } from '@/hooks/useLocationName';
+import type { Location } from '@/data/stylists';
 import { useHomepageStylistsSettings, useUpdateHomepageStylistsSettings } from '@/hooks/useSiteSettings';
 import { sampleStylists } from '@/data/sampleStylists';
 import { HomepagePreviewModal } from '@/components/dashboard/HomepagePreviewModal';
@@ -278,9 +279,17 @@ export default function HomepageStylists() {
   const updateSettings = useUpdateHomepageStylistsSettings();
   const showSampleCards = settings?.show_sample_cards ?? false;
   
-  // Count sample stylists per location
-  const northMesaCount = sampleStylists.filter(s => s.locations.includes('north-mesa' as any)).length;
-  const valVistaCount = sampleStylists.filter(s => s.locations.includes('val-vista-lakes' as any)).length;
+  const { getLocationName, locations: activeLocations } = useLocationName();
+  
+  // Count sample stylists per location dynamically
+  const locationCounts = useMemo(() => {
+    if (!activeLocations) return [];
+    return activeLocations.map(loc => ({
+      id: loc.id,
+      name: loc.name,
+      count: sampleStylists.filter(s => s.locations.includes(loc.id)).length,
+    })).filter(lc => lc.count > 0);
+  }, [activeLocations]);
   
   // Get ordered stylists for display
   const displayStylists = orderedIds 
@@ -450,14 +459,18 @@ export default function HomepageStylists() {
                 )}
               </div>
               <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                <Badge variant="outline" className="gap-1">
-                  <Users className="w-3 h-3" />
-                  {northMesaCount} North Mesa
-                </Badge>
-                <Badge variant="outline" className="gap-1">
-                  <Users className="w-3 h-3" />
-                  {valVistaCount} Val Vista
-                </Badge>
+                {locationCounts.map(lc => (
+                  <Badge key={lc.id} variant="outline" className="gap-1">
+                    <Users className="w-3 h-3" />
+                    {lc.count} {lc.name}
+                  </Badge>
+                ))}
+                {locationCounts.length === 0 && (
+                  <Badge variant="outline" className="gap-1">
+                    <Users className="w-3 h-3" />
+                    {sampleStylists.length} Total
+                  </Badge>
+                )}
               </div>
             </div>
             {showSampleCards && visibleStylists.length > 0 && (

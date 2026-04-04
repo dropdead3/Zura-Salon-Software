@@ -22,7 +22,8 @@ import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
 import { GripVertical, User, MapPin, Sparkles, RotateCcw, Save, Loader2, Pencil, Calendar, CalendarOff } from 'lucide-react';
-import { getLocationName, type Location } from '@/data/stylists';
+import { useLocationName } from '@/hooks/useLocationName';
+import type { Location } from '@/data/stylists';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { EditStylistCardDialog } from './EditStylistCardDialog';
@@ -54,6 +55,7 @@ interface SortableStylistCardProps {
 }
 
 function SortableStylistCard({ stylist, onToggleVisibility, onEdit, isUpdating }: SortableStylistCardProps) {
+  const { getLocationName } = useLocationName();
   const {
     attributes,
     listeners,

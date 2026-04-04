@@ -763,7 +763,7 @@ export default function MyProfile() {
                       value={formData.phone}
                       onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
                       className={cn("pl-10", !formData.phone.trim() && "border-destructive/50")}
-                      placeholder="480-555-1234"
+                      placeholder="555-123-4567"
                       maxLength={12}
                       required
                     />
@@ -1435,7 +1435,7 @@ export default function MyProfile() {
                     value={formData.emergency_phone}
                     onChange={(e) => setFormData(prev => ({ ...prev, emergency_phone: e.target.value }))}
                     className={cn(!formData.emergency_phone.trim() && "border-destructive/50")}
-                    placeholder="480-555-1234"
+                    placeholder="555-123-4567"
                     maxLength={12}
                     required
                   />

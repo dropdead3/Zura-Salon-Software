@@ -478,7 +478,7 @@ export function LocationsSettingsContent() {
                       id="name"
                       value={formData.name}
                       onChange={(e) => setFormData(f => ({ ...f, name: e.target.value }))}
-                      placeholder="e.g., North Mesa"
+                      placeholder="e.g., Downtown"
                     />
                   </div>
                   <div className="space-y-2">
@@ -531,7 +531,7 @@ export function LocationsSettingsContent() {
                     id="booking_url"
                     value={formData.booking_url}
                     onChange={(e) => setFormData(f => ({ ...f, booking_url: e.target.value }))}
-                    placeholder="e.g., /booking?location=north-mesa"
+                    placeholder="e.g., /booking?location=downtown"
                   />
                 </div>
                 
@@ -551,7 +551,7 @@ export function LocationsSettingsContent() {
                     id="major_crossroads"
                     value={formData.major_crossroads}
                     onChange={(e) => setFormData(f => ({ ...f, major_crossroads: e.target.value }))}
-                    placeholder="e.g., Gilbert Rd & McKellips"
+                    placeholder="e.g., Main St & 1st Ave"
                   />
                   <p className="text-xs text-muted-foreground">
                     Helps receptionists give directions over the phone

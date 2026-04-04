@@ -571,7 +571,7 @@ export default function ViewProfile() {
                       value={formData.phone}
                       onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
                       className="pl-10"
-                      placeholder="480-555-1234"
+                      placeholder="555-123-4567"
                       maxLength={12}
                     />
                   </div>

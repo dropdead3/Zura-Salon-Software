@@ -485,17 +485,17 @@ export interface DemoClient {
 }
 
 export const DEMO_CLIENTS: DemoClient[] = [
-  { id: 'demo-client-1', phorest_client_id: 'demo-pc-1', name: 'Sarah Mitchell', email: 'sarah.m@example.com', phone: '(480) 555-0101' },
-  { id: 'demo-client-2', phorest_client_id: 'demo-pc-2', name: 'Jessica Chen', email: 'jchen@example.com', phone: '(480) 555-0102' },
-  { id: 'demo-client-3', phorest_client_id: 'demo-pc-3', name: 'Emily Rodriguez', email: 'emily.r@example.com', phone: '(602) 555-0103' },
-  { id: 'demo-client-4', phorest_client_id: 'demo-pc-4', name: 'Amanda Park', email: 'apark@example.com', phone: '(480) 555-0104' },
-  { id: 'demo-client-5', phorest_client_id: 'demo-pc-5', name: 'Lauren Taylor', email: 'ltaylor@example.com', phone: '(602) 555-0105' },
-  { id: 'demo-client-6', phorest_client_id: 'demo-pc-6', name: 'Maria Gonzalez', email: 'maria.g@example.com', phone: '(480) 555-0106' },
-  { id: 'demo-client-7', phorest_client_id: 'demo-pc-7', name: 'Rachel Kim', email: 'rkim@example.com', phone: '(602) 555-0107' },
-  { id: 'demo-client-8', phorest_client_id: 'demo-pc-8', name: 'Olivia Barnes', email: 'obarnes@example.com', phone: '(480) 555-0108' },
-  { id: 'demo-client-9', phorest_client_id: 'demo-pc-9', name: 'Megan Foster', email: 'mfoster@example.com', phone: '(602) 555-0109' },
-  { id: 'demo-client-10', phorest_client_id: 'demo-pc-10', name: 'Danielle Wright', email: 'dwright@example.com', phone: '(480) 555-0110' },
-  { id: 'demo-client-11', phorest_client_id: 'demo-pc-11', name: 'Natalie Brooks', email: 'nbrooks@example.com', phone: '(602) 555-0111' },
+  { id: 'demo-client-1', phorest_client_id: 'demo-pc-1', name: 'Sarah Mitchell', email: 'sarah.m@example.com', phone: '(555) 555-0101' },
+  { id: 'demo-client-2', phorest_client_id: 'demo-pc-2', name: 'Jessica Chen', email: 'jchen@example.com', phone: '(555) 555-0102' },
+  { id: 'demo-client-3', phorest_client_id: 'demo-pc-3', name: 'Emily Rodriguez', email: 'emily.r@example.com', phone: '(555) 555-0103' },
+  { id: 'demo-client-4', phorest_client_id: 'demo-pc-4', name: 'Amanda Park', email: 'apark@example.com', phone: '(555) 555-0104' },
+  { id: 'demo-client-5', phorest_client_id: 'demo-pc-5', name: 'Lauren Taylor', email: 'ltaylor@example.com', phone: '(555) 555-0105' },
+  { id: 'demo-client-6', phorest_client_id: 'demo-pc-6', name: 'Maria Gonzalez', email: 'maria.g@example.com', phone: '(555) 555-0106' },
+  { id: 'demo-client-7', phorest_client_id: 'demo-pc-7', name: 'Rachel Kim', email: 'rkim@example.com', phone: '(555) 555-0107' },
+  { id: 'demo-client-8', phorest_client_id: 'demo-pc-8', name: 'Olivia Barnes', email: 'obarnes@example.com', phone: '(555) 555-0108' },
+  { id: 'demo-client-9', phorest_client_id: 'demo-pc-9', name: 'Megan Foster', email: 'mfoster@example.com', phone: '(555) 555-0109' },
+  { id: 'demo-client-10', phorest_client_id: 'demo-pc-10', name: 'Danielle Wright', email: 'dwright@example.com', phone: '(555) 555-0110' },
+  { id: 'demo-client-11', phorest_client_id: 'demo-pc-11', name: 'Natalie Brooks', email: 'nbrooks@example.com', phone: '(555) 555-0111' },
 ];
 
 export function searchDemoClients(query: string): DemoClient[] {
