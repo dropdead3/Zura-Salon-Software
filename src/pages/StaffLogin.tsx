@@ -48,6 +48,7 @@ async function getCustomLandingPage(userId: string): Promise<string | null> {
 
 export default function StaffLogin() {
   const { dashPath } = useOrgDashboardPath();
+  const { data: businessSettings } = useBusinessSettings();
   const [isLogin, setIsLogin] = useState(true);
   const [isForgotPassword, setIsForgotPassword] = useState(false);
   const [email, setEmail] = useState('');
