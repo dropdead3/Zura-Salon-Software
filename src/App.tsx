@@ -29,7 +29,6 @@ import NotFound from "./pages/NotFound";
 
 // Organization public pages (under /org/:orgSlug)
 import { OrgPublicRoute } from "./components/org/OrgPublicRoute";
-import DashboardHome from "./pages/dashboard/DashboardHome";
 
 // Dashboard pages
 
@@ -67,6 +66,7 @@ const Extensions = lazy(() => import("./pages/Extensions"));
 const Policies = lazy(() => import("./pages/Policies"));
 const Shop = lazy(() => import("./pages/Shop"));
 const DynamicPage = lazy(() => import("./pages/DynamicPage"));
+const DashboardHome = lazy(() => import("./pages/dashboard/DashboardHome"));
 const Program = lazy(() => import("./pages/dashboard/Program"));
 const RingTheBell = lazy(() => import("./pages/dashboard/RingTheBell"));
 const Leaderboard = lazy(() => import("./pages/dashboard/Leaderboard"));
