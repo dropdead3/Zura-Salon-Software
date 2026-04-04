@@ -79,7 +79,7 @@ export const sampleStylists: Stylist[] = [
     specialties: ["BALAYAGE", "LIVED-IN COLOR", "BLONDING"],
     highlighted_services: ["BALAYAGE", "LIVED-IN COLOR", "BLONDING"],
     imageUrl: miaGarcia,
-    locations: ["north-mesa"],
+    locations: ["location-1"],
     isBooking: true,
     bio: "Low-maintenance color that fits your lifestyle.",
   },
