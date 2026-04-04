@@ -12,6 +12,7 @@ interface FounderWelcomeConfig {
   headshot_url?: string;
   signature_url?: string;
   visible?: boolean;
+  [key: string]: unknown;
 }
 
 export function FounderWelcome() {
