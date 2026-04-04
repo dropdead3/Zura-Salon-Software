@@ -13,6 +13,7 @@ interface QRCodeFullScreenProps {
 }
 
 export function QRCodeFullScreen({ isOpen, onClose, url }: QRCodeFullScreenProps) {
+  const { data: businessSettings } = useBusinessSettings();
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
     if (e.key === 'Escape') {
       onClose();
