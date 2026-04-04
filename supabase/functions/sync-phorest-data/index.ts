@@ -324,18 +324,16 @@ async function syncAppointments(
     
     const locationMap = new Map<string, string>();
     locations?.forEach((loc: any) => {
-      // Map various name formats to location ID
-      locationMap.set(loc.name.toLowerCase(), loc.id);
-      // Also try extracting location from Phorest branch name format: "Salon Name (North Mesa)"
-      if (loc.name.toLowerCase().includes('mesa')) {
-        locationMap.set('north mesa', loc.id);
-        locationMap.set('mesa', loc.id);
-      }
-      if (loc.name.toLowerCase().includes('val vista') || loc.name.toLowerCase().includes('lakes')) {
-        locationMap.set('val vista lakes', loc.id);
-        locationMap.set('val vista', loc.id);
-        locationMap.set('lakes', loc.id);
-      }
+      const locNameLower = loc.name.toLowerCase().trim();
+      // Map exact location name
+      locationMap.set(locNameLower, loc.id);
+      // Also map individual words from the location name for fuzzy matching
+      // e.g. "North Mesa" → also maps "mesa", "north"
+      locNameLower.split(/\s+/).forEach((word: string) => {
+        if (word.length > 2 && !locationMap.has(word)) {
+          locationMap.set(word, loc.id);
+        }
+      });
     });
 
     // Pre-fetch soft-deleted appointment IDs to prevent resurrection

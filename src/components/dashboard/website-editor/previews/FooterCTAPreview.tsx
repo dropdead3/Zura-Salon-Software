@@ -8,8 +8,8 @@ interface FooterCTAPreviewProps {
 export function FooterCTAPreview({ config }: FooterCTAPreviewProps) {
   // Sample location data for preview
   const sampleLocations = [
-    { name: 'Mesa', phone: '(480) 555-0123' },
-    { name: 'Gilbert', phone: '(480) 555-0456' },
+    { name: 'Downtown', phone: '(555) 123-0001' },
+    { name: 'Eastside', phone: '(555) 123-0002' },
   ];
 
   return (
