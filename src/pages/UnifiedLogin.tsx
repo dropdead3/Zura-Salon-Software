@@ -64,11 +64,11 @@ async function checkDualRoleStatus(userId: string): Promise<DualRoleInfo> {
     supabase.from('platform_roles').select('role').eq('user_id', userId).limit(1),
     supabase
       .from('employee_profiles')
-      .select('organization_id, organizations:organization_id (slug, name)')
+      .select('organization_id, organizations:organization_id (slug, name, logo_url)')
       .eq('user_id', userId),
     supabase
       .from('organization_admins')
-      .select('organization_id, organizations:organization_id (slug, name)')
+      .select('organization_id, organizations:organization_id (slug, name, logo_url)')
       .eq('user_id', userId),
   ]);
 
