@@ -50,6 +50,7 @@ interface DualRoleInfo {
   hasPlatformRoles: boolean;
   hasOrgMembership: boolean;
   orgSlug?: string;
+  orgName?: string;
 }
 
 async function checkDualRoleStatus(userId: string): Promise<DualRoleInfo> {
