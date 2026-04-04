@@ -38,11 +38,7 @@ export function DashboardLockScreen({
   } | null>(null);
   const [isUnlocking, setIsUnlocking] = useState(false);
 
-  const getLogo = () => {
-    const isDark = resolvedTheme === 'dark';
-    const customLogo = isDark ? businessSettings?.logo_dark_url : businessSettings?.logo_light_url;
-    return customLogo || (isDark ? LogoWhite : Logo);
-  };
+  const isDark = resolvedTheme === 'dark';
 
   const handlePinDigit = useCallback((digit: string) => {
     if (pin.length < 4) {
