@@ -63,6 +63,7 @@ async function checkDualRoleStatus(userId: string): Promise<DualRoleInfo> {
   const hasOrgMembership = !!(orgResult.data && orgResult.data.length > 0);
 
   let orgSlug: string | undefined;
+  let orgName: string | undefined;
   if (hasOrgMembership && orgResult.data?.[0]?.organization_id) {
     const { data: org } = await supabase
       .from('organizations')
