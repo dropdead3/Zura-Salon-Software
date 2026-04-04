@@ -5,7 +5,7 @@ type ImportWithRetryOptions = {
 };
 
 const DEFAULT_MAX_RETRIES = 3;
-const DEFAULT_BASE_DELAY_MS = 1000;
+const DEFAULT_BASE_DELAY_MS = 200;
 
 function wait(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -57,6 +57,7 @@ export async function importWithRetry<T>(
       const isLastAttempt = attempt === maxRetries;
 
       if (!isLastAttempt) {
+        // Fast retries: 200ms, 400ms, 800ms instead of 1s, 2s, 4s
         await wait(baseDelayMs * 2 ** attempt);
         continue;
       }
