@@ -1,50 +1,44 @@
 
 
-# Bug Cleanup Pass 4 — Hardcoded Location & Contact Data
+# Bug Cleanup Pass 5 — Remaining Tenant Location References
 
-## Problems Found
-
-Three files have hardcoded tenant addresses, phone numbers, and hours that should resolve from the database `locations` table (via `useActiveLocations()`). One file has tenant-specific placeholder text.
+## Issues Found
 
 | File | Issue | Severity |
 |------|-------|----------|
-| `Booking.tsx` | Two full addresses, phone numbers, hours, email (`contact@salon.com`), and `locationOptions` array all hardcoded | HIGH |
-| `StickyPhoneSidebar.tsx` | Hardcoded location names and phone numbers | HIGH |
-| `stylists.ts` | `locations` export with real addresses; `Location` type locked to `"north-mesa" \| "val-vista-lakes"` | HIGH (tech debt) |
-| `LocationsSettingsContent.tsx` | Placeholder text uses tenant address/phone (`"e.g., 2036 N Gilbert Rd"`, `"e.g., (480) 548-1886"`) | LOW |
-
-The `LocationsSection.tsx` is already correctly using `useActiveLocations()` — no change needed there.
+| `sync-phorest-data/index.ts` | Hardcoded `mesa`, `val vista`, `lakes` keyword matching for location mapping (lines 329-338) | HIGH |
+| `StylistsContent.tsx` | Hardcoded `north-mesa` / `val-vista-lakes` location counts (lines 199-200, 362-367) | MED |
+| `HomepageStylists.tsx` | Same hardcoded location counts (lines 282-283) | MED |
+| `FooterCTAPreview.tsx` | Sample locations use `Mesa` / `Gilbert` with `(480)` area codes | LOW |
+| `LocationsSettingsContent.tsx` | Remaining tenant placeholders: `"North Mesa"`, `"Gilbert Rd & McKellips"`, `"/booking?location=north-mesa"` | LOW |
+| `stylists.ts` | `Location` type still locked to `"north-mesa" \| "val-vista-lakes"`; `getLocationName` maps those IDs; stylist data references them | HIGH (tech debt, previously flagged) |
+| `sampleStylists.ts` | All sample stylists use `"north-mesa"` location ID | MED |
+| `ViewProfile.tsx` / `MyProfile.tsx` | Phone placeholders use `(480)` area code — minor but tenant-adjacent | LOW |
+| `dockDemoData.ts` | Demo clients use `(480)` / `(602)` area codes | LOW |
 
 ## Implementation Plan
 
-### Step 1: Make Booking.tsx dynamic
-- Import `useActiveLocations` and `useBusinessSettings`
-- Replace hardcoded `locationOptions` with locations from DB
-- Replace the "Visit the Salon" section (addresses, phones, hours, email) with a dynamic loop over active locations
-- Email resolves from `businessSettings.email`
-- Hours resolve from each location's `hours_json`
-- If no locations exist, show a generic "Contact us" fallback
+### Step 1: Fix Phorest sync location mapping
+The edge function has hardcoded keyword matching (`mesa`, `val vista`, `lakes`) instead of generic matching. Replace with a dynamic approach: normalize both DB location names and Phorest branch names, then match on substring/fuzzy logic without hardcoded keywords.
 
-### Step 2: Make StickyPhoneSidebar.tsx dynamic
-- Import `useActiveLocations`
-- Replace hardcoded `locations` array with DB query
-- Each location's phone comes from `location.phone`
-- Hide sidebar entirely if no locations have phone numbers
+### Step 2: Make stylist location counts dynamic
+`StylistsContent.tsx` and `HomepageStylists.tsx` both hardcode `north-mesa` / `val-vista-lakes` counts. Replace with a dynamic loop that counts stylists per location using `useActiveLocations()` to get location names and IDs.
 
-### Step 3: Neutralize stylists.ts locations
-- Remove the hardcoded `locations` export (real addresses)
-- Consumers already using `useActiveLocations()` from the DB don't need this
-- Keep the `Location` type generic or remove it (check dependents)
-- The stylist data itself remains as flagged tech debt for future DB migration
+### Step 3: Genericize Location type in stylists.ts
+Change `Location` from a union literal to `string`. Remove `getLocationName()` (consumers should resolve names from DB). Update `sampleStylists.ts` to use generic IDs like `"location-1"`.
 
-### Step 4: Genericize placeholder text
-- `LocationsSettingsContent.tsx`: Change `"e.g., 2036 N Gilbert Rd Ste 1"` → `"e.g., 123 Main St"`
-- Change `"e.g., (480) 548-1886"` → `"e.g., (555) 123-4567"`
+### Step 4: Neutralize remaining placeholder text
+- `LocationsSettingsContent.tsx`: `"North Mesa"` → `"Downtown"`, `"Gilbert Rd & McKellips"` → `"Main St & 1st Ave"`, `"/booking?location=north-mesa"` → `"/booking?location=downtown"`
+- `FooterCTAPreview.tsx`: `Mesa`/`Gilbert` → `"Downtown"`/`"Eastside"`, phones → `(555)` prefix
+- `ViewProfile.tsx` / `MyProfile.tsx`: `480-555-1234` → `555-123-4567`
+- `dockDemoData.ts`: Swap `(480)`/`(602)` → `(555)` prefix
+
+### Step 5: Deploy updated Phorest edge function
 
 ## Technical Details
-
-- **No database changes** required — `locations` table already has address, phone, hours_json fields
-- `useActiveLocations()` is already used by `LocationsSection.tsx` and 10+ other hooks, so the pattern is well-established
-- `Booking.tsx` is the largest change (~100 lines of hardcoded contact info replaced with a dynamic render)
-- Risk: Low — rendering-only changes with established data patterns
+- **Edge function redeployment** required for `sync-phorest-data`
+- The Phorest location matching fix is the most critical — hardcoded keywords will break for any tenant that doesn't have Mesa/Val Vista locations
+- `stylists.ts` type change may cascade to consumers importing `Location` — need to check dependents
+- All other changes are placeholder text swaps
+- **Risk**: Low for UI changes. Medium for Phorest sync (needs careful testing to ensure location matching still works for existing data)
 
