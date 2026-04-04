@@ -3,7 +3,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { QRCodeCanvas } from 'qrcode.react';
 import { X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import BrandLogoWhite from '@/assets/brand-logo-secondary-white.svg';
+import { OrganizationLogo } from '@/components/brand/OrganizationLogo';
+import { useBusinessSettings } from '@/hooks/useBusinessSettings';
 
 interface QRCodeFullScreenProps {
   isOpen: boolean;
@@ -12,6 +13,7 @@ interface QRCodeFullScreenProps {
 }
 
 export function QRCodeFullScreen({ isOpen, onClose, url }: QRCodeFullScreenProps) {
+  const { data: businessSettings } = useBusinessSettings();
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
     if (e.key === 'Escape') {
       onClose();
@@ -63,9 +65,11 @@ export function QRCodeFullScreen({ isOpen, onClose, url }: QRCodeFullScreenProps
           >
             {/* Branding */}
             <div className="text-center space-y-2">
-              <img 
-                src={BrandLogoWhite} 
-                alt="Staff Portal" 
+              <OrganizationLogo
+                variant="sidebar"
+                logoUrl={businessSettings?.logo_dark_url}
+                theme="dark"
+                alt={businessSettings?.business_name || 'Staff Portal'}
                 className="h-8 mx-auto"
               />
               <p className="text-[hsl(40,30%,70%)] text-sm tracking-[0.3em] font-display uppercase font-medium">

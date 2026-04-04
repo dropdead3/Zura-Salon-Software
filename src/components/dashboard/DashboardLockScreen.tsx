@@ -9,8 +9,7 @@ import { useBusinessSettings } from '@/hooks/useBusinessSettings';
 import { useDashboardTheme } from '@/contexts/DashboardThemeContext';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import Logo from '@/assets/brand-logo-secondary.svg';
-import LogoWhite from '@/assets/brand-logo-secondary-white.svg';
+import { OrganizationLogo } from '@/components/brand/OrganizationLogo';
 import { tokens } from '@/lib/design-tokens';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 
@@ -39,11 +38,7 @@ export function DashboardLockScreen({
   } | null>(null);
   const [isUnlocking, setIsUnlocking] = useState(false);
 
-  const getLogo = () => {
-    const isDark = resolvedTheme === 'dark';
-    const customLogo = isDark ? businessSettings?.logo_dark_url : businessSettings?.logo_light_url;
-    return customLogo || (isDark ? LogoWhite : Logo);
-  };
+  const isDark = resolvedTheme === 'dark';
 
   const handlePinDigit = useCallback((digit: string) => {
     if (pin.length < 4) {
@@ -245,10 +240,12 @@ export function DashboardLockScreen({
         animate={{ y: 0, opacity: 1 }}
         transition={{ delay: 0.1 }}
       >
-        <img 
-          src={getLogo()} 
-          alt={businessSettings?.business_name || 'Logo'} 
-          className="h-6 w-auto" 
+        <OrganizationLogo
+          variant="sidebar"
+          logoUrl={isDark ? businessSettings?.logo_dark_url : businessSettings?.logo_light_url}
+          theme={isDark ? 'dark' : 'light'}
+          alt={businessSettings?.business_name || 'Logo'}
+          className="h-6 w-auto"
         />
       </motion.div>
 

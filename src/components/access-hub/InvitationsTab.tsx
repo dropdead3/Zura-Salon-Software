@@ -68,7 +68,8 @@ import {
 } from 'lucide-react';
 import { cn, formatDisplayName } from '@/lib/utils';
 import { QRCodeCanvas } from 'qrcode.react';
-import BrandLogo from '@/assets/brand-logo-secondary.svg';
+import { useBusinessSettings } from '@/hooks/useBusinessSettings';
+import { DEFAULT_ORG_LOGO_DARK } from '@/lib/platform-assets';
 import { QRCodeFullScreen } from '@/components/dashboard/QRCodeFullScreen';
 import { formatRelativeTime } from '@/lib/format';
 import { ImageWithSkeleton } from '@/components/ui/image-skeleton';
@@ -96,13 +97,14 @@ const getStaffLoginUrl = () => {
 };
 
 function QRCodePDFPreview({ staffLoginUrl }: { staffLoginUrl: string }) {
+  const { data: businessSettings } = useBusinessSettings();
   return (
     <div className="bg-gradient-to-b from-[hsl(40,30%,96%)] to-[hsl(35,25%,92%)] rounded-xl p-6 shadow-inner">
       <div className="bg-white rounded-lg shadow-xl overflow-hidden mx-auto relative" style={{ aspectRatio: '8.5/11', maxWidth: '340px' }}>
         <div className="bg-gradient-to-r from-[hsl(0,0%,8%)] to-[hsl(0,0%,15%)] py-3 px-4 text-center">
           <ImageWithSkeleton
-            src={BrandLogo}
-            alt="Salon"
+            src={businessSettings?.logo_dark_url || businessSettings?.logo_light_url || DEFAULT_ORG_LOGO_DARK}
+            alt={businessSettings?.business_name || 'Salon'}
             className="h-3 w-auto mx-auto invert"
             wrapperClassName="mx-auto"
           />

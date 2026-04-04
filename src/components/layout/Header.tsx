@@ -2,8 +2,8 @@ import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Menu, X, ArrowRight, ChevronDown, MoreHorizontal, UserRound } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import Logo from "@/assets/brand-logo-primary.svg";
-import LogoIcon from "@/assets/brand-logo-secondary.svg";
+import { useBusinessSettings } from "@/hooks/useBusinessSettings";
+import { OrganizationLogo } from "@/components/brand/OrganizationLogo";
 import { cn } from "@/lib/utils";
 import { useAnnouncementBarSettings } from "@/hooks/useAnnouncementBar";
 import { useOrgPath } from "@/hooks/useOrgPath";
@@ -98,6 +98,7 @@ export function Header() {
   const [isDesktop, setIsDesktop] = useState(false);
   const headerRef = useRef<HTMLElement>(null);
   const staffMenuRef = useRef<HTMLDivElement>(null);
+  const { data: businessSettings } = useBusinessSettings();
   const navContainerRef = useRef<HTMLDivElement>(null);
   const lastScrollY = useRef(0);
   const location = useLocation();
@@ -342,9 +343,11 @@ export function Header() {
                 to={orgPath("/")}
                 className="flex items-center hover:opacity-70 transition-opacity relative h-8"
               >
-                <img
-                  src={Logo}
-                  alt="Salon"
+                <OrganizationLogo
+                  variant="website"
+                  logoUrl={businessSettings?.logo_light_url}
+                  theme="light"
+                  alt={businessSettings?.business_name || 'Salon'}
                   style={{ 
                     opacity: !isScrolledDesktop || isScrollingUp ? 1 : 0,
                     transform: !isScrolledDesktop || isScrollingUp ? "scale(1)" : "scale(0.95)",
@@ -355,9 +358,12 @@ export function Header() {
                     isOverDark && "invert"
                   )}
                 />
-                <img
-                  src={LogoIcon}
-                  alt="Salon"
+                <OrganizationLogo
+                  variant="website-icon"
+                  logoUrl={businessSettings?.logo_light_url}
+                  iconUrl={businessSettings?.icon_light_url}
+                  theme="light"
+                  alt={businessSettings?.business_name || 'Salon'}
                   style={{ 
                     opacity: isScrolledDesktop && !isScrollingUp ? 1 : 0,
                     transform: isScrolledDesktop && !isScrollingUp ? "scale(1)" : "scale(0.95)",

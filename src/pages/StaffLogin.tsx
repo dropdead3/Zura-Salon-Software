@@ -14,7 +14,8 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, ArrowLeft, Eye, EyeOff, Mail, CheckCircle } from 'lucide-react';
-import Logo from '@/assets/brand-logo-secondary.svg';
+import { OrganizationLogo } from '@/components/brand/OrganizationLogo';
+import { useBusinessSettings } from '@/hooks/useBusinessSettings';
 import { z } from 'zod';
 import { useCheckInvitation, useAcceptInvitation } from '@/hooks/useStaffInvitations';
 import { useDebounce } from '@/hooks/use-debounce';
@@ -47,6 +48,7 @@ async function getCustomLandingPage(userId: string): Promise<string | null> {
 
 export default function StaffLogin() {
   const { dashPath } = useOrgDashboardPath();
+  const { data: businessSettings } = useBusinessSettings();
   const [isLogin, setIsLogin] = useState(true);
   const [isForgotPassword, setIsForgotPassword] = useState(false);
   const [email, setEmail] = useState('');
@@ -206,9 +208,11 @@ export default function StaffLogin() {
           <div className="w-full max-w-sm mx-auto space-y-8">
           {/* Logo */}
           <div className="text-center">
-            <img 
-              src={Logo} 
-              alt="Salon" 
+            <OrganizationLogo
+              variant="website"
+              logoUrl={businessSettings?.logo_light_url}
+              theme="light"
+              alt={businessSettings?.business_name || 'Salon'}
               className="h-6 w-auto mx-auto mb-8"
             />
             <h1 className="font-display text-2xl tracking-wide">

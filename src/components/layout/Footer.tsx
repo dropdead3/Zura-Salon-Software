@@ -1,7 +1,8 @@
 import { useMemo } from "react";
 import { Link } from "react-router-dom";
 import { Instagram, ArrowUpRight, MapPin, Phone, AlertCircle } from "lucide-react";
-import Logo from "@/assets/brand-logo-secondary.svg";
+import { useBusinessSettings } from "@/hooks/useBusinessSettings";
+import { OrganizationLogo } from "@/components/brand/OrganizationLogo";
 import { useActiveLocations, formatHoursForDisplay, isClosedForHoliday, isClosedToday } from "@/hooks/useLocations";
 import { useOrgPath } from "@/hooks/useOrgPath";
 import { usePublicMenuBySlug } from "@/hooks/useWebsiteMenus";
@@ -14,6 +15,7 @@ const FALLBACK_FOOTER_LINKS = [
 
 export function Footer() {
   const { data: locations = [] } = useActiveLocations();
+  const { data: businessSettings } = useBusinessSettings();
   const orgPath = useOrgPath();
   const { data: publishedFooterData } = usePublicMenuBySlug('footer');
   
@@ -46,9 +48,11 @@ export function Footer() {
               to={orgPath("/")}
               className="hover:opacity-70 transition-opacity inline-block"
             >
-              <img 
-                src={Logo} 
-                alt="Salon" 
+              <OrganizationLogo
+                variant="website"
+                logoUrl={businessSettings?.logo_light_url}
+                theme="light"
+                alt={businessSettings?.business_name || 'Salon'}
                 className="h-5 w-auto"
               />
             </Link>
