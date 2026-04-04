@@ -72,6 +72,7 @@ export function usePlatformBranding() {
         secondary_logo_url: (value.secondary_logo_url as string | null) ?? null,
         icon_dark_url: (value.icon_dark_url as string | null) ?? null,
         icon_light_url: (value.icon_light_url as string | null) ?? null,
+        login_logo_url: (value.login_logo_url as string | null) ?? null,
         theme_colors: (value.theme_colors as Record<string, string>) ?? {},
         typography: (value.typography as Record<string, string>) ?? {},
         loader_style: (value.loader_style as LoaderStyleOption) ?? 'zura',
