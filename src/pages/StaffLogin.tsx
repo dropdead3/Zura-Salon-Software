@@ -208,9 +208,11 @@ export default function StaffLogin() {
           <div className="w-full max-w-sm mx-auto space-y-8">
           {/* Logo */}
           <div className="text-center">
-            <img 
-              src={Logo} 
-              alt="Salon" 
+            <OrganizationLogo
+              variant="website"
+              logoUrl={businessSettings?.logo_light_url}
+              theme="light"
+              alt={businessSettings?.business_name || 'Salon'}
               className="h-6 w-auto mx-auto mb-8"
             />
             <h1 className="font-display text-2xl tracking-wide">

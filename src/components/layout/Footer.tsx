@@ -48,9 +48,11 @@ export function Footer() {
               to={orgPath("/")}
               className="hover:opacity-70 transition-opacity inline-block"
             >
-              <img 
-                src={Logo} 
-                alt="Salon" 
+              <OrganizationLogo
+                variant="website"
+                logoUrl={businessSettings?.logo_light_url}
+                theme="light"
+                alt={businessSettings?.business_name || 'Salon'}
                 className="h-5 w-auto"
               />
             </Link>

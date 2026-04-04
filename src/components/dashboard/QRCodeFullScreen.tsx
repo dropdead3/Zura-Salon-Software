@@ -65,9 +65,11 @@ export function QRCodeFullScreen({ isOpen, onClose, url }: QRCodeFullScreenProps
           >
             {/* Branding */}
             <div className="text-center space-y-2">
-              <img 
-                src={BrandLogoWhite} 
-                alt="Staff Portal" 
+              <OrganizationLogo
+                variant="sidebar"
+                logoUrl={businessSettings?.logo_dark_url}
+                theme="dark"
+                alt={businessSettings?.business_name || 'Staff Portal'}
                 className="h-8 mx-auto"
               />
               <p className="text-[hsl(40,30%,70%)] text-sm tracking-[0.3em] font-display uppercase font-medium">

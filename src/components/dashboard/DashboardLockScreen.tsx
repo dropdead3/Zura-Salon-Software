@@ -240,10 +240,12 @@ export function DashboardLockScreen({
         animate={{ y: 0, opacity: 1 }}
         transition={{ delay: 0.1 }}
       >
-        <img 
-          src={getLogo()} 
-          alt={businessSettings?.business_name || 'Logo'} 
-          className="h-6 w-auto" 
+        <OrganizationLogo
+          variant="sidebar"
+          logoUrl={isDark ? businessSettings?.logo_dark_url : businessSettings?.logo_light_url}
+          theme={isDark ? 'dark' : 'light'}
+          alt={businessSettings?.business_name || 'Logo'}
+          className="h-6 w-auto"
         />
       </motion.div>
 

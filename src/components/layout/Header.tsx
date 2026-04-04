@@ -343,9 +343,11 @@ export function Header() {
                 to={orgPath("/")}
                 className="flex items-center hover:opacity-70 transition-opacity relative h-8"
               >
-                <img
-                  src={Logo}
-                  alt="Salon"
+                <OrganizationLogo
+                  variant="website"
+                  logoUrl={businessSettings?.logo_light_url}
+                  theme="light"
+                  alt={businessSettings?.business_name || 'Salon'}
                   style={{ 
                     opacity: !isScrolledDesktop || isScrollingUp ? 1 : 0,
                     transform: !isScrolledDesktop || isScrollingUp ? "scale(1)" : "scale(0.95)",
@@ -356,9 +358,12 @@ export function Header() {
                     isOverDark && "invert"
                   )}
                 />
-                <img
-                  src={LogoIcon}
-                  alt="Salon"
+                <OrganizationLogo
+                  variant="website-icon"
+                  logoUrl={businessSettings?.logo_light_url}
+                  iconUrl={businessSettings?.icon_light_url}
+                  theme="light"
+                  alt={businessSettings?.business_name || 'Salon'}
                   style={{ 
                     opacity: isScrolledDesktop && !isScrollingUp ? 1 : 0,
                     transform: isScrolledDesktop && !isScrollingUp ? "scale(1)" : "scale(0.95)",
