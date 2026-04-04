@@ -1,6 +1,7 @@
 import { useParams, Outlet, Navigate } from 'react-router-dom';
 import { useOrganizationBySlug } from '@/hooks/useOrganizations';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { Loader2 } from 'lucide-react';
 import NotFound from '@/pages/NotFound';
 import { useEffect } from 'react';
