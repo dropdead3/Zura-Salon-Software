@@ -182,39 +182,10 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
   }, [sidebarLayout, roles]);
   
   // Logo/icon helpers — collapsed now follows theme like expanded
-  const hasCustomLogo = (forCollapsed = false) => {
-    if (forCollapsed) {
-      return resolvedTheme === 'dark'
-        ? !!businessSettings?.logo_dark_url
-        : !!businessSettings?.logo_light_url;
-    }
-    return resolvedTheme === 'dark'
-      ? !!businessSettings?.logo_dark_url
-      : !!businessSettings?.logo_light_url;
-  };
-
-  const hasCustomIcon = (forCollapsed = false) => {
-    if (forCollapsed) {
-      return resolvedTheme === 'dark'
-        ? !!businessSettings?.icon_dark_url
-        : !!businessSettings?.icon_light_url;
-    }
-    return resolvedTheme === 'dark'
-      ? !!businessSettings?.icon_dark_url
-      : !!businessSettings?.icon_light_url;
-  };
-
-  const getLogo = (forCollapsed = false) => {
-    return resolvedTheme === 'dark'
-      ? (businessSettings?.logo_dark_url || LogoWhite)
-      : (businessSettings?.logo_light_url || Logo);
-  };
-
-  const getIcon = (forCollapsed = false) => {
-    return resolvedTheme === 'dark'
-      ? businessSettings?.icon_dark_url
-      : businessSettings?.icon_light_url;
-  };
+  const orgLogoTheme = resolvedTheme === 'dark' ? 'dark' : 'light';
+  const orgLogoUrl = resolvedTheme === 'dark' ? businessSettings?.logo_dark_url : businessSettings?.logo_light_url;
+  const orgIconUrl = resolvedTheme === 'dark' ? businessSettings?.icon_dark_url : businessSettings?.icon_light_url;
+  const orgName = businessSettings?.business_name || 'Salon';
   
   // Expose the internal ref
   useImperativeHandle(ref, () => internalRef.current!, []);
