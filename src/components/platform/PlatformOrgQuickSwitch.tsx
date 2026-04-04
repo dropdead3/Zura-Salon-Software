@@ -20,7 +20,6 @@ import { useOrganizations, type Organization, logPlatformAction } from '@/hooks/
 import { useFavoriteOrganizations, useToggleFavoriteOrg } from '@/hooks/useFavoriteOrganizations';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { PlatformButton } from './ui/PlatformButton';
-import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 
 
 interface PlatformOrgQuickSwitchProps {
@@ -29,7 +28,6 @@ interface PlatformOrgQuickSwitchProps {
 
 export function PlatformOrgQuickSwitch({
   className }: PlatformOrgQuickSwitchProps) {
-  const { dashPath } = useOrgDashboardPath();
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
   const { data: organizations = [], isLoading } = useOrganizations();
@@ -40,7 +38,8 @@ export function PlatformOrgQuickSwitch({
   const handleSelect = (org: Organization) => {
     setSelectedOrganization(org);
     setOpen(false);
-    navigate(dashPath('/'));
+    // Navigate directly to the org dashboard URL — avoids legacy /dashboard/ redirect chain
+    navigate(`/org/${org.slug}/dashboard/`);
 
     logPlatformAction(org.id, 'org_viewed', 'organization', org.id, {
       organization_name: org.name,

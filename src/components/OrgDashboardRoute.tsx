@@ -15,7 +15,6 @@ export function OrgDashboardRoute() {
   const { orgSlug } = useParams<{ orgSlug: string }>();
   const { data: organization, isLoading, error } = useOrganizationBySlug(orgSlug);
   const { setSelectedOrganization, effectiveOrganization } = useOrganizationContext();
-  const { isPlatformUser } = useAuth();
 
   // Sync the URL-resolved org into context so all downstream hooks work
   useEffect(() => {
@@ -24,9 +23,7 @@ export function OrgDashboardRoute() {
     }
   }, [organization, effectiveOrganization?.id, setSelectedOrganization]);
 
-  const isSyncingOrgContext = isPlatformUser && !!organization && effectiveOrganization?.id !== organization.id;
-
-  if (isLoading || isSyncingOrgContext) {
+  if (isLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
