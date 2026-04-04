@@ -33,7 +33,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { PremiumFloatingPanel } from '@/components/ui/premium-floating-panel';
 import { useUnreadAnnouncements } from '@/hooks/useUnreadAnnouncements';
 import { useProfileCompletion } from '@/hooks/useProfileCompletion';
 import { useOnboardingProgress } from '@/hooks/useOnboardingProgress';
@@ -463,41 +462,58 @@ function DashboardLayoutInner({ children, hideFooter, hideTopBar, hideSidebar }:
       </aside>
       )}
 
-      <PremiumFloatingPanel
-        open={sidebarOpen}
-        onOpenChange={setSidebarOpen}
-        side="left"
-        maxWidth="288px"
-        showCloseButton={false}
-      >
-        <div className="h-full overflow-hidden">
-          <SidebarNavContent
-            mainNavItems={mainNavItems}
-            growthNavItems={growthNavItems}
-            statsNavItems={statsNavItems}
-            housekeepingNavItems={housekeepingNavItems}
-            managerNavItems={managerNavItems}
-            websiteNavItems={websiteNavItems}
-            adminOnlyNavItems={adminOnlyNavItems}
-            appsNavItems={appsNavItems}
-            footerNavItems={footerNavItems}
-            isPlatformUser={isPlatformUser}
-            isMultiOrgOwner={isMultiOrgOwner}
-            unreadCount={unreadCount}
-            roles={roles}
-            effectiveIsCoach={effectiveIsCoach}
-            filterNavItems={filterNavItems}
-            onNavClick={handleNavClick}
-            isOnboardingComplete={isOnboardingComplete}
-            onboardingProgress={onboardingProgress}
-            isCollapsed={false}
-            onToggleCollapse={toggleSidebarCollapsed}
-            greeting={sidebarGreeting}
-            subtitle={sidebarSubtitle}
-            firstName={firstName}
-          />
-        </div>
-      </PremiumFloatingPanel>
+      <AnimatePresence>
+        {sidebarOpen && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="fixed inset-0 z-40 bg-background/60 backdrop-blur-sm lg:hidden"
+              style={isImpersonating ? { top: 44 } : undefined}
+              onClick={() => setSidebarOpen(false)}
+            />
+
+            <motion.aside
+              initial={{ x: '-100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '-100%' }}
+              transition={{ type: 'spring', damping: 26, stiffness: 300, mass: 0.8 }}
+              className="fixed inset-y-0 left-0 z-50 w-72 max-w-[85vw] border-r border-border bg-card/95 shadow-2xl backdrop-blur-xl lg:hidden"
+              style={isImpersonating ? { top: 44 } : undefined}
+            >
+              <div className="h-full overflow-hidden">
+                <SidebarNavContent
+                  mainNavItems={mainNavItems}
+                  growthNavItems={growthNavItems}
+                  statsNavItems={statsNavItems}
+                  housekeepingNavItems={housekeepingNavItems}
+                  managerNavItems={managerNavItems}
+                  websiteNavItems={websiteNavItems}
+                  adminOnlyNavItems={adminOnlyNavItems}
+                  appsNavItems={appsNavItems}
+                  footerNavItems={footerNavItems}
+                  isPlatformUser={isPlatformUser}
+                  isMultiOrgOwner={isMultiOrgOwner}
+                  unreadCount={unreadCount}
+                  roles={roles}
+                  effectiveIsCoach={effectiveIsCoach}
+                  filterNavItems={filterNavItems}
+                  onNavClick={handleNavClick}
+                  isOnboardingComplete={isOnboardingComplete}
+                  onboardingProgress={onboardingProgress}
+                  isCollapsed={false}
+                  onToggleCollapse={toggleSidebarCollapsed}
+                  greeting={sidebarGreeting}
+                  subtitle={sidebarSubtitle}
+                  firstName={firstName}
+                />
+              </div>
+            </motion.aside>
+          </>
+        )}
+      </AnimatePresence>
 
       <main className={cn(
         "flex-1 flex flex-col min-h-screen transition-[margin] duration-500 ease-[cubic-bezier(0.4,0,0.2,1)]",
