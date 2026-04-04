@@ -273,7 +273,7 @@ export function useSeedMenus() {
       if (aboutParent) {
         await supabase.from('website_menu_items').insert([
           { menu_id: primaryMenu.id, organization_id: orgId, parent_id: aboutParent.id, label: 'About Us', item_type: 'page_link', target_url: '/about', sort_order: 0, is_published: true },
-          { menu_id: primaryMenu.id, organization_id: orgId, parent_id: aboutParent.id, label: 'Salon Policies', item_type: 'page_link', target_url: '/policies', sort_order: 1, is_published: true },
+          { menu_id: primaryMenu.id, organization_id: orgId, parent_id: aboutParent.id, label: 'Policies', item_type: 'page_link', target_url: '/policies', sort_order: 1, is_published: true },
         ]);
       }
 

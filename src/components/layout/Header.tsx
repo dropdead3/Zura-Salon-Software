@@ -41,14 +41,14 @@ const FALLBACK_NAV_ITEMS = [
   { href: "/services", label: "Services", priority: 1, type: "link" as const },
   { href: "/about", label: "About", priority: 2, type: "dropdown" as const, children: [
     { href: "/about", label: "About Us" },
-    { href: "/policies", label: "Salon Policies" },
+    { href: "/policies", label: "Policies" },
   ]},
-  { href: "/extensions", label: "Hair Extensions", priority: 3, type: "link" as const },
-  { href: "/careers", label: "Join The Team", priority: 4, type: "link" as const },
-  { href: "/gallery", label: "Gallery", priority: 5, type: "link" as const },
+  { href: "/team", label: "Team", priority: 3, type: "link" as const },
+  { href: "/gallery", label: "Gallery", priority: 4, type: "link" as const },
+  { href: "/contact", label: "Contact", priority: 5, type: "link" as const },
 ];
 
-const FALLBACK_CTA = { href: "/booking", label: "Book Consult" };
+const FALLBACK_CTA = { href: "/booking", label: "Book Now" };
 
 /** Transform published menu items into the nav format used by the Header */
 function menuItemToNavItem(item: MenuItem, index: number, orgPath: (p: string) => string): {
