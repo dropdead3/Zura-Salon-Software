@@ -1554,3 +1554,32 @@ html {
 .god-mode-active {
   box-shadow: inset 0 0 120px rgba(139, 92, 246, 0.03);
 }
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   MARKETING SURFACE — Scoped styles for platform marketing pages.
+   These styles are isolated from dashboard/tenant layers.
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+.marketing-surface .mkt-fade-in {
+  animation: mktFadeIn 0.6s ease-out both;
+}
+.marketing-surface .mkt-delay-1 { animation-delay: 0.1s; }
+.marketing-surface .mkt-delay-2 { animation-delay: 0.2s; }
+.marketing-surface .mkt-delay-3 { animation-delay: 0.3s; }
+
+@keyframes mktFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .marketing-surface .mkt-fade-in {
+    animation: none;
+  }
+}
