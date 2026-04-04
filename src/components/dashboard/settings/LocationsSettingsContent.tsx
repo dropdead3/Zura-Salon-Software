@@ -511,7 +511,7 @@ export function LocationsSettingsContent() {
                     id="city"
                     value={formData.city}
                     onChange={(e) => setFormData(f => ({ ...f, city: e.target.value }))}
-                    placeholder="e.g., Mesa, AZ 85203"
+                    placeholder="e.g., Anytown, ST 12345"
                   />
                 </div>
                 
