@@ -28,7 +28,6 @@ interface PlatformOrgQuickSwitchProps {
 
 export function PlatformOrgQuickSwitch({
   className }: PlatformOrgQuickSwitchProps) {
-  const { dashPath } = useOrgDashboardPath();
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
   const { data: organizations = [], isLoading } = useOrganizations();
