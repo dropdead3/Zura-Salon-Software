@@ -1,66 +1,50 @@
 
 
-# Bug Cleanup Pass 3 — Remaining Tenant Data Leaks
+# Bug Cleanup Pass 4 — Hardcoded Location & Contact Data
 
-## Issues Found
+## Problems Found
 
-### 1. `SEO.tsx` — Hardcoded tenant business info (HIGH)
-`BUSINESS_INFO` contains hardcoded tenant-specific data: real addresses (2036 N Gilbert Rd), phone numbers, email (`contact@salon.com`), area served lists, opening hours, and hardcoded SEO keywords referencing Mesa/Gilbert/Chandler. This is exported and used across the site.
+Three files have hardcoded tenant addresses, phone numbers, and hours that should resolve from the database `locations` table (via `useActiveLocations()`). One file has tenant-specific placeholder text.
 
-**Fix**: Refactor `SEO.tsx` to resolve business info from `useBusinessSettings()` at runtime. The `BUSINESS_INFO` constant should become a generic fallback with placeholder values, and the component should accept or resolve org-specific data dynamically. Hardcoded geo-specific keywords should be removed or templated.
+| File | Issue | Severity |
+|------|-------|----------|
+| `Booking.tsx` | Two full addresses, phone numbers, hours, email (`contact@salon.com`), and `locationOptions` array all hardcoded | HIGH |
+| `StickyPhoneSidebar.tsx` | Hardcoded location names and phone numbers | HIGH |
+| `stylists.ts` | `locations` export with real addresses; `Location` type locked to `"north-mesa" \| "val-vista-lakes"` | HIGH (tech debt) |
+| `LocationsSettingsContent.tsx` | Placeholder text uses tenant address/phone (`"e.g., 2036 N Gilbert Rd"`, `"e.g., (480) 548-1886"`) | LOW |
 
-### 2. `Stylists.tsx` — Duplicate hardcoded tenant stylist data (HIGH)
-This page has its own inline copy of real tenant stylists (Kristi D., Sarina L., etc.) with real Instagram handles — completely separate from `src/data/stylists.ts`. Double violation: tenant data AND code duplication.
+The `LocationsSection.tsx` is already correctly using `useActiveLocations()` — no change needed there.
 
-**Fix**: Remove the inline stylist array. Import from `src/data/stylists.ts` (which is already flagged as tech debt for future DB migration), or better — make this page query stylists from the database. At minimum, consolidate to the single shared source.
+## Implementation Plan
 
-### 3. `ColorBarPaywall.tsx` — Hardcoded tenant name in testimonial (LOW)
-Line 523: `"Jamie Torres · Owner, Drop Dead Salon · Austin, TX"` — real tenant name in a fake testimonial.
+### Step 1: Make Booking.tsx dynamic
+- Import `useActiveLocations` and `useBusinessSettings`
+- Replace hardcoded `locationOptions` with locations from DB
+- Replace the "Visit the Salon" section (addresses, phones, hours, email) with a dynamic loop over active locations
+- Email resolves from `businessSettings.email`
+- Hours resolve from each location's `hours_json`
+- If no locations exist, show a generic "Contact us" fallback
 
-**Fix**: Replace with a generic fictional business name (e.g., "Jamie T. · Salon Owner · Austin, TX").
+### Step 2: Make StickyPhoneSidebar.tsx dynamic
+- Import `useActiveLocations`
+- Replace hardcoded `locations` array with DB query
+- Each location's phone comes from `location.phone`
+- Hide sidebar entirely if no locations have phone numbers
 
-### 4. `dockDemoData.ts` — Tenant name in code comment (LOW)
-Line 344: `// ─── Mock Services (Drop Dead Salons catalog) ───`
+### Step 3: Neutralize stylists.ts locations
+- Remove the hardcoded `locations` export (real addresses)
+- Consumers already using `useActiveLocations()` from the DB don't need this
+- Keep the `Location` type generic or remove it (check dependents)
+- The stylist data itself remains as flagged tech debt for future DB migration
 
-**Fix**: Neutralize comment to `// ─── Mock Services (demo catalog) ───`
-
-### 5. `SignaturePresetActions.tsx` / `SignaturePresetsManager.tsx` — Tenant name in placeholder (LOW)
-Placeholder text: `"e.g., Kristi Day - CEO"`
-
-**Fix**: Replace with generic placeholder: `"e.g., Jane Smith - Owner"`
-
-### 6. `Extensions.tsx` — Entire page is hardcoded tenant content (TECH DEBT)
-The entire Extensions page has hardcoded marketing copy, pricing tiers, and FAQs. Similar to `stylists.ts`, this should eventually resolve from the database. Out of scope for this pass — flag only.
-
----
-
-## Recommended Scope
-
-Focus on items 1–5 (quick, impactful). Item 6 is tech debt for a future pass.
-
-### Step 1: Refactor SEO.tsx
-- Make `BUSINESS_INFO` resolve from `useBusinessSettings()` + org locations
-- Keep generic fallbacks for when no org data exists
-- Remove hardcoded Mesa/Gilbert addresses, phones, and geo keywords
-- SEO component becomes org-aware instead of tenant-hardcoded
-
-### Step 2: Consolidate Stylists.tsx
-- Remove inline duplicate stylist array
-- Import from shared `src/data/stylists.ts` or make DB-aware
-- Ensure the page uses the same data source as other stylist consumers
-
-### Step 3: Neutralize tenant names in UI copy
-- `ColorBarPaywall.tsx`: genericize testimonial attribution
-- `dockDemoData.ts`: neutralize code comment
-- `SignaturePresetActions.tsx` + `SignaturePresetsManager.tsx`: generic placeholder
-
----
+### Step 4: Genericize placeholder text
+- `LocationsSettingsContent.tsx`: Change `"e.g., 2036 N Gilbert Rd Ste 1"` → `"e.g., 123 Main St"`
+- Change `"e.g., (480) 548-1886"` → `"e.g., (555) 123-4567"`
 
 ## Technical Details
 
-- **No database changes** required
-- **SEO.tsx refactor** is the most significant change — needs careful handling since it generates structured data (JSON-LD) for search engines
-- The SEO component currently uses a static constant; it needs to become a hook-aware component that resolves org data at render time
-- All other changes are single-line copy fixes
-- **Risk**: Low — all rendering-only changes with no architectural impact
+- **No database changes** required — `locations` table already has address, phone, hours_json fields
+- `useActiveLocations()` is already used by `LocationsSection.tsx` and 10+ other hooks, so the pattern is well-established
+- `Booking.tsx` is the largest change (~100 lines of hardcoded contact info replaced with a dynamic render)
+- Risk: Low — rendering-only changes with established data patterns
 
