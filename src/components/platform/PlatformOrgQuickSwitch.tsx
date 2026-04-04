@@ -40,7 +40,8 @@ export function PlatformOrgQuickSwitch({
   const handleSelect = (org: Organization) => {
     setSelectedOrganization(org);
     setOpen(false);
-    navigate(dashPath('/'));
+    // Navigate directly to the org dashboard URL — avoids legacy /dashboard/ redirect chain
+    navigate(`/org/${org.slug}/dashboard/`);
 
     logPlatformAction(org.id, 'org_viewed', 'organization', org.id, {
       organization_name: org.name,
