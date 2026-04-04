@@ -470,7 +470,7 @@ export function StylistsSection() {
   
   // Merge database locations with static locations for tooltip info
   const locations = useMemo(() => {
-    if (!dbLocations) return staticLocations.map(loc => ({ ...loc, city: '', hours: '' }));
+    if (!dbLocations) return staticLocations.map(loc => ({ ...loc, address: '', city: '', hours: '' }));
     return staticLocations.map(staticLoc => {
       const dbLoc = dbLocations.find(db => db.id === staticLoc.id);
       return {
