@@ -78,7 +78,34 @@ async function checkDualRoleStatus(userId: string): Promise<DualRoleInfo> {
   return { hasPlatformRoles, hasOrgMembership, orgSlug, orgName };
 }
 
-async function getUserRedirectPath(userId: string, fallback: string): Promise<string> {
+async function getDualRolePreference(userId: string): Promise<string | null> {
+  try {
+    const { data, error } = await supabase
+      .from('user_preferences')
+      .select('dual_role_destination')
+      .eq('user_id', userId)
+      .maybeSingle();
+    if (error) return null;
+    return (data as any)?.dual_role_destination || null;
+  } catch {
+    return null;
+  }
+}
+
+async function saveDualRolePreference(userId: string, destination: string): Promise<void> {
+  await supabase
+    .from('user_preferences')
+    .upsert(
+      {
+        user_id: userId,
+        dual_role_destination: destination,
+        updated_at: new Date().toISOString(),
+      } as any,
+      { onConflict: 'user_id' }
+    );
+}
+
+
   // Check for platform roles first
   const { data: platformRoles } = await supabase
     .from('platform_roles')
