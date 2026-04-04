@@ -67,7 +67,7 @@ export const sampleStylists: Stylist[] = [
     specialties: ["BLONDING", "COLOR CORRECTION", "BALAYAGE"],
     highlighted_services: ["BLONDING", "COLOR CORRECTION"],
     imageUrl: isabellaBrown,
-    locations: ["north-mesa"],
+    locations: ["location-1"],
     isBooking: true,
     bio: "Blonde specialist with a passion for transformations.",
   },
