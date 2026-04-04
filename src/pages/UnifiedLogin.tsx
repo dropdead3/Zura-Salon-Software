@@ -15,6 +15,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { toast as sonnerToast } from 'sonner';
 import { Loader2, ArrowLeft, Eye, EyeOff, Mail, CheckCircle, Shield, Building2 } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
 import ZuraLogoWhite from '@/assets/zura-logo-white.svg';
 import { usePlatformBranding } from '@/hooks/usePlatformBranding';
 import { z } from 'zod';
@@ -50,6 +51,7 @@ interface DualRoleInfo {
   hasPlatformRoles: boolean;
   hasOrgMembership: boolean;
   orgSlug?: string;
+  orgName?: string;
 }
 
 async function checkDualRoleStatus(userId: string): Promise<DualRoleInfo> {
@@ -62,16 +64,45 @@ async function checkDualRoleStatus(userId: string): Promise<DualRoleInfo> {
   const hasOrgMembership = !!(orgResult.data && orgResult.data.length > 0);
 
   let orgSlug: string | undefined;
+  let orgName: string | undefined;
   if (hasOrgMembership && orgResult.data?.[0]?.organization_id) {
     const { data: org } = await supabase
       .from('organizations')
-      .select('slug')
+      .select('slug, name')
       .eq('id', orgResult.data[0].organization_id)
       .single();
     orgSlug = org?.slug || undefined;
+    orgName = org?.name || undefined;
   }
 
-  return { hasPlatformRoles, hasOrgMembership, orgSlug };
+  return { hasPlatformRoles, hasOrgMembership, orgSlug, orgName };
+}
+
+async function getDualRolePreference(userId: string): Promise<string | null> {
+  try {
+    const { data, error } = await supabase
+      .from('user_preferences')
+      .select('dual_role_destination')
+      .eq('user_id', userId)
+      .maybeSingle();
+    if (error) return null;
+    return (data as any)?.dual_role_destination || null;
+  } catch {
+    return null;
+  }
+}
+
+async function saveDualRolePreference(userId: string, destination: string): Promise<void> {
+  await supabase
+    .from('user_preferences')
+    .upsert(
+      {
+        user_id: userId,
+        dual_role_destination: destination,
+        updated_at: new Date().toISOString(),
+      } as any,
+      { onConflict: 'user_id' }
+    );
 }
 
 async function getUserRedirectPath(userId: string, fallback: string): Promise<string> {
@@ -127,6 +158,7 @@ export default function UnifiedLogin() {
   // Dual-role interstitial state
   const [dualRoleInfo, setDualRoleInfo] = useState<DualRoleInfo | null>(null);
   const [showDualRoleInterstitial, setShowDualRoleInterstitial] = useState(false);
+  const [rememberChoice, setRememberChoice] = useState(false);
 
   const { signIn, signUp, resetPassword, user } = useAuth();
   const navigate = useNavigate();
@@ -204,6 +236,17 @@ export default function UnifiedLogin() {
       // Check for dual roles
       const info = await checkDualRoleStatus(user.id);
       if (info.hasPlatformRoles && info.hasOrgMembership) {
+        // Check for saved preference
+        const savedPref = await getDualRolePreference(user.id);
+        if (savedPref === 'platform') {
+          navigate('/platform/overview', { replace: true });
+          return;
+        }
+        if (savedPref === 'org_dashboard') {
+          const orgPath = info.orgSlug ? `/org/${info.orgSlug}/dashboard` : '/dashboard';
+          navigate(orgPath, { replace: true });
+          return;
+        }
         setDualRoleInfo(info);
         setShowDualRoleInterstitial(true);
         setCheckingAccess(false);
@@ -273,6 +316,17 @@ export default function UnifiedLogin() {
             // Check for dual roles before redirecting
             const info = await checkDualRoleStatus(loggedInUser.id);
             if (info.hasPlatformRoles && info.hasOrgMembership) {
+              // Check for saved preference
+              const savedPref = await getDualRolePreference(loggedInUser.id);
+              if (savedPref === 'platform') {
+                navigate('/platform/overview', { replace: true });
+                return;
+              }
+              if (savedPref === 'org_dashboard') {
+                const orgPath = info.orgSlug ? `/org/${info.orgSlug}/dashboard` : '/dashboard';
+                navigate(orgPath, { replace: true });
+                return;
+              }
               setDualRoleInfo(info);
               setShowDualRoleInterstitial(true);
               setLoading(false);
@@ -339,6 +393,14 @@ export default function UnifiedLogin() {
       ? `/org/${dualRoleInfo.orgSlug}/dashboard`
       : '/dashboard';
 
+    const handleDestinationChoice = async (destination: 'platform' | 'org_dashboard') => {
+      if (rememberChoice && user) {
+        await saveDualRolePreference(user.id, destination);
+      }
+      const path = destination === 'platform' ? '/platform/overview' : orgDashPath;
+      navigate(path, { replace: true });
+    };
+
     return (
       <div className="min-h-screen bg-slate-950 flex flex-col relative overflow-hidden">
         {/* Background */}
@@ -367,7 +429,7 @@ export default function UnifiedLogin() {
 
             <div className="space-y-3">
               <button
-                onClick={() => navigate('/platform/overview', { replace: true })}
+                onClick={() => handleDestinationChoice('platform')}
                 className="w-full p-5 bg-white/[0.03] border border-white/[0.08] rounded-xl backdrop-blur-sm hover:bg-white/[0.06] hover:border-violet-500/30 transition-all group text-left"
               >
                 <div className="flex items-center gap-4">
@@ -384,7 +446,7 @@ export default function UnifiedLogin() {
               </button>
 
               <button
-                onClick={() => navigate(orgDashPath, { replace: true })}
+                onClick={() => handleDestinationChoice('org_dashboard')}
                 className="w-full p-5 bg-white/[0.03] border border-white/[0.08] rounded-xl backdrop-blur-sm hover:bg-white/[0.06] hover:border-violet-500/30 transition-all group text-left"
               >
                 <div className="flex items-center gap-4">
@@ -392,13 +454,31 @@ export default function UnifiedLogin() {
                     <Building2 className="w-5 h-5 text-emerald-400" />
                   </div>
                   <div>
-                    <h3 className="text-white font-medium">Organization Dashboard</h3>
+                    <h3 className="text-white font-medium">
+                      {dualRoleInfo.orgName ? `${dualRoleInfo.orgName} Dashboard` : 'Organization Dashboard'}
+                    </h3>
                     <p className="text-sm text-slate-400 mt-0.5">
                       View your salon's performance and operations
                     </p>
                   </div>
                 </div>
               </button>
+            </div>
+
+            {/* Remember choice */}
+            <div className="flex items-center gap-3 justify-center">
+              <Checkbox
+                id="rememberChoice"
+                checked={rememberChoice}
+                onCheckedChange={(checked) => setRememberChoice(checked === true)}
+                className="border-slate-600 data-[state=checked]:bg-violet-600 data-[state=checked]:border-violet-600"
+              />
+              <label
+                htmlFor="rememberChoice"
+                className="text-sm text-slate-400 cursor-pointer select-none"
+              >
+                Remember my choice
+              </label>
             </div>
           </div>
         </div>
