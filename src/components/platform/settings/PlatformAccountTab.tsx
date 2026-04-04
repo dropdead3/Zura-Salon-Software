@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useEmployeeProfile, useUpdateEmployeeProfile, useUploadProfilePhoto } from '@/hooks/useEmployeeProfile';
 import { cn } from '@/lib/utils';
-import { Camera, Loader2, Save, User, Crown, Shield, Headphones, Code } from 'lucide-react';
+import { Camera, Loader2, Save, User, Crown, Shield, Headphones, Code, RotateCcw, Navigation } from 'lucide-react';
 import { ZuraLoader } from '@/components/ui/ZuraLoader';
 import { PlatformBadge } from '@/components/platform/ui/PlatformBadge';
 import type { PlatformRole } from '@/hooks/usePlatformRoles';
@@ -18,6 +18,8 @@ import { PlatformButton } from '@/components/platform/ui/PlatformButton';
 import { PlatformInput } from '@/components/platform/ui/PlatformInput';
 import { PlatformLabel } from '@/components/platform/ui/PlatformLabel';
 import { OnlineIndicator } from '@/components/platform/ui/OnlineIndicator';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 const roleConfig: Record<PlatformRole, { label: string; icon: React.ElementType; variant: 'warning' | 'info' | 'success' | 'primary' }> = {
   platform_owner: { label: 'Owner', icon: Crown, variant: 'warning' },
@@ -25,6 +27,111 @@ const roleConfig: Record<PlatformRole, { label: string; icon: React.ElementType;
   platform_support: { label: 'Support', icon: Headphones, variant: 'success' },
   platform_developer: { label: 'Developer', icon: Code, variant: 'primary' },
 };
+
+function getPreferenceLabel(pref: string | null): string {
+  if (!pref) return 'Not set (interstitial shown each login)';
+  if (pref === 'platform') return 'Platform Administration';
+  if (pref.startsWith('org_dashboard:')) {
+    const slug = pref.split(':')[1];
+    return `Organization Dashboard (${slug})`;
+  }
+  if (pref === 'org_dashboard') return 'Organization Dashboard';
+  return pref;
+}
+
+function LoginDestinationPreference() {
+  const { user, platformRoles } = useAuth();
+  const [preference, setPreference] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [resetting, setResetting] = useState(false);
+  const [hasOrgMembership, setHasOrgMembership] = useState(false);
+
+  const isDualRole = platformRoles.length > 0 && hasOrgMembership;
+
+  useEffect(() => {
+    if (!user?.id) return;
+    async function load() {
+      const [prefResult, empResult, adminResult] = await Promise.all([
+        supabase
+          .from('user_preferences')
+          .select('dual_role_destination')
+          .eq('user_id', user!.id)
+          .maybeSingle(),
+        supabase
+          .from('employee_profiles')
+          .select('organization_id')
+          .eq('user_id', user!.id)
+          .limit(1),
+        supabase
+          .from('organization_admins')
+          .select('organization_id')
+          .eq('user_id', user!.id)
+          .limit(1),
+      ]);
+      setPreference((prefResult.data as any)?.dual_role_destination || null);
+      setHasOrgMembership(
+        !!(empResult.data && empResult.data.length > 0) ||
+        !!(adminResult.data && adminResult.data.length > 0)
+      );
+      setLoading(false);
+    }
+    load();
+  }, [user?.id]);
+
+  const handleReset = async () => {
+    if (!user?.id) return;
+    setResetting(true);
+    await supabase
+      .from('user_preferences')
+      .upsert(
+        { user_id: user.id, dual_role_destination: null, updated_at: new Date().toISOString() } as any,
+        { onConflict: 'user_id' }
+      );
+    setPreference(null);
+    setResetting(false);
+    toast.success('Login destination preference cleared');
+  };
+
+  if (loading || !isDualRole) return null;
+
+  return (
+    <PlatformCard variant="glass" className="mt-6">
+      <PlatformCardHeader>
+        <PlatformCardTitle className="flex items-center gap-2">
+          <Navigation className="h-5 w-5 text-[hsl(var(--platform-primary))]" />
+          Login Destination
+        </PlatformCardTitle>
+        <PlatformCardDescription>
+          Choose where you land after signing in. Reset to see the selection screen each time.
+        </PlatformCardDescription>
+      </PlatformCardHeader>
+      <PlatformCardContent>
+        <div className="flex items-center justify-between gap-4">
+          <div className="space-y-1">
+            <p className="text-sm text-[hsl(var(--platform-foreground))]">
+              Current default
+            </p>
+            <p className="text-sm text-[hsl(var(--platform-foreground-muted))]">
+              {getPreferenceLabel(preference)}
+            </p>
+          </div>
+          {preference && (
+            <PlatformButton
+              variant="outline"
+              size="sm"
+              onClick={handleReset}
+              disabled={resetting}
+              className="gap-1.5"
+            >
+              {resetting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RotateCcw className="w-3.5 h-3.5" />}
+              Reset
+            </PlatformButton>
+          )}
+        </div>
+      </PlatformCardContent>
+    </PlatformCard>
+  );
+}
 
 export function PlatformAccountTab() {
   const { user, platformRoles } = useAuth();
@@ -86,133 +193,137 @@ export function PlatformAccountTab() {
   }
 
   return (
-    <PlatformCard variant="glass">
-      <PlatformCardHeader>
-        <PlatformCardTitle className="flex items-center gap-2">
-          <User className="h-5 w-5 text-[hsl(var(--platform-primary))]" />
-          Account Settings
-        </PlatformCardTitle>
-        <PlatformCardDescription>
-          Manage your platform profile and preferences
-        </PlatformCardDescription>
-      </PlatformCardHeader>
-      <PlatformCardContent>
-        <div className="flex flex-col md:flex-row gap-8">
-          {/* Photo Upload Section */}
-          <div className="flex flex-col items-center gap-3">
-            <div className="relative group">
-              <Avatar className="h-24 w-24 border-2 border-[hsl(var(--platform-border))]">
-                <AvatarImage src={profile?.photo_url || undefined} alt="Profile photo" />
-                <AvatarFallback className="text-xl font-medium bg-[hsl(var(--platform-bg-card))] text-[hsl(var(--platform-foreground)/0.85)]">
-                  {getInitials()}
-                </AvatarFallback>
-              </Avatar>
-              
-              <OnlineIndicator 
-                isOnline={true} 
-                size="lg" 
-                className="absolute bottom-1 right-1"
-              />
-              
-              <button
-                onClick={handlePhotoClick}
-                disabled={uploadPhoto.isPending}
-                className={cn(
-                  'absolute inset-0 rounded-full flex items-center justify-center',
-                  'bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity',
-                  'cursor-pointer disabled:cursor-not-allowed'
-                )}
-              >
-                {uploadPhoto.isPending ? (
-                  <Loader2 className="w-6 h-6 text-white animate-spin" />
-                ) : (
-                  <Camera className="w-6 h-6 text-white" />
-                )}
-              </button>
-              
-              <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handlePhotoChange} />
-            </div>
-            <p className="text-xs text-[hsl(var(--platform-foreground-subtle))]">
-              Click to upload photo
-            </p>
-            
-            {roleInfo && (
-              <PlatformBadge variant={roleInfo.variant} size="lg" className="gap-1.5 mt-2">
-                <roleInfo.icon className="w-3.5 h-3.5" />
-                {roleInfo.label}
-              </PlatformBadge>
-            )}
-          </div>
-
-          {/* Form Fields */}
-          <div className="flex-1 space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <PlatformLabel htmlFor="full_name">Full Name</PlatformLabel>
-                <PlatformInput
-                  id="full_name"
-                  value={formData.full_name}
-                  onChange={(e) => handleInputChange('full_name', e.target.value)}
-                  placeholder="Enter your full name"
+    <>
+      <PlatformCard variant="glass">
+        <PlatformCardHeader>
+          <PlatformCardTitle className="flex items-center gap-2">
+            <User className="h-5 w-5 text-[hsl(var(--platform-primary))]" />
+            Account Settings
+          </PlatformCardTitle>
+          <PlatformCardDescription>
+            Manage your platform profile and preferences
+          </PlatformCardDescription>
+        </PlatformCardHeader>
+        <PlatformCardContent>
+          <div className="flex flex-col md:flex-row gap-8">
+            {/* Photo Upload Section */}
+            <div className="flex flex-col items-center gap-3">
+              <div className="relative group">
+                <Avatar className="h-24 w-24 border-2 border-[hsl(var(--platform-border))]">
+                  <AvatarImage src={profile?.photo_url || undefined} alt="Profile photo" />
+                  <AvatarFallback className="text-xl font-medium bg-[hsl(var(--platform-bg-card))] text-[hsl(var(--platform-foreground)/0.85)]">
+                    {getInitials()}
+                  </AvatarFallback>
+                </Avatar>
+                
+                <OnlineIndicator 
+                  isOnline={true} 
+                  size="lg" 
+                  className="absolute bottom-1 right-1"
                 />
+                
+                <button
+                  onClick={handlePhotoClick}
+                  disabled={uploadPhoto.isPending}
+                  className={cn(
+                    'absolute inset-0 rounded-full flex items-center justify-center',
+                    'bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity',
+                    'cursor-pointer disabled:cursor-not-allowed'
+                  )}
+                >
+                  {uploadPhoto.isPending ? (
+                    <Loader2 className="w-6 h-6 text-white animate-spin" />
+                  ) : (
+                    <Camera className="w-6 h-6 text-white" />
+                  )}
+                </button>
+                
+                <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handlePhotoChange} />
               </div>
-
-              <div className="space-y-2">
-                <PlatformLabel htmlFor="display_name">Display Name</PlatformLabel>
-                <PlatformInput
-                  id="display_name"
-                  value={formData.display_name}
-                  onChange={(e) => handleInputChange('display_name', e.target.value)}
-                  placeholder="Preferred name"
-                />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <PlatformLabel>Email</PlatformLabel>
-              <PlatformInput
-                value={user?.email || ''}
-                disabled
-                className="opacity-60 cursor-not-allowed"
-              />
               <p className="text-xs text-[hsl(var(--platform-foreground-subtle))]">
-                Email is linked to your account and cannot be changed here
+                Click to upload photo
               </p>
+              
+              {roleInfo && (
+                <PlatformBadge variant={roleInfo.variant} size="lg" className="gap-1.5 mt-2">
+                  <roleInfo.icon className="w-3.5 h-3.5" />
+                  {roleInfo.label}
+                </PlatformBadge>
+              )}
             </div>
 
-            <div className="space-y-2">
-              <PlatformLabel htmlFor="phone">Phone</PlatformLabel>
-              <PlatformInput
-                id="phone"
-                type="tel"
-                value={formData.phone}
-                onChange={(e) => handleInputChange('phone', e.target.value)}
-                placeholder="(555) 123-4567"
-              />
-            </div>
+            {/* Form Fields */}
+            <div className="flex-1 space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <PlatformLabel htmlFor="full_name">Full Name</PlatformLabel>
+                  <PlatformInput
+                    id="full_name"
+                    value={formData.full_name}
+                    onChange={(e) => handleInputChange('full_name', e.target.value)}
+                    placeholder="Enter your full name"
+                  />
+                </div>
 
-            <div className="pt-4">
-              <PlatformButton
-                onClick={handleSave}
-                disabled={!hasChanges || updateProfile.isPending}
-                className="gap-2"
-              >
-                {updateProfile.isPending ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    Saving...
-                  </>
-                ) : (
-                  <>
-                    <Save className="w-4 h-4" />
-                    Save Changes
-                  </>
-                )}
-              </PlatformButton>
+                <div className="space-y-2">
+                  <PlatformLabel htmlFor="display_name">Display Name</PlatformLabel>
+                  <PlatformInput
+                    id="display_name"
+                    value={formData.display_name}
+                    onChange={(e) => handleInputChange('display_name', e.target.value)}
+                    placeholder="Preferred name"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <PlatformLabel>Email</PlatformLabel>
+                <PlatformInput
+                  value={user?.email || ''}
+                  disabled
+                  className="opacity-60 cursor-not-allowed"
+                />
+                <p className="text-xs text-[hsl(var(--platform-foreground-subtle))]">
+                  Email is linked to your account and cannot be changed here
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <PlatformLabel htmlFor="phone">Phone</PlatformLabel>
+                <PlatformInput
+                  id="phone"
+                  type="tel"
+                  value={formData.phone}
+                  onChange={(e) => handleInputChange('phone', e.target.value)}
+                  placeholder="(555) 123-4567"
+                />
+              </div>
+
+              <div className="pt-4">
+                <PlatformButton
+                  onClick={handleSave}
+                  disabled={!hasChanges || updateProfile.isPending}
+                  className="gap-2"
+                >
+                  {updateProfile.isPending ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Saving...
+                    </>
+                  ) : (
+                    <>
+                      <Save className="w-4 h-4" />
+                      Save Changes
+                    </>
+                  )}
+                </PlatformButton>
+              </div>
             </div>
           </div>
-        </div>
-      </PlatformCardContent>
-    </PlatformCard>
+        </PlatformCardContent>
+      </PlatformCard>
+
+      <LoginDestinationPreference />
+    </>
   );
 }
