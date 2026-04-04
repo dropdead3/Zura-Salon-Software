@@ -31,7 +31,7 @@ export const sampleStylists: Stylist[] = [
     specialties: ["EXTENSIONS", "BLONDING", "BALAYAGE"],
     highlighted_services: ["EXTENSIONS", "BLONDING", "BALAYAGE"],
     imageUrl: oliviaMartinez,
-    locations: ["north-mesa"],
+    locations: ["location-1"],
     isBooking: true,
     bio: "Specializing in seamless extensions and sun-kissed blondes.",
   },
