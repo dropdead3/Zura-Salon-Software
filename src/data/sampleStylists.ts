@@ -91,7 +91,7 @@ export const sampleStylists: Stylist[] = [
     specialties: ["PRECISION CUTS", "STYLING", "BLOWOUTS"],
     highlighted_services: ["PRECISION CUTS", "STYLING"],
     imageUrl: charlotteDavis,
-    locations: ["north-mesa"],
+    locations: ["location-1"],
     isBooking: true,
     bio: "Creating confidence through precision haircuts.",
   },
