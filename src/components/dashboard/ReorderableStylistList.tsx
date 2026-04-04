@@ -55,6 +55,7 @@ interface SortableStylistCardProps {
 }
 
 function SortableStylistCard({ stylist, onToggleVisibility, onEdit, isUpdating }: SortableStylistCardProps) {
+  const { getLocationName } = useLocationName();
   const {
     attributes,
     listeners,

@@ -197,8 +197,17 @@ export function StylistsContent() {
   const updateSettings = useUpdateHomepageStylistsSettings();
   const showSampleCards = settings?.show_sample_cards ?? false;
   
-  const northMesaCount = sampleStylists.filter(s => s.locations.includes('north-mesa' as any)).length;
-  const valVistaCount = sampleStylists.filter(s => s.locations.includes('val-vista-lakes' as any)).length;
+  const { getLocationName, locations: activeLocations } = useLocationName();
+  
+  // Count sample stylists per location dynamically
+  const locationCounts = useMemo(() => {
+    if (!activeLocations) return [];
+    return activeLocations.map(loc => ({
+      id: loc.id,
+      name: loc.name,
+      count: sampleStylists.filter(s => s.locations.includes(loc.id)).length,
+    })).filter(lc => lc.count > 0);
+  }, [activeLocations]);
   
   const displayStylists = orderedIds 
     ? orderedIds.map(id => visibleStylists.find(s => s.id === id)).filter(Boolean) as StylistProfile[]
