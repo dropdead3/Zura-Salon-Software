@@ -105,7 +105,7 @@ async function saveDualRolePreference(userId: string, destination: string): Prom
     );
 }
 
-
+async function getUserRedirectPath(userId: string, fallback: string): Promise<string> {
   // Check for platform roles first
   const { data: platformRoles } = await supabase
     .from('platform_roles')
