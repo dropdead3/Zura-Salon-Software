@@ -74,7 +74,7 @@ async function checkDualRoleStatus(userId: string): Promise<DualRoleInfo> {
     orgName = org?.name || undefined;
   }
 
-  return { hasPlatformRoles, hasOrgMembership, orgSlug };
+  return { hasPlatformRoles, hasOrgMembership, orgSlug, orgName };
 }
 
 async function getUserRedirectPath(userId: string, fallback: string): Promise<string> {
