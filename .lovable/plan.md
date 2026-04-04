@@ -1,44 +1,29 @@
 
 
-# Bug Cleanup Pass 5 — Remaining Tenant Location References
+# Add `lazyWithRetry` Wrapper for Resilient Dynamic Imports
 
-## Issues Found
+## Problem
+Transient Vite dev-server 503/timeout errors during module transformation cause `React.lazy` to throw unrecoverable errors, resulting in blank screens. Once a dynamic import fails, React has no built-in retry mechanism.
 
-| File | Issue | Severity |
-|------|-------|----------|
-| `sync-phorest-data/index.ts` | Hardcoded `mesa`, `val vista`, `lakes` keyword matching for location mapping (lines 329-338) | HIGH |
-| `StylistsContent.tsx` | Hardcoded `north-mesa` / `val-vista-lakes` location counts (lines 199-200, 362-367) | MED |
-| `HomepageStylists.tsx` | Same hardcoded location counts (lines 282-283) | MED |
-| `FooterCTAPreview.tsx` | Sample locations use `Mesa` / `Gilbert` with `(480)` area codes | LOW |
-| `LocationsSettingsContent.tsx` | Remaining tenant placeholders: `"North Mesa"`, `"Gilbert Rd & McKellips"`, `"/booking?location=north-mesa"` | LOW |
-| `stylists.ts` | `Location` type still locked to `"north-mesa" \| "val-vista-lakes"`; `getLocationName` maps those IDs; stylist data references them | HIGH (tech debt, previously flagged) |
-| `sampleStylists.ts` | All sample stylists use `"north-mesa"` location ID | MED |
-| `ViewProfile.tsx` / `MyProfile.tsx` | Phone placeholders use `(480)` area code — minor but tenant-adjacent | LOW |
-| `dockDemoData.ts` | Demo clients use `(480)` / `(602)` area codes | LOW |
+## Solution
+Create a `lazyWithRetry` utility that wraps `React.lazy` with automatic retry logic (exponential backoff, 3 attempts). Then replace all `lazy()` calls in `App.tsx` with `lazyWithRetry()`.
 
-## Implementation Plan
+## Implementation
 
-### Step 1: Fix Phorest sync location mapping
-The edge function has hardcoded keyword matching (`mesa`, `val vista`, `lakes`) instead of generic matching. Replace with a dynamic approach: normalize both DB location names and Phorest branch names, then match on substring/fuzzy logic without hardcoded keywords.
+### Step 1: Create `src/lib/lazyWithRetry.ts`
+- Export a `lazyWithRetry` function with the same signature as `React.lazy`
+- On import failure, retry up to 3 times with 1s → 2s → 4s delays
+- On final failure, force a page reload (clears stale module cache) unless already reloaded
+- Uses `sessionStorage` flag to prevent infinite reload loops
 
-### Step 2: Make stylist location counts dynamic
-`StylistsContent.tsx` and `HomepageStylists.tsx` both hardcode `north-mesa` / `val-vista-lakes` counts. Replace with a dynamic loop that counts stylists per location using `useActiveLocations()` to get location names and IDs.
-
-### Step 3: Genericize Location type in stylists.ts
-Change `Location` from a union literal to `string`. Remove `getLocationName()` (consumers should resolve names from DB). Update `sampleStylists.ts` to use generic IDs like `"location-1"`.
-
-### Step 4: Neutralize remaining placeholder text
-- `LocationsSettingsContent.tsx`: `"North Mesa"` → `"Downtown"`, `"Gilbert Rd & McKellips"` → `"Main St & 1st Ave"`, `"/booking?location=north-mesa"` → `"/booking?location=downtown"`
-- `FooterCTAPreview.tsx`: `Mesa`/`Gilbert` → `"Downtown"`/`"Eastside"`, phones → `(555)` prefix
-- `ViewProfile.tsx` / `MyProfile.tsx`: `480-555-1234` → `555-123-4567`
-- `dockDemoData.ts`: Swap `(480)`/`(602)` → `(555)` prefix
-
-### Step 5: Deploy updated Phorest edge function
+### Step 2: Update `App.tsx`
+- Replace `import { lazy } from "react"` usage with `import { lazyWithRetry } from "@/lib/lazyWithRetry"`
+- Find-and-replace all `lazy(() =>` calls (~80+) with `lazyWithRetry(() =>`
+- No other changes needed — the function returns the same `React.LazyExoticComponent` type
 
 ## Technical Details
-- **Edge function redeployment** required for `sync-phorest-data`
-- The Phorest location matching fix is the most critical — hardcoded keywords will break for any tenant that doesn't have Mesa/Val Vista locations
-- `stylists.ts` type change may cascade to consumers importing `Location` — need to check dependents
-- All other changes are placeholder text swaps
-- **Risk**: Low for UI changes. Medium for Phorest sync (needs careful testing to ensure location matching still works for existing data)
+- Zero impact on bundle size or runtime behavior when imports succeed on first try
+- The retry + reload pattern is a well-established production practice for SPAs
+- `sessionStorage` key (e.g. `"lazyRetryReloaded"`) prevents infinite reload loops
+- Compatible with existing `<Suspense>` boundary and `ErrorBoundary`
 
