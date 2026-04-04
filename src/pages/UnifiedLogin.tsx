@@ -15,6 +15,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { toast as sonnerToast } from 'sonner';
 import { Loader2, ArrowLeft, Eye, EyeOff, Mail, CheckCircle, Shield, Building2 } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
 import ZuraLogoWhite from '@/assets/zura-logo-white.svg';
 import { usePlatformBranding } from '@/hooks/usePlatformBranding';
 import { z } from 'zod';
