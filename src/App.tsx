@@ -1,3 +1,4 @@
+import { Suspense, lazy } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -27,184 +28,192 @@ import UnifiedLogin from "./pages/UnifiedLogin";
 import NotFound from "./pages/NotFound";
 
 // Organization public pages (under /org/:orgSlug)
-import Index from "./pages/Index";
-import Services from "./pages/Services";
-import About from "./pages/About";
-import Booking from "./pages/Booking";
-import Stylists from "./pages/Stylists";
-import Extensions from "./pages/Extensions";
-import Policies from "./pages/Policies";
-import Shop from "./pages/Shop";
-import DynamicPage from "./pages/DynamicPage";
 import { OrgPublicRoute } from "./components/org/OrgPublicRoute";
 
 // Dashboard pages
-import DashboardHome from "./pages/dashboard/DashboardHome";
-import Program from "./pages/dashboard/Program";
-import RingTheBell from "./pages/dashboard/RingTheBell";
-import Leaderboard from "./pages/dashboard/Leaderboard";
-import Training from "./pages/dashboard/Training";
-import Progress from "./pages/dashboard/Progress";
-import Stats from "./pages/dashboard/Stats";
-import WeeklyWins from "./pages/dashboard/WeeklyWins";
-import TeamOverview from "./pages/dashboard/admin/TeamOverview";
-import Handbooks from "./pages/dashboard/admin/Handbooks";
-import AdminSettings from "./pages/dashboard/admin/Settings";
-import AdminAnnouncements from "./pages/dashboard/admin/Announcements";
-import HomepageStylists from "./pages/dashboard/admin/HomepageStylists";
-import AccountManagement from "./pages/dashboard/admin/AccountManagement";
-import TestimonialsManager from "./pages/dashboard/admin/TestimonialsManager";
-import ServicesManager from "./pages/dashboard/admin/ServicesManager";
-import AnnouncementBarManager from "./pages/dashboard/admin/AnnouncementBarManager";
-import StylistLevels from "./pages/dashboard/admin/StylistLevels";
-import LocationsManager from "./pages/dashboard/admin/LocationsManager";
-import WebsiteSectionsHub from "./pages/dashboard/admin/WebsiteSectionsHub";
 
-import TeamBirthdays from "./pages/dashboard/admin/TeamBirthdays";
-import StaffStrikes from "./pages/dashboard/admin/StaffStrikes";
-import BusinessCardRequests from "./pages/dashboard/admin/BusinessCardRequests";
-import HeadshotRequests from "./pages/dashboard/admin/HeadshotRequests";
-import MyHandbooks from "./pages/dashboard/MyHandbooks";
-import Onboarding from "./pages/dashboard/Onboarding";
-import AssistantSchedule from "./pages/dashboard/AssistantSchedule";
-import ScheduleMeeting from "./pages/dashboard/ScheduleMeeting";
-import ScheduleNewMeeting from "./pages/dashboard/meetings/ScheduleNewMeeting";
-import MyMeetings from "./pages/dashboard/meetings/MyMeetings";
-import CoachRequests from "./pages/dashboard/meetings/CoachRequests";
-import Commitments from "./pages/dashboard/meetings/Commitments";
-import MeetingInbox from "./pages/dashboard/meetings/MeetingInbox";
-import MeetingDetails from "./pages/dashboard/MeetingDetails";
-import MyProfile from "./pages/dashboard/MyProfile";
-import ViewProfile from "./pages/dashboard/ViewProfile";
-import TeamDirectory from "./pages/dashboard/TeamDirectory";
-import NotificationPreferences from "./pages/dashboard/NotificationPreferences";
-import OnboardingTracker from "./pages/dashboard/admin/OnboardingTracker";
-import ClientEngineTracker from "./pages/dashboard/admin/ClientEngineTracker";
-import AssistantRequestsOverview from "./pages/dashboard/admin/AssistantRequestsOverview";
-import ScheduleRequests from "./pages/dashboard/admin/ScheduleRequests";
-import DashboardBuild from "./pages/dashboard/admin/DashboardBuild";
-import RecruitingPipeline from "./pages/dashboard/admin/RecruitingPipeline";
-import GraduationTracker from "./pages/dashboard/admin/GraduationTracker";
-import MyGraduation from "./pages/dashboard/MyGraduation";
-import DesignSystem from "./pages/dashboard/DesignSystem";
-import ProgramEditor from "./pages/dashboard/admin/ProgramEditor";
-import PhorestSettings from "./pages/dashboard/admin/PhorestSettings";
-import AnalyticsHub from "./pages/dashboard/admin/AnalyticsHub";
-import ManagementHub from "./pages/dashboard/admin/ManagementHub";
-import TrainingHub from "./pages/dashboard/admin/TrainingHub";
-import TeamHub from "./pages/dashboard/admin/TeamHub";
-import ClientHub from "./pages/dashboard/admin/ClientHub";
-import GrowthHub from "./pages/dashboard/admin/GrowthHub";
-import WebsiteHub from "./pages/dashboard/admin/WebsiteHub";
-import LeadManagement from "./pages/dashboard/admin/LeadManagement";
-import AdminFeatureFlags from "./pages/dashboard/admin/FeatureFlags";
-import FeaturesCenter from "./pages/dashboard/admin/FeaturesCenter";
-import AccessHub from "./pages/dashboard/admin/AccessHub";
-import PlatformFeatureFlags from "./pages/dashboard/platform/FeatureFlags";
-import ClientDirectory from "./pages/dashboard/ClientDirectory";
-import Schedule from "./pages/dashboard/Schedule";
-import AllNotifications from "./pages/dashboard/AllNotifications";
-import Changelog from "./pages/dashboard/Changelog";
-import StylistMixingDashboard from "./pages/dashboard/StylistMixingDashboard";
 
-import MetricsGlossary from "./pages/dashboard/MetricsGlossary";
-import PublicBooking from "./pages/PublicBooking";
-import DayRateBooking from "./pages/DayRateBooking";
-import ProductDemo from "./pages/ProductDemo";
-import Kiosk from "./pages/Kiosk";
-import Dock from "./pages/Dock";
-import DayRateSettings from "./pages/dashboard/admin/DayRateSettings";
-import DayRateCalendar from "./pages/dashboard/admin/DayRateCalendar";
-import DataImport from "./pages/dashboard/admin/DataImport";
-import ChairAssignments from "./pages/dashboard/admin/ChairAssignments";
-import Payroll from "./pages/dashboard/admin/Payroll";
-import PayrollCallback from "./pages/dashboard/admin/PayrollCallback";
-import HelpCenter from "./pages/dashboard/HelpCenter";
-import MyPay from "./pages/dashboard/MyPay";
-import Transactions from "./pages/dashboard/Transactions";
-import AppointmentsHub from "./pages/dashboard/AppointmentsHub";
-import Inventory from "./pages/dashboard/Inventory";
-import Register from "./pages/dashboard/Register";
-import TodayPrep from "./pages/dashboard/TodayPrep";
-import Waitlist from "./pages/dashboard/Waitlist";
-import LoyaltyProgram from "./pages/dashboard/settings/LoyaltyProgram";
-import BoothRenters from "./pages/dashboard/admin/BoothRenters";
 
 // Team Challenges & Shift Swaps
-import ChallengesDashboard from "./pages/dashboard/admin/ChallengesDashboard";
-import ChallengeDetail from "./pages/dashboard/admin/ChallengeDetail";
-import ShiftSwapMarketplace from "./pages/dashboard/ShiftSwapMarketplace";
-import ShiftSwapApprovals from "./pages/dashboard/admin/ShiftSwapApprovals";
 
 // HR Tools Suite
-import DocumentTracker from "./pages/dashboard/admin/DocumentTracker";
-import PerformanceReviews from "./pages/dashboard/admin/PerformanceReviews";
-import PTOManager from "./pages/dashboard/admin/PTOManager";
-import IncidentReports from "./pages/dashboard/admin/IncidentReports";
-import NewHireWizard from "./pages/dashboard/admin/NewHireWizard";
-import RenterOnboardWizard from "./pages/dashboard/admin/RenterOnboardWizard";
 
 // Engagement Features: Points, Huddles, Training Enhancements
-import RewardShop from "./pages/dashboard/RewardShop";
-import PointsConfig from "./pages/dashboard/admin/PointsConfig";
-import DailyHuddle from "./pages/dashboard/admin/DailyHuddle";
-import ZuraConfigPage from "./pages/dashboard/admin/ZuraConfigPage";
-import ColorBarSettings from "./pages/dashboard/admin/ColorBarSettings";
-import ColorBarSubscription from "./pages/dashboard/admin/ColorBarSubscription";
-import PriceRecommendations from "./pages/dashboard/admin/PriceRecommendations";
 
 // V1 Zura Intelligence
-import KpiBuilderPage from "./pages/dashboard/admin/KpiBuilderPage";
-import ExecutiveBriefPage from "./pages/dashboard/admin/ExecutiveBriefPage";
-import DecisionHistoryPage from "./pages/dashboard/admin/DecisionHistoryPage";
 
 // Team Chat
-import TeamChat from "./pages/dashboard/TeamChat";
-import Campaigns from "./pages/dashboard/Campaigns";
-import CampaignDetail from "./pages/dashboard/CampaignDetail";
 
 // Client Engagement Tools
-import ClientFeedbackPage from "./pages/ClientFeedback";
-import ClientPortalPage from "./pages/ClientPortal";
-import FeedbackHub from "./pages/dashboard/admin/FeedbackHub";
-import SEOWorkshopHub from "./pages/dashboard/admin/SEOWorkshopHub";
-import ReengagementHub from "./pages/dashboard/admin/ReengagementHub";
-import ClientHealthHub from "./pages/dashboard/admin/ClientHealthHub";
-import MergeClients from "./pages/dashboard/admin/MergeClients";
 
 // Renter Portal pages
-import RenterPortal from "./pages/dashboard/RenterPortal";
-import RenterPayRent from "./pages/dashboard/RenterPayRent";
-import RenterPaymentMethods from "./pages/dashboard/RenterPaymentMethods";
-import RenterCommissions from "./pages/dashboard/RenterCommissions";
-import RenterTaxDocuments from "./pages/dashboard/RenterTaxDocuments";
 
 // Platform Admin pages
-import PlatformOverview from "./pages/dashboard/platform/Overview";
-import PlatformAccounts from "./pages/dashboard/platform/Accounts";
-import AccountDetail from "./pages/dashboard/platform/AccountDetail";
-import PlatformImport from "./pages/dashboard/platform/PlatformImport";
-import PlatformSettings from "./pages/dashboard/platform/PlatformSettings";
-import PlatformRevenue from "./pages/dashboard/platform/Revenue";
-import PlatformPermissions from "./pages/dashboard/platform/Permissions";
-import PlatformIntegrationDetail from "./pages/dashboard/platform/PlatformIntegrationDetail";
-import PlatformKnowledgeBase from "./pages/dashboard/platform/KnowledgeBase";
-import PlatformOnboarding from "./pages/dashboard/platform/Onboarding";
-import PlatformAnalytics from "./pages/dashboard/platform/Analytics";
-import AuditLogPage from "./pages/dashboard/platform/AuditLog";
-import JobsPage from "./pages/dashboard/platform/Jobs";
-import SystemHealthPage from "./pages/dashboard/platform/SystemHealth";
-import StripeHealthPage from "./pages/dashboard/platform/StripeHealth";
-import NotificationsPage from "./pages/dashboard/platform/Notifications";
-import DemoFeatures from "./pages/dashboard/platform/DemoFeatures";
-import HealthScoresPage from "./pages/dashboard/platform/HealthScores";
-import BenchmarksPage from "./pages/dashboard/platform/Benchmarks";
-import ColorBarAdmin from "./pages/dashboard/platform/ColorBarAdmin";
-import CoachDashboard from "./pages/dashboard/platform/CoachDashboard";
-import BillingGuide from "./pages/dashboard/platform/BillingGuide";
-import { PlatformLayout } from "./components/platform/layout/PlatformLayout";
-import TeamCalendar from "./pages/dashboard/TeamCalendar";
-import SalesDashboard from "./pages/dashboard/admin/SalesDashboard";
+
+function RouteFallback() {
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-background">
+      <div className="h-10 w-10 animate-spin rounded-full border-2 border-border border-t-primary" />
+    </div>
+  );
+}
+const Index = lazy(() => import("./pages/Index"));
+const Services = lazy(() => import("./pages/Services"));
+const About = lazy(() => import("./pages/About"));
+const Booking = lazy(() => import("./pages/Booking"));
+const Stylists = lazy(() => import("./pages/Stylists"));
+const Extensions = lazy(() => import("./pages/Extensions"));
+const Policies = lazy(() => import("./pages/Policies"));
+const Shop = lazy(() => import("./pages/Shop"));
+const DynamicPage = lazy(() => import("./pages/DynamicPage"));
+const DashboardHome = lazy(() => import("./pages/dashboard/DashboardHome"));
+const Program = lazy(() => import("./pages/dashboard/Program"));
+const RingTheBell = lazy(() => import("./pages/dashboard/RingTheBell"));
+const Leaderboard = lazy(() => import("./pages/dashboard/Leaderboard"));
+const Training = lazy(() => import("./pages/dashboard/Training"));
+const Progress = lazy(() => import("./pages/dashboard/Progress"));
+const Stats = lazy(() => import("./pages/dashboard/Stats"));
+const WeeklyWins = lazy(() => import("./pages/dashboard/WeeklyWins"));
+const TeamOverview = lazy(() => import("./pages/dashboard/admin/TeamOverview"));
+const Handbooks = lazy(() => import("./pages/dashboard/admin/Handbooks"));
+const AdminSettings = lazy(() => import("./pages/dashboard/admin/Settings"));
+const AdminAnnouncements = lazy(() => import("./pages/dashboard/admin/Announcements"));
+const HomepageStylists = lazy(() => import("./pages/dashboard/admin/HomepageStylists"));
+const AccountManagement = lazy(() => import("./pages/dashboard/admin/AccountManagement"));
+const TestimonialsManager = lazy(() => import("./pages/dashboard/admin/TestimonialsManager"));
+const ServicesManager = lazy(() => import("./pages/dashboard/admin/ServicesManager"));
+const AnnouncementBarManager = lazy(() => import("./pages/dashboard/admin/AnnouncementBarManager"));
+const StylistLevels = lazy(() => import("./pages/dashboard/admin/StylistLevels"));
+const LocationsManager = lazy(() => import("./pages/dashboard/admin/LocationsManager"));
+const WebsiteSectionsHub = lazy(() => import("./pages/dashboard/admin/WebsiteSectionsHub"));
+const TeamBirthdays = lazy(() => import("./pages/dashboard/admin/TeamBirthdays"));
+const StaffStrikes = lazy(() => import("./pages/dashboard/admin/StaffStrikes"));
+const BusinessCardRequests = lazy(() => import("./pages/dashboard/admin/BusinessCardRequests"));
+const HeadshotRequests = lazy(() => import("./pages/dashboard/admin/HeadshotRequests"));
+const MyHandbooks = lazy(() => import("./pages/dashboard/MyHandbooks"));
+const Onboarding = lazy(() => import("./pages/dashboard/Onboarding"));
+const AssistantSchedule = lazy(() => import("./pages/dashboard/AssistantSchedule"));
+const ScheduleMeeting = lazy(() => import("./pages/dashboard/ScheduleMeeting"));
+const ScheduleNewMeeting = lazy(() => import("./pages/dashboard/meetings/ScheduleNewMeeting"));
+const MyMeetings = lazy(() => import("./pages/dashboard/meetings/MyMeetings"));
+const CoachRequests = lazy(() => import("./pages/dashboard/meetings/CoachRequests"));
+const Commitments = lazy(() => import("./pages/dashboard/meetings/Commitments"));
+const MeetingInbox = lazy(() => import("./pages/dashboard/meetings/MeetingInbox"));
+const MeetingDetails = lazy(() => import("./pages/dashboard/MeetingDetails"));
+const MyProfile = lazy(() => import("./pages/dashboard/MyProfile"));
+const ViewProfile = lazy(() => import("./pages/dashboard/ViewProfile"));
+const TeamDirectory = lazy(() => import("./pages/dashboard/TeamDirectory"));
+const NotificationPreferences = lazy(() => import("./pages/dashboard/NotificationPreferences"));
+const OnboardingTracker = lazy(() => import("./pages/dashboard/admin/OnboardingTracker"));
+const ClientEngineTracker = lazy(() => import("./pages/dashboard/admin/ClientEngineTracker"));
+const AssistantRequestsOverview = lazy(() => import("./pages/dashboard/admin/AssistantRequestsOverview"));
+const ScheduleRequests = lazy(() => import("./pages/dashboard/admin/ScheduleRequests"));
+const DashboardBuild = lazy(() => import("./pages/dashboard/admin/DashboardBuild"));
+const RecruitingPipeline = lazy(() => import("./pages/dashboard/admin/RecruitingPipeline"));
+const GraduationTracker = lazy(() => import("./pages/dashboard/admin/GraduationTracker"));
+const MyGraduation = lazy(() => import("./pages/dashboard/MyGraduation"));
+const DesignSystem = lazy(() => import("./pages/dashboard/DesignSystem"));
+const ProgramEditor = lazy(() => import("./pages/dashboard/admin/ProgramEditor"));
+const PhorestSettings = lazy(() => import("./pages/dashboard/admin/PhorestSettings"));
+const AnalyticsHub = lazy(() => import("./pages/dashboard/admin/AnalyticsHub"));
+const ManagementHub = lazy(() => import("./pages/dashboard/admin/ManagementHub"));
+const TrainingHub = lazy(() => import("./pages/dashboard/admin/TrainingHub"));
+const TeamHub = lazy(() => import("./pages/dashboard/admin/TeamHub"));
+const ClientHub = lazy(() => import("./pages/dashboard/admin/ClientHub"));
+const GrowthHub = lazy(() => import("./pages/dashboard/admin/GrowthHub"));
+const WebsiteHub = lazy(() => import("./pages/dashboard/admin/WebsiteHub"));
+const LeadManagement = lazy(() => import("./pages/dashboard/admin/LeadManagement"));
+const AdminFeatureFlags = lazy(() => import("./pages/dashboard/admin/FeatureFlags"));
+const FeaturesCenter = lazy(() => import("./pages/dashboard/admin/FeaturesCenter"));
+const AccessHub = lazy(() => import("./pages/dashboard/admin/AccessHub"));
+const PlatformFeatureFlags = lazy(() => import("./pages/dashboard/platform/FeatureFlags"));
+const ClientDirectory = lazy(() => import("./pages/dashboard/ClientDirectory"));
+const Schedule = lazy(() => import("./pages/dashboard/Schedule"));
+const AllNotifications = lazy(() => import("./pages/dashboard/AllNotifications"));
+const Changelog = lazy(() => import("./pages/dashboard/Changelog"));
+const StylistMixingDashboard = lazy(() => import("./pages/dashboard/StylistMixingDashboard"));
+const MetricsGlossary = lazy(() => import("./pages/dashboard/MetricsGlossary"));
+const PublicBooking = lazy(() => import("./pages/PublicBooking"));
+const DayRateBooking = lazy(() => import("./pages/DayRateBooking"));
+const ProductDemo = lazy(() => import("./pages/ProductDemo"));
+const Kiosk = lazy(() => import("./pages/Kiosk"));
+const Dock = lazy(() => import("./pages/Dock"));
+const DayRateSettings = lazy(() => import("./pages/dashboard/admin/DayRateSettings"));
+const DayRateCalendar = lazy(() => import("./pages/dashboard/admin/DayRateCalendar"));
+const DataImport = lazy(() => import("./pages/dashboard/admin/DataImport"));
+const ChairAssignments = lazy(() => import("./pages/dashboard/admin/ChairAssignments"));
+const Payroll = lazy(() => import("./pages/dashboard/admin/Payroll"));
+const PayrollCallback = lazy(() => import("./pages/dashboard/admin/PayrollCallback"));
+const HelpCenter = lazy(() => import("./pages/dashboard/HelpCenter"));
+const MyPay = lazy(() => import("./pages/dashboard/MyPay"));
+const Transactions = lazy(() => import("./pages/dashboard/Transactions"));
+const AppointmentsHub = lazy(() => import("./pages/dashboard/AppointmentsHub"));
+const Inventory = lazy(() => import("./pages/dashboard/Inventory"));
+const Register = lazy(() => import("./pages/dashboard/Register"));
+const TodayPrep = lazy(() => import("./pages/dashboard/TodayPrep"));
+const Waitlist = lazy(() => import("./pages/dashboard/Waitlist"));
+const LoyaltyProgram = lazy(() => import("./pages/dashboard/settings/LoyaltyProgram"));
+const BoothRenters = lazy(() => import("./pages/dashboard/admin/BoothRenters"));
+const ChallengesDashboard = lazy(() => import("./pages/dashboard/admin/ChallengesDashboard"));
+const ChallengeDetail = lazy(() => import("./pages/dashboard/admin/ChallengeDetail"));
+const ShiftSwapMarketplace = lazy(() => import("./pages/dashboard/ShiftSwapMarketplace"));
+const ShiftSwapApprovals = lazy(() => import("./pages/dashboard/admin/ShiftSwapApprovals"));
+const DocumentTracker = lazy(() => import("./pages/dashboard/admin/DocumentTracker"));
+const PerformanceReviews = lazy(() => import("./pages/dashboard/admin/PerformanceReviews"));
+const PTOManager = lazy(() => import("./pages/dashboard/admin/PTOManager"));
+const IncidentReports = lazy(() => import("./pages/dashboard/admin/IncidentReports"));
+const NewHireWizard = lazy(() => import("./pages/dashboard/admin/NewHireWizard"));
+const RenterOnboardWizard = lazy(() => import("./pages/dashboard/admin/RenterOnboardWizard"));
+const RewardShop = lazy(() => import("./pages/dashboard/RewardShop"));
+const PointsConfig = lazy(() => import("./pages/dashboard/admin/PointsConfig"));
+const DailyHuddle = lazy(() => import("./pages/dashboard/admin/DailyHuddle"));
+const ZuraConfigPage = lazy(() => import("./pages/dashboard/admin/ZuraConfigPage"));
+const ColorBarSettings = lazy(() => import("./pages/dashboard/admin/ColorBarSettings"));
+const ColorBarSubscription = lazy(() => import("./pages/dashboard/admin/ColorBarSubscription"));
+const PriceRecommendations = lazy(() => import("./pages/dashboard/admin/PriceRecommendations"));
+const KpiBuilderPage = lazy(() => import("./pages/dashboard/admin/KpiBuilderPage"));
+const ExecutiveBriefPage = lazy(() => import("./pages/dashboard/admin/ExecutiveBriefPage"));
+const DecisionHistoryPage = lazy(() => import("./pages/dashboard/admin/DecisionHistoryPage"));
+const TeamChat = lazy(() => import("./pages/dashboard/TeamChat"));
+const Campaigns = lazy(() => import("./pages/dashboard/Campaigns"));
+const CampaignDetail = lazy(() => import("./pages/dashboard/CampaignDetail"));
+const ClientFeedbackPage = lazy(() => import("./pages/ClientFeedback"));
+const ClientPortalPage = lazy(() => import("./pages/ClientPortal"));
+const FeedbackHub = lazy(() => import("./pages/dashboard/admin/FeedbackHub"));
+const SEOWorkshopHub = lazy(() => import("./pages/dashboard/admin/SEOWorkshopHub"));
+const ReengagementHub = lazy(() => import("./pages/dashboard/admin/ReengagementHub"));
+const ClientHealthHub = lazy(() => import("./pages/dashboard/admin/ClientHealthHub"));
+const MergeClients = lazy(() => import("./pages/dashboard/admin/MergeClients"));
+const RenterPortal = lazy(() => import("./pages/dashboard/RenterPortal"));
+const RenterPayRent = lazy(() => import("./pages/dashboard/RenterPayRent"));
+const RenterPaymentMethods = lazy(() => import("./pages/dashboard/RenterPaymentMethods"));
+const RenterCommissions = lazy(() => import("./pages/dashboard/RenterCommissions"));
+const RenterTaxDocuments = lazy(() => import("./pages/dashboard/RenterTaxDocuments"));
+const PlatformOverview = lazy(() => import("./pages/dashboard/platform/Overview"));
+const PlatformAccounts = lazy(() => import("./pages/dashboard/platform/Accounts"));
+const AccountDetail = lazy(() => import("./pages/dashboard/platform/AccountDetail"));
+const PlatformImport = lazy(() => import("./pages/dashboard/platform/PlatformImport"));
+const PlatformSettings = lazy(() => import("./pages/dashboard/platform/PlatformSettings"));
+const PlatformRevenue = lazy(() => import("./pages/dashboard/platform/Revenue"));
+const PlatformPermissions = lazy(() => import("./pages/dashboard/platform/Permissions"));
+const PlatformIntegrationDetail = lazy(() => import("./pages/dashboard/platform/PlatformIntegrationDetail"));
+const PlatformKnowledgeBase = lazy(() => import("./pages/dashboard/platform/KnowledgeBase"));
+const PlatformOnboarding = lazy(() => import("./pages/dashboard/platform/Onboarding"));
+const PlatformAnalytics = lazy(() => import("./pages/dashboard/platform/Analytics"));
+const AuditLogPage = lazy(() => import("./pages/dashboard/platform/AuditLog"));
+const JobsPage = lazy(() => import("./pages/dashboard/platform/Jobs"));
+const SystemHealthPage = lazy(() => import("./pages/dashboard/platform/SystemHealth"));
+const StripeHealthPage = lazy(() => import("./pages/dashboard/platform/StripeHealth"));
+const NotificationsPage = lazy(() => import("./pages/dashboard/platform/Notifications"));
+const DemoFeatures = lazy(() => import("./pages/dashboard/platform/DemoFeatures"));
+const HealthScoresPage = lazy(() => import("./pages/dashboard/platform/HealthScores"));
+const BenchmarksPage = lazy(() => import("./pages/dashboard/platform/Benchmarks"));
+const ColorBarAdmin = lazy(() => import("./pages/dashboard/platform/ColorBarAdmin"));
+const CoachDashboard = lazy(() => import("./pages/dashboard/platform/CoachDashboard"));
+const BillingGuide = lazy(() => import("./pages/dashboard/platform/BillingGuide"));
+const PlatformLayout = lazy(() => import("./components/platform/layout/PlatformLayout").then((module) => ({ default: module.PlatformLayout })));
+const TeamCalendar = lazy(() => import("./pages/dashboard/TeamCalendar"));
+const SalesDashboard = lazy(() => import("./pages/dashboard/admin/SalesDashboard"));
 
 const queryClient = new QueryClient();
 
@@ -382,7 +391,8 @@ const App = () => (
                           <ScrollToTop />
                           {import.meta.env.DEV && <DevContextBridge />}
                           <CommandMenu />
-                          <Routes>
+                          <Suspense fallback={<RouteFallback />}>
+                            <Routes>
                             {/* Platform entry point */}
                             <Route path="/" element={<PlatformLanding />} />
                             <Route path="/login" element={<UnifiedLogin />} />
@@ -456,7 +466,8 @@ const App = () => (
                             </Route>
 
                             <Route path="*" element={<NotFound />} />
-                          </Routes>
+                            </Routes>
+                          </Suspense>
                         </TooltipProvider>
                       </SoundSettingsProvider>
                     </HideNumbersProvider>
