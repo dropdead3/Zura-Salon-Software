@@ -50,6 +50,7 @@ async function getCustomLandingPage(userId: string): Promise<string | null> {
 interface DualRoleOrg {
   slug: string;
   name: string;
+  logo_url: string | null;
 }
 
 interface DualRoleInfo {
