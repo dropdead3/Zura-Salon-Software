@@ -80,6 +80,7 @@ async function checkDualRoleStatus(userId: string): Promise<DualRoleInfo> {
       orgMap.set(row.organization_id, {
         slug: row.organizations.slug,
         name: row.organizations.name,
+        logo_url: row.organizations.logo_url ?? null,
       });
     }
   });
@@ -88,6 +89,7 @@ async function checkDualRoleStatus(userId: string): Promise<DualRoleInfo> {
       orgMap.set(row.organization_id, {
         slug: row.organizations.slug,
         name: row.organizations.name,
+        logo_url: row.organizations.logo_url ?? null,
       });
     }
   });
