@@ -501,7 +501,7 @@ export function LocationsSettingsContent() {
                     id="address"
                     value={formData.address}
                     onChange={(e) => setFormData(f => ({ ...f, address: e.target.value }))}
-                    placeholder="e.g., 2036 N Gilbert Rd Ste 1"
+                    placeholder="e.g., 123 Main St"
                   />
                 </div>
                 
@@ -511,7 +511,7 @@ export function LocationsSettingsContent() {
                     id="city"
                     value={formData.city}
                     onChange={(e) => setFormData(f => ({ ...f, city: e.target.value }))}
-                    placeholder="e.g., Mesa, AZ 85203"
+                    placeholder="e.g., Anytown, ST 12345"
                   />
                 </div>
                 
@@ -521,7 +521,7 @@ export function LocationsSettingsContent() {
                     id="phone"
                     value={formData.phone}
                     onChange={(e) => setFormData(f => ({ ...f, phone: e.target.value }))}
-                    placeholder="e.g., (480) 548-1886"
+                    placeholder="e.g., (555) 123-4567"
                   />
                 </div>
                 

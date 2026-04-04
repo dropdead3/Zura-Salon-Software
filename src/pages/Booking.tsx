@@ -7,9 +7,13 @@ import { formatPhoneNumber } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { MapPin, Clock, Mail, Phone, ArrowUpRight, ChevronDown, AlertCircle } from "lucide-react";
 import { captureWebsiteLead } from "@/lib/leadCapture";
+import { useActiveLocations, formatHoursForDisplay, getClosedDays } from "@/hooks/useLocations";
+import { useBusinessSettings } from "@/hooks/useBusinessSettings";
 
 export default function Booking() {
   const { toast } = useToast();
+  const { data: dbLocations = [] } = useActiveLocations();
+  const { data: businessSettings } = useBusinessSettings();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
@@ -27,7 +31,6 @@ export default function Booking() {
   ) => {
     const { name, value } = e.target;
     
-    // Reset stylist selection when location changes
     if (name === "location") {
       setFormData({ ...formData, location: value, stylist: "" });
     } else if (name === "phone") {
@@ -41,7 +44,6 @@ export default function Booking() {
     e.preventDefault();
     setIsSubmitting(true);
 
-    // Capture lead in database
     const result = await captureWebsiteLead({
       name: formData.name,
       email: formData.email,
@@ -63,7 +65,6 @@ export default function Booking() {
         title: "Request Received",
         description: "We'll be in touch within 24 hours to confirm your appointment.",
       });
-      // Log error but still show success to user
       console.error('Lead capture failed:', result.error);
     }
 
@@ -92,12 +93,6 @@ export default function Booking() {
   const stylistOptions = [
     { name: "Soonest Available", level: "", location: "all" },
     { name: "No Preference", level: "", location: "all" },
-    { name: "Sarah Mitchell", level: "Master Stylist", location: "West Hollywood" },
-    { name: "Jordan Lee", level: "Senior Colorist", location: "West Hollywood" },
-    { name: "Alex Rivera", level: "Extension Specialist", location: "Studio City" },
-    { name: "Morgan Chen", level: "Stylist", location: "Studio City" },
-    { name: "Taylor Brooks", level: "Junior Stylist", location: "West Hollywood" },
-    { name: "Casey Kim", level: "Colorist", location: "Studio City" },
   ];
 
   const referralOptions = [
@@ -111,11 +106,16 @@ export default function Booking() {
     "Other",
   ];
 
+  // Build location options from DB
   const locationOptions = [
-    { name: "North Mesa", address: "2036 N Gilbert Rd Ste 1, Mesa, AZ 85203" },
-    { name: "Val Vista Lakes", address: "3641 E Baseline Rd Suite Q-103, Gilbert, AZ 85234" },
+    ...dbLocations.map(loc => ({
+      name: loc.name,
+      address: [loc.address, loc.city].filter(Boolean).join(", "),
+    })),
     { name: "No Preference", address: "" },
   ];
+
+  const businessEmail = businessSettings?.email || null;
 
   return (
     <Layout>
@@ -151,7 +151,7 @@ export default function Booking() {
               transition={{ duration: 0.6, delay: 0.2 }}
               className="mt-8 text-base md:text-lg text-muted-foreground font-sans font-light max-w-lg"
             >
-              Share a few details about yourself and your hair goals, and we'll be in touch to schedule your $15 consultation.
+              Share a few details about yourself and your hair goals, and we'll be in touch to schedule your consultation.
             </motion.p>
             {/* New clients notice */}
             <motion.div
@@ -416,87 +416,74 @@ export default function Booking() {
             </h2>
 
             <div className="space-y-10">
-              {/* North Mesa Location */}
-              <div className="space-y-4">
-                <div className="flex items-start gap-4">
-                  <MapPin size={20} className="text-muted-foreground mt-1 flex-shrink-0" />
-                  <div>
-                    <h3 className="text-sm uppercase tracking-wide text-foreground font-display mb-2">
-                      North Mesa
-                    </h3>
-                    <p className="text-muted-foreground font-sans font-light">
-                      2036 N Gilbert Rd Ste 1
-                      <br />
-                      Mesa, AZ 85203
-                    </p>
+              {/* Dynamic Locations */}
+              {dbLocations.length > 0 ? (
+                dbLocations.map((loc) => (
+                  <div key={loc.id} className="space-y-4">
+                    <div className="flex items-start gap-4">
+                      <MapPin size={20} className="text-muted-foreground mt-1 flex-shrink-0" />
+                      <div>
+                        <h3 className="text-sm uppercase tracking-wide text-foreground font-display mb-2">
+                          {loc.name}
+                        </h3>
+                        <p className="text-muted-foreground font-sans font-light">
+                          {loc.address}
+                          {loc.city && (
+                            <>
+                              <br />
+                              {loc.city}
+                            </>
+                          )}
+                        </p>
+                      </div>
+                    </div>
+                    {loc.phone && (
+                      <div className="flex items-start gap-4 ml-9">
+                        <Phone size={16} className="text-muted-foreground mt-0.5 flex-shrink-0" />
+                        <a
+                          href={`tel:${loc.phone.replace(/[^0-9+]/g, "")}`}
+                          className="text-muted-foreground font-sans font-light hover:text-foreground transition-colors text-sm"
+                        >
+                          {loc.phone}
+                        </a>
+                      </div>
+                    )}
+                    {loc.hours_json && (
+                      <div className="flex items-start gap-4 ml-9">
+                        <Clock size={16} className="text-muted-foreground mt-0.5 flex-shrink-0" />
+                        <div className="text-muted-foreground font-sans font-light text-sm space-y-1">
+                          <p>{formatHoursForDisplay(loc.hours_json)}</p>
+                          {getClosedDays(loc.hours_json) && (
+                            <p>{getClosedDays(loc.hours_json)}</p>
+                          )}
+                        </div>
+                      </div>
+                    )}
                   </div>
-                </div>
-                <div className="flex items-start gap-4 ml-9">
-                  <Phone size={16} className="text-muted-foreground mt-0.5 flex-shrink-0" />
-                  <a
-                    href="tel:+14805481886"
-                    className="text-muted-foreground font-sans font-light hover:text-foreground transition-colors text-sm"
-                  >
-                    (480) 548-1886
-                  </a>
-              </div>
-
-              {/* Val Vista Lakes Location */}
-              <div className="space-y-4">
-                <div className="flex items-start gap-4">
-                  <MapPin size={20} className="text-muted-foreground mt-1 flex-shrink-0" />
-                  <div>
-                    <h3 className="text-sm uppercase tracking-wide text-foreground font-display mb-2">
-                      Val Vista Lakes
-                    </h3>
-                    <p className="text-muted-foreground font-sans font-light">
-                      3641 E Baseline Rd Suite Q-103
-                      <br />
-                      Gilbert, AZ 85234
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-4 ml-9">
-                  <Phone size={16} className="text-muted-foreground mt-0.5 flex-shrink-0" />
-                  <a
-                    href="tel:+14805481886"
-                    className="text-muted-foreground font-sans font-light hover:text-foreground transition-colors text-sm"
-                  >
-                    (480) 548-1886
-                  </a>
-                </div>
-              </div>
-              </div>
-
-              {/* Hours */}
-              <div className="flex items-start gap-4">
-                <Clock size={20} className="text-muted-foreground mt-1 flex-shrink-0" />
-                <div>
-                  <h3 className="text-sm uppercase tracking-wide text-foreground font-display mb-2">
-                    Hours
-                  </h3>
-                  <div className="text-muted-foreground font-sans font-light space-y-1">
-                    <p>Tuesday – Saturday: 10am – 6pm</p>
-                    <p>Sunday – Monday: Closed</p>
-                  </div>
-                </div>
-              </div>
+                ))
+              ) : (
+                <p className="text-muted-foreground font-sans font-light">
+                  Contact us for location details.
+                </p>
+              )}
 
               {/* Email */}
-              <div className="flex items-start gap-4">
-                <Mail size={20} className="text-muted-foreground mt-1 flex-shrink-0" />
-                <div>
-                  <h3 className="text-sm uppercase tracking-wide text-foreground font-display mb-2">
-                    Email
-                  </h3>
-                  <a
-                    href="mailto:contact@salon.com"
-                    className="text-muted-foreground font-sans font-light hover:text-foreground transition-colors"
-                  >
-                    contact@salon.com
-                  </a>
+              {businessEmail && (
+                <div className="flex items-start gap-4">
+                  <Mail size={20} className="text-muted-foreground mt-1 flex-shrink-0" />
+                  <div>
+                    <h3 className="text-sm uppercase tracking-wide text-foreground font-display mb-2">
+                      Email
+                    </h3>
+                    <a
+                      href={`mailto:${businessEmail}`}
+                      className="text-muted-foreground font-sans font-light hover:text-foreground transition-colors"
+                    >
+                      {businessEmail}
+                    </a>
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
 
           </motion.div>
