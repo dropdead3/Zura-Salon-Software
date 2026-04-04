@@ -67,17 +67,15 @@ export function AnimatedBlurredAmount({
   useEffect(() => {
     const el = spanRef.current;
     if (!el || !shouldAutoCompact) return;
+    let rafId: number;
     const ro = new ResizeObserver(() => {
-      // When container grows, try un-compacting
-      if (isAutoCompact && Math.abs(value) >= 1000) {
-        setIsAutoCompact(false); // will re-check on next render
-      }
       // Defer check to next frame after layout
-      requestAnimationFrame(() => checkOverflow());
+      cancelAnimationFrame(rafId);
+      rafId = requestAnimationFrame(() => checkOverflow());
     });
     ro.observe(el);
-    return () => ro.disconnect();
-  }, [shouldAutoCompact, checkOverflow, isAutoCompact, value]);
+    return () => { ro.disconnect(); cancelAnimationFrame(rafId); };
+  }, [shouldAutoCompact, checkOverflow]);
 
   // Check overflow after value settles
   useEffect(() => {
