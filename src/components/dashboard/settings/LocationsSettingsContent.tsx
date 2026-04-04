@@ -521,7 +521,7 @@ export function LocationsSettingsContent() {
                     id="phone"
                     value={formData.phone}
                     onChange={(e) => setFormData(f => ({ ...f, phone: e.target.value }))}
-                    placeholder="e.g., (480) 548-1886"
+                    placeholder="e.g., (555) 123-4567"
                   />
                 </div>
                 
