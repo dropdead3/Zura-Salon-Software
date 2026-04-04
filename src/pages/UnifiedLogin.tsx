@@ -413,15 +413,14 @@ export default function UnifiedLogin() {
 
   // Dual-role interstitial
   if (showDualRoleInterstitial && dualRoleInfo) {
-    const orgDashPath = dualRoleInfo.orgSlug
-      ? `/org/${dualRoleInfo.orgSlug}/dashboard`
-      : '/dashboard';
-
-    const handleDestinationChoice = async (destination: 'platform' | 'org_dashboard') => {
+    const handleDestinationChoice = async (destination: string, orgSlug?: string) => {
+      const prefValue = destination === 'platform' ? 'platform' : `org_dashboard:${orgSlug}`;
       if (rememberChoice && user) {
-        await saveDualRolePreference(user.id, destination);
+        await saveDualRolePreference(user.id, prefValue);
       }
-      const path = destination === 'platform' ? '/platform/overview' : orgDashPath;
+      const path = destination === 'platform'
+        ? '/platform/overview'
+        : orgSlug ? `/org/${orgSlug}/dashboard` : '/dashboard';
       navigate(path, { replace: true });
     };
 
@@ -447,7 +446,7 @@ export default function UnifiedLogin() {
                 Where do you want to go?
               </h1>
               <p className="text-slate-400">
-                You have access to both platform administration and your organization dashboard.
+                You have access to both platform administration and {dualRoleInfo.orgs.length > 1 ? 'multiple organizations' : 'your organization dashboard'}.
               </p>
             </div>
 
@@ -469,24 +468,27 @@ export default function UnifiedLogin() {
                 </div>
               </button>
 
-              <button
-                onClick={() => handleDestinationChoice('org_dashboard')}
-                className="w-full p-5 bg-white/[0.03] border border-white/[0.08] rounded-xl backdrop-blur-sm hover:bg-white/[0.06] hover:border-violet-500/30 transition-all group text-left"
-              >
-                <div className="flex items-center gap-4">
-                  <div className="p-3 bg-emerald-500/10 rounded-lg group-hover:bg-emerald-500/20 transition-colors">
-                    <Building2 className="w-5 h-5 text-emerald-400" />
+              {dualRoleInfo.orgs.map((org) => (
+                <button
+                  key={org.slug}
+                  onClick={() => handleDestinationChoice('org_dashboard', org.slug)}
+                  className="w-full p-5 bg-white/[0.03] border border-white/[0.08] rounded-xl backdrop-blur-sm hover:bg-white/[0.06] hover:border-violet-500/30 transition-all group text-left"
+                >
+                  <div className="flex items-center gap-4">
+                    <div className="p-3 bg-emerald-500/10 rounded-lg group-hover:bg-emerald-500/20 transition-colors">
+                      <Building2 className="w-5 h-5 text-emerald-400" />
+                    </div>
+                    <div>
+                      <h3 className="text-white font-medium">
+                        {org.name} Dashboard
+                      </h3>
+                      <p className="text-sm text-slate-400 mt-0.5">
+                        View performance and operations
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <h3 className="text-white font-medium">
-                      {dualRoleInfo.orgName ? `${dualRoleInfo.orgName} Dashboard` : 'Organization Dashboard'}
-                    </h3>
-                    <p className="text-sm text-slate-400 mt-0.5">
-                      View your salon's performance and operations
-                    </p>
-                  </div>
-                </div>
-              </button>
+                </button>
+              ))}
             </div>
 
             {/* Remember choice */}
