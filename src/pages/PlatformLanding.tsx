@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import { ArrowRight, BarChart3, Users, Calendar, Shield, Zap, Globe } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { PLATFORM_NAME_FULL } from '@/lib/brand';
-import brandWordmarkWhite from '@/assets/brand-wordmark-white.svg';
+import { PlatformLogo } from '@/components/brand/PlatformLogo';
 
 
 export default function PlatformLanding() {
