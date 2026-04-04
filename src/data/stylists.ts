@@ -1,6 +1,7 @@
 import kristiImage from "@/assets/stylists/kristi.jpg";
 
-export type Location = "north-mesa" | "val-vista-lakes";
+// Location is now a generic string — actual location IDs come from the database
+export type Location = string;
 
 export interface Stylist {
   id: string;
@@ -22,15 +23,6 @@ export interface Stylist {
   card_rotation?: number; // rotation for card display (default 0)
 }
 
-// Helper to get location display name
-export const getLocationName = (locationId: Location): string => {
-  const locationMap: Record<Location, string> = {
-    "north-mesa": "North Mesa",
-    "val-vista-lakes": "Val Vista Lakes"
-  };
-  return locationMap[locationId];
-};
-
 export const stylists: Stylist[] = [
   {
     id: "1",
@@ -39,7 +31,7 @@ export const stylists: Stylist[] = [
     level: "LEVEL 3 STYLIST",
     specialties: ["BLONDING", "CREATIVE COLOR", "EXTENSIONS"],
     imageUrl: kristiImage,
-    locations: ["north-mesa", "val-vista-lakes"],
+    locations: [],
     isBooking: false,
     bio: "Founder & creative director. Passionate about transforming hair and empowering stylists to reach their full potential."
   },
@@ -50,7 +42,7 @@ export const stylists: Stylist[] = [
     level: "LEVEL 2 STYLIST",
     specialties: ["EXTENSIONS", "BLONDING", "CREATIVE COLOR"],
     imageUrl: "https://images.unsplash.com/photo-1580618672591-eb180b1a973f?w=600&h=800&fit=crop",
-    locations: ["north-mesa"],
+    locations: [],
     bio: "Extension specialist with a love for creating seamless, natural-looking length. Your dream hair is my mission."
   },
   {
@@ -60,7 +52,7 @@ export const stylists: Stylist[] = [
     level: "LEVEL 2 STYLIST",
     specialties: ["BLONDING", "CREATIVE COLOR", "EXTENSIONS"],
     imageUrl: "https://images.unsplash.com/photo-1492106087820-71f1a00d2b11?w=600&h=800&fit=crop",
-    locations: ["north-mesa"],
+    locations: [],
     bio: "Blonding enthusiast who lives for that perfect, dimensional color. Let's create something beautiful together!"
   },
   {
@@ -70,7 +62,7 @@ export const stylists: Stylist[] = [
     level: "LEVEL 2 STYLIST",
     specialties: ["AIRTOUCH", "COLOR BLOCKING", "CREATIVE COLOR"],
     imageUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600&h=800&fit=crop",
-    locations: ["north-mesa"],
+    locations: [],
     bio: "Airtouch master and color blocking artist. I believe hair is the ultimate form of self-expression."
   },
   {
@@ -80,7 +72,7 @@ export const stylists: Stylist[] = [
     level: "LEVEL 3 STYLIST",
     specialties: ["LAYERED CUTS", "CREATIVE COLOR", "COLOR BLOCKING"],
     imageUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=600&h=800&fit=crop",
-    locations: ["north-mesa"],
+    locations: [],
     bio: "Precision cutting meets artistic vision. Specializing in transformative cuts that frame your unique beauty."
   },
   {
@@ -90,7 +82,7 @@ export const stylists: Stylist[] = [
     level: "LEVEL 1 STYLIST",
     specialties: ["BLONDING", "CREATIVE COLOR", "CUSTOM CUTS"],
     imageUrl: "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=600&h=800&fit=crop",
-    locations: ["north-mesa"],
+    locations: [],
     bio: "Rising talent with fresh ideas and endless creativity. Ready to bring your hair vision to life!"
   }
 ];
@@ -114,11 +106,9 @@ export const stylistWorksAtLocation = (stylist: Stylist, location: Location): bo
   return stylist.locations.includes(location);
 };
 
-// Static location IDs for stylist-location mapping (tech debt: migrate to DB)
-export const locations = [
-  { id: "north-mesa" as Location, name: "North Mesa" },
-  { id: "val-vista-lakes" as Location, name: "Val Vista Lakes" },
-];
+// Static location list — kept for backward compatibility but IDs are now generic.
+// Consumers should prefer useActiveLocations() from the DB.
+export const locations: { id: string; name: string }[] = [];
 
 // Extract all unique specialties - with EXTENSIONS first
 export const allSpecialties = Array.from(
