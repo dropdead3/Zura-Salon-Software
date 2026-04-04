@@ -1,44 +1,44 @@
 
 
-## Dual-Role Interstitial Enhancements
+## Two Enhancements to the Dual-Role Login Flow
 
-Three improvements to the post-login interstitial for users with both platform and org roles.
+### 1. "Change default login destination" in Platform Settings
 
-### Changes
+Add a new section to `PlatformAccountTab.tsx` that lets dual-role users view and reset their saved login destination preference.
 
-**1. Add `dual_role_destination` column to `user_preferences`**
+**What it does:**
+- Queries `user_preferences.dual_role_destination` for the current user
+- Displays the current default (e.g., "Platform Admin" or "Organization Dashboard") with a "Reset" button
+- Resetting sets `dual_role_destination` to `null`, so the interstitial reappears on next login
+- Only visible to users who actually have both platform roles and org membership
 
-New migration adds a nullable text column to store the user's preferred destination (`platform` or `org_dashboard`). When set, the interstitial is skipped and the user is routed directly.
+**Files modified:**
+- `src/components/platform/settings/PlatformAccountTab.tsx` — add a "Login Destination" card section at the bottom with current preference display and reset button
 
-**2. Enhance `checkDualRoleStatus()` to fetch org name**
+### 2. Multi-org support in the interstitial
 
-Currently fetches only `slug`. Will also select `name` from `organizations` and add `orgName` to the `DualRoleInfo` interface. The Organization Dashboard button will display the actual org name (e.g., "Drop Dead Salon Dashboard") instead of generic "Organization Dashboard".
+Currently the interstitial assumes a single org membership. Users who admin/own multiple organizations should see all of them.
 
-**3. Add "Remember my choice" checkbox + preference persistence**
+**What it does:**
+- `checkDualRoleStatus()` in `UnifiedLogin.tsx` fetches ALL org memberships (from both `employee_profiles` and `organization_admins`) instead of just the first one
+- `DualRoleInfo` changes from `orgSlug/orgName` to `orgs: Array<{ slug: string; name: string }>`
+- The interstitial card shows "Platform Admin" as one option, then lists each organization as a separate button (e.g., "Drop Dead Salon Dashboard", "Second Location Dashboard")
+- If only one org exists, the UI stays simple (two buttons). If multiple orgs exist, they are listed vertically
+- "Remember my choice" persists the chosen destination including the specific org slug
 
-- Add a `rememberChoice` checkbox state to the interstitial card
-- When a user clicks a destination with the checkbox checked, upsert `dual_role_destination` into `user_preferences`
-- On subsequent logins, `checkDualRoleStatus` result is combined with a preference lookup — if a saved preference exists, auto-redirect without showing the interstitial
-- The interstitial card gets a small "Remember my choice" checkbox below the two destination buttons
-
-**4. Skip interstitial when preference exists**
-
-After login, before showing the interstitial, check `user_preferences.dual_role_destination`. If set, redirect immediately. The existing `getUserRedirectPath()` function will be updated to check this field for dual-role users.
-
-### Files Modified
-
-- **Migration**: Add `dual_role_destination` column to `user_preferences`
-- **`src/pages/UnifiedLogin.tsx`**: All UI and logic changes
-  - `DualRoleInfo` gains `orgName?: string`
-  - `checkDualRoleStatus()` selects `slug, name` from organizations
-  - New `getDualRolePreference()` helper queries saved preference
-  - Interstitial card shows org name + "Remember my choice" checkbox
-  - Button click handler persists preference when checkbox is checked
-  - Post-login flow checks saved preference before showing interstitial
+**Files modified:**
+- `src/pages/UnifiedLogin.tsx`:
+  - Update `DualRoleInfo` interface to hold an array of orgs
+  - Update `checkDualRoleStatus()` to query both `employee_profiles` and `organization_admins`, deduplicating by org ID, and fetching name/slug for each
+  - Update the interstitial UI to render one button per org
+  - Update `saveDualRolePreference` to store the org slug when destination is org-based
+  - Update `getDualRolePreference` auto-redirect logic to use the stored slug
+- `src/components/platform/settings/PlatformAccountTab.tsx`:
+  - Add "Login Destination Preference" card section
 
 ### Technical Notes
 
-- `dual_role_destination` is a simple text field (`'platform'` | `'org_dashboard'` | null) — no enum needed since it's UI-only preference
-- Users can change their default later via a "Change default login destination" option in settings (future enhancement)
-- No RLS changes needed — `user_preferences` already has user-scoped policies
+- No database migration needed — `dual_role_destination` text column can store `'platform'` or `'org_dashboard:slug-name'` format
+- The reset action uses the existing `saveDualRolePreference` function with `null`
+- Multi-org query reuses the same pattern as `useUserOrganizations` hook but as a one-shot async call during login
 
