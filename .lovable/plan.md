@@ -1,44 +1,40 @@
 
 
-## Auto-Compact Numbers Everywhere via Self-Aware AnimatedBlurredAmount
+## Login Architecture: Unified vs Separate
 
-### Problem
-Only the Sales Overview card currently switches to compact numbers when space is tight. Every other card with `AnimatedBlurredAmount` (16 files, ~30+ instances) still overflows at narrow widths.
+### Current State (Already Correct)
 
-### Solution
-Instead of adding ResizeObserver to every parent component, make `AnimatedBlurredAmount` **self-aware** of overflow. The component will measure its own rendered text against its container and automatically switch to compact notation when it detects the text would clip.
+Your `UnifiedLogin.tsx` already handles both user types with a **single login form**. After sign-in, `getUserRedirectPath()` checks:
+1. Does the user have `platform_roles`? Route to `/platform/overview`
+2. Does the user have a custom landing page? Use that
+3. Otherwise, route to org dashboard
 
-### Implementation
+### Why a Single Login is Better Than Two
 
-**1. Add auto-compact logic inside `AnimatedBlurredAmount`** (`src/components/ui/AnimatedBlurredAmount.tsx`)
+Separate login pages create problems:
+- Users forget which login to use (support burden)
+- Same email/password works on both -- confusing to have two doors to the same lock
+- Platform admins who also own organizations would need to remember which page does what
+- Two pages to maintain, style, and secure
 
-- Keep the existing `compact` prop as an explicit override
-- Add a new `autoCompact` prop (default `true` for currency values) that enables self-measurement
-- Use a `ResizeObserver` on the `<span>` element itself combined with a check: if `scrollWidth > clientWidth` (text is clipping), flip to compact formatting
-- Implementation approach:
-  - Render normally first
-  - On mount and resize, check if the span is overflowing
-  - If overflowing and value ≥ 1000 (compact only makes sense for large numbers), re-render with compact notation
-  - Store `isAutoCompact` in local state
+The current unified approach is the correct pattern for multi-tenant platforms. Slack, Notion, and similar platforms use one login and route based on role/membership.
 
-**2. Remove per-card ResizeObserver from `AggregateSalesCard`** (`src/components/dashboard/AggregateSalesCard.tsx`)
+### What Could Be Improved (No Separate Pages Needed)
 
-- Remove the `cardRef`, `compactNumbers` state, and `ResizeObserver` useEffect added in the previous change
-- Remove all `compact={compactNumbers}` props from `AnimatedBlurredAmount` instances (the component now handles this internally)
-- This simplifies the card back to its original structure
+1. **Post-login disambiguation** -- If a user has BOTH platform roles AND org membership, show a brief "Where do you want to go?" interstitial after login (platform admin view vs org dashboard). This already partially exists via the multi-org switcher.
 
-**3. Files changed:**
+2. **Contextual messaging** -- If someone arrives at `/login` from a platform admin link vs an org dashboard link, the subtitle could adapt ("Sign in to manage your organization" vs "Sign in to the Zura Platform") based on the `from` state. No separate page needed.
 
-| File | Change |
-|------|--------|
-| `src/components/ui/AnimatedBlurredAmount.tsx` | Add `autoCompact` self-measurement logic using overflow detection; keep `compact` as explicit override |
-| `src/components/dashboard/AggregateSalesCard.tsx` | Remove ResizeObserver, `compactNumbers` state, and `compact={compactNumbers}` from all instances |
+3. **Sign-up gating** -- The current sign-up form shows a role selector, which is org-facing. Platform admin accounts should only be created via invitation (which is already enforced via `platformInvitationToken`). Consider hiding the public sign-up toggle entirely unless there is an active staff or platform invitation, to prevent orphan accounts.
 
-### Technical Detail
+### Recommendation
 
-- Overflow detection: the `<span>` gets `overflow-hidden text-ellipsis whitespace-nowrap` styles, then `scrollWidth > clientWidth` reliably detects clipping
-- Only triggers for values ≥ 1000 (below that, compact notation is identical to standard)
-- Uses `ResizeObserver` on the span itself (not a parent), so it works regardless of which card/layout hosts it
-- The auto-compact check runs after each value animation frame settles, not during animation, to avoid flicker
-- Every `AnimatedBlurredAmount` with `currency` set will automatically benefit — no changes needed in the 16 consumer files
+Keep the single `/login` page. No architectural change needed. The smart routing is already in place. If you want contextual copy changes based on where the user came from, that is a small UI tweak, not a structural change.
+
+### Technical Details
+
+- `getUserRedirectPath()` in `UnifiedLogin.tsx` (line 49-66) already handles role-based routing
+- Platform invitation flow (line 117-122, 138-150) correctly channels platform admin signups
+- Staff invitation flow handles org-level signups
+- No new pages, routes, or database changes required
 
