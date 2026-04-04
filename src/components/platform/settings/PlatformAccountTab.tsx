@@ -39,14 +39,19 @@ function getPreferenceLabel(pref: string | null): string {
   return pref;
 }
 
+interface OrgOption {
+  slug: string;
+  name: string;
+}
+
 function LoginDestinationPreference() {
   const { user, platformRoles } = useAuth();
   const [preference, setPreference] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [resetting, setResetting] = useState(false);
-  const [hasOrgMembership, setHasOrgMembership] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [orgs, setOrgs] = useState<OrgOption[]>([]);
 
-  const isDualRole = platformRoles.length > 0 && hasOrgMembership;
+  const isDualRole = platformRoles.length > 0 && orgs.length > 0;
 
   useEffect(() => {
     if (!user?.id) return;
@@ -59,40 +64,50 @@ function LoginDestinationPreference() {
           .maybeSingle(),
         supabase
           .from('employee_profiles')
-          .select('organization_id')
-          .eq('user_id', user!.id)
-          .limit(1),
+          .select('organization_id, organizations:organization_id (slug, name)')
+          .eq('user_id', user!.id),
         supabase
           .from('organization_admins')
-          .select('organization_id')
-          .eq('user_id', user!.id)
-          .limit(1),
+          .select('organization_id, organizations:organization_id (slug, name)')
+          .eq('user_id', user!.id),
       ]);
       setPreference((prefResult.data as any)?.dual_role_destination || null);
-      setHasOrgMembership(
-        !!(empResult.data && empResult.data.length > 0) ||
-        !!(adminResult.data && adminResult.data.length > 0)
-      );
+
+      const orgMap = new Map<string, OrgOption>();
+      empResult.data?.forEach((row: any) => {
+        if (row.organization_id && row.organizations) {
+          orgMap.set(row.organization_id, { slug: row.organizations.slug, name: row.organizations.name });
+        }
+      });
+      adminResult.data?.forEach((row: any) => {
+        if (row.organization_id && row.organizations && !orgMap.has(row.organization_id)) {
+          orgMap.set(row.organization_id, { slug: row.organizations.slug, name: row.organizations.name });
+        }
+      });
+      setOrgs(Array.from(orgMap.values()));
       setLoading(false);
     }
     load();
   }, [user?.id]);
 
-  const handleReset = async () => {
+  const handleChange = async (value: string) => {
     if (!user?.id) return;
-    setResetting(true);
+    setSaving(true);
+    const destination = value === 'ask' ? null : value;
     await supabase
       .from('user_preferences')
       .upsert(
-        { user_id: user.id, dual_role_destination: null, updated_at: new Date().toISOString() } as any,
+        { user_id: user.id, dual_role_destination: destination, updated_at: new Date().toISOString() } as any,
         { onConflict: 'user_id' }
       );
-    setPreference(null);
-    setResetting(false);
-    toast.success('Login destination preference cleared');
+    setPreference(destination);
+    setSaving(false);
+    toast.success(destination ? 'Login destination updated' : 'Login destination cleared');
   };
 
   if (loading || !isDualRole) return null;
+
+  const currentValue = preference || 'ask';
 
   return (
     <PlatformCard variant="glass" className="mt-6">
@@ -102,31 +117,32 @@ function LoginDestinationPreference() {
           Login Destination
         </PlatformCardTitle>
         <PlatformCardDescription>
-          Choose where you land after signing in. Reset to see the selection screen each time.
+          Choose where you land after signing in
         </PlatformCardDescription>
       </PlatformCardHeader>
       <PlatformCardContent>
-        <div className="flex items-center justify-between gap-4">
-          <div className="space-y-1">
-            <p className="text-sm text-[hsl(var(--platform-foreground))]">
-              Current default
-            </p>
-            <p className="text-sm text-[hsl(var(--platform-foreground-muted))]">
-              {getPreferenceLabel(preference)}
-            </p>
-          </div>
-          {preference && (
-            <PlatformButton
-              variant="outline"
-              size="sm"
-              onClick={handleReset}
-              disabled={resetting}
-              className="gap-1.5"
-            >
-              {resetting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RotateCcw className="w-3.5 h-3.5" />}
-              Reset
-            </PlatformButton>
-          )}
+        <div className="space-y-2">
+          <PlatformLabel>Default destination</PlatformLabel>
+          <select
+            value={currentValue}
+            onChange={(e) => handleChange(e.target.value)}
+            disabled={saving}
+            className={cn(
+              'w-full max-w-sm h-10 px-3 rounded-lg text-sm',
+              'bg-[hsl(var(--platform-bg-hover))] border border-[hsl(var(--platform-border))]',
+              'text-[hsl(var(--platform-foreground))]',
+              'focus:outline-none focus:ring-1 focus:ring-[hsl(var(--platform-border-glow)/0.5)]',
+              'disabled:opacity-50'
+            )}
+          >
+            <option value="ask">Always ask (show selection screen)</option>
+            <option value="platform">Platform Administration</option>
+            {orgs.map((org) => (
+              <option key={org.slug} value={`org_dashboard:${org.slug}`}>
+                {org.name} Dashboard
+              </option>
+            ))}
+          </select>
         </div>
       </PlatformCardContent>
     </PlatformCard>
