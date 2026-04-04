@@ -316,6 +316,17 @@ export default function UnifiedLogin() {
             // Check for dual roles before redirecting
             const info = await checkDualRoleStatus(loggedInUser.id);
             if (info.hasPlatformRoles && info.hasOrgMembership) {
+              // Check for saved preference
+              const savedPref = await getDualRolePreference(loggedInUser.id);
+              if (savedPref === 'platform') {
+                navigate('/platform/overview', { replace: true });
+                return;
+              }
+              if (savedPref === 'org_dashboard') {
+                const orgPath = info.orgSlug ? `/org/${info.orgSlug}/dashboard` : '/dashboard';
+                navigate(orgPath, { replace: true });
+                return;
+              }
               setDualRoleInfo(info);
               setShowDualRoleInterstitial(true);
               setLoading(false);
