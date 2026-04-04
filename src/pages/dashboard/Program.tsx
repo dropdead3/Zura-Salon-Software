@@ -41,7 +41,7 @@ import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import BrandWordmark from '@/assets/brand-wordmark.svg';
+
 import { ClientEngineWelcome } from '@/components/dashboard/ClientEngineWelcome';
 import {
   AlertDialog,
