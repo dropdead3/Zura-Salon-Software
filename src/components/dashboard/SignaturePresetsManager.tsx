@@ -161,7 +161,7 @@ export const SignaturePresetsManager: React.FC = () => {
                 id="preset-name"
                 value={editName}
                 onChange={(e) => setEditName(e.target.value)}
-                placeholder="e.g., Kristi Day - CEO"
+                placeholder="e.g., Jane Smith - Owner"
               />
             </div>
             {editingPreset?.config.imageUrl && (

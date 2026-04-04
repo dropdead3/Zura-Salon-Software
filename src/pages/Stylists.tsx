@@ -6,80 +6,7 @@ import { ArrowRight, Star, Info } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Eyebrow } from "@/components/ui/Eyebrow";
 import { TogglePill } from "@/components/ui/toggle-pill";
-
-type Location = "north-mesa" | "val-vista-lakes";
-
-interface Stylist {
-  id: string;
-  name: string;
-  instagram: string;
-  level: string;
-  specialties: string[];
-  imageUrl: string;
-  location: Location;
-}
-
-const stylists: Stylist[] = [
-  {
-    id: "1",
-    name: "Kristi D.",
-    instagram: "@stylist_kristi",
-    level: "LEVEL III STYLIST",
-    specialties: ["BLONDING", "VIVIDS", "EXTENSIONS"],
-    imageUrl: "https://images.unsplash.com/photo-1595959183082-7b570b7e1daf?w=600&h=800&fit=crop",
-    location: "north-mesa"
-  },
-  {
-    id: "2",
-    name: "Sarina L.",
-    instagram: "@hairdidbysarina_",
-    level: "LEVEL II STYLIST",
-    specialties: ["EXTENSIONS", "BLONDING", "VIVIDS"],
-    imageUrl: "https://images.unsplash.com/photo-1580618672591-eb180b1a973f?w=600&h=800&fit=crop",
-    location: "north-mesa"
-  },
-  {
-    id: "3",
-    name: "Hayleigh H.",
-    instagram: "@lucky7studios_",
-    level: "LEVEL II STYLIST",
-    specialties: ["BLONDING", "VIVIDS", "EXTENSIONS"],
-    imageUrl: "https://images.unsplash.com/photo-1492106087820-71f1a00d2b11?w=600&h=800&fit=crop",
-    location: "north-mesa"
-  },
-  {
-    id: "4",
-    name: "Gavin E.",
-    instagram: "@hairbygavinn",
-    level: "LEVEL II STYLIST",
-    specialties: ["AIRTOUCH", "COLOR BLOCKING", "CREATIVE COLOR"],
-    imageUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600&h=800&fit=crop",
-    location: "north-mesa"
-  },
-  {
-    id: "5",
-    name: "Maya R.",
-    instagram: "@mayahairartist",
-    level: "LEVEL III STYLIST",
-    specialties: ["LAYERED CUTS", "CREATIVE COLOR", "COLOR BLOCKING"],
-    imageUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=600&h=800&fit=crop",
-    location: "north-mesa"
-  },
-  {
-    id: "6",
-    name: "Jordan T.",
-    instagram: "@jordantcuts",
-    level: "LEVEL I STYLIST",
-    specialties: ["BLONDING", "VIVIDS", "CUSTOM CUTS"],
-    imageUrl: "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=600&h=800&fit=crop",
-    location: "north-mesa"
-  }
-];
-
-const locations = [
-  { id: "north-mesa" as Location, name: "North Mesa" },
-  { id: "val-vista-lakes" as Location, name: "Val Vista Lakes" }
-];
+import { stylists, locations, type Location, type Stylist, stylistWorksAtLocation } from "@/data/stylists";
 
 const StylistCard = ({ stylist }: { stylist: Stylist }) => {
   return (
@@ -101,7 +28,7 @@ const StylistCard = ({ stylist }: { stylist: Stylist }) => {
       {/* Gradient Overlay */}
       <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent opacity-80 group-hover:opacity-90 transition-opacity duration-500" />
       
-      {/* Specialty Tags - EXTENSIONS first as we're an extension salon */}
+      {/* Specialty Tags */}
       <div className="absolute top-4 left-4 right-4 flex flex-wrap gap-2">
         {[...stylist.specialties].sort((a, b) => {
           if (a === "EXTENSIONS") return -1;
@@ -154,7 +81,7 @@ const Stylists = () => {
   const [selectedLocation, setSelectedLocation] = useState<Location>("north-mesa");
 
   const filteredStylists = stylists.filter(
-    (s) => s.location === selectedLocation
+    (s) => stylistWorksAtLocation(s, selectedLocation)
   );
 
   const stylistCount = filteredStylists.length;

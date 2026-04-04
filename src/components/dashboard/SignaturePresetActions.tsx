@@ -92,7 +92,7 @@ export const SignaturePresetActions: React.FC<SignaturePresetActionsProps> = ({
               <Input
                 value={presetName}
                 onChange={(e) => setPresetName(e.target.value)}
-                placeholder="e.g., Kristi Day - CEO"
+                placeholder="e.g., Jane Smith - Owner"
               />
             </div>
           </div>

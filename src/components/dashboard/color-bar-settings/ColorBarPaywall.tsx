@@ -520,7 +520,7 @@ export function ColorBarPaywall() {
                   "Zura Color Bar saved us thousands per month and helps us recoup over $50,000 a year in color costs. 10/10 add-on feature."
                 </p>
                 <footer className="text-xs text-muted-foreground/50 font-sans">
-                  <span className="font-medium text-muted-foreground/70">Jamie Torres</span> · Owner, Drop Dead Salon · Austin, TX
+                  <span className="font-medium text-muted-foreground/70">Jamie T.</span> · Salon Owner · Austin, TX
                 </footer>
               </blockquote>
             </div>

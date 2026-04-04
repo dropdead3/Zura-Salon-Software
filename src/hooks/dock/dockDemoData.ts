@@ -341,7 +341,7 @@ export function searchDemoProducts(query: string): DockProduct[] {
   );
 }
 
-// ─── Mock Services (Drop Dead Salons catalog) ───────────────
+// ─── Mock Services (demo catalog) ───────────────
 export interface DemoService {
   id: string;
   phorest_service_id: string;
