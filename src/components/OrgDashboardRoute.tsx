@@ -15,7 +15,6 @@ export function OrgDashboardRoute() {
   const { orgSlug } = useParams<{ orgSlug: string }>();
   const { data: organization, isLoading, error } = useOrganizationBySlug(orgSlug);
   const { setSelectedOrganization, effectiveOrganization } = useOrganizationContext();
-  const { isPlatformUser } = useAuth();
 
   // Sync the URL-resolved org into context so all downstream hooks work
   useEffect(() => {
