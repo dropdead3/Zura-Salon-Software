@@ -274,7 +274,7 @@ function DashboardLayoutInner({ children, hideFooter, hideTopBar, hideSidebar }:
   const getLogo = () => {
     const isDark = resolvedTheme === 'dark';
     const customLogo = isDark ? businessSettings?.logo_dark_url : businessSettings?.logo_light_url;
-    const fallbackLogo = isDark ? LogoWhite : Logo;
+    const fallbackLogo = isDark ? DEFAULT_ORG_LOGO_DARK : DEFAULT_ORG_LOGO_LIGHT;
     return customLogo || fallbackLogo;
   };
 
@@ -288,7 +288,7 @@ function DashboardLayoutInner({ children, hideFooter, hideTopBar, hideSidebar }:
     if (hasCustomIcon()) {
       return isDark ? businessSettings?.icon_dark_url : businessSettings?.icon_light_url;
     }
-    return isDark ? LogoIconWhite : LogoIcon;
+    return isDark ? DEFAULT_ORG_LOGO_DARK : DEFAULT_ORG_LOGO_LIGHT;
   };
 
   useEffect(() => {
