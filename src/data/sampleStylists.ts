@@ -43,7 +43,7 @@ export const sampleStylists: Stylist[] = [
     specialties: ["BALAYAGE", "CREATIVE COLOR", "LIVED-IN COLOR"],
     highlighted_services: ["BALAYAGE", "CREATIVE COLOR"],
     imageUrl: emmaJohnson,
-    locations: ["north-mesa"],
+    locations: ["location-1"],
     isBooking: true,
     bio: "Creating dimensional color that grows out beautifully.",
   },
