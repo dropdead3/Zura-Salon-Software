@@ -29,7 +29,6 @@ import NotFound from "./pages/NotFound";
 
 // Organization public pages (under /org/:orgSlug)
 import { OrgPublicRoute } from "./components/org/OrgPublicRoute";
-import DashboardHome from "./pages/dashboard/DashboardHome";
 
 // Dashboard pages
 
