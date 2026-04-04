@@ -38,7 +38,6 @@ export function PlatformSidebar() {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, hasPlatformRoleOrHigher, platformRoles } = useAuth();
-  const { branding } = usePlatformBranding();
   const { resolvedTheme } = usePlatformTheme();
   const { data: profile } = useEmployeeProfile();
   const { isConnected } = usePlatformPresenceContext();
