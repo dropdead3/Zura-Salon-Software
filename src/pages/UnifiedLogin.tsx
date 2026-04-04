@@ -393,6 +393,14 @@ export default function UnifiedLogin() {
       ? `/org/${dualRoleInfo.orgSlug}/dashboard`
       : '/dashboard';
 
+    const handleDestinationChoice = async (destination: 'platform' | 'org_dashboard') => {
+      if (rememberChoice && user) {
+        await saveDualRolePreference(user.id, destination);
+      }
+      const path = destination === 'platform' ? '/platform/overview' : orgDashPath;
+      navigate(path, { replace: true });
+    };
+
     return (
       <div className="min-h-screen bg-slate-950 flex flex-col relative overflow-hidden">
         {/* Background */}
@@ -421,7 +429,7 @@ export default function UnifiedLogin() {
 
             <div className="space-y-3">
               <button
-                onClick={() => navigate('/platform/overview', { replace: true })}
+                onClick={() => handleDestinationChoice('platform')}
                 className="w-full p-5 bg-white/[0.03] border border-white/[0.08] rounded-xl backdrop-blur-sm hover:bg-white/[0.06] hover:border-violet-500/30 transition-all group text-left"
               >
                 <div className="flex items-center gap-4">
@@ -438,7 +446,7 @@ export default function UnifiedLogin() {
               </button>
 
               <button
-                onClick={() => navigate(orgDashPath, { replace: true })}
+                onClick={() => handleDestinationChoice('org_dashboard')}
                 className="w-full p-5 bg-white/[0.03] border border-white/[0.08] rounded-xl backdrop-blur-sm hover:bg-white/[0.06] hover:border-violet-500/30 transition-all group text-left"
               >
                 <div className="flex items-center gap-4">
@@ -446,13 +454,31 @@ export default function UnifiedLogin() {
                     <Building2 className="w-5 h-5 text-emerald-400" />
                   </div>
                   <div>
-                    <h3 className="text-white font-medium">Organization Dashboard</h3>
+                    <h3 className="text-white font-medium">
+                      {dualRoleInfo.orgName ? `${dualRoleInfo.orgName} Dashboard` : 'Organization Dashboard'}
+                    </h3>
                     <p className="text-sm text-slate-400 mt-0.5">
                       View your salon's performance and operations
                     </p>
                   </div>
                 </div>
               </button>
+            </div>
+
+            {/* Remember choice */}
+            <div className="flex items-center gap-3 justify-center">
+              <Checkbox
+                id="rememberChoice"
+                checked={rememberChoice}
+                onCheckedChange={(checked) => setRememberChoice(checked === true)}
+                className="border-slate-600 data-[state=checked]:bg-violet-600 data-[state=checked]:border-violet-600"
+              />
+              <label
+                htmlFor="rememberChoice"
+                className="text-sm text-slate-400 cursor-pointer select-none"
+              >
+                Remember my choice
+              </label>
             </div>
           </div>
         </div>
