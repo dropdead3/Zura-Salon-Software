@@ -22,6 +22,7 @@ const DEFAULT_BRANDING: PlatformBranding = {
   secondary_logo_url: null,
   icon_dark_url: null,
   icon_light_url: null,
+  login_logo_url: null,
   theme_colors: {},
   typography: {},
   loader_style: 'zura',
