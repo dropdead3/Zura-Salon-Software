@@ -98,6 +98,7 @@ export function Header() {
   const [isDesktop, setIsDesktop] = useState(false);
   const headerRef = useRef<HTMLElement>(null);
   const staffMenuRef = useRef<HTMLDivElement>(null);
+  const { data: businessSettings } = useBusinessSettings();
   const navContainerRef = useRef<HTMLDivElement>(null);
   const lastScrollY = useRef(0);
   const location = useLocation();
