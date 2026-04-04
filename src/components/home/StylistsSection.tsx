@@ -475,7 +475,7 @@ export function StylistsSection() {
       const dbLoc = dbLocations.find(db => db.id === staticLoc.id);
       return {
         ...staticLoc,
-        address: dbLoc?.address || staticLoc.address,
+        address: dbLoc?.address || "",
         city: dbLoc?.city || "",
         hours: dbLoc?.hours || "Hours not available",
       };
