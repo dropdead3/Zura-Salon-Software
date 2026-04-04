@@ -552,7 +552,7 @@ export function StylistsSection() {
                 value: loc.id,
                 label: loc.name,
                 icon: <Info className="w-3.5 h-3.5" />,
-                tooltip: `${loc.address}\n${loc.city}\n${loc.hours}`,
+                tooltip: [loc.address, loc.city, loc.hours].filter(Boolean).join('\n') || loc.name,
               }))
             ]}
             value={selectedLocation}
