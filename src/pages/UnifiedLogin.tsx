@@ -322,7 +322,7 @@ export default function UnifiedLogin() {
           <div className="text-center space-y-4">
             <div className="flex items-center justify-center mb-6">
               <img
-                src={branding.primary_logo_url || ZuraLogoWhite}
+                src={branding.login_logo_url || branding.primary_logo_url || ZuraLogoWhite}
                 alt={PLATFORM_NAME}
                 className="h-10 w-auto"
               />

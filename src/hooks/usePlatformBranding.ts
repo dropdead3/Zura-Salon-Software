@@ -10,6 +10,7 @@ export interface PlatformBranding {
   secondary_logo_url: string | null;
   icon_dark_url: string | null;
   icon_light_url: string | null;
+  login_logo_url: string | null;
   theme_colors: Record<string, string>;
   typography: Record<string, string>;
   loader_style: LoaderStyleOption;
@@ -21,6 +22,7 @@ const DEFAULT_BRANDING: PlatformBranding = {
   secondary_logo_url: null,
   icon_dark_url: null,
   icon_light_url: null,
+  login_logo_url: null,
   theme_colors: {},
   typography: {},
   loader_style: 'zura',
@@ -70,6 +72,7 @@ export function usePlatformBranding() {
         secondary_logo_url: (value.secondary_logo_url as string | null) ?? null,
         icon_dark_url: (value.icon_dark_url as string | null) ?? null,
         icon_light_url: (value.icon_light_url as string | null) ?? null,
+        login_logo_url: (value.login_logo_url as string | null) ?? null,
         theme_colors: (value.theme_colors as Record<string, string>) ?? {},
         typography: (value.typography as Record<string, string>) ?? {},
         loader_style: (value.loader_style as LoaderStyleOption) ?? 'zura',
@@ -87,6 +90,7 @@ export function usePlatformBranding() {
         secondary_logo_url: branding.secondary_logo_url,
         icon_dark_url: branding.icon_dark_url,
         icon_light_url: branding.icon_light_url,
+        login_logo_url: branding.login_logo_url,
         theme_colors: branding.theme_colors,
         typography: branding.typography,
         loader_style: branding.loader_style,
