@@ -15,7 +15,8 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { toast as sonnerToast } from 'sonner';
 import { Loader2, ArrowLeft, Eye, EyeOff, Mail, CheckCircle } from 'lucide-react';
-import { ZuraZIcon } from '@/components/icons/ZuraZIcon';
+import ZuraLogoWhite from '@/assets/zura-logo-white.svg';
+import { usePlatformBranding } from '@/hooks/usePlatformBranding';
 import { z } from 'zod';
 import { useCheckInvitation, useAcceptInvitation } from '@/hooks/useStaffInvitations';
 import { useInvitationByToken, useAcceptPlatformInvitation } from '@/hooks/usePlatformInvitations';
@@ -90,6 +91,7 @@ export default function UnifiedLogin() {
   const { toast } = useToast();
   const acceptStaffInvitation = useAcceptInvitation();
   const { roleOptions } = useRoleUtils();
+  const { branding } = usePlatformBranding();
 
   // Staff invitation check
   const debouncedEmail = useDebounce(email, 500);
@@ -318,9 +320,12 @@ export default function UnifiedLogin() {
         <div className="w-full max-w-md space-y-8">
           {/* Header */}
           <div className="text-center space-y-4">
-            <div className="flex flex-col items-center justify-center gap-3 mb-6">
-              <ZuraZIcon className="h-10 w-10 text-white" />
-              <span className="font-display text-lg tracking-widest text-white uppercase">{PLATFORM_NAME}</span>
+            <div className="flex items-center justify-center mb-6">
+              <img
+                src={branding.primary_logo_url || ZuraLogoWhite}
+                alt={PLATFORM_NAME}
+                className="h-10 w-auto"
+              />
             </div>
             <h1 className="text-3xl font-medium text-white tracking-tight">
               {isForgotPassword
