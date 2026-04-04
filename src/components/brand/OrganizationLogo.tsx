@@ -30,7 +30,7 @@ interface OrganizationLogoProps {
  * 
  * Handles load errors gracefully.
  */
-export function OrganizationLogo({ variant, logoUrl, iconUrl, theme = 'dark', className, alt = 'Organization' }: OrganizationLogoProps) {
+export function OrganizationLogo({ variant, logoUrl, iconUrl, theme = 'dark', className, alt = 'Organization', style }: OrganizationLogoProps) {
   const [imgError, setImgError] = useState(false);
 
   const resolveSource = (): string => {
