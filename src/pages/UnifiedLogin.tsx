@@ -318,10 +318,8 @@ export default function UnifiedLogin() {
         <div className="w-full max-w-md space-y-8">
           {/* Header */}
           <div className="text-center space-y-4">
-            <div className="flex items-center justify-center gap-3 mb-6">
-              <div className="p-3 bg-gradient-to-br from-violet-600 to-purple-600 rounded-2xl shadow-lg shadow-violet-500/25">
-                <Sparkles className="w-7 h-7 text-white" />
-              </div>
+            <div className="flex items-center justify-center mb-6">
+              <img src={BrandWordmarkWhite} alt={PLATFORM_NAME} className="h-10" />
             </div>
             <h1 className="text-3xl font-medium text-white tracking-tight">
               {isForgotPassword
