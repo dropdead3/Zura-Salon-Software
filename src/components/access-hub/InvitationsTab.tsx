@@ -69,6 +69,7 @@ import {
 import { cn, formatDisplayName } from '@/lib/utils';
 import { QRCodeCanvas } from 'qrcode.react';
 import { useBusinessSettings } from '@/hooks/useBusinessSettings';
+import { DEFAULT_ORG_LOGO_DARK } from '@/lib/platform-assets';
 import { QRCodeFullScreen } from '@/components/dashboard/QRCodeFullScreen';
 import { formatRelativeTime } from '@/lib/format';
 import { ImageWithSkeleton } from '@/components/ui/image-skeleton';
