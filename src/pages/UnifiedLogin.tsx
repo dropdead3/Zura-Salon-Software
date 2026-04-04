@@ -47,35 +47,52 @@ async function getCustomLandingPage(userId: string): Promise<string | null> {
   }
 }
 
+interface DualRoleOrg {
+  slug: string;
+  name: string;
+}
+
 interface DualRoleInfo {
   hasPlatformRoles: boolean;
   hasOrgMembership: boolean;
-  orgSlug?: string;
-  orgName?: string;
+  orgs: DualRoleOrg[];
 }
 
 async function checkDualRoleStatus(userId: string): Promise<DualRoleInfo> {
-  const [platformResult, orgResult] = await Promise.all([
+  const [platformResult, employeeResult, adminResult] = await Promise.all([
     supabase.from('platform_roles').select('role').eq('user_id', userId).limit(1),
-    supabase.from('employee_profiles').select('organization_id').eq('user_id', userId).limit(1),
+    supabase
+      .from('employee_profiles')
+      .select('organization_id, organizations:organization_id (slug, name)')
+      .eq('user_id', userId),
+    supabase
+      .from('organization_admins')
+      .select('organization_id, organizations:organization_id (slug, name)')
+      .eq('user_id', userId),
   ]);
 
   const hasPlatformRoles = !!(platformResult.data && platformResult.data.length > 0);
-  const hasOrgMembership = !!(orgResult.data && orgResult.data.length > 0);
 
-  let orgSlug: string | undefined;
-  let orgName: string | undefined;
-  if (hasOrgMembership && orgResult.data?.[0]?.organization_id) {
-    const { data: org } = await supabase
-      .from('organizations')
-      .select('slug, name')
-      .eq('id', orgResult.data[0].organization_id)
-      .single();
-    orgSlug = org?.slug || undefined;
-    orgName = org?.name || undefined;
-  }
+  const orgMap = new Map<string, DualRoleOrg>();
+  employeeResult.data?.forEach((row: any) => {
+    if (row.organization_id && row.organizations) {
+      orgMap.set(row.organization_id, {
+        slug: row.organizations.slug,
+        name: row.organizations.name,
+      });
+    }
+  });
+  adminResult.data?.forEach((row: any) => {
+    if (row.organization_id && row.organizations && !orgMap.has(row.organization_id)) {
+      orgMap.set(row.organization_id, {
+        slug: row.organizations.slug,
+        name: row.organizations.name,
+      });
+    }
+  });
 
-  return { hasPlatformRoles, hasOrgMembership, orgSlug, orgName };
+  const orgs = Array.from(orgMap.values());
+  return { hasPlatformRoles, hasOrgMembership: orgs.length > 0, orgs };
 }
 
 async function getDualRolePreference(userId: string): Promise<string | null> {
@@ -92,7 +109,7 @@ async function getDualRolePreference(userId: string): Promise<string | null> {
   }
 }
 
-async function saveDualRolePreference(userId: string, destination: string): Promise<void> {
+async function saveDualRolePreference(userId: string, destination: string | null): Promise<void> {
   await supabase
     .from('user_preferences')
     .upsert(
@@ -236,15 +253,19 @@ export default function UnifiedLogin() {
       // Check for dual roles
       const info = await checkDualRoleStatus(user.id);
       if (info.hasPlatformRoles && info.hasOrgMembership) {
-        // Check for saved preference
         const savedPref = await getDualRolePreference(user.id);
         if (savedPref === 'platform') {
           navigate('/platform/overview', { replace: true });
           return;
         }
-        if (savedPref === 'org_dashboard') {
-          const orgPath = info.orgSlug ? `/org/${info.orgSlug}/dashboard` : '/dashboard';
-          navigate(orgPath, { replace: true });
+        if (savedPref?.startsWith('org_dashboard:')) {
+          const slug = savedPref.split(':')[1];
+          navigate(slug ? `/org/${slug}/dashboard` : '/dashboard', { replace: true });
+          return;
+        }
+        // Legacy format
+        if (savedPref === 'org_dashboard' && info.orgs.length > 0) {
+          navigate(`/org/${info.orgs[0].slug}/dashboard`, { replace: true });
           return;
         }
         setDualRoleInfo(info);
@@ -316,15 +337,18 @@ export default function UnifiedLogin() {
             // Check for dual roles before redirecting
             const info = await checkDualRoleStatus(loggedInUser.id);
             if (info.hasPlatformRoles && info.hasOrgMembership) {
-              // Check for saved preference
               const savedPref = await getDualRolePreference(loggedInUser.id);
               if (savedPref === 'platform') {
                 navigate('/platform/overview', { replace: true });
                 return;
               }
-              if (savedPref === 'org_dashboard') {
-                const orgPath = info.orgSlug ? `/org/${info.orgSlug}/dashboard` : '/dashboard';
-                navigate(orgPath, { replace: true });
+              if (savedPref?.startsWith('org_dashboard:')) {
+                const slug = savedPref.split(':')[1];
+                navigate(slug ? `/org/${slug}/dashboard` : '/dashboard', { replace: true });
+                return;
+              }
+              if (savedPref === 'org_dashboard' && info.orgs.length > 0) {
+                navigate(`/org/${info.orgs[0].slug}/dashboard`, { replace: true });
                 return;
               }
               setDualRoleInfo(info);
@@ -389,15 +413,14 @@ export default function UnifiedLogin() {
 
   // Dual-role interstitial
   if (showDualRoleInterstitial && dualRoleInfo) {
-    const orgDashPath = dualRoleInfo.orgSlug
-      ? `/org/${dualRoleInfo.orgSlug}/dashboard`
-      : '/dashboard';
-
-    const handleDestinationChoice = async (destination: 'platform' | 'org_dashboard') => {
+    const handleDestinationChoice = async (destination: string, orgSlug?: string) => {
+      const prefValue = destination === 'platform' ? 'platform' : `org_dashboard:${orgSlug}`;
       if (rememberChoice && user) {
-        await saveDualRolePreference(user.id, destination);
+        await saveDualRolePreference(user.id, prefValue);
       }
-      const path = destination === 'platform' ? '/platform/overview' : orgDashPath;
+      const path = destination === 'platform'
+        ? '/platform/overview'
+        : orgSlug ? `/org/${orgSlug}/dashboard` : '/dashboard';
       navigate(path, { replace: true });
     };
 
@@ -423,7 +446,7 @@ export default function UnifiedLogin() {
                 Where do you want to go?
               </h1>
               <p className="text-slate-400">
-                You have access to both platform administration and your organization dashboard.
+                You have access to both platform administration and {dualRoleInfo.orgs.length > 1 ? 'multiple organizations' : 'your organization dashboard'}.
               </p>
             </div>
 
@@ -445,24 +468,27 @@ export default function UnifiedLogin() {
                 </div>
               </button>
 
-              <button
-                onClick={() => handleDestinationChoice('org_dashboard')}
-                className="w-full p-5 bg-white/[0.03] border border-white/[0.08] rounded-xl backdrop-blur-sm hover:bg-white/[0.06] hover:border-violet-500/30 transition-all group text-left"
-              >
-                <div className="flex items-center gap-4">
-                  <div className="p-3 bg-emerald-500/10 rounded-lg group-hover:bg-emerald-500/20 transition-colors">
-                    <Building2 className="w-5 h-5 text-emerald-400" />
+              {dualRoleInfo.orgs.map((org) => (
+                <button
+                  key={org.slug}
+                  onClick={() => handleDestinationChoice('org_dashboard', org.slug)}
+                  className="w-full p-5 bg-white/[0.03] border border-white/[0.08] rounded-xl backdrop-blur-sm hover:bg-white/[0.06] hover:border-violet-500/30 transition-all group text-left"
+                >
+                  <div className="flex items-center gap-4">
+                    <div className="p-3 bg-emerald-500/10 rounded-lg group-hover:bg-emerald-500/20 transition-colors">
+                      <Building2 className="w-5 h-5 text-emerald-400" />
+                    </div>
+                    <div>
+                      <h3 className="text-white font-medium">
+                        {org.name} Dashboard
+                      </h3>
+                      <p className="text-sm text-slate-400 mt-0.5">
+                        View performance and operations
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <h3 className="text-white font-medium">
-                      {dualRoleInfo.orgName ? `${dualRoleInfo.orgName} Dashboard` : 'Organization Dashboard'}
-                    </h3>
-                    <p className="text-sm text-slate-400 mt-0.5">
-                      View your salon's performance and operations
-                    </p>
-                  </div>
-                </div>
-              </button>
+                </button>
+              ))}
             </div>
 
             {/* Remember choice */}
