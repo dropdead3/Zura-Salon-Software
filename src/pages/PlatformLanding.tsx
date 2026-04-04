@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import { ArrowRight, BarChart3, Users, Calendar, Shield, Zap, Globe } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { PLATFORM_NAME_FULL } from '@/lib/brand';
-import brandWordmarkWhite from '@/assets/brand-wordmark-white.svg';
+import { PlatformLogo } from '@/components/brand/PlatformLogo';
 
 
 export default function PlatformLanding() {
@@ -27,7 +27,7 @@ export default function PlatformLanding() {
       {/* Nav */}
       <header className="relative z-10 flex items-center justify-between px-8 py-6 max-w-7xl mx-auto w-full">
         <div className="flex items-center gap-3">
-          <img src={brandWordmarkWhite} alt="Zura" className="h-6" />
+          <PlatformLogo variant="landing" className="h-6" />
         </div>
         <nav className="flex items-center gap-6">
           {user ? (

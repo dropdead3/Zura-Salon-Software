@@ -130,11 +130,7 @@ export function PlatformAppearanceTab() {
   }, [localBranding, branding]);
 
   const handleLogoUpdate = (key: keyof PlatformBranding, value: string | null) => {
-    setLocalBranding((prev) => {
-      const nextBranding = { ...prev, [key]: value };
-      saveBranding(nextBranding);
-      return nextBranding;
-    });
+    setLocalBranding((prev) => ({ ...prev, [key]: value }));
   };
 
   const handleThemeColorsChange = (colors: Record<string, string>) => {

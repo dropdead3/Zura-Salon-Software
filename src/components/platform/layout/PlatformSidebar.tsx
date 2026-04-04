@@ -3,7 +3,6 @@ import { NavLink } from '@/components/NavLink';
 import {
   ChevronLeft,
   ChevronRight,
-  Sparkles,
   Crown,
   Headphones,
   Code,
@@ -14,7 +13,7 @@ import { cn } from '@/lib/utils';
 import { getAvatarStyle } from '@/lib/avatar-utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { useState, useEffect } from 'react';
-import { usePlatformBranding } from '@/hooks/usePlatformBranding';
+import { PlatformLogo } from '@/components/brand/PlatformLogo';
 import { usePlatformTheme } from '@/contexts/PlatformThemeContext';
 import { useEmployeeProfile } from '@/hooks/useEmployeeProfile';
 import { usePlatformPresenceContext } from '@/contexts/PlatformPresenceContext';
@@ -38,7 +37,6 @@ export function PlatformSidebar() {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, hasPlatformRoleOrHigher, platformRoles } = useAuth();
-  const { branding } = usePlatformBranding();
   const { resolvedTheme } = usePlatformTheme();
   const { data: profile } = useEmployeeProfile();
   const { isConnected } = usePlatformPresenceContext();
@@ -72,14 +70,7 @@ export function PlatformSidebar() {
     }))
     .filter(group => group.items.length > 0);
 
-  // Choose logo based on theme
-  const currentLogo = resolvedTheme === 'dark' 
-    ? branding.primary_logo_url 
-    : branding.secondary_logo_url;
-  
-  const currentIcon = resolvedTheme === 'dark'
-    ? branding.icon_dark_url
-    : branding.icon_light_url;
+  const logoTheme = resolvedTheme === 'dark' ? 'dark' : 'light';
 
   return (
     <aside
@@ -95,41 +86,12 @@ export function PlatformSidebar() {
       )}>
         {!collapsed && (
           <div className="flex items-center gap-2">
-            {currentLogo ? (
-              <img
-                src={currentLogo}
-                alt="Platform logo"
-                className="h-8 object-contain"
-              />
-            ) : (
-              <>
-                <div className={cn(
-                  'p-1.5 rounded-lg shadow-lg',
-                  'bg-gradient-to-br from-violet-500 to-purple-600 shadow-violet-500/20'
-                )}>
-                  <Sparkles className="h-4 w-4 text-white" />
-                </div>
-                <span className="font-display text-[hsl(var(--platform-foreground))]">Platform</span>
-              </>
-            )}
+            <PlatformLogo variant="sidebar" theme={logoTheme} className="h-8" />
           </div>
         )}
         {collapsed && (
           <div className="mx-auto">
-            {currentIcon ? (
-              <img
-                src={currentIcon}
-                alt="Platform icon"
-                className="h-8 w-8 object-contain"
-              />
-            ) : (
-              <div className={cn(
-                'p-1.5 rounded-lg shadow-lg',
-                'bg-gradient-to-br from-violet-500 to-purple-600 shadow-violet-500/20'
-              )}>
-                <Sparkles className="h-4 w-4 text-white" />
-              </div>
-            )}
+            <PlatformLogo variant="sidebar-icon" theme={logoTheme} className="h-8 w-8" />
           </div>
         )}
         {!collapsed && (

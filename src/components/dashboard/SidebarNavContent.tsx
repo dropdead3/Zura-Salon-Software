@@ -13,8 +13,7 @@ import { cn } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { ExternalLink, Rocket, TrendingUp, Users, LayoutGrid, Briefcase, ArrowLeft, Shield, FlaskConical, PanelLeftClose, ChevronRight } from 'lucide-react';
 import { NavBadge } from './NavBadge';
-import Logo from '@/assets/brand-logo-secondary.svg';
-import LogoWhite from '@/assets/brand-logo-secondary-white.svg';
+import { OrganizationLogo } from '@/components/brand/OrganizationLogo';
 import { SidebarAnnouncementsWidget } from './SidebarAnnouncementsWidget';
 import { SidebarGreeting } from './SidebarGreeting';
 import { SidebarSyncStatusWidget } from './SidebarSyncStatusWidget';
@@ -183,39 +182,10 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
   }, [sidebarLayout, roles]);
   
   // Logo/icon helpers — collapsed now follows theme like expanded
-  const hasCustomLogo = (forCollapsed = false) => {
-    if (forCollapsed) {
-      return resolvedTheme === 'dark'
-        ? !!businessSettings?.logo_dark_url
-        : !!businessSettings?.logo_light_url;
-    }
-    return resolvedTheme === 'dark'
-      ? !!businessSettings?.logo_dark_url
-      : !!businessSettings?.logo_light_url;
-  };
-
-  const hasCustomIcon = (forCollapsed = false) => {
-    if (forCollapsed) {
-      return resolvedTheme === 'dark'
-        ? !!businessSettings?.icon_dark_url
-        : !!businessSettings?.icon_light_url;
-    }
-    return resolvedTheme === 'dark'
-      ? !!businessSettings?.icon_dark_url
-      : !!businessSettings?.icon_light_url;
-  };
-
-  const getLogo = (forCollapsed = false) => {
-    return resolvedTheme === 'dark'
-      ? (businessSettings?.logo_dark_url || LogoWhite)
-      : (businessSettings?.logo_light_url || Logo);
-  };
-
-  const getIcon = (forCollapsed = false) => {
-    return resolvedTheme === 'dark'
-      ? businessSettings?.icon_dark_url
-      : businessSettings?.icon_light_url;
-  };
+  const orgLogoTheme = resolvedTheme === 'dark' ? 'dark' : 'light';
+  const orgLogoUrl = resolvedTheme === 'dark' ? businessSettings?.logo_dark_url : businessSettings?.logo_light_url;
+  const orgIconUrl = resolvedTheme === 'dark' ? businessSettings?.icon_dark_url : businessSettings?.icon_light_url;
+  const orgName = businessSettings?.business_name || 'Salon';
   
   // Expose the internal ref
   useImperativeHandle(ref, () => internalRef.current!, []);
@@ -352,30 +322,25 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
             {isCollapsed ? (
               <Tooltip>
                 <TooltipTrigger asChild>
-                  {hasCustomIcon(true) ? (
-                    <img 
-                      src={getIcon(true)} 
-                      alt={businessSettings?.business_name || 'Salon'} 
-                      className="h-6 w-auto max-w-[32px] object-contain"
-                    />
-                  ) : (
-                    <div className="w-7 h-7 rounded-full bg-muted dark:bg-white/10 text-foreground/80 dark:text-white flex items-center justify-center font-display text-xs">
-                      {(businessSettings?.business_name || 'DD').substring(0, 2).toUpperCase()}
-                    </div>
-                  )}
+                  <OrganizationLogo
+                    variant="sidebar-icon"
+                    logoUrl={orgLogoUrl}
+                    iconUrl={orgIconUrl}
+                    theme={orgLogoTheme}
+                    alt={orgName}
+                    className="h-6 w-auto max-w-[32px]"
+                  />
                 </TooltipTrigger>
-                <TooltipContent side="right">{businessSettings?.business_name || 'Salon'}</TooltipContent>
+                <TooltipContent side="right">{orgName}</TooltipContent>
               </Tooltip>
-            ) : hasCustomLogo() ? (
-              <img
-                src={getLogo()} 
-                alt={businessSettings?.business_name || 'Salon'} 
-                className="h-7 w-auto max-w-[160px] object-contain" 
-              />
             ) : (
-              <span className="font-display text-sm uppercase tracking-wider text-foreground">
-                {businessSettings?.business_name || 'Salon'}
-              </span>
+              <OrganizationLogo
+                variant="sidebar"
+                logoUrl={orgLogoUrl}
+                theme={orgLogoTheme}
+                alt={orgName}
+                className="h-7 w-auto max-w-[160px]"
+              />
             )}
           </Link>
           {isCollapsed ? (
