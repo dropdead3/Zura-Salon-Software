@@ -10,6 +10,7 @@ export interface PlatformBranding {
   secondary_logo_url: string | null;
   icon_dark_url: string | null;
   icon_light_url: string | null;
+  login_logo_url: string | null;
   theme_colors: Record<string, string>;
   typography: Record<string, string>;
   loader_style: LoaderStyleOption;
