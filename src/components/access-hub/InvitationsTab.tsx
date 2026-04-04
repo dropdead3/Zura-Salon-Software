@@ -68,7 +68,7 @@ import {
 } from 'lucide-react';
 import { cn, formatDisplayName } from '@/lib/utils';
 import { QRCodeCanvas } from 'qrcode.react';
-import BrandLogo from '@/assets/brand-logo-secondary.svg';
+import { useBusinessSettings } from '@/hooks/useBusinessSettings';
 import { QRCodeFullScreen } from '@/components/dashboard/QRCodeFullScreen';
 import { formatRelativeTime } from '@/lib/format';
 import { ImageWithSkeleton } from '@/components/ui/image-skeleton';

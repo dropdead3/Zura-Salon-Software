@@ -7,7 +7,7 @@ import {
   DEFAULT_ORG_ICON_LIGHT,
 } from '@/lib/platform-assets';
 
-type OrgLogoVariant = 'sidebar' | 'sidebar-icon';
+type OrgLogoVariant = 'sidebar' | 'sidebar-icon' | 'website' | 'website-icon';
 
 interface OrganizationLogoProps {
   variant: OrgLogoVariant;
@@ -37,9 +37,11 @@ export function OrganizationLogo({ variant, logoUrl, iconUrl, theme = 'dark', cl
 
     switch (variant) {
       case 'sidebar':
+      case 'website':
         if (logoUrl) return logoUrl;
         return theme === 'dark' ? DEFAULT_ORG_LOGO_DARK : DEFAULT_ORG_LOGO_LIGHT;
       case 'sidebar-icon':
+      case 'website-icon':
         if (iconUrl) return iconUrl;
         if (logoUrl) return logoUrl;
         return theme === 'dark' ? DEFAULT_ORG_ICON_DARK : DEFAULT_ORG_ICON_LIGHT;
@@ -61,8 +63,10 @@ export function OrganizationLogo({ variant, logoUrl, iconUrl, theme = 'dark', cl
 function getFallback(variant: OrgLogoVariant, theme: string): string {
   switch (variant) {
     case 'sidebar':
+    case 'website':
       return theme === 'dark' ? DEFAULT_ORG_LOGO_DARK : DEFAULT_ORG_LOGO_LIGHT;
     case 'sidebar-icon':
+    case 'website-icon':
       return theme === 'dark' ? DEFAULT_ORG_ICON_DARK : DEFAULT_ORG_ICON_LIGHT;
     default:
       return DEFAULT_ORG_LOGO_DARK;

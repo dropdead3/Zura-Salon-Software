@@ -74,7 +74,7 @@ import {
 import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { cn } from '@/lib/utils';
 import { QRCodeCanvas } from 'qrcode.react';
-import BrandLogo from '@/assets/brand-logo-secondary.svg';
+import { useBusinessSettings } from '@/hooks/useBusinessSettings';
 import { PLATFORM_NAME } from '@/lib/brand';
 import { QRCodeFullScreen } from '@/components/dashboard/QRCodeFullScreen';
 import { PageExplainer } from '@/components/ui/PageExplainer';

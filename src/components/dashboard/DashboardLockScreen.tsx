@@ -9,8 +9,7 @@ import { useBusinessSettings } from '@/hooks/useBusinessSettings';
 import { useDashboardTheme } from '@/contexts/DashboardThemeContext';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import Logo from '@/assets/brand-logo-secondary.svg';
-import LogoWhite from '@/assets/brand-logo-secondary-white.svg';
+import { OrganizationLogo } from '@/components/brand/OrganizationLogo';
 import { tokens } from '@/lib/design-tokens';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 
