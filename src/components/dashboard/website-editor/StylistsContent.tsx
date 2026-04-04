@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { tokens } from '@/lib/design-tokens';
 import { formatDisplayName } from '@/lib/utils';
 
