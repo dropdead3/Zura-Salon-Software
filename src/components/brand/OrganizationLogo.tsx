@@ -18,6 +18,7 @@ interface OrganizationLogoProps {
   theme?: 'dark' | 'light';
   className?: string;
   alt?: string;
+  style?: React.CSSProperties;
 }
 
 /**
