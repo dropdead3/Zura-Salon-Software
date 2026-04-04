@@ -55,7 +55,7 @@ export const sampleStylists: Stylist[] = [
     specialties: ["EXTENSIONS", "PRECISION CUTS", "STYLING"],
     highlighted_services: ["EXTENSIONS", "PRECISION CUTS", "STYLING"],
     imageUrl: sophiaWilliams,
-    locations: ["north-mesa"],
+    locations: ["location-1"],
     isBooking: true,
     bio: "Expert in natural-looking extensions and modern cuts.",
   },
