@@ -1,61 +1,44 @@
 
 
-## Login UX Enhancements
+## Dual-Role Interstitial Enhancements
 
-Three targeted improvements to the unified login page — no new pages or routes needed.
+Three improvements to the post-login interstitial for users with both platform and org roles.
 
-### 1. Post-Login Interstitial for Dual-Role Users
+### Changes
 
-**Problem**: Users who hold both platform roles AND org membership are silently routed to `/platform/overview`, with no way to choose their org dashboard instead.
+**1. Add `dual_role_destination` column to `user_preferences`**
 
-**Solution**: After login, if the user has both platform roles and org membership, show a brief "Where do you want to go?" card with two options:
-- **Platform Admin** → `/platform/overview`
-- **Organization Dashboard** → `/org/:slug/dashboard`
+New migration adds a nullable text column to store the user's preferred destination (`platform` or `org_dashboard`). When set, the interstitial is skipped and the user is routed directly.
 
-This replaces the current auto-redirect in `getUserRedirectPath()`. Users with only one context still get auto-redirected.
+**2. Enhance `checkDualRoleStatus()` to fetch org name**
 
-**Implementation**:
-- Add a `dualRoleInterstitial` state to `UnifiedLogin.tsx`
-- After login, check both `platform_roles` and org membership
-- If both exist, show a selection card instead of redirecting
-- Selection stores preference in `user_preferences` for future logins (skip interstitial next time, with a "Change default" option in settings)
+Currently fetches only `slug`. Will also select `name` from `organizations` and add `orgName` to the `DualRoleInfo` interface. The Organization Dashboard button will display the actual org name (e.g., "Drop Dead Salon Dashboard") instead of generic "Organization Dashboard".
 
-### 2. Contextual Subtitle Based on Referral Source
+**3. Add "Remember my choice" checkbox + preference persistence**
 
-**Problem**: The subtitle always says "Sign in to access your dashboard" regardless of where the user came from.
+- Add a `rememberChoice` checkbox state to the interstitial card
+- When a user clicks a destination with the checkbox checked, upsert `dual_role_destination` into `user_preferences`
+- On subsequent logins, `checkDualRoleStatus` result is combined with a preference lookup — if a saved preference exists, auto-redirect without showing the interstitial
+- The interstitial card gets a small "Remember my choice" checkbox below the two destination buttons
 
-**Solution**: Use the `location.state.from` pathname to adapt the subtitle:
-- From `/platform/*` → "Sign in to the Zura Platform"
-- From `/org/*/dashboard/*` → "Sign in to manage your organization"
-- From staff invitation → "Sign in to join your team"
-- Default → "Sign in to access your dashboard"
+**4. Skip interstitial when preference exists**
 
-**Implementation**:
-- Add a `getContextualSubtitle()` function in `UnifiedLogin.tsx`
-- Reads `location.state.from?.pathname` and `staffInvitation` presence
-- Returns appropriate subtitle string
-- Replace the static subtitle at line 345
-
-### 3. Hide Sign-Up Unless Invitation Token Present
-
-**Problem**: The Sign Up button and toggle are always visible, allowing anyone to create an account without an invitation. This can create orphan accounts with no organization attachment.
-
-**Solution**: Only show sign-up UI when a valid invitation token is present (either `staffInvitation` or `platformInvitationToken`).
-
-**Implementation**:
-- Compute `canSignUp = !!staffInvitation || !!platformInvitationToken`
-- Hide the "Sign Up" button (line 517-524) when `!canSignUp`
-- Hide the "Don't have an account?" toggle (line 568) when `!canSignUp`
-- If someone arrives at `/login` without a token, they only see login + forgot password
-- Staff invitation check still runs on email input — if a pending invitation is found, the sign-up option appears dynamically
+After login, before showing the interstitial, check `user_preferences.dual_role_destination`. If set, redirect immediately. The existing `getUserRedirectPath()` function will be updated to check this field for dual-role users.
 
 ### Files Modified
 
-- `src/pages/UnifiedLogin.tsx` — all three changes consolidated here
+- **Migration**: Add `dual_role_destination` column to `user_preferences`
+- **`src/pages/UnifiedLogin.tsx`**: All UI and logic changes
+  - `DualRoleInfo` gains `orgName?: string`
+  - `checkDualRoleStatus()` selects `slug, name` from organizations
+  - New `getDualRolePreference()` helper queries saved preference
+  - Interstitial card shows org name + "Remember my choice" checkbox
+  - Button click handler persists preference when checkbox is checked
+  - Post-login flow checks saved preference before showing interstitial
 
 ### Technical Notes
 
-- The dual-role check queries both `platform_roles` and `employee_profiles` (for org membership) — two small queries that already exist in the codebase
-- No database migrations needed
-- No new components — all changes are within the existing login page
+- `dual_role_destination` is a simple text field (`'platform'` | `'org_dashboard'` | null) — no enum needed since it's UI-only preference
+- Users can change their default later via a "Change default login destination" option in settings (future enhancement)
+- No RLS changes needed — `user_preferences` already has user-scoped policies
 
