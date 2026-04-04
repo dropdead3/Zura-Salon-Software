@@ -531,7 +531,7 @@ export function LocationsSettingsContent() {
                     id="booking_url"
                     value={formData.booking_url}
                     onChange={(e) => setFormData(f => ({ ...f, booking_url: e.target.value }))}
-                    placeholder="e.g., /booking?location=north-mesa"
+                    placeholder="e.g., /booking?location=downtown"
                   />
                 </div>
                 
