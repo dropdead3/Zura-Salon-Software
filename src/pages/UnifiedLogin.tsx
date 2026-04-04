@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, useEffect } from 'react';
+import { useState, useRef, useCallback, useEffect, useMemo } from 'react';
 import { PLATFORM_NAME, PLATFORM_NAME_FULL } from '@/lib/brand';
 import { useNavigate, useLocation, useSearchParams, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -14,7 +14,7 @@ import {
 } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { toast as sonnerToast } from 'sonner';
-import { Loader2, ArrowLeft, Eye, EyeOff, Mail, CheckCircle } from 'lucide-react';
+import { Loader2, ArrowLeft, Eye, EyeOff, Mail, CheckCircle, Shield, Building2 } from 'lucide-react';
 import ZuraLogoWhite from '@/assets/zura-logo-white.svg';
 import { usePlatformBranding } from '@/hooks/usePlatformBranding';
 import { z } from 'zod';
@@ -46,6 +46,34 @@ async function getCustomLandingPage(userId: string): Promise<string | null> {
   }
 }
 
+interface DualRoleInfo {
+  hasPlatformRoles: boolean;
+  hasOrgMembership: boolean;
+  orgSlug?: string;
+}
+
+async function checkDualRoleStatus(userId: string): Promise<DualRoleInfo> {
+  const [platformResult, orgResult] = await Promise.all([
+    supabase.from('platform_roles').select('role').eq('user_id', userId).limit(1),
+    supabase.from('employee_profiles').select('organization_id').eq('user_id', userId).limit(1),
+  ]);
+
+  const hasPlatformRoles = !!(platformResult.data && platformResult.data.length > 0);
+  const hasOrgMembership = !!(orgResult.data && orgResult.data.length > 0);
+
+  let orgSlug: string | undefined;
+  if (hasOrgMembership && orgResult.data?.[0]?.organization_id) {
+    const { data: org } = await supabase
+      .from('organizations')
+      .select('slug')
+      .eq('id', orgResult.data[0].organization_id)
+      .single();
+    orgSlug = org?.slug || undefined;
+  }
+
+  return { hasPlatformRoles, hasOrgMembership, orgSlug };
+}
+
 async function getUserRedirectPath(userId: string, fallback: string): Promise<string> {
   // Check for platform roles first
   const { data: platformRoles } = await supabase
@@ -63,6 +91,17 @@ async function getUserRedirectPath(userId: string, fallback: string): Promise<st
   if (customLanding) return customLanding;
 
   return fallback;
+}
+
+/** Contextual subtitle based on referral source */
+function getContextualSubtitle(
+  fromPathname: string | undefined,
+  hasStaffInvitation: boolean,
+): string {
+  if (hasStaffInvitation) return 'Sign in to join your team';
+  if (fromPathname?.startsWith('/platform')) return `Sign in to the ${PLATFORM_NAME} Platform`;
+  if (fromPathname?.match(/^\/org\/[^/]+\/dashboard/)) return 'Sign in to manage your organization';
+  return 'Sign in to access your dashboard';
 }
 
 export default function UnifiedLogin() {
@@ -85,6 +124,10 @@ export default function UnifiedLogin() {
   const passwordMatchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const lastPasswordMatchStateRef = useRef<boolean | null>(null);
 
+  // Dual-role interstitial state
+  const [dualRoleInfo, setDualRoleInfo] = useState<DualRoleInfo | null>(null);
+  const [showDualRoleInterstitial, setShowDualRoleInterstitial] = useState(false);
+
   const { signIn, signUp, resetPassword, user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -102,6 +145,15 @@ export default function UnifiedLogin() {
   const acceptPlatformInvitation = useAcceptPlatformInvitation();
 
   const from = location.state?.from?.pathname || '/dashboard';
+
+  // Sign-up gating: only show sign-up when invitation is present
+  const canSignUp = !!staffInvitation || !!platformInvitationToken;
+
+  // Contextual subtitle
+  const contextualSubtitle = useMemo(
+    () => getContextualSubtitle(location.state?.from?.pathname, !!staffInvitation),
+    [location.state?.from?.pathname, staffInvitation],
+  );
 
   // Show redirect message as toast (e.g. "Please sign in to access your dashboard")
   useEffect(() => {
@@ -128,7 +180,7 @@ export default function UnifiedLogin() {
     }
   }, [staffInvitation, isLogin]);
 
-  // If already logged in, redirect based on role
+  // If already logged in, redirect based on role (with dual-role check)
   useEffect(() => {
     const checkAccess = async () => {
       if (!user) return;
@@ -147,6 +199,15 @@ export default function UnifiedLogin() {
         } catch (error) {
           console.error('Failed to accept platform invitation:', error);
         }
+      }
+
+      // Check for dual roles
+      const info = await checkDualRoleStatus(user.id);
+      if (info.hasPlatformRoles && info.hasOrgMembership) {
+        setDualRoleInfo(info);
+        setShowDualRoleInterstitial(true);
+        setCheckingAccess(false);
+        return;
       }
 
       const redirectPath = await getUserRedirectPath(user.id, from);
@@ -209,6 +270,15 @@ export default function UnifiedLogin() {
               }
             }
 
+            // Check for dual roles before redirecting
+            const info = await checkDualRoleStatus(loggedInUser.id);
+            if (info.hasPlatformRoles && info.hasOrgMembership) {
+              setDualRoleInfo(info);
+              setShowDualRoleInterstitial(true);
+              setLoading(false);
+              return;
+            }
+
             const redirectPath = await getUserRedirectPath(loggedInUser.id, from);
             navigate(redirectPath, { replace: true });
           }
@@ -257,6 +327,86 @@ export default function UnifiedLogin() {
           <Loader2 className="w-8 h-8 animate-spin text-violet-400" />
           <p className="text-slate-400 text-sm">
             {loadingPlatformInvitation ? 'Loading invitation...' : 'Checking access...'}
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // Dual-role interstitial
+  if (showDualRoleInterstitial && dualRoleInfo) {
+    const orgDashPath = dualRoleInfo.orgSlug
+      ? `/org/${dualRoleInfo.orgSlug}/dashboard`
+      : '/dashboard';
+
+    return (
+      <div className="min-h-screen bg-slate-950 flex flex-col relative overflow-hidden">
+        {/* Background */}
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute -top-40 -right-40 w-96 h-96 bg-violet-500/10 rounded-full blur-[100px]" />
+          <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-purple-500/10 rounded-full blur-[100px]" />
+        </div>
+
+        <div className="flex-1 flex items-center justify-center px-6 relative z-10">
+          <div className="w-full max-w-md space-y-8">
+            <div className="text-center space-y-4">
+              <div className="flex items-center justify-center mb-6">
+                <img
+                  src={branding.login_logo_url || branding.primary_logo_url || ZuraLogoWhite}
+                  alt={PLATFORM_NAME}
+                  className="h-10 w-auto"
+                />
+              </div>
+              <h1 className="text-3xl font-medium text-white tracking-tight">
+                Where do you want to go?
+              </h1>
+              <p className="text-slate-400">
+                You have access to both platform administration and your organization dashboard.
+              </p>
+            </div>
+
+            <div className="space-y-3">
+              <button
+                onClick={() => navigate('/platform/overview', { replace: true })}
+                className="w-full p-5 bg-white/[0.03] border border-white/[0.08] rounded-xl backdrop-blur-sm hover:bg-white/[0.06] hover:border-violet-500/30 transition-all group text-left"
+              >
+                <div className="flex items-center gap-4">
+                  <div className="p-3 bg-violet-500/10 rounded-lg group-hover:bg-violet-500/20 transition-colors">
+                    <Shield className="w-5 h-5 text-violet-400" />
+                  </div>
+                  <div>
+                    <h3 className="text-white font-medium">Platform Administration</h3>
+                    <p className="text-sm text-slate-400 mt-0.5">
+                      Manage organizations, users, and platform settings
+                    </p>
+                  </div>
+                </div>
+              </button>
+
+              <button
+                onClick={() => navigate(orgDashPath, { replace: true })}
+                className="w-full p-5 bg-white/[0.03] border border-white/[0.08] rounded-xl backdrop-blur-sm hover:bg-white/[0.06] hover:border-violet-500/30 transition-all group text-left"
+              >
+                <div className="flex items-center gap-4">
+                  <div className="p-3 bg-emerald-500/10 rounded-lg group-hover:bg-emerald-500/20 transition-colors">
+                    <Building2 className="w-5 h-5 text-emerald-400" />
+                  </div>
+                  <div>
+                    <h3 className="text-white font-medium">Organization Dashboard</h3>
+                    <p className="text-sm text-slate-400 mt-0.5">
+                      View your salon's performance and operations
+                    </p>
+                  </div>
+                </div>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Bottom branding */}
+        <div className="py-6 text-center relative z-10">
+          <p className="text-slate-600 text-sm">
+            &copy; {new Date().getFullYear()} {PLATFORM_NAME_FULL}
           </p>
         </div>
       </div>
@@ -342,7 +492,7 @@ export default function UnifiedLogin() {
                 : isPlatformInviteSignup
                 ? `You've been invited as ${platformInvitation?.role.replace('platform_', '').replace('_', ' ')}`
                 : isLogin
-                ? 'Sign in to access your dashboard'
+                ? contextualSubtitle
                 : `Get started with ${PLATFORM_NAME}`}
             </p>
           </div>
@@ -513,7 +663,7 @@ export default function UnifiedLogin() {
 
               {/* Buttons */}
               <div className="flex gap-3 pt-1">
-                {isLogin && !isForgotPassword && (
+                {isLogin && !isForgotPassword && canSignUp && (
                   <Button
                     type="button"
                     variant="outline"
@@ -553,21 +703,41 @@ export default function UnifiedLogin() {
                 </button>
               )}
               <div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsForgotPassword(false);
-                    setIsLogin(!isLogin);
-                    lastPasswordMatchStateRef.current = null;
-                  }}
-                  className="text-sm text-slate-500 hover:text-slate-300 transition-colors"
-                >
-                  {isForgotPassword
-                    ? 'Back to sign in'
-                    : isLogin
-                    ? "Don't have an account? Sign up"
-                    : 'Already have an account? Sign in'}
-                </button>
+                {isForgotPassword ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsForgotPassword(false);
+                      setIsLogin(true);
+                      lastPasswordMatchStateRef.current = null;
+                    }}
+                    className="text-sm text-slate-500 hover:text-slate-300 transition-colors"
+                  >
+                    Back to sign in
+                  </button>
+                ) : !isLogin ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsLogin(true);
+                      lastPasswordMatchStateRef.current = null;
+                    }}
+                    className="text-sm text-slate-500 hover:text-slate-300 transition-colors"
+                  >
+                    Already have an account? Sign in
+                  </button>
+                ) : canSignUp ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsLogin(false);
+                      lastPasswordMatchStateRef.current = null;
+                    }}
+                    className="text-sm text-slate-500 hover:text-slate-300 transition-colors"
+                  >
+                    Don't have an account? Sign up
+                  </button>
+                ) : null}
               </div>
             </div>
           </div>
