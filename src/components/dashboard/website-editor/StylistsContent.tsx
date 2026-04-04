@@ -367,14 +367,18 @@ export function StylistsContent() {
           )}
         </div>
         <div className="flex flex-wrap items-center gap-1.5 text-sm text-muted-foreground">
-          <Badge variant="outline" className="gap-1 text-xs">
-            <Users className="w-3 h-3" />
-            {northMesaCount} North Mesa
-          </Badge>
-          <Badge variant="outline" className="gap-1 text-xs">
-            <Users className="w-3 h-3" />
-            {valVistaCount} Val Vista
-          </Badge>
+          {locationCounts.map(lc => (
+            <Badge key={lc.id} variant="outline" className="gap-1 text-xs">
+              <Users className="w-3 h-3" />
+              {lc.count} {lc.name}
+            </Badge>
+          ))}
+          {locationCounts.length === 0 && (
+            <Badge variant="outline" className="gap-1 text-xs">
+              <Users className="w-3 h-3" />
+              {sampleStylists.length} Total
+            </Badge>
+          )}
         </div>
         {showSampleCards && visibleStylists.length > 0 && (
           <div className="flex items-start gap-2 p-2.5 bg-destructive/10 border border-destructive/30 rounded-lg">

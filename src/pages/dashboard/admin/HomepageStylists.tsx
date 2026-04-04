@@ -459,14 +459,18 @@ export default function HomepageStylists() {
                 )}
               </div>
               <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                <Badge variant="outline" className="gap-1">
-                  <Users className="w-3 h-3" />
-                  {northMesaCount} North Mesa
-                </Badge>
-                <Badge variant="outline" className="gap-1">
-                  <Users className="w-3 h-3" />
-                  {valVistaCount} Val Vista
-                </Badge>
+                {locationCounts.map(lc => (
+                  <Badge key={lc.id} variant="outline" className="gap-1">
+                    <Users className="w-3 h-3" />
+                    {lc.count} {lc.name}
+                  </Badge>
+                ))}
+                {locationCounts.length === 0 && (
+                  <Badge variant="outline" className="gap-1">
+                    <Users className="w-3 h-3" />
+                    {sampleStylists.length} Total
+                  </Badge>
+                )}
               </div>
             </div>
             {showSampleCards && visibleStylists.length > 0 && (
