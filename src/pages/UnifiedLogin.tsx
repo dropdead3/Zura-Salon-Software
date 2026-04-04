@@ -26,7 +26,6 @@ import { useRoleUtils } from '@/hooks/useRoleUtils';
 import { supabase } from '@/integrations/supabase/client';
 
 import type { Database } from '@/integrations/supabase/types';
-import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 
 
 type AppRole = Database['public']['Enums']['app_role'];
@@ -156,7 +155,6 @@ function getContextualSubtitle(
 }
 
 export default function UnifiedLogin() {
-  const { dashPath } = useOrgDashboardPath();
   const [searchParams] = useSearchParams();
   const platformInvitationToken = searchParams.get('invitation');
 
@@ -391,7 +389,7 @@ export default function UnifiedLogin() {
                 ? `Your account has been created with the ${roleOptions.find(r => r.value === staffInvitation.role)?.label} role.`
                 : `Welcome! You've been registered as ${roleOptions.find(r => r.value === role)?.label}.`,
             });
-            navigate(dashPath('/'), { replace: true });
+            navigate('/dashboard', { replace: true });
           }
         }
       }

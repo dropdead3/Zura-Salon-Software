@@ -3,7 +3,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, Outlet } from "react-router-dom";
 import { HelmetProvider } from "react-helmet-async";
 import { ThemeProvider } from "next-themes";
 import ScrollToTop from "./components/ScrollToTop";
@@ -217,6 +217,25 @@ const SalesDashboard = lazy(() => import("./pages/dashboard/admin/SalesDashboard
 
 const queryClient = new QueryClient();
 
+function PrivateAppShell() {
+  return (
+    <OrganizationProvider>
+      <I18nLocaleSync />
+      <DashboardThemeProvider>
+        <ViewAsProvider>
+          <HideNumbersProvider>
+            <SoundSettingsProvider>
+              {import.meta.env.DEV && <DevContextBridge />}
+              <CommandMenu />
+              <Outlet />
+            </SoundSettingsProvider>
+          </HideNumbersProvider>
+        </ViewAsProvider>
+      </DashboardThemeProvider>
+    </OrganizationProvider>
+  );
+}
+
 /**
  * Shared dashboard route tree.
  * Used by both /org/:orgSlug/dashboard/* (primary) and /dashboard/* (legacy redirect).
@@ -378,102 +397,90 @@ const App = () => (
           <QueryClientProvider client={queryClient}>
             <AuthProvider>
               <ThemeInitializer />
-              <OrganizationProvider>
-                <I18nLocaleSync />
-                <DashboardThemeProvider>
-                  <ViewAsProvider>
-                    <HideNumbersProvider>
-                      <SoundSettingsProvider>
-                        <TooltipProvider delayDuration={0}>
-                          <Toaster />
-                          <Sonner />
-                          
-                          <ScrollToTop />
-                          {import.meta.env.DEV && <DevContextBridge />}
-                          <CommandMenu />
-                          <Suspense fallback={<RouteFallback />}>
-                            <Routes>
-                            {/* Platform entry point */}
-                            <Route path="/" element={<PlatformLanding />} />
-                            <Route path="/login" element={<UnifiedLogin />} />
+              <TooltipProvider delayDuration={0}>
+                <Toaster />
+                <Sonner />
+                <ScrollToTop />
+                <Suspense fallback={<RouteFallback />}>
+                  <Routes>
+                    {/* Platform entry point */}
+                    <Route path="/" element={<PlatformLanding />} />
+                    <Route path="/login" element={<UnifiedLogin />} />
 
-                            {/* Backward-compatible redirects */}
-                            <Route path="/staff-login" element={<Navigate to="/login" replace />} />
-                            <Route path="/platform-login" element={<Navigate to="/login" replace />} />
+                    {/* Backward-compatible redirects */}
+                    <Route path="/staff-login" element={<Navigate to="/login" replace />} />
+                    <Route path="/platform-login" element={<Navigate to="/login" replace />} />
 
-                            {/* Organization public pages */}
-                            <Route path="/org/:orgSlug" element={<OrgPublicRoute />}>
-                              <Route index element={<Index />} />
-                              <Route path="about" element={<About />} />
-                              <Route path="services" element={<Services />} />
-                              <Route path="booking" element={<Booking />} />
-                              <Route path="stylists" element={<Stylists />} />
-                              <Route path="extensions" element={<Extensions />} />
-                              <Route path="policies" element={<Policies />} />
-                              <Route path="book" element={<PublicBooking />} />
-                              <Route path="day-rate" element={<DayRateBooking />} />
-                              <Route path="shop" element={<Shop />} />
-                              <Route path=":pageSlug" element={<DynamicPage />} />
-                            </Route>
+                    {/* Organization public pages */}
+                    <Route path="/org/:orgSlug" element={<OrgPublicRoute />}>
+                      <Route index element={<Index />} />
+                      <Route path="about" element={<About />} />
+                      <Route path="services" element={<Services />} />
+                      <Route path="booking" element={<Booking />} />
+                      <Route path="stylists" element={<Stylists />} />
+                      <Route path="extensions" element={<Extensions />} />
+                      <Route path="policies" element={<Policies />} />
+                      <Route path="book" element={<PublicBooking />} />
+                      <Route path="day-rate" element={<DayRateBooking />} />
+                      <Route path="shop" element={<Shop />} />
+                      <Route path=":pageSlug" element={<DynamicPage />} />
+                    </Route>
 
-                            {/* Standalone public pages */}
-                            <Route path="/demo" element={<ProductDemo />} />
-                            <Route path="/feedback" element={<ClientFeedbackPage />} />
-                            <Route path="/rewards" element={<ClientPortalPage />} />
-                            <Route path="/kiosk/:locationId" element={<Kiosk />} />
-                            <Route path="/dock" element={<Dock />} />
+                    {/* Standalone public pages */}
+                    <Route path="/demo" element={<ProductDemo />} />
+                    <Route path="/feedback" element={<ClientFeedbackPage />} />
+                    <Route path="/rewards" element={<ClientPortalPage />} />
+                    <Route path="/kiosk/:locationId" element={<Kiosk />} />
+                    <Route path="/dock" element={<Dock />} />
 
-                            {/* ══════════════════════════════════════════════════
-                                PRIMARY: Org-scoped dashboard — /org/:orgSlug/dashboard/*
-                                OrgDashboardRoute resolves the org from URL slug.
-                               ══════════════════════════════════════════════════ */}
-                            <Route path="/org/:orgSlug/dashboard" element={<OrgDashboardRoute />}>
-                              {DashboardRoutes()}
-                            </Route>
+                    <Route element={<PrivateAppShell />}>
+                      {/* ══════════════════════════════════════════════════
+                          PRIMARY: Org-scoped dashboard — /org/:orgSlug/dashboard/*
+                          OrgDashboardRoute resolves the org from URL slug.
+                         ══════════════════════════════════════════════════ */}
+                      <Route path="/org/:orgSlug/dashboard" element={<OrgDashboardRoute />}>
+                        {DashboardRoutes()}
+                      </Route>
 
-                            {/* ══════════════════════════════════════════════════
-                                LEGACY: /dashboard/* → redirect to /org/:slug/dashboard/*
-                                LegacyDashboardRedirect resolves slug from context.
-                               ══════════════════════════════════════════════════ */}
-                            <Route path="/dashboard/*" element={<LegacyDashboardRedirect />} />
+                      {/* ══════════════════════════════════════════════════
+                          LEGACY: /dashboard/* → redirect to /org/:slug/dashboard/*
+                          LegacyDashboardRedirect resolves slug from context.
+                         ══════════════════════════════════════════════════ */}
+                      <Route path="/dashboard/*" element={<LegacyDashboardRedirect />} />
 
-                            {/* Platform Admin routes */}
-                            <Route path="/platform" element={<ProtectedRoute requireAnyPlatformRole><PlatformLayout /></ProtectedRoute>}>
-                              <Route index element={<Navigate to="overview" replace />} />
-                              <Route path="overview" element={<PlatformOverview />} />
-                              <Route path="accounts" element={<PlatformAccounts />} />
-                              <Route path="accounts/:orgId" element={<AccountDetail />} />
-                              <Route path="health-scores" element={<ProtectedRoute requirePlatformRole="platform_support"><HealthScoresPage /></ProtectedRoute>} />
-                              <Route path="benchmarks" element={<ProtectedRoute requirePlatformRole="platform_admin"><BenchmarksPage /></ProtectedRoute>} />
-                              <Route path="onboarding" element={<PlatformOnboarding />} />
-                              <Route path="import" element={<PlatformImport />} />
-                              <Route path="audit-log" element={<AuditLogPage />} />
-                              <Route path="jobs" element={<JobsPage />} />
-                              <Route path="health" element={<SystemHealthPage />} />
-                              <Route path="stripe-health" element={<StripeHealthPage />} />
-                              <Route path="notifications" element={<ProtectedRoute requirePlatformRole="platform_admin"><NotificationsPage /></ProtectedRoute>} />
-                              <Route path="analytics" element={<ProtectedRoute requirePlatformRole="platform_owner"><PlatformAnalytics /></ProtectedRoute>} />
-                              <Route path="knowledge-base" element={<ProtectedRoute requirePlatformRole="platform_admin"><PlatformKnowledgeBase /></ProtectedRoute>} />
-                              <Route path="revenue" element={<ProtectedRoute requirePlatformRole="platform_admin"><PlatformRevenue /></ProtectedRoute>} />
-                              <Route path="billing-guide" element={<BillingGuide />} />
-                              <Route path="settings" element={<ProtectedRoute requirePlatformRole="platform_admin"><PlatformSettings /></ProtectedRoute>} />
-                              <Route path="settings/integrations/:integrationId" element={<ProtectedRoute requirePlatformRole="platform_admin"><PlatformIntegrationDetail /></ProtectedRoute>} />
-                              <Route path="permissions" element={<ProtectedRoute requirePlatformRole="platform_admin"><PlatformPermissions /></ProtectedRoute>} />
-                              <Route path="feature-flags" element={<ProtectedRoute requirePlatformRole="platform_admin"><PlatformFeatureFlags /></ProtectedRoute>} />
-                              <Route path="color-bar" element={<ProtectedRoute requirePlatformRole="platform_admin"><ColorBarAdmin /></ProtectedRoute>} />
-                              <Route path="coach" element={<ProtectedRoute requireAnyPlatformRole><CoachDashboard /></ProtectedRoute>} />
-                              <Route path="demo-features" element={<ProtectedRoute requirePlatformRole="platform_admin"><DemoFeatures /></ProtectedRoute>} />
-                            </Route>
+                      {/* Platform Admin routes */}
+                      <Route path="/platform" element={<ProtectedRoute requireAnyPlatformRole><PlatformLayout /></ProtectedRoute>}>
+                        <Route index element={<Navigate to="overview" replace />} />
+                        <Route path="overview" element={<PlatformOverview />} />
+                        <Route path="accounts" element={<PlatformAccounts />} />
+                        <Route path="accounts/:orgId" element={<AccountDetail />} />
+                        <Route path="health-scores" element={<ProtectedRoute requirePlatformRole="platform_support"><HealthScoresPage /></ProtectedRoute>} />
+                        <Route path="benchmarks" element={<ProtectedRoute requirePlatformRole="platform_admin"><BenchmarksPage /></ProtectedRoute>} />
+                        <Route path="onboarding" element={<PlatformOnboarding />} />
+                        <Route path="import" element={<PlatformImport />} />
+                        <Route path="audit-log" element={<AuditLogPage />} />
+                        <Route path="jobs" element={<JobsPage />} />
+                        <Route path="health" element={<SystemHealthPage />} />
+                        <Route path="stripe-health" element={<StripeHealthPage />} />
+                        <Route path="notifications" element={<ProtectedRoute requirePlatformRole="platform_admin"><NotificationsPage /></ProtectedRoute>} />
+                        <Route path="analytics" element={<ProtectedRoute requirePlatformRole="platform_owner"><PlatformAnalytics /></ProtectedRoute>} />
+                        <Route path="knowledge-base" element={<ProtectedRoute requirePlatformRole="platform_admin"><PlatformKnowledgeBase /></ProtectedRoute>} />
+                        <Route path="revenue" element={<ProtectedRoute requirePlatformRole="platform_admin"><PlatformRevenue /></ProtectedRoute>} />
+                        <Route path="billing-guide" element={<BillingGuide />} />
+                        <Route path="settings" element={<ProtectedRoute requirePlatformRole="platform_admin"><PlatformSettings /></ProtectedRoute>} />
+                        <Route path="settings/integrations/:integrationId" element={<ProtectedRoute requirePlatformRole="platform_admin"><PlatformIntegrationDetail /></ProtectedRoute>} />
+                        <Route path="permissions" element={<ProtectedRoute requirePlatformRole="platform_admin"><PlatformPermissions /></ProtectedRoute>} />
+                        <Route path="feature-flags" element={<ProtectedRoute requirePlatformRole="platform_admin"><PlatformFeatureFlags /></ProtectedRoute>} />
+                        <Route path="color-bar" element={<ProtectedRoute requirePlatformRole="platform_admin"><ColorBarAdmin /></ProtectedRoute>} />
+                        <Route path="coach" element={<ProtectedRoute requireAnyPlatformRole><CoachDashboard /></ProtectedRoute>} />
+                        <Route path="demo-features" element={<ProtectedRoute requirePlatformRole="platform_admin"><DemoFeatures /></ProtectedRoute>} />
+                      </Route>
+                    </Route>
 
-                            <Route path="*" element={<NotFound />} />
-                            </Routes>
-                          </Suspense>
-                        </TooltipProvider>
-                      </SoundSettingsProvider>
-                    </HideNumbersProvider>
-                  </ViewAsProvider>
-                </DashboardThemeProvider>
-              </OrganizationProvider>
+                    <Route path="*" element={<NotFound />} />
+                  </Routes>
+                </Suspense>
+              </TooltipProvider>
             </AuthProvider>
           </QueryClientProvider>
         </ErrorBoundary>
