@@ -56,6 +56,7 @@ export function OrganizationLogo({ variant, logoUrl, iconUrl, theme = 'dark', cl
       src={resolveSource()}
       alt={alt}
       className={cn('object-contain', className)}
+      style={style}
       onError={() => setImgError(true)}
     />
   );

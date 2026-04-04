@@ -102,11 +102,12 @@ const getStaffLoginUrl = () => {
 };
 
 function QRCodePDFPreview({ staffLoginUrl }: { staffLoginUrl: string }) {
+  const { data: businessSettings } = useBusinessSettings();
   return (
     <div className="bg-gradient-to-b from-[hsl(40,30%,96%)] to-[hsl(35,25%,92%)] rounded-xl p-6 shadow-inner">
       <div className="bg-white rounded-lg shadow-xl overflow-hidden mx-auto relative" style={{ aspectRatio: '8.5/11', maxWidth: '340px' }}>
         <div className="bg-gradient-to-r from-[hsl(0,0%,8%)] to-[hsl(0,0%,15%)] py-3 px-4 text-center">
-          <img src={BrandLogo} alt={PLATFORM_NAME} className="h-3 mx-auto invert" />
+          <img src={businessSettings?.logo_dark_url || businessSettings?.logo_light_url || DEFAULT_ORG_LOGO_DARK} alt={businessSettings?.business_name || PLATFORM_NAME} className="h-3 mx-auto invert" />
           <p className="text-[hsl(40,30%,70%)] text-[7px] mt-0.5 tracking-[0.2em] uppercase">Staff Portal</p>
         </div>
         <div className="flex flex-col items-center px-6 py-4">
