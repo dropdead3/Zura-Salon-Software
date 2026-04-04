@@ -20,7 +20,6 @@ import { useOrganizations, type Organization, logPlatformAction } from '@/hooks/
 import { useFavoriteOrganizations, useToggleFavoriteOrg } from '@/hooks/useFavoriteOrganizations';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { PlatformButton } from './ui/PlatformButton';
-import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 
 
 interface PlatformOrgQuickSwitchProps {
