@@ -47,35 +47,52 @@ async function getCustomLandingPage(userId: string): Promise<string | null> {
   }
 }
 
+interface DualRoleOrg {
+  slug: string;
+  name: string;
+}
+
 interface DualRoleInfo {
   hasPlatformRoles: boolean;
   hasOrgMembership: boolean;
-  orgSlug?: string;
-  orgName?: string;
+  orgs: DualRoleOrg[];
 }
 
 async function checkDualRoleStatus(userId: string): Promise<DualRoleInfo> {
-  const [platformResult, orgResult] = await Promise.all([
+  const [platformResult, employeeResult, adminResult] = await Promise.all([
     supabase.from('platform_roles').select('role').eq('user_id', userId).limit(1),
-    supabase.from('employee_profiles').select('organization_id').eq('user_id', userId).limit(1),
+    supabase
+      .from('employee_profiles')
+      .select('organization_id, organizations:organization_id (slug, name)')
+      .eq('user_id', userId),
+    supabase
+      .from('organization_admins')
+      .select('organization_id, organizations:organization_id (slug, name)')
+      .eq('user_id', userId),
   ]);
 
   const hasPlatformRoles = !!(platformResult.data && platformResult.data.length > 0);
-  const hasOrgMembership = !!(orgResult.data && orgResult.data.length > 0);
 
-  let orgSlug: string | undefined;
-  let orgName: string | undefined;
-  if (hasOrgMembership && orgResult.data?.[0]?.organization_id) {
-    const { data: org } = await supabase
-      .from('organizations')
-      .select('slug, name')
-      .eq('id', orgResult.data[0].organization_id)
-      .single();
-    orgSlug = org?.slug || undefined;
-    orgName = org?.name || undefined;
-  }
+  const orgMap = new Map<string, DualRoleOrg>();
+  employeeResult.data?.forEach((row: any) => {
+    if (row.organization_id && row.organizations) {
+      orgMap.set(row.organization_id, {
+        slug: row.organizations.slug,
+        name: row.organizations.name,
+      });
+    }
+  });
+  adminResult.data?.forEach((row: any) => {
+    if (row.organization_id && row.organizations && !orgMap.has(row.organization_id)) {
+      orgMap.set(row.organization_id, {
+        slug: row.organizations.slug,
+        name: row.organizations.name,
+      });
+    }
+  });
 
-  return { hasPlatformRoles, hasOrgMembership, orgSlug, orgName };
+  const orgs = Array.from(orgMap.values());
+  return { hasPlatformRoles, hasOrgMembership: orgs.length > 0, orgs };
 }
 
 async function getDualRolePreference(userId: string): Promise<string | null> {
@@ -92,7 +109,7 @@ async function getDualRolePreference(userId: string): Promise<string | null> {
   }
 }
 
-async function saveDualRolePreference(userId: string, destination: string): Promise<void> {
+async function saveDualRolePreference(userId: string, destination: string | null): Promise<void> {
   await supabase
     .from('user_preferences')
     .upsert(
