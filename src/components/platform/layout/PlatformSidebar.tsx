@@ -3,7 +3,6 @@ import { NavLink } from '@/components/NavLink';
 import {
   ChevronLeft,
   ChevronRight,
-  Sparkles,
   Crown,
   Headphones,
   Code,
