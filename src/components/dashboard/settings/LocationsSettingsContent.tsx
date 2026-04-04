@@ -478,7 +478,7 @@ export function LocationsSettingsContent() {
                       id="name"
                       value={formData.name}
                       onChange={(e) => setFormData(f => ({ ...f, name: e.target.value }))}
-                      placeholder="e.g., North Mesa"
+                      placeholder="e.g., Downtown"
                     />
                   </div>
                   <div className="space-y-2">
