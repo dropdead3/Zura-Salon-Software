@@ -27,6 +27,7 @@ import { OrgDashboardRoute, LegacyDashboardRedirect } from "./components/OrgDash
 import PlatformLanding from "./pages/PlatformLanding";
 import UnifiedLogin from "./pages/UnifiedLogin";
 import NotFound from "./pages/NotFound";
+import DashboardHome from "./pages/dashboard/DashboardHome";
 
 // Organization public pages (under /org/:orgSlug)
 import { OrgPublicRoute } from "./components/org/OrgPublicRoute";
@@ -67,7 +68,6 @@ const Extensions = lazyWithRetry(() => import("./pages/Extensions"));
 const Policies = lazyWithRetry(() => import("./pages/Policies"));
 const Shop = lazyWithRetry(() => import("./pages/Shop"));
 const DynamicPage = lazyWithRetry(() => import("./pages/DynamicPage"));
-const DashboardHome = lazyWithRetry(() => import("./pages/dashboard/DashboardHome"));
 const Program = lazyWithRetry(() => import("./pages/dashboard/Program"));
 const RingTheBell = lazyWithRetry(() => import("./pages/dashboard/RingTheBell"));
 const Leaderboard = lazyWithRetry(() => import("./pages/dashboard/Leaderboard"));
