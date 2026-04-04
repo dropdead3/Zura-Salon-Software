@@ -15,6 +15,7 @@ const FALLBACK_FOOTER_LINKS = [
 
 export function Footer() {
   const { data: locations = [] } = useActiveLocations();
+  const { data: businessSettings } = useBusinessSettings();
   const orgPath = useOrgPath();
   const { data: publishedFooterData } = usePublicMenuBySlug('footer');
   
