@@ -14,7 +14,8 @@ import {
 } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { toast as sonnerToast } from 'sonner';
-import { Loader2, ArrowLeft, Eye, EyeOff, Mail, CheckCircle, Sparkles } from 'lucide-react';
+import { Loader2, ArrowLeft, Eye, EyeOff, Mail, CheckCircle } from 'lucide-react';
+import BrandWordmarkWhite from '@/assets/brand-wordmark-white.svg';
 import { z } from 'zod';
 import { useCheckInvitation, useAcceptInvitation } from '@/hooks/useStaffInvitations';
 import { useInvitationByToken, useAcceptPlatformInvitation } from '@/hooks/usePlatformInvitations';
