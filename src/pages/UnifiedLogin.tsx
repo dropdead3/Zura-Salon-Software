@@ -209,10 +209,9 @@ export default function UnifiedLogin() {
     const message = location.state?.message;
     if (message && typeof message === 'string') {
       sonnerToast.info(message);
-      // Clear the message from state so it doesn't re-show on re-renders
-      window.history.replaceState({}, '');
+      navigate(`${location.pathname}${location.search}`, { replace: true, state: null });
     }
-  }, [location.state?.message]);
+  }, [location.state?.message, location.pathname, location.search, navigate]);
 
   // Set signup mode if platform invitation
   useEffect(() => {
