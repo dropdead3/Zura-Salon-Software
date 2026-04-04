@@ -108,7 +108,7 @@ export const sampleStylists: Stylist[] = [
     bio: "Making every day a good hair day.",
   },
 
-  // Val Vista Lakes (9)
+  // Location 2 (9)
   {
     id: "sample-vv-1",
     name: "Harper Anderson",
