@@ -90,6 +90,7 @@ export function usePlatformBranding() {
         secondary_logo_url: branding.secondary_logo_url,
         icon_dark_url: branding.icon_dark_url,
         icon_light_url: branding.icon_light_url,
+        login_logo_url: branding.login_logo_url,
         theme_colors: branding.theme_colors,
         typography: branding.typography,
         loader_style: branding.loader_style,

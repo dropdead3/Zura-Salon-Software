@@ -249,6 +249,31 @@ export function PlatformAppearanceTab() {
         </PlatformCardContent>
       </PlatformCard>
 
+      {/* Login Logo Configuration Card */}
+      <PlatformCard variant="glass">
+        <PlatformCardHeader>
+          <PlatformCardTitle className="flex items-center gap-2">
+            <Crown className="h-5 w-5 text-[hsl(var(--platform-primary))]" />
+            Login Logo
+          </PlatformCardTitle>
+          <PlatformCardDescription>
+            Logo displayed on the platform login page. Falls back to the dark mode sidebar logo if not set.
+          </PlatformCardDescription>
+        </PlatformCardHeader>
+        <PlatformCardContent>
+          <div className="max-w-sm">
+            <LogoUpload
+              label="Login Page Logo"
+              description="White/light logo for the dark login background (recommended: 200x50px)"
+              currentUrl={localBranding.login_logo_url}
+              onUpload={(url) => handleLogoUpdate('login_logo_url', url)}
+              onRemove={() => handleLogoUpdate('login_logo_url', null)}
+              variant="dark"
+            />
+          </div>
+        </PlatformCardContent>
+      </PlatformCard>
+
       {/* Full Logo Configuration Card */}
       <PlatformCard variant="glass">
         <PlatformCardHeader>
