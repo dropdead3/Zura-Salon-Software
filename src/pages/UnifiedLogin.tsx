@@ -91,6 +91,7 @@ export default function UnifiedLogin() {
   const { toast } = useToast();
   const acceptStaffInvitation = useAcceptInvitation();
   const { roleOptions } = useRoleUtils();
+  const { branding } = usePlatformBranding();
 
   // Staff invitation check
   const debouncedEmail = useDebounce(email, 500);
