@@ -22,7 +22,7 @@ import scarlettLee from "@/assets/sample-stylists/scarlett-lee.jpg";
 // 7 for Location 1, 9 for Location 2
 // Note: highlighted_services should match specialty filter names (uppercase)
 export const sampleStylists: Stylist[] = [
-  // North Mesa (7)
+  // Location 1 (7)
   {
     id: "sample-nm-1",
     name: "Olivia Martinez",
