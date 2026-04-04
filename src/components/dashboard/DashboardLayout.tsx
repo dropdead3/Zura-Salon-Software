@@ -143,10 +143,7 @@ import {
   websiteNavItems as websiteNavFromConfig,
   appsNavItems as appsNavFromConfig,
 } from '@/config/dashboardNav';
-import Logo from '@/assets/brand-logo-secondary.svg';
-import LogoWhite from '@/assets/brand-logo-secondary-white.svg';
-import LogoIcon from '@/assets/brand-logo-secondary.svg';
-import LogoIconWhite from '@/assets/brand-logo-secondary-white.svg';
+import { DEFAULT_ORG_LOGO_DARK, DEFAULT_ORG_LOGO_LIGHT } from '@/lib/platform-assets';
 import { useBusinessSettings } from '@/hooks/useBusinessSettings';
 import { NextClientIndicator } from '@/components/dashboard/NextClientIndicator';
 import { TopBarSearch } from '@/components/dashboard/TopBarSearch';
