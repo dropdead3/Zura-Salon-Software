@@ -1,70 +1,66 @@
 
 
-# Branding Isolation Cleanup — Bug Fix & Hardening Pass
+# Bug Cleanup Pass — Remaining Issues
 
-## Problems Found
+## Issues Found
 
-There are **8 files** still importing raw brand SVGs directly from `src/assets/`, bypassing the centralized `PlatformLogo` and `OrganizationLogo` resolvers. This creates two categories of bleed-over risk:
+### 1. Platform landing page showing org logo (DD75) — Data issue
+The `PlatformLogo` resolver is working correctly, but the `platform_branding` database row has `primary_logo_url` set to an organization's logo (DD75). The code correctly reads `login_logo_url → primary_logo_url → DEFAULT`, but since `primary_logo_url` points to DD75, the landing page shows the wrong brand.
 
-### Category A: Org surfaces using platform assets (identity bleed)
-These are organization-scoped pages that hardcode platform brand assets instead of resolving from org `businessSettings`:
+**Fix**: Update the `platform_branding` row to clear `primary_logo_url` (or set it to the correct Zura asset). This is a data correction, not a code bug.
 
-| File | Surface | What it shows | What it should show |
-|------|---------|---------------|---------------------|
-| `Header.tsx` | Org public website nav | Hardcoded `brand-logo-primary.svg` | Org logo from `businessSettings.logo_light_url` |
-| `Footer.tsx` | Org public website footer | Hardcoded `brand-logo-secondary.svg` | Org logo from `businessSettings.logo_light_url` |
-| `StaffLogin.tsx` | Org staff login page | Hardcoded `brand-logo-secondary.svg` | Org logo from `businessSettings` |
-| `DashboardLockScreen.tsx` | Org dashboard lock | Has its own `getLogo()` fallback chain with raw imports | Should use `OrganizationLogo` component |
-| `InvitationsTab.tsx` | Org invitation QR card | Hardcoded `brand-logo-secondary.svg` | Org logo |
-| `QRCodeFullScreen.tsx` | Org QR fullscreen | Hardcoded `brand-logo-secondary-white.svg` | Org logo (dark variant) |
-| `AccountManagement.tsx` | Org account management QR card | Hardcoded `brand-logo-secondary.svg` | Org logo |
+### 2. `Program.tsx` — Unused raw brand import
+`BrandWordmark` is imported from `@/assets/brand-wordmark.svg` but never used in the JSX. Dead import that should be removed.
 
-### Category B: Acceptable raw imports (no change needed)
-| File | Reason |
-|------|--------|
-| `platform-assets.ts` | This IS the canonical asset registry — raw imports are correct here |
-| `ColoredLogo.tsx` | Utility component that accepts `logoUrl` prop; fallback to platform wordmark is intentional |
-| `EmailTemplateEditor.tsx` | Provides brand asset presets for email template design — utility, not a rendering surface |
-| `Program.tsx` | Uses `ColoredLogo` which already handles fallback correctly |
+**Fix**: Remove the unused import line.
 
-## Implementation Plan
+### 3. `FounderWelcome.tsx` — Hardcoded tenant content (tenant brand guard violation)
+This component has:
+- Hardcoded founder headshot (`founder-headshot.jpg`) and signature (`founder-signature.png`) from `src/assets/`
+- Alt text "Kristi Day, Founder" — tenant-specific name
+- Alt text "Kristi Day signature" — tenant-specific name
+- Copy like "Welcome to Our Salon" — generic but still static
 
-### Step 1: Migrate org public website surfaces (Header.tsx, Footer.tsx)
-- Remove raw `brand-logo-primary.svg` and `brand-logo-secondary.svg` imports
-- Add `useBusinessSettings()` hook to resolve org logo
-- Use `OrganizationLogo` component or direct `businessSettings.logo_light_url` with platform asset fallback
-- Header has two logo states (full logo when at top, icon when scrolled) — both need org-aware resolution
+This is a public org-scoped component that should resolve founder content from the database (site_settings or a founder section config), not bundled assets.
 
-### Step 2: Migrate StaffLogin.tsx
-- Remove raw `brand-logo-secondary.svg` import
-- This page is org-scoped (staff invitation context) — resolve logo from invitation org data or `useBusinessSettings()`
-- Fallback: `OrganizationLogo` with platform default
+**Fix**: Migrate to use `useSectionConfig('founder_welcome')` or similar hook. For now, at minimum remove the hardcoded tenant name from alt text and make the component check for configured content.
 
-### Step 3: Migrate DashboardLockScreen.tsx
-- Remove raw `brand-logo-secondary.svg` and `brand-logo-secondary-white.svg` imports
-- Remove the manual `getLogo()` function (duplicates fallback logic)
-- Replace with `<OrganizationLogo>` component which already handles dark/light theme + fallback
+### 4. `Header.tsx` — Hardcoded fallback nav items with tenant-specific labels
+`FALLBACK_NAV_ITEMS` includes "Hair Extensions", "Join The Team", "Salon Policies" — these are tenant-specific menu labels, not generic platform defaults. Same in `useWebsiteMenus.ts` seed defaults.
 
-### Step 4: Migrate QR code surfaces (InvitationsTab.tsx, QRCodeFullScreen.tsx, AccountManagement.tsx)
-- Remove raw brand imports
-- These render org-branded QR cards — should show org logo from `businessSettings`
-- Use `OrganizationLogo` or resolve from `useBusinessSettings()` with platform fallback
+**Fix**: Make fallback items more generic ("Services", "About", "Team", "Gallery", "Contact") or suppress nav entirely when no published menu exists.
 
-### Step 5: Add `'website'` and `'website-icon'` variants to OrganizationLogo
-- The Header needs two variants: full logo (default view) and compact icon (scrolled view)
-- Extend `OrganizationLogo` to support these via `businessSettings.logo_light_url` and `businessSettings.icon_light_url`
-- This keeps the public website in light-mode brand resolution (org sites are light-themed)
+### 5. `stylists.ts` — Hardcoded tenant data file
+Contains real tenant stylists with names, Instagram handles, and bundled headshots. This is seed/demo data that violates tenant isolation. Used by 9+ components.
+
+**Fix**: This is a larger refactor (out of scope for this pass). Flag as tech debt — all stylist data should come from the database. The static file should only provide type definitions and utility functions.
+
+---
+
+## Recommended Scope for This Pass
+
+Focus on items 1–4 (quick, impactful fixes). Item 5 is flagged as tech debt for a future dedicated refactor.
+
+### Step 1: Fix platform branding data
+- Clear or correct `primary_logo_url` in the `platform_branding` site_settings row so the landing page shows the Zura wordmark instead of DD75
+
+### Step 2: Clean up Program.tsx
+- Remove unused `BrandWordmark` import
+
+### Step 3: Neutralize FounderWelcome.tsx
+- Remove hardcoded tenant name ("Kristi Day") from alt text
+- Replace with dynamic content from section config or generic placeholder
+- Keep the component functional but tenant-neutral
+
+### Step 4: Genericize Header.tsx fallback nav
+- Change fallback labels to generic terms ("Services", "About", "Team", "Gallery", "Contact")
+- Same for `useWebsiteMenus.ts` seed defaults
+
+---
 
 ## Technical Details
 
-- **No database changes** required
-- **No new hooks** — `useBusinessSettings()` already exists and is cached for 10 minutes
-- Header/Footer are inside org public routes which have access to org context via `useOrgPath`
-- `OrganizationLogo` already handles `onError` fallback to platform defaults
-- The `alt` text on all org surfaces should resolve to `businessSettings.business_name` instead of hardcoded "Salon"
-
-## Risk Assessment
-- **Low risk**: These are rendering-only changes, no provider restructuring
-- All changes fall back to platform defaults if org branding is missing
-- `OrganizationLogo` already has `onError` → bundled fallback, so broken URLs cannot blank any surface
+- **Database change**: One UPDATE to `site_settings` to fix the platform logo URL
+- **Code changes**: 4 files, all rendering-only — no provider restructuring
+- **Risk**: Very low — all changes are cosmetic/cleanup with no architectural impact
 
