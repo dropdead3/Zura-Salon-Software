@@ -1,66 +1,66 @@
 
 
-# Bug Cleanup Pass — Remaining Issues
+# Bug Cleanup Pass 3 — Remaining Tenant Data Leaks
 
 ## Issues Found
 
-### 1. Platform landing page showing org logo (DD75) — Data issue
-The `PlatformLogo` resolver is working correctly, but the `platform_branding` database row has `primary_logo_url` set to an organization's logo (DD75). The code correctly reads `login_logo_url → primary_logo_url → DEFAULT`, but since `primary_logo_url` points to DD75, the landing page shows the wrong brand.
+### 1. `SEO.tsx` — Hardcoded tenant business info (HIGH)
+`BUSINESS_INFO` contains hardcoded tenant-specific data: real addresses (2036 N Gilbert Rd), phone numbers, email (`contact@salon.com`), area served lists, opening hours, and hardcoded SEO keywords referencing Mesa/Gilbert/Chandler. This is exported and used across the site.
 
-**Fix**: Update the `platform_branding` row to clear `primary_logo_url` (or set it to the correct Zura asset). This is a data correction, not a code bug.
+**Fix**: Refactor `SEO.tsx` to resolve business info from `useBusinessSettings()` at runtime. The `BUSINESS_INFO` constant should become a generic fallback with placeholder values, and the component should accept or resolve org-specific data dynamically. Hardcoded geo-specific keywords should be removed or templated.
 
-### 2. `Program.tsx` — Unused raw brand import
-`BrandWordmark` is imported from `@/assets/brand-wordmark.svg` but never used in the JSX. Dead import that should be removed.
+### 2. `Stylists.tsx` — Duplicate hardcoded tenant stylist data (HIGH)
+This page has its own inline copy of real tenant stylists (Kristi D., Sarina L., etc.) with real Instagram handles — completely separate from `src/data/stylists.ts`. Double violation: tenant data AND code duplication.
 
-**Fix**: Remove the unused import line.
+**Fix**: Remove the inline stylist array. Import from `src/data/stylists.ts` (which is already flagged as tech debt for future DB migration), or better — make this page query stylists from the database. At minimum, consolidate to the single shared source.
 
-### 3. `FounderWelcome.tsx` — Hardcoded tenant content (tenant brand guard violation)
-This component has:
-- Hardcoded founder headshot (`founder-headshot.jpg`) and signature (`founder-signature.png`) from `src/assets/`
-- Alt text "Kristi Day, Founder" — tenant-specific name
-- Alt text "Kristi Day signature" — tenant-specific name
-- Copy like "Welcome to Our Salon" — generic but still static
+### 3. `ColorBarPaywall.tsx` — Hardcoded tenant name in testimonial (LOW)
+Line 523: `"Jamie Torres · Owner, Drop Dead Salon · Austin, TX"` — real tenant name in a fake testimonial.
 
-This is a public org-scoped component that should resolve founder content from the database (site_settings or a founder section config), not bundled assets.
+**Fix**: Replace with a generic fictional business name (e.g., "Jamie T. · Salon Owner · Austin, TX").
 
-**Fix**: Migrate to use `useSectionConfig('founder_welcome')` or similar hook. For now, at minimum remove the hardcoded tenant name from alt text and make the component check for configured content.
+### 4. `dockDemoData.ts` — Tenant name in code comment (LOW)
+Line 344: `// ─── Mock Services (Drop Dead Salons catalog) ───`
 
-### 4. `Header.tsx` — Hardcoded fallback nav items with tenant-specific labels
-`FALLBACK_NAV_ITEMS` includes "Hair Extensions", "Join The Team", "Salon Policies" — these are tenant-specific menu labels, not generic platform defaults. Same in `useWebsiteMenus.ts` seed defaults.
+**Fix**: Neutralize comment to `// ─── Mock Services (demo catalog) ───`
 
-**Fix**: Make fallback items more generic ("Services", "About", "Team", "Gallery", "Contact") or suppress nav entirely when no published menu exists.
+### 5. `SignaturePresetActions.tsx` / `SignaturePresetsManager.tsx` — Tenant name in placeholder (LOW)
+Placeholder text: `"e.g., Kristi Day - CEO"`
 
-### 5. `stylists.ts` — Hardcoded tenant data file
-Contains real tenant stylists with names, Instagram handles, and bundled headshots. This is seed/demo data that violates tenant isolation. Used by 9+ components.
+**Fix**: Replace with generic placeholder: `"e.g., Jane Smith - Owner"`
 
-**Fix**: This is a larger refactor (out of scope for this pass). Flag as tech debt — all stylist data should come from the database. The static file should only provide type definitions and utility functions.
+### 6. `Extensions.tsx` — Entire page is hardcoded tenant content (TECH DEBT)
+The entire Extensions page has hardcoded marketing copy, pricing tiers, and FAQs. Similar to `stylists.ts`, this should eventually resolve from the database. Out of scope for this pass — flag only.
 
 ---
 
-## Recommended Scope for This Pass
+## Recommended Scope
 
-Focus on items 1–4 (quick, impactful fixes). Item 5 is flagged as tech debt for a future dedicated refactor.
+Focus on items 1–5 (quick, impactful). Item 6 is tech debt for a future pass.
 
-### Step 1: Fix platform branding data
-- Clear or correct `primary_logo_url` in the `platform_branding` site_settings row so the landing page shows the Zura wordmark instead of DD75
+### Step 1: Refactor SEO.tsx
+- Make `BUSINESS_INFO` resolve from `useBusinessSettings()` + org locations
+- Keep generic fallbacks for when no org data exists
+- Remove hardcoded Mesa/Gilbert addresses, phones, and geo keywords
+- SEO component becomes org-aware instead of tenant-hardcoded
 
-### Step 2: Clean up Program.tsx
-- Remove unused `BrandWordmark` import
+### Step 2: Consolidate Stylists.tsx
+- Remove inline duplicate stylist array
+- Import from shared `src/data/stylists.ts` or make DB-aware
+- Ensure the page uses the same data source as other stylist consumers
 
-### Step 3: Neutralize FounderWelcome.tsx
-- Remove hardcoded tenant name ("Kristi Day") from alt text
-- Replace with dynamic content from section config or generic placeholder
-- Keep the component functional but tenant-neutral
-
-### Step 4: Genericize Header.tsx fallback nav
-- Change fallback labels to generic terms ("Services", "About", "Team", "Gallery", "Contact")
-- Same for `useWebsiteMenus.ts` seed defaults
+### Step 3: Neutralize tenant names in UI copy
+- `ColorBarPaywall.tsx`: genericize testimonial attribution
+- `dockDemoData.ts`: neutralize code comment
+- `SignaturePresetActions.tsx` + `SignaturePresetsManager.tsx`: generic placeholder
 
 ---
 
 ## Technical Details
 
-- **Database change**: One UPDATE to `site_settings` to fix the platform logo URL
-- **Code changes**: 4 files, all rendering-only — no provider restructuring
-- **Risk**: Very low — all changes are cosmetic/cleanup with no architectural impact
+- **No database changes** required
+- **SEO.tsx refactor** is the most significant change — needs careful handling since it generates structured data (JSON-LD) for search engines
+- The SEO component currently uses a static constant; it needs to become a hook-aware component that resolves org data at render time
+- All other changes are single-line copy fixes
+- **Risk**: Low — all rendering-only changes with no architectural impact
 
