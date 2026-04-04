@@ -50,6 +50,7 @@ async function getCustomLandingPage(userId: string): Promise<string | null> {
 interface DualRoleOrg {
   slug: string;
   name: string;
+  logo_url: string | null;
 }
 
 interface DualRoleInfo {
@@ -63,11 +64,11 @@ async function checkDualRoleStatus(userId: string): Promise<DualRoleInfo> {
     supabase.from('platform_roles').select('role').eq('user_id', userId).limit(1),
     supabase
       .from('employee_profiles')
-      .select('organization_id, organizations:organization_id (slug, name)')
+      .select('organization_id, organizations:organization_id (slug, name, logo_url)')
       .eq('user_id', userId),
     supabase
       .from('organization_admins')
-      .select('organization_id, organizations:organization_id (slug, name)')
+      .select('organization_id, organizations:organization_id (slug, name, logo_url)')
       .eq('user_id', userId),
   ]);
 
@@ -79,6 +80,7 @@ async function checkDualRoleStatus(userId: string): Promise<DualRoleInfo> {
       orgMap.set(row.organization_id, {
         slug: row.organizations.slug,
         name: row.organizations.name,
+        logo_url: row.organizations.logo_url ?? null,
       });
     }
   });
@@ -87,6 +89,7 @@ async function checkDualRoleStatus(userId: string): Promise<DualRoleInfo> {
       orgMap.set(row.organization_id, {
         slug: row.organizations.slug,
         name: row.organizations.name,
+        logo_url: row.organizations.logo_url ?? null,
       });
     }
   });
@@ -474,9 +477,15 @@ export default function UnifiedLogin() {
                   className="w-full p-5 bg-white/[0.03] border border-white/[0.08] rounded-xl backdrop-blur-sm hover:bg-white/[0.06] hover:border-violet-500/30 transition-all group text-left"
                 >
                   <div className="flex items-center gap-4">
-                    <div className="p-3 bg-emerald-500/10 rounded-lg group-hover:bg-emerald-500/20 transition-colors">
-                      <Building2 className="w-5 h-5 text-emerald-400" />
-                    </div>
+                    {org.logo_url ? (
+                      <div className="w-11 h-11 rounded-lg overflow-hidden bg-white/[0.05] flex items-center justify-center group-hover:ring-1 group-hover:ring-emerald-500/30 transition-all">
+                        <img src={org.logo_url} alt={org.name} className="w-full h-full object-contain p-1" />
+                      </div>
+                    ) : (
+                      <div className="p-3 bg-emerald-500/10 rounded-lg group-hover:bg-emerald-500/20 transition-colors">
+                        <Building2 className="w-5 h-5 text-emerald-400" />
+                      </div>
+                    )}
                     <div>
                       <h3 className="text-white font-medium">
                         {org.name} Dashboard
