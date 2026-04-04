@@ -1,27 +1,24 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Phone, ChevronLeft, ChevronRight, X } from "lucide-react";
-
-const locations = [
-  {
-    name: "North Mesa",
-    phone: "(480) 548-1886",
-  },
-  {
-    name: "Val Vista Lakes",
-    phone: "(480) 548-1886",
-  },
-];
+import { useActiveLocations } from "@/hooks/useLocations";
 
 export function StickyPhoneSidebar() {
+  const { data: dbLocations = [] } = useActiveLocations();
   const [isExpanded, setIsExpanded] = useState(true);
   const [selectedLocation, setSelectedLocation] = useState<string | null>(null);
 
-  const handleLocationClick = (locationName: string) => {
-    setSelectedLocation(selectedLocation === locationName ? null : locationName);
+  // Only show locations that have a phone number
+  const locationsWithPhone = dbLocations.filter(loc => loc.phone);
+
+  const handleLocationClick = (locationId: string) => {
+    setSelectedLocation(selectedLocation === locationId ? null : locationId);
   };
 
-  const selectedLocationData = locations.find(l => l.name === selectedLocation);
+  const selectedLocationData = locationsWithPhone.find(l => l.id === selectedLocation);
+
+  // Hide sidebar if no locations have phone numbers
+  if (locationsWithPhone.length === 0) return null;
 
   return (
     <div className="fixed right-0 top-1/2 -translate-y-1/2 z-40 hidden lg:block">
@@ -46,12 +43,12 @@ export function StickyPhoneSidebar() {
 
             {/* Location names - vertical layout */}
             <div className="flex flex-col gap-4">
-              {locations.map((location) => (
+              {locationsWithPhone.map((location) => (
                 <button
-                  key={location.name}
-                  onClick={() => handleLocationClick(location.name)}
+                  key={location.id}
+                  onClick={() => handleLocationClick(location.id)}
                   className={`flex flex-col items-center gap-2 group transition-colors ${
-                    selectedLocation === location.name ? "text-background" : "text-background/60 hover:text-background"
+                    selectedLocation === location.id ? "text-background" : "text-background/60 hover:text-background"
                   }`}
                 >
                   <Phone size={16} />
@@ -76,7 +73,7 @@ export function StickyPhoneSidebar() {
                   className="border-t border-background/20 pt-4 flex flex-col items-center gap-2"
                 >
                   <a
-                    href={`tel:${selectedLocationData.phone.replace(/[^0-9]/g, "")}`}
+                    href={`tel:${selectedLocationData.phone.replace(/[^0-9+]/g, "")}`}
                     className="text-xs font-sans text-background hover:text-background/80 transition-colors whitespace-nowrap"
                     style={{ writingMode: "vertical-rl", textOrientation: "mixed" }}
                   >

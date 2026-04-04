@@ -501,7 +501,7 @@ export function LocationsSettingsContent() {
                     id="address"
                     value={formData.address}
                     onChange={(e) => setFormData(f => ({ ...f, address: e.target.value }))}
-                    placeholder="e.g., 2036 N Gilbert Rd Ste 1"
+                    placeholder="e.g., 123 Main St"
                   />
                 </div>
                 
