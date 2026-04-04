@@ -1,40 +1,61 @@
 
 
-## Login Architecture: Unified vs Separate
+## Login UX Enhancements
 
-### Current State (Already Correct)
+Three targeted improvements to the unified login page — no new pages or routes needed.
 
-Your `UnifiedLogin.tsx` already handles both user types with a **single login form**. After sign-in, `getUserRedirectPath()` checks:
-1. Does the user have `platform_roles`? Route to `/platform/overview`
-2. Does the user have a custom landing page? Use that
-3. Otherwise, route to org dashboard
+### 1. Post-Login Interstitial for Dual-Role Users
 
-### Why a Single Login is Better Than Two
+**Problem**: Users who hold both platform roles AND org membership are silently routed to `/platform/overview`, with no way to choose their org dashboard instead.
 
-Separate login pages create problems:
-- Users forget which login to use (support burden)
-- Same email/password works on both -- confusing to have two doors to the same lock
-- Platform admins who also own organizations would need to remember which page does what
-- Two pages to maintain, style, and secure
+**Solution**: After login, if the user has both platform roles and org membership, show a brief "Where do you want to go?" card with two options:
+- **Platform Admin** → `/platform/overview`
+- **Organization Dashboard** → `/org/:slug/dashboard`
 
-The current unified approach is the correct pattern for multi-tenant platforms. Slack, Notion, and similar platforms use one login and route based on role/membership.
+This replaces the current auto-redirect in `getUserRedirectPath()`. Users with only one context still get auto-redirected.
 
-### What Could Be Improved (No Separate Pages Needed)
+**Implementation**:
+- Add a `dualRoleInterstitial` state to `UnifiedLogin.tsx`
+- After login, check both `platform_roles` and org membership
+- If both exist, show a selection card instead of redirecting
+- Selection stores preference in `user_preferences` for future logins (skip interstitial next time, with a "Change default" option in settings)
 
-1. **Post-login disambiguation** -- If a user has BOTH platform roles AND org membership, show a brief "Where do you want to go?" interstitial after login (platform admin view vs org dashboard). This already partially exists via the multi-org switcher.
+### 2. Contextual Subtitle Based on Referral Source
 
-2. **Contextual messaging** -- If someone arrives at `/login` from a platform admin link vs an org dashboard link, the subtitle could adapt ("Sign in to manage your organization" vs "Sign in to the Zura Platform") based on the `from` state. No separate page needed.
+**Problem**: The subtitle always says "Sign in to access your dashboard" regardless of where the user came from.
 
-3. **Sign-up gating** -- The current sign-up form shows a role selector, which is org-facing. Platform admin accounts should only be created via invitation (which is already enforced via `platformInvitationToken`). Consider hiding the public sign-up toggle entirely unless there is an active staff or platform invitation, to prevent orphan accounts.
+**Solution**: Use the `location.state.from` pathname to adapt the subtitle:
+- From `/platform/*` → "Sign in to the Zura Platform"
+- From `/org/*/dashboard/*` → "Sign in to manage your organization"
+- From staff invitation → "Sign in to join your team"
+- Default → "Sign in to access your dashboard"
 
-### Recommendation
+**Implementation**:
+- Add a `getContextualSubtitle()` function in `UnifiedLogin.tsx`
+- Reads `location.state.from?.pathname` and `staffInvitation` presence
+- Returns appropriate subtitle string
+- Replace the static subtitle at line 345
 
-Keep the single `/login` page. No architectural change needed. The smart routing is already in place. If you want contextual copy changes based on where the user came from, that is a small UI tweak, not a structural change.
+### 3. Hide Sign-Up Unless Invitation Token Present
 
-### Technical Details
+**Problem**: The Sign Up button and toggle are always visible, allowing anyone to create an account without an invitation. This can create orphan accounts with no organization attachment.
 
-- `getUserRedirectPath()` in `UnifiedLogin.tsx` (line 49-66) already handles role-based routing
-- Platform invitation flow (line 117-122, 138-150) correctly channels platform admin signups
-- Staff invitation flow handles org-level signups
-- No new pages, routes, or database changes required
+**Solution**: Only show sign-up UI when a valid invitation token is present (either `staffInvitation` or `platformInvitationToken`).
+
+**Implementation**:
+- Compute `canSignUp = !!staffInvitation || !!platformInvitationToken`
+- Hide the "Sign Up" button (line 517-524) when `!canSignUp`
+- Hide the "Don't have an account?" toggle (line 568) when `!canSignUp`
+- If someone arrives at `/login` without a token, they only see login + forgot password
+- Staff invitation check still runs on email input — if a pending invitation is found, the sign-up option appears dynamically
+
+### Files Modified
+
+- `src/pages/UnifiedLogin.tsx` — all three changes consolidated here
+
+### Technical Notes
+
+- The dual-role check queries both `platform_roles` and `employee_profiles` (for org membership) — two small queries that already exist in the codebase
+- No database migrations needed
+- No new components — all changes are within the existing login page
 
