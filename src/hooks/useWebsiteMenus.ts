@@ -251,11 +251,10 @@ export function useSeedMenus() {
       const primaryItems = [
         { label: 'Services', item_type: 'page_link', target_url: '/services', sort_order: 0 },
         { label: 'About', item_type: 'dropdown_parent', sort_order: 1 },
-        { label: 'Hair Extensions', item_type: 'page_link', target_url: '/extensions', sort_order: 2 },
-        { label: 'Join The Team', item_type: 'page_link', target_url: '/careers', sort_order: 3 },
-        { label: 'Gallery', item_type: 'page_link', target_url: '/gallery', sort_order: 4 },
-        { label: 'Contact Us', item_type: 'page_link', target_url: '/contact', sort_order: 5 },
-        { label: 'Book Consult', item_type: 'cta', target_url: '/booking', cta_style: 'primary', sort_order: 6 },
+        { label: 'Team', item_type: 'page_link', target_url: '/team', sort_order: 2 },
+        { label: 'Gallery', item_type: 'page_link', target_url: '/gallery', sort_order: 3 },
+        { label: 'Contact', item_type: 'page_link', target_url: '/contact', sort_order: 4 },
+        { label: 'Book Now', item_type: 'cta', target_url: '/booking', cta_style: 'primary', sort_order: 5 },
       ];
 
       const { data: insertedPrimary, error: e3 } = await supabase
