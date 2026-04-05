@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { DashboardPageHeader } from '@/components/dashboard/DashboardPageHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,14 +9,14 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { PremiumFloatingPanel } from '@/components/ui/premium-floating-panel';
+import { Skeleton } from '@/components/ui/skeleton';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
+import { getLevelColor } from '@/lib/level-colors';
 import {
   GraduationCap,
   Users,
@@ -26,14 +25,16 @@ import {
   AlertCircle,
   ChevronDown,
   Plus,
-  Eye,
-  MessageSquare,
   ExternalLink,
-  Award,
   Search,
-  Filter,
   Send,
-  ArrowLeft,
+  TrendingUp,
+  ShieldCheck,
+  ArrowRight,
+  Sparkles,
+  AlertTriangle,
+  Crown,
+  Loader2,
 } from 'lucide-react';
 import {
   useAllAssistantProgress,
@@ -41,14 +42,224 @@ import {
   useUpdateSubmissionStatus,
   useAddFeedback,
   useCreateRequirement,
-  useUpdateRequirement,
   useSubmissionFeedback,
   type AssistantProgress,
   type GraduationSubmission,
   type GraduationFeedback,
 } from '@/hooks/useGraduationTracker';
+import { useTeamLevelProgress, type TeamMemberProgress, type GraduationStatus } from '@/hooks/useTeamLevelProgress';
+import { useStylistLevels } from '@/hooks/useStylistLevels';
 import { useFormatDate } from '@/hooks/useFormatDate';
 import { PageExplainer } from '@/components/ui/PageExplainer';
+import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
+import type { CriterionProgress } from '@/hooks/useLevelProgress';
+
+/* ─── KPI Strip ─────────────────────────────────────────── */
+
+function KpiStrip({ counts }: { counts: ReturnType<typeof useTeamLevelProgress>['counts'] }) {
+  const kpis = [
+    { label: 'Ready to Graduate', value: counts.ready, icon: CheckCircle2, color: 'text-emerald-600' },
+    { label: 'In Progress', value: counts.inProgress, icon: TrendingUp, color: 'text-primary' },
+    { label: 'Needs Attention', value: counts.needsAttention, icon: AlertTriangle, color: 'text-amber-600' },
+    { label: 'At Top Level', value: counts.atTopLevel, icon: Crown, color: 'text-muted-foreground' },
+  ];
+
+  return (
+    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      {kpis.map(kpi => (
+        <div key={kpi.label} className={tokens.kpi.tile}>
+          <div className="flex items-center gap-2">
+            <kpi.icon className={cn('w-4 h-4', kpi.color)} />
+            <span className={tokens.kpi.label}>{kpi.label}</span>
+          </div>
+          <span className={tokens.kpi.value}>{kpi.value}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/* ─── Criterion Row (reused from LevelProgressCard) ───── */
+
+function CriterionRow({ cp }: { cp: CriterionProgress }) {
+  const formatValue = (val: number) => {
+    if (cp.unit === '/mo' || cp.unit === '$') return `$${val.toLocaleString()}`;
+    if (cp.unit === '%') return `${val.toFixed(1)}%`;
+    if (cp.unit === 'd') return `${val}d`;
+    return String(val);
+  };
+
+  return (
+    <div className="space-y-1">
+      <div className="flex items-center justify-between text-xs">
+        <span className="text-muted-foreground">{cp.label}</span>
+        <span className="tabular-nums">
+          <span className="text-foreground">{formatValue(cp.current)}</span>
+          <span className="text-muted-foreground"> / {formatValue(cp.target)}</span>
+        </span>
+      </div>
+      <Progress
+        value={cp.percent}
+        className="h-1.5"
+        indicatorClassName={cn(
+          cp.percent >= 100 ? 'bg-emerald-500' : cp.percent >= 75 ? 'bg-primary' : 'bg-amber-500'
+        )}
+      />
+    </div>
+  );
+}
+
+/* ─── Status Badge ──────────────────────────────────────── */
+
+function StatusBadge({ status }: { status: GraduationStatus }) {
+  const config: Record<GraduationStatus, { label: string; className: string; icon: typeof CheckCircle2 }> = {
+    ready: {
+      label: 'Qualified',
+      className: 'bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-950/30 dark:text-emerald-400 dark:border-emerald-800',
+      icon: CheckCircle2,
+    },
+    in_progress: {
+      label: 'In Progress',
+      className: 'bg-primary/10 text-primary border-primary/20',
+      icon: TrendingUp,
+    },
+    needs_attention: {
+      label: 'Needs Attention',
+      className: 'bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-950/30 dark:text-amber-400 dark:border-amber-800',
+      icon: AlertTriangle,
+    },
+    at_top_level: {
+      label: 'Top Level',
+      className: 'bg-muted text-muted-foreground border-border',
+      icon: Crown,
+    },
+    no_criteria: {
+      label: 'No Criteria',
+      className: 'bg-muted text-muted-foreground border-border',
+      icon: AlertCircle,
+    },
+  };
+
+  const c = config[status];
+  const Icon = c.icon;
+
+  return (
+    <Badge variant="outline" className={cn('text-xs gap-1', c.className)}>
+      <Icon className="w-3 h-3" />
+      {c.label}
+    </Badge>
+  );
+}
+
+/* ─── Stylist Progress Row ──────────────────────────────── */
+
+function StylistProgressRow({ member, totalLevels }: { member: TeamMemberProgress; totalLevels: number }) {
+  const [isExpanded, setIsExpanded] = useState(false);
+  const levelColor = member.currentLevel
+    ? getLevelColor(member.currentLevelIndex, totalLevels)
+    : null;
+
+  return (
+    <Collapsible open={isExpanded} onOpenChange={setIsExpanded}>
+      <div className="flex items-center gap-4 p-4 rounded-xl border bg-card/50 hover:bg-muted/30 transition-colors">
+        <Avatar className="h-10 w-10">
+          <AvatarImage src={member.photoUrl || undefined} />
+          <AvatarFallback>{member.fullName?.[0] || '?'}</AvatarFallback>
+        </Avatar>
+
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="font-medium text-sm">{member.fullName}</span>
+            {levelColor && member.currentLevel && (
+              <Badge variant="secondary" className={cn('text-[10px]', levelColor.bg, levelColor.text)}>
+                {member.currentLevel.label}
+              </Badge>
+            )}
+            {member.nextLevel && (
+              <span className="flex items-center gap-1 text-[10px] text-muted-foreground">
+                <ArrowRight className="w-3 h-3" />
+                {member.nextLevel.label}
+              </span>
+            )}
+          </div>
+
+          {member.status !== 'at_top_level' && member.status !== 'no_criteria' && (
+            <div className="flex items-center gap-3 mt-1.5">
+              <Progress
+                value={member.compositeScore}
+                className="h-2 flex-1 max-w-[200px]"
+                indicatorClassName={cn(
+                  member.compositeScore >= 100 ? 'bg-emerald-500' : 'bg-primary'
+                )}
+              />
+              <span className="text-xs tabular-nums text-muted-foreground">{member.compositeScore}%</span>
+            </div>
+          )}
+        </div>
+
+        <div className="flex items-center gap-2">
+          <StatusBadge status={member.status} />
+          {member.criteriaProgress.length > 0 && (
+            <CollapsibleTrigger asChild>
+              <Button variant="ghost" size="icon" className="h-8 w-8">
+                <ChevronDown className={cn('h-4 w-4 transition-transform', isExpanded && 'rotate-180')} />
+              </Button>
+            </CollapsibleTrigger>
+          )}
+        </div>
+      </div>
+
+      <CollapsibleContent className="mt-2 ml-14 space-y-4 pb-2">
+        <div className="p-4 rounded-lg border bg-card/30 space-y-3">
+          {member.criteriaProgress.map(cp => (
+            <CriterionRow key={cp.key} cp={cp} />
+          ))}
+
+          <div className="flex items-center justify-between pt-2 border-t text-[10px] text-muted-foreground">
+            <span>{member.evaluationWindowDays}-day rolling window</span>
+            {member.requiresApproval && (
+              <span className="flex items-center gap-1">
+                <ShieldCheck className="w-3 h-3" />
+                Requires approval
+              </span>
+            )}
+          </div>
+        </div>
+      </CollapsibleContent>
+    </Collapsible>
+  );
+}
+
+/* ─── Stylist List (shared between tabs) ───────────────── */
+
+function StylistList({
+  members,
+  totalLevels,
+  emptyMessage,
+}: {
+  members: TeamMemberProgress[];
+  totalLevels: number;
+  emptyMessage: string;
+}) {
+  if (members.length === 0) {
+    return (
+      <div className={tokens.empty.container}>
+        <GraduationCap className={tokens.empty.icon} />
+        <h3 className={tokens.empty.heading}>{emptyMessage}</h3>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-3">
+      {members.map(m => (
+        <StylistProgressRow key={m.userId} member={m} totalLevels={totalLevels} />
+      ))}
+    </div>
+  );
+}
+
+/* ─── Assistant Checklist Tab (preserved) ──────────────── */
 
 const STATUS_COLORS = {
   pending: 'bg-amber-100 text-amber-800',
@@ -66,35 +277,24 @@ function SubmissionReviewPanel({ submission, requirementTitle }: { submission: G
 
   const handleAddFeedback = () => {
     if (!feedbackText.trim()) return;
-    addFeedback.mutate({
-      submissionId: submission.id,
-      feedback: feedbackText,
-    });
+    addFeedback.mutate({ submissionId: submission.id, feedback: feedbackText });
     setFeedbackText('');
   };
 
   return (
     <div className="space-y-6">
       <div className="space-y-2">
-        <h3 className="font-medium text-sm text-muted-foreground uppercase tracking-wide">Requirement</h3>
+        <h3 className={tokens.heading.subsection}>Requirement</h3>
         <p className="text-lg font-medium">{requirementTitle}</p>
       </div>
 
       <div className="space-y-2">
-        <h3 className="font-medium text-sm text-muted-foreground uppercase tracking-wide">Submission</h3>
+        <h3 className={tokens.heading.subsection}>Submission</h3>
         <div className="p-4 rounded-lg bg-muted/30 space-y-3">
-          {submission.assistant_notes && (
-            <p className="text-sm">{submission.assistant_notes}</p>
-          )}
+          {submission.assistant_notes && <p className="text-sm">{submission.assistant_notes}</p>}
           {submission.proof_url && (
-            <a 
-              href={submission.proof_url} 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="flex items-center gap-2 text-primary hover:underline text-sm"
-            >
-              <ExternalLink className="h-4 w-4" />
-              View Attachment
+            <a href={submission.proof_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-primary hover:underline text-sm">
+              <ExternalLink className="h-4 w-4" /> View Attachment
             </a>
           )}
           <div className="flex items-center gap-2 text-xs text-muted-foreground pt-2 border-t border-border/50">
@@ -105,32 +305,29 @@ function SubmissionReviewPanel({ submission, requirementTitle }: { submission: G
       </div>
 
       <div className="space-y-2">
-        <h3 className="font-medium text-sm text-muted-foreground uppercase tracking-wide">Status</h3>
+        <h3 className={tokens.heading.subsection}>Status</h3>
         <div className="flex gap-2">
-          <Button 
+          <Button
             variant={submission.status === 'approved' ? 'default' : 'outline'}
             className={submission.status === 'approved' ? 'bg-emerald-600 hover:bg-emerald-700' : ''}
             onClick={() => updateStatus.mutate({ submissionId: submission.id, status: 'approved' })}
             disabled={updateStatus.isPending}
           >
-            <CheckCircle2 className="h-4 w-4 mr-2" />
-            Approve
+            <CheckCircle2 className="h-4 w-4 mr-2" /> Approve
           </Button>
-          <Button 
+          <Button
             variant={submission.status === 'rejected' ? 'default' : 'outline'}
             className={submission.status === 'rejected' ? 'bg-destructive hover:bg-destructive/90' : ''}
             onClick={() => updateStatus.mutate({ submissionId: submission.id, status: 'rejected' })}
             disabled={updateStatus.isPending}
           >
-            <AlertCircle className="h-4 w-4 mr-2" />
-            Request Changes
+            <AlertCircle className="h-4 w-4 mr-2" /> Request Changes
           </Button>
         </div>
       </div>
 
       <div className="space-y-4 pt-4 border-t border-border">
-        <h3 className="font-medium text-sm text-muted-foreground uppercase tracking-wide">Feedback History</h3>
-        
+        <h3 className={tokens.heading.subsection}>Feedback History</h3>
         <ScrollArea className="h-[200px] pr-4">
           <div className="space-y-4">
             {feedback.map((item: GraduationFeedback) => (
@@ -142,9 +339,7 @@ function SubmissionReviewPanel({ submission, requirementTitle }: { submission: G
                 <div className="flex-1 space-y-1">
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-medium">{item.coach?.full_name}</span>
-                    <span className="text-xs text-muted-foreground">
-                      {formatDate(new Date(item.created_at), 'MMM d')}
-                    </span>
+                    <span className="text-xs text-muted-foreground">{formatDate(new Date(item.created_at), 'MMM d')}</span>
                   </div>
                   <p className="text-sm text-muted-foreground">{item.feedback}</p>
                 </div>
@@ -152,19 +347,9 @@ function SubmissionReviewPanel({ submission, requirementTitle }: { submission: G
             ))}
           </div>
         </ScrollArea>
-
         <div className="flex gap-2">
-          <Textarea
-            value={feedbackText}
-            onChange={(e) => setFeedbackText(e.target.value)}
-            placeholder="Add feedback..."
-            className="min-h-[60px] resize-none"
-          />
-          <Button 
-            size="icon" 
-            onClick={handleAddFeedback}
-            disabled={!feedbackText.trim() || addFeedback.isPending}
-          >
+          <Textarea value={feedbackText} onChange={(e) => setFeedbackText(e.target.value)} placeholder="Add feedback..." className="min-h-[60px] resize-none" />
+          <Button size="icon" onClick={handleAddFeedback} disabled={!feedbackText.trim() || addFeedback.isPending}>
             <Send className="h-4 w-4" />
           </Button>
         </div>
@@ -176,8 +361,8 @@ function SubmissionReviewPanel({ submission, requirementTitle }: { submission: G
 function AssistantRow({ assistant, requirements }: { assistant: AssistantProgress; requirements: any[] }) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [selectedSubmission, setSelectedSubmission] = useState<GraduationSubmission | null>(null);
-  const progress = assistant.total_requirements > 0 
-    ? (assistant.completed_requirements / assistant.total_requirements) * 100 
+  const progress = assistant.total_requirements > 0
+    ? (assistant.completed_requirements / assistant.total_requirements) * 100
     : 0;
 
   return (
@@ -204,10 +389,9 @@ function AssistantRow({ assistant, requirements }: { assistant: AssistantProgres
               <Progress value={progress} className="h-2" />
             </div>
           </div>
-
           <CollapsibleTrigger asChild>
             <Button variant="ghost" size="icon">
-              <ChevronDown className={cn("h-4 w-4 transition-transform", isExpanded && "rotate-180")} />
+              <ChevronDown className={cn('h-4 w-4 transition-transform', isExpanded && 'rotate-180')} />
             </Button>
           </CollapsibleTrigger>
         </div>
@@ -216,8 +400,8 @@ function AssistantRow({ assistant, requirements }: { assistant: AssistantProgres
           {requirements.map((req) => {
             const submission = assistant.submissions.find(s => s.requirement_id === req.id);
             return (
-              <div 
-                key={req.id} 
+              <div
+                key={req.id}
                 className="flex items-center justify-between p-3 rounded-lg border bg-card/30 cursor-pointer hover:bg-muted/50 transition-colors"
                 onClick={() => submission && setSelectedSubmission(submission)}
               >
@@ -234,7 +418,7 @@ function AssistantRow({ assistant, requirements }: { assistant: AssistantProgres
                   <span className="text-sm">{req.title}</span>
                 </div>
                 {submission && (
-                  <Badge variant="secondary" className={cn("text-xs", STATUS_COLORS[submission.status as keyof typeof STATUS_COLORS])}>
+                  <Badge variant="secondary" className={cn('text-xs', STATUS_COLORS[submission.status as keyof typeof STATUS_COLORS])}>
                     {submission.status.replace('_', ' ')}
                   </Badge>
                 )}
@@ -244,11 +428,7 @@ function AssistantRow({ assistant, requirements }: { assistant: AssistantProgres
         </CollapsibleContent>
       </Collapsible>
 
-      <PremiumFloatingPanel
-        open={!!selectedSubmission}
-        onOpenChange={() => setSelectedSubmission(null)}
-        maxWidth="560px"
-      >
+      <PremiumFloatingPanel open={!!selectedSubmission} onOpenChange={() => setSelectedSubmission(null)} maxWidth="560px">
         {selectedSubmission && (
           <div className="p-5">
             <SubmissionReviewPanel
@@ -268,31 +448,23 @@ function RequirementsManager() {
   const [showCreate, setShowCreate] = useState(false);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [category, setCategory] = useState('general');
 
   const handleCreate = () => {
     if (!title.trim()) return;
     createRequirement.mutate(
-      { title: title.trim(), description: description.trim() || null, category },
-      {
-        onSuccess: () => {
-          setTitle('');
-          setDescription('');
-          setShowCreate(false);
-        },
-      }
+      { title: title.trim(), description: description.trim() || null, category: 'general' },
+      { onSuccess: () => { setTitle(''); setDescription(''); setShowCreate(false); } }
     );
   };
 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h3 className="font-display text-sm tracking-wide uppercase">Requirements</h3>
+        <h3 className={tokens.heading.subsection}>Requirements</h3>
         <Button size="sm" onClick={() => setShowCreate(true)}>
           <Plus className="h-4 w-4 mr-2" /> Add
         </Button>
       </div>
-
       {showCreate && (
         <Card className="p-4 space-y-3">
           <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Requirement title" />
@@ -303,11 +475,8 @@ function RequirementsManager() {
           </div>
         </Card>
       )}
-
       {isLoading ? (
-        <div className="space-y-2">
-          {[1,2,3].map(i => <div key={i} className={cn("animate-pulse rounded-md bg-muted h-12 w-full")} />)}
-        </div>
+        <div className="space-y-2">{[1, 2, 3].map(i => <Skeleton key={i} className="h-12 w-full" />)}</div>
       ) : (
         requirements.map((req) => (
           <div key={req.id} className="flex items-center justify-between p-3 rounded-lg border">
@@ -323,66 +492,145 @@ function RequirementsManager() {
   );
 }
 
+/* ─── Main Page ─────────────────────────────────────────── */
+
 export default function GraduationTracker() {
+  const { teamProgress, counts, isLoading } = useTeamLevelProgress();
+  const { data: allLevels = [] } = useStylistLevels();
   const { data: assistants, isLoading: loadingAssistants } = useAllAssistantProgress();
   const { data: requirements, isLoading: loadingReqs } = useAllGraduationRequirements();
-  const [searchQuery, setSearchQuery] = useState('');
 
-  const filteredAssistants = assistants?.filter(a => 
+  const [searchQuery, setSearchQuery] = useState('');
+  const [levelFilter, setLevelFilter] = useState<string>('all');
+
+  const filtered = teamProgress.filter(m => {
+    if (searchQuery && !m.fullName.toLowerCase().includes(searchQuery.toLowerCase())) return false;
+    if (levelFilter !== 'all' && m.currentLevel?.slug !== levelFilter) return false;
+    return true;
+  });
+
+  const readyMembers = filtered.filter(m => m.status === 'ready');
+
+  const filteredAssistants = assistants?.filter(a =>
     a.full_name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   return (
     <DashboardLayout>
-      <DashboardPageHeader 
+      <DashboardPageHeader
         title="Graduation Tracker"
+        description="Track team progression through levels and assistant graduation"
         actions={
-          <div className="relative w-64">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <PageExplainer pageId="graduation-tracker" />
-            <Input
-              placeholder="Search assistants..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9"
-            />
+          <div className="flex items-center gap-3">
+            <Select value={levelFilter} onValueChange={setLevelFilter}>
+              <SelectTrigger className="w-[160px] h-9">
+                <SelectValue placeholder="All Levels" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Levels</SelectItem>
+                {allLevels.map(l => (
+                  <SelectItem key={l.slug} value={l.slug}>{l.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <div className="relative w-56">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search team..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9 h-9"
+              />
+            </div>
           </div>
         }
       />
 
       <div className="container max-w-[1600px] px-8 py-8 space-y-6">
-        <Tabs defaultValue="assistants">
+        <PageExplainer pageId="graduation-tracker" />
+
+        {/* KPI Strip */}
+        {!isLoading && <KpiStrip counts={counts} />}
+
+        <Tabs defaultValue="all-stylists">
           <TabsList>
-            <TabsTrigger value="assistants">
+            <TabsTrigger value="all-stylists">
               <Users className="h-4 w-4 mr-2" />
+              All Stylists
+              {counts.total > 0 && (
+                <Badge variant="secondary" className="ml-2 text-xs">{counts.total}</Badge>
+              )}
+            </TabsTrigger>
+            <TabsTrigger value="ready">
+              <CheckCircle2 className="h-4 w-4 mr-2" />
+              Ready to Graduate
+              {counts.ready > 0 && (
+                <Badge variant="secondary" className="ml-2 text-xs bg-emerald-100 text-emerald-700">{counts.ready}</Badge>
+              )}
+            </TabsTrigger>
+            <TabsTrigger value="assistants">
+              <GraduationCap className="h-4 w-4 mr-2" />
               Assistants
             </TabsTrigger>
             <TabsTrigger value="requirements">
-              <GraduationCap className="h-4 w-4 mr-2" />
+              <Sparkles className="h-4 w-4 mr-2" />
               Requirements
             </TabsTrigger>
           </TabsList>
 
+          {/* Tab: All Stylists */}
+          <TabsContent value="all-stylists" className="mt-6">
+            {isLoading ? (
+              <div className="space-y-3">
+                {[1, 2, 3, 4, 5].map(i => <Skeleton key={i} className={tokens.loading.skeleton} />)}
+              </div>
+            ) : (
+              <StylistList
+                members={filtered}
+                totalLevels={allLevels.length}
+                emptyMessage="No team members with levels assigned"
+              />
+            )}
+          </TabsContent>
+
+          {/* Tab: Ready to Graduate */}
+          <TabsContent value="ready" className="mt-6">
+            {isLoading ? (
+              <div className="space-y-3">
+                {[1, 2, 3].map(i => <Skeleton key={i} className={tokens.loading.skeleton} />)}
+              </div>
+            ) : (
+              <StylistList
+                members={readyMembers}
+                totalLevels={allLevels.length}
+                emptyMessage="No team members currently qualified for promotion"
+              />
+            )}
+          </TabsContent>
+
+          {/* Tab: Assistants */}
           <TabsContent value="assistants" className="mt-6 space-y-3">
             {loadingAssistants || loadingReqs ? (
               <div className="space-y-4">
-                {[1, 2, 3].map(i => <div key={i} className={cn("animate-pulse rounded-md bg-muted h-24 w-full")} />)}
+                {[1, 2, 3].map(i => <Skeleton key={i} className="h-24 w-full rounded-md" />)}
               </div>
             ) : filteredAssistants?.length === 0 ? (
-              <div className="text-center py-12 text-muted-foreground">
-                No assistants found.
+              <div className={tokens.empty.container}>
+                <Users className={tokens.empty.icon} />
+                <h3 className={tokens.empty.heading}>No assistants found</h3>
               </div>
             ) : (
               filteredAssistants?.map(assistant => (
-                <AssistantRow 
-                  key={assistant.assistant_id} 
-                  assistant={assistant} 
-                  requirements={requirements || []} 
+                <AssistantRow
+                  key={assistant.assistant_id}
+                  assistant={assistant}
+                  requirements={requirements || []}
                 />
               ))
             )}
           </TabsContent>
 
+          {/* Tab: Requirements */}
           <TabsContent value="requirements" className="mt-6">
             <RequirementsManager />
           </TabsContent>
