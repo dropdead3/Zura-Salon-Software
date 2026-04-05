@@ -175,6 +175,36 @@ export function PersonaExplorer() {
           </p>
         </div>
 
+        {/* ── Breadcrumb trail ─────────────────────────────────────── */}
+        <AnimatePresence>
+          {selectedPersona && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.25 }}
+              className="flex items-center justify-center gap-2 mb-6 text-sm font-sans text-muted-foreground overflow-hidden"
+            >
+              <button
+                type="button"
+                onClick={handleReset}
+                className="inline-flex items-center gap-1 text-violet-400 hover:text-violet-300 transition-colors cursor-pointer"
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+                Start over
+              </button>
+              <ChevronRight className="w-3.5 h-3.5 text-slate-600" />
+              <span>{currentPersonaLabel}</span>
+              {selectedProblems.length > 0 && (
+                <>
+                  <ChevronRight className="w-3.5 h-3.5 text-slate-600" />
+                  <span>{selectedProblems.length} problem{selectedProblems.length !== 1 ? 's' : ''} selected</span>
+                </>
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         {/* ── Step 1: Persona cards ───────────────────────────────────── */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mkt-reveal" style={{ transitionDelay: '0.1s' }}>
           {personas.map((persona) => {
