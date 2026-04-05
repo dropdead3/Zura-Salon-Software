@@ -9260,6 +9260,96 @@ export type Database = {
         }
         Relationships: []
       }
+      level_promotion_criteria: {
+        Row: {
+          avg_ticket_enabled: boolean
+          avg_ticket_threshold: number
+          avg_ticket_weight: number
+          created_at: string
+          evaluation_window_days: number
+          id: string
+          is_active: boolean
+          organization_id: string
+          rebooking_enabled: boolean
+          rebooking_pct_threshold: number
+          rebooking_weight: number
+          requires_manual_approval: boolean
+          retail_enabled: boolean
+          retail_pct_threshold: number
+          retail_weight: number
+          revenue_enabled: boolean
+          revenue_threshold: number
+          revenue_weight: number
+          stylist_level_id: string
+          tenure_days: number
+          tenure_enabled: boolean
+          updated_at: string
+        }
+        Insert: {
+          avg_ticket_enabled?: boolean
+          avg_ticket_threshold?: number
+          avg_ticket_weight?: number
+          created_at?: string
+          evaluation_window_days?: number
+          id?: string
+          is_active?: boolean
+          organization_id: string
+          rebooking_enabled?: boolean
+          rebooking_pct_threshold?: number
+          rebooking_weight?: number
+          requires_manual_approval?: boolean
+          retail_enabled?: boolean
+          retail_pct_threshold?: number
+          retail_weight?: number
+          revenue_enabled?: boolean
+          revenue_threshold?: number
+          revenue_weight?: number
+          stylist_level_id: string
+          tenure_days?: number
+          tenure_enabled?: boolean
+          updated_at?: string
+        }
+        Update: {
+          avg_ticket_enabled?: boolean
+          avg_ticket_threshold?: number
+          avg_ticket_weight?: number
+          created_at?: string
+          evaluation_window_days?: number
+          id?: string
+          is_active?: boolean
+          organization_id?: string
+          rebooking_enabled?: boolean
+          rebooking_pct_threshold?: number
+          rebooking_weight?: number
+          requires_manual_approval?: boolean
+          retail_enabled?: boolean
+          retail_pct_threshold?: number
+          retail_weight?: number
+          revenue_enabled?: boolean
+          revenue_threshold?: number
+          revenue_weight?: number
+          stylist_level_id?: string
+          tenure_days?: number
+          tenure_enabled?: boolean
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "level_promotion_criteria_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "level_promotion_criteria_stylist_level_id_fkey"
+            columns: ["stylist_level_id"]
+            isOneToOne: false
+            referencedRelation: "stylist_levels"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       lever_outcomes: {
         Row: {
           created_at: string
