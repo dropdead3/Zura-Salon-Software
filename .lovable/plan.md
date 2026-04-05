@@ -1,65 +1,100 @@
 
-# Revamp Front-End Marketing Copy — Clean + Converting Language
 
-## What This Changes
-A full copy overhaul of the marketing landing page, applying the 10-section language brief across every user-facing string. No structural, layout, or component changes — copy only.
+# Hybrid Solutions Mega-Dropdown + Solution Pages
 
-## File-by-File Changes
+## Overview
+Transform the "Solutions" nav link into a two-column mega-dropdown menu, and create dedicated landing pages for each solution area. Left column shows persona paths ("I'm a..."), right column shows solution areas. Each item links to its own page.
 
-### 1. `HeroSection.tsx`
-- **Headline**: "Stop Managing. Start Growing." → "Run your salon with clarity, not chaos."
-- **Subheadline**: → "One platform that connects your schedule, team, inventory, and business performance — so you always know what's working and what needs attention."
-- **Primary CTA**: "Request Demo" → "Get a Demo"
-- **Secondary CTA**: "Explore Platform" → "Explore the Platform"
-- **Pill badge**: → "Built with real salon owners"
-- **Trust line**: → "No credit card required · See your salon clearly from day one"
+## Mega-Dropdown Design
 
-### 2. `StatBar.tsx`
-- "Tools Replaced" label → "Tools replaced by one system"
+```text
+┌─────────────────────────────────────────────────────────────┐
+│  WHO ARE YOU?              │  SOLUTIONS                     │
+│                            │                                │
+│  → Independent Stylist     │  → Business Visibility         │
+│  → Salon Owner             │  → Smart Scheduling            │
+│  → Multi-Location Owner    │  → Team Performance            │
+│  → Enterprise Leader       │  → Inventory Control           │
+│                            │  → Connected Platform          │
+│                            │                                │
+│  ─────────────────────────────────────────────────────────  │
+│  "Not sure where to start?" → Get a Demo                   │
+└─────────────────────────────────────────────────────────────┘
+```
 
-### 3. `ProblemStatement.tsx`
-- **Left headline**: → "Running a salon shouldn't feel like guessing."
-- **Left subtext**: Add brief list: schedule, team performance, inventory, clients, numbers you can't trust
-- **Closing line**: → "Most systems show you information. They don't help you actually run your business."
-- Tighten individual pain points to remove jargon ("service-level margin" → "what's actually profitable", etc.)
+- Hover-triggered on desktop, tap-to-open on mobile
+- Glass aesthetic matching existing marketing surface (bg-slate-950/95 backdrop-blur-xl)
+- Each item has icon + label + one-line description
+- Subtle violet accent on hover
+- Mobile: collapses into accordion sections within the existing mobile menu
 
-### 4. `SolutionShowcase.tsx`
-- **Heading**: → "Everything your salon needs. Finally working together."
-- **Subheadline**: → "Instead of disconnected tools and guesswork, Zura brings everything into one place — and shows you what to focus on next."
-- Rewrite 6 solution cards to match the 5 value pillars from the brief (See, Schedule, Team, Inventory, Connected)
+## New Pages (6 total)
 
-### 5. `PersonaExplorer.tsx` — No changes (already clean)
+### 4 Persona Pages
+Each follows the same template: hero with persona-specific headline, 3-4 problem/solution pairs pulled from PersonaExplorer data, testimonial slot, and CTA.
 
-### 6. `BuiltByOperators.tsx`
-- **Section label**: → "Built for how salons actually run"
-- Body: "So we built the system we needed" → "So we built what we wished existed."
+| Route | Page | Hero Headline |
+|-------|------|---------------|
+| `/solutions/independent` | Independent Stylist | "Build your business with clarity — from chair one." |
+| `/solutions/salon-owner` | Salon Owner | "Run your team with confidence, not guesswork." |
+| `/solutions/multi-location` | Multi-Location Owner | "Every location. One standard. Zero guesswork." |
+| `/solutions/enterprise` | Enterprise Leader | "Portfolio-level visibility. Decision-grade intelligence." |
 
-### 7. `OutcomeMetrics.tsx`
-- **Section label**: "Outcomes" → "Results"
-- Tighten metric context lines to remove jargon
+### 2 Solution-Area Pages (new, beyond existing /product)
+| Route | Page | Focus |
+|-------|------|-------|
+| `/solutions/scheduling` | Smart Scheduling | Calendar optimization, gap detection, rebooking |
+| `/solutions/inventory` | Inventory Control | Product tracking, cost visibility, reorder intelligence |
 
-### 8. `TestimonialSection.tsx` — No changes
+The existing `/product` page serves as the "Business Visibility + Intelligence" solution page. The existing `/ecosystem` page covers the "Connected Platform" story. So we reuse those rather than duplicating.
 
-### 9. `FinalCTA.tsx`
-- **Heading**: → "A better way to run your salon."
-- **Body**: → "See how Zura connects your schedule, team, and business performance in one clear system."
-- **Primary CTA**: → "Get a Demo"
+## File Changes
 
-### 10. `MarketingNav.tsx`
-- CTA: "Request Demo" → "Get a Demo"
+### Create: `src/components/marketing/SolutionsMegaMenu.tsx`
+- Two-column layout component rendered inside MarketingNav
+- Left column: 4 persona cards with icons from PersonaExplorer
+- Right column: 5 solution items (Visibility → /product, Scheduling → /solutions/scheduling, Team → /solutions/team, Inventory → /solutions/inventory, Connected → /ecosystem)
+- Bottom bar: "Not sure? → Get a Demo" CTA
+- Desktop: absolute-positioned dropdown below nav, triggered by hover/click on "Solutions"
+- Mobile: integrated into existing mobile menu as expandable accordion
+- Animated with framer-motion (fade + slide-down)
 
-### 11. `IntelligencePillars.tsx`
-- **Section label**: → "How it works"
-- **Subheadline**: → "Zura watches your business, spots what's off, and tells you what to focus on."
-- Rewrite 4 pillar descriptions to plain salon-owner language
+### Modify: `src/components/marketing/MarketingNav.tsx`
+- Replace the static "Solutions" Link with a trigger that opens `SolutionsMegaMenu`
+- Desktop: hover intent with 150ms delay (prevents accidental triggers)
+- Mobile: "Solutions" becomes an expandable section showing all items inline
+- Keep Ecosystem and Pricing as standard links
+
+### Create: `src/components/marketing/SolutionPageTemplate.tsx`
+- Shared template for all solution/persona pages
+- Props: hero content, problem/solution pairs, optional testimonial, CTA variant
+- Sections: Hero → Problem list → Solution cards → Social proof → CTA
+- Reuses `MarketingLayout`, `useScrollReveal`, existing glass card styles
+
+### Create: 6 page files
+- `src/pages/solutions/IndependentStylist.tsx`
+- `src/pages/solutions/SalonOwner.tsx`
+- `src/pages/solutions/MultiLocation.tsx`
+- `src/pages/solutions/Enterprise.tsx`
+- `src/pages/solutions/Scheduling.tsx`
+- `src/pages/solutions/Inventory.tsx`
+
+Each imports `SolutionPageTemplate` and passes page-specific content. Problem/solution copy is pulled from the existing PersonaExplorer data arrays to stay consistent.
+
+### Modify: `src/App.tsx`
+- Add 6 new routes under `/solutions/*`
+
+## Technical Details
+- No new dependencies — uses existing framer-motion, lucide-react, and marketing CSS
+- Dropdown uses `onMouseEnter`/`onMouseLeave` with timeout for hover intent (desktop)
+- Click-outside closes dropdown (useRef + useEffect pattern)
+- ESC key closes dropdown
+- Mobile accordion uses AnimatePresence for expand/collapse
+- All pages lazy-loaded with `React.lazy` + `Suspense`
+- Copy tone follows Clean + Converting guidelines — no jargon, salon-owner language throughout
 
 ## What Does NOT Change
-- Component names, file names, variable names, brand tokens
-- Layout, CSS, animations — zero visual changes
-- PersonaExplorer, TestimonialSection — already match tone
-- 12 files touched, zero new files, zero dependencies
+- Existing `/product`, `/ecosystem`, `/pricing`, `/demo` pages stay as-is
+- PersonaExplorer on landing page stays — the dropdown is a navigation shortcut, not a replacement
+- No backend changes, no database changes
 
-## Tone Checklist
-- No "leverage," "optimize," "utilization," "infrastructure" in copy
-- No buzzwords or investor-speak
-- Clear, confident, grounded, helpful — written for salon owners
