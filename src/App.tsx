@@ -25,6 +25,7 @@ import { OrgDashboardRoute, LegacyDashboardRedirect } from "./components/OrgDash
 
 // Platform pages
 import PlatformLanding from "./pages/PlatformLanding";
+import Ecosystem from "./pages/Ecosystem";
 import UnifiedLogin from "./pages/UnifiedLogin";
 import NotFound from "./pages/NotFound";
 import DashboardHome from "./pages/dashboard/DashboardHome";
@@ -406,6 +407,7 @@ const App = () => (
                   <Routes>
                     {/* Platform entry point */}
                     <Route path="/" element={<PlatformLanding />} />
+                    <Route path="/ecosystem" element={<Ecosystem />} />
                     <Route path="/login" element={<UnifiedLogin />} />
 
                     {/* Backward-compatible redirects */}
