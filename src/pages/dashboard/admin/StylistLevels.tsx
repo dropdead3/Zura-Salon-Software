@@ -277,28 +277,55 @@ export default function StylistLevels() {
             title="Stylist Levels"
             description="Manage experience levels and pricing tiers"
             actions={
-              hasChanges && (
-                <div className="flex items-center gap-2">
-                  <Button 
-                    variant="ghost"
-                    onClick={handleDiscard}
+              <div className="flex items-center gap-2">
+                {promotionCriteria && promotionCriteria.length > 0 && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-2"
+                    onClick={() => {
+                      const levelInfos = levels.map((l, i) => ({
+                        label: l.label,
+                        slug: l.slug,
+                        dbId: l.dbId,
+                        index: i,
+                      }));
+                      const doc = generateLevelRequirementsPDF({
+                        orgName: effectiveOrganization?.name || 'Organization',
+                        levels: levelInfos,
+                        criteria: promotionCriteria,
+                      });
+                      doc.save('graduation-roadmap.pdf');
+                      toast.success('Graduation roadmap exported');
+                    }}
                   >
-                    Discard
+                    <FileDown className="w-4 h-4" />
+                    Export Roadmap
                   </Button>
-                  <Button 
-                    className="gap-2" 
-                    onClick={handleSave}
-                    disabled={saveLevels.isPending}
-                  >
-                    {saveLevels.isPending ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                    ) : (
-                      <Save className="w-4 h-4" />
-                    )}
-                    Save Changes
-                  </Button>
-                </div>
-              )
+                )}
+                {hasChanges && (
+                  <>
+                    <Button 
+                      variant="ghost"
+                      onClick={handleDiscard}
+                    >
+                      Discard
+                    </Button>
+                    <Button 
+                      className="gap-2" 
+                      onClick={handleSave}
+                      disabled={saveLevels.isPending}
+                    >
+                      {saveLevels.isPending ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <Save className="w-4 h-4" />
+                      )}
+                      Save Changes
+                    </Button>
+                  </>
+                )}
+              </div>
             }
           />
           <PageExplainer pageId="stylist-levels" />
@@ -490,6 +517,13 @@ export default function StylistLevels() {
                             ? 'Graduation Configured'
                             : 'Configure Graduation'}
                         </button>
+                        {(() => {
+                          const c = promotionCriteria?.find(cr => cr.stylist_level_id === level.dbId && cr.is_active);
+                          const summary = c ? formatCriteriaSummary(c) : '';
+                          return summary ? (
+                            <p className="text-[10px] text-muted-foreground/70 mt-1 pl-4">{summary}</p>
+                          ) : null;
+                        })()}
                       </div>
                     )}
                     {index === 0 && (
