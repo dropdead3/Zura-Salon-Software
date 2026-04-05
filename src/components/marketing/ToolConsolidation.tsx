@@ -81,7 +81,7 @@ export function ToolConsolidation() {
           className="flex flex-col sm:flex-row items-center justify-center gap-6 sm:gap-10"
         >
           <div className="text-center">
-            <p className="font-sans text-xs text-slate-500 uppercase tracking-wide mb-1">Typical spend</p>
+            <p className="font-display text-xs text-slate-500 uppercase tracking-wide mb-1">Typical spend</p>
             <p className="font-display text-2xl sm:text-3xl text-red-400/80 line-through decoration-red-500/40">
               ${totalSpend.toLocaleString()}/mo
             </p>
@@ -91,7 +91,7 @@ export function ToolConsolidation() {
           <div className="sm:hidden w-16 h-px bg-white/10" />
 
           <div className="text-center">
-            <p className="font-sans text-xs text-slate-500 uppercase tracking-wide mb-1">Zura</p>
+            <p className="font-display text-xs text-slate-500 uppercase tracking-wide mb-1">Zura</p>
             <p className="font-display text-2xl sm:text-3xl text-white">
               $99/mo
             </p>

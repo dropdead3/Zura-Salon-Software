@@ -87,7 +87,7 @@ export function HeroSection() {
         transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
         onClick={() => document.getElementById('chaos-to-clarity')?.scrollIntoView({ behavior: 'smooth' })}
       >
-        <span className="font-sans text-[11px] text-slate-500 tracking-widest uppercase">Scroll to explore</span>
+        <span className="font-display text-[11px] text-slate-500 tracking-widest uppercase">Scroll to explore</span>
         <ArrowRight className="w-3.5 h-3.5 text-slate-500 rotate-90" />
       </motion.div>
     </section>
