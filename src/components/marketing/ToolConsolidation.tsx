@@ -3,28 +3,36 @@ import { motion, useInView } from 'framer-motion';
 import { useScrollReveal } from './useScrollReveal';
 
 const tools = [
-  { name: 'CRM & Scheduling', price: 89, color: 'bg-violet-500/20 text-violet-300 border-violet-500/30', rotate: -6, x: -20, y: 0 },
-  { name: 'POS System', price: 79, color: 'bg-amber-500/20 text-amber-300 border-amber-500/30', rotate: 4, x: 30, y: -10 },
-  { name: 'Payroll', price: 59, color: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30', rotate: -3, x: -10, y: 5 },
-  { name: 'Marketing Agencies', price: 1500, color: 'bg-rose-500/20 text-rose-300 border-rose-500/30', rotate: 7, x: 15, y: -5 },
-  { name: 'Color Bar Management', price: 45, color: 'bg-cyan-500/20 text-cyan-300 border-cyan-500/30', rotate: -5, x: -25, y: 8 },
-  { name: 'AI Receptionist', price: 199, color: 'bg-orange-500/20 text-orange-300 border-orange-500/30', rotate: 3, x: 20, y: -8 },
-  { name: 'Team Chat', price: 25, color: 'bg-indigo-500/20 text-indigo-300 border-indigo-500/30', rotate: -8, x: -15, y: 3 },
-  { name: 'Email Marketing', price: 49, color: 'bg-pink-500/20 text-pink-300 border-pink-500/30', rotate: 5, x: 10, y: -3 },
-  { name: 'Business Consulting', price: 500, color: 'bg-yellow-500/20 text-yellow-300 border-yellow-500/30', rotate: -4, x: -5, y: 6 },
+  { name: 'CRM & Scheduling', price: 89, color: 'bg-violet-500/20 text-violet-300 border-violet-500/30', rotate: -12, top: '8%', left: '28%', z: 5 },
+  { name: 'POS System', price: 79, color: 'bg-amber-500/20 text-amber-300 border-amber-500/30', rotate: 9, top: '18%', left: '12%', z: 3 },
+  { name: 'Payroll', price: 59, color: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30', rotate: -7, top: '42%', left: '20%', z: 6 },
+  { name: 'Marketing Agencies', price: 1500, color: 'bg-rose-500/20 text-rose-300 border-rose-500/30', rotate: 14, top: '22%', left: '48%', z: 4 },
+  { name: 'Color Bar Management', price: 45, color: 'bg-cyan-500/20 text-cyan-300 border-cyan-500/30', rotate: -16, top: '48%', left: '42%', z: 7 },
+  { name: 'AI Receptionist', price: 199, color: 'bg-orange-500/20 text-orange-300 border-orange-500/30', rotate: 6, top: '55%', left: '10%', z: 2 },
+  { name: 'Team Chat', price: 25, color: 'bg-indigo-500/20 text-indigo-300 border-indigo-500/30', rotate: -18, top: '35%', left: '60%', z: 8 },
+  { name: 'Email Marketing', price: 49, color: 'bg-pink-500/20 text-pink-300 border-pink-500/30', rotate: 11, top: '60%', left: '55%', z: 1 },
+  { name: 'Business Consulting', price: 500, color: 'bg-yellow-500/20 text-yellow-300 border-yellow-500/30', rotate: -5, top: '72%', left: '30%', z: 9 },
 ];
 
 const totalSpend = tools.reduce((sum, t) => sum + t.price, 0);
 
 const pillVariants = {
-  hidden: { opacity: 0, scale: 0.6, y: 30 },
+  hidden: (i: number) => ({
+    opacity: 0,
+    scale: 0.5,
+    x: (i % 2 === 0 ? -1 : 1) * (60 + i * 15),
+    y: -80 + i * 12,
+    rotate: (i % 2 === 0 ? -1 : 1) * (30 + i * 5),
+  }),
   visible: (i: number) => ({
     opacity: 1,
     scale: 1,
+    x: 0,
     y: 0,
+    rotate: 0,
     transition: {
-      delay: i * 0.07,
-      duration: 0.5,
+      delay: i * 0.06,
+      duration: 0.7,
       ease: [0.25, 0.46, 0.45, 0.94] as [number, number, number, number],
     },
   }),
@@ -53,8 +61,8 @@ export function ToolConsolidation() {
           </p>
         </div>
 
-        {/* Scattered pill pile */}
-        <div ref={pileRef} className="flex flex-wrap justify-center gap-3 sm:gap-4 max-w-2xl mx-auto mb-14">
+        {/* Jumbled pill pile */}
+        <div ref={pileRef} className="relative mx-auto max-w-xl h-[280px] sm:h-[240px] mb-14">
           {tools.map((tool, i) => (
             <motion.div
               key={tool.name}
@@ -62,9 +70,12 @@ export function ToolConsolidation() {
               variants={pillVariants}
               initial="hidden"
               animate={isInView ? 'visible' : 'hidden'}
-              className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 sm:px-5 sm:py-2.5 font-sans text-xs sm:text-sm whitespace-nowrap ${tool.color}`}
+              className={`absolute inline-flex items-center gap-2 rounded-full border px-4 py-2 sm:px-5 sm:py-2.5 font-sans text-xs sm:text-sm whitespace-nowrap ${tool.color}`}
               style={{
-                transform: `rotate(${tool.rotate}deg) translate(${tool.x}px, ${tool.y}px)`,
+                top: tool.top,
+                left: tool.left,
+                zIndex: tool.z,
+                rotate: `${tool.rotate}deg`,
               }}
             >
               <span>{tool.name}</span>
