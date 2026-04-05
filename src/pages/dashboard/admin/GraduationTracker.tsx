@@ -422,6 +422,7 @@ function StylistProgressRow({ member, totalLevels, promotions, allLevels }: { me
             </>
           )}
           {member.isFullyQualified && <ApprovePromotionButton member={member} />}
+          <DemoteLevelButton member={member} allLevels={allLevels} />
           <StatusBadge status={member.status} />
           {hasExpandableContent && (
             <CollapsibleTrigger asChild>
