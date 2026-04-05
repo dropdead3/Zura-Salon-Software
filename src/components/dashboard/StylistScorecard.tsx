@@ -28,7 +28,7 @@ import { useStaffColorBarPerformance } from '@/hooks/color-bar/useStaffColorBarP
 import { useStylistPeerAverages } from '@/hooks/useStylistPeerAverages';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { format, subDays } from 'date-fns';
-import { BlurredAmount } from '@/components/ui/BlurredAmount';
+import { BlurredAmount } from '@/contexts/HideNumbersContext';
 
 interface StylistScorecardProps {
   userId: string | undefined;
