@@ -20,7 +20,7 @@ export function FinalCTA() {
         <div className="mt-10">
           <Link
             to="/demo"
-            className="inline-flex items-center justify-center gap-2 h-12 px-8 bg-white text-slate-950 hover:bg-slate-100 rounded-full font-sans text-base font-medium transition-colors"
+            className="inline-flex items-center justify-center gap-2 h-12 px-8 bg-gradient-to-r from-violet-600 to-purple-600 text-white hover:from-violet-500 hover:to-purple-500 shadow-lg shadow-violet-500/25 rounded-full font-sans text-base font-medium transition-all"
           >
             Get a Demo
             <ArrowRight className="w-4 h-4" />

@@ -77,7 +77,7 @@ export function MarketingNav() {
               </Link>
               <Link
                 to="/demo"
-                className="inline-flex items-center gap-2 h-10 px-6 bg-white text-slate-950 hover:bg-slate-100 rounded-full font-sans text-sm font-medium transition-colors"
+                className="inline-flex items-center gap-2 h-10 px-6 bg-gradient-to-r from-violet-600 to-purple-600 text-white hover:from-violet-500 hover:to-purple-500 shadow-lg shadow-violet-500/25 rounded-full font-sans text-sm font-medium transition-all"
               >
                 Get a Demo
               </Link>
@@ -136,7 +136,7 @@ export function MarketingNav() {
                   </Link>
                   <Link
                     to="/demo"
-                    className="inline-flex items-center justify-center gap-2 h-12 w-full bg-white text-slate-950 rounded-full font-sans text-sm font-medium"
+                    className="inline-flex items-center justify-center gap-2 h-12 w-full bg-gradient-to-r from-violet-600 to-purple-600 text-white shadow-lg shadow-violet-500/25 rounded-full font-sans text-sm font-medium"
                     onClick={() => setMobileOpen(false)}
                   >
                     Get a Demo
