@@ -1,25 +1,30 @@
 
 
-# Fix Bootstrap Loader: Context-Neutral + Branded
+# Add Ecosystem Page
 
 ## Problem
-The `BootstrapFallback` in `main.tsx` has two issues:
-1. Text says "Loading dashboard" -- wrong when loading the marketing site, login, or any non-dashboard surface
-2. Uses a generic spinning circle instead of the branded ZuraLoader (the pixel Z-grid)
+The marketing nav and footer link to `/ecosystem`, but no route exists -- users hit the 404 page.
+
+## What the page should be
+A dedicated marketing page expanding on the four platform surfaces previewed on the landing page: Intelligence Brief (Live), Marketing OS (Phase 2), Simulation Engine (Phase 3), Automation Layer (Phase 4). This is the "Infrastructure that compounds" story told in full.
 
 ## Changes
 
-### 1. Update `src/main.tsx` — `BootstrapFallback`
-- Replace the generic spinner with the `ZuraLoader` component (static import -- it has zero data dependencies, only uses `cn` and React state)
-- Use `platformColors` prop to get the violet accent treatment
-- Change text from "Loading dashboard" to just the platform name via `PLATFORM_NAME` from `src/lib/brand.ts`
-- Update `BootstrapError` copy from "Zura hit a startup issue before the dashboard could render" to a context-neutral message using the brand token
+### 1. Create `src/pages/Ecosystem.tsx`
+- Marketing layout page (uses `MarketingNav` + `MarketingFooter` wrapper like `PlatformLanding`)
+- Hero section: "Infrastructure that compounds" headline with supporting copy about the four interconnected surfaces
+- Expanded cards for each surface (reuse the data from `EcosystemPreview` but with richer descriptions, phase status badges, and feature lists)
+- Final CTA section linking to demo request / login
+- Fully wrapped in the `.marketing-surface` class for CSS namespacing
 
-### 2. Update `src/components/OrgDashboardRoute.tsx` — Route-level loaders
-- Replace the 3 instances of `Loader2` spinner with `ZuraLoader` for consistent branded loading across org resolution and legacy redirects
+### 2. Add route in `src/App.tsx`
+- Add `/ecosystem` route pointing to the new `Ecosystem` page
+- Place alongside other public marketing routes (outside `PrivateAppShell`)
+- Use `lazyWithRetry` for code splitting (non-critical path)
 
 ### Technical Notes
-- `ZuraLoader` is safe for static import in `main.tsx` -- it depends only on `react`, `cn`, and inline CSS classes (no hooks, no data fetching, no context providers)
-- The `platformColors` prop activates the violet-400/violet-500 color scheme that aligns with the platform marketing surface
-- No changes to dashboard-internal loaders (those 135+ `Loader2` instances are contextually correct for in-app inline loading states)
+- Page renders outside `OrganizationProvider` (public route) -- no dashboard context dependencies
+- Reuses existing brand tokens (`SIMULATION_ENGINE_NAME`, `MARKETING_OS_NAME`, etc.) from `src/lib/brand.ts`
+- Follows marketing surface typography: `font-display` for headlines, `font-sans` for body, violet accents, max `font-medium`
+- Responsive grid layout matching existing marketing pages
 
