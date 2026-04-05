@@ -16,6 +16,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { tokens } from '@/lib/design-tokens';
+import { useStylistLevels } from '@/hooks/useStylistLevels';
 
 interface StylistProfile {
   id: string;
@@ -42,12 +43,11 @@ interface EditStylistCardDialogProps {
   stylist: StylistProfile | null;
 }
 
-const STYLIST_LEVELS = ['LEVEL 1', 'LEVEL 2', 'LEVEL 3', 'LEVEL 4'];
-
 export function EditStylistCardDialog({ open, onOpenChange, stylist }: EditStylistCardDialogProps) {
   const queryClient = useQueryClient();
   const { data: specialtyOptions = [] } = useSpecialtyOptions();
   const { data: locations = [] } = useLocations();
+  const { data: dynamicLevels = [] } = useStylistLevels();
   
   const [formData, setFormData] = useState({
     display_name: '',
@@ -269,8 +269,8 @@ export function EditStylistCardDialog({ open, onOpenChange, stylist }: EditStyli
                 <SelectValue placeholder="Select level..." />
               </SelectTrigger>
               <SelectContent>
-                {STYLIST_LEVELS.map(level => (
-                  <SelectItem key={level} value={level}>{level}</SelectItem>
+              {dynamicLevels.map(level => (
+                  <SelectItem key={level.slug} value={level.client_label}>{level.client_label} ({level.label})</SelectItem>
                 ))}
               </SelectContent>
             </Select>

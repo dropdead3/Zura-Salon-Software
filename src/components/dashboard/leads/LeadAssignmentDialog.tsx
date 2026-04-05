@@ -14,6 +14,8 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Search, UserPlus, MapPin, Sparkles } from 'lucide-react';
 import { LeadWithAssignee } from '@/hooks/useLeadInbox';
 import { cn } from '@/lib/utils';
+import { useStylistLevels } from '@/hooks/useStylistLevels';
+import { getLevelColor } from '@/lib/level-colors';
 
 interface Stylist {
   user_id: string;
@@ -86,14 +88,14 @@ export function LeadAssignmentDialog({
     return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
   };
 
-  const getLevelColor = (level: string | null) => {
-    switch (level?.toLowerCase()) {
-      case 'master': return 'bg-amber-100 text-amber-800 border-amber-200';
-      case 'senior': return 'bg-purple-100 text-purple-800 border-purple-200';
-      case 'stylist': return 'bg-blue-100 text-blue-800 border-blue-200';
-      case 'junior': return 'bg-green-100 text-green-800 border-green-200';
-      default: return 'bg-muted text-muted-foreground';
-    }
+  const { data: levels = [] } = useStylistLevels();
+
+  const getLevelBadgeColor = (level: string | null) => {
+    if (!level || levels.length === 0) return 'bg-muted text-muted-foreground';
+    const idx = levels.findIndex(l => l.client_label === level || l.slug === level || l.label === level);
+    if (idx === -1) return 'bg-muted text-muted-foreground';
+    const colors = getLevelColor(idx, levels.length);
+    return `${colors.bg} ${colors.text}`;
   };
 
   return (
@@ -175,7 +177,7 @@ export function LeadAssignmentDialog({
                         {stylist.stylist_level && (
                           <Badge 
                             variant="outline" 
-                            className={cn("text-xs", getLevelColor(stylist.stylist_level))}
+                            className={cn("text-xs", getLevelBadgeColor(stylist.stylist_level))}
                           >
                             {stylist.stylist_level}
                           </Badge>

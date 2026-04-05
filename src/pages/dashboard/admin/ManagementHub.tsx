@@ -184,9 +184,9 @@ export default function ManagementHub() {
             href={dashPath('/admin/graduation-tracker')}
             icon={GraduationCap}
             title="Graduation Tracker"
-            description="Monitor assistant advancement and milestones"
+            description="Track team level progression and retention"
             stat={stats?.inProgressGraduations || null}
-            statLabel="tracked"
+            statLabel="with levels"
             colorClass="bg-purple-500/10 text-purple-600 dark:text-purple-400"
           />
           <ManagementCard
