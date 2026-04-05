@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { ArrowRight, Menu, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -12,9 +12,24 @@ export function MarketingNav() {
   const location = useLocation();
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [navVisible, setNavVisible] = useState(true);
+  const lastScrollY = useRef(0);
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 80);
+    const onScroll = () => {
+      const currentY = window.scrollY;
+      setScrolled(currentY > 80);
+
+      if (currentY < 100) {
+        setNavVisible(true);
+      } else if (currentY > lastScrollY.current + 5) {
+        setNavVisible(false);
+      } else if (currentY < lastScrollY.current - 5) {
+        setNavVisible(true);
+      }
+
+      lastScrollY.current = currentY;
+    };
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
@@ -29,7 +44,13 @@ export function MarketingNav() {
   const isActive = (href: string) => location.pathname === href;
 
   return (
-    <header className="fixed top-4 left-1/2 -translate-x-1/2 z-50 w-[calc(100%-2rem)] max-w-5xl">
+    <>
+    <header
+      className={cn(
+        'fixed top-4 left-1/2 -translate-x-1/2 z-50 w-[calc(100%-2rem)] max-w-5xl transition-all duration-300',
+        navVisible ? 'translate-y-0 opacity-100' : '-translate-y-[calc(100%+2rem)] opacity-0'
+      )}
+    >
       <nav
         className={cn(
           'flex items-center justify-between px-6 py-3 rounded-full transition-all duration-300 border shadow-lg shadow-black/20',
@@ -150,5 +171,31 @@ export function MarketingNav() {
         )}
       </AnimatePresence>
     </header>
+
+      <AnimatePresence>
+        {!navVisible && (
+          <motion.div
+            initial={{ y: '100%' }}
+            animate={{ y: 0 }}
+            exit={{ y: '100%' }}
+            transition={{ duration: 0.3, ease: 'easeOut' }}
+            className="fixed bottom-0 left-0 right-0 z-50 bg-white/[0.06] backdrop-blur-xl border-t border-white/[0.08] py-3 px-6"
+          >
+            <div className="max-w-5xl mx-auto flex items-center justify-between">
+              <span className="font-sans text-sm text-slate-300">
+                Ready for a better salon software?
+              </span>
+              <Link
+                to="/demo"
+                className="inline-flex items-center gap-2 h-9 px-5 bg-gradient-to-r from-violet-600 to-purple-600 text-white hover:from-violet-500 hover:to-purple-500 rounded-full font-sans text-sm font-medium transition-all shadow-lg shadow-violet-500/25"
+              >
+                Book A Demo
+                <ArrowRight className="w-4 h-4" />
+              </Link>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </>
   );
 }
