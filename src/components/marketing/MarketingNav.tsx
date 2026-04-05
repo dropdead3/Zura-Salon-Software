@@ -175,11 +175,11 @@ export function MarketingNav() {
       <AnimatePresence>
         {!navVisible && (
           <motion.div
-            initial={{ y: '100%' }}
-            animate={{ y: 0 }}
-            exit={{ y: '100%' }}
+            initial={{ y: 100, x: '-50%' }}
+            animate={{ y: 0, x: '-50%' }}
+            exit={{ y: 100, x: '-50%' }}
             transition={{ duration: 0.3, ease: 'easeOut' }}
-            className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 w-auto max-w-2xl bg-white/[0.06] backdrop-blur-xl border border-white/[0.08] rounded-full py-3 px-6 shadow-lg shadow-black/20"
+            className="fixed bottom-4 left-1/2 z-50 w-auto max-w-2xl bg-white/[0.06] backdrop-blur-xl border border-white/[0.08] rounded-full py-3 px-6 shadow-lg shadow-black/20"
           >
             <div className="flex items-center gap-6">
               <span className="font-sans text-sm text-slate-300 whitespace-nowrap">
