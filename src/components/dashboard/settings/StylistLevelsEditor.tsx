@@ -203,6 +203,7 @@ function CriteriaComparisonTable({ levels, promotionCriteria, retentionCriteria,
         Compare promotion and retention criteria across all levels. Click "Edit" to modify a level's criteria.
       </p>
       <ScrollableTableWrapper>
+        <Table>
           <TableHeader>
             <TableRow>
               <TableHead className="w-[140px] sticky left-0 bg-card z-10">Metric</TableHead>
