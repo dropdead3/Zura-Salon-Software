@@ -134,6 +134,7 @@ export default function TeamDirectory() {
   // Get strike counts for all team members (only for admins/managers)
   const userIds = team.map(m => m.user_id);
   const { data: strikeCounts = {} } = useStrikeCounts(canViewStrikes ? userIds : []);
+  const { data: stylistLevels } = useStylistLevels();
 
   // Get all unique roles from team members for filter dropdown
   const allRoles = [...new Set(team.flatMap(member => 
