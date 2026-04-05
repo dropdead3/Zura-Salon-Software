@@ -21,13 +21,15 @@ type Phase = 'chaos' | 'converging' | 'resolved';
 export function ToolConsolidation() {
   const sectionRef = useScrollReveal();
   const pileRef = useRef<HTMLDivElement>(null);
-  const isInView = useInView(pileRef, { once: true, margin: '-80px' });
+  const isInView = useInView(pileRef, { once: true, margin: '-40px' });
   const [phase, setPhase] = useState<Phase>('chaos');
   const lastIndex = tools.length - 1;
+  const hasTriggered = useRef(false);
 
-  // Trigger convergence when in view
-  if (isInView && phase === 'chaos') {
-    setPhase('converging');
+  // Wait 2s after in-view so user can read the chaos state
+  if (isInView && !hasTriggered.current) {
+    hasTriggered.current = true;
+    setTimeout(() => setPhase('converging'), 2000);
   }
 
   return (
