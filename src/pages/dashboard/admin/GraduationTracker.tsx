@@ -78,7 +78,7 @@ import type { CriterionProgress } from '@/hooks/useLevelProgress';
 
 function KpiStrip({ counts }: { counts: ReturnType<typeof useTeamLevelProgress>['counts'] }) {
   const kpis = [
-    { label: 'Ready to Graduate', value: counts.ready, icon: CheckCircle2, color: 'text-emerald-600' },
+    { label: 'Ready to Promote', value: counts.ready, icon: CheckCircle2, color: 'text-emerald-600' },
     { label: 'In Progress', value: counts.inProgress, icon: TrendingUp, color: 'text-primary' },
     { label: 'At Risk', value: counts.atRisk, icon: AlertTriangle, color: 'text-rose-600' },
     { label: 'Below Standard', value: counts.belowStandard, icon: AlertCircle, color: 'text-red-700' },
@@ -783,8 +783,8 @@ export default function GraduationTracker() {
   return (
     <DashboardLayout>
       <DashboardPageHeader
-        title="Graduation Tracker"
-        description="Track team progression through levels and assistant graduation"
+        title="Team Level Progress"
+        description="Track team progression, retention standards, and promotion readiness"
         actions={
           <div className="flex items-center gap-3">
             <Select value={statusFilter} onValueChange={setStatusFilter}>
@@ -848,7 +848,7 @@ export default function GraduationTracker() {
             </TabsTrigger>
             <TabsTrigger value="ready">
               <CheckCircle2 className="h-4 w-4 mr-2" />
-              Ready to Graduate
+              Ready to Promote
               {counts.ready > 0 && (
                 <Badge variant="secondary" className="ml-2 text-xs bg-emerald-100 text-emerald-700">{counts.ready}</Badge>
               )}
@@ -887,7 +887,7 @@ export default function GraduationTracker() {
             )}
           </TabsContent>
 
-          {/* Tab: Ready to Graduate */}
+          {/* Tab: Ready to Promote */}
           <TabsContent value="ready" className="mt-6">
             {isLoading ? (
               <div className="space-y-3">

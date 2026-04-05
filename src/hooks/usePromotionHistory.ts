@@ -10,6 +10,7 @@ export interface PromotionRecord {
   promoted_by: string;
   promoted_at: string;
   created_at: string;
+  direction?: string;
   promoter_name?: string;
 }
 
