@@ -50,7 +50,7 @@ export function HeroSection() {
 
       {/* Scroll anchor */}
       <motion.div
-        className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 cursor-pointer opacity-40 hover:opacity-70 transition-opacity"
+        className="absolute bottom-8 inset-x-0 mx-auto w-fit flex flex-col items-center gap-1 cursor-pointer opacity-40 hover:opacity-70 transition-opacity"
         animate={{ y: [0, 6, 0] }}
         transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
         onClick={() => document.getElementById('dashboard-showcase')?.scrollIntoView({ behavior: 'smooth' })}
