@@ -126,10 +126,10 @@ export default function ManagementHub() {
         .eq('status', 'pending');
       
       const graduationsResult = await supabase
-        .from('stylist_program_enrollment')
+        .from('employee_profiles')
         .select('*', { count: 'exact', head: true })
-        .eq('status', 'active')
-        .not('graduation_type', 'is', null);
+        .eq('is_active', true)
+        .not('stylist_level', 'is', null);
       
       const birthdaysResult = await supabase
         .from('employee_profiles')
@@ -186,7 +186,7 @@ export default function ManagementHub() {
             title="Graduation Tracker"
             description="Monitor assistant advancement and milestones"
             stat={stats?.inProgressGraduations || null}
-            statLabel="in progress"
+            statLabel="tracked"
             colorClass="bg-purple-500/10 text-purple-600 dark:text-purple-400"
           />
           <ManagementCard
