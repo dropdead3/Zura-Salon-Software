@@ -1,21 +1,26 @@
-import { TrendingDown, UserMinus, Lock } from 'lucide-react';
+import { TrendingDown, UserMinus, Lock, User } from 'lucide-react';
 import { useScrollReveal } from './useScrollReveal';
 
 const painPoints = [
   {
     icon: TrendingDown,
     title: 'Margin Erosion',
-    body: 'Without service-level profitability data, margin erodes silently across every location.',
+    body: 'Without service-level profitability data, margin bleeds silently across every chair, every location, every week.',
   },
   {
     icon: UserMinus,
     title: 'Talent Attrition',
-    body: 'Without structured career paths and transparent performance data, top performers leave for clarity.',
+    body: 'Without transparent performance paths, your best stylists leave for clarity they cannot find with you.',
   },
   {
     icon: Lock,
     title: 'Growth Ceiling',
-    body: 'Without ranked intelligence, every expansion decision is a guess. Revenue scales. Systems do not.',
+    body: 'Without ranked intelligence, every expansion is a gamble. Revenue scales. Systems do not.',
+  },
+  {
+    icon: User,
+    title: 'Founder Bottleneck',
+    body: 'Every decision flows through you. Your business cannot scale past your availability.',
   },
 ];
 
@@ -30,7 +35,7 @@ export function ProblemStatement() {
           <div className="mkt-reveal">
             <h2 className="font-display text-2xl sm:text-3xl lg:text-5xl tracking-tight leading-[1.12]">
               The beauty industry mastered artistry.{' '}
-              <span className="text-slate-500">It did not master infrastructure.</span>
+              <span className="text-slate-500">It never built infrastructure.</span>
             </h2>
           </div>
 
@@ -55,6 +60,13 @@ export function ProblemStatement() {
                 </div>
               </div>
             ))}
+
+            {/* Closing line */}
+            <div className="mkt-reveal pt-4 border-t border-white/[0.06]" style={{ transitionDelay: '0.6s' }}>
+              <p className="font-sans text-sm text-violet-400 italic">
+                These are symptoms. The root cause is missing infrastructure.
+              </p>
+            </div>
           </div>
         </div>
       </div>

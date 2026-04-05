@@ -3,7 +3,7 @@ import { PLATFORM_NAME } from '@/lib/brand';
 import { useScrollReveal } from './useScrollReveal';
 
 const markers = [
-  { icon: Building2, text: 'Built while scaling from 1 to 12 locations' },
+  { icon: Building2, text: 'Scaled from 1 chair to 12 locations' },
   { icon: TrendingUp, text: 'Designed for $1M–$50M operators' },
   { icon: Shield, text: 'Structure-first, not feature-first' },
   { icon: Users, text: 'By salon owners, for salon owners' },
@@ -14,6 +14,9 @@ export function BuiltByOperators() {
 
   return (
     <section ref={ref} className="relative z-10 px-6 sm:px-8 py-16 sm:py-20 lg:py-24">
+      {/* Gradient separator */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-3/4 h-px bg-gradient-to-r from-transparent via-violet-500/20 to-transparent" />
+
       <div className="max-w-6xl mx-auto">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
           {/* Narrative */}
@@ -22,17 +25,22 @@ export function BuiltByOperators() {
               Origin Story
             </p>
             <h2 className="font-display text-2xl sm:text-3xl lg:text-4xl tracking-tight mb-6">
-              Built by multi-location owners who lived the chaos
+              Built by operators who lived the chaos
             </h2>
             <div className="space-y-4 font-sans text-base sm:text-lg text-slate-400 leading-relaxed">
               <p>
                 We scaled a salon business from a single chair to twelve locations. Every tool we tried
-                was built for booking — not for operating.
+                was built for booking — not for building a business.
               </p>
               <p>
                 {PLATFORM_NAME} is what we wished existed: an operating system that embeds
                 structure into every workflow and surfaces the exact lever to pull next.
               </p>
+            </div>
+            {/* Stat callout */}
+            <div className="mt-8 inline-flex items-center gap-3 px-5 py-3 rounded-xl mkt-glass mkt-border-shimmer">
+              <span className="font-display text-2xl text-violet-400">12</span>
+              <span className="font-sans text-sm text-slate-400">years of salon operations<br />distilled into one platform</span>
             </div>
           </div>
 

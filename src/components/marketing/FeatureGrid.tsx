@@ -1,4 +1,4 @@
-import { LayoutDashboard, Brain, DollarSign, Users, AlertTriangle, Award } from 'lucide-react';
+import { LayoutDashboard, Brain, DollarSign, Users, AlertTriangle, Award, ArrowRight } from 'lucide-react';
 import { useScrollReveal } from './useScrollReveal';
 
 const features = [
@@ -55,20 +55,29 @@ export function FeatureGrid() {
           {features.map((feature, i) => (
             <div
               key={feature.title}
-              className={`mkt-reveal p-6 sm:p-8 rounded-2xl mkt-glass hover:bg-white/[0.05] transition-colors ${
-                feature.large ? 'lg:col-span-1 sm:col-span-1' : ''
+              className={`mkt-reveal group relative p-6 sm:p-8 rounded-2xl mkt-glass hover:bg-white/[0.05] transition-colors ${
+                feature.large && i < 2 ? 'lg:col-span-1' : ''
               }`}
               style={{ transitionDelay: `${i * 0.08}s` }}
             >
-              <div className="w-10 h-10 rounded-lg bg-violet-500/10 flex items-center justify-center mb-4">
-                <feature.icon className="w-5 h-5 text-violet-400" />
+              {/* Gradient overlay for large cards */}
+              {feature.large && (
+                <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-violet-500/[0.04] to-transparent pointer-events-none" />
+              )}
+              <div className="relative">
+                <div className="w-10 h-10 rounded-lg bg-violet-500/10 flex items-center justify-center mb-4">
+                  <feature.icon className="w-5 h-5 text-violet-400" />
+                </div>
+                <h3 className="font-display text-sm tracking-[0.1em] mb-3">
+                  {feature.title}
+                </h3>
+                <p className="font-sans text-sm text-slate-400 leading-relaxed mb-4">
+                  {feature.description}
+                </p>
+                <span className="inline-flex items-center gap-1 font-sans text-xs text-violet-400 opacity-0 group-hover:opacity-100 transition-opacity">
+                  Learn more <ArrowRight className="w-3 h-3" />
+                </span>
               </div>
-              <h3 className="font-display text-sm tracking-[0.1em] mb-3">
-                {feature.title}
-              </h3>
-              <p className="font-sans text-sm text-slate-400 leading-relaxed">
-                {feature.description}
-              </p>
             </div>
           ))}
         </div>

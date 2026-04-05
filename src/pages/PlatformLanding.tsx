@@ -2,7 +2,7 @@ import { MarketingLayout } from '@/components/marketing/MarketingLayout';
 import { HeroSection } from '@/components/marketing/HeroSection';
 import { StatBar } from '@/components/marketing/StatBar';
 import { ProblemStatement } from '@/components/marketing/ProblemStatement';
-import { PlatformPreview } from '@/components/marketing/PlatformPreview';
+import { PersonaTargeting } from '@/components/marketing/PersonaTargeting';
 import { IntelligencePillars } from '@/components/marketing/IntelligencePillars';
 import { BuiltByOperators } from '@/components/marketing/BuiltByOperators';
 import { OutcomeMetrics } from '@/components/marketing/OutcomeMetrics';
@@ -16,7 +16,7 @@ export default function PlatformLanding() {
       <HeroSection />
       <StatBar />
       <ProblemStatement />
-      <PlatformPreview />
+      <PersonaTargeting />
       <IntelligencePillars />
       <BuiltByOperators />
       <OutcomeMetrics />

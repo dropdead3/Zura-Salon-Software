@@ -40,18 +40,30 @@ export function TestimonialSection() {
           Operator Voices
         </p>
 
-        <div className="min-h-[140px] sm:min-h-[120px] flex items-center justify-center">
-          <blockquote
-            key={active}
-            className="font-serif text-xl sm:text-2xl lg:text-3xl text-white/90 italic leading-relaxed animate-fade-in"
-          >
-            &ldquo;{current.quote}&rdquo;
-          </blockquote>
+        {/* Decorative quote mark */}
+        <div className="relative">
+          <span className="absolute -top-8 left-1/2 -translate-x-1/2 font-serif text-[120px] leading-none text-violet-500/[0.06] select-none pointer-events-none">
+            &ldquo;
+          </span>
+
+          <div className="min-h-[140px] sm:min-h-[120px] flex items-center justify-center">
+            <blockquote
+              key={active}
+              className="font-serif text-xl sm:text-2xl lg:text-3xl text-white/90 italic leading-relaxed animate-fade-in"
+            >
+              &ldquo;{current.quote}&rdquo;
+            </blockquote>
+          </div>
         </div>
 
-        <p className="font-sans text-sm text-slate-400 mt-6">
-          — {current.attribution}, {current.detail}
-        </p>
+        <div className="flex items-center justify-center gap-3 mt-6">
+          <p className="font-sans text-sm text-slate-400">
+            — {current.attribution}
+          </p>
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full bg-violet-500/10 border border-violet-500/20 font-sans text-xs text-violet-300">
+            {current.detail}
+          </span>
+        </div>
 
         {/* Dot indicators */}
         <div className="flex items-center justify-center gap-2 mt-6">
