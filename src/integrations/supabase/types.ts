@@ -9392,6 +9392,7 @@ export type Database = {
           direction: string
           from_level: string
           id: string
+          notes: string | null
           organization_id: string
           promoted_at: string
           promoted_by: string
@@ -9403,6 +9404,7 @@ export type Database = {
           direction?: string
           from_level: string
           id?: string
+          notes?: string | null
           organization_id: string
           promoted_at?: string
           promoted_by: string
@@ -9414,6 +9416,7 @@ export type Database = {
           direction?: string
           from_level?: string
           id?: string
+          notes?: string | null
           organization_id?: string
           promoted_at?: string
           promoted_by?: string

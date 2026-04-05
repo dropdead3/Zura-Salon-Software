@@ -1,0 +1,1 @@
+ALTER TABLE public.level_promotions ADD COLUMN IF NOT EXISTS notes TEXT;
