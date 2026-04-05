@@ -43,6 +43,7 @@ interface GraduationWizardProps {
   levelId: string;
   levelLabel: string;
   levelIndex: number;
+  totalLevels: number;
 }
 
 interface CriterionConfig {
@@ -309,7 +310,7 @@ export function GraduationWizard({ open, onOpenChange, levelId, levelLabel, leve
   useEffect(() => {
     if (open) {
       setStep(0);
-      setActiveTab(levelIndex === 0 ? 'retention' : 'promotion');
+      setActiveTab(levelIndex === totalLevels - 1 ? 'retention' : 'promotion');
     }
   }, [open, levelIndex]);
 
@@ -472,7 +473,7 @@ export function GraduationWizard({ open, onOpenChange, levelId, levelLabel, leve
           {/* Mode tabs */}
           <Tabs value={activeTab} onValueChange={(v) => { setActiveTab(v as any); setStep(0); }} className="mt-4">
             <TabsList className="w-full">
-              <TabsTrigger value="promotion" className="flex-1 text-xs gap-1.5" disabled={levelIndex === 0}>
+              <TabsTrigger value="promotion" className="flex-1 text-xs gap-1.5" disabled={levelIndex === totalLevels - 1}>
                 <Sparkles className="w-3.5 h-3.5" />
                 Required to Graduate
               </TabsTrigger>

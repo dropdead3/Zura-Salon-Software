@@ -206,11 +206,12 @@ function CriteriaComparisonTable({ levels, promotionCriteria, retentionCriteria,
                 <TableCell className="text-xs text-muted-foreground sticky left-0 bg-card z-10">{metric.label}</TableCell>
                 {levels.map((level, levelIdx) => {
                   const { promo, retention } = levelData[levelIdx];
-                  const val = levelIdx === 0 ? null : metric.getValue(promo, retention);
-                  const warn = levelIdx > 0 && hasInconsistency(mIdx, levelIdx);
+                  const isLastLevel = levelIdx === levels.length - 1;
+                  const val = isLastLevel ? null : metric.getValue(promo, retention);
+                  const warn = levelIdx > 0 && !isLastLevel && hasInconsistency(mIdx, levelIdx);
                   return (
                     <TableCell key={level.id} className="text-center text-xs">
-                      {levelIdx === 0 ? (
+                      {isLastLevel ? (
                         <span className="text-muted-foreground/40">—</span>
                       ) : val ? (
                         <span className="flex items-center justify-center gap-1">
@@ -794,55 +795,7 @@ export function StylistLevelsEditor({ embedded = false }: StylistLevelsEditorPro
 
                       {/* Level Criteria */}
                       <div className="ml-[3.25rem]">
-                      {index === 0 ? (
-                          level.dbId ? (
-                            retSummary ? (
-                              <div className="rounded-lg border border-border/60 bg-muted/30 p-3 space-y-2">
-                                <div className="flex items-center justify-between">
-                                  <span className="font-sans text-xs text-foreground flex items-center gap-1.5">
-                                    <Shield className="w-3.5 h-3.5 text-primary" />
-                                    Retention Criteria
-                                  </span>
-                                  <button
-                                    onClick={() => {
-                                      setWizardLevelId(level.dbId!);
-                                      setWizardLevelLabel(level.label);
-                                      setWizardLevelIndex(0);
-                                    }}
-                                    className="text-xs text-primary hover:text-primary/80 transition-colors font-sans"
-                                  >
-                                    Edit
-                                  </button>
-                                </div>
-                                <div className="flex items-start gap-2">
-                                  <Shield className="w-3 h-3 text-muted-foreground mt-0.5 shrink-0" />
-                                  <p className="text-xs text-muted-foreground">{retSummary}</p>
-                                </div>
-                              </div>
-                            ) : (
-                              <button
-                                onClick={() => {
-                                  setWizardLevelId(level.dbId!);
-                                  setWizardLevelLabel(level.label);
-                                  setWizardLevelIndex(0);
-                                }}
-                                className="w-full rounded-lg border-2 border-dashed border-border/60 hover:border-primary/40 bg-muted/20 hover:bg-primary/5 p-3 flex items-center gap-3 transition-all group/cta"
-                              >
-                                <div className="w-8 h-8 rounded-lg bg-muted/60 group-hover/cta:bg-primary/10 flex items-center justify-center transition-colors">
-                                  <Shield className="w-4 h-4 text-muted-foreground group-hover/cta:text-primary transition-colors" />
-                                </div>
-                                <div className="text-left">
-                                  <p className="text-xs font-sans text-foreground">Set up retention criteria</p>
-                                  <p className="text-[11px] text-muted-foreground mt-0.5">Define minimum standards to stay at this level</p>
-                                </div>
-                              </button>
-                            )
-                          ) : (
-                            <p className="text-xs text-muted-foreground/50 italic">
-                              Save this level to configure criteria
-                            </p>
-                          )
-                        ) : level.dbId ? (
+                      {level.dbId ? (
                           hasAnyCriteria ? (
                             <div className="rounded-lg border border-border/60 bg-muted/30 p-3 space-y-2">
                               <div className="flex items-center justify-between">
@@ -1168,6 +1121,7 @@ export function StylistLevelsEditor({ embedded = false }: StylistLevelsEditorPro
         levelId={wizardLevelId || ''}
         levelLabel={wizardLevelLabel}
         levelIndex={wizardLevelIndex}
+        totalLevels={levels.length}
       />
     </>
   );
