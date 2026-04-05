@@ -1,4 +1,5 @@
 import { useState, useRef } from 'react';
+import { cn } from '@/lib/utils';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { DashboardPageHeader } from '@/components/dashboard/DashboardPageHeader';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -436,22 +437,26 @@ export default function MyGraduation() {
             <CardHeader>
               <CardTitle className={tokens.card.title}>
                 <History className="w-4 h-4 mr-2 inline" />
-                Promotion History
+                Level History
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {promotions.map(p => (
-                  <div key={p.id} className="flex items-center gap-3 text-sm">
-                    <div className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
-                    <span className="text-muted-foreground">{p.from_level}</span>
-                    <ArrowRight className="w-3 h-3 text-muted-foreground" />
-                    <span className="text-foreground">{p.to_level}</span>
-                    <span className="text-xs text-muted-foreground ml-auto">
-                      {formatDate(new Date(p.promoted_at), 'MMM d, yyyy')}
-                    </span>
-                  </div>
-                ))}
+                {promotions.map(p => {
+                  const isDemotion = p.direction === 'demotion';
+                  return (
+                    <div key={p.id} className="flex items-center gap-3 text-sm">
+                      <div className={cn('w-2 h-2 rounded-full shrink-0', isDemotion ? 'bg-rose-500' : 'bg-emerald-500')} />
+                      <span className="text-muted-foreground">{p.from_level}</span>
+                      <ArrowRight className={cn('w-3 h-3 text-muted-foreground', isDemotion && 'rotate-90 text-rose-500')} />
+                      <span className="text-foreground">{p.to_level}</span>
+                      {isDemotion && <span className="text-xs text-rose-500">(Demotion)</span>}
+                      <span className="text-xs text-muted-foreground ml-auto">
+                        {formatDate(new Date(p.promoted_at), 'MMM d, yyyy')}
+                      </span>
+                    </div>
+                  );
+                })}
               </div>
             </CardContent>
           </Card>
@@ -496,12 +501,12 @@ export default function MyGraduation() {
           </Card>
         )}
 
-        {/* Requirements by Category */}
+        {/* Requirements by Category — only show when checklist requirements exist */}
         {isLoading ? (
           <div className="text-center py-12 text-muted-foreground">
             Loading your level progress...
           </div>
-        ) : (
+        ) : Object.keys(requirementsByCategory).length > 0 ? (
           <div className="space-y-6">
             {Object.entries(requirementsByCategory).map(([category, reqs]) => (
               <Card key={category}>
@@ -525,7 +530,7 @@ export default function MyGraduation() {
               </Card>
             ))}
           </div>
-        )}
+        ) : null}
       </div>
     </DashboardLayout>
   );

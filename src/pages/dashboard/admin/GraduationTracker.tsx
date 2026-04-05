@@ -78,7 +78,7 @@ import type { CriterionProgress } from '@/hooks/useLevelProgress';
 
 function KpiStrip({ counts }: { counts: ReturnType<typeof useTeamLevelProgress>['counts'] }) {
   const kpis = [
-    { label: 'Ready to Graduate', value: counts.ready, icon: CheckCircle2, color: 'text-emerald-600' },
+    { label: 'Ready to Promote', value: counts.ready, icon: CheckCircle2, color: 'text-emerald-600' },
     { label: 'In Progress', value: counts.inProgress, icon: TrendingUp, color: 'text-primary' },
     { label: 'At Risk', value: counts.atRisk, icon: AlertTriangle, color: 'text-rose-600' },
     { label: 'Below Standard', value: counts.belowStandard, icon: AlertCircle, color: 'text-red-700' },
@@ -320,20 +320,25 @@ function PromotionHistorySection({ userId, promotions }: { userId: string; promo
     <div className="p-3 rounded-lg border bg-card/30 space-y-2">
       <div className="flex items-center gap-2 text-xs text-muted-foreground">
         <History className="w-3.5 h-3.5" />
-        <span className="font-medium">Promotion History</span>
+        <span className="font-medium">Level History</span>
       </div>
-      {userPromotions.map(p => (
-        <div key={p.id} className="flex items-center justify-between text-xs">
-          <span>
-            <span className="text-muted-foreground">{p.from_level}</span>
-            <ArrowRight className="w-3 h-3 inline mx-1" />
-            <span className="text-foreground">{p.to_level}</span>
-          </span>
-          <span className="text-muted-foreground">
-            {formatDate(new Date(p.promoted_at), 'MMM d, yyyy')} — by {p.promoter_name}
-          </span>
-        </div>
-      ))}
+      {userPromotions.map(p => {
+        const isDemotion = p.direction === 'demotion';
+        return (
+          <div key={p.id} className="flex items-center justify-between text-xs">
+            <span className="flex items-center gap-1">
+              <span className={cn('w-1.5 h-1.5 rounded-full shrink-0', isDemotion ? 'bg-rose-500' : 'bg-emerald-500')} />
+              <span className="text-muted-foreground">{p.from_level}</span>
+              <ArrowRight className={cn('w-3 h-3 inline mx-0.5', isDemotion ? 'rotate-90 text-rose-500' : '')} />
+              <span className="text-foreground">{p.to_level}</span>
+              {isDemotion && <span className="text-rose-500 ml-1">(Demotion)</span>}
+            </span>
+            <span className="text-muted-foreground">
+              {formatDate(new Date(p.promoted_at), 'MMM d, yyyy')} — by {p.promoter_name}
+            </span>
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -361,7 +366,7 @@ function StylistProgressRow({ member, totalLevels, promotions, allLevels }: { me
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
             <Link
-              to={dashPath(`/admin/reports/staff/${member.userId}`)}
+              to={dashPath('/admin/analytics/reports')}
               className="font-medium text-sm hover:text-primary transition-colors hover:underline"
             >
               {member.fullName}
@@ -408,7 +413,7 @@ function StylistProgressRow({ member, totalLevels, promotions, allLevels }: { me
           {isAtRisk && (
             <>
               <Button variant="ghost" size="sm" className="text-xs gap-1 h-7" asChild>
-                <Link to={dashPath(`/admin/reports/staff/${member.userId}`)}>
+                <Link to={dashPath('/admin/analytics/reports')}>
                   <FileText className="w-3 h-3" />
                   Report
                 </Link>
@@ -783,8 +788,8 @@ export default function GraduationTracker() {
   return (
     <DashboardLayout>
       <DashboardPageHeader
-        title="Graduation Tracker"
-        description="Track team progression through levels and assistant graduation"
+        title="Team Level Progress"
+        description="Track team progression, retention standards, and promotion readiness"
         actions={
           <div className="flex items-center gap-3">
             <Select value={statusFilter} onValueChange={setStatusFilter}>
@@ -848,7 +853,7 @@ export default function GraduationTracker() {
             </TabsTrigger>
             <TabsTrigger value="ready">
               <CheckCircle2 className="h-4 w-4 mr-2" />
-              Ready to Graduate
+              Ready to Promote
               {counts.ready > 0 && (
                 <Badge variant="secondary" className="ml-2 text-xs bg-emerald-100 text-emerald-700">{counts.ready}</Badge>
               )}
@@ -887,7 +892,7 @@ export default function GraduationTracker() {
             )}
           </TabsContent>
 
-          {/* Tab: Ready to Graduate */}
+          {/* Tab: Ready to Promote */}
           <TabsContent value="ready" className="mt-6">
             {isLoading ? (
               <div className="space-y-3">
