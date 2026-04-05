@@ -824,6 +824,20 @@ export function StylistLevelsEditor({ embedded = false }: StylistLevelsEditorPro
           <FileDown className="w-4 h-4" />
           Export Roadmap
         </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          className="gap-2"
+          onClick={handleAnalyze}
+          disabled={analysisLoading}
+        >
+          {analysisLoading ? (
+            <Loader2 className="w-4 h-4 animate-spin" />
+          ) : (
+            <Sparkles className="w-4 h-4" />
+          )}
+          Analyze Configuration
+        </Button>
       )}
       {hasChanges && (
         <>
