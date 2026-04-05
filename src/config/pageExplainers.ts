@@ -458,7 +458,7 @@ export const PAGE_EXPLAINERS: Record<string, PageExplainerEntry> = {
   },
   'graduation-tracker': {
     title: 'Graduation Tracker',
-    description: 'Track team-wide level progression, identify who is ready for promotion, and manage assistant graduation checklists — all in one place.',
+    description: 'Monitor team-wide level progression, retention standing, and coaching needs. Identify who is ready for promotion, who is at risk of falling below standard, and manage assistant graduation checklists — all in one place.',
     icon: GraduationCap,
   },
   'booth-renters': {

@@ -457,47 +457,49 @@ export default function MyGraduation() {
           </Card>
         )}
 
-        {/* Progress Overview */}
-        <Card className={isGraduationReady ? 'border-emerald-500/50 bg-emerald-500/5' : ''}>
-          <CardHeader>
-            <CardTitle className="flex items-center justify-between">
-              <span>Overall Progress</span>
-              <span className="text-2xl">{completedRequirements}/{totalRequirements}</span>
-            </CardTitle>
-            <CardDescription>
-              {isGraduationReady 
-                ? '🎉 Congratulations! You have completed all requirements!'
-                : `${totalRequirements - completedRequirements} requirements remaining`
-              }
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Progress value={progressPercent} className="h-3" />
-            <div className="flex gap-4 mt-4 text-sm">
-              <div className="flex items-center gap-2">
-                <CheckCircle2 className="h-4 w-4 text-emerald-500" />
-                <span>{completedRequirements} Completed</span>
+        {/* Progress Overview — only show when graduation requirements exist */}
+        {totalRequirements > 0 && (
+          <Card className={isGraduationReady ? 'border-emerald-500/50 bg-emerald-500/5' : ''}>
+            <CardHeader>
+              <CardTitle className="flex items-center justify-between">
+                <span>Overall Progress</span>
+                <span className="text-2xl">{completedRequirements}/{totalRequirements}</span>
+              </CardTitle>
+              <CardDescription>
+                {isGraduationReady 
+                  ? '🎉 Congratulations! You have completed all requirements!'
+                  : `${totalRequirements - completedRequirements} requirements remaining`
+                }
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Progress value={progressPercent} className="h-3" />
+              <div className="flex gap-4 mt-4 text-sm">
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+                  <span>{completedRequirements} Completed</span>
+                </div>
+                {pendingReviews > 0 && (
+                  <div className="flex items-center gap-2">
+                    <Clock className="h-4 w-4 text-amber-500" />
+                    <span>{pendingReviews} Pending Review</span>
+                  </div>
+                )}
+                {needsRevision > 0 && (
+                  <div className="flex items-center gap-2">
+                    <AlertCircle className="h-4 w-4 text-rose-500" />
+                    <span>{needsRevision} Needs Revision</span>
+                  </div>
+                )}
               </div>
-              {pendingReviews > 0 && (
-                <div className="flex items-center gap-2">
-                  <Clock className="h-4 w-4 text-amber-500" />
-                  <span>{pendingReviews} Pending Review</span>
-                </div>
-              )}
-              {needsRevision > 0 && (
-                <div className="flex items-center gap-2">
-                  <AlertCircle className="h-4 w-4 text-rose-500" />
-                  <span>{needsRevision} Needs Revision</span>
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Requirements by Category */}
         {isLoading ? (
           <div className="text-center py-12 text-muted-foreground">
-            Loading your graduation requirements...
+            Loading your level progress...
           </div>
         ) : (
           <div className="space-y-6">

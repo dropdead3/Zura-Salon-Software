@@ -741,6 +741,7 @@ export default function GraduationTracker() {
                 <SelectItem value="ready">Ready</SelectItem>
                 <SelectItem value="in_progress">In Progress</SelectItem>
                 <SelectItem value="at_risk">At Risk</SelectItem>
+                <SelectItem value="below_standard">Below Standard</SelectItem>
                 <SelectItem value="needs_attention">Needs Attention</SelectItem>
                 <SelectItem value="at_top_level">Top Level</SelectItem>
                 <SelectItem value="no_criteria">No Criteria</SelectItem>
