@@ -194,7 +194,7 @@ function CriteriaComparisonTable({ levels, promotionCriteria, retentionCriteria,
 
   type MetricRow = {
     label: string;
-    getValue: (promo: LevelPromotionCriteria | undefined, ret: LevelRetentionCriteria | undefined) => string | null;
+    getValue: (promo: LevelPromotionCriteria | undefined, ret: LevelRetentionCriteria | undefined, levelIdx?: number) => string | null;
     getNumeric: (promo: LevelPromotionCriteria | undefined, ret: LevelRetentionCriteria | undefined) => number | null;
     section: 'promotion' | 'retention';
   };
