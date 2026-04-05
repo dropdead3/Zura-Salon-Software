@@ -64,7 +64,7 @@ interface CriterionConfig {
   step?: number;
 }
 
-interface FormState {
+export interface FormState {
   revenue_enabled: boolean;
   revenue_threshold: number;
   retail_enabled: boolean;
