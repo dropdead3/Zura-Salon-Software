@@ -728,6 +728,7 @@ interface TeamMemberCardProps {
 function TeamMemberCard({ member, locations, isSuperAdmin, canViewStrikes, strikeCount = 0, onViewProfile }: TeamMemberCardProps) {
   const navigate = useNavigate();
   const { getRoleIcon } = useRoleUtils();
+  const { data: stylistLevels } = useStylistLevels();
   const timeAtCompany = getTimeAtCompany(member.hire_date);
   const memberLocations = member.location_ids || [];
   const hasSchedules = Object.keys(member.location_schedules).length > 0;
