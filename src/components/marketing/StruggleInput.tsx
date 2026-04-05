@@ -51,11 +51,63 @@ export function StruggleInput() {
   const [error, setError] = useState<string | null>(null);
   const [cooldownUntil, setCooldownUntil] = useState(0);
   const [limitReached, setLimitReached] = useState(() => getSessionCount() >= SESSION_LIMIT);
+  const [isFocused, setIsFocused] = useState(false);
+  const [placeholderText, setPlaceholderText] = useState('');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const responseRef = useRef<HTMLDivElement>(null);
 
   const isCoolingDown = Date.now() < cooldownUntil;
   const canSubmit = query.trim().length > 0 && !isLoading && !isCoolingDown && !limitReached;
+  const showAnimatedPlaceholder = query === '' && !isFocused && !isLoading && !limitReached;
+
+  // Typing animation effect
+  useEffect(() => {
+    if (!showAnimatedPlaceholder) {
+      setPlaceholderText('');
+      return;
+    }
+
+    let cancelled = false;
+    let timeoutId: ReturnType<typeof setTimeout>;
+
+    const animate = async () => {
+      let index = 0;
+      while (!cancelled) {
+        const text = SUGGESTIONS[index % SUGGESTIONS.length];
+
+        // Type in
+        for (let i = 0; i <= text.length; i++) {
+          if (cancelled) return;
+          setPlaceholderText(text.slice(0, i));
+          await new Promise(r => { timeoutId = setTimeout(r, 40); });
+        }
+
+        // Pause
+        if (cancelled) return;
+        await new Promise(r => { timeoutId = setTimeout(r, 2000); });
+
+        // Delete
+        for (let i = text.length; i >= 0; i--) {
+          if (cancelled) return;
+          setPlaceholderText(text.slice(0, i));
+          await new Promise(r => { timeoutId = setTimeout(r, 25); });
+        }
+
+        // Brief pause before next
+        if (cancelled) return;
+        await new Promise(r => { timeoutId = setTimeout(r, 300); });
+
+        index++;
+      }
+    };
+
+    animate();
+
+    return () => {
+      cancelled = true;
+      clearTimeout(timeoutId);
+    };
+  }, [showAnimatedPlaceholder]);
 
   // Cooldown tick
   useEffect(() => {
