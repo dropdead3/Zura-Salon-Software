@@ -1,62 +1,56 @@
 
 
-# "Zura In A Nutshell" — Feature Showcase Section
+# Founder Quote Section for Marketing Landing Page
 
 ## Concept
 
-A new marketing section inspired by the Nudge reference: alternating left-text/right-visual and right-text/left-visual rows, each showcasing a core Zura feature with a category pill, headline, description, and a static mockup visual that accurately represents the built product.
+A clean, editorial-style founder quote section inspired by the Nudge reference — large pull-quote with highlighted key phrases, founder illustration/photo on the left, name + title + company below the quote. Matches the marketing dark surface palette.
 
-## Features to Showcase (8 rows, alternating layout)
-
-| # | Category Pill | Headline | Visual Mockup |
-|---|---|---|---|
-| 1 | Client Management | Know every client. Not just their name. | CRM card: client profile with visit count, lifetime spend, retention badge, notes preview |
-| 2 | Scheduling | Your book, optimized automatically | Calendar grid mockup with colored appointment blocks, utilization bar |
-| 3 | Point of Sale | Ring up. Track. Move on. | Transaction card with service line items, tip, payment method, total |
-| 4 | Analytics & Reporting | See what's actually happening | Mini dashboard: revenue donut, utilization %, retention trend sparkline |
-| 5 | Onboarding & Hiring | From hire to chair in days, not weeks | Onboarding checklist mockup with progress steps (license, training, access) |
-| 6 | Payroll & Commission | Pay your team right. Every time. | Payroll summary: commission tiers, tip breakdown, total payout |
-| 7 | Team Chat | One place for your team to talk | Chat mockup with message bubbles, team member avatars, channel name |
-| 8 | Website Builder | Your front door. Always on brand. | Browser chrome mockup showing a salon landing page with hero, nav, booking CTA |
-
-## Layout Pattern
-
-Each row is a two-column grid (`md:grid-cols-2`) with the text side and visual side swapping via `md:order-1`/`md:order-2` on odd/even rows. On mobile, text always stacks above the visual.
+## Layout
 
 ```text
-Row 1:  [ Text ←──────── | ──────── Visual → ]
-Row 2:  [ ← Visual ──── | ────── Text → ]
-Row 3:  [ Text ←──────── | ──────── Visual → ]
-...
+┌────────────────────────────────────────────────────────┐
+│                                                        │
+│   ┌──────────┐    "Zura gives us visibility we        │
+│   │          │     never had. It helps us [monitor     │
+│   │  Photo   │     margins], reinforce [team           │
+│   │          │     structure], and provide daily        │
+│   │          │     clarity, [significantly improving]   │
+│   └──────────┘     our operations."                    │
+│                                                        │
+│                    Sarah Mitchell                       │
+│                    Founder, Luxe Collective             │
+│                                                        │
+│                    LUXE COLLECTIVE                      │
+│                                                        │
+└────────────────────────────────────────────────────────┘
 ```
 
-## Visual Mockup Style
+## Design Details
 
-Each visual is a **static, code-rendered mockup** (not screenshots) styled to match the marketing dark surface:
-- Container: `rounded-2xl bg-white/[0.04] border border-white/[0.08] p-6`
-- Inner elements use `bg-white/[0.06]`, violet/emerald/amber accents
-- Designed to feel like a product screenshot but built with Tailwind — lightweight, responsive, no images needed
-- Each mockup is a small self-contained component within the file
+- **Section**: Full-width, clean background — `bg-[#FAF9F7]` (warm off-white, like the reference) to break from the dark marketing surface and create visual breathing room
+- **Two-column grid**: `md:grid-cols-[1fr_1.5fr]` — photo left, quote right
+- **Photo**: Rounded corners, illustration/watercolor style placeholder (a styled `div` with initials since we don't have a real photo)
+- **Quote**: Large serif or display text (`font-display text-2xl sm:text-3xl lg:text-4xl`), dark text (`text-slate-900`), with generous `leading-snug`
+- **Highlighted words**: Key phrases wrapped in `<span>` with `bg-amber-100/60 px-1 rounded-sm` — subtle warm highlight like the reference image
+- **Attribution**: Name in `font-sans text-base text-slate-900`, title in `text-slate-500 text-sm`, company name below in `font-display text-xs tracking-[0.15em] text-slate-400`
+- **Scroll animation**: `framer-motion` fade-in on viewport entry
 
-## Text Side Style
+## Highlighted Phrases
 
-- Category pill: `rounded-full border border-white/[0.08] bg-white/[0.04] px-3 py-1 text-xs text-slate-400`
-- Headline: `font-display text-xl sm:text-2xl text-white tracking-tight`
-- Description: `font-sans text-sm sm:text-base text-slate-400 leading-relaxed`
-- All hardcoded marketing colors (no semantic tokens)
+Pre-selected key phrases get the warm highlight treatment:
+- "visibility we never had"
+- "monitor margins"
+- "significantly improving"
 
-## Section Header
-
-- Overline: "ZURA IN A NUTSHELL" (violet, tracking-wide)
-- Heading: "Everything your salon runs on. One platform."
-- Subtext: "Built for operators who need real tools — not another app to manage."
+These are hardcoded in the component as a render helper that wraps matching substrings.
 
 ## File Changes
 
 | File | Action |
 |------|--------|
-| `src/components/marketing/ZuraInANutshell.tsx` | **Create** — full section with 8 feature rows, each with inline mockup component |
-| `src/pages/PlatformLanding.tsx` | **Modify** — insert `<ZuraInANutshell />` after `<ToolConsolidation />` (before OutcomeMetrics) |
+| `src/components/marketing/FounderQuote.tsx` | **Create** — editorial quote section with highlighted phrases |
+| `src/pages/PlatformLanding.tsx` | **Modify** — insert `<FounderQuote />` after `<ZuraInANutshell />` (before OutcomeMetrics) |
 
 **2 files touched. 1 new. 1 modified.**
 
