@@ -306,8 +306,8 @@ function CriteriaComparisonTable({ levels, promotionCriteria, retentionCriteria,
                 <TableCell className="text-xs text-muted-foreground sticky left-0 bg-card z-10">{metric.label}</TableCell>
                 {levels.map((level, levelIdx) => {
                   const { promo, retention } = levelData[levelIdx];
-                  const isLastLevel = levelIdx === levels.length - 1;
-                  const val = isLastLevel ? null : metric.getValue(promo, retention);
+                    const isLastLevel = levelIdx === levels.length - 1;
+                    const val = isLastLevel ? null : metric.getValue(promo, retention, levelIdx);
                   const warn = levelIdx > 0 && !isLastLevel && hasInconsistency(mIdx, levelIdx);
                   return (
                     <TableCell key={level.id} className="text-center text-xs">
@@ -352,7 +352,7 @@ function CriteriaComparisonTable({ levels, promotionCriteria, retentionCriteria,
                   <TableCell className="text-xs text-muted-foreground sticky left-0 bg-card z-10">{metric.label}</TableCell>
                   {levels.map((level, levelIdx) => {
                     const { promo, retention } = levelData[levelIdx];
-                    const val = metric.getValue(promo, retention);
+                    const val = metric.getValue(promo, retention, levelIdx);
                     const warn = levelIdx > 0 && hasInconsistency(globalIdx, levelIdx);
                     return (
                       <TableCell key={level.id} className="text-center text-xs">
