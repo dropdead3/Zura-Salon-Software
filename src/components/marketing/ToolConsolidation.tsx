@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import { motion, useInView, AnimatePresence } from 'framer-motion';
 import { useScrollReveal } from './useScrollReveal';
 
@@ -21,16 +21,27 @@ type Phase = 'chaos' | 'converging' | 'resolved';
 export function ToolConsolidation() {
   const sectionRef = useScrollReveal();
   const pileRef = useRef<HTMLDivElement>(null);
-  const isInView = useInView(pileRef, { once: true, margin: '-40px' });
+  const isInView = useInView(pileRef, { once: false, margin: '-40px' });
   const [phase, setPhase] = useState<Phase>('chaos');
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastIndex = tools.length - 1;
-  const hasTriggered = useRef(false);
 
-  // Wait 2s after in-view so user can read the chaos state
-  if (isInView && !hasTriggered.current) {
-    hasTriggered.current = true;
-    setTimeout(() => setPhase('converging'), 2000);
-  }
+  useEffect(() => {
+    if (isInView && phase === 'chaos') {
+      // Delay so user can see the chaos state
+      timerRef.current = setTimeout(() => setPhase('converging'), 2000);
+    }
+
+    if (!isInView && phase !== 'chaos') {
+      // Reset when scrolled away
+      if (timerRef.current) clearTimeout(timerRef.current);
+      setPhase('chaos');
+    }
+
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
+  }, [isInView, phase]);
 
   return (
     <section ref={sectionRef} className="relative z-10 px-6 sm:px-8 py-20 lg:py-28">
@@ -58,21 +69,14 @@ export function ToolConsolidation() {
               key={tool.name}
               className={`absolute left-1/2 top-1/2 inline-flex items-center gap-2 rounded-full border px-4 py-2 sm:px-5 sm:py-2.5 font-sans text-xs sm:text-sm whitespace-nowrap ${tool.color}`}
               style={{ marginLeft: '-80px', marginTop: '-18px' }}
-              initial={{
-                x: tool.chaos.x,
-                y: tool.chaos.y,
-                rotate: tool.chaos.rotate,
-                scale: 1,
-                opacity: 1,
-              }}
               animate={
                 phase === 'converging' || phase === 'resolved'
                   ? { x: 0, y: 0, rotate: 0, scale: 0.3, opacity: 0 }
                   : { x: tool.chaos.x, y: tool.chaos.y, rotate: tool.chaos.rotate, scale: 1, opacity: 1 }
               }
               transition={{
-                delay: i * 0.08,
-                duration: 0.8,
+                delay: phase === 'chaos' ? i * 0.05 : i * 0.08,
+                duration: phase === 'chaos' ? 0.6 : 0.8,
                 ease: [0.4, 0, 0.2, 1],
               }}
               onAnimationComplete={() => {
@@ -93,6 +97,7 @@ export function ToolConsolidation() {
                 className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 inline-flex items-center gap-3 rounded-full border-2 border-violet-400/50 bg-violet-500/15 px-8 py-3.5 sm:px-10 sm:py-4 font-display text-base sm:text-lg tracking-wide text-white whitespace-nowrap shadow-[0_0_40px_rgba(139,92,246,0.25)]"
                 initial={{ scale: 0, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0, opacity: 0 }}
                 transition={{ duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] }}
               >
                 <span className="uppercase tracking-[0.1em]">Zura</span>
@@ -104,9 +109,8 @@ export function ToolConsolidation() {
 
         {/* Price comparison */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={phase === 'resolved' ? { opacity: 1, y: 0 } : {}}
-          transition={{ delay: 0.3, duration: 0.6 }}
+          animate={phase === 'resolved' ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+          transition={{ delay: phase === 'resolved' ? 0.3 : 0, duration: 0.6 }}
           className="flex flex-col sm:flex-row items-center justify-center gap-6 sm:gap-10"
         >
           <div className="text-center">
