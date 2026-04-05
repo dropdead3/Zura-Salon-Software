@@ -14,24 +14,41 @@ export function MarketingNav() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [navVisible, setNavVisible] = useState(true);
   const lastScrollY = useRef(0);
+  const cumulativeDelta = useRef(0);
+  const rafId = useRef(0);
 
   useEffect(() => {
+    const THRESHOLD = 15;
+
     const onScroll = () => {
-      const currentY = window.scrollY;
-      setScrolled(currentY > 80);
+      cancelAnimationFrame(rafId.current);
+      rafId.current = requestAnimationFrame(() => {
+        const currentY = window.scrollY;
+        setScrolled(currentY > 80);
 
-      if (currentY < 100) {
-        setNavVisible(true);
-      } else if (currentY > lastScrollY.current + 5) {
-        setNavVisible(false);
-      } else if (currentY < lastScrollY.current - 5) {
-        setNavVisible(true);
-      }
+        if (currentY < 100) {
+          setNavVisible(true);
+          cumulativeDelta.current = 0;
+        } else {
+          cumulativeDelta.current += currentY - lastScrollY.current;
 
-      lastScrollY.current = currentY;
+          if (cumulativeDelta.current > THRESHOLD) {
+            setNavVisible(false);
+            cumulativeDelta.current = 0;
+          } else if (cumulativeDelta.current < -THRESHOLD) {
+            setNavVisible(true);
+            cumulativeDelta.current = 0;
+          }
+        }
+
+        lastScrollY.current = currentY;
+      });
     };
     window.addEventListener('scroll', onScroll, { passive: true });
-    return () => window.removeEventListener('scroll', onScroll);
+    return () => {
+      window.removeEventListener('scroll', onScroll);
+      cancelAnimationFrame(rafId.current);
+    };
   }, []);
 
   const navLinks = [
