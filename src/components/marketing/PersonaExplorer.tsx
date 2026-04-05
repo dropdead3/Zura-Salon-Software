@@ -1,5 +1,6 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { RotateCcw, ChevronRight } from 'lucide-react';
 import {
   Scissors, Users, Building2, Crown,
   DollarSign, CalendarCheck, Heart, BarChart3,
