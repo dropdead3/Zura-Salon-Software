@@ -1,11 +1,12 @@
 import { MarketingLayout } from '@/components/marketing/MarketingLayout';
 import { HeroSection } from '@/components/marketing/HeroSection';
-import { LogoBar } from '@/components/marketing/LogoBar';
+import { StatBar } from '@/components/marketing/StatBar';
 import { ProblemStatement } from '@/components/marketing/ProblemStatement';
 import { PlatformPreview } from '@/components/marketing/PlatformPreview';
 import { IntelligencePillars } from '@/components/marketing/IntelligencePillars';
+import { BuiltByOperators } from '@/components/marketing/BuiltByOperators';
 import { OutcomeMetrics } from '@/components/marketing/OutcomeMetrics';
-import { EcosystemPreview } from '@/components/marketing/EcosystemPreview';
+import { FeatureGrid } from '@/components/marketing/FeatureGrid';
 import { TestimonialSection } from '@/components/marketing/TestimonialSection';
 import { FinalCTA } from '@/components/marketing/FinalCTA';
 
@@ -13,12 +14,13 @@ export default function PlatformLanding() {
   return (
     <MarketingLayout>
       <HeroSection />
-      <LogoBar />
+      <StatBar />
       <ProblemStatement />
       <PlatformPreview />
       <IntelligencePillars />
+      <BuiltByOperators />
       <OutcomeMetrics />
-      <EcosystemPreview />
+      <FeatureGrid />
       <TestimonialSection />
       <FinalCTA />
     </MarketingLayout>
