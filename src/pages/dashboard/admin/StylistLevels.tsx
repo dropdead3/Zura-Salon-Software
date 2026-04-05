@@ -128,6 +128,8 @@ export default function StylistLevels() {
         label: l.label,
         clientLabel: l.client_label,
         description: l.description || '',
+        serviceCommissionRate: formatRate(l.service_commission_rate),
+        retailCommissionRate: formatRate(l.retail_commission_rate),
       }));
       setLevels(localLevels);
     }
@@ -225,22 +227,64 @@ export default function StylistLevels() {
     setHasChanges(true);
   };
 
+  const handleCommissionChange = (index: number, field: 'serviceCommissionRate' | 'retailCommissionRate', value: string) => {
+    const newLevels = [...levels];
+    newLevels[index] = { ...newLevels[index], [field]: value };
+    setLevels(newLevels);
+    setHasChanges(true);
+  };
+
   const handleAddNew = () => {
     if (!newLevelName.trim()) return;
     
-    const newSlug = newLevelName.toLowerCase().replace(/\s+/g, '-');
+    let newSlug = newLevelName.toLowerCase().replace(/\s+/g, '-');
+    // Deduplicate slug
+    const existingSlugs = new Set(levels.map(l => l.slug));
+    if (existingSlugs.has(newSlug)) {
+      let counter = 2;
+      while (existingSlugs.has(`${newSlug}-${counter}`)) counter++;
+      newSlug = `${newSlug}-${counter}`;
+    }
+    
     const newLevel: LocalStylistLevel = {
       id: newSlug,
       slug: newSlug,
       label: newLevelName.trim(),
       clientLabel: `Level ${levels.length + 1}`,
       description: '',
+      serviceCommissionRate: '',
+      retailCommissionRate: '',
     };
     
     setLevels([...levels, newLevel]);
     setNewLevelName('');
     setIsAddingNew(false);
     setHasChanges(true);
+  };
+
+  // State for reassignment on delete
+  const [deleteTargetIndex, setDeleteTargetIndex] = useState<number | null>(null);
+  const [reassignToSlug, setReassignToSlug] = useState<string>('');
+
+  const handleDeleteWithReassign = async (index: number) => {
+    const level = levels[index];
+    const count = getStylistCount(level.id);
+    
+    // If there are assigned stylists and a reassignment target is chosen, bulk-update
+    if (count > 0 && reassignToSlug) {
+      const { error } = await supabase
+        .from('employee_profiles')
+        .update({ stylist_level: reassignToSlug })
+        .eq('stylist_level', level.id);
+      if (error) {
+        toast.error('Failed to reassign stylists: ' + error.message);
+        return;
+      }
+    }
+    
+    handleDelete(index);
+    setDeleteTargetIndex(null);
+    setReassignToSlug('');
   };
 
   const handleSave = async () => {
@@ -251,6 +295,8 @@ export default function StylistLevels() {
       client_label: `Level ${idx + 1}`,
       description: level.description || undefined,
       display_order: idx,
+      service_commission_rate: level.serviceCommissionRate ? parseFloat(level.serviceCommissionRate) / 100 : null,
+      retail_commission_rate: level.retailCommissionRate ? parseFloat(level.retailCommissionRate) / 100 : null,
     }));
 
     saveLevels.mutate(levelsToSave, {
