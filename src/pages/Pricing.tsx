@@ -1,7 +1,8 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Helmet } from 'react-helmet-async';
-import { Check, ArrowRight, Sparkles } from 'lucide-react';
+import { Check, ArrowRight, Sparkles, Minus } from 'lucide-react';
 import { MarketingLayout } from '@/components/marketing/MarketingLayout';
+import { MarketingSEO } from '@/components/marketing/MarketingSEO';
 import { useScrollReveal } from '@/components/marketing/useScrollReveal';
 import { PLATFORM_NAME } from '@/lib/brand';
 import {

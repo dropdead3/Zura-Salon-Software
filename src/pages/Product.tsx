@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { ArrowRight, Eye, GitCompare, AlertTriangle, Target } from 'lucide-react';
 import { MarketingLayout } from '@/components/marketing/MarketingLayout';
+import { MarketingSEO } from '@/components/marketing/MarketingSEO';
 import { PLATFORM_NAME } from '@/lib/brand';
 
 const capabilities = [
@@ -33,6 +34,11 @@ const capabilities = [
 export default function Product() {
   return (
     <MarketingLayout>
+      <MarketingSEO
+        title="How It Works"
+        description="Not just reports — direction. Zura watches your business, spots what's off, and tells you what to focus on next."
+        path="/product"
+      />
       {/* Hero */}
       <section className="relative z-10 px-6 sm:px-8 pt-16 sm:pt-24 pb-12 sm:pb-16">
         <div className="max-w-4xl mx-auto text-center">
