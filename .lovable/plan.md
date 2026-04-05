@@ -1,65 +1,54 @@
 
 
-# Criteria Configuration Table View
+# Stylist Levels Editor — Gaps, Bugs & Enhancements
 
-## Problem
+## Bugs Found
 
-Currently, promotion and retention criteria are configured one level at a time via a dialog (GraduationWizard). The admin has no way to see all levels' criteria side-by-side, making it impossible to verify that thresholds increase progressively or spot gaps without clicking into each level individually.
+### 1. Duplicate import alias — `ChevronDown` imported twice (line 24 + 29)
+`ChevronDown` is imported normally on line 24, then aliased again as `ChevronDownIcon` on line 29. This is unnecessary and confusing — just use `ChevronDown` everywhere.
 
-## Solution
+### 2. `stylistsByLevel` query not scoped to organization
+The query on line 342 fetches **all** `employee_profiles` across organizations with no `organization_id` filter. This violates tenant isolation and will show incorrect counts for multi-org setups.
 
-Add a new **"Criteria" tab** to the Stylist Levels Editor (alongside Levels, Team Roster, Previews) that renders a full comparison table showing all levels and their promotion + retention metrics in one view.
+### 3. Criteria table "Configure" button crashes on unsaved levels
+On line 1004, `level.dbId!` is force-unwrapped. If an admin adds a new level (unsaved, no `dbId`) and clicks a "Configure" button that slips through, this throws. The guard on line 221 (`!level.dbId`) protects most paths but the column header "Edit" button on line 182 does not check for `dbId` existence.
 
-### Table Layout
+### 4. `hasChanges` toast fires repeatedly
+The `useEffect` on line 333 fires a toast every time `hasChanges` becomes true. Multiple rapid edits (rename + reorder) trigger duplicate toasts. The `id: 'unsaved-changes'` deduplicates visually but the effect still runs needlessly.
 
-```text
-                  | New Talent | Studio Stylist | Senior Stylist | Master Stylist
-──────────────────|------------|----------------|----------------|---------------
-PROMOTION
-  Revenue         |    —       |   $6K/mo       |   $8K/mo       |   $12K/mo
-  Retail %        |    —       |   10%          |   15%          |   18%
-  Rebooking %     |    —       |   60%          |   65%          |   70%
-  Avg Ticket      |    —       |    —           |   $110         |   $140
-  Tenure          |    —       |    —           |    —           |   365 days
-  Eval Window     |    —       |   30d          |   60d          |   60d
-  Approval        |    —       |   Auto         |   Auto         |   Manual
-──────────────────|------------|----------------|----------------|---------------
-RETENTION
-  Revenue         |    —       |   $4K/mo       |   $5.5K/mo     |   $8K/mo
-  Retail %        |    —       |   5%           |   8%           |   12%
-  Rebooking %     |    —       |   45%          |   50%          |   55%
-  Avg Ticket      |    —       |    —           |   $85          |   $100
-  Grace Period    |    —       |   30d          |   30d          |   30d
-  Action          |    —       |   Coaching     |   Coaching     |   Demotion
-```
+## Gaps
 
-### Key Features
+### 5. No org scope on criteria comparison table
+The `CriteriaComparisonTable` receives already-filtered data, so this is fine — but if `promotionCriteria` or `retentionCriteria` queries return `undefined` during loading, the table shows "No levels configured" rather than a loading state.
 
-- **Level 1 column** shows "Entry Level" with dashes — no criteria needed
-- **Unconfigured levels** show a "Configure" button in that column cell
-- **Configured levels** show values with an "Edit" button at the column header that opens the existing GraduationWizard
-- **Progressive validation hints**: If a higher level has a lower threshold than the level before it, show a subtle warning icon (inconsistency detection)
-- **Responsive**: On narrow screens, the table scrolls horizontally inside `overflow-auto`
+### 6. Criteria tab has no loading/error state
+When promotion/retention criteria are still loading, the Criteria tab renders immediately with empty data, showing all dashes. There's no skeleton or spinner indicating data is in flight.
 
-### Interaction
+### 7. Tab comment says "TAB 3" twice (lines 1011 and 1024)
+Minor: both Team Roster and Previews tabs are labeled `TAB 3` in comments.
 
-- Clicking "Edit" on any level column opens the existing GraduationWizard for that level — no new forms needed
-- The table is read-only display with edit entry points; all editing still happens in the wizard dialog
+## Enhancements
 
-## File Changes
+### 8. Progression Roadmap duplicates the Criteria tab
+The "Progression Roadmap" section (lines 963-993) inside the Levels tab is now redundant — the Criteria tab shows the same information in a better format. Remove it to reduce clutter.
 
-| File | Action |
-|------|--------|
-| `src/components/dashboard/settings/StylistLevelsEditor.tsx` | **Modify** — Add "Criteria" tab between "Levels" and "Team Roster" tabs; render the comparison table using existing `promotionCriteria` and `retentionCriteria` data already fetched |
+### 9. Team Distribution bar has no percentage label
+The distribution bars show count but not percentage. Adding a small `12%` label would improve scannability.
+
+---
+
+## Plan
+
+| # | File | Change |
+|---|------|--------|
+| 1 | `StylistLevelsEditor.tsx` | Remove duplicate `ChevronDown as ChevronDownIcon` import; use `ChevronDown` directly |
+| 2 | `StylistLevelsEditor.tsx` | Add `.eq('organization_id', orgId)` to `stylistsByLevel` query and add `orgId` to queryKey |
+| 3 | `StylistLevelsEditor.tsx` | Add `dbId` guard on criteria table header "Edit" button (line 182) |
+| 4 | `StylistLevelsEditor.tsx` | Remove the `hasChanges` toast `useEffect` — the save/discard buttons are sufficient UX signal |
+| 5 | `StylistLevelsEditor.tsx` | Add loading state to Criteria tab when `promotionCriteria` or `retentionCriteria` are undefined |
+| 6 | `StylistLevelsEditor.tsx` | Fix tab comments (TAB 3 → TAB 4 for Previews) |
+| 7 | `StylistLevelsEditor.tsx` | Remove Progression Roadmap section (redundant with Criteria tab) |
+| 8 | `StylistLevelsEditor.tsx` | Add percentage labels to Team Distribution bars |
 
 **0 new files, 1 modified file, 0 migrations.**
-
-## Technical Details
-
-- Use `Table, TableHeader, TableBody, TableRow, TableHead, TableCell` from `@/components/ui/table`
-- Data source: `promotionCriteria` and `retentionCriteria` arrays already fetched in the component (lines 53-54)
-- Match criteria to levels via `stylist_level_id === level.dbId`
-- Row grouping: two sections ("Promotion" and "Retention") separated by a subtle section header row using `TableRow` with `bg-muted/30`
-- Progressive validation: compare each metric value to the previous level's value; if current < previous, add `AlertTriangle` icon (already imported)
-- Tab value: `"criteria"`, placed as second tab
 
