@@ -179,15 +179,15 @@ export function MarketingNav() {
             animate={{ y: 0 }}
             exit={{ y: '100%' }}
             transition={{ duration: 0.3, ease: 'easeOut' }}
-            className="fixed bottom-0 left-0 right-0 z-50 bg-white/[0.06] backdrop-blur-xl border-t border-white/[0.08] py-3 px-6"
+            className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 w-auto max-w-2xl bg-white/[0.06] backdrop-blur-xl border border-white/[0.08] rounded-full py-3 px-6 shadow-lg shadow-black/20"
           >
-            <div className="max-w-5xl mx-auto flex items-center justify-between">
-              <span className="font-sans text-sm text-slate-300">
+            <div className="flex items-center gap-6">
+              <span className="font-sans text-sm text-slate-300 whitespace-nowrap">
                 Ready for a better salon software?
               </span>
               <Link
                 to="/demo"
-                className="inline-flex items-center gap-2 h-9 px-5 bg-gradient-to-r from-violet-600 to-purple-600 text-white hover:from-violet-500 hover:to-purple-500 rounded-full font-sans text-sm font-medium transition-all shadow-lg shadow-violet-500/25"
+                className="inline-flex items-center gap-2 h-9 px-5 bg-gradient-to-r from-violet-600 to-purple-600 text-white hover:from-violet-500 hover:to-purple-500 rounded-full font-sans text-sm font-medium transition-all shadow-lg shadow-violet-500/25 whitespace-nowrap"
               >
                 Book A Demo
                 <ArrowRight className="w-4 h-4" />
