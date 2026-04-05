@@ -36,12 +36,14 @@ import {
   Globe,
   TrendingUp,
   Shield,
+  Wand2,
 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Checkbox } from '@/components/ui/checkbox';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import {
   useStylistLevels, 
@@ -49,7 +51,7 @@ import {
 } from '@/hooks/useStylistLevels';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 import { PageExplainer } from '@/components/ui/PageExplainer';
-import { GraduationWizard } from '@/components/dashboard/settings/GraduationWizard';
+import { GraduationWizard, getZuraDefaults, getZuraRetentionDefaults } from '@/components/dashboard/settings/GraduationWizard';
 import { useLevelPromotionCriteria, type LevelPromotionCriteria } from '@/hooks/useLevelPromotionCriteria';
 import { useLevelRetentionCriteria, type LevelRetentionCriteria } from '@/hooks/useLevelRetentionCriteria';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
@@ -298,6 +300,181 @@ function CriteriaComparisonTable({ levels, promotionCriteria, retentionCriteria,
   );
 }
 
+// ── Level Name Templates ──
+const LEVEL_NAME_TEMPLATES: Record<number, string[]> = {
+  3: ['New Talent', 'Stylist', 'Senior Stylist'],
+  4: ['New Talent', 'Emerging', 'Stylist', 'Senior Stylist'],
+  5: ['New Talent', 'Emerging', 'Stylist', 'Senior Stylist', 'Master Stylist'],
+  6: ['New Talent', 'Emerging', 'Stylist', 'Senior Stylist', 'Master Stylist', 'Director'],
+  7: ['New Talent', 'Emerging', 'Stylist', 'Senior Stylist', 'Master Stylist', 'Director', 'Elite'],
+};
+
+interface QuickSetupProps {
+  onGenerate: (levels: LocalStylistLevel[], applyKPIs: boolean) => void;
+  onDismiss: () => void;
+  isGenerating: boolean;
+}
+
+function LevelsQuickSetupWizard({ onGenerate, onDismiss, isGenerating }: QuickSetupProps) {
+  const [levelCount, setLevelCount] = useState(4);
+  const [baseRate, setBaseRate] = useState('30');
+  const [topRate, setTopRate] = useState('50');
+  const [retailRate, setRetailRate] = useState('10');
+  const [applyKPIs, setApplyKPIs] = useState(true);
+
+  const handleGenerate = () => {
+    const names = LEVEL_NAME_TEMPLATES[levelCount];
+    const base = parseFloat(baseRate) || 30;
+    const top = parseFloat(topRate) || 50;
+    const retail = retailRate;
+
+    const generatedLevels: LocalStylistLevel[] = names.map((name, i) => {
+      const rate = levelCount === 1 ? base : Math.round(base + (top - base) * (i / (levelCount - 1)));
+      const slug = name.toLowerCase().replace(/\s+/g, '-');
+      return {
+        id: slug,
+        slug,
+        label: name,
+        clientLabel: `Level ${i + 1}`,
+        description: '',
+        serviceCommissionRate: String(rate),
+        retailCommissionRate: retail,
+      };
+    });
+
+    onGenerate(generatedLevels, applyKPIs);
+  };
+
+  return (
+    <div className="rounded-xl border-2 border-dashed border-primary/30 bg-primary/5 p-6 space-y-6">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+            <Wand2 className="w-5 h-5 text-primary" />
+          </div>
+          <div>
+            <h3 className="font-display text-base tracking-wide">QUICK SETUP</h3>
+            <p className="text-xs text-muted-foreground mt-0.5">Generate your level structure in one click</p>
+          </div>
+        </div>
+        <button
+          onClick={onDismiss}
+          className="p-1.5 rounded-md hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
+        >
+          <X className="w-4 h-4" />
+        </button>
+      </div>
+
+      {/* Step 1: Level count */}
+      <div className="space-y-2">
+        <label className="text-sm text-muted-foreground">How many levels?</label>
+        <div className="flex gap-2">
+          {[3, 4, 5, 6, 7].map(n => (
+            <button
+              key={n}
+              onClick={() => setLevelCount(n)}
+              className={cn(
+                "w-10 h-10 rounded-full text-sm transition-colors",
+                levelCount === n
+                  ? "bg-foreground text-background"
+                  : "bg-muted text-muted-foreground hover:bg-muted/80"
+              )}
+            >
+              {n}
+            </button>
+          ))}
+        </div>
+        <p className="text-xs text-muted-foreground">
+          {LEVEL_NAME_TEMPLATES[levelCount].join(' → ')}
+        </p>
+      </div>
+
+      {/* Step 2: Commission range */}
+      <div className="space-y-2">
+        <label className="text-sm text-muted-foreground">Commission range</label>
+        <div className="grid grid-cols-3 gap-3">
+          <div className="space-y-1">
+            <label className="text-xs text-muted-foreground">Base (lowest)</label>
+            <div className="relative">
+              <Input
+                type="number"
+                value={baseRate}
+                onChange={e => setBaseRate(e.target.value)}
+                className="h-9 text-sm pr-7"
+                min={0}
+                max={100}
+              />
+              <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">%</span>
+            </div>
+          </div>
+          <div className="space-y-1">
+            <label className="text-xs text-muted-foreground">Top (highest)</label>
+            <div className="relative">
+              <Input
+                type="number"
+                value={topRate}
+                onChange={e => setTopRate(e.target.value)}
+                className="h-9 text-sm pr-7"
+                min={0}
+                max={100}
+              />
+              <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">%</span>
+            </div>
+          </div>
+          <div className="space-y-1">
+            <label className="text-xs text-muted-foreground">Retail (all)</label>
+            <div className="relative">
+              <Input
+                type="number"
+                value={retailRate}
+                onChange={e => setRetailRate(e.target.value)}
+                className="h-9 text-sm pr-7"
+                min={0}
+                max={100}
+              />
+              <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">%</span>
+            </div>
+          </div>
+        </div>
+        <p className="text-xs text-muted-foreground">
+          Intermediate levels will be interpolated: {LEVEL_NAME_TEMPLATES[levelCount].map((name, i) => {
+            const base = parseFloat(baseRate) || 30;
+            const top = parseFloat(topRate) || 50;
+            const rate = levelCount === 1 ? base : Math.round(base + (top - base) * (i / (levelCount - 1)));
+            return `${rate}%`;
+          }).join(' → ')}
+        </p>
+      </div>
+
+      {/* KPI checkbox */}
+      <div className="flex items-center gap-3">
+        <Checkbox
+          id="apply-kpis"
+          checked={applyKPIs}
+          onCheckedChange={(checked) => setApplyKPIs(!!checked)}
+        />
+        <label htmlFor="apply-kpis" className="text-sm text-foreground cursor-pointer flex items-center gap-1.5">
+          <Sparkles className="w-3.5 h-3.5 text-primary" />
+          Also apply Zura Recommended KPI criteria
+        </label>
+      </div>
+
+      <Button
+        onClick={handleGenerate}
+        disabled={isGenerating}
+        className="gap-2"
+      >
+        {isGenerating ? (
+          <Loader2 className="w-4 h-4 animate-spin" />
+        ) : (
+          <Wand2 className="w-4 h-4" />
+        )}
+        Generate {levelCount} Levels
+      </Button>
+    </div>
+  );
+}
+
 interface StylistLevelsEditorProps {
   /** When true, omits page header, sticky behavior, and info notice (used inside Settings) */
   embedded?: boolean;
@@ -320,6 +497,9 @@ export function StylistLevelsEditor({ embedded = false }: StylistLevelsEditorPro
   const [deleteTargetIndex, setDeleteTargetIndex] = useState<number | null>(null);
   const [reassignToSlug, setReassignToSlug] = useState<string>('');
   const [wizardLevelIndex, setWizardLevelIndex] = useState(0);
+  const [quickSetupDismissed, setQuickSetupDismissed] = useState(false);
+  const [isQuickSetupGenerating, setIsQuickSetupGenerating] = useState(false);
+  const queryClient = useQueryClient();
 
   const { data: promotionCriteria } = useLevelPromotionCriteria();
   const { data: retentionCriteria } = useLevelRetentionCriteria();
@@ -482,6 +662,76 @@ export function StylistLevelsEditor({ embedded = false }: StylistLevelsEditorPro
     });
   };
 
+  const handleQuickSetup = async (generatedLevels: LocalStylistLevel[], applyKPIs: boolean) => {
+    setIsQuickSetupGenerating(true);
+    try {
+      // 1. Save levels to DB
+      const levelsToSave = generatedLevels.map((level, idx) => ({
+        slug: level.slug,
+        label: level.label,
+        client_label: `Level ${idx + 1}`,
+        description: level.description || undefined,
+        display_order: idx,
+        service_commission_rate: level.serviceCommissionRate ? parseFloat(level.serviceCommissionRate) / 100 : null,
+        retail_commission_rate: level.retailCommissionRate ? parseFloat(level.retailCommissionRate) / 100 : null,
+      }));
+
+      await new Promise<void>((resolve, reject) => {
+        saveLevels.mutate(levelsToSave, {
+          onSuccess: () => resolve(),
+          onError: (err) => reject(err),
+        });
+      });
+
+      // 2. If KPIs requested, fetch the newly-created level IDs and save criteria
+      if (applyKPIs) {
+        const orgId = effectiveOrganization?.id;
+        if (orgId) {
+          const { data: savedLevels, error: fetchErr } = await supabase
+            .from('stylist_levels')
+            .select('id, slug, display_order')
+            .order('display_order', { ascending: true });
+
+          if (fetchErr) throw fetchErr;
+          if (savedLevels) {
+            for (const dbLevel of savedLevels) {
+              const levelIndex = dbLevel.display_order;
+              // Skip last level (no promotion target beyond top)
+              if (levelIndex < savedLevels.length - 1) {
+                const promoDefaults = getZuraDefaults(levelIndex);
+                await supabase.from('level_promotion_criteria').upsert({
+                  organization_id: orgId,
+                  stylist_level_id: dbLevel.id,
+                  ...promoDefaults,
+                  is_active: true,
+                }, { onConflict: 'organization_id,stylist_level_id' });
+              }
+
+              const retDefaults = getZuraRetentionDefaults(levelIndex);
+              await supabase.from('level_retention_criteria').upsert({
+                organization_id: orgId,
+                stylist_level_id: dbLevel.id,
+                ...retDefaults,
+                is_active: true,
+              }, { onConflict: 'organization_id,stylist_level_id' });
+            }
+            queryClient.invalidateQueries({ queryKey: ['level-promotion-criteria'] });
+            queryClient.invalidateQueries({ queryKey: ['level-retention-criteria'] });
+          }
+        }
+      }
+
+      setLevels(generatedLevels);
+      setHasChanges(false);
+      setQuickSetupDismissed(true);
+      toast.success(`${generatedLevels.length} levels generated${applyKPIs ? ' with KPI criteria' : ''}`);
+    } catch (err: any) {
+      toast.error('Failed to generate levels: ' + (err?.message || 'Unknown error'));
+    } finally {
+      setIsQuickSetupGenerating(false);
+    }
+  };
+
   const handleDiscard = () => {
     setHasChanges(false);
   };
@@ -597,12 +847,23 @@ export function StylistLevelsEditor({ embedded = false }: StylistLevelsEditorPro
           {/* === TAB 1: Levels === */}
           <TabsContent value="levels">
             <div className="space-y-3">
+              {/* Quick Setup Wizard — shown when no levels exist */}
+              {levels.length === 0 && !quickSetupDismissed && (
+                <LevelsQuickSetupWizard
+                  onGenerate={handleQuickSetup}
+                  onDismiss={() => setQuickSetupDismissed(true)}
+                  isGenerating={isQuickSetupGenerating}
+                />
+              )}
+
               {/* Quick stats row */}
-              <div className="flex items-center gap-4 text-sm text-muted-foreground pb-2">
-                <span>{levels.length} level{levels.length !== 1 ? 's' : ''}</span>
-                <span className="text-border">·</span>
-                <span>{totalAssigned} stylist{totalAssigned !== 1 ? 's' : ''} assigned</span>
-              </div>
+              {levels.length > 0 && (
+                <div className="flex items-center gap-4 text-sm text-muted-foreground pb-2">
+                  <span>{levels.length} level{levels.length !== 1 ? 's' : ''}</span>
+                  <span className="text-border">·</span>
+                  <span>{totalAssigned} stylist{totalAssigned !== 1 ? 's' : ''} assigned</span>
+                </div>
+              )}
 
               {levels.map((level, index) => {
                 const stylistCount = getStylistCount(level.id);
