@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 
 const stats = [
-  { value: 50, suffix: '+', label: 'Locations Managed' },
-  { value: 30, prefix: '$', suffix: 'M+', label: 'Revenue Monitored' },
-  { value: 500, suffix: '+', label: 'Stylists on Platform' },
+  { value: 50, suffix: '+', label: 'Salon locations' },
+  { value: 30, prefix: '$', suffix: 'M+', label: 'Revenue tracked' },
+  { value: 500, suffix: '+', label: 'Stylists connected' },
 ];
 
 function Counter({ value, prefix, suffix }: { value: number; prefix?: string; suffix?: string }) {
@@ -47,7 +47,7 @@ export function StatBar() {
     <section className="relative z-10 py-8 sm:py-10">
       <div className="max-w-5xl mx-auto px-6 sm:px-8">
         <p className="font-display text-[11px] sm:text-xs text-slate-500 uppercase tracking-[0.15em] text-center mb-8">
-          Trusted by salon owners building real businesses
+          Already running in salons like yours
         </p>
         <div className="grid grid-cols-3 gap-6 sm:gap-0 text-center">
           {stats.map((stat, i) => (

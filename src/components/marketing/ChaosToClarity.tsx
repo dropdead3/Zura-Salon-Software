@@ -30,16 +30,13 @@ export function ChaosToClarity() {
         {/* Section header */}
         <div className="text-center mb-14">
           <p className="font-display text-[11px] sm:text-xs text-[hsl(var(--mkt-dusky))] uppercase tracking-[0.15em] mb-4">
-            The Problem
+            Sound familiar?
           </p>
           <h2 className="font-display text-2xl sm:text-3xl lg:text-4xl tracking-tight mb-4">
-            From noise to{' '}
-            <span className="bg-gradient-to-r from-violet-400 to-purple-400 bg-clip-text text-transparent">
-              signal
-            </span>
+            This is what running a salon feels like.
           </h2>
           <p className="font-sans text-base sm:text-lg text-slate-400 max-w-2xl mx-auto">
-            You're drowning in spreadsheets, texts, and half-answers. {PLATFORM_NAME} turns all of it into one clear picture.
+            Spreadsheets. Group texts. Half-answers. You're working harder than you should to figure out what's actually going on.
           </p>
         </div>
 
@@ -51,7 +48,7 @@ export function ChaosToClarity() {
             style={{ opacity: chaosDim }}
           >
             <p className="font-display text-[10px] tracking-[0.15em] text-slate-500 uppercase mb-6">
-              Without {PLATFORM_NAME}
+              Your Monday morning
             </p>
 
             {/* Scattered chaos cards */}
@@ -92,7 +89,7 @@ export function ChaosToClarity() {
             style={{ opacity: clarityOpacity, x: clarityX }}
           >
             <p className="font-display text-[10px] tracking-[0.15em] text-violet-400 uppercase mb-6">
-              With {PLATFORM_NAME}
+              Your Monday with {PLATFORM_NAME}
             </p>
 
             {/* Clean KPI card */}
@@ -128,7 +125,7 @@ export function ChaosToClarity() {
               {/* Action confirmation */}
               <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-emerald-500/[0.08] border border-emerald-500/[0.15]">
                 <Check className="w-3.5 h-3.5 text-emerald-400" />
-                <span className="font-sans text-xs text-emerald-300">One action. Measurable impact.</span>
+                <span className="font-sans text-xs text-emerald-300">One decision. The rest runs itself.</span>
               </div>
             </div>
           </motion.div>

@@ -8,10 +8,10 @@ import { PLATFORM_NAME } from '@/lib/brand';
 type Phase = 'observe' | 'detect' | 'act' | 'pause';
 
 const phaseNarration: Record<Phase, string> = {
-  observe: `${PLATFORM_NAME} is watching your business right now.`,
-  detect: 'A deviation detected. Utilization dropped.',
-  act: 'One lever. Clear impact. You decide.',
-  pause: 'This is what clarity feels like.',
+  observe: 'Watching your numbers. Comparing to your benchmarks.',
+  detect: 'Something\'s off. Tuesday bookings dropped 18%.',
+  act: 'One fix. $4,200/mo recovered. Your call.',
+  pause: 'That\'s it. Back to running your salon.',
 };
 
 export function HeroSection() {
@@ -29,18 +29,18 @@ export function HeroSection() {
       {/* Pill badge */}
       <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-violet-500/10 border border-violet-500/20 rounded-full text-violet-300 font-sans text-sm mb-8 mkt-fade-in">
         <Zap className="w-3.5 h-3.5" />
-        Trusted by 50+ salon locations
+        Used by 50+ salon locations daily
       </div>
 
       <h1 className="font-display text-3xl sm:text-5xl lg:text-7xl font-medium tracking-tight leading-[1.08] mb-6 mkt-fade-in mkt-delay-1">
-        Run your salon with{' '}
+        Know exactly{' '}
         <br className="hidden sm:block" />
-        <span className="bg-gradient-to-r from-violet-400 to-purple-400 bg-clip-text text-transparent">clarity, not chaos.</span>
+        <span className="bg-gradient-to-r from-violet-400 to-purple-400 bg-clip-text text-transparent">what to fix next.</span>
       </h1>
 
       <p className="font-sans text-base sm:text-lg lg:text-xl text-slate-400 max-w-2xl mb-10 leading-relaxed mkt-fade-in mkt-delay-2">
-        One platform that connects your schedule, team, inventory, and business performance
-        — so you always know what's working and what needs attention.
+        {PLATFORM_NAME} watches your schedule, team, and numbers — and tells you the one thing
+        that will make the biggest difference this week.
       </p>
 
       <div className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto mkt-fade-in mkt-delay-2">

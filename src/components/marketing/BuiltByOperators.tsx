@@ -34,7 +34,7 @@ export function BuiltByOperators() {
               </p>
               <p>
                 {PLATFORM_NAME} is what happens when salon owners
-                stop waiting for software companies to understand their business.
+                stop waiting for someone else to build what they needed.
               </p>
             </div>
             {/* Stat callout */}
