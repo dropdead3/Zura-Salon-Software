@@ -95,6 +95,10 @@ interface RetentionFormState {
   rebooking_pct_minimum: number;
   avg_ticket_enabled: boolean;
   avg_ticket_minimum: number;
+  retention_rate_enabled: boolean;
+  retention_rate_minimum: number;
+  new_clients_enabled: boolean;
+  new_clients_minimum: number;
   evaluation_window_days: number;
   grace_period_days: number;
   action_type: 'coaching_flag' | 'demotion_eligible';
@@ -105,6 +109,8 @@ const CRITERIA: CriterionConfig[] = [
   { key: 'retail', label: 'Retail Attachment', icon: ShoppingBag, unit: '%', enabledKey: 'retail_enabled', thresholdKey: 'retail_pct_threshold', weightKey: 'retail_weight', placeholder: '15' },
   { key: 'rebooking', label: 'Rebooking Rate', icon: CalendarCheck, unit: '%', enabledKey: 'rebooking_enabled', thresholdKey: 'rebooking_pct_threshold', weightKey: 'rebooking_weight', placeholder: '70' },
   { key: 'avg_ticket', label: 'Average Ticket', icon: Receipt, unit: '$', enabledKey: 'avg_ticket_enabled', thresholdKey: 'avg_ticket_threshold', weightKey: 'avg_ticket_weight', placeholder: '120' },
+  { key: 'retention_rate', label: 'Client Retention', icon: Users, unit: '%', enabledKey: 'retention_rate_enabled', thresholdKey: 'retention_rate_threshold', weightKey: 'retention_rate_weight', placeholder: '70' },
+  { key: 'new_clients', label: 'New Clients', icon: UserPlus, unit: '/mo', enabledKey: 'new_clients_enabled', thresholdKey: 'new_clients_threshold', weightKey: 'new_clients_weight', placeholder: '10' },
 ];
 
 interface RetentionCriterionConfig {
@@ -122,6 +128,8 @@ const RETENTION_CRITERIA: RetentionCriterionConfig[] = [
   { key: 'retail', label: 'Retail Attachment', icon: ShoppingBag, unit: '%', enabledKey: 'retail_enabled', minimumKey: 'retail_pct_minimum', placeholder: '8' },
   { key: 'rebooking', label: 'Rebooking Rate', icon: CalendarCheck, unit: '%', enabledKey: 'rebooking_enabled', minimumKey: 'rebooking_pct_minimum', placeholder: '50' },
   { key: 'avg_ticket', label: 'Average Ticket', icon: Receipt, unit: '$', enabledKey: 'avg_ticket_enabled', minimumKey: 'avg_ticket_minimum', placeholder: '80' },
+  { key: 'retention_rate', label: 'Client Retention', icon: Users, unit: '%', enabledKey: 'retention_rate_enabled', minimumKey: 'retention_rate_minimum', placeholder: '50' },
+  { key: 'new_clients', label: 'New Clients', icon: UserPlus, unit: '/mo', enabledKey: 'new_clients_enabled', minimumKey: 'new_clients_minimum', placeholder: '3' },
 ];
 
 const INITIAL_STATE: FormState = {
