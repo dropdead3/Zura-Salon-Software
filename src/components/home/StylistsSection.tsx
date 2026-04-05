@@ -31,6 +31,7 @@ import { sampleStylists } from "@/data/sampleStylists";
 import { locations as staticLocations, stylistLevels, type Stylist, type Location } from "@/data/stylists";
 import { useLocationName } from "@/hooks/useLocationName";
 import { useStylistLevels } from "@/hooks/useStylistLevels";
+import { useWebsiteLevelDisplayMode } from "@/hooks/useWebsiteLevelDisplayMode";
 
 // Helper to convert text to title case
 const toTitleCase = (str: string) => {
@@ -419,6 +420,16 @@ export function StylistsSection() {
   // Fetch stylist levels from database
   const { data: dbLevels } = useStylistLevels();
 
+  // Fetch level display mode from org settings
+  const { data: levelDisplayMode } = useWebsiteLevelDisplayMode();
+
+  // Resolve display label for a stylist's level based on display mode
+  const resolveDisplayLabel = useCallback((rawLevel: string): string => {
+    if (!dbLevels || dbLevels.length === 0 || levelDisplayMode !== 'custom_name') return rawLevel;
+    const match = dbLevels.find(l => l.client_label === rawLevel || l.slug === rawLevel);
+    return match ? match.label : rawLevel;
+  }, [dbLevels, levelDisplayMode]);
+
   // Fetch locations from database
   const { data: dbLocations } = useActiveLocations();
   
@@ -681,7 +692,7 @@ export function StylistsSection() {
         {filteredStylists.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {filteredStylists.map((stylist) => (
-              <StylistFlipCard key={stylist.id} stylist={stylist} index={0} selectedLocation={selectedLocation} levels={dbLevels} />
+              <StylistFlipCard key={stylist.id} stylist={stylist} index={0} selectedLocation={selectedLocation} levels={dbLevels} displayLabel={resolveDisplayLabel(stylist.level)} />
             ))}
             
             {/* Join Our Team Card - dynamically spans remaining columns */}
