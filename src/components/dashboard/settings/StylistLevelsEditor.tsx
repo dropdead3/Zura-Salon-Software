@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
 import { DashboardPageHeader } from '@/components/dashboard/DashboardPageHeader';
@@ -22,6 +22,7 @@ import {
   Trash2, 
   ChevronUp, 
   ChevronDown,
+  ChevronRight,
   Save,
   X,
   AlertTriangle,
@@ -201,8 +202,7 @@ function CriteriaComparisonTable({ levels, promotionCriteria, retentionCriteria,
       <p className="text-sm text-muted-foreground">
         Compare promotion and retention criteria across all levels. Click "Edit" to modify a level's criteria.
       </p>
-      <div className="rounded-xl border bg-card overflow-auto">
-        <Table>
+      <ScrollableTableWrapper>
           <TableHeader>
             <TableRow>
               <TableHead className="w-[140px] sticky left-0 bg-card z-10">Metric</TableHead>
@@ -317,8 +317,7 @@ function CriteriaComparisonTable({ levels, promotionCriteria, retentionCriteria,
             })}
           </TableBody>
         </Table>
-      </div>
-    </div>
+      </ScrollableTableWrapper>
   );
 }
 
