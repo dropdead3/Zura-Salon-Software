@@ -223,10 +223,10 @@ export function StruggleInput() {
         transition={{ duration: 0.5 }}
         className="text-center mb-10"
       >
-        <h2 className="font-display text-2xl sm:text-3xl tracking-wide text-foreground mb-3">
+        <h2 className="font-display text-2xl sm:text-3xl tracking-wide text-white mb-3">
           What's holding you back?
         </h2>
-        <p className="font-sans text-base text-muted-foreground max-w-lg mx-auto">
+        <p className="font-sans text-base text-slate-400 max-w-lg mx-auto">
           Tell us your biggest salon challenge. We'll show you exactly how {PLATFORM_NAME} solves it.
         </p>
       </motion.div>
@@ -242,7 +242,7 @@ export function StruggleInput() {
         {limitReached ? (
           <div className="text-center py-8">
             <Sparkles className="w-8 h-8 text-violet-400 mx-auto mb-4" />
-            <p className="font-sans text-lg text-foreground mb-2">
+            <p className="font-sans text-lg text-white mb-2">
               You've explored a few solutions — want to see the full picture?
             </p>
             <Link
@@ -264,11 +264,11 @@ export function StruggleInput() {
                 placeholder="I'm struggling with..."
                 disabled={isLoading}
                 aria-label="Describe your salon challenge"
-                className="w-full bg-transparent border-0 resize-none text-foreground placeholder:text-muted-foreground/50 font-sans text-lg focus:outline-none min-h-[80px] disabled:opacity-50"
+                className="w-full bg-transparent border-0 resize-none text-white placeholder:text-slate-500 font-sans text-lg focus:outline-none min-h-[80px] disabled:opacity-50"
                 rows={3}
               />
               <div className="flex items-center justify-between mt-2">
-                <span className="font-sans text-xs text-muted-foreground/40">
+                <span className="font-sans text-xs text-slate-600">
                   {query.length}/{MAX_CHARS}
                 </span>
                 <button
@@ -298,7 +298,7 @@ export function StruggleInput() {
                   <button
                     key={s}
                     onClick={() => handleSuggestionClick(s)}
-                    className="px-3 py-1.5 bg-white/[0.04] border border-white/[0.08] rounded-full font-sans text-xs text-muted-foreground hover:text-foreground hover:border-violet-500/30 hover:bg-violet-500/5 transition-all"
+                    className="px-3 py-1.5 bg-white/[0.04] border border-white/[0.08] rounded-full font-sans text-xs text-slate-400 hover:text-white hover:border-violet-500/30 hover:bg-violet-500/5 transition-all"
                   >
                     {s}
                   </button>
@@ -348,11 +348,11 @@ export function StruggleInput() {
                     <p className="font-display text-xs tracking-wide text-violet-400 mb-1">
                       {f.category}
                     </p>
-                    <p className="font-sans text-sm text-foreground font-medium">
+                    <p className="font-sans text-sm text-white font-medium">
                       {f.name}
                     </p>
                     {f.tagline && (
-                      <p className="font-sans text-xs text-muted-foreground mt-1">
+                      <p className="font-sans text-xs text-slate-400 mt-1">
                         {f.tagline}
                       </p>
                     )}
@@ -367,7 +367,7 @@ export function StruggleInput() {
                 aria-live="polite"
                 className="bg-white/[0.03] border border-white/[0.06] rounded-xl p-5 sm:p-6"
               >
-                <div className="prose prose-sm prose-invert max-w-none font-sans text-muted-foreground [&_strong]:text-foreground [&_h1]:font-display [&_h2]:font-display [&_h3]:font-display [&_h1]:tracking-wide [&_h2]:tracking-wide [&_h3]:tracking-wide">
+                <div className="prose prose-sm prose-invert max-w-none font-sans text-slate-400 [&_strong]:text-white [&_p]:text-slate-400 [&_li]:text-slate-400 [&_h1]:text-white [&_h2]:text-white [&_h3]:text-white [&_h1]:font-display [&_h2]:font-display [&_h3]:font-display [&_h1]:tracking-wide [&_h2]:tracking-wide [&_h3]:tracking-wide">
                   <ReactMarkdown>{response}</ReactMarkdown>
                 </div>
               </div>
@@ -379,7 +379,7 @@ export function StruggleInput() {
                 <button
                   onClick={handleReset}
                   disabled={isCoolingDown}
-                  className="inline-flex items-center gap-1.5 font-sans text-sm text-muted-foreground hover:text-foreground transition-colors disabled:opacity-40"
+                  className="inline-flex items-center gap-1.5 font-sans text-sm text-slate-400 hover:text-white transition-colors disabled:opacity-40"
                 >
                   <RotateCcw className="w-3.5 h-3.5" />
                   Ask another question
