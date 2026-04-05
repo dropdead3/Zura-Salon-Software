@@ -397,65 +397,102 @@ export function StruggleInput() {
             transition={{ duration: 0.4 }}
             className="mt-6"
           >
-            {/* Feature cards */}
-            {features.length > 0 && (
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
-                {features.map((f, i) => (
-                  <motion.div
-                    key={f.id}
-                    initial={{ opacity: 0, y: 15 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: i * 0.1, duration: 0.3 }}
-                    className="bg-white/[0.04] border border-white/[0.08] rounded-xl p-4"
-                  >
-                    <p className="font-display text-xs tracking-wide text-violet-400 mb-1">
-                      {f.category}
-                    </p>
-                    <p className="font-sans text-sm text-white font-medium">
-                      {f.name}
-                    </p>
-                    {f.tagline && (
-                      <p className="font-sans text-xs text-slate-400 mt-1">
-                        {f.tagline}
+            {/* Unified response card */}
+            <div className="bg-white/[0.04] border border-white/[0.08] rounded-2xl p-5 sm:p-6 space-y-5">
+              {/* Primary feature hero card */}
+              {features.length > 0 && (
+                <motion.div
+                  initial={{ opacity: 0, y: 15 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3 }}
+                  className="relative bg-gradient-to-br from-violet-500/10 to-transparent border border-violet-500/20 rounded-xl p-5 overflow-hidden"
+                >
+                  <div className="absolute left-0 top-0 bottom-0 w-1 bg-violet-500 rounded-l-xl" />
+                  <div className="flex items-start gap-3">
+                    <div className="flex-shrink-0 w-9 h-9 rounded-lg bg-violet-500/15 flex items-center justify-center">
+                      <Sparkles className="w-4 h-4 text-violet-400" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-display text-[10px] tracking-[0.12em] text-violet-400 mb-1">
+                        {features[0].category?.toUpperCase() || 'FEATURED SOLUTION'}
                       </p>
-                    )}
-                  </motion.div>
-                ))}
-              </div>
-            )}
+                      <p className="font-sans text-lg text-white font-medium leading-tight">
+                        {features[0].name}
+                      </p>
+                      {features[0].tagline && (
+                        <p className="font-sans text-sm text-slate-400 mt-1.5 leading-relaxed">
+                          {features[0].tagline}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </motion.div>
+              )}
 
-            {/* AI response */}
-            {response && (
-              <div
-                aria-live="polite"
-                className="bg-white/[0.03] border border-white/[0.06] rounded-xl p-5 sm:p-6"
-              >
-                <div className="prose prose-sm prose-invert max-w-none font-sans text-slate-400 [&_strong]:text-white [&_p]:text-slate-400 [&_li]:text-slate-400 [&_h1]:text-white [&_h2]:text-white [&_h3]:text-white [&_h1]:font-display [&_h2]:font-display [&_h3]:font-display [&_h1]:tracking-wide [&_h2]:tracking-wide [&_h3]:tracking-wide">
-                  <ReactMarkdown>{response}</ReactMarkdown>
+              {/* Secondary features as compact chips */}
+              {features.length > 1 && (
+                <div>
+                  <p className="font-sans text-xs text-slate-500 mb-2">Also relevant</p>
+                  <div className="flex flex-wrap gap-2">
+                    {features.slice(1).map((f, i) => (
+                      <motion.div
+                        key={f.id}
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ delay: 0.2 + i * 0.08, duration: 0.25 }}
+                        className="inline-flex items-center gap-2 px-3 py-2 bg-white/[0.04] border border-white/[0.08] rounded-lg"
+                      >
+                        <span className="font-display text-[9px] tracking-[0.1em] text-violet-400/70">
+                          {f.category?.toUpperCase()}
+                        </span>
+                        <span className="font-sans text-sm text-slate-300">{f.name}</span>
+                      </motion.div>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
 
-            {/* Reset */}
-            {!isLoading && (
-              <div className="flex items-center justify-center gap-4 mt-5">
-                <button
-                  onClick={handleReset}
-                  disabled={isCoolingDown}
-                  className="inline-flex items-center gap-1.5 font-sans text-sm text-slate-400 hover:text-white transition-colors disabled:opacity-40"
-                >
-                  <RotateCcw className="w-3.5 h-3.5" />
-                  Ask another question
-                </button>
-                <Link
-                  to="/demo"
-                  className="inline-flex items-center gap-1.5 font-sans text-sm text-violet-400 hover:text-violet-300 transition-colors"
-                >
-                  Book a demo
-                  <ArrowRight className="w-3.5 h-3.5" />
-                </Link>
-              </div>
-            )}
+              {/* Section divider + AI response */}
+              {response && (
+                <>
+                  <div className="flex items-center gap-3">
+                    <div className="h-px flex-1 bg-gradient-to-r from-violet-500/20 to-transparent" />
+                    <span className="font-display text-[10px] tracking-[0.12em] text-violet-400/60">
+                      HOW {PLATFORM_NAME.toUpperCase()} SOLVES THIS
+                    </span>
+                    <div className="h-px flex-1 bg-gradient-to-l from-violet-500/20 to-transparent" />
+                  </div>
+
+                  <div
+                    aria-live="polite"
+                    className="prose prose-sm prose-invert max-w-none font-sans leading-relaxed text-slate-400 [&_strong]:text-violet-300 [&_p]:text-slate-400 [&_li]:text-slate-400 [&_li::marker]:text-violet-500/50 [&_h1]:text-white [&_h2]:text-white [&_h3]:text-white [&_h1]:font-display [&_h2]:font-display [&_h3]:font-display [&_h1]:tracking-wide [&_h2]:tracking-wide [&_h3]:tracking-wide [&_ul]:space-y-1.5"
+                  >
+                    <ReactMarkdown>{response}</ReactMarkdown>
+                  </div>
+                </>
+              )}
+
+              {/* Action row */}
+              {!isLoading && (
+                <div className="flex items-center justify-between pt-3 border-t border-white/[0.06]">
+                  <button
+                    onClick={handleReset}
+                    disabled={isCoolingDown}
+                    className="inline-flex items-center gap-1.5 font-sans text-sm text-slate-400 hover:text-white transition-colors disabled:opacity-40"
+                  >
+                    <RotateCcw className="w-3.5 h-3.5" />
+                    Ask another question
+                  </button>
+                  <Link
+                    to="/demo"
+                    className="inline-flex items-center gap-2 px-5 py-2 bg-gradient-to-r from-violet-600 to-purple-600 text-white rounded-full font-sans text-sm hover:from-violet-500 hover:to-purple-500 transition-all active:scale-[0.98]"
+                  >
+                    Book a Demo
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </Link>
+                </div>
+              )}
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
