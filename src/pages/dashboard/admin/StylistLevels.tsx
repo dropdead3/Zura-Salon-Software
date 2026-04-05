@@ -595,6 +595,39 @@ export default function StylistLevels() {
 
           {/* Right Column - Preview & Stats */}
           <div className="lg:col-span-2 space-y-6">
+            {/* Graduation Requirements Summary */}
+            {promotionCriteria && promotionCriteria.length > 0 && (
+              <div className="space-y-3">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <GraduationCap className="w-4 h-4" />
+                  <span>Graduation Roadmap</span>
+                </div>
+                <div className="bg-card border rounded-xl p-4 space-y-3">
+                  {levels.map((level, idx) => {
+                    const criteria = promotionCriteria?.find(c => c.stylist_level_id === level.dbId && c.is_active);
+                    const summary = criteria ? formatCriteriaSummary(criteria) : null;
+                    return (
+                      <div key={level.id} className="flex items-start gap-3">
+                        <span className={cn(
+                          "w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-medium shrink-0 mt-0.5",
+                          getLevelColor(idx, levels.length).bg,
+                          getLevelColor(idx, levels.length).text,
+                        )}>
+                          {idx + 1}
+                        </span>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-medium truncate">{level.label}</p>
+                          <p className="text-[10px] text-muted-foreground">
+                            {idx === 0 ? 'Entry level' : summary || 'No criteria configured'}
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
             {/* Color Progression Preview */}
             <div className="space-y-3">
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
