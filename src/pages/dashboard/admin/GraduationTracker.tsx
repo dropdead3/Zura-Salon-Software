@@ -528,7 +528,7 @@ function StylistProgressRow({ member, totalLevels, promotions, allLevels }: { me
         )}
 
         {/* Promotion history */}
-        <PromotionHistorySection userId={member.userId} promotions={promotions} />
+        <PromotionHistorySection userId={member.userId} promotions={promotions} allLevels={allLevels} />
       </CollapsibleContent>
     </Collapsible>
   );
