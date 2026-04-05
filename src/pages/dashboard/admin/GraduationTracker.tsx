@@ -901,6 +901,13 @@ export default function GraduationTracker() {
               <Sparkles className="h-4 w-4 mr-2" />
               Requirements
             </TabsTrigger>
+            <TabsTrigger value="history">
+              <History className="h-4 w-4 mr-2" />
+              History
+              {promotions.length > 0 && (
+                <Badge variant="secondary" className="ml-2 text-xs">{promotions.length}</Badge>
+              )}
+            </TabsTrigger>
           </TabsList>
 
           {/* Tab: All Stylists */}
@@ -979,6 +986,10 @@ export default function GraduationTracker() {
           {/* Tab: Requirements */}
           <TabsContent value="requirements" className="mt-6">
             <RequirementsManager />
+          </TabsContent>
+          {/* Tab: History */}
+          <TabsContent value="history" className="mt-6">
+            <OrgPromotionHistoryTab promotions={promotions} />
           </TabsContent>
         </Tabs>
       </div>
