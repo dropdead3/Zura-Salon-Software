@@ -1,0 +1,397 @@
+/**
+ * StylistScorecard — Unified performance scorecard for stylists.
+ * Merges level progress KPIs, Color Bar metrics, peer context, trends,
+ * coaching signals, and commission uplift into a single motivating view.
+ */
+
+import { useMemo } from 'react';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Progress } from '@/components/ui/progress';
+import { Badge } from '@/components/ui/badge';
+import { tokens } from '@/lib/design-tokens';
+import { cn } from '@/lib/utils';
+import {
+  GraduationCap,
+  CheckCircle2,
+  TrendingUp,
+  TrendingDown,
+  Minus,
+  Beaker,
+  Lightbulb,
+  DollarSign,
+  ArrowRight,
+} from 'lucide-react';
+import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
+import { useLevelProgress, type CriterionProgress } from '@/hooks/useLevelProgress';
+import { useStylistLevels } from '@/hooks/useStylistLevels';
+import { useStaffColorBarPerformance } from '@/hooks/color-bar/useStaffColorBarPerformance';
+import { useStylistPeerAverages } from '@/hooks/useStylistPeerAverages';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
+import { format, subDays } from 'date-fns';
+import { BlurredAmount } from '@/contexts/HideNumbersContext';
+
+interface StylistScorecardProps {
+  userId: string | undefined;
+}
+
+function TrendIcon({ direction }: { direction: 'up' | 'down' | 'flat' }) {
+  if (direction === 'up') return <TrendingUp className="w-3 h-3 text-emerald-500" />;
+  if (direction === 'down') return <TrendingDown className="w-3 h-3 text-rose-500" />;
+  return <Minus className="w-3 h-3 text-muted-foreground" />;
+}
+
+function formatKpiValue(value: number, unit: string) {
+  if (unit === '/mo' || unit === '$') return `$${value.toLocaleString()}`;
+  if (unit === '%') return `${value.toFixed(1)}%`;
+  if (unit === '$/hr') return `$${value}`;
+  if (unit === 'd') return `${value}d`;
+  if (unit === '/mo') return `${value}/mo`;
+  return String(value);
+}
+
+export function StylistScorecard({ userId }: StylistScorecardProps) {
+  const progress = useLevelProgress(userId);
+  const { data: allLevels = [] } = useStylistLevels();
+  const { formatCurrency } = useFormatCurrency();
+
+  // Color bar data — last 30 days
+  const endStr = format(new Date(), 'yyyy-MM-dd');
+  const startStr = format(subDays(new Date(), 30), 'yyyy-MM-dd');
+  const { data: colorBarData } = useStaffColorBarPerformance(startStr, endStr, undefined, userId);
+
+  // Peer averages
+  const peerAverages = useStylistPeerAverages(
+    progress?.currentLevelSlug,
+    userId,
+    progress?.evaluationWindowDays || 30,
+  );
+
+  // Find current + next level commission rates
+  const commissionInfo = useMemo(() => {
+    if (!progress || !allLevels.length) return null;
+    const sorted = [...allLevels].sort((a, b) => a.display_order - b.display_order);
+    const currentIdx = sorted.findIndex(l => l.slug === progress.currentLevelSlug);
+    if (currentIdx === -1) return null;
+
+    const current = sorted[currentIdx];
+    const next = currentIdx < sorted.length - 1 ? sorted[currentIdx + 1] : null;
+
+    const currentSvcRate = Number(current.service_commission_rate) || 0;
+    const currentRetRate = Number(current.retail_commission_rate) || 0;
+    const nextSvcRate = next ? (Number(next.service_commission_rate) || 0) : null;
+    const nextRetRate = next ? (Number(next.retail_commission_rate) || 0) : null;
+
+    // Estimate monthly uplift from commission increase
+    const currentRevenue = progress.criteriaProgress.find(c => c.key === 'revenue')?.current || 0;
+    let monthlyUplift = 0;
+    if (nextSvcRate !== null && currentRevenue > 0) {
+      monthlyUplift = currentRevenue * ((nextSvcRate - currentSvcRate) / 100);
+    }
+
+    return {
+      currentSvcRate: Math.round(currentSvcRate * 100),
+      currentRetRate: Math.round(currentRetRate * 100),
+      nextSvcRate: nextSvcRate !== null ? Math.round(nextSvcRate * 100) : null,
+      nextRetRate: nextRetRate !== null ? Math.round(nextRetRate * 100) : null,
+      monthlyUplift: Math.round(monthlyUplift),
+    };
+  }, [progress, allLevels]);
+
+  // Aggregate color bar metrics
+  const colorBarMetrics = useMemo(() => {
+    if (!colorBarData?.length) return null;
+    const totalSessions = colorBarData.reduce((s, d) => s + d.mix_session_count, 0);
+    const totalCost = colorBarData.reduce((s, d) => s + d.total_product_cost, 0);
+    const avgWaste = totalSessions > 0
+      ? colorBarData.reduce((s, d) => s + d.waste_rate * d.mix_session_count, 0) / totalSessions
+      : 0;
+    const avgReweigh = totalSessions > 0
+      ? colorBarData.reduce((s, d) => s + d.reweigh_compliance_rate * d.mix_session_count, 0) / totalSessions
+      : 0;
+    const avgCost = totalSessions > 0 ? totalCost / totalSessions : 0;
+
+    return {
+      reweighCompliance: Math.round(avgReweigh),
+      wasteRate: Math.round(avgWaste * 10) / 10,
+      avgChemicalCost: Math.round(avgCost * 100) / 100,
+      mixSessions: totalSessions,
+    };
+  }, [colorBarData]);
+
+  // Generate coaching signals
+  const coachingSignals = useMemo(() => {
+    if (!progress) return [];
+    const signals: string[] = [];
+
+    for (const cp of progress.criteriaProgress) {
+      if (cp.percent < 75 && cp.weight > 0) {
+        signals.push(`${cp.label} is ${Math.round(cp.gap)} ${cp.unit === '%' ? 'pts' : cp.unit === '/mo' || cp.unit === '$' ? '' : ''} below target — focus area`);
+      }
+    }
+
+    if (colorBarMetrics) {
+      if (colorBarMetrics.reweighCompliance < 80) {
+        signals.push(`Reweigh compliance at ${colorBarMetrics.reweighCompliance}% — below 80% target`);
+      }
+      if (colorBarMetrics.wasteRate > 15) {
+        signals.push(`Waste rate at ${colorBarMetrics.wasteRate}% — review dispensing habits`);
+      }
+    }
+
+    return signals.slice(0, 3);
+  }, [progress, colorBarMetrics]);
+
+  if (!progress || (!progress.nextLevelLabel && !progress.retention?.isAtRisk)) {
+    return null;
+  }
+
+  const hasColorBar = !!colorBarMetrics;
+
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className={tokens.card.iconBox}>
+              <GraduationCap className="w-5 h-5 text-primary" />
+            </div>
+            <div>
+              <CardTitle className={cn(tokens.card.title, 'flex items-center gap-1.5')}>
+                Performance Scorecard
+                <MetricInfoTooltip description="A unified view of your KPI performance, Color Bar metrics, and peer standing — everything that factors into your level progression." />
+              </CardTitle>
+              <CardDescription className="text-xs">
+                {progress.nextLevelLabel
+                  ? `${progress.currentLevelLabel} → ${progress.nextLevelLabel}`
+                  : `${progress.currentLevelLabel} — Retention Status`}
+                {progress.levelSince && (
+                  <span className="text-muted-foreground/60 ml-2">
+                    Since {format(new Date(progress.levelSince), 'MMM yyyy')}
+                  </span>
+                )}
+              </CardDescription>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            {progress.isFullyQualified && progress.nextLevelLabel ? (
+              <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-950/30 dark:text-emerald-400 dark:border-emerald-800">
+                <CheckCircle2 className="w-3 h-3 mr-1" />
+                Qualified
+              </Badge>
+            ) : progress.nextLevelLabel ? (
+              <Badge variant="secondary" className="text-xs tabular-nums">
+                {progress.compositeScore}% Ready
+              </Badge>
+            ) : null}
+          </div>
+        </div>
+      </CardHeader>
+
+      <CardContent className="space-y-5">
+        {/* Overall Readiness */}
+        {progress.nextLevelLabel && progress.criteria && (
+          <div>
+            <div className="flex items-center justify-between text-xs mb-1.5">
+              <span className="text-muted-foreground">Overall Readiness</span>
+              <span className="font-medium tabular-nums">{progress.compositeScore}%</span>
+            </div>
+            <Progress
+              value={progress.compositeScore}
+              className="h-2.5"
+              indicatorClassName={cn(
+                progress.compositeScore >= 100 ? 'bg-emerald-500' : 'bg-primary'
+              )}
+            />
+          </div>
+        )}
+
+        {/* Commission Uplift */}
+        {commissionInfo && commissionInfo.nextSvcRate !== null && (
+          <div className="rounded-lg border border-border/60 bg-muted/20 p-3 space-y-1.5">
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <DollarSign className="w-3.5 h-3.5" />
+              <span>Commission Rates</span>
+            </div>
+            <div className="grid grid-cols-2 gap-3 text-xs">
+              <div>
+                <span className="text-muted-foreground">Current: </span>
+                <span className="text-foreground tabular-nums">
+                  {commissionInfo.currentSvcRate}% svc / {commissionInfo.currentRetRate}% ret
+                </span>
+              </div>
+              <div>
+                <span className="text-muted-foreground">Next Level: </span>
+                <span className="text-foreground tabular-nums">
+                  {commissionInfo.nextSvcRate}% svc / {commissionInfo.nextRetRate}% ret
+                </span>
+              </div>
+            </div>
+            {commissionInfo.monthlyUplift > 0 && (
+              <p className="text-[10px] text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                <ArrowRight className="w-3 h-3" />
+                Est. +<BlurredAmount>{formatCurrency(commissionInfo.monthlyUplift)}</BlurredAmount>/mo at next level
+              </p>
+            )}
+          </div>
+        )}
+
+        {/* KPI Performance Table */}
+        {progress.criteriaProgress.length > 0 && (
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <h4 className="font-display text-xs tracking-wide text-foreground">KPI Performance</h4>
+              {peerAverages && (
+                <span className="text-[10px] text-muted-foreground">
+                  vs {peerAverages.peerCount} peer{peerAverages.peerCount !== 1 ? 's' : ''}
+                </span>
+              )}
+            </div>
+
+            {/* Column headers */}
+            <div className="grid grid-cols-[1fr_auto_auto_auto_auto] gap-x-3 px-1 text-[10px] text-muted-foreground border-b border-border/40 pb-1">
+              <span>Metric</span>
+              <span className="text-right w-16">You</span>
+              <span className="text-right w-16">Target</span>
+              {peerAverages && <span className="text-right w-16">Avg</span>}
+              <span className="w-4" />
+            </div>
+
+            {progress.criteriaProgress.filter(cp => cp.weight > 0).map(cp => {
+              const peerVal = getPeerValue(cp.key, peerAverages);
+              const trend = getTrend(cp);
+              return (
+                <div key={cp.key} className="space-y-1">
+                  <div className="grid grid-cols-[1fr_auto_auto_auto_auto] gap-x-3 items-center px-1">
+                    <span className="text-xs text-muted-foreground">{cp.label}</span>
+                    <span className="text-xs text-foreground tabular-nums text-right w-16">
+                      {cp.unit === '/mo' || cp.unit === '$'
+                        ? <BlurredAmount>{formatKpiValue(cp.current, cp.unit)}</BlurredAmount>
+                        : formatKpiValue(cp.current, cp.unit)
+                      }
+                    </span>
+                    <span className="text-xs text-muted-foreground tabular-nums text-right w-16">
+                      {cp.unit === '/mo' || cp.unit === '$'
+                        ? <BlurredAmount>{formatKpiValue(cp.target, cp.unit)}</BlurredAmount>
+                        : formatKpiValue(cp.target, cp.unit)
+                      }
+                    </span>
+                    {peerAverages && (
+                      <span className="text-xs text-muted-foreground/70 tabular-nums text-right w-16">
+                        {peerVal !== null
+                          ? (cp.unit === '/mo' || cp.unit === '$'
+                            ? <BlurredAmount>{formatKpiValue(peerVal, cp.unit)}</BlurredAmount>
+                            : formatKpiValue(peerVal, cp.unit))
+                          : '—'
+                        }
+                      </span>
+                    )}
+                    <div className="w-4 flex justify-center">
+                      <TrendIcon direction={trend} />
+                    </div>
+                  </div>
+                  <Progress
+                    value={cp.percent}
+                    className="h-1 mx-1"
+                    indicatorClassName={cn(
+                      cp.percent >= 100 ? 'bg-emerald-500' : cp.percent >= 75 ? 'bg-primary' : 'bg-amber-500'
+                    )}
+                  />
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {/* Color Bar Performance */}
+        {hasColorBar && (
+          <div className="space-y-2 pt-1 border-t border-border/40">
+            <h4 className="font-display text-xs tracking-wide text-foreground flex items-center gap-1.5">
+              <Beaker className="w-3.5 h-3.5 text-primary" />
+              Color Bar Performance
+            </h4>
+            <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-xs">
+              <div className="flex items-center justify-between">
+                <span className="text-muted-foreground">Reweigh Compliance</span>
+                <span className={cn(
+                  'tabular-nums',
+                  colorBarMetrics!.reweighCompliance >= 80 ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400'
+                )}>
+                  {colorBarMetrics!.reweighCompliance}%
+                  {colorBarMetrics!.reweighCompliance >= 80 ? ' ✓' : ''}
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-muted-foreground">Waste Rate</span>
+                <span className={cn(
+                  'tabular-nums',
+                  colorBarMetrics!.wasteRate <= 15 ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400'
+                )}>
+                  {colorBarMetrics!.wasteRate}%
+                  {colorBarMetrics!.wasteRate <= 15 ? ' ✓' : ''}
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-muted-foreground">Avg Chemical Cost</span>
+                <span className="text-foreground tabular-nums">
+                  <BlurredAmount>{formatCurrency(colorBarMetrics!.avgChemicalCost)}</BlurredAmount>
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-muted-foreground">Mix Sessions</span>
+                <span className="text-foreground tabular-nums">{colorBarMetrics!.mixSessions}</span>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Coaching Signals */}
+        {coachingSignals.length > 0 && (
+          <div className="space-y-2 pt-1 border-t border-border/40">
+            <h4 className="font-display text-xs tracking-wide text-foreground flex items-center gap-1.5">
+              <Lightbulb className="w-3.5 h-3.5 text-amber-500" />
+              Focus Areas
+            </h4>
+            <div className="space-y-1">
+              {coachingSignals.map((signal, i) => (
+                <p key={i} className="text-xs text-muted-foreground flex items-start gap-1.5">
+                  <span className="text-amber-500 mt-0.5 shrink-0">•</span>
+                  {signal}
+                </p>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Footer */}
+        <div className="flex items-center justify-between pt-2 border-t text-[10px] text-muted-foreground">
+          <span>{progress.evaluationWindowDays > 0 ? `${progress.evaluationWindowDays}-day rolling window` : ''}</span>
+          {progress.timeAtLevelDays > 0 && (
+            <span>{progress.timeAtLevelDays} days at current level</span>
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+/** Map criterion key to peer average value */
+function getPeerValue(key: string, peers: ReturnType<typeof useStylistPeerAverages>): number | null {
+  if (!peers) return null;
+  switch (key) {
+    case 'revenue': return peers.avgRevenue;
+    case 'retail': return peers.avgRetailPct;
+    case 'rebooking': return peers.avgRebookPct;
+    case 'avg_ticket': return peers.avgTicket;
+    case 'retention_rate': return peers.avgRetentionRate || null;
+    case 'utilization': return peers.avgUtilization;
+    case 'rev_per_hour': return peers.avgRevPerHour;
+    default: return null;
+  }
+}
+
+/** Determine trend direction — simple heuristic based on distance to target */
+function getTrend(cp: CriterionProgress): 'up' | 'down' | 'flat' {
+  if (cp.percent >= 100) return 'up';
+  if (cp.percent >= 80) return 'flat';
+  return 'down';
+}
