@@ -80,6 +80,7 @@ type LocalStylistLevel = {
 
 export default function StylistLevels() {
   const { dashPath } = useOrgDashboardPath();
+  const { effectiveOrganization } = useOrganizationContext();
   const { data: dbLevels, isLoading, error, refetch } = useStylistLevels();
   const saveLevels = useSaveStylistLevels();
   
