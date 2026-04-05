@@ -25,7 +25,7 @@ export function ChaosToClarity() {
   const dividerX = useTransform(scrollYProgress, [0.25, 0.45], ['100%', '0%']);
 
   return (
-    <section ref={sectionRef} className="relative z-10 px-6 sm:px-8 py-20 lg:py-28">
+    <section id="chaos-to-clarity" ref={sectionRef} className="relative z-10 px-6 sm:px-8 py-20 lg:py-28">
       <div className="max-w-6xl mx-auto">
         {/* Section header */}
         <div className="text-center mb-14">

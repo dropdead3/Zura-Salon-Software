@@ -10,6 +10,7 @@ import { BuiltByOperators } from '@/components/marketing/BuiltByOperators';
 import { OutcomeMetrics } from '@/components/marketing/OutcomeMetrics';
 import { TestimonialSection } from '@/components/marketing/TestimonialSection';
 import { FinalCTA } from '@/components/marketing/FinalCTA';
+import { SectionDivider } from '@/components/marketing/SectionDivider';
 
 export default function PlatformLanding() {
   return (
@@ -21,12 +22,14 @@ export default function PlatformLanding() {
       />
       <HeroSection />
       <StatBar />
-      <LogoBar />
       <ChaosToClarity />
+      <SectionDivider />
       <SystemWalkthrough />
+      <LogoBar />
       <PersonaExplorer />
-      <BuiltByOperators />
+      <SectionDivider />
       <OutcomeMetrics />
+      <BuiltByOperators />
       <TestimonialSection />
       <FinalCTA />
     </MarketingLayout>

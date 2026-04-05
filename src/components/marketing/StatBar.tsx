@@ -44,7 +44,7 @@ function Counter({ value, prefix, suffix }: { value: number; prefix?: string; su
 
 export function StatBar() {
   return (
-    <section className="relative z-10 border-y border-white/[0.06] py-12 sm:py-16">
+    <section className="relative z-10 py-8 sm:py-10">
       <div className="max-w-5xl mx-auto px-6 sm:px-8">
         <p className="font-display text-[11px] sm:text-xs text-slate-500 uppercase tracking-[0.15em] text-center mb-8">
           Trusted by salon owners building real businesses
