@@ -754,7 +754,7 @@ export function StylistLevelsEditor({ embedded = false }: StylistLevelsEditorPro
 
   const actionButtons = (
     <div className="flex items-center gap-2">
-      {promotionCriteria && promotionCriteria.length > 0 && (
+      {levels.length > 0 && (
         <Button
           variant="outline"
           size="sm"
