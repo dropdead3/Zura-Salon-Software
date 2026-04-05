@@ -408,6 +408,7 @@ const App = () => (
                   <Routes>
                     {/* Platform entry point */}
                     <Route path="/" element={<PlatformLanding />} />
+                    <Route path="/product" element={<Product />} />
                     <Route path="/ecosystem" element={<Ecosystem />} />
                     <Route path="/login" element={<UnifiedLogin />} />
 
