@@ -37,6 +37,8 @@ import {
   RefreshCw,
   Palette,
   Sparkles,
+  FileDown,
+  GraduationCap,
 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
@@ -52,7 +54,20 @@ import {
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 import { PageExplainer } from '@/components/ui/PageExplainer';
 import { GraduationWizard } from '@/components/dashboard/settings/GraduationWizard';
-import { useLevelPromotionCriteria } from '@/hooks/useLevelPromotionCriteria';
+import { useLevelPromotionCriteria, type LevelPromotionCriteria } from '@/hooks/useLevelPromotionCriteria';
+import { useOrganizationContext } from '@/contexts/OrganizationContext';
+import { generateLevelRequirementsPDF } from '@/components/dashboard/settings/LevelRequirementsPDF';
+
+function formatCriteriaSummary(c: LevelPromotionCriteria): string {
+  const parts: string[] = [];
+  if (c.revenue_enabled && c.revenue_threshold > 0) parts.push(`$${(c.revenue_threshold / 1000).toFixed(0)}K rev`);
+  if (c.retail_enabled && c.retail_pct_threshold > 0) parts.push(`${c.retail_pct_threshold}% retail`);
+  if (c.rebooking_enabled && c.rebooking_pct_threshold > 0) parts.push(`${c.rebooking_pct_threshold}% rebook`);
+  if (c.avg_ticket_enabled && c.avg_ticket_threshold > 0) parts.push(`$${c.avg_ticket_threshold} avg`);
+  if (c.tenure_enabled && c.tenure_days > 0) parts.push(`${c.tenure_days}d tenure`);
+  if (parts.length === 0) return '';
+  return parts.join(' · ') + ` — ${c.evaluation_window_days}d window`;
+}
 
 type LocalStylistLevel = {
   id: string;
@@ -66,6 +81,7 @@ type LocalStylistLevel = {
 
 export default function StylistLevels() {
   const { dashPath } = useOrgDashboardPath();
+  const { effectiveOrganization } = useOrganizationContext();
   const { data: dbLevels, isLoading, error, refetch } = useStylistLevels();
   const saveLevels = useSaveStylistLevels();
   
@@ -263,28 +279,55 @@ export default function StylistLevels() {
             title="Stylist Levels"
             description="Manage experience levels and pricing tiers"
             actions={
-              hasChanges && (
-                <div className="flex items-center gap-2">
-                  <Button 
-                    variant="ghost"
-                    onClick={handleDiscard}
+              <div className="flex items-center gap-2">
+                {promotionCriteria && promotionCriteria.length > 0 && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-2"
+                    onClick={() => {
+                      const levelInfos = levels.map((l, i) => ({
+                        label: l.label,
+                        slug: l.slug,
+                        dbId: l.dbId,
+                        index: i,
+                      }));
+                      const doc = generateLevelRequirementsPDF({
+                        orgName: effectiveOrganization?.name || 'Organization',
+                        levels: levelInfos,
+                        criteria: promotionCriteria,
+                      });
+                      doc.save('graduation-roadmap.pdf');
+                      toast.success('Graduation roadmap exported');
+                    }}
                   >
-                    Discard
+                    <FileDown className="w-4 h-4" />
+                    Export Roadmap
                   </Button>
-                  <Button 
-                    className="gap-2" 
-                    onClick={handleSave}
-                    disabled={saveLevels.isPending}
-                  >
-                    {saveLevels.isPending ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                    ) : (
-                      <Save className="w-4 h-4" />
-                    )}
-                    Save Changes
-                  </Button>
-                </div>
-              )
+                )}
+                {hasChanges && (
+                  <>
+                    <Button 
+                      variant="ghost"
+                      onClick={handleDiscard}
+                    >
+                      Discard
+                    </Button>
+                    <Button 
+                      className="gap-2" 
+                      onClick={handleSave}
+                      disabled={saveLevels.isPending}
+                    >
+                      {saveLevels.isPending ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <Save className="w-4 h-4" />
+                      )}
+                      Save Changes
+                    </Button>
+                  </>
+                )}
+              </div>
             }
           />
           <PageExplainer pageId="stylist-levels" />
@@ -476,6 +519,13 @@ export default function StylistLevels() {
                             ? 'Graduation Configured'
                             : 'Configure Graduation'}
                         </button>
+                        {(() => {
+                          const c = promotionCriteria?.find(cr => cr.stylist_level_id === level.dbId && cr.is_active);
+                          const summary = c ? formatCriteriaSummary(c) : '';
+                          return summary ? (
+                            <p className="text-[10px] text-muted-foreground/70 mt-1 pl-4">{summary}</p>
+                          ) : null;
+                        })()}
                       </div>
                     )}
                     {index === 0 && (
@@ -545,6 +595,39 @@ export default function StylistLevels() {
 
           {/* Right Column - Preview & Stats */}
           <div className="lg:col-span-2 space-y-6">
+            {/* Graduation Requirements Summary */}
+            {promotionCriteria && promotionCriteria.length > 0 && (
+              <div className="space-y-3">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <GraduationCap className="w-4 h-4" />
+                  <span>Graduation Roadmap</span>
+                </div>
+                <div className="bg-card border rounded-xl p-4 space-y-3">
+                  {levels.map((level, idx) => {
+                    const criteria = promotionCriteria?.find(c => c.stylist_level_id === level.dbId && c.is_active);
+                    const summary = criteria ? formatCriteriaSummary(criteria) : null;
+                    return (
+                      <div key={level.id} className="flex items-start gap-3">
+                        <span className={cn(
+                          "w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-medium shrink-0 mt-0.5",
+                          getLevelColor(idx, levels.length).bg,
+                          getLevelColor(idx, levels.length).text,
+                        )}>
+                          {idx + 1}
+                        </span>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-medium truncate">{level.label}</p>
+                          <p className="text-[10px] text-muted-foreground">
+                            {idx === 0 ? 'Entry level' : summary || 'No criteria configured'}
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
             {/* Color Progression Preview */}
             <div className="space-y-3">
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
