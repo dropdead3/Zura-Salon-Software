@@ -75,7 +75,7 @@ const faqs = [
   },
   {
     q: 'Are there any setup fees?',
-    a: `There's a one-time $199 setup fee that covers onboarding and data migration. We waive it frequently — ask us about current promotions.`,
+    a: "There\u2019s a one-time $199 setup fee that covers onboarding and data migration. We waive it frequently \u2014 ask us about current promotions.",
   },
   {
     q: 'What happens when I add a new location?',
