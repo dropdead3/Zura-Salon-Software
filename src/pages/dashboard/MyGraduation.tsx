@@ -501,12 +501,12 @@ export default function MyGraduation() {
           </Card>
         )}
 
-        {/* Requirements by Category */}
+        {/* Requirements by Category — only show when checklist requirements exist */}
         {isLoading ? (
           <div className="text-center py-12 text-muted-foreground">
             Loading your level progress...
           </div>
-        ) : (
+        ) : Object.keys(requirementsByCategory).length > 0 ? (
           <div className="space-y-6">
             {Object.entries(requirementsByCategory).map(([category, reqs]) => (
               <Card key={category}>
@@ -530,7 +530,7 @@ export default function MyGraduation() {
               </Card>
             ))}
           </div>
-        )}
+        ) : null}
       </div>
     </DashboardLayout>
   );
