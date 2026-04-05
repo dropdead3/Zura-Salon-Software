@@ -6,6 +6,7 @@ import { useLevelPromotionCriteria, type LevelPromotionCriteria } from './useLev
 import { useLevelRetentionCriteria, type LevelRetentionCriteria } from './useLevelRetentionCriteria';
 import { useStylistLevels, type StylistLevel } from './useStylistLevels';
 import { subDays, format } from 'date-fns';
+import { buildTimeOffSet, isUserOffOnDate } from '@/lib/time-off-utils';
 import type { CriterionProgress } from './useLevelProgress';
 
 export type GraduationStatus = 'ready' | 'in_progress' | 'needs_attention' | 'at_top_level' | 'no_criteria' | 'at_risk' | 'below_standard';
@@ -175,6 +176,25 @@ export function useTeamLevelProgress() {
     enabled: !!orgId && userIds.length > 0,
   });
 
+  // Batch fetch approved time-off requests for all team members
+  const { data: allTimeOffData = [] } = useQuery({
+    queryKey: ['team-graduation-timeoff', orgId, startStr, endStr, userIds.length],
+    queryFn: async () => {
+      if (userIds.length === 0) return [];
+      const { data, error } = await supabase
+        .from('time_off_requests')
+        .select('user_id, start_date, end_date, is_full_day')
+        .eq('organization_id', orgId!)
+        .eq('status', 'approved')
+        .in('user_id', userIds)
+        .lte('start_date', endStr)
+        .gte('end_date', startStr);
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!orgId && userIds.length > 0,
+  });
+
   const isLoading = loadingProfiles || loadingSales || loadingAppts || loadingShifts;
 
   const teamProgress = useMemo<TeamMemberProgress[]>(() => {
@@ -239,13 +259,15 @@ export function useTeamLevelProgress() {
         const returningCount = [...currentClients].filter(id => priorClients.has(id)).length;
         const retentionRate = priorClients.size > 0 ? (returningCount / priorClients.size) * 100 : 0;
 
-        // Utilization calculation
+        // Utilization calculation — exclude approved time-off days
+        const timeOffSet = buildTimeOffSet(allTimeOffData);
         const userShifts = allShiftData.filter(
           (s: any) => s.user_id === profile.user_id && s.shift_date >= evalStart
+            && !isUserOffOnDate(timeOffSet, profile.user_id, s.shift_date)
         );
         let utilization = 0;
         if (userShifts.length > 0) {
-          // Shift-based: booked hours / shift hours
+          // Shift-based: booked hours / shift hours (time-off days excluded)
           const totalShiftMinutes = userShifts.reduce((sum: number, s: any) => {
             const start = new Date(`${s.shift_date}T${s.start_time}`);
             const end = new Date(`${s.shift_date}T${s.end_time}`);
@@ -254,8 +276,9 @@ export function useTeamLevelProgress() {
           const totalBookedMinutes = completedAppts.reduce((sum: number, a: any) => sum + (Number(a.duration_minutes) || 60), 0);
           utilization = totalShiftMinutes > 0 ? (totalBookedMinutes / totalShiftMinutes) * 100 : 0;
         } else {
-          // Fallback: booking density (avg booked hours per active day, capped at 8h workday)
-          const activeDays = new Set(completedAppts.map((a: any) => a.appointment_date)).size;
+          // Fallback: booking density — exclude time-off days from active day count
+          const activeDaysSet = new Set(completedAppts.map((a: any) => a.appointment_date));
+          const activeDays = [...activeDaysSet].filter(d => !isUserOffOnDate(timeOffSet, profile.user_id, d)).length;
           if (activeDays > 0) {
             const totalBookedMinutes = completedAppts.reduce((sum: number, a: any) => sum + (Number(a.duration_minutes) || 60), 0);
             const avgMinutesPerDay = totalBookedMinutes / activeDays;
@@ -491,7 +514,7 @@ export function useTeamLevelProgress() {
       if (diff !== 0) return diff;
       return b.compositeScore - a.compositeScore;
     });
-  }, [profiles, allLevels, allCriteria, allRetention, allSalesData, allApptData, allShiftData, allLevelPromotions]);
+  }, [profiles, allLevels, allCriteria, allRetention, allSalesData, allApptData, allShiftData, allLevelPromotions, allTimeOffData]);
 
   const counts = useMemo(() => {
     const ready = teamProgress.filter(t => t.status === 'ready').length;

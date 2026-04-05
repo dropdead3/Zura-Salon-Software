@@ -6,6 +6,7 @@ import { useLevelPromotionCriteria, type LevelPromotionCriteria } from './useLev
 import { useLevelRetentionCriteria, type LevelRetentionCriteria } from './useLevelRetentionCriteria';
 import { useStylistLevels } from './useStylistLevels';
 import { subDays, format } from 'date-fns';
+import { buildTimeOffSet, isUserOffOnDate } from '@/lib/time-off-utils';
 
 export interface CriterionProgress {
   key: string;
@@ -166,6 +167,23 @@ export function useLevelProgress(userId: string | undefined) {
     enabled: !!userId && !!(nextCriteria || retentionCriteria),
   });
 
+  // Fetch approved time-off requests for this user
+  const { data: timeOffData } = useQuery({
+    queryKey: ['level-progress-timeoff', userId, startStr, endStr],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('time_off_requests')
+        .select('user_id, start_date, end_date, is_full_day')
+        .eq('user_id', userId!)
+        .eq('status', 'approved')
+        .lte('start_date', endStr)
+        .gte('end_date', startStr);
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!userId && !!(nextCriteria || retentionCriteria),
+  });
+
   // Fetch latest level promotion for time-at-level
   const { data: latestPromotion } = useQuery({
     queryKey: ['level-progress-latest-promo', userId, orgId],
@@ -229,8 +247,11 @@ export function useLevelProgress(userId: string | undefined) {
       const returningCount = [...currentClients].filter(id => priorClients.has(id)).length;
       const retentionRate = priorClients.size > 0 ? (returningCount / priorClients.size) * 100 : 0;
 
-      // Utilization
-      const userShifts = (shiftData || []).filter((s: any) => s.shift_date >= evalStart);
+      // Utilization — exclude approved time-off days
+      const timeOffSet = buildTimeOffSet(timeOffData || []);
+      const userShifts = (shiftData || []).filter(
+        (s: any) => s.shift_date >= evalStart && !isUserOffOnDate(timeOffSet, userId!, s.shift_date)
+      );
       let utilization = 0;
       if (userShifts.length > 0) {
         const totalShiftMinutes = userShifts.reduce((sum: number, s: any) => {
@@ -241,7 +262,9 @@ export function useLevelProgress(userId: string | undefined) {
         const totalBookedMinutes = filteredAppts.reduce((sum: number, a: any) => sum + (Number(a.duration_minutes) || 60), 0);
         utilization = totalShiftMinutes > 0 ? (totalBookedMinutes / totalShiftMinutes) * 100 : 0;
       } else {
-        const activeDays = new Set(filteredAppts.map((a: any) => a.appointment_date)).size;
+        // Fallback: exclude time-off days from active day count
+        const activeDaysSet = new Set(filteredAppts.map((a: any) => a.appointment_date));
+        const activeDays = [...activeDaysSet].filter(d => !isUserOffOnDate(timeOffSet, userId!, d)).length;
         if (activeDays > 0) {
           const totalBookedMinutes = filteredAppts.reduce((sum: number, a: any) => sum + (Number(a.duration_minutes) || 60), 0);
           const avgMinutesPerDay = totalBookedMinutes / activeDays;
@@ -444,7 +467,7 @@ export function useLevelProgress(userId: string | undefined) {
       timeAtLevelDays,
       levelSince,
     };
-  }, [currentLevel, nextLevel, nextCriteria, retentionCriteria, salesData, apptData, shiftData, profile, promoEvalDays, latestPromotion]);
+  }, [currentLevel, nextLevel, nextCriteria, retentionCriteria, salesData, apptData, shiftData, timeOffData, profile, promoEvalDays, latestPromotion]);
 
   return result;
 }
