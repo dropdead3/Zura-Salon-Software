@@ -90,8 +90,16 @@ const solutions: Solution[] = [
   { problemId: 'forecasting', icon: TrendingUp, headline: 'Forecast with confidence', description: 'Model scenarios before committing capital. See how pricing changes, new hires, or expansions affect your bottom line.', stat: 'Forecasts within 5% accuracy' },
 ];
 
-/* ── Max problems selectable ──────────────────────────────────────────────── */
-const MAX_PROBLEMS = 3;
+/* ── Micro-analytics helper ────────────────────────────────────────────── */
+function emitExplorerEvent(
+  eventName: 'persona_selected' | 'problem_toggled' | 'solutions_viewed',
+  payload: Record<string, unknown>
+) {
+  if (import.meta.env.DEV) {
+    console.debug(`[persona-explorer] ${eventName}`, payload);
+  }
+  window.dispatchEvent(new CustomEvent(eventName, { detail: payload }));
+}
 
 /* ── Component ────────────────────────────────────────────────────────────── */
 export function PersonaExplorer() {
@@ -110,15 +118,43 @@ export function PersonaExplorer() {
   const handlePersonaSelect = useCallback((key: PersonaKey) => {
     setSelectedPersona(key);
     setSelectedProblems([]);
+    emitExplorerEvent('persona_selected', { persona: key });
   }, []);
 
   const toggleProblem = useCallback((id: string) => {
     setSelectedProblems((prev) => {
-      if (prev.includes(id)) return prev.filter((p) => p !== id);
-      if (prev.length >= MAX_PROBLEMS) return prev;
-      return [...prev, id];
+      const removing = prev.includes(id);
+      const next = removing ? prev.filter((p) => p !== id) : prev.length >= MAX_PROBLEMS ? prev : [...prev, id];
+      if (next !== prev) {
+        emitExplorerEvent('problem_toggled', {
+          persona: selectedPersona,
+          problemId: id,
+          action: removing ? 'remove' : 'add',
+          selectedProblems: next,
+        });
+      }
+      return next;
     });
+  }, [selectedPersona]);
+
+  // Fire when solutions become visible
+  useEffect(() => {
+    if (filteredSolutions.length > 0 && selectedPersona) {
+      emitExplorerEvent('solutions_viewed', {
+        persona: selectedPersona,
+        problems: selectedProblems,
+        solutionCount: filteredSolutions.length,
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filteredSolutions.length, selectedPersona]);
+
+  const handleReset = useCallback(() => {
+    setSelectedPersona(null);
+    setSelectedProblems([]);
   }, []);
+
+  const currentPersonaLabel = personas.find((p) => p.key === selectedPersona)?.label;
 
   return (
     <section ref={sectionRef} className="relative z-10 px-6 sm:px-8 py-16 sm:py-20 lg:py-24">
