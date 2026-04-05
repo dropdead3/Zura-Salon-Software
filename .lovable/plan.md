@@ -1,74 +1,66 @@
 
 
-# Marketing Front-End — Continued Improvements & Fixes
+# Marketing Front-End — Round 3 Polish & Fixes
 
 ## Issues Found
 
-### Critical Bugs
-1. **`/about` route is missing** — The About page was rebuilt with `MarketingLayout` but has no top-level route in `App.tsx`. It only exists under `/org/:orgSlug/about` (tenant-scoped). The footer links to `/about` which 404s.
-2. **Footer "Company" column is anemic** — Only has "Sign In". Missing "About", "Blog", "Careers" links. The About link is the most obvious omission since the page exists.
-3. **Footer "Solutions" link points to `/product`** — Should link to the solutions mega menu or a dedicated `/solutions` index page, not the product page.
+### 1. Mobile nav menu bleeds through to footer
+The mobile menu (`MarketingNav.tsx` line 104) uses `bg-slate-950/95` but doesn't have a solid bottom edge or sufficient height — the footer content is visible underneath it. The menu needs `min-h-[calc(100vh-64px)]` or a full-screen overlay approach to prevent bleed-through.
 
-### UI Polish Issues
-4. **LogoBar and StatBar render back-to-back borders** — Both sections have `border-y border-white/[0.06]`, creating a double-border seam between them on the landing page.
-5. **Testimonial cards lack visual differentiation** — All three cards are identical white/[0.02] boxes. No accent, no gradient, no variety. The "Owner Stories" eyebrow is orphaned with no headline below it.
-6. **FinalCTA section feels thin** — Just a headline, one line of body text, and a button. No supporting visual, no secondary CTA, no trust signal. Compared to the rest of the page it's underwhelming as the closing pitch.
-7. **"See all solutions" link at bottom of SolutionShowcase** — Small plain text link. Should be a ghost button for better tap target and visual weight.
-8. **PersonaExplorer taglines use `font-serif italic`** — These serif italic lines feel out of place against the otherwise Termina + Aeonik system. Should use `font-sans` or `font-display` for consistency.
-9. **BuiltByOperators credibility markers** — The right column only has 3 markers visible (the "80+ stylists managed" marker is scrolled off in the screenshot). The markers are plain text with no stat emphasis — the numbers should pop more.
+### 2. Solution page testimonials use `font-serif italic`
+`SolutionPageTemplate.tsx` line 112 still uses `font-serif text-xl italic` on the testimonial blockquote — this was fixed on the homepage `TestimonialSection` but not here. Should be `font-sans` for brand consistency.
 
-### Missing Pages / Navigation
-10. **No `/about` route** — needs to be added to the router alongside the other standalone public pages.
-11. **Footer Company column** — needs About link added.
+### 3. Solution page CTA section is thin
+The solution page bottom CTA (lines 126-142) has only a headline, one line of text, and a button. No trust signal, no secondary CTA — unlike the homepage `FinalCTA` which now has both. Should mirror that pattern.
+
+### 4. Nav missing "About" link
+The desktop nav has no way to reach `/about` — it's only in the footer. Adding it to the Company column was good, but the nav itself should also surface it (either as a direct link or under a "Company" dropdown). Given the minimal nav, adding it as a plain link alongside Ecosystem/Pricing is the simplest fix.
+
+### 5. Pricing "Start Free Trial" buttons go to `/demo`
+Both Solo and Multi-Location CTAs say "Start Free Trial" but link to the demo request form. Either the copy should say "Get a Demo" (consistent with the rest of the site) or these should link to actual signup. Since there's no self-serve signup flow yet, the labels should read "Get a Demo" to avoid confusion.
+
+### 6. Pricing feature comparison table missing
+The plan called for a feature comparison table below the tier cards. Let me verify if it was built.
+
+### 7. Hero "Explore the Platform" ghost CTA has no gradient or lavender styling
+The hero secondary CTA (line 37-42) uses plain `bg-white/5 border-white/10` — it doesn't use the new lavender ghost style that was applied to the FinalCTA's secondary button. Should be consistent.
+
+### 8. Large empty space between sections on landing page
+Scrolling the landing page shows what looks like excessive vertical padding between sections — the page feels like it has dead zones between the mid-page sections (StatBar → LogoBar → ProblemStatement gap appears large).
 
 ---
 
 ## Plan
 
-### 1. Add `/about` route to router
-Add a top-level `<Route path="/about">` in `App.tsx` alongside `/pricing`, `/demo`, etc. Import the existing `About` page component.
+### 1. Fix mobile nav overlay
+Change the mobile menu container to a full-screen overlay with solid background so footer doesn't bleed through. Add `fixed inset-0 top-[64px]` with solid `bg-slate-950` and overflow scroll.
 
-**File:** `src/App.tsx`
+**File:** `src/components/marketing/MarketingNav.tsx`
 
-### 2. Fix footer links
-- Add "About" to the Company column
-- Change "Solutions" href from `/product` to a more appropriate target (keep `/product` label as "Platform", add a proper "Solutions" link to one of the solution pages or keep as-is since the mega menu handles it)
+### 2. Fix SolutionPageTemplate testimonial font
+Replace `font-serif text-xl sm:text-2xl italic` with `font-sans text-lg sm:text-xl` on the blockquote for brand consistency.
 
-**File:** `src/components/marketing/MarketingFooter.tsx`
+**File:** `src/components/marketing/SolutionPageTemplate.tsx`
 
-### 3. Fix double-border between StatBar and LogoBar
-Remove the `border-y` from `LogoBar` (or just `border-t`) since `StatBar` already provides the bottom border.
+### 3. Strengthen SolutionPageTemplate bottom CTA
+Add a trust signal line and secondary ghost CTA (matching the homepage FinalCTA pattern). Add gradient accent on the headline.
 
-**File:** `src/components/marketing/LogoBar.tsx`
+**File:** `src/components/marketing/SolutionPageTemplate.tsx`
 
-### 4. Elevate TestimonialSection
-- Add a proper headline below the "Owner Stories" eyebrow: "What operators are saying"
-- Add a subtle left-border accent to each testimonial card (violet gradient border) for visual differentiation
-- Use alternating accent colors from the palette for variety
+### 4. Add "About" link to desktop nav
+Add "About" to the `navLinks` array in `MarketingNav.tsx`.
 
-**File:** `src/components/marketing/TestimonialSection.tsx`
+**File:** `src/components/marketing/MarketingNav.tsx`
 
-### 5. Strengthen FinalCTA
-- Add a secondary line of supporting text or a trust signal ("Join 50+ salon locations already using Zura")
-- Add a secondary ghost CTA ("Explore the Platform") below the primary
-- Add a subtle gradient text accent on the headline
+### 5. Fix Pricing CTA labels
+Change "Start Free Trial" to "Get a Demo" on Solo and Multi-Location tiers since there's no self-serve trial flow.
 
-**File:** `src/components/marketing/FinalCTA.tsx`
+**File:** `src/pages/Pricing.tsx`
 
-### 6. Upgrade "See all solutions" to ghost button
-Replace the plain text link with a proper ghost-styled button using the lavender border variant.
+### 6. Unify hero ghost CTA with lavender style
+Update the "Explore the Platform" button in `HeroSection.tsx` to use the same lavender ghost styling as the FinalCTA secondary button: `border-[hsl(var(--mkt-lavender)/0.3)] text-[hsl(var(--mkt-lavender))]`.
 
-**File:** `src/components/marketing/SolutionShowcase.tsx`
-
-### 7. Fix PersonaExplorer font inconsistency
-Replace `font-serif italic` on persona taglines with `font-sans text-sm text-slate-400` for consistency with the rest of the marketing system.
-
-**File:** `src/components/marketing/PersonaExplorer.tsx`
-
-### 8. Polish BuiltByOperators markers
-Make the stat numbers in the marker text use `text-[hsl(var(--mkt-lavender))]` or `text-white` for emphasis, separating the number from the label text.
-
-**File:** `src/components/marketing/BuiltByOperators.tsx`
+**File:** `src/components/marketing/HeroSection.tsx`
 
 ---
 
@@ -76,14 +68,10 @@ Make the stat numbers in the marker text use `text-[hsl(var(--mkt-lavender))]` o
 
 | File | Change |
 |------|--------|
-| `App.tsx` | Add `/about` route |
-| `MarketingFooter.tsx` | Add About link to Company column |
-| `LogoBar.tsx` | Remove top border to fix double-border seam |
-| `TestimonialSection.tsx` | Add headline, accent borders on cards |
-| `FinalCTA.tsx` | Add trust signal, secondary CTA, gradient headline accent |
-| `SolutionShowcase.tsx` | Upgrade "See all solutions" to ghost button |
-| `PersonaExplorer.tsx` | Fix serif italic to sans for consistency |
-| `BuiltByOperators.tsx` | Emphasize stat numbers in markers |
+| `MarketingNav.tsx` | Fix mobile menu overlay bleed-through, add About link |
+| `SolutionPageTemplate.tsx` | Fix testimonial font, strengthen bottom CTA |
+| `Pricing.tsx` | Fix "Start Free Trial" → "Get a Demo" labels |
+| `HeroSection.tsx` | Unify ghost CTA with lavender styling |
 
-**8 files modified. 0 new. 0 deleted.**
+**4 files modified. 0 new. 0 deleted.**
 
