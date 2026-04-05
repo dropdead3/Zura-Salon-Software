@@ -1078,7 +1078,7 @@ export default function GraduationTracker() {
           </TabsContent>
           {/* Tab: History */}
           <TabsContent value="history" className="mt-6">
-            <OrgPromotionHistoryTab promotions={promotions} />
+            <OrgPromotionHistoryTab promotions={promotions} allLevels={allLevels} />
           </TabsContent>
         </Tabs>
       </div>
