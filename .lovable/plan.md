@@ -1,79 +1,63 @@
 
 
-# Graduation System — Pass 8: Levels Editor Gaps and Consolidation
+# Fix Flash of Unstyled Text (FOUT) — Font Loading Gate
 
-## Current State
+## Problem
 
-There are **two separate level editors** with divergent feature sets:
-1. **Standalone page** (`StylistLevels.tsx` at `/admin/stylist-levels`) — has GraduationWizard, criteria summary, PDF export, color/card/tooltip previews, but **no commission rate editing**
-2. **Settings embed** (`StylistLevelsContent.tsx` at `/admin/settings?category=levels`) — has commission rate editing and TeamCommissionRoster, but **no graduation wizard, no criteria summary, no previews**
+All 5 custom `@font-face` declarations (Termina, Aeonik Pro Regular/Medium, Laguna, Sloop Script) use `font-display: swap`. This tells the browser to immediately render text with fallback system fonts, then swap to the custom fonts once they load. The result: every page briefly flashes with generic sans-serif text before the platform fonts appear. This is unacceptable for a luxury/executive product.
 
-Admins get a different experience depending on which path they take to manage levels.
+## Root Cause
 
----
+1. **`font-display: swap`** in `src/index.css` — renders fallback fonts immediately
+2. **No font readiness gate** in the bootstrap flow — `main.tsx` renders `<App>` as soon as JS is ready, regardless of font loading status
 
-## Gaps Found
+## Solution
 
-### 1. Two editors, neither complete
-The standalone page cannot edit commission rates (its `LocalStylistLevel` type omits them; `handleSave` doesn't persist them). The Settings embed cannot configure graduation/retention criteria (no GraduationWizard, no criteria hooks). This is confusing — an admin who configures levels in Settings never sees the graduation pathway button.
+Two-layer fix: CSS-level blocking + JS-level gate.
 
-### 2. Stale "graduation" terminology in standalone editor
-- "Configure Graduation" / "Graduation Configured" (line 522-523)
-- "Graduation Roadmap" sidebar heading (line 606)
-- PDF filename `graduation-roadmap.pdf` (line 303)
-- Toast: "Graduation roadmap exported" (line 304)
+### 1. Change `font-display` strategy (index.css)
 
-These should say "Level Progression" or "Promotion Pathway" to match the system rename from earlier passes.
+Change `font-display: swap` to `font-display: block` on the two primary fonts (Termina and Aeonik Pro Regular/Medium). This tells the browser to use an invisible placeholder for up to 3 seconds while fonts load, preventing the fallback flash entirely.
 
-### 3. Retention criteria not shown inline
-Retention criteria is fetched but only passed to the PDF export. The roadmap sidebar and the inline criteria summary beneath each level only show promotion criteria. Admins can't see retention ("Required to Stay") status at a glance in the editor.
+For Laguna and Sloop Script (decorative, rarely in critical path), keep `font-display: swap` — they appear on limited surfaces and aren't worth blocking render for.
 
-### 4. Broken link from GraduationTracker
-`GraduationTracker.tsx` line 118 links to `/admin/settings/stylist-levels` — this route doesn't exist. The actual routes are `/admin/stylist-levels` (standalone) or `/admin/settings?category=levels` (Settings embed).
+### 2. Add a font readiness gate to bootstrap (main.tsx)
 
-### 5. Delete without reassignment
-When deleting a level with assigned stylists, the confirmation dialog warns about the count but clicking "Delete" proceeds without offering to reassign those stylists to another level. This can orphan stylists with a stale `stylist_level` value that no longer maps to any level.
+Before rendering `<App>`, await `document.fonts.ready` with a timeout fallback (3 seconds max). The `BootstrapFallback` (ZuraLoader) is already rendered during this wait — it uses no text, just the animated Z grid, so it's immune to FOUT. This ensures the first real page render only happens after fonts are loaded.
 
-### 6. Slug collision on add
-`handleAddNew` generates slugs from names (`name.toLowerCase().replace(/\s+/g, '-')`) but doesn't check if the slug already exists among current levels. Adding "New Talent" after a deleted "new-talent" would create a duplicate slug conflict.
+```text
+Bootstrap flow (current):
+  render ZuraLoader → import i18n → import App → render App (fonts may not be ready)
 
----
+Bootstrap flow (proposed):
+  render ZuraLoader → import i18n → import App → await fonts.ready (max 3s) → render App
+```
 
-## Plan
+### 3. Preload critical fonts (index.html)
 
-### 1. Consolidate to one editor surface
-Remove `StylistLevelsContent.tsx` as a standalone implementation. Instead, have the Settings `levels` category render the full `StylistLevels` component (without the `DashboardLayout` wrapper) or redirect to the standalone page. This eliminates the feature parity gap.
+Add `<link rel="preload">` tags for the 3 critical font files in `<head>`. This starts the font download immediately — in parallel with JS — instead of waiting until CSS is parsed and a matching element is found.
 
-**Approach**: Extract the core editor from `StylistLevels.tsx` into a shared `StylistLevelsEditor` component that both surfaces can render. Add commission rate fields to the standalone editor's `LocalStylistLevel` type and `handleSave`. Integrate `TeamCommissionRoster` into the standalone page.
-
-### 2. Rename stale graduation terminology
-- "Configure Graduation" → "Configure Criteria"
-- "Graduation Configured" → "Criteria Configured"
-- "Graduation Roadmap" → "Progression Roadmap"
-- PDF filename → `level-progression-roadmap.pdf`
-- Toast → "Progression roadmap exported"
-
-### 3. Show retention criteria inline
-Add retention criteria summary beneath each level row (similar to promotion criteria summary). Format: "Required to Stay: $5K rev · 8% retail — 90d grace · Coaching" using the existing retention data.
-
-### 4. Fix broken GraduationTracker link
-Update the link from `/admin/settings/stylist-levels` to `/admin/stylist-levels`.
-
-### 5. Add reassignment on level delete
-When deleting a level that has assigned stylists, show a select dropdown in the confirmation dialog asking which level to reassign them to. On confirm, bulk-update the affected `employee_profiles` before deleting the level.
-
-### 6. Add slug deduplication
-Before adding a new level, check if the generated slug already exists in the current `levels` array. If so, append a numeric suffix (e.g., `new-talent-2`).
-
----
+```html
+<link rel="preload" href="/fonts/Termina-Medium.otf" as="font" type="font/opentype" crossorigin />
+<link rel="preload" href="/fonts/AeonikPro-Regular.otf" as="font" type="font/opentype" crossorigin />
+<link rel="preload" href="/fonts/AeonikPro-Medium.otf" as="font" type="font/opentype" crossorigin />
+```
 
 ## File Changes
 
 | File | Action |
 |------|--------|
-| `src/pages/dashboard/admin/StylistLevels.tsx` | **Modify** — Add commission rate fields to LocalStylistLevel and handleSave, add retention criteria inline summary, rename graduation terminology, add slug dedup, add reassignment on delete, integrate TeamCommissionRoster |
-| `src/components/dashboard/settings/StylistLevelsContent.tsx` | **Modify** — Replace with redirect/render of the consolidated editor (or thin wrapper around shared component) |
-| `src/pages/dashboard/admin/GraduationTracker.tsx` | **Modify** — Fix broken link to `/admin/stylist-levels` |
+| `src/index.css` | **Modify** — Change `font-display: swap` to `font-display: block` on Termina and both Aeonik Pro faces (lines 23, 39, 47) |
+| `index.html` | **Modify** — Add 3 `<link rel="preload">` tags for critical fonts in `<head>` |
+| `src/main.tsx` | **Modify** — Add `await document.fonts.ready` (with 3s timeout) before rendering `<App>` in the bootstrap function |
 
 **0 new files, 3 modified files, 0 migrations.**
+
+## Why This Works
+
+- **Preload** starts font downloads immediately on page load (not deferred until CSS parse)
+- **`font-display: block`** prevents fallback text from ever appearing — the browser waits (invisibly) for the font
+- **JS gate** ensures React doesn't render the full app until fonts are confirmed loaded
+- **ZuraLoader** (the bootstrap screen) is purely visual (animated grid cells) — no text, no font dependency — so it renders cleanly during the wait
+- **3-second timeout** prevents infinite hang if a font fails to load — the app renders anyway after 3s
 
