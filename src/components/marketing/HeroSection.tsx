@@ -1,8 +1,26 @@
+import { useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, Zap } from 'lucide-react';
+import { AnimatePresence, motion } from 'framer-motion';
 import { DashboardMockup } from './DashboardMockup';
+import { PLATFORM_NAME } from '@/lib/brand';
+
+type Phase = 'observe' | 'detect' | 'act' | 'pause';
+
+const phaseNarration: Record<Phase, string> = {
+  observe: `${PLATFORM_NAME} is watching your business right now.`,
+  detect: 'A deviation detected. Utilization dropped.',
+  act: 'One lever. Clear impact. You decide.',
+  pause: 'This is what clarity feels like.',
+};
 
 export function HeroSection() {
+  const [phase, setPhase] = useState<Phase>('observe');
+
+  const handlePhaseChange = useCallback((p: Phase) => {
+    setPhase(p);
+  }, []);
+
   return (
     <section className="relative flex flex-col items-center justify-center px-6 sm:px-8 text-center pt-24 sm:pt-32 lg:pt-40 pb-8 sm:pb-12 max-w-5xl mx-auto overflow-visible">
       {/* Ambient glow beam */}
@@ -44,7 +62,23 @@ export function HeroSection() {
 
       {/* Dashboard mockup */}
       <div className="w-full mt-14 sm:mt-20 mkt-fade-in mkt-delay-3">
-        <DashboardMockup />
+        <DashboardMockup onPhaseChange={handlePhaseChange} />
+      </div>
+
+      {/* Phase narration strip */}
+      <div className="w-full mt-6 h-8 flex items-center justify-center mkt-fade-in mkt-delay-3">
+        <AnimatePresence mode="wait">
+          <motion.p
+            key={phase}
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -6 }}
+            transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+            className="font-sans text-sm text-slate-500 tracking-wide"
+          >
+            {phaseNarration[phase]}
+          </motion.p>
+        </AnimatePresence>
       </div>
     </section>
   );

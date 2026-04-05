@@ -109,7 +109,11 @@ function KpiTile({ kpi, phase, index }: { kpi: KpiDef; phase: Phase; index: numb
   );
 }
 
-export function DashboardMockup() {
+interface DashboardMockupProps {
+  onPhaseChange?: (phase: Phase) => void;
+}
+
+export function DashboardMockup({ onPhaseChange }: DashboardMockupProps = {}) {
   const [phase, setPhase] = useState<Phase>('observe');
   const timeoutRef = useRef<ReturnType<typeof setTimeout>>();
   const prefersReducedMotion = typeof window !== 'undefined'
@@ -134,6 +138,11 @@ export function DashboardMockup() {
 
     return () => { if (timeoutRef.current) clearTimeout(timeoutRef.current); };
   }, [phase, nextPhase, prefersReducedMotion]);
+
+  // Notify parent of phase changes
+  useEffect(() => {
+    onPhaseChange?.(phase);
+  }, [phase, onPhaseChange]);
 
   const showLever = phase === 'detect' || phase === 'act' || phase === 'pause';
   const leverApplied = phase === 'act' || phase === 'pause';

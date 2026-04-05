@@ -1786,6 +1786,12 @@ html {
   transform: translateY(-2px);
 }
 
+/* ── Auto-progress bar for walkthrough tabs ────────────────────────────────── */
+@keyframes mktAutoProgress {
+  from { width: 0%; }
+  to { width: 100%; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .marketing-surface .mkt-fade-in,
   .marketing-surface .mkt-reveal {
