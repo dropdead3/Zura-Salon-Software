@@ -662,6 +662,76 @@ export function StylistLevelsEditor({ embedded = false }: StylistLevelsEditorPro
     });
   };
 
+  const handleQuickSetup = async (generatedLevels: LocalStylistLevel[], applyKPIs: boolean) => {
+    setIsQuickSetupGenerating(true);
+    try {
+      // 1. Save levels to DB
+      const levelsToSave = generatedLevels.map((level, idx) => ({
+        slug: level.slug,
+        label: level.label,
+        client_label: `Level ${idx + 1}`,
+        description: level.description || undefined,
+        display_order: idx,
+        service_commission_rate: level.serviceCommissionRate ? parseFloat(level.serviceCommissionRate) / 100 : null,
+        retail_commission_rate: level.retailCommissionRate ? parseFloat(level.retailCommissionRate) / 100 : null,
+      }));
+
+      await new Promise<void>((resolve, reject) => {
+        saveLevels.mutate(levelsToSave, {
+          onSuccess: () => resolve(),
+          onError: (err) => reject(err),
+        });
+      });
+
+      // 2. If KPIs requested, fetch the newly-created level IDs and save criteria
+      if (applyKPIs) {
+        const orgId = effectiveOrganization?.id;
+        if (orgId) {
+          const { data: savedLevels, error: fetchErr } = await supabase
+            .from('stylist_levels')
+            .select('id, slug, display_order')
+            .order('display_order', { ascending: true });
+
+          if (fetchErr) throw fetchErr;
+          if (savedLevels) {
+            for (const dbLevel of savedLevels) {
+              const levelIndex = dbLevel.display_order;
+              // Skip last level (no promotion target beyond top)
+              if (levelIndex < savedLevels.length - 1) {
+                const promoDefaults = getZuraDefaults(levelIndex);
+                await supabase.from('level_promotion_criteria').upsert({
+                  organization_id: orgId,
+                  stylist_level_id: dbLevel.id,
+                  ...promoDefaults,
+                  is_active: true,
+                }, { onConflict: 'organization_id,stylist_level_id' });
+              }
+
+              const retDefaults = getZuraRetentionDefaults(levelIndex);
+              await supabase.from('level_retention_criteria').upsert({
+                organization_id: orgId,
+                stylist_level_id: dbLevel.id,
+                ...retDefaults,
+                is_active: true,
+              }, { onConflict: 'organization_id,stylist_level_id' });
+            }
+            queryClient.invalidateQueries({ queryKey: ['level-promotion-criteria'] });
+            queryClient.invalidateQueries({ queryKey: ['level-retention-criteria'] });
+          }
+        }
+      }
+
+      setLevels(generatedLevels);
+      setHasChanges(false);
+      setQuickSetupDismissed(true);
+      toast.success(`${generatedLevels.length} levels generated${applyKPIs ? ' with KPI criteria' : ''}`);
+    } catch (err: any) {
+      toast.error('Failed to generate levels: ' + (err?.message || 'Unknown error'));
+    } finally {
+      setIsQuickSetupGenerating(false);
+    }
+  };
+
   const handleDiscard = () => {
     setHasChanges(false);
   };
