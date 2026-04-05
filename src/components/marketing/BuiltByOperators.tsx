@@ -3,10 +3,10 @@ import { PLATFORM_NAME } from '@/lib/brand';
 import { useScrollReveal } from './useScrollReveal';
 
 const markers = [
-  { icon: Users, text: '80+ stylists managed' },
-  { icon: TrendingUp, text: '12 locations scaled' },
-  { icon: DollarSign, text: '$8M+ revenue operated' },
-  { icon: Heart, text: 'Zero outside investors' },
+  { icon: Users, number: '80+', label: 'stylists managed' },
+  { icon: TrendingUp, number: '12', label: 'locations scaled' },
+  { icon: DollarSign, number: '$8M+', label: 'revenue operated' },
+  { icon: Heart, number: 'Zero', label: 'outside investors' },
 ];
 
 export function BuiltByOperators() {
@@ -44,18 +44,19 @@ export function BuiltByOperators() {
             </div>
           </div>
 
-          {/* Credibility markers — simple vertical list */}
+          {/* Credibility markers */}
           <div className="space-y-5 mkt-reveal" style={{ transitionDelay: '0.15s' }}>
             {markers.map((marker) => (
               <div
-                key={marker.text}
+                key={marker.label}
                 className="flex items-center gap-4"
               >
                 <div className="w-10 h-10 rounded-lg bg-[hsl(var(--mkt-dusky)/0.1)] flex items-center justify-center shrink-0">
                   <marker.icon className="w-5 h-5 text-[hsl(var(--mkt-dusky))]" />
                 </div>
                 <p className="font-sans text-base text-slate-300">
-                  {marker.text}
+                  <span className="text-[hsl(var(--mkt-lavender))] font-medium">{marker.number}</span>{' '}
+                  {marker.label}
                 </p>
               </div>
             ))}

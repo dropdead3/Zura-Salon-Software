@@ -1,6 +1,12 @@
 import { PLATFORM_NAME } from '@/lib/brand';
 import { useScrollReveal } from './useScrollReveal';
 
+const accentColors = [
+  'hsl(var(--mkt-dusky))',
+  'hsl(var(--mkt-lavender))',
+  'hsl(var(--mkt-twilight))',
+];
+
 const testimonials = [
   {
     quote: 'I used to spend every Monday morning in spreadsheets trying to figure out which location was bleeding margin. Now I open one screen and know exactly what to fix.',
@@ -26,18 +32,26 @@ export function TestimonialSection() {
     <section ref={ref} className="relative z-10 px-6 sm:px-8 py-20 lg:py-28">
       <div className="max-w-5xl mx-auto">
         <div className="text-center mb-12 mkt-reveal">
-          <p className="font-display text-[11px] sm:text-xs text-violet-400 uppercase tracking-[0.15em]">
+          <p className="font-display text-[11px] sm:text-xs text-violet-400 uppercase tracking-[0.15em] mb-3">
             Owner Stories
           </p>
+          <h2 className="font-display text-2xl sm:text-3xl lg:text-4xl tracking-tight">
+            What operators are saying
+          </h2>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mkt-reveal" style={{ transitionDelay: '0.1s' }}>
           {testimonials.map((t, i) => (
             <div
               key={i}
-              className="p-6 rounded-xl border border-white/[0.06] bg-white/[0.02]"
+              className="p-6 rounded-xl border border-white/[0.06] bg-white/[0.02] relative overflow-hidden"
             >
-              <blockquote className="font-serif text-base sm:text-lg text-white/90 italic leading-relaxed mb-6">
+              {/* Left accent border */}
+              <div
+                className="absolute left-0 top-0 bottom-0 w-[2px]"
+                style={{ background: accentColors[i % accentColors.length] }}
+              />
+              <blockquote className="font-sans text-base sm:text-lg text-white/90 leading-relaxed mb-6">
                 &ldquo;{t.quote}&rdquo;
               </blockquote>
               <div className="flex items-center gap-3">

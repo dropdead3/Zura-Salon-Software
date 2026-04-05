@@ -442,6 +442,7 @@ const App = () => (
                     {/* Standalone public pages */}
                     <Route path="/pricing" element={<Suspense fallback={<RouteFallback />}><PricingPage /></Suspense>} />
                     <Route path="/demo" element={<ProductDemo />} />
+                    <Route path="/about" element={<Suspense fallback={<RouteFallback />}><About /></Suspense>} />
                     <Route path="/solutions/independent" element={<SolIndependent />} />
                     <Route path="/solutions/salon-owner" element={<SolSalonOwner />} />
                     <Route path="/solutions/multi-location" element={<SolMultiLocation />} />
