@@ -9,10 +9,10 @@ import { useIsMobile } from '@/hooks/use-mobile';
 type Step = 'connect' | 'observe' | 'detect' | 'act';
 
 const steps: { id: Step; label: string; icon: typeof Link2; caption: string }[] = [
-  { id: 'connect', label: 'Connect', icon: Link2, caption: 'Your data, unified. No manual entry.' },
-  { id: 'observe', label: 'Observe', icon: Eye, caption: 'Continuous monitoring. No manual reports.' },
-  { id: 'detect', label: 'Detect', icon: AlertTriangle, caption: `${PLATFORM_NAME} found something. Utilization is slipping on Tuesdays.` },
-  { id: 'act', label: 'Act', icon: CheckCircle2, caption: 'One decision. Measurable impact.' },
+  { id: 'connect', label: 'Connect', icon: Link2, caption: 'Your calendar, payments, and team — connected in minutes.' },
+  { id: 'observe', label: 'Observe', icon: Eye, caption: 'Your numbers, tracked automatically. No spreadsheets.' },
+  { id: 'detect', label: 'Detect', icon: AlertTriangle, caption: 'Something changed. Tuesday bookings are dropping. Here\'s why.' },
+  { id: 'act', label: 'Act', icon: CheckCircle2, caption: 'One fix. You see the result. Move on with your day.' },
 ];
 
 const AUTO_ADVANCE_MS = 5000;
@@ -245,16 +245,16 @@ export function SystemWalkthrough() {
         {/* Section header */}
         <div className="text-center mb-14 mkt-reveal">
           <p className="font-display text-[11px] sm:text-xs text-[hsl(var(--mkt-dusky))] uppercase tracking-[0.15em] mb-4">
-            How It Works
+            See how it works
           </p>
           <h2 className="font-display text-2xl sm:text-3xl lg:text-4xl tracking-tight mb-4">
-            Watch {PLATFORM_NAME}{' '}
+            Four steps.{' '}
             <span className="bg-gradient-to-r from-violet-400 to-purple-400 bg-clip-text text-transparent">
-              think
+              No guesswork.
             </span>
           </h2>
           <p className="font-sans text-base sm:text-lg text-slate-400 max-w-2xl mx-auto">
-            Four steps. Continuous intelligence. Zero guesswork.
+            {PLATFORM_NAME} connects your data, watches for problems, and tells you what to do about them.
           </p>
         </div>
 

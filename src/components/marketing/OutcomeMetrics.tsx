@@ -2,9 +2,9 @@ import { useEffect, useRef, useState } from 'react';
 import { useScrollReveal } from './useScrollReveal';
 
 const metrics = [
-  { value: 23, suffix: '%', label: 'Average margin improvement', context: 'Clarity on what\'s profitable changes everything' },
-  { value: 4.2, suffix: 'h', label: 'Saved per owner per week', context: 'Know what\'s happening without digging through reports' },
-  { value: 67, suffix: '%', label: 'Faster new-hire ramp', context: 'Structured training replaces guesswork' },
+  { value: 23, suffix: '%', label: 'Average margin improvement', context: 'Owners see where money is lost — and stop the bleeding' },
+  { value: 4.2, suffix: 'h', label: 'Saved per owner per week', context: 'Less time in spreadsheets. More time in the salon.' },
+  { value: 67, suffix: '%', label: 'Faster new-hire ramp', context: 'New hires get productive faster with a clear path' },
 ];
 
 function AnimatedStat({ value, suffix }: { value: number; suffix: string }) {
@@ -54,10 +54,10 @@ export function OutcomeMetrics() {
       <div className="max-w-5xl mx-auto">
         <div className="text-center mb-14 mkt-reveal">
           <p className="font-display text-[11px] sm:text-xs text-[hsl(var(--mkt-dusky))] uppercase tracking-[0.15em] mb-4">
-            Results
+            What's changing
           </p>
           <h2 className="font-display text-2xl sm:text-3xl lg:text-4xl tracking-tight mb-2">
-            Results salon owners are seeing
+            Real numbers from real salons.
           </h2>
           <p className="font-sans text-xs text-slate-500">
             Based on early adopter data

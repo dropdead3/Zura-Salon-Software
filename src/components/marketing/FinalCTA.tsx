@@ -12,14 +12,13 @@ export function FinalCTA() {
 
       <div className="max-w-3xl mx-auto text-center mkt-reveal">
         <h2 className="font-display text-3xl sm:text-4xl lg:text-5xl tracking-tight mb-6">
-          See what{' '}
+          See it working. With{' '}
           <span className="bg-gradient-to-r from-violet-400 to-[hsl(var(--mkt-dusky))] bg-clip-text text-transparent">
-            clarity
-          </span>{' '}
-          looks like.
+            your numbers.
+          </span>
         </h2>
         <p className="font-sans text-base sm:text-lg text-slate-400 max-w-xl mx-auto mb-2">
-          No commitment. No credit card.
+          15 minutes. No commitment. No credit card.
         </p>
         <p className="font-sans text-sm text-slate-500 max-w-xl mx-auto mb-10">
           Join 50+ salon locations already running on Zura.

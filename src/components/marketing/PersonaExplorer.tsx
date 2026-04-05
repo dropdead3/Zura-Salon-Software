@@ -164,13 +164,13 @@ export function PersonaExplorer() {
         {/* ── Header ──────────────────────────────────────────────────── */}
         <div className="text-center mb-12 sm:mb-16 mkt-reveal">
           <p className="font-display text-[11px] sm:text-xs text-[hsl(var(--mkt-dusky))] uppercase tracking-[0.15em] mb-4">
-            Find Your Solution
+            Built for you
           </p>
           <h2 className="font-display text-2xl sm:text-3xl lg:text-4xl tracking-tight mb-4">
-            Tell us who you are. We'll show you what changes.
+            Pick your role. See what changes.
           </h2>
           <p className="font-sans text-base sm:text-lg text-slate-400 max-w-2xl mx-auto">
-            Select your role and the problems that matter most — and see exactly how {PLATFORM_NAME} solves them.
+            Different operators have different problems. Start with yours.
           </p>
         </div>
 
@@ -248,7 +248,7 @@ export function PersonaExplorer() {
               className="mt-10"
             >
               <p className="font-sans text-sm text-slate-400 text-center mb-5">
-                What keeps you up at night? <span className="text-slate-500">(Pick up to {MAX_PROBLEMS})</span>
+                What's frustrating you most? <span className="text-slate-500">(Pick up to {MAX_PROBLEMS})</span>
               </p>
               <div className="flex flex-wrap justify-center gap-2 sm:gap-3">
                 {filteredProblems.map((problem) => {

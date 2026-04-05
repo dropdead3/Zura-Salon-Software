@@ -33,10 +33,10 @@ export function TestimonialSection() {
       <div className="max-w-5xl mx-auto">
         <div className="text-center mb-12 mkt-reveal">
           <p className="font-display text-[11px] sm:text-xs text-violet-400 uppercase tracking-[0.15em] mb-3">
-            Owner Stories
+            From operators
           </p>
           <h2 className="font-display text-2xl sm:text-3xl lg:text-4xl tracking-tight">
-            What operators are saying
+            They had the same problems you do.
           </h2>
         </div>
 
