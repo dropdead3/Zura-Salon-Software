@@ -1,102 +1,89 @@
 
 
-# Sequential Marketing Front-End Improvements — Full Plan
+# Marketing Front-End — Continued Improvements & Fixes
 
-Five items, executed in order. Each builds on the last.
+## Issues Found
 
----
+### Critical Bugs
+1. **`/about` route is missing** — The About page was rebuilt with `MarketingLayout` but has no top-level route in `App.tsx`. It only exists under `/org/:orgSlug/about` (tenant-scoped). The footer links to `/about` which 404s.
+2. **Footer "Company" column is anemic** — Only has "Sign In". Missing "About", "Blog", "Careers" links. The About link is the most obvious omission since the page exists.
+3. **Footer "Solutions" link points to `/product`** — Should link to the solutions mega menu or a dedicated `/solutions` index page, not the product page.
 
-## 1. Wire Up the Demo Request Form
+### UI Polish Issues
+4. **LogoBar and StatBar render back-to-back borders** — Both sections have `border-y border-white/[0.06]`, creating a double-border seam between them on the landing page.
+5. **Testimonial cards lack visual differentiation** — All three cards are identical white/[0.02] boxes. No accent, no gradient, no variety. The "Owner Stories" eyebrow is orphaned with no headline below it.
+6. **FinalCTA section feels thin** — Just a headline, one line of body text, and a button. No supporting visual, no secondary CTA, no trust signal. Compared to the rest of the page it's underwhelming as the closing pitch.
+7. **"See all solutions" link at bottom of SolutionShowcase** — Small plain text link. Should be a ghost button for better tap target and visual weight.
+8. **PersonaExplorer taglines use `font-serif italic`** — These serif italic lines feel out of place against the otherwise Termina + Aeonik system. Should use `font-sans` or `font-display` for consistency.
+9. **BuiltByOperators credibility markers** — The right column only has 3 markers visible (the "80+ stylists managed" marker is scrolled off in the screenshot). The markers are plain text with no stat emphasis — the numbers should pop more.
 
-**Problem:** `ProductDemo.tsx` sets `setSubmitted(true)` on submit but never saves anything. The primary conversion endpoint is a dead end.
-
-**Solution:**
-- Import `captureWebsiteLead` from `@/lib/leadCapture.ts` into `ProductDemo.tsx`
-- Map form fields: `name`, `email`, `locations` → `message` (or `preferred_location`), `challenge` → `preferred_service`
-- Add loading state, error handling, and toast feedback
-- Add basic validation (name required, email format check) before submission
-- The `salon_inquiries` table already has the right columns and RLS allows anonymous inserts via `website_form` source
-
-**Files:** `src/pages/ProductDemo.tsx` (modify)
-
----
-
-## 2. Add SEO Meta Tags Across All Marketing Pages
-
-**Problem:** `PlatformLanding.tsx`, `Product.tsx`, `Ecosystem.tsx`, all 7 solution pages, and `ProductDemo.tsx` have zero meta tags. The `Pricing.tsx` page uses `Helmet` directly but without OG/Twitter cards. The `SEO` component exists but is only used on the tenant-side About page.
-
-**Solution:**
-- Create a lightweight `MarketingSEO` component (since the existing `SEO` component pulls from `useBusinessSettings` which is tenant-scoped and inappropriate for platform marketing)
-- It accepts `title`, `description`, `image?`, `path?` and renders `<Helmet>` with `<title>`, meta description, OG tags (og:title, og:description, og:image, og:url, og:type), and Twitter cards
-- Add `<MarketingSEO>` to every marketing page:
-  - `PlatformLanding.tsx` — "Salon Intelligence Platform — Run your salon with clarity"
-  - `Product.tsx` — "How It Works"
-  - `Ecosystem.tsx` — "Ecosystem"
-  - `Pricing.tsx` — replace raw `<Helmet>` with `<MarketingSEO>`
-  - `ProductDemo.tsx` — "Request a Demo"
-  - All 7 solution pages via `SolutionPageTemplate.tsx` (add `seoTitle?` and `seoDescription?` props)
-
-**Files:** New `src/components/marketing/MarketingSEO.tsx`, modify 4 page files + `SolutionPageTemplate.tsx` + 7 solution pages (props only)
+### Missing Pages / Navigation
+10. **No `/about` route** — needs to be added to the router alongside the other standalone public pages.
+11. **Footer Company column** — needs About link added.
 
 ---
 
-## 3. Rebuild About Page with MarketingLayout
+## Plan
 
-**Problem:** The About page at `/about` uses the tenant `<Layout>` shell (dashboard header/footer, light theme) instead of the marketing `<MarketingLayout>`. It looks like a completely different site.
+### 1. Add `/about` route to router
+Add a top-level `<Route path="/about">` in `App.tsx` alongside `/pricing`, `/demo`, etc. Import the existing `About` page component.
 
-**Solution:**
-- Replace `<Layout>` with `<MarketingLayout>` in `About.tsx`
-- Remove `<SEO>` (tenant) and add `<MarketingSEO>`
-- Rebuild the 5 sub-components (`AboutHero`, `ValuesSection`, `StatsSection`, `StorySection`, `JoinTeamSection`) to use the marketing color system:
-  - Dark backgrounds (`slate-950`), white/slate text
-  - `font-display` for headlines, `font-sans` for body
-  - Violet/dusky blue/lavender accent palette from `--mkt-*` variables
-  - `rounded-xl` cards, marketing spacing (`py-20 lg:py-28`)
-  - Remove `FounderWelcome` (tenant-specific component, not relevant to platform marketing)
-- `AboutHero`: Replace typewriter effect with a clean static headline + description (matches the confident, minimal marketing tone)
+**File:** `src/App.tsx`
 
-**Files:** Modify `src/pages/About.tsx`, modify all 5 files in `src/components/about/`
+### 2. Fix footer links
+- Add "About" to the Company column
+- Change "Solutions" href from `/product` to a more appropriate target (keep `/product` label as "Platform", add a proper "Solutions" link to one of the solution pages or keep as-is since the mega menu handles it)
+
+**File:** `src/components/marketing/MarketingFooter.tsx`
+
+### 3. Fix double-border between StatBar and LogoBar
+Remove the `border-y` from `LogoBar` (or just `border-t`) since `StatBar` already provides the bottom border.
+
+**File:** `src/components/marketing/LogoBar.tsx`
+
+### 4. Elevate TestimonialSection
+- Add a proper headline below the "Owner Stories" eyebrow: "What operators are saying"
+- Add a subtle left-border accent to each testimonial card (violet gradient border) for visual differentiation
+- Use alternating accent colors from the palette for variety
+
+**File:** `src/components/marketing/TestimonialSection.tsx`
+
+### 5. Strengthen FinalCTA
+- Add a secondary line of supporting text or a trust signal ("Join 50+ salon locations already using Zura")
+- Add a secondary ghost CTA ("Explore the Platform") below the primary
+- Add a subtle gradient text accent on the headline
+
+**File:** `src/components/marketing/FinalCTA.tsx`
+
+### 6. Upgrade "See all solutions" to ghost button
+Replace the plain text link with a proper ghost-styled button using the lavender border variant.
+
+**File:** `src/components/marketing/SolutionShowcase.tsx`
+
+### 7. Fix PersonaExplorer font inconsistency
+Replace `font-serif italic` on persona taglines with `font-sans text-sm text-slate-400` for consistency with the rest of the marketing system.
+
+**File:** `src/components/marketing/PersonaExplorer.tsx`
+
+### 8. Polish BuiltByOperators markers
+Make the stat numbers in the marker text use `text-[hsl(var(--mkt-lavender))]` or `text-white` for emphasis, separating the number from the label text.
+
+**File:** `src/components/marketing/BuiltByOperators.tsx`
 
 ---
 
-## 4. Add Logo/Integration Partners Bar
+## Summary
 
-**Problem:** `LogoBar.tsx` exists but uses placeholder text ("Salon A", "Salon B"). It's not rendered on the landing page. There's no social proof strip.
+| File | Change |
+|------|--------|
+| `App.tsx` | Add `/about` route |
+| `MarketingFooter.tsx` | Add About link to Company column |
+| `LogoBar.tsx` | Remove top border to fix double-border seam |
+| `TestimonialSection.tsx` | Add headline, accent borders on cards |
+| `FinalCTA.tsx` | Add trust signal, secondary CTA, gradient headline accent |
+| `SolutionShowcase.tsx` | Upgrade "See all solutions" to ghost button |
+| `PersonaExplorer.tsx` | Fix serif italic to sans for consistency |
+| `BuiltByOperators.tsx` | Emphasize stat numbers in markers |
 
-**Solution:**
-- Redesign `LogoBar.tsx` as an integration partners bar rather than client logos (more credible when you don't have named clients yet)
-- Show recognizable tool names that Zura replaces/integrates with: "Google Calendar", "Square", "Stripe", "QuickBooks", "Mailchimp", "Instagram"
-- Use a subtle infinite horizontal scroll animation for dynamism
-- Render the `<LogoBar />` in `PlatformLanding.tsx` between `<StatBar />` and `<ProblemStatement />`
-- Style: `font-display text-xs tracking-[0.15em] text-slate-500` for names, faint border pills, auto-scroll on mobile
-
-**Files:** Modify `src/components/marketing/LogoBar.tsx`, modify `src/pages/PlatformLanding.tsx`
-
----
-
-## 5. Elevate the Pricing Page
-
-**Problem:** The pricing page works but lacks interactive polish — no monthly/annual toggle, no feature comparison, and the FAQ section is adequate but plain.
-
-**Solution:**
-- Add a monthly/annual billing toggle with animated savings badge ("Save 20%")
-- Add annual pricing: Solo $79/mo, Multi-Location $160/location/mo (billed annually)
-- Add a feature comparison table below the cards: rows for key features, columns for tiers, check/dash markers
-- Style the comparison table with the marketing design system (slate borders, `font-sans` body, `font-display` tier headers)
-- Tier cards: standardize to `rounded-xl`, add `<MarketingSEO>`
-- FAQ: already good — minor cleanup only (ensure accordion uses marketing tokens)
-
-**Files:** Modify `src/pages/Pricing.tsx`
-
----
-
-## Execution Order
-
-1. Demo form wiring (quick, high-impact)
-2. SEO component + all page tags (foundational)
-3. About page rebuild (visual consistency)
-4. Logo bar integration (social proof)
-5. Pricing elevation (conversion polish)
-
-**Total: ~4 new files, ~18 files modified, 0 deleted.**
+**8 files modified. 0 new. 0 deleted.**
 
