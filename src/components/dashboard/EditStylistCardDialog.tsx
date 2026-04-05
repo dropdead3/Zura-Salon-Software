@@ -17,6 +17,7 @@ import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { tokens } from '@/lib/design-tokens';
 import { useStylistLevels } from '@/hooks/useStylistLevels';
+import { useWebsiteLevelDisplayMode, useUpdateWebsiteLevelDisplayMode, type LevelDisplayMode } from '@/hooks/useWebsiteLevelDisplayMode';
 
 interface StylistProfile {
   id: string;
