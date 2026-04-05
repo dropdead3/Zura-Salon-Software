@@ -1,91 +1,72 @@
 
 
-# Add Client Retention + New Clients Criteria & Surface Context Metrics
+# Add Schedule Utilization as a Graduation Criterion
 
-## Overview
+## Business Logic
 
-Three workstreams: (1) Add **Client Retention Rate** and **New Client Count** as optional promotion/retention criteria, (2) surface **No-Show Rate** and **Utilization** as informational context on the Graduation Tracker, and (3) audit the GraduationWizard for bugs/gaps.
+Before a stylist raises prices (levels up), they must prove demand at their current rate. An empty schedule at current prices means raising prices will make things worse. Utilization is the demand signal.
 
----
+## Data Strategy
 
-## Part 1: Add Retention Rate + New Clients as Criteria
+Two available data sources:
+- **`staff_shifts`** — has `user_id`, `shift_date`, `start_time`, `end_time` (currently empty, but will populate as scheduling matures)
+- **`appointments`** — has `staff_user_id`, `start_time`, `end_time`, `duration_minutes`
 
-### Database Migration
+**Calculation**: When shift data exists for a stylist, compute `booked_hours / shift_hours * 100`. When it doesn't, fall back to **booking density** — average booked hours per working day (estimated from appointment days with activity). This gives a meaningful demand proxy even without shift data.
 
-Add 6 columns to `level_promotion_criteria`:
-- `retention_rate_enabled` boolean default false
-- `retention_rate_threshold` numeric default 0
-- `retention_rate_weight` integer default 0
-- `new_clients_enabled` boolean default false
-- `new_clients_threshold` numeric default 0 (monthly count)
-- `new_clients_weight` integer default 0
-
-Add 4 columns to `level_retention_criteria`:
-- `retention_rate_enabled` boolean default false
-- `retention_rate_minimum` numeric default 0
-- `new_clients_enabled` boolean default false
-- `new_clients_minimum` numeric default 0
-
-### Hook Updates
-
-| File | Change |
-|------|--------|
-| `useLevelPromotionCriteria.ts` | Add 6 new fields to `LevelPromotionCriteria` interface |
-| `useLevelRetentionCriteria.ts` | Add 4 new fields to `LevelRetentionCriteria` interface |
-
-### GraduationWizard Updates
-
-| Change | Detail |
-|--------|--------|
-| `FormState` interface | Add `retention_rate_enabled`, `retention_rate_threshold`, `retention_rate_weight`, `new_clients_enabled`, `new_clients_threshold`, `new_clients_weight` |
-| `RetentionFormState` | Add `retention_rate_enabled`, `retention_rate_minimum`, `new_clients_enabled`, `new_clients_minimum` |
-| `CRITERIA` array | Add two entries: `{ key: 'retention_rate', label: 'Client Retention', icon: Users, unit: '%' }` and `{ key: 'new_clients', label: 'New Clients', icon: UserPlus, unit: '/mo' }` |
-| `RETENTION_CRITERIA` array | Same two new entries with `minimumKey` variants |
-| `INITIAL_STATE` / `INITIAL_RETENTION_STATE` | Add defaults for new fields |
-| `getZuraDefaults()` | Add recommended values (e.g. retention 60-80%, new clients 5-15/mo by level) |
-| Load/save mapping | Map new DB columns in both directions |
-
-### Progress Evaluation (`useTeamLevelProgress.ts`)
-
-- Fetch `retention_rate` and `new_clients` from `phorest_performance_metrics` alongside existing data
-- `computeMetrics()` returns two new values: `retentionRate` (avg over window) and `newClientsMonthly` (sum, normalized to 30d)
-- Add promotion progress entries for both when enabled
-- Add retention failure checks for both when enabled
-
-### Criteria Comparison Table
-
-- Add two new rows in both Promotion and Retention sections: "Client Retention" and "New Clients"
+The metric is expressed as a percentage (0-100%) for utilization, making it intuitive for salon owners.
 
 ---
 
-## Part 2: Surface No-Show + Utilization on Graduation Tracker
+## Database Migration
 
-These are **informational context only** — not hard criteria. They appear as supplementary badges on each stylist's card in the Graduation Tracker.
+Add 3 columns to `level_promotion_criteria`:
+- `utilization_enabled` boolean default false
+- `utilization_threshold` numeric default 0 (target %)
+- `utilization_weight` integer default 0
 
-| Metric | Source | Display |
-|--------|--------|---------|
-| No-Show Rate | `phorest_appointments` where `status = 'no_show'` / total completed+no_show | Small badge: `"3% no-show"` |
-| Utilization | Already computed in operations analytics; fetch from `appointments` (booked hours / available hours) | Small badge: `"78% utilized"` — or omit if data unavailable |
+Add 2 columns to `level_retention_criteria`:
+- `utilization_enabled` boolean default false
+- `utilization_minimum` numeric default 0
 
-### Implementation
+## File Changes
 
-- In `useTeamLevelProgress.ts`, add a lightweight query for no-show counts per user (already fetching appointments)
-- Calculate no-show rate from existing `allApptData` by counting `status === 'no_show'` — requires adding `status` to the appointment select
-- Add `noShowRate` and optionally `utilization` to `TeamMemberProgress` interface
-- In `GraduationTracker.tsx`, render as muted info badges on each stylist row (not in the criteria progress section)
+### 1. Migration SQL — Add utilization columns to both criteria tables
+
+### 2. `useLevelPromotionCriteria.ts` — Add 3 fields to interface
+
+### 3. `useLevelRetentionCriteria.ts` — Add 2 fields to interface
+
+### 4. `GraduationWizard.tsx`
+- Add `utilization` entry to `CRITERIA` array: `{ key: 'utilization', label: 'Schedule Utilization', icon: CalendarClock, unit: '%' }`
+- Add to `RETENTION_CRITERIA` array
+- Extend `FormState` with `utilization_enabled`, `utilization_threshold`, `utilization_weight`
+- Extend `RetentionFormState` with `utilization_enabled`, `utilization_minimum`
+- Update `INITIAL_STATE`, `INITIAL_RETENTION_STATE`, `getZuraDefaults()` (e.g. 70-85% by level)
+- Update load/save mapping, weight normalization, reset logic
+
+### 5. `useTeamLevelProgress.ts`
+- Add a batch query for `staff_shifts` within the evaluation window for all team members
+- In `computeMetrics()`: calculate utilization per stylist
+  - If shift data exists: `sum(booked_minutes) / sum(shift_minutes) * 100`
+  - Fallback: estimate from appointment density (booked hours per active day, capped at a reasonable work-day assumption like 8h)
+- Add promotion progress entry for utilization when enabled
+- Add retention failure check for utilization when enabled
+
+### 6. `StylistLevelsEditor.tsx` — Add "Schedule Utilization" row to CriteriaComparisonTable (both sections)
 
 ---
 
-## Part 3: GraduationWizard Audit Findings
+## Zura Default Recommendations
 
-| # | Issue | Fix |
-|---|-------|-----|
-| 1 | **Zura defaults don't account for new criteria** | Add retention_rate and new_clients to `getZuraDefaults()` with level-appropriate values |
-| 2 | **Weight normalization doesn't include new criteria** | Update weight sum calculation (Step 2) to include `retention_rate_weight` + `new_clients_weight` |
-| 3 | **"Reset to Defaults" only resets original 4 criteria** | Extend reset logic to cover all 6 criteria |
-| 4 | **Tenure criterion has no weight** but other criteria do | Tenure is pass/fail (correct), but the UI doesn't clarify this — add a small "(pass/fail)" label next to Tenure |
+| Level | Utilization Target | Weight |
+|-------|-------------------|--------|
+| Level 1 → 2 | 65% | 10 |
+| Level 2 → 3 | 75% | 10 |
+| Level 3 → 4 | 80% | 10 |
+| Level 4+ | 85% | 10 |
 
----
+Lower weight than revenue (10 vs 40) because utilization is a qualifying gate, not the primary driver. But it's critical — you can't skip it.
 
 ## File Summary
 
@@ -94,10 +75,9 @@ These are **informational context only** — not hard criteria. They appear as s
 | Migration SQL | **Create** — Add columns to both criteria tables |
 | `useLevelPromotionCriteria.ts` | **Modify** — Extend interface |
 | `useLevelRetentionCriteria.ts` | **Modify** — Extend interface |
-| `GraduationWizard.tsx` | **Modify** — Add criteria configs, form state, defaults, save/load mapping, weight normalization |
-| `useTeamLevelProgress.ts` | **Modify** — Fetch metrics data, evaluate new criteria, add no-show rate |
-| `StylistLevelsEditor.tsx` | **Modify** — Add rows to CriteriaComparisonTable |
-| `GraduationTracker.tsx` | **Modify** — Render no-show/utilization info badges |
+| `GraduationWizard.tsx` | **Modify** — Add utilization criterion config, form state, defaults, save/load |
+| `useTeamLevelProgress.ts` | **Modify** — Fetch shifts, compute utilization, evaluate criterion |
+| `StylistLevelsEditor.tsx` | **Modify** — Add row to comparison table |
 
-**1 migration, 6 modified files, 0 new files.**
+**1 migration, 5 modified files, 0 new files.**
 
