@@ -67,14 +67,25 @@ export function useTeamLevelProgress() {
     queryKey: ['team-graduation-sales', orgId, startStr, endStr, userIds.length],
     queryFn: async () => {
       if (userIds.length === 0) return [];
-      const { data, error } = await supabase
-        .from('phorest_daily_sales_summary')
-        .select('user_id, service_revenue, product_revenue, summary_date')
-        .in('user_id', userIds)
-        .gte('summary_date', startStr)
-        .lte('summary_date', endStr);
-      if (error) throw error;
-      return data || [];
+      // Paginate to avoid 1000-row limit
+      const allData: any[] = [];
+      const pageSize = 1000;
+      let from = 0;
+      let hasMore = true;
+      while (hasMore) {
+        const { data, error } = await supabase
+          .from('phorest_daily_sales_summary')
+          .select('user_id, service_revenue, product_revenue, summary_date')
+          .in('user_id', userIds)
+          .gte('summary_date', startStr)
+          .lte('summary_date', endStr)
+          .range(from, from + pageSize - 1);
+        if (error) throw error;
+        allData.push(...(data || []));
+        hasMore = (data?.length || 0) === pageSize;
+        from += pageSize;
+      }
+      return allData;
     },
     enabled: !!orgId && userIds.length > 0,
   });
@@ -84,15 +95,26 @@ export function useTeamLevelProgress() {
     queryKey: ['team-graduation-appts', orgId, startStr, endStr, userIds.length],
     queryFn: async () => {
       if (userIds.length === 0) return [];
-      const { data, error } = await supabase
-        .from('appointments')
-        .select('staff_user_id, total_price, rebooked_at_checkout, appointment_date')
-        .in('staff_user_id', userIds)
-        .gte('appointment_date', startStr)
-        .lte('appointment_date', endStr)
-        .neq('status', 'cancelled');
-      if (error) throw error;
-      return data || [];
+      // Paginate to avoid 1000-row limit
+      const allData: any[] = [];
+      const pageSize = 1000;
+      let from = 0;
+      let hasMore = true;
+      while (hasMore) {
+        const { data, error } = await supabase
+          .from('appointments')
+          .select('staff_user_id, total_price, rebooked_at_checkout, appointment_date')
+          .in('staff_user_id', userIds)
+          .gte('appointment_date', startStr)
+          .lte('appointment_date', endStr)
+          .neq('status', 'cancelled')
+          .range(from, from + pageSize - 1);
+        if (error) throw error;
+        allData.push(...(data || []));
+        hasMore = (data?.length || 0) === pageSize;
+        from += pageSize;
+      }
+      return allData;
     },
     enabled: !!orgId && userIds.length > 0,
   });

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { DashboardPageHeader } from '@/components/dashboard/DashboardPageHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -14,6 +15,17 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { PremiumFloatingPanel } from '@/components/ui/premium-floating-panel';
 import { Skeleton } from '@/components/ui/skeleton';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import { getLevelColor } from '@/lib/level-colors';
@@ -35,6 +47,7 @@ import {
   AlertTriangle,
   Crown,
   Loader2,
+  Settings,
 } from 'lucide-react';
 import {
   useAllAssistantProgress,
@@ -49,7 +62,9 @@ import {
 } from '@/hooks/useGraduationTracker';
 import { useTeamLevelProgress, type TeamMemberProgress, type GraduationStatus } from '@/hooks/useTeamLevelProgress';
 import { useStylistLevels } from '@/hooks/useStylistLevels';
+import { usePromoteLevel } from '@/hooks/usePromoteLevel';
 import { useFormatDate } from '@/hooks/useFormatDate';
+import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 import { PageExplainer } from '@/components/ui/PageExplainer';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import type { CriterionProgress } from '@/hooks/useLevelProgress';
@@ -75,6 +90,30 @@ function KpiStrip({ counts }: { counts: ReturnType<typeof useTeamLevelProgress>[
           <span className={tokens.kpi.value}>{kpi.value}</span>
         </div>
       ))}
+    </div>
+  );
+}
+
+/* ─── Empty State: No Criteria Configured ──────────────── */
+
+function NoCriteriaEmptyState() {
+  const { dashPath } = useOrgDashboardPath();
+
+  return (
+    <div className={tokens.empty.container}>
+      <Settings className={tokens.empty.icon} />
+      <h3 className={tokens.empty.heading}>No graduation criteria configured</h3>
+      <p className={tokens.empty.description}>
+        Set up level promotion criteria in Stylist Levels settings to start tracking team progression.
+      </p>
+      <div className="mt-5 flex justify-center">
+        <Button asChild variant="outline">
+          <Link to={dashPath('/admin/settings/stylist-levels')}>
+            <Settings className="h-4 w-4 mr-2" />
+            Configure Stylist Levels
+          </Link>
+        </Button>
+      </div>
     </div>
   );
 }
@@ -151,6 +190,56 @@ function StatusBadge({ status }: { status: GraduationStatus }) {
   );
 }
 
+/* ─── Approve Promotion Dialog ──────────────────────────── */
+
+function ApprovePromotionButton({ member }: { member: TeamMemberProgress }) {
+  const promoteLevel = usePromoteLevel();
+
+  if (!member.isFullyQualified || !member.currentLevel || !member.nextLevel) return null;
+
+  return (
+    <AlertDialog>
+      <AlertDialogTrigger asChild>
+        <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white">
+          <CheckCircle2 className="h-4 w-4 mr-1" />
+          Approve Promotion
+        </Button>
+      </AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Approve Promotion</AlertDialogTitle>
+          <AlertDialogDescription>
+            Promote <span className="font-medium text-foreground">{member.fullName}</span> from{' '}
+            <span className="font-medium text-foreground">{member.currentLevel.label}</span> to{' '}
+            <span className="font-medium text-foreground">{member.nextLevel.label}</span>?
+            This will immediately update their level.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogAction
+            className="bg-emerald-600 hover:bg-emerald-700"
+            onClick={() => {
+              promoteLevel.mutate({
+                userId: member.userId,
+                fromLevelSlug: member.currentLevel!.slug,
+                toLevelSlug: member.nextLevel!.slug,
+              });
+            }}
+            disabled={promoteLevel.isPending}
+          >
+            {promoteLevel.isPending ? (
+              <><Loader2 className="h-4 w-4 mr-1 animate-spin" /> Promoting...</>
+            ) : (
+              'Confirm Promotion'
+            )}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+}
+
 /* ─── Stylist Progress Row ──────────────────────────────── */
 
 function StylistProgressRow({ member, totalLevels }: { member: TeamMemberProgress; totalLevels: number }) {
@@ -198,6 +287,7 @@ function StylistProgressRow({ member, totalLevels }: { member: TeamMemberProgres
         </div>
 
         <div className="flex items-center gap-2">
+          {member.isFullyQualified && <ApprovePromotionButton member={member} />}
           <StatusBadge status={member.status} />
           {member.criteriaProgress.length > 0 && (
             <CollapsibleTrigger asChild>
@@ -502,10 +592,12 @@ export default function GraduationTracker() {
 
   const [searchQuery, setSearchQuery] = useState('');
   const [levelFilter, setLevelFilter] = useState<string>('all');
+  const [statusFilter, setStatusFilter] = useState<string>('all');
 
   const filtered = teamProgress.filter(m => {
     if (searchQuery && !m.fullName.toLowerCase().includes(searchQuery.toLowerCase())) return false;
     if (levelFilter !== 'all' && m.currentLevel?.slug !== levelFilter) return false;
+    if (statusFilter !== 'all' && m.status !== statusFilter) return false;
     return true;
   });
 
@@ -515,6 +607,8 @@ export default function GraduationTracker() {
     a.full_name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  const hasCriteriaConfigured = counts.total > 0 && counts.noCriteria < counts.total;
+
   return (
     <DashboardLayout>
       <DashboardPageHeader
@@ -522,6 +616,19 @@ export default function GraduationTracker() {
         description="Track team progression through levels and assistant graduation"
         actions={
           <div className="flex items-center gap-3">
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-[160px] h-9">
+                <SelectValue placeholder="All Statuses" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Statuses</SelectItem>
+                <SelectItem value="ready">Ready</SelectItem>
+                <SelectItem value="in_progress">In Progress</SelectItem>
+                <SelectItem value="needs_attention">Needs Attention</SelectItem>
+                <SelectItem value="at_top_level">Top Level</SelectItem>
+                <SelectItem value="no_criteria">No Criteria</SelectItem>
+              </SelectContent>
+            </Select>
             <Select value={levelFilter} onValueChange={setLevelFilter}>
               <SelectTrigger className="w-[160px] h-9">
                 <SelectValue placeholder="All Levels" />
@@ -549,8 +656,13 @@ export default function GraduationTracker() {
       <div className="container max-w-[1600px] px-8 py-8 space-y-6">
         <PageExplainer pageId="graduation-tracker" />
 
-        {/* KPI Strip */}
-        {!isLoading && <KpiStrip counts={counts} />}
+        {/* KPI Strip — only show when criteria are configured */}
+        {!isLoading && hasCriteriaConfigured && <KpiStrip counts={counts} />}
+
+        {/* Empty state when no criteria configured */}
+        {!isLoading && !hasCriteriaConfigured && counts.total > 0 && (
+          <NoCriteriaEmptyState />
+        )}
 
         <Tabs defaultValue="all-stylists">
           <TabsList>
