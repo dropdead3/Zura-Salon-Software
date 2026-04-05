@@ -1,73 +1,47 @@
 
 
-# Graduation Configurator Polish + Level Progress Surfacing in 1:1 Prep & Stylist Dashboard
+# Zura Default Configuration for Graduation Wizard
 
-## Current State
+## What This Does
 
-**Graduation Configurator (Admin)**: Functional wizard with 3 steps, PDF export, inline summaries, and roadmap card. Previous plan's enhancements are all shipped — slider bug fixed, PDF export working, summary card in right column.
+Adds a "Use Zura Defaults" button at the top of Step 0 (Requirements) in the Graduation Wizard. When clicked, it pre-fills the form with level-appropriate thresholds, weights, and evaluation settings — a no-brainer starting point that admins can accept as-is or tweak.
 
-**1:1 Meeting Prep (MeetingDetails.tsx)**: Shows meeting notes, accountability items, and a ReportBuilder that includes compliance data. No graduation progress or level-up context is surfaced for the stylist being coached.
+## Default Presets (by level index)
 
-**Staff 1:1 Prep Report (IndividualStaffReport)**: Comprehensive KPI report (revenue, rebooking, retention, experience score, compliance). No level progression data — doesn't show how close a stylist is to their next level.
+The graduation wizard receives `levelIndex` (0 = entry, 1 = second tier, etc.). Defaults scale progressively:
 
-**Stylist-Facing Dashboard**: Does not exist yet. No "My Growth" or "Leveling Roadmap" page. `tierProgress` and `amountToNextTier` in payroll forecasting are always `0`.
+```text
+Level 2 (e.g. Emerging):
+  Revenue $6,000/mo · Retail 10% · Rebooking 60%
+  Weights: 50/25/25 · 30-day window · No approval required
 
-## Remaining Bugs in Graduation Wizard
+Level 3 (e.g. Lead):
+  Revenue $8,000/mo · Retail 15% · Rebooking 65% · Avg Ticket $110
+  Weights: 40/20/20/20 · 60-day window · No approval required
 
-1. **Threshold input allows 0 save** — A criterion can be toggled on with threshold left at 0. The wizard should require a non-zero threshold for enabled criteria before allowing "Next" from step 0.
+Level 4 (e.g. Senior):
+  Revenue $12,000/mo · Retail 18% · Rebooking 70% · Avg Ticket $140 · Tenure 365d
+  Weights: 35/20/25/20 · 60-day window · Approval required
 
-2. **Revenue formatting inconsistency** — `formatCriteriaSummary` divides by 1000 and shows "$8K rev" but if someone enters 500 it shows "$1K rev" (rounds poorly). Should show "$500 rev" for values under 1000.
+Level 5+ (e.g. Signature/Icon):
+  Revenue $16,000/mo · Retail 22% · Rebooking 75% · Avg Ticket $170 · Tenure 730d
+  Weights: 30/20/25/25 · 90-day window · Approval required
+```
 
-3. **PDF `\n` literal in cells** — The `formatCriteriaRow` function in LevelRequirementsPDF.ts uses `\n` for multi-line cell content but jspdf-autotable needs actual newlines, not escaped ones. The current file has `'\\n'` which renders as literal backslash-n in the PDF.
+These are industry-informed benchmarks for salon performance tiers, tuned to be achievable but meaningful.
 
-## Plan
+## UX
 
-### 1. Fix remaining wizard bugs
-
-- **GraduationWizard.tsx**: Update `canProceedFromStep0` to also validate that all enabled criteria have non-zero thresholds.
-- **StylistLevels.tsx**: Fix `formatCriteriaSummary` to show raw dollar amounts under $1,000 instead of dividing by 1000.
-- **LevelRequirementsPDF.ts**: Verify newline handling in `formatCriteriaRow` — ensure `\n` is actual newline character, not double-escaped.
-
-### 2. Create `useLevelProgress` hook
-
-Computes a stylist's real-time graduation progress against their next level's criteria. Inputs: stylist's current level, their rolling performance data (from existing appointment/sales queries). Outputs: per-criterion progress percentages, weighted composite score, and gap analysis.
-
-This hook powers both the 1:1 prep context and the future stylist dashboard.
-
-### 3. Surface level progress in 1:1 Meeting Prep
-
-Add a "Level Progress" card to `MeetingDetails.tsx` that shows:
-- Current level and next level target
-- Per-criterion progress bars (revenue, retail, rebooking, avg ticket)
-- Weighted composite progress percentage
-- Gap summary ("$1,200 more revenue needed")
-
-This gives coaches immediate context on where a stylist stands relative to promotion.
-
-### 4. Surface level progress in Staff 1:1 Prep Report
-
-Add a "Level Progression" section to `IndividualStaffReport.tsx` showing:
-- Current level vs next level
-- Per-criterion current vs target values
-- Composite progress percentage
-- Include in PDF export as a new table section
-
-### 5. Populate `tierProgress` in Payroll Forecasting
-
-Wire `useLevelProgress` into `usePayrollForecasting.ts` so `tierProgress` and `amountToNextTier` reflect real graduation criteria instead of always being 0. This activates the existing `TierProgressionCard` and `TierProgressAlert` components.
+- A subtle banner appears at the top of Step 0 when the form is empty (no existing criteria saved): **"Start with Zura's recommended criteria for this level"** with a **"Apply Defaults"** button.
+- Clicking it fills all fields instantly — toggles, thresholds, weights, window, approval.
+- If existing criteria are loaded, the banner is hidden (admin already configured).
+- Admin can still modify any value after applying defaults.
 
 ## File Changes
 
 | File | Action |
 |------|--------|
-| `src/components/dashboard/settings/GraduationWizard.tsx` | **Modify** — validate non-zero thresholds on enabled criteria |
-| `src/pages/dashboard/admin/StylistLevels.tsx` | **Modify** — fix revenue formatting in `formatCriteriaSummary` |
-| `src/components/dashboard/settings/LevelRequirementsPDF.ts` | **Modify** — fix newline escaping in criteria rows |
-| `src/hooks/useLevelProgress.ts` | **Create** — compute stylist progress against next level criteria |
-| `src/pages/dashboard/MeetingDetails.tsx` | **Modify** — add LevelProgressCard for coaching context |
-| `src/components/coaching/LevelProgressCard.tsx` | **Create** — reusable card showing level progress bars and gaps |
-| `src/components/dashboard/reports/IndividualStaffReport.tsx` | **Modify** — add level progression section to report + PDF |
-| `src/hooks/usePayrollForecasting.ts` | **Modify** — populate tierProgress from level_promotion_criteria |
+| `src/components/dashboard/settings/GraduationWizard.tsx` | **Modify** — Add `ZURA_DEFAULTS` preset map and "Apply Defaults" banner in Step 0 |
 
-**3 new files, 5 modified files.**
+**1 file modified.**
 
