@@ -45,7 +45,6 @@ function formatKpiValue(value: number, unit: string) {
   if (unit === '%') return `${value.toFixed(1)}%`;
   if (unit === '$/hr') return `$${value}`;
   if (unit === 'd') return `${value}d`;
-  if (unit === '/mo') return `${value}/mo`;
   return String(value);
 }
 
@@ -76,10 +75,14 @@ export function StylistScorecard({ userId }: StylistScorecardProps) {
     const current = sorted[currentIdx];
     const next = currentIdx < sorted.length - 1 ? sorted[currentIdx + 1] : null;
 
-    const currentSvcRate = Number(current.service_commission_rate) || 0;
-    const currentRetRate = Number(current.retail_commission_rate) || 0;
-    const nextSvcRate = next ? (Number(next.service_commission_rate) || 0) : null;
-    const nextRetRate = next ? (Number(next.retail_commission_rate) || 0) : null;
+    // Commission rates are stored as percentage numbers (e.g. 42 for 42%)
+    // Normalize: if value > 1 it's already a percentage; if <= 1 it's a decimal
+    const normalize = (v: number) => v > 1 ? v : v * 100;
+
+    const currentSvcRate = normalize(Number(current.service_commission_rate) || 0);
+    const currentRetRate = normalize(Number(current.retail_commission_rate) || 0);
+    const nextSvcRate = next ? normalize(Number(next.service_commission_rate) || 0) : null;
+    const nextRetRate = next ? normalize(Number(next.retail_commission_rate) || 0) : null;
 
     // Estimate monthly uplift from commission increase
     const currentRevenue = progress.criteriaProgress.find(c => c.key === 'revenue')?.current || 0;
@@ -89,10 +92,10 @@ export function StylistScorecard({ userId }: StylistScorecardProps) {
     }
 
     return {
-      currentSvcRate: Math.round(currentSvcRate * 100),
-      currentRetRate: Math.round(currentRetRate * 100),
-      nextSvcRate: nextSvcRate !== null ? Math.round(nextSvcRate * 100) : null,
-      nextRetRate: nextRetRate !== null ? Math.round(nextRetRate * 100) : null,
+      currentSvcRate: Math.round(currentSvcRate),
+      currentRetRate: Math.round(currentRetRate),
+      nextSvcRate: nextSvcRate !== null ? Math.round(nextSvcRate) : null,
+      nextRetRate: nextRetRate !== null ? Math.round(nextRetRate) : null,
       monthlyUplift: Math.round(monthlyUplift),
     };
   }, [progress, allLevels]);
@@ -141,11 +144,13 @@ export function StylistScorecard({ userId }: StylistScorecardProps) {
     return signals.slice(0, 3);
   }, [progress, colorBarMetrics]);
 
-  if (!progress || (!progress.nextLevelLabel && !progress.retention?.isAtRisk)) {
+  if (!progress) {
     return null;
   }
 
+  const hasNextLevel = !!progress.nextLevelLabel;
   const hasColorBar = !!colorBarMetrics;
+  const isTopLevel = !hasNextLevel;
 
   return (
     <Card>
@@ -161,9 +166,9 @@ export function StylistScorecard({ userId }: StylistScorecardProps) {
                 <MetricInfoTooltip description="A unified view of your KPI performance, Color Bar metrics, and peer standing — everything that factors into your level progression." />
               </CardTitle>
               <CardDescription className="text-xs">
-                {progress.nextLevelLabel
+                {hasNextLevel
                   ? `${progress.currentLevelLabel} → ${progress.nextLevelLabel}`
-                  : `${progress.currentLevelLabel} — Retention Status`}
+                  : `${progress.currentLevelLabel} — Current Performance`}
                 {progress.levelSince && (
                   <span className="text-muted-foreground/60 ml-2">
                     Since {format(new Date(progress.levelSince), 'MMM yyyy')}
@@ -173,14 +178,18 @@ export function StylistScorecard({ userId }: StylistScorecardProps) {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            {progress.isFullyQualified && progress.nextLevelLabel ? (
+            {progress.isFullyQualified && hasNextLevel ? (
               <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-950/30 dark:text-emerald-400 dark:border-emerald-800">
                 <CheckCircle2 className="w-3 h-3 mr-1" />
                 Qualified
               </Badge>
-            ) : progress.nextLevelLabel ? (
+            ) : hasNextLevel ? (
               <Badge variant="secondary" className="text-xs tabular-nums">
                 {progress.compositeScore}% Ready
+              </Badge>
+            ) : isTopLevel ? (
+              <Badge variant="secondary" className="text-xs">
+                Top Level
               </Badge>
             ) : null}
           </div>
@@ -188,8 +197,8 @@ export function StylistScorecard({ userId }: StylistScorecardProps) {
       </CardHeader>
 
       <CardContent className="space-y-5">
-        {/* Overall Readiness */}
-        {progress.nextLevelLabel && progress.criteria && (
+        {/* Overall Readiness — only when progressing */}
+        {hasNextLevel && progress.criteria && (
           <div>
             <div className="flex items-center justify-between text-xs mb-1.5">
               <span className="text-muted-foreground">Overall Readiness</span>
@@ -205,7 +214,7 @@ export function StylistScorecard({ userId }: StylistScorecardProps) {
           </div>
         )}
 
-        {/* Commission Uplift */}
+        {/* Commission Uplift — only when there's a next level */}
         {commissionInfo && commissionInfo.nextSvcRate !== null && (
           <div className="rounded-lg border border-border/60 bg-muted/20 p-3 space-y-1.5">
             <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
@@ -251,7 +260,7 @@ export function StylistScorecard({ userId }: StylistScorecardProps) {
             <div className="grid grid-cols-[1fr_auto_auto_auto_auto] gap-x-3 px-1 text-[10px] text-muted-foreground border-b border-border/40 pb-1">
               <span>Metric</span>
               <span className="text-right w-16">You</span>
-              <span className="text-right w-16">Target</span>
+              {hasNextLevel && <span className="text-right w-16">Target</span>}
               {peerAverages && <span className="text-right w-16">Avg</span>}
               <span className="w-4" />
             </div>
@@ -261,7 +270,12 @@ export function StylistScorecard({ userId }: StylistScorecardProps) {
               const trend = getTrend(cp);
               return (
                 <div key={cp.key} className="space-y-1">
-                  <div className="grid grid-cols-[1fr_auto_auto_auto_auto] gap-x-3 items-center px-1">
+                  <div className={cn(
+                    'grid gap-x-3 items-center px-1',
+                    hasNextLevel
+                      ? 'grid-cols-[1fr_auto_auto_auto_auto]'
+                      : 'grid-cols-[1fr_auto_auto_auto]'
+                  )}>
                     <span className="text-xs text-muted-foreground">{cp.label}</span>
                     <span className="text-xs text-foreground tabular-nums text-right w-16">
                       {cp.unit === '/mo' || cp.unit === '$'
@@ -269,12 +283,14 @@ export function StylistScorecard({ userId }: StylistScorecardProps) {
                         : formatKpiValue(cp.current, cp.unit)
                       }
                     </span>
-                    <span className="text-xs text-muted-foreground tabular-nums text-right w-16">
-                      {cp.unit === '/mo' || cp.unit === '$'
-                        ? <BlurredAmount>{formatKpiValue(cp.target, cp.unit)}</BlurredAmount>
-                        : formatKpiValue(cp.target, cp.unit)
-                      }
-                    </span>
+                    {hasNextLevel && (
+                      <span className="text-xs text-muted-foreground tabular-nums text-right w-16">
+                        {cp.unit === '/mo' || cp.unit === '$'
+                          ? <BlurredAmount>{formatKpiValue(cp.target, cp.unit)}</BlurredAmount>
+                          : formatKpiValue(cp.target, cp.unit)
+                        }
+                      </span>
+                    )}
                     {peerAverages && (
                       <span className="text-xs text-muted-foreground/70 tabular-nums text-right w-16">
                         {peerVal !== null
@@ -289,13 +305,15 @@ export function StylistScorecard({ userId }: StylistScorecardProps) {
                       <TrendIcon direction={trend} />
                     </div>
                   </div>
-                  <Progress
-                    value={cp.percent}
-                    className="h-1 mx-1"
-                    indicatorClassName={cn(
-                      cp.percent >= 100 ? 'bg-emerald-500' : cp.percent >= 75 ? 'bg-primary' : 'bg-amber-500'
-                    )}
-                  />
+                  {hasNextLevel && (
+                    <Progress
+                      value={cp.percent}
+                      className="h-1 mx-1"
+                      indicatorClassName={cn(
+                        cp.percent >= 100 ? 'bg-emerald-500' : cp.percent >= 75 ? 'bg-primary' : 'bg-amber-500'
+                      )}
+                    />
+                  )}
                 </div>
               );
             })}
@@ -385,13 +403,21 @@ function getPeerValue(key: string, peers: ReturnType<typeof useStylistPeerAverag
     case 'retention_rate': return peers.avgRetentionRate || null;
     case 'utilization': return peers.avgUtilization;
     case 'rev_per_hour': return peers.avgRevPerHour;
+    case 'new_clients': return peers.avgNewClients;
     default: return null;
   }
 }
 
-/** Determine trend direction — simple heuristic based on distance to target */
+/** Determine trend direction — real period-over-period comparison.
+ *  Uses priorCurrent from the previous eval window vs current value.
+ *  A 3% relative change threshold determines up/down vs flat. */
 function getTrend(cp: CriterionProgress): 'up' | 'down' | 'flat' {
-  if (cp.percent >= 100) return 'up';
-  if (cp.percent >= 80) return 'flat';
-  return 'down';
+  // If no prior data exists, can't determine trend
+  if (cp.priorCurrent === 0 && cp.current === 0) return 'flat';
+  if (cp.priorCurrent === 0) return 'up'; // went from nothing to something
+
+  const changePct = ((cp.current - cp.priorCurrent) / cp.priorCurrent) * 100;
+  if (changePct > 3) return 'up';
+  if (changePct < -3) return 'down';
+  return 'flat';
 }

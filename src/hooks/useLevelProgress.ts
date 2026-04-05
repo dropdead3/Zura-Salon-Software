@@ -346,8 +346,69 @@ export function useLevelProgress(userId: string | undefined) {
       };
     }
 
-    // Compute promotion progress
+    // Compute promotion progress — current and prior windows for trend arrows
     const promoMetrics = computeMetrics(promoEvalDays);
+    const priorPromoMetrics = computeMetrics(promoEvalDays * 2); // 2x window gives overall; subtract current for prior
+    // To get true "prior window only" metrics, we'd need a separate windowed calc.
+    // Simpler approach: compute metrics for the prior window specifically.
+    const computePriorMetrics = (evalDays: number) => {
+      const evalStart = format(subDays(new Date(), evalDays * 2), 'yyyy-MM-dd');
+      const evalEnd = format(subDays(new Date(), evalDays), 'yyyy-MM-dd');
+      const filteredSales = (salesData || []).filter(s => s.summary_date >= evalStart && s.summary_date < evalEnd);
+      const filteredAppts = (apptData || []).filter(a => a.appointment_date >= evalStart && a.appointment_date < evalEnd && a.status !== 'no_show');
+
+      const totalServiceRevenue = filteredSales.reduce((sum, r) => sum + (Number(r.service_revenue) || 0), 0);
+      const totalProductRevenue = filteredSales.reduce((sum, r) => sum + (Number(r.product_revenue) || 0), 0);
+      const totalRevenue = totalServiceRevenue + totalProductRevenue;
+      const monthlyRevenue = evalDays > 0 ? (totalRevenue / evalDays) * 30 : 0;
+      const retailPct = totalRevenue > 0 ? (totalProductRevenue / totalRevenue) * 100 : 0;
+      const totalAppts = filteredAppts.length;
+      const rebooked = filteredAppts.filter(a => a.rebooked_at_checkout).length;
+      const rebookingPct = totalAppts > 0 ? (rebooked / totalAppts) * 100 : 0;
+      const avgTicket = totalAppts > 0
+        ? filteredAppts.reduce((sum, a) => sum + (Number(a.total_price) || 0), 0) / totalAppts
+        : 0;
+      const newClients = filteredAppts.filter((a: any) => a.is_new_client === true).length;
+      const newClientsMonthly = evalDays > 0 ? (newClients / evalDays) * 30 : 0;
+
+      // Retention — prior's prior vs prior
+      const pp = format(subDays(new Date(), evalDays * 3), 'yyyy-MM-dd');
+      const allA = (apptData || []).filter((a: any) => a.status !== 'no_show');
+      const ppClients = new Set(allA.filter((a: any) => a.appointment_date >= pp && a.appointment_date < evalStart && a.client_id).map((a: any) => a.client_id));
+      const pClients = new Set(allA.filter((a: any) => a.appointment_date >= evalStart && a.appointment_date < evalEnd && a.client_id).map((a: any) => a.client_id));
+      const retCount = [...pClients].filter(id => ppClients.has(id)).length;
+      const retentionRate = ppClients.size > 0 ? (retCount / ppClients.size) * 100 : 0;
+
+      // Utilization
+      const timeOffSet = buildTimeOffSet(timeOffData || []);
+      const userShifts = (shiftData || []).filter((s: any) => s.shift_date >= evalStart && s.shift_date < evalEnd && !isUserOffOnDate(timeOffSet, userId!, s.shift_date));
+      let utilization = 0;
+      if (userShifts.length > 0) {
+        const totalShiftMin = userShifts.reduce((sum: number, s: any) => {
+          const st = new Date(`${s.shift_date}T${s.start_time}`);
+          const en = new Date(`${s.shift_date}T${s.end_time}`);
+          return sum + Math.max(0, (en.getTime() - st.getTime()) / 60000);
+        }, 0);
+        const totalBookMin = filteredAppts.reduce((sum: number, a: any) => sum + (Number(a.duration_minutes) || 60), 0);
+        utilization = totalShiftMin > 0 ? (totalBookMin / totalShiftMin) * 100 : 0;
+      } else {
+        const activeDaysSet = new Set(filteredAppts.map((a: any) => a.appointment_date));
+        const activeDays = [...activeDaysSet].filter(d => !isUserOffOnDate(timeOffSet, userId!, d)).length;
+        if (activeDays > 0) {
+          const totalBookMin = filteredAppts.reduce((sum: number, a: any) => sum + (Number(a.duration_minutes) || 60), 0);
+          utilization = Math.min(100, ((totalBookMin / activeDays) / 480) * 100);
+        }
+      }
+
+      const totalBookMin = filteredAppts.reduce((sum: number, a: any) => sum + (Number(a.duration_minutes) || 60), 0);
+      const totalApptRev = filteredAppts.reduce((s: number, a: any) => s + (Number(a.total_price) || 0), 0);
+      const revPerHour = totalBookMin > 0 ? (totalApptRev / totalBookMin) * 60 : 0;
+
+      return { monthlyRevenue, retailPct, rebookingPct, avgTicket, newClientsMonthly, retentionRate, utilization, revPerHour };
+    };
+
+    const priorMetrics = computePriorMetrics(promoEvalDays);
+
     const tenureDays = profile?.hire_date
       ? Math.max(0, Math.floor((Date.now() - new Date(profile.hire_date).getTime()) / (1000 * 60 * 60 * 24)))
       : 0;
@@ -358,7 +419,7 @@ export function useLevelProgress(userId: string | undefined) {
       const target = nextCriteria.revenue_threshold;
       progress.push({
         key: 'revenue', label: 'Service Revenue', enabled: true,
-        current: Math.round(promoMetrics.monthlyRevenue), target,
+        current: Math.round(promoMetrics.monthlyRevenue), priorCurrent: Math.round(priorMetrics.monthlyRevenue), target,
         percent: target > 0 ? Math.min(100, (promoMetrics.monthlyRevenue / target) * 100) : 0,
         weight: nextCriteria.revenue_weight, unit: '/mo',
         gap: Math.max(0, target - promoMetrics.monthlyRevenue),
@@ -368,7 +429,7 @@ export function useLevelProgress(userId: string | undefined) {
       const target = nextCriteria.retail_pct_threshold;
       progress.push({
         key: 'retail', label: 'Retail Attachment', enabled: true,
-        current: Math.round(promoMetrics.retailPct * 10) / 10, target,
+        current: Math.round(promoMetrics.retailPct * 10) / 10, priorCurrent: Math.round(priorMetrics.retailPct * 10) / 10, target,
         percent: target > 0 ? Math.min(100, (promoMetrics.retailPct / target) * 100) : 0,
         weight: nextCriteria.retail_weight, unit: '%',
         gap: Math.max(0, target - promoMetrics.retailPct),
@@ -378,7 +439,7 @@ export function useLevelProgress(userId: string | undefined) {
       const target = nextCriteria.rebooking_pct_threshold;
       progress.push({
         key: 'rebooking', label: 'Rebooking Rate', enabled: true,
-        current: Math.round(promoMetrics.rebookingPct * 10) / 10, target,
+        current: Math.round(promoMetrics.rebookingPct * 10) / 10, priorCurrent: Math.round(priorMetrics.rebookingPct * 10) / 10, target,
         percent: target > 0 ? Math.min(100, (promoMetrics.rebookingPct / target) * 100) : 0,
         weight: nextCriteria.rebooking_weight, unit: '%',
         gap: Math.max(0, target - promoMetrics.rebookingPct),
@@ -388,7 +449,7 @@ export function useLevelProgress(userId: string | undefined) {
       const target = nextCriteria.avg_ticket_threshold;
       progress.push({
         key: 'avg_ticket', label: 'Average Ticket', enabled: true,
-        current: Math.round(promoMetrics.avgTicket), target,
+        current: Math.round(promoMetrics.avgTicket), priorCurrent: Math.round(priorMetrics.avgTicket), target,
         percent: target > 0 ? Math.min(100, (promoMetrics.avgTicket / target) * 100) : 0,
         weight: nextCriteria.avg_ticket_weight, unit: '$',
         gap: Math.max(0, target - promoMetrics.avgTicket),
@@ -398,7 +459,7 @@ export function useLevelProgress(userId: string | undefined) {
       const target = Number(nextCriteria.retention_rate_threshold);
       progress.push({
         key: 'retention_rate', label: 'Client Retention', enabled: true,
-        current: Math.round(promoMetrics.retentionRate * 10) / 10, target,
+        current: Math.round(promoMetrics.retentionRate * 10) / 10, priorCurrent: Math.round(priorMetrics.retentionRate * 10) / 10, target,
         percent: target > 0 ? Math.min(100, (promoMetrics.retentionRate / target) * 100) : 0,
         weight: nextCriteria.retention_rate_weight, unit: '%',
         gap: Math.max(0, target - promoMetrics.retentionRate),
@@ -408,7 +469,7 @@ export function useLevelProgress(userId: string | undefined) {
       const target = Number(nextCriteria.new_clients_threshold);
       progress.push({
         key: 'new_clients', label: 'New Clients', enabled: true,
-        current: Math.round(promoMetrics.newClientsMonthly * 10) / 10, target,
+        current: Math.round(promoMetrics.newClientsMonthly * 10) / 10, priorCurrent: Math.round(priorMetrics.newClientsMonthly * 10) / 10, target,
         percent: target > 0 ? Math.min(100, (promoMetrics.newClientsMonthly / target) * 100) : 0,
         weight: nextCriteria.new_clients_weight, unit: '/mo',
         gap: Math.max(0, target - promoMetrics.newClientsMonthly),
@@ -418,7 +479,7 @@ export function useLevelProgress(userId: string | undefined) {
       const target = Number(nextCriteria.utilization_threshold);
       progress.push({
         key: 'utilization', label: 'Schedule Utilization', enabled: true,
-        current: Math.round(promoMetrics.utilization * 10) / 10, target,
+        current: Math.round(promoMetrics.utilization * 10) / 10, priorCurrent: Math.round(priorMetrics.utilization * 10) / 10, target,
         percent: target > 0 ? Math.min(100, (promoMetrics.utilization / target) * 100) : 0,
         weight: nextCriteria.utilization_weight, unit: '%',
         gap: Math.max(0, target - promoMetrics.utilization),
@@ -428,7 +489,7 @@ export function useLevelProgress(userId: string | undefined) {
       const target = Number(nextCriteria.rev_per_hour_threshold);
       progress.push({
         key: 'rev_per_hour', label: 'Revenue Per Hour', enabled: true,
-        current: Math.round(promoMetrics.revPerHour), target,
+        current: Math.round(promoMetrics.revPerHour), priorCurrent: Math.round(priorMetrics.revPerHour), target,
         percent: target > 0 ? Math.min(100, (promoMetrics.revPerHour / target) * 100) : 0,
         weight: nextCriteria.rev_per_hour_weight, unit: '$/hr',
         gap: Math.max(0, target - promoMetrics.revPerHour),
@@ -438,7 +499,7 @@ export function useLevelProgress(userId: string | undefined) {
       const target = nextCriteria.tenure_days;
       progress.push({
         key: 'tenure', label: 'Tenure', enabled: true,
-        current: tenureDays, target,
+        current: tenureDays, priorCurrent: tenureDays, target,
         percent: target > 0 ? Math.min(100, (tenureDays / target) * 100) : 0,
         weight: 0, unit: 'd',
         gap: Math.max(0, target - tenureDays),
