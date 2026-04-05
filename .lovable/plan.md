@@ -1,156 +1,140 @@
 
 
-# Zura "Wow Factor" — Flagship Product Experience
+# Cinematic Hero + Interactive Demo Architecture
 
-## Experience Concept
+## Current State Assessment
 
-The landing page transforms from a static scroll into a **guided intelligence simulation**. The visitor doesn't read about Zura — they *watch it think*. The page is structured as a narrative arc: chaos → observation → detection → clarity → action. Each section advances this arc using scroll-driven state changes, interactive UI simulations, and progressive reveals that make the system feel alive.
+The foundation is already strong. The Hero has a live DashboardMockup with phase-cycling (Observe→Detect→Act→Pause) and synced narration. The SystemWalkthrough shows Connect→Observe→Detect→Act with auto-advancing tabs. The PersonaExplorer provides interactive problem→solution mapping. The `/demo` page is a lead capture form only — no actual product experience exists.
 
-The emotional journey: confusion → recognition → relief → confidence → action.
+**What's missing:** There is no way for a visitor to *experience* Zura before requesting a demo. The hero mockup is passive (watch-only). There are no guided product simulations. The "See it in action" promise leads to a form, not an experience.
 
 ---
 
-## Section-by-Section Breakdown
-
-### Current Flow vs. New Flow
+## Architecture: Two Layers
 
 ```text
-CURRENT                          NEW
-─────────                        ────
-Hero + static mockup             Hero with live intelligence loop (KEEP, enhance)
-StatBar                          StatBar (KEEP as-is)
-LogoBar                          LogoBar (KEEP as-is)
-ProblemStatement                 Chaos → Clarity Transition (REPLACE)
-SolutionShowcase                 Live System Walkthrough (REPLACE)
-PersonaExplorer                  PersonaExplorer (KEEP, already interactive)
-BuiltByOperators                 BuiltByOperators (KEEP as-is)
-OutcomeMetrics                   OutcomeMetrics (KEEP as-is)
-TestimonialSection               TestimonialSection (KEEP as-is)
-FinalCTA                         FinalCTA (KEEP as-is)
+Layer 1: CINEMATIC HERO (enhanced)
+  → Existing DashboardMockup becomes interactive on hover/click
+  → "See it in action" CTA scrolls to SystemWalkthrough instead of /demo
+  → Hero gains a third CTA: "Try the Demo" → /explore
+
+Layer 2: INTERACTIVE DEMO (/explore)
+  → New route with 3 guided scenario flows
+  → Simulated UI panels (not real data)
+  → Step-through experience with tooltips
+  → Exits to /demo (lead capture) at completion
 ```
 
-Only **2 sections** are rebuilt. Everything else stays. The hero gets a targeted enhancement.
+---
+
+## Section 1: Hero Enhancement — Interactive Mockup
+
+**Current:** DashboardMockup auto-cycles passively. User watches.
+
+**Enhancement:** Make the mockup respond to user interaction.
+- On hover over a KPI tile, pause auto-cycle and show a tooltip explaining the metric
+- Clicking the "APPLY" button in the lever card triggers the act phase manually (satisfying micro-interaction)
+- Add a pulsing "See it in action" anchor link below the narration strip that smooth-scrolls to SystemWalkthrough
+- Replace the secondary "Explore the Platform" CTA with "Try the Interactive Demo" → `/explore`
+
+**Files:** Modify `DashboardMockup.tsx`, `HeroSection.tsx`
 
 ---
 
-### 1. Hero Enhancement — "Sticky Intelligence Loop"
+## Section 2: Interactive Demo Page (`/explore`)
 
-**Current:** DashboardMockup auto-cycles through phases. Works well but feels disconnected from the visitor.
+**New page** — a full-screen guided product simulation with 3 scenario tabs.
 
-**Enhancement:** Add a **text narration strip** below the mockup that syncs with the phase cycle, giving the viewer a guided explanation of what they're watching.
+### Scenario Structure
 
-- `observe` phase → "Zura is watching your business right now."
-- `detect` phase → "A deviation detected. Utilization dropped."
-- `act` phase → "One lever. Clear impact. You decide."
-- `pause` phase → "This is what clarity feels like."
+Each scenario is a 3–5 step guided walkthrough using simulated UI panels.
 
-Implementation: A `<PhaseNarration>` component inside `HeroSection` that reads `phase` from a shared ref/context with `DashboardMockup`. The narration text fades in/out with each phase transition using `AnimatePresence`.
+**Scenario 1: "Your Day in Zura"**
+- Step 1: Simulated daily schedule view (time slots with appointments, 2 visible gaps highlighted in amber)
+- Step 2: Zura detects the gaps, shows a lever card: "Reach out to 3 clients who haven't rebooked"
+- Step 3: User clicks "Apply" → gaps fill with green, revenue counter ticks up
+- Tooltip guidance at each step
 
-**Files:** Modify `DashboardMockup.tsx` (expose phase via callback prop), modify `HeroSection.tsx` (add narration strip)
+**Scenario 2: "Your Team at a Glance"**
+- Step 1: 4 stylist performance cards (utilization %, retention %, revenue) — one visibly underperforming (amber)
+- Step 2: Zura highlights the underperformer, shows context: "Sarah's retention dropped 15% this month"
+- Step 3: Lever card: "Schedule a 1:1 and review her rebooking flow" → card turns green with checkmark
+- Tooltip: "Zura surfaces who needs support — before it becomes a problem"
 
----
+**Scenario 3: "What Needs Attention"**
+- Step 1: Command Center view with 3 priority cards (Margin dip, Stockout risk, Utilization drop)
+- Step 2: Cards rank themselves by impact (animated reorder)
+- Step 3: Top card expands to show lever + projected impact
+- Tooltip: "One screen. Ranked by what matters most."
 
-### 2. NEW: Chaos → Clarity Transition (replaces ProblemStatement)
+### Interaction Model
+- Horizontal scenario tabs at top (pill style, matching SystemWalkthrough)
+- Each scenario has a step indicator (dots or numbered pills)
+- "Next" button advances steps; "Back" goes back
+- Tooltip/highlight layer with pulsing rings on interactive elements
+- At final step of each scenario → "Get a Demo" CTA card slides in
 
-**Purpose:** The emotional pivot of the entire page. Show the visitor their current reality, then transform it.
+### Mobile Adaptation
+- Scenarios stack as full-width cards
+- Step-through uses swipe or tap-to-advance
+- Tooltips become inline callout cards below the simulated UI
+- Simplified simulated panels (fewer columns, stacked layouts)
 
-**Concept:** A split-screen component called `ChaosToClarity`.
-
-**Left side — "Without Zura" (always visible):**
-- A simulated "messy desk" of overlapping cards: a spreadsheet snippet, a text notification, a sticky note, a calendar with gaps — all slightly rotated, overlapping, semi-transparent
-- Feels chaotic, crowded, noisy
-- Muted colors (slate-600, amber warnings)
-
-**Right side — "With Zura" (revealed on scroll):**
-- A clean, single card: one KPI, one lever, one action
-- Calm, violet accent, spacious
-- Appears via a horizontal wipe/reveal triggered by scroll intersection
-
-**Scroll behavior:** When the section enters the viewport, the left side is fully visible. As the user scrolls deeper into the section (using a scroll progress tracker within the section bounds — NOT scroll hijacking), the right side slides in from the right, and the left side dims slightly.
-
-**Mobile adaptation:** Stacks vertically. "Without" on top, "With" slides up from below on scroll.
-
-**Files:** New `src/components/marketing/ChaosToClarity.tsx`
-
----
-
-### 3. NEW: Live System Walkthrough (replaces SolutionShowcase)
-
-**Purpose:** Show Zura working, not describe features.
-
-**Concept:** A tabbed walkthrough called `SystemWalkthrough` with 4 steps, each showing a simulated UI moment.
-
-**Tabs (horizontal pills on desktop, vertical stack on mobile):**
-
-1. **"Connect"** — Animated visualization of data sources flowing in (calendar, POS, team). Simple node-and-line diagram where lines animate with flowing dots (reuse `mkt-connector-line` pattern). Shows: "Your data, unified."
-
-2. **"Observe"** — A mini KPI dashboard (3 tiles) that populates with animated counters when the tab activates. Shows real-looking numbers. Caption: "Continuous monitoring. No manual reports."
-
-3. **"Detect"** — One KPI tile pulses amber (reuse `mkt-pulse-amber`). A lever card slides in from the right. Caption: "Zura found something. Utilization is slipping on Tuesdays."
-
-4. **"Act"** — The lever card shows a green checkmark. The KPI value animates upward. A progress bar fills. Caption: "One decision. Measurable impact."
-
-**Auto-advance:** Tabs auto-advance every 5 seconds with a progress indicator on the active tab. Clicking a tab resets the timer. Pauses on hover (desktop) or tap (mobile).
-
-**Mobile adaptation:** Tabs become a vertical stepper with connecting lines. Each step expands on tap.
-
-**Files:** New `src/components/marketing/SystemWalkthrough.tsx`
+**Files:** New `src/pages/InteractiveDemo.tsx`, new `src/components/marketing/demo/` directory with `DemoScenario.tsx`, `DemoScheduleView.tsx`, `DemoTeamView.tsx`, `DemoCommandView.tsx`, `DemoTooltip.tsx`
 
 ---
 
-### 4. Landing Page Recomposition
+## Section 3: Navigation + Routing
 
-Update `PlatformLanding.tsx` to swap in the new sections:
+- Add `/explore` route to `App.tsx`
+- Add "Try Demo" link to `MarketingNav.tsx` nav links array
+- Update Hero secondary CTA to point to `/explore`
+- Add "Interactive Demo" entry to footer Platform column
 
-```text
-HeroSection (enhanced with phase narration)
-StatBar
-LogoBar
-ChaosToClarity          ← replaces ProblemStatement
-SystemWalkthrough       ← replaces SolutionShowcase
-PersonaExplorer
-BuiltByOperators
-OutcomeMetrics
-TestimonialSection
-FinalCTA
-```
+**Files:** Modify `App.tsx`, `MarketingNav.tsx`, `MarketingFooter.tsx`, `HeroSection.tsx`
 
-**Files:** Modify `src/pages/PlatformLanding.tsx`
+---
+
+## Section 4: Demo Exit → Conversion Bridge
+
+At the end of each scenario flow, render a contextual CTA card:
+- Headline: "This is how {PLATFORM_NAME} works for your salon."
+- Body: "Want to see it with your real data?"
+- Primary CTA: "Get a Demo" → `/demo`
+- Secondary: "Try another scenario" → resets to scenario picker
+- Trust signal: "Join 50+ salon locations"
+
+**File:** New `src/components/marketing/demo/DemoExitCTA.tsx`
 
 ---
 
 ## UI + Motion Direction
 
-All motion follows the existing marketing animation system. No new animation frameworks.
-
 | Element | Duration | Easing | Trigger |
 |---------|----------|--------|---------|
-| Phase narration fade | 400ms | cubic-bezier(0.16, 1, 0.3, 1) | Phase change |
-| Chaos→Clarity wipe | CSS transition 700ms | ease-out | Scroll intersection |
-| Walkthrough tab switch | 300ms | ease-out | Auto-advance / click |
-| Connector flow dots | 3s loop | ease-in-out | Tab active |
-| KPI counter animation | 1000ms | cubic-bezier ease-out | Tab activation |
+| Scenario tab switch | 300ms | ease-out | Click |
+| Step advance | 400ms | cubic-bezier(0.16,1,0.3,1) | Click "Next" |
+| Tooltip appear | 200ms | ease-out | Step activation |
+| Simulated data fill | 800ms | ease-out-cubic | Step trigger |
+| Lever card slide-in | 500ms | ease-out | Step trigger |
+| KPI counter tick | 1000ms | ease-out-quartic | Apply action |
+| Pulsing highlight ring | 2s loop | ease-in-out | Active element |
 
-**Constraints enforced:**
-- No scroll hijacking — all sections use natural document flow
-- No physics-based bounce or elastic effects
-- `prefers-reduced-motion` disables all animations, shows static final states
-- All transitions < 700ms
+All animations respect `prefers-reduced-motion`. No scroll hijacking.
 
 ---
 
-## Responsive Interaction Plan
+## Responsive Plan
 
 | Component | Desktop | Tablet | Mobile |
 |-----------|---------|--------|--------|
-| Phase narration | Below mockup, horizontal text | Same | Same, smaller text |
-| Chaos→Clarity | Side-by-side split | Side-by-side, narrower | Stacked vertically |
-| System Walkthrough tabs | Horizontal pill bar | Horizontal, scrollable | Vertical stepper |
-| Walkthrough simulations | Full-width within tab panel | Same | Simplified, smaller nodes |
-| Connector flow dots | Animated | Animated | Static dots (no animation) |
-| Auto-advance | Pauses on hover | Pauses on hover | Pauses on tap |
-
-All hover-dependent interactions have tap/click equivalents on touch devices.
+| Scenario tabs | Horizontal pills | Horizontal, scrollable | Horizontal, scrollable |
+| Step content | Full panel | Full panel | Stacked, simplified |
+| Tooltips | Floating with arrow | Floating | Inline callout card |
+| Schedule sim | 5-column time grid | 3-column | Single-column list |
+| Team cards | 4-across grid | 2x2 grid | Vertical stack |
+| Command cards | 3-column | 2+1 | Vertical stack |
+| Step nav | Bottom bar with dots | Same | Same, full-width buttons |
 
 ---
 
@@ -158,22 +142,18 @@ All hover-dependent interactions have tap/click equivalents on touch devices.
 
 | File | Action | Purpose |
 |------|--------|---------|
-| `DashboardMockup.tsx` | Modify | Expose `onPhaseChange` callback prop |
-| `HeroSection.tsx` | Modify | Add phase narration strip below mockup |
-| `ChaosToClarity.tsx` | **Create** | Scroll-driven chaos→clarity transition |
-| `SystemWalkthrough.tsx` | **Create** | Tabbed live system walkthrough |
-| `PlatformLanding.tsx` | Modify | Swap ProblemStatement → ChaosToClarity, SolutionShowcase → SystemWalkthrough |
-| `index.css` | Modify | Add `mkt-wipe-reveal` transition class |
+| `DashboardMockup.tsx` | Modify | Add hover pause, click-to-apply interaction |
+| `HeroSection.tsx` | Modify | Update secondary CTA → `/explore`, add scroll anchor |
+| `InteractiveDemo.tsx` | **Create** | New page: guided demo with 3 scenarios |
+| `demo/DemoScenario.tsx` | **Create** | Shared scenario shell (tabs, steps, tooltips) |
+| `demo/DemoScheduleView.tsx` | **Create** | "Your Day" simulated schedule UI |
+| `demo/DemoTeamView.tsx` | **Create** | "Your Team" simulated performance cards |
+| `demo/DemoCommandView.tsx` | **Create** | "What Needs Attention" command center sim |
+| `demo/DemoTooltip.tsx` | **Create** | Guided tooltip/highlight component |
+| `demo/DemoExitCTA.tsx` | **Create** | Conversion CTA at scenario end |
+| `App.tsx` | Modify | Add `/explore` route |
+| `MarketingNav.tsx` | Modify | Add "Try Demo" link |
+| `MarketingFooter.tsx` | Modify | Add "Interactive Demo" to footer |
 
-**2 new files, 4 modified. 0 deleted** (old components remain available for other pages).
-
----
-
-## What This Does NOT Touch
-
-- No changes to tenant/dashboard architecture
-- No changes to navigation, footer, pricing, about, or solution pages
-- No new dependencies — uses existing framer-motion, Lucide icons, and CSS animations
-- PersonaExplorer (already interactive) stays as-is
-- All existing marketing CSS classes remain intact
+**7 new files, 5 modified, 0 deleted.**
 
