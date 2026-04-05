@@ -52,10 +52,10 @@ export function HeroSection() {
           <ArrowRight className="w-4 h-4" />
         </Link>
         <Link
-          to="/product"
+          to="/explore"
           className="inline-flex items-center justify-center gap-2 h-12 px-8 w-full sm:w-auto rounded-full border border-[hsl(var(--mkt-lavender)/0.3)] text-[hsl(var(--mkt-lavender))] hover:border-[hsl(var(--mkt-lavender)/0.5)] hover:bg-[hsl(var(--mkt-lavender)/0.05)] font-sans text-base font-medium transition-all"
         >
-          Explore the Platform
+          Try the Interactive Demo
           <ArrowRight className="w-4 h-4" />
         </Link>
       </div>
