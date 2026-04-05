@@ -1,100 +1,81 @@
 
 
-# Rewrite Landing Page — Problem-Solution Selling for Salon Owners
+# Simplify Language — Replace Jargon with Salon-Owner Terms
 
 ## Diagnosis
-The current page speaks in abstractions: "intelligence architecture," "infrastructure," "observe → compare → detect → recommend." These resonate with architects, not with salon owners who are drowning in spreadsheets, losing stylists, and can't figure out why Tuesday is always dead. The page needs to **name the daily pain**, then show **exactly how each part of the platform fixes it**.
+The page uses terms like "operator," "infrastructure," "intelligence architecture," "commission architecture," "drift detection," "lever," and "structured intelligence" throughout. A solo stylist with 3 chairs won't connect with these words. They think in terms like: "my salon," "my team," "my numbers," "what's working," "what's not." The emotional pain points are strong — but the solution descriptions still read like enterprise software copy.
 
-## Strategy
-Replace the abstract "capabilities" and "intelligence loop" framing with a **problem → solution grid** organized around the real operational categories salon owners think in. Keep the cinematic UI quality. Kill the jargon.
+## Language Swap Map
 
-## Section-by-Section Changes
+| Current Term | Simpler Replacement |
+|---|---|
+| operator(s) | salon owner(s) / owner(s) |
+| infrastructure | system / tools |
+| intelligence | insights |
+| commission architecture | pay structures / commission setup |
+| drift detection | performance tracking / catching problems early |
+| capacity planning | scheduling and coverage tools |
+| delegation tools | management tools |
+| lever / primary lever | next step / what to fix first |
+| structured intelligence | clear answers |
+| service-level margin | profit by service |
+| utilization | chair time / how busy you are |
+| structured onboarding | step-by-step training |
+| ROI attribution | tracking what works |
+| operating domains | areas of your business |
+| multi-market portfolio | multiple locations |
+| operator maturity | where your business is today |
 
-### 1. HeroSection — Keep, Sharpen Subline
-- Headline stays: "Stop Managing. Start Architecting."
-- **Rewrite subline** to be concrete: "Clear data. Actionable insights. Team tools that scale. Built by salon owners who grew from 1 to 12 locations."
-- No structural changes needed.
+## File-by-File Changes
 
-### 2. StatBar — Keep As-Is
-- Already strong.
+### 1. `HeroSection.tsx`
+- "Start Architecting" → "Start Growing" (or "Start Leading")
+- Subline already good — no changes needed
 
-### 3. ProblemStatement — Rewrite Pain Points to Daily Reality
-Replace the 4 abstract pain points with **6 real problems salon owners face every day**:
-- **"Where is my money going?"** — No service-level margin data. You guess at profitability.
-- **"My best stylist just quit."** — No career paths, no transparent comp, no reason to stay.
-- **"I can't step away."** — Every decision runs through you. Vacations are a liability.
-- **"Training is chaos."** — New hires take months. No structured onboarding. No standards.
-- **"Marketing feels random."** — You post, hope, and have no idea what drives bookings.
-- **"I'm scaling blind."** — Revenue grows but you can't tell which location is healthy.
+### 2. `StatBar.tsx`
+- "Trusted by operators scaling real businesses" → "Trusted by salon owners building real businesses"
 
-Keep the split layout (headline left, pain list right). Update the headline to: "You already know the problems. You just don't have the infrastructure to solve them."
+### 3. `ProblemStatement.tsx`
+- "You just don't have the infrastructure to solve them." → "You just don't have the right tools to solve them."
+- "These aren't six separate problems. They're one missing operating system." → "These aren't six separate problems. They're one missing system."
 
-### 4. NEW: SolutionShowcase — Replace FeatureGrid + IntelligencePillars
-Create `src/components/marketing/SolutionShowcase.tsx` — a new section that maps **6 problem categories to 6 platform solutions** in a visual bento grid:
+### 4. `SolutionShowcase.tsx`
+- "Actionable Intelligence" → "Smart Recommendations"
+- "structured infrastructure across six core operating domains" → "one system that covers every part of running your salon"
+- "Weekly briefs that rank your problems by impact and tell you exactly which lever to pull" → "Weekly reports that rank your biggest issues and tell you exactly what to fix first"
+- "commission architecture" → "commission setup"
+- "Drift detection, capacity planning, and delegation tools" → "Performance tracking, scheduling tools, and management systems"
+- "ROI attribution" → "tracking what actually works"
 
-| Problem Category | Solution | Icon |
-|---|---|---|
-| Data & Visibility | Real-time dashboards with service-level margin, revenue, and utilization across every location | BarChart3 |
-| Actionable Intelligence | Weekly briefs that rank problems and tell you exactly which lever to pull | Brain |
-| Team & Talent | Performance tiers, career paths, commission architecture, and retention tracking | Users |
-| Management & Leadership | Drift detection, capacity planning, and delegation tools that free the founder | Shield |
-| Onboarding & Training | Structured onboarding flows, training hubs, and standards enforcement | GraduationCap |
-| Marketing & Growth | Client acquisition, hiring campaigns, and ROI attribution in one system | Megaphone |
+### 5. `PersonaTargeting.tsx`
+- "The Overwhelmed Operator" → "The Overwhelmed Owner"
+- "The Scaling Operator" → "The Growing Owner"
+- "intelligence infrastructure" → "smart tools and clear data"
+- "scales with operator maturity" → "grows with you"
 
-Layout: 3-column bento grid. Top 2 cards span wider (`lg:col-span-2` and `lg:col-span-1` alternating). Each card has icon, problem headline, solution description, and a subtle "Explore →" link.
+### 6. `BuiltByOperators.tsx`
+- Component name stays (internal), but copy:
+  - Section already reads well — minimal changes
+  - "operators stop waiting for software companies" → "salon owners stop waiting for software companies"
 
-This replaces both `FeatureGrid` and `IntelligencePillars` — those were too abstract. This section does the real selling.
+### 7. `OutcomeMetrics.tsx`
+- "Average across multi-location operators" → "Average across multi-location owners"
+- "Saved per operator per week" → "Saved per owner per week"
+- "Results operators are seeing" → "Results salon owners are seeing"
+- "Structured intelligence replaces manual review" → "Clear insights replace hours of manual review"
 
-### 5. PersonaTargeting — Keep, Minor Copy Tweak
-- Change section header from "Where are you in your journey?" to "No matter where you are, we built for you."
-- Descriptions already good.
+### 8. `FinalCTA.tsx`
+- Already clean — no jargon to fix
 
-### 6. BuiltByOperators — Rewrite for Specificity
-- Replace generic narrative with **concrete operational details**: "We managed payroll for 80+ stylists. We tracked margin across 12 locations on spreadsheets. We lost top talent because we couldn't show them a growth path. So we built the system we needed."
-- Keep credibility markers but update: "80+ stylists managed" / "12 locations scaled" / "$8M+ revenue operated" / "Zero outside investors"
+### 9. `TestimonialSection.tsx`
+- Already uses plain language — no changes needed
 
-### 7. OutcomeMetrics — Add a 4th Metric
-- Add: `{ value: 67, suffix: '%', label: 'Faster new-hire ramp', context: 'Structured onboarding replaces tribal knowledge' }`
-- Keeps the section concrete about training/onboarding outcomes.
-
-### 8. TestimonialSection — Rewrite Quotes for Problem Specificity
-- Quote 1: "I used to spend every Monday morning in spreadsheets trying to figure out which location was bleeding margin. Now I open one screen and know exactly what to fix."
-- Quote 2: "We lost three senior stylists in six months before Zura. Once we built transparent career paths and commission tiers, retention flipped."
-- Quote 3: "Our new hires used to take 90 days to get productive. With structured onboarding, we cut that to 30."
-
-### 9. FinalCTA — Rewrite Headline
-- Change to: "Your data has answers. Your team needs structure. Let us show you."
-- Keep the dual-CTA and particle field.
-
-### 10. PlatformLanding.tsx — Updated Section Order
-1. HeroSection
-2. StatBar
-3. ProblemStatement (rewritten)
-4. SolutionShowcase (NEW — replaces FeatureGrid + IntelligencePillars)
-5. PersonaTargeting
-6. BuiltByOperators (rewritten)
-7. OutcomeMetrics (4th metric added)
-8. TestimonialSection (rewritten)
-9. FinalCTA (rewritten)
-
-Remove `IntelligencePillars` and `FeatureGrid` from the page (components remain in codebase for `/product` or `/ecosystem` pages).
-
-## Files to Modify
-- `src/components/marketing/HeroSection.tsx` — subline rewrite
-- `src/components/marketing/ProblemStatement.tsx` — 6 new pain points, new headline
-- `src/components/marketing/PersonaTargeting.tsx` — header copy tweak
-- `src/components/marketing/BuiltByOperators.tsx` — narrative + markers rewrite
-- `src/components/marketing/OutcomeMetrics.tsx` — add 4th metric
-- `src/components/marketing/TestimonialSection.tsx` — rewrite all 3 quotes
-- `src/components/marketing/FinalCTA.tsx` — headline rewrite
-- `src/pages/PlatformLanding.tsx` — reorder, swap in SolutionShowcase
-
-## Files to Create
-- `src/components/marketing/SolutionShowcase.tsx` — 6-category problem-solution bento grid
+### 10. `LogoBar.tsx`
+- "Trusted by operators managing millions" → "Trusted by salon owners managing millions"
 
 ## Technical Notes
-- Reuses all existing patterns: `useScrollReveal`, `mkt-glass`, `mkt-reveal`, brand tokens
-- `IntelligencePillars` and `FeatureGrid` are removed from this page only — not deleted (reusable on `/product` or `/ecosystem`)
-- No new dependencies
-- Mobile-first responsive: bento grid collapses to single column
+- Copy-only changes — no structural, layout, or CSS modifications
+- 8 files modified, zero new files
+- All brand tokens (`PLATFORM_NAME`) remain unchanged
+- Internal code (component names, file names, variable names) stays as-is — only user-facing strings change
 
