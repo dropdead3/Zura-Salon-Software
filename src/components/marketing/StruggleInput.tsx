@@ -308,15 +308,26 @@ export function StruggleInput() {
         ) : (
           <>
             <div className="relative">
+              {/* Animated typing placeholder */}
+              {showAnimatedPlaceholder && (
+                <div
+                  className="absolute inset-0 pointer-events-none font-sans text-lg text-slate-500 whitespace-pre-wrap py-[2px]"
+                  aria-hidden="true"
+                >
+                  {placeholderText}
+                  <span className="animate-pulse">|</span>
+                </div>
+              )}
               <textarea
                 ref={textareaRef}
                 value={query}
                 onChange={(e) => setQuery(e.target.value.slice(0, MAX_CHARS))}
                 onKeyDown={handleKeyDown}
-                placeholder="I'm struggling with..."
+                onFocus={() => setIsFocused(true)}
+                onBlur={() => setIsFocused(false)}
                 disabled={isLoading}
                 aria-label="Describe your salon challenge"
-                className="w-full bg-transparent border-0 resize-none text-white placeholder:text-slate-500 font-sans text-lg focus:outline-none min-h-[80px] disabled:opacity-50"
+                className="w-full bg-transparent border-0 resize-none text-white font-sans text-lg focus:outline-none min-h-[80px] disabled:opacity-50 relative z-10"
                 rows={3}
               />
               <div className="flex items-center justify-between mt-2">
