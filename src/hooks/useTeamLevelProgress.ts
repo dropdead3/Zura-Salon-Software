@@ -257,6 +257,9 @@ export function useTeamLevelProgress() {
         if (retCriteria.new_clients_enabled && retMetrics.newClientsMonthly < Number(retCriteria.new_clients_minimum)) {
           retentionFailures.push({ key: 'new_clients', label: 'New Clients', current: Math.round(retMetrics.newClientsMonthly * 10) / 10, minimum: Number(retCriteria.new_clients_minimum), unit: '/mo' });
         }
+        if (retCriteria.utilization_enabled && retMetrics.utilization < Number(retCriteria.utilization_minimum)) {
+          retentionFailures.push({ key: 'utilization', label: 'Schedule Utilization', current: Math.round(retMetrics.utilization * 10) / 10, minimum: Number(retCriteria.utilization_minimum), unit: '%' });
+        }
       }
 
       if (isTopLevel) {
@@ -363,6 +366,16 @@ export function useTeamLevelProgress() {
           percent: target > 0 ? Math.min(100, (promoMetrics.newClientsMonthly / target) * 100) : 0,
           weight: criteria.new_clients_weight, unit: '/mo',
           gap: Math.max(0, target - promoMetrics.newClientsMonthly),
+        });
+      }
+      if (criteria.utilization_enabled) {
+        const target = Number(criteria.utilization_threshold);
+        progress.push({
+          key: 'utilization', label: 'Schedule Utilization', enabled: true,
+          current: Math.round(promoMetrics.utilization * 10) / 10, target,
+          percent: target > 0 ? Math.min(100, (promoMetrics.utilization / target) * 100) : 0,
+          weight: criteria.utilization_weight, unit: '%',
+          gap: Math.max(0, target - promoMetrics.utilization),
         });
       }
       if (criteria.tenure_enabled) {
