@@ -1,31 +1,45 @@
 
 
-# Add Zura Color Bar Suggestions to Struggle Input
+# Improve ChaosToClarity Section — Better Visibility and More Chaos Items
 
 ## Problem
 
-The current suggestion pills are generic salon management pain points. None specifically reference the **Zura Color Bar** app — a core product with its own mixing station, inventory tracking, waste analytics, and cost-per-service intelligence.
+The "chaos" side is too dark and low-contrast — the cards blend into the background making the content hard to read. The section also needs more relatable salon problems (without Zura branding).
 
 ## Changes
 
-### `src/components/marketing/StruggleInput.tsx`
+### `src/components/marketing/ChaosToClarity.tsx`
 
-Add 4 Color Bar-specific suggestions to the `SUGGESTIONS` array:
+**1. Visual improvements to chaos side**
+- Increase card background opacity: `bg-slate-800/70` instead of `bg-slate-900/80`
+- Bump border contrast: `border-white/[0.12]` instead of `0.08`
+- Increase text brightness: `text-slate-300` instead of `text-slate-400` for labels
+- Increase container background: `bg-white/[0.04]` instead of `0.02`
+- Make noise dots brighter or remove them (they add visual noise without value)
 
-1. "I'm losing money on color and don't know how much"
-2. "I need to track exactly how much product goes on each head"
-3. "My stylists waste too much color"
-4. "I want to know my true cost per color service"
+**2. Expand chaos cards from 6 to 10+**
 
-These complement the existing "I need to track color bar costs per service" entry (already present) and speak directly to the Color Bar app's value props: waste reduction, per-service cost tracking, and margin visibility.
+Add more real operator pain-point items:
 
-The typing animation cycles through all suggestions; the pill subset (5 shown) is randomly selected on mount, so Color Bar entries will naturally surface.
+| Icon | Label | Color |
+|------|-------|-------|
+| Clock | "Where did my 2pm cancel go?" | slate-400 |
+| DollarSign | "Commission math doesn't add up" | red-400 |
+| Users | "3rd no-call no-show this month" | amber-400 |
+| ShoppingBag | "Who ordered more Redken?" | slate-400 |
+| Phone | "Missed 4 calls while cutting" | amber-500 |
+
+These are all generic salon operator frustrations — no Zura references.
+
+**3. Adjust card positioning**
+
+Redistribute positions across the container to accommodate the additional cards without overlap, using a tighter grid of `x`/`y` percentages and varied rotations.
 
 ## File Changes
 
 | File | Action |
 |------|--------|
-| `src/components/marketing/StruggleInput.tsx` | **Modify** — add 4 Color Bar-specific strings to `SUGGESTIONS` array |
+| `src/components/marketing/ChaosToClarity.tsx` | **Modify** — brighten card styles, expand `chaosCards` array with 5 new entries, reposition all cards |
 
 **1 file modified.**
 
