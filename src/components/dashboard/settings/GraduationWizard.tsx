@@ -76,6 +76,8 @@ interface FormState {
   new_clients_threshold: number;
   utilization_enabled: boolean;
   utilization_threshold: number;
+  rev_per_hour_enabled: boolean;
+  rev_per_hour_threshold: number;
   tenure_enabled: boolean;
   tenure_days: number;
   revenue_weight: number;
@@ -85,6 +87,7 @@ interface FormState {
   retention_rate_weight: number;
   new_clients_weight: number;
   utilization_weight: number;
+  rev_per_hour_weight: number;
   evaluation_window_days: number;
   requires_manual_approval: boolean;
 }
@@ -105,6 +108,8 @@ interface RetentionFormState {
   new_clients_minimum: number;
   utilization_enabled: boolean;
   utilization_minimum: number;
+  rev_per_hour_enabled: boolean;
+  rev_per_hour_minimum: number;
   evaluation_window_days: number;
   grace_period_days: number;
   action_type: 'coaching_flag' | 'demotion_eligible';
