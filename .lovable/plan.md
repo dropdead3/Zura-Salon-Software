@@ -1,44 +1,37 @@
 
 
-# Floating Glass Morphism Nav Bar
+# Hide-on-Scroll Nav + Bottom Sticky CTA Bar
 
-## Concept
+## Behavior
 
-Replace the current full-width fixed header with a **floating pill-shaped nav bar** centered at the top of the viewport — inspired by the Nudge reference. The bar floats with margin from the edges, has a rounded-full shape, and uses a glass morphism effect (translucent background + backdrop blur + subtle border).
+1. **Top nav**: Visible on page load. Hides when scrolling down. Re-appears (slides down) when scrolling up. Uses scroll direction detection with a small threshold to avoid jitter.
+2. **Bottom sticky bar**: Appears only when the top nav is hidden (i.e., user has scrolled down past hero). Shows "Ready for a better salon software? Book A Demo >" as a full-width bottom bar. Hides when top nav reappears on scroll-up.
 
 ## Design
 
-```text
-          ┌─────────────────────────────────────────────────────┐
-          │ [Logo]     Solutions  Ecosystem  Pricing  ...  [CTA]│
-          └─────────────────────────────────────────────────────┘
-```
+**Top nav** (existing floating pill) -- add `translate-y` animation:
+- Visible: `translateY(0)`, `opacity: 1`
+- Hidden: `translateY(-100%)`, `opacity: 0`
+- Smooth `transition-transform duration-300`
 
-- **Shape**: `rounded-full` pill with horizontal padding
-- **Positioning**: `fixed top-4 left-4 right-4` (or centered with `max-w-5xl mx-auto`) so it floats away from edges
-- **Glass effect**: `bg-white/[0.05] backdrop-blur-xl border border-white/[0.08]` — translucent dark glass
-- **Shadow**: Subtle `shadow-lg shadow-black/20` for depth
-- **On scroll**: Slightly increase background opacity (`bg-white/[0.08]`) for better contrast over content
-- **Transition**: Smooth `transition-all duration-300` between states
+**Bottom bar**:
+- Fixed bottom-0, full width, glass morphism (`bg-white/[0.06] backdrop-blur-xl border-t border-white/[0.08]`)
+- Content: left-aligned text "Ready for a better salon software?" + right-aligned "Book A Demo" link with `ArrowRight` icon, violet gradient pill
+- Slides up from bottom with `framer-motion` AnimatePresence
+- Height: `py-3 px-6`, compact
 
-## Changes
+## Scroll Logic
 
-### MarketingNav.tsx
-- Wrap the `<nav>` in a container div that is `fixed top-4 left-1/2 -translate-x-1/2 max-w-5xl w-[calc(100%-2rem)]`
-- Apply `rounded-full` + glass morphism classes to the nav container itself
-- Remove old full-width header background logic
-- Keep all existing nav links, Solutions mega menu, CTAs, and mobile menu intact
-- Mobile menu origin adjusts to account for the floating bar position
-
-### MarketingLayout.tsx
-- Reduce `pt-20` to `pt-24` to account for the floating bar's top offset
+Track `lastScrollY` and `scrollDirection`. On each scroll event:
+- If `scrollY > lastScrollY + 5` (scrolling down) and past hero (~400px): hide nav, show bottom bar
+- If `scrollY < lastScrollY - 5` (scrolling up): show nav, hide bottom bar
+- If near top (`scrollY < 100`): always show nav, hide bottom bar
 
 ## File Changes
 
 | File | Action |
 |------|--------|
-| `src/components/marketing/MarketingNav.tsx` | **Modify** — floating pill layout with glass morphism |
-| `src/components/marketing/MarketingLayout.tsx` | **Modify** — adjust top padding |
+| `src/components/marketing/MarketingNav.tsx` | **Modify** -- add scroll-direction detection, conditional `translateY` hide/show, and bottom sticky CTA bar with AnimatePresence |
 
-**2 files modified.**
+**1 file modified.**
 
