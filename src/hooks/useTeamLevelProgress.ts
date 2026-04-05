@@ -40,6 +40,9 @@ export interface TeamMemberProgress {
   retentionGracePeriodDays: number;
   // Informational context
   noShowRate: number | null;
+  // Time at current level
+  timeAtLevelDays: number;
+  levelSince: string | null;
 }
 
 export function useTeamLevelProgress() {
@@ -121,7 +124,7 @@ export function useTeamLevelProgress() {
       while (hasMore) {
         const { data, error } = await supabase
           .from('appointments')
-          .select('staff_user_id, total_price, rebooked_at_checkout, appointment_date, status, is_new_client, duration_minutes')
+          .select('staff_user_id, total_price, rebooked_at_checkout, appointment_date, status, is_new_client, duration_minutes, client_id')
           .in('staff_user_id', userIds)
           .gte('appointment_date', startStr)
           .lte('appointment_date', endStr)
@@ -148,6 +151,22 @@ export function useTeamLevelProgress() {
         .in('user_id', userIds)
         .gte('shift_date', startStr)
         .lte('shift_date', endStr);
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!orgId && userIds.length > 0,
+  });
+  // Batch fetch latest level_promotions per user for time-at-level
+  const { data: allLevelPromotions = [] } = useQuery({
+    queryKey: ['team-graduation-level-promotions', orgId, userIds.length],
+    queryFn: async () => {
+      if (userIds.length === 0) return [];
+      const { data, error } = await supabase
+        .from('level_promotions')
+        .select('user_id, promoted_at')
+        .eq('organization_id', orgId!)
+        .in('user_id', userIds)
+        .order('promoted_at', { ascending: false });
       if (error) throw error;
       return data || [];
     },
@@ -200,8 +219,23 @@ export function useTeamLevelProgress() {
         // New clients count (normalized to monthly)
         const newClients = completedAppts.filter((a: any) => a.is_new_client === true).length;
         const newClientsMonthly = evalDays > 0 ? (newClients / evalDays) * 30 : 0;
-        // Retention rate placeholder — use rebooking as proxy for now
-        const retentionRate = rebookingPct;
+        // True client retention rate: compare unique clients in prior window vs current window
+        const priorStart = format(subDays(new Date(), evalDays * 2), 'yyyy-MM-dd');
+        const allUserApptsFull = allApptData.filter(
+          (a: any) => a.staff_user_id === profile.user_id && a.status !== 'no_show' && a.status !== 'cancelled'
+        );
+        const priorClients = new Set(
+          allUserApptsFull
+            .filter((a: any) => a.appointment_date >= priorStart && a.appointment_date < evalStart && a.client_id)
+            .map((a: any) => a.client_id)
+        );
+        const currentClients = new Set(
+          allUserApptsFull
+            .filter((a: any) => a.appointment_date >= evalStart && a.client_id)
+            .map((a: any) => a.client_id)
+        );
+        const returningCount = [...currentClients].filter(id => priorClients.has(id)).length;
+        const retentionRate = priorClients.size > 0 ? (returningCount / priorClients.size) * 100 : 0;
 
         // Utilization calculation
         const userShifts = allShiftData.filter(
@@ -233,6 +267,13 @@ export function useTeamLevelProgress() {
 
         return { monthlyRevenue, retailPct, rebookingPct, avgTicket, newClientsMonthly, retentionRate, utilization, revPerHour };
       };
+
+      // Compute time at current level
+      const latestPromo = allLevelPromotions.find((p: any) => p.user_id === profile.user_id);
+      const levelSince = latestPromo?.promoted_at || profile.hire_date || null;
+      const timeAtLevelDays = levelSince
+        ? Math.max(0, Math.floor((Date.now() - new Date(levelSince).getTime()) / (1000 * 60 * 60 * 24)))
+        : 0;
 
       // Compute no-show rate (informational, uses full window)
       const allUserAppts = allApptData.filter(a => a.staff_user_id === profile.user_id);
@@ -284,6 +325,7 @@ export function useTeamLevelProgress() {
           retentionActionType: retCriteria?.action_type || null,
           retentionGracePeriodDays: retCriteria?.grace_period_days || 0,
           noShowRate,
+          timeAtLevelDays, levelSince,
         };
       }
 
@@ -302,6 +344,7 @@ export function useTeamLevelProgress() {
           retentionActionType: retCriteria?.action_type || null,
           retentionGracePeriodDays: retCriteria?.grace_period_days || 0,
           noShowRate,
+          timeAtLevelDays, levelSince,
         };
       }
 
@@ -436,6 +479,7 @@ export function useTeamLevelProgress() {
         retentionActionType: retCriteria?.action_type || null,
         retentionGracePeriodDays: retCriteria?.grace_period_days || 0,
         noShowRate,
+        timeAtLevelDays, levelSince,
       };
     }).sort((a, b) => {
       const statusOrder: Record<GraduationStatus, number> = {
@@ -445,7 +489,7 @@ export function useTeamLevelProgress() {
       if (diff !== 0) return diff;
       return b.compositeScore - a.compositeScore;
     });
-  }, [profiles, allLevels, allCriteria, allRetention, allSalesData, allApptData, allShiftData]);
+  }, [profiles, allLevels, allCriteria, allRetention, allSalesData, allApptData, allShiftData, allLevelPromotions]);
 
   const counts = useMemo(() => {
     const ready = teamProgress.filter(t => t.status === 'ready').length;

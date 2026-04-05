@@ -8,6 +8,7 @@ interface DemoteLevelParams {
   userId: string;
   fromLevelSlug: string;
   toLevelSlug: string;
+  notes?: string;
 }
 
 export function useDemoteLevel() {
@@ -17,7 +18,7 @@ export function useDemoteLevel() {
   const orgId = effectiveOrganization?.id;
 
   return useMutation({
-    mutationFn: async ({ userId, fromLevelSlug, toLevelSlug }: DemoteLevelParams) => {
+    mutationFn: async ({ userId, fromLevelSlug, toLevelSlug, notes }: DemoteLevelParams) => {
       if (!orgId || !user?.id) throw new Error('Missing organization or user context');
 
       // 1. Update the employee's stylist_level
@@ -39,6 +40,7 @@ export function useDemoteLevel() {
           to_level: toLevelSlug,
           promoted_by: user.id,
           direction: 'demotion',
+          ...(notes ? { notes } : {}),
         });
 
       if (auditError) throw auditError;

@@ -261,8 +261,13 @@ function ApprovePromotionButton({ member }: { member: TeamMemberProgress }) {
 
 function DemoteLevelButton({ member, allLevels }: { member: TeamMemberProgress; allLevels: StylistLevel[] }) {
   const demoteLevel = useDemoteLevel();
+  const [demoteNotes, setDemoteNotes] = useState('');
 
-  if (member.status !== 'below_standard' || !member.currentLevel || member.currentLevelIndex <= 0) return null;
+  // Show for below_standard OR at_risk with demotion_eligible action type
+  const showDemote = (member.status === 'below_standard' || (member.status === 'at_risk' && member.retentionActionType === 'demotion_eligible'))
+    && member.currentLevel && member.currentLevelIndex > 0;
+
+  if (!showDemote) return null;
 
   const previousLevel = allLevels[member.currentLevelIndex - 1];
   if (!previousLevel) return null;
@@ -280,13 +285,21 @@ function DemoteLevelButton({ member, allLevels }: { member: TeamMemberProgress; 
           <AlertDialogTitle>Confirm Demotion</AlertDialogTitle>
           <AlertDialogDescription>
             Demote <span className="font-medium text-foreground">{member.fullName}</span> from{' '}
-            <span className="font-medium text-foreground">{member.currentLevel.label}</span> to{' '}
+            <span className="font-medium text-foreground">{member.currentLevel!.label}</span> to{' '}
             <span className="font-medium text-foreground">{previousLevel.label}</span>?
             This will immediately update their level and is recorded in the audit trail.
           </AlertDialogDescription>
         </AlertDialogHeader>
+        <div className="py-2">
+          <Textarea
+            value={demoteNotes}
+            onChange={(e) => setDemoteNotes(e.target.value)}
+            placeholder="Reason for demotion (optional)..."
+            className="min-h-[60px] resize-none"
+          />
+        </div>
         <AlertDialogFooter>
-          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogCancel onClick={() => setDemoteNotes('')}>Cancel</AlertDialogCancel>
           <AlertDialogAction
             className="bg-destructive hover:bg-destructive/90"
             onClick={() => {
@@ -294,7 +307,9 @@ function DemoteLevelButton({ member, allLevels }: { member: TeamMemberProgress; 
                 userId: member.userId,
                 fromLevelSlug: member.currentLevel!.slug,
                 toLevelSlug: previousLevel.slug,
+                notes: demoteNotes.trim() || undefined,
               });
+              setDemoteNotes('');
             }}
             disabled={demoteLevel.isPending}
           >
@@ -380,6 +395,11 @@ function StylistProgressRow({ member, totalLevels, promotions, allLevels }: { me
               <span className="flex items-center gap-1 text-[10px] text-muted-foreground">
                 <ArrowRight className="w-3 h-3" />
                 {member.nextLevel.label}
+              </span>
+            )}
+            {member.timeAtLevelDays > 0 && (
+              <span className="text-[10px] text-muted-foreground bg-muted/50 px-1.5 py-0.5 rounded">
+                {member.timeAtLevelDays}d at level
               </span>
             )}
           </div>
@@ -764,6 +784,59 @@ function RequirementsManager() {
   );
 }
 
+/* ─── Org-Wide Promotion History Tab ────────────────────── */
+
+function OrgPromotionHistoryTab({ promotions }: { promotions: PromotionRecord[] }) {
+  const { formatDate } = useFormatDate();
+
+  if (promotions.length === 0) {
+    return (
+      <div className={tokens.empty.container}>
+        <History className={tokens.empty.icon} />
+        <h3 className={tokens.empty.heading}>No promotion or demotion history</h3>
+        <p className={tokens.empty.description}>Level changes will appear here once recorded.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-3">
+      {promotions.map(p => {
+        const isDemotion = p.direction === 'demotion';
+        return (
+          <div key={p.id} className="flex items-center gap-4 p-4 rounded-xl border bg-card/50">
+            <div className={cn('w-2 h-2 rounded-full shrink-0', isDemotion ? 'bg-rose-500' : 'bg-emerald-500')} />
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="font-medium text-sm">{p.user_name || 'Unknown'}</span>
+                <span className="text-xs text-muted-foreground">{p.from_level}</span>
+                <ArrowRight className={cn('w-3 h-3', isDemotion ? 'text-rose-500' : 'text-emerald-500')} />
+                <span className="text-xs text-foreground">{p.to_level}</span>
+                {isDemotion && (
+                  <Badge variant="outline" className="text-[10px] border-rose-200 text-rose-600 dark:border-rose-800 dark:text-rose-400">
+                    Demotion
+                  </Badge>
+                )}
+              </div>
+              {p.notes && (
+                <p className="text-xs text-muted-foreground mt-1 italic">{p.notes}</p>
+              )}
+            </div>
+            <div className="text-right shrink-0">
+              <div className="text-xs text-muted-foreground">
+                {formatDate(new Date(p.promoted_at), 'MMM d, yyyy')}
+              </div>
+              <div className="text-[10px] text-muted-foreground">
+                by {p.promoter_name}
+              </div>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 /* ─── Main Page ─────────────────────────────────────────── */
 
 export default function GraduationTracker() {
@@ -881,6 +954,13 @@ export default function GraduationTracker() {
               <Sparkles className="h-4 w-4 mr-2" />
               Requirements
             </TabsTrigger>
+            <TabsTrigger value="history">
+              <History className="h-4 w-4 mr-2" />
+              History
+              {promotions.length > 0 && (
+                <Badge variant="secondary" className="ml-2 text-xs">{promotions.length}</Badge>
+              )}
+            </TabsTrigger>
           </TabsList>
 
           {/* Tab: All Stylists */}
@@ -959,6 +1039,10 @@ export default function GraduationTracker() {
           {/* Tab: Requirements */}
           <TabsContent value="requirements" className="mt-6">
             <RequirementsManager />
+          </TabsContent>
+          {/* Tab: History */}
+          <TabsContent value="history" className="mt-6">
+            <OrgPromotionHistoryTab promotions={promotions} />
           </TabsContent>
         </Tabs>
       </div>

@@ -12,6 +12,8 @@ export interface PromotionRecord {
   created_at: string;
   direction?: string;
   promoter_name?: string;
+  notes?: string | null;
+  user_name?: string;
 }
 
 export function usePromotionHistory(userId?: string) {
@@ -34,24 +36,25 @@ export function usePromotionHistory(userId?: string) {
       const { data, error } = await query;
       if (error) throw error;
 
-      // Fetch promoter names
-      const promoterIds = [...new Set((data || []).map(d => d.promoted_by))];
-      let promoterMap: Record<string, string> = {};
+      // Fetch promoter names and user names
+      const allUserIds = [...new Set((data || []).flatMap(d => [d.promoted_by, d.user_id]))];
+      let nameMap: Record<string, string> = {};
 
-      if (promoterIds.length > 0) {
+      if (allUserIds.length > 0) {
         const { data: profiles } = await supabase
           .from('employee_profiles')
           .select('user_id, full_name')
-          .in('user_id', promoterIds);
+          .in('user_id', allUserIds);
 
         if (profiles) {
-          promoterMap = Object.fromEntries(profiles.map(p => [p.user_id, p.full_name]));
+          nameMap = Object.fromEntries(profiles.map(p => [p.user_id, p.full_name]));
         }
       }
 
       return (data || []).map(d => ({
         ...d,
-        promoter_name: promoterMap[d.promoted_by] || 'Unknown',
+        promoter_name: nameMap[d.promoted_by] || 'Unknown',
+        user_name: nameMap[d.user_id] || 'Unknown',
       })) as PromotionRecord[];
     },
     enabled: !!orgId,
