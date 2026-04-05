@@ -255,13 +255,47 @@ function ApprovePromotionButton({ member }: { member: TeamMemberProgress }) {
   );
 }
 
+/* ─── Promotion History Row ─────────────────────────────── */
+
+function PromotionHistorySection({ userId, promotions }: { userId: string; promotions: PromotionRecord[] }) {
+  const { formatDate } = useFormatDate();
+  const userPromotions = promotions.filter(p => p.user_id === userId);
+
+  if (userPromotions.length === 0) return null;
+
+  return (
+    <div className="p-3 rounded-lg border bg-card/30 space-y-2">
+      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+        <History className="w-3.5 h-3.5" />
+        <span className="font-medium">Promotion History</span>
+      </div>
+      {userPromotions.map(p => (
+        <div key={p.id} className="flex items-center justify-between text-xs">
+          <span>
+            <span className="text-muted-foreground">{p.from_level}</span>
+            <ArrowRight className="w-3 h-3 inline mx-1" />
+            <span className="text-foreground">{p.to_level}</span>
+          </span>
+          <span className="text-muted-foreground">
+            {formatDate(new Date(p.promoted_at), 'MMM d, yyyy')} — by {p.promoter_name}
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 /* ─── Stylist Progress Row ──────────────────────────────── */
 
-function StylistProgressRow({ member, totalLevels }: { member: TeamMemberProgress; totalLevels: number }) {
+function StylistProgressRow({ member, totalLevels, promotions }: { member: TeamMemberProgress; totalLevels: number; promotions: PromotionRecord[] }) {
   const [isExpanded, setIsExpanded] = useState(false);
+  const { dashPath } = useOrgDashboardPath();
   const levelColor = member.currentLevel
     ? getLevelColor(member.currentLevelIndex, totalLevels)
     : null;
+
+  const isAtRisk = member.status === 'at_risk' || member.status === 'below_standard';
+  const hasExpandableContent = member.criteriaProgress.length > 0 || member.retentionFailures.length > 0;
 
   return (
     <Collapsible open={isExpanded} onOpenChange={setIsExpanded}>
@@ -273,7 +307,12 @@ function StylistProgressRow({ member, totalLevels }: { member: TeamMemberProgres
 
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="font-medium text-sm">{member.fullName}</span>
+            <Link
+              to={dashPath(`/admin/reports/staff/${member.userId}`)}
+              className="font-medium text-sm hover:text-primary transition-colors hover:underline"
+            >
+              {member.fullName}
+            </Link>
             {levelColor && member.currentLevel && (
               <Badge variant="secondary" className={cn('text-[10px]', levelColor.bg, levelColor.text)}>
                 {member.currentLevel.label}
@@ -287,7 +326,7 @@ function StylistProgressRow({ member, totalLevels }: { member: TeamMemberProgres
             )}
           </div>
 
-          {member.status !== 'at_top_level' && member.status !== 'no_criteria' && member.status !== 'at_risk' && member.status !== 'below_standard' && (
+          {member.status !== 'at_top_level' && member.status !== 'no_criteria' && !isAtRisk && (
             <div className="flex items-center gap-3 mt-1.5">
               <Progress
                 value={member.compositeScore}
@@ -312,9 +351,26 @@ function StylistProgressRow({ member, totalLevels }: { member: TeamMemberProgres
         </div>
 
         <div className="flex items-center gap-2">
+          {/* Action links for at-risk members */}
+          {isAtRisk && (
+            <>
+              <Button variant="ghost" size="sm" className="text-xs gap-1 h-7" asChild>
+                <Link to={dashPath(`/admin/reports/staff/${member.userId}`)}>
+                  <FileText className="w-3 h-3" />
+                  Report
+                </Link>
+              </Button>
+              <Button variant="ghost" size="sm" className="text-xs gap-1 h-7" asChild>
+                <Link to={dashPath('/coaching/meetings')}>
+                  <Calendar className="w-3 h-3" />
+                  Schedule 1:1
+                </Link>
+              </Button>
+            </>
+          )}
           {member.isFullyQualified && <ApprovePromotionButton member={member} />}
           <StatusBadge status={member.status} />
-          {member.criteriaProgress.length > 0 && (
+          {hasExpandableContent && (
             <CollapsibleTrigger asChild>
               <Button variant="ghost" size="icon" className="h-8 w-8">
                 <ChevronDown className={cn('h-4 w-4 transition-transform', isExpanded && 'rotate-180')} />
@@ -367,6 +423,9 @@ function StylistProgressRow({ member, totalLevels }: { member: TeamMemberProgres
             </div>
           </div>
         )}
+
+        {/* Promotion history */}
+        <PromotionHistorySection userId={member.userId} promotions={promotions} />
       </CollapsibleContent>
     </Collapsible>
   );
