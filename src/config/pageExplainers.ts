@@ -457,8 +457,8 @@ export const PAGE_EXPLAINERS: Record<string, PageExplainerEntry> = {
     icon: GraduationCap,
   },
   'graduation-tracker': {
-    title: 'Graduation Tracking',
-    description: 'Monitor assistant-to-stylist graduation progress across your team. Track requirements, mentorship hours, and readiness assessments.',
+    title: 'Graduation Tracker',
+    description: 'Track team-wide level progression, identify who is ready for promotion, and manage assistant graduation checklists — all in one place.',
     icon: GraduationCap,
   },
   'booth-renters': {
