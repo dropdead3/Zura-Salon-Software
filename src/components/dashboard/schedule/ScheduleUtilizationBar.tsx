@@ -80,7 +80,7 @@ export function ScheduleUtilizationBar({
     const revenuePotential = openSlots * (averageServicePrice / 2); // rough half-service estimate
 
     return { fillRate, gapCount, revenuePotential, bookedMinutes, availableMinutes };
-  }, [appointments, dateStr, stylistCount, hoursStart, hoursEnd, averageServicePrice]);
+  }, [appointments, dateStr, effectiveStylistCount, hoursStart, hoursEnd, averageServicePrice]);
 
   return (
     <div className="bg-muted/40 border border-border/50 rounded-lg px-4 py-2.5 flex items-center gap-6">
