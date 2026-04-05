@@ -1,27 +1,38 @@
 
 
-# Fix StruggleInput Theme Contamination
+# Dynamic Typing Placeholder for StruggleInput
 
 ## Problem
 
-`StruggleInput.tsx` uses semantic theme tokens (`text-foreground`, `text-muted-foreground`, `prose-invert`) that resolve to the active tenant theme instead of the marketing page's hardcoded dark palette. Every other marketing component uses explicit slate/white/violet colors.
+The textarea uses a static placeholder ("I'm struggling with..."). The user wants the SUGGESTIONS array to cycle through as animated typing text inside the textarea — like a typewriter effect showing example problems before the user starts typing.
 
-## Changes — `src/components/marketing/StruggleInput.tsx`
+## Approach
 
-Replace all semantic tokens with marketing-surface colors:
+Add a custom typing animation hook that cycles through the SUGGESTIONS array, typing each one character by character, pausing, then deleting and moving to the next. This replaces the static `placeholder` attribute.
 
-| Current (broken) | Replacement |
-|---|---|
-| `text-foreground` (headings, feature names, strong text) | `text-white` |
-| `text-muted-foreground` (body, descriptions, char counter) | `text-slate-400` |
-| `text-muted-foreground/50` (placeholder) | `text-slate-500` |
-| `text-muted-foreground/40` (char counter) | `text-slate-600` |
-| `text-red-300` (error) | `text-red-300` (already fine) |
-| `text-violet-400` (category labels, links) | `text-violet-400` (already fine) |
-| `hover:text-foreground` (pills, reset) | `hover:text-white` |
-| `prose-invert` on response container | Keep, but override `[&_p]:text-slate-400 [&_strong]:text-white [&_li]:text-slate-400` |
+### Typing Animation Logic
 
-All other marketing styles (glass cards `bg-white/[0.04]`, borders `border-white/[0.08]`, violet gradients) are already correct and match the marketing surface.
+- When `query` is empty and textarea is not focused, show animated placeholder text
+- Cycle through SUGGESTIONS with: type in (40ms/char) → pause (2s) → delete (25ms/char) → pause (300ms) → next
+- When user focuses the textarea or starts typing, immediately hide the animated text and show real input
+- Use a `useEffect` with `setInterval`/`setTimeout` to drive the animation loop
 
-**1 file modified. 0 new. 0 deleted.**
+### Implementation Details
+
+1. **New state**: `placeholderText` (the currently visible animated string), `isTyping` (animation active flag), `isFocused`
+2. **Animation effect**: Runs only when `query === ''` and `!isFocused` — types/deletes through SUGGESTIONS in a loop
+3. **Render**: When `query` is empty and animation is active, render the animated text as a positioned overlay `<span>` inside the textarea container (not as the native `placeholder` attr, since we need character-by-character control)
+4. **Styling**: The animated text uses `text-slate-500` (same as current placeholder) with a blinking cursor character `|` appended
+
+### Visual Result
+
+The textarea appears to type out: `With my current salon software, I cannot adjust commission rates per level...` then erases, then types the next suggestion — exactly like the screenshot reference.
+
+## File Changes
+
+| File | Action |
+|------|--------|
+| `src/components/marketing/StruggleInput.tsx` | **Modify** — add typing animation effect, overlay span, focus handling |
+
+**1 file modified.**
 
