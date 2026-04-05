@@ -582,6 +582,21 @@ export function StruggleInput() {
                   </Link>
                 </div>
               )}
+
+              {/* Auto-collapse countdown bar */}
+              {collapseActive && !isLoading && (
+                <div className="relative h-0.5 w-full rounded-full bg-white/[0.06] overflow-hidden mt-1">
+                  <motion.div
+                    className="absolute inset-y-0 left-0 bg-violet-500/40 rounded-full"
+                    initial={{ width: '100%' }}
+                    animate={{ width: isHoveringResponse ? undefined : '0%' }}
+                    transition={{
+                      duration: isHoveringResponse ? 0 : remainingRef.current / 1000,
+                      ease: 'linear',
+                    }}
+                  />
+                </div>
+              )}
             </div>
           </motion.div>
         )}
