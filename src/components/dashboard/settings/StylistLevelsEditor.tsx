@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
 import { DashboardPageHeader } from '@/components/dashboard/DashboardPageHeader';
 import { Button } from '@/components/ui/button';
 import { tokens } from '@/lib/design-tokens';
@@ -93,6 +94,199 @@ type LocalStylistLevel = {
   serviceCommissionRate: string;
   retailCommissionRate: string;
 };
+
+interface CriteriaComparisonTableProps {
+  levels: LocalStylistLevel[];
+  promotionCriteria: LevelPromotionCriteria[];
+  retentionCriteria: LevelRetentionCriteria[];
+  onEditLevel: (level: LocalStylistLevel, index: number) => void;
+}
+
+function CriteriaComparisonTable({ levels, promotionCriteria, retentionCriteria, onEditLevel }: CriteriaComparisonTableProps) {
+  const getCriteria = (levelDbId: string | undefined) => ({
+    promo: promotionCriteria.find(c => c.stylist_level_id === levelDbId && c.is_active),
+    retention: retentionCriteria.find(r => r.stylist_level_id === levelDbId && r.is_active),
+  });
+
+  const fmtCurrency = (v: number) => v >= 1000 ? `$${(v / 1000).toFixed(0)}K` : `$${v}`;
+
+  type MetricRow = {
+    label: string;
+    getValue: (promo: LevelPromotionCriteria | undefined, ret: LevelRetentionCriteria | undefined) => string | null;
+    getNumeric: (promo: LevelPromotionCriteria | undefined, ret: LevelRetentionCriteria | undefined) => number | null;
+    section: 'promotion' | 'retention';
+  };
+
+  const metrics: MetricRow[] = [
+    // Promotion
+    { label: 'Revenue', section: 'promotion', getValue: (p) => p?.revenue_enabled ? fmtCurrency(p.revenue_threshold) : null, getNumeric: (p) => p?.revenue_enabled ? p.revenue_threshold : null },
+    { label: 'Retail %', section: 'promotion', getValue: (p) => p?.retail_enabled ? `${p.retail_pct_threshold}%` : null, getNumeric: (p) => p?.retail_enabled ? p.retail_pct_threshold : null },
+    { label: 'Rebooking %', section: 'promotion', getValue: (p) => p?.rebooking_enabled ? `${p.rebooking_pct_threshold}%` : null, getNumeric: (p) => p?.rebooking_enabled ? p.rebooking_pct_threshold : null },
+    { label: 'Avg Ticket', section: 'promotion', getValue: (p) => p?.avg_ticket_enabled ? `$${p.avg_ticket_threshold}` : null, getNumeric: (p) => p?.avg_ticket_enabled ? p.avg_ticket_threshold : null },
+    { label: 'Tenure', section: 'promotion', getValue: (p) => p?.tenure_enabled ? `${p.tenure_days}d` : null, getNumeric: (p) => p?.tenure_enabled ? p.tenure_days : null },
+    { label: 'Eval Window', section: 'promotion', getValue: (p) => p ? `${p.evaluation_window_days}d` : null, getNumeric: () => null },
+    { label: 'Approval', section: 'promotion', getValue: (p) => p ? (p.requires_manual_approval ? 'Manual' : 'Auto') : null, getNumeric: () => null },
+    // Retention
+    { label: 'Revenue', section: 'retention', getValue: (_, r) => r?.revenue_enabled ? fmtCurrency(r.revenue_minimum) : null, getNumeric: (_, r) => r?.revenue_enabled ? r.revenue_minimum : null },
+    { label: 'Retail %', section: 'retention', getValue: (_, r) => r?.retail_enabled ? `${r.retail_pct_minimum}%` : null, getNumeric: (_, r) => r?.retail_enabled ? r.retail_pct_minimum : null },
+    { label: 'Rebooking %', section: 'retention', getValue: (_, r) => r?.rebooking_enabled ? `${r.rebooking_pct_minimum}%` : null, getNumeric: (_, r) => r?.rebooking_enabled ? r.rebooking_pct_minimum : null },
+    { label: 'Avg Ticket', section: 'retention', getValue: (_, r) => r?.avg_ticket_enabled ? `$${r.avg_ticket_minimum}` : null, getNumeric: (_, r) => r?.avg_ticket_enabled ? r.avg_ticket_minimum : null },
+    { label: 'Grace Period', section: 'retention', getValue: (_, r) => r ? `${r.grace_period_days}d` : null, getNumeric: () => null },
+    { label: 'Action', section: 'retention', getValue: (_, r) => r ? (r.action_type === 'demotion_eligible' ? 'Demotion' : 'Coaching') : null, getNumeric: () => null },
+  ];
+
+  const levelData = levels.map(l => getCriteria(l.dbId));
+
+  const hasInconsistency = (metricIdx: number, levelIdx: number): boolean => {
+    const metric = metrics[metricIdx];
+    if (levelIdx === 0) return false;
+    const currentVal = metric.getNumeric(levelData[levelIdx].promo, levelData[levelIdx].retention);
+    // Find previous level that has a value
+    for (let i = levelIdx - 1; i >= 0; i--) {
+      const prevVal = metric.getNumeric(levelData[i].promo, levelData[i].retention);
+      if (prevVal !== null && currentVal !== null) {
+        return currentVal < prevVal;
+      }
+    }
+    return false;
+  };
+
+  if (levels.length === 0) {
+    return (
+      <div className={tokens.empty.container}>
+        <GraduationCap className={tokens.empty.icon} />
+        <h3 className={tokens.empty.heading}>No levels configured</h3>
+        <p className={tokens.empty.description}>Add levels first to configure criteria</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      <p className="text-sm text-muted-foreground">
+        Compare promotion and retention criteria across all levels. Click "Edit" to modify a level's criteria.
+      </p>
+      <div className="rounded-xl border bg-card overflow-auto">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="w-[140px] sticky left-0 bg-card z-10">Metric</TableHead>
+              {levels.map((level, idx) => (
+                <TableHead key={level.id} className="text-center min-w-[120px]">
+                  <div className="flex flex-col items-center gap-1">
+                    <span className="text-xs">{level.label}</span>
+                    {idx === 0 ? (
+                      <span className="text-[10px] text-muted-foreground/60">Entry</span>
+                    ) : level.dbId ? (
+                      <button
+                        onClick={() => onEditLevel(level, idx)}
+                        className="text-[10px] text-primary hover:text-primary/80 transition-colors"
+                      >
+                        Edit
+                      </button>
+                    ) : (
+                      <span className="text-[10px] text-muted-foreground/50">Unsaved</span>
+                    )}
+                  </div>
+                </TableHead>
+              ))}
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {/* Promotion section header */}
+            <TableRow className="bg-muted/30 hover:bg-muted/30">
+              <TableCell colSpan={levels.length + 1} className="py-2">
+                <span className="flex items-center gap-1.5 text-xs font-medium text-foreground">
+                  <TrendingUp className="w-3.5 h-3.5 text-primary" />
+                  Promotion — To Reach This Level
+                </span>
+              </TableCell>
+            </TableRow>
+            {metrics.filter(m => m.section === 'promotion').map((metric, mIdx) => (
+              <TableRow key={`promo-${metric.label}`}>
+                <TableCell className="text-xs text-muted-foreground sticky left-0 bg-card z-10">{metric.label}</TableCell>
+                {levels.map((level, levelIdx) => {
+                  const { promo, retention } = levelData[levelIdx];
+                  const val = levelIdx === 0 ? null : metric.getValue(promo, retention);
+                  const warn = levelIdx > 0 && hasInconsistency(mIdx, levelIdx);
+                  return (
+                    <TableCell key={level.id} className="text-center text-xs">
+                      {levelIdx === 0 ? (
+                        <span className="text-muted-foreground/40">—</span>
+                      ) : val ? (
+                        <span className="flex items-center justify-center gap-1">
+                          {warn && <AlertTriangle className="w-3 h-3 text-amber-500 shrink-0" />}
+                          <span className={warn ? 'text-amber-600 dark:text-amber-400' : 'text-foreground'}>{val}</span>
+                        </span>
+                      ) : !level.dbId ? (
+                        <span className="text-muted-foreground/40">—</span>
+                      ) : !promo ? (
+                        <button
+                          onClick={() => onEditLevel(level, levelIdx)}
+                          className="text-[10px] text-primary/60 hover:text-primary transition-colors"
+                        >
+                          Configure
+                        </button>
+                      ) : (
+                        <span className="text-muted-foreground/40">—</span>
+                      )}
+                    </TableCell>
+                  );
+                })}
+              </TableRow>
+            ))}
+
+            {/* Retention section header */}
+            <TableRow className="bg-muted/30 hover:bg-muted/30">
+              <TableCell colSpan={levels.length + 1} className="py-2">
+                <span className="flex items-center gap-1.5 text-xs font-medium text-foreground">
+                  <Shield className="w-3.5 h-3.5 text-primary" />
+                  Retention — Required to Stay
+                </span>
+              </TableCell>
+            </TableRow>
+            {metrics.filter(m => m.section === 'retention').map((metric, mIdx) => {
+              const globalIdx = metrics.findIndex(m => m.section === 'retention' && m.label === metric.label);
+              return (
+                <TableRow key={`ret-${metric.label}`}>
+                  <TableCell className="text-xs text-muted-foreground sticky left-0 bg-card z-10">{metric.label}</TableCell>
+                  {levels.map((level, levelIdx) => {
+                    const { promo, retention } = levelData[levelIdx];
+                    const val = levelIdx === 0 ? null : metric.getValue(promo, retention);
+                    const warn = levelIdx > 0 && hasInconsistency(globalIdx, levelIdx);
+                    return (
+                      <TableCell key={level.id} className="text-center text-xs">
+                        {levelIdx === 0 ? (
+                          <span className="text-muted-foreground/40">—</span>
+                        ) : val ? (
+                          <span className="flex items-center justify-center gap-1">
+                            {warn && <AlertTriangle className="w-3 h-3 text-amber-500 shrink-0" />}
+                            <span className={warn ? 'text-amber-600 dark:text-amber-400' : 'text-foreground'}>{val}</span>
+                          </span>
+                        ) : !level.dbId ? (
+                          <span className="text-muted-foreground/40">—</span>
+                        ) : !retention ? (
+                          <button
+                            onClick={() => onEditLevel(level, levelIdx)}
+                            className="text-[10px] text-primary/60 hover:text-primary transition-colors"
+                          >
+                            Configure
+                          </button>
+                        ) : (
+                          <span className="text-muted-foreground/40">—</span>
+                        )}
+                      </TableCell>
+                    );
+                  })}
+                </TableRow>
+              );
+            })}
+          </TableBody>
+        </Table>
+      </div>
+    </div>
+  );
+}
 
 interface StylistLevelsEditorProps {
   /** When true, omits page header, sticky behavior, and info notice (used inside Settings) */
@@ -390,6 +584,7 @@ export function StylistLevelsEditor({ embedded = false }: StylistLevelsEditorPro
         <Tabs defaultValue="levels" className="w-full">
           <TabsList>
             <TabsTrigger value="levels">Levels</TabsTrigger>
+            <TabsTrigger value="criteria">Criteria</TabsTrigger>
             <TabsTrigger value="team">Team Roster</TabsTrigger>
             <TabsTrigger value="previews">Previews</TabsTrigger>
           </TabsList>
@@ -799,7 +994,21 @@ export function StylistLevelsEditor({ embedded = false }: StylistLevelsEditorPro
             </div>
           </TabsContent>
 
-          {/* === TAB 2: Team Roster === */}
+          {/* === TAB 2: Criteria Comparison === */}
+          <TabsContent value="criteria">
+            <CriteriaComparisonTable
+              levels={levels}
+              promotionCriteria={promotionCriteria || []}
+              retentionCriteria={retentionCriteria || []}
+              onEditLevel={(level, index) => {
+                setWizardLevelId(level.dbId!);
+                setWizardLevelLabel(level.label);
+                setWizardLevelIndex(index);
+              }}
+            />
+          </TabsContent>
+
+          {/* === TAB 3: Team Roster === */}
           <TabsContent value="team">
             {effectiveOrganization?.id && dbLevels && dbLevels.length > 0 ? (
               <TeamCommissionRoster orgId={effectiveOrganization.id} levels={dbLevels} />
