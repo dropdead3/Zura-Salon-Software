@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
 import { DashboardPageHeader } from '@/components/dashboard/DashboardPageHeader';
 import { Button } from '@/components/ui/button';
 import { tokens } from '@/lib/design-tokens';
