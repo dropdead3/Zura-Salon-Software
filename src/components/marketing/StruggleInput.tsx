@@ -283,6 +283,61 @@ export function StruggleInput() {
 
   const hasResponse = response.length > 0 || features.length > 0;
 
+  // Auto-collapse timer (15s after response finishes)
+  const AUTO_COLLAPSE_MS = 15_000;
+  const collapseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const collapseStartRef = useRef<number>(0);
+  const remainingRef = useRef<number>(AUTO_COLLAPSE_MS);
+  const [isHoveringResponse, setIsHoveringResponse] = useState(false);
+  const [collapseActive, setCollapseActive] = useState(false);
+
+  const clearCollapseTimer = useCallback(() => {
+    if (collapseTimerRef.current) {
+      clearTimeout(collapseTimerRef.current);
+      collapseTimerRef.current = null;
+    }
+  }, []);
+
+  const startCollapseTimer = useCallback((duration: number) => {
+    clearCollapseTimer();
+    remainingRef.current = duration;
+    collapseStartRef.current = Date.now();
+    setCollapseActive(true);
+    collapseTimerRef.current = setTimeout(() => {
+      handleReset();
+      setCollapseActive(false);
+    }, duration);
+  }, [clearCollapseTimer]);
+
+  // Start timer when response finishes loading
+  useEffect(() => {
+    if (!isLoading && hasResponse) {
+      startCollapseTimer(AUTO_COLLAPSE_MS);
+    }
+    if (!hasResponse) {
+      clearCollapseTimer();
+      setCollapseActive(false);
+    }
+    return () => clearCollapseTimer();
+  }, [isLoading, hasResponse]);
+
+  // Pause on hover, resume on leave
+  const handleResponseMouseEnter = useCallback(() => {
+    setIsHoveringResponse(true);
+    if (collapseTimerRef.current) {
+      const elapsed = Date.now() - collapseStartRef.current;
+      remainingRef.current = Math.max(0, remainingRef.current - elapsed);
+      clearCollapseTimer();
+    }
+  }, [clearCollapseTimer]);
+
+  const handleResponseMouseLeave = useCallback(() => {
+    setIsHoveringResponse(false);
+    if (hasResponse && !isLoading && remainingRef.current > 0) {
+      startCollapseTimer(remainingRef.current);
+    }
+  }, [hasResponse, isLoading, startCollapseTimer]);
+
   return (
     <section className="relative px-6 sm:px-8 py-16 sm:py-24 max-w-4xl mx-auto">
       {/* Section header */}
