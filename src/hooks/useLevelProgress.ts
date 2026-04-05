@@ -13,6 +13,7 @@ export interface CriterionProgress {
   label: string;
   enabled: boolean;
   current: number;
+  priorCurrent: number; // value from prior eval window for PoP trend
   target: number;
   percent: number; // 0-100
   weight: number;
