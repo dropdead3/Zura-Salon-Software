@@ -22,6 +22,8 @@ import {
   ShieldCheck,
   Sparkles,
   Shield,
+  Users,
+  UserPlus,
 } from 'lucide-react';
 import {
   useLevelPromotionCriteriaForLevel,
