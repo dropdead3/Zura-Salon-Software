@@ -264,9 +264,8 @@ export default function StylistLevels() {
     setHasChanges(true);
   };
 
-  // State for reassignment on delete
-  const [deleteTargetIndex, setDeleteTargetIndex] = useState<number | null>(null);
-  const [reassignToSlug, setReassignToSlug] = useState<string>('');
+
+
 
   const handleDeleteWithReassign = async (index: number) => {
     const level = levels[index];
