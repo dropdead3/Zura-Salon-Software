@@ -24,6 +24,10 @@ const SUGGESTIONS = [
   "Scheduling is a nightmare",
   "I want onboarding to feel more streamlined",
   "I want a training hub for each employee role",
+  "I'm losing money on color and don't know how much",
+  "I need to track exactly how much product goes on each head",
+  "My stylists waste too much color",
+  "I want to know my true cost per color service",
 ];
 
 const DISPLAY_PILL_COUNT = 5;
