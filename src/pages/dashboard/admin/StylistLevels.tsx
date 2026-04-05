@@ -55,9 +55,11 @@ import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 import { PageExplainer } from '@/components/ui/PageExplainer';
 import { GraduationWizard } from '@/components/dashboard/settings/GraduationWizard';
 import { useLevelPromotionCriteria, type LevelPromotionCriteria } from '@/hooks/useLevelPromotionCriteria';
-import { useLevelRetentionCriteria } from '@/hooks/useLevelRetentionCriteria';
+import { useLevelRetentionCriteria, type LevelRetentionCriteria } from '@/hooks/useLevelRetentionCriteria';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { generateLevelRequirementsPDF } from '@/components/dashboard/settings/LevelRequirementsPDF';
+import { TeamCommissionRoster } from '@/components/dashboard/settings/TeamCommissionRoster';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 function formatCriteriaSummary(c: LevelPromotionCriteria): string {
   const parts: string[] = [];
@@ -70,6 +72,21 @@ function formatCriteriaSummary(c: LevelPromotionCriteria): string {
   return parts.join(' · ') + ` — ${c.evaluation_window_days}d window`;
 }
 
+function formatRetentionSummary(r: LevelRetentionCriteria): string {
+  const parts: string[] = [];
+  if (r.revenue_enabled && r.revenue_minimum > 0) parts.push(r.revenue_minimum >= 1000 ? `$${(r.revenue_minimum / 1000).toFixed(0)}K rev` : `$${r.revenue_minimum} rev`);
+  if (r.retail_enabled && r.retail_pct_minimum > 0) parts.push(`${r.retail_pct_minimum}% retail`);
+  if (r.rebooking_enabled && r.rebooking_pct_minimum > 0) parts.push(`${r.rebooking_pct_minimum}% rebook`);
+  if (r.avg_ticket_enabled && r.avg_ticket_minimum > 0) parts.push(`$${r.avg_ticket_minimum} avg`);
+  if (parts.length === 0) return '';
+  return `Required to Stay: ${parts.join(' · ')} — ${r.grace_period_days}d grace · ${r.action_type === 'demotion_eligible' ? 'Demotion' : 'Coaching'}`;
+}
+
+const formatRate = (rate: number | null | undefined): string => {
+  if (rate == null) return '';
+  return String(Math.round(rate * 100));
+};
+
 type LocalStylistLevel = {
   id: string;
   dbId?: string;
@@ -77,6 +94,8 @@ type LocalStylistLevel = {
   label: string;
   clientLabel: string;
   description: string;
+  serviceCommissionRate: string;
+  retailCommissionRate: string;
 };
 
 
@@ -94,6 +113,8 @@ export default function StylistLevels() {
   const [previewLevel, setPreviewLevel] = useState(0);
   const [wizardLevelId, setWizardLevelId] = useState<string | null>(null);
   const [wizardLevelLabel, setWizardLevelLabel] = useState('');
+  const [deleteTargetIndex, setDeleteTargetIndex] = useState<number | null>(null);
+  const [reassignToSlug, setReassignToSlug] = useState<string>('');
   const [wizardLevelIndex, setWizardLevelIndex] = useState(0);
 
   const { data: promotionCriteria } = useLevelPromotionCriteria();
@@ -109,6 +130,8 @@ export default function StylistLevels() {
         label: l.label,
         clientLabel: l.client_label,
         description: l.description || '',
+        serviceCommissionRate: formatRate(l.service_commission_rate),
+        retailCommissionRate: formatRate(l.retail_commission_rate),
       }));
       setLevels(localLevels);
     }
@@ -206,22 +229,63 @@ export default function StylistLevels() {
     setHasChanges(true);
   };
 
+  const handleCommissionChange = (index: number, field: 'serviceCommissionRate' | 'retailCommissionRate', value: string) => {
+    const newLevels = [...levels];
+    newLevels[index] = { ...newLevels[index], [field]: value };
+    setLevels(newLevels);
+    setHasChanges(true);
+  };
+
   const handleAddNew = () => {
     if (!newLevelName.trim()) return;
     
-    const newSlug = newLevelName.toLowerCase().replace(/\s+/g, '-');
+    let newSlug = newLevelName.toLowerCase().replace(/\s+/g, '-');
+    // Deduplicate slug
+    const existingSlugs = new Set(levels.map(l => l.slug));
+    if (existingSlugs.has(newSlug)) {
+      let counter = 2;
+      while (existingSlugs.has(`${newSlug}-${counter}`)) counter++;
+      newSlug = `${newSlug}-${counter}`;
+    }
+    
     const newLevel: LocalStylistLevel = {
       id: newSlug,
       slug: newSlug,
       label: newLevelName.trim(),
       clientLabel: `Level ${levels.length + 1}`,
       description: '',
+      serviceCommissionRate: '',
+      retailCommissionRate: '',
     };
     
     setLevels([...levels, newLevel]);
     setNewLevelName('');
     setIsAddingNew(false);
     setHasChanges(true);
+  };
+
+
+
+
+  const handleDeleteWithReassign = async (index: number) => {
+    const level = levels[index];
+    const count = getStylistCount(level.id);
+    
+    // If there are assigned stylists and a reassignment target is chosen, bulk-update
+    if (count > 0 && reassignToSlug) {
+      const { error } = await supabase
+        .from('employee_profiles')
+        .update({ stylist_level: reassignToSlug })
+        .eq('stylist_level', level.id);
+      if (error) {
+        toast.error('Failed to reassign stylists: ' + error.message);
+        return;
+      }
+    }
+    
+    handleDelete(index);
+    setDeleteTargetIndex(null);
+    setReassignToSlug('');
   };
 
   const handleSave = async () => {
@@ -232,6 +296,8 @@ export default function StylistLevels() {
       client_label: `Level ${idx + 1}`,
       description: level.description || undefined,
       display_order: idx,
+      service_commission_rate: level.serviceCommissionRate ? parseFloat(level.serviceCommissionRate) / 100 : null,
+      retail_commission_rate: level.retailCommissionRate ? parseFloat(level.retailCommissionRate) / 100 : null,
     }));
 
     saveLevels.mutate(levelsToSave, {
@@ -300,8 +366,8 @@ export default function StylistLevels() {
                         criteria: promotionCriteria,
                         retentionCriteria: retentionCriteria || [],
                       });
-                      doc.save('graduation-roadmap.pdf');
-                      toast.success('Graduation roadmap exported');
+                      doc.save('level-progression-roadmap.pdf');
+                      toast.success('Progression roadmap exported');
                     }}
                   >
                     <FileDown className="w-4 h-4" />
@@ -434,6 +500,13 @@ export default function StylistLevels() {
                               {stylistCount} stylist{stylistCount !== 1 ? 's' : ''}
                             </span>
                           )}
+                          {/* Inline commission rates */}
+                          {(level.serviceCommissionRate || level.retailCommissionRate) && (
+                            <div className="flex items-center gap-2 text-[10px] text-muted-foreground shrink-0">
+                              {level.serviceCommissionRate && <span>Svc: {level.serviceCommissionRate}%</span>}
+                              {level.retailCommissionRate && <span>Retail: {level.retailCommissionRate}%</span>}
+                            </div>
+                          )}
                         </div>
                         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                           <button
@@ -442,11 +515,12 @@ export default function StylistLevels() {
                           >
                             <Pencil className="w-4 h-4 text-muted-foreground" />
                           </button>
-                          <AlertDialog>
+                          <AlertDialog onOpenChange={(open) => { if (!open) { setDeleteTargetIndex(null); setReassignToSlug(''); } }}>
                             <AlertDialogTrigger asChild>
                               <button
                                 className="p-2 rounded-md hover:bg-destructive/10 transition-colors disabled:opacity-30"
                                 disabled={levels.length <= 1}
+                                onClick={() => setDeleteTargetIndex(index)}
                               >
                                 <Trash2 className="w-4 h-4 text-destructive" />
                               </button>
@@ -460,15 +534,27 @@ export default function StylistLevels() {
                                 <AlertDialogDescription asChild>
                                   <div className="space-y-3">
                                     {hasStylists ? (
-                                      <div className="p-3 rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900 text-amber-800 dark:text-amber-200">
-                                        <p className="font-medium flex items-center gap-2">
-                                          <AlertTriangle className="w-4 h-4" />
-                                          Warning: {stylistCount} stylist{stylistCount !== 1 ? 's are' : ' is'} assigned to this level
-                                        </p>
-                                        <p className="text-sm mt-1 text-amber-700 dark:text-amber-300">
-                                          You'll need to reassign these stylists to a different level.
-                                        </p>
-                                      </div>
+                                      <>
+                                        <div className="p-3 rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900 text-amber-800 dark:text-amber-200">
+                                          <p className="font-medium flex items-center gap-2">
+                                            <AlertTriangle className="w-4 h-4" />
+                                            {stylistCount} stylist{stylistCount !== 1 ? 's are' : ' is'} assigned to this level
+                                          </p>
+                                        </div>
+                                        <div className="space-y-2">
+                                          <label className="text-sm font-medium">Reassign stylists to:</label>
+                                          <Select value={reassignToSlug} onValueChange={setReassignToSlug}>
+                                            <SelectTrigger className="w-full">
+                                              <SelectValue placeholder="Select a level..." />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                              {levels.filter((_, i) => i !== index).map((l, i) => (
+                                                <SelectItem key={l.id} value={l.id}>{l.label}</SelectItem>
+                                              ))}
+                                            </SelectContent>
+                                          </Select>
+                                        </div>
+                                      </>
                                     ) : (
                                       <p>No stylists are currently assigned to this level.</p>
                                     )}
@@ -479,9 +565,10 @@ export default function StylistLevels() {
                                 <AlertDialogCancel>Cancel</AlertDialogCancel>
                                 <AlertDialogAction
                                   className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                                  onClick={() => handleDelete(index)}
+                                  disabled={hasStylists && !reassignToSlug}
+                                  onClick={() => handleDeleteWithReassign(index)}
                                 >
-                                  Delete
+                                  {hasStylists ? 'Reassign & Delete' : 'Delete'}
                                 </AlertDialogAction>
                               </AlertDialogFooter>
                             </AlertDialogContent>
@@ -491,7 +578,7 @@ export default function StylistLevels() {
                     )}
                   </div>
                   
-                  {/* Description + Graduation Pathway */}
+                  {/* Description + Commission + Criteria */}
                   <div className="px-4 pb-3 pt-0">
                     <div className="flex items-start gap-2 pl-14">
                       <Input
@@ -501,7 +588,36 @@ export default function StylistLevels() {
                         className="h-7 text-xs text-muted-foreground bg-background border focus-visible:ring-1"
                       />
                     </div>
-                    {/* Graduation Pathway button - hidden for first level (entry level) */}
+                    {/* Commission rate fields */}
+                    {editingIndex === index && (
+                      <div className="pl-14 mt-2 grid grid-cols-2 gap-3">
+                        <div className="space-y-1">
+                          <label className="text-xs font-medium text-muted-foreground">Service Commission %</label>
+                          <Input
+                            type="number"
+                            placeholder="e.g. 40"
+                            value={level.serviceCommissionRate}
+                            onChange={(e) => handleCommissionChange(index, 'serviceCommissionRate', e.target.value)}
+                            className="h-7 text-xs"
+                            min={0}
+                            max={100}
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-xs font-medium text-muted-foreground">Retail Commission %</label>
+                          <Input
+                            type="number"
+                            placeholder="e.g. 10"
+                            value={level.retailCommissionRate}
+                            onChange={(e) => handleCommissionChange(index, 'retailCommissionRate', e.target.value)}
+                            className="h-7 text-xs"
+                            min={0}
+                            max={100}
+                          />
+                        </div>
+                      </div>
+                    )}
+                    {/* Criteria Pathway button */}
                     {index > 0 && level.dbId && (
                       <div className="pl-14 mt-2">
                         <button
@@ -519,8 +635,8 @@ export default function StylistLevels() {
                         >
                           <Sparkles className="w-3 h-3" />
                           {promotionCriteria?.some(c => c.stylist_level_id === level.dbId && c.is_active)
-                            ? 'Graduation Configured'
-                            : 'Configure Graduation'}
+                            ? 'Criteria Configured'
+                            : 'Configure Criteria'}
                         </button>
                         {(() => {
                           const c = promotionCriteria?.find(cr => cr.stylist_level_id === level.dbId && cr.is_active);
@@ -529,11 +645,19 @@ export default function StylistLevels() {
                             <p className="text-[10px] text-muted-foreground/70 mt-1 pl-4">{summary}</p>
                           ) : null;
                         })()}
+                        {/* Retention criteria inline */}
+                        {(() => {
+                          const r = retentionCriteria?.find(rc => rc.stylist_level_id === level.dbId && rc.is_active);
+                          const retSummary = r ? formatRetentionSummary(r) : '';
+                          return retSummary ? (
+                            <p className="text-[10px] text-muted-foreground/70 mt-0.5 pl-4">{retSummary}</p>
+                          ) : null;
+                        })()}
                       </div>
                     )}
                     {index === 0 && (
                       <div className="pl-14 mt-2">
-                        <span className="text-[10px] text-muted-foreground/60 italic">Entry level — no graduation criteria needed</span>
+                        <span className="text-[10px] text-muted-foreground/60 italic">Entry level — no promotion criteria needed</span>
                       </div>
                     )}
                   </div>
@@ -598,17 +722,19 @@ export default function StylistLevels() {
 
           {/* Right Column - Preview & Stats */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Graduation Requirements Summary */}
+            {/* Progression Roadmap */}
             {promotionCriteria && promotionCriteria.length > 0 && (
               <div className="space-y-3">
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <GraduationCap className="w-4 h-4" />
-                  <span>Graduation Roadmap</span>
+                  <span>Progression Roadmap</span>
                 </div>
                 <div className="bg-card border rounded-xl p-4 space-y-3">
                   {levels.map((level, idx) => {
                     const criteria = promotionCriteria?.find(c => c.stylist_level_id === level.dbId && c.is_active);
                     const summary = criteria ? formatCriteriaSummary(criteria) : null;
+                    const retention = retentionCriteria?.find(r => r.stylist_level_id === level.dbId && r.is_active);
+                    const retSummary = retention ? formatRetentionSummary(retention) : null;
                     return (
                       <div key={level.id} className="flex items-start gap-3">
                         <span className={cn(
@@ -623,6 +749,9 @@ export default function StylistLevels() {
                           <p className="text-[10px] text-muted-foreground">
                             {idx === 0 ? 'Entry level' : summary || 'No criteria configured'}
                           </p>
+                          {retSummary && (
+                            <p className="text-[10px] text-muted-foreground/70">{retSummary}</p>
+                          )}
                         </div>
                       </div>
                     );
@@ -863,6 +992,11 @@ export default function StylistLevels() {
             </div>
           </div>
         </div>
+
+        {/* Team Commission Roster */}
+        {effectiveOrganization?.id && dbLevels && dbLevels.length > 0 && (
+          <TeamCommissionRoster orgId={effectiveOrganization.id} levels={dbLevels} />
+        )}
       </div>
 
       {/* Graduation Wizard Dialog */}
