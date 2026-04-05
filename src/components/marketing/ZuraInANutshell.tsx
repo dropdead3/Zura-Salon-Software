@@ -1,4 +1,7 @@
+import { useRef } from 'react';
 import { PLATFORM_NAME } from '@/lib/brand';
+import { motion, useInView } from 'framer-motion';
+import { Link } from 'react-router-dom';
 import {
   Users, Calendar, CreditCard, BarChart3, UserPlus,
   DollarSign, MessageCircle, Globe, Check, Star,
