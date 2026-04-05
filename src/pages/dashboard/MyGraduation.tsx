@@ -23,6 +23,9 @@ import {
   ExternalLink,
   Trophy,
   Sparkles,
+  ArrowRight,
+  AlertTriangle,
+  History,
 } from 'lucide-react';
 import {
   useGraduationRequirements,
@@ -35,6 +38,8 @@ import {
 } from '@/hooks/useGraduationTracker';
 import { useEffectiveUserId } from '@/hooks/useEffectiveUser';
 import { useFormatDate } from '@/hooks/useFormatDate';
+import { usePromotionHistory } from '@/hooks/usePromotionHistory';
+import { useLevelProgress } from '@/hooks/useLevelProgress';
 import { PageExplainer } from '@/components/ui/PageExplainer';
 import { LevelProgressCard } from '@/components/coaching/LevelProgressCard';
 
@@ -348,8 +353,11 @@ function RequirementCard({
 
 export default function MyGraduation() {
   const effectiveUserId = useEffectiveUserId();
+  const { formatDate } = useFormatDate();
   const { data: requirements, isLoading: loadingReqs } = useGraduationRequirements();
   const { data: submissions, isLoading: loadingSubs } = useGraduationSubmissions(effectiveUserId || undefined);
+  const { data: promotions = [] } = usePromotionHistory(effectiveUserId || undefined);
+  const progress = useLevelProgress(effectiveUserId || undefined);
 
   const isLoading = loadingReqs || loadingSubs;
 
@@ -377,13 +385,77 @@ export default function MyGraduation() {
     <DashboardLayout>
       <div className="p-6 space-y-6">
         <DashboardPageHeader
-          title="My Graduation Progress"
-          description="Submit proof of completion for graduation requirements and track review status."
+          title="My Level Progress"
+          description="Track your performance, advancement path, and retention standing."
         />
         <PageExplainer pageId="my-graduation" />
 
         {/* Level-Based Progress Card */}
         <LevelProgressCard userId={effectiveUserId || undefined} />
+
+        {/* Retention guidance — shown when at risk */}
+        {progress?.retention?.isAtRisk && (
+          <Card className="border-rose-200 bg-rose-50/50 dark:border-rose-800 dark:bg-rose-950/10">
+            <CardContent className="pt-5 space-y-3">
+              <div className="flex items-start gap-3">
+                <AlertTriangle className="w-5 h-5 text-rose-600 dark:text-rose-400 mt-0.5 shrink-0" />
+                <div className="space-y-2">
+                  <p className="text-sm text-foreground">
+                    {progress.retention.actionType === 'demotion_eligible'
+                      ? 'Some of your performance metrics are below the minimum standards for your current level. Please focus on improving these areas — your manager is available to help.'
+                      : 'Your performance in one or more areas has dipped below the minimum for your current level. This is a coaching opportunity — reach out to your manager to discuss a plan.'}
+                  </p>
+                  <div className="space-y-1">
+                    {progress.retention.failures.map(f => (
+                      <div key={f.key} className="flex items-center gap-2 text-xs">
+                        <span className="text-rose-600 dark:text-rose-400">•</span>
+                        <span className="text-muted-foreground">{f.label}:</span>
+                        <span className="text-rose-700 dark:text-rose-300 tabular-nums">
+                          {f.unit === '/mo' || f.unit === '$' ? `$${f.current.toLocaleString()}` : `${f.current}${f.unit}`}
+                        </span>
+                        <span className="text-muted-foreground">
+                          (minimum: {f.unit === '/mo' || f.unit === '$' ? `$${f.minimum.toLocaleString()}` : `${f.minimum}${f.unit}`})
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                  {progress.retention.gracePeriodDays > 0 && (
+                    <p className="text-[10px] text-muted-foreground">
+                      {progress.retention.gracePeriodDays}-day improvement window
+                    </p>
+                  )}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Promotion History Timeline */}
+        {promotions.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle className={tokens.card.title}>
+                <History className="w-4 h-4 mr-2 inline" />
+                Promotion History
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {promotions.map(p => (
+                  <div key={p.id} className="flex items-center gap-3 text-sm">
+                    <div className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
+                    <span className="text-muted-foreground">{p.from_level}</span>
+                    <ArrowRight className="w-3 h-3 text-muted-foreground" />
+                    <span className="text-foreground">{p.to_level}</span>
+                    <span className="text-xs text-muted-foreground ml-auto">
+                      {formatDate(new Date(p.promoted_at), 'MMM d, yyyy')}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Progress Overview */}
         <Card className={isGraduationReady ? 'border-emerald-500/50 bg-emerald-500/5' : ''}>

@@ -73,21 +73,23 @@ export function LevelProgressCard({ userId, compact = false }: LevelProgressCard
                 <MetricInfoTooltip description="Shows how close this stylist is to meeting the graduation criteria for their next level, based on rolling performance data." />
               </CardTitle>
               <CardDescription className="text-xs">
-                {progress.currentLevelLabel} → {progress.nextLevelLabel}
+                {progress.nextLevelLabel
+                  ? `${progress.currentLevelLabel} → ${progress.nextLevelLabel}`
+                  : `${progress.currentLevelLabel} — Retention Status`}
               </CardDescription>
             </div>
           </div>
           <div className="flex items-center gap-2">
-            {progress.isFullyQualified ? (
+            {progress.isFullyQualified && progress.nextLevelLabel ? (
               <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-950/30 dark:text-emerald-400 dark:border-emerald-800">
                 <CheckCircle2 className="w-3 h-3 mr-1" />
                 Qualified
               </Badge>
-            ) : (
+            ) : progress.nextLevelLabel ? (
               <Badge variant="secondary" className="text-xs tabular-nums">
                 {progress.compositeScore}%
               </Badge>
-            )}
+            ) : null}
           </div>
         </div>
       </CardHeader>
