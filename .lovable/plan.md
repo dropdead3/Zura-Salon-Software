@@ -1,83 +1,57 @@
 
 
-# Exclude Approved Time Off from Utilization Calculations
+# Enhance Level Roadmap PDF Export
 
-## Problem
+## Issues Found
 
-All utilization calculations currently treat every calendar day (or shift day) as a working day, even when a stylist has approved time off. A stylist taking two weeks of vacation would show ~50% utilization for that month — punishing them for approved absence. This affects KPI-driven promotion/retention evaluations, capacity reports, and schedule fill rates.
+The current PDF (`LevelRequirementsPDF.ts`) has several gaps:
 
-## Affected Surfaces
+1. **Missing KPIs in promotion table**: Only exports Revenue, Retail %, Rebooking %, Avg Ticket, and Tenure. Missing 4 KPIs that exist in the schema: Client Retention Rate, New Clients, Schedule Utilization, and Revenue Per Hour.
+2. **Missing KPIs in retention table**: Same gap — Retention Rate, New Clients, Utilization, and Rev/Hour are in the schema but not exported.
+3. **No organization logo**: The header shows org name as text only. The logo is available via `useBusinessSettings()` (`logo_light_url`) or `effectiveOrganization.logo_url`.
+4. **No commission rates per level**: The PDF doesn't show Service/Retail commission percentages, which are a core part of the level architecture.
+5. **No visual level progression**: No indication of the path from one level to the next.
 
-| Surface | File | Issue |
-|---------|------|-------|
-| Stylist level progress (promotion + retention KPIs) | `useLevelProgress.ts` | Shift-based utilization counts shift minutes on time-off days; fallback counts calendar days without exclusion |
-| Team level progress (bulk) | `useTeamLevelProgress.ts` | Same logic duplicated for all team members |
-| Capacity report | `useCapacityReport.ts` | `workingDays` is raw calendar day diff — never subtracts org-wide time off |
-| Schedule utilization bar | `ScheduleUtilizationBar.tsx` | `stylistCount` doesn't subtract stylists who are off that day |
+## Plan
 
-## Approach
+### File: `src/components/dashboard/settings/LevelRequirementsPDF.ts`
 
-### 1. Shared utility: `getApprovedTimeOffDays`
+**A. Add logo support**
+- Add `logoDataUrl?: string` to `LevelRequirementsPDFOptions` (base64 data URL, pre-fetched by caller)
+- Render the logo in the dark header bar (left side, before title), sized to ~10mm height
 
-Create a small helper in `src/lib/time-off-utils.ts` that, given approved time-off records, returns a `Set<string>` of `"userId|date"` keys for full-day approved time off, and a parallel function that returns just date strings for org-wide calculations.
+**B. Add all missing KPIs to promotion criteria rows**
+- Add Retention Rate, New Clients, Utilization, Rev/Hour to `formatCriteriaRow` requirements and weights arrays (same pattern as existing fields)
 
-### 2. `useLevelProgress.ts` — Fetch and exclude time off
+**C. Add all missing KPIs to retention criteria rows**
+- Add Retention Rate, New Clients, Utilization, Rev/Hour to `formatRetentionRow` minimums array
 
-- Add a query for `time_off_requests` where `user_id = userId`, `status = 'approved'`, date range overlaps eval window
-- In `computeMetrics`: filter out `userShifts` on dates that overlap approved full-day time off
-- In the fallback (no shifts): exclude time-off dates from the `activeDays` denominator
+**D. Add commission rates column**
+- Add a "Commission" column to the promotion table showing Service/Retail rates per level
+- Pass commission data through a new `commissions` field on the options interface
 
-### 3. `useTeamLevelProgress.ts` — Batch fetch and exclude
+**E. Add a level progression visual**
+- After the header stats, add a simple horizontal flow showing level names connected by arrows: `Emerging → Stylist → Senior → Master`
 
-- Add a single query for all team members' approved time off in the eval window
-- Same filtering logic as above, applied per-user in the `computeMetrics` loop
+### File: `src/components/dashboard/settings/StylistLevelsEditor.tsx`
 
-### 4. `useCapacityReport.ts` — Subtract time-off days from capacity denominator
-
-- Fetch approved time-off requests for the date range (optionally filtered by location)
-- Count distinct `(user_id, date)` pairs with approved full-day time off
-- Subtract from `workingDays * stylistCount` denominator (or at minimum reduce `workingDays` proportionally)
-
-### 5. `ScheduleUtilizationBar.tsx` — Reduce stylist count for the day
-
-- Accept an optional `timeOffUserIds: string[]` prop (stylists off that specific day)
-- Subtract from `stylistCount` when computing `availableMinutes`
-- Parent component (Schedule page) already has access to time-off data via `useChairAssignments` which queries `time_off_requests`
+**F. Pass logo + commission data to PDF generator**
+- Pre-fetch the org logo as a base64 data URL (canvas fetch + toDataURL) before calling `generateLevelRequirementsPDF`
+- Pass `levels` commission rates alongside level info
+- Pass the logo data URL
 
 ## Technical Details
 
-**New file**: `src/lib/time-off-utils.ts`
-```typescript
-// Builds a Set of "userId|YYYY-MM-DD" keys from approved time-off records
-// Expands date ranges into individual days
-// Used by all utilization hooks to exclude days off
-```
-
-**Query pattern** (added to each hook):
-```sql
-SELECT user_id, start_date, end_date, is_full_day
-FROM time_off_requests
-WHERE status = 'approved'
-  AND start_date <= :endStr
-  AND end_date >= :startStr
-  AND (user_id = :userId OR user_id IN (:userIds))
-```
-
-**Utilization formula change**:
-- Before: `totalBookedMinutes / totalShiftMinutes`
-- After: `totalBookedMinutes / (totalShiftMinutes - shiftMinutesOnTimeOffDays)`
-
-For the fallback (no shifts): divide by working days minus time-off days instead of raw active days.
+- Logo fetching uses an `Image()` + canvas approach to convert the logo URL to a base64 data URL that jsPDF can embed. If the fetch fails (CORS, missing), the PDF generates without a logo — no blocking.
+- Commission data is already available in the `levels` state array (`serviceCommissionRate`, `retailCommissionRate`).
+- The progression visual uses simple `doc.text()` and `doc.line()` calls — no external dependencies.
 
 ## Files Changed
 
 | File | Change |
 |------|--------|
-| `src/lib/time-off-utils.ts` | **New** — shared date expansion + lookup helpers |
-| `src/hooks/useLevelProgress.ts` | Add time-off query, filter shifts/days in `computeMetrics` |
-| `src/hooks/useTeamLevelProgress.ts` | Add batch time-off query, same filtering per user |
-| `src/hooks/useCapacityReport.ts` | Fetch time-off, reduce capacity denominator |
-| `src/components/dashboard/schedule/ScheduleUtilizationBar.tsx` | Accept + apply `timeOffUserIds` prop |
+| `src/components/dashboard/settings/LevelRequirementsPDF.ts` | Add logo, missing KPIs, commission column, progression visual |
+| `src/components/dashboard/settings/StylistLevelsEditor.tsx` | Pre-fetch logo, pass commission + logo data to PDF |
 
-**5 files. No database changes.**
+**2 files. No database changes.**
 
