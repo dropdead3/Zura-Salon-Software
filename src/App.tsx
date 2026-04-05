@@ -406,6 +406,7 @@ const App = () => (
                   <Routes>
                     {/* Platform entry point */}
                     <Route path="/" element={<PlatformLanding />} />
+                    <Route path="/ecosystem" element={<Ecosystem />} />
                     <Route path="/login" element={<UnifiedLogin />} />
 
                     {/* Backward-compatible redirects */}
