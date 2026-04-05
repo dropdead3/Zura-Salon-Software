@@ -1,35 +1,34 @@
 
 
-# Fix Nav/CTA Jitter — Add Scroll Dead Zone and Debounce
+# Expand Struggle Input Suggestions
 
-## Problem
+## Change
 
-The 5px scroll threshold is far too sensitive. Micro-fluctuations from browser rendering, trackpad inertia, and content reflows cause `navVisible` to toggle rapidly, making both the top nav and bottom CTA pill flicker back and forth.
+Update the `SUGGESTIONS` array in `src/components/marketing/StruggleInput.tsx` (lines 15-20) to include more software-specific salon pain points. These also cycle through the typing animation placeholder.
 
-## Solution
+### New suggestions list
 
-Three changes to the scroll handler in `MarketingNav.tsx`:
+1. "I can't track commissions accurately"
+2. "I want to run my commission salon better"
+3. "I need booth renter tracking and management"
+4. "I want custom commission levels per service and retail"
+5. "I need to track color bar costs per service"
+6. "I want an AI assistant to handle calls and scheduling"
+7. "My team keeps quitting"
+8. "I don't know which services are profitable"
+9. "Scheduling is a nightmare"
 
-1. **Increase dead zone** from 5px to 15px — prevents micro-scroll noise from triggering state changes
-2. **Add a direction lock** — require consistent scroll direction across multiple ticks before toggling visibility (track cumulative delta instead of per-tick comparison)
-3. **Gate with `requestAnimationFrame`** — ensure at most one state update per frame, preventing rapid re-renders
+Nine total — the typing animation cycles through all of them; the pill buttons below the input will show a random or first-N subset (4-5) to avoid clutter.
 
-### Logic (pseudocode)
+### Pill display logic
 
-```text
-scrollDelta accumulates (currentY - lastY) each tick
-if delta > 15  → scrolling down → hide nav, show CTA, reset delta
-if delta < -15 → scrolling up   → show nav, hide CTA, reset delta
-if near top (<100px) → always show nav, hide CTA
-```
-
-This replaces the current per-tick comparison with cumulative delta tracking, which is inherently jitter-resistant.
+To prevent the suggestion area from becoming too tall, show only 5 pills at a time, randomly selected on mount. The full list still cycles in the typing placeholder animation.
 
 ## File Changes
 
 | File | Action |
 |------|--------|
-| `src/components/marketing/MarketingNav.tsx` | **Modify** lines 16-35 — replace scroll handler with cumulative-delta approach, increase threshold to 15px, add rAF gating |
+| `src/components/marketing/StruggleInput.tsx` | **Modify** — expand `SUGGESTIONS` array, add display subset logic for pills |
 
 **1 file modified.**
 
