@@ -95,7 +95,7 @@ export interface FormState {
   requires_manual_approval: boolean;
 }
 
-interface RetentionFormState {
+export interface RetentionFormState {
   retention_enabled: boolean;
   revenue_enabled: boolean;
   revenue_minimum: number;
@@ -181,7 +181,7 @@ const INITIAL_RETENTION_STATE: RetentionFormState = {
 const EVAL_WINDOWS = [30, 60, 90];
 const GRACE_PERIODS = [14, 30, 60, 90];
 
-function getZuraDefaults(levelIndex: number): FormState {
+export function getZuraDefaults(levelIndex: number): FormState {
   if (levelIndex <= 1) {
     return {
       revenue_enabled: true, revenue_threshold: 6000,
@@ -246,7 +246,7 @@ function getZuraDefaults(levelIndex: number): FormState {
   };
 }
 
-function getZuraRetentionDefaults(levelIndex: number): RetentionFormState {
+export function getZuraRetentionDefaults(levelIndex: number): RetentionFormState {
   if (levelIndex <= 1) {
     return {
       retention_enabled: true,
