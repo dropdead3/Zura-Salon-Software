@@ -61,6 +61,10 @@ export function StruggleInput() {
   const [isFocused, setIsFocused] = useState(false);
   const [placeholderText, setPlaceholderText] = useState('');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const displayPills = useMemo(() => {
+    const shuffled = [...SUGGESTIONS].sort(() => Math.random() - 0.5);
+    return shuffled.slice(0, DISPLAY_PILL_COUNT);
+  }, []);
   const responseRef = useRef<HTMLDivElement>(null);
 
   const isCoolingDown = Date.now() < cooldownUntil;
