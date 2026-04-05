@@ -14,10 +14,10 @@ import { cn } from '@/lib/utils';
  */
 export function LevelProgressNudge() {
   const { user } = useAuth();
-  const { data: progress, isLoading } = useLevelProgress(user?.id);
+  const progress = useLevelProgress(user?.id);
   const { dashPath } = useOrgDashboardPath();
 
-  if (isLoading || !progress) return null;
+  if (!progress || !progress.currentLevelLabel) return null;
 
   const hasRetentionRisk = progress.retention.isAtRisk;
   const hasNextLevel = !!progress.nextLevelLabel;
