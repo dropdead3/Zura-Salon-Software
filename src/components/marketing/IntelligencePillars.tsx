@@ -1,5 +1,6 @@
-import { Eye, GitCompare, AlertTriangle, Sparkles } from 'lucide-react';
+import { Eye, GitCompare, AlertTriangle, Sparkles, ArrowRight } from 'lucide-react';
 import { PLATFORM_NAME } from '@/lib/brand';
+import { useScrollReveal } from './useScrollReveal';
 
 const pillars = [
   {
@@ -12,7 +13,7 @@ const pillars = [
     num: '02',
     icon: GitCompare,
     title: 'Compare',
-    description: 'Benchmark performance against your own architecture and cross-location standards.',
+    description: 'Benchmark performance against your architecture and cross-location standards.',
   },
   {
     num: '03',
@@ -29,10 +30,12 @@ const pillars = [
 ];
 
 export function IntelligencePillars() {
+  const ref = useScrollReveal();
+
   return (
-    <section className="relative z-10 px-6 sm:px-8 py-16 sm:py-20 lg:py-24">
-      <div className="max-w-7xl mx-auto">
-        <div className="text-center mb-12 sm:mb-16">
+    <section ref={ref} className="relative z-10 px-6 sm:px-8 py-16 sm:py-20 lg:py-24">
+      <div className="max-w-6xl mx-auto">
+        <div className="text-center mb-12 sm:mb-16 mkt-reveal">
           <p className="font-sans text-xs sm:text-sm text-violet-400 uppercase tracking-[0.15em] mb-4">
             Intelligence Architecture
           </p>
@@ -44,24 +47,34 @@ export function IntelligencePillars() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-          {pillars.map((pillar) => (
-            <div
-              key={pillar.title}
-              className="relative p-6 sm:p-8 bg-white/[0.03] border border-white/[0.06] rounded-2xl text-center hover:border-violet-500/20 transition-colors"
-            >
-              <span className="absolute top-4 right-4 font-display text-4xl text-violet-500/10 leading-none">
-                {pillar.num}
-              </span>
-              <div className="w-12 h-12 mx-auto bg-violet-500/10 rounded-xl flex items-center justify-center mb-4">
-                <pillar.icon className="w-6 h-6 text-violet-400" />
+        {/* Connected flow — desktop horizontal, mobile vertical */}
+        <div className="relative flex flex-col lg:flex-row gap-4 lg:gap-0 items-stretch">
+          {pillars.map((pillar, i) => (
+            <div key={pillar.title} className="flex items-center lg:flex-1" style={{ transitionDelay: `${i * 0.1}s` }}>
+              <div className="mkt-reveal relative flex-1 p-6 sm:p-8 rounded-2xl mkt-glass text-center hover:bg-white/[0.05] transition-colors">
+                {/* Pulse ring */}
+                <div className="relative w-14 h-14 mx-auto mb-4">
+                  <div className="absolute inset-0 rounded-xl mkt-pulse-ring" />
+                  <div className="relative w-full h-full bg-violet-500/10 rounded-xl flex items-center justify-center">
+                    <pillar.icon className="w-6 h-6 text-violet-400" />
+                  </div>
+                </div>
+                <span className="font-display text-3xl text-violet-500/10 absolute top-4 right-4 leading-none">
+                  {pillar.num}
+                </span>
+                <h3 className="font-display text-sm tracking-[0.15em] mb-3">
+                  {pillar.title}
+                </h3>
+                <p className="font-sans text-sm text-slate-400 leading-relaxed">
+                  {pillar.description}
+                </p>
               </div>
-              <h3 className="font-display text-sm tracking-[0.15em] mb-3">
-                {pillar.title}
-              </h3>
-              <p className="font-sans text-sm text-slate-400 leading-relaxed">
-                {pillar.description}
-              </p>
+              {/* Connector arrow */}
+              {i < pillars.length - 1 && (
+                <div className="hidden lg:flex items-center justify-center w-8 shrink-0">
+                  <ArrowRight className="w-4 h-4 text-violet-500/30" />
+                </div>
+              )}
             </div>
           ))}
         </div>

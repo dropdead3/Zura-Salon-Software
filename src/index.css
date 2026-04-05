@@ -1560,17 +1560,23 @@ html {
    These styles are isolated from dashboard/tenant layers.
    ══════════════════════════════════════════════════════════════════════════════ */
 
+/* ── Fade-in system ─────────────────────────────────────────────────────────── */
 .marketing-surface .mkt-fade-in {
-  animation: mktFadeIn 0.6s ease-out both;
+  animation: mktFadeIn 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 .marketing-surface .mkt-delay-1 { animation-delay: 0.1s; }
 .marketing-surface .mkt-delay-2 { animation-delay: 0.2s; }
 .marketing-surface .mkt-delay-3 { animation-delay: 0.3s; }
+.marketing-surface .mkt-delay-4 { animation-delay: 0.4s; }
+.marketing-surface .mkt-delay-5 { animation-delay: 0.5s; }
+.marketing-surface .mkt-delay-6 { animation-delay: 0.6s; }
+.marketing-surface .mkt-delay-7 { animation-delay: 0.7s; }
+.marketing-surface .mkt-delay-8 { animation-delay: 0.8s; }
 
 @keyframes mktFadeIn {
   from {
     opacity: 0;
-    transform: translateY(12px);
+    transform: translateY(16px);
   }
   to {
     opacity: 1;
@@ -1578,8 +1584,104 @@ html {
   }
 }
 
+/* ── Scroll reveal (JS-driven via IntersectionObserver) ────────────────────── */
+.marketing-surface .mkt-reveal {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1),
+              transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.marketing-surface .mkt-reveal.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ── Ambient glow (hero light beam) ────────────────────────────────────────── */
+@keyframes mktAmbientGlow {
+  0%, 100% { opacity: 0.4; transform: scaleY(1); }
+  50% { opacity: 0.7; transform: scaleY(1.05); }
+}
+.marketing-surface .mkt-ambient-glow {
+  animation: mktAmbientGlow 6s ease-in-out infinite;
+}
+
+/* ── Pulse ring for intelligence loop ──────────────────────────────────────── */
+@keyframes mktPulseRing {
+  0% { transform: scale(1); opacity: 0.5; }
+  100% { transform: scale(1.8); opacity: 0; }
+}
+.marketing-surface .mkt-pulse-ring::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  border: 1px solid hsl(var(--marketing-accent, 263 70% 55%) / 0.3);
+  animation: mktPulseRing 2.5s ease-out infinite;
+}
+
+/* ── Glass-morphism card ───────────────────────────────────────────────────── */
+.marketing-surface .mkt-glass {
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+/* ── Perspective / tilt for dashboard mockup ────────────────────────────────── */
+.marketing-surface .mkt-perspective {
+  perspective: 1200px;
+}
+.marketing-surface .mkt-tilt {
+  transform: rotateX(4deg) rotateY(0deg);
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.marketing-surface .mkt-tilt:hover {
+  transform: rotateX(1deg) rotateY(0deg);
+}
+
+/* ── Gradient border shimmer ───────────────────────────────────────────────── */
+@keyframes mktBorderShimmer {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+.marketing-surface .mkt-border-shimmer {
+  position: relative;
+}
+.marketing-surface .mkt-border-shimmer::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(
+    135deg,
+    hsl(263 70% 55% / 0.3),
+    hsl(280 60% 50% / 0.1),
+    hsl(263 70% 55% / 0.3)
+  );
+  background-size: 200% 200%;
+  animation: mktBorderShimmer 4s ease-in-out infinite;
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+/* ── Counter ticker ────────────────────────────────────────────────────────── */
+@keyframes mktCountUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .marketing-surface .mkt-fade-in {
+  .marketing-surface .mkt-fade-in,
+  .marketing-surface .mkt-reveal {
     animation: none;
+    opacity: 1;
+    transform: none;
   }
+  .marketing-surface .mkt-ambient-glow { animation: none; }
+  .marketing-surface .mkt-pulse-ring::after { animation: none; }
+  .marketing-surface .mkt-border-shimmer::before { animation: none; }
 }

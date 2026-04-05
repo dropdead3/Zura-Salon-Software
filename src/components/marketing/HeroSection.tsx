@@ -1,10 +1,14 @@
 import { Link } from 'react-router-dom';
 import { ArrowRight, Zap } from 'lucide-react';
 import { PLATFORM_NAME, PLATFORM_DESCRIPTOR } from '@/lib/brand';
+import { DashboardMockup } from './DashboardMockup';
 
 export function HeroSection() {
   return (
-    <section className="relative flex flex-col items-center justify-center px-6 sm:px-8 text-center py-20 sm:py-28 lg:py-36 max-w-4xl mx-auto">
+    <section className="relative flex flex-col items-center justify-center px-6 sm:px-8 text-center pt-20 sm:pt-28 lg:pt-36 pb-8 sm:pb-12 max-w-5xl mx-auto overflow-visible">
+      {/* Ambient glow beam */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[320px] h-[500px] bg-gradient-to-b from-violet-500/20 via-violet-500/5 to-transparent rounded-full blur-[100px] -z-10 mkt-ambient-glow" />
+
       {/* Pill badge */}
       <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-violet-500/10 border border-violet-500/20 rounded-full text-violet-300 font-sans text-sm mb-8 mkt-fade-in">
         <Zap className="w-3.5 h-3.5" />
@@ -38,6 +42,11 @@ export function HeroSection() {
           Explore Platform
           <ArrowRight className="w-4 h-4" />
         </Link>
+      </div>
+
+      {/* Dashboard mockup */}
+      <div className="w-full mt-14 sm:mt-20 mkt-fade-in mkt-delay-5">
+        <DashboardMockup />
       </div>
     </section>
   );
