@@ -164,7 +164,7 @@ export function PersonaExplorer() {
       <div className="max-w-6xl mx-auto">
         {/* ── Header ──────────────────────────────────────────────────── */}
         <div className="text-center mb-12 sm:mb-16 mkt-reveal">
-          <p className="font-sans text-xs sm:text-sm text-violet-400 uppercase tracking-[0.15em] mb-4">
+          <p className="font-display text-[11px] sm:text-xs text-violet-400 uppercase tracking-[0.15em] mb-4">
             Find Your Solution
           </p>
           <h2 className="font-display text-2xl sm:text-3xl lg:text-4xl tracking-tight mb-4">
@@ -183,7 +183,7 @@ export function PersonaExplorer() {
               animate={{ opacity: 1, height: 'auto' }}
               exit={{ opacity: 0, height: 0 }}
               transition={{ duration: 0.25 }}
-              className="flex items-center justify-center gap-2 mb-6 text-sm font-sans text-muted-foreground overflow-hidden"
+              className="flex items-center justify-center gap-2 mb-6 text-sm font-sans text-slate-500 overflow-hidden"
             >
               <button
                 type="button"
@@ -297,7 +297,7 @@ export function PersonaExplorer() {
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: 12 }}
                     transition={{ duration: 0.4, delay: i * 0.08, ease: [0.16, 1, 0.3, 1] }}
-                    className="p-6 rounded-2xl mkt-glass"
+                    className="p-6 rounded-xl border border-white/[0.06] bg-white/[0.02]"
                   >
                     <div className="w-10 h-10 rounded-lg bg-violet-500/10 flex items-center justify-center mb-4">
                       <solution.icon className="w-5 h-5 text-violet-400" />
@@ -308,26 +308,13 @@ export function PersonaExplorer() {
                     <p className="font-sans text-sm text-slate-400 leading-relaxed mb-4">
                       {solution.description}
                     </p>
-                    <p className="font-sans text-xs text-violet-400/80 italic">
+                    <p className="font-sans text-xs text-violet-400/80">
                       {solution.stat}
                     </p>
                   </motion.div>
                 ))}
               </div>
 
-              {/* ── CTA ───────────────────────────────────────────────── */}
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.3 }}
-                className="text-center mt-10"
-              >
-                <Button asChild variant="default" size="lg">
-                  <Link to="/demo">
-                    See how {PLATFORM_NAME} works for you
-                  </Link>
-                </Button>
-              </motion.div>
             </motion.div>
           )}
         </AnimatePresence>
