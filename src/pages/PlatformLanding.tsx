@@ -3,7 +3,7 @@ import { HeroSection } from '@/components/marketing/HeroSection';
 import { StatBar } from '@/components/marketing/StatBar';
 import { ProblemStatement } from '@/components/marketing/ProblemStatement';
 import { SolutionShowcase } from '@/components/marketing/SolutionShowcase';
-import { PersonaTargeting } from '@/components/marketing/PersonaTargeting';
+import { PersonaExplorer } from '@/components/marketing/PersonaExplorer';
 import { BuiltByOperators } from '@/components/marketing/BuiltByOperators';
 import { OutcomeMetrics } from '@/components/marketing/OutcomeMetrics';
 import { TestimonialSection } from '@/components/marketing/TestimonialSection';
@@ -16,7 +16,7 @@ export default function PlatformLanding() {
       <StatBar />
       <ProblemStatement />
       <SolutionShowcase />
-      <PersonaTargeting />
+      <PersonaExplorer />
       <BuiltByOperators />
       <OutcomeMetrics />
       <TestimonialSection />
