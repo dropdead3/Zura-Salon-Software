@@ -1,6 +1,5 @@
-import { Layout } from "@/components/layout/Layout";
-import { SEO } from "@/components/SEO";
-import { FounderWelcome } from "@/components/home/FounderWelcome";
+import { MarketingLayout } from "@/components/marketing/MarketingLayout";
+import { MarketingSEO } from "@/components/marketing/MarketingSEO";
 import { AboutHero } from "@/components/about/AboutHero";
 import { ValuesSection } from "@/components/about/ValuesSection";
 import { StatsSection } from "@/components/about/StatsSection";
@@ -9,18 +8,18 @@ import { JoinTeamSection } from "@/components/about/JoinTeamSection";
 
 const About = () => {
   return (
-    <Layout>
-      <SEO 
+    <MarketingLayout>
+      <MarketingSEO 
         title="About Us"
-        description="Learn about our story and our team. Discover what makes us the premier destination for expert hair color, extensions, and styling."
+        description="Learn about the team building the salon intelligence platform. Zura is governance infrastructure for scaling operators."
+        path="/about"
       />
       <AboutHero />
-      <FounderWelcome />
       <ValuesSection />
       <StatsSection />
       <StorySection />
       <JoinTeamSection />
-    </Layout>
+    </MarketingLayout>
   );
 };
 

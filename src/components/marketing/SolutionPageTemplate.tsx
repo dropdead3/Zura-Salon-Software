@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
 import { MarketingLayout } from './MarketingLayout';
+import { MarketingSEO } from './MarketingSEO';
 import { useScrollReveal } from './useScrollReveal';
 import type { LucideIcon } from 'lucide-react';
 
@@ -25,6 +26,9 @@ export interface SolutionPageProps {
     detail: string;
   };
   ctaText?: string;
+  seoTitle?: string;
+  seoDescription?: string;
+  seoPath?: string;
 }
 
 /* ── Component ─────────────────────────────────────────────────────────────── */
@@ -36,6 +40,9 @@ export function SolutionPageTemplate({
   items,
   testimonial,
   ctaText = 'Get a Demo',
+  seoTitle,
+  seoDescription,
+  seoPath,
 }: SolutionPageProps) {
   const heroRef = useScrollReveal();
   const cardsRef = useScrollReveal();
@@ -48,6 +55,13 @@ export function SolutionPageTemplate({
 
   return (
     <MarketingLayout>
+      {seoTitle && (
+        <MarketingSEO
+          title={seoTitle}
+          description={seoDescription || description}
+          path={seoPath}
+        />
+      )}
       {/* ── Hero ──────────────────────────────────────────────────── */}
       <section ref={heroRef} className="relative z-10 px-6 sm:px-8 pt-20 pb-12 sm:pt-28 sm:pb-16 lg:pt-36 lg:pb-20">
         <div className="max-w-3xl mx-auto text-center mkt-reveal">

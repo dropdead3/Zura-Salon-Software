@@ -7,6 +7,9 @@ export default function MultiLocation() {
       eyebrow="For Multi-Location Owners"
       headline="Every location. One standard. Zero guesswork."
       description="You're growing fast. Zura makes sure your systems grow with you — so every location runs the way you designed it."
+      seoTitle="Multi-Location Management"
+      seoDescription="Benchmark, standardize, and scale across every location with zero guesswork."
+      seoPath="/solutions/multi-location"
       items={[
         {
           icon: GitCompare,

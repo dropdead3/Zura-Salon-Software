@@ -3,10 +3,10 @@ import { motion, useInView } from "framer-motion";
 import { useCounterAnimation } from "@/hooks/use-counter-animation";
 
 const stats = [
-  { value: 5, suffix: "+", label: "Years of Excellence" },
-  { value: 2, suffix: "K+", label: "Extension Installs" },
-  { value: 10, suffix: "K+", label: "Services Performed" },
-  { value: 2, suffix: "", label: "Valley Locations" },
+  { value: 5, suffix: "+", label: "Years Building" },
+  { value: 200, suffix: "+", label: "Locations Served" },
+  { value: 10, suffix: "K+", label: "Stylists Empowered" },
+  { value: 99, suffix: "%", label: "Uptime" },
 ];
 
 function StatItem({ value, suffix, label, delay }: { value: number; suffix: string; label: string; delay: number }) {
@@ -26,10 +26,10 @@ function StatItem({ value, suffix, label, delay }: { value: number; suffix: stri
       transition={{ duration: 0.6, delay }}
       className="text-center"
     >
-      <div className="text-4xl md:text-5xl lg:text-6xl font-display mb-2">
+      <div className="text-4xl md:text-5xl lg:text-6xl font-display mb-2 text-[hsl(var(--mkt-lavender))]">
         <span ref={counterRef}>{isInView ? count : 0}</span>{suffix}
       </div>
-      <p className="text-sm uppercase tracking-wider text-foreground/50">
+      <p className="font-sans text-sm uppercase tracking-wider text-slate-500">
         {label}
       </p>
     </motion.div>
@@ -41,18 +41,18 @@ export function StatsSection() {
   const isInView = useInView(sectionRef, { once: true, margin: "-100px" });
 
   return (
-    <section ref={sectionRef} className="py-16 lg:py-24 bg-secondary">
-      <div className="container mx-auto px-6">
+    <section ref={sectionRef} className="relative z-10 px-6 sm:px-8 py-20 lg:py-28 border-y border-white/[0.06]">
+      <div className="max-w-5xl mx-auto">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.6 }}
           className="text-center mb-12 lg:mb-16"
         >
-          <span className="inline-block text-xs uppercase tracking-[0.25em] text-muted-foreground mb-4 font-display">
+          <p className="font-sans text-xs uppercase tracking-[0.15em] text-[hsl(var(--mkt-dusky))] mb-4">
             By The Numbers
-          </span>
-          <h2 className="text-3xl md:text-4xl font-display">
+          </p>
+          <h2 className="font-display text-3xl sm:text-4xl tracking-tight text-white">
             Our Impact
           </h2>
         </motion.div>

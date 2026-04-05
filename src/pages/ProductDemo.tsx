@@ -1,8 +1,11 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowRight, ArrowLeft, Send, Building2, Sparkles } from 'lucide-react';
+import { ArrowRight, ArrowLeft, Send, Building2, Sparkles, Loader2 } from 'lucide-react';
 import { PLATFORM_NAME } from '@/lib/brand';
 import { MarketingLayout } from '@/components/marketing/MarketingLayout';
+import { MarketingSEO } from '@/components/marketing/MarketingSEO';
+import { captureWebsiteLead } from '@/lib/leadCapture';
+import { toast } from '@/hooks/use-toast';
 
 const locationOptions = ['1 location', '2–5 locations', '6–15 locations', '16+ locations'];
 const challengeOptions = [
@@ -17,16 +20,46 @@ export default function ProductDemo() {
   const navigate = useNavigate();
   const [form, setForm] = useState({ name: '', email: '', locations: '', challenge: '' });
   const [submitted, setSubmitted] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const isValid = form.name.trim() && form.email.trim() && form.locations && form.challenge;
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSubmitted(true);
-  };
+    if (!isValid) return;
 
-  const isValid = form.name && form.email && form.locations && form.challenge;
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(form.email.trim())) {
+      toast({ title: 'Invalid email', description: 'Please enter a valid email address.', variant: 'destructive' });
+      return;
+    }
+
+    setLoading(true);
+    const result = await captureWebsiteLead({
+      name: form.name.trim(),
+      email: form.email.trim(),
+      location: form.locations,
+      service: form.challenge,
+      referralSource: 'Platform Demo Request',
+      message: `Locations: ${form.locations} | Challenge: ${form.challenge}`,
+    });
+    setLoading(false);
+
+    if (result.success) {
+      setSubmitted(true);
+    } else {
+      toast({ title: 'Something went wrong', description: 'Please try again or email us directly.', variant: 'destructive' });
+    }
+  };
 
   return (
     <MarketingLayout>
+      <MarketingSEO
+        title="Request a Demo"
+        description={`See ${PLATFORM_NAME} in action. Get a personalized walkthrough of the salon intelligence platform built for scaling operators.`}
+        path="/demo"
+      />
       <section className="px-6 sm:px-8 py-16 sm:py-24 lg:py-32">
         <div className="max-w-2xl mx-auto">
           {/* Back link */}
@@ -63,6 +96,7 @@ export default function ProductDemo() {
                     onChange={(e) => setForm({ ...form, name: e.target.value })}
                     className="w-full h-12 px-4 rounded-xl bg-white/[0.04] border border-white/[0.08] text-white font-sans text-sm placeholder:text-slate-600 focus:outline-none focus:border-violet-500/40 focus:ring-1 focus:ring-violet-500/20 transition-colors"
                     placeholder="Jane Smith"
+                    maxLength={100}
                   />
                 </div>
 
@@ -75,6 +109,7 @@ export default function ProductDemo() {
                     onChange={(e) => setForm({ ...form, email: e.target.value })}
                     className="w-full h-12 px-4 rounded-xl bg-white/[0.04] border border-white/[0.08] text-white font-sans text-sm placeholder:text-slate-600 focus:outline-none focus:border-violet-500/40 focus:ring-1 focus:ring-violet-500/20 transition-colors"
                     placeholder="jane@salon.com"
+                    maxLength={255}
                   />
                 </div>
 
@@ -123,11 +158,20 @@ export default function ProductDemo() {
                 {/* Submit */}
                 <button
                   type="submit"
-                  disabled={!isValid}
+                  disabled={!isValid || loading}
                   className="w-full h-12 rounded-full bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 disabled:opacity-40 disabled:cursor-not-allowed font-sans text-base font-medium text-white transition-all shadow-lg shadow-violet-500/20 inline-flex items-center justify-center gap-2"
                 >
-                  Get a Demo
-                  <Send className="w-4 h-4" />
+                  {loading ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Submitting…
+                    </>
+                  ) : (
+                    <>
+                      Get a Demo
+                      <Send className="w-4 h-4" />
+                    </>
+                  )}
                 </button>
               </form>
             </>

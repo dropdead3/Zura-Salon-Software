@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { Brain, Megaphone, FlaskConical, Cog, ArrowRight, Check } from 'lucide-react';
 import { MarketingLayout } from '@/components/marketing/MarketingLayout';
+import { MarketingSEO } from '@/components/marketing/MarketingSEO';
 import {
   PLATFORM_NAME,
   EXECUTIVE_BRIEF_NAME,
@@ -75,6 +76,11 @@ const surfaces = [
 export default function Ecosystem() {
   return (
     <MarketingLayout>
+      <MarketingSEO
+        title="Ecosystem"
+        description="Intelligence, marketing, simulation, and automation — a complete set of tools that all work together to run your salon."
+        path="/ecosystem"
+      />
       {/* Hero */}
       <section className="relative z-10 px-6 sm:px-8 pt-16 sm:pt-24 pb-12 sm:pb-16">
         <div className="max-w-4xl mx-auto text-center">

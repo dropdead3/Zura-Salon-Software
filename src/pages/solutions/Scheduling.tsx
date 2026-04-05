@@ -7,6 +7,9 @@ export default function Scheduling() {
       eyebrow="Smart Scheduling"
       headline="A full book is good. A smart book is better."
       description="Your calendar should work for you — not against you. See gaps before they happen, rebook with purpose, and keep every chair productive."
+      seoTitle="Smart Scheduling"
+      seoDescription="Fill gaps, optimize bookings, and keep every chair productive with intelligent scheduling tools."
+      seoPath="/solutions/scheduling"
       items={[
         {
           icon: CalendarCheck,
