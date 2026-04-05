@@ -4,6 +4,7 @@ const stats = [
   { value: 50, suffix: '+', label: 'Locations Managed' },
   { value: 30, prefix: '$', suffix: 'M+', label: 'Revenue Monitored' },
   { value: 500, suffix: '+', label: 'Stylists on Platform' },
+  { value: 12, suffix: ' → 1', label: 'Tools Replaced' },
 ];
 
 function Counter({ value, prefix, suffix }: { value: number; prefix?: string; suffix?: string }) {
@@ -36,7 +37,7 @@ function Counter({ value, prefix, suffix }: { value: number; prefix?: string; su
   }, [value]);
 
   return (
-    <span ref={ref} className="font-display text-2xl sm:text-3xl tracking-tight text-white">
+    <span ref={ref} className="font-display text-3xl sm:text-4xl tracking-tight text-white">
       {prefix}{display}{suffix}
     </span>
   );
@@ -45,13 +46,16 @@ function Counter({ value, prefix, suffix }: { value: number; prefix?: string; su
 export function StatBar() {
   return (
     <section className="relative z-10 border-y border-white/[0.06] py-12 sm:py-16">
-      <div className="max-w-5xl mx-auto px-6 sm:px-8">
+      <div className="max-w-6xl mx-auto px-6 sm:px-8">
         <p className="font-sans text-xs sm:text-sm text-slate-500 uppercase tracking-[0.15em] text-center mb-8">
           Trusted by operators scaling real businesses
         </p>
-        <div className="grid grid-cols-3 gap-6 sm:gap-12 text-center">
-          {stats.map((stat) => (
-            <div key={stat.label}>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-6 sm:gap-0 text-center">
+          {stats.map((stat, i) => (
+            <div
+              key={stat.label}
+              className={`${i < stats.length - 1 ? 'sm:border-r sm:border-white/[0.06]' : ''}`}
+            >
               <Counter value={stat.value} prefix={stat.prefix} suffix={stat.suffix} />
               <p className="font-sans text-[10px] sm:text-xs text-slate-500 uppercase tracking-wide mt-2">
                 {stat.label}

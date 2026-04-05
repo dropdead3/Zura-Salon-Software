@@ -1717,6 +1717,66 @@ html {
   to { opacity: 1; transform: translateY(0); }
 }
 
+/* ── Floating dots (FinalCTA background) ───────────────────────────────────── */
+@keyframes mktFloatUp {
+  0% { transform: translateY(0) scale(1); opacity: 0; }
+  10% { opacity: 0.6; }
+  90% { opacity: 0.6; }
+  100% { transform: translateY(-400px) scale(0.5); opacity: 0; }
+}
+.marketing-surface .mkt-float-dot {
+  position: absolute;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: hsl(263 70% 55% / 0.4);
+  animation: mktFloatUp var(--dur, 8s) var(--delay, 0s) ease-in infinite;
+}
+
+/* ── Gradient pillar connector ──────────────────────────────────────────────── */
+@keyframes mktFlowDot {
+  0% { left: 0; opacity: 0; }
+  10% { opacity: 1; }
+  90% { opacity: 1; }
+  100% { left: 100%; opacity: 0; }
+}
+.marketing-surface .mkt-connector-line {
+  position: relative;
+  height: 2px;
+  background: linear-gradient(90deg, hsl(263 70% 55% / 0.2), hsl(263 70% 55% / 0.05));
+}
+.marketing-surface .mkt-connector-line::after {
+  content: '';
+  position: absolute;
+  top: -2px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: hsl(263 70% 55% / 0.8);
+  box-shadow: 0 0 8px hsl(263 70% 55% / 0.5);
+  animation: mktFlowDot 3s ease-in-out infinite;
+}
+
+/* ── Nav gradient CTA shimmer ──────────────────────────────────────────────── */
+@keyframes mktCtaShimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+.marketing-surface .mkt-cta-shimmer {
+  background-size: 200% 100%;
+  animation: mktCtaShimmer 3s ease-in-out infinite;
+}
+
+/* ── Persona card glow on hover ────────────────────────────────────────────── */
+.marketing-surface .mkt-persona-card {
+  transition: border-color 0.3s, box-shadow 0.3s, transform 0.3s;
+}
+.marketing-surface .mkt-persona-card:hover {
+  border-color: hsl(263 70% 55% / 0.3);
+  box-shadow: 0 0 40px hsl(263 70% 55% / 0.08);
+  transform: translateY(-2px);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .marketing-surface .mkt-fade-in,
   .marketing-surface .mkt-reveal {
@@ -1727,4 +1787,8 @@ html {
   .marketing-surface .mkt-ambient-glow { animation: none; }
   .marketing-surface .mkt-pulse-ring::after { animation: none; }
   .marketing-surface .mkt-border-shimmer::before { animation: none; }
+  .marketing-surface .mkt-float-dot { animation: none; opacity: 0.3; }
+  .marketing-surface .mkt-connector-line::after { animation: none; }
+  .marketing-surface .mkt-cta-shimmer { animation: none; }
+  .marketing-surface .mkt-persona-card:hover { transform: none; }
 }

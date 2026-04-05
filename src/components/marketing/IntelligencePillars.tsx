@@ -1,4 +1,4 @@
-import { Eye, GitCompare, AlertTriangle, Sparkles, ArrowRight } from 'lucide-react';
+import { Eye, GitCompare, AlertTriangle, Sparkles } from 'lucide-react';
 import { PLATFORM_NAME } from '@/lib/brand';
 import { useScrollReveal } from './useScrollReveal';
 
@@ -52,11 +52,11 @@ export function IntelligencePillars() {
           {pillars.map((pillar, i) => (
             <div key={pillar.title} className="flex items-center lg:flex-1" style={{ transitionDelay: `${i * 0.1}s` }}>
               <div className="mkt-reveal relative flex-1 p-6 sm:p-8 rounded-2xl mkt-glass text-center hover:bg-white/[0.05] transition-colors">
-                {/* Pulse ring */}
-                <div className="relative w-14 h-14 mx-auto mb-4">
+                {/* Icon */}
+                <div className="relative w-16 h-16 mx-auto mb-4">
                   <div className="absolute inset-0 rounded-xl mkt-pulse-ring" />
                   <div className="relative w-full h-full bg-violet-500/10 rounded-xl flex items-center justify-center">
-                    <pillar.icon className="w-6 h-6 text-violet-400" />
+                    <pillar.icon className="w-7 h-7 text-violet-400" />
                   </div>
                 </div>
                 <span className="font-display text-3xl text-violet-500/10 absolute top-4 right-4 leading-none">
@@ -69,10 +69,10 @@ export function IntelligencePillars() {
                   {pillar.description}
                 </p>
               </div>
-              {/* Connector arrow */}
+              {/* Connector line with flowing dot */}
               {i < pillars.length - 1 && (
-                <div className="hidden lg:flex items-center justify-center w-8 shrink-0">
-                  <ArrowRight className="w-4 h-4 text-violet-500/30" />
+                <div className="hidden lg:flex items-center w-10 shrink-0 px-1">
+                  <div className="mkt-connector-line w-full" />
                 </div>
               )}
             </div>

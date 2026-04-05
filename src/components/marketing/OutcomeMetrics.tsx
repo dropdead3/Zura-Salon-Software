@@ -47,12 +47,12 @@ export function OutcomeMetrics() {
   const ref = useScrollReveal();
 
   return (
-    <section ref={ref} className="relative z-10 px-6 sm:px-8 py-16 sm:py-20 lg:py-24">
+    <section ref={ref} className="relative z-10 px-6 sm:px-8 py-16 sm:py-24 lg:py-28">
       {/* Subtle gradient backdrop */}
       <div className="absolute inset-0 bg-gradient-to-b from-transparent via-violet-500/[0.03] to-transparent -z-10" />
 
       <div className="max-w-5xl mx-auto">
-        <div className="text-center mb-12 mkt-reveal">
+        <div className="text-center mb-14 mkt-reveal">
           <p className="font-sans text-xs sm:text-sm text-violet-400 uppercase tracking-[0.15em] mb-4">
             Outcomes
           </p>
@@ -61,9 +61,13 @@ export function OutcomeMetrics() {
           </h2>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 sm:gap-12 text-center">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 sm:gap-6 text-center">
           {metrics.map((metric, i) => (
-            <div key={metric.label} className="mkt-reveal" style={{ transitionDelay: `${i * 0.1}s` }}>
+            <div
+              key={metric.label}
+              className="mkt-reveal p-6 sm:p-8 rounded-2xl mkt-glass mkt-border-shimmer"
+              style={{ transitionDelay: `${i * 0.1}s` }}
+            >
               <AnimatedStat value={metric.value} prefix={metric.prefix} suffix={metric.suffix} />
               <p className="font-sans text-xs sm:text-sm text-slate-300 uppercase tracking-wide mt-3 mb-2">
                 {metric.label}
