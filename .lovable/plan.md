@@ -1,123 +1,81 @@
 
 
-# Rebuild the Zura Landing Page — World-Class Salon Intelligence Sales Page
+# Animate the DashboardMockup: Data → Intelligence → Action Narrative
 
-## Vision
-Transform the current placeholder-heavy landing page into a premium, high-converting sales page that communicates: built by multi-location salon owners, designed for operators who want to scale, powered by real intelligence infrastructure. The reference image shows the caliber we're targeting — dark, cinematic, with real product UI as proof.
+## Concept
+Transform the static DashboardMockup into a looping 3-act animation that tells Zura's core story:
 
-## Current State
-The existing page has the right structure but lacks visual punch:
-- Hero is text-only with no product visual
-- LogoBar uses placeholder text ("Salon A", "Salon B")
-- PlatformPreview is an empty gray box saying "Dashboard screenshot coming soon"
-- TestimonialSection has one hardcoded quote with no attribution depth
-- No animated dashboard mockups, no real product screenshots, no social proof images
-- Sections feel flat — same card pattern repeated without variation
+1. **ACT 1 — OBSERVE** (~3s): KPI tiles count up from zero. Chart line draws itself left-to-right. The dashboard "comes alive" with data flowing in.
+2. **ACT 2 — DETECT + RECOMMEND** (~3s): A scanning pulse sweeps across the data. The Utilization KPI flashes amber (highlighting a problem). The Primary Lever card glows and slides into focus with the recommendation: "Increase Tuesday utilization by 12%." A confidence bar fills. This is Zura telling you what to do.
+3. **ACT 3 — ACT + IMPROVE** (~3s): A cursor appears, clicks "Apply" on the lever card. The Utilization value ticks from 75% → 87%. The Revenue value climbs from $248K → $284K. Chart line redraws with an upward shift. A green "Applied" checkmark appears on the lever. The numbers settle — the business improved.
 
-## Page Architecture (Section Order)
+Then a brief pause (~2s) and the loop resets.
 
-### 1. Hero — Cinematic + Product Visual
-- Keep the gradient headline but add a dramatic ambient glow effect (inspired by the reference — a vertical light beam behind the headline)
-- Add a floating, perspective-tilted dashboard mockup below the CTA buttons — a CSS-only recreation of the Command Center showing KPI tiles, revenue charts, and lever cards
-- Animated entrance: staggered fade-up for headline, subline, CTAs, then the dashboard mock slides up with parallax
+## Technical Approach
 
-### 2. Social Proof Bar (replaces LogoBar)
-- Replace placeholder text logos with a real stat bar: "Trusted by operators managing 50+ locations and $30M+ in annual revenue"
-- Animated counter strip: locations managed, revenue monitored, stylists on platform
-- No fake logos — numbers carry more weight until real brand logos are available
+### Rewrite `src/components/marketing/DashboardMockup.tsx`
+- Use React `useState` + `useEffect` with a single `phase` state cycling through `'observe' | 'detect' | 'act' | 'pause'`
+- CSS transitions and keyframe animations handle all motion (no framer-motion dependency needed for this component)
+- Animated number counter utility (simple requestAnimationFrame-based interpolation) for KPI values
+- SVG `stroke-dasharray` / `stroke-dashoffset` animation for the chart line draw effect
+- CSS classes toggled per phase to control opacity, glow, scale, and color shifts
 
-### 3. Problem Statement — Emotional + Visual
-- Redesign from flat cards to a more dramatic split layout
-- Left side: large display text "The beauty industry mastered artistry. It did not master infrastructure."
-- Right side: animated list of pain points that fade in sequentially
-- Stronger emotional hook targeting multi-location chaos
+### Animation Details
 
-### 4. Product Showcase — Interactive Dashboard Mockup (replaces PlatformPreview)
-- Create a CSS/SVG-rendered dashboard mock showing:
-  - Revenue KPI tiles with animated counters
-  - A simplified area chart (CSS gradients, no library needed)
-  - Lever cards showing "Primary Lever: Increase Tuesday utilization by 12%"
-  - Weekly intelligence brief preview
-- Slight perspective tilt with hover parallax
-- Glass-morphism container with violet glow backdrop
-- Caption: "Real intelligence. Not another dashboard."
+**Act 1 — Observe (0-3s)**
+- KPI values animate from 0 to "before" values ($248K, 75%, 2,847, 31.1%)
+- Chart SVG path draws via stroke-dashoffset transition
+- Staggered: each KPI tile fades in 200ms apart
 
-### 5. Intelligence Loop (IntelligencePillars)
-- Upgrade from 4 flat cards to a connected timeline/flow visualization
-- Horizontal on desktop with connecting lines/arrows between steps
-- Each step has a subtle animated pulse showing the "loop" is continuous
-- Larger icons, bolder numbering
+**Act 2 — Detect (3-6s)**
+- A subtle horizontal scan line sweeps down the mockup (CSS gradient animation)
+- Utilization KPI border pulses amber briefly (detected problem)
+- Lever card transitions from opacity-0/translateY(8px) to full visibility
+- Confidence bar fills from 0% to 75%
+- Small "Zura detected" label fades in above the lever card
 
-### 6. Built by Operators Section (NEW)
-- "Built by multi-location salon owners who lived the chaos"
-- Two-column layout: narrative text left, credibility markers right
-- Key messages: "We scaled from 1 to 12 locations. We built what we wished existed."
-- No headshots needed — the story carries the weight
+**Act 3 — Act (6-9s)**
+- A fake cursor element appears, moves toward and "clicks" an "Apply" button on the lever card
+- Utilization value counts up: 75% → 87%
+- Revenue value counts up: $248K → $284K
+- Margin ticks: 31.1% → 34.2%
+- Chart path morphs to a higher trajectory (second SVG path, cross-faded)
+- Lever card shows green checkmark + "Applied" state
+- Change indicators (+12%, +4%, +2.1%) fade in beneath values
 
-### 7. Outcome Metrics — Bolder Treatment
-- Keep animated counters but add context cards beneath each number
-- "$84K recovered in Q1" / "23% margin improvement" / "4.2 hours saved per week"
-- Add a subtle background gradient strip to separate this section visually
+**Pause (9-11s)**
+- Everything holds for 2 seconds, then all elements fade to initial state and loop restarts
 
-### 8. Feature Grid (NEW — replaces EcosystemPreview on landing)
-- 6 feature cards in a bento grid layout showing concrete capabilities:
-  - Multi-location command center
-  - Weekly intelligence briefs
-  - Margin visibility at service level
-  - Stylist performance architecture
-  - Drift detection and alerting
-  - Career path and commission architecture
-- Each card has a small icon, title, one-line description
-- Alternating sizes (2 large + 4 small in bento pattern)
+### CSS Additions to `src/index.css`
+- `@keyframes mktScanLine` — horizontal gradient sweep
+- `@keyframes mktCursorMove` — cursor position animation
+- `@keyframes mktPulseAmber` — amber border pulse for detected KPI
+- Utility classes for phase-based transitions
 
-### 9. Testimonials — Multi-Quote Carousel
-- Upgrade from single quote to 3 rotating testimonials
-- Auto-rotate with dot indicators
-- Each quote attributed with role + location count
+### No changes needed to:
+- `PlatformPreview.tsx` or `HeroSection.tsx` — they just render `<DashboardMockup />` and the animation is self-contained
+- No new dependencies
 
-### 10. Final CTA — Full-Width Cinematic
-- Dark-to-violet gradient background
-- Larger headline: "See what Zura sees in your business"
-- Dual CTAs: "Request a Demo" (primary) + "Explore the Platform" (secondary)
-- Subtle animated particles or glow effect in background
+## Component Structure
 
-## New Components to Create
-1. `src/components/marketing/DashboardMockup.tsx` — CSS-rendered dashboard preview with KPI tiles, chart areas, and lever cards (no real data, purely visual)
-2. `src/components/marketing/BuiltByOperators.tsx` — Founder credibility section
-3. `src/components/marketing/FeatureGrid.tsx` — Bento-style capability showcase
-4. `src/components/marketing/StatBar.tsx` — Animated social proof numbers (replaces LogoBar)
+```text
+DashboardMockup
+├── Title bar (static)
+├── KPI Row (4 tiles)
+│   └── Each: animated value + phase-dependent border color
+├── Chart area
+│   └── Two SVG paths (before/after) cross-faded by phase
+├── Lever card
+│   └── Phase-dependent: hidden → visible → "Applied" state
+├── Scan line overlay (Act 2 only)
+├── Fake cursor element (Act 3 only)
+└── Phase timer (useEffect interval)
+```
 
-## Components to Heavily Refactor
-1. `HeroSection.tsx` — Add ambient glow, dashboard mockup, stronger entrance animations
-2. `ProblemStatement.tsx` — Split layout, emotional copy, sequential animations
-3. `IntelligencePillars.tsx` — Connected flow visualization
-4. `OutcomeMetrics.tsx` — Context cards beneath stats
-5. `TestimonialSection.tsx` — Multi-quote with rotation
-6. `FinalCTA.tsx` — Full-width cinematic treatment
-7. `PlatformPreview.tsx` — Replace with DashboardMockup integration
-
-## CSS Additions (in index.css)
-- Ambient glow keyframes for hero light beam effect
-- Perspective/tilt utilities for dashboard mockup
-- Sequential fade-in animation variants (mkt-delay-4 through mkt-delay-8)
-- Glass-morphism card variant for premium surfaces
-- Gradient border animation for featured cards
-
-## Technical Notes
-- All mockup UI is pure CSS/SVG — no screenshots, no external images, no data dependencies
-- Every section uses IntersectionObserver-based scroll reveal (extend existing mkt-fade-in system)
-- Brand tokens used throughout — zero hardcoded "Zura" strings
-- Mobile-first responsive: sections stack cleanly, mockup scales down gracefully
-- No new dependencies — Tailwind + Lucide icons + existing animation system
-- Marketing surface CSS namespace (.marketing-surface) prevents style leakage
-
-## Build Order (8 phases)
-1. CSS additions (glow effects, animations, glass utilities)
-2. DashboardMockup component
-3. Hero rebuild with mockup integration
-4. StatBar (replace LogoBar)
-5. Problem Statement + Built by Operators
-6. Intelligence Pillars upgrade + Feature Grid
-7. Outcome Metrics + Testimonials upgrade
-8. Final CTA + PlatformLanding.tsx section reorder
+## Key Decisions
+- Pure CSS transitions + React state — no animation library needed
+- Self-contained loop with ~11s cycle — engaging without being distracting
+- The "cursor click" is a simple div with a pointer SVG shape, not an actual interaction
+- Respects `prefers-reduced-motion`: if enabled, shows the final "after" state statically
+- Mobile: cursor animation hidden on small screens (the number transitions still play)
 
