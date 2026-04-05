@@ -7,11 +7,8 @@ import "./index.css";
 function BootstrapFallback() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background text-foreground">
-      <div className="flex flex-col items-center gap-4 text-center">
+      <div className="flex flex-col items-center text-center">
         <ZuraLoader size="lg" platformColors />
-        <p className="font-display text-xs uppercase tracking-[0.16em] text-muted-foreground">
-          {PLATFORM_NAME}
-        </p>
       </div>
     </div>
   );
