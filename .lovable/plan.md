@@ -1,34 +1,31 @@
 
 
-# Expand Struggle Input Suggestions
+# Add Zura Color Bar Suggestions to Struggle Input
 
-## Change
+## Problem
 
-Update the `SUGGESTIONS` array in `src/components/marketing/StruggleInput.tsx` (lines 15-20) to include more software-specific salon pain points. These also cycle through the typing animation placeholder.
+The current suggestion pills are generic salon management pain points. None specifically reference the **Zura Color Bar** app — a core product with its own mixing station, inventory tracking, waste analytics, and cost-per-service intelligence.
 
-### New suggestions list
+## Changes
 
-1. "I can't track commissions accurately"
-2. "I want to run my commission salon better"
-3. "I need booth renter tracking and management"
-4. "I want custom commission levels per service and retail"
-5. "I need to track color bar costs per service"
-6. "I want an AI assistant to handle calls and scheduling"
-7. "My team keeps quitting"
-8. "I don't know which services are profitable"
-9. "Scheduling is a nightmare"
+### `src/components/marketing/StruggleInput.tsx`
 
-Nine total — the typing animation cycles through all of them; the pill buttons below the input will show a random or first-N subset (4-5) to avoid clutter.
+Add 4 Color Bar-specific suggestions to the `SUGGESTIONS` array:
 
-### Pill display logic
+1. "I'm losing money on color and don't know how much"
+2. "I need to track exactly how much product goes on each head"
+3. "My stylists waste too much color"
+4. "I want to know my true cost per color service"
 
-To prevent the suggestion area from becoming too tall, show only 5 pills at a time, randomly selected on mount. The full list still cycles in the typing placeholder animation.
+These complement the existing "I need to track color bar costs per service" entry (already present) and speak directly to the Color Bar app's value props: waste reduction, per-service cost tracking, and margin visibility.
+
+The typing animation cycles through all suggestions; the pill subset (5 shown) is randomly selected on mount, so Color Bar entries will naturally surface.
 
 ## File Changes
 
 | File | Action |
 |------|--------|
-| `src/components/marketing/StruggleInput.tsx` | **Modify** — expand `SUGGESTIONS` array, add display subset logic for pills |
+| `src/components/marketing/StruggleInput.tsx` | **Modify** — add 4 Color Bar-specific strings to `SUGGESTIONS` array |
 
 **1 file modified.**
 
