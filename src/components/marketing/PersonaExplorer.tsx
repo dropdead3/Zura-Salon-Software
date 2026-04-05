@@ -1,5 +1,6 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { RotateCcw, ChevronRight } from 'lucide-react';
 import {
   Scissors, Users, Building2, Crown,
   DollarSign, CalendarCheck, Heart, BarChart3,
@@ -92,6 +93,17 @@ const solutions: Solution[] = [
 /* ── Max problems selectable ──────────────────────────────────────────────── */
 const MAX_PROBLEMS = 3;
 
+/* ── Micro-analytics helper ────────────────────────────────────────────── */
+function emitExplorerEvent(
+  eventName: 'persona_selected' | 'problem_toggled' | 'solutions_viewed',
+  payload: Record<string, unknown>
+) {
+  if (import.meta.env.DEV) {
+    console.debug(`[persona-explorer] ${eventName}`, payload);
+  }
+  window.dispatchEvent(new CustomEvent(eventName, { detail: payload }));
+}
+
 /* ── Component ────────────────────────────────────────────────────────────── */
 export function PersonaExplorer() {
   const sectionRef = useScrollReveal();
@@ -109,15 +121,43 @@ export function PersonaExplorer() {
   const handlePersonaSelect = useCallback((key: PersonaKey) => {
     setSelectedPersona(key);
     setSelectedProblems([]);
+    emitExplorerEvent('persona_selected', { persona: key });
   }, []);
 
   const toggleProblem = useCallback((id: string) => {
     setSelectedProblems((prev) => {
-      if (prev.includes(id)) return prev.filter((p) => p !== id);
-      if (prev.length >= MAX_PROBLEMS) return prev;
-      return [...prev, id];
+      const removing = prev.includes(id);
+      const next = removing ? prev.filter((p) => p !== id) : prev.length >= MAX_PROBLEMS ? prev : [...prev, id];
+      if (next !== prev) {
+        emitExplorerEvent('problem_toggled', {
+          persona: selectedPersona,
+          problemId: id,
+          action: removing ? 'remove' : 'add',
+          selectedProblems: next,
+        });
+      }
+      return next;
     });
+  }, [selectedPersona]);
+
+  // Fire when solutions become visible
+  useEffect(() => {
+    if (filteredSolutions.length > 0 && selectedPersona) {
+      emitExplorerEvent('solutions_viewed', {
+        persona: selectedPersona,
+        problems: selectedProblems,
+        solutionCount: filteredSolutions.length,
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filteredSolutions.length, selectedPersona]);
+
+  const handleReset = useCallback(() => {
+    setSelectedPersona(null);
+    setSelectedProblems([]);
   }, []);
+
+  const currentPersonaLabel = personas.find((p) => p.key === selectedPersona)?.label;
 
   return (
     <section ref={sectionRef} className="relative z-10 px-6 sm:px-8 py-16 sm:py-20 lg:py-24">
@@ -134,6 +174,36 @@ export function PersonaExplorer() {
             Select your role and the problems that matter most — and see exactly how {PLATFORM_NAME} solves them.
           </p>
         </div>
+
+        {/* ── Breadcrumb trail ─────────────────────────────────────── */}
+        <AnimatePresence>
+          {selectedPersona && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.25 }}
+              className="flex items-center justify-center gap-2 mb-6 text-sm font-sans text-muted-foreground overflow-hidden"
+            >
+              <button
+                type="button"
+                onClick={handleReset}
+                className="inline-flex items-center gap-1 text-violet-400 hover:text-violet-300 transition-colors cursor-pointer"
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+                Start over
+              </button>
+              <ChevronRight className="w-3.5 h-3.5 text-slate-600" />
+              <span>{currentPersonaLabel}</span>
+              {selectedProblems.length > 0 && (
+                <>
+                  <ChevronRight className="w-3.5 h-3.5 text-slate-600" />
+                  <span>{selectedProblems.length} problem{selectedProblems.length !== 1 ? 's' : ''} selected</span>
+                </>
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* ── Step 1: Persona cards ───────────────────────────────────── */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mkt-reveal" style={{ transitionDelay: '0.1s' }}>
