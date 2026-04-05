@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useOrganizationContext } from '@/contexts/OrganizationContext';
 
 export interface StylistLevel {
   id: string;
@@ -13,6 +14,7 @@ export interface StylistLevel {
   is_active: boolean;
   service_commission_rate: number | null;
   retail_commission_rate: number | null;
+  organization_id: string;
   created_at: string;
   updated_at: string;
 }
@@ -39,7 +41,6 @@ export function useStylistLevelsRealtime() {
           table: 'stylist_levels',
         },
         () => {
-          // Invalidate all stylist-levels queries when changes occur
           queryClient.invalidateQueries({ queryKey: ['stylist-levels'] });
           queryClient.invalidateQueries({ queryKey: ['stylist-levels-all'] });
         }
@@ -53,15 +54,19 @@ export function useStylistLevelsRealtime() {
 }
 
 export function useStylistLevels() {
-  // Set up realtime subscription
+  const { effectiveOrganization } = useOrganizationContext();
+  const orgId = effectiveOrganization?.id;
+
   useStylistLevelsRealtime();
   
   return useQuery({
-    queryKey: ['stylist-levels'],
+    queryKey: ['stylist-levels', orgId],
+    enabled: !!orgId,
     queryFn: async () => {
       const { data, error } = await supabase
         .from('stylist_levels')
         .select('*')
+        .eq('organization_id', orgId!)
         .eq('is_active', true)
         .order('display_order', { ascending: true });
 
@@ -72,12 +77,17 @@ export function useStylistLevels() {
 }
 
 export function useAllStylistLevels() {
+  const { effectiveOrganization } = useOrganizationContext();
+  const orgId = effectiveOrganization?.id;
+
   return useQuery({
-    queryKey: ['stylist-levels-all'],
+    queryKey: ['stylist-levels-all', orgId],
+    enabled: !!orgId,
     queryFn: async () => {
       const { data, error } = await supabase
         .from('stylist_levels')
         .select('*')
+        .eq('organization_id', orgId!)
         .order('display_order', { ascending: true });
 
       if (error) throw error;
@@ -134,6 +144,7 @@ export function useCreateStylistLevel() {
 
   return useMutation({
     mutationFn: async (data: {
+      organization_id: string;
       slug: string;
       label: string;
       client_label: string;
@@ -203,7 +214,6 @@ export function useReorderStylistLevels() {
 
   return useMutation({
     mutationFn: async (levels: { id: string; display_order: number; client_label: string }[]) => {
-      // Update all levels in sequence
       for (const level of levels) {
         const { error } = await supabase
           .from('stylist_levels')
@@ -235,6 +245,7 @@ export function useReorderStylistLevels() {
 export function useSaveStylistLevels() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const { effectiveOrganization } = useOrganizationContext();
 
   return useMutation({
     mutationFn: async (levels: {
@@ -247,10 +258,14 @@ export function useSaveStylistLevels() {
       service_commission_rate?: number | null;
       retail_commission_rate?: number | null;
     }[]) => {
-      // Get current levels from DB
+      const orgId = effectiveOrganization?.id;
+      if (!orgId) throw new Error('No organization selected');
+
+      // Get current levels from DB for this org
       const { data: existingLevels, error: fetchError } = await supabase
         .from('stylist_levels')
-        .select('id, slug');
+        .select('id, slug')
+        .eq('organization_id', orgId);
       
       if (fetchError) throw fetchError;
 
@@ -281,13 +296,15 @@ export function useSaveStylistLevels() {
               service_commission_rate: level.service_commission_rate ?? null,
               retail_commission_rate: level.retail_commission_rate ?? null,
             })
-            .eq('slug', level.slug);
+            .eq('slug', level.slug)
+            .eq('organization_id', orgId);
           if (error) throw error;
         } else {
           // Insert new
           const { error } = await supabase
             .from('stylist_levels')
             .insert({
+              organization_id: orgId,
               slug: level.slug,
               label: level.label,
               client_label: level.client_label,
