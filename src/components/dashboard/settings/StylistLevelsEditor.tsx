@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
 import { DashboardPageHeader } from '@/components/dashboard/DashboardPageHeader';
@@ -58,6 +58,28 @@ import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { generateLevelRequirementsPDF } from '@/components/dashboard/settings/LevelRequirementsPDF';
 import { TeamCommissionRoster } from '@/components/dashboard/settings/TeamCommissionRoster';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from '@/components/ui/dialog';
+
+interface LevelAnalysisItem {
+  title: string;
+  description: string;
+  severity?: 'low' | 'medium' | 'high';
+  affectedLevels?: string[];
+}
+
+interface LevelAnalysisResult {
+  overallRating: 'well_structured' | 'needs_attention' | 'requires_review';
+  overallSummary: string;
+  strengths: LevelAnalysisItem[];
+  suggestions: LevelAnalysisItem[];
+  considerations: LevelAnalysisItem[];
+}
 
 function formatCriteriaSummary(c: LevelPromotionCriteria): string {
   const parts: string[] = [];
