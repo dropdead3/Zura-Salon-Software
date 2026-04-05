@@ -702,6 +702,7 @@ export default function GraduationTracker() {
   const { data: allLevels = [] } = useStylistLevels();
   const { data: assistants, isLoading: loadingAssistants } = useAllAssistantProgress();
   const { data: requirements, isLoading: loadingReqs } = useAllGraduationRequirements();
+  const { data: promotions = [] } = useOrgPromotionHistory();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [levelFilter, setLevelFilter] = useState<string>('all');
@@ -823,6 +824,7 @@ export default function GraduationTracker() {
                 members={filtered}
                 totalLevels={allLevels.length}
                 emptyMessage="No team members with levels assigned"
+                promotions={promotions}
               />
             )}
           </TabsContent>
@@ -838,6 +840,7 @@ export default function GraduationTracker() {
                 members={readyMembers}
                 totalLevels={allLevels.length}
                 emptyMessage="No team members currently qualified for promotion"
+                promotions={promotions}
               />
             )}
           </TabsContent>
@@ -853,6 +856,7 @@ export default function GraduationTracker() {
                 members={atRiskMembers}
                 totalLevels={allLevels.length}
                 emptyMessage="No team members currently at risk — all meeting retention standards"
+                promotions={promotions}
               />
             )}
           </TabsContent>
