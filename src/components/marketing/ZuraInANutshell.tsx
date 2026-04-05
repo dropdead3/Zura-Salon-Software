@@ -361,11 +361,22 @@ const FEATURES = [
 
 /* ─── Main Section ─────────────────────────────────────────────────── */
 export function ZuraInANutshell() {
+  const headerRef = useRef<HTMLDivElement>(null);
+  const headerInView = useInView(headerRef, { once: true, margin: '-60px' });
+  const ctaRef = useRef<HTMLDivElement>(null);
+  const ctaInView = useInView(ctaRef, { once: true, margin: '-60px' });
+
   return (
     <section className="relative z-10 py-24 sm:py-32">
       <div className="max-w-6xl mx-auto px-6 sm:px-8">
         {/* Section header */}
-        <div className="text-center mb-16 sm:mb-20">
+        <motion.div
+          ref={headerRef}
+          className="text-center mb-16 sm:mb-20"
+          initial={{ opacity: 0, y: 30 }}
+          animate={headerInView ? { opacity: 1, y: 0 } : {}}
+          transition={{ duration: 0.7, ease: [0.25, 0.1, 0.25, 1] }}
+        >
           <p className="font-display text-xs tracking-[0.2em] text-violet-400 mb-3">
             {PLATFORM_NAME.toUpperCase()} IN A NUTSHELL
           </p>
@@ -375,42 +386,77 @@ export function ZuraInANutshell() {
           <p className="font-sans text-sm sm:text-base text-slate-400 max-w-xl mx-auto leading-relaxed">
             Built for operators who need real tools — not another app to manage.
           </p>
-        </div>
+        </motion.div>
 
         {/* Feature rows */}
         <div className="space-y-16 sm:space-y-24">
-          {FEATURES.map((feature, index) => {
-            const isEven = index % 2 === 1;
-            const Icon = feature.icon;
-            const Mockup = feature.Mockup;
-            return (
-              <div key={feature.pill} className="grid md:grid-cols-2 gap-8 md:gap-12 items-center">
-                {/* Text side */}
-                <div className={`space-y-4 ${isEven ? 'md:order-2' : ''}`}>
-                  <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-lg bg-violet-500/10 flex items-center justify-center">
-                      <Icon className="w-4 h-4 text-violet-400" />
-                    </div>
-                    <span className="rounded-full border border-white/[0.08] bg-white/[0.04] px-3 py-1 text-xs text-slate-400 font-sans">
-                      {feature.pill}
-                    </span>
-                  </div>
-                  <h3 className="font-display text-xl sm:text-2xl text-white tracking-tight">
-                    {feature.headline}
-                  </h3>
-                  <p className="font-sans text-sm sm:text-base text-slate-400 leading-relaxed max-w-md">
-                    {feature.description}
-                  </p>
-                </div>
-                {/* Visual side */}
-                <div className={isEven ? 'md:order-1' : ''}>
-                  <Mockup />
-                </div>
-              </div>
-            );
-          })}
+          {FEATURES.map((feature, index) => (
+            <FeatureRow key={feature.pill} feature={feature} index={index} />
+          ))}
         </div>
+
+        {/* Bottom CTA */}
+        <motion.div
+          ref={ctaRef}
+          className="text-center mt-16 sm:mt-20"
+          initial={{ opacity: 0, y: 20 }}
+          animate={ctaInView ? { opacity: 1, y: 0 } : {}}
+          transition={{ duration: 0.6, ease: [0.25, 0.1, 0.25, 1] }}
+        >
+          <Link
+            to="/product"
+            className="inline-flex items-center gap-2 text-violet-400 hover:text-violet-300 font-sans text-sm transition-colors duration-200 hover:underline underline-offset-4"
+          >
+            See all features
+            <ArrowRight className="w-4 h-4" />
+          </Link>
+        </motion.div>
       </div>
     </section>
+  );
+}
+
+/* ─── Feature Row (with scroll animation) ──────────────────────────── */
+function FeatureRow({ feature, index }: { feature: typeof FEATURES[number]; index: number }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const isInView = useInView(ref, { once: true, margin: '-60px' });
+  const isEven = index % 2 === 1;
+  const Icon = feature.icon;
+  const Mockup = feature.Mockup;
+
+  return (
+    <div ref={ref} className="grid md:grid-cols-2 gap-8 md:gap-12 items-center">
+      {/* Text side */}
+      <motion.div
+        className={`space-y-4 ${isEven ? 'md:order-2' : ''}`}
+        initial={{ opacity: 0, y: 30 }}
+        animate={isInView ? { opacity: 1, y: 0 } : {}}
+        transition={{ duration: 0.7, ease: [0.25, 0.1, 0.25, 1] }}
+      >
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 rounded-lg bg-violet-500/10 flex items-center justify-center">
+            <Icon className="w-4 h-4 text-violet-400" />
+          </div>
+          <span className="rounded-full border border-white/[0.08] bg-white/[0.04] px-3 py-1 text-xs text-slate-400 font-sans">
+            {feature.pill}
+          </span>
+        </div>
+        <h3 className="font-display text-xl sm:text-2xl text-white tracking-tight">
+          {feature.headline}
+        </h3>
+        <p className="font-sans text-sm sm:text-base text-slate-400 leading-relaxed max-w-md">
+          {feature.description}
+        </p>
+      </motion.div>
+      {/* Visual side */}
+      <motion.div
+        className={isEven ? 'md:order-1' : ''}
+        initial={{ opacity: 0, y: 30 }}
+        animate={isInView ? { opacity: 1, y: 0 } : {}}
+        transition={{ duration: 0.7, delay: 0.15, ease: [0.25, 0.1, 0.25, 1] }}
+      >
+        <Mockup />
+      </motion.div>
+    </div>
   );
 }
