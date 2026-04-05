@@ -54,7 +54,7 @@ export function PlatformHeader() {
 
   const handleSignOut = async () => {
     await signOut();
-    navigate('/auth');
+    navigate('/login');
   };
 
   const handleViewProfile = () => {
