@@ -279,6 +279,32 @@ export function EditStylistCardDialog({ open, onOpenChange, stylist }: EditStyli
             </Select>
           </div>
 
+          {/* Website Level Display Mode */}
+          <div className="p-3 border rounded-lg bg-muted/30 space-y-2">
+            <Label className="text-xs font-medium">Website Level Display</Label>
+            <p className="text-xs text-muted-foreground">Choose how levels appear on your public website for all stylists.</p>
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                size="sm"
+                variant={levelDisplayMode === 'numbered' || !levelDisplayMode ? 'default' : 'outline'}
+                className="text-xs"
+                onClick={() => updateDisplayMode.mutate('numbered')}
+              >
+                Numbered (Level 1, Level 2...)
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant={levelDisplayMode === 'custom_name' ? 'default' : 'outline'}
+                className="text-xs"
+                onClick={() => updateDisplayMode.mutate('custom_name')}
+              >
+                Custom Names ({dynamicLevels[0]?.label || 'e.g. New Talent'}...)
+              </Button>
+            </div>
+          </div>
+
           {/* Locations */}
           <div className="space-y-2">
             <Label className="flex items-center gap-1">
