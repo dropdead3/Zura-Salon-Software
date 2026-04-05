@@ -75,6 +75,11 @@ export default function StylistLevels() {
   const [isAddingNew, setIsAddingNew] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
   const [previewLevel, setPreviewLevel] = useState(0);
+  const [wizardLevelId, setWizardLevelId] = useState<string | null>(null);
+  const [wizardLevelLabel, setWizardLevelLabel] = useState('');
+  const [wizardLevelIndex, setWizardLevelIndex] = useState(0);
+
+  const { data: promotionCriteria } = useLevelPromotionCriteria();
 
   // Sync local state with database when data changes
   useEffect(() => {
