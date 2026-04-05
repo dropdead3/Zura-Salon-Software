@@ -13,6 +13,7 @@ import { FinalCTA } from '@/components/marketing/FinalCTA';
 import { SectionDivider } from '@/components/marketing/SectionDivider';
 import { BeforeAfterShowcase } from '@/components/marketing/BeforeAfterShowcase';
 import { ToolConsolidation } from '@/components/marketing/ToolConsolidation';
+import { StruggleInput } from '@/components/marketing/StruggleInput';
 
 export default function PlatformLanding() {
   return (
@@ -23,6 +24,7 @@ export default function PlatformLanding() {
         path="/"
       />
       <HeroSection />
+      <StruggleInput />
       <StatBar />
       <ChaosToClarity />
       <SectionDivider />

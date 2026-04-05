@@ -6083,6 +6083,27 @@ export type Database = {
           },
         ]
       }
+      demo_queries: {
+        Row: {
+          created_at: string
+          id: string
+          matched_feature_count: number
+          query_text: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          matched_feature_count?: number
+          query_text: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          matched_feature_count?: number
+          query_text?: string
+        }
+        Relationships: []
+      }
       detected_anomalies: {
         Row: {
           acknowledged_at: string | null
