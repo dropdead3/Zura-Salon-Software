@@ -26,7 +26,6 @@ import {
   X,
   AlertTriangle,
   Eye,
-  ChevronDown as ChevronDownIcon,
   Users,
   Info,
   Loader2,
@@ -330,21 +329,15 @@ export function StylistLevelsEditor({ embedded = false }: StylistLevelsEditorPro
     }
   }, [dbLevels, hasChanges]);
 
-  useEffect(() => {
-    if (hasChanges) {
-      toast.warning('You have unsaved changes', {
-        id: 'unsaved-changes',
-        duration: 4000,
-      });
-    }
-  }, [hasChanges]);
+  // Save/Discard buttons provide sufficient unsaved-changes UX signal
 
   const { data: stylistsByLevel } = useQuery({
-    queryKey: ['stylists-by-level'],
+    queryKey: ['stylists-by-level', effectiveOrganization?.id],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('employee_profiles')
         .select('stylist_level')
+        .eq('organization_id', effectiveOrganization!.id)
         .not('stylist_level', 'is', null);
       if (error) throw error;
       const counts: Record<string, number> = {};
@@ -355,6 +348,7 @@ export function StylistLevelsEditor({ embedded = false }: StylistLevelsEditorPro
       });
       return counts;
     },
+    enabled: !!effectiveOrganization?.id,
   });
 
   const getStylistCount = (levelId: string): number => {
@@ -939,7 +933,9 @@ export function StylistLevelsEditor({ embedded = false }: StylistLevelsEditorPro
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center justify-between gap-2 mb-1">
                               <span className="text-xs truncate">{level.label}</span>
-                              <span className="text-xs text-muted-foreground shrink-0">{count}</span>
+                              <span className="text-xs text-muted-foreground shrink-0">
+                                {count}{totalAssigned > 0 && ` (${Math.round((count / totalAssigned) * 100)}%)`}
+                              </span>
                             </div>
                             <div className="h-1.5 bg-muted rounded-full overflow-hidden">
                               <div 
@@ -960,55 +956,33 @@ export function StylistLevelsEditor({ embedded = false }: StylistLevelsEditorPro
                 </div>
               )}
 
-              {/* Progression Roadmap inline */}
-              {promotionCriteria && promotionCriteria.length > 0 && (
-                <div className="rounded-xl border bg-card p-4">
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground mb-3">
-                    <GraduationCap className="w-4 h-4" />
-                    <span>Progression Roadmap</span>
-                  </div>
-                  <div className="space-y-2.5">
-                    {levels.map((level, idx) => {
-                      const criteria = promotionCriteria?.find(c => c.stylist_level_id === level.dbId && c.is_active);
-                      const summary = criteria ? formatCriteriaSummary(criteria) : null;
-                      const ret = retentionCriteria?.find(r => r.stylist_level_id === level.dbId && r.is_active);
-                      const retSum = ret ? formatRetentionSummary(ret) : null;
-                      return (
-                        <div key={level.id} className="flex items-start gap-3">
-                          <span className="text-xs text-muted-foreground w-4 text-right shrink-0 mt-0.5">{idx + 1}</span>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-xs font-medium truncate">{level.label}</p>
-                            <p className="text-xs text-muted-foreground">
-                              {idx === 0 ? 'Entry level' : summary || 'No criteria configured'}
-                            </p>
-                            {retSum && (
-                              <p className="text-xs text-muted-foreground/70">{retSum}</p>
-                            )}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
+              {/* Progression Roadmap removed — now in Criteria tab */}
             </div>
           </TabsContent>
 
           {/* === TAB 2: Criteria Comparison === */}
           <TabsContent value="criteria">
-            <CriteriaComparisonTable
-              levels={levels}
-              promotionCriteria={promotionCriteria || []}
-              retentionCriteria={retentionCriteria || []}
-              onEditLevel={(level, index) => {
-                setWizardLevelId(level.dbId!);
-                setWizardLevelLabel(level.label);
-                setWizardLevelIndex(index);
-              }}
-            />
+            {(!promotionCriteria || !retentionCriteria) ? (
+              <div className="flex items-center justify-center h-64">
+                <Loader2 className={tokens.loading.spinner} />
+              </div>
+            ) : (
+              <CriteriaComparisonTable
+                levels={levels}
+                promotionCriteria={promotionCriteria || []}
+                retentionCriteria={retentionCriteria || []}
+                onEditLevel={(level, index) => {
+                  if (!level.dbId) return;
+                  setWizardLevelId(level.dbId);
+                  setWizardLevelLabel(level.label);
+                  setWizardLevelIndex(index);
+                }}
+              />
+            )}
           </TabsContent>
 
           {/* === TAB 3: Team Roster === */}
+
           <TabsContent value="team">
             {effectiveOrganization?.id && dbLevels && dbLevels.length > 0 ? (
               <TeamCommissionRoster orgId={effectiveOrganization.id} levels={dbLevels} />
@@ -1021,7 +995,7 @@ export function StylistLevelsEditor({ embedded = false }: StylistLevelsEditorPro
             )}
           </TabsContent>
 
-          {/* === TAB 3: Previews === */}
+          {/* === TAB 4: Previews === */}
           <TabsContent value="previews">
             <div className="space-y-6 max-w-lg">
               {/* Level selector for previews */}
@@ -1098,7 +1072,7 @@ export function StylistLevelsEditor({ embedded = false }: StylistLevelsEditorPro
                     <span className="font-medium truncate">
                       {levels[previewLevel]?.label || 'New Talent'}
                     </span>
-                    <ChevronDownIcon size={14} className="text-background/70 shrink-0" />
+                    <ChevronDown size={14} className="text-background/70 shrink-0" />
                   </button>
                   <div className="bg-card rounded-lg border shadow-lg overflow-hidden max-h-32 overflow-y-auto">
                     {levels.map((level, idx) => (
