@@ -23,7 +23,7 @@ export function MarketingLayout({ children }: MarketingLayoutProps) {
       </div>
 
       <MarketingNav />
-      <main className="relative z-10 flex-1 pt-20">
+      <main className="relative z-10 flex-1 pt-24">
         {children}
       </main>
       <MarketingFooter />
