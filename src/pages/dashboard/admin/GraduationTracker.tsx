@@ -211,6 +211,7 @@ function StatusBadge({ status }: { status: GraduationStatus }) {
 
 function ApprovePromotionButton({ member }: { member: TeamMemberProgress }) {
   const promoteLevel = usePromoteLevel();
+  const [promoNotes, setPromoNotes] = useState('');
 
   if (!member.isFullyQualified || !member.currentLevel || !member.nextLevel) return null;
 
@@ -232,6 +233,14 @@ function ApprovePromotionButton({ member }: { member: TeamMemberProgress }) {
             This will immediately update their level.
           </AlertDialogDescription>
         </AlertDialogHeader>
+        <div className="py-2">
+          <Textarea
+            value={promoNotes}
+            onChange={(e) => setPromoNotes(e.target.value)}
+            placeholder="Promotion notes (optional)..."
+            className="text-sm min-h-[60px]"
+          />
+        </div>
         <AlertDialogFooter>
           <AlertDialogCancel>Cancel</AlertDialogCancel>
           <AlertDialogAction
@@ -241,6 +250,7 @@ function ApprovePromotionButton({ member }: { member: TeamMemberProgress }) {
                 userId: member.userId,
                 fromLevelSlug: member.currentLevel!.slug,
                 toLevelSlug: member.nextLevel!.slug,
+                notes: promoNotes.trim() || undefined,
               });
             }}
             disabled={promoteLevel.isPending}
