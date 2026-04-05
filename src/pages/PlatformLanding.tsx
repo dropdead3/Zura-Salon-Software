@@ -11,6 +11,7 @@ import { OutcomeMetrics } from '@/components/marketing/OutcomeMetrics';
 import { TestimonialSection } from '@/components/marketing/TestimonialSection';
 import { FinalCTA } from '@/components/marketing/FinalCTA';
 import { SectionDivider } from '@/components/marketing/SectionDivider';
+import { BeforeAfterShowcase } from '@/components/marketing/BeforeAfterShowcase';
 
 export default function PlatformLanding() {
   return (
@@ -28,6 +29,7 @@ export default function PlatformLanding() {
       <LogoBar />
       <PersonaExplorer />
       <SectionDivider />
+      <BeforeAfterShowcase />
       <OutcomeMetrics />
       <BuiltByOperators />
       <TestimonialSection />
