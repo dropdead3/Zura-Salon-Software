@@ -57,6 +57,12 @@ async function bootstrap() {
       reloadKey: "appBootstrapReloaded",
     });
 
+    // Wait for fonts to load before rendering the app (max 3s timeout)
+    await Promise.race([
+      document.fonts.ready,
+      new Promise((resolve) => setTimeout(resolve, 3000)),
+    ]);
+
     root.render(<App />);
   } catch (error) {
     console.error("Failed to bootstrap application", error);
