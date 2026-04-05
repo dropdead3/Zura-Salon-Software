@@ -3,8 +3,8 @@ import { MarketingSEO } from '@/components/marketing/MarketingSEO';
 import { HeroSection } from '@/components/marketing/HeroSection';
 import { StatBar } from '@/components/marketing/StatBar';
 import { LogoBar } from '@/components/marketing/LogoBar';
-import { ProblemStatement } from '@/components/marketing/ProblemStatement';
-import { SolutionShowcase } from '@/components/marketing/SolutionShowcase';
+import { ChaosToClarity } from '@/components/marketing/ChaosToClarity';
+import { SystemWalkthrough } from '@/components/marketing/SystemWalkthrough';
 import { PersonaExplorer } from '@/components/marketing/PersonaExplorer';
 import { BuiltByOperators } from '@/components/marketing/BuiltByOperators';
 import { OutcomeMetrics } from '@/components/marketing/OutcomeMetrics';
@@ -22,8 +22,8 @@ export default function PlatformLanding() {
       <HeroSection />
       <StatBar />
       <LogoBar />
-      <ProblemStatement />
-      <SolutionShowcase />
+      <ChaosToClarity />
+      <SystemWalkthrough />
       <PersonaExplorer />
       <BuiltByOperators />
       <OutcomeMetrics />

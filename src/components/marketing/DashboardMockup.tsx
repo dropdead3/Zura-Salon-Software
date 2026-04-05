@@ -139,6 +139,11 @@ export function DashboardMockup({ onPhaseChange }: DashboardMockupProps = {}) {
     return () => { if (timeoutRef.current) clearTimeout(timeoutRef.current); };
   }, [phase, nextPhase, prefersReducedMotion]);
 
+  // Notify parent of phase changes
+  useEffect(() => {
+    onPhaseChange?.(phase);
+  }, [phase, onPhaseChange]);
+
   const showLever = phase === 'detect' || phase === 'act' || phase === 'pause';
   const leverApplied = phase === 'act' || phase === 'pause';
   const showCursor = phase === 'act';
