@@ -802,8 +802,14 @@ function RequirementsManager() {
 
 /* ─── Org-Wide Promotion History Tab ────────────────────── */
 
-function OrgPromotionHistoryTab({ promotions }: { promotions: PromotionRecord[] }) {
+function OrgPromotionHistoryTab({ promotions, allLevels }: { promotions: PromotionRecord[]; allLevels: StylistLevel[] }) {
   const { formatDate } = useFormatDate();
+  const [visibleCount, setVisibleCount] = useState(25);
+
+  const slugToLabel = (slug: string) => {
+    const level = allLevels.find(l => l.slug === slug);
+    return level?.label || slug.replace(/[-_]/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+  };
 
   if (promotions.length === 0) {
     return (
@@ -815,9 +821,12 @@ function OrgPromotionHistoryTab({ promotions }: { promotions: PromotionRecord[] 
     );
   }
 
+  const visible = promotions.slice(0, visibleCount);
+  const hasMore = visibleCount < promotions.length;
+
   return (
     <div className="space-y-3">
-      {promotions.map(p => {
+      {visible.map(p => {
         const isDemotion = p.direction === 'demotion';
         return (
           <div key={p.id} className="flex items-center gap-4 p-4 rounded-xl border bg-card/50">
@@ -825,9 +834,9 @@ function OrgPromotionHistoryTab({ promotions }: { promotions: PromotionRecord[] 
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
                 <span className="font-medium text-sm">{p.user_name || 'Unknown'}</span>
-                <span className="text-xs text-muted-foreground">{p.from_level}</span>
+                <span className="text-xs text-muted-foreground">{slugToLabel(p.from_level)}</span>
                 <ArrowRight className={cn('w-3 h-3', isDemotion ? 'text-rose-500' : 'text-emerald-500')} />
-                <span className="text-xs text-foreground">{p.to_level}</span>
+                <span className="text-xs text-foreground">{slugToLabel(p.to_level)}</span>
                 {isDemotion && (
                   <Badge variant="outline" className="text-[10px] border-rose-200 text-rose-600 dark:border-rose-800 dark:text-rose-400">
                     Demotion
@@ -849,6 +858,17 @@ function OrgPromotionHistoryTab({ promotions }: { promotions: PromotionRecord[] 
           </div>
         );
       })}
+      {hasMore && (
+        <div className="flex justify-center pt-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setVisibleCount(prev => prev + 25)}
+          >
+            Show More ({promotions.length - visibleCount} remaining)
+          </Button>
+        </div>
+      )}
     </div>
   );
 }
