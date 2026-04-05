@@ -437,10 +437,12 @@ function StylistList({
   members,
   totalLevels,
   emptyMessage,
+  promotions,
 }: {
   members: TeamMemberProgress[];
   totalLevels: number;
   emptyMessage: string;
+  promotions: PromotionRecord[];
 }) {
   if (members.length === 0) {
     return (
@@ -454,7 +456,7 @@ function StylistList({
   return (
     <div className="space-y-3">
       {members.map(m => (
-        <StylistProgressRow key={m.userId} member={m} totalLevels={totalLevels} />
+        <StylistProgressRow key={m.userId} member={m} totalLevels={totalLevels} promotions={promotions} />
       ))}
     </div>
   );
