@@ -58,6 +58,8 @@ import { useLevelRetentionCriteria, type LevelRetentionCriteria } from '@/hooks/
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { generateLevelRequirementsPDF } from '@/components/dashboard/settings/LevelRequirementsPDF';
 import { TeamCommissionRoster } from '@/components/dashboard/settings/TeamCommissionRoster';
+import { LocationOverridesTab } from '@/components/dashboard/settings/LocationOverridesTab';
+import { useActiveLocations } from '@/hooks/useLocations';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
   Dialog,
@@ -592,6 +594,7 @@ export function StylistLevelsEditor({ embedded = false }: StylistLevelsEditorPro
 
   const { data: promotionCriteria } = useLevelPromotionCriteria();
   const { data: retentionCriteria } = useLevelRetentionCriteria();
+  const { data: activeLocations = [] } = useActiveLocations();
 
   useEffect(() => {
     if (dbLevels && !hasChanges) {
@@ -997,6 +1000,9 @@ export function StylistLevelsEditor({ embedded = false }: StylistLevelsEditorPro
           <TabsList>
             <TabsTrigger value="levels">Levels</TabsTrigger>
             <TabsTrigger value="criteria">Criteria</TabsTrigger>
+            {activeLocations.length >= 2 && (
+              <TabsTrigger value="overrides">Location Overrides</TabsTrigger>
+            )}
             <TabsTrigger value="team">Team Roster</TabsTrigger>
             <TabsTrigger value="previews">Previews</TabsTrigger>
           </TabsList>
@@ -1363,6 +1369,15 @@ export function StylistLevelsEditor({ embedded = false }: StylistLevelsEditorPro
                 }}
               />
             )}
+          </TabsContent>
+
+          {/* === TAB: Location Overrides === */}
+          <TabsContent value="overrides">
+            <LocationOverridesTab
+              levels={levels}
+              promotionCriteria={promotionCriteria || []}
+              retentionCriteria={retentionCriteria || []}
+            />
           </TabsContent>
 
           {/* === TAB 3: Team Roster === */}

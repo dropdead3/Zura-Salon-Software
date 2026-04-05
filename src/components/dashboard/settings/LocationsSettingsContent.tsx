@@ -224,6 +224,7 @@ export function LocationsSettingsContent() {
       stripe_account_id: null,
       stripe_payments_enabled: false,
       stripe_status: 'not_connected' as const,
+      location_group_id: null,
     };
 
     if (editingLocation) {

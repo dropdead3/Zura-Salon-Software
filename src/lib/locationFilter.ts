@@ -35,3 +35,37 @@ export function applyLocationFilter<T extends { eq: (col: string, val: string) =
   if (ids.length === 1) return query.eq(column, ids[0]);
   return query.in(column, ids);
 }
+
+/**
+ * Expand a list of location IDs to include all locations in any matching group.
+ * Useful for "apply to all locations in group" operations.
+ */
+export function expandGroupLocations(
+  selectedIds: string[],
+  locations: Array<{ id: string; location_group_id?: string | null }>,
+  groups: Array<{ id: string }>,
+): string[] {
+  if (selectedIds.length === 0) return [];
+  const expanded = new Set(selectedIds);
+
+  // For each selected location, find its group and add all group members
+  for (const id of selectedIds) {
+    const loc = locations.find(l => l.id === id);
+    if (loc?.location_group_id) {
+      const groupMembers = locations.filter(l => l.location_group_id === loc.location_group_id);
+      groupMembers.forEach(m => expanded.add(m.id));
+    }
+  }
+
+  return Array.from(expanded);
+}
+
+/**
+ * Get location IDs belonging to a specific group.
+ */
+export function getGroupLocationIds(
+  groupId: string,
+  locations: Array<{ id: string; location_group_id?: string | null }>,
+): string[] {
+  return locations.filter(l => l.location_group_id === groupId).map(l => l.id);
+}
