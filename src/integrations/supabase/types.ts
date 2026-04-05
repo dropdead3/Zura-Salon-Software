@@ -9290,6 +9290,9 @@ export type Database = {
           tenure_days: number
           tenure_enabled: boolean
           updated_at: string
+          utilization_enabled: boolean
+          utilization_threshold: number
+          utilization_weight: number
         }
         Insert: {
           avg_ticket_enabled?: boolean
@@ -9320,6 +9323,9 @@ export type Database = {
           tenure_days?: number
           tenure_enabled?: boolean
           updated_at?: string
+          utilization_enabled?: boolean
+          utilization_threshold?: number
+          utilization_weight?: number
         }
         Update: {
           avg_ticket_enabled?: boolean
@@ -9350,6 +9356,9 @@ export type Database = {
           tenure_days?: number
           tenure_enabled?: boolean
           updated_at?: string
+          utilization_enabled?: boolean
+          utilization_threshold?: number
+          utilization_weight?: number
         }
         Relationships: [
           {
@@ -9436,6 +9445,8 @@ export type Database = {
           revenue_minimum: number
           stylist_level_id: string
           updated_at: string
+          utilization_enabled: boolean
+          utilization_minimum: number
         }
         Insert: {
           action_type?: Database["public"]["Enums"]["retention_action_type"]
@@ -9460,6 +9471,8 @@ export type Database = {
           revenue_minimum?: number
           stylist_level_id: string
           updated_at?: string
+          utilization_enabled?: boolean
+          utilization_minimum?: number
         }
         Update: {
           action_type?: Database["public"]["Enums"]["retention_action_type"]
@@ -9484,6 +9497,8 @@ export type Database = {
           revenue_minimum?: number
           stylist_level_id?: string
           updated_at?: string
+          utilization_enabled?: boolean
+          utilization_minimum?: number
         }
         Relationships: [
           {

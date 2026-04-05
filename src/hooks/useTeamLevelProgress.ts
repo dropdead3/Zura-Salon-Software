@@ -121,7 +121,7 @@ export function useTeamLevelProgress() {
       while (hasMore) {
         const { data, error } = await supabase
           .from('appointments')
-          .select('staff_user_id, total_price, rebooked_at_checkout, appointment_date, status, is_new_client')
+          .select('staff_user_id, total_price, rebooked_at_checkout, appointment_date, status, is_new_client, duration_minutes')
           .in('staff_user_id', userIds)
           .gte('appointment_date', startStr)
           .lte('appointment_date', endStr)
@@ -137,7 +137,24 @@ export function useTeamLevelProgress() {
     enabled: !!orgId && userIds.length > 0,
   });
 
-  const isLoading = loadingProfiles || loadingSales || loadingAppts;
+  // Batch fetch shift data for utilization calculation
+  const { data: allShiftData = [], isLoading: loadingShifts } = useQuery({
+    queryKey: ['team-graduation-shifts', orgId, startStr, endStr, userIds.length],
+    queryFn: async () => {
+      if (userIds.length === 0) return [];
+      const { data, error } = await supabase
+        .from('staff_shifts')
+        .select('user_id, shift_date, start_time, end_time')
+        .in('user_id', userIds)
+        .gte('shift_date', startStr)
+        .lte('shift_date', endStr);
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!orgId && userIds.length > 0,
+  });
+
+  const isLoading = loadingProfiles || loadingSales || loadingAppts || loadingShifts;
 
   const teamProgress = useMemo<TeamMemberProgress[]>(() => {
     if (profiles.length === 0 || allLevels.length === 0) return [];
@@ -186,7 +203,31 @@ export function useTeamLevelProgress() {
         // Retention rate placeholder — use rebooking as proxy for now
         const retentionRate = rebookingPct;
 
-        return { monthlyRevenue, retailPct, rebookingPct, avgTicket, newClientsMonthly, retentionRate };
+        // Utilization calculation
+        const userShifts = allShiftData.filter(
+          (s: any) => s.user_id === profile.user_id && s.shift_date >= evalStart
+        );
+        let utilization = 0;
+        if (userShifts.length > 0) {
+          // Shift-based: booked hours / shift hours
+          const totalShiftMinutes = userShifts.reduce((sum: number, s: any) => {
+            const start = new Date(`${s.shift_date}T${s.start_time}`);
+            const end = new Date(`${s.shift_date}T${s.end_time}`);
+            return sum + Math.max(0, (end.getTime() - start.getTime()) / 60000);
+          }, 0);
+          const totalBookedMinutes = completedAppts.reduce((sum: number, a: any) => sum + (Number(a.duration_minutes) || 60), 0);
+          utilization = totalShiftMinutes > 0 ? (totalBookedMinutes / totalShiftMinutes) * 100 : 0;
+        } else {
+          // Fallback: booking density (avg booked hours per active day, capped at 8h workday)
+          const activeDays = new Set(completedAppts.map((a: any) => a.appointment_date)).size;
+          if (activeDays > 0) {
+            const totalBookedMinutes = completedAppts.reduce((sum: number, a: any) => sum + (Number(a.duration_minutes) || 60), 0);
+            const avgMinutesPerDay = totalBookedMinutes / activeDays;
+            utilization = Math.min(100, (avgMinutesPerDay / 480) * 100); // 480 = 8h workday
+          }
+        }
+
+        return { monthlyRevenue, retailPct, rebookingPct, avgTicket, newClientsMonthly, retentionRate, utilization };
       };
 
       // Compute no-show rate (informational, uses full window)
@@ -215,6 +256,9 @@ export function useTeamLevelProgress() {
         }
         if (retCriteria.new_clients_enabled && retMetrics.newClientsMonthly < Number(retCriteria.new_clients_minimum)) {
           retentionFailures.push({ key: 'new_clients', label: 'New Clients', current: Math.round(retMetrics.newClientsMonthly * 10) / 10, minimum: Number(retCriteria.new_clients_minimum), unit: '/mo' });
+        }
+        if (retCriteria.utilization_enabled && retMetrics.utilization < Number(retCriteria.utilization_minimum)) {
+          retentionFailures.push({ key: 'utilization', label: 'Schedule Utilization', current: Math.round(retMetrics.utilization * 10) / 10, minimum: Number(retCriteria.utilization_minimum), unit: '%' });
         }
       }
 
@@ -324,6 +368,16 @@ export function useTeamLevelProgress() {
           gap: Math.max(0, target - promoMetrics.newClientsMonthly),
         });
       }
+      if (criteria.utilization_enabled) {
+        const target = Number(criteria.utilization_threshold);
+        progress.push({
+          key: 'utilization', label: 'Schedule Utilization', enabled: true,
+          current: Math.round(promoMetrics.utilization * 10) / 10, target,
+          percent: target > 0 ? Math.min(100, (promoMetrics.utilization / target) * 100) : 0,
+          weight: criteria.utilization_weight, unit: '%',
+          gap: Math.max(0, target - promoMetrics.utilization),
+        });
+      }
       if (criteria.tenure_enabled) {
         const target = criteria.tenure_days;
         progress.push({
@@ -374,7 +428,7 @@ export function useTeamLevelProgress() {
       if (diff !== 0) return diff;
       return b.compositeScore - a.compositeScore;
     });
-  }, [profiles, allLevels, allCriteria, allRetention, allSalesData, allApptData]);
+  }, [profiles, allLevels, allCriteria, allRetention, allSalesData, allApptData, allShiftData]);
 
   const counts = useMemo(() => {
     const ready = teamProgress.filter(t => t.status === 'ready').length;
