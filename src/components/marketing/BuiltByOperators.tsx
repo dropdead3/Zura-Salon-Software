@@ -22,7 +22,7 @@ export function BuiltByOperators() {
           {/* Narrative */}
           <div className="mkt-reveal">
             <p className="font-sans text-xs sm:text-sm text-violet-400 uppercase tracking-[0.15em] mb-4">
-              Origin Story
+              Built for how salons actually run
             </p>
             <h2 className="font-display text-2xl sm:text-3xl lg:text-4xl tracking-tight mb-6">
               We didn't study salons. We ran them.
@@ -33,7 +33,7 @@ export function BuiltByOperators() {
                 We lost top talent because we couldn't show them a growth path.
               </p>
               <p>
-                So we built the system we needed. {PLATFORM_NAME} is what happens when salon owners
+                So we built what we wished existed. {PLATFORM_NAME} is what happens when salon owners
                 stop waiting for software companies to understand their business.
               </p>
             </div>

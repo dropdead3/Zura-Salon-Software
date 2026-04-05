@@ -7,25 +7,25 @@ const pillars = [
     num: '01',
     icon: Eye,
     title: 'Observe',
-    description: 'Continuous monitoring across revenue, utilization, retention, and margin.',
+    description: 'Watches your revenue, your schedule, your team, and your costs — all the time, in real time.',
   },
   {
     num: '02',
     icon: GitCompare,
     title: 'Compare',
-    description: 'Benchmark performance against your architecture and cross-location standards.',
+    description: 'Measures each location and team member against your own benchmarks and standards.',
   },
   {
     num: '03',
     icon: AlertTriangle,
     title: 'Detect',
-    description: 'Flag deviations before they become crises. Drift detection across every KPI.',
+    description: 'Catches problems early — before they become expensive. Flags anything drifting off track.',
   },
   {
     num: '04',
     icon: Sparkles,
     title: 'Recommend',
-    description: 'Ranked, high-confidence actions. One primary lever. No noise.',
+    description: 'Tells you what to focus on next. One clear action, ranked by impact. No noise.',
   },
 ];
 
@@ -37,13 +37,13 @@ export function IntelligencePillars() {
       <div className="max-w-6xl mx-auto">
         <div className="text-center mb-12 sm:mb-16 mkt-reveal">
           <p className="font-sans text-xs sm:text-sm text-violet-400 uppercase tracking-[0.15em] mb-4">
-            Intelligence Architecture
+            How it works
           </p>
           <h2 className="font-display text-2xl sm:text-3xl lg:text-4xl tracking-tight mb-4">
-            How {PLATFORM_NAME} thinks
+            How {PLATFORM_NAME} helps you run smarter
           </h2>
           <p className="font-sans text-base sm:text-lg text-slate-400 max-w-2xl mx-auto">
-            A structured intelligence loop that replaces reactive management with ranked clarity.
+            {PLATFORM_NAME} watches your business, spots what's off, and tells you what to focus on.
           </p>
         </div>
 

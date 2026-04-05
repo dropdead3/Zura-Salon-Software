@@ -5,32 +5,32 @@ const painPoints = [
   {
     icon: DollarSign,
     title: 'Where is my money going?',
-    body: 'No service-level margin data. You guess at profitability while revenue bleeds through cracks you can\'t see.',
+    body: 'You can\'t see what\'s actually profitable. Revenue comes in, but you\'re not sure where it goes or what\'s being lost.',
   },
   {
     icon: UserMinus,
     title: 'My best stylist just quit.',
-    body: 'No career paths, no transparent comp, no growth plan. Your top talent leaves for clarity you never offered.',
+    body: 'No growth path, no clear comp structure, no way to show them a future. Your best people leave for something that feels more certain.',
   },
   {
     icon: Lock,
     title: 'I can\'t step away.',
-    body: 'Every decision runs through you. Vacations are a liability. Your business can\'t scale past your availability.',
+    body: 'Every decision runs through you. Vacations feel risky. Your business can\'t grow past your personal bandwidth.',
   },
   {
     icon: BookOpen,
     title: 'Training is chaos.',
-    body: 'New hires take months to ramp. No structured onboarding, no standards, no accountability.',
+    body: 'New hires take months to get going. No structure, no standards, no way to measure when they\'re ready.',
   },
   {
     icon: Megaphone,
-    title: 'Marketing feels random.',
-    body: 'You post, boost, hope — and have no idea what actually drives bookings or whether you can even handle the demand.',
+    title: 'Marketing feels like throwing darts.',
+    body: 'You post, boost, hope — and have no idea what actually drives bookings or whether your team can handle the demand.',
   },
   {
     icon: MapPin,
     title: 'I\'m scaling blind.',
-    body: 'Revenue grows but you can\'t tell which location is healthy, which is bleeding, or why.',
+    body: 'Revenue grows but you can\'t tell which location is healthy, which one needs help, or why.',
   },
 ];
 
@@ -44,9 +44,11 @@ export function ProblemStatement() {
           {/* Left — Emotional headline */}
           <div className="mkt-reveal">
             <h2 className="font-display text-2xl sm:text-3xl lg:text-5xl tracking-tight leading-[1.12]">
-              You already know the problems.{' '}
-              <span className="text-slate-500">You just don't have the right tools to solve them.</span>
+              Running a salon shouldn't feel like guessing.
             </h2>
+            <p className="font-sans text-base sm:text-lg text-slate-400 leading-relaxed mt-6">
+              You're managing a full schedule, a team with different levels of performance, inventory that's always off, clients who don't always rebook, and numbers you don't fully trust.
+            </p>
           </div>
 
           {/* Right — Pain points */}
@@ -74,7 +76,7 @@ export function ProblemStatement() {
             {/* Closing line */}
             <div className="mkt-reveal pt-4 border-t border-white/[0.06]" style={{ transitionDelay: '0.75s' }}>
               <p className="font-sans text-sm text-violet-400 italic">
-                These aren't six separate problems. They're one missing system.
+                Most systems show you information. They don't help you actually run your business.
               </p>
             </div>
           </div>
