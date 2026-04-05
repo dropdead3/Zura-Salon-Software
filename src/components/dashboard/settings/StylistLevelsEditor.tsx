@@ -34,6 +34,8 @@ import {
   FileDown,
   GraduationCap,
   Globe,
+  TrendingUp,
+  Shield,
 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
@@ -588,42 +590,76 @@ export function StylistLevelsEditor({ embedded = false }: StylistLevelsEditorPro
                           </div>
                         </div>
                       )}
-                      {index > 0 && level.dbId && (
-                        <div className="pl-14 mt-2">
-                          <button
-                            onClick={() => {
-                              setWizardLevelId(level.dbId!);
-                              setWizardLevelLabel(level.label);
-                              setWizardLevelIndex(index);
-                            }}
-                            className={cn(
-                              "flex items-center gap-1.5 text-xs transition-colors rounded-full px-2.5 py-1",
-                              promotionCriteria?.some(c => c.stylist_level_id === level.dbId && c.is_active)
-                                ? "text-primary bg-primary/5 hover:bg-primary/10"
-                                : "text-muted-foreground hover:text-foreground hover:bg-muted"
-                            )}
-                          >
-                            <Sparkles className="w-3 h-3" />
-                            {promotionCriteria?.some(c => c.stylist_level_id === level.dbId && c.is_active)
-                              ? 'Criteria Configured'
-                              : 'Configure Criteria'}
-                          </button>
-                          {(() => {
-                            const c = promotionCriteria?.find(cr => cr.stylist_level_id === level.dbId && cr.is_active);
-                            const summary = c ? formatCriteriaSummary(c) : '';
-                            return summary ? (
-                              <p className="text-[10px] text-muted-foreground/70 mt-1 pl-4">{summary}</p>
-                            ) : null;
-                          })()}
-                          {(() => {
-                            const r = retentionCriteria?.find(rc => rc.stylist_level_id === level.dbId && rc.is_active);
-                            const retSummary = r ? formatRetentionSummary(r) : '';
-                            return retSummary ? (
-                              <p className="text-[10px] text-muted-foreground/70 mt-0.5 pl-4">{retSummary}</p>
-                            ) : null;
-                          })()}
-                        </div>
-                      )}
+                      {/* Level Criteria Section */}
+                      <div className="pl-14 mt-3">
+                        {index === 0 ? (
+                          <p className="text-xs text-muted-foreground/60 italic">
+                            Entry level — no promotion criteria needed
+                          </p>
+                        ) : level.dbId ? (
+                          (() => {
+                            const promo = promotionCriteria?.find(cr => cr.stylist_level_id === level.dbId && cr.is_active);
+                            const retention = retentionCriteria?.find(rc => rc.stylist_level_id === level.dbId && rc.is_active);
+                            const hasAnyCriteria = !!promo || !!retention;
+                            const promoSummary = promo ? formatCriteriaSummary(promo) : '';
+                            const retSummary = retention ? formatRetentionSummary(retention) : '';
+
+                            return hasAnyCriteria ? (
+                              <div className="rounded-lg border border-border/60 bg-muted/30 p-3 space-y-2">
+                                <div className="flex items-center justify-between">
+                                  <span className="font-sans text-xs text-foreground flex items-center gap-1.5">
+                                    <Sparkles className="w-3.5 h-3.5 text-primary" />
+                                    Level Criteria
+                                  </span>
+                                  <button
+                                    onClick={() => {
+                                      setWizardLevelId(level.dbId!);
+                                      setWizardLevelLabel(level.label);
+                                      setWizardLevelIndex(index);
+                                    }}
+                                    className="text-xs text-primary hover:text-primary/80 transition-colors font-sans"
+                                  >
+                                    Edit
+                                  </button>
+                                </div>
+                                {promoSummary && (
+                                  <div className="flex items-start gap-2">
+                                    <TrendingUp className="w-3 h-3 text-muted-foreground mt-0.5 shrink-0" />
+                                    <p className="text-xs text-muted-foreground">{promoSummary}</p>
+                                  </div>
+                                )}
+                                {retSummary && (
+                                  <div className="flex items-start gap-2">
+                                    <Shield className="w-3 h-3 text-muted-foreground mt-0.5 shrink-0" />
+                                    <p className="text-xs text-muted-foreground">{retSummary}</p>
+                                  </div>
+                                )}
+                              </div>
+                            ) : (
+                              <button
+                                onClick={() => {
+                                  setWizardLevelId(level.dbId!);
+                                  setWizardLevelLabel(level.label);
+                                  setWizardLevelIndex(index);
+                                }}
+                                className="w-full rounded-lg border-2 border-dashed border-border/60 hover:border-primary/40 bg-muted/20 hover:bg-primary/5 p-3 flex items-center gap-3 transition-all group"
+                              >
+                                <div className="w-8 h-8 rounded-lg bg-muted/60 group-hover:bg-primary/10 flex items-center justify-center transition-colors">
+                                  <Sparkles className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                                </div>
+                                <div className="text-left">
+                                  <p className="text-xs font-sans text-foreground">Set up promotion & retention criteria</p>
+                                  <p className="text-[11px] text-muted-foreground mt-0.5">Define what it takes to reach this level</p>
+                                </div>
+                              </button>
+                            );
+                          })()
+                        ) : (
+                          <p className="text-xs text-muted-foreground/50 italic">
+                            Save this level to configure criteria
+                          </p>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
