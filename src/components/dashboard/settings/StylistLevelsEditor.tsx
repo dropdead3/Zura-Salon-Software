@@ -847,12 +847,23 @@ export function StylistLevelsEditor({ embedded = false }: StylistLevelsEditorPro
           {/* === TAB 1: Levels === */}
           <TabsContent value="levels">
             <div className="space-y-3">
+              {/* Quick Setup Wizard — shown when no levels exist */}
+              {levels.length === 0 && !quickSetupDismissed && (
+                <LevelsQuickSetupWizard
+                  onGenerate={handleQuickSetup}
+                  onDismiss={() => setQuickSetupDismissed(true)}
+                  isGenerating={isQuickSetupGenerating}
+                />
+              )}
+
               {/* Quick stats row */}
-              <div className="flex items-center gap-4 text-sm text-muted-foreground pb-2">
-                <span>{levels.length} level{levels.length !== 1 ? 's' : ''}</span>
-                <span className="text-border">·</span>
-                <span>{totalAssigned} stylist{totalAssigned !== 1 ? 's' : ''} assigned</span>
-              </div>
+              {levels.length > 0 && (
+                <div className="flex items-center gap-4 text-sm text-muted-foreground pb-2">
+                  <span>{levels.length} level{levels.length !== 1 ? 's' : ''}</span>
+                  <span className="text-border">·</span>
+                  <span>{totalAssigned} stylist{totalAssigned !== 1 ? 's' : ''} assigned</span>
+                </div>
+              )}
 
               {levels.map((level, index) => {
                 const stylistCount = getStylistCount(level.id);
