@@ -882,6 +882,7 @@ export default function GraduationTracker() {
                 totalLevels={allLevels.length}
                 emptyMessage="No team members with levels assigned"
                 promotions={promotions}
+                allLevels={allLevels}
               />
             )}
           </TabsContent>
@@ -898,6 +899,7 @@ export default function GraduationTracker() {
                 totalLevels={allLevels.length}
                 emptyMessage="No team members currently qualified for promotion"
                 promotions={promotions}
+                allLevels={allLevels}
               />
             )}
           </TabsContent>
@@ -914,6 +916,7 @@ export default function GraduationTracker() {
                 totalLevels={allLevels.length}
                 emptyMessage="No team members currently at risk — all meeting retention standards"
                 promotions={promotions}
+                allLevels={allLevels}
               />
             )}
           </TabsContent>
