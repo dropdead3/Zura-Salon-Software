@@ -170,119 +170,115 @@ const EVAL_WINDOWS = [30, 60, 90];
 const GRACE_PERIODS = [14, 30, 60, 90];
 
 function getZuraDefaults(levelIndex: number): FormState {
-  const base = {
-    retention_rate_enabled: false, retention_rate_threshold: 0, retention_rate_weight: 0,
-    new_clients_enabled: false, new_clients_threshold: 0, new_clients_weight: 0,
-  };
   if (levelIndex <= 1) {
     return {
-      ...base,
       revenue_enabled: true, revenue_threshold: 6000,
       retail_enabled: true, retail_pct_threshold: 10,
       rebooking_enabled: true, rebooking_pct_threshold: 60,
       avg_ticket_enabled: false, avg_ticket_threshold: 0,
       retention_rate_enabled: true, retention_rate_threshold: 60,
       new_clients_enabled: true, new_clients_threshold: 5,
+      utilization_enabled: true, utilization_threshold: 65,
       tenure_enabled: false, tenure_days: 0,
-      revenue_weight: 40, retail_weight: 15, rebooking_weight: 15, avg_ticket_weight: 0,
-      retention_rate_weight: 15, new_clients_weight: 15,
+      revenue_weight: 35, retail_weight: 10, rebooking_weight: 10, avg_ticket_weight: 0,
+      retention_rate_weight: 15, new_clients_weight: 15, utilization_weight: 15,
       evaluation_window_days: 30, requires_manual_approval: false,
     };
   }
   if (levelIndex === 2) {
     return {
-      ...base,
       revenue_enabled: true, revenue_threshold: 8000,
       retail_enabled: true, retail_pct_threshold: 15,
       rebooking_enabled: true, rebooking_pct_threshold: 65,
       avg_ticket_enabled: true, avg_ticket_threshold: 110,
       retention_rate_enabled: true, retention_rate_threshold: 65,
       new_clients_enabled: true, new_clients_threshold: 8,
+      utilization_enabled: true, utilization_threshold: 75,
       tenure_enabled: false, tenure_days: 0,
-      revenue_weight: 30, retail_weight: 15, rebooking_weight: 15, avg_ticket_weight: 15,
-      retention_rate_weight: 15, new_clients_weight: 10,
+      revenue_weight: 25, retail_weight: 10, rebooking_weight: 10, avg_ticket_weight: 15,
+      retention_rate_weight: 15, new_clients_weight: 10, utilization_weight: 15,
       evaluation_window_days: 60, requires_manual_approval: false,
     };
   }
   if (levelIndex === 3) {
     return {
-      ...base,
       revenue_enabled: true, revenue_threshold: 12000,
       retail_enabled: true, retail_pct_threshold: 18,
       rebooking_enabled: true, rebooking_pct_threshold: 70,
       avg_ticket_enabled: true, avg_ticket_threshold: 140,
       retention_rate_enabled: true, retention_rate_threshold: 70,
       new_clients_enabled: true, new_clients_threshold: 10,
+      utilization_enabled: true, utilization_threshold: 80,
       tenure_enabled: true, tenure_days: 365,
-      revenue_weight: 25, retail_weight: 15, rebooking_weight: 15, avg_ticket_weight: 15,
-      retention_rate_weight: 15, new_clients_weight: 15,
+      revenue_weight: 20, retail_weight: 10, rebooking_weight: 10, avg_ticket_weight: 15,
+      retention_rate_weight: 15, new_clients_weight: 10, utilization_weight: 20,
       evaluation_window_days: 60, requires_manual_approval: true,
     };
   }
   return {
-    ...base,
     revenue_enabled: true, revenue_threshold: 16000,
     retail_enabled: true, retail_pct_threshold: 22,
     rebooking_enabled: true, rebooking_pct_threshold: 75,
     avg_ticket_enabled: true, avg_ticket_threshold: 170,
     retention_rate_enabled: true, retention_rate_threshold: 80,
     new_clients_enabled: true, new_clients_threshold: 15,
+    utilization_enabled: true, utilization_threshold: 85,
     tenure_enabled: true, tenure_days: 730,
-    revenue_weight: 25, retail_weight: 15, rebooking_weight: 15, avg_ticket_weight: 15,
-    retention_rate_weight: 15, new_clients_weight: 15,
+    revenue_weight: 20, retail_weight: 10, rebooking_weight: 10, avg_ticket_weight: 15,
+    retention_rate_weight: 15, new_clients_weight: 10, utilization_weight: 20,
     evaluation_window_days: 90, requires_manual_approval: true,
   };
 }
 
 function getZuraRetentionDefaults(levelIndex: number): RetentionFormState {
-  const base = {
-    retention_rate_enabled: false, retention_rate_minimum: 0,
-    new_clients_enabled: false, new_clients_minimum: 0,
-  };
   if (levelIndex <= 1) {
     return {
-      ...base, retention_enabled: true,
+      retention_enabled: true,
       revenue_enabled: true, revenue_minimum: 4000,
       retail_enabled: true, retail_pct_minimum: 5,
       rebooking_enabled: true, rebooking_pct_minimum: 45,
       avg_ticket_enabled: false, avg_ticket_minimum: 0,
       retention_rate_enabled: true, retention_rate_minimum: 45,
       new_clients_enabled: true, new_clients_minimum: 3,
+      utilization_enabled: true, utilization_minimum: 50,
       evaluation_window_days: 90, grace_period_days: 30, action_type: 'coaching_flag',
     };
   }
   if (levelIndex === 2) {
     return {
-      ...base, retention_enabled: true,
+      retention_enabled: true,
       revenue_enabled: true, revenue_minimum: 5500,
       retail_enabled: true, retail_pct_minimum: 8,
       rebooking_enabled: true, rebooking_pct_minimum: 50,
       avg_ticket_enabled: true, avg_ticket_minimum: 85,
       retention_rate_enabled: true, retention_rate_minimum: 50,
       new_clients_enabled: true, new_clients_minimum: 4,
+      utilization_enabled: true, utilization_minimum: 55,
       evaluation_window_days: 90, grace_period_days: 30, action_type: 'coaching_flag',
     };
   }
   if (levelIndex === 3) {
     return {
-      ...base, retention_enabled: true,
+      retention_enabled: true,
       revenue_enabled: true, revenue_minimum: 8000,
       retail_enabled: true, retail_pct_minimum: 12,
       rebooking_enabled: true, rebooking_pct_minimum: 55,
       avg_ticket_enabled: true, avg_ticket_minimum: 100,
       retention_rate_enabled: true, retention_rate_minimum: 55,
       new_clients_enabled: true, new_clients_minimum: 5,
+      utilization_enabled: true, utilization_minimum: 60,
       evaluation_window_days: 90, grace_period_days: 30, action_type: 'demotion_eligible',
     };
   }
   return {
-    ...base, retention_enabled: true,
+    retention_enabled: true,
     revenue_enabled: true, revenue_minimum: 10000,
     retail_enabled: true, retail_pct_minimum: 15,
     rebooking_enabled: true, rebooking_pct_minimum: 60,
     avg_ticket_enabled: true, avg_ticket_minimum: 120,
     retention_rate_enabled: true, retention_rate_minimum: 60,
     new_clients_enabled: true, new_clients_minimum: 8,
+    utilization_enabled: true, utilization_minimum: 65,
     evaluation_window_days: 90, grace_period_days: 30, action_type: 'demotion_eligible',
   };
 }
