@@ -1,47 +1,91 @@
 
 
-# Zura Default Configuration for Graduation Wizard
+# Graduation Tracker — Full Admin Rebuild
 
-## What This Does
+## Problem
 
-Adds a "Use Zura Defaults" button at the top of Step 0 (Requirements) in the Graduation Wizard. When clicked, it pre-fills the form with level-appropriate thresholds, weights, and evaluation settings — a no-brainer starting point that admins can accept as-is or tweak.
+The current Graduation Tracker page is built around an **assistant-to-stylist submission checklist** system (graduation_requirements / graduation_submissions tables). It only shows `stylist_assistant` role users and their manual proof submissions. 
 
-## Default Presets (by level index)
+Meanwhile, we've built a complete **level promotion criteria** system (level_promotion_criteria table, `useLevelProgress` hook, `LevelProgressCard` component) that computes real-time graduation readiness based on revenue, retail, rebooking, avg ticket, and tenure — but none of that is surfaced on this page.
 
-The graduation wizard receives `levelIndex` (0 = entry, 1 = second tier, etc.). Defaults scale progressively:
+The page needs to merge both systems and become the admin's central command for tracking who's progressing through levels, who's ready for promotion, and who needs coaching intervention.
+
+## Architecture
+
+The page will have three sections:
 
 ```text
-Level 2 (e.g. Emerging):
-  Revenue $6,000/mo · Retail 10% · Rebooking 60%
-  Weights: 50/25/25 · 30-day window · No approval required
-
-Level 3 (e.g. Lead):
-  Revenue $8,000/mo · Retail 15% · Rebooking 65% · Avg Ticket $110
-  Weights: 40/20/20/20 · 60-day window · No approval required
-
-Level 4 (e.g. Senior):
-  Revenue $12,000/mo · Retail 18% · Rebooking 70% · Avg Ticket $140 · Tenure 365d
-  Weights: 35/20/25/20 · 60-day window · Approval required
-
-Level 5+ (e.g. Signature/Icon):
-  Revenue $16,000/mo · Retail 22% · Rebooking 75% · Avg Ticket $170 · Tenure 730d
-  Weights: 30/20/25/25 · 90-day window · Approval required
+┌─────────────────────────────────────────────────────────────────┐
+│  GRADUATION TRACKER                           [Filter] [Search] │
+├─────────────────────────────────────────────────────────────────┤
+│  KPI Strip                                                      │
+│  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐           │
+│  │ Ready to  │ │ In       │ │ Needs    │ │ No Next  │           │
+│  │ Graduate  │ │ Progress │ │ Attention│ │ Level    │           │
+│  └──────────┘ └──────────┘ └──────────┘ └──────────┘           │
+├─────────────────────────────────────────────────────────────────┤
+│  Tabs: [All Stylists] [Ready to Graduate] [Assistants]          │
+├─────────────────────────────────────────────────────────────────┤
+│  Tab 1 & 2: Level-Based Progress                                │
+│  ┌─ Stylist Row ────────────────────────────────────────────┐   │
+│  │ Avatar | Name | Current → Next | Composite Bar | Status  │   │
+│  │ (expandable: per-criterion progress bars, gap analysis)  │   │
+│  └──────────────────────────────────────────────────────────┘   │
+│                                                                  │
+│  Tab 3: Legacy Assistant Checklist (existing functionality)      │
+│  ┌─ Assistant Row ──────────────────────────────────────────┐   │
+│  │ Avatar | Name | X/Y complete | Progress | Submissions    │   │
+│  └──────────────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────────────┘
 ```
 
-These are industry-informed benchmarks for salon performance tiers, tuned to be achievable but meaningful.
+## Plan
 
-## UX
+### 1. Create `useTeamLevelProgress` hook
 
-- A subtle banner appears at the top of Step 0 when the form is empty (no existing criteria saved): **"Start with Zura's recommended criteria for this level"** with a **"Apply Defaults"** button.
-- Clicking it fills all fields instantly — toggles, thresholds, weights, window, approval.
-- If existing criteria are loaded, the banner is hidden (admin already configured).
-- Admin can still modify any value after applying defaults.
+New hook that fetches ALL active stylists with their current levels and computes level progress for each. Unlike `useLevelProgress` (single user), this does a bulk fetch:
+- Fetch all active `employee_profiles` with `stylist_level` and `hire_date`
+- Fetch all `level_promotion_criteria` for the org
+- Fetch rolling sales + appointment data for all stylists in a single batch query
+- Compute per-stylist progress (reusing the same math from `useLevelProgress`)
+- Return array sorted by composite score descending (closest to graduation first)
+- Categorize each stylist: `ready` (100%), `in_progress` (>0%), `needs_attention` (<25%), `no_criteria` (no next level or no criteria configured)
+
+### 2. Rebuild `GraduationTracker.tsx`
+
+Completely rebuild the page with three tabs:
+
+**Tab: All Stylists** — Every stylist with a level assigned, showing:
+- Avatar, name, current level badge (color-coded via `getLevelColor`)
+- "Current → Next" level labels
+- Composite progress bar with percentage
+- Status badge: "Qualified" (green), "In Progress" (primary), "Needs Attention" (amber), "At Top Level" (muted)
+- Expandable row showing per-criterion progress bars (reusing `CriterionRow` pattern from `LevelProgressCard`)
+- If `requires_manual_approval` and score is 100%, show "Approve Promotion" button
+
+**Tab: Ready to Graduate** — Filtered to only stylists at 100% composite score. These are actionable — admin can review and approve promotions.
+
+**Tab: Assistants** — Preserves the existing assistant checklist system (submission review, feedback, requirements). This keeps backward compatibility.
+
+**KPI Strip** (above tabs):
+- Ready to Graduate count
+- In Progress count
+- Needs Attention count (<25% or 0 active criteria)
+- Total tracked stylists
+
+**Page Header**: Search input + filter by level dropdown
+
+### 3. Update PageExplainer
+
+Update the `graduation-tracker` entry in `pageExplainers.ts` to reflect the new scope — it's no longer just assistants, it's team-wide level progression tracking.
 
 ## File Changes
 
 | File | Action |
 |------|--------|
-| `src/components/dashboard/settings/GraduationWizard.tsx` | **Modify** — Add `ZURA_DEFAULTS` preset map and "Apply Defaults" banner in Step 0 |
+| `src/hooks/useTeamLevelProgress.ts` | **Create** — Bulk-fetch all stylist level progress for the org |
+| `src/pages/dashboard/admin/GraduationTracker.tsx` | **Rewrite** — Full rebuild with KPI strip, 3 tabs, level-based progress rows |
+| `src/config/pageExplainers.ts` | **Modify** — Update `graduation-tracker` description |
 
-**1 file modified.**
+**1 new file, 2 modified files.**
 
