@@ -22,6 +22,8 @@ const SUGGESTIONS = [
   "My team keeps quitting",
   "I don't know which services are profitable",
   "Scheduling is a nightmare",
+  "I want onboarding to feel more streamlined",
+  "I want a training hub for each employee role",
 ];
 
 const DISPLAY_PILL_COUNT = 5;
