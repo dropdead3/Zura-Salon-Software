@@ -60,7 +60,7 @@ import { generateLevelRequirementsPDF } from '@/components/dashboard/settings/Le
 
 function formatCriteriaSummary(c: LevelPromotionCriteria): string {
   const parts: string[] = [];
-  if (c.revenue_enabled && c.revenue_threshold > 0) parts.push(`$${(c.revenue_threshold / 1000).toFixed(0)}K rev`);
+  if (c.revenue_enabled && c.revenue_threshold > 0) parts.push(c.revenue_threshold >= 1000 ? `$${(c.revenue_threshold / 1000).toFixed(0)}K rev` : `$${c.revenue_threshold} rev`);
   if (c.retail_enabled && c.retail_pct_threshold > 0) parts.push(`${c.retail_pct_threshold}% retail`);
   if (c.rebooking_enabled && c.rebooking_pct_threshold > 0) parts.push(`${c.rebooking_pct_threshold}% rebook`);
   if (c.avg_ticket_enabled && c.avg_ticket_threshold > 0) parts.push(`$${c.avg_ticket_threshold} avg`);

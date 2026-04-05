@@ -6,6 +6,8 @@ import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useEmployeePayrollSettings } from './useEmployeePayrollSettings';
 import { usePaySchedule, getCurrentPayPeriod } from './usePaySchedule';
 import { useResolveCommission } from './useResolveCommission';
+import { useLevelPromotionCriteria } from './useLevelPromotionCriteria';
+import { useStylistLevels } from './useStylistLevels';
 import { format, differenceInDays, subDays } from 'date-fns';
 
 export interface EmployeeProjection {
@@ -80,6 +82,23 @@ export function usePayrollForecasting() {
   const { employeeSettings, isLoading: isLoadingSettings } = useEmployeePayrollSettings();
   const { settings: paySchedule, isLoading: isLoadingSchedule } = usePaySchedule();
   const { resolveCommission, isLoading: isLoadingTiers } = useResolveCommission();
+  const { data: allCriteria = [] } = useLevelPromotionCriteria();
+  const { data: allLevels = [] } = useStylistLevels();
+
+  // Fetch employee level slugs
+  const { data: employeeLevels } = useQuery({
+    queryKey: ['payroll-employee-levels', organizationId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('employee_profiles')
+        .select('user_id, stylist_level')
+        .eq('organization_id', organizationId!)
+        .eq('is_active', true);
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!organizationId,
+  });
 
   // Get current pay period
   const currentPeriod = paySchedule ? getCurrentPayPeriod(paySchedule) : null;
@@ -185,6 +204,30 @@ export function usePayrollForecasting() {
       let amountToNextTier = 0;
 
       currentTier = { name: resolved.sourceName, rate: resolved.serviceRate };
+
+      // Compute tier progress from level_promotion_criteria
+      const empLevelSlug = (employeeLevels || []).find(e => e.user_id === emp.employee_id)?.stylist_level;
+      if (empLevelSlug && allLevels.length > 0) {
+        const sortedLevels = [...allLevels].sort((a, b) => a.display_order - b.display_order);
+        const currentIdx = sortedLevels.findIndex(l => l.slug === empLevelSlug);
+        if (currentIdx >= 0 && currentIdx < sortedLevels.length - 1) {
+          const nextLevelObj = sortedLevels[currentIdx + 1];
+          const criteria = allCriteria.find(c => c.stylist_level_id === nextLevelObj.id && c.is_active);
+          if (criteria) {
+            nextTier = {
+              name: nextLevelObj.label,
+              rate: nextLevelObj.service_commission_rate || 0,
+              threshold: criteria.revenue_threshold || 0,
+            };
+            // Simple progress based on revenue threshold (primary metric)
+            if (criteria.revenue_enabled && criteria.revenue_threshold > 0) {
+              const monthlyProjected = totalDays > 0 ? (projectedServices / totalDays) * 30 : 0;
+              tierProgress = Math.min(100, (monthlyProjected / criteria.revenue_threshold) * 100);
+              amountToNextTier = Math.max(0, criteria.revenue_threshold - monthlyProjected);
+            }
+          }
+        }
+      }
 
       // Calculate commissions
       let serviceCommission = 0;

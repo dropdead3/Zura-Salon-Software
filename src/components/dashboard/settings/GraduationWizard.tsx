@@ -220,7 +220,12 @@ export function GraduationWizard({ open, onOpenChange, levelId, levelLabel, leve
     }
   };
 
-  const canProceedFromStep0 = enabledCount > 0;
+  // Require at least 1 criterion enabled AND all enabled criteria must have non-zero thresholds
+  const allThresholdsValid = CRITERIA.every(c => {
+    if (!(form[c.enabledKey] as boolean)) return true;
+    return (form[c.thresholdKey] as number) > 0;
+  }) && (!form.tenure_enabled || form.tenure_days > 0);
+  const canProceedFromStep0 = enabledCount > 0 && allThresholdsValid;
   const canProceedFromStep1 = totalWeight === 100 || enabledCriteria.length === 0;
   const canSave = canProceedFromStep0 && canProceedFromStep1;
 
