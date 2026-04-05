@@ -26,6 +26,8 @@ import { useStrikeCounts } from '@/hooks/useStaffStrikes';
 import { ResponsibilityBadges } from '@/components/access-hub/ResponsibilityBadges';
 import { useRoleUtils, getIconComponent } from '@/hooks/useRoleUtils';
 import { PageExplainer } from '@/components/ui/PageExplainer';
+import { getLevelColor } from '@/lib/level-colors';
+import { useStylistLevels } from '@/hooks/useStylistLevels';
 
 const roleLabels: Record<string, string> = {
   super_admin: 'Super Admin',
@@ -862,12 +864,17 @@ function TeamMemberCard({ member, locations, isSuperAdmin, canViewStrikes, strik
                       </Tooltip>
                     </TooltipProvider>
                   )}
-                  {isStylistOrAssistant && member.stylist_level && (
-                    <span className="flex items-center gap-1 font-medium text-foreground/70">
-                      <Award className="w-3 h-3" />
-                      {member.stylist_level.replace(' STYLIST', '')}
-                    </span>
-                  )}
+                  {isStylistOrAssistant && member.stylist_level && (() => {
+                    const levelIdx = stylistLevels?.findIndex(l => l.client_label === member.stylist_level || l.slug === member.stylist_level) ?? -1;
+                    const totalLevels = stylistLevels?.length ?? 1;
+                    const colors = levelIdx >= 0 ? getLevelColor(levelIdx, totalLevels) : { bg: 'bg-muted', text: 'text-muted-foreground' };
+                    return (
+                      <span className={cn("inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium", colors.bg, colors.text)}>
+                        <Award className="w-3 h-3" />
+                        {member.stylist_level.replace(' STYLIST', '')}
+                      </span>
+                    );
+                  })()}
                 </div>
               </div>
               
