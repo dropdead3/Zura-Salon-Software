@@ -27,6 +27,9 @@ export interface LevelPromotionCriteria {
   new_clients_enabled: boolean;
   new_clients_threshold: number;
   new_clients_weight: number;
+  utilization_enabled: boolean;
+  utilization_threshold: number;
+  utilization_weight: number;
   evaluation_window_days: number;
   requires_manual_approval: boolean;
   is_active: boolean;

@@ -24,6 +24,7 @@ import {
   Shield,
   Users,
   UserPlus,
+  CalendarClock,
 } from 'lucide-react';
 import {
   useLevelPromotionCriteriaForLevel,
@@ -73,6 +74,8 @@ interface FormState {
   retention_rate_threshold: number;
   new_clients_enabled: boolean;
   new_clients_threshold: number;
+  utilization_enabled: boolean;
+  utilization_threshold: number;
   tenure_enabled: boolean;
   tenure_days: number;
   revenue_weight: number;
@@ -81,6 +84,7 @@ interface FormState {
   avg_ticket_weight: number;
   retention_rate_weight: number;
   new_clients_weight: number;
+  utilization_weight: number;
   evaluation_window_days: number;
   requires_manual_approval: boolean;
 }
