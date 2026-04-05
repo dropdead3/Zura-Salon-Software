@@ -425,7 +425,6 @@ export function GraduationWizard({ open, onOpenChange, levelId, levelLabel, leve
                           </Badge>
                         </div>
                         <Slider
-                          variant="filled"
                           value={[weight]}
                           onValueChange={([v]) => adjustWeight(criterion.weightKey, v)}
                           max={100}
