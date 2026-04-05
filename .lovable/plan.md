@@ -1,38 +1,76 @@
 
 
-# Dynamic Typing Placeholder for StruggleInput
+# Enhanced StruggleInput Response Layout
 
-## Problem
+## Current Issues
 
-The textarea uses a static placeholder ("I'm struggling with..."). The user wants the SUGGESTIONS array to cycle through as animated typing text inside the textarea — like a typewriter effect showing example problems before the user starts typing.
+1. Feature cards render in a flat 3-column grid with no visual hierarchy — they all look identical
+2. The AI response sits in a plain bordered box below, visually disconnected from the feature cards
+3. No clear visual separation between "what Zura feature solves this" and "how it solves it"
+4. The response area lacks structure — it's just a markdown dump
 
-## Approach
+## Proposed Layout (Post-Response State)
 
-Add a custom typing animation hook that cycles through the SUGGESTIONS array, typing each one character by character, pausing, then deleting and moving to the next. This replaces the static `placeholder` attribute.
+```text
+┌─────────────────────────────────────────────────┐
+│  [textarea with typing animation]               │
+│  0/300                        [Show me how →]   │
+│  ─────────────────────────────────────────────   │
+│  pill  pill  pill  pill                          │
+└─────────────────────────────────────────────────┘
 
-### Typing Animation Logic
+          ↓  (after submit, response area)
 
-- When `query` is empty and textarea is not focused, show animated placeholder text
-- Cycle through SUGGESTIONS with: type in (40ms/char) → pause (2s) → delete (25ms/char) → pause (300ms) → next
-- When user focuses the textarea or starts typing, immediately hide the animated text and show real input
-- Use a `useEffect` with `setInterval`/`setTimeout` to drive the animation loop
+┌──────────────────────────────────────────────────┐
+│                                                  │
+│  ┌─ FEATURED SOLUTION ───────────────────────┐   │
+│  │  ⚡ PAYROLL                                │   │
+│  │  Payroll Hub                               │   │
+│  │  Automate tips, commissions, and payroll   │   │
+│  │                                            │   │
+│  │  [Learn more →]                            │   │
+│  └────────────────────────────────────────────┘   │
+│                                                  │
+│  Also relevant:                                  │
+│  ┌──────────┐  ┌──────────┐                      │
+│  │ Feature2 │  │ Feature3 │    (smaller cards)   │
+│  └──────────┘  └──────────┘                      │
+│                                                  │
+│  ── How Zura solves this ──────────────────────   │
+│                                                  │
+│  [Streamed AI markdown response with improved    │
+│   typography — violet accent on feature names,   │
+│   bullet points styled cleaner]                  │
+│                                                  │
+│  ↻ Ask another question    Book a demo →         │
+└──────────────────────────────────────────────────┘
+```
 
-### Implementation Details
+## Key Design Changes
 
-1. **New state**: `placeholderText` (the currently visible animated string), `isTyping` (animation active flag), `isFocused`
-2. **Animation effect**: Runs only when `query === ''` and `!isFocused` — types/deletes through SUGGESTIONS in a loop
-3. **Render**: When `query` is empty and animation is active, render the animated text as a positioned overlay `<span>` inside the textarea container (not as the native `placeholder` attr, since we need character-by-character control)
-4. **Styling**: The animated text uses `text-slate-500` (same as current placeholder) with a blinking cursor character `|` appended
+### 1. Primary Feature Card (Hero Treatment)
+- First matched feature gets a larger, highlighted card with a subtle violet left border accent and a gradient background (`bg-gradient-to-br from-violet-500/10 to-transparent`)
+- Category label in violet, feature name larger (`text-lg`), tagline visible
+- Optional "Learn more" link if we have a route
 
-### Visual Result
+### 2. Secondary Features (Compact Row)
+- Remaining features render as smaller inline pills/chips below a "Also relevant:" label
+- Keeps the response area clean without a heavy grid
 
-The textarea appears to type out: `With my current salon software, I cannot adjust commission rates per level...` then erases, then types the next suggestion — exactly like the screenshot reference.
+### 3. Response Container Improvements
+- Add a subtle section label: "How Zura solves this" with a thin violet divider line
+- Better markdown prose styling — slightly larger line-height, violet-colored bold feature names
+- Cleaner visual weight overall
+
+### 4. Overall Container
+- Widen max-width from `max-w-3xl` to `max-w-4xl` to give the response more breathing room
+- The entire response area (features + AI text + actions) lives in one cohesive card instead of separate disconnected boxes
 
 ## File Changes
 
 | File | Action |
 |------|--------|
-| `src/components/marketing/StruggleInput.tsx` | **Modify** — add typing animation effect, overlay span, focus handling |
+| `src/components/marketing/StruggleInput.tsx` | **Modify** — restructure response layout with hero feature card, secondary chips, section divider, unified container |
 
 **1 file modified.**
 
