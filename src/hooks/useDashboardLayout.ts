@@ -202,6 +202,23 @@ function migrateLayout(layout: DashboardLayout, pinnedCards: string[]): Dashboar
     };
   }
 
+  // Ensure level_progress and graduation_kpi sections exist for existing layouts
+  for (const sectionKey of ['level_progress', 'graduation_kpi']) {
+    if (!migrated.sectionOrder?.includes(sectionKey)) {
+      const insertAfter = migrated.sectionOrder?.indexOf('quick_stats');
+      const idx = insertAfter !== undefined && insertAfter >= 0 ? insertAfter + 1 : migrated.sectionOrder.length;
+      const newSections = [...(migrated.sections || [])];
+      const newOrder = [...(migrated.sectionOrder || [])];
+      newSections.splice(idx, 0, sectionKey);
+      newOrder.splice(idx, 0, sectionKey);
+      migrated = {
+        ...migrated,
+        sections: newSections,
+        sectionOrder: newOrder,
+      };
+    }
+  }
+
   return sanitizeDashboardLayout(migrated);
 }
 
