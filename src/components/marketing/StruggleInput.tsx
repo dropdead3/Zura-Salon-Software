@@ -58,7 +58,7 @@ export function StruggleInput() {
   const [error, setError] = useState<string | null>(null);
   const [cooldownUntil, setCooldownUntil] = useState(0);
   const [limitReached, setLimitReached] = useState(() => getSessionCount() >= SESSION_LIMIT);
-  const [isFocused, setIsFocused] = useState(false);
+  const [showAllPills, setShowAllPills] = useState(false);
   const [placeholderText, setPlaceholderText] = useState('');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const displayPills = useMemo(() => {
