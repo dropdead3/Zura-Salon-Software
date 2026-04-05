@@ -356,6 +356,27 @@ export function GraduationWizard({ open, onOpenChange, levelId, levelLabel, leve
               {/* Step 0: Select Requirements */}
               {step === 0 && (
                 <div className="space-y-3">
+                  {/* Zura Defaults banner — show when no criteria are configured */}
+                  {!existing && enabledCount === 0 && (
+                    <div className="flex items-center gap-3 rounded-lg border border-primary/20 bg-primary/5 p-3 mb-1">
+                      <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                        <Sparkles className="w-4 h-4 text-primary" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm text-foreground font-medium font-sans">Start with Zura's recommended criteria</p>
+                        <p className="text-xs text-muted-foreground font-sans">Industry benchmarks tuned for this level — tweak as needed.</p>
+                      </div>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="shrink-0 rounded-full h-8 px-3 text-xs border-primary/30 text-primary hover:bg-primary/10 font-sans"
+                        onClick={() => setForm(getZuraDefaults(levelIndex))}
+                      >
+                        Apply Defaults
+                      </Button>
+                    </div>
+                  )}
+
                   <p className={cn(tokens.body.muted, 'mb-4')}>
                     Toggle on the metrics that matter for promotion to this level.
                   </p>
