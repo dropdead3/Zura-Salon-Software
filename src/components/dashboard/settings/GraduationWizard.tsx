@@ -95,6 +95,55 @@ const INITIAL_STATE: FormState = {
 
 const EVAL_WINDOWS = [30, 60, 90];
 
+function getZuraDefaults(levelIndex: number): FormState {
+  if (levelIndex <= 1) {
+    // Level 2 / Emerging
+    return {
+      revenue_enabled: true, revenue_threshold: 6000,
+      retail_enabled: true, retail_pct_threshold: 10,
+      rebooking_enabled: true, rebooking_pct_threshold: 60,
+      avg_ticket_enabled: false, avg_ticket_threshold: 0,
+      tenure_enabled: false, tenure_days: 0,
+      revenue_weight: 50, retail_weight: 25, rebooking_weight: 25, avg_ticket_weight: 0,
+      evaluation_window_days: 30, requires_manual_approval: false,
+    };
+  }
+  if (levelIndex === 2) {
+    // Level 3 / Lead
+    return {
+      revenue_enabled: true, revenue_threshold: 8000,
+      retail_enabled: true, retail_pct_threshold: 15,
+      rebooking_enabled: true, rebooking_pct_threshold: 65,
+      avg_ticket_enabled: true, avg_ticket_threshold: 110,
+      tenure_enabled: false, tenure_days: 0,
+      revenue_weight: 40, retail_weight: 20, rebooking_weight: 20, avg_ticket_weight: 20,
+      evaluation_window_days: 60, requires_manual_approval: false,
+    };
+  }
+  if (levelIndex === 3) {
+    // Level 4 / Senior
+    return {
+      revenue_enabled: true, revenue_threshold: 12000,
+      retail_enabled: true, retail_pct_threshold: 18,
+      rebooking_enabled: true, rebooking_pct_threshold: 70,
+      avg_ticket_enabled: true, avg_ticket_threshold: 140,
+      tenure_enabled: true, tenure_days: 365,
+      revenue_weight: 35, retail_weight: 20, rebooking_weight: 25, avg_ticket_weight: 20,
+      evaluation_window_days: 60, requires_manual_approval: true,
+    };
+  }
+  // Level 5+ / Signature / Icon
+  return {
+    revenue_enabled: true, revenue_threshold: 16000,
+    retail_enabled: true, retail_pct_threshold: 22,
+    rebooking_enabled: true, rebooking_pct_threshold: 75,
+    avg_ticket_enabled: true, avg_ticket_threshold: 170,
+    tenure_enabled: true, tenure_days: 730,
+    revenue_weight: 30, retail_weight: 20, rebooking_weight: 25, avg_ticket_weight: 25,
+    evaluation_window_days: 90, requires_manual_approval: true,
+  };
+}
+
 export function GraduationWizard({ open, onOpenChange, levelId, levelLabel, levelIndex }: GraduationWizardProps) {
   const [step, setStep] = useState(0);
   const [form, setForm] = useState<FormState>(INITIAL_STATE);
