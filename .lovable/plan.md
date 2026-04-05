@@ -1,49 +1,51 @@
 
 
-# Testimonial Section Redesign — Bento Grid with Star Ratings
+# Tool Consolidation — Scroll-Driven Convergence Animation
 
-## What Changes
+## Concept
 
-Redesign `TestimonialSection.tsx` to match the reference image's card style:
+The 9 scattered tool pills start in a chaotic, jumbled state (random rotations, offsets, overlapping). As the user scrolls the section into view, the pills animate inward — shrinking, losing their individual colors, and converging into a single glowing "Zura $99/mo" pill that replaces them all. A visual metaphor for consolidation.
 
-### Card Design (per reference)
-- **Star ratings**: 5 amber/gold stars at the top of each card
-- **Quote text**: Large, readable body copy
-- **Author block at bottom**: Circular letter avatar (first initial) + Name + Company/Role stacked
-- **Card surface**: Rounded corners, subtle border, dark glass background (`bg-white/[0.04]` with `border-white/[0.08]`)
-- Remove the left accent border stripe (replaced by stars as the visual anchor)
+## Animation Sequence (3 phases, scroll-triggered)
 
-### Layout — Bento Grid
-- 3-column, 2-row grid on desktop (6 cells total)
-- Center cell in top row becomes a **stat callout** (e.g., "50+ Locations" / "Already running on Zura") instead of a testimonial — mirrors the reference's "11M+" pattern
-- 5 testimonial cards fill the remaining 5 cells
-- On tablet: 2-column grid, stat card spans full width
-- On mobile: single column stack
+**Phase 1 — Chaos (initial state, before in-view)**
+- Pills visible but scattered: large random offsets (x: -120 to +120, y: -80 to +80), random rotations (-15 to +15 deg), slight overlap
+- Each pill has its own color and price tag
+- Feels messy, expensive, overwhelming
 
-### Updated Testimonials (5 total, salon-contextualized)
-1. Monday spreadsheet → one-screen clarity (Multi-Location Owner, 4 locations)
-2. Retention flipped with career paths (Salon Group CEO, 8 locations)
-3. New-hire ramp cut from 90 to 30 days (Regional Director, 6 locations)
-4. Color waste visibility changed everything (Salon Owner, 2 locations)
-5. Finally see which stylist needs help before they quit (Operations Manager, 3 locations)
+**Phase 2 — Convergence (on scroll into view, ~1.2s staggered)**
+- Pills animate toward center: x/y go to 0, rotation goes to 0
+- Pills shrink (scale 0.8 → 0.4) and fade out (opacity 1 → 0)
+- Staggered timing so they don't all collapse at once — feels like being "absorbed"
 
-### Stat Callout Card (center top)
-- Large number: "50+"
-- Label: "Salon locations running on Zura"
-- Styled distinctly — no stars, no quote, just the metric
+**Phase 3 — Zura pill reveal (after convergence completes, ~0.3s delay)**
+- A single large "Zura — $99/mo" pill fades + scales in at center
+- Uses violet/purple gradient border matching Zura brand
+- Clean, confident, singular — the visual payoff
+- Price comparison row fades in below
 
-### Visual Details
-- Stars: 5x amber/gold star icons (`text-amber-400`)
-- Avatar circle: `w-9 h-9 rounded-full bg-white/[0.08]` with first letter centered
-- Author name: `font-sans text-sm text-white/90`
-- Author role: `font-sans text-xs text-slate-500`
-- Cards have consistent `p-6 rounded-xl` with glass surface
+## Technical Approach
 
-## Implementation
+- Use Framer Motion `useInView` (already imported) to trigger the sequence
+- `useState` to track animation phase: `'chaos' | 'converging' | 'resolved'`
+- Each pill uses `motion.div` with `animate` controlled by phase state
+- Chaos positions defined as larger offsets in the tool data (increase current x/y/rotate values)
+- Convergence: animate to `{ x: 0, y: 0, rotate: 0, scale: 0.4, opacity: 0 }` with stagger
+- After last pill finishes (onAnimationComplete on the last one), set phase to `'resolved'`
+- Zura pill: `AnimatePresence` conditional render when phase === 'resolved'
+- Container uses `position: relative` with pills absolutely positioned for true overlap during chaos
+
+## Layout Change
+
+- Switch from `flex-wrap` to a `relative` container with fixed height
+- Pills use `absolute` positioning with transform offsets for the chaos state
+- This allows true overlapping scatter rather than flex-wrap grid
+
+## File Changes
 
 | File | Action |
 |------|--------|
-| `src/components/marketing/TestimonialSection.tsx` | **Rewrite** — bento grid, star ratings, avatar circles, stat callout |
+| `src/components/marketing/ToolConsolidation.tsx` | **Rewrite** — add 3-phase scroll animation, absolute positioning, Zura pill reveal |
 
 **1 file modified. 0 new. 0 deleted.**
 
