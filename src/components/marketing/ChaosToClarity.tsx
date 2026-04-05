@@ -24,10 +24,10 @@ export function ChaosToClarity() {
     offset: ['start end', 'end start'],
   });
 
-  const clarityOpacity = useTransform(scrollYProgress, [0.25, 0.45], [0, 1]);
-  const clarityX = useTransform(scrollYProgress, [0.25, 0.45], [60, 0]);
-  const chaosDim = useTransform(scrollYProgress, [0.3, 0.5], [1, 0.4]);
-  const dividerX = useTransform(scrollYProgress, [0.25, 0.45], ['100%', '0%']);
+  const clarityOpacity = useTransform(scrollYProgress, [0.4, 0.58], [0, 1]);
+  const clarityX = useTransform(scrollYProgress, [0.4, 0.58], [60, 0]);
+  const chaosDim = useTransform(scrollYProgress, [0.45, 0.6], [1, 0.4]);
+  const dividerX = useTransform(scrollYProgress, [0.4, 0.58], ['100%', '0%']);
 
   return (
     <section id="chaos-to-clarity" ref={sectionRef} className="relative z-10 px-6 sm:px-8 py-20 lg:py-28">
