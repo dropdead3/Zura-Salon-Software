@@ -9269,6 +9269,9 @@ export type Database = {
           evaluation_window_days: number
           id: string
           is_active: boolean
+          new_clients_enabled: boolean
+          new_clients_threshold: number
+          new_clients_weight: number
           organization_id: string
           rebooking_enabled: boolean
           rebooking_pct_threshold: number
@@ -9277,6 +9280,9 @@ export type Database = {
           retail_enabled: boolean
           retail_pct_threshold: number
           retail_weight: number
+          retention_rate_enabled: boolean
+          retention_rate_threshold: number
+          retention_rate_weight: number
           revenue_enabled: boolean
           revenue_threshold: number
           revenue_weight: number
@@ -9293,6 +9299,9 @@ export type Database = {
           evaluation_window_days?: number
           id?: string
           is_active?: boolean
+          new_clients_enabled?: boolean
+          new_clients_threshold?: number
+          new_clients_weight?: number
           organization_id: string
           rebooking_enabled?: boolean
           rebooking_pct_threshold?: number
@@ -9301,6 +9310,9 @@ export type Database = {
           retail_enabled?: boolean
           retail_pct_threshold?: number
           retail_weight?: number
+          retention_rate_enabled?: boolean
+          retention_rate_threshold?: number
+          retention_rate_weight?: number
           revenue_enabled?: boolean
           revenue_threshold?: number
           revenue_weight?: number
@@ -9317,6 +9329,9 @@ export type Database = {
           evaluation_window_days?: number
           id?: string
           is_active?: boolean
+          new_clients_enabled?: boolean
+          new_clients_threshold?: number
+          new_clients_weight?: number
           organization_id?: string
           rebooking_enabled?: boolean
           rebooking_pct_threshold?: number
@@ -9325,6 +9340,9 @@ export type Database = {
           retail_enabled?: boolean
           retail_pct_threshold?: number
           retail_weight?: number
+          retention_rate_enabled?: boolean
+          retention_rate_threshold?: number
+          retention_rate_weight?: number
           revenue_enabled?: boolean
           revenue_threshold?: number
           revenue_weight?: number
@@ -9404,12 +9422,16 @@ export type Database = {
           grace_period_days: number
           id: string
           is_active: boolean
+          new_clients_enabled: boolean
+          new_clients_minimum: number
           organization_id: string
           rebooking_enabled: boolean
           rebooking_pct_minimum: number
           retail_enabled: boolean
           retail_pct_minimum: number
           retention_enabled: boolean
+          retention_rate_enabled: boolean
+          retention_rate_minimum: number
           revenue_enabled: boolean
           revenue_minimum: number
           stylist_level_id: string
@@ -9424,12 +9446,16 @@ export type Database = {
           grace_period_days?: number
           id?: string
           is_active?: boolean
+          new_clients_enabled?: boolean
+          new_clients_minimum?: number
           organization_id: string
           rebooking_enabled?: boolean
           rebooking_pct_minimum?: number
           retail_enabled?: boolean
           retail_pct_minimum?: number
           retention_enabled?: boolean
+          retention_rate_enabled?: boolean
+          retention_rate_minimum?: number
           revenue_enabled?: boolean
           revenue_minimum?: number
           stylist_level_id: string
@@ -9444,12 +9470,16 @@ export type Database = {
           grace_period_days?: number
           id?: string
           is_active?: boolean
+          new_clients_enabled?: boolean
+          new_clients_minimum?: number
           organization_id?: string
           rebooking_enabled?: boolean
           rebooking_pct_minimum?: number
           retail_enabled?: boolean
           retail_pct_minimum?: number
           retention_enabled?: boolean
+          retention_rate_enabled?: boolean
+          retention_rate_minimum?: number
           revenue_enabled?: boolean
           revenue_minimum?: number
           stylist_level_id?: string

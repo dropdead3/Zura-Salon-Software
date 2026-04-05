@@ -21,6 +21,12 @@ export interface LevelPromotionCriteria {
   retail_weight: number;
   rebooking_weight: number;
   avg_ticket_weight: number;
+  retention_rate_enabled: boolean;
+  retention_rate_threshold: number;
+  retention_rate_weight: number;
+  new_clients_enabled: boolean;
+  new_clients_threshold: number;
+  new_clients_weight: number;
   evaluation_window_days: number;
   requires_manual_approval: boolean;
   is_active: boolean;

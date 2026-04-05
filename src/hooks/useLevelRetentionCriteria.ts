@@ -16,6 +16,10 @@ export interface LevelRetentionCriteria {
   rebooking_pct_minimum: number;
   avg_ticket_enabled: boolean;
   avg_ticket_minimum: number;
+  retention_rate_enabled: boolean;
+  retention_rate_minimum: number;
+  new_clients_enabled: boolean;
+  new_clients_minimum: number;
   evaluation_window_days: number;
   grace_period_days: number;
   action_type: 'coaching_flag' | 'demotion_eligible';

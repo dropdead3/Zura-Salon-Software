@@ -38,6 +38,8 @@ export interface TeamMemberProgress {
   retentionFailures: RetentionFailure[];
   retentionActionType: 'coaching_flag' | 'demotion_eligible' | null;
   retentionGracePeriodDays: number;
+  // Informational context
+  noShowRate: number | null;
 }
 
 export function useTeamLevelProgress() {
@@ -119,7 +121,7 @@ export function useTeamLevelProgress() {
       while (hasMore) {
         const { data, error } = await supabase
           .from('appointments')
-          .select('staff_user_id, total_price, rebooked_at_checkout, appointment_date')
+          .select('staff_user_id, total_price, rebooked_at_checkout, appointment_date, status, is_new_client')
           .in('staff_user_id', userIds)
           .gte('appointment_date', startStr)
           .lte('appointment_date', endStr)
@@ -171,15 +173,26 @@ export function useTeamLevelProgress() {
         const totalRevenue = totalServiceRevenue + totalProductRevenue;
         const monthlyRevenue = evalDays > 0 ? (totalRevenue / evalDays) * 30 : 0;
         const retailPct = totalRevenue > 0 ? (totalProductRevenue / totalRevenue) * 100 : 0;
-        const totalApptCount = userAppts.length;
-        const rebooked = userAppts.filter((a: any) => a.rebooked_at_checkout).length;
+        const completedAppts = userAppts.filter((a: any) => a.status !== 'no_show');
+        const totalApptCount = completedAppts.length;
+        const rebooked = completedAppts.filter((a: any) => a.rebooked_at_checkout).length;
         const rebookingPct = totalApptCount > 0 ? (rebooked / totalApptCount) * 100 : 0;
         const avgTicket = totalApptCount > 0
-          ? userAppts.reduce((s: number, a: any) => s + (Number(a.total_price) || 0), 0) / totalApptCount
+          ? completedAppts.reduce((s: number, a: any) => s + (Number(a.total_price) || 0), 0) / totalApptCount
           : 0;
+        // New clients count (normalized to monthly)
+        const newClients = completedAppts.filter((a: any) => a.is_new_client === true).length;
+        const newClientsMonthly = evalDays > 0 ? (newClients / evalDays) * 30 : 0;
+        // Retention rate placeholder — use rebooking as proxy for now
+        const retentionRate = rebookingPct;
 
-        return { monthlyRevenue, retailPct, rebookingPct, avgTicket };
+        return { monthlyRevenue, retailPct, rebookingPct, avgTicket, newClientsMonthly, retentionRate };
       };
+
+      // Compute no-show rate (informational, uses full window)
+      const allUserAppts = allApptData.filter(a => a.staff_user_id === profile.user_id);
+      const noShowCount = allUserAppts.filter((a: any) => a.status === 'no_show').length;
+      const noShowRate = allUserAppts.length > 0 ? (noShowCount / allUserAppts.length) * 100 : null;
 
       // Evaluate retention failures
       let retentionFailures: RetentionFailure[] = [];
@@ -197,32 +210,29 @@ export function useTeamLevelProgress() {
         if (retCriteria.avg_ticket_enabled && retMetrics.avgTicket < retCriteria.avg_ticket_minimum) {
           retentionFailures.push({ key: 'avg_ticket', label: 'Average Ticket', current: Math.round(retMetrics.avgTicket), minimum: retCriteria.avg_ticket_minimum, unit: '$' });
         }
+        if (retCriteria.retention_rate_enabled && retMetrics.retentionRate < Number(retCriteria.retention_rate_minimum)) {
+          retentionFailures.push({ key: 'retention_rate', label: 'Client Retention', current: Math.round(retMetrics.retentionRate * 10) / 10, minimum: Number(retCriteria.retention_rate_minimum), unit: '%' });
+        }
+        if (retCriteria.new_clients_enabled && retMetrics.newClientsMonthly < Number(retCriteria.new_clients_minimum)) {
+          retentionFailures.push({ key: 'new_clients', label: 'New Clients', current: Math.round(retMetrics.newClientsMonthly * 10) / 10, minimum: Number(retCriteria.new_clients_minimum), unit: '/mo' });
+        }
       }
 
       if (isTopLevel) {
-        // Top level can still be at risk if retention criteria fail
         const retStatus = retentionFailures.length > 0
           ? (retCriteria?.action_type === 'demotion_eligible' ? 'below_standard' : 'at_risk')
           : 'at_top_level';
         return {
-          userId: profile.user_id,
-          fullName: profile.full_name || 'Unknown',
-          photoUrl: profile.photo_url,
-          hireDate: profile.hire_date,
-          currentLevel,
-          currentLevelIndex: idx,
-          nextLevel: null,
-          criteria: null,
-          criteriaProgress: [],
-          compositeScore: 100,
-          isFullyQualified: false,
-          requiresApproval: false,
-          evaluationWindowDays: 0,
+          userId: profile.user_id, fullName: profile.full_name || 'Unknown',
+          photoUrl: profile.photo_url, hireDate: profile.hire_date,
+          currentLevel, currentLevelIndex: idx, nextLevel: null,
+          criteria: null, criteriaProgress: [], compositeScore: 100,
+          isFullyQualified: false, requiresApproval: false, evaluationWindowDays: 0,
           status: retStatus as GraduationStatus,
-          retentionCriteria: retCriteria,
-          retentionFailures,
+          retentionCriteria: retCriteria, retentionFailures,
           retentionActionType: retCriteria?.action_type || null,
           retentionGracePeriodDays: retCriteria?.grace_period_days || 0,
+          noShowRate,
         };
       }
 
@@ -231,24 +241,16 @@ export function useTeamLevelProgress() {
           ? (retCriteria?.action_type === 'demotion_eligible' ? 'below_standard' : 'at_risk')
           : 'no_criteria';
         return {
-          userId: profile.user_id,
-          fullName: profile.full_name || 'Unknown',
-          photoUrl: profile.photo_url,
-          hireDate: profile.hire_date,
-          currentLevel,
-          currentLevelIndex: idx,
-          nextLevel,
-          criteria: null,
-          criteriaProgress: [],
-          compositeScore: 0,
-          isFullyQualified: false,
-          requiresApproval: false,
-          evaluationWindowDays: 0,
+          userId: profile.user_id, fullName: profile.full_name || 'Unknown',
+          photoUrl: profile.photo_url, hireDate: profile.hire_date,
+          currentLevel, currentLevelIndex: idx, nextLevel,
+          criteria: null, criteriaProgress: [], compositeScore: 0,
+          isFullyQualified: false, requiresApproval: false, evaluationWindowDays: 0,
           status: retStatus as GraduationStatus,
-          retentionCriteria: retCriteria,
-          retentionFailures,
+          retentionCriteria: retCriteria, retentionFailures,
           retentionActionType: retCriteria?.action_type || null,
           retentionGracePeriodDays: retCriteria?.grace_period_days || 0,
+          noShowRate,
         };
       }
 
@@ -302,6 +304,26 @@ export function useTeamLevelProgress() {
           gap: Math.max(0, target - promoMetrics.avgTicket),
         });
       }
+      if (criteria.retention_rate_enabled) {
+        const target = Number(criteria.retention_rate_threshold);
+        progress.push({
+          key: 'retention_rate', label: 'Client Retention', enabled: true,
+          current: Math.round(promoMetrics.retentionRate * 10) / 10, target,
+          percent: target > 0 ? Math.min(100, (promoMetrics.retentionRate / target) * 100) : 0,
+          weight: criteria.retention_rate_weight, unit: '%',
+          gap: Math.max(0, target - promoMetrics.retentionRate),
+        });
+      }
+      if (criteria.new_clients_enabled) {
+        const target = Number(criteria.new_clients_threshold);
+        progress.push({
+          key: 'new_clients', label: 'New Clients', enabled: true,
+          current: Math.round(promoMetrics.newClientsMonthly * 10) / 10, target,
+          percent: target > 0 ? Math.min(100, (promoMetrics.newClientsMonthly / target) * 100) : 0,
+          weight: criteria.new_clients_weight, unit: '/mo',
+          gap: Math.max(0, target - promoMetrics.newClientsMonthly),
+        });
+      }
       if (criteria.tenure_enabled) {
         const target = criteria.tenure_days;
         progress.push({
@@ -323,7 +345,6 @@ export function useTeamLevelProgress() {
 
       const score = Math.min(100, Math.round(compositeScore));
 
-      // Determine status: retention failures take priority if present
       let status: GraduationStatus = 'in_progress';
       if (retentionFailures.length > 0) {
         status = retCriteria?.action_type === 'demotion_eligible' ? 'below_standard' : 'at_risk';
@@ -334,24 +355,16 @@ export function useTeamLevelProgress() {
       }
 
       return {
-        userId: profile.user_id,
-        fullName: profile.full_name || 'Unknown',
-        photoUrl: profile.photo_url,
-        hireDate: profile.hire_date,
-        currentLevel,
-        currentLevelIndex: idx,
-        nextLevel,
-        criteria,
-        criteriaProgress: progress,
-        compositeScore: score,
-        isFullyQualified,
-        requiresApproval: criteria.requires_manual_approval,
-        evaluationWindowDays: evalDays,
+        userId: profile.user_id, fullName: profile.full_name || 'Unknown',
+        photoUrl: profile.photo_url, hireDate: profile.hire_date,
+        currentLevel, currentLevelIndex: idx, nextLevel, criteria,
+        criteriaProgress: progress, compositeScore: score, isFullyQualified,
+        requiresApproval: criteria.requires_manual_approval, evaluationWindowDays: evalDays,
         status,
-        retentionCriteria: retCriteria,
-        retentionFailures,
+        retentionCriteria: retCriteria, retentionFailures,
         retentionActionType: retCriteria?.action_type || null,
         retentionGracePeriodDays: retCriteria?.grace_period_days || 0,
+        noShowRate,
       };
     }).sort((a, b) => {
       const statusOrder: Record<GraduationStatus, number> = {

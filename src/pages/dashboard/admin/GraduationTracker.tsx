@@ -406,6 +406,14 @@ function StylistProgressRow({ member, totalLevels, promotions, allLevels }: { me
               ))}
             </div>
           )}
+          {/* Informational context badges */}
+          {member.noShowRate !== null && member.noShowRate > 0 && (
+            <div className="flex items-center gap-2 mt-1.5">
+              <span className="text-[10px] text-muted-foreground bg-muted/50 px-1.5 py-0.5 rounded">
+                {Math.round(member.noShowRate)}% no-show
+              </span>
+            </div>
+          )}
         </div>
 
         <div className="flex items-center gap-2">
