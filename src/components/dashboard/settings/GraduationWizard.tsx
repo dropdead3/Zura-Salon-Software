@@ -305,13 +305,13 @@ export function GraduationWizard({ open, onOpenChange, levelId, levelLabel, leve
     }
   }, [existingRetention, open, loadingRetention]);
 
-  // Reset step/tab on open
+  // Reset step/tab on open — default to retention for Level 1 (no promotion applicable)
   useEffect(() => {
     if (open) {
       setStep(0);
-      setActiveTab('promotion');
+      setActiveTab(levelIndex === 0 ? 'retention' : 'promotion');
     }
-  }, [open]);
+  }, [open, levelIndex]);
 
   const enabledCriteria = CRITERIA.filter(c => form[c.enabledKey] as boolean);
   const enabledCount = enabledCriteria.length + (form.tenure_enabled ? 1 : 0);
@@ -472,7 +472,7 @@ export function GraduationWizard({ open, onOpenChange, levelId, levelLabel, leve
           {/* Mode tabs */}
           <Tabs value={activeTab} onValueChange={(v) => { setActiveTab(v as any); setStep(0); }} className="mt-4">
             <TabsList className="w-full">
-              <TabsTrigger value="promotion" className="flex-1 text-xs gap-1.5">
+              <TabsTrigger value="promotion" className="flex-1 text-xs gap-1.5" disabled={levelIndex === 0}>
                 <Sparkles className="w-3.5 h-3.5" />
                 Required to Graduate
               </TabsTrigger>
