@@ -254,6 +254,7 @@ export function StylistScorecard({ userId, locationId }: StylistScorecardProps) 
               {peerAverages && (
                 <span className="text-[10px] text-muted-foreground">
                   vs {peerAverages.peerCount} peer{peerAverages.peerCount !== 1 ? 's' : ''}
+                  {locationId ? ' at this location' : ' org-wide'}
                 </span>
               )}
             </div>
