@@ -6,6 +6,8 @@ import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useEmployeePayrollSettings } from './useEmployeePayrollSettings';
 import { usePaySchedule, getCurrentPayPeriod } from './usePaySchedule';
 import { useResolveCommission } from './useResolveCommission';
+import { useLevelPromotionCriteria } from './useLevelPromotionCriteria';
+import { useStylistLevels } from './useStylistLevels';
 import { format, differenceInDays, subDays } from 'date-fns';
 
 export interface EmployeeProjection {
