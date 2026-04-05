@@ -24,6 +24,7 @@ export default function PlatformLanding() {
         path="/"
       />
       <HeroSection />
+      <StruggleInput />
       <StatBar />
       <ChaosToClarity />
       <SectionDivider />
