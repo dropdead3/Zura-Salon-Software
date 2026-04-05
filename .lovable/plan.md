@@ -1,128 +1,102 @@
 
 
-# Expanded Color & Gradient System for Zura Marketing
+# Sequential Marketing Front-End Improvements — Full Plan
 
-## The Problem
-Right now, the entire marketing site uses one color story: `violet-400/500/600` + `purple-400/500/600`. Every eyebrow, icon tint, gradient, CTA, text accent, and ambient glow is the same violet. It works but feels flat — there's no color hierarchy or variety across sections.
-
-## The Palette (from your reference)
-Mapped to Tailwind + custom values:
-
-```text
-Night Indigo    #1B003F  → deepest backgrounds, hero ambient glow
-Twilight Purple #4B0082  → gradient midpoints, banner fills
-Midnight Blue   #191970  → secondary gradients, card accents
-Lavender Haze   #E6E6FA  → light text accents, ghost button borders
-Dusky Blue      #6495ED  → secondary accent color, stat highlights
-```
-
-These supplement (not replace) the existing violet-400→purple-600 range.
-
-## What Changes
-
-### 1. New CSS custom properties (`index.css`)
-Add the palette as CSS variables under `.marketing-surface` so they're scoped to marketing pages only:
-```css
-.marketing-surface {
-  --mkt-indigo: 271 100% 12%;
-  --mkt-twilight: 275 100% 25%;
-  --mkt-midnight: 240 59% 26%;
-  --mkt-lavender: 240 100% 94%;
-  --mkt-dusky: 219 79% 66%;
-}
-```
-
-### 2. Gradient Variants — Buttons & CTAs
-
-**Primary CTA** (stays violet→purple — proven, energetic):
-No change. `from-violet-600 to-purple-600` remains the primary action gradient.
-
-**Secondary gradient option** — new indigo→dusky blue for variety:
-`bg-gradient-to-r from-[hsl(var(--mkt-twilight))] to-[hsl(var(--mkt-dusky))]`
-Use on: SolutionPageTemplate bottom CTA (to differentiate from homepage), PersonaExplorer CTA if re-added.
-
-**Ghost CTA variant** — lavender-tinted border:
-`border-[hsl(var(--mkt-lavender)/0.2)] text-[hsl(var(--mkt-lavender)/0.8)] hover:bg-[hsl(var(--mkt-lavender)/0.06)]`
-Use on: secondary CTAs like "Explore the Platform", "See all solutions" links upgraded to ghost buttons.
-
-### 3. Text Emphasis & Headlines
-
-**Gradient text — expanded options:**
-- **Violet→Purple** (current): Hero headline accent — keep as-is
-- **Indigo→Dusky Blue** (new): `from-[#4B0082] to-[#6495ED]` for section headlines like BuiltByOperators or OutcomeMetrics — creates visual variation without clashing
-- **Lavender highlight**: `text-[hsl(var(--mkt-lavender))]` as a softer white alternative for emphasized body text or pull quotes
-
-### 4. Eyebrow Labels — Color Rotation
-
-Currently every eyebrow is `text-violet-400`. Introduce rotation by section purpose:
-- **Product/Platform sections** → `text-violet-400` (keep)
-- **Results/Metrics sections** → `text-[hsl(var(--mkt-dusky))]` (dusky blue)
-- **Credibility/Story sections** → `text-[hsl(var(--mkt-lavender)/0.6)]` (lavender muted)
-
-This creates subtle section identity without being heavy-handed.
-
-### 5. Icon Tint Variation
-
-Currently all icon containers are `bg-violet-500/10` with `text-violet-400`. Add a second tier:
-- **Primary icons** (keep): `bg-violet-500/10 text-violet-400`
-- **Secondary icons** (new): `bg-[hsl(var(--mkt-dusky)/0.1)] text-[hsl(var(--mkt-dusky))]` — for ProblemStatement pain points and BuiltByOperators markers, differentiating "problem" from "solution" sections
-
-### 6. Ambient Glows — Depth via Color
-
-**MarketingLayout background orbs:**
-- Top-right orb: keep `bg-violet-500/10`
-- Bottom-left orb: change from `bg-purple-600/10` to `bg-[hsl(var(--mkt-midnight)/0.15)]` — creates a cooler, deeper anchor that contrasts the warm violet
-
-**HeroSection ambient glow:**
-- Shift from pure violet to a blend: `bg-gradient-to-b from-violet-500/20 via-[hsl(var(--mkt-twilight)/0.1)] to-transparent` — adds depth
-
-### 7. Section Dividers & Borders
-
-**BuiltByOperators gradient separator:**
-Currently `via-violet-500/20`. Change to `via-[hsl(var(--mkt-dusky)/0.2)]` — the blue tone creates a visual "chapter break"
-
-**OutcomeMetrics backdrop gradient:**
-Currently `via-violet-500/[0.03]`. Change to `via-[hsl(var(--mkt-midnight)/0.06)]` — subtle midnight blue wash distinguishes it from FinalCTA's violet wash
-
-### 8. Card Hover States — Color-Coded
-
-**SolutionShowcase cards:**
-Currently `hover:border-violet-500/20`. Add a subtle gradient glow on hover:
-`hover:border-[hsl(var(--mkt-dusky)/0.25)] hover:shadow-[0_0_20px_hsl(var(--mkt-twilight)/0.05)]`
-
-### 9. StatBar — Dusky Blue Accent
-
-The stat numbers are currently plain white. The counter values could use `text-[hsl(var(--mkt-lavender))]` for a warmer white that ties to the palette, while keeping the labels in `text-slate-500`.
+Five items, executed in order. Each builds on the last.
 
 ---
 
-## Files Modified
+## 1. Wire Up the Demo Request Form
 
-| File | Changes |
-|------|---------|
-| `index.css` | Add `.marketing-surface` CSS custom properties for the 5 new palette colors |
-| `MarketingLayout.tsx` | Update bottom-left background orb to midnight blue tint |
-| `HeroSection.tsx` | Deepen ambient glow with twilight purple blend |
-| `StatBar.tsx` | Lavender-tinted stat values |
-| `ProblemStatement.tsx` | Dusky blue icon tint for pain point icons |
-| `SolutionShowcase.tsx` | Dusky blue eyebrow, enhanced card hover glow |
-| `BuiltByOperators.tsx` | Dusky blue separator + lavender eyebrow, secondary icon tint |
-| `OutcomeMetrics.tsx` | Midnight blue backdrop wash, dusky blue eyebrow |
-| `FinalCTA.tsx` | Keep violet gradient CTA (no change needed — it's the anchor) |
-| `SolutionPageTemplate.tsx` | Indigo→dusky blue gradient on bottom CTA for variety, lavender ghost secondary elements |
-| `MarketingNav.tsx` | No change — nav CTA stays violet gradient for brand consistency |
-| `PersonaExplorer.tsx` | Dusky blue accent on active persona indicator |
+**Problem:** `ProductDemo.tsx` sets `setSubmitted(true)` on submit but never saves anything. The primary conversion endpoint is a dead end.
 
-**12 files modified. 0 new files. 0 deleted.**
+**Solution:**
+- Import `captureWebsiteLead` from `@/lib/leadCapture.ts` into `ProductDemo.tsx`
+- Map form fields: `name`, `email`, `locations` → `message` (or `preferred_location`), `challenge` → `preferred_service`
+- Add loading state, error handling, and toast feedback
+- Add basic validation (name required, email format check) before submission
+- The `salon_inquiries` table already has the right columns and RLS allows anonymous inserts via `website_form` source
 
-## Design Rationale
+**Files:** `src/pages/ProductDemo.tsx` (modify)
 
-The palette creates three tonal zones:
-```text
-WARM (action)     violet-400 → purple-600    CTAs, hero accent, primary icons
-COOL (depth)      midnight → dusky blue      section variety, secondary icons, dividers
-NEUTRAL (breath)  lavender → slate           text emphasis, ghost elements, stat highlights
-```
+---
 
-This gives the site color *rhythm* — warm sections feel active, cool sections feel grounding, and the alternation keeps the eye engaged without any single color becoming monotonous.
+## 2. Add SEO Meta Tags Across All Marketing Pages
+
+**Problem:** `PlatformLanding.tsx`, `Product.tsx`, `Ecosystem.tsx`, all 7 solution pages, and `ProductDemo.tsx` have zero meta tags. The `Pricing.tsx` page uses `Helmet` directly but without OG/Twitter cards. The `SEO` component exists but is only used on the tenant-side About page.
+
+**Solution:**
+- Create a lightweight `MarketingSEO` component (since the existing `SEO` component pulls from `useBusinessSettings` which is tenant-scoped and inappropriate for platform marketing)
+- It accepts `title`, `description`, `image?`, `path?` and renders `<Helmet>` with `<title>`, meta description, OG tags (og:title, og:description, og:image, og:url, og:type), and Twitter cards
+- Add `<MarketingSEO>` to every marketing page:
+  - `PlatformLanding.tsx` — "Salon Intelligence Platform — Run your salon with clarity"
+  - `Product.tsx` — "How It Works"
+  - `Ecosystem.tsx` — "Ecosystem"
+  - `Pricing.tsx` — replace raw `<Helmet>` with `<MarketingSEO>`
+  - `ProductDemo.tsx` — "Request a Demo"
+  - All 7 solution pages via `SolutionPageTemplate.tsx` (add `seoTitle?` and `seoDescription?` props)
+
+**Files:** New `src/components/marketing/MarketingSEO.tsx`, modify 4 page files + `SolutionPageTemplate.tsx` + 7 solution pages (props only)
+
+---
+
+## 3. Rebuild About Page with MarketingLayout
+
+**Problem:** The About page at `/about` uses the tenant `<Layout>` shell (dashboard header/footer, light theme) instead of the marketing `<MarketingLayout>`. It looks like a completely different site.
+
+**Solution:**
+- Replace `<Layout>` with `<MarketingLayout>` in `About.tsx`
+- Remove `<SEO>` (tenant) and add `<MarketingSEO>`
+- Rebuild the 5 sub-components (`AboutHero`, `ValuesSection`, `StatsSection`, `StorySection`, `JoinTeamSection`) to use the marketing color system:
+  - Dark backgrounds (`slate-950`), white/slate text
+  - `font-display` for headlines, `font-sans` for body
+  - Violet/dusky blue/lavender accent palette from `--mkt-*` variables
+  - `rounded-xl` cards, marketing spacing (`py-20 lg:py-28`)
+  - Remove `FounderWelcome` (tenant-specific component, not relevant to platform marketing)
+- `AboutHero`: Replace typewriter effect with a clean static headline + description (matches the confident, minimal marketing tone)
+
+**Files:** Modify `src/pages/About.tsx`, modify all 5 files in `src/components/about/`
+
+---
+
+## 4. Add Logo/Integration Partners Bar
+
+**Problem:** `LogoBar.tsx` exists but uses placeholder text ("Salon A", "Salon B"). It's not rendered on the landing page. There's no social proof strip.
+
+**Solution:**
+- Redesign `LogoBar.tsx` as an integration partners bar rather than client logos (more credible when you don't have named clients yet)
+- Show recognizable tool names that Zura replaces/integrates with: "Google Calendar", "Square", "Stripe", "QuickBooks", "Mailchimp", "Instagram"
+- Use a subtle infinite horizontal scroll animation for dynamism
+- Render the `<LogoBar />` in `PlatformLanding.tsx` between `<StatBar />` and `<ProblemStatement />`
+- Style: `font-display text-xs tracking-[0.15em] text-slate-500` for names, faint border pills, auto-scroll on mobile
+
+**Files:** Modify `src/components/marketing/LogoBar.tsx`, modify `src/pages/PlatformLanding.tsx`
+
+---
+
+## 5. Elevate the Pricing Page
+
+**Problem:** The pricing page works but lacks interactive polish — no monthly/annual toggle, no feature comparison, and the FAQ section is adequate but plain.
+
+**Solution:**
+- Add a monthly/annual billing toggle with animated savings badge ("Save 20%")
+- Add annual pricing: Solo $79/mo, Multi-Location $160/location/mo (billed annually)
+- Add a feature comparison table below the cards: rows for key features, columns for tiers, check/dash markers
+- Style the comparison table with the marketing design system (slate borders, `font-sans` body, `font-display` tier headers)
+- Tier cards: standardize to `rounded-xl`, add `<MarketingSEO>`
+- FAQ: already good — minor cleanup only (ensure accordion uses marketing tokens)
+
+**Files:** Modify `src/pages/Pricing.tsx`
+
+---
+
+## Execution Order
+
+1. Demo form wiring (quick, high-impact)
+2. SEO component + all page tags (foundational)
+3. About page rebuild (visual consistency)
+4. Logo bar integration (social proof)
+5. Pricing elevation (conversion polish)
+
+**Total: ~4 new files, ~18 files modified, 0 deleted.**
 
