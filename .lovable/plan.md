@@ -1,46 +1,75 @@
 
 
-# 1-Click "Set All" with KPI Rationale
+# Levels Quick-Start Wizard
 
-## What Changes
+## Overview
 
-### 1. Persistent "Zura Recommended" Button
-Currently the defaults banner only appears when the form is empty and no saved criteria exist. Replace this with a persistent button in the wizard header area (both Promotion and Retention tabs) that works as a 1-click reset to recommended values at any time — not just on first use.
+A dismissable setup wizard that appears when a salon has **zero levels configured**. It asks three simple questions, then generates all levels with names, commission rates, and (optionally) Zura Recommended KPI criteria in one click.
 
-- Button label: "Zura Recommended" with Sparkles icon
-- Available in both Promotion and Retention tabs
-- Works even when criteria are already configured (acts as reset-to-defaults)
-- Confirmation if overwriting existing values: brief inline "This will replace your current settings" note
+## User Flow
 
-### 2. KPI Rationale Panel
-Add an expandable "Why these KPIs?" section below the defaults button (or as a collapsible at the top of Step 0). Content is static copy — no database needed.
+```text
+┌──────────────────────────────────────────────┐
+│  🪄  Quick Setup                    [Dismiss] │
+│                                               │
+│  Step 1: How many levels?                     │
+│  ┌───┐ ┌───┐ ┌───┐ ┌───┐ ┌───┐              │
+│  │ 3 │ │ 4 │ │ 5 │ │ 6 │ │ 7 │  ← pill btns │
+│  └───┘ └───┘ └───┘ └───┘ └───┘   (4 default) │
+│                                               │
+│  Step 2: Commission range                     │
+│  Base (lowest level):  [30]%  ← suggestion 30 │
+│  Top (highest level):  [50]%  ← suggestion 50 │
+│  Retail (all levels):  [10]%  ← suggestion 10 │
+│                                               │
+│  ☑ Also apply Zura Recommended KPI criteria   │
+│                                               │
+│  [Generate Levels]                            │
+└──────────────────────────────────────────────┘
+```
 
-**Tracked KPIs and rationale:**
+**After clicking "Generate Levels":**
+- Creates N levels with industry-standard names (New Talent, Emerging, Stylist, Senior Stylist, Master Stylist, Director, Elite)
+- Interpolates service commission linearly from base → top
+- Sets retail commission uniformly
+- Saves levels to DB via existing `useSaveStylistLevels`
+- If KPI checkbox is checked, also saves promotion + retention criteria for each level using existing `getZuraDefaults` / `getZuraRetentionDefaults`
+- Wizard dismisses and the Levels tab shows the freshly created levels
 
-| KPI | Why It's Tracked |
-|-----|-----------------|
-| Service Revenue | The direct output measure — proves a stylist can generate enough volume at their current price point to justify higher pricing |
-| Retail Attachment % | Measures ability to prescribe home care — increases ticket value without adding chair time, and is a loyalty signal |
-| Rebooking Rate | Immediate behavioral signal — clients who rebook at checkout are committed; this is the leading indicator of retention |
-| Average Ticket | Validates pricing power — a stylist whose avg ticket is high relative to peers is already commanding premium value |
-| Client Retention Rate | The lagging truth — did clients actually come back? Rebooking intent means nothing if they cancel later |
-| New Client Count | Growth signal — proves the stylist can build (not just maintain) a book, which matters more at lower levels |
-| Schedule Utilization | Demand proof — an empty schedule at current prices means raising prices will make things worse |
-| Revenue Per Hour | Economic efficiency — the ultimate signal for whether a price increase is justified |
+**Dismissal**: An "X" button sets a local state flag. The wizard only shows when `levels.length === 0 && !dismissed`. No persistence needed — if they navigate away and come back with zero levels, it reappears (which is helpful).
 
-**Why NOT other KPIs:**
-- **Google Reviews / Social metrics** — Not trackable from POS data; would require manual entry, which degrades data integrity
-- **Education hours** — Valuable but subjective; better handled via manager discretion during manual approval
-- **Client satisfaction scores** — No reliable automated source; retention rate is the behavioral proxy
-- **Product sales volume** — Already captured by Retail Attachment %; tracking both would double-count
+## Level Name Templates
 
-### 3. File Changes
+| Count | Names |
+|-------|-------|
+| 3 | New Talent, Stylist, Senior Stylist |
+| 4 | New Talent, Emerging, Stylist, Senior Stylist |
+| 5 | New Talent, Emerging, Stylist, Senior Stylist, Master Stylist |
+| 6 | New Talent, Emerging, Stylist, Senior Stylist, Master Stylist, Director |
+| 7 | New Talent, Emerging, Stylist, Senior Stylist, Master Stylist, Director, Elite |
 
-**`GraduationWizard.tsx`** — Single file, 3 modifications:
+## Commission Interpolation
 
-1. Replace the conditional defaults banner (lines 614-632) with a persistent "Zura Recommended" button that appears regardless of current state, in both Promotion and Retention tabs
-2. Add a collapsible "Why these KPIs?" section with the rationale copy (Collapsible from Radix, already available in the project)
-3. Add a "Zura Recommended" button to the Retention tab content area (currently has no defaults shortcut)
+```text
+rate(i) = baseRate + (topRate - baseRate) * (i / (count - 1))
+// Rounded to nearest integer
+// Level 0 = baseRate, Level N-1 = topRate
+```
 
-No database changes. No new files. No hook changes.
+## Technical Details
+
+**Files changed: 1**
+
+**`StylistLevelsEditor.tsx`** — Add a `LevelsQuickSetupWizard` component rendered conditionally when `levels.length === 0 && !wizardDismissed`:
+
+1. Add state: `wizardDismissed` (boolean), `wizardLevelCount` (number, default 4), `wizardBaseRate` (string, default "30"), `wizardTopRate` (string, default "50"), `wizardRetailRate` (string, default "10"), `wizardApplyKPIs` (boolean, default true)
+2. Add `LEVEL_NAME_TEMPLATES` constant mapping count → name arrays
+3. Add `handleQuickSetup()` function that:
+   - Builds `LocalStylistLevel[]` from template names + interpolated rates
+   - Calls `handleSave` equivalent (sets levels, triggers save)
+   - If KPI checkbox is on, saves promotion + retention criteria for each level via existing hooks
+4. Render the wizard card above the levels list in the "Levels" tab content area, replacing the empty state
+5. Uses existing design tokens, pill-style number selector, Input fields for commission
+
+**No new files. No database changes. No new hooks.**
 
