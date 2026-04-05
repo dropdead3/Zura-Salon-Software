@@ -1639,6 +1639,49 @@ html {
   transform: rotateX(1deg) rotateY(0deg);
 }
 
+/* ── Dashboard Mockup Animation Keyframes ──────────────────────────────────── */
+@keyframes mktScanLine {
+  0% { transform: translateY(-100%); opacity: 0; }
+  10% { opacity: 1; }
+  90% { opacity: 1; }
+  100% { transform: translateY(100%); opacity: 0; }
+}
+
+@keyframes mktPulseAmber {
+  0%, 100% { border-color: rgba(255, 255, 255, 0.06); box-shadow: none; }
+  50% { border-color: hsl(38 92% 50%); box-shadow: 0 0 20px hsl(38 92% 50% / 0.25); }
+}
+
+@keyframes mktCursorMove {
+  0% { transform: translate(0, 0); opacity: 0; }
+  15% { opacity: 1; }
+  70% { transform: translate(var(--cursor-dx), var(--cursor-dy)); opacity: 1; }
+  80% { transform: translate(var(--cursor-dx), var(--cursor-dy)) scale(0.9); }
+  85% { transform: translate(var(--cursor-dx), var(--cursor-dy)) scale(1); }
+  100% { transform: translate(var(--cursor-dx), var(--cursor-dy)); opacity: 0; }
+}
+
+@keyframes mktConfidenceFill {
+  0% { width: 0%; }
+  100% { width: 75%; }
+}
+
+.marketing-surface .mkt-scan-line {
+  animation: mktScanLine 1.8s ease-in-out forwards;
+}
+
+.marketing-surface .mkt-pulse-amber {
+  animation: mktPulseAmber 1s ease-in-out 2;
+}
+
+.marketing-surface .mkt-cursor {
+  animation: mktCursorMove 2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.marketing-surface .mkt-confidence-fill {
+  animation: mktConfidenceFill 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
 /* ── Gradient border shimmer ───────────────────────────────────────────────── */
 @keyframes mktBorderShimmer {
   0% { background-position: 0% 50%; }
