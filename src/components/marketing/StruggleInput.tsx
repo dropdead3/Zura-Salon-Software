@@ -368,7 +368,7 @@ export function StruggleInput() {
             {/* Suggestion pills */}
             {!hasResponse && !isLoading && (
               <div className="flex flex-wrap gap-2 mt-4 pt-4 border-t border-white/[0.06]">
-                {SUGGESTIONS.map((s) => (
+                {displayPills.map((s) => (
                   <button
                     key={s}
                     onClick={() => handleSuggestionClick(s)}
