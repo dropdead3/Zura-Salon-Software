@@ -342,6 +342,9 @@ export function GraduationWizard({ open, onOpenChange, levelId, levelLabel, leve
         retention_rate_weight: existing.retention_rate_weight,
         new_clients_weight: existing.new_clients_weight,
         utilization_weight: existing.utilization_weight,
+        rev_per_hour_enabled: existing.rev_per_hour_enabled,
+        rev_per_hour_threshold: Number(existing.rev_per_hour_threshold),
+        rev_per_hour_weight: existing.rev_per_hour_weight,
         evaluation_window_days: existing.evaluation_window_days,
         requires_manual_approval: existing.requires_manual_approval,
       });
@@ -369,6 +372,8 @@ export function GraduationWizard({ open, onOpenChange, levelId, levelLabel, leve
         new_clients_minimum: Number(existingRetention.new_clients_minimum),
         utilization_enabled: existingRetention.utilization_enabled,
         utilization_minimum: Number(existingRetention.utilization_minimum),
+        rev_per_hour_enabled: existingRetention.rev_per_hour_enabled,
+        rev_per_hour_minimum: Number(existingRetention.rev_per_hour_minimum),
         evaluation_window_days: existingRetention.evaluation_window_days,
         grace_period_days: existingRetention.grace_period_days,
         action_type: existingRetention.action_type as 'coaching_flag' | 'demotion_eligible',
