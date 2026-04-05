@@ -1,81 +1,46 @@
 
 
-# Simplify Language — Replace Jargon with Salon-Owner Terms
+# Add a Dedicated /pricing Page
 
-## Diagnosis
-The page uses terms like "operator," "infrastructure," "intelligence architecture," "commission architecture," "drift detection," "lever," and "structured intelligence" throughout. A solo stylist with 3 chairs won't connect with these words. They think in terms like: "my salon," "my team," "my numbers," "what's working," "what's not." The emotional pain points are strong — but the solution descriptions still read like enterprise software copy.
+## What We're Building
+A standalone `/pricing` page that shows three clear tiers (Solo, Multi-Location, Enterprise) with plain-language benefits, pricing, and CTAs — designed for salon owners ready to buy but needing to see cost structure before committing.
 
-## Language Swap Map
+## Tier Structure (from existing billing model)
 
-| Current Term | Simpler Replacement |
-|---|---|
-| operator(s) | salon owner(s) / owner(s) |
-| infrastructure | system / tools |
-| intelligence | insights |
-| commission architecture | pay structures / commission setup |
-| drift detection | performance tracking / catching problems early |
-| capacity planning | scheduling and coverage tools |
-| delegation tools | management tools |
-| lever / primary lever | next step / what to fix first |
-| structured intelligence | clear answers |
-| service-level margin | profit by service |
-| utilization | chair time / how busy you are |
-| structured onboarding | step-by-step training |
-| ROI attribution | tracking what works |
-| operating domains | areas of your business |
-| multi-market portfolio | multiple locations |
-| operator maturity | where your business is today |
+| Tier | Who It's For | Price | Includes |
+|---|---|---|---|
+| Solo | 1 location, up to 4 team members | $99/mo | Dashboard, scheduling, team tools, smart recommendations |
+| Multi-Location | 2–15 locations | $200/location/mo | Everything in Solo + cross-location insights, benchmarking, 10 users/location |
+| Enterprise | 16+ locations | Custom | Everything + dedicated support, custom integrations |
 
-## File-by-File Changes
+## Page Design
+- Wrapped in `MarketingLayout` (dark theme, consistent with landing)
+- Header: "Simple pricing that grows with you" + subtitle
+- 3-column card grid (collapses to stacked on mobile)
+- Each card: tier name, price, "who it's for" line, feature checklist (6-8 items), CTA button
+- Multi-Location card gets a "Most Popular" badge with violet glow
+- Enterprise card gets "Contact Us" CTA instead of price
+- Below cards: FAQ accordion (4-5 common questions: trial, setup fee, what's included, cancellation)
+- Bottom: mini CTA strip linking to `/demo`
 
-### 1. `HeroSection.tsx`
-- "Start Architecting" → "Start Growing" (or "Start Leading")
-- Subline already good — no changes needed
+## Files
 
-### 2. `StatBar.tsx`
-- "Trusted by operators scaling real businesses" → "Trusted by salon owners building real businesses"
+### Create
+- `src/pages/Pricing.tsx` — full pricing page component
 
-### 3. `ProblemStatement.tsx`
-- "You just don't have the infrastructure to solve them." → "You just don't have the right tools to solve them."
-- "These aren't six separate problems. They're one missing operating system." → "These aren't six separate problems. They're one missing system."
+### Modify
+- `src/App.tsx` — add `Route path="/pricing"` importing Pricing page, keep `/demo` route as-is
+- `src/components/marketing/MarketingNav.tsx` — change Pricing link from `/demo` to `/pricing`
+- `src/components/marketing/MarketingFooter.tsx` — add "Pricing" link to Product column
 
-### 4. `SolutionShowcase.tsx`
-- "Actionable Intelligence" → "Smart Recommendations"
-- "structured infrastructure across six core operating domains" → "one system that covers every part of running your salon"
-- "Weekly briefs that rank your problems by impact and tell you exactly which lever to pull" → "Weekly reports that rank your biggest issues and tell you exactly what to fix first"
-- "commission architecture" → "commission setup"
-- "Drift detection, capacity planning, and delegation tools" → "Performance tracking, scheduling tools, and management systems"
-- "ROI attribution" → "tracking what actually works"
-
-### 5. `PersonaTargeting.tsx`
-- "The Overwhelmed Operator" → "The Overwhelmed Owner"
-- "The Scaling Operator" → "The Growing Owner"
-- "intelligence infrastructure" → "smart tools and clear data"
-- "scales with operator maturity" → "grows with you"
-
-### 6. `BuiltByOperators.tsx`
-- Component name stays (internal), but copy:
-  - Section already reads well — minimal changes
-  - "operators stop waiting for software companies" → "salon owners stop waiting for software companies"
-
-### 7. `OutcomeMetrics.tsx`
-- "Average across multi-location operators" → "Average across multi-location owners"
-- "Saved per operator per week" → "Saved per owner per week"
-- "Results operators are seeing" → "Results salon owners are seeing"
-- "Structured intelligence replaces manual review" → "Clear insights replace hours of manual review"
-
-### 8. `FinalCTA.tsx`
-- Already clean — no jargon to fix
-
-### 9. `TestimonialSection.tsx`
-- Already uses plain language — no changes needed
-
-### 10. `LogoBar.tsx`
-- "Trusted by operators managing millions" → "Trusted by salon owners managing millions"
+## Copy Guidelines
+- Zero jargon: "salon owner" not "operator," "system" not "infrastructure"
+- Feature items written as benefits: "See profit by service" not "Service-level margin dashboards"
+- FAQ answers are conversational and direct
 
 ## Technical Notes
-- Copy-only changes — no structural, layout, or CSS modifications
-- 8 files modified, zero new files
-- All brand tokens (`PLATFORM_NAME`) remain unchanged
-- Internal code (component names, file names, variable names) stays as-is — only user-facing strings change
+- Uses existing `MarketingLayout`, `mkt-glass`, `mkt-reveal`, `useScrollReveal` patterns
+- Brand tokens for platform name
+- No new dependencies
+- Pricing values are hardcoded display-only (not fetched from `subscription_plans` table — this is a marketing page)
 
