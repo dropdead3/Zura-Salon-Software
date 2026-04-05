@@ -23,6 +23,9 @@ import {
   ExternalLink,
   Trophy,
   Sparkles,
+  ArrowRight,
+  AlertTriangle,
+  History,
 } from 'lucide-react';
 import {
   useGraduationRequirements,
@@ -35,6 +38,8 @@ import {
 } from '@/hooks/useGraduationTracker';
 import { useEffectiveUserId } from '@/hooks/useEffectiveUser';
 import { useFormatDate } from '@/hooks/useFormatDate';
+import { usePromotionHistory } from '@/hooks/usePromotionHistory';
+import { useLevelProgress } from '@/hooks/useLevelProgress';
 import { PageExplainer } from '@/components/ui/PageExplainer';
 import { LevelProgressCard } from '@/components/coaching/LevelProgressCard';
 
