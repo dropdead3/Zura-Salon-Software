@@ -266,7 +266,7 @@ export function StruggleInput() {
   const hasResponse = response.length > 0 || features.length > 0;
 
   return (
-    <section className="relative px-6 sm:px-8 py-16 sm:py-24 max-w-3xl mx-auto">
+    <section className="relative px-6 sm:px-8 py-16 sm:py-24 max-w-4xl mx-auto">
       {/* Section header */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
