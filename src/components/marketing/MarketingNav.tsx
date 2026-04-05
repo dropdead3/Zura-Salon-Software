@@ -4,6 +4,7 @@ import { ArrowRight, Menu, X } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { PlatformLogo } from '@/components/brand/PlatformLogo';
 import { cn } from '@/lib/utils';
+import { SolutionsDesktopTrigger, SolutionsMobileAccordion } from './SolutionsMegaMenu';
 
 export function MarketingNav() {
   const { user } = useAuth();
@@ -17,7 +18,6 @@ export function MarketingNav() {
   }, []);
 
   const navLinks = [
-    { label: 'Solutions', href: '/product' },
     { label: 'Ecosystem', href: '/ecosystem' },
     { label: 'Pricing', href: '/pricing' },
   ];
@@ -37,6 +37,7 @@ export function MarketingNav() {
         </Link>
 
         <div className="hidden md:flex items-center gap-8">
+          <SolutionsDesktopTrigger />
           {navLinks.map((link) => (
             <Link
               key={link.href}
@@ -87,6 +88,7 @@ export function MarketingNav() {
       {mobileOpen && (
         <div className="md:hidden bg-slate-950/95 backdrop-blur-xl border-t border-white/[0.06] px-6 pb-6 pt-4">
           <div className="flex flex-col gap-4">
+            <SolutionsMobileAccordion onNavigate={() => setMobileOpen(false)} />
             {navLinks.map((link) => (
               <Link
                 key={link.href}
