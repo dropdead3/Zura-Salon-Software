@@ -38,6 +38,7 @@ import {
   Shield,
 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
@@ -348,9 +349,11 @@ export function StylistLevelsEditor({ embedded = false }: StylistLevelsEditorPro
     </div>
   );
 
+  const totalAssigned = Object.values(stylistsByLevel || {}).reduce((a, b) => a + b, 0);
+
   return (
     <>
-      <div className={cn("space-y-8", !embedded && "p-6 max-w-4xl mx-auto")}>
+      <div className={cn("space-y-6", !embedded && "p-6 max-w-5xl mx-auto")}>
         {/* Header */}
         {!embedded ? (
           <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm -mx-6 px-6 py-4 -mt-6 mb-2 border-b border-transparent transition-all duration-200">
@@ -362,7 +365,6 @@ export function StylistLevelsEditor({ embedded = false }: StylistLevelsEditorPro
             <PageExplainer pageId="stylist-levels" />
           </div>
         ) : (
-          /* In embedded mode, just show save/export actions inline */
           <div className="flex justify-end">{actionButtons}</div>
         )}
 
@@ -384,60 +386,69 @@ export function StylistLevelsEditor({ embedded = false }: StylistLevelsEditorPro
           </div>
         )}
 
-        <div className="grid lg:grid-cols-5 gap-8">
-          {/* Levels List */}
-          <div className="lg:col-span-3 space-y-0">
-            {levels.map((level, index) => {
-              const stylistCount = getStylistCount(level.id);
-              const hasStylists = stylistCount > 0;
-              const isLast = index === levels.length - 1;
-              
-              return (
-                <div key={level.id} className="relative">
-                  {/* Connector line between cards */}
-                  {!isLast && (
-                    <div className="absolute left-[2.35rem] top-full w-px h-2 bg-border z-10" />
-                  )}
+        {/* Tabbed Layout */}
+        <Tabs defaultValue="levels" className="w-full">
+          <TabsList>
+            <TabsTrigger value="levels">Levels</TabsTrigger>
+            <TabsTrigger value="team">Team Roster</TabsTrigger>
+            <TabsTrigger value="previews">Previews</TabsTrigger>
+          </TabsList>
+
+          {/* === TAB 1: Levels === */}
+          <TabsContent value="levels">
+            <div className="space-y-3">
+              {/* Quick stats row */}
+              <div className="flex items-center gap-4 text-sm text-muted-foreground pb-2">
+                <span>{levels.length} level{levels.length !== 1 ? 's' : ''}</span>
+                <span className="text-border">·</span>
+                <span>{totalAssigned} stylist{totalAssigned !== 1 ? 's' : ''} assigned</span>
+              </div>
+
+              {levels.map((level, index) => {
+                const stylistCount = getStylistCount(level.id);
+                const hasStylists = stylistCount > 0;
+                const promo = promotionCriteria?.find(cr => cr.stylist_level_id === level.dbId && cr.is_active);
+                const retention = retentionCriteria?.find(rc => rc.stylist_level_id === level.dbId && rc.is_active);
+                const hasAnyCriteria = !!promo || !!retention;
+                const promoSummary = promo ? formatCriteriaSummary(promo) : '';
+                const retSummary = retention ? formatRetentionSummary(retention) : '';
+
+                return (
                   <div
+                    key={level.id}
                     className={cn(
-                      "group rounded-xl bg-muted/50 border transition-all duration-200 hover:shadow-sm mb-2",
+                      "group rounded-xl bg-card border transition-all duration-200 hover:shadow-sm",
                       editingIndex === index && "ring-2 ring-primary/50 shadow-sm"
                     )}
                   >
-                    <div className="flex items-center gap-4 px-4 py-3">
-                      {/* Reorder buttons */}
-                      <div className="flex flex-col opacity-40 group-hover:opacity-100 transition-opacity">
+                    {/* Header row */}
+                    <div className="flex items-center gap-3 px-4 py-3">
+                      {/* Reorder */}
+                      <div className="flex flex-col shrink-0">
                         <button
-                          className="p-0.5 hover:text-foreground disabled:opacity-30 disabled:cursor-not-allowed"
+                          className="p-0.5 text-muted-foreground hover:text-foreground disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                           disabled={index === 0}
                           onClick={() => handleMoveUp(index)}
                         >
-                          <ChevronUp className="w-4 h-4" />
+                          <ChevronUp className="w-3.5 h-3.5" />
                         </button>
                         <button
-                          className="p-0.5 hover:text-foreground disabled:opacity-30 disabled:cursor-not-allowed"
+                          className="p-0.5 text-muted-foreground hover:text-foreground disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                           disabled={index === levels.length - 1}
                           onClick={() => handleMoveDown(index)}
                         >
-                          <ChevronDown className="w-4 h-4" />
+                          <ChevronDown className="w-3.5 h-3.5" />
                         </button>
                       </div>
 
-                      {/* Level number — neutral badge */}
-                      <span className="px-2 py-1 rounded-full text-xs font-medium bg-muted text-muted-foreground">
-                        Level {index + 1}
+                      {/* Level badge */}
+                      <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-muted text-muted-foreground shrink-0">
+                        {index + 1}
                       </span>
 
-                      {/* Entry Level badge */}
-                      {index === 0 && (
-                        <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-primary/10 text-primary">
-                          Entry Level
-                        </span>
-                      )}
-
-                      {/* Level name */}
+                      {/* Name & info */}
                       {editingIndex === index ? (
-                        <div className="flex-1 flex items-center gap-2">
+                        <div className="flex-1 flex items-center gap-2 min-w-0">
                           <Input
                             value={level.label}
                             onChange={(e) => handleRename(index, e.target.value)}
@@ -451,119 +462,122 @@ export function StylistLevelsEditor({ embedded = false }: StylistLevelsEditorPro
                           <Button
                             variant="ghost"
                             size={tokens.button.inline}
-                            className="h-8 px-2"
+                            className="h-8 px-2 shrink-0"
                             onClick={() => setEditingIndex(null)}
                           >
                             Done
                           </Button>
                         </div>
                       ) : (
-                        <div className="flex-1 flex items-center justify-between gap-2 min-w-0">
-                          <div className="flex items-center gap-3 min-w-0">
-                            <span className="font-medium truncate">{level.label}</span>
-                            {hasStylists && (
-                              <span className="text-xs text-muted-foreground shrink-0">
-                                {stylistCount} stylist{stylistCount !== 1 ? 's' : ''}
-                              </span>
-                            )}
-                            {/* Commission rate pills */}
-                            {(level.serviceCommissionRate || level.retailCommissionRate) && (
-                              <div className="flex items-center gap-1.5 shrink-0">
-                                {level.serviceCommissionRate && (
-                                  <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-muted text-muted-foreground">
-                                    Svc {level.serviceCommissionRate}%
-                                  </span>
-                                )}
-                                {level.retailCommissionRate && (
-                                  <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-muted text-muted-foreground">
-                                    Retail {level.retailCommissionRate}%
-                                  </span>
-                                )}
-                              </div>
-                            )}
-                          </div>
-                          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <button
-                              className="p-2 rounded-md hover:bg-muted transition-colors"
-                              onClick={() => setEditingIndex(index)}
-                            >
-                              <Pencil className="w-4 h-4 text-muted-foreground" />
-                            </button>
-                            <AlertDialog onOpenChange={(open) => { if (!open) { setDeleteTargetIndex(null); setReassignToSlug(''); } }}>
-                              <AlertDialogTrigger asChild>
-                                <button
-                                  className="p-2 rounded-md hover:bg-destructive/10 transition-colors disabled:opacity-30"
-                                  disabled={levels.length <= 1}
-                                  onClick={() => setDeleteTargetIndex(index)}
+                        <div className="flex-1 flex items-center gap-3 min-w-0">
+                          <span className="font-medium text-sm truncate">{level.label}</span>
+                          {index === 0 && (
+                            <span className="px-2 py-0.5 rounded-full text-[11px] font-medium bg-primary/10 text-primary shrink-0">
+                              Entry
+                            </span>
+                          )}
+                          {/* Inline commission rates */}
+                          {(level.serviceCommissionRate || level.retailCommissionRate) && (
+                            <span className="text-xs text-muted-foreground shrink-0 hidden sm:inline">
+                              {level.serviceCommissionRate ? `Service ${level.serviceCommissionRate}%` : ''}
+                              {level.serviceCommissionRate && level.retailCommissionRate ? ' · ' : ''}
+                              {level.retailCommissionRate ? `Retail ${level.retailCommissionRate}%` : ''}
+                            </span>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Right side: count + actions */}
+                      {editingIndex !== index && (
+                        <div className="flex items-center gap-2 shrink-0">
+                          {hasStylists && (
+                            <span className="text-xs text-muted-foreground">
+                              {stylistCount} <span className="hidden sm:inline">stylist{stylistCount !== 1 ? 's' : ''}</span>
+                            </span>
+                          )}
+                          <button
+                            className="p-1.5 rounded-md hover:bg-muted transition-colors opacity-60 hover:opacity-100"
+                            onClick={() => setEditingIndex(index)}
+                          >
+                            <Pencil className="w-3.5 h-3.5 text-muted-foreground" />
+                          </button>
+                          <AlertDialog onOpenChange={(open) => { if (!open) { setDeleteTargetIndex(null); setReassignToSlug(''); } }}>
+                            <AlertDialogTrigger asChild>
+                              <button
+                                className="p-1.5 rounded-md hover:bg-destructive/10 transition-colors opacity-60 hover:opacity-100 disabled:opacity-30"
+                                disabled={levels.length <= 1}
+                                onClick={() => setDeleteTargetIndex(index)}
+                              >
+                                <Trash2 className="w-3.5 h-3.5 text-destructive" />
+                              </button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle className="flex items-center gap-2">
+                                  {hasStylists && <AlertTriangle className="w-5 h-5 text-amber-500" />}
+                                  Delete "{level.label}"?
+                                </AlertDialogTitle>
+                                <AlertDialogDescription asChild>
+                                  <div className="space-y-3">
+                                    {hasStylists ? (
+                                      <>
+                                        <div className="p-3 rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900 text-amber-800 dark:text-amber-200">
+                                          <p className="font-medium flex items-center gap-2">
+                                            <AlertTriangle className="w-4 h-4" />
+                                            {stylistCount} stylist{stylistCount !== 1 ? 's are' : ' is'} assigned to this level
+                                          </p>
+                                        </div>
+                                        <div className="space-y-2">
+                                          <label className="text-sm font-medium">Reassign stylists to:</label>
+                                          <Select value={reassignToSlug} onValueChange={setReassignToSlug}>
+                                            <SelectTrigger className="w-full">
+                                              <SelectValue placeholder="Select a level..." />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                              {levels.filter((_, i) => i !== index).map((l) => (
+                                                <SelectItem key={l.id} value={l.id}>{l.label}</SelectItem>
+                                              ))}
+                                            </SelectContent>
+                                          </Select>
+                                        </div>
+                                      </>
+                                    ) : (
+                                      <p>No stylists are currently assigned to this level.</p>
+                                    )}
+                                  </div>
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction
+                                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                  disabled={hasStylists && !reassignToSlug}
+                                  onClick={() => handleDeleteWithReassign(index)}
                                 >
-                                  <Trash2 className="w-4 h-4 text-destructive" />
-                                </button>
-                              </AlertDialogTrigger>
-                              <AlertDialogContent>
-                                <AlertDialogHeader>
-                                  <AlertDialogTitle className="flex items-center gap-2">
-                                    {hasStylists && <AlertTriangle className="w-5 h-5 text-amber-500" />}
-                                    Delete "{level.label}"?
-                                  </AlertDialogTitle>
-                                  <AlertDialogDescription asChild>
-                                    <div className="space-y-3">
-                                      {hasStylists ? (
-                                        <>
-                                          <div className="p-3 rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900 text-amber-800 dark:text-amber-200">
-                                            <p className="font-medium flex items-center gap-2">
-                                              <AlertTriangle className="w-4 h-4" />
-                                              {stylistCount} stylist{stylistCount !== 1 ? 's are' : ' is'} assigned to this level
-                                            </p>
-                                          </div>
-                                          <div className="space-y-2">
-                                            <label className="text-sm font-medium">Reassign stylists to:</label>
-                                            <Select value={reassignToSlug} onValueChange={setReassignToSlug}>
-                                              <SelectTrigger className="w-full">
-                                                <SelectValue placeholder="Select a level..." />
-                                              </SelectTrigger>
-                                              <SelectContent>
-                                                {levels.filter((_, i) => i !== index).map((l) => (
-                                                  <SelectItem key={l.id} value={l.id}>{l.label}</SelectItem>
-                                                ))}
-                                              </SelectContent>
-                                            </Select>
-                                          </div>
-                                        </>
-                                      ) : (
-                                        <p>No stylists are currently assigned to this level.</p>
-                                      )}
-                                    </div>
-                                  </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                  <AlertDialogAction
-                                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                                    disabled={hasStylists && !reassignToSlug}
-                                    onClick={() => handleDeleteWithReassign(index)}
-                                  >
-                                    {hasStylists ? 'Reassign & Delete' : 'Delete'}
-                                  </AlertDialogAction>
-                                </AlertDialogFooter>
-                              </AlertDialogContent>
-                            </AlertDialog>
-                          </div>
+                                  {hasStylists ? 'Reassign & Delete' : 'Delete'}
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
                         </div>
                       )}
                     </div>
-                    
-                    {/* Description + Commission + Criteria */}
-                    <div className="px-4 pb-3 pt-0">
-                      <div className="flex items-start gap-2 pl-14">
+
+                    {/* Expanded content */}
+                    <div className="px-4 pb-4 pt-0 space-y-3">
+                      {/* Description */}
+                      <div className="ml-[3.25rem]">
                         <Input
                           value={level.description}
                           onChange={(e) => handleDescriptionChange(index, e.target.value)}
                           placeholder="Brief description for tooltip..."
-                          className="h-7 text-xs text-muted-foreground bg-background border focus-visible:ring-1"
+                          className="h-8 text-xs text-muted-foreground bg-background/50 border focus-visible:ring-1"
                         />
                       </div>
+
+                      {/* Commission fields in edit mode */}
                       {editingIndex === index && (
-                        <div className="pl-14 mt-2 grid grid-cols-2 gap-3">
+                        <div className="ml-[3.25rem] grid grid-cols-2 gap-3">
                           <div className="space-y-1">
                             <label className="text-xs font-medium text-muted-foreground">Service Commission %</label>
                             <Input
@@ -571,7 +585,7 @@ export function StylistLevelsEditor({ embedded = false }: StylistLevelsEditorPro
                               placeholder="e.g. 40"
                               value={level.serviceCommissionRate}
                               onChange={(e) => handleCommissionChange(index, 'serviceCommissionRate', e.target.value)}
-                              className="h-7 text-xs"
+                              className="h-8 text-xs"
                               min={0}
                               max={100}
                             />
@@ -583,77 +597,70 @@ export function StylistLevelsEditor({ embedded = false }: StylistLevelsEditorPro
                               placeholder="e.g. 10"
                               value={level.retailCommissionRate}
                               onChange={(e) => handleCommissionChange(index, 'retailCommissionRate', e.target.value)}
-                              className="h-7 text-xs"
+                              className="h-8 text-xs"
                               min={0}
                               max={100}
                             />
                           </div>
                         </div>
                       )}
-                      {/* Level Criteria Section */}
-                      <div className="pl-14 mt-3">
+
+                      {/* Level Criteria */}
+                      <div className="ml-[3.25rem]">
                         {index === 0 ? (
                           <p className="text-xs text-muted-foreground/60 italic">
                             Entry level — no promotion criteria needed
                           </p>
                         ) : level.dbId ? (
-                          (() => {
-                            const promo = promotionCriteria?.find(cr => cr.stylist_level_id === level.dbId && cr.is_active);
-                            const retention = retentionCriteria?.find(rc => rc.stylist_level_id === level.dbId && rc.is_active);
-                            const hasAnyCriteria = !!promo || !!retention;
-                            const promoSummary = promo ? formatCriteriaSummary(promo) : '';
-                            const retSummary = retention ? formatRetentionSummary(retention) : '';
-
-                            return hasAnyCriteria ? (
-                              <div className="rounded-lg border border-border/60 bg-muted/30 p-3 space-y-2">
-                                <div className="flex items-center justify-between">
-                                  <span className="font-sans text-xs text-foreground flex items-center gap-1.5">
-                                    <Sparkles className="w-3.5 h-3.5 text-primary" />
-                                    Level Criteria
-                                  </span>
-                                  <button
-                                    onClick={() => {
-                                      setWizardLevelId(level.dbId!);
-                                      setWizardLevelLabel(level.label);
-                                      setWizardLevelIndex(index);
-                                    }}
-                                    className="text-xs text-primary hover:text-primary/80 transition-colors font-sans"
-                                  >
-                                    Edit
-                                  </button>
-                                </div>
-                                {promoSummary && (
-                                  <div className="flex items-start gap-2">
-                                    <TrendingUp className="w-3 h-3 text-muted-foreground mt-0.5 shrink-0" />
-                                    <p className="text-xs text-muted-foreground">{promoSummary}</p>
-                                  </div>
-                                )}
-                                {retSummary && (
-                                  <div className="flex items-start gap-2">
-                                    <Shield className="w-3 h-3 text-muted-foreground mt-0.5 shrink-0" />
-                                    <p className="text-xs text-muted-foreground">{retSummary}</p>
-                                  </div>
-                                )}
+                          hasAnyCriteria ? (
+                            <div className="rounded-lg border border-border/60 bg-muted/30 p-3 space-y-2">
+                              <div className="flex items-center justify-between">
+                                <span className="font-sans text-xs text-foreground flex items-center gap-1.5">
+                                  <Sparkles className="w-3.5 h-3.5 text-primary" />
+                                  Level Criteria
+                                </span>
+                                <button
+                                  onClick={() => {
+                                    setWizardLevelId(level.dbId!);
+                                    setWizardLevelLabel(level.label);
+                                    setWizardLevelIndex(index);
+                                  }}
+                                  className="text-xs text-primary hover:text-primary/80 transition-colors font-sans"
+                                >
+                                  Edit
+                                </button>
                               </div>
-                            ) : (
-                              <button
-                                onClick={() => {
-                                  setWizardLevelId(level.dbId!);
-                                  setWizardLevelLabel(level.label);
-                                  setWizardLevelIndex(index);
-                                }}
-                                className="w-full rounded-lg border-2 border-dashed border-border/60 hover:border-primary/40 bg-muted/20 hover:bg-primary/5 p-3 flex items-center gap-3 transition-all group"
-                              >
-                                <div className="w-8 h-8 rounded-lg bg-muted/60 group-hover:bg-primary/10 flex items-center justify-center transition-colors">
-                                  <Sparkles className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                              {promoSummary && (
+                                <div className="flex items-start gap-2">
+                                  <TrendingUp className="w-3 h-3 text-muted-foreground mt-0.5 shrink-0" />
+                                  <p className="text-xs text-muted-foreground">{promoSummary}</p>
                                 </div>
-                                <div className="text-left">
-                                  <p className="text-xs font-sans text-foreground">Set up promotion & retention criteria</p>
-                                  <p className="text-[11px] text-muted-foreground mt-0.5">Define what it takes to reach this level</p>
+                              )}
+                              {retSummary && (
+                                <div className="flex items-start gap-2">
+                                  <Shield className="w-3 h-3 text-muted-foreground mt-0.5 shrink-0" />
+                                  <p className="text-xs text-muted-foreground">{retSummary}</p>
                                 </div>
-                              </button>
-                            );
-                          })()
+                              )}
+                            </div>
+                          ) : (
+                            <button
+                              onClick={() => {
+                                setWizardLevelId(level.dbId!);
+                                setWizardLevelLabel(level.label);
+                                setWizardLevelIndex(index);
+                              }}
+                              className="w-full rounded-lg border-2 border-dashed border-border/60 hover:border-primary/40 bg-muted/20 hover:bg-primary/5 p-3 flex items-center gap-3 transition-all group/cta"
+                            >
+                              <div className="w-8 h-8 rounded-lg bg-muted/60 group-hover/cta:bg-primary/10 flex items-center justify-center transition-colors">
+                                <Sparkles className="w-4 h-4 text-muted-foreground group-hover/cta:text-primary transition-colors" />
+                              </div>
+                              <div className="text-left">
+                                <p className="text-xs font-sans text-foreground">Set up promotion & retention criteria</p>
+                                <p className="text-[11px] text-muted-foreground mt-0.5">Define what it takes to reach this level</p>
+                              </div>
+                            </button>
+                          )
                         ) : (
                           <p className="text-xs text-muted-foreground/50 italic">
                             Save this level to configure criteria
@@ -662,153 +669,171 @@ export function StylistLevelsEditor({ embedded = false }: StylistLevelsEditorPro
                       </div>
                     </div>
                   </div>
-                </div>
-              );
-            })}
+                );
+              })}
 
-            {/* Add new level */}
-            {isAddingNew ? (
-              <div className="flex items-center gap-4 px-4 py-3 rounded-xl border-2 border-dashed border-primary/30 bg-primary/5">
-                <div className="w-8" />
-                <span className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center text-xs font-medium text-primary">
-                  {levels.length + 1}
-                </span>
-                <Input
-                  value={newLevelName}
-                  onChange={(e) => setNewLevelName(e.target.value)}
-                  placeholder="Enter level name..."
-                  className="h-8 text-sm flex-1 border bg-background rounded-md px-3 ml-2"
-                  autoFocus
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') handleAddNew();
-                    if (e.key === 'Escape') {
-                      setIsAddingNew(false);
-                      setNewLevelName('');
-                    }
-                  }}
-                />
-                <div className="flex items-center gap-1">
-                  <Button
-                    variant="ghost"
-                    size={tokens.button.inline}
-                    className="h-8"
-                    onClick={handleAddNew}
-                    disabled={!newLevelName.trim()}
-                  >
-                    Add
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size={tokens.button.inline}
-                    className="h-8 px-2"
-                    onClick={() => {
-                      setIsAddingNew(false);
-                      setNewLevelName('');
-                    }}
-                  >
-                    <X className="w-4 h-4" />
-                  </Button>
-                </div>
-              </div>
-            ) : (
-              <button
-                className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl border-2 border-dashed text-muted-foreground hover:text-foreground hover:border-primary/30 hover:bg-primary/5 transition-all"
-                onClick={() => setIsAddingNew(true)}
-              >
-                <Plus className="w-4 h-4" />
-                <span className="text-sm font-medium">Add Level</span>
-              </button>
-            )}
-          </div>
-
-          {/* Right Column - Preview & Stats */}
-          <div className="lg:col-span-2 space-y-6">
-            {/* 1. Team Distribution (most actionable — top) */}
-            <div className="space-y-3">
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Users className="w-4 h-4" />
-                <span>Team Distribution</span>
-              </div>
-              <div className="bg-card border rounded-xl p-4 space-y-3">
-                <div className="flex items-center justify-between pb-3 border-b">
-                  <span className="text-sm text-muted-foreground">Total Assigned</span>
-                  <span className="text-lg font-medium">
-                    {Object.values(stylistsByLevel || {}).reduce((a, b) => a + b, 0)}
+              {/* Add new level */}
+              {isAddingNew ? (
+                <div className="flex items-center gap-3 px-4 py-3 rounded-xl border-2 border-dashed border-primary/30 bg-primary/5">
+                  <div className="w-[1.75rem]" />
+                  <span className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center text-xs font-medium text-primary shrink-0">
+                    {levels.length + 1}
                   </span>
+                  <Input
+                    value={newLevelName}
+                    onChange={(e) => setNewLevelName(e.target.value)}
+                    placeholder="Enter level name..."
+                    className="h-8 text-sm flex-1"
+                    autoFocus
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') handleAddNew();
+                      if (e.key === 'Escape') {
+                        setIsAddingNew(false);
+                        setNewLevelName('');
+                      }
+                    }}
+                  />
+                  <div className="flex items-center gap-1">
+                    <Button
+                      variant="ghost"
+                      size={tokens.button.inline}
+                      className="h-8"
+                      onClick={handleAddNew}
+                      disabled={!newLevelName.trim()}
+                    >
+                      Add
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size={tokens.button.inline}
+                      className="h-8 px-2"
+                      onClick={() => {
+                        setIsAddingNew(false);
+                        setNewLevelName('');
+                      }}
+                    >
+                      <X className="w-4 h-4" />
+                    </Button>
+                  </div>
                 </div>
-                <div className="space-y-2">
-                  {levels.map((level, idx) => {
-                    const count = getStylistCount(level.id);
-                    const totalAssigned = Object.values(stylistsByLevel || {}).reduce((a, b) => a + b, 0);
-                    const percentage = totalAssigned > 0 ? (count / totalAssigned) * 100 : 0;
-                    return (
-                      <div key={level.id} className="flex items-center gap-3">
-                        <span className="w-5 h-5 rounded-full bg-muted flex items-center justify-center text-[10px] font-medium text-muted-foreground shrink-0">
-                          {idx + 1}
-                        </span>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between gap-2 mb-1">
-                            <span className="text-xs truncate">{level.label}</span>
-                            <span className="text-xs text-muted-foreground shrink-0">{count}</span>
-                          </div>
-                          <div className="h-1.5 bg-muted rounded-full overflow-hidden">
-                            <div 
-                              className="h-full bg-primary/60 rounded-full transition-all duration-300"
-                              style={{ width: `${percentage}%` }}
-                            />
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-                {Object.values(stylistsByLevel || {}).reduce((a, b) => a + b, 0) === 0 && (
-                  <p className="text-xs text-muted-foreground text-center py-2">
-                    No stylists assigned to levels yet
-                  </p>
-                )}
-              </div>
-            </div>
+              ) : (
+                <button
+                  className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl border-2 border-dashed text-muted-foreground hover:text-foreground hover:border-primary/30 hover:bg-primary/5 transition-all"
+                  onClick={() => setIsAddingNew(true)}
+                >
+                  <Plus className="w-4 h-4" />
+                  <span className="text-sm font-medium">Add Level</span>
+                </button>
+              )}
 
-            {/* 2. Progression Roadmap (only when criteria exist) */}
-            {promotionCriteria && promotionCriteria.length > 0 && (
-              <div className="space-y-3">
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <GraduationCap className="w-4 h-4" />
-                  <span>Progression Roadmap</span>
-                </div>
-                <div className="bg-card border rounded-xl p-4 space-y-3">
-                  {levels.map((level, idx) => {
-                    const criteria = promotionCriteria?.find(c => c.stylist_level_id === level.dbId && c.is_active);
-                    const summary = criteria ? formatCriteriaSummary(criteria) : null;
-                    const retention = retentionCriteria?.find(r => r.stylist_level_id === level.dbId && r.is_active);
-                    const retSummary = retention ? formatRetentionSummary(retention) : null;
-                    return (
-                      <div key={level.id} className="flex items-start gap-3">
-                        <span className="w-5 h-5 rounded-full bg-muted flex items-center justify-center text-[10px] font-medium text-muted-foreground shrink-0 mt-0.5">
-                          {idx + 1}
-                        </span>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-xs font-medium truncate">{level.label}</p>
-                          <p className="text-[10px] text-muted-foreground">
-                            {idx === 0 ? 'Entry level' : summary || 'No criteria configured'}
-                          </p>
-                          {retSummary && (
-                            <p className="text-[10px] text-muted-foreground/70">{retSummary}</p>
-                          )}
+              {/* Team Distribution inline summary */}
+              {levels.length > 0 && (
+                <div className="rounded-xl border bg-card p-4 mt-4">
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground mb-3">
+                    <Users className="w-4 h-4" />
+                    <span>Team Distribution</span>
+                    <span className="ml-auto text-foreground font-medium">{totalAssigned}</span>
+                  </div>
+                  <div className="space-y-2">
+                    {levels.map((level, idx) => {
+                      const count = getStylistCount(level.id);
+                      const percentage = totalAssigned > 0 ? (count / totalAssigned) * 100 : 0;
+                      return (
+                        <div key={level.id} className="flex items-center gap-3">
+                          <span className="text-xs text-muted-foreground w-4 text-right shrink-0">{idx + 1}</span>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between gap-2 mb-1">
+                              <span className="text-xs truncate">{level.label}</span>
+                              <span className="text-xs text-muted-foreground shrink-0">{count}</span>
+                            </div>
+                            <div className="h-1.5 bg-muted rounded-full overflow-hidden">
+                              <div 
+                                className="h-full bg-primary/60 rounded-full transition-all duration-300"
+                                style={{ width: `${percentage}%` }}
+                              />
+                            </div>
+                          </div>
                         </div>
-                      </div>
-                    );
-                  })}
+                      );
+                    })}
+                  </div>
+                  {totalAssigned === 0 && (
+                    <p className="text-xs text-muted-foreground text-center py-2">
+                      No stylists assigned to levels yet
+                    </p>
+                  )}
                 </div>
+              )}
+
+              {/* Progression Roadmap inline */}
+              {promotionCriteria && promotionCriteria.length > 0 && (
+                <div className="rounded-xl border bg-card p-4">
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground mb-3">
+                    <GraduationCap className="w-4 h-4" />
+                    <span>Progression Roadmap</span>
+                  </div>
+                  <div className="space-y-2.5">
+                    {levels.map((level, idx) => {
+                      const criteria = promotionCriteria?.find(c => c.stylist_level_id === level.dbId && c.is_active);
+                      const summary = criteria ? formatCriteriaSummary(criteria) : null;
+                      const ret = retentionCriteria?.find(r => r.stylist_level_id === level.dbId && r.is_active);
+                      const retSum = ret ? formatRetentionSummary(ret) : null;
+                      return (
+                        <div key={level.id} className="flex items-start gap-3">
+                          <span className="text-xs text-muted-foreground w-4 text-right shrink-0 mt-0.5">{idx + 1}</span>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs font-medium truncate">{level.label}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {idx === 0 ? 'Entry level' : summary || 'No criteria configured'}
+                            </p>
+                            {retSum && (
+                              <p className="text-xs text-muted-foreground/70">{retSum}</p>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
+          </TabsContent>
+
+          {/* === TAB 2: Team Roster === */}
+          <TabsContent value="team">
+            {effectiveOrganization?.id && dbLevels && dbLevels.length > 0 ? (
+              <TeamCommissionRoster orgId={effectiveOrganization.id} levels={dbLevels} />
+            ) : (
+              <div className={tokens.empty.container}>
+                <Users className={tokens.empty.icon} />
+                <h3 className={tokens.empty.heading}>No levels configured</h3>
+                <p className={tokens.empty.description}>Add and save levels first to see team assignments</p>
               </div>
             )}
+          </TabsContent>
 
-            {/* 3. Website Previews section */}
-            <div className="space-y-4">
-              <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground tracking-wide uppercase">
-                <Globe className="w-3.5 h-3.5" />
-                <span>Website Previews</span>
+          {/* === TAB 3: Previews === */}
+          <TabsContent value="previews">
+            <div className="space-y-6 max-w-lg">
+              {/* Level selector for previews */}
+              <div className="flex items-center gap-3">
+                <span className="text-sm text-muted-foreground">Preview level:</span>
+                <div className="flex flex-wrap gap-1">
+                  {levels.map((level, idx) => (
+                    <button
+                      key={level.id}
+                      onClick={() => setPreviewLevel(idx)}
+                      className={cn(
+                        "px-3 py-1.5 rounded-full text-xs transition-colors",
+                        previewLevel === idx 
+                          ? "bg-foreground text-background" 
+                          : "bg-muted text-muted-foreground hover:bg-muted/80"
+                      )}
+                    >
+                      {level.label}
+                    </button>
+                  ))}
+                </div>
               </div>
 
               {/* Card Preview */}
@@ -817,7 +842,7 @@ export function StylistLevelsEditor({ embedded = false }: StylistLevelsEditorPro
                   <Eye className="w-4 h-4" />
                   <span>Card Preview</span>
                 </div>
-                <div className="relative rounded-xl overflow-hidden aspect-[3/4] bg-gradient-to-b from-neutral-600 to-neutral-800">
+                <div className="relative rounded-xl overflow-hidden aspect-[3/4] bg-gradient-to-b from-neutral-600 to-neutral-800 max-w-[280px]">
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
                   <div className="absolute bottom-0 left-0 right-0 p-4 text-white">
                     <div className="flex items-center gap-1.5 mb-1">
@@ -848,22 +873,6 @@ export function StylistLevelsEditor({ embedded = false }: StylistLevelsEditorPro
                     <h3 className="font-display text-lg">Stylist Name</h3>
                   </div>
                 </div>
-                <div className="flex flex-wrap gap-1">
-                  {levels.map((level, idx) => (
-                    <button
-                      key={level.id}
-                      onClick={() => setPreviewLevel(idx)}
-                      className={cn(
-                        "px-2 py-1 rounded text-[10px] transition-colors",
-                        previewLevel === idx 
-                          ? "bg-foreground text-background" 
-                          : "bg-muted text-muted-foreground hover:bg-muted/80"
-                      )}
-                    >
-                      {idx + 1}
-                    </button>
-                  ))}
-                </div>
               </div>
 
               {/* Services Dropdown */}
@@ -872,7 +881,7 @@ export function StylistLevelsEditor({ embedded = false }: StylistLevelsEditorPro
                   <Eye className="w-4 h-4" />
                   <span>Services Dropdown</span>
                 </div>
-                <div className="bg-foreground rounded-xl p-4 space-y-3">
+                <div className="bg-foreground rounded-xl p-4 space-y-3 max-w-[320px]">
                   <button
                     className="w-full flex items-center justify-between gap-2 px-3 py-2 border border-background/30 rounded-full text-xs font-sans bg-background/10 text-background"
                   >
@@ -907,7 +916,7 @@ export function StylistLevelsEditor({ embedded = false }: StylistLevelsEditorPro
                   <Info className="w-4 h-4" />
                   <span>Tooltip Preview</span>
                 </div>
-                <div className="bg-card border rounded-xl p-4 space-y-3">
+                <div className="bg-card border rounded-xl p-4 space-y-3 max-w-[320px]">
                   <p className="font-medium text-sm">Stylist Level System</p>
                   <ul className="text-xs space-y-1.5 text-muted-foreground">
                     {levels.map((level, idx) => (
@@ -923,13 +932,8 @@ export function StylistLevelsEditor({ embedded = false }: StylistLevelsEditorPro
                 </div>
               </div>
             </div>
-          </div>
-        </div>
-
-        {/* Team Commission Roster */}
-        {effectiveOrganization?.id && dbLevels && dbLevels.length > 0 && (
-          <TeamCommissionRoster orgId={effectiveOrganization.id} levels={dbLevels} />
-        )}
+          </TabsContent>
+        </Tabs>
       </div>
 
       {/* Graduation Wizard Dialog */}
