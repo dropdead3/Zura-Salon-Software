@@ -109,7 +109,11 @@ function KpiTile({ kpi, phase, index }: { kpi: KpiDef; phase: Phase; index: numb
   );
 }
 
-export function DashboardMockup() {
+interface DashboardMockupProps {
+  onPhaseChange?: (phase: Phase) => void;
+}
+
+export function DashboardMockup({ onPhaseChange }: DashboardMockupProps = {}) {
   const [phase, setPhase] = useState<Phase>('observe');
   const timeoutRef = useRef<ReturnType<typeof setTimeout>>();
   const prefersReducedMotion = typeof window !== 'undefined'
