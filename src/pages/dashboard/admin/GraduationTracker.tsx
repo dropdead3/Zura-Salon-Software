@@ -397,6 +397,11 @@ function StylistProgressRow({ member, totalLevels, promotions, allLevels }: { me
                 {member.nextLevel.label}
               </span>
             )}
+            {member.timeAtLevelDays > 0 && (
+              <span className="text-[10px] text-muted-foreground bg-muted/50 px-1.5 py-0.5 rounded">
+                {member.timeAtLevelDays}d at level
+              </span>
+            )}
           </div>
 
           {member.status !== 'at_top_level' && member.status !== 'no_criteria' && !isAtRisk && (
