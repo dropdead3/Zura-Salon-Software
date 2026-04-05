@@ -188,9 +188,10 @@ function getZuraDefaults(levelIndex: number): FormState {
       retention_rate_enabled: true, retention_rate_threshold: 60,
       new_clients_enabled: true, new_clients_threshold: 5,
       utilization_enabled: true, utilization_threshold: 65,
+      rev_per_hour_enabled: true, rev_per_hour_threshold: 40,
       tenure_enabled: false, tenure_days: 0,
-      revenue_weight: 35, retail_weight: 10, rebooking_weight: 10, avg_ticket_weight: 0,
-      retention_rate_weight: 15, new_clients_weight: 15, utilization_weight: 15,
+      revenue_weight: 30, retail_weight: 10, rebooking_weight: 10, avg_ticket_weight: 0,
+      retention_rate_weight: 10, new_clients_weight: 10, utilization_weight: 15, rev_per_hour_weight: 15,
       evaluation_window_days: 30, requires_manual_approval: false,
     };
   }
@@ -203,9 +204,10 @@ function getZuraDefaults(levelIndex: number): FormState {
       retention_rate_enabled: true, retention_rate_threshold: 65,
       new_clients_enabled: true, new_clients_threshold: 8,
       utilization_enabled: true, utilization_threshold: 75,
+      rev_per_hour_enabled: true, rev_per_hour_threshold: 55,
       tenure_enabled: false, tenure_days: 0,
-      revenue_weight: 25, retail_weight: 10, rebooking_weight: 10, avg_ticket_weight: 15,
-      retention_rate_weight: 15, new_clients_weight: 10, utilization_weight: 15,
+      revenue_weight: 20, retail_weight: 10, rebooking_weight: 10, avg_ticket_weight: 10,
+      retention_rate_weight: 10, new_clients_weight: 10, utilization_weight: 15, rev_per_hour_weight: 15,
       evaluation_window_days: 60, requires_manual_approval: false,
     };
   }
@@ -218,9 +220,10 @@ function getZuraDefaults(levelIndex: number): FormState {
       retention_rate_enabled: true, retention_rate_threshold: 70,
       new_clients_enabled: true, new_clients_threshold: 10,
       utilization_enabled: true, utilization_threshold: 80,
+      rev_per_hour_enabled: true, rev_per_hour_threshold: 75,
       tenure_enabled: true, tenure_days: 365,
-      revenue_weight: 20, retail_weight: 10, rebooking_weight: 10, avg_ticket_weight: 15,
-      retention_rate_weight: 15, new_clients_weight: 10, utilization_weight: 20,
+      revenue_weight: 15, retail_weight: 10, rebooking_weight: 10, avg_ticket_weight: 10,
+      retention_rate_weight: 10, new_clients_weight: 10, utilization_weight: 20, rev_per_hour_weight: 15,
       evaluation_window_days: 60, requires_manual_approval: true,
     };
   }
@@ -232,9 +235,10 @@ function getZuraDefaults(levelIndex: number): FormState {
     retention_rate_enabled: true, retention_rate_threshold: 80,
     new_clients_enabled: true, new_clients_threshold: 15,
     utilization_enabled: true, utilization_threshold: 85,
+    rev_per_hour_enabled: true, rev_per_hour_threshold: 95,
     tenure_enabled: true, tenure_days: 730,
-    revenue_weight: 20, retail_weight: 10, rebooking_weight: 10, avg_ticket_weight: 15,
-    retention_rate_weight: 15, new_clients_weight: 10, utilization_weight: 20,
+    revenue_weight: 15, retail_weight: 10, rebooking_weight: 10, avg_ticket_weight: 10,
+    retention_rate_weight: 10, new_clients_weight: 10, utilization_weight: 20, rev_per_hour_weight: 15,
     evaluation_window_days: 90, requires_manual_approval: true,
   };
 }
@@ -250,6 +254,7 @@ function getZuraRetentionDefaults(levelIndex: number): RetentionFormState {
       retention_rate_enabled: true, retention_rate_minimum: 45,
       new_clients_enabled: true, new_clients_minimum: 3,
       utilization_enabled: true, utilization_minimum: 50,
+      rev_per_hour_enabled: true, rev_per_hour_minimum: 25,
       evaluation_window_days: 90, grace_period_days: 30, action_type: 'coaching_flag',
     };
   }
@@ -263,6 +268,7 @@ function getZuraRetentionDefaults(levelIndex: number): RetentionFormState {
       retention_rate_enabled: true, retention_rate_minimum: 50,
       new_clients_enabled: true, new_clients_minimum: 4,
       utilization_enabled: true, utilization_minimum: 55,
+      rev_per_hour_enabled: true, rev_per_hour_minimum: 35,
       evaluation_window_days: 90, grace_period_days: 30, action_type: 'coaching_flag',
     };
   }
@@ -276,6 +282,7 @@ function getZuraRetentionDefaults(levelIndex: number): RetentionFormState {
       retention_rate_enabled: true, retention_rate_minimum: 55,
       new_clients_enabled: true, new_clients_minimum: 5,
       utilization_enabled: true, utilization_minimum: 60,
+      rev_per_hour_enabled: true, rev_per_hour_minimum: 50,
       evaluation_window_days: 90, grace_period_days: 30, action_type: 'demotion_eligible',
     };
   }
@@ -288,6 +295,7 @@ function getZuraRetentionDefaults(levelIndex: number): RetentionFormState {
     retention_rate_enabled: true, retention_rate_minimum: 60,
     new_clients_enabled: true, new_clients_minimum: 8,
     utilization_enabled: true, utilization_minimum: 65,
+    rev_per_hour_enabled: true, rev_per_hour_minimum: 65,
     evaluation_window_days: 90, grace_period_days: 30, action_type: 'demotion_eligible',
   };
 }
