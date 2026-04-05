@@ -1,38 +1,54 @@
 
 
-# Fix Typography Rule Violations — Aeonik Pro with Tracking/Uppercase
+# Tool Consolidation — Jumbled Pile Layout
 
 ## Problem
 
-Multiple marketing components apply `uppercase` and wide `tracking-[0.15em]` / `tracking-wide` / `tracking-wider` to `font-sans` (Aeonik Pro) text. Per the design system, letter-spacing and uppercase are Termina (`font-display`) traits only. Aeonik Pro should never have these applied.
+The pills currently render in a clean flex-wrap grid with tiny offsets. They look organized, not chaotic. The reference image (second screenshot) shows pills physically overlapping, stacked at steep angles, forming a messy heap — like tools dumped on a table.
 
-The screenshot shows the LogoBar section as one example, but this violation exists across ~10 marketing components.
+## Approach
 
-## Fix
+Switch from `flex-wrap` to a `relative` container with absolutely positioned pills. Each pill gets aggressive x/y offsets and rotations to create a dense, overlapping pile centered in the section. The pile should feel compact and messy — not spread across the full width.
 
-Every instance of `font-sans` combined with `uppercase` and/or explicit tracking must be corrected by switching to `font-display` (since the text is intended to be uppercase kicker/label style) or by removing the uppercase + tracking if it should remain Aeonik body text.
+## Updated Tool Positions
 
-## Affected Files & Changes
+Each tool gets much larger offsets and steeper rotations to create true overlap:
 
-| File | Line(s) | Current | Fix |
-|------|---------|---------|-----|
-| `LogoBar.tsx` | 12 | `font-sans ... uppercase tracking-[0.15em]` | → `font-display` |
-| `LogoBar.tsx` | 28 | `font-display text-[11px] tracking-[0.12em]` (pill text) | Already correct — keep |
-| `PersonaTargeting.tsx` | 39 | `font-sans ... uppercase tracking-[0.15em]` | → `font-display` |
-| `FeatureGrid.tsx` | 46 | `font-sans ... uppercase tracking-[0.15em]` | → `font-display` |
-| `IntelligencePillars.tsx` | 39 | `font-sans ... uppercase tracking-[0.15em]` | → `font-display` |
-| `EcosystemPreview.tsx` | 46 | `font-sans ... uppercase tracking-[0.15em]` | → `font-display` |
-| `EcosystemPreview.tsx` | 68 | `font-sans ... uppercase tracking-wide` | → `font-display` |
-| `SolutionsMegaMenu.tsx` | 89, 114, 187, 203 | `font-sans ... uppercase tracking-[0.15em]` | → `font-display` |
-| `SolutionsMegaMenu.tsx` | 269 | `font-sans ... tracking-wide` (no uppercase) | Remove `tracking-wide` |
-| `ToolConsolidation.tsx` | 84, 94 | `font-sans ... uppercase tracking-wide` | → `font-display` |
-| `HeroSection.tsx` | 90 | `font-sans ... tracking-widest uppercase` | → `font-display` |
-| `DashboardMockup.tsx` | 209 | `font-sans ... tracking-wider uppercase` | → `font-display` |
+```text
+Layout concept (approximate positions):
 
-## Rule Applied
+         [CRM $89]·····
+    [AI Chat $24]  [AI Images $29]  [CRM $20]
+  [Website $20] [Invoicing $23] [SEO] [Payments]
 
-- `font-sans` (Aeonik Pro): No uppercase, no explicit tracking — used for body text and UI labels in normal case
-- `font-display` (Termina): Uppercase, wide tracking — used for kickers, labels, navigation, stats
+→ Translated to Zura tools with heavy overlap:
 
-**~12 files modified. 0 new. 0 deleted.**
+              ╔═══════════════╗
+         ┌────┤  CRM & Sched  ├──┐
+    ┌────┤    ╚═══════════════╝  │
+    │ POS├──┐   ┌─Marketing──┐   │
+    └────┘  │   └────────────┘   │
+       ┌Payroll┐  ┌Color Bar┐    │
+       └───────┘  └─────────┘ ┌──┤
+    ┌AI Recept┐ ┌Team Chat┐  │  Email
+    └─────────┘ └─────────┘  └──┘
+         ┌─Biz Consulting─┐
+         └─────────────────┘
+```
+
+## Changes to `ToolConsolidation.tsx`
+
+1. **Container**: Replace `flex flex-wrap` with `relative` container with a fixed height (~220px desktop, ~260px mobile) to allow absolute positioning
+2. **Pill positions**: Each tool gets `position: absolute` with specific `top/left` percentages plus `rotate` for a jumbled look — pills overlap significantly
+3. **Rotations**: Range from -18° to +15° (much steeper than current -8° to +7°)
+4. **Animation**: Keep stagger entrance but animate from scattered chaos positions to their final jumbled positions (they start even more scattered, then settle into the pile)
+5. **z-index**: Vary per pill so some visually sit on top of others
+
+## File Changes
+
+| File | Action |
+|------|--------|
+| `src/components/marketing/ToolConsolidation.tsx` | **Modify** — absolute positioning, aggressive offsets/rotations, fixed-height container |
+
+**1 file modified.**
 
