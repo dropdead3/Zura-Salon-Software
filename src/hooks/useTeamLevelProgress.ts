@@ -121,7 +121,7 @@ export function useTeamLevelProgress() {
       while (hasMore) {
         const { data, error } = await supabase
           .from('appointments')
-          .select('staff_user_id, total_price, rebooked_at_checkout, appointment_date')
+          .select('staff_user_id, total_price, rebooked_at_checkout, appointment_date, status, is_new_client')
           .in('staff_user_id', userIds)
           .gte('appointment_date', startStr)
           .lte('appointment_date', endStr)
