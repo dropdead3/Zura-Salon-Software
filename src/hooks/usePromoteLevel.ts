@@ -8,6 +8,7 @@ interface PromoteLevelParams {
   userId: string;
   fromLevelSlug: string;
   toLevelSlug: string;
+  notes?: string;
 }
 
 export function usePromoteLevel() {
