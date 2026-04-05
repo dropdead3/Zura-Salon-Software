@@ -95,6 +95,55 @@ const INITIAL_STATE: FormState = {
 
 const EVAL_WINDOWS = [30, 60, 90];
 
+function getZuraDefaults(levelIndex: number): FormState {
+  if (levelIndex <= 1) {
+    // Level 2 / Emerging
+    return {
+      revenue_enabled: true, revenue_threshold: 6000,
+      retail_enabled: true, retail_pct_threshold: 10,
+      rebooking_enabled: true, rebooking_pct_threshold: 60,
+      avg_ticket_enabled: false, avg_ticket_threshold: 0,
+      tenure_enabled: false, tenure_days: 0,
+      revenue_weight: 50, retail_weight: 25, rebooking_weight: 25, avg_ticket_weight: 0,
+      evaluation_window_days: 30, requires_manual_approval: false,
+    };
+  }
+  if (levelIndex === 2) {
+    // Level 3 / Lead
+    return {
+      revenue_enabled: true, revenue_threshold: 8000,
+      retail_enabled: true, retail_pct_threshold: 15,
+      rebooking_enabled: true, rebooking_pct_threshold: 65,
+      avg_ticket_enabled: true, avg_ticket_threshold: 110,
+      tenure_enabled: false, tenure_days: 0,
+      revenue_weight: 40, retail_weight: 20, rebooking_weight: 20, avg_ticket_weight: 20,
+      evaluation_window_days: 60, requires_manual_approval: false,
+    };
+  }
+  if (levelIndex === 3) {
+    // Level 4 / Senior
+    return {
+      revenue_enabled: true, revenue_threshold: 12000,
+      retail_enabled: true, retail_pct_threshold: 18,
+      rebooking_enabled: true, rebooking_pct_threshold: 70,
+      avg_ticket_enabled: true, avg_ticket_threshold: 140,
+      tenure_enabled: true, tenure_days: 365,
+      revenue_weight: 35, retail_weight: 20, rebooking_weight: 25, avg_ticket_weight: 20,
+      evaluation_window_days: 60, requires_manual_approval: true,
+    };
+  }
+  // Level 5+ / Signature / Icon
+  return {
+    revenue_enabled: true, revenue_threshold: 16000,
+    retail_enabled: true, retail_pct_threshold: 22,
+    rebooking_enabled: true, rebooking_pct_threshold: 75,
+    avg_ticket_enabled: true, avg_ticket_threshold: 170,
+    tenure_enabled: true, tenure_days: 730,
+    revenue_weight: 30, retail_weight: 20, rebooking_weight: 25, avg_ticket_weight: 25,
+    evaluation_window_days: 90, requires_manual_approval: true,
+  };
+}
+
 export function GraduationWizard({ open, onOpenChange, levelId, levelLabel, levelIndex }: GraduationWizardProps) {
   const [step, setStep] = useState(0);
   const [form, setForm] = useState<FormState>(INITIAL_STATE);
@@ -307,6 +356,27 @@ export function GraduationWizard({ open, onOpenChange, levelId, levelLabel, leve
               {/* Step 0: Select Requirements */}
               {step === 0 && (
                 <div className="space-y-3">
+                  {/* Zura Defaults banner — show when no criteria are configured */}
+                  {!existing && enabledCount === 0 && (
+                    <div className="flex items-center gap-3 rounded-lg border border-primary/20 bg-primary/5 p-3 mb-1">
+                      <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                        <Sparkles className="w-4 h-4 text-primary" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm text-foreground font-medium font-sans">Start with Zura's recommended criteria</p>
+                        <p className="text-xs text-muted-foreground font-sans">Industry benchmarks tuned for this level — tweak as needed.</p>
+                      </div>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="shrink-0 rounded-full h-8 px-3 text-xs border-primary/30 text-primary hover:bg-primary/10 font-sans"
+                        onClick={() => setForm(getZuraDefaults(levelIndex))}
+                      >
+                        Apply Defaults
+                      </Button>
+                    </div>
+                  )}
+
                   <p className={cn(tokens.body.muted, 'mb-4')}>
                     Toggle on the metrics that matter for promotion to this level.
                   </p>
