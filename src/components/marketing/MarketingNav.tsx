@@ -29,15 +29,15 @@ export function MarketingNav() {
   const isActive = (href: string) => location.pathname === href;
 
   return (
-    <header
-      className={cn(
-        'fixed top-0 left-0 right-0 z-50 transition-all duration-300',
-        scrolled
-          ? 'bg-slate-950/80 backdrop-blur-xl border-b border-white/[0.06] shadow-lg shadow-black/20'
-          : 'bg-transparent'
-      )}
-    >
-      <nav className="flex items-center justify-between px-6 sm:px-8 py-4 max-w-7xl mx-auto w-full">
+    <header className="fixed top-4 left-1/2 -translate-x-1/2 z-50 w-[calc(100%-2rem)] max-w-5xl">
+      <nav
+        className={cn(
+          'flex items-center justify-between px-6 py-3 rounded-full transition-all duration-300 border shadow-lg shadow-black/20',
+          scrolled
+            ? 'bg-white/[0.08] backdrop-blur-xl border-white/[0.1]'
+            : 'bg-white/[0.05] backdrop-blur-xl border-white/[0.08]'
+        )}
+      >
         <Link to="/" className="flex items-center gap-3 shrink-0">
           <PlatformLogo variant="landing" className="h-5 sm:h-6" />
         </Link>
@@ -103,7 +103,7 @@ export function MarketingNav() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }}
             transition={{ duration: 0.2 }}
-            className="md:hidden fixed inset-0 top-[64px] bg-slate-950 z-50 px-6 pb-6 pt-4 overflow-y-auto"
+            className="md:hidden fixed inset-0 top-[72px] bg-slate-950/95 backdrop-blur-xl z-50 px-6 pb-6 pt-4 overflow-y-auto"
           >
             <div className="flex flex-col gap-4">
               <SolutionsMobileAccordion onNavigate={() => setMobileOpen(false)} />
