@@ -9353,6 +9353,7 @@ export type Database = {
       level_promotions: {
         Row: {
           created_at: string
+          direction: string
           from_level: string
           id: string
           organization_id: string
@@ -9363,6 +9364,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          direction?: string
           from_level: string
           id?: string
           organization_id: string
@@ -9373,6 +9375,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          direction?: string
           from_level?: string
           id?: string
           organization_id?: string
