@@ -1,48 +1,49 @@
 
 
-# "Fewer Tools to Juggle" — Tool Consolidation Section
+# Testimonial Section Redesign — Bento Grid with Star Ratings
 
-## Concept
+## What Changes
 
-A visual section showing scattered tool subscription pills that Zura replaces, with a price comparison. Inspired by the reference image — colorful capsules in a loose pile, each with a tool name and monthly cost.
+Redesign `TestimonialSection.tsx` to match the reference image's card style:
 
-## Updated Tool Pills
+### Card Design (per reference)
+- **Star ratings**: 5 amber/gold stars at the top of each card
+- **Quote text**: Large, readable body copy
+- **Author block at bottom**: Circular letter avatar (first initial) + Name + Company/Role stacked
+- **Card surface**: Rounded corners, subtle border, dark glass background (`bg-white/[0.04]` with `border-white/[0.08]`)
+- Remove the left accent border stripe (replaced by stars as the visual anchor)
 
-| Tool | Price | Color |
-|------|-------|-------|
-| CRM & Scheduling | $89 | violet |
-| POS System | $79 | amber |
-| Payroll | $59 | emerald |
-| Marketing Agencies | $1,500 | rose |
-| Color Bar Management | $45 | cyan |
-| AI Receptionist | $199 | orange |
-| Team Chat | $25 | indigo |
-| Email Marketing | $49 | pink |
-| Business Consulting | $500 | yellow |
+### Layout — Bento Grid
+- 3-column, 2-row grid on desktop (6 cells total)
+- Center cell in top row becomes a **stat callout** (e.g., "50+ Locations" / "Already running on Zura") instead of a testimonial — mirrors the reference's "11M+" pattern
+- 5 testimonial cards fill the remaining 5 cells
+- On tablet: 2-column grid, stat card spans full width
+- On mobile: single column stack
 
-**Typical spend: ~$2,545/mo** (struck through, red)
-**Zura: $99/mo** (clean, white/violet)
+### Updated Testimonials (5 total, salon-contextualized)
+1. Monday spreadsheet → one-screen clarity (Multi-Location Owner, 4 locations)
+2. Retention flipped with career paths (Salon Group CEO, 8 locations)
+3. New-hire ramp cut from 90 to 30 days (Regional Director, 6 locations)
+4. Color waste visibility changed everything (Salon Owner, 2 locations)
+5. Finally see which stylist needs help before they quit (Operations Manager, 3 locations)
 
-## Section Copy
+### Stat Callout Card (center top)
+- Large number: "50+"
+- Label: "Salon locations running on Zura"
+- Styled distinctly — no stars, no quote, just the metric
 
-- Kicker: "Everything included"
-- Headline: "Fewer tools to juggle."
-- Subline: "Stop paying for 9 disconnected subscriptions. Zura replaces them all."
-
-## Visual Design
-
-- Dark background matching marketing surfaces
-- Pills are `rounded-full` capsules with tool name + price, scattered via CSS transforms (rotation + translate)
-- Framer Motion stagger animation on scroll reveal
-- Price comparison below: strikethrough typical vs clean Zura price
-- Responsive: pills scale down on mobile, pile compresses
+### Visual Details
+- Stars: 5x amber/gold star icons (`text-amber-400`)
+- Avatar circle: `w-9 h-9 rounded-full bg-white/[0.08]` with first letter centered
+- Author name: `font-sans text-sm text-white/90`
+- Author role: `font-sans text-xs text-slate-500`
+- Cards have consistent `p-6 rounded-xl` with glass surface
 
 ## Implementation
 
 | File | Action |
 |------|--------|
-| `src/components/marketing/ToolConsolidation.tsx` | **Create** |
-| `src/pages/PlatformLanding.tsx` | **Modify** — insert after BeforeAfterShowcase |
+| `src/components/marketing/TestimonialSection.tsx` | **Rewrite** — bento grid, star ratings, avatar circles, stat callout |
 
-**2 files. 1 new, 1 modified.**
+**1 file modified. 0 new. 0 deleted.**
 
