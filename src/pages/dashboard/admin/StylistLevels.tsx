@@ -36,6 +36,7 @@ import {
   Loader2,
   RefreshCw,
   Palette,
+  Sparkles,
 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
@@ -50,6 +51,8 @@ import {
 } from '@/hooks/useStylistLevels';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 import { PageExplainer } from '@/components/ui/PageExplainer';
+import { GraduationWizard } from '@/components/dashboard/settings/GraduationWizard';
+import { useLevelPromotionCriteria } from '@/hooks/useLevelPromotionCriteria';
 
 type LocalStylistLevel = {
   id: string;
