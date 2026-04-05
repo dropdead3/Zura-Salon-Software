@@ -1,79 +1,32 @@
 
 
-# Graduation Pathway Configurator — Revised Plan
+# Graduation Configurator — Bug Fixes, Enhancements, and PDF Export
 
-## Summary
+## Bugs Found
 
-Build a wizard-style configurator within Settings > Stylist Levels that lets admins define promotion criteria per level. The wizard makes it easy to toggle on/off which requirements matter and set thresholds — no form overload.
+1. **Slider `variant="filled"` may not exist** — The `Slider` component is passed `variant="filled"` (line 428) but shadcn's default Slider doesn't support variants. This likely throws a console warning or is silently ignored.
 
-## Gaps and Improvements Over Previous Plan
+2. **Weight validation allows saving at 0%** — When only one criterion is enabled, `canProceedFromStep1` is `true` because `enabledCriteria.length === 0` check passes vacuously, but the weight step is skipped — so the single criterion gets auto-set to 100%. This works but if a user manually navigates to step 1 via step indicators with one criterion, the UI shows nothing. Not a data bug, but a minor UX gap.
 
-1. **Organization scoping** — The `stylist_levels` table has no `organization_id` column. The new `level_promotion_criteria` table must join through `stylist_levels`, but `stylist_levels` itself is globally visible (RLS: any authenticated user). This means criteria need their own `organization_id` for proper tenant isolation, since different orgs may use the same level slugs with different promotion rules.
+3. **Tenure toggle doesn't use `toggleCriterion`** — Tenure uses `setField('tenure_enabled', !form.tenure_enabled)` directly instead of going through `toggleCriterion`, which is correct since tenure isn't weighted. No bug, but worth noting it's intentional.
 
-2. **Wizard UX instead of inline form** — Rather than cramming threshold fields into each level row, use a slide-out panel or dialog wizard with clear steps. This keeps the existing Stylist Levels page clean and adds a "Configure Graduation" button per level that opens the wizard.
+4. **Step indicator numbering is off when weights step is skipped** — When only 1 criterion is enabled, `activeSteps` becomes `['Requirements', 'Settings']` and step numbers show "1, 2", but clicking step 2 sets `step=2` (skipping internal step 1). The step indicator buttons work correctly via `actualStep`, so this is cosmetic but fine.
 
-3. **Toggle-based requirement selection** — The wizard should let admins toggle each criterion on/off (Revenue, Retail %, Rebooking %, Avg Ticket, Tenure). Only toggled-on criteria show threshold inputs. This avoids overwhelming admins with fields they don't care about.
+## Enhancements
 
-4. **Weight auto-distribution** — When criteria are toggled, weights auto-distribute equally among active criteria. Admin can then adjust. Weights must sum to 100 and are validated client-side.
+1. **Levels + Requirements Summary Card** — Add a new card in the right column of the Stylist Levels page that lists all levels with their configured graduation criteria in a compact summary view. Shows "No criteria" for unconfigured levels and the entry level.
 
-5. **First level has no criteria** — The lowest-order level is the entry point. The "Configure Graduation" button should be disabled or hidden for it, with a subtle note: "Entry level — no promotion criteria needed."
+2. **PDF Export** — Add an "Export PDF" button that generates a branded PDF document listing all levels, their graduation requirements, weights, evaluation windows, and approval settings. Uses `jsPDF` (already in the project for training certificates).
 
-6. **Manual approval toggle** — Some salons want manager sign-off before promotion. This is a simple toggle in the wizard, not a separate workflow.
-
-7. **No sustained-periods complexity for Phase 1** — Keep it simple: a single evaluation window (30/60/90 days). "Sustained periods" adds complexity that can come in Phase 2.
-
-## Database
-
-**New table: `level_promotion_criteria`**
-
-```text
-id                    UUID PK DEFAULT gen_random_uuid()
-organization_id       UUID NOT NULL FK → organizations(id) ON DELETE CASCADE
-stylist_level_id      UUID NOT NULL FK → stylist_levels(id) ON DELETE CASCADE
-revenue_enabled       BOOLEAN DEFAULT false
-revenue_threshold     NUMERIC DEFAULT 0
-retail_enabled        BOOLEAN DEFAULT false
-retail_pct_threshold  NUMERIC DEFAULT 0
-rebooking_enabled     BOOLEAN DEFAULT false
-rebooking_pct_threshold NUMERIC DEFAULT 0
-avg_ticket_enabled    BOOLEAN DEFAULT false
-avg_ticket_threshold  NUMERIC DEFAULT 0
-tenure_enabled        BOOLEAN DEFAULT false
-tenure_days           INTEGER DEFAULT 0
-revenue_weight        INTEGER DEFAULT 0
-retail_weight         INTEGER DEFAULT 0
-rebooking_weight      INTEGER DEFAULT 0
-avg_ticket_weight     INTEGER DEFAULT 0
-evaluation_window_days INTEGER DEFAULT 30
-requires_manual_approval BOOLEAN DEFAULT false
-is_active             BOOLEAN DEFAULT true
-created_at            TIMESTAMPTZ DEFAULT now()
-updated_at            TIMESTAMPTZ DEFAULT now()
-UNIQUE(organization_id, stylist_level_id)
-```
-
-RLS: org-scoped using `is_org_member` for SELECT, `is_org_admin` for INSERT/UPDATE/DELETE.
-
-## Wizard UI Design
-
-The wizard opens as a dialog when admin clicks "Graduation Pathway" on a level row.
-
-**Step 1: Select Requirements** — Toggle switches for each criterion type (Revenue, Retail %, Rebooking %, Avg Ticket, Tenure). Each toggle reveals a threshold input inline. Clean, minimal, one criterion per row.
-
-**Step 2: Set Weights** — Only shows enabled criteria. Sliders or number inputs that must sum to 100%. Auto-distributes on toggle changes. Skip this step if only one criterion is enabled (it gets 100%).
-
-**Step 3: Evaluation Settings** — Evaluation window selector (30/60/90 days). Manual approval toggle. Summary preview of what a stylist needs to achieve.
-
-**Summary card** at bottom: "To become [Level Name], a stylist must maintain $X revenue, Y% retail, Z% rebooking over 30 days."
+3. **Summary visible on configured levels** — In the levels list, show a subtle inline summary below the "Graduation Configured" button (e.g., "$8K rev, 15% retail, 70% rebook — 30 day window") so admins don't have to open the wizard to see what's set.
 
 ## File Changes
 
 | File | Action |
 |------|--------|
-| Migration SQL | **Create** — `level_promotion_criteria` table + RLS + trigger |
-| `src/hooks/useLevelPromotionCriteria.ts` | **Create** — fetch/upsert criteria per level per org |
-| `src/components/dashboard/settings/GraduationWizard.tsx` | **Create** — 3-step wizard dialog component |
-| `src/pages/dashboard/admin/StylistLevels.tsx` | **Modify** — add "Graduation Pathway" button per level row (except first) |
+| `src/pages/dashboard/admin/StylistLevels.tsx` | **Modify** — Add graduation summary card in right column, inline criteria preview per level row, PDF export button in page header |
+| `src/components/dashboard/settings/GraduationWizard.tsx` | **Modify** — Remove `variant="filled"` from Slider |
+| `src/components/dashboard/settings/LevelRequirementsPDF.ts` | **Create** — PDF generation utility using jsPDF, exports all levels + criteria as a branded document |
 
-**1 migration, 2 new files, 1 modified file.**
+**3 files changed (1 new, 2 modified).**
 
