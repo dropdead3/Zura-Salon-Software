@@ -38,6 +38,7 @@ import {
   TrendingUp,
   Shield,
   Wand2,
+  DollarSign,
 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -202,15 +203,6 @@ function CriteriaComparisonTable({ levels, promotionCriteria, retentionCriteria,
   };
 
   const metrics: MetricRow[] = [
-    // Commission (informational row)
-    { label: 'Service Commission', section: 'promotion', getValue: (_p, _r, levelIdx) => {
-      const rate = levels[levelIdx ?? 0]?.serviceCommissionRate;
-      return rate ? `${rate}%` : null;
-    }, getNumeric: () => null },
-    { label: 'Retail Commission', section: 'promotion', getValue: (_p, _r, levelIdx) => {
-      const rate = levels[levelIdx ?? 0]?.retailCommissionRate;
-      return rate ? `${rate}%` : null;
-    }, getNumeric: () => null },
     // Promotion
     { label: 'Revenue', section: 'promotion', getValue: (p) => p?.revenue_enabled ? fmtCurrency(p.revenue_threshold) : null, getNumeric: (p) => p?.revenue_enabled ? p.revenue_threshold : null },
     { label: 'Retail %', section: 'promotion', getValue: (p) => p?.retail_enabled ? `${p.retail_pct_threshold}%` : null, getNumeric: (p) => p?.retail_enabled ? p.retail_pct_threshold : null },
@@ -294,6 +286,36 @@ function CriteriaComparisonTable({ levels, promotionCriteria, retentionCriteria,
             </TableRow>
           </TableHeader>
           <TableBody>
+            {/* Compensation section — rewards at this level */}
+            <TableRow className="bg-primary/5 hover:bg-primary/5">
+              <TableCell colSpan={levels.length + 1} className="py-2">
+                <span className="flex items-center gap-1.5 text-xs font-medium text-foreground">
+                  <DollarSign className="w-3.5 h-3.5 text-primary" />
+                  Compensation — At This Level
+                </span>
+              </TableCell>
+            </TableRow>
+            {['Service Commission', 'Retail Commission'].map((commLabel) => {
+              const field = commLabel === 'Service Commission' ? 'serviceCommissionRate' : 'retailCommissionRate';
+              return (
+                <TableRow key={commLabel} className="border-l-2 border-l-primary/20">
+                  <TableCell className="text-xs text-muted-foreground sticky left-0 bg-card z-10">{commLabel}</TableCell>
+                  {levels.map((level) => {
+                    const rate = level[field];
+                    return (
+                      <TableCell key={level.id} className="text-center text-xs">
+                        {rate ? (
+                          <span className="text-foreground font-medium">{rate}%</span>
+                        ) : (
+                          <span className="text-muted-foreground/40">—</span>
+                        )}
+                      </TableCell>
+                    );
+                  })}
+                </TableRow>
+              );
+            })}
+
             {/* Promotion section header */}
             <TableRow className="bg-muted/30 hover:bg-muted/30">
               <TableCell colSpan={levels.length + 1} className="py-2">
