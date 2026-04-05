@@ -40,7 +40,7 @@ export function PersonaTargeting() {
             Built for You
           </p>
           <h2 className="font-display text-2xl sm:text-3xl lg:text-4xl tracking-tight mb-4">
-            Where are you in your journey?
+            No matter where you are, we built for you.
           </h2>
           <p className="font-sans text-base sm:text-lg text-slate-400 max-w-2xl mx-auto">
             {PLATFORM_NAME} scales with operator maturity — from a single location to a multi-market portfolio.

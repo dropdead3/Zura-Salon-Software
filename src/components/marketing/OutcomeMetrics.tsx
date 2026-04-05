@@ -5,6 +5,7 @@ const metrics = [
   { value: 84, prefix: '$', suffix: 'K', label: 'Recovered in first quarter', context: 'Average across multi-location operators' },
   { value: 23, suffix: '%', label: 'Average margin improvement', context: 'Service-level visibility drives recovery' },
   { value: 4.2, suffix: 'h', label: 'Saved per operator per week', context: 'Structured intelligence replaces manual review' },
+  { value: 67, suffix: '%', label: 'Faster new-hire ramp', context: 'Structured onboarding replaces tribal knowledge' },
 ];
 
 function AnimatedStat({ value, prefix, suffix }: { value: number; prefix?: string; suffix: string }) {
