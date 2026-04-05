@@ -58,6 +58,7 @@ export function StruggleInput() {
   const [error, setError] = useState<string | null>(null);
   const [cooldownUntil, setCooldownUntil] = useState(0);
   const [limitReached, setLimitReached] = useState(() => getSessionCount() >= SESSION_LIMIT);
+  const [showAllPills, setShowAllPills] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
   const [placeholderText, setPlaceholderText] = useState('');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -368,15 +369,30 @@ export function StruggleInput() {
             {/* Suggestion pills */}
             {!hasResponse && !isLoading && (
               <div className="flex flex-wrap gap-2 mt-4 pt-4 border-t border-white/[0.06]">
-                {displayPills.map((s) => (
+                <AnimatePresence mode="popLayout">
+                  {(showAllPills ? SUGGESTIONS : displayPills).map((s) => (
+                    <motion.button
+                      key={s}
+                      layout
+                      initial={{ opacity: 0, scale: 0.9 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.9 }}
+                      transition={{ duration: 0.2 }}
+                      onClick={() => handleSuggestionClick(s)}
+                      className="px-3 py-1.5 bg-white/[0.04] border border-white/[0.08] rounded-full font-sans text-xs text-slate-400 hover:text-white hover:border-violet-500/30 hover:bg-violet-500/5 transition-all"
+                    >
+                      {s}
+                    </motion.button>
+                  ))}
+                </AnimatePresence>
+                {!showAllPills && SUGGESTIONS.length > DISPLAY_PILL_COUNT && (
                   <button
-                    key={s}
-                    onClick={() => handleSuggestionClick(s)}
-                    className="px-3 py-1.5 bg-white/[0.04] border border-white/[0.08] rounded-full font-sans text-xs text-slate-400 hover:text-white hover:border-violet-500/30 hover:bg-violet-500/5 transition-all"
+                    onClick={() => setShowAllPills(true)}
+                    className="px-3 py-1.5 border border-dashed border-white/[0.12] rounded-full font-sans text-xs text-violet-400 hover:text-violet-300 hover:border-violet-500/30 transition-all"
                   >
-                    {s}
+                    + See more problems
                   </button>
-                ))}
+                )}
               </div>
             )}
           </>
