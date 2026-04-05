@@ -1,159 +1,163 @@
 
 
-# Cinematic Hero + Interactive Demo Architecture
+# Homepage Cinematic Flow Map — Refinement Plan
 
 ## Current State Assessment
 
-The foundation is already strong. The Hero has a live DashboardMockup with phase-cycling (Observe→Detect→Act→Pause) and synced narration. The SystemWalkthrough shows Connect→Observe→Detect→Act with auto-advancing tabs. The PersonaExplorer provides interactive problem→solution mapping. The `/demo` page is a lead capture form only — no actual product experience exists.
-
-**What's missing:** There is no way for a visitor to *experience* Zura before requesting a demo. The hero mockup is passive (watch-only). There are no guided product simulations. The "See it in action" promise leads to a form, not an experience.
-
----
-
-## Architecture: Two Layers
+The homepage has 10 sections in this order:
 
 ```text
-Layer 1: CINEMATIC HERO (enhanced)
-  → Existing DashboardMockup becomes interactive on hover/click
-  → "See it in action" CTA scrolls to SystemWalkthrough instead of /demo
-  → Hero gains a third CTA: "Try the Demo" → /explore
-
-Layer 2: INTERACTIVE DEMO (/explore)
-  → New route with 3 guided scenario flows
-  → Simulated UI panels (not real data)
-  → Step-through experience with tooltips
-  → Exits to /demo (lead capture) at completion
+1. HeroSection        — Hook + live mockup + narration
+2. StatBar            — Social proof counters
+3. LogoBar            — Integration logos marquee
+4. ChaosToClarity     — Problem → solution split
+5. SystemWalkthrough  — 4-step tabbed simulation
+6. PersonaExplorer    — Interactive persona → problem → solution
+7. BuiltByOperators   — Credibility narrative
+8. OutcomeMetrics     — Result stats
+9. TestimonialSection — Owner quotes
+10. FinalCTA          — Conversion close
 ```
 
----
+**Flow problems identified:**
 
-## Section 1: Hero Enhancement — Interactive Mockup
+- **StatBar + LogoBar back-to-back** creates two thin, low-content strips that feel like filler between the hero and the real content. They break momentum.
+- **No visual transitions** between sections — each section is a standalone block with its own `py-20` padding. Sections feel stacked, not connected.
+- **PersonaExplorer is heavy and positioned too late** — by section 6, the visitor has already seen the product work (ChaosToClarity, SystemWalkthrough). The persona picker feels like going backwards.
+- **BuiltByOperators → OutcomeMetrics → Testimonials** is three trust sections in a row with no breathing room or product re-engagement between them. Trust fatigue.
+- **FinalCTA secondary link goes to `/product`** which is disconnected from the `/explore` demo strategy.
 
-**Current:** DashboardMockup auto-cycles passively. User watches.
+## Proposed Flow Restructure
 
-**Enhancement:** Make the mockup respond to user interaction.
-- On hover over a KPI tile, pause auto-cycle and show a tooltip explaining the metric
-- Clicking the "APPLY" button in the lever card triggers the act phase manually (satisfying micro-interaction)
-- Add a pulsing "See it in action" anchor link below the narration strip that smooth-scrolls to SystemWalkthrough
-- Replace the secondary "Explore the Platform" CTA with "Try the Interactive Demo" → `/explore`
+Reorder and add connective tissue — no new components, no rebuilds, just repositioning and transition enhancements.
 
-**Files:** Modify `DashboardMockup.tsx`, `HeroSection.tsx`
+```text
+NEW ORDER                           NARRATIVE ROLE
+──────────                          ──────────────
+1. HeroSection                      HOOK — "This is different"
+2. StatBar (merged into hero tail)  ORIENTATION — instant credibility
+3. ChaosToClarity                   PROBLEM — "This is what I deal with"
+4. SystemWalkthrough                TRANSFORMATION — "This solves that"
+5. LogoBar                          BREATHING ROOM — integration trust
+6. PersonaExplorer                  PRODUCT EXPERIENCE — personalized
+7. OutcomeMetrics                   PROOF — measurable results
+8. BuiltByOperators                 TRUST — who built this
+9. TestimonialSection               AUTHORITY — peer validation
+10. FinalCTA                        CONVERSION — natural close
+```
 
----
+### Key Changes
 
-## Section 2: Interactive Demo Page (`/explore`)
+**A. Merge StatBar into Hero's tail** — Remove the hard border between hero and StatBar. Move StatBar's content to flow seamlessly from the phase narration strip. Remove top/bottom borders.
 
-**New page** — a full-screen guided product simulation with 3 scenario tabs.
+**B. Move LogoBar to after SystemWalkthrough** — Instead of two thin strips at the top, the integration bar serves as a breather between the intense SystemWalkthrough and PersonaExplorer.
 
-### Scenario Structure
+**C. Add section transition connectors** — Thin gradient divider lines between major narrative shifts (Problem → Transformation, Product → Proof). These replace the hard `border-y` breaks.
 
-Each scenario is a 3–5 step guided walkthrough using simulated UI panels.
+**D. Fix FinalCTA secondary link** — Change `/product` to `/explore` to match the demo strategy.
 
-**Scenario 1: "Your Day in Zura"**
-- Step 1: Simulated daily schedule view (time slots with appointments, 2 visible gaps highlighted in amber)
-- Step 2: Zura detects the gaps, shows a lever card: "Reach out to 3 clients who haven't rebooked"
-- Step 3: User clicks "Apply" → gaps fill with green, revenue counter ticks up
-- Tooltip guidance at each step
-
-**Scenario 2: "Your Team at a Glance"**
-- Step 1: 4 stylist performance cards (utilization %, retention %, revenue) — one visibly underperforming (amber)
-- Step 2: Zura highlights the underperformer, shows context: "Sarah's retention dropped 15% this month"
-- Step 3: Lever card: "Schedule a 1:1 and review her rebooking flow" → card turns green with checkmark
-- Tooltip: "Zura surfaces who needs support — before it becomes a problem"
-
-**Scenario 3: "What Needs Attention"**
-- Step 1: Command Center view with 3 priority cards (Margin dip, Stockout risk, Utilization drop)
-- Step 2: Cards rank themselves by impact (animated reorder)
-- Step 3: Top card expands to show lever + projected impact
-- Tooltip: "One screen. Ranked by what matters most."
-
-### Interaction Model
-- Horizontal scenario tabs at top (pill style, matching SystemWalkthrough)
-- Each scenario has a step indicator (dots or numbered pills)
-- "Next" button advances steps; "Back" goes back
-- Tooltip/highlight layer with pulsing rings on interactive elements
-- At final step of each scenario → "Get a Demo" CTA card slides in
-
-### Mobile Adaptation
-- Scenarios stack as full-width cards
-- Step-through uses swipe or tap-to-advance
-- Tooltips become inline callout cards below the simulated UI
-- Simplified simulated panels (fewer columns, stacked layouts)
-
-**Files:** New `src/pages/InteractiveDemo.tsx`, new `src/components/marketing/demo/` directory with `DemoScenario.tsx`, `DemoScheduleView.tsx`, `DemoTeamView.tsx`, `DemoCommandView.tsx`, `DemoTooltip.tsx`
+**E. Add a "scroll anchor" CTA** — After the phase narration in the hero, add a subtle animated chevron/text that anchors to ChaosToClarity, creating a visual invitation to keep scrolling.
 
 ---
 
-## Section 3: Navigation + Routing
+## Section-by-Section Flow Map
 
-- Add `/explore` route to `App.tsx`
-- Add "Try Demo" link to `MarketingNav.tsx` nav links array
-- Update Hero secondary CTA to point to `/explore`
-- Add "Interactive Demo" entry to footer Platform column
+### 1. Hero (HOOK) — 0-5 seconds
+**Purpose:** Capture attention, show product is alive
+**Emotional intent:** "This is different. This is serious."
+**Content:** Headline, subline, dual CTAs, live DashboardMockup, phase narration
+**Interaction:** Mockup cycles automatically, pauses on hover, APPLY is clickable
+**Transition out:** Narration strip → StatBar counters flow directly below with no hard border — just a subtle gradient separator
 
-**Files:** Modify `App.tsx`, `MarketingNav.tsx`, `MarketingFooter.tsx`, `HeroSection.tsx`
+### 2. StatBar (ORIENTATION) — merged
+**Purpose:** Instant credibility without breaking momentum
+**Change:** Remove `border-y`. Replace with a soft gradient top separator. Reduce vertical padding from `py-12/16` to `py-8/10`. The section should feel like the hero's closing flourish, not a separate block.
+**Transition out:** Gradient fade into ChaosToClarity
+
+### 3. ChaosToClarity (PROBLEM) — 15-30 seconds
+**Purpose:** Make the visitor feel seen
+**Emotional intent:** "This is exactly what I deal with"
+**Content:** Chaos cards → clarity KPI reveal, scroll-driven
+**No changes to content** — already strong
+**Transition out:** The clarity side's emerald "One action" confirmation creates natural momentum into "how does it work?"
+
+### 4. SystemWalkthrough (TRANSFORMATION) — 30-60 seconds
+**Purpose:** Show the shift from confusion to structured intelligence
+**Emotional intent:** "This actually works"
+**Content:** Connect → Observe → Detect → Act tabbed simulation
+**No changes to content** — already strong
+**Transition out:** Soft gradient divider, then LogoBar as breathing room
+
+### 5. LogoBar (BREATHING ROOM) — repositioned
+**Purpose:** Light-touch trust, mental pause after intense walkthrough
+**Change:** Remove top border. The marquee serves as visual breathing room. Keeps eyes moving without demanding attention.
+**Transition out:** Flows into PersonaExplorer
+
+### 6. PersonaExplorer (PRODUCT EXPERIENCE) — 60-90 seconds
+**Purpose:** Personalized problem → solution mapping
+**Emotional intent:** "This is built for me specifically"
+**Content:** Persona selection → problem chips → solution cards
+**No changes to content** — already the most interactive section
+**Transition out:** Gradient separator into proof section
+
+### 7. OutcomeMetrics (PROOF)
+**Purpose:** Hard numbers to cement belief
+**Emotional intent:** "This delivers real results"
+**Content:** 23% margin improvement, 4.2h saved, 67% faster ramp
+**No changes to content**
+**Transition out:** Flows into credibility narrative
+
+### 8. BuiltByOperators (TRUST)
+**Purpose:** Humanize the platform, establish credibility
+**Emotional intent:** "These people understand my world"
+**Content:** Founder narrative + stat markers
+**No changes to content**
+**Transition out:** Natural flow into peer validation
+
+### 9. TestimonialSection (AUTHORITY)
+**Purpose:** Peer validation from operators
+**Emotional intent:** "People like me are using this"
+**No changes to content**
+**Transition out:** Final gradient into CTA
+
+### 10. FinalCTA (CONVERSION)
+**Purpose:** Natural close
+**Change:** Update secondary CTA from `/product` to `/explore`
+**Emotional intent:** "I'm ready to see this"
 
 ---
 
-## Section 4: Demo Exit → Conversion Bridge
+## Implementation Details
 
-At the end of each scenario flow, render a contextual CTA card:
-- Headline: "This is how {PLATFORM_NAME} works for your salon."
-- Body: "Want to see it with your real data?"
-- Primary CTA: "Get a Demo" → `/demo`
-- Secondary: "Try another scenario" → resets to scenario picker
-- Trust signal: "Join 50+ salon locations"
+### Files Modified
 
-**File:** New `src/components/marketing/demo/DemoExitCTA.tsx`
+| File | Change |
+|------|--------|
+| `PlatformLanding.tsx` | Reorder sections: move LogoBar after SystemWalkthrough |
+| `StatBar.tsx` | Remove `border-y`, reduce padding, add gradient separator |
+| `LogoBar.tsx` | Remove top border (`border-b` only → no border) |
+| `FinalCTA.tsx` | Change secondary CTA href from `/product` to `/explore` |
+| `HeroSection.tsx` | Add scroll-down indicator below narration strip |
 
----
+### Transition System
 
-## UI + Motion Direction
+Add a reusable `SectionDivider` component — a thin gradient line that visually connects sections. Used between ChaosToClarity→SystemWalkthrough, LogoBar→PersonaExplorer, and OutcomeMetrics→BuiltByOperators.
 
-| Element | Duration | Easing | Trigger |
-|---------|----------|--------|---------|
-| Scenario tab switch | 300ms | ease-out | Click |
-| Step advance | 400ms | cubic-bezier(0.16,1,0.3,1) | Click "Next" |
-| Tooltip appear | 200ms | ease-out | Step activation |
-| Simulated data fill | 800ms | ease-out-cubic | Step trigger |
-| Lever card slide-in | 500ms | ease-out | Step trigger |
-| KPI counter tick | 1000ms | ease-out-quartic | Apply action |
-| Pulsing highlight ring | 2s loop | ease-in-out | Active element |
+| File | Action |
+|------|--------|
+| `SectionDivider.tsx` | **Create** — simple gradient `<hr>` component |
 
-All animations respect `prefers-reduced-motion`. No scroll hijacking.
+### Responsive Adaptation
 
----
-
-## Responsive Plan
-
-| Component | Desktop | Tablet | Mobile |
-|-----------|---------|--------|--------|
-| Scenario tabs | Horizontal pills | Horizontal, scrollable | Horizontal, scrollable |
-| Step content | Full panel | Full panel | Stacked, simplified |
-| Tooltips | Floating with arrow | Floating | Inline callout card |
-| Schedule sim | 5-column time grid | 3-column | Single-column list |
-| Team cards | 4-across grid | 2x2 grid | Vertical stack |
-| Command cards | 3-column | 2+1 | Vertical stack |
-| Step nav | Bottom bar with dots | Same | Same, full-width buttons |
+- **Desktop:** Full cinematic flow with scroll-driven reveals
+- **Tablet:** Same order, no layout changes needed (all sections already responsive)
+- **Mobile:** Same order, scroll indicator hidden (saves space), reduced section padding
 
 ---
 
-## Technical Summary
+## Summary
 
-| File | Action | Purpose |
-|------|--------|---------|
-| `DashboardMockup.tsx` | Modify | Add hover pause, click-to-apply interaction |
-| `HeroSection.tsx` | Modify | Update secondary CTA → `/explore`, add scroll anchor |
-| `InteractiveDemo.tsx` | **Create** | New page: guided demo with 3 scenarios |
-| `demo/DemoScenario.tsx` | **Create** | Shared scenario shell (tabs, steps, tooltips) |
-| `demo/DemoScheduleView.tsx` | **Create** | "Your Day" simulated schedule UI |
-| `demo/DemoTeamView.tsx` | **Create** | "Your Team" simulated performance cards |
-| `demo/DemoCommandView.tsx` | **Create** | "What Needs Attention" command center sim |
-| `demo/DemoTooltip.tsx` | **Create** | Guided tooltip/highlight component |
-| `demo/DemoExitCTA.tsx` | **Create** | Conversion CTA at scenario end |
-| `App.tsx` | Modify | Add `/explore` route |
-| `MarketingNav.tsx` | Modify | Add "Try Demo" link |
-| `MarketingFooter.tsx` | Modify | Add "Interactive Demo" to footer |
+**5 files modified, 1 new file created, 0 deleted.**
 
-**7 new files, 5 modified, 0 deleted.**
+The restructure creates a clear narrative arc: Hook → Credibility → Problem → Solution → Breathing Room → Personalization → Proof → Trust → Peer Validation → Conversion. No content rebuilds — just repositioning and connective tissue.
 
