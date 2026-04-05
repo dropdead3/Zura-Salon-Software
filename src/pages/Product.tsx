@@ -6,27 +6,27 @@ import { PLATFORM_NAME } from '@/lib/brand';
 const capabilities = [
   {
     icon: Eye,
-    title: 'Observe continuously',
+    title: 'Watches everything in real time',
     description:
-      'Revenue, utilization, retention, payroll, inventory — monitored across every location in real time.',
+      'Revenue, scheduling, retention, payroll, inventory — all monitored across every location, all the time.',
   },
   {
     icon: GitCompare,
-    title: 'Compare to architecture',
+    title: 'Compares to your standards',
     description:
-      'Every metric is measured against the structural targets you define. Not industry averages — your operating plan.',
+      'Every metric is measured against the benchmarks you set — not industry averages, but your operating plan.',
   },
   {
     icon: AlertTriangle,
-    title: 'Detect deviations',
+    title: 'Catches problems early',
     description:
-      'When performance drifts from architecture, the system flags it before it becomes a crisis.',
+      'When something drifts off track, you know about it before it becomes expensive.',
   },
   {
     icon: Target,
-    title: 'Recommend action',
+    title: 'Tells you what to focus on',
     description:
-      'One ranked lever. Confidence-qualified. Economically justified. Expandable logic so you understand the why.',
+      'One clear recommendation, ranked by impact. With the reasoning behind it — so you understand the why.',
   },
 ];
 
@@ -40,10 +40,10 @@ export default function Product() {
             Product
           </p>
           <h1 className="font-display text-3xl sm:text-4xl lg:text-5xl tracking-tight mb-6 leading-[1.1]">
-            The operating brain for scaling operators
+            Not just reports. Direction.
           </h1>
           <p className="font-sans text-base sm:text-lg text-slate-400 max-w-2xl mx-auto leading-relaxed">
-            {PLATFORM_NAME} doesn't show you dashboards. It tells you exactly what lever to pull next — and why.
+            Most salon software helps you track what already happened. {PLATFORM_NAME} helps you understand what to do next.
           </p>
         </div>
       </section>
@@ -56,7 +56,7 @@ export default function Product() {
               Observe. Compare. Detect. Recommend.
             </h2>
             <p className="font-sans text-sm sm:text-base text-slate-400 max-w-xl mx-auto">
-              A continuous intelligence loop that turns operational noise into ranked, actionable leverage.
+              {PLATFORM_NAME} watches your business, spots what's off, and tells you what to focus on.
             </p>
           </div>
 
@@ -86,19 +86,19 @@ export default function Product() {
         <div className="max-w-3xl mx-auto">
           <div className="p-8 sm:p-12 bg-white/[0.02] border border-white/[0.06] rounded-2xl">
             <h2 className="font-display text-lg sm:text-xl tracking-wide mb-4 text-center">
-              Not a dashboard. A decision engine.
+              Not just data. Decisions.
             </h2>
             <div className="space-y-4 font-sans text-sm sm:text-base text-slate-400 leading-relaxed">
               <p>
                 Most software shows you what happened. {PLATFORM_NAME} tells you what to do about it.
               </p>
               <p>
-                Every recommendation is confidence-qualified — if the signal is weak, {PLATFORM_NAME} stays silent.
-                Silence is meaningful. It means your operation is running within architecture.
+                Every recommendation comes with context — if the signal isn't strong enough, {PLATFORM_NAME} stays quiet.
+                That's intentional. It means your business is running the way it should.
               </p>
               <p>
-                When a lever surfaces, it comes with expandable logic: the deviation, the time window,
-                the economic impact, and the recommended action. No black boxes.
+                When something does need attention, you get the full picture: what changed, how long it's been off,
+                the financial impact, and what to do next. No guesswork.
               </p>
             </div>
           </div>
@@ -112,13 +112,13 @@ export default function Product() {
             See what {PLATFORM_NAME} sees in your business
           </h2>
           <p className="font-sans text-base text-slate-400 max-w-xl mx-auto mb-10">
-            Request a walkthrough. We will show you the levers hiding in your operations.
+            Get a walkthrough and we'll show you what's working, what needs attention, and where to start.
           </p>
           <Link
             to="/demo"
             className="inline-flex items-center justify-center gap-2 h-12 px-8 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 rounded-xl font-sans text-base font-medium transition-all shadow-lg shadow-violet-500/25"
           >
-            Request a Demo
+            Get a Demo
             <ArrowRight className="w-4 h-4" />
           </Link>
         </div>
