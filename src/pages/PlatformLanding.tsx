@@ -37,6 +37,7 @@ export default function PlatformLanding() {
       <BeforeAfterShowcase />
       <ToolConsolidation />
       <ZuraInANutshell />
+      <FounderQuote />
       <OutcomeMetrics />
       <BuiltByOperators />
       <TestimonialSection />
