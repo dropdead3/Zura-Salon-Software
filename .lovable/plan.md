@@ -1,91 +1,86 @@
 
 
-# Graduation Tracker — Full Admin Rebuild
+# Graduation System — Full UX/UI Audit and Enhancement Plan
 
-## Problem
+## System Inventory
 
-The current Graduation Tracker page is built around an **assistant-to-stylist submission checklist** system (graduation_requirements / graduation_submissions tables). It only shows `stylist_assistant` role users and their manual proof submissions. 
+The graduation system currently spans these surfaces:
+- **Admin: Graduation Tracker** (`GraduationTracker.tsx`) — KPI strip, All Stylists / Ready / Assistants / Requirements tabs
+- **Admin: Stylist Levels** (`StylistLevels.tsx`) — Level configurator with GraduationWizard for criteria per level
+- **Admin: Level Requirements PDF** — exportable document of all level criteria
+- **Stylist-Facing: My Graduation** (`MyGraduation.tsx`) — assistant checklist submission page
+- **Coaching: LevelProgressCard** — embedded in MeetingDetails and IndividualStaffReport
+- **Hooks: useLevelProgress** (single user) / **useTeamLevelProgress** (bulk team)
+- **Payroll: usePayrollForecasting** — tierProgress wired from level_promotion_criteria
 
-Meanwhile, we've built a complete **level promotion criteria** system (level_promotion_criteria table, `useLevelProgress` hook, `LevelProgressCard` component) that computes real-time graduation readiness based on revenue, retail, rebooking, avg ticket, and tenure — but none of that is surfaced on this page.
+---
 
-The page needs to merge both systems and become the admin's central command for tracking who's progressing through levels, who's ready for promotion, and who needs coaching intervention.
+## Bugs Found
 
-## Architecture
+### 1. No "Approve Promotion" action exists
+The plan called for an "Approve Promotion" button on the Ready to Graduate tab when `requires_manual_approval` is true. It was never built. The `StylistProgressRow` shows the badge and expand data but has no actionable CTA. There is no mutation to update `employee_profiles.stylist_level` from this page.
 
-The page will have three sections:
+### 2. "My Graduation" page has no level progress
+The stylist-facing `MyGraduation.tsx` only shows the legacy checklist system (submit proof, get coach feedback). It does not show the `LevelProgressCard` or any KPI-based graduation progress. A stylist at level 3 approaching level 4 sees nothing about their revenue/rebooking progress.
 
-```text
-┌─────────────────────────────────────────────────────────────────┐
-│  GRADUATION TRACKER                           [Filter] [Search] │
-├─────────────────────────────────────────────────────────────────┤
-│  KPI Strip                                                      │
-│  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐           │
-│  │ Ready to  │ │ In       │ │ Needs    │ │ No Next  │           │
-│  │ Graduate  │ │ Progress │ │ Attention│ │ Level    │           │
-│  └──────────┘ └──────────┘ └──────────┘ └──────────┘           │
-├─────────────────────────────────────────────────────────────────┤
-│  Tabs: [All Stylists] [Ready to Graduate] [Assistants]          │
-├─────────────────────────────────────────────────────────────────┤
-│  Tab 1 & 2: Level-Based Progress                                │
-│  ┌─ Stylist Row ────────────────────────────────────────────┐   │
-│  │ Avatar | Name | Current → Next | Composite Bar | Status  │   │
-│  │ (expandable: per-criterion progress bars, gap analysis)  │   │
-│  └──────────────────────────────────────────────────────────┘   │
-│                                                                  │
-│  Tab 3: Legacy Assistant Checklist (existing functionality)      │
-│  ┌─ Assistant Row ──────────────────────────────────────────┐   │
-│  │ Avatar | Name | X/Y complete | Progress | Submissions    │   │
-│  └──────────────────────────────────────────────────────────┘   │
-└─────────────────────────────────────────────────────────────────┘
-```
+### 3. KPI strip shows when data is loaded but no criteria configured
+When an org has levels but hasn't configured any graduation criteria yet, the KPI strip shows all zeros with no guidance. Should show a setup prompt linking to Settings > Stylist Levels.
 
-## Plan
+### 4. `no_criteria` stylists shown mixed in with tracked stylists
+Stylists whose next level has no criteria configured appear in "All Stylists" with a bland "No Criteria" badge. This pollutes the actionable view. They should either be filterable or grouped separately.
 
-### 1. Create `useTeamLevelProgress` hook
+### 5. ManagementHub stat query is wrong
+`ManagementHub.tsx` queries `stylist_program_enrollment` for `inProgressGraduations` count — this is the client engine program, not graduation. The stat label says "in progress" but doesn't reflect actual graduation readiness counts.
 
-New hook that fetches ALL active stylists with their current levels and computes level progress for each. Unlike `useLevelProgress` (single user), this does a bulk fetch:
-- Fetch all active `employee_profiles` with `stylist_level` and `hire_date`
-- Fetch all `level_promotion_criteria` for the org
-- Fetch rolling sales + appointment data for all stylists in a single batch query
-- Compute per-stylist progress (reusing the same math from `useLevelProgress`)
-- Return array sorted by composite score descending (closest to graduation first)
-- Categorize each stylist: `ready` (100%), `in_progress` (>0%), `needs_attention` (<25%), `no_criteria` (no next level or no criteria configured)
+### 6. `useTeamLevelProgress` may hit 1000-row limit
+The batch queries to `phorest_daily_sales_summary` and `appointments` use `.in('user_id', userIds)` without pagination. For orgs with 50+ stylists and 90-day windows, this can silently truncate data.
 
-### 2. Rebuild `GraduationTracker.tsx`
+---
 
-Completely rebuild the page with three tabs:
+## Enhancements
 
-**Tab: All Stylists** — Every stylist with a level assigned, showing:
-- Avatar, name, current level badge (color-coded via `getLevelColor`)
-- "Current → Next" level labels
-- Composite progress bar with percentage
-- Status badge: "Qualified" (green), "In Progress" (primary), "Needs Attention" (amber), "At Top Level" (muted)
-- Expandable row showing per-criterion progress bars (reusing `CriterionRow` pattern from `LevelProgressCard`)
-- If `requires_manual_approval` and score is 100%, show "Approve Promotion" button
+### 7. Add "Approve Promotion" action to Ready tab
+- Add a mutation to update `employee_profiles.stylist_level` to the next level's slug
+- Show "Approve Promotion" button on each qualified row when `requiresApproval` is true
+- On approval: update the level, invalidate queries, show success toast
+- Add confirmation dialog ("Promote {name} from {current} to {next}?")
 
-**Tab: Ready to Graduate** — Filtered to only stylists at 100% composite score. These are actionable — admin can review and approve promotions.
+### 8. Add LevelProgressCard to MyGraduation
+- Surface the level-based progress card at the top of the stylist's My Graduation page
+- Shows them their real-time progress toward their next level alongside the legacy checklist
+- Uses existing `useLevelProgress(effectiveUserId)` hook
 
-**Tab: Assistants** — Preserves the existing assistant checklist system (submission review, feedback, requirements). This keeps backward compatibility.
+### 9. Empty state with setup CTA on Graduation Tracker
+- When `counts.total === 0` or all are `no_criteria`, show a structured empty state
+- "No graduation criteria configured yet" with a button linking to Settings > Stylist Levels
+- Follows `tokens.empty` pattern
 
-**KPI Strip** (above tabs):
-- Ready to Graduate count
-- In Progress count
-- Needs Attention count (<25% or 0 active criteria)
-- Total tracked stylists
+### 10. Wire ManagementHub graduation stat correctly
+- Replace the `stylist_program_enrollment` query with actual `useTeamLevelProgress` counts
+- Show `counts.ready` as the stat ("ready to graduate") instead of unrelated program enrollments
 
-**Page Header**: Search input + filter by level dropdown
+### 11. Add status filter to All Stylists tab
+- Add a status filter dropdown (All / Ready / In Progress / Needs Attention / No Criteria / Top Level)
+- Works alongside existing level filter and search
+- Lets admins quickly isolate actionable groups
 
-### 3. Update PageExplainer
+### 12. Promotion history tracking
+- When a promotion is approved, record it in a new `level_promotions` table (user_id, from_level, to_level, promoted_by, promoted_at)
+- Show promotion history in the expanded row and on the individual staff report
+- This creates an audit trail per the governance doctrine
 
-Update the `graduation-tracker` entry in `pageExplainers.ts` to reflect the new scope — it's no longer just assistants, it's team-wide level progression tracking.
+---
 
 ## File Changes
 
 | File | Action |
 |------|--------|
-| `src/hooks/useTeamLevelProgress.ts` | **Create** — Bulk-fetch all stylist level progress for the org |
-| `src/pages/dashboard/admin/GraduationTracker.tsx` | **Rewrite** — Full rebuild with KPI strip, 3 tabs, level-based progress rows |
-| `src/config/pageExplainers.ts` | **Modify** — Update `graduation-tracker` description |
+| Migration SQL | **Create** — `level_promotions` table for audit trail |
+| `src/hooks/useTeamLevelProgress.ts` | **Modify** — Add pagination guard for large datasets |
+| `src/hooks/usePromoteLevel.ts` | **Create** — Mutation to promote stylist + record in audit table |
+| `src/pages/dashboard/admin/GraduationTracker.tsx` | **Modify** — Add Approve Promotion CTA, status filter, empty state with setup CTA |
+| `src/pages/dashboard/MyGraduation.tsx` | **Modify** — Add LevelProgressCard at top of page |
+| `src/pages/dashboard/admin/ManagementHub.tsx` | **Modify** — Fix graduation stat to use real counts |
 
-**1 new file, 2 modified files.**
+**1 migration, 1 new file, 4 modified files.**
 
