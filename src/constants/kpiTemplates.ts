@@ -89,6 +89,17 @@ export const KPI_TEMPLATES: KpiTemplate[] = [
     category: 'client',
   },
   {
+    key: 'rev_per_hour',
+    name: 'Revenue Per Hour',
+    description: 'Average revenue generated per booked hour of service.',
+    unit: '$',
+    cadence: 'weekly',
+    suggestedTarget: null,
+    suggestedWarning: null,
+    suggestedCritical: null,
+    category: 'revenue',
+  },
+  {
     key: 'new_client_pct',
     name: 'New Client %',
     description: 'Percentage of appointments from first-time clients.',

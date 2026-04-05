@@ -9283,6 +9283,9 @@ export type Database = {
           retention_rate_enabled: boolean
           retention_rate_threshold: number
           retention_rate_weight: number
+          rev_per_hour_enabled: boolean
+          rev_per_hour_threshold: number
+          rev_per_hour_weight: number
           revenue_enabled: boolean
           revenue_threshold: number
           revenue_weight: number
@@ -9316,6 +9319,9 @@ export type Database = {
           retention_rate_enabled?: boolean
           retention_rate_threshold?: number
           retention_rate_weight?: number
+          rev_per_hour_enabled?: boolean
+          rev_per_hour_threshold?: number
+          rev_per_hour_weight?: number
           revenue_enabled?: boolean
           revenue_threshold?: number
           revenue_weight?: number
@@ -9349,6 +9355,9 @@ export type Database = {
           retention_rate_enabled?: boolean
           retention_rate_threshold?: number
           retention_rate_weight?: number
+          rev_per_hour_enabled?: boolean
+          rev_per_hour_threshold?: number
+          rev_per_hour_weight?: number
           revenue_enabled?: boolean
           revenue_threshold?: number
           revenue_weight?: number
@@ -9441,6 +9450,8 @@ export type Database = {
           retention_enabled: boolean
           retention_rate_enabled: boolean
           retention_rate_minimum: number
+          rev_per_hour_enabled: boolean
+          rev_per_hour_minimum: number
           revenue_enabled: boolean
           revenue_minimum: number
           stylist_level_id: string
@@ -9467,6 +9478,8 @@ export type Database = {
           retention_enabled?: boolean
           retention_rate_enabled?: boolean
           retention_rate_minimum?: number
+          rev_per_hour_enabled?: boolean
+          rev_per_hour_minimum?: number
           revenue_enabled?: boolean
           revenue_minimum?: number
           stylist_level_id: string
@@ -9493,6 +9506,8 @@ export type Database = {
           retention_enabled?: boolean
           retention_rate_enabled?: boolean
           retention_rate_minimum?: number
+          rev_per_hour_enabled?: boolean
+          rev_per_hour_minimum?: number
           revenue_enabled?: boolean
           revenue_minimum?: number
           stylist_level_id?: string

@@ -76,6 +76,8 @@ interface FormState {
   new_clients_threshold: number;
   utilization_enabled: boolean;
   utilization_threshold: number;
+  rev_per_hour_enabled: boolean;
+  rev_per_hour_threshold: number;
   tenure_enabled: boolean;
   tenure_days: number;
   revenue_weight: number;
@@ -85,6 +87,7 @@ interface FormState {
   retention_rate_weight: number;
   new_clients_weight: number;
   utilization_weight: number;
+  rev_per_hour_weight: number;
   evaluation_window_days: number;
   requires_manual_approval: boolean;
 }
@@ -105,6 +108,8 @@ interface RetentionFormState {
   new_clients_minimum: number;
   utilization_enabled: boolean;
   utilization_minimum: number;
+  rev_per_hour_enabled: boolean;
+  rev_per_hour_minimum: number;
   evaluation_window_days: number;
   grace_period_days: number;
   action_type: 'coaching_flag' | 'demotion_eligible';
@@ -118,6 +123,7 @@ const CRITERIA: CriterionConfig[] = [
   { key: 'retention_rate', label: 'Client Retention', icon: Users, unit: '%', enabledKey: 'retention_rate_enabled', thresholdKey: 'retention_rate_threshold', weightKey: 'retention_rate_weight', placeholder: '70' },
   { key: 'new_clients', label: 'New Clients', icon: UserPlus, unit: '/mo', enabledKey: 'new_clients_enabled', thresholdKey: 'new_clients_threshold', weightKey: 'new_clients_weight', placeholder: '10' },
   { key: 'utilization', label: 'Schedule Utilization', icon: CalendarClock, unit: '%', enabledKey: 'utilization_enabled', thresholdKey: 'utilization_threshold', weightKey: 'utilization_weight', placeholder: '75' },
+  { key: 'rev_per_hour', label: 'Revenue Per Hour', icon: DollarSign, unit: '$/hr', enabledKey: 'rev_per_hour_enabled', thresholdKey: 'rev_per_hour_threshold', weightKey: 'rev_per_hour_weight', placeholder: '55' },
 ];
 
 interface RetentionCriterionConfig {
@@ -138,6 +144,7 @@ const RETENTION_CRITERIA: RetentionCriterionConfig[] = [
   { key: 'retention_rate', label: 'Client Retention', icon: Users, unit: '%', enabledKey: 'retention_rate_enabled', minimumKey: 'retention_rate_minimum', placeholder: '50' },
   { key: 'new_clients', label: 'New Clients', icon: UserPlus, unit: '/mo', enabledKey: 'new_clients_enabled', minimumKey: 'new_clients_minimum', placeholder: '3' },
   { key: 'utilization', label: 'Schedule Utilization', icon: CalendarClock, unit: '%', enabledKey: 'utilization_enabled', minimumKey: 'utilization_minimum', placeholder: '50' },
+  { key: 'rev_per_hour', label: 'Revenue Per Hour', icon: DollarSign, unit: '$/hr', enabledKey: 'rev_per_hour_enabled', minimumKey: 'rev_per_hour_minimum', placeholder: '30' },
 ];
 
 const INITIAL_STATE: FormState = {
@@ -148,9 +155,10 @@ const INITIAL_STATE: FormState = {
   retention_rate_enabled: false, retention_rate_threshold: 0,
   new_clients_enabled: false, new_clients_threshold: 0,
   utilization_enabled: false, utilization_threshold: 0,
+  rev_per_hour_enabled: false, rev_per_hour_threshold: 0,
   tenure_enabled: false, tenure_days: 0,
   revenue_weight: 0, retail_weight: 0, rebooking_weight: 0, avg_ticket_weight: 0,
-  retention_rate_weight: 0, new_clients_weight: 0, utilization_weight: 0,
+  retention_rate_weight: 0, new_clients_weight: 0, utilization_weight: 0, rev_per_hour_weight: 0,
   evaluation_window_days: 30, requires_manual_approval: false,
 };
 
@@ -163,6 +171,7 @@ const INITIAL_RETENTION_STATE: RetentionFormState = {
   retention_rate_enabled: false, retention_rate_minimum: 0,
   new_clients_enabled: false, new_clients_minimum: 0,
   utilization_enabled: false, utilization_minimum: 0,
+  rev_per_hour_enabled: false, rev_per_hour_minimum: 0,
   evaluation_window_days: 90, grace_period_days: 30, action_type: 'coaching_flag',
 };
 
@@ -179,9 +188,10 @@ function getZuraDefaults(levelIndex: number): FormState {
       retention_rate_enabled: true, retention_rate_threshold: 60,
       new_clients_enabled: true, new_clients_threshold: 5,
       utilization_enabled: true, utilization_threshold: 65,
+      rev_per_hour_enabled: true, rev_per_hour_threshold: 40,
       tenure_enabled: false, tenure_days: 0,
-      revenue_weight: 35, retail_weight: 10, rebooking_weight: 10, avg_ticket_weight: 0,
-      retention_rate_weight: 15, new_clients_weight: 15, utilization_weight: 15,
+      revenue_weight: 30, retail_weight: 10, rebooking_weight: 10, avg_ticket_weight: 0,
+      retention_rate_weight: 10, new_clients_weight: 10, utilization_weight: 15, rev_per_hour_weight: 15,
       evaluation_window_days: 30, requires_manual_approval: false,
     };
   }
@@ -194,9 +204,10 @@ function getZuraDefaults(levelIndex: number): FormState {
       retention_rate_enabled: true, retention_rate_threshold: 65,
       new_clients_enabled: true, new_clients_threshold: 8,
       utilization_enabled: true, utilization_threshold: 75,
+      rev_per_hour_enabled: true, rev_per_hour_threshold: 55,
       tenure_enabled: false, tenure_days: 0,
-      revenue_weight: 25, retail_weight: 10, rebooking_weight: 10, avg_ticket_weight: 15,
-      retention_rate_weight: 15, new_clients_weight: 10, utilization_weight: 15,
+      revenue_weight: 20, retail_weight: 10, rebooking_weight: 10, avg_ticket_weight: 10,
+      retention_rate_weight: 10, new_clients_weight: 10, utilization_weight: 15, rev_per_hour_weight: 15,
       evaluation_window_days: 60, requires_manual_approval: false,
     };
   }
@@ -209,9 +220,10 @@ function getZuraDefaults(levelIndex: number): FormState {
       retention_rate_enabled: true, retention_rate_threshold: 70,
       new_clients_enabled: true, new_clients_threshold: 10,
       utilization_enabled: true, utilization_threshold: 80,
+      rev_per_hour_enabled: true, rev_per_hour_threshold: 75,
       tenure_enabled: true, tenure_days: 365,
-      revenue_weight: 20, retail_weight: 10, rebooking_weight: 10, avg_ticket_weight: 15,
-      retention_rate_weight: 15, new_clients_weight: 10, utilization_weight: 20,
+      revenue_weight: 15, retail_weight: 10, rebooking_weight: 10, avg_ticket_weight: 10,
+      retention_rate_weight: 10, new_clients_weight: 10, utilization_weight: 20, rev_per_hour_weight: 15,
       evaluation_window_days: 60, requires_manual_approval: true,
     };
   }
@@ -223,9 +235,10 @@ function getZuraDefaults(levelIndex: number): FormState {
     retention_rate_enabled: true, retention_rate_threshold: 80,
     new_clients_enabled: true, new_clients_threshold: 15,
     utilization_enabled: true, utilization_threshold: 85,
+    rev_per_hour_enabled: true, rev_per_hour_threshold: 95,
     tenure_enabled: true, tenure_days: 730,
-    revenue_weight: 20, retail_weight: 10, rebooking_weight: 10, avg_ticket_weight: 15,
-    retention_rate_weight: 15, new_clients_weight: 10, utilization_weight: 20,
+    revenue_weight: 15, retail_weight: 10, rebooking_weight: 10, avg_ticket_weight: 10,
+    retention_rate_weight: 10, new_clients_weight: 10, utilization_weight: 20, rev_per_hour_weight: 15,
     evaluation_window_days: 90, requires_manual_approval: true,
   };
 }
@@ -241,6 +254,7 @@ function getZuraRetentionDefaults(levelIndex: number): RetentionFormState {
       retention_rate_enabled: true, retention_rate_minimum: 45,
       new_clients_enabled: true, new_clients_minimum: 3,
       utilization_enabled: true, utilization_minimum: 50,
+      rev_per_hour_enabled: true, rev_per_hour_minimum: 25,
       evaluation_window_days: 90, grace_period_days: 30, action_type: 'coaching_flag',
     };
   }
@@ -254,6 +268,7 @@ function getZuraRetentionDefaults(levelIndex: number): RetentionFormState {
       retention_rate_enabled: true, retention_rate_minimum: 50,
       new_clients_enabled: true, new_clients_minimum: 4,
       utilization_enabled: true, utilization_minimum: 55,
+      rev_per_hour_enabled: true, rev_per_hour_minimum: 35,
       evaluation_window_days: 90, grace_period_days: 30, action_type: 'coaching_flag',
     };
   }
@@ -267,6 +282,7 @@ function getZuraRetentionDefaults(levelIndex: number): RetentionFormState {
       retention_rate_enabled: true, retention_rate_minimum: 55,
       new_clients_enabled: true, new_clients_minimum: 5,
       utilization_enabled: true, utilization_minimum: 60,
+      rev_per_hour_enabled: true, rev_per_hour_minimum: 50,
       evaluation_window_days: 90, grace_period_days: 30, action_type: 'demotion_eligible',
     };
   }
@@ -279,6 +295,7 @@ function getZuraRetentionDefaults(levelIndex: number): RetentionFormState {
     retention_rate_enabled: true, retention_rate_minimum: 60,
     new_clients_enabled: true, new_clients_minimum: 8,
     utilization_enabled: true, utilization_minimum: 65,
+    rev_per_hour_enabled: true, rev_per_hour_minimum: 65,
     evaluation_window_days: 90, grace_period_days: 30, action_type: 'demotion_eligible',
   };
 }
@@ -325,6 +342,9 @@ export function GraduationWizard({ open, onOpenChange, levelId, levelLabel, leve
         retention_rate_weight: existing.retention_rate_weight,
         new_clients_weight: existing.new_clients_weight,
         utilization_weight: existing.utilization_weight,
+        rev_per_hour_enabled: existing.rev_per_hour_enabled,
+        rev_per_hour_threshold: Number(existing.rev_per_hour_threshold),
+        rev_per_hour_weight: existing.rev_per_hour_weight,
         evaluation_window_days: existing.evaluation_window_days,
         requires_manual_approval: existing.requires_manual_approval,
       });
@@ -352,6 +372,8 @@ export function GraduationWizard({ open, onOpenChange, levelId, levelLabel, leve
         new_clients_minimum: Number(existingRetention.new_clients_minimum),
         utilization_enabled: existingRetention.utilization_enabled,
         utilization_minimum: Number(existingRetention.utilization_minimum),
+        rev_per_hour_enabled: existingRetention.rev_per_hour_enabled,
+        rev_per_hour_minimum: Number(existingRetention.rev_per_hour_minimum),
         evaluation_window_days: existingRetention.evaluation_window_days,
         grace_period_days: existingRetention.grace_period_days,
         action_type: existingRetention.action_type as 'coaching_flag' | 'demotion_eligible',

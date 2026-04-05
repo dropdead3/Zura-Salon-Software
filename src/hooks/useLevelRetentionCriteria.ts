@@ -22,6 +22,8 @@ export interface LevelRetentionCriteria {
   new_clients_minimum: number;
   utilization_enabled: boolean;
   utilization_minimum: number;
+  rev_per_hour_enabled: boolean;
+  rev_per_hour_minimum: number;
   evaluation_window_days: number;
   grace_period_days: number;
   action_type: 'coaching_flag' | 'demotion_eligible';
