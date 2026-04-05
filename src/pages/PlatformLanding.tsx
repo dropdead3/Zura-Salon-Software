@@ -12,6 +12,7 @@ import { TestimonialSection } from '@/components/marketing/TestimonialSection';
 import { FinalCTA } from '@/components/marketing/FinalCTA';
 import { SectionDivider } from '@/components/marketing/SectionDivider';
 import { BeforeAfterShowcase } from '@/components/marketing/BeforeAfterShowcase';
+import { ToolConsolidation } from '@/components/marketing/ToolConsolidation';
 
 export default function PlatformLanding() {
   return (
@@ -30,6 +31,7 @@ export default function PlatformLanding() {
       <PersonaExplorer />
       <SectionDivider />
       <BeforeAfterShowcase />
+      <ToolConsolidation />
       <OutcomeMetrics />
       <BuiltByOperators />
       <TestimonialSection />
