@@ -9,7 +9,7 @@ export function LogoBar() {
   return (
     <section className="relative z-10 py-10 sm:py-14 overflow-hidden">
       <div className="max-w-7xl mx-auto px-6 sm:px-8 text-center mb-8">
-        <p className="font-sans text-xs sm:text-sm text-slate-500 uppercase tracking-[0.15em]">
+        <p className="font-display text-xs sm:text-sm text-slate-500 uppercase tracking-[0.15em]">
           Integrates with the tools you already use
         </p>
       </div>

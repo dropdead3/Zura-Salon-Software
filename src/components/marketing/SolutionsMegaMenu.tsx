@@ -86,7 +86,7 @@ function DesktopDropdown({ open, onClose }: DesktopDropdownProps) {
             <div className="grid grid-cols-2 divide-x divide-white/[0.06]">
               {/* Left: Personas */}
               <div className="p-5">
-                <p className="font-sans text-[10px] text-slate-500 uppercase tracking-[0.15em] mb-3 px-1">
+                <p className="font-display text-[10px] text-slate-500 uppercase tracking-[0.15em] mb-3 px-1">
                   Who are you?
                 </p>
                 <div className="space-y-0.5">
@@ -111,7 +111,7 @@ function DesktopDropdown({ open, onClose }: DesktopDropdownProps) {
 
               {/* Right: Solutions */}
               <div className="p-5">
-                <p className="font-sans text-[10px] text-slate-500 uppercase tracking-[0.15em] mb-3 px-1">
+                <p className="font-display text-[10px] text-slate-500 uppercase tracking-[0.15em] mb-3 px-1">
                   Solutions
                 </p>
                 <div className="space-y-0.5">
@@ -184,7 +184,7 @@ function MobileAccordion({ onNavigate }: MobileAccordionProps) {
           >
             <div className="pt-2 pb-3 pl-3 space-y-4">
               <div>
-                <p className="font-sans text-[10px] text-slate-500 uppercase tracking-[0.15em] mb-2">Who are you?</p>
+                <p className="font-display text-[10px] text-slate-500 uppercase tracking-[0.15em] mb-2">Who are you?</p>
                 <div className="space-y-1">
                   {personaItems.map((item) => (
                     <Link
@@ -200,7 +200,7 @@ function MobileAccordion({ onNavigate }: MobileAccordionProps) {
                 </div>
               </div>
               <div>
-                <p className="font-sans text-[10px] text-slate-500 uppercase tracking-[0.15em] mb-2">Solutions</p>
+                <p className="font-display text-[10px] text-slate-500 uppercase tracking-[0.15em] mb-2">Solutions</p>
                 <div className="space-y-1">
                   {solutionItems.map((item) => (
                     <Link
@@ -266,7 +266,7 @@ export function SolutionsDesktopTrigger() {
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="inline-flex items-center gap-1 font-sans text-sm text-slate-400 hover:text-white transition-colors tracking-wide"
+        className="inline-flex items-center gap-1 font-sans text-sm text-slate-400 hover:text-white transition-colors"
       >
         Solutions
         <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${open ? 'rotate-180' : ''}`} />

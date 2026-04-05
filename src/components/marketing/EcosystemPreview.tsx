@@ -43,7 +43,7 @@ export function EcosystemPreview() {
     <section className="relative z-10 px-6 sm:px-8 py-16 sm:py-20 lg:py-24">
       <div className="max-w-7xl mx-auto">
         <div className="text-center mb-12 sm:mb-16">
-          <p className="font-sans text-xs sm:text-sm text-violet-400 uppercase tracking-[0.15em] mb-4">
+          <p className="font-display text-xs sm:text-sm text-violet-400 uppercase tracking-[0.15em] mb-4">
             Ecosystem
           </p>
           <h2 className="font-display text-2xl sm:text-3xl lg:text-4xl tracking-tight mb-4">
@@ -65,7 +65,7 @@ export function EcosystemPreview() {
                   <surface.icon className="w-5 h-5 text-violet-400" />
                 </div>
                 {surface.phase !== 'Live' && (
-                  <span className="font-sans text-xs text-slate-500 uppercase tracking-wide">
+                  <span className="font-display text-xs text-slate-500 uppercase tracking-wide">
                     {surface.phase}
                   </span>
                 )}

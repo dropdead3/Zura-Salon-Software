@@ -206,7 +206,7 @@ export function DashboardMockup({ onPhaseChange }: DashboardMockupProps = {}) {
           {/* Phase indicator */}
           <div className="ml-auto flex items-center gap-1.5">
             {phase !== 'pause' && (
-              <span className="font-sans text-[9px] text-violet-400/70 tracking-wider uppercase animate-fade-in">
+              <span className="font-display text-[9px] text-violet-400/70 tracking-wider uppercase animate-fade-in">
                 {phase === 'observe' && 'Observing…'}
                 {phase === 'detect' && `${PLATFORM_NAME} detected an opportunity`}
                 {phase === 'act' && 'Applying recommendation…'}

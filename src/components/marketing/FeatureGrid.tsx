@@ -43,7 +43,7 @@ export function FeatureGrid() {
     <section ref={ref} className="relative z-10 px-6 sm:px-8 py-16 sm:py-20 lg:py-24">
       <div className="max-w-6xl mx-auto">
         <div className="text-center mb-12 sm:mb-16 mkt-reveal">
-          <p className="font-sans text-xs sm:text-sm text-violet-400 uppercase tracking-[0.15em] mb-4">
+          <p className="font-display text-xs sm:text-sm text-violet-400 uppercase tracking-[0.15em] mb-4">
             Capabilities
           </p>
           <h2 className="font-display text-2xl sm:text-3xl lg:text-4xl tracking-tight mb-4">
