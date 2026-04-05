@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, useEffect } from 'react';
+import { useState, useRef, useCallback, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowRight, Loader2, Sparkles, RotateCcw, Calendar } from 'lucide-react';
 import { Link } from 'react-router-dom';
@@ -14,10 +14,17 @@ const DEMO_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/demo-assista
 
 const SUGGESTIONS = [
   "I can't track commissions accurately",
+  "I want to run my commission salon better",
+  "I need booth renter tracking and management",
+  "I want custom commission levels per service and retail",
+  "I need to track color bar costs per service",
+  "I want an AI assistant to handle calls and scheduling",
   "My team keeps quitting",
   "I don't know which services are profitable",
   "Scheduling is a nightmare",
 ];
+
+const DISPLAY_PILL_COUNT = 5;
 
 type FeatureCard = {
   id: string;
