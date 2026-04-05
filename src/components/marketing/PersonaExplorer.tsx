@@ -215,7 +215,7 @@ export function PersonaExplorer() {
                 type="button"
                 onClick={() => handlePersonaSelect(persona.key)}
                 className={`
-                  text-left p-6 rounded-2xl mkt-glass cursor-pointer transition-all duration-300
+                  text-left p-6 rounded-xl border border-white/[0.06] bg-white/[0.02] cursor-pointer transition-all duration-300
                   ${isSelected
                     ? 'border-violet-500/50 shadow-[0_0_30px_-5px_hsl(263_70%_55%/0.25)]'
                     : 'border-transparent hover:border-white/10'
