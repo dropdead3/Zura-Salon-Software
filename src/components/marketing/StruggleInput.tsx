@@ -51,11 +51,63 @@ export function StruggleInput() {
   const [error, setError] = useState<string | null>(null);
   const [cooldownUntil, setCooldownUntil] = useState(0);
   const [limitReached, setLimitReached] = useState(() => getSessionCount() >= SESSION_LIMIT);
+  const [isFocused, setIsFocused] = useState(false);
+  const [placeholderText, setPlaceholderText] = useState('');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const responseRef = useRef<HTMLDivElement>(null);
 
   const isCoolingDown = Date.now() < cooldownUntil;
   const canSubmit = query.trim().length > 0 && !isLoading && !isCoolingDown && !limitReached;
+  const showAnimatedPlaceholder = query === '' && !isFocused && !isLoading && !limitReached;
+
+  // Typing animation effect
+  useEffect(() => {
+    if (!showAnimatedPlaceholder) {
+      setPlaceholderText('');
+      return;
+    }
+
+    let cancelled = false;
+    let timeoutId: ReturnType<typeof setTimeout>;
+
+    const animate = async () => {
+      let index = 0;
+      while (!cancelled) {
+        const text = SUGGESTIONS[index % SUGGESTIONS.length];
+
+        // Type in
+        for (let i = 0; i <= text.length; i++) {
+          if (cancelled) return;
+          setPlaceholderText(text.slice(0, i));
+          await new Promise(r => { timeoutId = setTimeout(r, 40); });
+        }
+
+        // Pause
+        if (cancelled) return;
+        await new Promise(r => { timeoutId = setTimeout(r, 2000); });
+
+        // Delete
+        for (let i = text.length; i >= 0; i--) {
+          if (cancelled) return;
+          setPlaceholderText(text.slice(0, i));
+          await new Promise(r => { timeoutId = setTimeout(r, 25); });
+        }
+
+        // Brief pause before next
+        if (cancelled) return;
+        await new Promise(r => { timeoutId = setTimeout(r, 300); });
+
+        index++;
+      }
+    };
+
+    animate();
+
+    return () => {
+      cancelled = true;
+      clearTimeout(timeoutId);
+    };
+  }, [showAnimatedPlaceholder]);
 
   // Cooldown tick
   useEffect(() => {
@@ -256,15 +308,26 @@ export function StruggleInput() {
         ) : (
           <>
             <div className="relative">
+              {/* Animated typing placeholder */}
+              {showAnimatedPlaceholder && (
+                <div
+                  className="absolute inset-0 pointer-events-none font-sans text-lg text-slate-500 whitespace-pre-wrap py-[2px]"
+                  aria-hidden="true"
+                >
+                  {placeholderText}
+                  <span className="animate-pulse">|</span>
+                </div>
+              )}
               <textarea
                 ref={textareaRef}
                 value={query}
                 onChange={(e) => setQuery(e.target.value.slice(0, MAX_CHARS))}
                 onKeyDown={handleKeyDown}
-                placeholder="I'm struggling with..."
+                onFocus={() => setIsFocused(true)}
+                onBlur={() => setIsFocused(false)}
                 disabled={isLoading}
                 aria-label="Describe your salon challenge"
-                className="w-full bg-transparent border-0 resize-none text-white placeholder:text-slate-500 font-sans text-lg focus:outline-none min-h-[80px] disabled:opacity-50"
+                className="w-full bg-transparent border-0 resize-none text-white font-sans text-lg focus:outline-none min-h-[80px] disabled:opacity-50 relative z-10"
                 rows={3}
               />
               <div className="flex items-center justify-between mt-2">
