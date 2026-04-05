@@ -44,6 +44,7 @@ export function MarketingNav() {
   const isActive = (href: string) => location.pathname === href;
 
   return (
+    <>
     <header
       className={cn(
         'fixed top-4 left-1/2 -translate-x-1/2 z-50 w-[calc(100%-2rem)] max-w-5xl transition-all duration-300',
