@@ -1560,6 +1560,15 @@ html {
    These styles are isolated from dashboard/tenant layers.
    ══════════════════════════════════════════════════════════════════════════════ */
 
+/* ── Extended palette (marketing only) ─────────────────────────────────────── */
+.marketing-surface {
+  --mkt-indigo: 271 100% 12%;
+  --mkt-twilight: 275 100% 25%;
+  --mkt-midnight: 240 59% 26%;
+  --mkt-lavender: 240 100% 94%;
+  --mkt-dusky: 219 79% 66%;
+}
+
 /* ── Fade-in system ─────────────────────────────────────────────────────────── */
 .marketing-surface .mkt-fade-in {
   animation: mktFadeIn 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;

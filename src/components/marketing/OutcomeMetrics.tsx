@@ -49,11 +49,11 @@ export function OutcomeMetrics() {
   return (
     <section ref={ref} className="relative z-10 px-6 sm:px-8 py-20 lg:py-28">
       {/* Subtle gradient backdrop */}
-      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-violet-500/[0.03] to-transparent -z-10" />
+      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[hsl(var(--mkt-midnight)/0.06)] to-transparent -z-10" />
 
       <div className="max-w-5xl mx-auto">
         <div className="text-center mb-14 mkt-reveal">
-          <p className="font-display text-[11px] sm:text-xs text-violet-400 uppercase tracking-[0.15em] mb-4">
+          <p className="font-display text-[11px] sm:text-xs text-[hsl(var(--mkt-dusky))] uppercase tracking-[0.15em] mb-4">
             Results
           </p>
           <h2 className="font-display text-2xl sm:text-3xl lg:text-4xl tracking-tight mb-2">

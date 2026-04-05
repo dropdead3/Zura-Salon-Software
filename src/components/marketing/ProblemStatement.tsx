@@ -58,8 +58,8 @@ export function ProblemStatement() {
                 className="mkt-reveal flex gap-4 items-start"
                 style={{ transitionDelay: `${0.1 + i * 0.1}s` }}
               >
-                <div className="w-10 h-10 shrink-0 bg-violet-500/10 rounded-lg flex items-center justify-center mt-0.5">
-                  <point.icon className="w-5 h-5 text-violet-400" />
+                <div className="w-10 h-10 shrink-0 bg-[hsl(var(--mkt-dusky)/0.1)] rounded-lg flex items-center justify-center mt-0.5">
+                  <point.icon className="w-5 h-5 text-[hsl(var(--mkt-dusky))]" />
                 </div>
                 <div>
                   <h3 className="font-display text-base tracking-[0.08em] mb-1.5">

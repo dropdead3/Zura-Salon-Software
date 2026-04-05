@@ -163,7 +163,7 @@ export function PersonaExplorer() {
       <div className="max-w-6xl mx-auto">
         {/* ── Header ──────────────────────────────────────────────────── */}
         <div className="text-center mb-12 sm:mb-16 mkt-reveal">
-          <p className="font-display text-[11px] sm:text-xs text-violet-400 uppercase tracking-[0.15em] mb-4">
+          <p className="font-display text-[11px] sm:text-xs text-[hsl(var(--mkt-dusky))] uppercase tracking-[0.15em] mb-4">
             Find Your Solution
           </p>
           <h2 className="font-display text-2xl sm:text-3xl lg:text-4xl tracking-tight mb-4">
@@ -216,7 +216,7 @@ export function PersonaExplorer() {
                 className={`
                   text-left p-6 rounded-xl border border-white/[0.06] bg-white/[0.02] cursor-pointer transition-all duration-300
                   ${isSelected
-                    ? 'border-violet-500/50 shadow-[0_0_30px_-5px_hsl(263_70%_55%/0.25)]'
+                    ? 'border-[hsl(var(--mkt-dusky)/0.5)] shadow-[0_0_30px_-5px_hsl(var(--mkt-dusky)/0.25)]'
                     : 'border-transparent hover:border-white/10'
                   }
                 `}

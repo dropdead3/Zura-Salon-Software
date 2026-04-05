@@ -6,7 +6,7 @@ export function HeroSection() {
   return (
     <section className="relative flex flex-col items-center justify-center px-6 sm:px-8 text-center pt-24 sm:pt-32 lg:pt-40 pb-8 sm:pb-12 max-w-5xl mx-auto overflow-visible">
       {/* Ambient glow beam */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[320px] h-[500px] bg-gradient-to-b from-violet-500/20 via-violet-500/5 to-transparent rounded-full blur-[100px] -z-10 mkt-ambient-glow" />
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[320px] h-[500px] bg-gradient-to-b from-violet-500/20 via-[hsl(var(--mkt-twilight)/0.1)] to-transparent rounded-full blur-[100px] -z-10 mkt-ambient-glow" />
 
       {/* Pill badge */}
       <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-violet-500/10 border border-violet-500/20 rounded-full text-violet-300 font-sans text-sm mb-8 mkt-fade-in">

@@ -119,7 +119,7 @@ export function SolutionPageTemplate({
           </p>
           <Link
             to="/demo"
-            className="inline-flex items-center justify-center gap-2 h-12 px-8 bg-gradient-to-r from-violet-600 to-purple-600 text-white hover:from-violet-500 hover:to-purple-500 shadow-lg shadow-violet-500/25 rounded-full font-sans text-base font-medium transition-all"
+            className="inline-flex items-center justify-center gap-2 h-12 px-8 bg-gradient-to-r from-[hsl(var(--mkt-twilight))] to-[hsl(var(--mkt-dusky))] text-white hover:opacity-90 shadow-lg shadow-[hsl(var(--mkt-dusky)/0.25)] rounded-full font-sans text-base font-medium transition-all"
           >
             {ctaText}
             <ArrowRight className="w-4 h-4" />

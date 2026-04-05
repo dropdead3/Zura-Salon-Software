@@ -15,13 +15,13 @@ export function BuiltByOperators() {
   return (
     <section ref={ref} className="relative z-10 px-6 sm:px-8 py-20 lg:py-28">
       {/* Gradient separator */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-3/4 h-px bg-gradient-to-r from-transparent via-violet-500/20 to-transparent" />
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-3/4 h-px bg-gradient-to-r from-transparent via-[hsl(var(--mkt-dusky)/0.2)] to-transparent" />
 
       <div className="max-w-6xl mx-auto">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
           {/* Narrative */}
           <div className="mkt-reveal">
-            <p className="font-display text-[11px] sm:text-xs text-violet-400 uppercase tracking-[0.15em] mb-4">
+            <p className="font-display text-[11px] sm:text-xs text-[hsl(var(--mkt-lavender)/0.6)] uppercase tracking-[0.15em] mb-4">
               Built for how salons actually run
             </p>
             <h2 className="font-display text-2xl sm:text-3xl lg:text-4xl tracking-tight mb-6">
@@ -51,8 +51,8 @@ export function BuiltByOperators() {
                 key={marker.text}
                 className="flex items-center gap-4"
               >
-                <div className="w-10 h-10 rounded-lg bg-violet-500/10 flex items-center justify-center shrink-0">
-                  <marker.icon className="w-5 h-5 text-violet-400" />
+                <div className="w-10 h-10 rounded-lg bg-[hsl(var(--mkt-dusky)/0.1)] flex items-center justify-center shrink-0">
+                  <marker.icon className="w-5 h-5 text-[hsl(var(--mkt-dusky))]" />
                 </div>
                 <p className="font-sans text-base text-slate-300">
                   {marker.text}
