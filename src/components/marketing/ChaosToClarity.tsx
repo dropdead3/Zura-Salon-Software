@@ -1,15 +1,20 @@
 import { useRef } from 'react';
 import { motion, useScroll, useTransform } from 'framer-motion';
-import { FileSpreadsheet, MessageSquare, Calendar, AlertTriangle, TrendingUp, Zap, Check } from 'lucide-react';
+import { FileSpreadsheet, MessageSquare, Calendar, AlertTriangle, TrendingUp, Zap, Check, Clock, DollarSign, Users, ShoppingBag, Phone } from 'lucide-react';
 import { PLATFORM_NAME } from '@/lib/brand';
 
 const chaosCards = [
-  { icon: FileSpreadsheet, label: 'Revenue_Report_v3_FINAL.xlsx', color: 'text-slate-400', rotate: -4, x: '5%', y: '10%' },
-  { icon: MessageSquare, label: '"Can someone cover Tuesday?"', color: 'text-amber-400', rotate: 3, x: '35%', y: '5%' },
-  { icon: Calendar, label: '3 gaps on Thursday', color: 'text-slate-500', rotate: -2, x: '15%', y: '55%' },
-  { icon: AlertTriangle, label: 'Low stock: Olaplex No.3', color: 'text-amber-500', rotate: 5, x: '50%', y: '45%' },
-  { icon: FileSpreadsheet, label: 'Payroll_March_REVISED.csv', color: 'text-slate-400', rotate: -6, x: '55%', y: '15%' },
-  { icon: MessageSquare, label: '"Is Sarah rebooking?"', color: 'text-slate-500', rotate: 2, x: '25%', y: '35%' },
+  { icon: FileSpreadsheet, label: 'Revenue_Report_v3_FINAL.xlsx', color: 'text-slate-300', rotate: -4, x: '3%', y: '8%' },
+  { icon: MessageSquare, label: '"Can someone cover Tuesday?"', color: 'text-amber-400', rotate: 3, x: '38%', y: '3%' },
+  { icon: Calendar, label: '3 gaps on Thursday', color: 'text-slate-300', rotate: -2, x: '8%', y: '50%' },
+  { icon: AlertTriangle, label: 'Low stock: Olaplex No.3', color: 'text-amber-500', rotate: 5, x: '55%', y: '42%' },
+  { icon: FileSpreadsheet, label: 'Payroll_March_REVISED.csv', color: 'text-slate-300', rotate: -6, x: '58%', y: '12%' },
+  { icon: MessageSquare, label: '"Is Sarah rebooking?"', color: 'text-slate-300', rotate: 2, x: '22%', y: '30%' },
+  { icon: Clock, label: '"Where did my 2pm cancel go?"', color: 'text-slate-300', rotate: -3, x: '5%', y: '75%' },
+  { icon: DollarSign, label: 'Commission math doesn\'t add up', color: 'text-red-400', rotate: 4, x: '42%', y: '68%' },
+  { icon: Users, label: '3rd no-call no-show this month', color: 'text-amber-400', rotate: -5, x: '55%', y: '78%' },
+  { icon: ShoppingBag, label: '"Who ordered more Redken?"', color: 'text-slate-300', rotate: 1, x: '30%', y: '58%' },
+  { icon: Phone, label: 'Missed 4 calls while cutting', color: 'text-amber-500', rotate: -1, x: '65%', y: '28%' },
 ];
 
 export function ChaosToClarity() {
@@ -44,10 +49,10 @@ export function ChaosToClarity() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8 items-stretch min-h-[380px]">
           {/* Chaos side */}
           <motion.div
-            className="relative rounded-xl border border-white/[0.06] bg-white/[0.02] p-6 sm:p-8 overflow-hidden min-h-[320px]"
+            className="relative rounded-xl border border-white/[0.12] bg-white/[0.04] p-6 sm:p-8 overflow-hidden min-h-[380px]"
             style={{ opacity: chaosDim }}
           >
-            <p className="font-display text-[10px] tracking-[0.15em] text-slate-500 uppercase mb-6">
+            <p className="font-display text-[10px] tracking-[0.15em] text-slate-400 uppercase mb-6">
               Your Monday morning
             </p>
 
@@ -55,7 +60,7 @@ export function ChaosToClarity() {
             {chaosCards.map((card, i) => (
               <div
                 key={i}
-                className="absolute flex items-center gap-2 px-3 py-2 rounded-lg border border-white/[0.08] bg-slate-900/80 backdrop-blur-sm shadow-lg max-w-[200px]"
+                className="absolute flex items-center gap-2 px-3 py-2 rounded-lg border border-white/[0.12] bg-slate-800/70 backdrop-blur-sm shadow-lg max-w-[220px]"
                 style={{
                   left: card.x,
                   top: card.y,
@@ -64,23 +69,9 @@ export function ChaosToClarity() {
                 }}
               >
                 <card.icon className={`w-3.5 h-3.5 shrink-0 ${card.color}`} />
-                <span className="font-sans text-[10px] text-slate-400 truncate">{card.label}</span>
+                <span className="font-sans text-[11px] text-slate-300 truncate">{card.label}</span>
               </div>
             ))}
-
-            {/* Noise overlay dots */}
-            <div className="absolute inset-0 pointer-events-none opacity-20">
-              {Array.from({ length: 12 }).map((_, i) => (
-                <div
-                  key={i}
-                  className="absolute w-1 h-1 rounded-full bg-amber-400/60"
-                  style={{
-                    left: `${10 + (i * 7.5)}%`,
-                    top: `${20 + Math.sin(i) * 30}%`,
-                  }}
-                />
-              ))}
-            </div>
           </motion.div>
 
           {/* Clarity side */}
