@@ -15,6 +15,7 @@ import { BeforeAfterShowcase } from '@/components/marketing/BeforeAfterShowcase'
 import { ToolConsolidation } from '@/components/marketing/ToolConsolidation';
 import { StruggleInput } from '@/components/marketing/StruggleInput';
 import { ZuraInANutshell } from '@/components/marketing/ZuraInANutshell';
+import { FounderQuote } from '@/components/marketing/FounderQuote';
 
 export default function PlatformLanding() {
   return (
