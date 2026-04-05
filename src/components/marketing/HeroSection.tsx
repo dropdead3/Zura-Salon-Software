@@ -32,10 +32,9 @@ export function HeroSection() {
         Used by 50+ salon locations daily
       </div>
 
-      <h1 className="font-display text-3xl sm:text-5xl lg:text-7xl font-medium tracking-tight leading-[1.08] mb-6 mkt-fade-in mkt-delay-1">
-        Know exactly{' '}
-        <br className="hidden sm:block" />
-        <span className="bg-gradient-to-r from-violet-400 to-purple-400 bg-clip-text text-transparent">what to fix next.</span>
+      <h1 className="font-display text-[1.6rem] xs:text-[1.75rem] sm:text-5xl lg:text-7xl font-medium tracking-tight leading-[1.12] mb-6 mkt-fade-in mkt-delay-1">
+        <span className="block">Know exactly</span>
+        <span className="block bg-gradient-to-r from-violet-400 to-purple-400 bg-clip-text text-transparent whitespace-nowrap">what to fix next.</span>
       </h1>
 
       <p className="font-sans text-base sm:text-lg lg:text-xl text-slate-400 max-w-2xl mb-10 leading-relaxed mkt-fade-in mkt-delay-2">
