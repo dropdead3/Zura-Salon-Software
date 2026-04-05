@@ -445,7 +445,7 @@ export default function StylistLevels() {
                     )}
                   </div>
                   
-                  {/* Description field */}
+                  {/* Description + Graduation Pathway */}
                   <div className="px-4 pb-3 pt-0">
                     <div className="flex items-start gap-2 pl-14">
                       <Input
@@ -455,6 +455,34 @@ export default function StylistLevels() {
                         className="h-7 text-xs text-muted-foreground bg-background border focus-visible:ring-1"
                       />
                     </div>
+                    {/* Graduation Pathway button - hidden for first level (entry level) */}
+                    {index > 0 && level.dbId && (
+                      <div className="pl-14 mt-2">
+                        <button
+                          onClick={() => {
+                            setWizardLevelId(level.dbId!);
+                            setWizardLevelLabel(level.label);
+                            setWizardLevelIndex(index);
+                          }}
+                          className={cn(
+                            "flex items-center gap-1.5 text-xs transition-colors rounded-full px-2.5 py-1",
+                            promotionCriteria?.some(c => c.stylist_level_id === level.dbId && c.is_active)
+                              ? "text-primary bg-primary/5 hover:bg-primary/10"
+                              : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                          )}
+                        >
+                          <Sparkles className="w-3 h-3" />
+                          {promotionCriteria?.some(c => c.stylist_level_id === level.dbId && c.is_active)
+                            ? 'Graduation Configured'
+                            : 'Configure Graduation'}
+                        </button>
+                      </div>
+                    )}
+                    {index === 0 && (
+                      <div className="pl-14 mt-2">
+                        <span className="text-[10px] text-muted-foreground/60 italic">Entry level — no graduation criteria needed</span>
+                      </div>
+                    )}
                   </div>
                 </div>
               );
