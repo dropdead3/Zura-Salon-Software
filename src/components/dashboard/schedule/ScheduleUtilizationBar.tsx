@@ -13,6 +13,8 @@ interface ScheduleUtilizationBarProps {
   hoursStart?: number;
   hoursEnd?: number;
   averageServicePrice?: number;
+  /** User IDs of stylists who have approved time off on this day */
+  timeOffUserIds?: string[];
 }
 
 function parseTimeToMinutes(time: string): number {
@@ -27,8 +29,11 @@ export function ScheduleUtilizationBar({
   hoursStart = 9,
   hoursEnd = 18,
   averageServicePrice = 85,
+  timeOffUserIds = [],
 }: ScheduleUtilizationBarProps) {
   const dateStr = format(date, 'yyyy-MM-dd');
+  // Reduce available stylist count by those on approved time off
+  const effectiveStylistCount = Math.max(stylistCount - timeOffUserIds.length, 0);
 
   const metrics = useMemo(() => {
     const dayAppointments = appointments.filter(
@@ -37,8 +42,8 @@ export function ScheduleUtilizationBar({
         !['cancelled', 'no_show'].includes(apt.status)
     );
 
-    // Total available minutes across all stylists
-    const availableMinutes = (hoursEnd - hoursStart) * 60 * Math.max(stylistCount, 1);
+    // Total available minutes across active stylists (excluding time off)
+    const availableMinutes = (hoursEnd - hoursStart) * 60 * Math.max(effectiveStylistCount, 1);
 
     // Total booked minutes
     const bookedMinutes = dayAppointments.reduce((sum, apt) => {

@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { getDay, getHours, format, differenceInMinutes } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
+import { buildTimeOffSet, countTimeOffDays } from '@/lib/time-off-utils';
 
 interface HourData {
   hour: string;
@@ -37,6 +38,22 @@ export function useCapacityReport(dateFrom: string, dateTo: string, locationId?:
       const { data: appointments, error } = await query;
       
       if (error) throw error;
+
+      // Fetch approved time-off to subtract from capacity denominator
+      let timeOffQuery = supabase
+        .from('time_off_requests')
+        .select('user_id, start_date, end_date, is_full_day')
+        .eq('status', 'approved')
+        .lte('start_date', dateTo)
+        .gte('end_date', dateFrom);
+
+      if (locationId) {
+        // We can't filter time_off by location directly, but we include all org time off
+      }
+
+      const { data: timeOffRecords } = await timeOffQuery;
+      const timeOffSet = buildTimeOffSet(timeOffRecords || []);
+      const timeOffDayCount = countTimeOffDays(timeOffSet);
 
       if (!appointments || appointments.length === 0) {
         return {
@@ -96,8 +113,9 @@ export function useCapacityReport(dateFrom: string, dateTo: string, locationId?:
         }
       });
 
-      // Calculate utilization by hour (assuming 8 working hours per day, 6 days a week)
-      const workingDays = Math.ceil((new Date(dateTo).getTime() - new Date(dateFrom).getTime()) / (1000 * 60 * 60 * 24));
+      // Calculate utilization by hour — subtract approved time-off days from capacity
+      const rawDays = Math.ceil((new Date(dateTo).getTime() - new Date(dateFrom).getTime()) / (1000 * 60 * 60 * 24));
+      const workingDays = Math.max(1, rawDays - timeOffDayCount);
       const maxAppointmentsPerHour = workingDays; // Simplified: 1 stylist capacity
 
       const byHour: HourData[] = [];
