@@ -7,6 +7,9 @@ export default function Inventory() {
       eyebrow="Inventory Control"
       headline="Know what you have. Use what you need."
       description="Product waste and guesswork eat into your margins quietly. Zura tracks what's being used, what's sitting on shelves, and what's costing you money."
+      seoTitle="Inventory Control"
+      seoDescription="Track product usage, reduce waste, and protect your margins with real-time inventory intelligence."
+      seoPath="/solutions/inventory"
       items={[
         {
           icon: Package,

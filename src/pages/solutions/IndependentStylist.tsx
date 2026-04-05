@@ -7,6 +7,9 @@ export default function IndependentStylist() {
       eyebrow="For Independent Stylists"
       headline="Build your business with clarity — from chair one."
       description="You're building something real behind the chair. Zura gives you the visibility to price right, book smart, and grow on your terms."
+      seoTitle="For Independent Stylists"
+      seoDescription="Build your salon business with clarity — pricing, booking, and growth tools from chair one."
+      seoPath="/solutions/independent-stylist"
       items={[
         {
           icon: DollarSign,

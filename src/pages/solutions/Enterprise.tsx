@@ -7,6 +7,9 @@ export default function Enterprise() {
       eyebrow="For Enterprise Leaders"
       headline="Portfolio-level visibility. Decision-grade intelligence."
       description="You think in margins, markets, and momentum. Zura gives you the data architecture to match how you make decisions."
+      seoTitle="Enterprise Intelligence"
+      seoDescription="Portfolio-level visibility and decision-grade intelligence for enterprise salon brands."
+      seoPath="/solutions/enterprise"
       items={[
         {
           icon: Eye,

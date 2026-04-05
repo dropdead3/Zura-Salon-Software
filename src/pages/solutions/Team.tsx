@@ -7,6 +7,9 @@ export default function Team() {
       eyebrow="Team Performance"
       headline="Grow the people who grow your business."
       description="Your team is your business. Zura helps you track performance, build career paths, and keep your best people — without micromanaging."
+      seoTitle="Team Performance"
+      seoDescription="Track performance, build career paths, and keep your best people without micromanaging."
+      seoPath="/solutions/team"
       items={[
         {
           icon: Users,

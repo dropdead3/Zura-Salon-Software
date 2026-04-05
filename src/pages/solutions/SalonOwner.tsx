@@ -7,6 +7,9 @@ export default function SalonOwner() {
       eyebrow="For Salon Owners"
       headline="Run your team with confidence, not guesswork."
       description="You built something great. Now you need the systems to keep it growing — without wearing every hat yourself."
+      seoTitle="For Salon Owners"
+      seoDescription="Run your team with confidence. Commission tracking, performance visibility, and growth tools for salon owners."
+      seoPath="/solutions/salon-owner"
       items={[
         {
           icon: DollarSign,
