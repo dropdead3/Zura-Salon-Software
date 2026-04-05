@@ -103,6 +103,8 @@ interface RetentionFormState {
   retention_rate_minimum: number;
   new_clients_enabled: boolean;
   new_clients_minimum: number;
+  utilization_enabled: boolean;
+  utilization_minimum: number;
   evaluation_window_days: number;
   grace_period_days: number;
   action_type: 'coaching_flag' | 'demotion_eligible';
@@ -115,6 +117,7 @@ const CRITERIA: CriterionConfig[] = [
   { key: 'avg_ticket', label: 'Average Ticket', icon: Receipt, unit: '$', enabledKey: 'avg_ticket_enabled', thresholdKey: 'avg_ticket_threshold', weightKey: 'avg_ticket_weight', placeholder: '120' },
   { key: 'retention_rate', label: 'Client Retention', icon: Users, unit: '%', enabledKey: 'retention_rate_enabled', thresholdKey: 'retention_rate_threshold', weightKey: 'retention_rate_weight', placeholder: '70' },
   { key: 'new_clients', label: 'New Clients', icon: UserPlus, unit: '/mo', enabledKey: 'new_clients_enabled', thresholdKey: 'new_clients_threshold', weightKey: 'new_clients_weight', placeholder: '10' },
+  { key: 'utilization', label: 'Schedule Utilization', icon: CalendarClock, unit: '%', enabledKey: 'utilization_enabled', thresholdKey: 'utilization_threshold', weightKey: 'utilization_weight', placeholder: '75' },
 ];
 
 interface RetentionCriterionConfig {
@@ -134,6 +137,7 @@ const RETENTION_CRITERIA: RetentionCriterionConfig[] = [
   { key: 'avg_ticket', label: 'Average Ticket', icon: Receipt, unit: '$', enabledKey: 'avg_ticket_enabled', minimumKey: 'avg_ticket_minimum', placeholder: '80' },
   { key: 'retention_rate', label: 'Client Retention', icon: Users, unit: '%', enabledKey: 'retention_rate_enabled', minimumKey: 'retention_rate_minimum', placeholder: '50' },
   { key: 'new_clients', label: 'New Clients', icon: UserPlus, unit: '/mo', enabledKey: 'new_clients_enabled', minimumKey: 'new_clients_minimum', placeholder: '3' },
+  { key: 'utilization', label: 'Schedule Utilization', icon: CalendarClock, unit: '%', enabledKey: 'utilization_enabled', minimumKey: 'utilization_minimum', placeholder: '50' },
 ];
 
 const INITIAL_STATE: FormState = {
@@ -143,9 +147,10 @@ const INITIAL_STATE: FormState = {
   avg_ticket_enabled: false, avg_ticket_threshold: 0,
   retention_rate_enabled: false, retention_rate_threshold: 0,
   new_clients_enabled: false, new_clients_threshold: 0,
+  utilization_enabled: false, utilization_threshold: 0,
   tenure_enabled: false, tenure_days: 0,
   revenue_weight: 0, retail_weight: 0, rebooking_weight: 0, avg_ticket_weight: 0,
-  retention_rate_weight: 0, new_clients_weight: 0,
+  retention_rate_weight: 0, new_clients_weight: 0, utilization_weight: 0,
   evaluation_window_days: 30, requires_manual_approval: false,
 };
 
@@ -157,6 +162,7 @@ const INITIAL_RETENTION_STATE: RetentionFormState = {
   avg_ticket_enabled: false, avg_ticket_minimum: 0,
   retention_rate_enabled: false, retention_rate_minimum: 0,
   new_clients_enabled: false, new_clients_minimum: 0,
+  utilization_enabled: false, utilization_minimum: 0,
   evaluation_window_days: 90, grace_period_days: 30, action_type: 'coaching_flag',
 };
 
