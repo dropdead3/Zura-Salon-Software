@@ -801,7 +801,21 @@ export function StylistLevelsEditor({ embedded = false }: StylistLevelsEditorPro
             </div>
           </TabsContent>
 
-          {/* === TAB 2: Team Roster === */}
+          {/* === TAB 2: Criteria Comparison === */}
+          <TabsContent value="criteria">
+            <CriteriaComparisonTable
+              levels={levels}
+              promotionCriteria={promotionCriteria || []}
+              retentionCriteria={retentionCriteria || []}
+              onEditLevel={(level, index) => {
+                setWizardLevelId(level.dbId!);
+                setWizardLevelLabel(level.label);
+                setWizardLevelIndex(index);
+              }}
+            />
+          </TabsContent>
+
+          {/* === TAB 3: Team Roster === */}
           <TabsContent value="team">
             {effectiveOrganization?.id && dbLevels && dbLevels.length > 0 ? (
               <TeamCommissionRoster orgId={effectiveOrganization.id} levels={dbLevels} />
