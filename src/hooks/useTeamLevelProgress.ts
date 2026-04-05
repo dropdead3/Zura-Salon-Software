@@ -121,7 +121,7 @@ export function useTeamLevelProgress() {
       while (hasMore) {
         const { data, error } = await supabase
           .from('appointments')
-          .select('staff_user_id, total_price, rebooked_at_checkout, appointment_date, status, is_new_client')
+          .select('staff_user_id, total_price, rebooked_at_checkout, appointment_date, status, is_new_client, duration_minutes')
           .in('staff_user_id', userIds)
           .gte('appointment_date', startStr)
           .lte('appointment_date', endStr)
@@ -137,7 +137,24 @@ export function useTeamLevelProgress() {
     enabled: !!orgId && userIds.length > 0,
   });
 
-  const isLoading = loadingProfiles || loadingSales || loadingAppts;
+  // Batch fetch shift data for utilization calculation
+  const { data: allShiftData = [], isLoading: loadingShifts } = useQuery({
+    queryKey: ['team-graduation-shifts', orgId, startStr, endStr, userIds.length],
+    queryFn: async () => {
+      if (userIds.length === 0) return [];
+      const { data, error } = await supabase
+        .from('staff_shifts')
+        .select('user_id, shift_date, start_time, end_time')
+        .in('user_id', userIds)
+        .gte('shift_date', startStr)
+        .lte('shift_date', endStr);
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!orgId && userIds.length > 0,
+  });
+
+  const isLoading = loadingProfiles || loadingSales || loadingAppts || loadingShifts;
 
   const teamProgress = useMemo<TeamMemberProgress[]>(() => {
     if (profiles.length === 0 || allLevels.length === 0) return [];
