@@ -268,6 +268,13 @@ export function useTeamLevelProgress() {
         return { monthlyRevenue, retailPct, rebookingPct, avgTicket, newClientsMonthly, retentionRate, utilization, revPerHour };
       };
 
+      // Compute time at current level
+      const latestPromo = allLevelPromotions.find((p: any) => p.user_id === profile.user_id);
+      const levelSince = latestPromo?.promoted_at || profile.hire_date || null;
+      const timeAtLevelDays = levelSince
+        ? Math.max(0, Math.floor((Date.now() - new Date(levelSince).getTime()) / (1000 * 60 * 60 * 24)))
+        : 0;
+
       // Compute no-show rate (informational, uses full window)
       const allUserAppts = allApptData.filter(a => a.staff_user_id === profile.user_id);
       const noShowCount = allUserAppts.filter((a: any) => a.status === 'no_show').length;
@@ -318,6 +325,7 @@ export function useTeamLevelProgress() {
           retentionActionType: retCriteria?.action_type || null,
           retentionGracePeriodDays: retCriteria?.grace_period_days || 0,
           noShowRate,
+          timeAtLevelDays, levelSince,
         };
       }
 
@@ -336,6 +344,7 @@ export function useTeamLevelProgress() {
           retentionActionType: retCriteria?.action_type || null,
           retentionGracePeriodDays: retCriteria?.grace_period_days || 0,
           noShowRate,
+          timeAtLevelDays, levelSince,
         };
       }
 
@@ -470,6 +479,7 @@ export function useTeamLevelProgress() {
         retentionActionType: retCriteria?.action_type || null,
         retentionGracePeriodDays: retCriteria?.grace_period_days || 0,
         noShowRate,
+        timeAtLevelDays, levelSince,
       };
     }).sort((a, b) => {
       const statusOrder: Record<GraduationStatus, number> = {
