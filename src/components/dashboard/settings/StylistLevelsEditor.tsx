@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
 import { DashboardPageHeader } from '@/components/dashboard/DashboardPageHeader';
@@ -58,6 +58,28 @@ import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { generateLevelRequirementsPDF } from '@/components/dashboard/settings/LevelRequirementsPDF';
 import { TeamCommissionRoster } from '@/components/dashboard/settings/TeamCommissionRoster';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from '@/components/ui/dialog';
+
+interface LevelAnalysisItem {
+  title: string;
+  description: string;
+  severity?: 'low' | 'medium' | 'high';
+  affectedLevels?: string[];
+}
+
+interface LevelAnalysisResult {
+  overallRating: 'well_structured' | 'needs_attention' | 'requires_review';
+  overallSummary: string;
+  strengths: LevelAnalysisItem[];
+  suggestions: LevelAnalysisItem[];
+  considerations: LevelAnalysisItem[];
+}
 
 function formatCriteriaSummary(c: LevelPromotionCriteria): string {
   const parts: string[] = [];
@@ -499,6 +521,9 @@ export function StylistLevelsEditor({ embedded = false }: StylistLevelsEditorPro
   const [wizardLevelIndex, setWizardLevelIndex] = useState(0);
   const [quickSetupDismissed, setQuickSetupDismissed] = useState(false);
   const [isQuickSetupGenerating, setIsQuickSetupGenerating] = useState(false);
+  const [analysisOpen, setAnalysisOpen] = useState(false);
+  const [analysisLoading, setAnalysisLoading] = useState(false);
+  const [analysisResult, setAnalysisResult] = useState<LevelAnalysisResult | null>(null);
   const queryClient = useQueryClient();
 
   const { data: promotionCriteria } = useLevelPromotionCriteria();
@@ -736,6 +761,26 @@ export function StylistLevelsEditor({ embedded = false }: StylistLevelsEditorPro
     setHasChanges(false);
   };
 
+  const handleAnalyze = useCallback(async () => {
+    setAnalysisLoading(true);
+    setAnalysisOpen(true);
+    setAnalysisResult(null);
+    try {
+      const { data, error } = await supabase.functions.invoke('ai-level-analysis', {
+        body: { levels, promotionCriteria, retentionCriteria },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      setAnalysisResult(data as LevelAnalysisResult);
+    } catch (err: any) {
+      console.error('Level analysis error:', err);
+      toast.error(err?.message || 'Failed to analyze configuration');
+      setAnalysisOpen(false);
+    } finally {
+      setAnalysisLoading(false);
+    }
+  }, [levels, promotionCriteria, retentionCriteria]);
+
   if (isLoading) {
     return <DashboardLoader className="min-h-[400px]" />;
   }
@@ -755,30 +800,46 @@ export function StylistLevelsEditor({ embedded = false }: StylistLevelsEditorPro
   const actionButtons = (
     <div className="flex items-center gap-2">
       {levels.length > 0 && (
-        <Button
-          variant="outline"
-          size="sm"
-          className="gap-2"
-          onClick={() => {
-            const levelInfos = levels.map((l, i) => ({
-              label: l.label,
-              slug: l.slug,
-              dbId: l.dbId,
-              index: i,
-            }));
-            const doc = generateLevelRequirementsPDF({
-              orgName: effectiveOrganization?.name || 'Organization',
-              levels: levelInfos,
-              criteria: promotionCriteria,
-              retentionCriteria: retentionCriteria || [],
-            });
-            doc.save('level-progression-roadmap.pdf');
-            toast.success('Progression roadmap exported');
-          }}
-        >
-          <FileDown className="w-4 h-4" />
-          Export Roadmap
-        </Button>
+        <>
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-2"
+            onClick={() => {
+              const levelInfos = levels.map((l, i) => ({
+                label: l.label,
+                slug: l.slug,
+                dbId: l.dbId,
+                index: i,
+              }));
+              const doc = generateLevelRequirementsPDF({
+                orgName: effectiveOrganization?.name || 'Organization',
+                levels: levelInfos,
+                criteria: promotionCriteria,
+                retentionCriteria: retentionCriteria || [],
+              });
+              doc.save('level-progression-roadmap.pdf');
+              toast.success('Progression roadmap exported');
+            }}
+          >
+            <FileDown className="w-4 h-4" />
+            Export Roadmap
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-2"
+            onClick={handleAnalyze}
+            disabled={analysisLoading}
+          >
+            {analysisLoading ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Sparkles className="w-4 h-4" />
+            )}
+            Analyze Configuration
+          </Button>
+        </>
       )}
       {hasChanges && (
         <>
@@ -1396,6 +1457,143 @@ export function StylistLevelsEditor({ embedded = false }: StylistLevelsEditorPro
         levelIndex={wizardLevelIndex}
         totalLevels={levels.length}
       />
+
+      {/* AI Analysis Dialog */}
+      <Dialog open={analysisOpen} onOpenChange={setAnalysisOpen}>
+        <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="font-display text-base tracking-wide flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-primary" />
+              Zura Configuration Analysis
+            </DialogTitle>
+            <DialogDescription>
+              AI-powered review of your level structure and KPI settings
+            </DialogDescription>
+          </DialogHeader>
+
+          {analysisLoading && (
+            <div className="flex flex-col items-center justify-center py-12 gap-3">
+              <Loader2 className="w-8 h-8 animate-spin text-primary" />
+              <p className="text-sm text-muted-foreground">Analyzing your configuration…</p>
+            </div>
+          )}
+
+          {analysisResult && (
+            <div className="space-y-5">
+              {/* Overall Rating */}
+              <div className={cn(
+                "rounded-lg p-4 border",
+                analysisResult.overallRating === 'well_structured'
+                  ? "bg-emerald-500/10 border-emerald-500/30"
+                  : analysisResult.overallRating === 'needs_attention'
+                  ? "bg-amber-500/10 border-amber-500/30"
+                  : "bg-destructive/10 border-destructive/30"
+              )}>
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-lg">
+                    {analysisResult.overallRating === 'well_structured' ? '✅' : analysisResult.overallRating === 'needs_attention' ? '⚠️' : '🔍'}
+                  </span>
+                  <span className="font-display text-sm tracking-wide">
+                    {analysisResult.overallRating === 'well_structured'
+                      ? 'WELL STRUCTURED'
+                      : analysisResult.overallRating === 'needs_attention'
+                      ? 'NEEDS ATTENTION'
+                      : 'REQUIRES REVIEW'}
+                  </span>
+                </div>
+                <p className="text-sm text-muted-foreground">{analysisResult.overallSummary}</p>
+              </div>
+
+              {/* Strengths */}
+              {analysisResult.strengths.length > 0 && (
+                <div className="space-y-2">
+                  <h4 className="font-display text-xs tracking-wide text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5">
+                    <Shield className="w-3.5 h-3.5" />
+                    STRENGTHS
+                  </h4>
+                  {analysisResult.strengths.map((item, i) => (
+                    <div key={i} className="rounded-lg border border-emerald-500/20 bg-emerald-500/5 p-3">
+                      <p className="text-sm font-medium text-foreground">{item.title}</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">{item.description}</p>
+                      {item.affectedLevels && item.affectedLevels.length > 0 && (
+                        <div className="flex gap-1 mt-1.5 flex-wrap">
+                          {item.affectedLevels.map(l => (
+                            <span key={l} className="text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-700 dark:text-emerald-300">{l}</span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Suggestions */}
+              {analysisResult.suggestions.length > 0 && (
+                <div className="space-y-2">
+                  <h4 className="font-display text-xs tracking-wide text-amber-600 dark:text-amber-400 flex items-center gap-1.5">
+                    <TrendingUp className="w-3.5 h-3.5" />
+                    SUGGESTIONS
+                  </h4>
+                  {analysisResult.suggestions.map((item, i) => (
+                    <div key={i} className={cn(
+                      "rounded-lg border p-3",
+                      item.severity === 'high'
+                        ? "border-destructive/30 bg-destructive/5"
+                        : item.severity === 'medium'
+                        ? "border-amber-500/30 bg-amber-500/5"
+                        : "border-border bg-muted/30"
+                    )}>
+                      <div className="flex items-start gap-2">
+                        <span className="text-xs mt-0.5">
+                          {item.severity === 'high' ? '🔴' : item.severity === 'medium' ? '🟡' : '🔵'}
+                        </span>
+                        <div>
+                          <p className="text-sm font-medium text-foreground">{item.title}</p>
+                          <p className="text-xs text-muted-foreground mt-0.5">{item.description}</p>
+                          {item.affectedLevels && item.affectedLevels.length > 0 && (
+                            <div className="flex gap-1 mt-1.5 flex-wrap">
+                              {item.affectedLevels.map(l => (
+                                <span key={l} className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-500/10 text-amber-700 dark:text-amber-300">{l}</span>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Considerations */}
+              {analysisResult.considerations.length > 0 && (
+                <div className="space-y-2">
+                  <h4 className="font-display text-xs tracking-wide text-primary flex items-center gap-1.5">
+                    <Info className="w-3.5 h-3.5" />
+                    CONSIDERATIONS
+                  </h4>
+                  {analysisResult.considerations.map((item, i) => (
+                    <div key={i} className="rounded-lg border border-primary/20 bg-primary/5 p-3">
+                      <p className="text-sm font-medium text-foreground">{item.title}</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">{item.description}</p>
+                      {item.affectedLevels && item.affectedLevels.length > 0 && (
+                        <div className="flex gap-1 mt-1.5 flex-wrap">
+                          {item.affectedLevels.map(l => (
+                            <span key={l} className="text-[10px] px-1.5 py-0.5 rounded-full bg-primary/10 text-primary">{l}</span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <p className="text-[10px] text-muted-foreground/60 text-center pt-2 border-t border-border/50">
+                This analysis is advisory only. Zura recommends — you decide.
+              </p>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
