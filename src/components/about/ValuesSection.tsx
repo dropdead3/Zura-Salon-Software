@@ -5,28 +5,28 @@ import { Sparkles, Heart, Users, Palette, Sun } from "lucide-react";
 const values = [
   {
     icon: Sparkles,
-    title: "Artistry First",
-    description: "Every stylist is a trained artist. We don't just cut hair—we craft transformations that reflect your unique beauty.",
+    title: "Structure First",
+    description: "We believe structure protects operators. Every feature we build enforces clarity, not chaos.",
   },
   {
     icon: Heart,
-    title: "Authentic Connection",
-    description: "Your chair time is sacred. We listen deeply, understand your vision, and build relationships that last beyond the appointment.",
+    title: "Operator Empathy",
+    description: "We've been in the chair, behind the desk, running payroll at midnight. We build for people we understand.",
   },
   {
     icon: Users,
-    title: "Community Driven",
-    description: "We've built a family of stylists and clients who inspire each other. When you join us, you join a movement.",
+    title: "Team Over Tools",
+    description: "Software should make your team better — not replace the judgment of the people running the business.",
   },
   {
     icon: Palette,
-    title: "Fearless Creativity",
-    description: "From subtle enhancements to bold transformations, we encourage you to explore and express yourself without limits.",
+    title: "Signal Over Noise",
+    description: "We'd rather stay silent than surface a weak recommendation. High confidence or nothing.",
   },
   {
     icon: Sun,
-    title: "Positivity Always",
-    description: "No gossip, no tearing others down—just respect and support for our peers. We lift each other up and celebrate every win.",
+    title: "Transparency Always",
+    description: "Every insight comes with reasoning. Every recommendation shows its math. No black boxes.",
   },
 ];
 
@@ -35,56 +35,56 @@ export function ValuesSection() {
   const isInView = useInView(sectionRef, { once: true, margin: "-100px" });
 
   return (
-    <section ref={sectionRef} className="py-16 lg:py-24 bg-background">
-      <div className="container mx-auto px-6">
+    <section ref={sectionRef} className="relative z-10 px-6 sm:px-8 py-20 lg:py-28">
+      <div className="max-w-5xl mx-auto">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.6 }}
           className="text-center mb-12 lg:mb-16"
         >
-          <span className="inline-block text-xs uppercase tracking-[0.25em] text-muted-foreground mb-4 font-display">
+          <p className="font-sans text-xs uppercase tracking-[0.15em] text-violet-400 mb-4">
             What We Stand For
-          </span>
-          <h2 className="text-3xl md:text-4xl font-display">
+          </p>
+          <h2 className="font-display text-3xl sm:text-4xl tracking-tight text-white">
             Our Core Values
           </h2>
         </motion.div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
           {values.slice(0, 3).map((value, index) => (
             <motion.div
               key={value.title}
               initial={{ opacity: 0, y: 30 }}
               animate={isInView ? { opacity: 1, y: 0 } : {}}
               transition={{ duration: 0.6, delay: index * 0.1 }}
-              className="bg-secondary rounded-2xl p-6 lg:p-8 text-center"
+              className="p-6 lg:p-8 rounded-xl bg-white/[0.03] border border-white/[0.06] text-center"
             >
-              <div className="w-12 h-12 mx-auto mb-5 rounded-full bg-background flex items-center justify-center">
-                <value.icon className="w-5 h-5 text-foreground" />
+              <div className="w-12 h-12 mx-auto mb-5 rounded-xl bg-violet-500/10 flex items-center justify-center">
+                <value.icon className="w-5 h-5 text-violet-400" />
               </div>
-              <h3 className="text-lg font-display mb-3">{value.title}</h3>
-              <p className="text-sm text-foreground/60 leading-relaxed">
+              <h3 className="font-display text-sm tracking-wide text-white mb-3">{value.title}</h3>
+              <p className="font-sans text-sm text-slate-400 leading-relaxed">
                 {value.description}
               </p>
             </motion.div>
           ))}
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8 mt-6 lg:mt-8 max-w-2xl lg:max-w-3xl mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mt-5 max-w-3xl mx-auto">
           {values.slice(3).map((value, index) => (
             <motion.div
               key={value.title}
               initial={{ opacity: 0, y: 30 }}
               animate={isInView ? { opacity: 1, y: 0 } : {}}
               transition={{ duration: 0.6, delay: (index + 3) * 0.1 }}
-              className="bg-secondary rounded-2xl p-6 lg:p-8 text-center"
+              className="p-6 lg:p-8 rounded-xl bg-white/[0.03] border border-white/[0.06] text-center"
             >
-              <div className="w-12 h-12 mx-auto mb-5 rounded-full bg-background flex items-center justify-center">
-                <value.icon className="w-5 h-5 text-foreground" />
+              <div className="w-12 h-12 mx-auto mb-5 rounded-xl bg-[hsl(var(--mkt-dusky)/0.1)] flex items-center justify-center">
+                <value.icon className="w-5 h-5 text-[hsl(var(--mkt-dusky))]" />
               </div>
-              <h3 className="text-lg font-display mb-3">{value.title}</h3>
-              <p className="text-sm text-foreground/60 leading-relaxed">
+              <h3 className="font-display text-sm tracking-wide text-white mb-3">{value.title}</h3>
+              <p className="font-sans text-sm text-slate-400 leading-relaxed">
                 {value.description}
               </p>
             </motion.div>

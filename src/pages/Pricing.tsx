@@ -12,7 +12,7 @@ import {
   AccordionTrigger,
 } from '@/components/ui/accordion';
 
-const tiers = [
+const monthlyTiers = [
   {
     name: 'Solo',
     price: '$99',
@@ -69,6 +69,28 @@ const tiers = [
   },
 ];
 
+const annualTiers = monthlyTiers.map((tier) => ({
+  ...tier,
+  price: tier.name === 'Solo' ? '$79' : tier.name === 'Multi-Location' ? '$160' : 'Custom',
+}));
+
+const comparisonFeatures = [
+  { name: 'Performance Dashboard', solo: true, multi: true, enterprise: true },
+  { name: 'Weekly Intelligence Brief', solo: true, multi: true, enterprise: true },
+  { name: 'Commission Tracking', solo: true, multi: true, enterprise: true },
+  { name: 'Client Retention Insights', solo: true, multi: true, enterprise: true },
+  { name: 'Scheduling Tools', solo: true, multi: true, enterprise: true },
+  { name: 'Cross-Location Benchmarking', solo: false, multi: true, enterprise: true },
+  { name: 'Manager Dashboards', solo: false, multi: true, enterprise: true },
+  { name: 'Marketing Campaign Tracking', solo: false, multi: true, enterprise: true },
+  { name: 'Priority Support', solo: false, multi: true, enterprise: true },
+  { name: 'Dedicated Account Manager', solo: false, multi: false, enterprise: true },
+  { name: 'Custom Integrations', solo: false, multi: false, enterprise: true },
+  { name: 'Advanced Forecasting', solo: false, multi: false, enterprise: true },
+  { name: 'Regional Benchmarking', solo: false, multi: false, enterprise: true },
+  { name: 'SLA-Backed Support', solo: false, multi: false, enterprise: true },
+];
+
 const faqs = [
   {
     q: 'Is there a free trial?',
@@ -94,35 +116,58 @@ const faqs = [
 
 export default function Pricing() {
   const ref = useScrollReveal();
+  const [annual, setAnnual] = useState(false);
+  const tiers = annual ? annualTiers : monthlyTiers;
 
   return (
     <MarketingLayout>
-      <Helmet>
-        <title>Pricing — {PLATFORM_NAME}</title>
-        <meta
-          name="description"
-          content={`Simple, transparent pricing that grows with your salon. Plans start at $99/mo for solo locations.`}
-        />
-      </Helmet>
+      <MarketingSEO
+        title="Pricing"
+        description="Simple, transparent pricing that grows with your salon. Plans start at $99/mo for solo locations."
+        path="/pricing"
+      />
 
       <div ref={ref}>
         {/* Header */}
-        <section className="pt-16 pb-12 text-center px-6">
+        <section className="pt-16 pb-8 text-center px-6">
           <h1 className="mkt-reveal font-display text-4xl sm:text-5xl lg:text-6xl tracking-tight text-white mb-4">
             Simple pricing that grows with you
           </h1>
-          <p className="mkt-reveal font-sans text-lg text-slate-400 max-w-xl mx-auto">
+          <p className="mkt-reveal font-sans text-lg text-slate-400 max-w-xl mx-auto mb-8">
             One system for your whole salon — whether you have one chair or one hundred.
           </p>
+
+          {/* Billing Toggle */}
+          <div className="mkt-reveal inline-flex items-center gap-3 p-1 rounded-full bg-white/[0.04] border border-white/[0.08]">
+            <button
+              onClick={() => setAnnual(false)}
+              className={`px-5 py-2 rounded-full font-sans text-sm transition-all ${
+                !annual ? 'bg-white/[0.1] text-white' : 'text-slate-500 hover:text-slate-300'
+              }`}
+            >
+              Monthly
+            </button>
+            <button
+              onClick={() => setAnnual(true)}
+              className={`px-5 py-2 rounded-full font-sans text-sm transition-all inline-flex items-center gap-2 ${
+                annual ? 'bg-white/[0.1] text-white' : 'text-slate-500 hover:text-slate-300'
+              }`}
+            >
+              Annual
+              <span className="inline-flex px-2 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 font-sans text-[11px] font-medium">
+                Save 20%
+              </span>
+            </button>
+          </div>
         </section>
 
         {/* Tier Cards */}
-        <section className="max-w-6xl mx-auto px-6 sm:px-8 pb-20">
+        <section className="max-w-6xl mx-auto px-6 sm:px-8 pb-20 pt-8">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8">
             {tiers.map((tier) => (
               <div
                 key={tier.name}
-                className={`mkt-reveal relative flex flex-col rounded-2xl border p-8 transition-all ${
+                className={`mkt-reveal relative flex flex-col rounded-xl border p-8 transition-all ${
                   tier.popular
                     ? 'border-violet-500/40 bg-violet-500/[0.06] shadow-lg shadow-violet-500/10'
                     : 'border-white/[0.08] bg-white/[0.02]'
@@ -151,6 +196,11 @@ export default function Pricing() {
                       {tier.period}
                     </span>
                   )}
+                  {annual && tier.name !== 'Enterprise' && (
+                    <span className="block font-sans text-xs text-slate-500 mt-1">
+                      billed annually
+                    </span>
+                  )}
                 </div>
 
                 <ul className="space-y-3 mb-8 flex-1">
@@ -175,6 +225,48 @@ export default function Pricing() {
                   {tier.cta}
                   <ArrowRight className="w-4 h-4" />
                 </Link>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* Feature Comparison Table */}
+        <section className="max-w-4xl mx-auto px-6 sm:px-8 pb-20">
+          <h2 className="mkt-reveal font-display text-2xl tracking-wide text-white text-center mb-10">
+            Compare Plans
+          </h2>
+          <div className="mkt-reveal rounded-xl border border-white/[0.08] overflow-hidden">
+            {/* Table header */}
+            <div className="grid grid-cols-4 bg-white/[0.03] border-b border-white/[0.06]">
+              <div className="p-4" />
+              <div className="p-4 text-center">
+                <span className="font-display text-xs tracking-wide text-slate-400">Solo</span>
+              </div>
+              <div className="p-4 text-center">
+                <span className="font-display text-xs tracking-wide text-violet-400">Multi-Location</span>
+              </div>
+              <div className="p-4 text-center">
+                <span className="font-display text-xs tracking-wide text-slate-400">Enterprise</span>
+              </div>
+            </div>
+            {/* Rows */}
+            {comparisonFeatures.map((feature, i) => (
+              <div
+                key={feature.name}
+                className={`grid grid-cols-4 ${i < comparisonFeatures.length - 1 ? 'border-b border-white/[0.04]' : ''}`}
+              >
+                <div className="p-4">
+                  <span className="font-sans text-sm text-slate-300">{feature.name}</span>
+                </div>
+                {[feature.solo, feature.multi, feature.enterprise].map((included, j) => (
+                  <div key={j} className="p-4 flex items-center justify-center">
+                    {included ? (
+                      <Check className="w-4 h-4 text-violet-400" />
+                    ) : (
+                      <Minus className="w-4 h-4 text-slate-700" />
+                    )}
+                  </div>
+                ))}
               </div>
             ))}
           </div>
