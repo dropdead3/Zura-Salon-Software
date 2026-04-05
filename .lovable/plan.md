@@ -1,54 +1,51 @@
 
 
-# Graduation System — Pass 6: Remaining Gaps and Polish
+# Graduation System — Pass 7: Terminology, Audit Trail, Staff Report Gap, and History Polish
 
 ## System Review
 
-After 5 passes, the graduation system is comprehensive. The core architecture (promotion criteria, retention criteria, status lifecycle, audit trail, cross-surface integration, display mode toggle, KPI tiles) is solid. What remains are edge cases, missing filter options, stale copy, and a few UX polish items.
+After 6 passes the core architecture is solid. This pass catches terminology inconsistencies, a missing data field in the audit trail UI, a confirmed missing integration point, and stale "graduation" language that survived earlier renames.
 
 ---
 
 ## Gaps Found
 
-### 1. Status filter dropdown missing "Below Standard"
-`GraduationTracker.tsx` line 740-747: The status filter `SelectContent` lists `ready`, `in_progress`, `at_risk`, `needs_attention`, `at_top_level`, `no_criteria` — but omits `below_standard`. Admins who want to filter specifically to demotion-eligible stylists cannot do so.
+### 1. "Ready to Graduate" label should be "Ready to Promote"
+The KPI strip (line 81), tab trigger (line 851), and tab comment (line 890) all say "Ready to Graduate." Since the system now governs full career progression (not just assistant graduation), this should be "Ready to Promote." The StatusBadge already says "Qualified" which is correct, but the KPI/tab language is misleading.
 
-### 2. Graduation Tracker page explainer is generic
-`pageExplainers.ts` line 459-463: The description says "Track team-wide level progression, identify who is ready for promotion, and manage assistant graduation checklists." It does not mention retention tracking, at-risk identification, or coaching workflows — all of which are now core features of this page.
+### 2. Promotion History does not show `direction` (promotion vs demotion)
+We added a `direction` column to `level_promotions` in Pass 6, and `useDemoteLevel` writes `direction: 'demotion'`. But `PromotionRecord` in `usePromotionHistory.ts` does not include the `direction` field, and neither the admin `PromotionHistorySection` nor the stylist-facing history in `MyGraduation.tsx` distinguishes promotions from demotions visually. A demotion shows up with the same green dot and layout as a promotion.
 
-### 3. MyGraduation still shows "graduation requirements" loading text
-`MyGraduation.tsx` line 500: The loading state says `"Loading your graduation requirements..."` — should say something like `"Loading your level progress..."` to match the renamed page.
+### 3. LevelProgressCard is NOT rendered in the Individual Staff Report
+The Plan from Pass 2 called for embedding `LevelProgressCard` in the individual staff report page. Searching confirms it's only rendered in `MyGraduation.tsx` and `MeetingDetails.tsx` — not in any staff report page. The links from `GraduationTracker.tsx` point to `/admin/reports/staff/:userId` but no route for that path was found, meaning those links may 404. This needs verification and either a route fix or link update.
 
-### 4. MyGraduation "Overall Progress" card uses stale graduation framing
-Lines 461-495: The card shows checklist-based progress (requirements completed) which is the legacy assistant graduation flow. For stylists with level-based progression, this card is confusing — it shows "0/0" if no checklist requirements exist for their role. It should be conditionally hidden when no graduation requirements are configured (i.e., when the user is a non-assistant stylist using level-based progression only).
+### 4. Page title still says "Graduation Tracker"
+The page header (line 787) says "Graduation Tracker" — this should be "Level Progression Tracker" or simply "Team Level Progress" to match the renamed system.
 
-### 5. No demotion action in Graduation Tracker
-When a stylist is `below_standard` (demotion eligible), the admin sees "Demotion Eligible" text in the expanded row but has no action button to actually demote. The `usePromoteLevel` hook only promotes upward. There's no `useDemoteLevel` or equivalent.
-
-### 6. `LevelProgressCard` not used in individual staff report
-The plan from Pass 2 mentioned embedding `LevelProgressCard` in the Individual Staff Report, but it should be verified that it's actually rendered there, not just imported.
+### 5. MyGraduation still shows assistant checklist sections for non-assistants
+When `requirementsByCategory` is empty (no active graduation requirements), the page still renders an empty `space-y-6` div after the loading check (lines 505-527). This is harmless but sloppy — could show a contextual empty state or be hidden entirely.
 
 ---
 
 ## Plan
 
-### 1. Add "Below Standard" to status filter
-Add `<SelectItem value="below_standard">Below Standard</SelectItem>` to the status filter dropdown in `GraduationTracker.tsx`.
+### 1. Rename "Ready to Graduate" to "Ready to Promote"
+Update the KPI strip label, tab trigger text, and tab content comment in `GraduationTracker.tsx`.
 
-### 2. Update Graduation Tracker page explainer
-Rewrite the `graduation-tracker` explainer to mention retention monitoring, at-risk identification, coaching actions, and demotion eligibility — reflecting the full scope of the page.
+### 2. Surface `direction` in promotion/demotion history
+- Add `direction` field to `PromotionRecord` interface in `usePromotionHistory.ts`
+- In `PromotionHistorySection` (GraduationTracker): show a red dot and "Demotion" label when `direction === 'demotion'`, green dot for promotions
+- In `MyGraduation.tsx` promotion timeline: same visual distinction (red dot + directional arrow down for demotions)
 
-### 3. Fix stale loading/copy in MyGraduation
-- Change loading text from "graduation requirements" to "level progress"
-- Conditionally hide the "Overall Progress" checklist card when no graduation requirements exist for the user, so non-assistant stylists only see the level-based progress card
+### 3. Fix broken staff report link OR add LevelProgressCard to staff report
+- First verify whether the `/admin/reports/staff/:userId` route exists. If it does, add `LevelProgressCard` to that page.
+- If the route doesn't exist, update the links in `GraduationTracker.tsx` to point to an existing staff analytics surface, or remove the dead links.
 
-### 4. Add demotion capability for below-standard stylists
-- Create `useDemoteLevel` hook (mirrors `usePromoteLevel` but moves the stylist down one level, records in `level_promotions` with a `direction` or negative movement indicator)
-- Add a "Demote" action button in `StylistProgressRow` when `status === 'below_standard'`, with a confirmation dialog
-- Note: this requires a migration to add a `direction` column to `level_promotions` (`'promotion' | 'demotion'` defaulting to `'promotion'`) so the audit trail distinguishes promotions from demotions
+### 4. Rename page title from "Graduation Tracker" to "Team Level Progress"
+Update the `DashboardPageHeader` title and description in `GraduationTracker.tsx`.
 
-### 5. Verify LevelProgressCard in Individual Staff Report
-Check that `LevelProgressCard` is rendered (not just imported) in the staff report page. If missing, add it.
+### 5. Hide empty assistant requirements section for non-assistants
+In `MyGraduation.tsx`, wrap the requirements-by-category section in a conditional that checks `Object.keys(requirementsByCategory).length > 0`.
 
 ---
 
@@ -56,11 +53,9 @@ Check that `LevelProgressCard` is rendered (not just imported) in the staff repo
 
 | File | Action |
 |------|--------|
-| `src/pages/dashboard/admin/GraduationTracker.tsx` | **Modify** — Add "Below Standard" to status filter dropdown |
-| `src/config/pageExplainers.ts` | **Modify** — Update graduation-tracker explainer copy |
-| `src/pages/dashboard/MyGraduation.tsx` | **Modify** — Fix loading text, conditionally hide empty checklist card |
-| `src/hooks/useDemoteLevel.ts` | **Create** — Hook for demoting a stylist with audit trail |
-| `src/pages/dashboard/admin/GraduationTracker.tsx` | **Modify** — Add DemoteButton for below_standard members |
+| `src/pages/dashboard/admin/GraduationTracker.tsx` | **Modify** — Rename "Ready to Graduate" to "Ready to Promote," rename page title to "Team Level Progress," fix staff report links |
+| `src/hooks/usePromotionHistory.ts` | **Modify** — Add `direction` field to `PromotionRecord` |
+| `src/pages/dashboard/MyGraduation.tsx` | **Modify** — Distinguish demotions in history timeline, hide empty requirements section |
 
-**1 new file, 3 modified files, 1 migration (add `direction` column to `level_promotions`).**
+**0 new files, 3 modified files, 0 migrations.**
 
