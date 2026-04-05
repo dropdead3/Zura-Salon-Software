@@ -205,6 +205,30 @@ export function usePayrollForecasting() {
 
       currentTier = { name: resolved.sourceName, rate: resolved.serviceRate };
 
+      // Compute tier progress from level_promotion_criteria
+      const empLevelSlug = (employeeLevels || []).find(e => e.user_id === emp.employee_id)?.stylist_level;
+      if (empLevelSlug && allLevels.length > 0) {
+        const sortedLevels = [...allLevels].sort((a, b) => a.display_order - b.display_order);
+        const currentIdx = sortedLevels.findIndex(l => l.slug === empLevelSlug);
+        if (currentIdx >= 0 && currentIdx < sortedLevels.length - 1) {
+          const nextLevelObj = sortedLevels[currentIdx + 1];
+          const criteria = allCriteria.find(c => c.stylist_level_id === nextLevelObj.id && c.is_active);
+          if (criteria) {
+            nextTier = {
+              name: nextLevelObj.label,
+              rate: nextLevelObj.service_commission_rate || 0,
+              threshold: criteria.revenue_threshold || 0,
+            };
+            // Simple progress based on revenue threshold (primary metric)
+            if (criteria.revenue_enabled && criteria.revenue_threshold > 0) {
+              const monthlyProjected = totalDays > 0 ? (projectedServices / totalDays) * 30 : 0;
+              tierProgress = Math.min(100, (monthlyProjected / criteria.revenue_threshold) * 100);
+              amountToNextTier = Math.max(0, criteria.revenue_threshold - monthlyProjected);
+            }
+          }
+        }
+      }
+
       // Calculate commissions
       let serviceCommission = 0;
       let productCommission = 0;
