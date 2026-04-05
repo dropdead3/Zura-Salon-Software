@@ -1,30 +1,36 @@
 
 
-# Enable Retention Criteria for Level 1 (Entry Level)
+# Enable Promotion Criteria for Level 1
 
 ## Problem
 
-Level 1 (Entry Level) currently shows "Entry level — no promotion criteria needed" and blocks all criteria configuration. While it's correct that Level 1 doesn't need **promotion** criteria (there's no level below to promote from), it absolutely needs **retention** criteria — minimum performance standards to remain employed.
+Level 1 promotion criteria is incorrectly disabled everywhere. The logic treated "entry level" as "no promotion needed," but that's wrong — Level 1 stylists need promotion criteria to know how to reach Level 2. The only level that truly has no promotion criteria is the **last** level (nowhere to promote to).
 
 ## Changes
 
-### 1. Level card criteria section (lines 799-802)
-Replace the blanket "no criteria needed" message for `index === 0` with a split behavior:
-- **Promotion**: Still show "Entry level — no promotion criteria" (correct)
-- **Retention**: Show the existing criteria CTA or summary, allowing the admin to configure "Required to Stay" metrics via the GraduationWizard
+### 1. GraduationWizard.tsx
+- Remove `disabled={levelIndex === 0}` from the promotion tab trigger
+- Add `disabled={levelIndex === levels.length - 1}` instead (disable promotion for the **last** level — needs `totalLevels` prop)
+- Default to retention tab only for the last level, not Level 1
 
-### 2. Criteria Comparison Table (lines 207-215, 252-260)
-Stop rendering `—` dashes for Level 1 in the **retention** section rows. Level 1 should show retention values (or "Configure" button) just like other levels. Promotion rows remain `—` for Level 1.
+### 2. StylistLevelsEditor.tsx — Level card (lines 797-844)
+- Remove the `index === 0` special branch that only shows retention
+- Level 1 now uses the same criteria display as all other levels (showing both promotion + retention summaries)
 
-### 3. GraduationWizard — default to retention tab for Level 1
-When opened for `levelIndex === 0`, auto-select the "retention" tab and hide or disable the "promotion" tab since it's not applicable.
+### 3. StylistLevelsEditor.tsx — Comparison table (lines 207-214)
+- Remove `levelIdx === 0` override that forces `—` dashes in promotion rows
+- Level 1 promotion cells now show values or "Configure" like any other level
+
+### 4. GraduationWizard — pass total levels count
+- Add `totalLevels` prop to GraduationWizard
+- Pass `levels.length` from the editor when opening the wizard
 
 ## File Changes
 
 | File | Action |
 |------|--------|
-| `src/components/dashboard/settings/StylistLevelsEditor.tsx` | **Modify** — Update Level 1 criteria section to allow retention config; update comparison table to show retention data for Level 1 |
-| `src/components/dashboard/settings/GraduationWizard.tsx` | **Modify** — Accept `levelIndex` to conditionally hide promotion tab when `levelIndex === 0`; default to retention tab for Level 1 |
+| `src/components/dashboard/settings/StylistLevelsEditor.tsx` | **Modify** — Remove Level 1 special-casing in card and comparison table; pass `totalLevels` to wizard |
+| `src/components/dashboard/settings/GraduationWizard.tsx` | **Modify** — Accept `totalLevels` prop; disable promotion tab for last level instead of first |
 
 **0 new files, 2 modified files, 0 migrations.**
 
