@@ -7,6 +7,7 @@ import { Slider } from '@/components/ui/slider';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import { 
@@ -17,6 +18,7 @@ import {
   Clock, 
   ChevronRight, 
   ChevronLeft, 
+  ChevronDown,
   Check, 
   Loader2,
   ShieldCheck,
@@ -25,6 +27,7 @@ import {
   Users,
   UserPlus,
   CalendarClock,
+  Info,
 } from 'lucide-react';
 import {
   useLevelPromotionCriteriaForLevel,
@@ -610,26 +613,61 @@ export function GraduationWizard({ open, onOpenChange, levelId, levelLabel, leve
               {/* Step 0: Select Requirements */}
               {step === 0 && (
                 <div className="space-y-3">
-                  {/* Zura Defaults banner */}
-                  {!existing && enabledCount === 0 && (
-                    <div className="flex items-center gap-3 rounded-lg border border-primary/20 bg-primary/5 p-3 mb-1">
-                      <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                        <Sparkles className="w-4 h-4 text-primary" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm text-foreground font-medium font-sans">Start with Zura's recommended criteria</p>
-                        <p className="text-xs text-muted-foreground font-sans">Industry benchmarks tuned for this level — tweak as needed.</p>
-                      </div>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="shrink-0 rounded-full h-8 px-3 text-xs border-primary/30 text-primary hover:bg-primary/10 font-sans"
-                        onClick={() => setForm(getZuraDefaults(levelIndex))}
-                      >
-                        Apply Defaults
-                      </Button>
+                  {/* Persistent Zura Recommended button */}
+                  <div className="flex items-center gap-3 rounded-lg border border-primary/20 bg-primary/5 p-3">
+                    <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                      <Sparkles className="w-4 h-4 text-primary" />
                     </div>
-                  )}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm text-foreground font-medium font-sans">Zura Recommended</p>
+                      <p className="text-xs text-muted-foreground font-sans">
+                        {enabledCount > 0
+                          ? 'Reset to industry benchmarks tuned for this level.'
+                          : 'Apply industry benchmarks tuned for this level — tweak as needed.'}
+                      </p>
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="shrink-0 rounded-full h-8 px-3 text-xs border-primary/30 text-primary hover:bg-primary/10 font-sans"
+                      onClick={() => setForm(getZuraDefaults(levelIndex))}
+                    >
+                      {enabledCount > 0 ? 'Reset to Defaults' : 'Apply Defaults'}
+                    </Button>
+                  </div>
+
+                  {/* Why these KPIs? collapsible */}
+                  <Collapsible>
+                    <CollapsibleTrigger className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors group w-full">
+                      <Info className="w-3.5 h-3.5" />
+                      <span className="font-sans">Why these KPIs?</span>
+                      <ChevronDown className="w-3 h-3 ml-auto transition-transform group-data-[state=open]:rotate-180" />
+                    </CollapsibleTrigger>
+                    <CollapsibleContent>
+                      <div className="mt-2 rounded-lg border border-border bg-muted/30 p-4 space-y-3">
+                        <div className="space-y-2">
+                          <p className="text-xs font-medium text-foreground font-sans">Tracked metrics and rationale</p>
+                          <div className="space-y-1.5 text-xs text-muted-foreground font-sans">
+                            <p><span className="text-foreground font-medium">Service Revenue</span> — Direct output measure. Proves volume at current price point justifies advancement.</p>
+                            <p><span className="text-foreground font-medium">Retail Attachment %</span> — Prescribing ability. Increases ticket without adding chair time. A loyalty signal.</p>
+                            <p><span className="text-foreground font-medium">Rebooking Rate</span> — Leading behavioral indicator. Clients who rebook at checkout are committed.</p>
+                            <p><span className="text-foreground font-medium">Average Ticket</span> — Pricing power. High relative ticket validates premium positioning.</p>
+                            <p><span className="text-foreground font-medium">Client Retention Rate</span> — The lagging truth. Rebooking intent means nothing if clients cancel later.</p>
+                            <p><span className="text-foreground font-medium">New Client Count</span> — Growth signal. Proves book-building ability, not just maintenance.</p>
+                            <p><span className="text-foreground font-medium">Schedule Utilization</span> — Demand proof. An empty schedule at current prices means raising prices will reduce volume.</p>
+                            <p><span className="text-foreground font-medium">Revenue Per Hour</span> — Economic efficiency. The ultimate signal for whether a price increase is justified.</p>
+                          </div>
+                        </div>
+                        <div className="border-t border-border pt-2 space-y-1.5 text-xs text-muted-foreground font-sans">
+                          <p className="font-medium text-foreground">Why not other metrics?</p>
+                          <p><span className="text-foreground">Reviews / Social</span> — Not trackable from POS data. Manual entry degrades data integrity.</p>
+                          <p><span className="text-foreground">Education hours</span> — Subjective. Better handled via manager discretion during approval.</p>
+                          <p><span className="text-foreground">Satisfaction scores</span> — No reliable automated source. Retention rate is the behavioral proxy.</p>
+                          <p><span className="text-foreground">Product sales volume</span> — Already captured by Retail Attachment %. Tracking both would double-count.</p>
+                        </div>
+                      </div>
+                    </CollapsibleContent>
+                  </Collapsible>
 
                   <p className={cn(tokens.body.muted, 'mb-4')}>
                     Toggle on the metrics that matter for promotion to this level.
@@ -855,26 +893,28 @@ export function GraduationWizard({ open, onOpenChange, levelId, levelLabel, leve
           ) : (
             /* ─── Retention Tab Content ─── */
             <div className="space-y-4">
-              {/* Zura Defaults banner for retention */}
-              {!existingRetention && !retForm.retention_enabled && (
-                <div className="flex items-center gap-3 rounded-lg border border-primary/20 bg-primary/5 p-3 mb-1">
-                  <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                    <Shield className="w-4 h-4 text-primary" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm text-foreground font-medium font-sans">Apply Zura retention defaults</p>
-                    <p className="text-xs text-muted-foreground font-sans">Minimum standards to maintain this level.</p>
-                  </div>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="shrink-0 rounded-full h-8 px-3 text-xs border-primary/30 text-primary hover:bg-primary/10 font-sans"
-                    onClick={() => setRetForm(getZuraRetentionDefaults(levelIndex))}
-                  >
-                    Apply Defaults
-                  </Button>
+              {/* Persistent Zura Recommended button for retention */}
+              <div className="flex items-center gap-3 rounded-lg border border-primary/20 bg-primary/5 p-3">
+                <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                  <Sparkles className="w-4 h-4 text-primary" />
                 </div>
-              )}
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm text-foreground font-medium font-sans">Zura Recommended</p>
+                  <p className="text-xs text-muted-foreground font-sans">
+                    {retForm.retention_enabled
+                      ? 'Reset to industry-standard minimums for this level.'
+                      : 'Apply minimum standards to maintain this level.'}
+                  </p>
+                </div>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="shrink-0 rounded-full h-8 px-3 text-xs border-primary/30 text-primary hover:bg-primary/10 font-sans"
+                  onClick={() => setRetForm(getZuraRetentionDefaults(levelIndex))}
+                >
+                  {retForm.retention_enabled ? 'Reset to Defaults' : 'Apply Defaults'}
+                </Button>
+              </div>
 
               {/* Master toggle */}
               <div className="flex items-center justify-between p-3 rounded-lg border">
