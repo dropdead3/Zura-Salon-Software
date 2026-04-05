@@ -80,6 +80,17 @@ export function HeroSection() {
           </motion.p>
         </AnimatePresence>
       </div>
+
+      {/* Scroll anchor */}
+      <motion.div
+        className="hidden sm:flex mt-8 flex-col items-center gap-1 cursor-pointer opacity-40 hover:opacity-70 transition-opacity"
+        animate={{ y: [0, 6, 0] }}
+        transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+        onClick={() => document.getElementById('chaos-to-clarity')?.scrollIntoView({ behavior: 'smooth' })}
+      >
+        <span className="font-sans text-[11px] text-slate-500 tracking-widest uppercase">Scroll to explore</span>
+        <ArrowRight className="w-3.5 h-3.5 text-slate-500 rotate-90" />
+      </motion.div>
     </section>
   );
 }
