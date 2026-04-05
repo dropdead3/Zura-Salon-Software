@@ -29,6 +29,7 @@ import Ecosystem from "./pages/Ecosystem";
 import Product from "./pages/Product";
 import UnifiedLogin from "./pages/UnifiedLogin";
 import NotFound from "./pages/NotFound";
+const PricingPage = lazyWithRetry(() => import("./pages/Pricing"));
 import DashboardHome from "./pages/dashboard/DashboardHome";
 
 // Organization public pages (under /org/:orgSlug)

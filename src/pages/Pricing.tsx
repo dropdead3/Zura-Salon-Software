@@ -86,7 +86,7 @@ const faqs = [
     a: `Yes. ${PLATFORM_NAME} is month-to-month with no long-term contracts. Cancel anytime from your account settings.`,
   },
   {
-    q: 'What's included in the dashboard?',
+    q: "What\u2019s included in the dashboard?",
     a: 'Every plan includes real-time performance data, smart weekly recommendations, commission tracking, client retention insights, and team management tools — scaled to your size.',
   },
 ];
