@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { DashboardPageHeader } from '@/components/dashboard/DashboardPageHeader';
@@ -263,13 +263,16 @@ function DemoteLevelButton({ member, allLevels }: { member: TeamMemberProgress; 
   const demoteLevel = useDemoteLevel();
   const [demoteNotes, setDemoteNotes] = useState('');
 
+  // Sort levels by display_order to match the index used in useTeamLevelProgress
+  const sortedLevels = useMemo(() => [...allLevels].sort((a, b) => a.display_order - b.display_order), [allLevels]);
+
   // Show for below_standard OR at_risk with demotion_eligible action type
   const showDemote = (member.status === 'below_standard' || (member.status === 'at_risk' && member.retentionActionType === 'demotion_eligible'))
     && member.currentLevel && member.currentLevelIndex > 0;
 
   if (!showDemote) return null;
 
-  const previousLevel = allLevels[member.currentLevelIndex - 1];
+  const previousLevel = sortedLevels[member.currentLevelIndex - 1];
   if (!previousLevel) return null;
 
   return (
