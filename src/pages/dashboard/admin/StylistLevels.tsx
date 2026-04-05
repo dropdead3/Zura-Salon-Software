@@ -778,6 +778,15 @@ export default function StylistLevels() {
           </div>
         </div>
       </div>
+
+      {/* Graduation Wizard Dialog */}
+      <GraduationWizard
+        open={!!wizardLevelId}
+        onOpenChange={(open) => { if (!open) setWizardLevelId(null); }}
+        levelId={wizardLevelId || ''}
+        levelLabel={wizardLevelLabel}
+        levelIndex={wizardLevelIndex}
+      />
     </DashboardLayout>
   );
 }
