@@ -38,6 +38,8 @@ export interface TeamMemberProgress {
   retentionFailures: RetentionFailure[];
   retentionActionType: 'coaching_flag' | 'demotion_eligible' | null;
   retentionGracePeriodDays: number;
+  // Informational context
+  noShowRate: number | null;
 }
 
 export function useTeamLevelProgress() {
