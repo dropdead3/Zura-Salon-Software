@@ -78,8 +78,10 @@ export function useTeamLevelProgress() {
     return Math.max(...all, 30);
   }, [allCriteria, allRetention]);
 
+  // Double the window so true retention has a full prior-period comparison
+  const fetchWindowDays = maxWindowDays * 2;
   const windowEnd = new Date();
-  const windowStart = subDays(windowEnd, maxWindowDays);
+  const windowStart = subDays(windowEnd, fetchWindowDays);
   const startStr = format(windowStart, 'yyyy-MM-dd');
   const endStr = format(windowEnd, 'yyyy-MM-dd');
 
