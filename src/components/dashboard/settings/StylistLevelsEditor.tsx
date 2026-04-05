@@ -594,6 +594,7 @@ export function StylistLevelsEditor({ embedded = false }: StylistLevelsEditorPro
 
   const { data: promotionCriteria } = useLevelPromotionCriteria();
   const { data: retentionCriteria } = useLevelRetentionCriteria();
+  const { data: activeLocations = [] } = useActiveLocations();
 
   useEffect(() => {
     if (dbLevels && !hasChanges) {
@@ -999,6 +1000,9 @@ export function StylistLevelsEditor({ embedded = false }: StylistLevelsEditorPro
           <TabsList>
             <TabsTrigger value="levels">Levels</TabsTrigger>
             <TabsTrigger value="criteria">Criteria</TabsTrigger>
+            {activeLocations.length >= 2 && (
+              <TabsTrigger value="overrides">Location Overrides</TabsTrigger>
+            )}
             <TabsTrigger value="team">Team Roster</TabsTrigger>
             <TabsTrigger value="previews">Previews</TabsTrigger>
           </TabsList>
