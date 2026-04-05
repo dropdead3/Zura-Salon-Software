@@ -115,6 +115,7 @@ interface DashboardMockupProps {
 
 export function DashboardMockup({ onPhaseChange }: DashboardMockupProps = {}) {
   const [phase, setPhase] = useState<Phase>('observe');
+  const [paused, setPaused] = useState(false);
   const timeoutRef = useRef<ReturnType<typeof setTimeout>>();
   const prefersReducedMotion = typeof window !== 'undefined'
     ? window.matchMedia('(prefers-reduced-motion: reduce)').matches
@@ -131,13 +132,21 @@ export function DashboardMockup({ onPhaseChange }: DashboardMockupProps = {}) {
       setPhase('pause');
       return;
     }
+    if (paused) return;
 
     timeoutRef.current = setTimeout(() => {
       setPhase((p) => nextPhase(p));
     }, PHASE_DURATIONS[phase]);
 
     return () => { if (timeoutRef.current) clearTimeout(timeoutRef.current); };
-  }, [phase, nextPhase, prefersReducedMotion]);
+  }, [phase, nextPhase, prefersReducedMotion, paused]);
+
+  const handleApplyClick = useCallback(() => {
+    if (phase === 'detect') {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+      setPhase('act');
+    }
+  }, [phase]);
 
   // Notify parent of phase changes
   useEffect(() => {
@@ -151,7 +160,11 @@ export function DashboardMockup({ onPhaseChange }: DashboardMockupProps = {}) {
   const chartIsAfter = phase === 'act' || phase === 'pause';
 
   return (
-    <div className="mkt-perspective w-full max-w-4xl mx-auto">
+    <div
+      className="mkt-perspective w-full max-w-4xl mx-auto"
+      onMouseEnter={() => setPaused(true)}
+      onMouseLeave={() => setPaused(false)}
+    >
       <div className="mkt-tilt mkt-glass rounded-2xl overflow-hidden shadow-2xl shadow-violet-500/10 relative">
         {/* Scan line overlay */}
         {showScan && (
@@ -320,9 +333,12 @@ export function DashboardMockup({ onPhaseChange }: DashboardMockupProps = {}) {
               {/* Apply button area */}
               {showLever && !leverApplied && (
                 <div className="mt-3 flex justify-end">
-                  <span className="font-display text-[10px] tracking-[0.12em] text-violet-400 px-3 py-1 rounded-full border border-violet-500/20 bg-violet-500/10">
+                  <button
+                    onClick={handleApplyClick}
+                    className="font-display text-[10px] tracking-[0.12em] text-violet-400 px-3 py-1 rounded-full border border-violet-500/20 bg-violet-500/10 hover:bg-violet-500/20 transition-colors cursor-pointer"
+                  >
                     APPLY
-                  </span>
+                  </button>
                 </div>
               )}
             </div>

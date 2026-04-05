@@ -9,6 +9,7 @@ const columns = [
       { label: 'Platform', href: '/product' },
       { label: 'Pricing', href: '/pricing' },
       { label: 'Ecosystem', href: '/ecosystem' },
+      { label: 'Interactive Demo', href: '/explore' },
       { label: 'Request Demo', href: '/demo' },
     ],
   },

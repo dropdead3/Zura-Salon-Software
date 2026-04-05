@@ -30,6 +30,7 @@ import Product from "./pages/Product";
 import UnifiedLogin from "./pages/UnifiedLogin";
 import NotFound from "./pages/NotFound";
 const PricingPage = lazyWithRetry(() => import("./pages/Pricing"));
+const InteractiveDemo = lazyWithRetry(() => import("./pages/InteractiveDemo"));
 import DashboardHome from "./pages/dashboard/DashboardHome";
 
 // Organization public pages (under /org/:orgSlug)
@@ -442,6 +443,7 @@ const App = () => (
                     {/* Standalone public pages */}
                     <Route path="/pricing" element={<Suspense fallback={<RouteFallback />}><PricingPage /></Suspense>} />
                     <Route path="/demo" element={<ProductDemo />} />
+                    <Route path="/explore" element={<Suspense fallback={<RouteFallback />}><InteractiveDemo /></Suspense>} />
                     <Route path="/about" element={<Suspense fallback={<RouteFallback />}><About /></Suspense>} />
                     <Route path="/solutions/independent" element={<SolIndependent />} />
                     <Route path="/solutions/salon-owner" element={<SolSalonOwner />} />
