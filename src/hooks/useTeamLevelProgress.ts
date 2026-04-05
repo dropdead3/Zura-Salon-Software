@@ -156,6 +156,22 @@ export function useTeamLevelProgress() {
     },
     enabled: !!orgId && userIds.length > 0,
   });
+  // Batch fetch latest level_promotions per user for time-at-level
+  const { data: allLevelPromotions = [] } = useQuery({
+    queryKey: ['team-graduation-level-promotions', orgId, userIds.length],
+    queryFn: async () => {
+      if (userIds.length === 0) return [];
+      const { data, error } = await supabase
+        .from('level_promotions')
+        .select('user_id, promoted_at')
+        .eq('organization_id', orgId!)
+        .in('user_id', userIds)
+        .order('promoted_at', { ascending: false });
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!orgId && userIds.length > 0,
+  });
 
   const isLoading = loadingProfiles || loadingSales || loadingAppts || loadingShifts;
 
@@ -203,8 +219,23 @@ export function useTeamLevelProgress() {
         // New clients count (normalized to monthly)
         const newClients = completedAppts.filter((a: any) => a.is_new_client === true).length;
         const newClientsMonthly = evalDays > 0 ? (newClients / evalDays) * 30 : 0;
-        // Retention rate placeholder — use rebooking as proxy for now
-        const retentionRate = rebookingPct;
+        // True client retention rate: compare unique clients in prior window vs current window
+        const priorStart = format(subDays(new Date(), evalDays * 2), 'yyyy-MM-dd');
+        const allUserApptsFull = allApptData.filter(
+          (a: any) => a.staff_user_id === profile.user_id && a.status !== 'no_show' && a.status !== 'cancelled'
+        );
+        const priorClients = new Set(
+          allUserApptsFull
+            .filter((a: any) => a.appointment_date >= priorStart && a.appointment_date < evalStart && a.client_id)
+            .map((a: any) => a.client_id)
+        );
+        const currentClients = new Set(
+          allUserApptsFull
+            .filter((a: any) => a.appointment_date >= evalStart && a.client_id)
+            .map((a: any) => a.client_id)
+        );
+        const returningCount = [...currentClients].filter(id => priorClients.has(id)).length;
+        const retentionRate = priorClients.size > 0 ? (returningCount / priorClients.size) * 100 : 0;
 
         // Utilization calculation
         const userShifts = allShiftData.filter(
