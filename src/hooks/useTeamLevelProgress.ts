@@ -201,7 +201,9 @@ export function useTeamLevelProgress() {
 
       if (isTopLevel) {
         // Top level can still be at risk if retention criteria fail
-        const retStatus = retentionFailures.length > 0 ? 'at_risk' : 'at_top_level';
+        const retStatus = retentionFailures.length > 0
+          ? (retCriteria?.action_type === 'demotion_eligible' ? 'below_standard' : 'at_risk')
+          : 'at_top_level';
         return {
           userId: profile.user_id,
           fullName: profile.full_name || 'Unknown',
@@ -225,7 +227,9 @@ export function useTeamLevelProgress() {
       }
 
       if (!criteria || !nextLevel) {
-        const retStatus = retentionFailures.length > 0 ? 'at_risk' : 'no_criteria';
+        const retStatus = retentionFailures.length > 0
+          ? (retCriteria?.action_type === 'demotion_eligible' ? 'below_standard' : 'at_risk')
+          : 'no_criteria';
         return {
           userId: profile.user_id,
           fullName: profile.full_name || 'Unknown',
@@ -322,7 +326,7 @@ export function useTeamLevelProgress() {
       // Determine status: retention failures take priority if present
       let status: GraduationStatus = 'in_progress';
       if (retentionFailures.length > 0) {
-        status = 'at_risk';
+        status = retCriteria?.action_type === 'demotion_eligible' ? 'below_standard' : 'at_risk';
       } else if (isFullyQualified) {
         status = 'ready';
       } else if (score < 25) {

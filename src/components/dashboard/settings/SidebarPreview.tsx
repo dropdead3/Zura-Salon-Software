@@ -18,7 +18,7 @@ const LINK_CONFIG: Record<string, { label: string }> = {
   '/dashboard/shift-swaps': { label: 'Shift Swaps' },
   '/dashboard/rewards': { label: 'Rewards' },
   '/dashboard/ring-the-bell': { label: 'Ring the Bell' },
-  '/dashboard/my-graduation': { label: 'My Graduation' },
+  '/dashboard/my-graduation': { label: 'My Level Progress' },
   // Manage (hub links)
   '/dashboard/admin/analytics': { label: 'Analytics Hub' },
   '/dashboard/admin/team-hub': { label: 'Operations Hub' },

@@ -67,6 +67,7 @@ import { PersonalInsightsDrawer } from '@/components/dashboard/PersonalInsightsD
 import { TodaysPrepSection } from '@/components/dashboard/TodaysPrepSection';
 import { StylistPushList } from '@/components/dashboard/StylistPushList';
 import { LevelProgressNudge } from '@/components/dashboard/LevelProgressNudge';
+import { GraduationKpiTile } from '@/components/dashboard/GraduationKpiTile';
 
 import { PaydayCountdownBanner } from '@/components/dashboard/mypay/PaydayCountdownBanner';
 import { InsightsNudgeBanner } from '@/components/dashboard/InsightsNudgeBanner';
@@ -588,6 +589,12 @@ function DashboardSections({
     level_progress: hasStylistRole && (
       <VisibilityGate elementKey="level_progress" elementName="Level Progress" elementCategory="growth">
         <LevelProgressNudge />
+      </VisibilityGate>
+    ),
+
+    graduation_kpi: isLeadership && (
+      <VisibilityGate elementKey="graduation_kpi" elementName="Team Level Progress" elementCategory="growth">
+        <GraduationKpiTile />
       </VisibilityGate>
     ),
     

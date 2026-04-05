@@ -80,12 +80,13 @@ function KpiStrip({ counts }: { counts: ReturnType<typeof useTeamLevelProgress>[
     { label: 'Ready to Graduate', value: counts.ready, icon: CheckCircle2, color: 'text-emerald-600' },
     { label: 'In Progress', value: counts.inProgress, icon: TrendingUp, color: 'text-primary' },
     { label: 'At Risk', value: counts.atRisk, icon: AlertTriangle, color: 'text-rose-600' },
+    { label: 'Below Standard', value: counts.belowStandard, icon: AlertCircle, color: 'text-red-700' },
     { label: 'Needs Attention', value: counts.needsAttention, icon: AlertCircle, color: 'text-amber-600' },
     { label: 'At Top Level', value: counts.atTopLevel, icon: Crown, color: 'text-muted-foreground' },
   ];
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
       {kpis.map(kpi => (
         <div key={kpi.label} className={tokens.kpi.tile}>
           <div className="flex items-center gap-2">

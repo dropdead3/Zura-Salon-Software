@@ -113,7 +113,7 @@ const LINK_CONFIG: Record<string, { label: string; icon: React.ComponentType<{ c
   '/dashboard/program': { label: 'New-Client Engine Program', icon: Target },
   '/dashboard/admin/team': { label: 'Program Team Overview', icon: Users },
   '/dashboard/ring-the-bell': { label: 'Ring the Bell', icon: Bell },
-  '/dashboard/my-graduation': { label: 'My Graduation', icon: GraduationCap },
+  '/dashboard/my-graduation': { label: 'My Level Progress', icon: GraduationCap },
   
   // Stats
   '/dashboard/stats': { label: 'Stats', icon: BarChart3 },
