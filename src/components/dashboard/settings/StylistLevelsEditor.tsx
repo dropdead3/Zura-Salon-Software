@@ -865,8 +865,8 @@ export function StylistLevelsEditor({ embedded = false }: StylistLevelsEditorPro
               }));
               const commissions = levels.map(l => ({
                 dbId: l.dbId,
-                serviceCommissionRate: l.serviceCommissionRate,
-                retailCommissionRate: l.retailCommissionRate,
+                serviceCommissionRate: parseFloat(String(l.serviceCommissionRate)) || 0,
+                retailCommissionRate: parseFloat(String(l.retailCommissionRate)) || 0,
               }));
 
               // Pre-fetch org logo as base64 data URL
