@@ -1,41 +1,42 @@
 
 
-# Stylist Levels Editor — Remove Color Progression & Improve Layout
+# Make Level Criteria Configurator More Discoverable
 
-## What Changes
+## Problem
 
-### 1. Remove Color Progression section
-Delete the "Color Progression" card from the right sidebar (lines 716–765). It shows current vs. future color badge previews that have no clear connection to any admin workflow. The `Palette` icon import can also be removed.
+The graduation/level criteria configurator exists but is nearly invisible. It's a tiny `text-muted-foreground` pill button ("Configure Criteria") tucked below the description input on each level card. Users can't find it because:
 
-### 2. Reorganize right sidebar for clarity
-Current sidebar order: Progression Roadmap → ~~Color Progression~~ → Stylists Overview → Tooltip Preview → Card Preview → Services Dropdown.
+1. It only appears on levels 2+ (skips entry level — correct, but not explained)
+2. It uses low-contrast muted colors when unconfigured
+3. It's nested inside the card body with no visual prominence
+4. There's no section header or call-to-action telling admins this capability exists
 
-**New order with grouping:**
+## Solution
 
-- **Team Distribution** (Stylists Overview — moved to top, most actionable)
-- **Progression Roadmap** (criteria summary — only shown when criteria exist)
-- **Website Previews** section header
-  - Card Preview (how stylists appear on the website)
-  - Services Dropdown (level selector on services page)
-  - Tooltip Preview (info tooltip content)
+Make the configurator a first-class section of each level card rather than a hidden inline link.
 
-This puts operational data first and groups the 3 website previews under a clear heading so admins understand these are client-facing representations.
+### 1. Promote "Configure Criteria" to a visible card section
 
-### 3. Improve level card clarity
-- Make commission rates always visible (not just as tiny `10px` text) — show them as labeled pill badges: `Svc 38%` `Retail 10%` with muted styling
-- Add a subtle connector line between level cards to reinforce the progression hierarchy
-- Show "Entry Level" as a small badge on level 1 instead of italic text below the description
+Replace the small inline pill with a distinct bordered sub-section inside each level card (for levels 2+). This section shows:
+- **When unconfigured**: A call-to-action box with a `Sparkles` icon, "Set up promotion & retention criteria" text, and a visible button — styled like an empty state with `border-dashed`
+- **When configured**: A compact summary card showing promotion criteria, retention criteria, and an "Edit" button — no longer hidden behind hover states
 
-### 4. Simplify the level badge
-Replace the color-coded `getLevelColor` badges on each level row with a plain muted number badge. The color progression was the only place those colors were explained — without it, randomly colored badges create confusion. Use a consistent `bg-muted text-muted-foreground` style for all level number badges.
+### 2. Add a contextual explanation for Level 1
 
----
+Level 1 (entry level) doesn't get criteria because it's the starting point. Currently there's no explanation — the button just doesn't appear. Add a small muted note: "Entry level — no promotion criteria needed" so admins understand why this level is different.
+
+### 3. Improve criteria summary readability
+
+Currently the criteria summaries are `text-[10px]` (nearly unreadable). Increase to `text-xs` and use a structured layout:
+- Promotion: icon + metrics on one line
+- Retention: icon + "Required to Stay" metrics on the next line
+- Both inside a light `bg-muted/30` container with proper padding
 
 ## File Changes
 
 | File | Action |
 |------|--------|
-| `src/components/dashboard/settings/StylistLevelsEditor.tsx` | **Modify** — Remove Color Progression section, remove `Palette` import, reorder sidebar sections, replace `getLevelColor` badges with neutral badges, improve commission rate visibility, add website previews group header |
+| `src/components/dashboard/settings/StylistLevelsEditor.tsx` | **Modify** — Redesign the criteria section (lines 591-626) from inline pill to visible sub-card with empty state CTA; add Level 1 explanation; increase summary text size |
 
 **0 new files, 1 modified file, 0 migrations.**
 
