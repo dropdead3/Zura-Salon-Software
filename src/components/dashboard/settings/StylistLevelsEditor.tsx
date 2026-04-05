@@ -318,6 +318,7 @@ function CriteriaComparisonTable({ levels, promotionCriteria, retentionCriteria,
           </TableBody>
         </Table>
       </ScrollableTableWrapper>
+    </div>
   );
 }
 
