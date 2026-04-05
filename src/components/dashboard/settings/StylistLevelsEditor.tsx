@@ -36,12 +36,14 @@ import {
   Globe,
   TrendingUp,
   Shield,
+  Wand2,
 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Checkbox } from '@/components/ui/checkbox';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import {
   useStylistLevels, 
@@ -49,7 +51,7 @@ import {
 } from '@/hooks/useStylistLevels';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 import { PageExplainer } from '@/components/ui/PageExplainer';
-import { GraduationWizard } from '@/components/dashboard/settings/GraduationWizard';
+import { GraduationWizard, getZuraDefaults, getZuraRetentionDefaults } from '@/components/dashboard/settings/GraduationWizard';
 import { useLevelPromotionCriteria, type LevelPromotionCriteria } from '@/hooks/useLevelPromotionCriteria';
 import { useLevelRetentionCriteria, type LevelRetentionCriteria } from '@/hooks/useLevelRetentionCriteria';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
