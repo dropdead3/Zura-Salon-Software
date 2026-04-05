@@ -26,9 +26,8 @@ export function OrgDashboardRoute() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-4">
+      <div className="min-h-screen bg-background flex items-center justify-center">
           <ZuraLoader size="lg" platformColors />
-          <p className="font-display text-xs uppercase tracking-[0.16em] text-muted-foreground">{PLATFORM_NAME}</p>
         </div>
     );
   }
@@ -60,9 +59,8 @@ export function LegacyDashboardRedirect() {
   // Auth still resolving — show spinner
   if (loading) {
     return (
-      <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-4">
+      <div className="min-h-screen bg-background flex items-center justify-center">
           <ZuraLoader size="lg" platformColors />
-          <p className="font-display text-xs uppercase tracking-[0.16em] text-muted-foreground">{PLATFORM_NAME}</p>
         </div>
     );
   }
@@ -80,9 +78,8 @@ export function LegacyDashboardRedirect() {
   // Org context still loading — show spinner
   if (isOrgLoading) {
     return (
-      <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-4">
+      <div className="min-h-screen bg-background flex items-center justify-center">
           <ZuraLoader size="lg" platformColors />
-          <p className="font-display text-xs uppercase tracking-[0.16em] text-muted-foreground">{PLATFORM_NAME}</p>
         </div>
     );
   }
