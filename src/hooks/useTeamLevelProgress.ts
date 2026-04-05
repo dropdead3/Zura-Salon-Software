@@ -489,7 +489,7 @@ export function useTeamLevelProgress() {
       if (diff !== 0) return diff;
       return b.compositeScore - a.compositeScore;
     });
-  }, [profiles, allLevels, allCriteria, allRetention, allSalesData, allApptData, allShiftData]);
+  }, [profiles, allLevels, allCriteria, allRetention, allSalesData, allApptData, allShiftData, allLevelPromotions]);
 
   const counts = useMemo(() => {
     const ready = teamProgress.filter(t => t.status === 'ready').length;
