@@ -497,6 +497,9 @@ export function StylistLevelsEditor({ embedded = false }: StylistLevelsEditorPro
   const [deleteTargetIndex, setDeleteTargetIndex] = useState<number | null>(null);
   const [reassignToSlug, setReassignToSlug] = useState<string>('');
   const [wizardLevelIndex, setWizardLevelIndex] = useState(0);
+  const [quickSetupDismissed, setQuickSetupDismissed] = useState(false);
+  const [isQuickSetupGenerating, setIsQuickSetupGenerating] = useState(false);
+  const queryClient = useQueryClient();
 
   const { data: promotionCriteria } = useLevelPromotionCriteria();
   const { data: retentionCriteria } = useLevelRetentionCriteria();
