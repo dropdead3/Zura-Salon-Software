@@ -1,73 +1,91 @@
 
 
-# Graduation System — Full UX/UI Audit and Enhancement Plan
+# Graduation System — Retention Criteria ("Required to Stay") + Full UX/UI Audit
 
-## System Inventory
+## What This Solves
 
-The graduation system currently spans these surfaces:
-- **Admin: Graduation Tracker** (`GraduationTracker.tsx`) — KPI strip, All Stylists / Ready / Assistants / Requirements tabs
-- **Admin: Stylist Levels** (`StylistLevels.tsx`) — Level configurator with GraduationWizard for criteria per level
-- **Admin: Level Requirements PDF** — exportable document of all level criteria
-- **Stylist-Facing: My Graduation** (`MyGraduation.tsx`) — assistant checklist submission page
-- **Coaching: LevelProgressCard** — embedded in MeetingDetails and IndividualStaffReport
-- **Hooks: useLevelProgress** (single user) / **useTeamLevelProgress** (bulk team)
-- **Payroll: usePayrollForecasting** — tierProgress wired from level_promotion_criteria
+The graduation system currently only tracks **upward progression** — who's ready for promotion. It has no concept of **minimum standards to maintain the current level**. A stylist promoted to Senior who then drops to $4k/month in revenue faces no structured accountability.
+
+Adding "retention criteria" transforms the Graduation Tracker from a one-directional promotions dashboard into a **full level governance system** — surface who's thriving, who's slipping, and who needs intervention.
 
 ---
 
-## Bugs Found
+## Gaps Found in Current Audit
 
-### 1. No "Approve Promotion" action exists
-The plan called for an "Approve Promotion" button on the Ready to Graduate tab when `requires_manual_approval` is true. It was never built. The `StylistProgressRow` shows the badge and expand data but has no actionable CTA. There is no mutation to update `employee_profiles.stylist_level` from this page.
+### Bug: `My Graduation` nav restricted to `stylist_assistant` only
+The nav entry in `dashboardNav.ts` limits "My Graduation" to `stylist_assistant` role. Stylists at any level can't see their own level progress page. Since we added `LevelProgressCard` to this page, all stylists should have access.
 
-### 2. "My Graduation" page has no level progress
-The stylist-facing `MyGraduation.tsx` only shows the legacy checklist system (submit proof, get coach feedback). It does not show the `LevelProgressCard` or any KPI-based graduation progress. A stylist at level 3 approaching level 4 sees nothing about their revenue/rebooking progress.
+### Bug: No "At Risk" or downward drift detection
+The system categorizes stylists as `ready`, `in_progress`, `needs_attention`, `at_top_level`, or `no_criteria` — all relative to the **next** level. There's no evaluation against **current** level minimums.
 
-### 3. KPI strip shows when data is loaded but no criteria configured
-When an org has levels but hasn't configured any graduation criteria yet, the KPI strip shows all zeros with no guidance. Should show a setup prompt linking to Settings > Stylist Levels.
+### Gap: No retention criteria data model
+The `level_promotion_criteria` table only stores "what it takes to reach this level." There's no equivalent for "what it takes to stay at this level."
 
-### 4. `no_criteria` stylists shown mixed in with tracked stylists
-Stylists whose next level has no criteria configured appear in "All Stylists" with a bland "No Criteria" badge. This pollutes the actionable view. They should either be filterable or grouped separately.
+### Gap: No admin surface for "who's at risk"
+The Graduation Tracker has no tab or KPI for stylists falling below their current level's retention thresholds. Admins can't quickly identify who needs coaching vs. a performance conversation.
 
-### 5. ManagementHub stat query is wrong
-`ManagementHub.tsx` queries `stylist_program_enrollment` for `inProgressGraduations` count — this is the client engine program, not graduation. The stat label says "in progress" but doesn't reflect actual graduation readiness counts.
-
-### 6. `useTeamLevelProgress` may hit 1000-row limit
-The batch queries to `phorest_daily_sales_summary` and `appointments` use `.in('user_id', userIds)` without pagination. For orgs with 50+ stylists and 90-day windows, this can silently truncate data.
+### Gap: Zura defaults don't include retention presets
+The `getZuraDefaults()` function only populates promotion criteria. No defaults exist for retention.
 
 ---
 
-## Enhancements
+## Architecture
 
-### 7. Add "Approve Promotion" action to Ready tab
-- Add a mutation to update `employee_profiles.stylist_level` to the next level's slug
-- Show "Approve Promotion" button on each qualified row when `requiresApproval` is true
-- On approval: update the level, invalidate queries, show success toast
-- Add confirmation dialog ("Promote {name} from {current} to {next}?")
+### New Data: `level_retention_criteria` table
 
-### 8. Add LevelProgressCard to MyGraduation
-- Surface the level-based progress card at the top of the stylist's My Graduation page
-- Shows them their real-time progress toward their next level alongside the legacy checklist
-- Uses existing `useLevelProgress(effectiveUserId)` hook
+Parallel structure to `level_promotion_criteria`, but defines **minimums to stay** at a level rather than thresholds to reach the next one:
 
-### 9. Empty state with setup CTA on Graduation Tracker
-- When `counts.total === 0` or all are `no_criteria`, show a structured empty state
-- "No graduation criteria configured yet" with a button linking to Settings > Stylist Levels
-- Follows `tokens.empty` pattern
+```text
+level_retention_criteria
+├── organization_id (FK → organizations)
+├── stylist_level_id (FK → stylist_levels)
+├── retention_enabled (boolean) ← master toggle per level
+├── revenue_enabled / revenue_minimum
+├── retail_enabled / retail_pct_minimum
+├── rebooking_enabled / rebooking_pct_minimum
+├── avg_ticket_enabled / avg_ticket_minimum
+├── evaluation_window_days (30/60/90)
+├── grace_period_days (how long below threshold before flagged)
+├── action_type ('coaching_flag' | 'demotion_eligible')
+└── is_active
+```
 
-### 10. Wire ManagementHub graduation stat correctly
-- Replace the `stylist_program_enrollment` query with actual `useTeamLevelProgress` counts
-- Show `counts.ready` as the stat ("ready to graduate") instead of unrelated program enrollments
+No weights — retention is pass/fail per criterion. If any enabled criterion is below minimum, the stylist is flagged.
 
-### 11. Add status filter to All Stylists tab
-- Add a status filter dropdown (All / Ready / In Progress / Needs Attention / No Criteria / Top Level)
-- Works alongside existing level filter and search
-- Lets admins quickly isolate actionable groups
+### New statuses in `useTeamLevelProgress`
 
-### 12. Promotion history tracking
-- When a promotion is approved, record it in a new `level_promotions` table (user_id, from_level, to_level, promoted_by, promoted_at)
-- Show promotion history in the expanded row and on the individual staff report
-- This creates an audit trail per the governance doctrine
+Add two new status values:
+- `at_risk` — below one or more retention criteria (within grace period)
+- `below_standard` — below retention criteria past grace period (action needed)
+
+### UI: New "At Risk" tab + KPI
+
+```text
+KPI Strip:
+┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐
+│ Ready to │ │ In       │ │ Needs    │ │ At Risk  │ │ Below    │
+│ Graduate │ │ Progress │ │ Attention│ │ ⚠️       │ │ Standard │
+└──────────┘ └──────────┘ └──────────┘ └──────────┘ └──────────┘
+
+Tabs: [All Stylists] [Ready to Graduate] [At Risk] [Assistants] [Requirements]
+```
+
+**At Risk tab** shows stylists failing retention criteria with:
+- Which criteria they're failing (red progress bars showing actual vs minimum)
+- Days remaining in grace period
+- Action type label ("Coaching recommended" vs "Demotion eligible")
+- Link to 1:1 meeting prep for that stylist
+
+### Admin Configuration: Retention tab in GraduationWizard
+
+Add a second configuration surface within the GraduationWizard (or a parallel wizard) for each level:
+- "Required to Graduate" (existing) — what it takes to reach this level
+- "Required to Stay" (new) — minimums to maintain this level
+- Zura defaults for retention: lower thresholds than promotion (e.g., Level 3 promotion needs $8k revenue, retention minimum is $5k)
+
+### Stylist-Facing: Surface retention status on MyGraduation
+
+If a stylist is below retention thresholds, show a subtle alert card on their My Graduation page: "Your [metric] is below the minimum for your current level. Focus on improving this before [grace period end]."
 
 ---
 
@@ -75,12 +93,15 @@ The batch queries to `phorest_daily_sales_summary` and `appointments` use `.in('
 
 | File | Action |
 |------|--------|
-| Migration SQL | **Create** — `level_promotions` table for audit trail |
-| `src/hooks/useTeamLevelProgress.ts` | **Modify** — Add pagination guard for large datasets |
-| `src/hooks/usePromoteLevel.ts` | **Create** — Mutation to promote stylist + record in audit table |
-| `src/pages/dashboard/admin/GraduationTracker.tsx` | **Modify** — Add Approve Promotion CTA, status filter, empty state with setup CTA |
-| `src/pages/dashboard/MyGraduation.tsx` | **Modify** — Add LevelProgressCard at top of page |
-| `src/pages/dashboard/admin/ManagementHub.tsx` | **Modify** — Fix graduation stat to use real counts |
+| Migration SQL | **Create** — `level_retention_criteria` table |
+| `src/hooks/useLevelRetentionCriteria.ts` | **Create** — CRUD hooks for retention criteria |
+| `src/hooks/useTeamLevelProgress.ts` | **Modify** — Add retention evaluation, new `at_risk` / `below_standard` statuses |
+| `src/hooks/useLevelProgress.ts` | **Modify** — Add retention check for individual stylist |
+| `src/components/dashboard/settings/GraduationWizard.tsx` | **Modify** — Add "Required to Stay" configuration tab with Zura defaults |
+| `src/pages/dashboard/admin/GraduationTracker.tsx` | **Modify** — Add "At Risk" tab, new KPI tiles, retention-aware status badges |
+| `src/components/coaching/LevelProgressCard.tsx` | **Modify** — Show retention warning when below minimums |
+| `src/pages/dashboard/MyGraduation.tsx` | **Modify** — Add retention alert card |
+| `src/config/dashboardNav.ts` | **Modify** — Expand My Graduation access to all stylist roles |
 
-**1 migration, 1 new file, 4 modified files.**
+**1 migration, 2 new files, 7 modified files.**
 
