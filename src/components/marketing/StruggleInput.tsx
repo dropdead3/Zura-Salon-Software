@@ -481,7 +481,9 @@ export function StruggleInput() {
             ref={responseRef}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            onMouseEnter={handleResponseMouseEnter}
+            onMouseLeave={handleResponseMouseLeave}
             transition={{ duration: 0.4 }}
             className="mt-6"
           >
