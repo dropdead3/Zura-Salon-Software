@@ -39,7 +39,7 @@ function renderQuoteWithHighlights(text: string, highlights: string[]) {
 
   return parts.map((part, i) =>
     part.highlighted ? (
-      <span key={i} className="bg-amber-100/60 px-1 rounded-sm">
+      <span key={i} className="bg-[hsl(var(--mkt-lavender)/0.15)] text-[hsl(var(--mkt-lavender))] px-1 rounded-sm">
         {part.text}
       </span>
     ) : (
@@ -53,7 +53,7 @@ export function FounderQuote() {
   const isInView = useInView(ref, { once: true, margin: '-80px' });
 
   return (
-    <section ref={ref} className="relative z-10 bg-[#FAF9F7] py-20 lg:py-28">
+    <section ref={ref} className="relative z-10 py-20 lg:py-28">
       <div className="max-w-5xl mx-auto px-6 sm:px-8">
         <div className="grid grid-cols-1 md:grid-cols-[1fr_1.5fr] gap-10 lg:gap-16 items-center">
           {/* Photo placeholder */}
@@ -63,8 +63,8 @@ export function FounderQuote() {
             transition={{ duration: 0.7, ease: [0.25, 0.1, 0.25, 1] }}
             className="flex justify-center md:justify-end"
           >
-            <div className="w-48 h-56 sm:w-56 sm:h-64 rounded-2xl bg-gradient-to-br from-slate-200 to-slate-300 flex items-center justify-center overflow-hidden">
-              <span className="font-display text-4xl text-slate-400 tracking-wide">SM</span>
+            <div className="w-48 h-56 sm:w-56 sm:h-64 rounded-2xl bg-white/[0.05] border border-white/[0.08] flex items-center justify-center overflow-hidden">
+              <span className="font-display text-4xl text-white/20 tracking-wide">SM</span>
             </div>
           </motion.div>
 
@@ -74,16 +74,16 @@ export function FounderQuote() {
             animate={isInView ? { opacity: 1, y: 0 } : {}}
             transition={{ duration: 0.7, delay: 0.15, ease: [0.25, 0.1, 0.25, 1] }}
           >
-            <p className="font-display text-2xl sm:text-3xl lg:text-4xl text-slate-900 leading-snug tracking-tight mb-8">
+            <p className="font-display text-2xl sm:text-3xl lg:text-4xl text-white/90 leading-snug tracking-tight mb-8">
               {renderQuoteWithHighlights(QUOTE_TEXT, HIGHLIGHTS)}
             </p>
 
             <div className="space-y-1">
-              <p className="font-sans text-base text-slate-900">Sarah Mitchell</p>
-              <p className="font-sans text-sm text-slate-500">Founder, Luxe Collective</p>
+              <p className="font-sans text-base text-white/90">Sarah Mitchell</p>
+              <p className="font-sans text-sm text-white/50">Founder, Luxe Collective</p>
             </div>
 
-            <p className="font-display text-[11px] tracking-[0.15em] text-slate-400 uppercase mt-5">
+            <p className="font-display text-[11px] tracking-[0.15em] text-white/30 uppercase mt-5">
               Luxe Collective
             </p>
           </motion.div>
