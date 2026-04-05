@@ -298,6 +298,7 @@ export default function StylistLevels() {
                         orgName: effectiveOrganization?.name || 'Organization',
                         levels: levelInfos,
                         criteria: promotionCriteria,
+                        retentionCriteria: retentionCriteria || [],
                       });
                       doc.save('graduation-roadmap.pdf');
                       toast.success('Graduation roadmap exported');
