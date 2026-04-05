@@ -261,8 +261,13 @@ function ApprovePromotionButton({ member }: { member: TeamMemberProgress }) {
 
 function DemoteLevelButton({ member, allLevels }: { member: TeamMemberProgress; allLevels: StylistLevel[] }) {
   const demoteLevel = useDemoteLevel();
+  const [demoteNotes, setDemoteNotes] = useState('');
 
-  if (member.status !== 'below_standard' || !member.currentLevel || member.currentLevelIndex <= 0) return null;
+  // Show for below_standard OR at_risk with demotion_eligible action type
+  const showDemote = (member.status === 'below_standard' || (member.status === 'at_risk' && member.retentionActionType === 'demotion_eligible'))
+    && member.currentLevel && member.currentLevelIndex > 0;
+
+  if (!showDemote) return null;
 
   const previousLevel = allLevels[member.currentLevelIndex - 1];
   if (!previousLevel) return null;
@@ -280,13 +285,21 @@ function DemoteLevelButton({ member, allLevels }: { member: TeamMemberProgress; 
           <AlertDialogTitle>Confirm Demotion</AlertDialogTitle>
           <AlertDialogDescription>
             Demote <span className="font-medium text-foreground">{member.fullName}</span> from{' '}
-            <span className="font-medium text-foreground">{member.currentLevel.label}</span> to{' '}
+            <span className="font-medium text-foreground">{member.currentLevel!.label}</span> to{' '}
             <span className="font-medium text-foreground">{previousLevel.label}</span>?
             This will immediately update their level and is recorded in the audit trail.
           </AlertDialogDescription>
         </AlertDialogHeader>
+        <div className="py-2">
+          <Textarea
+            value={demoteNotes}
+            onChange={(e) => setDemoteNotes(e.target.value)}
+            placeholder="Reason for demotion (optional)..."
+            className="min-h-[60px] resize-none"
+          />
+        </div>
         <AlertDialogFooter>
-          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogCancel onClick={() => setDemoteNotes('')}>Cancel</AlertDialogCancel>
           <AlertDialogAction
             className="bg-destructive hover:bg-destructive/90"
             onClick={() => {
@@ -294,7 +307,9 @@ function DemoteLevelButton({ member, allLevels }: { member: TeamMemberProgress; 
                 userId: member.userId,
                 fromLevelSlug: member.currentLevel!.slug,
                 toLevelSlug: previousLevel.slug,
+                notes: demoteNotes.trim() || undefined,
               });
+              setDemoteNotes('');
             }}
             disabled={demoteLevel.isPending}
           >
