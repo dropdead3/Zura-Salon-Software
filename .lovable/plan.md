@@ -1,50 +1,54 @@
 
 
-# Graduation System — Pass 5: Bug Fixes, Dead Code, Label Consistency, and Admin KPI
+# Graduation System — Pass 6: Remaining Gaps and Polish
 
-## Current State
+## System Review
 
-After 4 passes, the graduation system has: promotion criteria wizard with Zura defaults, retention criteria ("Required to Stay") with admin configuration, At Risk tab on Graduation Tracker, LevelProgressCard on MyGraduation/MeetingDetails/IndividualStaffReport, promotion history (admin + stylist), retention guidance cards, PDF export with retention criteria, website level display mode toggle, color-coded level badges in Team Directory, and LevelProgressNudge on the stylist dashboard home.
+After 5 passes, the graduation system is comprehensive. The core architecture (promotion criteria, retention criteria, status lifecycle, audit trail, cross-surface integration, display mode toggle, KPI tiles) is solid. What remains are edge cases, missing filter options, stale copy, and a few UX polish items.
 
 ---
 
 ## Gaps Found
 
-### Bug: `below_standard` status is never assigned
-The `GraduationStatus` type includes `'below_standard'`, there's a `StatusBadge` config for it, it's counted in `counts.belowStandard`, and the KPI strip references it — but the actual evaluation logic in `useTeamLevelProgress.ts` never sets `status = 'below_standard'`. It always assigns `'at_risk'` when retention failures exist. The distinction between "within grace period" and "past grace period" that `below_standard` was meant to represent is never computed. This means admins can never see who has exceeded their grace period.
+### 1. Status filter dropdown missing "Below Standard"
+`GraduationTracker.tsx` line 740-747: The status filter `SelectContent` lists `ready`, `in_progress`, `at_risk`, `needs_attention`, `at_top_level`, `no_criteria` — but omits `below_standard`. Admins who want to filter specifically to demotion-eligible stylists cannot do so.
 
-### Bug: SidebarPreview + SidebarLayoutEditor show stale label "My Graduation"
-`SidebarPreview.tsx` line 21 and `SidebarLayoutEditor.tsx` line 116 still say `"My Graduation"` while the actual nav and page title are `"My Level Progress"`.
+### 2. Graduation Tracker page explainer is generic
+`pageExplainers.ts` line 459-463: The description says "Track team-wide level progression, identify who is ready for promotion, and manage assistant graduation checklists." It does not mention retention tracking, at-risk identification, or coaching workflows — all of which are now core features of this page.
 
-### Gap: No admin-facing graduation KPI on DashboardHome
-The `LevelProgressNudge` was added for stylists, but admins have no graduation awareness on their Command Center. An admin with 3 stylists ready to promote and 2 at risk gets zero signal until they navigate to the Graduation Tracker.
+### 3. MyGraduation still shows "graduation requirements" loading text
+`MyGraduation.tsx` line 500: The loading state says `"Loading your graduation requirements..."` — should say something like `"Loading your level progress..."` to match the renamed page.
 
-### Gap: KPI strip missing "Below Standard" count
-The KPI strip in `GraduationTracker.tsx` shows 5 KPIs but doesn't include `belowStandard`. Once the bug above is fixed, this count needs its own tile so admins can distinguish "coaching recommended" from "action required."
+### 4. MyGraduation "Overall Progress" card uses stale graduation framing
+Lines 461-495: The card shows checklist-based progress (requirements completed) which is the legacy assistant graduation flow. For stylists with level-based progression, this card is confusing — it shows "0/0" if no checklist requirements exist for their role. It should be conditionally hidden when no graduation requirements are configured (i.e., when the user is a non-assistant stylist using level-based progression only).
 
-### Gap: `level_progress` section not in default section ordering
-The `LevelProgressNudge` section key `level_progress` was added to the section map but likely isn't in the default section ordering array, so it may not render unless manually positioned.
+### 5. No demotion action in Graduation Tracker
+When a stylist is `below_standard` (demotion eligible), the admin sees "Demotion Eligible" text in the expanded row but has no action button to actually demote. The `usePromoteLevel` hook only promotes upward. There's no `useDemoteLevel` or equivalent.
+
+### 6. `LevelProgressCard` not used in individual staff report
+The plan from Pass 2 mentioned embedding `LevelProgressCard` in the Individual Staff Report, but it should be verified that it's actually rendered there, not just imported.
 
 ---
 
 ## Plan
 
-### 1. Fix `below_standard` status assignment
-In `useTeamLevelProgress.ts`, when a stylist has retention failures AND the retention criteria has `action_type === 'demotion_eligible'`, assign `'below_standard'` instead of `'at_risk'`. This creates the intended two-tier distinction:
-- `at_risk` = coaching recommended (within grace period or coaching action type)
-- `below_standard` = demotion eligible (past grace period or demotion action type)
+### 1. Add "Below Standard" to status filter
+Add `<SelectItem value="below_standard">Below Standard</SelectItem>` to the status filter dropdown in `GraduationTracker.tsx`.
 
-### 2. Fix sidebar label inconsistency
-Update `SidebarPreview.tsx` and `SidebarLayoutEditor.tsx` to show `"My Level Progress"` instead of `"My Graduation"`.
+### 2. Update Graduation Tracker page explainer
+Rewrite the `graduation-tracker` explainer to mention retention monitoring, at-risk identification, coaching actions, and demotion eligibility — reflecting the full scope of the page.
 
-### 3. Add admin graduation KPI tile on DashboardHome
-Create a compact `GraduationKpiTile` component for admins showing "X ready / Y at risk" with a link to the Graduation Tracker. Add it to the admin sections in `DashboardHome.tsx`.
+### 3. Fix stale loading/copy in MyGraduation
+- Change loading text from "graduation requirements" to "level progress"
+- Conditionally hide the "Overall Progress" checklist card when no graduation requirements exist for the user, so non-assistant stylists only see the level-based progress card
 
-### 4. Add "Below Standard" KPI to Graduation Tracker
-Add a 6th KPI tile to the `KpiStrip` in `GraduationTracker.tsx` for `counts.belowStandard`, using `AlertCircle` icon and red styling. Update the grid from `grid-cols-5` to `grid-cols-6` (or `grid-cols-3` on smaller screens).
+### 4. Add demotion capability for below-standard stylists
+- Create `useDemoteLevel` hook (mirrors `usePromoteLevel` but moves the stylist down one level, records in `level_promotions` with a `direction` or negative movement indicator)
+- Add a "Demote" action button in `StylistProgressRow` when `status === 'below_standard'`, with a confirmation dialog
+- Note: this requires a migration to add a `direction` column to `level_promotions` (`'promotion' | 'demotion'` defaulting to `'promotion'`) so the audit trail distinguishes promotions from demotions
 
-### 5. Add `level_progress` to default section ordering
-Verify and add the `level_progress` key to the default dashboard section order array so the nudge renders without manual configuration.
+### 5. Verify LevelProgressCard in Individual Staff Report
+Check that `LevelProgressCard` is rendered (not just imported) in the staff report page. If missing, add it.
 
 ---
 
@@ -52,12 +56,11 @@ Verify and add the `level_progress` key to the default dashboard section order a
 
 | File | Action |
 |------|--------|
-| `src/hooks/useTeamLevelProgress.ts` | **Modify** — Assign `below_standard` when `action_type === 'demotion_eligible'` |
-| `src/components/dashboard/settings/SidebarPreview.tsx` | **Modify** — Rename label to "My Level Progress" |
-| `src/components/dashboard/settings/SidebarLayoutEditor.tsx` | **Modify** — Rename label to "My Level Progress" |
-| `src/components/dashboard/GraduationKpiTile.tsx` | **Create** — Admin KPI tile for Command Center |
-| `src/pages/dashboard/DashboardHome.tsx` | **Modify** — Add GraduationKpiTile to admin sections, verify `level_progress` in default ordering |
-| `src/pages/dashboard/admin/GraduationTracker.tsx` | **Modify** — Add "Below Standard" KPI tile to strip |
+| `src/pages/dashboard/admin/GraduationTracker.tsx` | **Modify** — Add "Below Standard" to status filter dropdown |
+| `src/config/pageExplainers.ts` | **Modify** — Update graduation-tracker explainer copy |
+| `src/pages/dashboard/MyGraduation.tsx` | **Modify** — Fix loading text, conditionally hide empty checklist card |
+| `src/hooks/useDemoteLevel.ts` | **Create** — Hook for demoting a stylist with audit trail |
+| `src/pages/dashboard/admin/GraduationTracker.tsx` | **Modify** — Add DemoteButton for below_standard members |
 
-**1 new file, 5 modified files, 0 migrations.**
+**1 new file, 3 modified files, 1 migration (add `direction` column to `level_promotions`).**
 
