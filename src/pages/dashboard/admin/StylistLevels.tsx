@@ -54,7 +54,19 @@ import {
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 import { PageExplainer } from '@/components/ui/PageExplainer';
 import { GraduationWizard } from '@/components/dashboard/settings/GraduationWizard';
-import { useLevelPromotionCriteria } from '@/hooks/useLevelPromotionCriteria';
+import { useLevelPromotionCriteria, type LevelPromotionCriteria } from '@/hooks/useLevelPromotionCriteria';
+import { generateLevelRequirementsPDF } from '@/components/dashboard/settings/LevelRequirementsPDF';
+
+function formatCriteriaSummary(c: LevelPromotionCriteria): string {
+  const parts: string[] = [];
+  if (c.revenue_enabled && c.revenue_threshold > 0) parts.push(`$${(c.revenue_threshold / 1000).toFixed(0)}K rev`);
+  if (c.retail_enabled && c.retail_pct_threshold > 0) parts.push(`${c.retail_pct_threshold}% retail`);
+  if (c.rebooking_enabled && c.rebooking_pct_threshold > 0) parts.push(`${c.rebooking_pct_threshold}% rebook`);
+  if (c.avg_ticket_enabled && c.avg_ticket_threshold > 0) parts.push(`$${c.avg_ticket_threshold} avg`);
+  if (c.tenure_enabled && c.tenure_days > 0) parts.push(`${c.tenure_days}d tenure`);
+  if (parts.length === 0) return '';
+  return parts.join(' · ') + ` — ${c.evaluation_window_days}d window`;
+}
 
 type LocalStylistLevel = {
   id: string;
