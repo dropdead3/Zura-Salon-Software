@@ -1,5 +1,4 @@
 import { useState, useCallback, useEffect } from 'react';
-import { Link } from 'react-router-dom';
 import { RotateCcw, ChevronRight } from 'lucide-react';
 import {
   Scissors, Users, Building2, Crown,
@@ -11,7 +10,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import { PLATFORM_NAME } from '@/lib/brand';
 import { useScrollReveal } from './useScrollReveal';
-import { Button } from '@/components/ui/button';
+
 
 /* ── Persona definitions ──────────────────────────────────────────────────── */
 type PersonaKey = 'independent' | 'salon-owner' | 'multi-location' | 'enterprise';
