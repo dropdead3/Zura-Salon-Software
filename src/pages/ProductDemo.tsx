@@ -6,10 +6,10 @@ import { MarketingLayout } from '@/components/marketing/MarketingLayout';
 
 const locationOptions = ['1 location', '2–5 locations', '6–15 locations', '16+ locations'];
 const challengeOptions = [
-  'Margin visibility',
-  'Scaling without chaos',
-  'Stylist retention & performance',
-  'Replacing multiple tools',
+  'Seeing what\'s actually profitable',
+  'Growing without losing control',
+  'Keeping great people',
+  'Replacing too many tools',
   'Other',
 ];
 
@@ -49,7 +49,7 @@ export default function ProductDemo() {
                   See {PLATFORM_NAME} in Action
                 </h1>
                 <p className="font-sans text-base sm:text-lg text-slate-400 max-w-lg mx-auto">
-                  Tell us about your business and we will show you the exact levers waiting inside your operations.
+                  Tell us a bit about your salon and we'll show you how {PLATFORM_NAME} can help you run it with more clarity.
                 </p>
               </div>
 
@@ -126,7 +126,7 @@ export default function ProductDemo() {
                   disabled={!isValid}
                   className="w-full h-12 rounded-full bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 disabled:opacity-40 disabled:cursor-not-allowed font-sans text-base font-medium text-white transition-all shadow-lg shadow-violet-500/20 inline-flex items-center justify-center gap-2"
                 >
-                  Request Walkthrough
+                  Get a Demo
                   <Send className="w-4 h-4" />
                 </button>
               </form>
@@ -137,10 +137,10 @@ export default function ProductDemo() {
                 <Building2 className="w-8 h-8 text-violet-400" />
               </div>
               <h2 className="font-display text-2xl sm:text-3xl tracking-tight mb-4">
-                We will be in touch
+                We'll be in touch
               </h2>
               <p className="font-sans text-base text-slate-400 max-w-md mx-auto mb-8">
-                Our team will reach out within 24 hours to schedule your personalized walkthrough.
+                Our team will reach out within 24 hours to schedule your walkthrough.
               </p>
               <button
                 onClick={() => navigate('/')}

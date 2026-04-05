@@ -87,7 +87,7 @@ const faqs = [
   },
   {
     q: "What\u2019s included in the dashboard?",
-    a: 'Every plan includes real-time performance data, smart weekly recommendations, commission tracking, client retention insights, and team management tools — scaled to your size.',
+    a: 'Every plan includes real-time performance data, smart weekly recommendations, commission tracking, client retention insights, and team management tools — all scaled to your size.',
   },
 ];
 
@@ -211,7 +211,7 @@ export default function Pricing() {
             to="/demo"
             className="mkt-reveal inline-flex items-center gap-2 h-11 px-8 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 rounded-full font-sans text-sm font-medium text-white transition-all shadow-lg shadow-violet-500/20"
           >
-            Request a Demo
+            Get a Demo
             <ArrowRight className="w-4 h-4" />
           </Link>
         </section>

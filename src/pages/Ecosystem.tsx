@@ -13,61 +13,61 @@ const surfaces = [
   {
     icon: Brain,
     name: EXECUTIVE_BRIEF_NAME,
-    shortName: 'Intelligence Brief',
+    shortName: 'Weekly Intelligence',
     phase: 'Live',
     phaseColor: 'bg-emerald-500/20 text-emerald-400',
     description:
-      'Your weekly executive decision briefing. Ranked levers, deviation alerts, and recommended actions — delivered every Monday.',
+      'A clear weekly summary of what\'s happening across your business — what\'s working, what\'s not, and what to focus on next. Delivered every Monday.',
     features: [
-      'Ranked operational levers by economic impact',
-      'Deviation detection across locations',
-      'Confidence-qualified recommendations',
-      'Expandable logic for every insight',
+      'Top issues ranked by business impact',
+      'Performance trends across locations',
+      'Clear recommendations with reasoning',
+      'Full context behind every insight',
     ],
   },
   {
     icon: Megaphone,
     name: MARKETING_OS_NAME,
-    shortName: 'Marketing OS',
-    phase: 'Phase 2',
+    shortName: 'Marketing',
+    phase: 'Coming Soon',
     phaseColor: 'bg-violet-500/20 text-violet-400',
     description:
-      'Campaign generation with closed-loop ROI attribution. Demand amplification governed by operational readiness.',
+      'Campaign tools that connect to your business data — so you only drive demand when your team can actually handle it.',
     features: [
-      'AI-generated creative and copy',
-      'Meta and TikTok distribution',
-      'ROI attribution to next best action',
-      'Capacity and margin validation gates',
+      'Ready-to-use creative and copy',
+      'Built-in distribution to Meta and TikTok',
+      'Track what actually drives bookings',
+      'Checks capacity and margin before spending',
     ],
   },
   {
     icon: FlaskConical,
     name: SIMULATION_ENGINE_NAME,
-    shortName: 'Simulation Engine',
-    phase: 'Phase 3',
+    shortName: 'What-If Modeling',
+    phase: 'Coming Soon',
     phaseColor: 'bg-amber-500/20 text-amber-400',
     description:
-      'What-if modeling before you act. Test pricing, staffing, and expansion scenarios against your real data.',
+      'Test ideas before you commit. Model pricing, staffing, and expansion scenarios against your real numbers.',
     features: [
-      'Pricing impact simulation',
-      'Staffing scenario modeling',
-      'Expansion feasibility analysis',
-      'Risk-adjusted outcome projections',
+      'Pricing impact modeling',
+      'Staffing scenario planning',
+      'Expansion feasibility checks',
+      'See projected outcomes before you act',
     ],
   },
   {
     icon: Cog,
     name: AUTOMATION_LAYER_NAME,
-    shortName: 'Automation',
-    phase: 'Phase 4',
+    shortName: 'Smart Automation',
+    phase: 'Coming Soon',
     phaseColor: 'bg-slate-500/20 text-slate-400',
     description:
-      'Guardrailed actions executed within constraints you define. Automation assists leadership — it never replaces it.',
+      'Automate the repetitive stuff — within boundaries you set. Automation helps you run your business. It doesn\'t make decisions for you.',
     features: [
-      'Semi-autonomous execution with approval gates',
-      'Operator-defined constraint boundaries',
-      'Audit trail for every automated action',
-      'Kill-switch override at any time',
+      'Automated actions with approval steps',
+      'You define the rules and limits',
+      'Full audit trail for every action',
+      'Override or pause at any time',
     ],
   },
 ];
@@ -82,11 +82,10 @@ export default function Ecosystem() {
             Ecosystem
           </p>
           <h1 className="font-display text-3xl sm:text-4xl lg:text-5xl tracking-tight mb-6 leading-[1.1]">
-            Infrastructure that compounds
+            A set of powerful tools that all work together
           </h1>
           <p className="font-sans text-base sm:text-lg text-slate-400 max-w-2xl mx-auto leading-relaxed">
-            Four interconnected surfaces. Each one multiplies the value of the others.
-            Together they form the operating brain for scaling operators.
+            Each piece is strong on its own. But together, they give you a complete picture of your business.
           </p>
         </div>
       </section>
@@ -94,7 +93,7 @@ export default function Ecosystem() {
       {/* Surface cards */}
       <section className="relative z-10 px-6 sm:px-8 pb-16 sm:pb-24">
         <div className="max-w-5xl mx-auto space-y-6">
-          {surfaces.map((surface, idx) => (
+          {surfaces.map((surface) => (
             <div
               key={surface.shortName}
               className="p-6 sm:p-10 bg-white/[0.03] border border-white/[0.06] rounded-2xl hover:border-violet-500/20 transition-colors"
@@ -139,12 +138,12 @@ export default function Ecosystem() {
       <section className="relative z-10 px-6 sm:px-8 pb-16 sm:pb-24">
         <div className="max-w-3xl mx-auto text-center">
           <h2 className="font-display text-xl sm:text-2xl lg:text-3xl tracking-tight mb-4">
-            Each surface feeds the next
+            Everything connects
           </h2>
           <p className="font-sans text-sm sm:text-base text-slate-400 leading-relaxed max-w-xl mx-auto">
-            Intelligence informs marketing. Marketing validates against operations.
-            Simulations test before action. Automation executes within guardrails.
-            The loop compounds every week.
+            Your intelligence feeds your marketing. Your marketing checks against your operations.
+            Your models test before you act. Your automation stays within the lines you draw.
+            The whole system gets smarter every week.
           </p>
         </div>
       </section>
@@ -153,16 +152,16 @@ export default function Ecosystem() {
       <section className="relative z-10 px-6 sm:px-8 pb-16 sm:pb-24">
         <div className="max-w-3xl mx-auto text-center">
           <h2 className="font-display text-2xl sm:text-3xl tracking-tight mb-6">
-            See the ecosystem in action
+            See how it all works together
           </h2>
           <p className="font-sans text-base text-slate-400 max-w-xl mx-auto mb-10">
-            Request a walkthrough. We will show you how each surface applies to your operation.
+            Get a walkthrough and we'll show you how each tool applies to your salon.
           </p>
           <Link
             to="/demo"
             className="inline-flex items-center justify-center gap-2 h-12 px-8 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 rounded-xl font-sans text-base font-medium transition-all shadow-lg shadow-violet-500/25"
           >
-            Request a Demo
+            Get a Demo
             <ArrowRight className="w-4 h-4" />
           </Link>
         </div>
