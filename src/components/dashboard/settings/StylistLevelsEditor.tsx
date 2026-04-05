@@ -332,12 +332,12 @@ export function StylistLevelsEditor({ embedded = false }: StylistLevelsEditorPro
   // Save/Discard buttons provide sufficient unsaved-changes UX signal
 
   const { data: stylistsByLevel } = useQuery({
-    queryKey: ['stylists-by-level', orgId],
+    queryKey: ['stylists-by-level', effectiveOrganization?.id],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('employee_profiles')
         .select('stylist_level')
-        .eq('organization_id', orgId!)
+        .eq('organization_id', effectiveOrganization!.id)
         .not('stylist_level', 'is', null);
       if (error) throw error;
       const counts: Record<string, number> = {};
@@ -348,7 +348,7 @@ export function StylistLevelsEditor({ embedded = false }: StylistLevelsEditorPro
       });
       return counts;
     },
-    enabled: !!orgId,
+    enabled: !!effectiveOrganization?.id,
   });
 
   const getStylistCount = (levelId: string): number => {
