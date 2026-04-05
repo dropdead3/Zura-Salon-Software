@@ -26,19 +26,27 @@ export function useStylistPeerAverages(
   currentLevelSlug: string | undefined,
   userId: string | undefined,
   evalDays: number = 30,
+  locationId?: string | null,
 ) {
   const { effectiveOrganization } = useOrganizationContext();
   const orgId = effectiveOrganization?.id;
 
   // Get all employee profiles at same level
   const { data: peerProfiles } = useQuery({
-    queryKey: ['peer-profiles', orgId, currentLevelSlug],
+    queryKey: ['peer-profiles', orgId, currentLevelSlug, locationId],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from('employee_profiles')
-        .select('user_id')
+        .select('user_id, location_id')
         .eq('organization_id', orgId!)
         .eq('stylist_level', currentLevelSlug!);
+
+      // Scope to same location if provided
+      if (locationId) {
+        query = query.eq('location_id', locationId);
+      }
+
+      const { data, error } = await query;
       if (error) throw error;
       return (data || []).filter(p => p.user_id !== userId);
     },
