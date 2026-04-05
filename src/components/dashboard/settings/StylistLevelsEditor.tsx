@@ -800,44 +800,46 @@ export function StylistLevelsEditor({ embedded = false }: StylistLevelsEditorPro
   const actionButtons = (
     <div className="flex items-center gap-2">
       {levels.length > 0 && (
-        <Button
-          variant="outline"
-          size="sm"
-          className="gap-2"
-          onClick={() => {
-            const levelInfos = levels.map((l, i) => ({
-              label: l.label,
-              slug: l.slug,
-              dbId: l.dbId,
-              index: i,
-            }));
-            const doc = generateLevelRequirementsPDF({
-              orgName: effectiveOrganization?.name || 'Organization',
-              levels: levelInfos,
-              criteria: promotionCriteria,
-              retentionCriteria: retentionCriteria || [],
-            });
-            doc.save('level-progression-roadmap.pdf');
-            toast.success('Progression roadmap exported');
-          }}
-        >
-          <FileDown className="w-4 h-4" />
-          Export Roadmap
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          className="gap-2"
-          onClick={handleAnalyze}
-          disabled={analysisLoading}
-        >
-          {analysisLoading ? (
-            <Loader2 className="w-4 h-4 animate-spin" />
-          ) : (
-            <Sparkles className="w-4 h-4" />
-          )}
-          Analyze Configuration
-        </Button>
+        <>
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-2"
+            onClick={() => {
+              const levelInfos = levels.map((l, i) => ({
+                label: l.label,
+                slug: l.slug,
+                dbId: l.dbId,
+                index: i,
+              }));
+              const doc = generateLevelRequirementsPDF({
+                orgName: effectiveOrganization?.name || 'Organization',
+                levels: levelInfos,
+                criteria: promotionCriteria,
+                retentionCriteria: retentionCriteria || [],
+              });
+              doc.save('level-progression-roadmap.pdf');
+              toast.success('Progression roadmap exported');
+            }}
+          >
+            <FileDown className="w-4 h-4" />
+            Export Roadmap
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-2"
+            onClick={handleAnalyze}
+            disabled={analysisLoading}
+          >
+            {analysisLoading ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Sparkles className="w-4 h-4" />
+            )}
+            Analyze Configuration
+          </Button>
+        </>
       )}
       {hasChanges && (
         <>
