@@ -391,6 +391,7 @@ export function StylistLevelsEditor({ embedded = false }: StylistLevelsEditorPro
         <Tabs defaultValue="levels" className="w-full">
           <TabsList>
             <TabsTrigger value="levels">Levels</TabsTrigger>
+            <TabsTrigger value="criteria">Criteria</TabsTrigger>
             <TabsTrigger value="team">Team Roster</TabsTrigger>
             <TabsTrigger value="previews">Previews</TabsTrigger>
           </TabsList>
