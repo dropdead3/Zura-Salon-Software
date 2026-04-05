@@ -3,7 +3,7 @@ import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
-import { TrendingUp, GraduationCap, CheckCircle2, ShieldCheck } from 'lucide-react';
+import { TrendingUp, GraduationCap, CheckCircle2, ShieldCheck, AlertTriangle } from 'lucide-react';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { useLevelProgress, type LevelProgressResult } from '@/hooks/useLevelProgress';
 
@@ -55,8 +55,8 @@ function CriterionRow({ label, current, target, percent, unit, gap }: {
 export function LevelProgressCard({ userId, compact = false }: LevelProgressCardProps) {
   const progress = useLevelProgress(userId);
 
-  if (!progress || !progress.nextLevelLabel || !progress.criteria) {
-    return null; // No next level or no criteria configured
+  if (!progress || (!progress.nextLevelLabel && !progress.retention?.isAtRisk)) {
+    return null; // No next level and no retention issues
   }
 
   return (
@@ -92,39 +92,67 @@ export function LevelProgressCard({ userId, compact = false }: LevelProgressCard
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* Composite progress bar */}
-        <div>
-          <div className="flex items-center justify-between text-xs mb-1.5">
-            <span className="text-muted-foreground">Overall Progress</span>
-            <span className="font-medium tabular-nums">{progress.compositeScore}%</span>
-          </div>
-          <Progress
-            value={progress.compositeScore}
-            className="h-2"
-            indicatorClassName={cn(
-              progress.compositeScore >= 100 ? 'bg-emerald-500' : 'bg-primary'
+        {/* Retention warning */}
+        {progress.retention?.isAtRisk && (
+          <div className="p-3 rounded-lg border border-rose-200 bg-rose-50 dark:border-rose-800 dark:bg-rose-950/20 space-y-2">
+            <div className="flex items-center gap-2 text-xs text-rose-700 dark:text-rose-400">
+              <AlertTriangle className="w-3.5 h-3.5" />
+              <span className="font-medium">
+                {progress.retention.actionType === 'demotion_eligible' ? 'Below minimum standards — demotion eligible' : 'Below minimum standards — coaching recommended'}
+              </span>
+            </div>
+            {progress.retention.failures.map(f => (
+              <div key={f.key} className="flex items-center justify-between text-xs">
+                <span className="text-rose-600 dark:text-rose-400">{f.label}</span>
+                <span className="tabular-nums text-rose-700 dark:text-rose-300">
+                  {f.unit === '/mo' || f.unit === '$' ? `$${f.current.toLocaleString()}` : `${f.current}${f.unit}`}
+                  <span className="text-rose-400"> / min {f.unit === '/mo' || f.unit === '$' ? `$${f.minimum.toLocaleString()}` : `${f.minimum}${f.unit}`}</span>
+                </span>
+              </div>
+            ))}
+            {progress.retention.gracePeriodDays > 0 && (
+              <p className="text-[10px] text-rose-500">{progress.retention.gracePeriodDays}-day grace period</p>
             )}
-          />
-        </div>
+          </div>
+        )}
 
-        {/* Per-criterion breakdown */}
-        <div className="space-y-3">
-          {progress.criteriaProgress.map(cp => (
-            <CriterionRow
-              key={cp.key}
-              label={cp.label}
-              current={cp.current}
-              target={cp.target}
-              percent={cp.percent}
-              unit={cp.unit}
-              gap={cp.gap}
-            />
-          ))}
-        </div>
+        {/* Composite progress bar — only show if there's a next level with criteria */}
+        {progress.nextLevelLabel && progress.criteria && (
+          <>
+            <div>
+              <div className="flex items-center justify-between text-xs mb-1.5">
+                <span className="text-muted-foreground">Overall Progress</span>
+                <span className="font-medium tabular-nums">{progress.compositeScore}%</span>
+              </div>
+              <Progress
+                value={progress.compositeScore}
+                className="h-2"
+                indicatorClassName={cn(
+                  progress.compositeScore >= 100 ? 'bg-emerald-500' : 'bg-primary'
+                )}
+              />
+            </div>
+
+            {/* Per-criterion breakdown */}
+            <div className="space-y-3">
+              {progress.criteriaProgress.map(cp => (
+                <CriterionRow
+                  key={cp.key}
+                  label={cp.label}
+                  current={cp.current}
+                  target={cp.target}
+                  percent={cp.percent}
+                  unit={cp.unit}
+                  gap={cp.gap}
+                />
+              ))}
+            </div>
+          </>
+        )}
 
         {/* Footer info */}
         <div className="flex items-center justify-between pt-2 border-t text-[10px] text-muted-foreground">
-          <span>{progress.evaluationWindowDays}-day rolling window</span>
+          <span>{progress.evaluationWindowDays > 0 ? `${progress.evaluationWindowDays}-day rolling window` : ''}</span>
           {progress.requiresApproval && (
             <span className="flex items-center gap-1">
               <ShieldCheck className="w-3 h-3" />
