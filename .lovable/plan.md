@@ -1,49 +1,38 @@
 
 
-# Testimonial Section Redesign — Bento Grid with Star Ratings
+# Fix Typography Rule Violations — Aeonik Pro with Tracking/Uppercase
 
-## What Changes
+## Problem
 
-Redesign `TestimonialSection.tsx` to match the reference image's card style:
+Multiple marketing components apply `uppercase` and wide `tracking-[0.15em]` / `tracking-wide` / `tracking-wider` to `font-sans` (Aeonik Pro) text. Per the design system, letter-spacing and uppercase are Termina (`font-display`) traits only. Aeonik Pro should never have these applied.
 
-### Card Design (per reference)
-- **Star ratings**: 5 amber/gold stars at the top of each card
-- **Quote text**: Large, readable body copy
-- **Author block at bottom**: Circular letter avatar (first initial) + Name + Company/Role stacked
-- **Card surface**: Rounded corners, subtle border, dark glass background (`bg-white/[0.04]` with `border-white/[0.08]`)
-- Remove the left accent border stripe (replaced by stars as the visual anchor)
+The screenshot shows the LogoBar section as one example, but this violation exists across ~10 marketing components.
 
-### Layout — Bento Grid
-- 3-column, 2-row grid on desktop (6 cells total)
-- Center cell in top row becomes a **stat callout** (e.g., "50+ Locations" / "Already running on Zura") instead of a testimonial — mirrors the reference's "11M+" pattern
-- 5 testimonial cards fill the remaining 5 cells
-- On tablet: 2-column grid, stat card spans full width
-- On mobile: single column stack
+## Fix
 
-### Updated Testimonials (5 total, salon-contextualized)
-1. Monday spreadsheet → one-screen clarity (Multi-Location Owner, 4 locations)
-2. Retention flipped with career paths (Salon Group CEO, 8 locations)
-3. New-hire ramp cut from 90 to 30 days (Regional Director, 6 locations)
-4. Color waste visibility changed everything (Salon Owner, 2 locations)
-5. Finally see which stylist needs help before they quit (Operations Manager, 3 locations)
+Every instance of `font-sans` combined with `uppercase` and/or explicit tracking must be corrected by switching to `font-display` (since the text is intended to be uppercase kicker/label style) or by removing the uppercase + tracking if it should remain Aeonik body text.
 
-### Stat Callout Card (center top)
-- Large number: "50+"
-- Label: "Salon locations running on Zura"
-- Styled distinctly — no stars, no quote, just the metric
+## Affected Files & Changes
 
-### Visual Details
-- Stars: 5x amber/gold star icons (`text-amber-400`)
-- Avatar circle: `w-9 h-9 rounded-full bg-white/[0.08]` with first letter centered
-- Author name: `font-sans text-sm text-white/90`
-- Author role: `font-sans text-xs text-slate-500`
-- Cards have consistent `p-6 rounded-xl` with glass surface
+| File | Line(s) | Current | Fix |
+|------|---------|---------|-----|
+| `LogoBar.tsx` | 12 | `font-sans ... uppercase tracking-[0.15em]` | → `font-display` |
+| `LogoBar.tsx` | 28 | `font-display text-[11px] tracking-[0.12em]` (pill text) | Already correct — keep |
+| `PersonaTargeting.tsx` | 39 | `font-sans ... uppercase tracking-[0.15em]` | → `font-display` |
+| `FeatureGrid.tsx` | 46 | `font-sans ... uppercase tracking-[0.15em]` | → `font-display` |
+| `IntelligencePillars.tsx` | 39 | `font-sans ... uppercase tracking-[0.15em]` | → `font-display` |
+| `EcosystemPreview.tsx` | 46 | `font-sans ... uppercase tracking-[0.15em]` | → `font-display` |
+| `EcosystemPreview.tsx` | 68 | `font-sans ... uppercase tracking-wide` | → `font-display` |
+| `SolutionsMegaMenu.tsx` | 89, 114, 187, 203 | `font-sans ... uppercase tracking-[0.15em]` | → `font-display` |
+| `SolutionsMegaMenu.tsx` | 269 | `font-sans ... tracking-wide` (no uppercase) | Remove `tracking-wide` |
+| `ToolConsolidation.tsx` | 84, 94 | `font-sans ... uppercase tracking-wide` | → `font-display` |
+| `HeroSection.tsx` | 90 | `font-sans ... tracking-widest uppercase` | → `font-display` |
+| `DashboardMockup.tsx` | 209 | `font-sans ... tracking-wider uppercase` | → `font-display` |
 
-## Implementation
+## Rule Applied
 
-| File | Action |
-|------|--------|
-| `src/components/marketing/TestimonialSection.tsx` | **Rewrite** — bento grid, star ratings, avatar circles, stat callout |
+- `font-sans` (Aeonik Pro): No uppercase, no explicit tracking — used for body text and UI labels in normal case
+- `font-display` (Termina): Uppercase, wide tracking — used for kickers, labels, navigation, stats
 
-**1 file modified. 0 new. 0 deleted.**
+**~12 files modified. 0 new. 0 deleted.**
 
