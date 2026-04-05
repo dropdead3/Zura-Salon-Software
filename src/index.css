@@ -20,7 +20,7 @@ html, body, #root {
   src: url('/fonts/Termina-Medium.otf') format('opentype');
   font-weight: 500;
   font-style: normal;
-  font-display: swap;
+  font-display: block;
 }
 
 @font-face {
@@ -36,7 +36,7 @@ html, body, #root {
   src: url('/fonts/AeonikPro-Regular.otf') format('opentype');
   font-weight: 400;
   font-style: normal;
-  font-display: swap;
+  font-display: block;
 }
 
 @font-face {
@@ -44,7 +44,7 @@ html, body, #root {
   src: url('/fonts/AeonikPro-Medium.otf') format('opentype');
   font-weight: 500;
   font-style: normal;
-  font-display: swap;
+  font-display: block;
 }
 
 @font-face {
