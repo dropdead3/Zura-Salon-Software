@@ -1,48 +1,41 @@
 
 
-# Embed Stylist Levels Editor Inline in Settings
+# Stylist Levels Editor — Remove Color Progression & Improve Layout
 
-## Problem
+## What Changes
 
-When an admin clicks **Settings > Stylist Levels**, they get redirected away from Settings to the standalone `/admin/stylist-levels` page. This breaks the Settings flow — the user loses their Settings context and has to navigate back. The editor should render inline within the Settings page, just like every other Settings category.
+### 1. Remove Color Progression section
+Delete the "Color Progression" card from the right sidebar (lines 716–765). It shows current vs. future color badge previews that have no clear connection to any admin workflow. The `Palette` icon import can also be removed.
 
-## Approach
+### 2. Reorganize right sidebar for clarity
+Current sidebar order: Progression Roadmap → ~~Color Progression~~ → Stylists Overview → Tooltip Preview → Card Preview → Services Dropdown.
 
-Extract the editor body from `StylistLevels.tsx` into a shared `StylistLevelsEditor` component. Both the standalone page and the Settings embed render this same component — no feature divergence possible.
+**New order with grouping:**
 
-### 1. Create `StylistLevelsEditor` component
-Extract everything inside `<DashboardLayout>` from `StylistLevels.tsx` (the `div.p-6.max-w-4xl` container and the `GraduationWizard` dialog) into a new `src/components/dashboard/settings/StylistLevelsEditor.tsx`. This component contains all state, hooks, and UI — it's the full editor without the layout shell.
+- **Team Distribution** (Stylists Overview — moved to top, most actionable)
+- **Progression Roadmap** (criteria summary — only shown when criteria exist)
+- **Website Previews** section header
+  - Card Preview (how stylists appear on the website)
+  - Services Dropdown (level selector on services page)
+  - Tooltip Preview (info tooltip content)
 
-The component accepts an optional `embedded?: boolean` prop. When `true`:
-- Omit the `DashboardPageHeader` (Settings already provides page context)
-- Remove `sticky top-0` header behavior (Settings has its own scroll context)
-- Skip the info notice about client-facing website (redundant in Settings)
+This puts operational data first and groups the 3 website previews under a clear heading so admins understand these are client-facing representations.
 
-### 2. Slim down `StylistLevels.tsx` (standalone page)
-Reduce to just:
-```tsx
-<DashboardLayout>
-  <StylistLevelsEditor />
-</DashboardLayout>
-```
+### 3. Improve level card clarity
+- Make commission rates always visible (not just as tiny `10px` text) — show them as labeled pill badges: `Svc 38%` `Retail 10%` with muted styling
+- Add a subtle connector line between level cards to reinforce the progression hierarchy
+- Show "Entry Level" as a small badge on level 1 instead of italic text below the description
 
-### 3. Update `StylistLevelsContent.tsx` (Settings embed)
-Replace the redirect with an inline render:
-```tsx
-export function StylistLevelsContent() {
-  return <StylistLevelsEditor embedded />;
-}
-```
+### 4. Simplify the level badge
+Replace the color-coded `getLevelColor` badges on each level row with a plain muted number badge. The color progression was the only place those colors were explained — without it, randomly colored badges create confusion. Use a consistent `bg-muted text-muted-foreground` style for all level number badges.
 
-No more redirect. The full editor — commission rates, criteria configurator, team roster, PDF export — all renders inline within Settings.
+---
 
 ## File Changes
 
 | File | Action |
 |------|--------|
-| `src/components/dashboard/settings/StylistLevelsEditor.tsx` | **Create** — Extracted editor with all state/hooks/UI from StylistLevels.tsx |
-| `src/pages/dashboard/admin/StylistLevels.tsx` | **Modify** — Slim wrapper: DashboardLayout + StylistLevelsEditor |
-| `src/components/dashboard/settings/StylistLevelsContent.tsx` | **Modify** — Render StylistLevelsEditor inline instead of redirecting |
+| `src/components/dashboard/settings/StylistLevelsEditor.tsx` | **Modify** — Remove Color Progression section, remove `Palette` import, reorder sidebar sections, replace `getLevelColor` badges with neutral badges, improve commission rate visibility, add website previews group header |
 
-**1 new file, 2 modified files, 0 migrations.**
+**0 new files, 1 modified file, 0 migrations.**
 
