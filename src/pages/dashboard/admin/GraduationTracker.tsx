@@ -75,12 +75,13 @@ function KpiStrip({ counts }: { counts: ReturnType<typeof useTeamLevelProgress>[
   const kpis = [
     { label: 'Ready to Graduate', value: counts.ready, icon: CheckCircle2, color: 'text-emerald-600' },
     { label: 'In Progress', value: counts.inProgress, icon: TrendingUp, color: 'text-primary' },
-    { label: 'Needs Attention', value: counts.needsAttention, icon: AlertTriangle, color: 'text-amber-600' },
+    { label: 'At Risk', value: counts.atRisk, icon: AlertTriangle, color: 'text-rose-600' },
+    { label: 'Needs Attention', value: counts.needsAttention, icon: AlertCircle, color: 'text-amber-600' },
     { label: 'At Top Level', value: counts.atTopLevel, icon: Crown, color: 'text-muted-foreground' },
   ];
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+    <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
       {kpis.map(kpi => (
         <div key={kpi.label} className={tokens.kpi.tile}>
           <div className="flex items-center gap-2">
@@ -166,6 +167,16 @@ function StatusBadge({ status }: { status: GraduationStatus }) {
       label: 'Needs Attention',
       className: 'bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-950/30 dark:text-amber-400 dark:border-amber-800',
       icon: AlertTriangle,
+    },
+    at_risk: {
+      label: 'At Risk',
+      className: 'bg-rose-100 text-rose-700 border-rose-200 dark:bg-rose-950/30 dark:text-rose-400 dark:border-rose-800',
+      icon: AlertTriangle,
+    },
+    below_standard: {
+      label: 'Below Standard',
+      className: 'bg-red-100 text-red-700 border-red-200 dark:bg-red-950/30 dark:text-red-400 dark:border-red-800',
+      icon: AlertCircle,
     },
     at_top_level: {
       label: 'Top Level',
@@ -272,7 +283,7 @@ function StylistProgressRow({ member, totalLevels }: { member: TeamMemberProgres
             )}
           </div>
 
-          {member.status !== 'at_top_level' && member.status !== 'no_criteria' && (
+          {member.status !== 'at_top_level' && member.status !== 'no_criteria' && member.status !== 'at_risk' && member.status !== 'below_standard' && (
             <div className="flex items-center gap-3 mt-1.5">
               <Progress
                 value={member.compositeScore}
@@ -282,6 +293,16 @@ function StylistProgressRow({ member, totalLevels }: { member: TeamMemberProgres
                 )}
               />
               <span className="text-xs tabular-nums text-muted-foreground">{member.compositeScore}%</span>
+            </div>
+          )}
+          {/* Retention failure indicators */}
+          {member.retentionFailures.length > 0 && (
+            <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+              {member.retentionFailures.map(f => (
+                <span key={f.key} className="text-[10px] text-rose-600 dark:text-rose-400">
+                  {f.label}: {f.unit === '/mo' || f.unit === '$' ? `$${f.current.toLocaleString()}` : `${f.current}${f.unit}`} (min {f.unit === '/mo' || f.unit === '$' ? `$${f.minimum.toLocaleString()}` : `${f.minimum}${f.unit}`})
+                </span>
+              ))}
             </div>
           )}
         </div>
@@ -300,21 +321,48 @@ function StylistProgressRow({ member, totalLevels }: { member: TeamMemberProgres
       </div>
 
       <CollapsibleContent className="mt-2 ml-14 space-y-4 pb-2">
-        <div className="p-4 rounded-lg border bg-card/30 space-y-3">
-          {member.criteriaProgress.map(cp => (
-            <CriterionRow key={cp.key} cp={cp} />
-          ))}
-
-          <div className="flex items-center justify-between pt-2 border-t text-[10px] text-muted-foreground">
-            <span>{member.evaluationWindowDays}-day rolling window</span>
-            {member.requiresApproval && (
-              <span className="flex items-center gap-1">
-                <ShieldCheck className="w-3 h-3" />
-                Requires approval
+        {/* Retention warning */}
+        {member.retentionFailures.length > 0 && (
+          <div className="p-3 rounded-lg border border-rose-200 bg-rose-50 dark:border-rose-800 dark:bg-rose-950/20 space-y-2">
+            <div className="flex items-center gap-2 text-xs text-rose-700 dark:text-rose-400">
+              <AlertTriangle className="w-3.5 h-3.5" />
+              <span className="font-medium">
+                {member.retentionActionType === 'demotion_eligible' ? 'Demotion Eligible' : 'Coaching Recommended'}
               </span>
-            )}
+              {member.retentionGracePeriodDays > 0 && (
+                <span className="text-rose-500 dark:text-rose-500">• {member.retentionGracePeriodDays}d grace period</span>
+              )}
+            </div>
+            {member.retentionFailures.map(f => (
+              <div key={f.key} className="flex items-center justify-between text-xs">
+                <span className="text-rose-600 dark:text-rose-400">{f.label}</span>
+                <span className="tabular-nums text-rose-700 dark:text-rose-300">
+                  {f.unit === '/mo' || f.unit === '$' ? `$${f.current.toLocaleString()}` : `${f.current}${f.unit}`}
+                  <span className="text-rose-400"> / min {f.unit === '/mo' || f.unit === '$' ? `$${f.minimum.toLocaleString()}` : `${f.minimum}${f.unit}`}</span>
+                </span>
+              </div>
+            ))}
           </div>
-        </div>
+        )}
+
+        {/* Promotion progress */}
+        {member.criteriaProgress.length > 0 && (
+          <div className="p-4 rounded-lg border bg-card/30 space-y-3">
+            {member.criteriaProgress.map(cp => (
+              <CriterionRow key={cp.key} cp={cp} />
+            ))}
+
+            <div className="flex items-center justify-between pt-2 border-t text-[10px] text-muted-foreground">
+              <span>{member.evaluationWindowDays}-day rolling window</span>
+              {member.requiresApproval && (
+                <span className="flex items-center gap-1">
+                  <ShieldCheck className="w-3 h-3" />
+                  Requires approval
+                </span>
+              )}
+            </div>
+          </div>
+        )}
       </CollapsibleContent>
     </Collapsible>
   );
