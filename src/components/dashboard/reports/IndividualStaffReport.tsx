@@ -15,7 +15,7 @@ import {
 import {
   DollarSign, Users, TrendingUp, TrendingDown, UserCheck, Package,
   Briefcase, Star, Calendar, Download, FileSpreadsheet, Loader2, ArrowLeft,
-  AlertTriangle, CheckCircle2, Target, Wallet, ShieldCheck,
+  AlertTriangle, CheckCircle2, Target, Wallet, ShieldCheck, GraduationCap,
 } from 'lucide-react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -33,6 +33,7 @@ import { addReportHeader, addReportFooter, fetchLogoAsDataUrl, getReportAutoTabl
 import { useBusinessSettings } from '@/hooks/useBusinessSettings';
 import { useReportLocationInfo } from '@/hooks/useReportLocationInfo';
 import { useIndividualStaffReport, type IndividualStaffReportData } from '@/hooks/useIndividualStaffReport';
+import { LevelProgressCard } from '@/components/coaching/LevelProgressCard';
 
 interface IndividualStaffReportProps {
   dateFrom: string;
@@ -416,6 +417,9 @@ export function IndividualStaffReport({ dateFrom, dateTo, locationId, onClose, i
               );
             })}
           </div>
+
+          {/* Level Progression */}
+          <LevelProgressCard userId={selectedStaffId} />
 
           {/* Section 3: Multi-Period Trend Indicators */}
           <Card>
