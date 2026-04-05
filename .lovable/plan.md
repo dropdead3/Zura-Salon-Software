@@ -1,26 +1,27 @@
 
 
-# Bottom Sticky CTA — Centered Pill
+# Fix FounderQuote — Dark Theme + Light Blue Highlights
 
-## Change
+## Problem
 
-Replace the full-width bottom bar with a centered floating pill, matching the top nav's glass morphism style.
+The FounderQuote section uses a light cream background (`bg-[#FAF9F7]`) with `text-slate-900` and amber highlights — completely out of place on the dark cinematic marketing surface.
 
-### Current
-Full-width bar: `fixed bottom-0 left-0 right-0` with `border-t`
+## Changes
 
-### New
-- Centered pill: `fixed bottom-4 left-1/2 -translate-x-1/2`
-- `rounded-full` with `border border-white/[0.08]` (no `border-t`)
-- `bg-white/[0.06] backdrop-blur-xl shadow-lg shadow-black/20`
-- Inner content stays the same (text + CTA button) in a compact horizontal layout
-- `w-auto` / `max-w-2xl` so it hugs content
+### `src/components/marketing/FounderQuote.tsx`
+
+- **Background**: Remove `bg-[#FAF9F7]`, use transparent (inherits the dark marketing surface background)
+- **Quote text**: Change `text-slate-900` to `text-white` / `text-white/90`
+- **Highlights**: Replace `bg-amber-100/60` with `bg-[hsl(var(--mkt-lavender)/0.15)]` (light blue from the marketing palette) and add `text-[hsl(var(--mkt-lavender))]` for the text color inside highlights
+- **Photo placeholder**: Update from `from-slate-200 to-slate-300` gradient to a dark glass style: `bg-white/[0.05] border border-white/[0.08]` with `text-white/20` initials
+- **Attribution**: `text-slate-900` → `text-white/90`, `text-slate-500` → `text-white/50`, `text-slate-400` → `text-white/30`
+- **Quote font**: Keep `font-display` with existing sizes — consistent with the screenshot reference
 
 ## File Changes
 
 | File | Action |
 |------|--------|
-| `src/components/marketing/MarketingNav.tsx` | **Modify** lines 182-196 — change bottom bar container from full-width to centered pill |
+| `src/components/marketing/FounderQuote.tsx` | **Modify** — dark theme colors, lavender highlights, glass photo placeholder |
 
 **1 file modified.**
 
