@@ -7,15 +7,24 @@ const columns = [
     title: 'Product',
     links: [
       { label: 'Platform', href: '/product' },
-      { label: 'Solutions', href: '/product' },
       { label: 'Pricing', href: '/pricing' },
       { label: 'Ecosystem', href: '/ecosystem' },
       { label: 'Request Demo', href: '/demo' },
     ],
   },
   {
+    title: 'Solutions',
+    links: [
+      { label: 'Independent Stylists', href: '/solutions/independent' },
+      { label: 'Salon Owners', href: '/solutions/salon-owner' },
+      { label: 'Multi-Location', href: '/solutions/multi-location' },
+      { label: 'Enterprise', href: '/solutions/enterprise' },
+    ],
+  },
+  {
     title: 'Company',
     links: [
+      { label: 'About', href: '/about' },
       { label: 'Sign In', href: '/login' },
     ],
   },
@@ -32,9 +41,9 @@ export function MarketingFooter() {
   return (
     <footer className="relative z-10 border-t border-white/[0.06]">
       <div className="max-w-7xl mx-auto px-6 sm:px-8 py-16">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-12 lg:gap-8">
+        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-6 gap-12 lg:gap-8">
           {/* Brand column */}
-          <div className="lg:col-span-2">
+          <div className="col-span-2">
             <PlatformLogo variant="landing" className="h-5 mb-4" />
             <p className="font-sans text-sm text-slate-500 max-w-xs leading-relaxed">
               {PLATFORM_DESCRIPTOR}

@@ -228,7 +228,7 @@ export function PersonaExplorer() {
                 <h3 className="font-display text-xs tracking-[0.12em] mb-1">
                   {persona.label}
                 </h3>
-                <p className="font-serif text-sm text-violet-300 italic">
+                <p className="font-sans text-sm text-slate-400">
                   {persona.tagline}
                 </p>
               </button>

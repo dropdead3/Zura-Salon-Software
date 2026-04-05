@@ -78,7 +78,7 @@ export function SolutionShowcase() {
         <div className="text-center mt-10 mkt-reveal" style={{ transitionDelay: '0.4s' }}>
           <Link
             to="/product"
-            className="inline-flex items-center gap-1.5 font-sans text-sm text-violet-400 hover:text-violet-300 transition-colors"
+            className="inline-flex items-center gap-2 h-10 px-6 rounded-full border border-[hsl(var(--mkt-lavender)/0.3)] text-[hsl(var(--mkt-lavender))] hover:border-[hsl(var(--mkt-lavender)/0.5)] hover:bg-[hsl(var(--mkt-lavender)/0.05)] font-sans text-sm font-medium transition-all"
           >
             See all solutions
             <ArrowRight className="w-3.5 h-3.5" />
