@@ -31,6 +31,7 @@ export default function PlatformLanding() {
       <PersonaExplorer />
       <SectionDivider />
       <BeforeAfterShowcase />
+      <ToolConsolidation />
       <OutcomeMetrics />
       <BuiltByOperators />
       <TestimonialSection />
