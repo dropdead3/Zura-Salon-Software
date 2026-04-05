@@ -57,6 +57,7 @@ export interface Location {
   stripe_account_id: string | null;
   stripe_payments_enabled: boolean;
   stripe_status: StripeStatus;
+  location_group_id: string | null;
   created_at: string;
   updated_at: string;
 }

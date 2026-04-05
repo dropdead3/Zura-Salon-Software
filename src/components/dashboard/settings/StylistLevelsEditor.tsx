@@ -58,6 +58,8 @@ import { useLevelRetentionCriteria, type LevelRetentionCriteria } from '@/hooks/
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { generateLevelRequirementsPDF } from '@/components/dashboard/settings/LevelRequirementsPDF';
 import { TeamCommissionRoster } from '@/components/dashboard/settings/TeamCommissionRoster';
+import { LocationOverridesTab } from '@/components/dashboard/settings/LocationOverridesTab';
+import { useActiveLocations } from '@/hooks/useLocations';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
   Dialog,
