@@ -1371,6 +1371,15 @@ export function StylistLevelsEditor({ embedded = false }: StylistLevelsEditorPro
             )}
           </TabsContent>
 
+          {/* === TAB: Location Overrides === */}
+          <TabsContent value="overrides">
+            <LocationOverridesTab
+              levels={levels}
+              promotionCriteria={promotionCriteria || []}
+              retentionCriteria={retentionCriteria || []}
+            />
+          </TabsContent>
+
           {/* === TAB 3: Team Roster === */}
 
           <TabsContent value="team">
