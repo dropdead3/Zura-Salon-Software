@@ -203,7 +203,31 @@ export function useTeamLevelProgress() {
         // Retention rate placeholder — use rebooking as proxy for now
         const retentionRate = rebookingPct;
 
-        return { monthlyRevenue, retailPct, rebookingPct, avgTicket, newClientsMonthly, retentionRate };
+        // Utilization calculation
+        const userShifts = allShiftData.filter(
+          (s: any) => s.user_id === profile.user_id && s.shift_date >= evalStart
+        );
+        let utilization = 0;
+        if (userShifts.length > 0) {
+          // Shift-based: booked hours / shift hours
+          const totalShiftMinutes = userShifts.reduce((sum: number, s: any) => {
+            const start = new Date(`${s.shift_date}T${s.start_time}`);
+            const end = new Date(`${s.shift_date}T${s.end_time}`);
+            return sum + Math.max(0, (end.getTime() - start.getTime()) / 60000);
+          }, 0);
+          const totalBookedMinutes = completedAppts.reduce((sum: number, a: any) => sum + (Number(a.duration_minutes) || 60), 0);
+          utilization = totalShiftMinutes > 0 ? (totalBookedMinutes / totalShiftMinutes) * 100 : 0;
+        } else {
+          // Fallback: booking density (avg booked hours per active day, capped at 8h workday)
+          const activeDays = new Set(completedAppts.map((a: any) => a.appointment_date)).size;
+          if (activeDays > 0) {
+            const totalBookedMinutes = completedAppts.reduce((sum: number, a: any) => sum + (Number(a.duration_minutes) || 60), 0);
+            const avgMinutesPerDay = totalBookedMinutes / activeDays;
+            utilization = Math.min(100, (avgMinutesPerDay / 480) * 100); // 480 = 8h workday
+          }
+        }
+
+        return { monthlyRevenue, retailPct, rebookingPct, avgTicket, newClientsMonthly, retentionRate, utilization };
       };
 
       // Compute no-show rate (informational, uses full window)
