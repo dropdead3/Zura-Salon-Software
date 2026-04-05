@@ -40,6 +40,9 @@ export interface TeamMemberProgress {
   retentionGracePeriodDays: number;
   // Informational context
   noShowRate: number | null;
+  // Time at current level
+  timeAtLevelDays: number;
+  levelSince: string | null;
 }
 
 export function useTeamLevelProgress() {
@@ -121,7 +124,7 @@ export function useTeamLevelProgress() {
       while (hasMore) {
         const { data, error } = await supabase
           .from('appointments')
-          .select('staff_user_id, total_price, rebooked_at_checkout, appointment_date, status, is_new_client, duration_minutes')
+          .select('staff_user_id, total_price, rebooked_at_checkout, appointment_date, status, is_new_client, duration_minutes, client_id')
           .in('staff_user_id', userIds)
           .gte('appointment_date', startStr)
           .lte('appointment_date', endStr)

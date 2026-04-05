@@ -12,6 +12,8 @@ export interface PromotionRecord {
   created_at: string;
   direction?: string;
   promoter_name?: string;
+  notes?: string | null;
+  user_name?: string;
 }
 
 export function usePromotionHistory(userId?: string) {
