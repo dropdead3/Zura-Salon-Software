@@ -340,7 +340,7 @@ function PromotionHistorySection({ userId, promotions }: { userId: string; promo
 
 /* ─── Stylist Progress Row ──────────────────────────────── */
 
-function StylistProgressRow({ member, totalLevels, promotions }: { member: TeamMemberProgress; totalLevels: number; promotions: PromotionRecord[] }) {
+function StylistProgressRow({ member, totalLevels, promotions, allLevels }: { member: TeamMemberProgress; totalLevels: number; promotions: PromotionRecord[]; allLevels: StylistLevel[] }) {
   const [isExpanded, setIsExpanded] = useState(false);
   const { dashPath } = useOrgDashboardPath();
   const levelColor = member.currentLevel
