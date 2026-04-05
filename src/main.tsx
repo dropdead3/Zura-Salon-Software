@@ -1,14 +1,16 @@
 import { createRoot } from "react-dom/client";
 import { importWithRetry } from "@/lib/importWithRetry";
+import { ZuraLoader } from "@/components/ui/ZuraLoader";
+import { PLATFORM_NAME } from "@/lib/brand";
 import "./index.css";
 
 function BootstrapFallback() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background text-foreground">
       <div className="flex flex-col items-center gap-4 text-center">
-        <div className="h-10 w-10 animate-spin rounded-full border-2 border-border border-t-primary" />
+        <ZuraLoader size="lg" platformColors />
         <p className="font-display text-xs uppercase tracking-[0.16em] text-muted-foreground">
-          Loading dashboard
+          {PLATFORM_NAME}
         </p>
       </div>
     </div>
@@ -19,11 +21,12 @@ function BootstrapError() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-6 text-foreground">
       <div className="max-w-md text-center">
+        <ZuraLoader size="lg" platformColors className="mx-auto mb-2" />
         <h1 className="font-display text-xl uppercase tracking-[0.16em]">
           Unexpected interruption
         </h1>
         <p className="mt-3 text-sm text-muted-foreground">
-          Zura hit a startup issue before the dashboard could render. Reload to try again.
+          {PLATFORM_NAME} hit a startup issue. Reload to try again.
         </p>
         <button
           type="button"

@@ -2,7 +2,8 @@ import { useParams, Outlet, Navigate } from 'react-router-dom';
 import { useOrganizationBySlug } from '@/hooks/useOrganizations';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useAuth } from '@/contexts/AuthContext';
-import { Loader2 } from 'lucide-react';
+import { ZuraLoader } from '@/components/ui/ZuraLoader';
+import { PLATFORM_NAME } from '@/lib/brand';
 import NotFound from '@/pages/NotFound';
 import { useEffect } from 'react';
 
@@ -25,9 +26,10 @@ export function OrgDashboardRoute() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
-      </div>
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-4">
+          <ZuraLoader size="lg" platformColors />
+          <p className="font-display text-xs uppercase tracking-[0.16em] text-muted-foreground">{PLATFORM_NAME}</p>
+        </div>
     );
   }
 
@@ -58,9 +60,10 @@ export function LegacyDashboardRedirect() {
   // Auth still resolving — show spinner
   if (loading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
-      </div>
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-4">
+          <ZuraLoader size="lg" platformColors />
+          <p className="font-display text-xs uppercase tracking-[0.16em] text-muted-foreground">{PLATFORM_NAME}</p>
+        </div>
     );
   }
 
@@ -77,9 +80,10 @@ export function LegacyDashboardRedirect() {
   // Org context still loading — show spinner
   if (isOrgLoading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
-      </div>
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-4">
+          <ZuraLoader size="lg" platformColors />
+          <p className="font-display text-xs uppercase tracking-[0.16em] text-muted-foreground">{PLATFORM_NAME}</p>
+        </div>
     );
   }
 
