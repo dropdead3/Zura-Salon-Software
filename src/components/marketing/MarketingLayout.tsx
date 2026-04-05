@@ -19,7 +19,7 @@ export function MarketingLayout({ children }: MarketingLayoutProps) {
           }}
         />
         <div className="absolute -top-40 -right-40 w-[500px] h-[500px] bg-violet-500/10 rounded-full blur-[120px]" />
-        <div className="absolute -bottom-40 -left-40 w-[400px] h-[400px] bg-purple-600/10 rounded-full blur-[120px]" />
+        <div className="absolute -bottom-40 -left-40 w-[400px] h-[400px] bg-[hsl(var(--mkt-midnight)/0.15)] rounded-full blur-[120px]" />
       </div>
 
       <MarketingNav />

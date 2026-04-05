@@ -36,7 +36,7 @@ function Counter({ value, prefix, suffix }: { value: number; prefix?: string; su
   }, [value]);
 
   return (
-    <span ref={ref} className="font-display text-3xl sm:text-4xl tracking-tight text-white">
+    <span ref={ref} className="font-display text-3xl sm:text-4xl tracking-tight text-[hsl(var(--mkt-lavender))]">
       {prefix}{display}{suffix}
     </span>
   );
