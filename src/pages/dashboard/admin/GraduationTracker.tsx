@@ -338,9 +338,14 @@ function DemoteLevelButton({ member, allLevels }: { member: TeamMemberProgress; 
   );
 }
 
-function PromotionHistorySection({ userId, promotions }: { userId: string; promotions: PromotionRecord[] }) {
+function PromotionHistorySection({ userId, promotions, allLevels }: { userId: string; promotions: PromotionRecord[]; allLevels: StylistLevel[] }) {
   const { formatDate } = useFormatDate();
   const userPromotions = promotions.filter(p => p.user_id === userId);
+
+  const slugToLabel = (slug: string) => {
+    const level = allLevels.find(l => l.slug === slug);
+    return level?.label || slug.replace(/[-_]/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+  };
 
   if (userPromotions.length === 0) return null;
 
@@ -356,9 +361,9 @@ function PromotionHistorySection({ userId, promotions }: { userId: string; promo
           <div key={p.id} className="flex items-center justify-between text-xs">
             <span className="flex items-center gap-1">
               <span className={cn('w-1.5 h-1.5 rounded-full shrink-0', isDemotion ? 'bg-rose-500' : 'bg-emerald-500')} />
-              <span className="text-muted-foreground">{p.from_level}</span>
+              <span className="text-muted-foreground">{slugToLabel(p.from_level)}</span>
               <ArrowRight className={cn('w-3 h-3 inline mx-0.5', isDemotion ? 'rotate-90 text-rose-500' : '')} />
-              <span className="text-foreground">{p.to_level}</span>
+              <span className="text-foreground">{slugToLabel(p.to_level)}</span>
               {isDemotion && <span className="text-rose-500 ml-1">(Demotion)</span>}
             </span>
             <span className="text-muted-foreground">
@@ -370,8 +375,6 @@ function PromotionHistorySection({ userId, promotions }: { userId: string; promo
     </div>
   );
 }
-
-/* ─── Stylist Progress Row ──────────────────────────────── */
 
 function StylistProgressRow({ member, totalLevels, promotions, allLevels }: { member: TeamMemberProgress; totalLevels: number; promotions: PromotionRecord[]; allLevels: StylistLevel[] }) {
   const [isExpanded, setIsExpanded] = useState(false);
