@@ -9260,6 +9260,121 @@ export type Database = {
         }
         Relationships: []
       }
+      level_commission_overrides: {
+        Row: {
+          created_at: string
+          id: string
+          location_id: string
+          organization_id: string
+          retail_commission_rate: number | null
+          service_commission_rate: number | null
+          stylist_level_id: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          location_id: string
+          organization_id: string
+          retail_commission_rate?: number | null
+          service_commission_rate?: number | null
+          stylist_level_id: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          location_id?: string
+          organization_id?: string
+          retail_commission_rate?: number | null
+          service_commission_rate?: number | null
+          stylist_level_id?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "level_commission_overrides_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "level_commission_overrides_stylist_level_id_fkey"
+            columns: ["stylist_level_id"]
+            isOneToOne: false
+            referencedRelation: "stylist_levels"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      level_criteria_overrides: {
+        Row: {
+          created_at: string
+          criteria_type: string
+          id: string
+          location_group_id: string | null
+          location_id: string | null
+          organization_id: string
+          override_field: string
+          override_value: number
+          stylist_level_id: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          criteria_type: string
+          id?: string
+          location_group_id?: string | null
+          location_id?: string | null
+          organization_id: string
+          override_field: string
+          override_value: number
+          stylist_level_id: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          criteria_type?: string
+          id?: string
+          location_group_id?: string | null
+          location_id?: string | null
+          organization_id?: string
+          override_field?: string
+          override_value?: number
+          stylist_level_id?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "level_criteria_overrides_location_group_id_fkey"
+            columns: ["location_group_id"]
+            isOneToOne: false
+            referencedRelation: "location_groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "level_criteria_overrides_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "level_criteria_overrides_stylist_level_id_fkey"
+            columns: ["stylist_level_id"]
+            isOneToOne: false
+            referencedRelation: "stylist_levels"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       level_promotion_criteria: {
         Row: {
           avg_ticket_enabled: boolean
@@ -9669,6 +9784,44 @@ export type Database = {
           },
         ]
       }
+      location_groups: {
+        Row: {
+          created_at: string
+          display_order: number
+          id: string
+          name: string
+          organization_id: string
+          slug: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          display_order?: number
+          id?: string
+          name: string
+          organization_id: string
+          slug: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          display_order?: number
+          id?: string
+          name?: string
+          organization_id?: string
+          slug?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "location_groups_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       location_inventory_leads: {
         Row: {
           assigned_at: string
@@ -9784,6 +9937,7 @@ export type Database = {
           id: string
           import_job_id: string | null
           is_active: boolean | null
+          location_group_id: string | null
           lunch_minutes: number | null
           major_crossroads: string | null
           name: string
@@ -9822,6 +9976,7 @@ export type Database = {
           id: string
           import_job_id?: string | null
           is_active?: boolean | null
+          location_group_id?: string | null
           lunch_minutes?: number | null
           major_crossroads?: string | null
           name: string
@@ -9860,6 +10015,7 @@ export type Database = {
           id?: string
           import_job_id?: string | null
           is_active?: boolean | null
+          location_group_id?: string | null
           lunch_minutes?: number | null
           major_crossroads?: string | null
           name?: string
@@ -9883,6 +10039,13 @@ export type Database = {
             columns: ["import_job_id"]
             isOneToOne: false
             referencedRelation: "import_jobs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "locations_location_group_id_fkey"
+            columns: ["location_group_id"]
+            isOneToOne: false
+            referencedRelation: "location_groups"
             referencedColumns: ["id"]
           },
           {
