@@ -29,6 +29,7 @@ export default function PlatformLanding() {
       <LogoBar />
       <PersonaExplorer />
       <SectionDivider />
+      <BeforeAfterShowcase />
       <OutcomeMetrics />
       <BuiltByOperators />
       <TestimonialSection />
