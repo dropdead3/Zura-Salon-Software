@@ -1,10 +1,11 @@
 import { TrendingDown, UserMinus, Lock } from 'lucide-react';
+import { useScrollReveal } from './useScrollReveal';
 
-const problems = [
+const painPoints = [
   {
     icon: TrendingDown,
     title: 'Margin Erosion',
-    body: 'Without margin visibility at the service level, profitability erodes silently across every location.',
+    body: 'Without service-level profitability data, margin erodes silently across every location.',
   },
   {
     icon: UserMinus,
@@ -19,35 +20,42 @@ const problems = [
 ];
 
 export function ProblemStatement() {
-  return (
-    <section className="relative z-10 px-6 sm:px-8 py-16 sm:py-20 lg:py-24">
-      <div className="max-w-7xl mx-auto">
-        <div className="text-center mb-12 sm:mb-16">
-          <h2 className="font-display text-2xl sm:text-3xl lg:text-4xl tracking-tight mb-4">
-            Operational chaos does not start where you think it does
-          </h2>
-          <p className="font-sans text-base sm:text-lg text-slate-400 max-w-2xl mx-auto">
-            Most operators scale revenue before they scale systems. These are the consequences.
-          </p>
-        </div>
+  const ref = useScrollReveal();
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-          {problems.map((problem) => (
-            <div
-              key={problem.title}
-              className="p-6 sm:p-8 bg-white/[0.03] border border-white/[0.06] rounded-2xl hover:bg-white/[0.05] transition-colors"
-            >
-              <div className="w-10 h-10 bg-violet-500/10 rounded-xl flex items-center justify-center mb-4">
-                <problem.icon className="w-5 h-5 text-violet-400" />
+  return (
+    <section ref={ref} className="relative z-10 px-6 sm:px-8 py-16 sm:py-20 lg:py-28">
+      <div className="max-w-6xl mx-auto">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-start">
+          {/* Left — Emotional headline */}
+          <div className="mkt-reveal">
+            <h2 className="font-display text-2xl sm:text-3xl lg:text-5xl tracking-tight leading-[1.12]">
+              The beauty industry mastered artistry.{' '}
+              <span className="text-slate-500">It did not master infrastructure.</span>
+            </h2>
+          </div>
+
+          {/* Right — Pain points */}
+          <div className="space-y-6">
+            {painPoints.map((point, i) => (
+              <div
+                key={point.title}
+                className="mkt-reveal flex gap-4 items-start"
+                style={{ transitionDelay: `${0.1 + i * 0.12}s` }}
+              >
+                <div className="w-10 h-10 shrink-0 bg-violet-500/10 rounded-xl flex items-center justify-center mt-0.5">
+                  <point.icon className="w-5 h-5 text-violet-400" />
+                </div>
+                <div>
+                  <h3 className="font-display text-sm tracking-[0.1em] mb-1.5">
+                    {point.title}
+                  </h3>
+                  <p className="font-sans text-sm text-slate-400 leading-relaxed">
+                    {point.body}
+                  </p>
+                </div>
               </div>
-              <h3 className="font-display text-base sm:text-lg tracking-wide mb-3">
-                {problem.title}
-              </h3>
-              <p className="font-sans text-sm text-slate-400 leading-relaxed">
-                {problem.body}
-              </p>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       </div>
     </section>
