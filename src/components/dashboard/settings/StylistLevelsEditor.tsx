@@ -90,6 +90,8 @@ function formatCriteriaSummary(c: LevelPromotionCriteria): string {
   if (c.avg_ticket_enabled && c.avg_ticket_threshold > 0) parts.push(`$${c.avg_ticket_threshold} avg`);
   if (c.retention_rate_enabled && Number(c.retention_rate_threshold) > 0) parts.push(`${c.retention_rate_threshold}% retention`);
   if (c.new_clients_enabled && Number(c.new_clients_threshold) > 0) parts.push(`${c.new_clients_threshold} new/mo`);
+  if (c.utilization_enabled && Number(c.utilization_threshold) > 0) parts.push(`${c.utilization_threshold}% util`);
+  if (c.rev_per_hour_enabled && Number(c.rev_per_hour_threshold) > 0) parts.push(`$${c.rev_per_hour_threshold}/hr`);
   if (c.tenure_enabled && c.tenure_days > 0) parts.push(`${c.tenure_days}d tenure`);
   if (parts.length === 0) return '';
   return parts.join(' · ') + ` — ${c.evaluation_window_days}d window`;
@@ -103,6 +105,8 @@ function formatRetentionSummary(r: LevelRetentionCriteria): string {
   if (r.avg_ticket_enabled && r.avg_ticket_minimum > 0) parts.push(`$${r.avg_ticket_minimum} avg`);
   if (r.retention_rate_enabled && Number(r.retention_rate_minimum) > 0) parts.push(`${r.retention_rate_minimum}% retention`);
   if (r.new_clients_enabled && Number(r.new_clients_minimum) > 0) parts.push(`${r.new_clients_minimum} new/mo`);
+  if (r.utilization_enabled && Number(r.utilization_minimum) > 0) parts.push(`${r.utilization_minimum}% util`);
+  if (r.rev_per_hour_enabled && Number(r.rev_per_hour_minimum) > 0) parts.push(`$${r.rev_per_hour_minimum}/hr`);
   if (parts.length === 0) return '';
   return `Required to Stay: ${parts.join(' · ')} — ${r.grace_period_days}d grace · ${r.action_type === 'demotion_eligible' ? 'Demotion' : 'Coaching'}`;
 }
@@ -196,6 +200,15 @@ function CriteriaComparisonTable({ levels, promotionCriteria, retentionCriteria,
   };
 
   const metrics: MetricRow[] = [
+    // Commission (informational row)
+    { label: 'Service Commission', section: 'promotion', getValue: (_p, _r, levelIdx) => {
+      const rate = levels[levelIdx ?? 0]?.serviceCommissionRate;
+      return rate ? `${rate}%` : null;
+    }, getNumeric: () => null },
+    { label: 'Retail Commission', section: 'promotion', getValue: (_p, _r, levelIdx) => {
+      const rate = levels[levelIdx ?? 0]?.retailCommissionRate;
+      return rate ? `${rate}%` : null;
+    }, getNumeric: () => null },
     // Promotion
     { label: 'Revenue', section: 'promotion', getValue: (p) => p?.revenue_enabled ? fmtCurrency(p.revenue_threshold) : null, getNumeric: (p) => p?.revenue_enabled ? p.revenue_threshold : null },
     { label: 'Retail %', section: 'promotion', getValue: (p) => p?.retail_enabled ? `${p.retail_pct_threshold}%` : null, getNumeric: (p) => p?.retail_enabled ? p.retail_pct_threshold : null },
