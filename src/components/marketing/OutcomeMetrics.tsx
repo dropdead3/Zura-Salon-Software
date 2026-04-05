@@ -3,9 +3,9 @@ import { useScrollReveal } from './useScrollReveal';
 
 const metrics = [
   { value: 84, prefix: '$', suffix: 'K', label: 'Recovered in first quarter', context: 'Average across multi-location owners' },
-  { value: 23, suffix: '%', label: 'Average margin improvement', context: 'Service-level visibility drives recovery' },
-  { value: 4.2, suffix: 'h', label: 'Saved per owner per week', context: 'Clear insights replace hours of manual review' },
-  { value: 67, suffix: '%', label: 'Faster new-hire ramp', context: 'Step-by-step training replaces tribal knowledge' },
+  { value: 23, suffix: '%', label: 'Average margin improvement', context: 'Clarity on what\'s profitable changes everything' },
+  { value: 4.2, suffix: 'h', label: 'Saved per owner per week', context: 'Know what\'s happening without digging through reports' },
+  { value: 67, suffix: '%', label: 'Faster new-hire ramp', context: 'Structured training replaces guesswork' },
 ];
 
 function AnimatedStat({ value, prefix, suffix }: { value: number; prefix?: string; suffix: string }) {
@@ -55,7 +55,7 @@ export function OutcomeMetrics() {
       <div className="max-w-5xl mx-auto">
         <div className="text-center mb-14 mkt-reveal">
           <p className="font-sans text-xs sm:text-sm text-violet-400 uppercase tracking-[0.15em] mb-4">
-            Outcomes
+            Results
           </p>
           <h2 className="font-display text-2xl sm:text-3xl lg:text-4xl tracking-tight">
             Results salon owners are seeing

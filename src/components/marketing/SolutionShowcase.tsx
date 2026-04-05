@@ -6,44 +6,44 @@ import { useScrollReveal } from './useScrollReveal';
 const solutions = [
   {
     icon: BarChart3,
-    category: 'Data & Visibility',
-    problem: 'Where is my money going?',
-    solution: 'Real-time dashboards with service-level margin, revenue, and utilization across every location. Stop guessing. Start seeing.',
+    category: 'See What\'s Actually Happening',
+    problem: 'No more digging through reports or guessing.',
+    solution: 'Know which stylists are fully booked and who needs support. See where revenue is coming from. Understand rebooking, retention, and growth at a glance.',
     span: 'lg:col-span-2',
   },
   {
     icon: Brain,
-    category: 'Smart Recommendations',
-    problem: 'What should I fix first?',
-    solution: 'Weekly reports that rank your biggest issues and tell you exactly what to fix first — not more dashboards to interpret.',
+    category: 'Know What to Focus on Next',
+    problem: 'Not just reports. Direction.',
+    solution: 'Instead of more dashboards to interpret, get clear recommendations on what to fix first — ranked by what matters most to your business.',
     span: 'lg:col-span-1',
   },
   {
     icon: Users,
-    category: 'Team & Talent',
-    problem: 'Why do my best people leave?',
-    solution: 'Performance tiers, transparent career paths, commission setup, and retention tracking that gives your team a reason to stay.',
+    category: 'Manage Your Team With Confidence',
+    problem: 'You don\'t have to "feel" who\'s doing well.',
+    solution: 'Track performance in a way that makes sense. Support team members who are falling behind. Recognize and grow your top performers.',
     span: 'lg:col-span-1',
   },
   {
     icon: Shield,
-    category: 'Management & Leadership',
-    problem: 'I can\'t step away from the business.',
-    solution: 'Performance tracking, scheduling tools, and management systems that free you from being the bottleneck in every decision.',
+    category: 'Keep Your Schedule Working for You',
+    problem: 'A full book is good. A smart book is better.',
+    solution: 'Identify gaps and missed opportunities. Understand booking patterns. Keep chairs filled with the right services.',
     span: 'lg:col-span-2',
   },
   {
     icon: GraduationCap,
-    category: 'Onboarding & Training',
-    problem: 'New hires take forever to ramp.',
-    solution: 'Step-by-step training, a training hub, and clear standards so new team members produce in weeks — not months.',
+    category: 'Control Your Inventory',
+    problem: 'No more over-ordering or running out mid-service.',
+    solution: 'Track exactly what\'s being used. Know when to reorder. Understand your true product costs.',
     span: 'lg:col-span-2',
   },
   {
     icon: Megaphone,
-    category: 'Marketing & Growth',
-    problem: 'Marketing feels like throwing darts.',
-    solution: 'Client acquisition campaigns, hiring pipelines, and tracking what actually works — so every dollar spent connects to a result.',
+    category: 'Everything Works Together',
+    problem: 'Most systems feel like separate pieces.',
+    solution: 'Your schedule, your team, your services, your inventory, your performance — all connected. Nothing lives in isolation.',
     span: 'lg:col-span-1',
   },
 ];
@@ -59,10 +59,10 @@ export function SolutionShowcase() {
             The Platform
           </p>
           <h2 className="font-display text-2xl sm:text-3xl lg:text-4xl tracking-tight mb-4">
-            Every problem you face. One system to solve it.
+            Everything your salon needs. Finally working together.
           </h2>
           <p className="font-sans text-base sm:text-lg text-slate-400 max-w-2xl mx-auto">
-            {PLATFORM_NAME} replaces scattered tools with one system that covers every part of running your salon.
+            Instead of disconnected tools and guesswork, {PLATFORM_NAME} brings everything into one place — and shows you what to focus on next.
           </p>
         </div>
 

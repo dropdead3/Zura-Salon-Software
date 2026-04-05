@@ -4,7 +4,7 @@ const stats = [
   { value: 50, suffix: '+', label: 'Locations Managed' },
   { value: 30, prefix: '$', suffix: 'M+', label: 'Revenue Monitored' },
   { value: 500, suffix: '+', label: 'Stylists on Platform' },
-  { value: 12, suffix: ' → 1', label: 'Tools Replaced' },
+  { value: 12, suffix: ' → 1', label: 'Tools replaced by one system' },
 ];
 
 function Counter({ value, prefix, suffix }: { value: number; prefix?: string; suffix?: string }) {

@@ -69,7 +69,7 @@ export function MarketingNav() {
                 to="/demo"
                 className="inline-flex items-center gap-2 h-10 px-6 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 rounded-full font-sans text-sm font-medium text-white transition-all shadow-lg shadow-violet-500/20 mkt-cta-shimmer"
               >
-                Request Demo
+                Get a Demo
               </Link>
             </>
           )}
@@ -121,7 +121,7 @@ export function MarketingNav() {
                   className="inline-flex items-center justify-center gap-2 h-12 w-full bg-gradient-to-r from-violet-600 to-purple-600 rounded-full font-sans text-sm font-medium text-white"
                   onClick={() => setMobileOpen(false)}
                 >
-                  Request Demo
+                  Get a Demo
                 </Link>
               </>
             )}

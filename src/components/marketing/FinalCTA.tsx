@@ -36,10 +36,10 @@ export function FinalCTA() {
 
       <div className="max-w-3xl mx-auto text-center mkt-reveal">
         <h2 className="font-display text-3xl sm:text-4xl lg:text-5xl tracking-tight mb-6">
-          Your data has answers. Your team needs structure. Let us show you.
+          A better way to run your salon.
         </h2>
         <p className="font-sans text-base sm:text-lg text-slate-400 max-w-xl mx-auto mb-4">
-          Request a 15-minute walkthrough. We'll show you exactly where margin, growth, and clarity are waiting.
+          See how {PLATFORM_NAME} connects your schedule, team, and business performance in one clear system.
         </p>
         <p className="font-sans text-sm text-slate-500 mb-10">
           No commitment. No credit card.
@@ -49,7 +49,7 @@ export function FinalCTA() {
             to="/demo"
             className="inline-flex items-center justify-center gap-2 h-12 px-8 w-full sm:w-auto bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 rounded-full font-sans text-base font-medium transition-all shadow-lg shadow-violet-500/25"
           >
-            Request a Demo
+            Get a Demo
             <ArrowRight className="w-4 h-4" />
           </Link>
           <Link
