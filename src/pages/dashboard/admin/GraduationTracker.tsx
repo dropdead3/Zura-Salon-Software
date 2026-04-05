@@ -64,8 +64,9 @@ import {
   type GraduationFeedback,
 } from '@/hooks/useGraduationTracker';
 import { useTeamLevelProgress, type TeamMemberProgress, type GraduationStatus } from '@/hooks/useTeamLevelProgress';
-import { useStylistLevels } from '@/hooks/useStylistLevels';
+import { useStylistLevels, type StylistLevel } from '@/hooks/useStylistLevels';
 import { usePromoteLevel } from '@/hooks/usePromoteLevel';
+import { useDemoteLevel } from '@/hooks/useDemoteLevel';
 import { useFormatDate } from '@/hooks/useFormatDate';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 import { useOrgPromotionHistory, type PromotionRecord } from '@/hooks/usePromotionHistory';
@@ -256,7 +257,58 @@ function ApprovePromotionButton({ member }: { member: TeamMemberProgress }) {
   );
 }
 
-/* ─── Promotion History Row ─────────────────────────────── */
+/* ─── Demote Level Dialog ───────────────────────────────── */
+
+function DemoteLevelButton({ member, allLevels }: { member: TeamMemberProgress; allLevels: StylistLevel[] }) {
+  const demoteLevel = useDemoteLevel();
+
+  if (member.status !== 'below_standard' || !member.currentLevel || member.currentLevelIndex <= 0) return null;
+
+  const previousLevel = allLevels[member.currentLevelIndex - 1];
+  if (!previousLevel) return null;
+
+  return (
+    <AlertDialog>
+      <AlertDialogTrigger asChild>
+        <Button size="sm" variant="destructive" className="text-xs">
+          <AlertCircle className="h-3.5 w-3.5 mr-1" />
+          Demote
+        </Button>
+      </AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Confirm Demotion</AlertDialogTitle>
+          <AlertDialogDescription>
+            Demote <span className="font-medium text-foreground">{member.fullName}</span> from{' '}
+            <span className="font-medium text-foreground">{member.currentLevel.label}</span> to{' '}
+            <span className="font-medium text-foreground">{previousLevel.label}</span>?
+            This will immediately update their level and is recorded in the audit trail.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogAction
+            className="bg-destructive hover:bg-destructive/90"
+            onClick={() => {
+              demoteLevel.mutate({
+                userId: member.userId,
+                fromLevelSlug: member.currentLevel!.slug,
+                toLevelSlug: previousLevel.slug,
+              });
+            }}
+            disabled={demoteLevel.isPending}
+          >
+            {demoteLevel.isPending ? (
+              <><Loader2 className="h-4 w-4 mr-1 animate-spin" /> Demoting...</>
+            ) : (
+              'Confirm Demotion'
+            )}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+}
 
 function PromotionHistorySection({ userId, promotions }: { userId: string; promotions: PromotionRecord[] }) {
   const { formatDate } = useFormatDate();
