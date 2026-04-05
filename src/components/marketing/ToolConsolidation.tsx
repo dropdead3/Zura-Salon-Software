@@ -1,39 +1,34 @@
-import { useRef } from 'react';
-import { motion, useInView } from 'framer-motion';
+import { useRef, useState } from 'react';
+import { motion, useInView, AnimatePresence } from 'framer-motion';
 import { useScrollReveal } from './useScrollReveal';
 
 const tools = [
-  { name: 'CRM & Scheduling', price: 89, color: 'bg-violet-500/20 text-violet-300 border-violet-500/30', rotate: -6, x: -20, y: 0 },
-  { name: 'POS System', price: 79, color: 'bg-amber-500/20 text-amber-300 border-amber-500/30', rotate: 4, x: 30, y: -10 },
-  { name: 'Payroll', price: 59, color: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30', rotate: -3, x: -10, y: 5 },
-  { name: 'Marketing Agencies', price: 1500, color: 'bg-rose-500/20 text-rose-300 border-rose-500/30', rotate: 7, x: 15, y: -5 },
-  { name: 'Color Bar Management', price: 45, color: 'bg-cyan-500/20 text-cyan-300 border-cyan-500/30', rotate: -5, x: -25, y: 8 },
-  { name: 'AI Receptionist', price: 199, color: 'bg-orange-500/20 text-orange-300 border-orange-500/30', rotate: 3, x: 20, y: -8 },
-  { name: 'Team Chat', price: 25, color: 'bg-indigo-500/20 text-indigo-300 border-indigo-500/30', rotate: -8, x: -15, y: 3 },
-  { name: 'Email Marketing', price: 49, color: 'bg-pink-500/20 text-pink-300 border-pink-500/30', rotate: 5, x: 10, y: -3 },
-  { name: 'Business Consulting', price: 500, color: 'bg-yellow-500/20 text-yellow-300 border-yellow-500/30', rotate: -4, x: -5, y: 6 },
+  { name: 'CRM & Scheduling', price: 89, color: 'bg-violet-500/20 text-violet-300 border-violet-500/30', chaos: { x: -110, y: -60, rotate: -12 } },
+  { name: 'POS System', price: 79, color: 'bg-amber-500/20 text-amber-300 border-amber-500/30', chaos: { x: 90, y: -45, rotate: 8 } },
+  { name: 'Payroll', price: 59, color: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30', chaos: { x: -60, y: 50, rotate: -6 } },
+  { name: 'Marketing Agencies', price: 1500, color: 'bg-rose-500/20 text-rose-300 border-rose-500/30', chaos: { x: 120, y: 30, rotate: 14 } },
+  { name: 'Color Bar Management', price: 45, color: 'bg-cyan-500/20 text-cyan-300 border-cyan-500/30', chaos: { x: -100, y: 20, rotate: -10 } },
+  { name: 'AI Receptionist', price: 199, color: 'bg-orange-500/20 text-orange-300 border-orange-500/30', chaos: { x: 70, y: -70, rotate: 11 } },
+  { name: 'Team Chat', price: 25, color: 'bg-indigo-500/20 text-indigo-300 border-indigo-500/30', chaos: { x: -40, y: -80, rotate: -15 } },
+  { name: 'Email Marketing', price: 49, color: 'bg-pink-500/20 text-pink-300 border-pink-500/30', chaos: { x: 50, y: 65, rotate: 7 } },
+  { name: 'Business Consulting', price: 500, color: 'bg-yellow-500/20 text-yellow-300 border-yellow-500/30', chaos: { x: -20, y: 75, rotate: -4 } },
 ];
 
 const totalSpend = tools.reduce((sum, t) => sum + t.price, 0);
 
-const pillVariants = {
-  hidden: { opacity: 0, scale: 0.6, y: 30 },
-  visible: (i: number) => ({
-    opacity: 1,
-    scale: 1,
-    y: 0,
-    transition: {
-      delay: i * 0.07,
-      duration: 0.5,
-      ease: [0.25, 0.46, 0.45, 0.94] as [number, number, number, number],
-    },
-  }),
-};
+type Phase = 'chaos' | 'converging' | 'resolved';
 
 export function ToolConsolidation() {
   const sectionRef = useScrollReveal();
   const pileRef = useRef<HTMLDivElement>(null);
-  const isInView = useInView(pileRef, { once: true, margin: '-60px' });
+  const isInView = useInView(pileRef, { once: true, margin: '-80px' });
+  const [phase, setPhase] = useState<Phase>('chaos');
+  const lastIndex = tools.length - 1;
+
+  // Trigger convergence when in view
+  if (isInView && phase === 'chaos') {
+    setPhase('converging');
+  }
 
   return (
     <section ref={sectionRef} className="relative z-10 px-6 sm:px-8 py-20 lg:py-28">
@@ -53,31 +48,63 @@ export function ToolConsolidation() {
           </p>
         </div>
 
-        {/* Scattered pill pile */}
-        <div ref={pileRef} className="flex flex-wrap justify-center gap-3 sm:gap-4 max-w-2xl mx-auto mb-14">
+        {/* Animation container */}
+        <div ref={pileRef} className="relative w-full max-w-2xl mx-auto mb-14" style={{ height: 260 }}>
+          {/* Scattered pills */}
           {tools.map((tool, i) => (
             <motion.div
               key={tool.name}
-              custom={i}
-              variants={pillVariants}
-              initial="hidden"
-              animate={isInView ? 'visible' : 'hidden'}
-              className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 sm:px-5 sm:py-2.5 font-sans text-xs sm:text-sm whitespace-nowrap ${tool.color}`}
-              style={{
-                transform: `rotate(${tool.rotate}deg) translate(${tool.x}px, ${tool.y}px)`,
+              className={`absolute left-1/2 top-1/2 inline-flex items-center gap-2 rounded-full border px-4 py-2 sm:px-5 sm:py-2.5 font-sans text-xs sm:text-sm whitespace-nowrap ${tool.color}`}
+              style={{ marginLeft: '-80px', marginTop: '-18px' }}
+              initial={{
+                x: tool.chaos.x,
+                y: tool.chaos.y,
+                rotate: tool.chaos.rotate,
+                scale: 1,
+                opacity: 1,
+              }}
+              animate={
+                phase === 'converging' || phase === 'resolved'
+                  ? { x: 0, y: 0, rotate: 0, scale: 0.3, opacity: 0 }
+                  : { x: tool.chaos.x, y: tool.chaos.y, rotate: tool.chaos.rotate, scale: 1, opacity: 1 }
+              }
+              transition={{
+                delay: i * 0.08,
+                duration: 0.8,
+                ease: [0.4, 0, 0.2, 1],
+              }}
+              onAnimationComplete={() => {
+                if (i === lastIndex && phase === 'converging') {
+                  setPhase('resolved');
+                }
               }}
             >
               <span>{tool.name}</span>
               <span className="opacity-60">${tool.price.toLocaleString()}/mo</span>
             </motion.div>
           ))}
+
+          {/* Zura pill reveal */}
+          <AnimatePresence>
+            {phase === 'resolved' && (
+              <motion.div
+                className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 inline-flex items-center gap-3 rounded-full border-2 border-violet-400/50 bg-violet-500/15 px-8 py-3.5 sm:px-10 sm:py-4 font-display text-base sm:text-lg tracking-wide text-white whitespace-nowrap shadow-[0_0_40px_rgba(139,92,246,0.25)]"
+                initial={{ scale: 0, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] }}
+              >
+                <span className="uppercase tracking-[0.1em]">Zura</span>
+                <span className="text-violet-300/80 font-sans text-sm sm:text-base font-normal">$99/mo</span>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
 
         {/* Price comparison */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
-          animate={isInView ? { opacity: 1, y: 0 } : {}}
-          transition={{ delay: 0.7, duration: 0.6 }}
+          animate={phase === 'resolved' ? { opacity: 1, y: 0 } : {}}
+          transition={{ delay: 0.3, duration: 0.6 }}
           className="flex flex-col sm:flex-row items-center justify-center gap-6 sm:gap-10"
         >
           <div className="text-center">
