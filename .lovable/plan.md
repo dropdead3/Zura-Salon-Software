@@ -1,72 +1,75 @@
 
 
-# Add Schedule Utilization as a Graduation Criterion
+# Add Revenue Per Hour as a Graduation Criterion
 
-## Business Logic
+## Why Only Revenue Per Hour (Not Request Rate)
 
-Before a stylist raises prices (levels up), they must prove demand at their current rate. An empty schedule at current prices means raising prices will make things worse. Utilization is the demand signal.
+**Request Rate** (% of appointments where the client specifically requested the stylist) requires a data field that doesn't exist in the current schema — `phorest_appointments` has no `is_requested` column, and Phorest's export doesn't reliably provide it. Adding it would require either manual tracking or a POS integration enhancement — not something we can wire up today.
 
-## Data Strategy
+**Revenue Per Hour** is immediately calculable: `sum(total_price) / sum(duration_minutes) * 60` from existing appointment data. It's the economic efficiency signal — a stylist earning $120/hr at 80% utilization is a stronger promotion candidate than one earning $60/hr at 95% utilization.
 
-Two available data sources:
-- **`staff_shifts`** — has `user_id`, `shift_date`, `start_time`, `end_time` (currently empty, but will populate as scheduling matures)
-- **`appointments`** — has `staff_user_id`, `start_time`, `end_time`, `duration_minutes`
+Together with the utilization criterion just added, this creates the complete demand picture:
+- **Utilization** = "Are they busy enough?"
+- **Revenue Per Hour** = "Are they generating enough value per hour worked?"
 
-**Calculation**: When shift data exists for a stylist, compute `booked_hours / shift_hours * 100`. When it doesn't, fall back to **booking density** — average booked hours per working day (estimated from appointment days with activity). This gives a meaningful demand proxy even without shift data.
-
-The metric is expressed as a percentage (0-100%) for utilization, making it intuitive for salon owners.
+Both must be strong before raising prices.
 
 ---
 
 ## Database Migration
 
 Add 3 columns to `level_promotion_criteria`:
-- `utilization_enabled` boolean default false
-- `utilization_threshold` numeric default 0 (target %)
-- `utilization_weight` integer default 0
+- `rev_per_hour_enabled` boolean default false
+- `rev_per_hour_threshold` numeric default 0
+- `rev_per_hour_weight` integer default 0
 
 Add 2 columns to `level_retention_criteria`:
-- `utilization_enabled` boolean default false
-- `utilization_minimum` numeric default 0
+- `rev_per_hour_enabled` boolean default false
+- `rev_per_hour_minimum` numeric default 0
 
 ## File Changes
 
-### 1. Migration SQL — Add utilization columns to both criteria tables
+### 1. Migration SQL — Add columns to both criteria tables
 
 ### 2. `useLevelPromotionCriteria.ts` — Add 3 fields to interface
 
 ### 3. `useLevelRetentionCriteria.ts` — Add 2 fields to interface
 
 ### 4. `GraduationWizard.tsx`
-- Add `utilization` entry to `CRITERIA` array: `{ key: 'utilization', label: 'Schedule Utilization', icon: CalendarClock, unit: '%' }`
+- Add `rev_per_hour` entry to `CRITERIA` array: `{ key: 'rev_per_hour', label: 'Revenue Per Hour', icon: DollarSign, unit: '$/hr' }`
 - Add to `RETENTION_CRITERIA` array
-- Extend `FormState` with `utilization_enabled`, `utilization_threshold`, `utilization_weight`
-- Extend `RetentionFormState` with `utilization_enabled`, `utilization_minimum`
-- Update `INITIAL_STATE`, `INITIAL_RETENTION_STATE`, `getZuraDefaults()` (e.g. 70-85% by level)
+- Extend `FormState` with `rev_per_hour_enabled`, `rev_per_hour_threshold`, `rev_per_hour_weight`
+- Extend `RetentionFormState` with `rev_per_hour_enabled`, `rev_per_hour_minimum`
+- Update `INITIAL_STATE`, `INITIAL_RETENTION_STATE`, `getZuraDefaults()`
 - Update load/save mapping, weight normalization, reset logic
 
 ### 5. `useTeamLevelProgress.ts`
-- Add a batch query for `staff_shifts` within the evaluation window for all team members
-- In `computeMetrics()`: calculate utilization per stylist
-  - If shift data exists: `sum(booked_minutes) / sum(shift_minutes) * 100`
-  - Fallback: estimate from appointment density (booked hours per active day, capped at a reasonable work-day assumption like 8h)
-- Add promotion progress entry for utilization when enabled
-- Add retention failure check for utilization when enabled
+- In `computeMetrics()`: calculate `revPerHour = sum(total_price) / sum(duration_minutes) * 60` from completed appointments
+- Add promotion progress entry for rev_per_hour when enabled
+- Add retention failure check for rev_per_hour when enabled
 
-### 6. `StylistLevelsEditor.tsx` — Add "Schedule Utilization" row to CriteriaComparisonTable (both sections)
+### 6. `StylistLevelsEditor.tsx` — Add "Revenue Per Hour" row to CriteriaComparisonTable (both sections)
+
+### 7. `kpiTemplates.ts` — Add Revenue Per Hour template for KPI architecture consistency
 
 ---
 
 ## Zura Default Recommendations
 
-| Level | Utilization Target | Weight |
-|-------|-------------------|--------|
-| Level 1 → 2 | 65% | 10 |
-| Level 2 → 3 | 75% | 10 |
-| Level 3 → 4 | 80% | 10 |
-| Level 4+ | 85% | 10 |
+These are intentionally conservative — salon owners can adjust up:
 
-Lower weight than revenue (10 vs 40) because utilization is a qualifying gate, not the primary driver. But it's critical — you can't skip it.
+| Level | Rev/Hr Target | Weight |
+|-------|--------------|--------|
+| Level 1 → 2 | $40/hr | 15 |
+| Level 2 → 3 | $55/hr | 15 |
+| Level 3 → 4 | $75/hr | 15 |
+| Level 4+ | $95/hr | 15 |
+
+Higher weight than utilization (15 vs 10) because revenue per hour directly measures economic value — the core signal for whether a price increase is justified.
+
+## Future: Request Rate
+
+When `is_requested` data becomes available (via Phorest integration or manual tracking), Request Rate can be added as another criterion following the same pattern. For now, it's not trackable.
 
 ## File Summary
 
@@ -75,9 +78,10 @@ Lower weight than revenue (10 vs 40) because utilization is a qualifying gate, n
 | Migration SQL | **Create** — Add columns to both criteria tables |
 | `useLevelPromotionCriteria.ts` | **Modify** — Extend interface |
 | `useLevelRetentionCriteria.ts` | **Modify** — Extend interface |
-| `GraduationWizard.tsx` | **Modify** — Add utilization criterion config, form state, defaults, save/load |
-| `useTeamLevelProgress.ts` | **Modify** — Fetch shifts, compute utilization, evaluate criterion |
+| `GraduationWizard.tsx` | **Modify** — Add rev_per_hour criterion config, form state, defaults, save/load |
+| `useTeamLevelProgress.ts` | **Modify** — Compute rev/hr, evaluate criterion |
 | `StylistLevelsEditor.tsx` | **Modify** — Add row to comparison table |
+| `kpiTemplates.ts` | **Modify** — Add Revenue Per Hour template |
 
-**1 migration, 5 modified files, 0 new files.**
+**1 migration, 6 modified files, 0 new files.**
 
