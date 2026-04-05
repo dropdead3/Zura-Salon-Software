@@ -44,7 +44,12 @@ export function MarketingNav() {
   const isActive = (href: string) => location.pathname === href;
 
   return (
-    <header className="fixed top-4 left-1/2 -translate-x-1/2 z-50 w-[calc(100%-2rem)] max-w-5xl">
+    <header
+      className={cn(
+        'fixed top-4 left-1/2 -translate-x-1/2 z-50 w-[calc(100%-2rem)] max-w-5xl transition-all duration-300',
+        navVisible ? 'translate-y-0 opacity-100' : '-translate-y-[calc(100%+2rem)] opacity-0'
+      )}
+    >
       <nav
         className={cn(
           'flex items-center justify-between px-6 py-3 rounded-full transition-all duration-300 border shadow-lg shadow-black/20',
