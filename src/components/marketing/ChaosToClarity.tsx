@@ -52,26 +52,47 @@ export function ChaosToClarity() {
             className="relative rounded-xl border border-white/[0.12] bg-white/[0.04] p-6 sm:p-8 overflow-hidden min-h-[380px]"
             style={{ opacity: chaosDim }}
           >
-            <p className="font-display text-[10px] tracking-[0.15em] text-slate-400 uppercase mb-6">
+            <p className="font-display text-xs tracking-[0.15em] text-slate-400 uppercase mb-5 relative z-10">
               Your Monday morning
             </p>
 
-            {/* Scattered chaos cards */}
-            {chaosCards.map((card, i) => (
-              <div
-                key={i}
-                className="absolute flex items-center gap-2 px-3 py-2 rounded-lg border border-white/[0.12] bg-slate-800/70 backdrop-blur-sm shadow-lg max-w-[220px]"
-                style={{
-                  left: card.x,
-                  top: card.y,
-                  transform: `rotate(${card.rotate}deg)`,
-                  animationDelay: `${i * 0.1}s`,
-                }}
-              >
-                <card.icon className={`w-3.5 h-3.5 shrink-0 ${card.color}`} />
-                <span className="font-sans text-[11px] text-slate-300 truncate">{card.label}</span>
-              </div>
-            ))}
+            {/* Grouped chaos cards */}
+            <div className="flex flex-wrap gap-2 relative z-0">
+              {chaosCards.map((card, i) => {
+                const hoverX = ((i * 7 + 3) % 13) - 6;
+                const hoverY = ((i * 5 + 2) % 9) - 4;
+                const hoverRotate = card.rotate + (((i * 3 + 1) % 7) - 3);
+                return (
+                  <motion.div
+                    key={i}
+                    className="flex items-center gap-2 px-3 py-2 rounded-lg border border-white/[0.12] bg-slate-800/70 backdrop-blur-sm shadow-lg cursor-default"
+                    style={{
+                      transform: `rotate(${card.rotate}deg)`,
+                    }}
+                    animate={{
+                      y: [0, -3, 0],
+                    }}
+                    transition={{
+                      y: {
+                        duration: 3 + (i % 3),
+                        repeat: Infinity,
+                        ease: 'easeInOut',
+                        delay: i * 0.3,
+                      },
+                    }}
+                    whileHover={{
+                      x: hoverX,
+                      y: hoverY,
+                      rotate: hoverRotate,
+                      transition: { duration: 0.15, ease: 'easeOut' },
+                    }}
+                  >
+                    <card.icon className={`w-3.5 h-3.5 shrink-0 ${card.color}`} />
+                    <span className="font-sans text-[11px] text-slate-300 whitespace-nowrap">{card.label}</span>
+                  </motion.div>
+                );
+              })}
+            </div>
           </motion.div>
 
           {/* Clarity side */}
