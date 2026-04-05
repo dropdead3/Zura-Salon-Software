@@ -14,6 +14,7 @@ import { SectionDivider } from '@/components/marketing/SectionDivider';
 import { BeforeAfterShowcase } from '@/components/marketing/BeforeAfterShowcase';
 import { ToolConsolidation } from '@/components/marketing/ToolConsolidation';
 import { StruggleInput } from '@/components/marketing/StruggleInput';
+import { ZuraInANutshell } from '@/components/marketing/ZuraInANutshell';
 
 export default function PlatformLanding() {
   return (
