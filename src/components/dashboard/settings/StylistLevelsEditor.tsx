@@ -761,6 +761,26 @@ export function StylistLevelsEditor({ embedded = false }: StylistLevelsEditorPro
     setHasChanges(false);
   };
 
+  const handleAnalyze = useCallback(async () => {
+    setAnalysisLoading(true);
+    setAnalysisOpen(true);
+    setAnalysisResult(null);
+    try {
+      const { data, error } = await supabase.functions.invoke('ai-level-analysis', {
+        body: { levels, promotionCriteria, retentionCriteria },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      setAnalysisResult(data as LevelAnalysisResult);
+    } catch (err: any) {
+      console.error('Level analysis error:', err);
+      toast.error(err?.message || 'Failed to analyze configuration');
+      setAnalysisOpen(false);
+    } finally {
+      setAnalysisLoading(false);
+    }
+  }, [levels, promotionCriteria, retentionCriteria]);
+
   if (isLoading) {
     return <DashboardLoader className="min-h-[400px]" />;
   }
