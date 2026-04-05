@@ -16,7 +16,7 @@ export default function PlatformLanding() {
       <StatBar />
       <ProblemStatement />
       <SolutionShowcase />
-      <PersonaTargeting />
+      <PersonaExplorer />
       <BuiltByOperators />
       <OutcomeMetrics />
       <TestimonialSection />
