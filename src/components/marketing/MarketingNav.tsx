@@ -170,5 +170,31 @@ export function MarketingNav() {
         )}
       </AnimatePresence>
     </header>
+
+      <AnimatePresence>
+        {!navVisible && (
+          <motion.div
+            initial={{ y: '100%' }}
+            animate={{ y: 0 }}
+            exit={{ y: '100%' }}
+            transition={{ duration: 0.3, ease: 'easeOut' }}
+            className="fixed bottom-0 left-0 right-0 z-50 bg-white/[0.06] backdrop-blur-xl border-t border-white/[0.08] py-3 px-6"
+          >
+            <div className="max-w-5xl mx-auto flex items-center justify-between">
+              <span className="font-sans text-sm text-slate-300">
+                Ready for a better salon software?
+              </span>
+              <Link
+                to="/demo"
+                className="inline-flex items-center gap-2 h-9 px-5 bg-gradient-to-r from-violet-600 to-purple-600 text-white hover:from-violet-500 hover:to-purple-500 rounded-full font-sans text-sm font-medium transition-all shadow-lg shadow-violet-500/25"
+              >
+                Book A Demo
+                <ArrowRight className="w-4 h-4" />
+              </Link>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </>
   );
 }
