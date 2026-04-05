@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
 import { DashboardPageHeader } from '@/components/dashboard/DashboardPageHeader';
@@ -22,6 +22,7 @@ import {
   Trash2, 
   ChevronUp, 
   ChevronDown,
+  ChevronRight,
   Save,
   X,
   AlertTriangle,
@@ -104,6 +105,56 @@ function formatRetentionSummary(r: LevelRetentionCriteria): string {
   if (r.new_clients_enabled && Number(r.new_clients_minimum) > 0) parts.push(`${r.new_clients_minimum} new/mo`);
   if (parts.length === 0) return '';
   return `Required to Stay: ${parts.join(' · ')} — ${r.grace_period_days}d grace · ${r.action_type === 'demotion_eligible' ? 'Demotion' : 'Coaching'}`;
+}
+
+/** Scrollable table container with a right-edge fade + arrow indicator when content overflows */
+function ScrollableTableWrapper({ children }: { children: React.ReactNode }) {
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [canScrollRight, setCanScrollRight] = useState(false);
+
+  const checkScroll = useCallback(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    setCanScrollRight(el.scrollWidth - el.scrollLeft - el.clientWidth > 4);
+  }, []);
+
+  useEffect(() => {
+    checkScroll();
+    const el = scrollRef.current;
+    if (!el) return;
+    el.addEventListener('scroll', checkScroll, { passive: true });
+    const ro = new ResizeObserver(checkScroll);
+    ro.observe(el);
+    return () => {
+      el.removeEventListener('scroll', checkScroll);
+      ro.disconnect();
+    };
+  }, [checkScroll]);
+
+  return (
+    <div className="relative rounded-xl border bg-card">
+      <div ref={scrollRef} className="overflow-auto">
+        {children}
+      </div>
+      {/* Right-edge scroll indicator */}
+      <div
+        className={cn(
+          'absolute right-0 top-0 bottom-0 w-12 pointer-events-none transition-opacity duration-200',
+          'bg-gradient-to-l from-card to-transparent',
+          canScrollRight ? 'opacity-100' : 'opacity-0'
+        )}
+      />
+      {canScrollRight && (
+        <button
+          onClick={() => scrollRef.current?.scrollBy({ left: 200, behavior: 'smooth' })}
+          className="absolute right-2 top-1/2 -translate-y-1/2 z-20 w-7 h-7 rounded-full bg-muted/80 backdrop-blur-sm border border-border/60 flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+          aria-label="Scroll right"
+        >
+          <ChevronRight className="w-4 h-4" />
+        </button>
+      )}
+    </div>
+  );
 }
 
 const formatRate = (rate: number | null | undefined): string => {
@@ -201,7 +252,7 @@ function CriteriaComparisonTable({ levels, promotionCriteria, retentionCriteria,
       <p className="text-sm text-muted-foreground">
         Compare promotion and retention criteria across all levels. Click "Edit" to modify a level's criteria.
       </p>
-      <div className="rounded-xl border bg-card overflow-auto">
+      <ScrollableTableWrapper>
         <Table>
           <TableHeader>
             <TableRow>
@@ -317,7 +368,7 @@ function CriteriaComparisonTable({ levels, promotionCriteria, retentionCriteria,
             })}
           </TableBody>
         </Table>
-      </div>
+      </ScrollableTableWrapper>
     </div>
   );
 }
