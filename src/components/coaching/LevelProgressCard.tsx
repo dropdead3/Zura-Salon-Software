@@ -73,7 +73,9 @@ export function LevelProgressCard({ userId, compact = false }: LevelProgressCard
                 <MetricInfoTooltip description="Shows how close this stylist is to meeting the graduation criteria for their next level, based on rolling performance data." />
               </CardTitle>
               <CardDescription className="text-xs">
-                {progress.currentLevelLabel} → {progress.nextLevelLabel}
+                {progress.nextLevelLabel
+                  ? `${progress.currentLevelLabel} → ${progress.nextLevelLabel}`
+                  : `${progress.currentLevelLabel} — Retention Status`}
               </CardDescription>
             </div>
           </div>
