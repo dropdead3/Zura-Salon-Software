@@ -68,6 +68,7 @@ import { useStylistLevels } from '@/hooks/useStylistLevels';
 import { usePromoteLevel } from '@/hooks/usePromoteLevel';
 import { useFormatDate } from '@/hooks/useFormatDate';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
+import { useOrgPromotionHistory, type PromotionRecord } from '@/hooks/usePromotionHistory';
 import { PageExplainer } from '@/components/ui/PageExplainer';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import type { CriterionProgress } from '@/hooks/useLevelProgress';
