@@ -90,7 +90,7 @@ export const myToolsNavItems: DashboardNavItem[] = [
   { href: '/dashboard/shift-swaps', label: 'Shift Swaps', labelKey: 'shift_swaps', icon: ArrowLeftRight, roles: ['stylist', 'stylist_assistant', 'receptionist', 'booth_renter'] },
   { href: '/dashboard/rewards', label: 'Rewards', labelKey: 'rewards', icon: Gift, roles: ['stylist', 'stylist_assistant', 'receptionist'] },
   { href: '/dashboard/ring-the-bell', label: 'Ring the Bell', labelKey: 'ring_the_bell', icon: Bell, permission: 'ring_the_bell', roles: ['stylist', 'stylist_assistant'] },
-  { href: '/dashboard/my-graduation', label: 'My Graduation', labelKey: 'my_graduation', icon: GraduationCap, permission: 'view_my_graduation', roles: ['stylist_assistant'] },
+  { href: '/dashboard/my-graduation', label: 'My Graduation', labelKey: 'my_graduation', icon: GraduationCap, permission: 'view_my_graduation', roles: ['stylist', 'stylist_assistant'] },
 ];
 
 // ─── SECTION: manage (admin hub-only links) ──────────────────────────────────
@@ -122,7 +122,7 @@ export const growthNavItems: DashboardNavItem[] = [
   { href: '/dashboard/training', label: 'Training', labelKey: 'training', icon: Video, permission: 'view_training', roles: ['admin', 'manager', 'stylist', 'stylist_assistant'] },
   { href: '/dashboard/program', label: 'New-Client Engine Program', labelKey: 'new_client_engine_program', icon: Target, permission: 'access_client_engine', roles: ['stylist', 'stylist_assistant'] },
   { href: '/dashboard/ring-the-bell', label: 'Ring the Bell', labelKey: 'ring_the_bell', icon: Bell, permission: 'ring_the_bell', roles: ['stylist', 'stylist_assistant'] },
-  { href: '/dashboard/my-graduation', label: 'My Graduation', labelKey: 'my_graduation', icon: GraduationCap, permission: 'view_my_graduation', roles: ['stylist_assistant'] },
+  { href: '/dashboard/my-graduation', label: 'My Graduation', labelKey: 'my_graduation', icon: GraduationCap, permission: 'view_my_graduation', roles: ['stylist', 'stylist_assistant'] },
 ];
 
 /** @deprecated Use myToolsNavItems instead. Stats items merged into myTools. */

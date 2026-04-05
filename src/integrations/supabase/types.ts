@@ -9391,6 +9391,84 @@ export type Database = {
           },
         ]
       }
+      level_retention_criteria: {
+        Row: {
+          action_type: Database["public"]["Enums"]["retention_action_type"]
+          avg_ticket_enabled: boolean
+          avg_ticket_minimum: number
+          created_at: string
+          evaluation_window_days: number
+          grace_period_days: number
+          id: string
+          is_active: boolean
+          organization_id: string
+          rebooking_enabled: boolean
+          rebooking_pct_minimum: number
+          retail_enabled: boolean
+          retail_pct_minimum: number
+          retention_enabled: boolean
+          revenue_enabled: boolean
+          revenue_minimum: number
+          stylist_level_id: string
+          updated_at: string
+        }
+        Insert: {
+          action_type?: Database["public"]["Enums"]["retention_action_type"]
+          avg_ticket_enabled?: boolean
+          avg_ticket_minimum?: number
+          created_at?: string
+          evaluation_window_days?: number
+          grace_period_days?: number
+          id?: string
+          is_active?: boolean
+          organization_id: string
+          rebooking_enabled?: boolean
+          rebooking_pct_minimum?: number
+          retail_enabled?: boolean
+          retail_pct_minimum?: number
+          retention_enabled?: boolean
+          revenue_enabled?: boolean
+          revenue_minimum?: number
+          stylist_level_id: string
+          updated_at?: string
+        }
+        Update: {
+          action_type?: Database["public"]["Enums"]["retention_action_type"]
+          avg_ticket_enabled?: boolean
+          avg_ticket_minimum?: number
+          created_at?: string
+          evaluation_window_days?: number
+          grace_period_days?: number
+          id?: string
+          is_active?: boolean
+          organization_id?: string
+          rebooking_enabled?: boolean
+          rebooking_pct_minimum?: number
+          retail_enabled?: boolean
+          retail_pct_minimum?: number
+          retention_enabled?: boolean
+          revenue_enabled?: boolean
+          revenue_minimum?: number
+          stylist_level_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "level_retention_criteria_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "level_retention_criteria_stylist_level_id_fkey"
+            columns: ["stylist_level_id"]
+            isOneToOne: false
+            referencedRelation: "stylist_levels"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       lever_outcomes: {
         Row: {
           created_at: string
@@ -24276,6 +24354,7 @@ export type Database = {
       price_queue_status: "pending" | "approved" | "rejected" | "auto_applied"
       price_recommendation_status: "pending" | "accepted" | "dismissed"
       program_status: "active" | "paused" | "completed" | "restarted"
+      retention_action_type: "coaching_flag" | "demotion_eligible"
       rsvp_status: "pending" | "accepted" | "declined"
       shift_role_context:
         | "front_desk"
@@ -24552,6 +24631,7 @@ export const Constants = {
       price_queue_status: ["pending", "approved", "rejected", "auto_applied"],
       price_recommendation_status: ["pending", "accepted", "dismissed"],
       program_status: ["active", "paused", "completed", "restarted"],
+      retention_action_type: ["coaching_flag", "demotion_eligible"],
       rsvp_status: ["pending", "accepted", "declined"],
       shift_role_context: [
         "front_desk",
