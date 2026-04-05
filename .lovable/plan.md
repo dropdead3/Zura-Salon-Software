@@ -1,77 +1,179 @@
 
 
-# Marketing Front-End — Round 3 Polish & Fixes
+# Zura "Wow Factor" — Flagship Product Experience
 
-## Issues Found
+## Experience Concept
 
-### 1. Mobile nav menu bleeds through to footer
-The mobile menu (`MarketingNav.tsx` line 104) uses `bg-slate-950/95` but doesn't have a solid bottom edge or sufficient height — the footer content is visible underneath it. The menu needs `min-h-[calc(100vh-64px)]` or a full-screen overlay approach to prevent bleed-through.
+The landing page transforms from a static scroll into a **guided intelligence simulation**. The visitor doesn't read about Zura — they *watch it think*. The page is structured as a narrative arc: chaos → observation → detection → clarity → action. Each section advances this arc using scroll-driven state changes, interactive UI simulations, and progressive reveals that make the system feel alive.
 
-### 2. Solution page testimonials use `font-serif italic`
-`SolutionPageTemplate.tsx` line 112 still uses `font-serif text-xl italic` on the testimonial blockquote — this was fixed on the homepage `TestimonialSection` but not here. Should be `font-sans` for brand consistency.
-
-### 3. Solution page CTA section is thin
-The solution page bottom CTA (lines 126-142) has only a headline, one line of text, and a button. No trust signal, no secondary CTA — unlike the homepage `FinalCTA` which now has both. Should mirror that pattern.
-
-### 4. Nav missing "About" link
-The desktop nav has no way to reach `/about` — it's only in the footer. Adding it to the Company column was good, but the nav itself should also surface it (either as a direct link or under a "Company" dropdown). Given the minimal nav, adding it as a plain link alongside Ecosystem/Pricing is the simplest fix.
-
-### 5. Pricing "Start Free Trial" buttons go to `/demo`
-Both Solo and Multi-Location CTAs say "Start Free Trial" but link to the demo request form. Either the copy should say "Get a Demo" (consistent with the rest of the site) or these should link to actual signup. Since there's no self-serve signup flow yet, the labels should read "Get a Demo" to avoid confusion.
-
-### 6. Pricing feature comparison table missing
-The plan called for a feature comparison table below the tier cards. Let me verify if it was built.
-
-### 7. Hero "Explore the Platform" ghost CTA has no gradient or lavender styling
-The hero secondary CTA (line 37-42) uses plain `bg-white/5 border-white/10` — it doesn't use the new lavender ghost style that was applied to the FinalCTA's secondary button. Should be consistent.
-
-### 8. Large empty space between sections on landing page
-Scrolling the landing page shows what looks like excessive vertical padding between sections — the page feels like it has dead zones between the mid-page sections (StatBar → LogoBar → ProblemStatement gap appears large).
+The emotional journey: confusion → recognition → relief → confidence → action.
 
 ---
 
-## Plan
+## Section-by-Section Breakdown
 
-### 1. Fix mobile nav overlay
-Change the mobile menu container to a full-screen overlay with solid background so footer doesn't bleed through. Add `fixed inset-0 top-[64px]` with solid `bg-slate-950` and overflow scroll.
+### Current Flow vs. New Flow
 
-**File:** `src/components/marketing/MarketingNav.tsx`
+```text
+CURRENT                          NEW
+─────────                        ────
+Hero + static mockup             Hero with live intelligence loop (KEEP, enhance)
+StatBar                          StatBar (KEEP as-is)
+LogoBar                          LogoBar (KEEP as-is)
+ProblemStatement                 Chaos → Clarity Transition (REPLACE)
+SolutionShowcase                 Live System Walkthrough (REPLACE)
+PersonaExplorer                  PersonaExplorer (KEEP, already interactive)
+BuiltByOperators                 BuiltByOperators (KEEP as-is)
+OutcomeMetrics                   OutcomeMetrics (KEEP as-is)
+TestimonialSection               TestimonialSection (KEEP as-is)
+FinalCTA                         FinalCTA (KEEP as-is)
+```
 
-### 2. Fix SolutionPageTemplate testimonial font
-Replace `font-serif text-xl sm:text-2xl italic` with `font-sans text-lg sm:text-xl` on the blockquote for brand consistency.
-
-**File:** `src/components/marketing/SolutionPageTemplate.tsx`
-
-### 3. Strengthen SolutionPageTemplate bottom CTA
-Add a trust signal line and secondary ghost CTA (matching the homepage FinalCTA pattern). Add gradient accent on the headline.
-
-**File:** `src/components/marketing/SolutionPageTemplate.tsx`
-
-### 4. Add "About" link to desktop nav
-Add "About" to the `navLinks` array in `MarketingNav.tsx`.
-
-**File:** `src/components/marketing/MarketingNav.tsx`
-
-### 5. Fix Pricing CTA labels
-Change "Start Free Trial" to "Get a Demo" on Solo and Multi-Location tiers since there's no self-serve trial flow.
-
-**File:** `src/pages/Pricing.tsx`
-
-### 6. Unify hero ghost CTA with lavender style
-Update the "Explore the Platform" button in `HeroSection.tsx` to use the same lavender ghost styling as the FinalCTA secondary button: `border-[hsl(var(--mkt-lavender)/0.3)] text-[hsl(var(--mkt-lavender))]`.
-
-**File:** `src/components/marketing/HeroSection.tsx`
+Only **2 sections** are rebuilt. Everything else stays. The hero gets a targeted enhancement.
 
 ---
 
-## Summary
+### 1. Hero Enhancement — "Sticky Intelligence Loop"
 
-| File | Change |
-|------|--------|
-| `MarketingNav.tsx` | Fix mobile menu overlay bleed-through, add About link |
-| `SolutionPageTemplate.tsx` | Fix testimonial font, strengthen bottom CTA |
-| `Pricing.tsx` | Fix "Start Free Trial" → "Get a Demo" labels |
-| `HeroSection.tsx` | Unify ghost CTA with lavender styling |
+**Current:** DashboardMockup auto-cycles through phases. Works well but feels disconnected from the visitor.
 
-**4 files modified. 0 new. 0 deleted.**
+**Enhancement:** Add a **text narration strip** below the mockup that syncs with the phase cycle, giving the viewer a guided explanation of what they're watching.
+
+- `observe` phase → "Zura is watching your business right now."
+- `detect` phase → "A deviation detected. Utilization dropped."
+- `act` phase → "One lever. Clear impact. You decide."
+- `pause` phase → "This is what clarity feels like."
+
+Implementation: A `<PhaseNarration>` component inside `HeroSection` that reads `phase` from a shared ref/context with `DashboardMockup`. The narration text fades in/out with each phase transition using `AnimatePresence`.
+
+**Files:** Modify `DashboardMockup.tsx` (expose phase via callback prop), modify `HeroSection.tsx` (add narration strip)
+
+---
+
+### 2. NEW: Chaos → Clarity Transition (replaces ProblemStatement)
+
+**Purpose:** The emotional pivot of the entire page. Show the visitor their current reality, then transform it.
+
+**Concept:** A split-screen component called `ChaosToClarity`.
+
+**Left side — "Without Zura" (always visible):**
+- A simulated "messy desk" of overlapping cards: a spreadsheet snippet, a text notification, a sticky note, a calendar with gaps — all slightly rotated, overlapping, semi-transparent
+- Feels chaotic, crowded, noisy
+- Muted colors (slate-600, amber warnings)
+
+**Right side — "With Zura" (revealed on scroll):**
+- A clean, single card: one KPI, one lever, one action
+- Calm, violet accent, spacious
+- Appears via a horizontal wipe/reveal triggered by scroll intersection
+
+**Scroll behavior:** When the section enters the viewport, the left side is fully visible. As the user scrolls deeper into the section (using a scroll progress tracker within the section bounds — NOT scroll hijacking), the right side slides in from the right, and the left side dims slightly.
+
+**Mobile adaptation:** Stacks vertically. "Without" on top, "With" slides up from below on scroll.
+
+**Files:** New `src/components/marketing/ChaosToClarity.tsx`
+
+---
+
+### 3. NEW: Live System Walkthrough (replaces SolutionShowcase)
+
+**Purpose:** Show Zura working, not describe features.
+
+**Concept:** A tabbed walkthrough called `SystemWalkthrough` with 4 steps, each showing a simulated UI moment.
+
+**Tabs (horizontal pills on desktop, vertical stack on mobile):**
+
+1. **"Connect"** — Animated visualization of data sources flowing in (calendar, POS, team). Simple node-and-line diagram where lines animate with flowing dots (reuse `mkt-connector-line` pattern). Shows: "Your data, unified."
+
+2. **"Observe"** — A mini KPI dashboard (3 tiles) that populates with animated counters when the tab activates. Shows real-looking numbers. Caption: "Continuous monitoring. No manual reports."
+
+3. **"Detect"** — One KPI tile pulses amber (reuse `mkt-pulse-amber`). A lever card slides in from the right. Caption: "Zura found something. Utilization is slipping on Tuesdays."
+
+4. **"Act"** — The lever card shows a green checkmark. The KPI value animates upward. A progress bar fills. Caption: "One decision. Measurable impact."
+
+**Auto-advance:** Tabs auto-advance every 5 seconds with a progress indicator on the active tab. Clicking a tab resets the timer. Pauses on hover (desktop) or tap (mobile).
+
+**Mobile adaptation:** Tabs become a vertical stepper with connecting lines. Each step expands on tap.
+
+**Files:** New `src/components/marketing/SystemWalkthrough.tsx`
+
+---
+
+### 4. Landing Page Recomposition
+
+Update `PlatformLanding.tsx` to swap in the new sections:
+
+```text
+HeroSection (enhanced with phase narration)
+StatBar
+LogoBar
+ChaosToClarity          ← replaces ProblemStatement
+SystemWalkthrough       ← replaces SolutionShowcase
+PersonaExplorer
+BuiltByOperators
+OutcomeMetrics
+TestimonialSection
+FinalCTA
+```
+
+**Files:** Modify `src/pages/PlatformLanding.tsx`
+
+---
+
+## UI + Motion Direction
+
+All motion follows the existing marketing animation system. No new animation frameworks.
+
+| Element | Duration | Easing | Trigger |
+|---------|----------|--------|---------|
+| Phase narration fade | 400ms | cubic-bezier(0.16, 1, 0.3, 1) | Phase change |
+| Chaos→Clarity wipe | CSS transition 700ms | ease-out | Scroll intersection |
+| Walkthrough tab switch | 300ms | ease-out | Auto-advance / click |
+| Connector flow dots | 3s loop | ease-in-out | Tab active |
+| KPI counter animation | 1000ms | cubic-bezier ease-out | Tab activation |
+
+**Constraints enforced:**
+- No scroll hijacking — all sections use natural document flow
+- No physics-based bounce or elastic effects
+- `prefers-reduced-motion` disables all animations, shows static final states
+- All transitions < 700ms
+
+---
+
+## Responsive Interaction Plan
+
+| Component | Desktop | Tablet | Mobile |
+|-----------|---------|--------|--------|
+| Phase narration | Below mockup, horizontal text | Same | Same, smaller text |
+| Chaos→Clarity | Side-by-side split | Side-by-side, narrower | Stacked vertically |
+| System Walkthrough tabs | Horizontal pill bar | Horizontal, scrollable | Vertical stepper |
+| Walkthrough simulations | Full-width within tab panel | Same | Simplified, smaller nodes |
+| Connector flow dots | Animated | Animated | Static dots (no animation) |
+| Auto-advance | Pauses on hover | Pauses on hover | Pauses on tap |
+
+All hover-dependent interactions have tap/click equivalents on touch devices.
+
+---
+
+## Technical Summary
+
+| File | Action | Purpose |
+|------|--------|---------|
+| `DashboardMockup.tsx` | Modify | Expose `onPhaseChange` callback prop |
+| `HeroSection.tsx` | Modify | Add phase narration strip below mockup |
+| `ChaosToClarity.tsx` | **Create** | Scroll-driven chaos→clarity transition |
+| `SystemWalkthrough.tsx` | **Create** | Tabbed live system walkthrough |
+| `PlatformLanding.tsx` | Modify | Swap ProblemStatement → ChaosToClarity, SolutionShowcase → SystemWalkthrough |
+| `index.css` | Modify | Add `mkt-wipe-reveal` transition class |
+
+**2 new files, 4 modified. 0 deleted** (old components remain available for other pages).
+
+---
+
+## What This Does NOT Touch
+
+- No changes to tenant/dashboard architecture
+- No changes to navigation, footer, pricing, about, or solution pages
+- No new dependencies — uses existing framer-motion, Lucide icons, and CSS animations
+- PersonaExplorer (already interactive) stays as-is
+- All existing marketing CSS classes remain intact
 
