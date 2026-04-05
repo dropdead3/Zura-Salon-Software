@@ -30,6 +30,9 @@ export interface LevelPromotionCriteria {
   utilization_enabled: boolean;
   utilization_threshold: number;
   utilization_weight: number;
+  rev_per_hour_enabled: boolean;
+  rev_per_hour_threshold: number;
+  rev_per_hour_weight: number;
   evaluation_window_days: number;
   requires_manual_approval: boolean;
   is_active: boolean;
