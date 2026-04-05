@@ -1,63 +1,50 @@
 
 
-# Graduation System — Pass 4: Cross-Surface Integration + Level Display Mode
+# Graduation System — Pass 5: Bug Fixes, Dead Code, Label Consistency, and Admin KPI
 
-## Feedback Incorporated
+## Current State
 
-The user correctly identified that custom level names (e.g., "New Talent," "Master Stylist") may be internal terminology not suitable for public-facing cards. Admins need a toggle to control whether the website shows **numbered labels** ("Level 1," "Level 2") or **custom names** from `client_label`. This setting will live in the existing `organizations.settings` JSONB column — no migration needed.
-
----
-
-## All Changes
-
-### 1. Website level display mode toggle (new)
-- Add a `website_level_display_mode` field to `organizations.settings` JSONB: `'numbered'` (default) or `'custom_name'`
-- Add a toggle in `EditStylistCardDialog` (or a website settings section) so admins can choose: "Show as Level 1, Level 2..." vs "Show as New Talent, Senior..."
-- `StylistFlipCard` and `StylistsSection` resolve the display label based on this setting
-- When `'numbered'`: show `client_label` as-is (e.g., "Level 1 Stylist")
-- When `'custom_name'`: resolve from `stylist_levels.label` (e.g., "New Talent")
-
-### 2. Add level color badges + graduation status to Team Directory
-- Import `getLevelColor` from `@/lib/level-colors.ts`
-- Replace plain text level display with colored badge
-- For admin viewers, add subtle status dot (green = ready, amber = in progress, red = at risk)
-
-### 3. Fix website stylist cards to use resolved labels
-- `StylistsSection` reads the org's `website_level_display_mode` setting
-- Passes the resolved label to `StylistFlipCard` based on mode
-- Fallback to raw slug if no match
-
-### 4. Replace hardcoded levels in EditStylistCardDialog
-- Replace `STYLIST_LEVELS = ['LEVEL 1', 'LEVEL 2', 'LEVEL 3', 'LEVEL 4']` with dynamic levels from `useStylistLevels`
-- Add a "Website level display" toggle (numbered vs custom names) in the dialog or a nearby settings surface
-
-### 5. Fix ManagementHub graduation stat + description
-- Replace vague "tracked" count with actionable stats from `useTeamLevelProgress`
-- Update description to "Track team level progression and retention"
-
-### 6. Add graduation awareness to Dashboard Home
-- **Stylists**: Compact level progress nudge showing composite score and next-level proximity
-- **Admins**: KPI tile showing "X ready to promote / Y at risk" linking to Graduation Tracker
-
-### 7. Fix LeadAssignmentDialog to use shared level colors
-- Replace local `getLevelColor` with import from `@/lib/level-colors.ts`
-
-### 8. Update nav label to "My Level Progress"
-- Rename both occurrences in `dashboardNav.ts`
+After 4 passes, the graduation system has: promotion criteria wizard with Zura defaults, retention criteria ("Required to Stay") with admin configuration, At Risk tab on Graduation Tracker, LevelProgressCard on MyGraduation/MeetingDetails/IndividualStaffReport, promotion history (admin + stylist), retention guidance cards, PDF export with retention criteria, website level display mode toggle, color-coded level badges in Team Directory, and LevelProgressNudge on the stylist dashboard home.
 
 ---
 
-## Technical Detail: Level Display Mode
+## Gaps Found
 
-The `organizations.settings` JSONB column already exists. We store:
+### Bug: `below_standard` status is never assigned
+The `GraduationStatus` type includes `'below_standard'`, there's a `StatusBadge` config for it, it's counted in `counts.belowStandard`, and the KPI strip references it — but the actual evaluation logic in `useTeamLevelProgress.ts` never sets `status = 'below_standard'`. It always assigns `'at_risk'` when retention failures exist. The distinction between "within grace period" and "past grace period" that `below_standard` was meant to represent is never computed. This means admins can never see who has exceeded their grace period.
 
-```json
-{ "website_level_display_mode": "numbered" }
-```
+### Bug: SidebarPreview + SidebarLayoutEditor show stale label "My Graduation"
+`SidebarPreview.tsx` line 21 and `SidebarLayoutEditor.tsx` line 116 still say `"My Graduation"` while the actual nav and page title are `"My Level Progress"`.
 
-Values: `"numbered"` (default — shows "Level 1", "Level 2") or `"custom_name"` (shows the `label` field from `stylist_levels`, e.g., "New Talent", "Senior").
+### Gap: No admin-facing graduation KPI on DashboardHome
+The `LevelProgressNudge` was added for stylists, but admins have no graduation awareness on their Command Center. An admin with 3 stylists ready to promote and 2 at risk gets zero signal until they navigate to the Graduation Tracker.
 
-This is read by the public website components and the edit dialog. No migration needed — just a JSONB key convention.
+### Gap: KPI strip missing "Below Standard" count
+The KPI strip in `GraduationTracker.tsx` shows 5 KPIs but doesn't include `belowStandard`. Once the bug above is fixed, this count needs its own tile so admins can distinguish "coaching recommended" from "action required."
+
+### Gap: `level_progress` section not in default section ordering
+The `LevelProgressNudge` section key `level_progress` was added to the section map but likely isn't in the default section ordering array, so it may not render unless manually positioned.
+
+---
+
+## Plan
+
+### 1. Fix `below_standard` status assignment
+In `useTeamLevelProgress.ts`, when a stylist has retention failures AND the retention criteria has `action_type === 'demotion_eligible'`, assign `'below_standard'` instead of `'at_risk'`. This creates the intended two-tier distinction:
+- `at_risk` = coaching recommended (within grace period or coaching action type)
+- `below_standard` = demotion eligible (past grace period or demotion action type)
+
+### 2. Fix sidebar label inconsistency
+Update `SidebarPreview.tsx` and `SidebarLayoutEditor.tsx` to show `"My Level Progress"` instead of `"My Graduation"`.
+
+### 3. Add admin graduation KPI tile on DashboardHome
+Create a compact `GraduationKpiTile` component for admins showing "X ready / Y at risk" with a link to the Graduation Tracker. Add it to the admin sections in `DashboardHome.tsx`.
+
+### 4. Add "Below Standard" KPI to Graduation Tracker
+Add a 6th KPI tile to the `KpiStrip` in `GraduationTracker.tsx` for `counts.belowStandard`, using `AlertCircle` icon and red styling. Update the grid from `grid-cols-5` to `grid-cols-6` (or `grid-cols-3` on smaller screens).
+
+### 5. Add `level_progress` to default section ordering
+Verify and add the `level_progress` key to the default dashboard section order array so the nudge renders without manual configuration.
 
 ---
 
@@ -65,14 +52,12 @@ This is read by the public website components and the edit dialog. No migration 
 
 | File | Action |
 |------|--------|
-| `src/pages/dashboard/TeamDirectory.tsx` | **Modify** — Add level color badges and graduation status indicators |
-| `src/components/home/StylistsSection.tsx` | **Modify** — Read display mode from org settings, resolve labels accordingly |
-| `src/components/home/StylistFlipCard.tsx` | **Modify** — Accept resolved display label prop |
-| `src/components/dashboard/EditStylistCardDialog.tsx` | **Modify** — Dynamic levels from DB, add website level display mode toggle |
-| `src/pages/dashboard/admin/ManagementHub.tsx` | **Modify** — Fix graduation stat and description |
-| `src/pages/dashboard/DashboardHome.tsx` | **Modify** — Add level progress nudge (stylist) and graduation KPI (admin) |
-| `src/components/dashboard/leads/LeadAssignmentDialog.tsx` | **Modify** — Use shared `getLevelColor` |
-| `src/config/dashboardNav.ts` | **Modify** — Rename "My Graduation" to "My Level Progress" |
+| `src/hooks/useTeamLevelProgress.ts` | **Modify** — Assign `below_standard` when `action_type === 'demotion_eligible'` |
+| `src/components/dashboard/settings/SidebarPreview.tsx` | **Modify** — Rename label to "My Level Progress" |
+| `src/components/dashboard/settings/SidebarLayoutEditor.tsx` | **Modify** — Rename label to "My Level Progress" |
+| `src/components/dashboard/GraduationKpiTile.tsx` | **Create** — Admin KPI tile for Command Center |
+| `src/pages/dashboard/DashboardHome.tsx` | **Modify** — Add GraduationKpiTile to admin sections, verify `level_progress` in default ordering |
+| `src/pages/dashboard/admin/GraduationTracker.tsx` | **Modify** — Add "Below Standard" KPI tile to strip |
 
-**0 new files, 8 modified files, 0 migrations.**
+**1 new file, 5 modified files, 0 migrations.**
 
