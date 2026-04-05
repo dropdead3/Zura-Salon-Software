@@ -1,76 +1,62 @@
 
 
-# Enhanced StruggleInput Response Layout
+# "Zura In A Nutshell" — Feature Showcase Section
 
-## Current Issues
+## Concept
 
-1. Feature cards render in a flat 3-column grid with no visual hierarchy — they all look identical
-2. The AI response sits in a plain bordered box below, visually disconnected from the feature cards
-3. No clear visual separation between "what Zura feature solves this" and "how it solves it"
-4. The response area lacks structure — it's just a markdown dump
+A new marketing section inspired by the Nudge reference: alternating left-text/right-visual and right-text/left-visual rows, each showcasing a core Zura feature with a category pill, headline, description, and a static mockup visual that accurately represents the built product.
 
-## Proposed Layout (Post-Response State)
+## Features to Showcase (8 rows, alternating layout)
+
+| # | Category Pill | Headline | Visual Mockup |
+|---|---|---|---|
+| 1 | Client Management | Know every client. Not just their name. | CRM card: client profile with visit count, lifetime spend, retention badge, notes preview |
+| 2 | Scheduling | Your book, optimized automatically | Calendar grid mockup with colored appointment blocks, utilization bar |
+| 3 | Point of Sale | Ring up. Track. Move on. | Transaction card with service line items, tip, payment method, total |
+| 4 | Analytics & Reporting | See what's actually happening | Mini dashboard: revenue donut, utilization %, retention trend sparkline |
+| 5 | Onboarding & Hiring | From hire to chair in days, not weeks | Onboarding checklist mockup with progress steps (license, training, access) |
+| 6 | Payroll & Commission | Pay your team right. Every time. | Payroll summary: commission tiers, tip breakdown, total payout |
+| 7 | Team Chat | One place for your team to talk | Chat mockup with message bubbles, team member avatars, channel name |
+| 8 | Website Builder | Your front door. Always on brand. | Browser chrome mockup showing a salon landing page with hero, nav, booking CTA |
+
+## Layout Pattern
+
+Each row is a two-column grid (`md:grid-cols-2`) with the text side and visual side swapping via `md:order-1`/`md:order-2` on odd/even rows. On mobile, text always stacks above the visual.
 
 ```text
-┌─────────────────────────────────────────────────┐
-│  [textarea with typing animation]               │
-│  0/300                        [Show me how →]   │
-│  ─────────────────────────────────────────────   │
-│  pill  pill  pill  pill                          │
-└─────────────────────────────────────────────────┘
-
-          ↓  (after submit, response area)
-
-┌──────────────────────────────────────────────────┐
-│                                                  │
-│  ┌─ FEATURED SOLUTION ───────────────────────┐   │
-│  │  ⚡ PAYROLL                                │   │
-│  │  Payroll Hub                               │   │
-│  │  Automate tips, commissions, and payroll   │   │
-│  │                                            │   │
-│  │  [Learn more →]                            │   │
-│  └────────────────────────────────────────────┘   │
-│                                                  │
-│  Also relevant:                                  │
-│  ┌──────────┐  ┌──────────┐                      │
-│  │ Feature2 │  │ Feature3 │    (smaller cards)   │
-│  └──────────┘  └──────────┘                      │
-│                                                  │
-│  ── How Zura solves this ──────────────────────   │
-│                                                  │
-│  [Streamed AI markdown response with improved    │
-│   typography — violet accent on feature names,   │
-│   bullet points styled cleaner]                  │
-│                                                  │
-│  ↻ Ask another question    Book a demo →         │
-└──────────────────────────────────────────────────┘
+Row 1:  [ Text ←──────── | ──────── Visual → ]
+Row 2:  [ ← Visual ──── | ────── Text → ]
+Row 3:  [ Text ←──────── | ──────── Visual → ]
+...
 ```
 
-## Key Design Changes
+## Visual Mockup Style
 
-### 1. Primary Feature Card (Hero Treatment)
-- First matched feature gets a larger, highlighted card with a subtle violet left border accent and a gradient background (`bg-gradient-to-br from-violet-500/10 to-transparent`)
-- Category label in violet, feature name larger (`text-lg`), tagline visible
-- Optional "Learn more" link if we have a route
+Each visual is a **static, code-rendered mockup** (not screenshots) styled to match the marketing dark surface:
+- Container: `rounded-2xl bg-white/[0.04] border border-white/[0.08] p-6`
+- Inner elements use `bg-white/[0.06]`, violet/emerald/amber accents
+- Designed to feel like a product screenshot but built with Tailwind — lightweight, responsive, no images needed
+- Each mockup is a small self-contained component within the file
 
-### 2. Secondary Features (Compact Row)
-- Remaining features render as smaller inline pills/chips below a "Also relevant:" label
-- Keeps the response area clean without a heavy grid
+## Text Side Style
 
-### 3. Response Container Improvements
-- Add a subtle section label: "How Zura solves this" with a thin violet divider line
-- Better markdown prose styling — slightly larger line-height, violet-colored bold feature names
-- Cleaner visual weight overall
+- Category pill: `rounded-full border border-white/[0.08] bg-white/[0.04] px-3 py-1 text-xs text-slate-400`
+- Headline: `font-display text-xl sm:text-2xl text-white tracking-tight`
+- Description: `font-sans text-sm sm:text-base text-slate-400 leading-relaxed`
+- All hardcoded marketing colors (no semantic tokens)
 
-### 4. Overall Container
-- Widen max-width from `max-w-3xl` to `max-w-4xl` to give the response more breathing room
-- The entire response area (features + AI text + actions) lives in one cohesive card instead of separate disconnected boxes
+## Section Header
+
+- Overline: "ZURA IN A NUTSHELL" (violet, tracking-wide)
+- Heading: "Everything your salon runs on. One platform."
+- Subtext: "Built for operators who need real tools — not another app to manage."
 
 ## File Changes
 
 | File | Action |
 |------|--------|
-| `src/components/marketing/StruggleInput.tsx` | **Modify** — restructure response layout with hero feature card, secondary chips, section divider, unified container |
+| `src/components/marketing/ZuraInANutshell.tsx` | **Create** — full section with 8 feature rows, each with inline mockup component |
+| `src/pages/PlatformLanding.tsx` | **Modify** — insert `<ZuraInANutshell />` after `<ToolConsolidation />` (before OutcomeMetrics) |
 
-**1 file modified.**
+**2 files touched. 1 new. 1 modified.**
 
