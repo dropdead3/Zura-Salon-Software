@@ -432,6 +432,7 @@ const App = () => (
                     </Route>
 
                     {/* Standalone public pages */}
+                    <Route path="/pricing" element={<Suspense fallback={<RouteFallback />}><PricingPage /></Suspense>} />
                     <Route path="/demo" element={<ProductDemo />} />
                     <Route path="/feedback" element={<ClientFeedbackPage />} />
                     <Route path="/rewards" element={<ClientPortalPage />} />
