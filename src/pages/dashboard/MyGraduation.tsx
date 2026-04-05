@@ -42,7 +42,7 @@ import { useFormatDate } from '@/hooks/useFormatDate';
 import { usePromotionHistory } from '@/hooks/usePromotionHistory';
 import { useLevelProgress } from '@/hooks/useLevelProgress';
 import { PageExplainer } from '@/components/ui/PageExplainer';
-import { LevelProgressCard } from '@/components/coaching/LevelProgressCard';
+import { StylistScorecard } from '@/components/dashboard/StylistScorecard';
 
 const STATUS_COLORS = {
   pending: 'bg-amber-500/10 text-amber-600 border-amber-500/20',
@@ -391,8 +391,8 @@ export default function MyGraduation() {
         />
         <PageExplainer pageId="my-graduation" />
 
-        {/* Level-Based Progress Card */}
-        <LevelProgressCard userId={effectiveUserId || undefined} />
+        {/* Unified Performance Scorecard */}
+        <StylistScorecard userId={effectiveUserId || undefined} />
 
         {/* Retention guidance — shown when at risk */}
         {progress?.retention?.isAtRisk && (
