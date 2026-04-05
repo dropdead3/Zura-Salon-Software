@@ -1244,47 +1244,6 @@ export function StylistLevelsEditor({ embedded = false }: StylistLevelsEditorPro
                 </button>
               )}
 
-              {/* Team Distribution inline summary */}
-              {levels.length > 0 && (
-                <div className="rounded-xl border bg-card p-4 mt-4">
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground mb-3">
-                    <Users className="w-4 h-4" />
-                    <span>Team Distribution</span>
-                    <span className="ml-auto text-foreground font-medium">{totalAssigned}</span>
-                  </div>
-                  <div className="space-y-2">
-                    {levels.map((level, idx) => {
-                      const count = getStylistCount(level.id);
-                      const percentage = totalAssigned > 0 ? (count / totalAssigned) * 100 : 0;
-                      return (
-                        <div key={level.id} className="flex items-center gap-3">
-                          <span className="text-xs text-muted-foreground w-4 text-right shrink-0">{idx + 1}</span>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center justify-between gap-2 mb-1">
-                              <span className="text-xs truncate">{level.label}</span>
-                              <span className="text-xs text-muted-foreground shrink-0">
-                                {count}{totalAssigned > 0 && ` (${Math.round((count / totalAssigned) * 100)}%)`}
-                              </span>
-                            </div>
-                            <div className="h-1.5 bg-muted rounded-full overflow-hidden">
-                              <div 
-                                className="h-full bg-primary/60 rounded-full transition-all duration-300"
-                                style={{ width: `${percentage}%` }}
-                              />
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                  {totalAssigned === 0 && (
-                    <p className="text-xs text-muted-foreground text-center py-2">
-                      No stylists assigned to levels yet
-                    </p>
-                  )}
-                </div>
-              )}
-
               {/* Progression Roadmap removed — now in Criteria tab */}
             </div>
           </TabsContent>
@@ -1313,6 +1272,46 @@ export function StylistLevelsEditor({ embedded = false }: StylistLevelsEditorPro
           {/* === TAB 3: Team Roster === */}
 
           <TabsContent value="team">
+            {/* Team Distribution summary */}
+            {levels.length > 0 && (
+              <div className="rounded-xl border bg-card p-4 mb-4">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground mb-3">
+                  <Users className="w-4 h-4" />
+                  <span>Team Distribution</span>
+                  <span className="ml-auto text-foreground font-medium">{totalAssigned}</span>
+                </div>
+                <div className="space-y-2">
+                  {levels.map((level, idx) => {
+                    const count = getStylistCount(level.id);
+                    const percentage = totalAssigned > 0 ? (count / totalAssigned) * 100 : 0;
+                    return (
+                      <div key={level.id} className="flex items-center gap-3">
+                        <span className="text-xs text-muted-foreground w-4 text-right shrink-0">{idx + 1}</span>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between gap-2 mb-1">
+                            <span className="text-xs truncate">{level.label}</span>
+                            <span className="text-xs text-muted-foreground shrink-0">
+                              {count}{totalAssigned > 0 && ` (${Math.round((count / totalAssigned) * 100)}%)`}
+                            </span>
+                          </div>
+                          <div className="h-1.5 bg-muted rounded-full overflow-hidden">
+                            <div 
+                              className="h-full bg-primary/60 rounded-full transition-all duration-300"
+                              style={{ width: `${percentage}%` }}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+                {totalAssigned === 0 && (
+                  <p className="text-xs text-muted-foreground text-center py-2">
+                    No stylists assigned to levels yet
+                  </p>
+                )}
+              </div>
+            )}
             {effectiveOrganization?.id && dbLevels && dbLevels.length > 0 ? (
               <TeamCommissionRoster orgId={effectiveOrganization.id} levels={dbLevels} />
             ) : (
