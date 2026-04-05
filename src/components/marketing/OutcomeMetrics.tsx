@@ -2,10 +2,10 @@ import { useEffect, useRef, useState } from 'react';
 import { useScrollReveal } from './useScrollReveal';
 
 const metrics = [
-  { value: 84, prefix: '$', suffix: 'K', label: 'Recovered in first quarter', context: 'Average across multi-location operators' },
+  { value: 84, prefix: '$', suffix: 'K', label: 'Recovered in first quarter', context: 'Average across multi-location owners' },
   { value: 23, suffix: '%', label: 'Average margin improvement', context: 'Service-level visibility drives recovery' },
-  { value: 4.2, suffix: 'h', label: 'Saved per operator per week', context: 'Structured intelligence replaces manual review' },
-  { value: 67, suffix: '%', label: 'Faster new-hire ramp', context: 'Structured onboarding replaces tribal knowledge' },
+  { value: 4.2, suffix: 'h', label: 'Saved per owner per week', context: 'Clear insights replace hours of manual review' },
+  { value: 67, suffix: '%', label: 'Faster new-hire ramp', context: 'Step-by-step training replaces tribal knowledge' },
 ];
 
 function AnimatedStat({ value, prefix, suffix }: { value: number; prefix?: string; suffix: string }) {
@@ -58,7 +58,7 @@ export function OutcomeMetrics() {
             Outcomes
           </p>
           <h2 className="font-display text-2xl sm:text-3xl lg:text-4xl tracking-tight">
-            Results operators are seeing
+            Results salon owners are seeing
           </h2>
         </div>
 

@@ -20,7 +20,7 @@ export function HeroSection() {
         <br className="hidden sm:block" />
         Start{' '}
         <span className="bg-gradient-to-r from-violet-400 to-purple-400 bg-clip-text text-transparent">
-          Architecting.
+          Growing.
         </span>
       </h1>
 

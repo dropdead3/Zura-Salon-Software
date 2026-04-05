@@ -33,7 +33,7 @@ export function BuiltByOperators() {
                 We lost top talent because we couldn't show them a growth path.
               </p>
               <p>
-                So we built the system we needed. {PLATFORM_NAME} is what happens when operators
+                So we built the system we needed. {PLATFORM_NAME} is what happens when salon owners
                 stop waiting for software companies to understand their business.
               </p>
             </div>

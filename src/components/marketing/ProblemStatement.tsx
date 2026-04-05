@@ -45,7 +45,7 @@ export function ProblemStatement() {
           <div className="mkt-reveal">
             <h2 className="font-display text-2xl sm:text-3xl lg:text-5xl tracking-tight leading-[1.12]">
               You already know the problems.{' '}
-              <span className="text-slate-500">You just don't have the infrastructure to solve them.</span>
+              <span className="text-slate-500">You just don't have the right tools to solve them.</span>
             </h2>
           </div>
 
@@ -74,7 +74,7 @@ export function ProblemStatement() {
             {/* Closing line */}
             <div className="mkt-reveal pt-4 border-t border-white/[0.06]" style={{ transitionDelay: '0.75s' }}>
               <p className="font-sans text-sm text-violet-400 italic">
-                These aren't six separate problems. They're one missing operating system.
+                These aren't six separate problems. They're one missing system.
               </p>
             </div>
           </div>

@@ -37,7 +37,7 @@ export function TestimonialSection() {
     <section ref={ref} className="relative z-10 px-6 sm:px-8 py-16 sm:py-20 lg:py-24">
       <div className="max-w-3xl mx-auto text-center mkt-reveal">
         <p className="font-sans text-xs sm:text-sm text-violet-400 uppercase tracking-[0.15em] mb-8">
-          Operator Voices
+          Owner Stories
         </p>
 
         {/* Decorative quote mark */}
