@@ -49,6 +49,8 @@ export function EditStylistCardDialog({ open, onOpenChange, stylist }: EditStyli
   const { data: specialtyOptions = [] } = useSpecialtyOptions();
   const { data: locations = [] } = useLocations();
   const { data: dynamicLevels = [] } = useStylistLevels();
+  const { data: levelDisplayMode } = useWebsiteLevelDisplayMode();
+  const updateDisplayMode = useUpdateWebsiteLevelDisplayMode();
   
   const [formData, setFormData] = useState({
     display_name: '',
