@@ -18,7 +18,7 @@ export function usePromoteLevel() {
   const orgId = effectiveOrganization?.id;
 
   return useMutation({
-    mutationFn: async ({ userId, fromLevelSlug, toLevelSlug }: PromoteLevelParams) => {
+    mutationFn: async ({ userId, fromLevelSlug, toLevelSlug, notes }: PromoteLevelParams) => {
       if (!orgId || !user?.id) throw new Error('Missing organization or user context');
 
       // 1. Update the employee's stylist_level
@@ -39,6 +39,7 @@ export function usePromoteLevel() {
           from_level: fromLevelSlug,
           to_level: toLevelSlug,
           promoted_by: user.id,
+          ...(notes ? { notes } : {}),
         });
 
       if (auditError) throw auditError;
@@ -47,6 +48,7 @@ export function usePromoteLevel() {
       queryClient.invalidateQueries({ queryKey: ['team-profiles-for-graduation'] });
       queryClient.invalidateQueries({ queryKey: ['employee-profile-level'] });
       queryClient.invalidateQueries({ queryKey: ['organization-users'] });
+      queryClient.invalidateQueries({ queryKey: ['promotion-history'] });
       toast.success('Promotion approved successfully');
     },
     onError: (error: Error) => {
