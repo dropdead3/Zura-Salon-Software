@@ -55,6 +55,7 @@ import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 import { PageExplainer } from '@/components/ui/PageExplainer';
 import { GraduationWizard } from '@/components/dashboard/settings/GraduationWizard';
 import { useLevelPromotionCriteria, type LevelPromotionCriteria } from '@/hooks/useLevelPromotionCriteria';
+import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { generateLevelRequirementsPDF } from '@/components/dashboard/settings/LevelRequirementsPDF';
 
 function formatCriteriaSummary(c: LevelPromotionCriteria): string {
