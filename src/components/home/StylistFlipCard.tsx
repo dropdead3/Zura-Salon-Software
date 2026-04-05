@@ -33,9 +33,11 @@ interface StylistFlipCardProps {
   photoRotation?: number;
   /** Stylist levels from database for tooltip display */
   levels?: Array<{ id: string; client_label: string; description: string | null; label: string }>;
+  /** Resolved display label for the level badge (e.g., "Level 1 Stylist" or "New Talent") */
+  displayLabel?: string;
 }
 
-export function StylistFlipCard({ stylist, index, selectedLocation, isPreview, photoFocalX, photoFocalY, photoZoom, photoRotation, levels }: StylistFlipCardProps) {
+export function StylistFlipCard({ stylist, index, selectedLocation, isPreview, photoFocalX, photoFocalY, photoZoom, photoRotation, levels, displayLabel }: StylistFlipCardProps) {
   const [isFlipped, setIsFlipped] = useState(false);
   const { getLocationName } = useLocationName();
 
@@ -98,7 +100,7 @@ export function StylistFlipCard({ stylist, index, selectedLocation, isPreview, p
             
             <div className="absolute bottom-0 left-0 right-0 px-6 pb-9 pt-6 text-white transform translate-y-3 transition-transform duration-500 ease-out group-hover:translate-y-0">
               <div className="flex items-center gap-1.5 mb-1">
-                <p className="text-xs tracking-[0.2em] text-white/70 uppercase">{stylist.level}</p>
+                <p className="text-xs tracking-[0.2em] text-white/70 uppercase">{displayLabel || stylist.level}</p>
                 <TooltipProvider delayDuration={100}>
                   <Tooltip>
                     <TooltipTrigger asChild>

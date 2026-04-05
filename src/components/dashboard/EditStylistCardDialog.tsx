@@ -16,6 +16,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { tokens } from '@/lib/design-tokens';
+import { useStylistLevels } from '@/hooks/useStylistLevels';
+import { useWebsiteLevelDisplayMode, useUpdateWebsiteLevelDisplayMode, type LevelDisplayMode } from '@/hooks/useWebsiteLevelDisplayMode';
 
 interface StylistProfile {
   id: string;
@@ -42,12 +44,13 @@ interface EditStylistCardDialogProps {
   stylist: StylistProfile | null;
 }
 
-const STYLIST_LEVELS = ['LEVEL 1', 'LEVEL 2', 'LEVEL 3', 'LEVEL 4'];
-
 export function EditStylistCardDialog({ open, onOpenChange, stylist }: EditStylistCardDialogProps) {
   const queryClient = useQueryClient();
   const { data: specialtyOptions = [] } = useSpecialtyOptions();
   const { data: locations = [] } = useLocations();
+  const { data: dynamicLevels = [] } = useStylistLevels();
+  const { data: levelDisplayMode } = useWebsiteLevelDisplayMode();
+  const updateDisplayMode = useUpdateWebsiteLevelDisplayMode();
   
   const [formData, setFormData] = useState({
     display_name: '',
@@ -269,11 +272,37 @@ export function EditStylistCardDialog({ open, onOpenChange, stylist }: EditStyli
                 <SelectValue placeholder="Select level..." />
               </SelectTrigger>
               <SelectContent>
-                {STYLIST_LEVELS.map(level => (
-                  <SelectItem key={level} value={level}>{level}</SelectItem>
+              {dynamicLevels.map(level => (
+                  <SelectItem key={level.slug} value={level.client_label}>{level.client_label} ({level.label})</SelectItem>
                 ))}
               </SelectContent>
             </Select>
+          </div>
+
+          {/* Website Level Display Mode */}
+          <div className="p-3 border rounded-lg bg-muted/30 space-y-2">
+            <Label className="text-xs font-medium">Website Level Display</Label>
+            <p className="text-xs text-muted-foreground">Choose how levels appear on your public website for all stylists.</p>
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                size="sm"
+                variant={levelDisplayMode === 'numbered' || !levelDisplayMode ? 'default' : 'outline'}
+                className="text-xs"
+                onClick={() => updateDisplayMode.mutate('numbered')}
+              >
+                Numbered (Level 1, Level 2...)
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant={levelDisplayMode === 'custom_name' ? 'default' : 'outline'}
+                className="text-xs"
+                onClick={() => updateDisplayMode.mutate('custom_name')}
+              >
+                Custom Names ({dynamicLevels[0]?.label || 'e.g. New Talent'}...)
+              </Button>
+            </div>
           </div>
 
           {/* Locations */}

@@ -66,6 +66,7 @@ import { AIInsightsDrawer } from '@/components/dashboard/AIInsightsDrawer';
 import { PersonalInsightsDrawer } from '@/components/dashboard/PersonalInsightsDrawer';
 import { TodaysPrepSection } from '@/components/dashboard/TodaysPrepSection';
 import { StylistPushList } from '@/components/dashboard/StylistPushList';
+import { LevelProgressNudge } from '@/components/dashboard/LevelProgressNudge';
 
 import { PaydayCountdownBanner } from '@/components/dashboard/mypay/PaydayCountdownBanner';
 import { InsightsNudgeBanner } from '@/components/dashboard/InsightsNudgeBanner';
@@ -581,6 +582,12 @@ function DashboardSections({
     push_list: hasStylistRole && (
       <VisibilityGate elementKey="push_list" elementName="Push List" elementCategory="retail">
         <StylistPushList />
+      </VisibilityGate>
+    ),
+
+    level_progress: hasStylistRole && (
+      <VisibilityGate elementKey="level_progress" elementName="Level Progress" elementCategory="growth">
+        <LevelProgressNudge />
       </VisibilityGate>
     ),
     
