@@ -650,6 +650,7 @@ export default function GraduationTracker() {
   });
 
   const readyMembers = filtered.filter(m => m.status === 'ready');
+  const atRiskMembers = filtered.filter(m => m.status === 'at_risk' || m.status === 'below_standard');
 
   const filteredAssistants = assistants?.filter(a =>
     a.full_name.toLowerCase().includes(searchQuery.toLowerCase())
@@ -672,6 +673,7 @@ export default function GraduationTracker() {
                 <SelectItem value="all">All Statuses</SelectItem>
                 <SelectItem value="ready">Ready</SelectItem>
                 <SelectItem value="in_progress">In Progress</SelectItem>
+                <SelectItem value="at_risk">At Risk</SelectItem>
                 <SelectItem value="needs_attention">Needs Attention</SelectItem>
                 <SelectItem value="at_top_level">Top Level</SelectItem>
                 <SelectItem value="no_criteria">No Criteria</SelectItem>
@@ -728,6 +730,13 @@ export default function GraduationTracker() {
                 <Badge variant="secondary" className="ml-2 text-xs bg-emerald-100 text-emerald-700">{counts.ready}</Badge>
               )}
             </TabsTrigger>
+            <TabsTrigger value="at-risk">
+              <AlertTriangle className="h-4 w-4 mr-2" />
+              At Risk
+              {(counts.atRisk + counts.belowStandard) > 0 && (
+                <Badge variant="secondary" className="ml-2 text-xs bg-rose-100 text-rose-700">{counts.atRisk + counts.belowStandard}</Badge>
+              )}
+            </TabsTrigger>
             <TabsTrigger value="assistants">
               <GraduationCap className="h-4 w-4 mr-2" />
               Assistants
@@ -764,6 +773,21 @@ export default function GraduationTracker() {
                 members={readyMembers}
                 totalLevels={allLevels.length}
                 emptyMessage="No team members currently qualified for promotion"
+              />
+            )}
+          </TabsContent>
+
+          {/* Tab: At Risk */}
+          <TabsContent value="at-risk" className="mt-6">
+            {isLoading ? (
+              <div className="space-y-3">
+                {[1, 2, 3].map(i => <Skeleton key={i} className={tokens.loading.skeleton} />)}
+              </div>
+            ) : (
+              <StylistList
+                members={atRiskMembers}
+                totalLevels={allLevels.length}
+                emptyMessage="No team members currently at risk — all meeting retention standards"
               />
             )}
           </TabsContent>
