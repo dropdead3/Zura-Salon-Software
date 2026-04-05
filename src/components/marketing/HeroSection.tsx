@@ -17,7 +17,7 @@ export function HeroSection() {
       <h1 className="font-display text-3xl sm:text-5xl lg:text-7xl font-medium tracking-tight leading-[1.08] mb-6 mkt-fade-in mkt-delay-1">
         Run your salon with{' '}
         <br className="hidden sm:block" />
-        clarity, not chaos.
+        <span className="bg-gradient-to-r from-violet-400 to-purple-400 bg-clip-text text-transparent">clarity, not chaos.</span>
       </h1>
 
       <p className="font-sans text-base sm:text-lg lg:text-xl text-slate-400 max-w-2xl mb-10 leading-relaxed mkt-fade-in mkt-delay-2">
@@ -28,7 +28,7 @@ export function HeroSection() {
       <div className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto mkt-fade-in mkt-delay-2">
         <Link
           to="/demo"
-          className="inline-flex items-center justify-center gap-2 h-12 px-8 w-full sm:w-auto bg-white text-slate-950 hover:bg-slate-100 rounded-full font-sans text-base font-medium transition-colors"
+          className="inline-flex items-center justify-center gap-2 h-12 px-8 w-full sm:w-auto bg-gradient-to-r from-violet-600 to-purple-600 text-white hover:from-violet-500 hover:to-purple-500 shadow-lg shadow-violet-500/25 rounded-full font-sans text-base font-medium transition-all"
         >
           Get a Demo
           <ArrowRight className="w-4 h-4" />
