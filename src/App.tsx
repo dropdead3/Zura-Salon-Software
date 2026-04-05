@@ -140,6 +140,13 @@ const MetricsGlossary = lazyWithRetry(() => import("./pages/dashboard/MetricsGlo
 const PublicBooking = lazyWithRetry(() => import("./pages/PublicBooking"));
 const DayRateBooking = lazyWithRetry(() => import("./pages/DayRateBooking"));
 const ProductDemo = lazyWithRetry(() => import("./pages/ProductDemo"));
+const SolIndependent = lazyWithRetry(() => import("./pages/solutions/IndependentStylist"));
+const SolSalonOwner = lazyWithRetry(() => import("./pages/solutions/SalonOwner"));
+const SolMultiLocation = lazyWithRetry(() => import("./pages/solutions/MultiLocation"));
+const SolEnterprise = lazyWithRetry(() => import("./pages/solutions/Enterprise"));
+const SolScheduling = lazyWithRetry(() => import("./pages/solutions/Scheduling"));
+const SolInventory = lazyWithRetry(() => import("./pages/solutions/Inventory"));
+const SolTeam = lazyWithRetry(() => import("./pages/solutions/Team"));
 const Kiosk = lazyWithRetry(() => import("./pages/Kiosk"));
 const Dock = lazyWithRetry(() => import("./pages/Dock"));
 const DayRateSettings = lazyWithRetry(() => import("./pages/dashboard/admin/DayRateSettings"));
@@ -435,6 +442,13 @@ const App = () => (
                     {/* Standalone public pages */}
                     <Route path="/pricing" element={<Suspense fallback={<RouteFallback />}><PricingPage /></Suspense>} />
                     <Route path="/demo" element={<ProductDemo />} />
+                    <Route path="/solutions/independent" element={<SolIndependent />} />
+                    <Route path="/solutions/salon-owner" element={<SolSalonOwner />} />
+                    <Route path="/solutions/multi-location" element={<SolMultiLocation />} />
+                    <Route path="/solutions/enterprise" element={<SolEnterprise />} />
+                    <Route path="/solutions/scheduling" element={<SolScheduling />} />
+                    <Route path="/solutions/inventory" element={<SolInventory />} />
+                    <Route path="/solutions/team" element={<SolTeam />} />
                     <Route path="/feedback" element={<ClientFeedbackPage />} />
                     <Route path="/rewards" element={<ClientPortalPage />} />
                     <Route path="/kiosk/:locationId" element={<Kiosk />} />
