@@ -35,7 +35,7 @@ export function HeroSection() {
         </Link>
         <Link
           to="/product"
-          className="inline-flex items-center justify-center gap-2 h-12 px-8 w-full sm:w-auto bg-white/5 hover:bg-white/10 border border-white/10 rounded-full font-sans text-base font-medium transition-colors"
+          className="inline-flex items-center justify-center gap-2 h-12 px-8 w-full sm:w-auto rounded-full border border-[hsl(var(--mkt-lavender)/0.3)] text-[hsl(var(--mkt-lavender))] hover:border-[hsl(var(--mkt-lavender)/0.5)] hover:bg-[hsl(var(--mkt-lavender)/0.05)] font-sans text-base font-medium transition-all"
         >
           Explore the Platform
           <ArrowRight className="w-4 h-4" />

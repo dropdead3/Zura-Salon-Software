@@ -109,7 +109,7 @@ export function SolutionPageTemplate({
       {testimonial && (
         <section className="relative z-10 px-6 sm:px-8 py-12 sm:py-16">
           <div className="max-w-3xl mx-auto text-center">
-            <blockquote className="font-serif text-xl sm:text-2xl text-white/90 italic leading-relaxed">
+            <blockquote className="font-sans text-lg sm:text-xl text-white/90 leading-relaxed">
               &ldquo;{testimonial.quote}&rdquo;
             </blockquote>
             <div className="flex items-center justify-center gap-3 mt-6">
@@ -126,18 +126,33 @@ export function SolutionPageTemplate({
       <section ref={ctaRef} className="relative z-10 px-6 sm:px-8 py-20 lg:py-28">
         <div className="max-w-2xl mx-auto text-center mkt-reveal">
           <h2 className="font-display text-2xl sm:text-3xl lg:text-4xl tracking-tight mb-4">
-            Ready to see it in action?
+            Ready to see{' '}
+            <span className="bg-gradient-to-r from-violet-400 to-[hsl(var(--mkt-dusky))] bg-clip-text text-transparent">
+              clarity
+            </span>{' '}
+            in action?
           </h2>
-          <p className="font-sans text-sm text-slate-500 mb-8">
+          <p className="font-sans text-sm text-slate-500 mb-2">
             No commitment. No credit card.
           </p>
-          <Link
-            to="/demo"
-            className="inline-flex items-center justify-center gap-2 h-12 px-8 bg-gradient-to-r from-[hsl(var(--mkt-twilight))] to-[hsl(var(--mkt-dusky))] text-white hover:opacity-90 shadow-lg shadow-[hsl(var(--mkt-dusky)/0.25)] rounded-full font-sans text-base font-medium transition-all"
-          >
-            {ctaText}
-            <ArrowRight className="w-4 h-4" />
-          </Link>
+          <p className="font-sans text-xs text-slate-600 mb-10">
+            Join 50+ salon locations already running on Zura.
+          </p>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+            <Link
+              to="/demo"
+              className="inline-flex items-center justify-center gap-2 h-12 px-8 bg-gradient-to-r from-violet-600 to-purple-600 text-white hover:from-violet-500 hover:to-purple-500 shadow-lg shadow-violet-500/25 rounded-full font-sans text-base font-medium transition-all"
+            >
+              {ctaText}
+              <ArrowRight className="w-4 h-4" />
+            </Link>
+            <Link
+              to="/product"
+              className="inline-flex items-center justify-center gap-2 h-12 px-8 rounded-full border border-[hsl(var(--mkt-lavender)/0.3)] text-[hsl(var(--mkt-lavender))] hover:border-[hsl(var(--mkt-lavender)/0.5)] hover:bg-[hsl(var(--mkt-lavender)/0.05)] font-sans text-base font-medium transition-all"
+            >
+              Explore the Platform
+            </Link>
+          </div>
         </div>
       </section>
     </MarketingLayout>
