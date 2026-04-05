@@ -12,9 +12,24 @@ export function MarketingNav() {
   const location = useLocation();
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [navVisible, setNavVisible] = useState(true);
+  const lastScrollY = useRef(0);
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 80);
+    const onScroll = () => {
+      const currentY = window.scrollY;
+      setScrolled(currentY > 80);
+
+      if (currentY < 100) {
+        setNavVisible(true);
+      } else if (currentY > lastScrollY.current + 5) {
+        setNavVisible(false);
+      } else if (currentY < lastScrollY.current - 5) {
+        setNavVisible(true);
+      }
+
+      lastScrollY.current = currentY;
+    };
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
