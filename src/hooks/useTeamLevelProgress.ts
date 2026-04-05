@@ -226,8 +226,12 @@ export function useTeamLevelProgress() {
             utilization = Math.min(100, (avgMinutesPerDay / 480) * 100); // 480 = 8h workday
           }
         }
+        // Revenue per hour calculation
+        const totalBookedMinutes = completedAppts.reduce((sum: number, a: any) => sum + (Number(a.duration_minutes) || 60), 0);
+        const totalApptRevenue = completedAppts.reduce((s: number, a: any) => s + (Number(a.total_price) || 0), 0);
+        const revPerHour = totalBookedMinutes > 0 ? (totalApptRevenue / totalBookedMinutes) * 60 : 0;
 
-        return { monthlyRevenue, retailPct, rebookingPct, avgTicket, newClientsMonthly, retentionRate, utilization };
+        return { monthlyRevenue, retailPct, rebookingPct, avgTicket, newClientsMonthly, retentionRate, utilization, revPerHour };
       };
 
       // Compute no-show rate (informational, uses full window)
@@ -259,6 +263,9 @@ export function useTeamLevelProgress() {
         }
         if (retCriteria.utilization_enabled && retMetrics.utilization < Number(retCriteria.utilization_minimum)) {
           retentionFailures.push({ key: 'utilization', label: 'Schedule Utilization', current: Math.round(retMetrics.utilization * 10) / 10, minimum: Number(retCriteria.utilization_minimum), unit: '%' });
+        }
+        if (retCriteria.rev_per_hour_enabled && retMetrics.revPerHour < Number(retCriteria.rev_per_hour_minimum)) {
+          retentionFailures.push({ key: 'rev_per_hour', label: 'Revenue Per Hour', current: Math.round(retMetrics.revPerHour), minimum: Number(retCriteria.rev_per_hour_minimum), unit: '$/hr' });
         }
       }
 
@@ -376,6 +383,16 @@ export function useTeamLevelProgress() {
           percent: target > 0 ? Math.min(100, (promoMetrics.utilization / target) * 100) : 0,
           weight: criteria.utilization_weight, unit: '%',
           gap: Math.max(0, target - promoMetrics.utilization),
+        });
+      }
+      if (criteria.rev_per_hour_enabled) {
+        const target = Number(criteria.rev_per_hour_threshold);
+        progress.push({
+          key: 'rev_per_hour', label: 'Revenue Per Hour', enabled: true,
+          current: Math.round(promoMetrics.revPerHour), target,
+          percent: target > 0 ? Math.min(100, (promoMetrics.revPerHour / target) * 100) : 0,
+          weight: criteria.rev_per_hour_weight, unit: '$/hr',
+          gap: Math.max(0, target - promoMetrics.revPerHour),
         });
       }
       if (criteria.tenure_enabled) {
