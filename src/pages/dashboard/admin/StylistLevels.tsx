@@ -992,6 +992,11 @@ export default function StylistLevels() {
             </div>
           </div>
         </div>
+
+        {/* Team Commission Roster */}
+        {effectiveOrganization?.id && dbLevels && dbLevels.length > 0 && (
+          <TeamCommissionRoster orgId={effectiveOrganization.id} levels={dbLevels} />
+        )}
       </div>
 
       {/* Graduation Wizard Dialog */}
