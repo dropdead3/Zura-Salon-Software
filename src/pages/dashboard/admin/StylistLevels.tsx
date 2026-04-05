@@ -366,8 +366,8 @@ export default function StylistLevels() {
                         criteria: promotionCriteria,
                         retentionCriteria: retentionCriteria || [],
                       });
-                      doc.save('graduation-roadmap.pdf');
-                      toast.success('Graduation roadmap exported');
+                      doc.save('level-progression-roadmap.pdf');
+                      toast.success('Progression roadmap exported');
                     }}
                   >
                     <FileDown className="w-4 h-4" />
@@ -500,6 +500,13 @@ export default function StylistLevels() {
                               {stylistCount} stylist{stylistCount !== 1 ? 's' : ''}
                             </span>
                           )}
+                          {/* Inline commission rates */}
+                          {(level.serviceCommissionRate || level.retailCommissionRate) && (
+                            <div className="flex items-center gap-2 text-[10px] text-muted-foreground shrink-0">
+                              {level.serviceCommissionRate && <span>Svc: {level.serviceCommissionRate}%</span>}
+                              {level.retailCommissionRate && <span>Retail: {level.retailCommissionRate}%</span>}
+                            </div>
+                          )}
                         </div>
                         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                           <button
@@ -508,11 +515,12 @@ export default function StylistLevels() {
                           >
                             <Pencil className="w-4 h-4 text-muted-foreground" />
                           </button>
-                          <AlertDialog>
+                          <AlertDialog onOpenChange={(open) => { if (!open) { setDeleteTargetIndex(null); setReassignToSlug(''); } }}>
                             <AlertDialogTrigger asChild>
                               <button
                                 className="p-2 rounded-md hover:bg-destructive/10 transition-colors disabled:opacity-30"
                                 disabled={levels.length <= 1}
+                                onClick={() => setDeleteTargetIndex(index)}
                               >
                                 <Trash2 className="w-4 h-4 text-destructive" />
                               </button>
@@ -526,15 +534,27 @@ export default function StylistLevels() {
                                 <AlertDialogDescription asChild>
                                   <div className="space-y-3">
                                     {hasStylists ? (
-                                      <div className="p-3 rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900 text-amber-800 dark:text-amber-200">
-                                        <p className="font-medium flex items-center gap-2">
-                                          <AlertTriangle className="w-4 h-4" />
-                                          Warning: {stylistCount} stylist{stylistCount !== 1 ? 's are' : ' is'} assigned to this level
-                                        </p>
-                                        <p className="text-sm mt-1 text-amber-700 dark:text-amber-300">
-                                          You'll need to reassign these stylists to a different level.
-                                        </p>
-                                      </div>
+                                      <>
+                                        <div className="p-3 rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900 text-amber-800 dark:text-amber-200">
+                                          <p className="font-medium flex items-center gap-2">
+                                            <AlertTriangle className="w-4 h-4" />
+                                            {stylistCount} stylist{stylistCount !== 1 ? 's are' : ' is'} assigned to this level
+                                          </p>
+                                        </div>
+                                        <div className="space-y-2">
+                                          <label className="text-sm font-medium">Reassign stylists to:</label>
+                                          <Select value={reassignToSlug} onValueChange={setReassignToSlug}>
+                                            <SelectTrigger className="w-full">
+                                              <SelectValue placeholder="Select a level..." />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                              {levels.filter((_, i) => i !== index).map((l, i) => (
+                                                <SelectItem key={l.id} value={l.id}>{l.label}</SelectItem>
+                                              ))}
+                                            </SelectContent>
+                                          </Select>
+                                        </div>
+                                      </>
                                     ) : (
                                       <p>No stylists are currently assigned to this level.</p>
                                     )}
@@ -545,9 +565,10 @@ export default function StylistLevels() {
                                 <AlertDialogCancel>Cancel</AlertDialogCancel>
                                 <AlertDialogAction
                                   className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                                  onClick={() => handleDelete(index)}
+                                  disabled={hasStylists && !reassignToSlug}
+                                  onClick={() => handleDeleteWithReassign(index)}
                                 >
-                                  Delete
+                                  {hasStylists ? 'Reassign & Delete' : 'Delete'}
                                 </AlertDialogAction>
                               </AlertDialogFooter>
                             </AlertDialogContent>
@@ -557,7 +578,7 @@ export default function StylistLevels() {
                     )}
                   </div>
                   
-                  {/* Description + Graduation Pathway */}
+                  {/* Description + Commission + Criteria */}
                   <div className="px-4 pb-3 pt-0">
                     <div className="flex items-start gap-2 pl-14">
                       <Input
@@ -567,7 +588,36 @@ export default function StylistLevels() {
                         className="h-7 text-xs text-muted-foreground bg-background border focus-visible:ring-1"
                       />
                     </div>
-                    {/* Graduation Pathway button - hidden for first level (entry level) */}
+                    {/* Commission rate fields */}
+                    {editingIndex === index && (
+                      <div className="pl-14 mt-2 grid grid-cols-2 gap-3">
+                        <div className="space-y-1">
+                          <label className="text-xs font-medium text-muted-foreground">Service Commission %</label>
+                          <Input
+                            type="number"
+                            placeholder="e.g. 40"
+                            value={level.serviceCommissionRate}
+                            onChange={(e) => handleCommissionChange(index, 'serviceCommissionRate', e.target.value)}
+                            className="h-7 text-xs"
+                            min={0}
+                            max={100}
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-xs font-medium text-muted-foreground">Retail Commission %</label>
+                          <Input
+                            type="number"
+                            placeholder="e.g. 10"
+                            value={level.retailCommissionRate}
+                            onChange={(e) => handleCommissionChange(index, 'retailCommissionRate', e.target.value)}
+                            className="h-7 text-xs"
+                            min={0}
+                            max={100}
+                          />
+                        </div>
+                      </div>
+                    )}
+                    {/* Criteria Pathway button */}
                     {index > 0 && level.dbId && (
                       <div className="pl-14 mt-2">
                         <button
@@ -585,8 +635,8 @@ export default function StylistLevels() {
                         >
                           <Sparkles className="w-3 h-3" />
                           {promotionCriteria?.some(c => c.stylist_level_id === level.dbId && c.is_active)
-                            ? 'Graduation Configured'
-                            : 'Configure Graduation'}
+                            ? 'Criteria Configured'
+                            : 'Configure Criteria'}
                         </button>
                         {(() => {
                           const c = promotionCriteria?.find(cr => cr.stylist_level_id === level.dbId && cr.is_active);
@@ -595,11 +645,19 @@ export default function StylistLevels() {
                             <p className="text-[10px] text-muted-foreground/70 mt-1 pl-4">{summary}</p>
                           ) : null;
                         })()}
+                        {/* Retention criteria inline */}
+                        {(() => {
+                          const r = retentionCriteria?.find(rc => rc.stylist_level_id === level.dbId && rc.is_active);
+                          const retSummary = r ? formatRetentionSummary(r) : '';
+                          return retSummary ? (
+                            <p className="text-[10px] text-muted-foreground/70 mt-0.5 pl-4">{retSummary}</p>
+                          ) : null;
+                        })()}
                       </div>
                     )}
                     {index === 0 && (
                       <div className="pl-14 mt-2">
-                        <span className="text-[10px] text-muted-foreground/60 italic">Entry level — no graduation criteria needed</span>
+                        <span className="text-[10px] text-muted-foreground/60 italic">Entry level — no promotion criteria needed</span>
                       </div>
                     )}
                   </div>
@@ -664,17 +722,19 @@ export default function StylistLevels() {
 
           {/* Right Column - Preview & Stats */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Graduation Requirements Summary */}
+            {/* Progression Roadmap */}
             {promotionCriteria && promotionCriteria.length > 0 && (
               <div className="space-y-3">
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <GraduationCap className="w-4 h-4" />
-                  <span>Graduation Roadmap</span>
+                  <span>Progression Roadmap</span>
                 </div>
                 <div className="bg-card border rounded-xl p-4 space-y-3">
                   {levels.map((level, idx) => {
                     const criteria = promotionCriteria?.find(c => c.stylist_level_id === level.dbId && c.is_active);
                     const summary = criteria ? formatCriteriaSummary(criteria) : null;
+                    const retention = retentionCriteria?.find(r => r.stylist_level_id === level.dbId && r.is_active);
+                    const retSummary = retention ? formatRetentionSummary(retention) : null;
                     return (
                       <div key={level.id} className="flex items-start gap-3">
                         <span className={cn(
@@ -689,6 +749,9 @@ export default function StylistLevels() {
                           <p className="text-[10px] text-muted-foreground">
                             {idx === 0 ? 'Entry level' : summary || 'No criteria configured'}
                           </p>
+                          {retSummary && (
+                            <p className="text-[10px] text-muted-foreground/70">{retSummary}</p>
+                          )}
                         </div>
                       </div>
                     );
