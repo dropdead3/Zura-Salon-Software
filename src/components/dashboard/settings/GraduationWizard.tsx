@@ -123,6 +123,7 @@ const CRITERIA: CriterionConfig[] = [
   { key: 'retention_rate', label: 'Client Retention', icon: Users, unit: '%', enabledKey: 'retention_rate_enabled', thresholdKey: 'retention_rate_threshold', weightKey: 'retention_rate_weight', placeholder: '70' },
   { key: 'new_clients', label: 'New Clients', icon: UserPlus, unit: '/mo', enabledKey: 'new_clients_enabled', thresholdKey: 'new_clients_threshold', weightKey: 'new_clients_weight', placeholder: '10' },
   { key: 'utilization', label: 'Schedule Utilization', icon: CalendarClock, unit: '%', enabledKey: 'utilization_enabled', thresholdKey: 'utilization_threshold', weightKey: 'utilization_weight', placeholder: '75' },
+  { key: 'rev_per_hour', label: 'Revenue Per Hour', icon: DollarSign, unit: '$/hr', enabledKey: 'rev_per_hour_enabled', thresholdKey: 'rev_per_hour_threshold', weightKey: 'rev_per_hour_weight', placeholder: '55' },
 ];
 
 interface RetentionCriterionConfig {
@@ -143,6 +144,7 @@ const RETENTION_CRITERIA: RetentionCriterionConfig[] = [
   { key: 'retention_rate', label: 'Client Retention', icon: Users, unit: '%', enabledKey: 'retention_rate_enabled', minimumKey: 'retention_rate_minimum', placeholder: '50' },
   { key: 'new_clients', label: 'New Clients', icon: UserPlus, unit: '/mo', enabledKey: 'new_clients_enabled', minimumKey: 'new_clients_minimum', placeholder: '3' },
   { key: 'utilization', label: 'Schedule Utilization', icon: CalendarClock, unit: '%', enabledKey: 'utilization_enabled', minimumKey: 'utilization_minimum', placeholder: '50' },
+  { key: 'rev_per_hour', label: 'Revenue Per Hour', icon: DollarSign, unit: '$/hr', enabledKey: 'rev_per_hour_enabled', minimumKey: 'rev_per_hour_minimum', placeholder: '30' },
 ];
 
 const INITIAL_STATE: FormState = {
@@ -153,9 +155,10 @@ const INITIAL_STATE: FormState = {
   retention_rate_enabled: false, retention_rate_threshold: 0,
   new_clients_enabled: false, new_clients_threshold: 0,
   utilization_enabled: false, utilization_threshold: 0,
+  rev_per_hour_enabled: false, rev_per_hour_threshold: 0,
   tenure_enabled: false, tenure_days: 0,
   revenue_weight: 0, retail_weight: 0, rebooking_weight: 0, avg_ticket_weight: 0,
-  retention_rate_weight: 0, new_clients_weight: 0, utilization_weight: 0,
+  retention_rate_weight: 0, new_clients_weight: 0, utilization_weight: 0, rev_per_hour_weight: 0,
   evaluation_window_days: 30, requires_manual_approval: false,
 };
 
@@ -168,6 +171,7 @@ const INITIAL_RETENTION_STATE: RetentionFormState = {
   retention_rate_enabled: false, retention_rate_minimum: 0,
   new_clients_enabled: false, new_clients_minimum: 0,
   utilization_enabled: false, utilization_minimum: 0,
+  rev_per_hour_enabled: false, rev_per_hour_minimum: 0,
   evaluation_window_days: 90, grace_period_days: 30, action_type: 'coaching_flag',
 };
 
