@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useLevelPromotionCriteria, type LevelPromotionCriteria } from './useLevelPromotionCriteria';
+import { useLevelRetentionCriteria, type LevelRetentionCriteria } from './useLevelRetentionCriteria';
 import { useStylistLevels } from './useStylistLevels';
 import { subDays, format } from 'date-fns';
 
@@ -18,6 +19,20 @@ export interface CriterionProgress {
   gap: number;
 }
 
+export interface RetentionStatus {
+  isAtRisk: boolean;
+  failures: Array<{
+    key: string;
+    label: string;
+    current: number;
+    minimum: number;
+    unit: string;
+  }>;
+  actionType: 'coaching_flag' | 'demotion_eligible' | null;
+  gracePeriodDays: number;
+  evaluationWindowDays: number;
+}
+
 export interface LevelProgressResult {
   currentLevelLabel: string;
   currentLevelSlug: string;
@@ -29,12 +44,12 @@ export interface LevelProgressResult {
   isFullyQualified: boolean;
   requiresApproval: boolean;
   evaluationWindowDays: number;
+  retention: RetentionStatus;
 }
 
 /**
- * Computes a stylist's real-time graduation progress against their next level's criteria.
- * Inputs: the user's ID. Internally resolves their current level, next level criteria,
- * and rolling performance data from daily sales + appointments.
+ * Computes a stylist's real-time graduation progress against their next level's criteria,
+ * plus retention status against their current level's minimums.
  */
 export function useLevelProgress(userId: string | undefined) {
   const { effectiveOrganization } = useOrganizationContext();
@@ -42,6 +57,7 @@ export function useLevelProgress(userId: string | undefined) {
 
   const { data: allLevels = [] } = useStylistLevels();
   const { data: allCriteria = [] } = useLevelPromotionCriteria();
+  const { data: allRetention = [] } = useLevelRetentionCriteria();
 
   // Fetch employee profile to get current level slug
   const { data: profile } = useQuery({
@@ -58,33 +74,37 @@ export function useLevelProgress(userId: string | undefined) {
     enabled: !!userId,
   });
 
-  // Determine current + next level
-  const { currentLevel, nextLevel, nextCriteria } = useMemo(() => {
+  // Determine current + next level + retention criteria
+  const { currentLevel, nextLevel, nextCriteria, retentionCriteria } = useMemo(() => {
     if (!profile?.stylist_level || allLevels.length === 0) {
-      return { currentLevel: null, nextLevel: null, nextCriteria: null };
+      return { currentLevel: null, nextLevel: null, nextCriteria: null, retentionCriteria: null };
     }
     const sorted = [...allLevels].sort((a, b) => a.display_order - b.display_order);
     const idx = sorted.findIndex(l => l.slug === profile.stylist_level);
-    if (idx === -1 || idx >= sorted.length - 1) {
-      return {
-        currentLevel: sorted[idx] || null,
-        nextLevel: null,
-        nextCriteria: null,
-      };
+    if (idx === -1) {
+      return { currentLevel: null, nextLevel: null, nextCriteria: null, retentionCriteria: null };
+    }
+
+    const current = sorted[idx];
+    const retCrit = allRetention.find(c => c.stylist_level_id === current.id && c.is_active && c.retention_enabled) || null;
+
+    if (idx >= sorted.length - 1) {
+      return { currentLevel: current, nextLevel: null, nextCriteria: null, retentionCriteria: retCrit };
     }
     const next = sorted[idx + 1];
     const criteria = allCriteria.find(c => c.stylist_level_id === next.id && c.is_active) || null;
-    return { currentLevel: sorted[idx], nextLevel: next, nextCriteria: criteria };
-  }, [profile, allLevels, allCriteria]);
+    return { currentLevel: current, nextLevel: next, nextCriteria: criteria, retentionCriteria: retCrit };
+  }, [profile, allLevels, allCriteria, allRetention]);
 
-  // Fetch rolling performance data for evaluation window
-  const evalDays = nextCriteria?.evaluation_window_days || 30;
+  // Fetch rolling performance data for the max of promo + retention window
+  const promoEvalDays = nextCriteria?.evaluation_window_days || 30;
+  const retEvalDays = retentionCriteria?.evaluation_window_days || 90;
+  const maxEvalDays = Math.max(promoEvalDays, retEvalDays);
   const windowEnd = new Date();
-  const windowStart = subDays(windowEnd, evalDays);
+  const windowStart = subDays(windowEnd, maxEvalDays);
   const startStr = format(windowStart, 'yyyy-MM-dd');
   const endStr = format(windowEnd, 'yyyy-MM-dd');
 
-  // Daily sales summary for revenue + retail
   const { data: salesData } = useQuery({
     queryKey: ['level-progress-sales', userId, startStr, endStr],
     queryFn: async () => {
@@ -97,10 +117,9 @@ export function useLevelProgress(userId: string | undefined) {
       if (error) throw error;
       return data || [];
     },
-    enabled: !!userId && !!nextCriteria,
+    enabled: !!userId && !!(nextCriteria || retentionCriteria),
   });
 
-  // Appointments for rebooking + avg ticket
   const { data: apptData } = useQuery({
     queryKey: ['level-progress-appointments', userId, startStr, endStr],
     queryFn: async () => {
@@ -114,12 +133,66 @@ export function useLevelProgress(userId: string | undefined) {
       if (error) throw error;
       return data || [];
     },
-    enabled: !!userId && !!nextCriteria,
+    enabled: !!userId && !!(nextCriteria || retentionCriteria),
   });
 
   const result = useMemo<LevelProgressResult | null>(() => {
-    if (!currentLevel) {
-      return null;
+    if (!currentLevel) return null;
+
+    // Helper: compute metrics for a given window
+    const computeMetrics = (evalDays: number) => {
+      const evalStart = format(subDays(new Date(), evalDays), 'yyyy-MM-dd');
+      const filteredSales = (salesData || []).filter(s => s.summary_date >= evalStart);
+      const filteredAppts = (apptData || []).filter(a => a.appointment_date >= evalStart);
+
+      const totalServiceRevenue = filteredSales.reduce((sum, r) => sum + (Number(r.service_revenue) || 0), 0);
+      const totalProductRevenue = filteredSales.reduce((sum, r) => sum + (Number(r.product_revenue) || 0), 0);
+      const totalRevenue = totalServiceRevenue + totalProductRevenue;
+      const monthlyRevenue = evalDays > 0 ? (totalRevenue / evalDays) * 30 : 0;
+      const retailPct = totalRevenue > 0 ? (totalProductRevenue / totalRevenue) * 100 : 0;
+      const totalAppts = filteredAppts.length;
+      const rebooked = filteredAppts.filter(a => a.rebooked_at_checkout).length;
+      const rebookingPct = totalAppts > 0 ? (rebooked / totalAppts) * 100 : 0;
+      const avgTicket = totalAppts > 0
+        ? filteredAppts.reduce((sum, a) => sum + (Number(a.total_price) || 0), 0) / totalAppts
+        : 0;
+
+      return { monthlyRevenue, retailPct, rebookingPct, avgTicket };
+    };
+
+    // Evaluate retention
+    let retention: RetentionStatus = {
+      isAtRisk: false,
+      failures: [],
+      actionType: null,
+      gracePeriodDays: 0,
+      evaluationWindowDays: 0,
+    };
+
+    if (retentionCriteria) {
+      const retMetrics = computeMetrics(retentionCriteria.evaluation_window_days);
+      const failures: RetentionStatus['failures'] = [];
+
+      if (retentionCriteria.revenue_enabled && retMetrics.monthlyRevenue < retentionCriteria.revenue_minimum) {
+        failures.push({ key: 'revenue', label: 'Service Revenue', current: Math.round(retMetrics.monthlyRevenue), minimum: retentionCriteria.revenue_minimum, unit: '/mo' });
+      }
+      if (retentionCriteria.retail_enabled && retMetrics.retailPct < retentionCriteria.retail_pct_minimum) {
+        failures.push({ key: 'retail', label: 'Retail Attachment', current: Math.round(retMetrics.retailPct * 10) / 10, minimum: retentionCriteria.retail_pct_minimum, unit: '%' });
+      }
+      if (retentionCriteria.rebooking_enabled && retMetrics.rebookingPct < retentionCriteria.rebooking_pct_minimum) {
+        failures.push({ key: 'rebooking', label: 'Rebooking Rate', current: Math.round(retMetrics.rebookingPct * 10) / 10, minimum: retentionCriteria.rebooking_pct_minimum, unit: '%' });
+      }
+      if (retentionCriteria.avg_ticket_enabled && retMetrics.avgTicket < retentionCriteria.avg_ticket_minimum) {
+        failures.push({ key: 'avg_ticket', label: 'Average Ticket', current: Math.round(retMetrics.avgTicket), minimum: retentionCriteria.avg_ticket_minimum, unit: '$' });
+      }
+
+      retention = {
+        isAtRisk: failures.length > 0,
+        failures,
+        actionType: retentionCriteria.action_type,
+        gracePeriodDays: retentionCriteria.grace_period_days,
+        evaluationWindowDays: retentionCriteria.evaluation_window_days,
+      };
     }
 
     if (!nextLevel || !nextCriteria) {
@@ -134,35 +207,12 @@ export function useLevelProgress(userId: string | undefined) {
         isFullyQualified: false,
         requiresApproval: false,
         evaluationWindowDays: 0,
+        retention,
       };
     }
 
-    // Compute actuals
-    const totalServiceRevenue = (salesData || []).reduce(
-      (sum, r) => sum + (Number(r.service_revenue) || 0), 0
-    );
-    const totalProductRevenue = (salesData || []).reduce(
-      (sum, r) => sum + (Number(r.product_revenue) || 0), 0
-    );
-    const totalRevenue = totalServiceRevenue + totalProductRevenue;
-
-    // Monthly revenue: normalize to 30 days
-    const monthlyRevenue = evalDays > 0 ? (totalRevenue / evalDays) * 30 : 0;
-
-    // Retail %
-    const retailPct = totalRevenue > 0 ? (totalProductRevenue / totalRevenue) * 100 : 0;
-
-    // Rebooking rate
-    const totalAppts = (apptData || []).length;
-    const rebooked = (apptData || []).filter(a => a.rebooked_at_checkout).length;
-    const rebookingPct = totalAppts > 0 ? (rebooked / totalAppts) * 100 : 0;
-
-    // Avg ticket
-    const avgTicket = totalAppts > 0
-      ? (apptData || []).reduce((sum, a) => sum + (Number(a.total_price) || 0), 0) / totalAppts
-      : 0;
-
-    // Tenure (days since hire)
+    // Compute promotion progress
+    const promoMetrics = computeMetrics(promoEvalDays);
     const tenureDays = profile?.hire_date
       ? Math.max(0, Math.floor((Date.now() - new Date(profile.hire_date).getTime()) / (1000 * 60 * 60 * 24)))
       : 0;
@@ -172,86 +222,59 @@ export function useLevelProgress(userId: string | undefined) {
     if (nextCriteria.revenue_enabled) {
       const target = nextCriteria.revenue_threshold;
       progress.push({
-        key: 'revenue',
-        label: 'Service Revenue',
-        enabled: true,
-        current: Math.round(monthlyRevenue),
-        target,
-        percent: target > 0 ? Math.min(100, (monthlyRevenue / target) * 100) : 0,
-        weight: nextCriteria.revenue_weight,
-        unit: '/mo',
-        gap: Math.max(0, target - monthlyRevenue),
+        key: 'revenue', label: 'Service Revenue', enabled: true,
+        current: Math.round(promoMetrics.monthlyRevenue), target,
+        percent: target > 0 ? Math.min(100, (promoMetrics.monthlyRevenue / target) * 100) : 0,
+        weight: nextCriteria.revenue_weight, unit: '/mo',
+        gap: Math.max(0, target - promoMetrics.monthlyRevenue),
       });
     }
-
     if (nextCriteria.retail_enabled) {
       const target = nextCriteria.retail_pct_threshold;
       progress.push({
-        key: 'retail',
-        label: 'Retail Attachment',
-        enabled: true,
-        current: Math.round(retailPct * 10) / 10,
-        target,
-        percent: target > 0 ? Math.min(100, (retailPct / target) * 100) : 0,
-        weight: nextCriteria.retail_weight,
-        unit: '%',
-        gap: Math.max(0, target - retailPct),
+        key: 'retail', label: 'Retail Attachment', enabled: true,
+        current: Math.round(promoMetrics.retailPct * 10) / 10, target,
+        percent: target > 0 ? Math.min(100, (promoMetrics.retailPct / target) * 100) : 0,
+        weight: nextCriteria.retail_weight, unit: '%',
+        gap: Math.max(0, target - promoMetrics.retailPct),
       });
     }
-
     if (nextCriteria.rebooking_enabled) {
       const target = nextCriteria.rebooking_pct_threshold;
       progress.push({
-        key: 'rebooking',
-        label: 'Rebooking Rate',
-        enabled: true,
-        current: Math.round(rebookingPct * 10) / 10,
-        target,
-        percent: target > 0 ? Math.min(100, (rebookingPct / target) * 100) : 0,
-        weight: nextCriteria.rebooking_weight,
-        unit: '%',
-        gap: Math.max(0, target - rebookingPct),
+        key: 'rebooking', label: 'Rebooking Rate', enabled: true,
+        current: Math.round(promoMetrics.rebookingPct * 10) / 10, target,
+        percent: target > 0 ? Math.min(100, (promoMetrics.rebookingPct / target) * 100) : 0,
+        weight: nextCriteria.rebooking_weight, unit: '%',
+        gap: Math.max(0, target - promoMetrics.rebookingPct),
       });
     }
-
     if (nextCriteria.avg_ticket_enabled) {
       const target = nextCriteria.avg_ticket_threshold;
       progress.push({
-        key: 'avg_ticket',
-        label: 'Average Ticket',
-        enabled: true,
-        current: Math.round(avgTicket),
-        target,
-        percent: target > 0 ? Math.min(100, (avgTicket / target) * 100) : 0,
-        weight: nextCriteria.avg_ticket_weight,
-        unit: '$',
-        gap: Math.max(0, target - avgTicket),
+        key: 'avg_ticket', label: 'Average Ticket', enabled: true,
+        current: Math.round(promoMetrics.avgTicket), target,
+        percent: target > 0 ? Math.min(100, (promoMetrics.avgTicket / target) * 100) : 0,
+        weight: nextCriteria.avg_ticket_weight, unit: '$',
+        gap: Math.max(0, target - promoMetrics.avgTicket),
       });
     }
-
     if (nextCriteria.tenure_enabled) {
       const target = nextCriteria.tenure_days;
       progress.push({
-        key: 'tenure',
-        label: 'Tenure',
-        enabled: true,
-        current: tenureDays,
-        target,
+        key: 'tenure', label: 'Tenure', enabled: true,
+        current: tenureDays, target,
         percent: target > 0 ? Math.min(100, (tenureDays / target) * 100) : 0,
-        weight: 0, // tenure isn't weighted
-        unit: 'd',
+        weight: 0, unit: 'd',
         gap: Math.max(0, target - tenureDays),
       });
     }
 
-    // Compute weighted composite score (exclude tenure from weighted calc)
     const weightedCriteria = progress.filter(p => p.weight > 0);
     const totalWeight = weightedCriteria.reduce((sum, p) => sum + p.weight, 0);
     const compositeScore = totalWeight > 0
       ? weightedCriteria.reduce((sum, p) => sum + (p.percent * p.weight) / totalWeight, 0)
       : 0;
-
-    // Tenure must also pass for full qualification
     const tenurePasses = !nextCriteria.tenure_enabled || tenureDays >= nextCriteria.tenure_days;
     const isFullyQualified = compositeScore >= 100 && tenurePasses;
 
@@ -265,9 +288,10 @@ export function useLevelProgress(userId: string | undefined) {
       compositeScore: Math.min(100, Math.round(compositeScore)),
       isFullyQualified,
       requiresApproval: nextCriteria.requires_manual_approval,
-      evaluationWindowDays: evalDays,
+      evaluationWindowDays: promoEvalDays,
+      retention,
     };
-  }, [currentLevel, nextLevel, nextCriteria, salesData, apptData, profile, evalDays]);
+  }, [currentLevel, nextLevel, nextCriteria, retentionCriteria, salesData, apptData, profile, promoEvalDays]);
 
   return result;
 }
