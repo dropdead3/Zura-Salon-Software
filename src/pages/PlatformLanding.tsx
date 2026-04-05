@@ -1,6 +1,7 @@
 import { MarketingLayout } from '@/components/marketing/MarketingLayout';
 import { MarketingSEO } from '@/components/marketing/MarketingSEO';
 import { HeroSection } from '@/components/marketing/HeroSection';
+import { DashboardShowcase } from '@/components/marketing/DashboardShowcase';
 import { StatBar } from '@/components/marketing/StatBar';
 import { LogoBar } from '@/components/marketing/LogoBar';
 import { ChaosToClarity } from '@/components/marketing/ChaosToClarity';
@@ -26,6 +27,7 @@ export default function PlatformLanding() {
         path="/"
       />
       <HeroSection />
+      <DashboardShowcase />
       <StruggleInput />
       <StatBar />
       <ChaosToClarity />
