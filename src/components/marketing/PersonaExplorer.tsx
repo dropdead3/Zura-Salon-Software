@@ -39,7 +39,7 @@ interface Problem {
 const problems: Problem[] = [
   { id: 'pricing', label: "I don't know if I'm pricing right", personas: ['independent', 'salon-owner'] },
   { id: 'bookings', label: 'My calendar has too many gaps', personas: ['independent', 'salon-owner'] },
-  { id: 'retention', label: 'Clients leave and I don't know why', personas: ['independent', 'salon-owner'] },
+  { id: 'retention', label: "Clients leave and I don't know why", personas: ['independent', 'salon-owner'] },
   { id: 'income', label: "I can't see where my money goes", personas: ['independent'] },
   { id: 'marketing', label: 'Marketing feels like guessing', personas: ['independent', 'salon-owner'] },
   { id: 'team-pay', label: 'Commission and pay are a mess', personas: ['salon-owner', 'multi-location'] },
@@ -53,7 +53,7 @@ const problems: Problem[] = [
   { id: 'scaling', label: "I'm growing but my systems aren't", personas: ['multi-location'] },
   { id: 'onboarding', label: 'Onboarding new locations takes too long', personas: ['multi-location', 'enterprise'] },
   { id: 'cross-market', label: 'I need data across all my markets', personas: ['enterprise'] },
-  { id: 'executive-reporting', label: 'My reporting doesn't match my decisions', personas: ['enterprise'] },
+  { id: 'executive-reporting', label: "My reporting doesn't match my decisions", personas: ['enterprise'] },
   { id: 'standards', label: 'Standards slip without me knowing', personas: ['enterprise'] },
   { id: 'forecasting', label: 'I need to forecast with confidence', personas: ['enterprise'] },
 ];
@@ -70,7 +70,7 @@ interface Solution {
 const solutions: Solution[] = [
   { problemId: 'pricing', icon: DollarSign, headline: 'Know your real numbers', description: 'See exactly how much you make per service after product cost, time, and commission. Adjust pricing with confidence — not guesswork.', stat: 'Owners raise margins 12–18% in the first quarter' },
   { problemId: 'bookings', icon: CalendarCheck, headline: 'Fill your calendar with purpose', description: 'Spot booking gaps before they happen. Smart recommendations help you rebook clients and fill open slots without discounting.', stat: 'Reduce calendar gaps by up to 30%' },
-  { problemId: 'retention', icon: Heart, headline: 'See who's slipping away', description: 'Track which clients haven't rebooked and why. Get alerts before they leave — so you can reach out while it still matters.', stat: 'Retain 15% more clients year over year' },
+  { problemId: 'retention', icon: Heart, headline: "See who's slipping away", description: "Track which clients haven't rebooked and why. Get alerts before they leave — so you can reach out while it still matters.", stat: 'Retain 15% more clients year over year' },
   { problemId: 'income', icon: Wallet, headline: 'Track every dollar clearly', description: 'One view of your income, expenses, and take-home pay. No more guessing what you actually made this month.', stat: 'Save 5+ hours/month on bookkeeping' },
   { problemId: 'marketing', icon: Megaphone, headline: 'Market with data, not hope', description: 'Know which promotions actually bring clients back and which waste money. Spend on what works — automatically.', stat: 'Cut wasted ad spend by up to 40%' },
   { problemId: 'team-pay', icon: DollarSign, headline: 'Commission done right', description: 'Set up transparent commission tiers your team can see. Automate calculations so payroll day is simple and dispute-free.', stat: 'Eliminate 90% of pay disputes' },
