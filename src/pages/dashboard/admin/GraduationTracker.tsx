@@ -211,6 +211,7 @@ function StatusBadge({ status }: { status: GraduationStatus }) {
 
 function ApprovePromotionButton({ member }: { member: TeamMemberProgress }) {
   const promoteLevel = usePromoteLevel();
+  const [promoNotes, setPromoNotes] = useState('');
 
   if (!member.isFullyQualified || !member.currentLevel || !member.nextLevel) return null;
 
@@ -232,6 +233,14 @@ function ApprovePromotionButton({ member }: { member: TeamMemberProgress }) {
             This will immediately update their level.
           </AlertDialogDescription>
         </AlertDialogHeader>
+        <div className="py-2">
+          <Textarea
+            value={promoNotes}
+            onChange={(e) => setPromoNotes(e.target.value)}
+            placeholder="Promotion notes (optional)..."
+            className="text-sm min-h-[60px]"
+          />
+        </div>
         <AlertDialogFooter>
           <AlertDialogCancel>Cancel</AlertDialogCancel>
           <AlertDialogAction
@@ -241,6 +250,7 @@ function ApprovePromotionButton({ member }: { member: TeamMemberProgress }) {
                 userId: member.userId,
                 fromLevelSlug: member.currentLevel!.slug,
                 toLevelSlug: member.nextLevel!.slug,
+                notes: promoNotes.trim() || undefined,
               });
             }}
             disabled={promoteLevel.isPending}
@@ -328,9 +338,14 @@ function DemoteLevelButton({ member, allLevels }: { member: TeamMemberProgress; 
   );
 }
 
-function PromotionHistorySection({ userId, promotions }: { userId: string; promotions: PromotionRecord[] }) {
+function PromotionHistorySection({ userId, promotions, allLevels }: { userId: string; promotions: PromotionRecord[]; allLevels: StylistLevel[] }) {
   const { formatDate } = useFormatDate();
   const userPromotions = promotions.filter(p => p.user_id === userId);
+
+  const slugToLabel = (slug: string) => {
+    const level = allLevels.find(l => l.slug === slug);
+    return level?.label || slug.replace(/[-_]/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+  };
 
   if (userPromotions.length === 0) return null;
 
@@ -346,9 +361,9 @@ function PromotionHistorySection({ userId, promotions }: { userId: string; promo
           <div key={p.id} className="flex items-center justify-between text-xs">
             <span className="flex items-center gap-1">
               <span className={cn('w-1.5 h-1.5 rounded-full shrink-0', isDemotion ? 'bg-rose-500' : 'bg-emerald-500')} />
-              <span className="text-muted-foreground">{p.from_level}</span>
+              <span className="text-muted-foreground">{slugToLabel(p.from_level)}</span>
               <ArrowRight className={cn('w-3 h-3 inline mx-0.5', isDemotion ? 'rotate-90 text-rose-500' : '')} />
-              <span className="text-foreground">{p.to_level}</span>
+              <span className="text-foreground">{slugToLabel(p.to_level)}</span>
               {isDemotion && <span className="text-rose-500 ml-1">(Demotion)</span>}
             </span>
             <span className="text-muted-foreground">
@@ -360,8 +375,6 @@ function PromotionHistorySection({ userId, promotions }: { userId: string; promo
     </div>
   );
 }
-
-/* ─── Stylist Progress Row ──────────────────────────────── */
 
 function StylistProgressRow({ member, totalLevels, promotions, allLevels }: { member: TeamMemberProgress; totalLevels: number; promotions: PromotionRecord[]; allLevels: StylistLevel[] }) {
   const [isExpanded, setIsExpanded] = useState(false);
@@ -515,7 +528,7 @@ function StylistProgressRow({ member, totalLevels, promotions, allLevels }: { me
         )}
 
         {/* Promotion history */}
-        <PromotionHistorySection userId={member.userId} promotions={promotions} />
+        <PromotionHistorySection userId={member.userId} promotions={promotions} allLevels={allLevels} />
       </CollapsibleContent>
     </Collapsible>
   );
@@ -789,8 +802,14 @@ function RequirementsManager() {
 
 /* ─── Org-Wide Promotion History Tab ────────────────────── */
 
-function OrgPromotionHistoryTab({ promotions }: { promotions: PromotionRecord[] }) {
+function OrgPromotionHistoryTab({ promotions, allLevels }: { promotions: PromotionRecord[]; allLevels: StylistLevel[] }) {
   const { formatDate } = useFormatDate();
+  const [visibleCount, setVisibleCount] = useState(25);
+
+  const slugToLabel = (slug: string) => {
+    const level = allLevels.find(l => l.slug === slug);
+    return level?.label || slug.replace(/[-_]/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+  };
 
   if (promotions.length === 0) {
     return (
@@ -802,9 +821,12 @@ function OrgPromotionHistoryTab({ promotions }: { promotions: PromotionRecord[] 
     );
   }
 
+  const visible = promotions.slice(0, visibleCount);
+  const hasMore = visibleCount < promotions.length;
+
   return (
     <div className="space-y-3">
-      {promotions.map(p => {
+      {visible.map(p => {
         const isDemotion = p.direction === 'demotion';
         return (
           <div key={p.id} className="flex items-center gap-4 p-4 rounded-xl border bg-card/50">
@@ -812,9 +834,9 @@ function OrgPromotionHistoryTab({ promotions }: { promotions: PromotionRecord[] 
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
                 <span className="font-medium text-sm">{p.user_name || 'Unknown'}</span>
-                <span className="text-xs text-muted-foreground">{p.from_level}</span>
+                <span className="text-xs text-muted-foreground">{slugToLabel(p.from_level)}</span>
                 <ArrowRight className={cn('w-3 h-3', isDemotion ? 'text-rose-500' : 'text-emerald-500')} />
-                <span className="text-xs text-foreground">{p.to_level}</span>
+                <span className="text-xs text-foreground">{slugToLabel(p.to_level)}</span>
                 {isDemotion && (
                   <Badge variant="outline" className="text-[10px] border-rose-200 text-rose-600 dark:border-rose-800 dark:text-rose-400">
                     Demotion
@@ -836,6 +858,17 @@ function OrgPromotionHistoryTab({ promotions }: { promotions: PromotionRecord[] 
           </div>
         );
       })}
+      {hasMore && (
+        <div className="flex justify-center pt-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setVisibleCount(prev => prev + 25)}
+          >
+            Show More ({promotions.length - visibleCount} remaining)
+          </Button>
+        </div>
+      )}
     </div>
   );
 }
@@ -1045,7 +1078,7 @@ export default function GraduationTracker() {
           </TabsContent>
           {/* Tab: History */}
           <TabsContent value="history" className="mt-6">
-            <OrgPromotionHistoryTab promotions={promotions} />
+            <OrgPromotionHistoryTab promotions={promotions} allLevels={allLevels} />
           </TabsContent>
         </Tabs>
       </div>

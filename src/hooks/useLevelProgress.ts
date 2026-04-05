@@ -127,15 +127,25 @@ export function useLevelProgress(userId: string | undefined) {
   const { data: apptData } = useQuery({
     queryKey: ['level-progress-appointments', userId, startStr, endStr],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('appointments')
-        .select('id, total_price, rebooked_at_checkout, appointment_date, status, is_new_client, duration_minutes, client_id')
-        .eq('staff_user_id', userId!)
-        .gte('appointment_date', startStr)
-        .lte('appointment_date', endStr)
-        .neq('status', 'cancelled');
-      if (error) throw error;
-      return data || [];
+      const pageSize = 1000;
+      let allData: any[] = [];
+      let page = 0;
+      let hasMore = true;
+      while (hasMore) {
+        const { data, error } = await supabase
+          .from('appointments')
+          .select('id, total_price, rebooked_at_checkout, appointment_date, status, is_new_client, duration_minutes, client_id')
+          .eq('staff_user_id', userId!)
+          .gte('appointment_date', startStr)
+          .lte('appointment_date', endStr)
+          .neq('status', 'cancelled')
+          .range(page * pageSize, (page + 1) * pageSize - 1);
+        if (error) throw error;
+        allData = allData.concat(data || []);
+        hasMore = (data?.length || 0) === pageSize;
+        page++;
+      }
+      return allData;
     },
     enabled: !!userId && !!(nextCriteria || retentionCriteria),
   });
