@@ -17,7 +17,7 @@ export function MarketingNav() {
   }, []);
 
   const navLinks = [
-    { label: 'Product', href: '/product' },
+    { label: 'Solutions', href: '/product' },
     { label: 'Ecosystem', href: '/ecosystem' },
     { label: 'Pricing', href: '/pricing' },
   ];
