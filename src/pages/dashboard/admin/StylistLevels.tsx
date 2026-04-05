@@ -113,6 +113,8 @@ export default function StylistLevels() {
   const [previewLevel, setPreviewLevel] = useState(0);
   const [wizardLevelId, setWizardLevelId] = useState<string | null>(null);
   const [wizardLevelLabel, setWizardLevelLabel] = useState('');
+  const [deleteTargetIndex, setDeleteTargetIndex] = useState<number | null>(null);
+  const [reassignToSlug, setReassignToSlug] = useState<string>('');
   const [wizardLevelIndex, setWizardLevelIndex] = useState(0);
 
   const { data: promotionCriteria } = useLevelPromotionCriteria();
