@@ -63,6 +63,8 @@ function formatCriteriaSummary(c: LevelPromotionCriteria): string {
   if (c.retail_enabled && c.retail_pct_threshold > 0) parts.push(`${c.retail_pct_threshold}% retail`);
   if (c.rebooking_enabled && c.rebooking_pct_threshold > 0) parts.push(`${c.rebooking_pct_threshold}% rebook`);
   if (c.avg_ticket_enabled && c.avg_ticket_threshold > 0) parts.push(`$${c.avg_ticket_threshold} avg`);
+  if (c.retention_rate_enabled && Number(c.retention_rate_threshold) > 0) parts.push(`${c.retention_rate_threshold}% retention`);
+  if (c.new_clients_enabled && Number(c.new_clients_threshold) > 0) parts.push(`${c.new_clients_threshold} new/mo`);
   if (c.tenure_enabled && c.tenure_days > 0) parts.push(`${c.tenure_days}d tenure`);
   if (parts.length === 0) return '';
   return parts.join(' · ') + ` — ${c.evaluation_window_days}d window`;
@@ -74,6 +76,8 @@ function formatRetentionSummary(r: LevelRetentionCriteria): string {
   if (r.retail_enabled && r.retail_pct_minimum > 0) parts.push(`${r.retail_pct_minimum}% retail`);
   if (r.rebooking_enabled && r.rebooking_pct_minimum > 0) parts.push(`${r.rebooking_pct_minimum}% rebook`);
   if (r.avg_ticket_enabled && r.avg_ticket_minimum > 0) parts.push(`$${r.avg_ticket_minimum} avg`);
+  if (r.retention_rate_enabled && Number(r.retention_rate_minimum) > 0) parts.push(`${r.retention_rate_minimum}% retention`);
+  if (r.new_clients_enabled && Number(r.new_clients_minimum) > 0) parts.push(`${r.new_clients_minimum} new/mo`);
   if (parts.length === 0) return '';
   return `Required to Stay: ${parts.join(' · ')} — ${r.grace_period_days}d grace · ${r.action_type === 'demotion_eligible' ? 'Demotion' : 'Coaching'}`;
 }

@@ -800,8 +800,14 @@ export function GraduationWizard({ open, onOpenChange, levelId, levelLabel, leve
                         {form.avg_ticket_enabled && form.avg_ticket_threshold > 0 && (
                           <li>• ${form.avg_ticket_threshold} avg ticket ({form.avg_ticket_weight}% weight)</li>
                         )}
+                        {form.retention_rate_enabled && form.retention_rate_threshold > 0 && (
+                          <li>• {form.retention_rate_threshold}% client retention ({form.retention_rate_weight}% weight)</li>
+                        )}
+                        {form.new_clients_enabled && form.new_clients_threshold > 0 && (
+                          <li>• {form.new_clients_threshold} new clients/mo ({form.new_clients_weight}% weight)</li>
+                        )}
                         {form.tenure_enabled && form.tenure_days > 0 && (
-                          <li>• {form.tenure_days} days at current level</li>
+                          <li>• {form.tenure_days} days at current level (pass/fail)</li>
                         )}
                       </ul>
                       <p className="text-xs text-muted-foreground">
