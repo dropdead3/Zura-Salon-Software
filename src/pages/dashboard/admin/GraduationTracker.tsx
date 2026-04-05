@@ -320,20 +320,25 @@ function PromotionHistorySection({ userId, promotions }: { userId: string; promo
     <div className="p-3 rounded-lg border bg-card/30 space-y-2">
       <div className="flex items-center gap-2 text-xs text-muted-foreground">
         <History className="w-3.5 h-3.5" />
-        <span className="font-medium">Promotion History</span>
+        <span className="font-medium">Level History</span>
       </div>
-      {userPromotions.map(p => (
-        <div key={p.id} className="flex items-center justify-between text-xs">
-          <span>
-            <span className="text-muted-foreground">{p.from_level}</span>
-            <ArrowRight className="w-3 h-3 inline mx-1" />
-            <span className="text-foreground">{p.to_level}</span>
-          </span>
-          <span className="text-muted-foreground">
-            {formatDate(new Date(p.promoted_at), 'MMM d, yyyy')} — by {p.promoter_name}
-          </span>
-        </div>
-      ))}
+      {userPromotions.map(p => {
+        const isDemotion = p.direction === 'demotion';
+        return (
+          <div key={p.id} className="flex items-center justify-between text-xs">
+            <span className="flex items-center gap-1">
+              <span className={cn('w-1.5 h-1.5 rounded-full shrink-0', isDemotion ? 'bg-rose-500' : 'bg-emerald-500')} />
+              <span className="text-muted-foreground">{p.from_level}</span>
+              <ArrowRight className={cn('w-3 h-3 inline mx-0.5', isDemotion ? 'rotate-90 text-rose-500' : '')} />
+              <span className="text-foreground">{p.to_level}</span>
+              {isDemotion && <span className="text-rose-500 ml-1">(Demotion)</span>}
+            </span>
+            <span className="text-muted-foreground">
+              {formatDate(new Date(p.promoted_at), 'MMM d, yyyy')} — by {p.promoter_name}
+            </span>
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -361,7 +366,7 @@ function StylistProgressRow({ member, totalLevels, promotions, allLevels }: { me
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
             <Link
-              to={dashPath(`/admin/reports/staff/${member.userId}`)}
+              to={dashPath('/admin/analytics/reports')}
               className="font-medium text-sm hover:text-primary transition-colors hover:underline"
             >
               {member.fullName}
@@ -408,7 +413,7 @@ function StylistProgressRow({ member, totalLevels, promotions, allLevels }: { me
           {isAtRisk && (
             <>
               <Button variant="ghost" size="sm" className="text-xs gap-1 h-7" asChild>
-                <Link to={dashPath(`/admin/reports/staff/${member.userId}`)}>
+                <Link to={dashPath('/admin/analytics/reports')}>
                   <FileText className="w-3 h-3" />
                   Report
                 </Link>
