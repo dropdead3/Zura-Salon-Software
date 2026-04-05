@@ -90,6 +90,9 @@ const solutions: Solution[] = [
   { problemId: 'forecasting', icon: TrendingUp, headline: 'Forecast with confidence', description: 'Model scenarios before committing capital. See how pricing changes, new hires, or expansions affect your bottom line.', stat: 'Forecasts within 5% accuracy' },
 ];
 
+/* ── Max problems selectable ──────────────────────────────────────────────── */
+const MAX_PROBLEMS = 3;
+
 /* ── Micro-analytics helper ────────────────────────────────────────────── */
 function emitExplorerEvent(
   eventName: 'persona_selected' | 'problem_toggled' | 'solutions_viewed',
