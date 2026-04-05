@@ -55,9 +55,11 @@ import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 import { PageExplainer } from '@/components/ui/PageExplainer';
 import { GraduationWizard } from '@/components/dashboard/settings/GraduationWizard';
 import { useLevelPromotionCriteria, type LevelPromotionCriteria } from '@/hooks/useLevelPromotionCriteria';
-import { useLevelRetentionCriteria } from '@/hooks/useLevelRetentionCriteria';
+import { useLevelRetentionCriteria, type LevelRetentionCriteria } from '@/hooks/useLevelRetentionCriteria';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { generateLevelRequirementsPDF } from '@/components/dashboard/settings/LevelRequirementsPDF';
+import { TeamCommissionRoster } from '@/components/dashboard/settings/TeamCommissionRoster';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 function formatCriteriaSummary(c: LevelPromotionCriteria): string {
   const parts: string[] = [];
@@ -70,6 +72,21 @@ function formatCriteriaSummary(c: LevelPromotionCriteria): string {
   return parts.join(' · ') + ` — ${c.evaluation_window_days}d window`;
 }
 
+function formatRetentionSummary(r: LevelRetentionCriteria): string {
+  const parts: string[] = [];
+  if (r.revenue_enabled && r.revenue_minimum > 0) parts.push(r.revenue_minimum >= 1000 ? `$${(r.revenue_minimum / 1000).toFixed(0)}K rev` : `$${r.revenue_minimum} rev`);
+  if (r.retail_enabled && r.retail_pct_minimum > 0) parts.push(`${r.retail_pct_minimum}% retail`);
+  if (r.rebooking_enabled && r.rebooking_pct_minimum > 0) parts.push(`${r.rebooking_pct_minimum}% rebook`);
+  if (r.avg_ticket_enabled && r.avg_ticket_minimum > 0) parts.push(`$${r.avg_ticket_minimum} avg`);
+  if (parts.length === 0) return '';
+  return `Required to Stay: ${parts.join(' · ')} — ${r.grace_period_days}d grace · ${r.action_type === 'demotion_eligible' ? 'Demotion' : 'Coaching'}`;
+}
+
+const formatRate = (rate: number | null | undefined): string => {
+  if (rate == null) return '';
+  return String(Math.round(rate * 100));
+};
+
 type LocalStylistLevel = {
   id: string;
   dbId?: string;
@@ -77,6 +94,8 @@ type LocalStylistLevel = {
   label: string;
   clientLabel: string;
   description: string;
+  serviceCommissionRate: string;
+  retailCommissionRate: string;
 };
 
 

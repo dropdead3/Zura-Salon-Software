@@ -115,7 +115,7 @@ function NoCriteriaEmptyState() {
       </p>
       <div className="mt-5 flex justify-center">
         <Button asChild variant="outline">
-          <Link to={dashPath('/admin/settings/stylist-levels')}>
+          <Link to={dashPath('/admin/stylist-levels')}>
             <Settings className="h-4 w-4 mr-2" />
             Configure Stylist Levels
           </Link>
