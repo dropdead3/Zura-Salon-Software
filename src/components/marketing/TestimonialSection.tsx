@@ -4,17 +4,17 @@ import { useScrollReveal } from './useScrollReveal';
 
 const testimonials = [
   {
-    quote: `${PLATFORM_NAME} showed us exactly where we were losing margin. We recovered $84K in the first quarter.`,
-    attribution: 'Multi-Location Operator',
+    quote: 'I used to spend every Monday morning in spreadsheets trying to figure out which location was bleeding margin. Now I open one screen and know exactly what to fix.',
+    attribution: 'Multi-Location Owner',
     detail: '4 locations',
   },
   {
-    quote: `Before ${PLATFORM_NAME}, scaling meant more chaos. Now every new location launches with structure already in place.`,
+    quote: `We lost three senior stylists in six months. Once we built transparent career paths and commission tiers with ${PLATFORM_NAME}, retention flipped.`,
     attribution: 'Salon Group CEO',
     detail: '8 locations',
   },
   {
-    quote: `The weekly intelligence brief changed how I run my Monday meetings. One lever, clear action, every single week.`,
+    quote: 'Our new hires used to take 90 days to get productive. With structured onboarding, we cut that to 30. The training hub changed everything.',
     attribution: 'Regional Director',
     detail: '6 locations',
   },

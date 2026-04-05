@@ -25,8 +25,8 @@ export function HeroSection() {
       </h1>
 
       <p className="font-sans text-base sm:text-lg lg:text-xl text-slate-400 max-w-2xl mb-10 leading-relaxed mkt-fade-in mkt-delay-2">
-        {PLATFORM_NAME} eliminates operational chaos by embedding structure into
-        workflows and surfacing the exact lever to pull next.
+        Clear data. Actionable insights. Team tools that scale.
+        Built by salon owners who grew from 1 to 12 locations.
       </p>
 
       <div className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto mkt-fade-in mkt-delay-3">

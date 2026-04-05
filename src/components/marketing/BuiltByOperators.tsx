@@ -1,12 +1,12 @@
-import { Building2, TrendingUp, Shield, Users } from 'lucide-react';
+import { Users, TrendingUp, DollarSign, Heart } from 'lucide-react';
 import { PLATFORM_NAME } from '@/lib/brand';
 import { useScrollReveal } from './useScrollReveal';
 
 const markers = [
-  { icon: Building2, text: 'Scaled from 1 chair to 12 locations' },
-  { icon: TrendingUp, text: 'Designed for $1M–$50M operators' },
-  { icon: Shield, text: 'Structure-first, not feature-first' },
-  { icon: Users, text: 'By salon owners, for salon owners' },
+  { icon: Users, text: '80+ stylists managed' },
+  { icon: TrendingUp, text: '12 locations scaled' },
+  { icon: DollarSign, text: '$8M+ revenue operated' },
+  { icon: Heart, text: 'Zero outside investors' },
 ];
 
 export function BuiltByOperators() {
@@ -25,16 +25,16 @@ export function BuiltByOperators() {
               Origin Story
             </p>
             <h2 className="font-display text-2xl sm:text-3xl lg:text-4xl tracking-tight mb-6">
-              Built by operators who lived the chaos
+              We didn't study salons. We ran them.
             </h2>
             <div className="space-y-4 font-sans text-base sm:text-lg text-slate-400 leading-relaxed">
               <p>
-                We scaled a salon business from a single chair to twelve locations. Every tool we tried
-                was built for booking — not for building a business.
+                We managed payroll for 80+ stylists. We tracked margin across 12 locations on spreadsheets.
+                We lost top talent because we couldn't show them a growth path.
               </p>
               <p>
-                {PLATFORM_NAME} is what we wished existed: an operating system that embeds
-                structure into every workflow and surfaces the exact lever to pull next.
+                So we built the system we needed. {PLATFORM_NAME} is what happens when operators
+                stop waiting for software companies to understand their business.
               </p>
             </div>
             {/* Stat callout */}

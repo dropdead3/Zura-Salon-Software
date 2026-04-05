@@ -36,10 +36,10 @@ export function FinalCTA() {
 
       <div className="max-w-3xl mx-auto text-center mkt-reveal">
         <h2 className="font-display text-3xl sm:text-4xl lg:text-5xl tracking-tight mb-6">
-          See the levers hiding in your business
+          Your data has answers. Your team needs structure. Let us show you.
         </h2>
         <p className="font-sans text-base sm:text-lg text-slate-400 max-w-xl mx-auto mb-4">
-          Request a 15-minute walkthrough. We will show you exactly where margin, growth, and clarity are waiting.
+          Request a 15-minute walkthrough. We'll show you exactly where margin, growth, and clarity are waiting.
         </p>
         <p className="font-sans text-sm text-slate-500 mb-10">
           No commitment. No credit card.
