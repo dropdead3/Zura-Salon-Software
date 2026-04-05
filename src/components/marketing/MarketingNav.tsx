@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { ArrowRight, Menu, X } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
 import { PlatformLogo } from '@/components/brand/PlatformLogo';
 import { cn } from '@/lib/utils';
@@ -8,6 +9,7 @@ import { SolutionsDesktopTrigger, SolutionsMobileAccordion } from './SolutionsMe
 
 export function MarketingNav() {
   const { user } = useAuth();
+  const location = useLocation();
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -21,6 +23,8 @@ export function MarketingNav() {
     { label: 'Ecosystem', href: '/ecosystem' },
     { label: 'Pricing', href: '/pricing' },
   ];
+
+  const isActive = (href: string) => location.pathname === href;
 
   return (
     <header
@@ -42,7 +46,12 @@ export function MarketingNav() {
             <Link
               key={link.href}
               to={link.href}
-              className="font-sans text-sm text-slate-400 hover:text-white transition-colors tracking-wide"
+              className={cn(
+                'font-sans text-sm transition-colors tracking-wide',
+                isActive(link.href)
+                  ? 'text-white'
+                  : 'text-slate-400 hover:text-white'
+              )}
             >
               {link.label}
             </Link>
@@ -53,7 +62,7 @@ export function MarketingNav() {
           {user ? (
             <Link
               to="/dashboard"
-              className="inline-flex items-center gap-2 h-10 px-6 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 rounded-full font-sans text-sm font-medium text-white transition-all shadow-lg shadow-violet-500/20 mkt-cta-shimmer"
+              className="inline-flex items-center gap-2 h-10 px-6 bg-white text-slate-950 hover:bg-slate-100 rounded-full font-sans text-sm font-medium transition-colors"
             >
               Go to Dashboard
               <ArrowRight className="w-4 h-4" />
@@ -62,13 +71,13 @@ export function MarketingNav() {
             <>
               <Link
                 to="/login"
-                className="font-sans text-sm text-slate-400 hover:text-white transition-colors"
+                className="font-sans text-sm text-slate-300 hover:text-white transition-colors"
               >
                 Sign In
               </Link>
               <Link
                 to="/demo"
-                className="inline-flex items-center gap-2 h-10 px-6 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 rounded-full font-sans text-sm font-medium text-white transition-all shadow-lg shadow-violet-500/20 mkt-cta-shimmer"
+                className="inline-flex items-center gap-2 h-10 px-6 bg-white text-slate-950 hover:bg-slate-100 rounded-full font-sans text-sm font-medium transition-colors"
               >
                 Get a Demo
               </Link>
@@ -85,51 +94,59 @@ export function MarketingNav() {
         </button>
       </nav>
 
-      {mobileOpen && (
-        <div className="md:hidden bg-slate-950/95 backdrop-blur-xl border-t border-white/[0.06] px-6 pb-6 pt-4">
-          <div className="flex flex-col gap-4">
-            <SolutionsMobileAccordion onNavigate={() => setMobileOpen(false)} />
-            {navLinks.map((link) => (
-              <Link
-                key={link.href}
-                to={link.href}
-                className="font-sans text-base text-slate-300 hover:text-white transition-colors py-2"
-                onClick={() => setMobileOpen(false)}
-              >
-                {link.label}
-              </Link>
-            ))}
-            <hr className="border-white/[0.06]" />
-            {user ? (
-              <Link
-                to="/dashboard"
-                className="inline-flex items-center justify-center gap-2 h-12 w-full bg-gradient-to-r from-violet-600 to-purple-600 rounded-full font-sans text-sm font-medium text-white"
-                onClick={() => setMobileOpen(false)}
-              >
-                Go to Dashboard
-                <ArrowRight className="w-4 h-4" />
-              </Link>
-            ) : (
-              <>
+      <AnimatePresence>
+        {mobileOpen && (
+          <motion.div
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.2 }}
+            className="md:hidden bg-slate-950/95 backdrop-blur-xl border-t border-white/[0.06] px-6 pb-6 pt-4"
+          >
+            <div className="flex flex-col gap-4">
+              <SolutionsMobileAccordion onNavigate={() => setMobileOpen(false)} />
+              {navLinks.map((link) => (
                 <Link
-                  to="/login"
+                  key={link.href}
+                  to={link.href}
                   className="font-sans text-base text-slate-300 hover:text-white transition-colors py-2"
                   onClick={() => setMobileOpen(false)}
                 >
-                  Sign In
+                  {link.label}
                 </Link>
+              ))}
+              <hr className="border-white/[0.06]" />
+              {user ? (
                 <Link
-                  to="/demo"
-                  className="inline-flex items-center justify-center gap-2 h-12 w-full bg-gradient-to-r from-violet-600 to-purple-600 rounded-full font-sans text-sm font-medium text-white"
+                  to="/dashboard"
+                  className="inline-flex items-center justify-center gap-2 h-12 w-full bg-white text-slate-950 rounded-full font-sans text-sm font-medium"
                   onClick={() => setMobileOpen(false)}
                 >
-                  Get a Demo
+                  Go to Dashboard
+                  <ArrowRight className="w-4 h-4" />
                 </Link>
-              </>
-            )}
-          </div>
-        </div>
-      )}
+              ) : (
+                <>
+                  <Link
+                    to="/login"
+                    className="font-sans text-base text-slate-300 hover:text-white transition-colors py-2"
+                    onClick={() => setMobileOpen(false)}
+                  >
+                    Sign In
+                  </Link>
+                  <Link
+                    to="/demo"
+                    className="inline-flex items-center justify-center gap-2 h-12 w-full bg-white text-slate-950 rounded-full font-sans text-sm font-medium"
+                    onClick={() => setMobileOpen(false)}
+                  >
+                    Get a Demo
+                  </Link>
+                </>
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </header>
   );
 }

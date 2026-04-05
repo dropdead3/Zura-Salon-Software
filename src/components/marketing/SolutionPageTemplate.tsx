@@ -1,6 +1,6 @@
+import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
-import { PLATFORM_NAME } from '@/lib/brand';
 import { MarketingLayout } from './MarketingLayout';
 import { useScrollReveal } from './useScrollReveal';
 import type { LucideIcon } from 'lucide-react';
@@ -15,21 +15,15 @@ export interface ProblemSolution {
 }
 
 export interface SolutionPageProps {
-  /** Eyebrow label above headline */
   eyebrow: string;
-  /** Main headline */
   headline: string;
-  /** Subheadline / description */
   description: string;
-  /** Problem → Solution pairs */
   items: ProblemSolution[];
-  /** Optional testimonial */
   testimonial?: {
     quote: string;
     attribution: string;
     detail: string;
   };
-  /** CTA text override */
   ctaText?: string;
 }
 
@@ -47,12 +41,17 @@ export function SolutionPageTemplate({
   const cardsRef = useScrollReveal();
   const ctaRef = useScrollReveal();
 
+  // Scroll to top on mount
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
   return (
     <MarketingLayout>
       {/* ── Hero ──────────────────────────────────────────────────── */}
-      <section ref={heroRef} className="relative z-10 px-6 sm:px-8 pt-16 pb-12 sm:pt-24 sm:pb-16 lg:pt-32 lg:pb-20">
+      <section ref={heroRef} className="relative z-10 px-6 sm:px-8 pt-20 pb-12 sm:pt-28 sm:pb-16 lg:pt-36 lg:pb-20">
         <div className="max-w-3xl mx-auto text-center mkt-reveal">
-          <p className="font-sans text-xs sm:text-sm text-violet-400 uppercase tracking-[0.15em] mb-4">
+          <p className="font-display text-[11px] sm:text-xs text-violet-400 uppercase tracking-[0.15em] mb-4">
             {eyebrow}
           </p>
           <h1 className="font-display text-3xl sm:text-4xl lg:text-5xl tracking-tight mb-6">
@@ -70,10 +69,10 @@ export function SolutionPageTemplate({
           {items.map((item, i) => (
             <div
               key={item.problem}
-              className="mkt-reveal p-6 sm:p-8 rounded-2xl mkt-glass"
+              className="mkt-reveal p-6 sm:p-8 rounded-xl border border-white/[0.06] bg-white/[0.02]"
               style={{ transitionDelay: `${i * 0.08}s` }}
             >
-              <div className="w-12 h-12 rounded-xl bg-violet-500/10 flex items-center justify-center mb-5">
+              <div className="w-12 h-12 rounded-lg bg-violet-500/10 flex items-center justify-center mb-5">
                 <item.icon className="w-6 h-6 text-violet-400" />
               </div>
               <h3 className="font-display text-sm sm:text-base tracking-wide mb-2">
@@ -83,7 +82,7 @@ export function SolutionPageTemplate({
                 {item.solution}
               </p>
               {item.stat && (
-                <p className="font-sans text-xs text-violet-400/80 italic">
+                <p className="font-sans text-xs text-violet-400/80">
                   {item.stat}
                 </p>
               )}
@@ -96,10 +95,7 @@ export function SolutionPageTemplate({
       {testimonial && (
         <section className="relative z-10 px-6 sm:px-8 py-12 sm:py-16">
           <div className="max-w-3xl mx-auto text-center">
-            <span className="font-serif text-[100px] leading-none text-violet-500/[0.06] select-none pointer-events-none">
-              &ldquo;
-            </span>
-            <blockquote className="font-serif text-xl sm:text-2xl text-white/90 italic leading-relaxed -mt-12">
+            <blockquote className="font-serif text-xl sm:text-2xl text-white/90 italic leading-relaxed">
               &ldquo;{testimonial.quote}&rdquo;
             </blockquote>
             <div className="flex items-center justify-center gap-3 mt-6">
@@ -113,7 +109,7 @@ export function SolutionPageTemplate({
       )}
 
       {/* ── CTA ──────────────────────────────────────────────────── */}
-      <section ref={ctaRef} className="relative z-10 px-6 sm:px-8 py-16 sm:py-24">
+      <section ref={ctaRef} className="relative z-10 px-6 sm:px-8 py-20 lg:py-28">
         <div className="max-w-2xl mx-auto text-center mkt-reveal">
           <h2 className="font-display text-2xl sm:text-3xl lg:text-4xl tracking-tight mb-4">
             Ready to see it in action?
@@ -121,22 +117,13 @@ export function SolutionPageTemplate({
           <p className="font-sans text-sm text-slate-500 mb-8">
             No commitment. No credit card.
           </p>
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Link
-              to="/demo"
-              className="inline-flex items-center justify-center gap-2 h-12 px-8 w-full sm:w-auto bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 rounded-full font-sans text-base font-medium transition-all shadow-lg shadow-violet-500/25"
-            >
-              {ctaText}
-              <ArrowRight className="w-4 h-4" />
-            </Link>
-            <Link
-              to="/product"
-              className="inline-flex items-center justify-center gap-2 h-12 px-8 w-full sm:w-auto bg-white/5 hover:bg-white/10 border border-white/10 rounded-full font-sans text-base font-medium transition-colors"
-            >
-              Explore the Platform
-              <ArrowRight className="w-4 h-4" />
-            </Link>
-          </div>
+          <Link
+            to="/demo"
+            className="inline-flex items-center justify-center gap-2 h-12 px-8 bg-white text-slate-950 hover:bg-slate-100 rounded-full font-sans text-base font-medium transition-colors"
+          >
+            {ctaText}
+            <ArrowRight className="w-4 h-4" />
+          </Link>
         </div>
       </section>
     </MarketingLayout>

@@ -266,7 +266,7 @@ export function DashboardMockup() {
 
             {/* Lever card */}
             <div
-              className={`sm:col-span-2 p-4 rounded-xl border flex flex-col justify-between transition-all duration-700 ${
+              className={`sm:col-span-2 p-4 rounded-xl border flex-col justify-between transition-all duration-700 hidden sm:flex ${
                 showLever
                   ? leverApplied
                     ? 'bg-emerald-500/[0.06] border-emerald-500/[0.15] opacity-100 translate-y-0'
@@ -311,7 +311,7 @@ export function DashboardMockup() {
               {/* Apply button area */}
               {showLever && !leverApplied && (
                 <div className="mt-3 flex justify-end">
-                  <span className="font-display text-[9px] tracking-[0.12em] text-violet-400 px-3 py-1 rounded-full border border-violet-500/20 bg-violet-500/10">
+                  <span className="font-display text-[10px] tracking-[0.12em] text-violet-400 px-3 py-1 rounded-full border border-violet-500/20 bg-violet-500/10">
                     APPLY
                   </span>
                 </div>

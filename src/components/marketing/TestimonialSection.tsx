@@ -1,4 +1,3 @@
-import { useState, useEffect } from 'react';
 import { PLATFORM_NAME } from '@/lib/brand';
 import { useScrollReveal } from './useScrollReveal';
 
@@ -22,60 +21,34 @@ const testimonials = [
 
 export function TestimonialSection() {
   const ref = useScrollReveal();
-  const [active, setActive] = useState(0);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setActive((prev) => (prev + 1) % testimonials.length);
-    }, 5000);
-    return () => clearInterval(interval);
-  }, []);
-
-  const current = testimonials[active];
 
   return (
-    <section ref={ref} className="relative z-10 px-6 sm:px-8 py-16 sm:py-20 lg:py-24">
-      <div className="max-w-3xl mx-auto text-center mkt-reveal">
-        <p className="font-sans text-xs sm:text-sm text-violet-400 uppercase tracking-[0.15em] mb-8">
-          Owner Stories
-        </p>
-
-        {/* Decorative quote mark */}
-        <div className="relative">
-          <span className="absolute -top-8 left-1/2 -translate-x-1/2 font-serif text-[120px] leading-none text-violet-500/[0.06] select-none pointer-events-none">
-            &ldquo;
-          </span>
-
-          <div className="min-h-[140px] sm:min-h-[120px] flex items-center justify-center">
-            <blockquote
-              key={active}
-              className="font-serif text-xl sm:text-2xl lg:text-3xl text-white/90 italic leading-relaxed animate-fade-in"
-            >
-              &ldquo;{current.quote}&rdquo;
-            </blockquote>
-          </div>
-        </div>
-
-        <div className="flex items-center justify-center gap-3 mt-6">
-          <p className="font-sans text-sm text-slate-400">
-            — {current.attribution}
+    <section ref={ref} className="relative z-10 px-6 sm:px-8 py-20 lg:py-28">
+      <div className="max-w-5xl mx-auto">
+        <div className="text-center mb-12 mkt-reveal">
+          <p className="font-display text-[11px] sm:text-xs text-violet-400 uppercase tracking-[0.15em]">
+            Owner Stories
           </p>
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full bg-violet-500/10 border border-violet-500/20 font-sans text-xs text-violet-300">
-            {current.detail}
-          </span>
         </div>
 
-        {/* Dot indicators */}
-        <div className="flex items-center justify-center gap-2 mt-6">
-          {testimonials.map((_, i) => (
-            <button
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mkt-reveal" style={{ transitionDelay: '0.1s' }}>
+          {testimonials.map((t, i) => (
+            <div
               key={i}
-              onClick={() => setActive(i)}
-              className={`w-2 h-2 rounded-full transition-all ${
-                i === active ? 'bg-violet-400 w-6' : 'bg-white/20 hover:bg-white/40'
-              }`}
-              aria-label={`Go to testimonial ${i + 1}`}
-            />
+              className="p-6 rounded-xl border border-white/[0.06] bg-white/[0.02]"
+            >
+              <blockquote className="font-serif text-base sm:text-lg text-white/90 italic leading-relaxed mb-6">
+                &ldquo;{t.quote}&rdquo;
+              </blockquote>
+              <div className="flex items-center gap-3">
+                <p className="font-sans text-sm text-slate-400">
+                  — {t.attribution}
+                </p>
+                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full bg-violet-500/10 border border-violet-500/20 font-sans text-xs text-violet-300">
+                  {t.detail}
+                </span>
+              </div>
+            </div>
           ))}
         </div>
       </div>

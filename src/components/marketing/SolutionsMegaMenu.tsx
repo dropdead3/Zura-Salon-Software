@@ -80,8 +80,8 @@ function DesktopDropdown({ open, onClose }: DesktopDropdownProps) {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }}
             transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-            style={{ transform: `translateX(calc(-50% + ${offsetX}px))` }}
-            className="absolute top-full left-1/2 mt-2 w-[680px] z-50 bg-slate-950/95 backdrop-blur-xl border border-white/[0.08] rounded-lg shadow-2xl shadow-black/40 overflow-hidden"
+            style={{ left: `calc(50% + ${offsetX}px)`, transform: 'translateX(-50%)' }}
+            className="absolute top-full mt-2 w-[680px] z-50 bg-slate-950/95 backdrop-blur-xl border border-white/[0.08] rounded-lg shadow-2xl shadow-black/40 overflow-hidden"
           >
             <div className="grid grid-cols-2 divide-x divide-white/[0.06]">
               {/* Left: Personas */}
