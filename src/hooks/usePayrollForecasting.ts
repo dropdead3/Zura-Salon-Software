@@ -82,6 +82,23 @@ export function usePayrollForecasting() {
   const { employeeSettings, isLoading: isLoadingSettings } = useEmployeePayrollSettings();
   const { settings: paySchedule, isLoading: isLoadingSchedule } = usePaySchedule();
   const { resolveCommission, isLoading: isLoadingTiers } = useResolveCommission();
+  const { data: allCriteria = [] } = useLevelPromotionCriteria();
+  const { data: allLevels = [] } = useStylistLevels();
+
+  // Fetch employee level slugs
+  const { data: employeeLevels } = useQuery({
+    queryKey: ['payroll-employee-levels', organizationId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('employee_profiles')
+        .select('user_id, stylist_level')
+        .eq('organization_id', organizationId!)
+        .eq('is_active', true);
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!organizationId,
+  });
 
   // Get current pay period
   const currentPeriod = paySchedule ? getCurrentPayPeriod(paySchedule) : null;
