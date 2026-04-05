@@ -55,6 +55,7 @@ import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 import { PageExplainer } from '@/components/ui/PageExplainer';
 import { GraduationWizard } from '@/components/dashboard/settings/GraduationWizard';
 import { useLevelPromotionCriteria, type LevelPromotionCriteria } from '@/hooks/useLevelPromotionCriteria';
+import { useLevelRetentionCriteria } from '@/hooks/useLevelRetentionCriteria';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { generateLevelRequirementsPDF } from '@/components/dashboard/settings/LevelRequirementsPDF';
 
@@ -96,6 +97,7 @@ export default function StylistLevels() {
   const [wizardLevelIndex, setWizardLevelIndex] = useState(0);
 
   const { data: promotionCriteria } = useLevelPromotionCriteria();
+  const { data: retentionCriteria } = useLevelRetentionCriteria();
 
   // Sync local state with database when data changes
   useEffect(() => {
