@@ -243,7 +243,7 @@ function getZuraRetentionDefaults(levelIndex: number): RetentionFormState {
   };
 }
 
-export function GraduationWizard({ open, onOpenChange, levelId, levelLabel, levelIndex }: GraduationWizardProps) {
+export function GraduationWizard({ open, onOpenChange, levelId, levelLabel, levelIndex, totalLevels }: GraduationWizardProps) {
   const [activeTab, setActiveTab] = useState<'promotion' | 'retention'>('promotion');
   const [step, setStep] = useState(0);
   const [form, setForm] = useState<FormState>(INITIAL_STATE);
