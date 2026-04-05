@@ -32,6 +32,7 @@ import { BlurredAmount } from '@/contexts/HideNumbersContext';
 
 interface StylistScorecardProps {
   userId: string | undefined;
+  locationId?: string | null;
 }
 
 function TrendIcon({ direction }: { direction: 'up' | 'down' | 'flat' }) {
@@ -48,7 +49,7 @@ function formatKpiValue(value: number, unit: string) {
   return String(value);
 }
 
-export function StylistScorecard({ userId }: StylistScorecardProps) {
+export function StylistScorecard({ userId, locationId }: StylistScorecardProps) {
   const progress = useLevelProgress(userId);
   const { data: allLevels = [] } = useStylistLevels();
   const { formatCurrency } = useFormatCurrency();
@@ -58,11 +59,12 @@ export function StylistScorecard({ userId }: StylistScorecardProps) {
   const startStr = format(subDays(new Date(), 30), 'yyyy-MM-dd');
   const { data: colorBarData } = useStaffColorBarPerformance(startStr, endStr, undefined, userId);
 
-  // Peer averages
+  // Peer averages — scoped to location if provided
   const peerAverages = useStylistPeerAverages(
     progress?.currentLevelSlug,
     userId,
     progress?.evaluationWindowDays || 30,
+    locationId,
   );
 
   // Find current + next level commission rates
