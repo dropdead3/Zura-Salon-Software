@@ -5,7 +5,7 @@ import { useScrollReveal } from './useScrollReveal';
 const personas = [
   {
     icon: Target,
-    label: 'The Overwhelmed Operator',
+    label: 'The Overwhelmed Owner',
     tagline: 'Working nonstop. Still behind.',
     description: 'You need automation that removes chaos from your day — not another tool to manage.',
   },
@@ -17,14 +17,14 @@ const personas = [
   },
   {
     icon: Rocket,
-    label: 'The Scaling Operator',
+    label: 'The Growing Owner',
     tagline: 'Growing fast. Getting messy.',
     description: 'You need structured systems that hold together at 5, 10, and 20 locations.',
   },
   {
     icon: Crown,
     label: 'The Strategic Leader',
-    tagline: 'Ready for intelligence infrastructure.',
+    tagline: 'Ready for smart tools and clear data.',
     description: 'You need ranked, high-confidence decisions delivered weekly — not dashboards to interpret.',
   },
 ];
@@ -43,7 +43,7 @@ export function PersonaTargeting() {
             No matter where you are, we built for you.
           </h2>
           <p className="font-sans text-base sm:text-lg text-slate-400 max-w-2xl mx-auto">
-            {PLATFORM_NAME} scales with operator maturity — from a single location to a multi-market portfolio.
+            {PLATFORM_NAME} grows with you — from a single location to multiple locations.
           </p>
         </div>
 

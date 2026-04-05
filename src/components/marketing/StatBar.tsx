@@ -48,7 +48,7 @@ export function StatBar() {
     <section className="relative z-10 border-y border-white/[0.06] py-12 sm:py-16">
       <div className="max-w-6xl mx-auto px-6 sm:px-8">
         <p className="font-sans text-xs sm:text-sm text-slate-500 uppercase tracking-[0.15em] text-center mb-8">
-          Trusted by operators scaling real businesses
+          Trusted by salon owners building real businesses
         </p>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-6 sm:gap-0 text-center">
           {stats.map((stat, i) => (

@@ -13,37 +13,37 @@ const solutions = [
   },
   {
     icon: Brain,
-    category: 'Actionable Intelligence',
+    category: 'Smart Recommendations',
     problem: 'What should I fix first?',
-    solution: 'Weekly briefs that rank your problems by impact and tell you exactly which lever to pull — not more dashboards to interpret.',
+    solution: 'Weekly reports that rank your biggest issues and tell you exactly what to fix first — not more dashboards to interpret.',
     span: 'lg:col-span-1',
   },
   {
     icon: Users,
     category: 'Team & Talent',
     problem: 'Why do my best people leave?',
-    solution: 'Performance tiers, transparent career paths, commission architecture, and retention tracking that gives your team a reason to stay.',
+    solution: 'Performance tiers, transparent career paths, commission setup, and retention tracking that gives your team a reason to stay.',
     span: 'lg:col-span-1',
   },
   {
     icon: Shield,
     category: 'Management & Leadership',
     problem: 'I can\'t step away from the business.',
-    solution: 'Drift detection, capacity planning, and delegation tools that free you from being the bottleneck in every decision.',
+    solution: 'Performance tracking, scheduling tools, and management systems that free you from being the bottleneck in every decision.',
     span: 'lg:col-span-2',
   },
   {
     icon: GraduationCap,
     category: 'Onboarding & Training',
     problem: 'New hires take forever to ramp.',
-    solution: 'Structured onboarding flows, a training hub, and standards enforcement so new team members produce in weeks — not months.',
+    solution: 'Step-by-step training, a training hub, and clear standards so new team members produce in weeks — not months.',
     span: 'lg:col-span-2',
   },
   {
     icon: Megaphone,
     category: 'Marketing & Growth',
     problem: 'Marketing feels like throwing darts.',
-    solution: 'Client acquisition campaigns, hiring pipelines, and ROI attribution in one system — so every dollar spent connects to a result.',
+    solution: 'Client acquisition campaigns, hiring pipelines, and tracking what actually works — so every dollar spent connects to a result.',
     span: 'lg:col-span-1',
   },
 ];
@@ -62,7 +62,7 @@ export function SolutionShowcase() {
             Every problem you face. One system to solve it.
           </h2>
           <p className="font-sans text-base sm:text-lg text-slate-400 max-w-2xl mx-auto">
-            {PLATFORM_NAME} replaces scattered tools with structured infrastructure across six core operating domains.
+            {PLATFORM_NAME} replaces scattered tools with one system that covers every part of running your salon.
           </p>
         </div>
 

@@ -8,7 +8,7 @@ export function LogoBar() {
     <section className="relative z-10 border-y border-white/[0.06] py-12 sm:py-16">
       <div className="max-w-7xl mx-auto px-6 sm:px-8 text-center">
         <p className="font-sans text-xs sm:text-sm text-slate-500 uppercase tracking-[0.15em] mb-8">
-          Trusted by operators managing millions in annual revenue
+          Trusted by salon owners managing millions in annual revenue
         </p>
         <div className="flex flex-wrap items-center justify-center gap-8 sm:gap-12">
           {logos.map((name) => (
