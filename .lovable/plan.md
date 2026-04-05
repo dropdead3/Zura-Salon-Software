@@ -1,23 +1,90 @@
 
 
-# Separate Commission Rows from Criteria Table
+# Remaining Gaps and Enhancements — Levels & Commission System
 
-## Problem
-The Service Commission and Retail Commission rows are currently rendered inside the "Promotion — To Reach This Level" section, making them look like KPI thresholds a stylist must meet to level up. They are not criteria — they are the **reward** at each level.
+## Critical: Multi-Tenancy Violation on `stylist_levels`
 
-## Solution
-Move the two commission rows out of the `metrics` array and render them as a distinct visual section **above** the Promotion section header, with their own section header and styling that differentiates them from the governance criteria.
+The `stylist_levels` table has **no `organization_id` column**. Every organization in the platform shares the same set of levels. This is the single most critical gap in the system — it breaks tenant isolation, a non-negotiable architectural rule.
 
-### Design
-- Add a new section header: `💰 Compensation — At This Level` (using a DollarSign icon) with a slightly different background tint (`bg-primary/5` instead of `bg-muted/30`) to visually separate it from the governance sections
-- Render the two commission rows immediately after this header, before the Promotion section
-- Remove the two commission entries from the `metrics` array so they no longer appear under "Promotion"
-- Give commission rows a subtle left border accent (`border-l-2 border-primary/20`) so they read as "informational context" rather than "settings to configure"
+All queries against `stylist_levels` (in `useStylistLevels`, `useResolveCommission`, `useSaveStylistLevels`, etc.) fetch globally with no org filter. The moment a second organization is onboarded, they will see and modify each other's levels.
 
-### File Changed
+**Fix:** Add `organization_id` to `stylist_levels`, backfill existing rows, update the unique constraint from `(slug)` to `(organization_id, slug)`, add RLS policies scoped to org membership, and update all hooks to filter by `orgId`.
+
+---
+
+## Gap 2: Commission Resolution Ignores Location Overrides
+
+`useResolveCommission` resolves commission as: per-stylist override → level default → unassigned. It does **not** check `level_commission_overrides` (the per-location commission table we just created). The table exists in the DB but is dead code — payroll and commission cards will never use location-specific rates.
+
+**Fix:** Extend the resolution chain to: per-stylist override → location commission override → level default → unassigned. Requires passing `locationId` into `resolveCommission()`.
+
+---
+
+## Gap 3: Commission Economics Tab Not Implemented
+
+The approved plan for the Commission Affordability Calculator ("Economics" tab) has not been built. The tab does not exist in the current `TabsList`. This is the feature that answers "can I afford this commission rate?" — a key intelligence gap for operators.
+
+**Fix:** Build `CommissionEconomicsTab.tsx` and `useCommissionEconomics.ts` per the approved plan.
+
+---
+
+## Gap 4: Criteria Override Resolution Not Wired into Scorecard
+
+`useLevelCriteriaOverrides` and `resolveCriteriaValue` exist as hooks, but `useLevelProgress` (which powers the Scorecard and Graduation Tracker) does **not** call them. It reads criteria directly from `level_promotion_criteria` / `level_retention_criteria` with no location override resolution. Location-specific KPI thresholds are therefore ignored during evaluation.
+
+**Fix:** Wire `resolveCriteriaValue` into `useLevelProgress` and `useTeamLevelProgress` so that when a stylist belongs to a specific location, their criteria targets reflect any location/group overrides.
+
+---
+
+## Gap 5: Location Groups Have No Management UI
+
+The `location_groups` table exists and `useLocationGroups` hook is created, but there is no admin UI to create, rename, reorder, or assign locations to groups. The `LocationsSettingsContent` component was supposed to get a "Groups" section but it was not added.
+
+**Fix:** Add a "Location Groups" management section to `LocationsSettingsContent` with CRUD operations and drag-and-drop location assignment.
+
+---
+
+## Enhancement 1: Audit Trail for Commission Rate Changes
+
+When commission rates on `stylist_levels` are changed, there is no audit log. For an enterprise operator, not knowing who changed a commission rate from 45% to 50% (and when) is a compliance gap. The `level_promotions` table logs level movements, but commission rate edits are untracked.
+
+**Fix:** Log commission rate changes to `platform_action_log` via `log_platform_action` RPC (already exists) when saving levels.
+
+---
+
+## Enhancement 2: Stylist-Facing Level Roadmap
+
+Stylists can see their Scorecard (current progress), but there is no view that shows them the full progression ladder — "here's where you are, here's what the next level requires, here's what your commission would be." The PDF export exists for admins, but stylists have no self-service visibility into what they're working toward.
+
+**Fix:** Add a "My Progression" card to the stylist dashboard that renders a simplified level ladder with their current position highlighted and next-level criteria.
+
+---
+
+## Proposed Implementation Order
+
+| Priority | Item | Impact |
+|----------|------|--------|
+| 1 | Multi-tenancy fix (`organization_id` on `stylist_levels`) | Blocks safe multi-org deployment |
+| 2 | Wire location commission overrides into `useResolveCommission` | Makes per-location rates functional |
+| 3 | Wire criteria overrides into `useLevelProgress` | Makes per-location KPI targets functional |
+| 4 | Commission Economics Tab | Key intelligence feature for operators |
+| 5 | Location Groups management UI | Completes enterprise grouping UX |
+| 6 | Audit trail for rate changes | Compliance |
+| 7 | Stylist-facing progression roadmap | Engagement |
+
+### Files Changed
+
 | File | Change |
 |------|--------|
-| `src/components/dashboard/settings/StylistLevelsEditor.tsx` | Extract commission rows from `metrics` array, render as separate "Compensation" section above Promotion in the table body |
+| **Migration** | Add `organization_id` to `stylist_levels`, backfill, update unique constraint + RLS |
+| `src/hooks/useStylistLevels.ts` | Filter all queries by `orgId` |
+| `src/hooks/useResolveCommission.ts` | Add `locationId` param, check `level_commission_overrides` |
+| `src/hooks/useLevelProgress.ts` | Integrate `resolveCriteriaValue` for location-aware thresholds |
+| `src/hooks/useTeamLevelProgress.ts` | Same location-aware override resolution |
+| `src/components/dashboard/settings/CommissionEconomicsTab.tsx` | **New** — Economics calculator |
+| `src/hooks/useCommissionEconomics.ts` | **New** — Revenue-per-level fetcher + margin math |
+| `src/components/dashboard/settings/StylistLevelsEditor.tsx` | Add Economics tab, pass orgId to save |
+| `src/components/dashboard/settings/LocationsSettingsContent.tsx` | Add Location Groups CRUD UI |
 
-**1 file. No database changes.**
+**9 files. 1 migration.**
 
