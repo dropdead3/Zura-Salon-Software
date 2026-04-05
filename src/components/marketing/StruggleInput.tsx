@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, useEffect } from 'react';
+import { useState, useRef, useCallback, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowRight, Loader2, Sparkles, RotateCcw, Calendar } from 'lucide-react';
 import { Link } from 'react-router-dom';
@@ -14,10 +14,17 @@ const DEMO_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/demo-assista
 
 const SUGGESTIONS = [
   "I can't track commissions accurately",
+  "I want to run my commission salon better",
+  "I need booth renter tracking and management",
+  "I want custom commission levels per service and retail",
+  "I need to track color bar costs per service",
+  "I want an AI assistant to handle calls and scheduling",
   "My team keeps quitting",
   "I don't know which services are profitable",
   "Scheduling is a nightmare",
 ];
+
+const DISPLAY_PILL_COUNT = 5;
 
 type FeatureCard = {
   id: string;
@@ -54,6 +61,10 @@ export function StruggleInput() {
   const [isFocused, setIsFocused] = useState(false);
   const [placeholderText, setPlaceholderText] = useState('');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const displayPills = useMemo(() => {
+    const shuffled = [...SUGGESTIONS].sort(() => Math.random() - 0.5);
+    return shuffled.slice(0, DISPLAY_PILL_COUNT);
+  }, []);
   const responseRef = useRef<HTMLDivElement>(null);
 
   const isCoolingDown = Date.now() < cooldownUntil;
@@ -357,7 +368,7 @@ export function StruggleInput() {
             {/* Suggestion pills */}
             {!hasResponse && !isLoading && (
               <div className="flex flex-wrap gap-2 mt-4 pt-4 border-t border-white/[0.06]">
-                {SUGGESTIONS.map((s) => (
+                {displayPills.map((s) => (
                   <button
                     key={s}
                     onClick={() => handleSuggestionClick(s)}
