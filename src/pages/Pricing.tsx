@@ -18,7 +18,7 @@ const monthlyTiers = [
     price: '$99',
     period: '/mo',
     audience: 'For single-location salons with up to 4 team members.',
-    cta: 'Start Free Trial',
+    cta: 'Get a Demo',
     ctaHref: '/demo',
     popular: false,
     features: [
@@ -35,7 +35,7 @@ const monthlyTiers = [
     price: '$200',
     period: '/location/mo',
     audience: 'For growing brands with 2–15 locations.',
-    cta: 'Start Free Trial',
+    cta: 'Get a Demo',
     ctaHref: '/demo',
     popular: true,
     features: [

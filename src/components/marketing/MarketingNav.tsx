@@ -22,6 +22,7 @@ export function MarketingNav() {
   const navLinks = [
     { label: 'Ecosystem', href: '/ecosystem' },
     { label: 'Pricing', href: '/pricing' },
+    { label: 'About', href: '/about' },
   ];
 
   const isActive = (href: string) => location.pathname === href;
@@ -101,7 +102,7 @@ export function MarketingNav() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }}
             transition={{ duration: 0.2 }}
-            className="md:hidden bg-slate-950/95 backdrop-blur-xl border-t border-white/[0.06] px-6 pb-6 pt-4"
+            className="md:hidden fixed inset-0 top-[64px] bg-slate-950 z-50 px-6 pb-6 pt-4 overflow-y-auto"
           >
             <div className="flex flex-col gap-4">
               <SolutionsMobileAccordion onNavigate={() => setMobileOpen(false)} />
