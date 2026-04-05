@@ -5,7 +5,7 @@ import { PLATFORM_NAME } from '@/lib/brand';
 
 export function HeroSection() {
   return (
-    <section className="relative flex flex-col items-center justify-center px-6 sm:px-8 text-center min-h-screen max-w-5xl mx-auto overflow-visible">
+    <section className="relative flex flex-col items-center justify-center px-6 sm:px-8 text-center min-h-[calc(100vh-5rem)] max-w-5xl mx-auto overflow-visible -mt-20 pt-20">
       {/* Ambient glow beam */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[320px] h-[500px] bg-gradient-to-b from-violet-500/20 via-[hsl(var(--mkt-twilight)/0.1)] to-transparent rounded-full blur-[100px] -z-10 mkt-ambient-glow" />
 
