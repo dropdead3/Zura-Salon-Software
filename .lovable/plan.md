@@ -1,70 +1,28 @@
 
 
-# AI Commission Rate Optimizer + Economics Tab Hardening
+# Economics Tab — Bug Fixes & Gaps
 
-## What This Delivers
+## Bugs Found
 
-An "Optimize Rates" button on the Economics tab that sends the current level structure, assumptions, and actual revenue data to an AI edge function. The AI returns specific recommended commission rates per level that hit the owner's target margin while staying competitive with industry benchmarks. Results render inline on the Economics tab with one-click "Apply" to push recommended rates into the What-If simulator.
+### 1. AI Optimizer Error Messages Lost (429/402 swallowed)
+`supabase.functions.invoke` wraps non-2xx responses in a generic `FunctionsHttpError` — the friendly error messages from the edge function ("Rate limit exceeded", "AI credits exhausted") are never surfaced. The toast just shows "Edge Function returned a non-2xx status code."
 
-Additionally: bug fixes and enhancements found during review.
+**Fix:** Replace `supabase.functions.invoke` with a direct `fetch` call (same pattern as `ai-insight-service.ts` already uses in this codebase). This gives access to the response status and body directly.
 
----
+### 2. No Input Validation on Assumptions
+Users can enter negative overhead, margins > 100%, or product cost > 100%. These cause `Infinity`, `NaN`, or division-by-zero in `computeEconomics`. No guard prevents saving nonsensical values.
 
-## Bugs and Gaps Found
+**Fix:** Clamp inputs in `handleAssumptionChange`: overhead ≥ 0, percentages between 0–1 (0%–100%). Also add a guard in `computeEconomics` to return `Infinity` when `variableCostRate ≥ 1`.
 
-1. **No AI recommendation capability** — the Economics tab is purely manual; no intelligence surfaces to suggest what rates *should* be
-2. **What-If has no "Apply to levels" path** — slider adjustments are throwaway; there is no way to commit what-if rates back to the actual level configuration
-3. **Missing retail commission in economics math** — `computeEconomics` only uses `serviceCommissionRate`; retail commission is a real cost that should factor into margin calculations
-4. **Revenue note is misleading** — says "annualized to monthly" but the code divides by 3 (correct for 90 days → monthly); the copy should just say "monthly average from trailing 90 days"
+### 3. Local `formatCurrency` Shadows Design System
+The component defines its own `formatCurrency` (line 70) instead of using `@/lib/format.ts`. This skips the org's currency setting and `BlurredAmount` integration.
 
----
+**Fix:** Remove the local function, import `formatCurrency` from `@/lib/format.ts` with `noCents: true` option.
 
-## Implementation
+### 4. Assumption Save Doesn't Provide Feedback
+`handleSaveAssumptions` calls `saveAssumptions` but shows no success toast. Users don't know if their save worked.
 
-### 1. New Edge Function: `ai-commission-optimizer`
-
-Creates `supabase/functions/ai-commission-optimizer/index.ts`:
-- Receives: levels (with current rates), assumptions (overhead, product cost, target margin), actual revenue per level, stylist counts
-- System prompt includes industry benchmarks (same as `ai-level-analysis`) plus margin math context
-- Uses tool-calling to return structured output:
-  ```
-  {
-    recommendations: [{
-      level_slug: string,
-      current_service_rate: number,
-      recommended_service_rate: number,
-      current_retail_rate: number,
-      recommended_retail_rate: number,
-      rationale: string,
-      projected_margin_at_current_revenue: number
-    }],
-    summary: string,
-    confidence: "high" | "medium" | "low"
-  }
-  ```
-- Handles 429/402 errors properly
-
-### 2. Update `CommissionEconomicsTab.tsx`
-
-- Add "Optimize with Zura" button in the Economics table card header (right side, pill style per `tokens.button.cardAction`)
-- On click: calls the edge function with current data
-- Results render in a new card below the economics table:
-  - Summary banner with confidence badge
-  - Per-level recommendation rows showing current → recommended rate with rationale
-  - "Apply to What-If" button that pushes all recommended rates into the What-If slider state
-- Fix the revenue footnote copy
-
-### 3. Fix Retail Commission Gap in Math
-
-Update `computeEconomics` and `computeMarginAtRevenue` in `useCommissionEconomics.ts`:
-- Accept `retailCommissionRate` as a parameter
-- Include it in `variableCostRate = serviceCommissionRate + retailCommissionRate + product_cost_pct`
-- Update the table to show blended commission impact
-
-### 4. Update Economics Table Columns
-
-- Add "Retail %" column (already in the header but using only service rate in the math)
-- Pass both rates through to `computeEconomics`
+**Fix:** Add a success toast after save.
 
 ---
 
@@ -72,9 +30,8 @@ Update `computeEconomics` and `computeMarginAtRevenue` in `useCommissionEconomic
 
 | File | Change |
 |------|--------|
-| `supabase/functions/ai-commission-optimizer/index.ts` | **New** — AI rate optimization edge function |
-| `src/components/dashboard/settings/CommissionEconomicsTab.tsx` | Add Optimize button, AI results card, fix footnote, pass retail rate |
-| `src/hooks/useCommissionEconomics.ts` | Add `retailCommissionRate` to math functions, export types for AI response |
+| `src/components/dashboard/settings/CommissionEconomicsTab.tsx` | Fix AI fetch (use direct fetch instead of invoke), input validation, import formatCurrency from design system, add save toast |
+| `src/hooks/useCommissionEconomics.ts` | Add guard for variableCostRate ≥ 1 in computeEconomics |
 
-**3 files. 1 new edge function. No database changes.**
+**2 files. No new files. No database changes.**
 
