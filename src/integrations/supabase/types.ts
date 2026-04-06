@@ -6735,6 +6735,35 @@ export type Database = {
           },
         ]
       }
+      employee_pins: {
+        Row: {
+          login_pin: string
+          organization_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          login_pin: string
+          organization_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          login_pin?: string
+          organization_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "employee_pins_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       employee_profiles: {
         Row: {
           active_organization_id: string | null
@@ -6776,7 +6805,6 @@ export type Database = {
           is_super_admin: boolean | null
           location_id: string | null
           location_ids: string[] | null
-          login_pin: string | null
           organization_id: string | null
           phone: string | null
           photo_focal_x: number | null
@@ -6832,7 +6860,6 @@ export type Database = {
           is_super_admin?: boolean | null
           location_id?: string | null
           location_ids?: string[] | null
-          login_pin?: string | null
           organization_id?: string | null
           phone?: string | null
           photo_focal_x?: number | null
@@ -6888,7 +6915,6 @@ export type Database = {
           is_super_admin?: boolean | null
           location_id?: string | null
           location_ids?: string[] | null
-          login_pin?: string | null
           organization_id?: string | null
           phone?: string | null
           photo_focal_x?: number | null
@@ -12134,6 +12160,41 @@ export type Database = {
           },
         ]
       }
+      organization_secrets: {
+        Row: {
+          created_at: string
+          organization_id: string
+          twilio_account_sid: string | null
+          twilio_auth_token: string | null
+          twilio_phone_number: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          organization_id: string
+          twilio_account_sid?: string | null
+          twilio_auth_token?: string | null
+          twilio_phone_number?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          organization_id?: string
+          twilio_account_sid?: string | null
+          twilio_auth_token?: string | null
+          twilio_phone_number?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "organization_secrets_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: true
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       organizations: {
         Row: {
           access_ends_at: string | null
@@ -12184,9 +12245,6 @@ export type Database = {
           time_off_requires_approval: boolean
           timezone: string | null
           trial_ends_at: string | null
-          twilio_account_sid: string | null
-          twilio_auth_token: string | null
-          twilio_phone_number: string | null
           updated_at: string | null
           website_url: string | null
         }
@@ -12239,9 +12297,6 @@ export type Database = {
           time_off_requires_approval?: boolean
           timezone?: string | null
           trial_ends_at?: string | null
-          twilio_account_sid?: string | null
-          twilio_auth_token?: string | null
-          twilio_phone_number?: string | null
           updated_at?: string | null
           website_url?: string | null
         }
@@ -12294,9 +12349,6 @@ export type Database = {
           time_off_requires_approval?: boolean
           timezone?: string | null
           trial_ends_at?: string | null
-          twilio_account_sid?: string | null
-          twilio_auth_token?: string | null
-          twilio_phone_number?: string | null
           updated_at?: string | null
           website_url?: string | null
         }
@@ -24256,6 +24308,7 @@ export type Database = {
         }
         Returns: undefined
       }
+      check_user_has_pin: { Args: { _user_id: string }; Returns: boolean }
       create_booking: {
         Args: {
           p_appointment_date: string
@@ -24455,6 +24508,13 @@ export type Database = {
           missing_swatch: number
         }[]
       }
+      get_team_pin_statuses: {
+        Args: { _organization_id: string }
+        Returns: {
+          has_pin: boolean
+          user_id: string
+        }[]
+      }
       get_user_accessible_organizations: {
         Args: { _user_id: string }
         Returns: string[]
@@ -24537,6 +24597,10 @@ export type Database = {
       }
       revert_price_recommendation: {
         Args: { _recommendation_id: string; _user_id?: string }
+        Returns: undefined
+      }
+      set_employee_pin: {
+        Args: { _pin: string; _target_user_id: string }
         Returns: undefined
       }
       update_booking_status: {

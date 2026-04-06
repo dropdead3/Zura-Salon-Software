@@ -36,13 +36,10 @@ export function useUserPinStatus(userId?: string) {
       if (!targetUserId) return { hasPin: false };
 
       const { data, error } = await supabase
-        .from('employee_profiles')
-        .select('login_pin')
-        .eq('user_id', targetUserId)
-        .single();
+        .rpc('check_user_has_pin', { _user_id: targetUserId });
 
       if (error) throw error;
-      return { hasPin: !!data?.login_pin };
+      return { hasPin: !!data };
     },
     enabled: !!targetUserId,
   });
@@ -60,7 +57,7 @@ export function useSetUserPin() {
       if (!user?.id) throw new Error('Not authenticated');
       if (!/^\d{4}$/.test(pin)) throw new Error('PIN must be exactly 4 digits');
 
-      // Get the employee profile ID
+      // Get the employee profile ID for changelog
       const { data: profile, error: profileError } = await supabase
         .from('employee_profiles')
         .select('id')
@@ -69,11 +66,9 @@ export function useSetUserPin() {
 
       if (profileError) throw profileError;
 
-      // Update the PIN
+      // Set PIN via secure RPC
       const { error: updateError } = await supabase
-        .from('employee_profiles')
-        .update({ login_pin: pin })
-        .eq('user_id', user.id);
+        .rpc('set_employee_pin', { _target_user_id: user.id, _pin: pin });
 
       if (updateError) throw updateError;
 
@@ -130,16 +125,14 @@ export function useAdminSetUserPin() {
 
       if (profileError) throw profileError;
 
-      // Check if target is primary owner (protection in place via trigger, but double-check)
+      // Check if target is primary owner
       if (profile.is_primary_owner && targetUserId !== user.id) {
         throw new Error('Cannot modify the Primary Owner\'s PIN');
       }
 
-      // Update the PIN
+      // Set or clear PIN via secure RPC
       const { error: updateError } = await supabase
-        .from('employee_profiles')
-        .update({ login_pin: pin })
-        .eq('user_id', targetUserId);
+        .rpc('set_employee_pin', { _target_user_id: targetUserId, _pin: pin });
 
       if (updateError) throw updateError;
 
@@ -176,8 +169,6 @@ export function useValidatePin() {
 
   return useMutation({
     mutationFn: async (pin: string): Promise<PinValidationResult | null> => {
-      // Use effectiveOrganization first, fall back to currentOrganization
-      // This handles platform users who haven't selected an org
       const orgId = effectiveOrganization?.id || currentOrganization?.id;
       
       if (!orgId) throw new Error('No organization context');
@@ -190,7 +181,6 @@ export function useValidatePin() {
 
       if (error) throw error;
       
-      // RPC returns an array, get the first result
       return data && data.length > 0 ? data[0] : null;
     },
   });
@@ -218,7 +208,6 @@ export function usePinChangelog(profileId?: string) {
       const { data, error } = await query;
       if (error) throw error;
 
-      // Fetch names for changed_by users
       const changerIds = [...new Set(data?.map(d => d.changed_by) || [])];
       const { data: changers } = await supabase
         .from('employee_profiles')
@@ -243,9 +232,6 @@ export function usePinChangelog(profileId?: string) {
  */
 export function useTeamPinStatus() {
   const { effectiveOrganization, currentOrganization } = useOrganizationContext();
-
-  // Use effectiveOrganization first, fall back to currentOrganization
-  // This handles platform users who haven't selected an org
   const orgId = effectiveOrganization?.id || currentOrganization?.id;
 
   return useQuery({
@@ -253,24 +239,35 @@ export function useTeamPinStatus() {
     queryFn: async () => {
       if (!orgId) return [];
 
-      const { data, error } = await supabase
+      // Get team members
+      const { data: profiles, error: profilesError } = await supabase
         .from('employee_profiles')
-        .select('id, user_id, full_name, display_name, photo_url, is_super_admin, is_primary_owner, login_pin')
+        .select('id, user_id, full_name, display_name, photo_url, is_super_admin, is_primary_owner')
         .eq('organization_id', orgId)
         .eq('is_active', true)
         .eq('is_approved', true)
         .order('full_name');
 
-      if (error) throw error;
+      if (profilesError) throw profilesError;
 
-      return (data || []).map(profile => ({
+      // Get PIN statuses via secure RPC
+      const { data: pinStatuses, error: pinError } = await supabase
+        .rpc('get_team_pin_statuses', { _organization_id: orgId });
+
+      if (pinError) throw pinError;
+
+      const pinMap = new Map(
+        (pinStatuses || []).map((s: { user_id: string; has_pin: boolean }) => [s.user_id, s.has_pin])
+      );
+
+      return (profiles || []).map(profile => ({
         id: profile.id,
         user_id: profile.user_id,
         name: formatDisplayName(profile.full_name || '', profile.display_name),
         photo_url: profile.photo_url,
         is_super_admin: profile.is_super_admin,
         is_primary_owner: profile.is_primary_owner,
-        has_pin: !!profile.login_pin,
+        has_pin: pinMap.get(profile.user_id) || false,
       }));
     },
     enabled: !!orgId,

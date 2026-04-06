@@ -4,8 +4,7 @@
  * Resolves SMS templates from the sms_templates table and sends via Twilio.
  * Falls back to logging if Twilio is not configured.
  * 
- * Twilio credentials are stored per-org in the organizations table
- * (twilio_account_sid, twilio_auth_token, twilio_phone_number).
+ * Twilio credentials are stored per-org in the organization_secrets table.
  */
 
 import { createClient } from "@supabase/supabase-js";
@@ -57,16 +56,16 @@ interface TwilioConfig {
 }
 
 /**
- * Fetch Twilio credentials for an organization.
+ * Fetch Twilio credentials for an organization from organization_secrets.
  */
 async function getOrgTwilioConfig(
   supabase: ReturnType<typeof createClient>,
   organizationId: string
 ): Promise<TwilioConfig | null> {
   const { data } = await supabase
-    .from("organizations")
+    .from("organization_secrets")
     .select("twilio_account_sid, twilio_auth_token, twilio_phone_number")
-    .eq("id", organizationId)
+    .eq("organization_id", organizationId)
     .single();
 
   if (!data?.twilio_account_sid || !data?.twilio_auth_token || !data?.twilio_phone_number) {
