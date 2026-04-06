@@ -354,11 +354,12 @@ function CriteriaComparisonTable({ levels, promotionCriteria, retentionCriteria,
                 {levels.map((level, levelIdx) => {
                   const { promo, retention } = levelData[levelIdx];
                     const isLastLevel = levelIdx === levels.length - 1;
-                    const val = isLastLevel ? null : metric.getValue(promo, retention, levelIdx);
-                  const warn = levelIdx > 0 && !isLastLevel && hasInconsistency(mIdx, levelIdx);
+                    const isBaseLevel = levelIdx === 0;
+                    const val = (isLastLevel || isBaseLevel) ? null : metric.getValue(promo, retention, levelIdx);
+                  const warn = levelIdx > 0 && !isLastLevel && !isBaseLevel && hasInconsistency(mIdx, levelIdx);
                   return (
                     <TableCell key={level.id} className="text-center text-xs">
-                      {isLastLevel ? (
+                      {(isLastLevel || isBaseLevel) ? (
                         <span className="text-muted-foreground/40">—</span>
                       ) : val ? (
                         <span className="flex items-center justify-center gap-1">
