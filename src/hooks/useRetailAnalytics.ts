@@ -182,7 +182,7 @@ export function exportRetailCSV(data: RetailAnalyticsResult, section: 'products'
 // Paginated fetch helper (bypasses 1000-row limit)
 // ---------------------------------------------------------------------------
 async function fetchAllRows<T>(
-  queryBuilder: () => ReturnType<ReturnType<typeof supabase.from>['select']>,
+  queryBuilder: () => any,
   batchSize = 1000,
 ): Promise<T[]> {
   const all: T[] = [];
