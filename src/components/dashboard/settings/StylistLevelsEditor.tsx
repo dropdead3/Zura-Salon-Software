@@ -653,6 +653,8 @@ export function StylistLevelsEditor({ embedded = false }: StylistLevelsEditorPro
         description: l.description || '',
         serviceCommissionRate: formatRate(l.service_commission_rate),
         retailCommissionRate: formatRate(l.retail_commission_rate),
+        hourlyWageEnabled: l.hourly_wage_enabled ?? false,
+        hourlyWage: l.hourly_wage != null ? String(l.hourly_wage) : '',
       }));
       setLevels(localLevels);
     }
@@ -756,6 +758,8 @@ export function StylistLevelsEditor({ embedded = false }: StylistLevelsEditorPro
       description: '',
       serviceCommissionRate: '',
       retailCommissionRate: '',
+      hourlyWageEnabled: false,
+      hourlyWage: '',
     };
     setLevels([...levels, newLevel]);
     setNewLevelName('');
