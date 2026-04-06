@@ -41,6 +41,26 @@ export function RunPayrollWizard({ onComplete, onCancel }: RunPayrollWizardProps
   const { employeeSettings, isLoading: loadingSettings } = useEmployeePayrollSettings();
   const { calculateEmployeeCompensation, calculatePayrollTotals, getWeeksInPeriod } = usePayrollCalculations();
   const { createLocalPayrollRun, isCreatingLocalRun } = usePayroll();
+  const { selectedOrganization } = useOrganizationContext();
+
+  // Fetch employee level slugs for hourly wage fallback
+  const { data: employeeLevelMap } = useQuery({
+    queryKey: ['payroll-wizard-employee-levels', selectedOrganization?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('employee_profiles')
+        .select('user_id, stylist_level')
+        .eq('organization_id', selectedOrganization!.id)
+        .eq('is_active', true);
+      if (error) throw error;
+      const map: Record<string, string | null> = {};
+      for (const row of data || []) {
+        map[row.user_id] = row.stylist_level;
+      }
+      return map;
+    },
+    enabled: !!selectedOrganization?.id,
+  });
 
   // Get active employees for payroll
   const activeEmployees = useMemo(() =>
@@ -76,12 +96,15 @@ export function RunPayrollWizard({ onComplete, onCancel }: RunPayrollWizardProps
       const sales = salesData?.find(s => s.employeeId === settings.employee_id);
       const adjustments = employeeAdjustments[settings.employee_id];
       
+      const levelSlug = employeeLevelMap?.[settings.employee_id] ?? null;
+      
       const compensation = calculateEmployeeCompensation(
         settings,
         hours,
         sales,
         adjustments,
-        weeksInPeriod
+        weeksInPeriod,
+        levelSlug
       );
 
       // Apply commission override if set
