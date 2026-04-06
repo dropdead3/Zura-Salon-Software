@@ -1210,7 +1210,12 @@ export function StylistLevelsEditor({ embedded = false }: StylistLevelsEditorPro
                         {level.retailCommissionRate ? `Retail ${level.retailCommissionRate}%` : '—'}
                       </span>
 
-                      {/* Col 6: Stylist count — center-aligned */}
+                      {/* Col 6: Hourly Wage — center-aligned */}
+                      <span className="text-xs text-muted-foreground text-center hidden sm:block">
+                        {level.hourlyWageEnabled && level.hourlyWage ? `$${level.hourlyWage}/hr` : '—'}
+                      </span>
+
+                      {/* Col 7: Stylist count — center-aligned */}
                       <div className="text-center">
                         {hasStylists && (
                           <span className="text-xs text-muted-foreground">
