@@ -1,55 +1,50 @@
 
 
-# Remaining Gaps & Enhancements: Hourly Wage + Commission Pay
+# Final Gaps: Hourly Wage + Commission Pay Systems
 
 ## Issues Found
 
-### 1. `EmployeeProjection` doesn't carry hourly rate or source flag
-**File:** `src/hooks/usePayrollForecasting.ts`
-The `EmployeeProjection` interface has no `hourlyRate` or `isLevelFallback` field. The `TeamCompensationTable` expanded row hardcodes "80 hrs estimated" text but can't show the actual rate (e.g. "80 hrs × $18/hr") or indicate if the rate came from a level fallback — because that data isn't passed through.
+### 1. RunPayrollWizard doesn't pass `employeeLevelSlug` to `calculateEmployeeCompensation`
+**File:** `src/components/dashboard/payroll/RunPayrollWizard.tsx` (line 76)
+The actual payroll run wizard — the one that generates real paychecks — calls `calculateEmployeeCompensation` without the 6th `employeeLevelSlug` parameter. This means when an owner runs payroll, hourly employees whose rate comes from their stylist level will calculate at $0/hr base pay. This is the most critical bug remaining.
 
-### 2. TeamCompensationTable hardcodes "80 hrs estimated"
-**File:** `src/components/dashboard/payroll/analytics/TeamCompensationTable.tsx` (line 128)
-The expanded Base Pay cell says `80 hrs estimated` without the actual rate. For hourly employees, it should show `80 hrs × $X/hr` and a "(Level Rate)" indicator when using fallback — matching the My Pay card pattern.
+### 2. CompensationBreakdownChart missing `BlurredAmount` on monetary values
+**File:** `src/components/dashboard/payroll/analytics/CompensationBreakdownChart.tsx` (line 131)
+The legend values (`formatCurrencyWhole(item.value)`) and chart tooltip are rendered without `BlurredAmount` wrapping. Per UI Canon, all monetary values must be privacy-wrapped.
 
-### 3. `usePayrollForecasting` missing from `useMemo` dependency array
-**File:** `src/hooks/usePayrollForecasting.ts` (line 310)
-The `useMemo` deps include `resolveCommission` but are missing `allLevels`, `allCriteria`, and `employeeLevels`. This means the projection won't recalculate when levels or employee level assignments change until another dep triggers it.
+### 3. `usePayrollAnalytics` forecast uses median level commission for all employees
+**File:** `src/hooks/usePayrollAnalytics.ts` (lines 206-245)
+The `calculateForecast` function uses the median level's commission rate for every employee, ignoring individual overrides or assigned levels. This produces inaccurate forecasts when team members span multiple levels with different rates.
 
-### 4. `BlurredAmount` missing on TeamCompensationTable monetary values
-**File:** `src/components/dashboard/payroll/analytics/TeamCompensationTable.tsx`
-Per UI Canon, all monetary values must be wrapped in `BlurredAmount`. The table's `formatCurrency` calls render raw dollar amounts without privacy wrapping.
+### 4. `calculateCompensationBreakdown` uses fallback multipliers instead of real data
+**File:** `src/hooks/usePayrollAnalytics.ts` (lines 272-273)
+When `total_base_pay` or `total_service_commissions` are missing from payroll runs, it falls back to `total_gross_pay * 0.55` and `total_commissions * 0.8` — arbitrary ratios that misrepresent the actual compensation mix in the donut chart.
 
-### 5. Duplicate Tips KPI card — low value
-**File:** `src/components/dashboard/payroll/analytics/PayrollKPICards.tsx` (line 179-192)
-"Tips Collected" uses the same `DollarSign` icon as "Next Payroll Forecast". Per design tokens, each KPI should have a distinct icon. Consider using a dedicated icon (e.g. `HandCoins` or `Banknote`).
-
-### 6. `ai-commission-optimizer` edge function may not handle hourly wage data
-The CommissionEconomicsTab now sends `hourly_wage_enabled` and `hourly_wage` in the payload, but the edge function itself may not use these fields in its prompt/logic. Should verify and update if needed.
+### 5. PayrollKPICards `commissionRatio` uses last run data, not current forecast
+**File:** `src/hooks/usePayrollAnalytics.ts` (lines 155-157)
+The "Commission Ratio" KPI is derived from the last completed payroll run, while "Base vs Commission" uses the current forecast. These two KPIs measure different time periods, which could confuse owners comparing them side by side.
 
 ## Plan
 
-### A. Extend `EmployeeProjection` with hourly rate data (1 file)
-- Add `hourlyRate: number | null` and `isLevelHourlyFallback: boolean` to the interface
-- Populate them during the projection calculation in `usePayrollForecasting`
+### A. Wire `employeeLevelSlug` into RunPayrollWizard (1 file)
+- Fetch `employee_profiles` with `stylist_level` for all active employees
+- Pass the matched slug as the 6th arg to `calculateEmployeeCompensation`
+- Add to `useMemo` dependency array
 
-### B. Fix `useMemo` dependency array (1 file)
-- Add `allLevels`, `allCriteria`, `employeeLevels` to the deps in `usePayrollForecasting`
+### B. Add `BlurredAmount` to CompensationBreakdownChart (1 file)
+- Wrap legend values in `BlurredAmount`
+- Wrap tooltip formatter output in a privacy-safe pattern (or disable tooltip values when numbers are hidden)
 
-### C. Enhance TeamCompensationTable expanded row (1 file)
-- Show `X hrs × $Y/hr` for hourly employees using the new `hourlyRate` field
-- Add "(Level Rate)" badge when `isLevelHourlyFallback` is true
-- Wrap all monetary values in `BlurredAmount`
+### C. Use per-employee level rates in analytics forecast (1 file)
+- In `calculateForecast`, look up each employee's assigned level via `employeeLevels` to get their specific commission rate instead of using the median
+- Fall back to median only for employees without an assigned level
 
-### D. Fix duplicate Tips icon (1 file)
-- Change Tips KPI icon from `DollarSign` to a distinct icon (e.g. `Banknote`)
-
-### E. Verify AI optimizer edge function handles hourly wage (1 file)
-- Check the edge function prompt/logic includes hourly wage context
-- Update if it doesn't reference the new fields
+### D. Align commission ratio KPI to current forecast (1 file)
+- Derive `commissionRatio` from `totalCommissionPay / forecast` instead of last run, so both KPIs reference the same time window
 
 ## Summary
-- **~4-5 files modified**
+- **~3 files modified** (`RunPayrollWizard.tsx`, `CompensationBreakdownChart.tsx`, `usePayrollAnalytics.ts`)
 - No database changes
-- Fixes data flow gaps, privacy compliance, and reactivity bugs
+- Fix A is critical — it affects real payroll calculations
+- Fixes B-D are correctness and privacy compliance
 
