@@ -1,53 +1,78 @@
 
 
-# Add Download Dropdown with Staff Level Report
+# Surface Level Progression Status on Team Directory Cards
 
-## Overview
-Replace the single "Download PDF" button in the Level Roadmap action bar with a dropdown menu offering two options:
-1. **Download Roadmap** — the existing level requirements PDF
-2. **Download Staff Report** — a new PDF showing each stylist's current level, readiness status, composite score, recommended next level, and key KPI progress
+## Current State
+
+Level promotion/demotion readiness currently surfaces in **three places**, none of which are the Team Directory:
+
+1. **Graduation Tracker** (`/dashboard/admin/graduation-tracker`) — dedicated page with tabs for Ready, In Progress, At Risk, etc.
+2. **Level Readiness Card** (Analytics Hub) — summary card showing "Ready to Promote" and "Stalled Progression" lists
+3. **Staff Level Report PDF** — downloadable from the Level Roadmap settings page
+
+The **Team Directory** (`/dashboard/directory`) shows each staff member's current level badge (e.g., "Level 2") but gives zero indication of whether they're ready for promotion, at risk of demotion, or stalled.
+
+## What Changes
+
+Add a compact **level status indicator** to each `TeamMemberCard` in the Team Directory, visible only to super admins. This indicator sits next to the existing level badge and communicates:
+
+- **Ready to Promote** — green upward arrow + tooltip with composite score and recommended next level
+- **At Risk / Below Standard** — amber/red downward arrow + tooltip with retention failure details
+- **Stalled** — gray clock icon + tooltip showing time at level (when progression has flatlined 6+ months)
+- **In Progress / No flags** — no indicator shown (keeps cards clean for the majority)
+
+Only stylists/assistants with an assigned level get this treatment. Non-stylist roles are unaffected.
 
 ## Architecture
 
-### Dropdown Button (`LevelRoadmapView.tsx`)
-- Replace the current `<button>` with a `DropdownMenu` (from shadcn) containing two items:
-  - "Level Roadmap" — calls existing `onDownloadPDF`
-  - "Staff Level Report" — calls new `onDownloadStaffReport`
-- Button label changes to "Download" with a chevron-down indicator
+```text
+TeamDirectory.tsx
+  └── useTeamLevelProgress()  ← already exists, used by GraduationTracker
+       └── returns TeamMemberProgress[] with status, compositeScore, nextLevel, retentionFailures
+  └── TeamMemberCard
+       └── NEW: LevelStatusIndicator (inline, next to existing level badge)
+            - Tooltip with details
+            - Click navigates to Graduation Tracker filtered to that user
+```
 
-### New prop and callback
-- Add `onDownloadStaffReport` callback to `LevelRoadmapViewProps`
-- Wire it from `StylistLevelsEditor.tsx` where `useTeamLevelProgress` data is already available (used elsewhere in the editor)
+## Data Flow
 
-### Staff Report PDF (`StaffLevelReportPDF.ts` — new file)
-A new jsPDF-based generator matching the roadmap PDF aesthetic (same header, footer, color palette, typography). Content:
+- `useTeamLevelProgress()` is called once at the `TeamDirectory` page level (only when user is super admin)
+- A `Map<userId, TeamMemberProgress>` is built and passed down to each card
+- No new database queries — the hook already fetches all active stylists with levels
+- The hook is behind `enabled: !!orgId`, so it won't fire for non-authenticated users
 
-- **Header**: Org name, "Staff Level Report", generation date — same centered layout as roadmap PDF
-- **Summary strip**: Total staff count, Ready to Promote count, At Risk count, Below Standard count
-- **Staff table** (one row per stylist, grouped by current level):
-  - Name
-  - Current Level (color-coded)
-  - Status badge (Ready / In Progress / Needs Attention / At Risk / Below Standard / At Top Level)
-  - Composite Score (%)
-  - Recommended Next Level (or "—" if at top / no criteria)
-  - Time at Level
-  - Key gap (the single largest KPI shortfall, if any)
-- Page breaks between level groups if needed
-- Same footer as roadmap PDF ("Confidential — For internal use only")
+## Visual Design
 
-### Data flow
-`StylistLevelsEditor.tsx` already has access to `useTeamLevelProgress()` via the graduation tab. The `onDownloadStaffReport` callback will:
-1. Call `useTeamLevelProgress` data (already cached from the hook)
-2. Pass `TeamMemberProgress[]` + org info to the new PDF generator
-3. Save as `staff-level-report.pdf`
+The indicator appears inline with the existing level badge row (line ~869-879 of TeamDirectory.tsx):
+
+```text
+┌──────────────────────────────────────┐
+│  👤 Avatar    Name                   │
+│              ⏱ 2y 3m  📍 2  [Lvl 2] ▲ Ready  │
+│              (555) 123-4567          │
+│              ✉ 📸                    │
+│  ─────────────────────────────────── │
+│  Extensions · Blonding · Color      │
+└──────────────────────────────────────┘
+```
+
+- `▲ Ready` — small emerald pill with upward chevron, tooltip: "Composite: 94% · Recommended: Level 3"
+- `▼ At Risk` — small rose pill with downward chevron, tooltip: "Revenue below minimum · Grace period active"
+- `⏸ Stalled` — small muted pill, tooltip: "No progression in 8 months"
+
+Uses existing `getLevelColor` for consistency. Icons from Lucide (`TrendingUp`, `TrendingDown`, `Pause`).
 
 ## Files
 
 | File | Action |
 |------|--------|
-| `src/components/dashboard/settings/LevelRoadmapView.tsx` | Replace Download button with `DropdownMenu`, add `onDownloadStaffReport` prop |
-| `src/components/dashboard/settings/StylistLevelsEditor.tsx` | Wire `onDownloadStaffReport` using `useTeamLevelProgress` data |
-| `src/components/dashboard/settings/StaffLevelReportPDF.ts` | **New** — jsPDF generator for the staff level report |
+| `src/pages/dashboard/TeamDirectory.tsx` | Import `useTeamLevelProgress`, build user→progress map, pass to `TeamMemberCard`, render `LevelStatusIndicator` inline next to level badge |
 
-No database changes.
+Single file change. No new components needed (indicator is ~20 lines inline). No database changes.
+
+## Scope Guard
+- Only renders for super admins (gated by existing `isSuperAdmin` prop)
+- Only for stylists/assistants with assigned levels (existing `isStylistOrAssistant` check)
+- Silent for "in progress" / "no criteria" / "at top level" statuses — only surfaces actionable flags
 
