@@ -47,8 +47,8 @@ function hexToRgb(hex: string): [number, number, number] {
   return [parseInt(h.slice(0, 2), 16), parseInt(h.slice(2, 4), 16), parseInt(h.slice(4, 6), 16)];
 }
 
-const MARGIN = 14;
-const PAGE_BOTTOM_MARGIN = 20;
+const MARGIN = 18;
+const PAGE_BOTTOM_MARGIN = 22;
 
 function fmtCurrency(v: number): string {
   return v >= 1000 ? `$${(v / 1000).toFixed(0)}K` : `$${v}`;
@@ -58,7 +58,7 @@ function ensureSpace(doc: jsPDF, y: number, needed: number): number {
   const pageH = doc.internal.pageSize.getHeight();
   if (y + needed > pageH - PAGE_BOTTOM_MARGIN) {
     doc.addPage();
-    return 20;
+    return 22;
   }
   return y;
 }
@@ -77,7 +77,7 @@ function drawRoundedRect(
 }
 
 export function generateLevelRequirementsPDF(options: LevelRequirementsPDFOptions): jsPDF {
-  const { orgName, levels, criteria, retentionCriteria = [], logoDataUrl, commissions = [] } = options;
+  const { orgName, levels, criteria, retentionCriteria = [], commissions = [] } = options;
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
   const pageWidth = doc.internal.pageSize.getWidth();
   const contentWidth = pageWidth - MARGIN * 2;
@@ -86,46 +86,52 @@ export function generateLevelRequirementsPDF(options: LevelRequirementsPDFOption
   const getPromo = (dbId?: string) => criteria.find(c => c.stylist_level_id === dbId && c.is_active);
   const getRetention = (dbId?: string) => retentionCriteria.find(r => r.stylist_level_id === dbId && r.is_active);
 
-  // ─── Header bar ───
-  doc.setFillColor(30, 30, 30);
-  doc.rect(0, 0, pageWidth, 26, 'F');
+  // ─── Centered Header (matching digital preview) ───
+  let y = 22;
 
-  let titleX = MARGIN;
-  if (logoDataUrl) {
-    try {
-      doc.addImage(logoDataUrl, 'PNG', MARGIN, 3, 0, 10);
-      titleX = MARGIN + 34;
-    } catch { /* skip */ }
-  }
-
-  doc.setTextColor(255, 255, 255);
+  doc.setTextColor(30, 30, 30);
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(14);
-  doc.text('Level Graduation Roadmap', titleX, 11);
+  doc.setFontSize(20);
+  const orgNameUpper = orgName.toUpperCase();
+  doc.text(orgNameUpper, pageWidth / 2, y, { align: 'center', charSpace: 1.5 });
+
+  y += 8;
+  doc.setTextColor(160, 160, 160);
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(8);
-  doc.text(orgName, titleX, 18);
-  doc.text(`Generated: ${format(now, 'MMM d, yyyy')}`, titleX, 23);
-  doc.text(`${levels.length} Levels`, pageWidth - MARGIN, 18, { align: 'right' });
+  doc.text('LEVEL GRADUATION ROADMAP', pageWidth / 2, y, { align: 'center', charSpace: 2 });
 
-  let y = 34;
+  y += 6;
+  doc.setTextColor(180, 180, 180);
+  doc.setFontSize(7);
+  doc.text(`Generated ${format(now, 'MMMM d, yyyy')}`, pageWidth / 2, y, { align: 'center' });
+
+  y += 10;
+
+  // Thin separator line
+  doc.setDrawColor(230, 230, 230);
+  doc.setLineWidth(0.3);
+  doc.line(MARGIN + 40, y, pageWidth - MARGIN - 40, y);
+
+  y += 10;
 
   // ─── Timeline ───
   if (levels.length > 1) {
-    const timelineH = 32;
+    const timelineH = 36;
     y = ensureSpace(doc, y, timelineH);
 
-    const nodeR = levels.length > 10 ? 5 : 7;
+    const isCompact = levels.length > 10;
+    const nodeR = isCompact ? 5 : 7;
     const totalNodes = levels.length;
     const usableW = contentWidth - nodeR * 2;
-    const spacing = Math.min(usableW / (totalNodes - 1), 40);
+    const spacing = Math.min(usableW / (totalNodes - 1), 42);
     const totalTimelineW = spacing * (totalNodes - 1);
     const startX = MARGIN + (contentWidth - totalTimelineW) / 2;
-    const nodeY = y + 10;
+    const nodeY = y + 12;
 
-    // Connector line
-    doc.setDrawColor(200, 200, 200);
-    doc.setLineWidth(0.5);
+    // Connector line — thicker
+    doc.setDrawColor(210, 210, 210);
+    doc.setLineWidth(0.8);
     doc.line(startX, nodeY, startX + totalTimelineW, nodeY);
 
     levels.forEach((level, i) => {
@@ -134,64 +140,85 @@ export function generateLevelRequirementsPDF(options: LevelRequirementsPDFOption
       const rgb = hexToRgb(bgHex);
       const isConfigured = criteria.some(c => c.stylist_level_id === level.dbId && c.is_active) || i === 0;
 
-      // Node circle
-      doc.setFillColor(...rgb);
+      // Outer ring for configured levels
       if (isConfigured) {
         doc.setDrawColor(52, 211, 153); // emerald-400
-        doc.setLineWidth(0.8);
+        doc.setLineWidth(0.6);
+        doc.circle(cx, nodeY, nodeR + 1.5, 'D');
       } else {
-        doc.setDrawColor(200, 200, 200);
+        doc.setDrawColor(210, 210, 210);
         doc.setLineWidth(0.5);
+        doc.circle(cx, nodeY, nodeR + 1.5, 'D');
       }
+
+      // Inner filled circle
+      doc.setFillColor(...rgb);
+      doc.setDrawColor(255, 255, 255);
+      doc.setLineWidth(0.8);
       doc.circle(cx, nodeY, nodeR, 'FD');
 
       // Level number
       doc.setTextColor(30, 30, 30);
       doc.setFont('helvetica', 'bold');
-      doc.setFontSize(nodeR > 5 ? 8 : 7);
-      doc.text(`${i + 1}`, cx, nodeY + (nodeR > 5 ? 1 : 0.8), { align: 'center' });
+      doc.setFontSize(isCompact ? 7 : 9);
+      doc.text(`${i + 1}`, cx, nodeY + (isCompact ? 0.8 : 1), { align: 'center' });
 
       // Status dot
       const dotR = 2;
-      const dotX = cx + nodeR * 0.6;
-      const dotY = nodeY + nodeR * 0.6;
+      const dotX = cx + nodeR * 0.65;
+      const dotY = nodeY + nodeR * 0.65;
       if (isConfigured) {
-        doc.setFillColor(16, 185, 129); // emerald-500
-        doc.circle(dotX, dotY, dotR, 'F');
+        doc.setFillColor(16, 185, 129);
+        doc.setDrawColor(255, 255, 255);
+        doc.setLineWidth(0.5);
+        doc.circle(dotX, dotY, dotR, 'FD');
         // checkmark
         doc.setDrawColor(255, 255, 255);
         doc.setLineWidth(0.5);
         doc.line(dotX - 0.8, dotY, dotX - 0.2, dotY + 0.6);
         doc.line(dotX - 0.2, dotY + 0.6, dotX + 0.8, dotY - 0.5);
       } else {
-        doc.setFillColor(251, 191, 36); // amber-400
-        doc.circle(dotX, dotY, dotR, 'F');
+        doc.setFillColor(251, 191, 36);
+        doc.setDrawColor(255, 255, 255);
+        doc.setLineWidth(0.5);
+        doc.circle(dotX, dotY, dotR, 'FD');
         doc.setTextColor(255, 255, 255);
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(5);
         doc.text('!', dotX, dotY + 0.6, { align: 'center' });
       }
 
-      // Level name below
-      doc.setTextColor(100, 100, 100);
-      doc.setFont('helvetica', 'normal');
-      doc.setFontSize(levels.length > 10 ? 5 : 6);
-      const maxLabelW = spacing * 0.9;
-      const labelText = level.label.length > 12 ? level.label.slice(0, 11) + '…' : level.label;
-      doc.text(labelText, cx, nodeY + nodeR + 5, { align: 'center', maxWidth: maxLabelW });
+      // Chevron between nodes
+      if (i < levels.length - 1) {
+        const nextCx = cx + spacing;
+        const midX = (cx + nextCx) / 2;
+        doc.setDrawColor(200, 200, 200);
+        doc.setLineWidth(0.4);
+        doc.line(midX - 1, nodeY - 1.2, midX + 0.5, nodeY);
+        doc.line(midX + 0.5, nodeY, midX - 1, nodeY + 1.2);
+      }
 
-      // Status label
+      // Level name below
+      doc.setTextColor(120, 120, 120);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(isCompact ? 5 : 6);
+      const maxLabelW = spacing * 0.9;
+      const maxChars = isCompact ? 8 : 12;
+      const labelText = level.label.length > maxChars ? level.label.slice(0, maxChars - 1) + '…' : level.label;
+      doc.text(labelText.toUpperCase(), cx, nodeY + nodeR + 6, { align: 'center', maxWidth: maxLabelW, charSpace: 0.3 });
+
+      // Status text
       doc.setFontSize(4.5);
       doc.setTextColor(isConfigured ? 16 : 200, isConfigured ? 185 : 150, isConfigured ? 129 : 0);
-      doc.text(isConfigured ? 'Ready' : 'Incomplete', cx, nodeY + nodeR + 9, { align: 'center' });
+      doc.text(isConfigured ? 'Ready' : 'Incomplete', cx, nodeY + nodeR + 10, { align: 'center' });
     });
 
-    y = nodeY + nodeR + 14;
+    y = nodeY + nodeR + 16;
   }
 
-  // ─── Summary Stats ───
-  y = ensureSpace(doc, y, 22);
-  const configuredCount = levels.filter(l => criteria.some(c => c.stylist_level_id === l.dbId && c.is_active)).length + (levels.length > 0 ? 1 : 0); // +1 for base level
+  // ─── Summary Stats (matching digital's centered card style) ───
+  y = ensureSpace(doc, y, 26);
+  const configuredCount = levels.filter(l => criteria.some(c => c.stylist_level_id === l.dbId && c.is_active)).length + (levels.length > 0 ? 1 : 0);
   const retentionCount = retentionCriteria.filter(r => r.is_active).length;
 
   const statsData = [
@@ -200,21 +227,23 @@ export function generateLevelRequirementsPDF(options: LevelRequirementsPDFOption
     { label: 'Retention Rules', value: `${retentionCount}` },
   ];
 
-  const statBoxW = (contentWidth - 8) / 3;
+  const statGap = 5;
+  const statBoxW = (contentWidth - statGap * 2) / 3;
+  const statBoxH = 22;
   statsData.forEach((stat, i) => {
-    const bx = MARGIN + i * (statBoxW + 4);
-    drawRoundedRect(doc, bx, y, statBoxW, 18, 2, { fill: [248, 248, 250], stroke: [220, 220, 220], lineWidth: 0.3 });
+    const bx = MARGIN + i * (statBoxW + statGap);
+    drawRoundedRect(doc, bx, y, statBoxW, statBoxH, 2.5, { fill: [250, 250, 252], stroke: [225, 225, 225], lineWidth: 0.3 });
     doc.setTextColor(30, 30, 30);
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(16);
-    doc.text(stat.value, bx + statBoxW / 2, y + 10, { align: 'center' });
-    doc.setTextColor(130, 130, 130);
+    doc.setFontSize(18);
+    doc.text(stat.value, bx + statBoxW / 2, y + 12, { align: 'center', charSpace: 0.5 });
+    doc.setTextColor(140, 140, 140);
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(7);
-    doc.text(stat.label, bx + statBoxW / 2, y + 15.5, { align: 'center' });
+    doc.text(stat.label, bx + statBoxW / 2, y + 18, { align: 'center' });
   });
 
-  y += 26;
+  y += statBoxH + 10;
 
   // ─── Per-level detail cards ───
   levels.forEach((level, i) => {
@@ -250,191 +279,247 @@ export function generateLevelRequirementsPDF(options: LevelRequirementsPDFOption
     }
 
     // Estimate card height
-    let cardH = 14; // header + accent bar + padding
-    cardH += 14; // compensation section
+    const innerPadX = 8;
+    let cardH = 16; // accent bar + title row + top padding
+    if (isBase) cardH += 5; // subtitle
+    cardH += 16; // compensation section
     if (kpis.length > 0) {
       const kpiRows = Math.ceil(kpis.length / 4);
-      cardH += 6 + kpiRows * 14;
+      cardH += 8 + kpiRows * 16;
     } else {
-      cardH += 14; // "no KPI" placeholder
+      cardH += 14;
     }
-    if (!isBase && promo) cardH += 10; // eval details
-    if (retention?.retention_enabled) cardH += 14; // retention section
-    cardH += 6; // bottom padding
+    if (!isBase && promo) cardH += 12; // eval details
+    if (retention?.retention_enabled) cardH += 16; // retention section
+    cardH += 4; // bottom padding
 
     y = ensureSpace(doc, y, cardH);
 
-    // Card border
-    const borderColor: [number, number, number] = isConfigured ? [220, 220, 220] : [253, 224, 71];
-    drawRoundedRect(doc, MARGIN, y, contentWidth, cardH, 3, { stroke: borderColor, lineWidth: 0.4 });
+    // Card background & border
+    const borderColor: [number, number, number] = isConfigured ? [225, 225, 225] : [253, 224, 71];
+    drawRoundedRect(doc, MARGIN, y, contentWidth, cardH, 3, { fill: [255, 255, 255], stroke: borderColor, lineWidth: 0.4 });
     if (!isConfigured) {
-      doc.setFillColor(255, 251, 235); // amber-50/20
-      doc.roundedRect(MARGIN, y, contentWidth, cardH, 3, 3, 'F');
+      // Amber tint background
+      doc.setFillColor(255, 251, 235);
+      doc.roundedRect(MARGIN + 0.2, y + 0.2, contentWidth - 0.4, cardH - 0.4, 2.8, 2.8, 'F');
     }
 
-    // Accent bar at top
+    // Accent bar at top — thicker with rounded top
+    const accentH = 2.5;
     doc.setFillColor(...accentRgb);
-    doc.rect(MARGIN + 0.5, y + 0.5, contentWidth - 1, 2, 'F');
+    // Draw accent bar clipped to card top corners
+    doc.roundedRect(MARGIN + 0.2, y + 0.2, contentWidth - 0.4, accentH, 2.8, 2.8, 'F');
+    // Fill below the rounded part to make it a proper bar
+    doc.rect(MARGIN + 0.2, y + 1.5, contentWidth - 0.4, accentH - 1, 'F');
 
-    let cy = y + 7;
+    let cy = y + accentH + 6;
 
-    // Card title
+    // Card title row
     doc.setTextColor(30, 30, 30);
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(10);
-    doc.text(`Level ${i + 1} — ${level.label}`, MARGIN + 6, cy);
+    doc.setFontSize(13);
+    const titleText = `LEVEL ${i + 1} — ${level.label.toUpperCase()}`;
+    doc.text(titleText, MARGIN + innerPadX, cy, { charSpace: 0.5 });
 
     // Status badge
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(6);
+    const badgeText = isConfigured ? 'Configured' : 'Incomplete';
+    const badgeW = doc.getTextWidth(badgeText) + 7;
+    const titleW = doc.getTextWidth(titleText);
+    doc.setFontSize(13);
+    const actualTitleW = doc.getTextWidth(titleText);
+    doc.setFontSize(6);
+    const badgeX = MARGIN + innerPadX + actualTitleW + 5;
+    const badgeY = cy - 3.5;
+
     if (isConfigured) {
-      const badgeText = 'Configured';
-      const bw = doc.getTextWidth(badgeText) + 6;
-      const bx = MARGIN + 6 + doc.getTextWidth(`Level ${i + 1} — ${level.label}`) + 4;
-      doc.setFillColor(209, 250, 229); // emerald-100
-      doc.roundedRect(bx, cy - 3.5, bw, 5, 1.5, 1.5, 'F');
-      doc.setTextColor(21, 128, 61); // emerald-700
-      doc.setFont('helvetica', 'normal');
-      doc.setFontSize(5.5);
-      doc.text(badgeText, bx + 3, cy - 0.3);
+      doc.setFillColor(209, 250, 229);
+      doc.roundedRect(badgeX, badgeY, badgeW, 5, 1.5, 1.5, 'F');
+      doc.setTextColor(21, 128, 61);
     } else {
-      const badgeText = 'Incomplete';
-      const bw = doc.getTextWidth(badgeText) + 6;
-      doc.setFontSize(5.5);
-      const bx = MARGIN + 6 + doc.getTextWidth(`Level ${i + 1} — ${level.label}`) + 4;
-      doc.setFillColor(254, 243, 199); // amber-100
-      doc.roundedRect(bx, cy - 3.5, bw, 5, 1.5, 1.5, 'F');
-      doc.setTextColor(180, 83, 9); // amber-700
-      doc.setFont('helvetica', 'normal');
-      doc.text(badgeText, bx + 3, cy - 0.3);
+      doc.setFillColor(254, 243, 199);
+      doc.roundedRect(badgeX, badgeY, badgeW, 5, 1.5, 1.5, 'F');
+      doc.setTextColor(180, 83, 9);
     }
+    doc.text(badgeText, badgeX + 3.5, cy - 0.8);
 
     if (isBase) {
-      cy += 4;
-      doc.setTextColor(130, 130, 130);
+      cy += 5;
+      doc.setTextColor(140, 140, 140);
       doc.setFont('helvetica', 'normal');
-      doc.setFontSize(6.5);
-      doc.text('Entry Level — Retention Minimums', MARGIN + 6, cy);
+      doc.setFontSize(7);
+      doc.text('Entry Level — Retention Minimums', MARGIN + innerPadX, cy);
     }
 
-    cy += 6;
+    cy += 8;
 
-    // ── Compensation ──
-    doc.setTextColor(160, 160, 160);
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(6);
-    doc.text('COMPENSATION', MARGIN + 6, cy);
-    cy += 4;
-
-    const compParts: string[] = [];
-    if (commission) {
-      if (commission.serviceCommissionRate > 0) compParts.push(`Service: ${commission.serviceCommissionRate}%`);
-      if (commission.retailCommissionRate > 0) compParts.push(`Retail: ${commission.retailCommissionRate}%`);
-      if (commission.hourlyWageEnabled && commission.hourlyWage) compParts.push(`Hourly: $${commission.hourlyWage}/hr`);
-    }
-
-    doc.setTextColor(60, 60, 60);
+    // ── Compensation Section ──
+    doc.setTextColor(170, 170, 170);
     doc.setFont('helvetica', 'normal');
-    doc.setFontSize(7.5);
-    doc.text(compParts.length > 0 ? compParts.join('   ·   ') : 'Not configured', MARGIN + 6, cy);
-    cy += 6;
+    doc.setFontSize(6.5);
+    doc.text('COMPENSATION', MARGIN + innerPadX, cy, { charSpace: 1.5 });
+    cy += 5;
+
+    const compParts: { label: string; value: string }[] = [];
+    if (commission) {
+      if (commission.serviceCommissionRate > 0) compParts.push({ label: 'SERVICE', value: `${commission.serviceCommissionRate}%` });
+      if (commission.retailCommissionRate > 0) compParts.push({ label: 'RETAIL', value: `${commission.retailCommissionRate}%` });
+      if (commission.hourlyWageEnabled && commission.hourlyWage) compParts.push({ label: 'HOURLY', value: `$${commission.hourlyWage}/hr` });
+    }
+
+    if (compParts.length > 0) {
+      let compX = MARGIN + innerPadX;
+      compParts.forEach((part, pi) => {
+        // Label
+        doc.setTextColor(170, 170, 170);
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(6);
+        doc.text(part.label, compX, cy, { charSpace: 0.8 });
+        const labelW = doc.getTextWidth(part.label) + 2;
+        // Value
+        doc.setTextColor(30, 30, 30);
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(9);
+        doc.text(part.value, compX + labelW, cy);
+        const valueW = doc.getTextWidth(part.value);
+        compX += labelW + valueW;
+
+        // Dot separator
+        if (pi < compParts.length - 1) {
+          compX += 4;
+          doc.setTextColor(200, 200, 200);
+          doc.setFont('helvetica', 'normal');
+          doc.setFontSize(7);
+          doc.text('·', compX, cy);
+          compX += 5;
+        }
+      });
+    } else {
+      doc.setTextColor(180, 180, 180);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(7.5);
+      doc.text('No compensation configured', MARGIN + innerPadX, cy);
+    }
+
+    cy += 8;
 
     // ── KPI Requirements ──
     if (kpis.length > 0) {
-      doc.setTextColor(160, 160, 160);
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(6);
-      doc.text(isBase ? 'RETENTION MINIMUMS' : 'GRADUATION REQUIREMENTS', MARGIN + 6, cy);
-      cy += 4;
+      doc.setTextColor(170, 170, 170);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(6.5);
+      doc.text(isBase ? 'RETENTION MINIMUMS' : 'GRADUATION REQUIREMENTS', MARGIN + innerPadX, cy, { charSpace: 1.5 });
+      cy += 5;
 
       const cols = 4;
-      const cellW = (contentWidth - 12) / cols;
-      const cellH = 12;
+      const cellGap = 3;
+      const cellW = (contentWidth - innerPadX * 2 - cellGap * (cols - 1)) / cols;
+      const cellH = 14;
 
       kpis.forEach((kpi, ki) => {
         const col = ki % cols;
         const row = Math.floor(ki / cols);
-        const cx = MARGIN + 6 + col * cellW;
-        const ky = cy + row * (cellH + 2);
+        const cellX = MARGIN + innerPadX + col * (cellW + cellGap);
+        const ky = cy + row * (cellH + 3);
 
-        drawRoundedRect(doc, cx, ky, cellW - 2, cellH, 1.5, { fill: [248, 248, 250], stroke: [235, 235, 235], lineWidth: 0.2 });
+        drawRoundedRect(doc, cellX, ky, cellW, cellH, 2, { fill: [250, 250, 252], stroke: [238, 238, 240], lineWidth: 0.2 });
 
-        doc.setTextColor(150, 150, 150);
+        // KPI label
+        doc.setTextColor(160, 160, 160);
         doc.setFont('helvetica', 'normal');
         doc.setFontSize(5.5);
-        doc.text(kpi.label, cx + 3, ky + 4);
+        doc.text(kpi.label, cellX + 3.5, ky + 5);
 
+        // KPI value
         doc.setTextColor(30, 30, 30);
         doc.setFont('helvetica', 'bold');
-        doc.setFontSize(8);
-        doc.text(kpi.value, cx + 3, ky + 9.5);
+        doc.setFontSize(9);
+        doc.text(kpi.value, cellX + 3.5, ky + 11);
       });
 
       const kpiRows = Math.ceil(kpis.length / cols);
-      cy += kpiRows * (cellH + 2) + 2;
+      cy += kpiRows * (cellH + 3) + 2;
     } else if (!isBase) {
-      doc.setTextColor(160, 160, 160);
+      doc.setTextColor(170, 170, 170);
       doc.setFont('helvetica', 'normal');
-      doc.setFontSize(6.5);
-      doc.text('No KPI requirements configured for this level.', MARGIN + 6, cy + 2);
+      doc.setFontSize(7);
+      doc.text('No KPI requirements configured for this level.', MARGIN + innerPadX, cy + 2);
       cy += 10;
     } else {
       cy += 4;
     }
 
-    // ── Evaluation details ──
+    // ── Evaluation details (dot-separated) ──
     if (!isBase && promo) {
       const evalParts: string[] = [];
       evalParts.push(`${promo.evaluation_window_days}d eval window`);
-      if (promo.tenure_enabled && promo.tenure_days > 0 && !isTop) evalParts.push(`${promo.tenure_days}d tenure`);
+      if (promo.tenure_enabled && promo.tenure_days > 0 && !isTop) evalParts.push(`${promo.tenure_days}d tenure required`);
       evalParts.push(promo.requires_manual_approval ? 'Manual approval' : 'Auto-promote');
 
-      doc.setTextColor(100, 100, 100);
+      doc.setTextColor(110, 110, 110);
       doc.setFont('helvetica', 'normal');
-      doc.setFontSize(6.5);
-      doc.text(evalParts.join('   ·   '), MARGIN + 6, cy);
-      cy += 6;
+      doc.setFontSize(7);
+
+      let evalX = MARGIN + innerPadX;
+      evalParts.forEach((part, pi) => {
+        // Small icon dot
+        doc.setFillColor(180, 180, 180);
+        doc.circle(evalX + 1.5, cy - 1, 0.8, 'F');
+        doc.setTextColor(110, 110, 110);
+        doc.text(part, evalX + 4, cy);
+        evalX += doc.getTextWidth(part) + 10;
+      });
+      cy += 8;
     }
 
     // ── Retention policy ──
     if (retention?.retention_enabled) {
-      doc.setTextColor(160, 160, 160);
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(6);
-      doc.text('RETENTION POLICY', MARGIN + 6, cy);
-      cy += 4;
-
-      const retParts = [
-        `${retention.evaluation_window_days}d eval window`,
-        `${retention.grace_period_days}d grace period`,
-        retention.action_type === 'demotion_eligible' ? 'Demotion eligible' : 'Coaching flag',
-      ];
-
+      doc.setTextColor(170, 170, 170);
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(6.5);
+      doc.text('RETENTION POLICY', MARGIN + innerPadX, cy, { charSpace: 1.5 });
+      cy += 5;
+
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(7);
+      const retParts = [
+        `${retention.evaluation_window_days}d evaluation window`,
+        `${retention.grace_period_days}d grace period`,
+      ];
+      const actionLabel = retention.action_type === 'demotion_eligible' ? 'Demotion eligible' : 'Coaching flag';
       const actionColor: [number, number, number] = retention.action_type === 'demotion_eligible' ? [220, 38, 38] : [217, 119, 6];
-      // First two parts in neutral
-      doc.setTextColor(100, 100, 100);
-      const neutralText = retParts.slice(0, 2).join('   ·   ') + '   ·   ';
-      doc.text(neutralText, MARGIN + 6, cy);
+
+      // Neutral parts
+      doc.setTextColor(110, 110, 110);
+      const neutralText = retParts.join('   ·   ') + '   ·   ';
+      doc.text(neutralText, MARGIN + innerPadX, cy);
       // Action type in color
       const neutralW = doc.getTextWidth(neutralText);
       doc.setTextColor(...actionColor);
-      doc.text(retParts[2], MARGIN + 6 + neutralW, cy);
+      doc.setFont('helvetica', 'bold');
+      doc.text(actionLabel, MARGIN + innerPadX + neutralW, cy);
     }
 
-    y += cardH + 5;
+    y += cardH + 7;
   });
 
-  // ─── Footer on every page ───
+  // ─── Footer on every page (centered, lighter) ───
   const totalPages = doc.getNumberOfPages();
   const pageH = doc.internal.pageSize.getHeight();
   for (let p = 1; p <= totalPages; p++) {
     doc.setPage(p);
+
+    // Separator line
+    doc.setDrawColor(235, 235, 235);
+    doc.setLineWidth(0.3);
+    doc.line(MARGIN, pageH - 14, pageWidth - MARGIN, pageH - 14);
+
     doc.setFontSize(6);
-    doc.setTextColor(170, 170, 170);
+    doc.setTextColor(180, 180, 180);
     doc.setFont('helvetica', 'normal');
-    doc.text(orgName, MARGIN, pageH - 8);
-    doc.text(`Page ${p} of ${totalPages}`, pageWidth - MARGIN, pageH - 8, { align: 'right' });
-    doc.text('Confidential — For internal use only', pageWidth / 2, pageH - 8, { align: 'center' });
+    doc.text(`Confidential — For internal use only  ·  ${orgName}`, pageWidth / 2, pageH - 9, { align: 'center' });
+    doc.text(`Page ${p} of ${totalPages}`, pageWidth / 2, pageH - 5, { align: 'center' });
   }
 
   return doc;
