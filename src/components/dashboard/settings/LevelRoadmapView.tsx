@@ -429,6 +429,7 @@ ${clone.innerHTML}
                   printBreak && 'print:mt-0 print:[page-break-before:always]',
                   level.isConfigured ? 'border-neutral-200' : 'border-amber-200 bg-amber-50/20'
                 )}
+                data-level-card
               >
                 {/* Color accent bar */}
                 <div className={cn('h-1.5', color.bg)} />
