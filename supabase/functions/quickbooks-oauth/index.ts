@@ -77,7 +77,10 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const qbClientId = Deno.env.get('QUICKBOOKS_CLIENT_ID');
     const qbClientSecret = Deno.env.get('QUICKBOOKS_CLIENT_SECRET');
-    const encryptionKey = Deno.env.get('PAYROLL_ENCRYPTION_KEY') || 'default-dev-key';
+    const encryptionKey = Deno.env.get('PAYROLL_ENCRYPTION_KEY');
+    if (!encryptionKey) {
+      return new Response(JSON.stringify({ error: 'PAYROLL_ENCRYPTION_KEY is not configured' }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
     
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
     

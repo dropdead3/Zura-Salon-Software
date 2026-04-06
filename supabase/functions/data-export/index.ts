@@ -22,6 +22,16 @@ Deno.serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const adminClient = createClient(supabaseUrl, supabaseServiceKey);
 
+    // ── Auth: require authenticated org admin ──
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader?.startsWith('Bearer ')) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+    const { data: { user }, error: authError } = await adminClient.auth.getUser(authHeader.replace('Bearer ', ''));
+    if (authError || !user) {
+      return new Response(JSON.stringify({ error: 'Invalid token' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+
     const request: ExportRequest = await req.json();
 
     if (!request.organization_id) {
@@ -29,6 +39,12 @@ Deno.serve(async (req) => {
         JSON.stringify({ error: 'organization_id is required' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
+    }
+
+    // Verify caller is admin of the target org
+    const { data: isAdmin } = await adminClient.rpc('is_org_admin', { _user_id: user.id, _org_id: request.organization_id });
+    if (!isAdmin) {
+      return new Response(JSON.stringify({ error: 'Forbidden: must be org admin' }), { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
     const format = request.format || 'json';
