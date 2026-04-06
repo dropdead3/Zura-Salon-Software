@@ -2652,6 +2652,7 @@ export function StylistLevelsEditor({ embedded = false, onActions }: StylistLeve
               slug: l.slug,
               dbId: l.dbId,
               index: i,
+              isConfigured: l.isConfigured,
             }));
             const commissions = levels.map(l => ({
               dbId: l.dbId,

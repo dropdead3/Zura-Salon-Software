@@ -312,7 +312,7 @@ ${clone.innerHTML}
                       'mt-0.5 text-[9px] font-medium',
                       isConfigured ? 'text-emerald-600' : 'text-amber-600'
                     )}>
-                      {isConfigured ? 'Ready' : 'Incomplete'}
+                      {isConfigured ? 'Configured' : 'Setup Incomplete'}
                     </span>
                   </div>
                   {i < levels.length - 1 && (
@@ -450,11 +450,11 @@ ${clone.innerHTML}
                       </span>
                       {level.isConfigured ? (
                         <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200 text-[10px] px-2 py-0.5 flex-shrink-0">
-                          <Check className="w-2.5 h-2.5 mr-0.5" /> Ready
+                          <Check className="w-2.5 h-2.5 mr-0.5" /> Configured
                         </Badge>
                       ) : (
                         <Badge className="bg-amber-100 text-amber-700 border-amber-200 text-[10px] px-2 py-0.5 flex-shrink-0">
-                          <AlertTriangle className="w-2.5 h-2.5 mr-0.5" /> Incomplete
+                          <AlertTriangle className="w-2.5 h-2.5 mr-0.5" /> Setup Incomplete
                         </Badge>
                       )}
                     </div>

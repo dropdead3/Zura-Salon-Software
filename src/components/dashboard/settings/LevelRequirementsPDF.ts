@@ -13,6 +13,7 @@ interface LevelInfo {
   slug: string;
   dbId?: string;
   index: number;
+  isConfigured?: boolean;
 }
 
 interface LevelCommission {
