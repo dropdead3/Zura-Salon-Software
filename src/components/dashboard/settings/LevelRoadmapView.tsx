@@ -85,8 +85,14 @@ export function LevelRoadmapView({
     return parts.length > 0 ? parts.join(' · ') : 'Not configured';
   };
 
+  const handlePrint = () => {
+    document.body.classList.add('printing-roadmap');
+    window.print();
+    document.body.classList.remove('printing-roadmap');
+  };
+
   return (
-    <div className="fixed inset-0 z-[80] bg-white overflow-auto print:static print:z-auto">
+    <div data-roadmap-print className="fixed inset-0 z-[80] bg-white overflow-auto print:static print:z-auto">
       {/* Sticky action bar — hidden on print */}
       <div className="sticky top-0 z-10 bg-white border-b border-neutral-200 print:hidden">
         <div className="max-w-4xl mx-auto px-6 py-3 flex items-center justify-between">
@@ -100,7 +106,7 @@ export function LevelRoadmapView({
               Download PDF
             </button>
             <button
-              onClick={() => window.print()}
+              onClick={handlePrint}
               className="inline-flex items-center gap-2 h-9 px-4 rounded-full text-sm font-sans font-medium border border-neutral-300 bg-white text-neutral-700 hover:bg-neutral-100 hover:text-neutral-900 transition-colors"
             >
               <Printer className="w-4 h-4" />
