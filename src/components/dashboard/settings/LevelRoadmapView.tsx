@@ -166,7 +166,7 @@ export function LevelRoadmapView({
   .overflow-x-auto { overflow: visible !important; flex-wrap: wrap !important; justify-content: center !important; }
   .overflow-auto { overflow: visible !important; }
 
-  /* Print footer */
+  /* Print footer — running footer at bottom of each page */
   .print-footer {
     position: fixed;
     bottom: 0;
@@ -179,6 +179,8 @@ export function LevelRoadmapView({
     font-family: sans-serif;
     letter-spacing: 0.03em;
   }
+  /* Reserve space so content doesn't overlap the footer */
+  body { margin-bottom: 20mm; }
 </style>
 </head><body>
 <div style="max-width: 760px; margin: 0 auto; padding: 16px 0;">

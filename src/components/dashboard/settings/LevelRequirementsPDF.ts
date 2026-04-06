@@ -460,11 +460,14 @@ export function generateLevelRequirementsPDF(options: LevelRequirementsPDFOption
       const kpiRows = Math.ceil(kpis.length / cols);
       cy += kpiRows * (cellH + 3) + 2;
     } else if (!isBase) {
+      // Styled empty state box matching digital's bg-neutral-50 border-neutral-100 look
+      const emptyBoxH = 10;
+      drawRoundedRect(doc, MARGIN + innerPadX, cy, contentWidth - innerPadX * 2, emptyBoxH, 2, { fill: [250, 250, 252], stroke: [238, 238, 240], lineWidth: 0.2 });
       doc.setTextColor(170, 170, 170);
-      doc.setFont('helvetica', 'normal');
+      doc.setFont('helvetica', 'italic');
       doc.setFontSize(7);
-      doc.text('No KPI requirements configured for this level.', MARGIN + innerPadX, cy + 2);
-      cy += 10;
+      doc.text('No KPI requirements configured for this level.', MARGIN + innerPadX + 4, cy + 6);
+      cy += emptyBoxH + 2;
     } else {
       cy += 4;
     }
