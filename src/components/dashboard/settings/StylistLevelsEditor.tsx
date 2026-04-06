@@ -321,6 +321,7 @@ interface CriteriaComparisonTableProps {
   promotionCriteria: LevelPromotionCriteria[];
   retentionCriteria: LevelRetentionCriteria[];
   onEditLevel: (level: LocalStylistLevel, index: number) => void;
+  onCompensationChange: (index: number, field: 'serviceCommissionRate' | 'retailCommissionRate' | 'hourlyWage' | 'hourlyWageEnabled', value: string | boolean) => void;
 }
 
 const METRIC_TOOLTIPS: Record<string, string> = {
