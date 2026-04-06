@@ -751,8 +751,8 @@ function TeamMemberCard({ member, locations, isSuperAdmin, canViewStrikes, strik
     return locations.find(l => l.id === id)?.name || id;
   };
 
-  // Check if stylist level should be shown (only for stylists and stylist assistants)
-  const isStylistOrAssistant = member.roles.includes('stylist') || member.roles.includes('stylist_assistant');
+  // Check if stylist level should be shown (stylists, assistants, or anyone with an assigned level)
+  const isStylistOrAssistant = member.roles.includes('stylist') || member.roles.includes('stylist_assistant') || !!member.stylist_level;
   
   // Get primary role to display
   const getPrimaryRole = () => {
