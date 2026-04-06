@@ -676,18 +676,24 @@ export function StylistLevelsEditor({ embedded = false }: StylistLevelsEditorPro
 
   useEffect(() => {
     if (dbLevels && !hasChanges) {
-      const localLevels: LocalStylistLevel[] = dbLevels.map((l) => ({
-        id: l.slug,
-        dbId: l.id,
-        slug: l.slug,
-        label: l.label,
-        clientLabel: l.client_label,
-        description: l.description || '',
-        serviceCommissionRate: formatRate(l.service_commission_rate),
-        retailCommissionRate: formatRate(l.retail_commission_rate),
-        hourlyWageEnabled: l.hourly_wage_enabled ?? false,
-        hourlyWage: l.hourly_wage != null ? String(l.hourly_wage) : '',
-      }));
+      const localLevels: LocalStylistLevel[] = dbLevels.map((l) => {
+        const sRate = formatRate(l.service_commission_rate);
+        const rRate = formatRate(l.retail_commission_rate);
+        const hEnabled = l.hourly_wage_enabled ?? false;
+        return {
+          id: l.slug,
+          dbId: l.id,
+          slug: l.slug,
+          label: l.label,
+          clientLabel: l.client_label,
+          description: l.description || '',
+          serviceCommissionRate: sRate,
+          retailCommissionRate: rRate,
+          hourlyWageEnabled: hEnabled,
+          hourlyWage: l.hourly_wage != null ? String(l.hourly_wage) : '',
+          earningsStructure: deriveEarningsStructure(hEnabled, sRate, rRate),
+        };
+      });
       setLevels(localLevels);
     }
   }, [dbLevels, hasChanges]);
