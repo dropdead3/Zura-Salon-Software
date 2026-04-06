@@ -7510,6 +7510,7 @@ export type Database = {
           created_at: string
           feedback: string
           id: string
+          organization_id: string
           submission_id: string
         }
         Insert: {
@@ -7517,6 +7518,7 @@ export type Database = {
           created_at?: string
           feedback: string
           id?: string
+          organization_id: string
           submission_id: string
         }
         Update: {
@@ -7524,9 +7526,17 @@ export type Database = {
           created_at?: string
           feedback?: string
           id?: string
+          organization_id?: string
           submission_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "graduation_feedback_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "graduation_feedback_submission_id_fkey"
             columns: ["submission_id"]
@@ -7538,36 +7548,50 @@ export type Database = {
       }
       graduation_requirements: {
         Row: {
+          applies_to_level_ids: string[] | null
           category: string
           created_at: string
           description: string | null
           display_order: number
           id: string
           is_active: boolean
+          organization_id: string
           title: string
           updated_at: string
         }
         Insert: {
+          applies_to_level_ids?: string[] | null
           category?: string
           created_at?: string
           description?: string | null
           display_order?: number
           id?: string
           is_active?: boolean
+          organization_id: string
           title: string
           updated_at?: string
         }
         Update: {
+          applies_to_level_ids?: string[] | null
           category?: string
           created_at?: string
           description?: string | null
           display_order?: number
           id?: string
           is_active?: boolean
+          organization_id?: string
           title?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "graduation_requirements_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       graduation_submissions: {
         Row: {
@@ -7575,6 +7599,7 @@ export type Database = {
           assistant_notes: string | null
           created_at: string
           id: string
+          organization_id: string
           proof_url: string | null
           requirement_id: string
           reviewed_at: string | null
@@ -7588,6 +7613,7 @@ export type Database = {
           assistant_notes?: string | null
           created_at?: string
           id?: string
+          organization_id: string
           proof_url?: string | null
           requirement_id: string
           reviewed_at?: string | null
@@ -7601,6 +7627,7 @@ export type Database = {
           assistant_notes?: string | null
           created_at?: string
           id?: string
+          organization_id?: string
           proof_url?: string | null
           requirement_id?: string
           reviewed_at?: string | null
@@ -7610,6 +7637,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "graduation_submissions_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "graduation_submissions_requirement_id_fkey"
             columns: ["requirement_id"]
