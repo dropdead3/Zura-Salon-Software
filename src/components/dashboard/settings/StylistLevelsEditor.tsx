@@ -936,7 +936,7 @@ function CriteriaComparisonTable({ levels, promotionCriteria, retentionCriteria,
                 </span>
               </TableCell>
               <TableCell colSpan={levels.length} className="py-3 px-4 bg-muted-strong text-sm text-muted-foreground/60">
-                To reach this level
+                To reach this level · <span className="italic">Level 1 shows retention minimums</span>
               </TableCell>
             </TableRow>
             {metrics.filter(m => m.section === 'promotion').map((metric, mIdx) =>
