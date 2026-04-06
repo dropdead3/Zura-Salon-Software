@@ -340,17 +340,21 @@ const METRIC_TOOLTIPS: Record<string, string> = {
   'Action': 'What happens when a stylist falls below retention thresholds — coaching conversation or demotion eligibility.',
 };
 
-function CriteriaComparisonTable({ levels, promotionCriteria, retentionCriteria, onEditLevel }: CriteriaComparisonTableProps) {
+function CriteriaComparisonTable({ levels, promotionCriteria, retentionCriteria, onEditLevel, onCompensationChange }: CriteriaComparisonTableProps) {
   const { effectiveOrganization } = useOrganizationContext();
   const orgId = effectiveOrganization?.id;
   const queryClient = useQueryClient();
 
-  // Inline editing state
+  // Inline editing state for KPI rows
   const [editingMetric, setEditingMetric] = useState<{ label: string; section: 'promotion' | 'retention' } | null>(null);
   const [editValues, setEditValues] = useState<Record<string, { enabled: boolean; value: string }>>({});
   const [isSavingRow, setIsSavingRow] = useState(false);
   const [isTableFullscreen, setIsTableFullscreen] = useState(false);
   const toggleTableFullscreen = useCallback(() => setIsTableFullscreen(prev => !prev), []);
+
+  // Inline editing state for compensation rows
+  const [editingCompRow, setEditingCompRow] = useState<'serviceCommission' | 'retailCommission' | 'hourlyWage' | null>(null);
+  const [compEditValues, setCompEditValues] = useState<Record<number, string>>({});
 
   const getCriteria = (levelDbId: string | undefined) => ({
     promo: promotionCriteria.find(c => c.stylist_level_id === levelDbId && c.is_active),
