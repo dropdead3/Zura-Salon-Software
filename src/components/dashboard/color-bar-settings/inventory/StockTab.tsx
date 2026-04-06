@@ -6,6 +6,7 @@
  */
 
 import { useMemo, useState, useCallback, useEffect } from 'react';
+import { sanitizeHtml } from '@/lib/sanitize';
 import JSZip from 'jszip';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -835,7 +836,7 @@ export function StockTab({ locationId, pdfExportRef }: StockTabProps) {
                         </div>
                         <div
                           className="p-3 text-sm"
-                          dangerouslySetInnerHTML={{ __html: buildEmailPreviewHtml(group) }}
+                          dangerouslySetInnerHTML={{ __html: sanitizeHtml(buildEmailPreviewHtml(group)) }}
                         />
                       </div>
                     </div>

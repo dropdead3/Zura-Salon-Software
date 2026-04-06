@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { sanitizeHtml } from '@/lib/sanitize';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Star, Clock, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -113,7 +114,7 @@ export function HelpArticleView({
         <CardContent>
           <div
             className="prose prose-slate dark:prose-invert max-w-none"
-            dangerouslySetInnerHTML={{ __html: renderMarkdown(article.content) }}
+            dangerouslySetInnerHTML={{ __html: sanitizeHtml(renderMarkdown(article.content)) }}
           />
         </CardContent>
       </Card>

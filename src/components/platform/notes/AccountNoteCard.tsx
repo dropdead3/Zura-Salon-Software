@@ -1,4 +1,5 @@
 import { format } from 'date-fns';
+import { sanitizeHtml } from '@/lib/sanitize';
 import { tokens } from '@/lib/design-tokens';
 import { Trash2 } from 'lucide-react';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -57,7 +58,7 @@ export function AccountNoteCard({ note, onDelete, isDeleting }: AccountNoteCardP
           
           <div 
             className="text-slate-300 text-sm whitespace-pre-wrap break-words"
-            dangerouslySetInnerHTML={{ __html: highlightedContent }}
+            dangerouslySetInnerHTML={{ __html: sanitizeHtml(highlightedContent) }}
           />
         </div>
         

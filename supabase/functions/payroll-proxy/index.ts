@@ -48,7 +48,10 @@ serve(async (req) => {
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const encryptionKey = Deno.env.get('PAYROLL_ENCRYPTION_KEY') || 'default-dev-key';
+    const encryptionKey = Deno.env.get('PAYROLL_ENCRYPTION_KEY');
+    if (!encryptionKey) {
+      return new Response(JSON.stringify({ error: 'PAYROLL_ENCRYPTION_KEY is not configured' }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
     
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
     

@@ -71,17 +71,28 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Get auth user
+    // Get auth user — REQUIRED
     const authHeader = req.headers.get('Authorization');
-    let userId: string | null = null;
-    if (authHeader) {
-      const { data: { user } } = await supabase.auth.getUser(authHeader.replace('Bearer ', ''));
-      userId = user?.id || null;
+    if (!authHeader?.startsWith('Bearer ')) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
+    const { data: { user: authUser }, error: authError } = await supabase.auth.getUser(authHeader.replace('Bearer ', ''));
+    if (authError || !authUser) {
+      return new Response(JSON.stringify({ error: 'Invalid token' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+    const userId: string = authUser.id;
 
     const importData: ImportRequest = await req.json();
     const { template_id, source_type, entity_type, location_id, organization_id, data, column_mappings, dry_run } = importData;
     
+    // Verify caller is admin of the target org
+    if (organization_id) {
+      const { data: isAdmin } = await supabase.rpc('is_org_admin', { _user_id: authUser.id, _org_id: organization_id });
+      if (!isAdmin) {
+        return new Response(JSON.stringify({ error: 'Forbidden: must be org admin to import data' }), { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
+    }
+
     // Determine target table for entity type (staff goes to imported_staff staging table)
     const targetTable = entity_type === 'staff' ? 'imported_staff' : entity_type;
 

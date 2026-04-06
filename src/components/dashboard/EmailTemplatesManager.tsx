@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { sanitizeHtml } from '@/lib/sanitize';
 import { tokens } from '@/lib/design-tokens';
 import type { Json } from '@/integrations/supabase/types';
 import { Card, CardContent } from '@/components/ui/card';
@@ -786,10 +787,10 @@ export function EmailTemplatesManager() {
                   <div
                     className="transition-opacity duration-300"
                     dangerouslySetInnerHTML={{
-                      __html: renderPreviewHtml(
+                      __html: sanitizeHtml(renderPreviewHtml(
                         previewTemplate.html_body,
                         previewTemplate.variables
-                      ),
+                      )),
                     }}
                   />
                 )}

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { sanitizeHtml } from '@/lib/sanitize';
 import { Button } from '@/components/ui/button';
 import { tokens } from '@/lib/design-tokens';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -112,7 +113,7 @@ export function AgreementStep({ bookingData, onAccept }: AgreementStepProps) {
       <ScrollArea className="h-[300px] border rounded-lg p-4 bg-muted/20">
         <div 
           className="prose prose-sm max-w-none text-foreground"
-          dangerouslySetInnerHTML={{ __html: formatContent(agreement.content) }}
+          dangerouslySetInnerHTML={{ __html: sanitizeHtml(formatContent(agreement.content)) }}
         />
       </ScrollArea>
 
