@@ -907,38 +907,15 @@ export function GraduationWizard({ open, onOpenChange, levelId, levelLabel, leve
               )}
             </>
           ) : (
-            /* ─── Retention Tab Content ─── */
+            /* ─── Retention Tab Content (Simplified — KPIs inherited from promotion) ─── */
             <div className="space-y-4">
-              {/* Persistent Zura Recommended button for retention */}
-              <div className="flex items-center gap-3 rounded-lg border border-primary/20 bg-primary/5 p-3">
-                <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                  <Sparkles className="w-4 h-4 text-primary" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm text-foreground font-medium font-sans">Zura Recommended</p>
-                  <p className="text-xs text-muted-foreground font-sans">
-                    {retForm.retention_enabled
-                      ? 'Reset to industry-standard minimums for this level.'
-                      : 'Apply minimum standards to maintain this level.'}
-                  </p>
-                </div>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="shrink-0 rounded-full h-8 px-3 text-xs border-primary/30 text-primary hover:bg-primary/10 font-sans"
-                  onClick={() => setRetForm(getZuraRetentionDefaults(levelIndex))}
-                >
-                  {retForm.retention_enabled ? 'Reset to Defaults' : 'Apply Defaults'}
-                </Button>
-              </div>
-
               {/* Master toggle */}
               <div className="flex items-center justify-between p-3 rounded-lg border">
                 <div className="flex items-center gap-3">
                   <Shield className="w-4 h-4 text-muted-foreground" />
                   <div>
-                    <p className="text-sm font-medium">Enable Retention Criteria</p>
-                    <p className="text-[10px] text-muted-foreground">Flag stylists who fall below minimums for this level</p>
+                    <p className="text-sm font-medium">Enable Retention Monitoring</p>
+                    <p className="text-[10px] text-muted-foreground">Flag stylists who fall below the level's KPI requirements</p>
                   </div>
                 </div>
                 <Switch
@@ -949,69 +926,25 @@ export function GraduationWizard({ open, onOpenChange, levelId, levelLabel, leve
 
               {retForm.retention_enabled && (
                 <>
-                  <p className={cn(tokens.body.muted, 'text-xs')}>
-                    Set minimums a stylist must maintain. Failing any enabled metric triggers a flag.
-                  </p>
-
-                  {/* Metric toggles */}
-                  {RETENTION_CRITERIA.map(criterion => {
-                    const Icon = criterion.icon;
-                    const enabled = retForm[criterion.enabledKey] as boolean;
-                    const minimum = retForm[criterion.minimumKey] as number;
-                    return (
-                      <div
-                        key={criterion.key}
-                        className={cn(
-                          "rounded-lg border p-3 transition-all",
-                          enabled ? "border-rose-300/50 bg-rose-50/50 dark:border-rose-800/40 dark:bg-rose-950/10" : "border-border bg-transparent"
-                        )}
-                      >
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-3">
-                            <div className={cn(
-                              "w-8 h-8 rounded-lg flex items-center justify-center",
-                              enabled ? "bg-rose-100 dark:bg-rose-950/30" : "bg-muted"
-                            )}>
-                              <Icon className={cn("w-4 h-4", enabled ? "text-rose-600 dark:text-rose-400" : "text-muted-foreground")} />
-                            </div>
-                            <span className={cn("text-sm", enabled ? "text-foreground font-medium" : "text-muted-foreground")}>
-                              {criterion.label}
-                            </span>
-                          </div>
-                          <Switch
-                            checked={enabled}
-                            onCheckedChange={() => setRetField(criterion.enabledKey, !enabled as never)}
-                          />
-                        </div>
-                        {enabled && (
-                          <div className="mt-3 pl-11">
-                            <div className="flex items-center gap-2">
-                              <span className="text-xs text-muted-foreground">Min:</span>
-                              <div className="relative flex-1 max-w-[160px]">
-                                {(criterion.unit === '$' || criterion.unit === '/mo') && (
-                                  <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">$</span>
-                                )}
-                                <Input
-                                  type="number"
-                                  value={minimum || ''}
-                                  onChange={(e) => setRetField(criterion.minimumKey, Number(e.target.value) as never)}
-                                  placeholder={criterion.placeholder}
-                                  className={cn("h-8 text-sm", (criterion.unit === '$' || criterion.unit === '/mo') && "pl-6")}
-                                />
-                              </div>
-                              <span className="text-xs text-muted-foreground">{criterion.unit}</span>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
+                  {/* Inherited KPI note */}
+                  <div className="flex items-center gap-3 rounded-lg border border-border bg-muted/30 p-3">
+                    <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center shrink-0">
+                      <Info className="w-4 h-4 text-muted-foreground" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm text-foreground font-medium font-sans">KPI Minimums Inherited</p>
+                      <p className="text-xs text-muted-foreground font-sans">
+                        Retention thresholds match the Level Requirements configured above. Only the evaluation policy settings below are unique to retention.
+                      </p>
+                    </div>
+                  </div>
 
                   {/* Settings */}
                   <div className="space-y-3 pt-3 border-t border-border/50">
                     <div>
                       <p className="text-sm font-medium">Evaluation Window</p>
-                      <div className="flex gap-2 mt-2">
+                      <p className="text-[10px] text-muted-foreground mb-2">Rolling period used to evaluate retention</p>
+                      <div className="flex gap-2">
                         {EVAL_WINDOWS.map(days => (
                           <button
                             key={days}
