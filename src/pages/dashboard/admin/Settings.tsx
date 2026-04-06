@@ -35,7 +35,7 @@ import {
   Monitor,
   Check,
   Plug,
-  ChevronRight,
+  
   GraduationCap,
   BookOpen,
   Layers,
@@ -185,14 +185,14 @@ function SortableCard({ category, isEditMode, onClick }: SortableCardProps) {
     >
       <Card 
         className={cn(
-          "transition-all relative h-full flex flex-col",
+          "transition-all relative h-[140px]",
           !isEditMode && "cursor-pointer group hover:border-primary/30 hover:shadow-md",
           isEditMode && "border-dashed",
           isDragging && "opacity-50"
         )}
         onClick={!isEditMode ? onClick : undefined}
       >
-        <MetricInfoTooltip description={category.description} className="absolute top-4 right-4 w-4 h-4" />
+        <MetricInfoTooltip description={category.description} className="absolute top-3 right-3 w-4 h-4" />
         {isEditMode && (
           <div 
             {...attributes}
@@ -202,19 +202,12 @@ function SortableCard({ category, isEditMode, onClick }: SortableCardProps) {
             <GripVertical className="w-4 h-4 text-muted-foreground" />
           </div>
         )}
-        <CardHeader className="pb-3">
-          <div className="flex items-center justify-between">
-            <div className={tokens.card.iconBox}>
-              <Icon className={tokens.card.icon} />
-            </div>
-            {!isEditMode && (
-              <ChevronRight className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-colors" />
-            )}
+        <div className="flex flex-col items-center justify-center h-full gap-3 p-4 text-center">
+          <div className={tokens.card.iconBox}>
+            <Icon className={tokens.card.icon} />
           </div>
-        </CardHeader>
-        <CardContent className="flex-1">
-          <CardTitle className={tokens.card.title}>{category.label}</CardTitle>
-        </CardContent>
+          <span className={tokens.card.title}>{category.label}</span>
+        </div>
       </Card>
     </DragFeedback>
   );
