@@ -140,7 +140,7 @@ function ScrollableTableWrapper({ children }: { children: React.ReactNode }) {
   }, [checkScroll]);
 
   return (
-    <div className="relative rounded-xl border bg-card">
+    <div className="relative rounded-xl border bg-card overflow-hidden">
       <div ref={scrollRef} className="overflow-auto max-h-[70vh]">
         {children}
       </div>
