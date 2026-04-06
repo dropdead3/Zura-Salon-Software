@@ -289,6 +289,7 @@ type LocalStylistLevel = {
   hourlyWageEnabled: boolean;
   hourlyWage: string;
   earningsStructure: EarningsStructure;
+  isConfigured: boolean;
 };
 
 function deriveEarningsStructure(hourlyEnabled: boolean, serviceRate: string, retailRate: string): EarningsStructure {
