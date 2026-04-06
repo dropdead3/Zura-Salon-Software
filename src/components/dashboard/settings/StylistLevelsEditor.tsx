@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
 import { DashboardPageHeader } from '@/components/dashboard/DashboardPageHeader';
@@ -1106,7 +1107,7 @@ function CriteriaComparisonTable({ levels, promotionCriteria, retentionCriteria,
             transition={{ duration: 0.15 }}
             className="fixed bottom-20 right-6 z-50 flex items-center gap-2 bg-card/90 backdrop-blur-xl border border-border rounded-xl shadow-[0_8px_32px_-4px_rgba(0,0,0,0.4)] px-4 py-2.5"
           >
-            <span className="text-xs font-display uppercase tracking-wide text-muted-foreground mr-1">{editingMetric}</span>
+            <span className="text-xs font-display uppercase tracking-wide text-muted-foreground mr-1">{editingMetric.label}</span>
             {autoStepAvailable && (
               <button
                 onClick={handleAutoStep}
