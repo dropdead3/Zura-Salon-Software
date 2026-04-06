@@ -259,6 +259,22 @@ interface CriteriaComparisonTableProps {
   onEditLevel: (level: LocalStylistLevel, index: number) => void;
 }
 
+const METRIC_TOOLTIPS: Record<string, string> = {
+  'Revenue': 'Total service revenue generated per evaluation period. Typical range: $3K–$12K/week depending on level and market.',
+  'Retail %': 'Retail product sales as a percentage of total revenue. Industry benchmark: 10–20%.',
+  'Rebooking %': 'Percentage of clients who rebook their next appointment before leaving. Strong salons target 60–80%.',
+  'Avg Ticket': 'Average revenue per completed appointment. Varies by service mix — track trend over time.',
+  'Client Retention': 'Percentage of clients who return within their expected rebooking window. Healthy retention: 70–85%.',
+  'New Clients': 'Number of new clients seen per month. 15–30/mo for growth-stage stylists; lower for senior books.',
+  'Utilization': 'Percentage of available hours that are booked with appointments. Target: 75–90%. Below 70% signals underutilization.',
+  'Rev/Hr': 'Average revenue generated per booked hour of service. Varies by price point — use to compare across team members.',
+  'Tenure': 'Minimum days at current level before promotion eligibility. Typical: 90–180 days between levels.',
+  'Eval Window': 'Time period over which KPI performance is measured for evaluation.',
+  'Approval': 'Whether promotion requires manual manager approval or triggers automatically when thresholds are met.',
+  'Grace Period': 'Days a stylist has to recover performance before the configured action is taken.',
+  'Action': 'What happens when a stylist falls below retention thresholds — coaching conversation or demotion eligibility.',
+};
+
 function CriteriaComparisonTable({ levels, promotionCriteria, retentionCriteria, onEditLevel }: CriteriaComparisonTableProps) {
   const { effectiveOrganization } = useOrganizationContext();
   const orgId = effectiveOrganization?.id;
@@ -627,6 +643,9 @@ function CriteriaComparisonTable({ levels, promotionCriteria, retentionCriteria,
         )}>
           <div className="flex items-center gap-1.5">
             <span>{metric.label}</span>
+            {!isEditingRow && METRIC_TOOLTIPS[metric.label] && (
+              <MetricInfoTooltip description={METRIC_TOOLTIPS[metric.label]} side="right" />
+            )}
             {isEditingRow && (
               <div className="flex items-center gap-1.5 ml-auto">
                 {autoStepAvailable && (
