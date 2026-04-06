@@ -302,6 +302,44 @@ export function LocationsSettingsContent() {
     }));
   };
 
+  // Location Groups state
+  const { data: locationGroups = [], isLoading: loadingGroups } = useLocationGroups();
+  const createGroup = useCreateLocationGroup();
+  const updateGroup = useUpdateLocationGroup();
+  const deleteGroup = useDeleteLocationGroup();
+  const assignToGroup = useAssignLocationToGroup();
+  const [newGroupName, setNewGroupName] = useState('');
+  const [editingGroupId, setEditingGroupId] = useState<string | null>(null);
+  const [editingGroupName, setEditingGroupName] = useState('');
+
+  const groupedLocations = useMemo(() => {
+    const groups = new Map<string | null, Location[]>();
+    groups.set(null, []);
+    for (const g of locationGroups) {
+      groups.set(g.id, []);
+    }
+    for (const loc of locations) {
+      const gid = (loc as any).location_group_id || null;
+      if (!groups.has(gid)) groups.set(null, []);
+      groups.get(gid)?.push(loc) ?? groups.get(null)?.push(loc);
+    }
+    return groups;
+  }, [locations, locationGroups]);
+
+  const handleCreateGroup = () => {
+    if (!newGroupName.trim()) return;
+    const slug = newGroupName.trim().toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+    const orgId = locations[0]?.organization_id;
+    if (!orgId) return;
+    createGroup.mutate({
+      organization_id: orgId,
+      name: newGroupName.trim(),
+      slug,
+      display_order: locationGroups.length + 1,
+    });
+    setNewGroupName('');
+  };
+
   return (
     <div className="space-y-6">
       <Card>
