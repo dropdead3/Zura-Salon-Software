@@ -1437,16 +1437,14 @@ html, body, #root {
   }
 }
 
-/* ===== Custom Scrollbars — Invisible Until Hover ===== */
+/* ===== Custom Scrollbars — Floating Handles, No Gutter ===== */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-  background-color: transparent;
+  width: 6px;
+  height: 6px;
   background: transparent;
 }
 
 ::-webkit-scrollbar-track {
-  background-color: transparent !important;
   background: transparent !important;
 }
 
@@ -1456,20 +1454,24 @@ html, body, #root {
 
 ::-webkit-scrollbar-thumb {
   background: transparent;
-  border-radius: 4px;
-  transition: background 0.3s ease;
+  border-radius: 9999px;
+  border: 1px solid transparent;
+  background-clip: padding-box;
 }
 
 *:hover::-webkit-scrollbar-thumb {
-  background: rgba(0, 0, 0, 0.15);
+  background: rgba(128, 128, 128, 0.3);
+  background-clip: padding-box;
 }
 
 *:hover::-webkit-scrollbar-thumb:hover {
-  background: rgba(0, 0, 0, 0.25);
+  background: rgba(128, 128, 128, 0.45);
+  background-clip: padding-box;
 }
 
 *:hover::-webkit-scrollbar-thumb:active {
-  background: rgba(0, 0, 0, 0.35);
+  background: rgba(128, 128, 128, 0.55);
+  background-clip: padding-box;
 }
 
 /* Firefox — hover-reveal: transparent by default, visible on hover */
@@ -1479,7 +1481,7 @@ html, body, #root {
 }
 
 *:hover {
-  scrollbar-color: rgba(0, 0, 0, 0.15) transparent;
+  scrollbar-color: rgba(128, 128, 128, 0.3) transparent;
 }
 
 /* ===== SYNTHETIC BOLD PREVENTION =====

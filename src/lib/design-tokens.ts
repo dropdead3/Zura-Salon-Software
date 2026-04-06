@@ -194,12 +194,12 @@ export const tokens = {
   scrollbar: {
     /** Base track: hidden by default, fades in on container hover */
     track: 'flex touch-none select-none bg-transparent opacity-0 transition-opacity duration-700 ease-in-out group-hover/scroll:opacity-100',
-    /** Vertical track sizing */
-    trackV: 'h-full w-2 p-[1px]',
-    /** Horizontal track sizing */
-    trackH: 'h-2 flex-col p-[1px]',
-    /** Thumb: rounded pill, muted color with hover lift */
-    thumb: 'relative flex-1 rounded-full bg-muted-foreground/25 hover:bg-muted-foreground/40',
+    /** Vertical track sizing — transparent border creates floating inset */
+    trackV: 'h-full w-2.5 border-l-[3px] border-l-transparent',
+    /** Horizontal track sizing — transparent border creates floating inset */
+    trackH: 'h-2.5 flex-col border-t-[3px] border-t-transparent',
+    /** Thumb: rounded pill, soft floating appearance */
+    thumb: 'relative flex-1 rounded-full bg-foreground/15 hover:bg-foreground/30',
   },
 
   // ========================================
