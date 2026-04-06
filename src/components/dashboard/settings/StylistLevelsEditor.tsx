@@ -71,6 +71,9 @@ import {
   DialogDescription,
 } from '@/components/ui/dialog';
 
+// Track which level cards are expanded
+type ExpandedSet = Set<string>;
+
 interface LevelAnalysisItem {
   title: string;
   description: string;
@@ -1058,19 +1061,27 @@ export function StylistLevelsEditor({ embedded = false }: StylistLevelsEditorPro
                 const hasAnyCriteria = !!promo || !!retention;
                 const promoSummary = promo ? formatCriteriaSummary(promo) : '';
                 const retSummary = retention ? formatRetentionSummary(retention) : '';
+                const isExpanded = expandedLevels.has(level.id) || editingIndex === index;
 
                 return (
                   <div
                     key={level.id}
                     className={cn(
-                      "group rounded-xl bg-card border transition-all duration-200 hover:shadow-sm",
-                      editingIndex === index && "ring-2 ring-primary/50 shadow-sm"
+                      "group rounded-xl bg-card border transition-all duration-200",
+                      editingIndex === index && "ring-2 ring-primary/50 shadow-sm",
+                      !isExpanded && "hover:bg-muted/30"
                     )}
                   >
-                    {/* Header row */}
-                    <div className="flex items-center gap-3 px-4 py-3">
+                    {/* Collapsed header row */}
+                    <div
+                      className="flex items-center gap-3 px-3 py-2 cursor-pointer select-none"
+                      onClick={(e) => {
+                        if ((e.target as HTMLElement).closest('button, input, [role="dialog"]')) return;
+                        toggleExpanded(level.id);
+                      }}
+                    >
                       {/* Reorder */}
-                      <div className="flex flex-col shrink-0">
+                      <div className="flex flex-col shrink-0" onClick={(e) => e.stopPropagation()}>
                         <button
                           className="p-0.5 text-muted-foreground hover:text-foreground disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                           disabled={index === 0}
@@ -1088,13 +1099,13 @@ export function StylistLevelsEditor({ embedded = false }: StylistLevelsEditorPro
                       </div>
 
                       {/* Level badge */}
-                      <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-muted text-muted-foreground shrink-0">
+                      <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-muted text-muted-foreground shrink-0">
                         {index + 1}
                       </span>
 
                       {/* Name & info */}
                       {editingIndex === index ? (
-                        <div className="flex-1 flex items-center gap-2 min-w-0">
+                        <div className="flex-1 flex items-center gap-2 min-w-0" onClick={(e) => e.stopPropagation()}>
                           <Input
                             value={level.label}
                             onChange={(e) => handleRename(index, e.target.value)}
@@ -1125,104 +1136,111 @@ export function StylistLevelsEditor({ embedded = false }: StylistLevelsEditorPro
                           {/* Inline commission rates */}
                           {(level.serviceCommissionRate || level.retailCommissionRate) && (
                             <span className="text-xs text-muted-foreground shrink-0 hidden sm:inline">
-                              {level.serviceCommissionRate ? `Service ${level.serviceCommissionRate}%` : ''}
+                              {level.serviceCommissionRate ? `Svc ${level.serviceCommissionRate}%` : ''}
                               {level.serviceCommissionRate && level.retailCommissionRate ? ' · ' : ''}
-                              {level.retailCommissionRate ? `Retail ${level.retailCommissionRate}%` : ''}
+                              {level.retailCommissionRate ? `Ret ${level.retailCommissionRate}%` : ''}
                             </span>
                           )}
                         </div>
                       )}
 
-                      {/* Right side: count + actions */}
+                      {/* Right side: count + actions + chevron */}
                       {editingIndex !== index && (
-                        <div className="flex items-center gap-2 shrink-0">
+                        <div className="flex items-center gap-1.5 shrink-0">
                           {hasStylists && (
-                            <span className="text-xs text-muted-foreground">
+                            <span className="text-xs text-muted-foreground mr-1">
                               {stylistCount} <span className="hidden sm:inline">stylist{stylistCount !== 1 ? 's' : ''}</span>
                             </span>
                           )}
                           <button
                             className="p-1.5 rounded-md hover:bg-muted transition-colors opacity-60 hover:opacity-100"
-                            onClick={() => setEditingIndex(index)}
+                            onClick={(e) => { e.stopPropagation(); setEditingIndex(index); toggleExpanded(level.id, true); }}
                           >
                             <Pencil className="w-3.5 h-3.5 text-muted-foreground" />
                           </button>
-                          <AlertDialog onOpenChange={(open) => { if (!open) { setDeleteTargetIndex(null); setReassignToSlug(''); } }}>
-                            <AlertDialogTrigger asChild>
-                              <button
-                                className="p-1.5 rounded-md hover:bg-destructive/10 transition-colors opacity-60 hover:opacity-100 disabled:opacity-30"
-                                disabled={levels.length <= 1}
-                                onClick={() => setDeleteTargetIndex(index)}
-                              >
-                                <Trash2 className="w-3.5 h-3.5 text-destructive" />
-                              </button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                              <AlertDialogHeader>
-                                <AlertDialogTitle className="flex items-center gap-2">
-                                  {hasStylists && <AlertTriangle className="w-5 h-5 text-amber-500" />}
-                                  Delete "{level.label}"?
-                                </AlertDialogTitle>
-                                <AlertDialogDescription asChild>
-                                  <div className="space-y-3">
-                                    {hasStylists ? (
-                                      <>
-                                        <div className="p-3 rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900 text-amber-800 dark:text-amber-200">
-                                          <p className="font-medium flex items-center gap-2">
-                                            <AlertTriangle className="w-4 h-4" />
-                                            {stylistCount} stylist{stylistCount !== 1 ? 's are' : ' is'} assigned to this level
-                                          </p>
-                                        </div>
-                                        <div className="space-y-2">
-                                          <label className="text-sm font-medium">Reassign stylists to:</label>
-                                          <Select value={reassignToSlug} onValueChange={setReassignToSlug}>
-                                            <SelectTrigger className="w-full">
-                                              <SelectValue placeholder="Select a level..." />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                              {levels.filter((_, i) => i !== index).map((l) => (
-                                                <SelectItem key={l.id} value={l.id}>{l.label}</SelectItem>
-                                              ))}
-                                            </SelectContent>
-                                          </Select>
-                                        </div>
-                                      </>
-                                    ) : (
-                                      <p>No stylists are currently assigned to this level.</p>
-                                    )}
-                                  </div>
-                                </AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                <AlertDialogAction
-                                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                                  disabled={hasStylists && !reassignToSlug}
-                                  onClick={() => handleDeleteWithReassign(index)}
+                          <div onClick={(e) => e.stopPropagation()}>
+                            <AlertDialog onOpenChange={(open) => { if (!open) { setDeleteTargetIndex(null); setReassignToSlug(''); } }}>
+                              <AlertDialogTrigger asChild>
+                                <button
+                                  className="p-1.5 rounded-md hover:bg-destructive/10 transition-colors opacity-60 hover:opacity-100 disabled:opacity-30"
+                                  disabled={levels.length <= 1}
+                                  onClick={() => setDeleteTargetIndex(index)}
                                 >
-                                  {hasStylists ? 'Reassign & Delete' : 'Delete'}
-                                </AlertDialogAction>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
+                                  <Trash2 className="w-3.5 h-3.5 text-destructive" />
+                                </button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle className="flex items-center gap-2">
+                                    {hasStylists && <AlertTriangle className="w-5 h-5 text-amber-500" />}
+                                    Delete "{level.label}"?
+                                  </AlertDialogTitle>
+                                  <AlertDialogDescription asChild>
+                                    <div className="space-y-3">
+                                      {hasStylists ? (
+                                        <>
+                                          <div className="p-3 rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900 text-amber-800 dark:text-amber-200">
+                                            <p className="font-medium flex items-center gap-2">
+                                              <AlertTriangle className="w-4 h-4" />
+                                              {stylistCount} stylist{stylistCount !== 1 ? 's are' : ' is'} assigned to this level
+                                            </p>
+                                          </div>
+                                          <div className="space-y-2">
+                                            <label className="text-sm font-medium">Reassign stylists to:</label>
+                                            <Select value={reassignToSlug} onValueChange={setReassignToSlug}>
+                                              <SelectTrigger className="w-full">
+                                                <SelectValue placeholder="Select a level..." />
+                                              </SelectTrigger>
+                                              <SelectContent>
+                                                {levels.filter((_, i) => i !== index).map((l) => (
+                                                  <SelectItem key={l.id} value={l.id}>{l.label}</SelectItem>
+                                                ))}
+                                              </SelectContent>
+                                            </Select>
+                                          </div>
+                                        </>
+                                      ) : (
+                                        <p>No stylists are currently assigned to this level.</p>
+                                      )}
+                                    </div>
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                  <AlertDialogAction
+                                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                    disabled={hasStylists && !reassignToSlug}
+                                    onClick={() => handleDeleteWithReassign(index)}
+                                  >
+                                    {hasStylists ? 'Reassign & Delete' : 'Delete'}
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          </div>
+                          {/* Expand chevron */}
+                          <ChevronRight className={cn(
+                            "w-4 h-4 text-muted-foreground transition-transform duration-200",
+                            isExpanded && "rotate-90"
+                          )} />
                         </div>
                       )}
                     </div>
 
                     {/* Expanded content */}
-                    <div className="px-4 pb-4 pt-0 space-y-3">
-                      {/* Description */}
-                      <div className="ml-[3.25rem]">
-                        <Input
-                          value={level.description}
-                          onChange={(e) => handleDescriptionChange(index, e.target.value)}
-                          placeholder="Brief description for tooltip..."
-                          className="h-8 text-xs text-muted-foreground bg-background/50 border focus-visible:ring-1"
-                        />
-                      </div>
+                    {isExpanded && (
+                      <div className="px-4 pb-4 pt-1 space-y-3 border-t border-border/40">
+                        {/* Description */}
+                        <div className="ml-[3.25rem]">
+                          <Input
+                            value={level.description}
+                            onChange={(e) => handleDescriptionChange(index, e.target.value)}
+                            placeholder="Brief description for tooltip..."
+                            className="h-8 text-xs text-muted-foreground bg-background/50 border focus-visible:ring-1"
+                          />
+                        </div>
 
-                      {/* Commission fields in edit mode */}
-                      {editingIndex === index && (
+                        {/* Commission fields */}
                         <div className="ml-[3.25rem] grid grid-cols-2 gap-3">
                           <div className="space-y-1">
                             <label className="text-xs font-medium text-muted-foreground">Service Commission %</label>
@@ -1249,67 +1267,67 @@ export function StylistLevelsEditor({ embedded = false }: StylistLevelsEditorPro
                             />
                           </div>
                         </div>
-                      )}
 
-                      {/* Level Criteria */}
-                      <div className="ml-[3.25rem]">
-                      {level.dbId ? (
-                          hasAnyCriteria ? (
-                            <div className="rounded-lg border border-border/60 bg-muted/30 p-3 space-y-2">
-                              <div className="flex items-center justify-between">
-                                <span className="font-sans text-xs text-foreground flex items-center gap-1.5">
-                                  <Sparkles className="w-3.5 h-3.5 text-primary" />
-                                  Level Criteria
-                                </span>
-                                <button
-                                  onClick={() => {
-                                    setWizardLevelId(level.dbId!);
-                                    setWizardLevelLabel(level.label);
-                                    setWizardLevelIndex(index);
-                                  }}
-                                  className="text-xs text-primary hover:text-primary/80 transition-colors font-sans"
-                                >
-                                  Edit
-                                </button>
+                        {/* Level Criteria */}
+                        <div className="ml-[3.25rem]">
+                        {level.dbId ? (
+                            hasAnyCriteria ? (
+                              <div className="rounded-lg border border-border/60 bg-muted/30 p-3 space-y-2">
+                                <div className="flex items-center justify-between">
+                                  <span className="font-sans text-xs text-foreground flex items-center gap-1.5">
+                                    <Sparkles className="w-3.5 h-3.5 text-primary" />
+                                    Level Criteria
+                                  </span>
+                                  <button
+                                    onClick={() => {
+                                      setWizardLevelId(level.dbId!);
+                                      setWizardLevelLabel(level.label);
+                                      setWizardLevelIndex(index);
+                                    }}
+                                    className="text-xs text-primary hover:text-primary/80 transition-colors font-sans"
+                                  >
+                                    Edit
+                                  </button>
+                                </div>
+                                {promoSummary && (
+                                  <div className="flex items-start gap-2">
+                                    <TrendingUp className="w-3 h-3 text-muted-foreground mt-0.5 shrink-0" />
+                                    <p className="text-xs text-muted-foreground">{promoSummary}</p>
+                                  </div>
+                                )}
+                                {retSummary && (
+                                  <div className="flex items-start gap-2">
+                                    <Shield className="w-3 h-3 text-muted-foreground mt-0.5 shrink-0" />
+                                    <p className="text-xs text-muted-foreground">{retSummary}</p>
+                                  </div>
+                                )}
                               </div>
-                              {promoSummary && (
-                                <div className="flex items-start gap-2">
-                                  <TrendingUp className="w-3 h-3 text-muted-foreground mt-0.5 shrink-0" />
-                                  <p className="text-xs text-muted-foreground">{promoSummary}</p>
+                            ) : (
+                              <button
+                                onClick={() => {
+                                  setWizardLevelId(level.dbId!);
+                                  setWizardLevelLabel(level.label);
+                                  setWizardLevelIndex(index);
+                                }}
+                                className="w-full rounded-lg border-2 border-dashed border-border/60 hover:border-primary/40 bg-muted/20 hover:bg-primary/5 p-3 flex items-center gap-3 transition-all group/cta"
+                              >
+                                <div className="w-8 h-8 rounded-lg bg-muted/60 group-hover/cta:bg-primary/10 flex items-center justify-center transition-colors">
+                                  <Sparkles className="w-4 h-4 text-muted-foreground group-hover/cta:text-primary transition-colors" />
                                 </div>
-                              )}
-                              {retSummary && (
-                                <div className="flex items-start gap-2">
-                                  <Shield className="w-3 h-3 text-muted-foreground mt-0.5 shrink-0" />
-                                  <p className="text-xs text-muted-foreground">{retSummary}</p>
+                                <div className="text-left">
+                                  <p className="text-xs font-sans text-foreground">Set up promotion & retention criteria</p>
+                                  <p className="text-[11px] text-muted-foreground mt-0.5">Define what it takes to reach this level</p>
                                 </div>
-                              )}
-                            </div>
+                              </button>
+                            )
                           ) : (
-                            <button
-                              onClick={() => {
-                                setWizardLevelId(level.dbId!);
-                                setWizardLevelLabel(level.label);
-                                setWizardLevelIndex(index);
-                              }}
-                              className="w-full rounded-lg border-2 border-dashed border-border/60 hover:border-primary/40 bg-muted/20 hover:bg-primary/5 p-3 flex items-center gap-3 transition-all group/cta"
-                            >
-                              <div className="w-8 h-8 rounded-lg bg-muted/60 group-hover/cta:bg-primary/10 flex items-center justify-center transition-colors">
-                                <Sparkles className="w-4 h-4 text-muted-foreground group-hover/cta:text-primary transition-colors" />
-                              </div>
-                              <div className="text-left">
-                                <p className="text-xs font-sans text-foreground">Set up promotion & retention criteria</p>
-                                <p className="text-[11px] text-muted-foreground mt-0.5">Define what it takes to reach this level</p>
-                              </div>
-                            </button>
-                          )
-                        ) : (
-                          <p className="text-xs text-muted-foreground/50 italic">
-                            Save this level to configure criteria
-                          </p>
-                        )}
+                            <p className="text-xs text-muted-foreground/50 italic">
+                              Save this level to configure criteria
+                            </p>
+                          )}
+                        </div>
                       </div>
-                    </div>
+                    )}
                   </div>
                 );
               })}
