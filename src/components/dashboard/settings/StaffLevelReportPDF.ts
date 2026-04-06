@@ -94,16 +94,17 @@ export function generateStaffLevelReportPDF(options: StaffLevelReportOptions): j
 
   doc.setTextColor(30, 30, 30);
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(18);
-  doc.text(orgName.toUpperCase(), pageWidth / 2, y, { align: 'center', charSpace: 1.5 });
+  doc.setFontSize(20);
+  doc.text(orgName.toUpperCase(), pageWidth / 2, y, { align: 'center', charSpace: 1.0 });
 
   y += 7;
   doc.setTextColor(160, 160, 160);
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(8);
-  doc.text('STAFF LEVEL REPORT', pageWidth / 2, y, { align: 'center', charSpace: 2 });
+  doc.text('STAFF LEVEL REPORT', pageWidth / 2, y, { align: 'center', charSpace: 1.2 });
 
   y += 5;
+  doc.setCharSpace(0); // Reset charSpace so it doesn't leak into body text / autoTable
   doc.setTextColor(180, 180, 180);
   doc.setFontSize(7);
   doc.text(`Generated ${format(now, 'MMMM d, yyyy')}`, pageWidth / 2, y, { align: 'center' });
