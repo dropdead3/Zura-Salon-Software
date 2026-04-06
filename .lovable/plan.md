@@ -1,32 +1,38 @@
 
 
-# Replace Base-Level Promotion Dashes with "N/A" Indicator
+# Improve Table Column Headers: Level Numbers + Icon Swap
 
-## Problem
+## Changes
 
-The base level (Level 1 / index 0) cannot have promotion criteria — there's no level below it to promote from. Currently these cells show `—` dashes, identical to unconfigured cells elsewhere, which misleads users into thinking they can or should configure them.
-
-## Solution
-
-Replace the `—` dash in base-level promotion cells with a styled `N/A` label (or `×` if preferred). This clearly communicates "not applicable" vs "not yet set."
-
-### Change in `StylistLevelsEditor.tsx`
-
-**Line 591** — the `isPromotionSkip` branch for read-only base-level cells:
+### 1. Add level number above each level name
+Show "Level 1", "Level 2", etc. as a small kicker above the level name in each column header.
 
 ```tsx
-// Before
-<span className="text-muted-foreground/40">—</span>
-
-// After
-<span className="text-muted-foreground/30 text-xs select-none">N/A</span>
+<div className="flex flex-col items-center gap-2">
+  <span className="text-[10px] font-display uppercase tracking-widest text-muted-foreground/50">
+    Level {idx + 1}
+  </span>
+  <span className="text-sm font-medium">{level.label}</span>
+  ...
+</div>
 ```
 
-This uses smaller, lighter text to visually distinguish "not applicable" from the clickable "Configure" and unconfigured `—` states in other columns.
+### 2. Replace ShieldCheck icon with a more appropriate indicator
+The shield icon doesn't communicate "retention monitoring" intuitively. Replace it with a small colored dot indicator — green when retention is active, gray when off. This is cleaner and more semantically clear.
 
-### Files Modified
+```tsx
+// Before: <ShieldCheck className="w-3.5 h-3.5 ..." />
+// After: simple status dot
+<span className={cn(
+  "w-2 h-2 rounded-full",
+  retentionActive ? "bg-emerald-500" : "bg-muted-foreground/20"
+)} />
+```
 
-- `src/components/dashboard/settings/StylistLevelsEditor.tsx` — one line change at ~591
+The tooltip explaining retention status remains unchanged.
 
-### No database changes.
+## File Modified
+- `src/components/dashboard/settings/StylistLevelsEditor.tsx` — column header updates (~lines 700–737)
+
+## No database changes.
 
