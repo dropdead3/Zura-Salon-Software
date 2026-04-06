@@ -58,6 +58,7 @@ import { useLevelPromotionCriteria, type LevelPromotionCriteria } from '@/hooks/
 import { useLevelRetentionCriteria, type LevelRetentionCriteria } from '@/hooks/useLevelRetentionCriteria';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { generateLevelRequirementsPDF } from '@/components/dashboard/settings/LevelRequirementsPDF';
+import { getLevelColor } from '@/lib/level-colors';
 import { TeamCommissionRoster } from '@/components/dashboard/settings/TeamCommissionRoster';
 import { LocationOverridesTab } from '@/components/dashboard/settings/LocationOverridesTab';
 import { CommissionEconomicsTab } from '@/components/dashboard/settings/CommissionEconomicsTab';
@@ -1057,12 +1058,71 @@ export function StylistLevelsEditor({ embedded = false }: StylistLevelsEditorPro
                 />
               )}
 
-              {/* Quick stats row */}
+              {/* Quick stats row + Add Level button */}
               {levels.length > 0 && (
-                <div className="flex items-center gap-4 text-sm text-muted-foreground pb-2">
-                  <span>{levels.length} level{levels.length !== 1 ? 's' : ''}</span>
-                  <span className="text-border">·</span>
-                  <span>{totalAssigned} stylist{totalAssigned !== 1 ? 's' : ''} assigned</span>
+                <div className="flex items-center justify-between pb-2">
+                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                    <span>{levels.length} level{levels.length !== 1 ? 's' : ''}</span>
+                    <span className="text-border">·</span>
+                    <span>{totalAssigned} stylist{totalAssigned !== 1 ? 's' : ''} assigned</span>
+                  </div>
+                  {!isAddingNew && (
+                    <Button
+                      variant="outline"
+                      size={tokens.button.inline}
+                      className="h-7 border-dashed text-xs"
+                      onClick={() => setIsAddingNew(true)}
+                    >
+                      <Plus className="w-3.5 h-3.5 mr-1" />
+                      Add Level
+                    </Button>
+                  )}
+                </div>
+              )}
+
+              {/* Inline add-new form */}
+              {isAddingNew && (
+                <div className="flex items-center gap-3 px-4 py-3 rounded-xl border-2 border-dashed border-primary/30 bg-primary/5">
+                  <div className="w-[1.75rem]" />
+                  <span className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center text-xs font-medium text-primary shrink-0">
+                    {levels.length + 1}
+                  </span>
+                  <Input
+                    value={newLevelName}
+                    onChange={(e) => setNewLevelName(e.target.value)}
+                    placeholder="Enter level name..."
+                    className="h-8 text-sm flex-1"
+                    autoFocus
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') handleAddNew();
+                      if (e.key === 'Escape') {
+                        setIsAddingNew(false);
+                        setNewLevelName('');
+                      }
+                    }}
+                  />
+                  <div className="flex items-center gap-1">
+                    <Button
+                      variant="ghost"
+                      size={tokens.button.inline}
+                      className="h-8"
+                      onClick={handleAddNew}
+                      disabled={!newLevelName.trim()}
+                    >
+                      Add
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size={tokens.button.inline}
+                      className="h-8 px-2"
+                      onClick={() => {
+                        setIsAddingNew(false);
+                        setNewLevelName('');
+                      }}
+                    >
+                      <X className="w-4 h-4" />
+                    </Button>
+                  </div>
                 </div>
               )}
 
@@ -1075,6 +1135,7 @@ export function StylistLevelsEditor({ embedded = false }: StylistLevelsEditorPro
                 const promoSummary = promo ? formatCriteriaSummary(promo) : '';
                 const retSummary = retention ? formatRetentionSummary(retention) : '';
                 const isExpanded = expandedLevels.has(level.id) || editingIndex === index;
+                const levelColor = getLevelColor(index, levels.length);
 
                 return (
                   <div
@@ -1094,7 +1155,7 @@ export function StylistLevelsEditor({ embedded = false }: StylistLevelsEditorPro
                       }}
                     >
                       {/* Reorder */}
-                      <div className="flex flex-col shrink-0" onClick={(e) => e.stopPropagation()}>
+                      <div className="flex flex-col shrink-0 opacity-40 group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
                         <button
                           className="p-0.5 text-muted-foreground hover:text-foreground disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                           disabled={index === 0}
@@ -1111,8 +1172,9 @@ export function StylistLevelsEditor({ embedded = false }: StylistLevelsEditorPro
                         </button>
                       </div>
 
-                      {/* Level badge */}
-                      <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-muted text-muted-foreground shrink-0">
+                      {/* Level color dot + badge */}
+                      <span className={cn("w-2 h-2 rounded-full shrink-0", levelColor.bg)} />
+                      <span className={cn("px-2 py-0.5 rounded-full text-xs font-medium shrink-0", levelColor.bg, levelColor.text)}>
                         {index + 1}
                       </span>
 
@@ -1140,7 +1202,7 @@ export function StylistLevelsEditor({ embedded = false }: StylistLevelsEditorPro
                         </div>
                       ) : (
                         <div className="flex-1 flex items-center gap-3 min-w-0">
-                          <span className="font-medium text-sm truncate">{level.label}</span>
+                          <span className="font-display text-xs tracking-wide truncate">{level.label}</span>
                           {index === 0 && (
                             <span className="px-2 py-0.5 rounded-full text-[11px] font-medium bg-primary/10 text-primary shrink-0">
                               Entry
@@ -1242,7 +1304,12 @@ export function StylistLevelsEditor({ embedded = false }: StylistLevelsEditorPro
 
                     {/* Expanded content */}
                     {isExpanded && (
-                      <div className="px-4 pb-4 pt-1 space-y-3 border-t border-border/40">
+                      <div className={cn("px-4 pb-4 pt-1 space-y-3 border-t border-border/40", isExpanded && "border-l-2")} style={{ borderLeftColor: `var(--${levelColor.bg.includes('amber-500') ? 'primary' : 'border'})` }}>
+                        {/* Details label */}
+                        <div className="ml-[3.25rem] flex items-center gap-2 pt-1">
+                          <span className="text-[11px] font-display tracking-wide text-muted-foreground">Details</span>
+                          <div className="flex-1 h-px bg-border/40" />
+                        </div>
                         {/* Description */}
                         <div className="ml-[3.25rem]">
                           <Input
