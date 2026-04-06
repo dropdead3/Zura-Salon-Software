@@ -58,7 +58,7 @@ import { useLevelPromotionCriteria, type LevelPromotionCriteria } from '@/hooks/
 import { useLevelRetentionCriteria, type LevelRetentionCriteria } from '@/hooks/useLevelRetentionCriteria';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { generateLevelRequirementsPDF } from '@/components/dashboard/settings/LevelRequirementsPDF';
-import { getLevelColor } from '@/lib/level-colors';
+
 import { TeamCommissionRoster } from '@/components/dashboard/settings/TeamCommissionRoster';
 import { LocationOverridesTab } from '@/components/dashboard/settings/LocationOverridesTab';
 import { CommissionEconomicsTab } from '@/components/dashboard/settings/CommissionEconomicsTab';
@@ -1135,7 +1135,7 @@ export function StylistLevelsEditor({ embedded = false }: StylistLevelsEditorPro
                 const promoSummary = promo ? formatCriteriaSummary(promo) : '';
                 const retSummary = retention ? formatRetentionSummary(retention) : '';
                 const isExpanded = expandedLevels.has(level.id) || editingIndex === index;
-                const levelColor = getLevelColor(index, levels.length);
+                
 
                 return (
                   <div
@@ -1172,9 +1172,8 @@ export function StylistLevelsEditor({ embedded = false }: StylistLevelsEditorPro
                         </button>
                       </div>
 
-                      {/* Level color dot + badge */}
-                      <span className={cn("w-2 h-2 rounded-full shrink-0", levelColor.bg)} />
-                      <span className={cn("px-2 py-0.5 rounded-full text-xs font-medium shrink-0", levelColor.bg, levelColor.text)}>
+                      {/* Level badge */}
+                      <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-muted text-muted-foreground shrink-0">
                         {index + 1}
                       </span>
 
