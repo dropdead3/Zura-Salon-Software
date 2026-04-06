@@ -195,9 +195,9 @@ export function useWeeklyAssignments(enrollmentId: string | undefined, currentDa
       return null;
     }
 
-    const { data: urlData } = supabase.storage
+    const { data: urlData } = await supabase.storage
       .from('proof-uploads')
-      .getPublicUrl(fileName);
+      .createSignedUrl(fileName, 60 * 60 * 24 * 30); // 30 day signed URL
 
     // Update or create completion record with proof URL
     const existing = completions.find((c) => c.assignment_id === assignmentId);
@@ -205,7 +205,7 @@ export function useWeeklyAssignments(enrollmentId: string | undefined, currentDa
     if (existing) {
       await supabase
         .from('weekly_assignment_completions')
-        .update({ proof_url: urlData.publicUrl })
+        .update({ proof_url: urlData?.signedUrl || '' })
         .eq('id', existing.id);
     } else {
       const { data } = await supabase
@@ -214,7 +214,7 @@ export function useWeeklyAssignments(enrollmentId: string | undefined, currentDa
           enrollment_id: enrollmentId,
           assignment_id: assignmentId,
           is_complete: false,
-          proof_url: urlData.publicUrl,
+          proof_url: urlData?.signedUrl || '',
         })
         .select()
         .single();
@@ -224,7 +224,7 @@ export function useWeeklyAssignments(enrollmentId: string | undefined, currentDa
       }
     }
 
-    return urlData.publicUrl;
+    return urlData?.signedUrl || '';
   };
 
   const getAssignmentCompletion = (assignmentId: string): WeeklyAssignmentCompletion | undefined => {

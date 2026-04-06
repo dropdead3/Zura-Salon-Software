@@ -131,9 +131,9 @@ export default function ProgramResourcesEditor() {
       return;
     }
 
-    const { data: urlData } = supabase.storage
+    const { data: urlData } = await supabase.storage
       .from('proof-uploads')
-      .getPublicUrl(filePath);
+      .createSignedUrl(filePath, 60 * 60 * 24 * 30); // 30 day signed URL
 
     // Determine file type
     let fileType = 'other';
@@ -144,7 +144,7 @@ export default function ProgramResourcesEditor() {
 
     setNewResource({
       ...newResource,
-      file_url: urlData.publicUrl,
+      file_url: urlData?.signedUrl || '',
       file_type: fileType,
       title: newResource.title || file.name.replace(/\.[^/.]+$/, ''),
     });

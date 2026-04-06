@@ -135,14 +135,14 @@ export function useChatAttachments(channelId: string | null) {
           continue;
         }
 
-        // Get public URL
-        const { data: urlData } = supabase.storage
+        // Get signed URL (bucket is private)
+        const { data: urlData } = await supabase.storage
           .from('chat-attachments')
-          .getPublicUrl(data.path);
+          .createSignedUrl(data.path, 60 * 60 * 24 * 7); // 7 day signed URL
 
         uploaded.push({
           file_name: file.name,
-          file_url: urlData.publicUrl,
+          file_url: urlData?.signedUrl || '',
           file_type: file.type,
           file_size: file.size,
         });

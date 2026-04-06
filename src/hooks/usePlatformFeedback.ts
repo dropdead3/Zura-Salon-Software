@@ -27,10 +27,10 @@ export function useSubmitPlatformFeedback() {
             .from('platform-feedback')
             .upload(path, file);
           if (uploadError) throw uploadError;
-          const { data: urlData } = supabase.storage
+          const { data: urlData } = await supabase.storage
             .from('platform-feedback')
-            .getPublicUrl(path);
-          screenshotUrls.push(urlData.publicUrl);
+            .createSignedUrl(path, 60 * 60 * 24 * 30); // 30 day signed URL
+          if (urlData?.signedUrl) screenshotUrls.push(urlData.signedUrl);
         }
       }
 

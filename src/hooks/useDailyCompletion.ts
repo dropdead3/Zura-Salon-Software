@@ -149,19 +149,19 @@ export function useDailyCompletion(userId: string | undefined) {
       return null;
     }
 
-    const { data: urlData } = supabase.storage
+    const { data: urlData } = await supabase.storage
       .from('proof-uploads')
-      .getPublicUrl(fileName);
+      .createSignedUrl(fileName, 60 * 60 * 24 * 30); // 30 day signed URL
 
     // Update completion record
     if (todayCompletion) {
       await supabase
         .from('daily_completions')
-        .update({ proof_url: urlData.publicUrl })
+        .update({ proof_url: urlData?.signedUrl || '' })
         .eq('id', todayCompletion.id);
     }
 
-    return urlData.publicUrl;
+    return urlData?.signedUrl || '';
   };
 
   const submitDay = async (): Promise<boolean> => {

@@ -296,13 +296,13 @@ export function WeekResourcesManager({ weekId, resources, assignments, onResourc
       return;
     }
 
-    const { data: urlData } = supabase.storage
+    const { data: urlData } = await supabase.storage
       .from('proof-uploads')
-      .getPublicUrl(fileName);
+      .createSignedUrl(fileName, 60 * 60 * 24 * 30); // 30 day signed URL
 
     setNewResource({
       ...newResource,
-      file_url: urlData.publicUrl,
+      file_url: urlData?.signedUrl || '',
       file_type: fileExt,
       title: newResource.title || file.name.replace(/\.[^/.]+$/, ''),
     });

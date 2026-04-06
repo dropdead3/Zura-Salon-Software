@@ -461,11 +461,11 @@ export function useUploadProof() {
 
       if (uploadError) throw uploadError;
 
-      const { data: urlData } = supabase.storage
+      const { data: urlData } = await supabase.storage
         .from('proof-uploads')
-        .getPublicUrl(fileName);
+        .createSignedUrl(fileName, 60 * 60 * 24 * 30); // 30 day signed URL
 
-      return urlData.publicUrl;
+      return urlData?.signedUrl || '';
     },
     onError: (error) => {
       console.error('Error uploading proof:', error);

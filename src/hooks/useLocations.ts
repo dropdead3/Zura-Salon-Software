@@ -246,20 +246,31 @@ export function useActiveLocations(organizationId?: string) {
   return useQuery({
     queryKey: ['locations', 'active', organizationId],
     queryFn: async () => {
-      let query = supabase
-        .from('locations')
-        .select('*')
-        .eq('is_active', true)
-        .order('display_order', { ascending: true });
+      // Try authenticated direct query first
+      const { data: session } = await supabase.auth.getSession();
+      if (session?.session) {
+        let query = supabase
+          .from('locations')
+          .select('*')
+          .eq('is_active', true)
+          .order('display_order', { ascending: true });
 
-      // If organizationId provided, filter by it
-      if (organizationId) {
-        query = query.eq('organization_id' as never, organizationId);
+        if (organizationId) {
+          query = query.eq('organization_id' as never, organizationId);
+        }
+
+        const { data, error } = await query;
+        if (!error && data) return data as unknown as Location[];
       }
 
-      const { data, error } = await query;
-      if (error) throw error;
-      return data as unknown as Location[];
+      // Fall back to public RPC (no stripe_account_id exposed)
+      const { data: publicData, error: rpcError } = await (supabase
+        .rpc as any)('get_public_locations', {
+        p_organization_id: organizationId || null,
+      });
+
+      if (rpcError) throw rpcError;
+      return (publicData || []) as unknown as Location[];
     },
     staleTime: 1000 * 60 * 5,
   });

@@ -93,11 +93,12 @@ async function uploadTransformationPhoto(
 
   if (error) throw error;
 
-  const { data: urlData } = supabase.storage
+  const { data: urlData } = await supabase.storage
     .from('client-transformations')
-    .getPublicUrl(path);
+    .createSignedUrl(path, 60 * 60 * 24); // 24h signed URL
 
-  return urlData.publicUrl;
+  if (!urlData?.signedUrl) throw new Error('Failed to generate signed URL');
+  return urlData.signedUrl;
 }
 
 interface AddTransformationParams {
