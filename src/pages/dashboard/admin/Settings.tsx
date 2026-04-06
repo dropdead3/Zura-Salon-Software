@@ -28,7 +28,7 @@ import {
   Mail,
   Cog,
   Rocket,
-  
+  Palette,
   Sun,
   Moon,
   Monitor,
