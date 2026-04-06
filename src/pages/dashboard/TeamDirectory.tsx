@@ -832,15 +832,14 @@ function TeamMemberCard({ member, locations, isSuperAdmin, canViewStrikes, strik
         
         {/* Main content - horizontal layout */}
         <div className="flex gap-4 flex-1">
-          {/* Larger Avatar */}
+          {/* Avatar */}
           <div className="relative shrink-0">
-            <Avatar className="w-20 h-20 ring-2 ring-background shadow-md">
+            <Avatar className="w-16 h-16 ring-2 ring-background shadow-md">
               <AvatarImage src={member.photo_url || undefined} alt={member.full_name} className="object-cover" />
-              <AvatarFallback className="bg-gradient-to-br from-muted to-muted/50 text-xl font-medium">
-                {member.full_name?.charAt(0) || <User className="w-6 h-6" />}
+              <AvatarFallback className="bg-gradient-to-br from-muted to-muted/50 text-lg font-medium">
+                {member.full_name?.charAt(0) || <User className="w-5 h-5" />}
               </AvatarFallback>
             </Avatar>
-            {/* Anniversary indicator */}
             {anniversaryInfo?.isToday && (
               <div className="absolute -top-1 -right-1 w-5 h-5 bg-amber-500 rounded-full flex items-center justify-center shadow-md">
                 <PartyPopper className="w-3 h-3 text-white" />
@@ -849,279 +848,262 @@ function TeamMemberCard({ member, locations, isSuperAdmin, canViewStrikes, strik
           </div>
           
           {/* Info column */}
-          <div className="flex-1 min-w-0">
-            {/* Name and actions row */}
-            <div className="flex items-start justify-between gap-2">
-              <div className="min-w-0">
-                <h3 className="font-display text-base leading-tight truncate">
-                  {formatFullDisplayName(member.full_name, member.display_name)}
-                </h3>
-                {/* Meta info */}
-                <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
-                  {timeAtCompany && (
-                    <span className="flex items-center gap-1">
-                      <Clock className="w-3 h-3" />
-                      {timeAtCompany}
-                    </span>
-                  )}
-                  {memberLocations.length > 1 && (
+          <div className="flex-1 min-w-0 space-y-1.5">
+            {/* Row 1: Full name — no truncation */}
+            <h3 className="font-display text-base leading-tight">
+              {formatFullDisplayName(member.full_name, member.display_name)}
+            </h3>
+
+            {/* Row 2: Role badge + tenure + multi-location */}
+            <div className="flex flex-wrap items-center gap-1.5">
+              {member.is_primary_owner && (
+                <Badge variant="outline" className="text-[10px] font-medium h-5 px-2 gap-1 bg-stone-700/90 text-amber-100 border-amber-400/30 backdrop-blur-sm">
+                  <Crown className="w-3 h-3" />
+                  Account Owner
+                </Badge>
+              )}
+              {member.is_super_admin && !member.is_primary_owner && (
+                <Badge variant="outline" className="text-[10px] font-medium h-5 px-2 gap-1 bg-gradient-to-r from-amber-200 via-orange-100 to-amber-200 text-amber-900 border-amber-300">
+                  <Crown className="w-3 h-3" />
+                  Super Admin
+                </Badge>
+              )}
+              {primaryRole && !member.is_super_admin && (() => {
+                const RoleIcon = getRoleIcon(primaryRole.key);
+                return (
+                  <Badge variant="outline" className={cn("text-[10px] font-medium h-5 px-2 gap-1", primaryRole.color)}>
+                    <RoleIcon className="w-3 h-3" />
+                    {primaryRole.label}
+                  </Badge>
+                );
+              })()}
+              <ResponsibilityBadges userId={member.user_id} size="sm" />
+              {timeAtCompany && (
+                <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                  <Clock className="w-3 h-3" />
+                  {timeAtCompany}
+                </span>
+              )}
+              {memberLocations.length > 1 && (
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span className="flex items-center gap-1 text-xs text-primary font-medium cursor-help">
+                        <Building2 className="w-3 h-3" />
+                        {memberLocations.length}
+                      </span>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom" className="text-xs">
+                      {memberLocations.map(id => getLocationName(id)).join(', ')}
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              )}
+            </div>
+
+            {/* Row 3: Level badge + status indicator */}
+            {isStylistOrAssistant && member.stylist_level && (() => {
+              const levelIdx = stylistLevels?.findIndex(l => l.client_label === member.stylist_level || l.slug === member.stylist_level) ?? -1;
+              const totalLevels = stylistLevels?.length ?? 1;
+              const colors = levelIdx >= 0 ? getLevelColor(levelIdx, totalLevels) : { bg: 'bg-muted', text: 'text-muted-foreground' };
+              const progress = levelProgress;
+              const showIndicator = isSuperAdmin && progress && !['in_progress', 'no_criteria', 'at_top_level'].includes(progress.status);
+              const isStalled = isSuperAdmin && progress && progress.timeAtLevelDays >= 180 && progress.status === 'in_progress';
+              return (
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <span className={cn("inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium", colors.bg, colors.text)}>
+                    <Award className="w-3 h-3" />
+                    {member.stylist_level.replace(' STYLIST', '')}
+                  </span>
+                  {showIndicator && progress.status === 'ready' && (
                     <TooltipProvider>
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <span className="flex items-center gap-1 text-primary font-medium cursor-help">
-                            <Building2 className="w-3 h-3" />
-                            {memberLocations.length}
+                          <span
+                            className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400 cursor-pointer"
+                            onClick={(e) => { e.stopPropagation(); navigate(`/dashboard/admin/graduation-tracker`); }}
+                          >
+                            <TrendingUp className="w-3 h-3" />
+                            Ready
                           </span>
                         </TooltipTrigger>
-                        <TooltipContent side="bottom" className="text-xs">
-                          {memberLocations.map(id => getLocationName(id)).join(', ')}
+                        <TooltipContent side="top" className="text-xs max-w-[220px]">
+                          <p className="font-medium">Ready to Promote</p>
+                          <p>Composite: {Math.round(progress.compositeScore)}%{progress.nextLevel ? ` · Next: ${progress.nextLevel.client_label}` : ''}</p>
                         </TooltipContent>
                       </Tooltip>
                     </TooltipProvider>
                   )}
-                  {isStylistOrAssistant && member.stylist_level && (() => {
-                    const levelIdx = stylistLevels?.findIndex(l => l.client_label === member.stylist_level || l.slug === member.stylist_level) ?? -1;
-                    const totalLevels = stylistLevels?.length ?? 1;
-                    const colors = levelIdx >= 0 ? getLevelColor(levelIdx, totalLevels) : { bg: 'bg-muted', text: 'text-muted-foreground' };
-                    const progress = levelProgress;
-                    const showIndicator = isSuperAdmin && progress && !['in_progress', 'no_criteria', 'at_top_level'].includes(progress.status);
-                    const isStalled = isSuperAdmin && progress && progress.timeAtLevelDays >= 180 && progress.status === 'in_progress';
-                    return (
-                      <>
-                        <span className={cn("inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium", colors.bg, colors.text)}>
-                          <Award className="w-3 h-3" />
-                          {member.stylist_level.replace(' STYLIST', '')}
-                        </span>
-                        {showIndicator && progress.status === 'ready' && (
-                          <TooltipProvider>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <span
-                                  className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400 cursor-pointer"
-                                  onClick={(e) => { e.stopPropagation(); navigate(`/dashboard/admin/graduation-tracker`); }}
-                                >
-                                  <TrendingUp className="w-3 h-3" />
-                                  Ready
-                                </span>
-                              </TooltipTrigger>
-                              <TooltipContent side="top" className="text-xs max-w-[220px]">
-                                <p className="font-medium">Ready to Promote</p>
-                                <p>Composite: {Math.round(progress.compositeScore)}%{progress.nextLevel ? ` · Next: ${progress.nextLevel.client_label}` : ''}</p>
-                              </TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
-                        )}
-                        {showIndicator && progress.status === 'needs_attention' && (
-                          <TooltipProvider>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <span
-                                  className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400 cursor-pointer"
-                                  onClick={(e) => { e.stopPropagation(); navigate(`/dashboard/admin/graduation-tracker`); }}
-                                >
-                                  <TrendingDown className="w-3 h-3" />
-                                  Attention
-                                </span>
-                              </TooltipTrigger>
-                              <TooltipContent side="top" className="text-xs max-w-[220px]">
-                                <p className="font-medium">Needs Attention</p>
-                                <p>Composite: {Math.round(progress.compositeScore)}%</p>
-                              </TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
-                        )}
-                        {showIndicator && progress.status === 'at_risk' && (
-                          <TooltipProvider>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <span
-                                  className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400 cursor-pointer"
-                                  onClick={(e) => { e.stopPropagation(); navigate(`/dashboard/admin/graduation-tracker`); }}
-                                >
-                                  <TrendingDown className="w-3 h-3" />
-                                  At Risk
-                                </span>
-                              </TooltipTrigger>
-                              <TooltipContent side="top" className="text-xs max-w-[220px]">
-                                <p className="font-medium">At Risk — Grace Period</p>
-                                <p>{progress.retentionFailures.map(f => f.label).join(', ')}</p>
-                              </TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
-                        )}
-                        {showIndicator && progress.status === 'below_standard' && (
-                          <TooltipProvider>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <span
-                                  className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-400 cursor-pointer"
-                                  onClick={(e) => { e.stopPropagation(); navigate(`/dashboard/admin/graduation-tracker`); }}
-                                >
-                                  <TrendingDown className="w-3 h-3" />
-                                  Below Std
-                                </span>
-                              </TooltipTrigger>
-                              <TooltipContent side="top" className="text-xs max-w-[220px]">
-                                <p className="font-medium">Below Standard — Demotion Eligible</p>
-                                <p>{progress.retentionFailures.map(f => f.label).join(', ')}</p>
-                              </TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
-                        )}
-                        {isStalled && (
-                          <TooltipProvider>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <span
-                                  className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-muted text-muted-foreground cursor-pointer"
-                                  onClick={(e) => { e.stopPropagation(); navigate(`/dashboard/admin/graduation-tracker`); }}
-                                >
-                                  <Pause className="w-3 h-3" />
-                                  Stalled
-                                </span>
-                              </TooltipTrigger>
-                              <TooltipContent side="top" className="text-xs max-w-[220px]">
-                                <p className="font-medium">Stalled Progression</p>
-                                <p>No level change in {Math.round(progress!.timeAtLevelDays / 30)} months</p>
-                              </TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
-                        )}
-                      </>
-                    );
-                  })()}
+                  {showIndicator && progress.status === 'needs_attention' && (
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span
+                            className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400 cursor-pointer"
+                            onClick={(e) => { e.stopPropagation(); navigate(`/dashboard/admin/graduation-tracker`); }}
+                          >
+                            <TrendingDown className="w-3 h-3" />
+                            Attention
+                          </span>
+                        </TooltipTrigger>
+                        <TooltipContent side="top" className="text-xs max-w-[220px]">
+                          <p className="font-medium">Needs Attention</p>
+                          <p>Composite: {Math.round(progress.compositeScore)}%</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  )}
+                  {showIndicator && progress.status === 'at_risk' && (
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span
+                            className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400 cursor-pointer"
+                            onClick={(e) => { e.stopPropagation(); navigate(`/dashboard/admin/graduation-tracker`); }}
+                          >
+                            <TrendingDown className="w-3 h-3" />
+                            At Risk
+                          </span>
+                        </TooltipTrigger>
+                        <TooltipContent side="top" className="text-xs max-w-[220px]">
+                          <p className="font-medium">At Risk — Grace Period</p>
+                          <p>{progress.retentionFailures.map(f => f.label).join(', ')}</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  )}
+                  {showIndicator && progress.status === 'below_standard' && (
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span
+                            className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-400 cursor-pointer"
+                            onClick={(e) => { e.stopPropagation(); navigate(`/dashboard/admin/graduation-tracker`); }}
+                          >
+                            <TrendingDown className="w-3 h-3" />
+                            Below Std
+                          </span>
+                        </TooltipTrigger>
+                        <TooltipContent side="top" className="text-xs max-w-[220px]">
+                          <p className="font-medium">Below Standard — Demotion Eligible</p>
+                          <p>{progress.retentionFailures.map(f => f.label).join(', ')}</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  )}
+                  {isStalled && (
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span
+                            className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-muted text-muted-foreground cursor-pointer"
+                            onClick={(e) => { e.stopPropagation(); navigate(`/dashboard/admin/graduation-tracker`); }}
+                          >
+                            <Pause className="w-3 h-3" />
+                            Stalled
+                          </span>
+                        </TooltipTrigger>
+                        <TooltipContent side="top" className="text-xs max-w-[220px]">
+                          <p className="font-medium">Stalled Progression</p>
+                          <p>No level change in {Math.round(progress!.timeAtLevelDays / 30)} months</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  )}
                 </div>
+              );
+            })()}
+
+            {/* Row 4: Phone */}
+            {member.phone && (
+              <a 
+                href={`tel:${member.phone}`}
+                className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors mt-1"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <Phone className="w-3 h-3" />
+                {formatPhone(member.phone)}
+              </a>
+            )}
+
+            {/* Row 5: Contact icons + calendar */}
+            <div className="flex items-center justify-between mt-1" onClick={(e) => e.stopPropagation()}>
+              <div className="flex items-center gap-1">
+                {member.email && (
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <a 
+                          href={`mailto:${member.email}`}
+                          className="p-1.5 rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
+                        >
+                          <Mail className="w-3.5 h-3.5" />
+                        </a>
+                      </TooltipTrigger>
+                      <TooltipContent side="bottom" className="text-xs max-w-48 truncate">{member.email}</TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                )}
+                {member.instagram && (
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <a 
+                          href={`https://instagram.com/${member.instagram.replace('@', '')}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="p-1.5 rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
+                        >
+                          <Instagram className="w-3.5 h-3.5" />
+                        </a>
+                      </TooltipTrigger>
+                      <TooltipContent side="bottom" className="text-xs">{member.instagram}</TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                )}
               </div>
-              
-              {/* Role badge + Calendar on right side */}
-              <div className="flex items-center gap-2 shrink-0">
-                {/* Account Owner badge */}
-                {member.is_primary_owner && (
-                  <Badge 
-                    variant="outline" 
-                    className="text-[10px] font-medium h-5 px-2 gap-1 bg-stone-700/90 text-amber-100 border-amber-400/30 backdrop-blur-sm"
-                  >
-                    <Crown className="w-3 h-3" />
-                    Account Owner
-                  </Badge>
-                )}
-                {/* Super Admin badge (only if not primary owner, to avoid duplicate crown badges) */}
-                {member.is_super_admin && !member.is_primary_owner && (
-                  <Badge 
-                    variant="outline" 
-                    className="text-[10px] font-medium h-5 px-2 gap-1 bg-gradient-to-r from-amber-200 via-orange-100 to-amber-200 text-amber-900 border-amber-300"
-                  >
-                    <Crown className="w-3 h-3" />
-                    Super Admin
-                  </Badge>
-                )}
-                {/* Other role badges */}
-                {primaryRole && !member.is_super_admin && (() => {
-                  const RoleIcon = getRoleIcon(primaryRole.key);
-                  return (
-                    <Badge 
-                      variant="outline" 
-                      className={cn("text-[10px] font-medium h-5 px-2 gap-1", primaryRole.color)}
+              {hasSchedules && (
+                <HoverCard openDelay={100} closeDelay={50}>
+                  <HoverCardTrigger asChild>
+                    <button 
+                      className="p-1.5 hover:bg-muted rounded-lg transition-colors opacity-60 hover:opacity-100"
+                      onClick={(e) => e.stopPropagation()}
                     >
-                      <RoleIcon className="w-3 h-3" />
-                      {primaryRole.label}
-                    </Badge>
-                  );
-                })()}
-                <ResponsibilityBadges userId={member.user_id} size="sm" />
-                {hasSchedules && (
-                  <HoverCard openDelay={100} closeDelay={50}>
-                    <HoverCardTrigger asChild>
-                      <button 
-                        className="p-1.5 hover:bg-muted rounded-lg transition-colors opacity-60 hover:opacity-100"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <Calendar className="w-4 h-4" />
-                      </button>
-                    </HoverCardTrigger>
-                    <HoverCardContent side="left" align="start" className="w-56 p-3 z-50">
-                      <p className="text-xs font-medium mb-2">Schedule</p>
-                      <div className="space-y-2">
-                        {memberLocations.map(locId => {
-                          const schedule = member.location_schedules[locId] || [];
-                          return (
-                            <div key={locId}>
-                              <p className="text-[10px] text-muted-foreground mb-1 flex items-center gap-1">
-                                <MapPin className="w-2.5 h-2.5" />
-                                {getLocationName(locId)}
-                              </p>
-                              <div className="flex gap-0.5">
-                                {DAYS_OF_WEEK.map(day => (
-                                  <span
-                                    key={day}
-                                    className={cn(
-                                      "text-[10px] w-5 h-5 flex items-center justify-center rounded font-medium",
-                                      schedule.includes(day)
-                                        ? 'bg-primary text-primary-foreground'
-                                        : 'bg-muted/50 text-muted-foreground/40'
-                                    )}
-                                  >
-                                    {day.charAt(0)}
-                                  </span>
-                                ))}
-                              </div>
+                      <Calendar className="w-4 h-4" />
+                    </button>
+                  </HoverCardTrigger>
+                  <HoverCardContent side="left" align="start" className="w-56 p-3 z-50">
+                    <p className="text-xs font-medium mb-2">Schedule</p>
+                    <div className="space-y-2">
+                      {memberLocations.map(locId => {
+                        const schedule = member.location_schedules[locId] || [];
+                        return (
+                          <div key={locId}>
+                            <p className="text-[10px] text-muted-foreground mb-1 flex items-center gap-1">
+                              <MapPin className="w-2.5 h-2.5" />
+                              {getLocationName(locId)}
+                            </p>
+                            <div className="flex gap-0.5">
+                              {DAYS_OF_WEEK.map(day => (
+                                <span
+                                  key={day}
+                                  className={cn(
+                                    "text-[10px] w-5 h-5 flex items-center justify-center rounded font-medium",
+                                    schedule.includes(day)
+                                      ? 'bg-primary text-primary-foreground'
+                                      : 'bg-muted/50 text-muted-foreground/40'
+                                  )}
+                                >
+                                  {day.charAt(0)}
+                                </span>
+                              ))}
                             </div>
-                          );
-                        })}
-                      </div>
-                    </HoverCardContent>
-                  </HoverCard>
-                )}
-              </div>
-            </div>
-            
-            {/* Phone number displayed */}
-            <div className="min-h-[20px] mt-2">
-              {member.phone && (
-                <a 
-                  href={`tel:${member.phone}`}
-                  className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <Phone className="w-3 h-3" />
-                  {formatPhone(member.phone)}
-                </a>
-              )}
-            </div>
-            
-            {/* Contact icons row */}
-            <div className="flex items-center gap-1 mt-2 min-h-[28px]" onClick={(e) => e.stopPropagation()}>
-              {member.email && (
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <a 
-                        href={`mailto:${member.email}`}
-                        className="p-1.5 rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
-                      >
-                        <Mail className="w-3.5 h-3.5" />
-                      </a>
-                    </TooltipTrigger>
-                    <TooltipContent side="bottom" className="text-xs max-w-48 truncate">{member.email}</TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              )}
-              {member.instagram && (
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <a 
-                        href={`https://instagram.com/${member.instagram.replace('@', '')}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="p-1.5 rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
-                      >
-                        <Instagram className="w-3.5 h-3.5" />
-                      </a>
-                    </TooltipTrigger>
-                    <TooltipContent side="bottom" className="text-xs">{member.instagram}</TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </HoverCardContent>
+                </HoverCard>
               )}
             </div>
           </div>
