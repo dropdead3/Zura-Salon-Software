@@ -40,7 +40,7 @@ serve(async (req) => {
     }
     const { user, supabaseAdmin } = authResult;
 
-        const body = await req.json();
+    const body = await validateBody(req, AssistantSchema, getCorsHeaders(req));
     const { messages, organizationId, userRole } = body;
     // Verify org access
     try {
