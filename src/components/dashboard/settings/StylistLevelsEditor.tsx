@@ -607,13 +607,17 @@ function CriteriaComparisonTable({ levels, promotionCriteria, retentionCriteria,
 
   // Handle escape key to cancel editing
   useEffect(() => {
-    if (!editingMetric) return;
+    if (!editingMetric && !editingCompRow) return;
     const handler = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') cancelEditing();
+      if (e.key === 'Escape') {
+        cancelEditing();
+        setEditingCompRow(null);
+        setCompEditValues({});
+      }
     };
     document.addEventListener('keydown', handler);
     return () => document.removeEventListener('keydown', handler);
-  }, [editingMetric]);
+  }, [editingMetric, editingCompRow]);
 
   if (levels.length === 0) {
     return (
