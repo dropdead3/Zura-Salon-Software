@@ -276,7 +276,7 @@ export function generateLevelRequirementsPDF(options: LevelRequirementsPDFOption
   doc.setTextColor(30, 30, 30);
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(10);
-  doc.text('Required to Graduate — Promotion Criteria by Level', 14, y);
+  doc.text('Level Requirements — Promotion Criteria by Level', 14, y);
   y += 4;
 
   const tableHead = ['Tier', 'Level Name', 'Commission', 'Requirements', 'Weights', 'Eval Window', 'Approval'];
