@@ -1,79 +1,60 @@
 
 
-# Promotion Readiness & Staleness Card
+# Phase 2: Level Progress Snapshots for Trend-Based Staleness
 
 ## What We're Building
-A dual-section analytics card for the Staff Analytics surface that answers two questions:
-1. **Ready to Promote** — Stylists who meet all criteria for their next level (or are close, e.g. ≥90%)
-2. **Stale / Stalled** — Stylists who haven't improved their promotion readiness in 6+ months, with a staleness duration indicator
+A `level_progress_snapshots` table that stores monthly composite score snapshots per stylist, plus a scheduled edge function to populate it. This replaces the current heuristic (time-at-level > 180 days) with true trend-based staleness detection: if a stylist's composite score hasn't improved by more than 2% over 6 months, they're stalled.
 
-## Data Source
-All data comes from the existing `useTeamLevelProgress` hook, which already provides per-stylist:
-- `status` (ready, in_progress, needs_attention, at_top_level, etc.)
-- `compositeScore` (weighted 0–100 promotion progress)
-- `isFullyQualified` (boolean)
-- `timeAtLevelDays` (days since last promotion/assignment)
-- `criteriaProgress[]` (per-KPI current vs target)
+## Database
 
-**New data needed**: To measure *staleness* (no improvement over 6 months), we need a historical comparison. Two options:
+### New table: `level_progress_snapshots`
+| Column | Type | Notes |
+|--------|------|-------|
+| id | UUID PK | |
+| organization_id | UUID FK → organizations | RLS scoped |
+| user_id | UUID FK → auth.users | The stylist |
+| stylist_level_id | UUID FK → stylist_levels | Level at snapshot time |
+| composite_score | NUMERIC | 0–100 |
+| criteria_snapshot | JSONB | Full criteria progress array for audit |
+| snapshot_month | DATE | First of month (e.g. 2026-04-01), unique per user+org+month |
+| created_at | TIMESTAMPTZ | |
 
-### Option A — Snapshot-based (requires new table)
-Store periodic `composite_score` snapshots and compare current vs 6-months-ago. More accurate but requires a new `level_progress_snapshots` table + a scheduled function.
+- Unique constraint on `(organization_id, user_id, snapshot_month)`
+- RLS: org members can SELECT; no client-side INSERT/UPDATE/DELETE
+- Index on `(organization_id, user_id, snapshot_month)`
 
-### Option B — Time-at-level heuristic (no new infra)
-Use `timeAtLevelDays > 180` combined with `compositeScore < 80%` as the staleness signal. If someone has been at a level for 6+ months and isn't close to qualifying, they're stalled. This is a good Phase 1 proxy.
+## Edge Function: `snapshot-level-progress`
 
-**Recommendation**: Start with **Option B** (no new tables), then add snapshot tracking in a future iteration for true trend-based staleness.
+Runs monthly via pg_cron. For each active stylist in each organization:
+1. Calls the same composite score logic (or reads from a recent calculation cache)
+2. Upserts into `level_progress_snapshots` for the current month
 
-## Card Design
+Since the composite score is currently computed client-side in `useTeamLevelProgress`, the edge function will replicate the core calculation server-side using the same data sources (appointments, promotion criteria, etc.) — or we take the simpler approach: **trigger a snapshot write from the client** whenever the Level Readiness Card loads, deduped by month. This avoids duplicating complex calculation logic.
 
-### Layout
-Following the Luxury Analytics Card pattern:
-- **Header**: `GraduationCap` icon + "LEVEL READINESS" title + `MetricInfoTooltip` + `AnalyticsFilterBadge`
-- **Body**: Two sections with a subtle divider
+**Recommended approach**: Client-side snapshot writer in `useTeamLevelProgress` that upserts the current month's scores. Simpler, no logic duplication, and the card already computes everything needed.
 
-**Section 1 — Ready to Promote**
-- List of stylists with `isFullyQualified === true` or `compositeScore >= 90`
-- Each row: avatar, name, current level → next level, composite score badge, time at level
-- Green accent for fully qualified; amber for ≥90%
-- Empty state: "No stylists currently qualify for promotion"
+## Code Changes
 
-**Section 2 — Stalled Progression**
-- Stylists with `timeAtLevelDays >= 180` AND `compositeScore < 80` AND status not `at_top_level`
-- Each row: avatar, name, current level, composite score, staleness duration (e.g. "8 months at level")
-- Sorted by staleness duration descending
-- Muted red/amber accent for staleness severity
+### 1. Add snapshot upsert hook: `src/hooks/useLevelProgressSnapshots.ts`
+- `useWriteLevelSnapshots(teamProgress)` — on mount, upserts current month's scores for all team members (deduped by unique constraint)
+- `useReadLevelSnapshots(userId, months)` — reads historical snapshots for trend comparison
 
-### Staleness Tiers
-- 6–9 months: "Stalling" (amber)
-- 9–12 months: "Stale" (orange)
-- 12+ months: "Stagnant" (muted red)
+### 2. Update `LevelReadinessCard.tsx`
+- Call `useWriteLevelSnapshots` to persist current scores
+- Call `useReadLevelSnapshots` to fetch 6-month-ago scores
+- Replace heuristic staleness filter with: `scoreDelta <= 2` over 6 months AND `compositeScore < 80`
+- Keep the heuristic as fallback when no historical snapshot exists yet (graceful degradation during ramp-up)
 
-## Technical Plan
+### 3. Optional future: Add sparkline per stylist showing 6-month score trajectory
 
-### Files to Create
-1. **`src/components/dashboard/analytics/LevelReadinessCard.tsx`**
-   - Consumes `useTeamLevelProgress()` (already batches all team data)
-   - Filters and segments into "ready" and "stalled" groups
-   - Uses `PinnableCard` wrapper for Command Center pinning
-   - Follows canonical card header layout (icon + title + tooltip + filter badge)
-   - Uses `BlurredAmount` for any financial values if shown
-   - Includes `VisibilityGate` for role-based access (admin/manager only)
+## Files
 
-### Files to Modify
-2. **Staff analytics page** (wherever the staff analytics cards are rendered) — add `<LevelReadinessCard />` to the layout
+| Action | File |
+|--------|------|
+| Create | Migration for `level_progress_snapshots` table |
+| Create | `src/hooks/useLevelProgressSnapshots.ts` |
+| Modify | `src/components/dashboard/analytics/LevelReadinessCard.tsx` |
 
-### No database changes needed for Phase 1.
-
-## Copy
-- Card title: "LEVEL READINESS"
-- Tooltip: "Identifies stylists who qualify for promotion and flags those whose progression has stalled for 6+ months."
-- Section headers: "Ready to Promote" / "Stalled Progression"
-- Staleness labels: "6mo stalling" / "9mo stale" / "12mo+ stagnant"
-- Empty states: "No stylists currently qualify" / "No stalled progressions detected"
-
-## Future Enhancement (Phase 2)
-- Add `level_progress_snapshots` table with monthly composite score snapshots
-- Compare current score vs 6-month-ago score for true trend-based staleness (score delta ≤ 2% = stalled)
-- Add sparkline showing score trajectory per stylist
+## No edge function needed in Phase 2a
+The client-side write approach eliminates the need for a scheduled function. If the org has no active users viewing the dashboard for a month, that month simply has no snapshot — which is acceptable since staleness detection only matters when someone is looking.
 
