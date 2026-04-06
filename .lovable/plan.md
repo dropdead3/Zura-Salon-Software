@@ -1,90 +1,90 @@
 
 
-# Remaining Gaps and Enhancements — Levels & Commission System
+# Items 4–7: Commission Economics, Location Groups UI, Audit Trail, Stylist Roadmap
 
-## Critical: Multi-Tenancy Violation on `stylist_levels`
+## Item 4 — Commission Economics Tab
 
-The `stylist_levels` table has **no `organization_id` column**. Every organization in the platform shares the same set of levels. This is the single most critical gap in the system — it breaks tenant isolation, a non-negotiable architectural rule.
+**What it does**: An interactive margin calculator inside the Stylist Levels Editor that answers "can I afford this commission rate at each level?"
 
-All queries against `stylist_levels` (in `useStylistLevels`, `useResolveCommission`, `useSaveStylistLevels`, etc.) fetch globally with no org filter. The moment a second organization is onboarded, they will see and modify each other's levels.
-
-**Fix:** Add `organization_id` to `stylist_levels`, backfill existing rows, update the unique constraint from `(slug)` to `(organization_id, slug)`, add RLS policies scoped to org membership, and update all hooks to filter by `orgId`.
-
----
-
-## Gap 2: Commission Resolution Ignores Location Overrides
-
-`useResolveCommission` resolves commission as: per-stylist override → level default → unassigned. It does **not** check `level_commission_overrides` (the per-location commission table we just created). The table exists in the DB but is dead code — payroll and commission cards will never use location-specific rates.
-
-**Fix:** Extend the resolution chain to: per-stylist override → location commission override → level default → unassigned. Requires passing `locationId` into `resolveCommission()`.
-
----
-
-## Gap 3: Commission Economics Tab Not Implemented
-
-The approved plan for the Commission Affordability Calculator ("Economics" tab) has not been built. The tab does not exist in the current `TabsList`. This is the feature that answers "can I afford this commission rate?" — a key intelligence gap for operators.
-
-**Fix:** Build `CommissionEconomicsTab.tsx` and `useCommissionEconomics.ts` per the approved plan.
-
----
-
-## Gap 4: Criteria Override Resolution Not Wired into Scorecard
-
-`useLevelCriteriaOverrides` and `resolveCriteriaValue` exist as hooks, but `useLevelProgress` (which powers the Scorecard and Graduation Tracker) does **not** call them. It reads criteria directly from `level_promotion_criteria` / `level_retention_criteria` with no location override resolution. Location-specific KPI thresholds are therefore ignored during evaluation.
-
-**Fix:** Wire `resolveCriteriaValue` into `useLevelProgress` and `useTeamLevelProgress` so that when a stylist belongs to a specific location, their criteria targets reflect any location/group overrides.
-
----
-
-## Gap 5: Location Groups Have No Management UI
-
-The `location_groups` table exists and `useLocationGroups` hook is created, but there is no admin UI to create, rename, reorder, or assign locations to groups. The `LocationsSettingsContent` component was supposed to get a "Groups" section but it was not added.
-
-**Fix:** Add a "Location Groups" management section to `LocationsSettingsContent` with CRUD operations and drag-and-drop location assignment.
-
----
-
-## Enhancement 1: Audit Trail for Commission Rate Changes
-
-When commission rates on `stylist_levels` are changed, there is no audit log. For an enterprise operator, not knowing who changed a commission rate from 45% to 50% (and when) is a compliance gap. The `level_promotions` table logs level movements, but commission rate edits are untracked.
-
-**Fix:** Log commission rate changes to `platform_action_log` via `log_platform_action` RPC (already exists) when saving levels.
-
----
-
-## Enhancement 2: Stylist-Facing Level Roadmap
-
-Stylists can see their Scorecard (current progress), but there is no view that shows them the full progression ladder — "here's where you are, here's what the next level requires, here's what your commission would be." The PDF export exists for admins, but stylists have no self-service visibility into what they're working toward.
-
-**Fix:** Add a "My Progression" card to the stylist dashboard that renders a simplified level ladder with their current position highlighted and next-level criteria.
-
----
-
-## Proposed Implementation Order
-
-| Priority | Item | Impact |
-|----------|------|--------|
-| 1 | Multi-tenancy fix (`organization_id` on `stylist_levels`) | Blocks safe multi-org deployment |
-| 2 | Wire location commission overrides into `useResolveCommission` | Makes per-location rates functional |
-| 3 | Wire criteria overrides into `useLevelProgress` | Makes per-location KPI targets functional |
-| 4 | Commission Economics Tab | Key intelligence feature for operators |
-| 5 | Location Groups management UI | Completes enterprise grouping UX |
-| 6 | Audit trail for rate changes | Compliance |
-| 7 | Stylist-facing progression roadmap | Engagement |
-
-### Files Changed
+**Implementation**:
+- New `CommissionEconomicsTab.tsx` component rendered as an "Economics" tab in `StylistLevelsEditor.tsx` (between "Location Overrides" and "Team Roster")
+- New `useCommissionEconomics.ts` hook that:
+  - Reads/writes three assumptions to `backroom_settings` (key-value store, already exists): `commission_target_margin_pct`, `commission_overhead_per_stylist`, `commission_product_cost_pct`
+  - Queries trailing 90-day average revenue per stylist grouped by their assigned level from appointment data
+- Per-level table columns: Level name, Service commission %, Retail commission %, Breakeven revenue, Target revenue, Actual avg revenue, Margin at actual, Status (Green/Yellow/Red)
+- Math: `Revenue needed = Overhead / (1 - commission_rate - product_cost_pct - target_margin_pct)`
+- "What If" slider panel (collapsible) — drag commission rate per level, see breakeven/target update in real-time
+- All monetary values wrapped in `BlurredAmount`
 
 | File | Change |
 |------|--------|
-| **Migration** | Add `organization_id` to `stylist_levels`, backfill, update unique constraint + RLS |
-| `src/hooks/useStylistLevels.ts` | Filter all queries by `orgId` |
-| `src/hooks/useResolveCommission.ts` | Add `locationId` param, check `level_commission_overrides` |
-| `src/hooks/useLevelProgress.ts` | Integrate `resolveCriteriaValue` for location-aware thresholds |
-| `src/hooks/useTeamLevelProgress.ts` | Same location-aware override resolution |
-| `src/components/dashboard/settings/CommissionEconomicsTab.tsx` | **New** — Economics calculator |
-| `src/hooks/useCommissionEconomics.ts` | **New** — Revenue-per-level fetcher + margin math |
-| `src/components/dashboard/settings/StylistLevelsEditor.tsx` | Add Economics tab, pass orgId to save |
-| `src/components/dashboard/settings/LocationsSettingsContent.tsx` | Add Location Groups CRUD UI |
+| `src/components/dashboard/settings/CommissionEconomicsTab.tsx` | **New** — Calculator UI |
+| `src/hooks/useCommissionEconomics.ts` | **New** — Assumptions CRUD + revenue-per-level query |
+| `src/components/dashboard/settings/StylistLevelsEditor.tsx` | Add "Economics" TabsTrigger + TabsContent |
 
-**9 files. 1 migration.**
+---
+
+## Item 5 — Location Groups Management UI
+
+**What it does**: Admin UI to create/rename/reorder/delete location groups and assign locations to them.
+
+**Implementation**:
+- Add a "Groups" tab to `LocationsSettingsContent.tsx` (the existing component already uses Tabs)
+- Groups list with inline edit for name, drag-to-reorder (display_order), delete with confirmation
+- Each group shows its assigned locations as chips; unassigned locations shown in a separate "Ungrouped" section
+- Dropdown on each location card to assign/reassign to a group
+- Uses existing `useLocationGroups`, `useCreateLocationGroup`, `useUpdateLocationGroup`, `useDeleteLocationGroup`, `useAssignLocationToGroup` hooks (all already built)
+
+| File | Change |
+|------|--------|
+| `src/components/dashboard/settings/LocationsSettingsContent.tsx` | Add "Groups" tab with CRUD UI |
+
+---
+
+## Item 6 — Audit Trail for Commission Rate Changes
+
+**What it does**: Logs to `platform_audit_log` whenever commission rates on `stylist_levels` are saved.
+
+**Implementation**:
+- In `useSaveStylistLevels` mutation's `onSuccess`, compare old vs new commission rates
+- For each level where `service_commission_rate` or `retail_commission_rate` changed, insert a `platform_audit_log` entry via the existing `useLogPlatformAction` pattern
+- Action type: `commission_rate_updated`, entity_type: `stylist_level`, details include `{ level_slug, old_service_rate, new_service_rate, old_retail_rate, new_retail_rate }`
+- Add `commission_rate_updated` to `AUDIT_ACTION_CONFIG` in `usePlatformAuditLog.ts`
+
+| File | Change |
+|------|--------|
+| `src/hooks/useStylistLevels.ts` | Add audit logging in save mutation |
+| `src/hooks/usePlatformAuditLog.ts` | Add `commission_rate_updated` to config map |
+
+---
+
+## Item 7 — Stylist-Facing Level Roadmap
+
+**What it does**: A "My Progression Ladder" card on the existing `MyGraduation` page showing the full level hierarchy with the stylist's current position highlighted and next-level criteria + commission rewards visible.
+
+**Implementation**:
+- New `LevelProgressionLadder.tsx` component — a vertical timeline/ladder rendering all active levels from `useStylistLevels`
+- Current level highlighted with accent border + "You are here" badge
+- Each level shows: commission rates (blurred), key promotion criteria thresholds for the next level
+- Levels above current show criteria needed; levels below show as completed checkmarks
+- Placed on `MyGraduation.tsx` between the `StylistScorecard` and the retention warning card
+- Read-only — no editing, just visibility into "what am I working toward"
+
+| File | Change |
+|------|--------|
+| `src/components/dashboard/LevelProgressionLadder.tsx` | **New** — Visual level ladder |
+| `src/pages/dashboard/MyGraduation.tsx` | Import and render ladder after scorecard |
+
+---
+
+## Summary
+
+| # | Item | Files | New |
+|---|------|-------|-----|
+| 4 | Commission Economics Tab | 3 | 2 new |
+| 5 | Location Groups UI | 1 | 0 |
+| 6 | Audit trail | 2 | 0 |
+| 7 | Stylist roadmap | 2 | 1 new |
+
+**8 files total. 3 new components. No database changes** — all tables and hooks already exist.
 
