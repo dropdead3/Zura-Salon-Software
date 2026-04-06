@@ -29,7 +29,7 @@ interface UseServiceProductDrilldownOptions {
 
 /** Fetch all rows from a query, paginating in batches of 1000 to avoid Supabase default limit. */
 async function fetchAllPages<T>(
-  buildQuery: (from: number, to: number) => ReturnType<ReturnType<typeof supabase.from>['select']>,
+  buildQuery: (from: number, to: number) => any,
 ): Promise<T[]> {
   const PAGE = 1000;
   const all: T[] = [];
