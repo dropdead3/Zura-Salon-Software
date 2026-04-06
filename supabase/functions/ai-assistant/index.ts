@@ -2,11 +2,8 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "@supabase/supabase-js";
 import { loadZuraConfig, buildZuraPromptPrefix } from "../_shared/zura-config-loader.ts";
 import { AI_ASSISTANT_NAME_DEFAULT as AI_ASSISTANT_NAME, PLATFORM_NAME } from "../_shared/brand.ts";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
-};
+import { requireAuth, requireOrgMember, authErrorResponse } from "../_shared/auth.ts";
+import { getCorsHeaders } from "../_shared/cors.ts";
 
 const BASE_SYSTEM_PROMPT = `You are ${AI_ASSISTANT_NAME}, the AI assistant for a salon management platform called ${PLATFORM_NAME}. Users may call you "${AI_ASSISTANT_NAME}" or "Hey ${AI_ASSISTANT_NAME}". You help users navigate the dashboard, understand features, and answer questions about salon operations.
 
@@ -30,11 +27,28 @@ Keep responses concise, friendly, and actionable. If you're not sure about somet
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { headers: getCorsHeaders(req) });
   }
 
   try {
-    const { messages, organizationId, userRole } = await req.json();
+    // Auth guard
+    let authResult;
+    try {
+      authResult = await requireAuth(req);
+    } catch (authErr) {
+      return authErrorResponse(authErr, getCorsHeaders(req));
+    }
+    const { user, supabaseAdmin } = authResult;
+
+        const body = await req.json();
+    const { messages, organizationId, userRole } = body;
+    // Verify org access
+    try {
+      await requireOrgMember(supabaseAdmin, user.id, body.organizationId || body.organization_id);
+    } catch (orgErr) {
+      return authErrorResponse(orgErr, getCorsHeaders(req));
+    }
+
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
@@ -91,7 +105,7 @@ serve(async (req) => {
           JSON.stringify({ error: "Rate limit exceeded. Please try again in a moment." }),
           {
             status: 429,
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
+            headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
           }
         );
       }
@@ -100,7 +114,7 @@ serve(async (req) => {
           JSON.stringify({ error: "AI usage limit reached. Please contact support." }),
           {
             status: 402,
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
+            headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
           }
         );
       }
@@ -110,13 +124,13 @@ serve(async (req) => {
         JSON.stringify({ error: "AI service temporarily unavailable" }),
         {
           status: 500,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
         }
       );
     }
 
     return new Response(response.body, {
-      headers: { ...corsHeaders, "Content-Type": "text/event-stream" },
+      headers: { ...getCorsHeaders(req), "Content-Type": "text/event-stream" },
     });
   } catch (e) {
     console.error("AI assistant error:", e);
@@ -124,7 +138,7 @@ serve(async (req) => {
       JSON.stringify({ error: e instanceof Error ? e.message : "Unknown error" }),
       {
         status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
       }
     );
   }

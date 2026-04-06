@@ -1,11 +1,8 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "@supabase/supabase-js";
 import { sendOrgEmail } from "../_shared/email-sender.ts";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+import { requireAuth, requireOrgAdmin, authErrorResponse } from "../_shared/auth.ts";
+import { getCorsHeaders } from "../_shared/cors.ts";
 
 interface AutomationRule {
   id: string;
@@ -21,15 +18,32 @@ interface AutomationRule {
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { headers: getCorsHeaders(req) });
   }
 
   try {
+    // Auth guard
+    let authResult;
+    try {
+      authResult = await requireAuth(req);
+    } catch (authErr) {
+      return authErrorResponse(authErr, getCorsHeaders(req));
+    }
+    const { user, supabaseAdmin } = authResult;
+
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    const { organizationId, dryRun = false } = await req.json();
+        const body = await req.json();
+    const { organizationId, dryRun = false } = body;
+    // Verify org access
+    try {
+      await requireOrgAdmin(supabaseAdmin, user.id, body.organizationId || body.organization_id);
+    } catch (orgErr) {
+      return authErrorResponse(orgErr, getCorsHeaders(req));
+    }
+
 
     let rulesQuery = supabase.from("client_automation_rules").select("*").eq("is_active", true);
     if (organizationId) rulesQuery = rulesQuery.eq("organization_id", organizationId);
@@ -39,7 +53,7 @@ serve(async (req) => {
     if (!rules || rules.length === 0) {
       return new Response(
         JSON.stringify({ success: true, message: "No active automation rules", processed: 0 }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
       );
     }
 
@@ -62,13 +76,13 @@ serve(async (req) => {
 
     return new Response(
       JSON.stringify({ success: true, ...results }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
     );
   } catch (error) {
     console.error("Client automations error:", error);
     return new Response(
       JSON.stringify({ error: error instanceof Error ? error.message : "Unknown error" }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { status: 500, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
     );
   }
 });

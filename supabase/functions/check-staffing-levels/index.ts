@@ -1,11 +1,8 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { sendOrgEmail } from "../_shared/email-sender.ts";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+import { requireAuth, requireOrgMember, authErrorResponse } from "../_shared/auth.ts";
+import { getCorsHeaders } from "../_shared/cors.ts";
 
 interface StaffingAlertSettings {
   percentage: number;
@@ -15,10 +12,19 @@ interface StaffingAlertSettings {
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { headers: getCorsHeaders(req) });
   }
 
   try {
+    // Auth guard
+    let authResult;
+    try {
+      authResult = await requireAuth(req);
+    } catch (authErr) {
+      return authErrorResponse(authErr, getCorsHeaders(req));
+    }
+    const { supabaseAdmin } = authResult;
+
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
@@ -36,7 +42,7 @@ serve(async (req) => {
     if (!settings.email_enabled && !settings.in_app_enabled) {
       return new Response(
         JSON.stringify({ message: "All staffing alerts are disabled" }),
-        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { status: 200, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
       );
     }
 
@@ -51,7 +57,7 @@ serve(async (req) => {
     if (!locations || locations.length === 0) {
       return new Response(
         JSON.stringify({ message: "No locations with capacity configured" }),
-        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { status: 200, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
       );
     }
 
@@ -89,7 +95,7 @@ serve(async (req) => {
     if (alertLocations.length === 0) {
       return new Response(
         JSON.stringify({ message: "All locations are above threshold" }),
-        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { status: 200, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
       );
     }
 
@@ -150,14 +156,14 @@ serve(async (req) => {
 
     return new Response(
       JSON.stringify({ success: true, alertLocations, notificationsSent, emailsSent }),
-      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { status: 200, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
     );
   } catch (error: unknown) {
     console.error("Error checking staffing levels:", error);
     const errorMessage = error instanceof Error ? error.message : "Unknown error";
     return new Response(
       JSON.stringify({ error: errorMessage }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { status: 500, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
     );
   }
 });

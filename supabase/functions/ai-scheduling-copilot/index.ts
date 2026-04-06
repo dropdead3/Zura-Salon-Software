@@ -1,10 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "@supabase/supabase-js";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
-};
+import { requireAuth, requireOrgMember, authErrorResponse } from "../_shared/auth.ts";
+import { getCorsHeaders } from "../_shared/cors.ts";
 
 interface ScheduleSlot {
   time: string;
@@ -26,10 +23,19 @@ interface ExistingAppointment {
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { headers: getCorsHeaders(req) });
   }
 
   try {
+    // Auth guard
+    let authResult;
+    try {
+      authResult = await requireAuth(req);
+    } catch (authErr) {
+      return authErrorResponse(authErr, getCorsHeaders(req));
+    }
+    const { user, supabaseAdmin } = authResult;
+
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const lovableApiKey = Deno.env.get("LOVABLE_API_KEY");
@@ -40,18 +46,26 @@ serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
+        const body = await req.json();
     const { 
       date, 
       locationId, 
       serviceDurationMinutes = 60, 
       staffUserId,
       organizationId 
-    } = await req.json();
+    } = body;
+    // Verify org access
+    try {
+      await requireOrgMember(supabaseAdmin, user.id, body.organizationId || body.organization_id);
+    } catch (orgErr) {
+      return authErrorResponse(orgErr, getCorsHeaders(req));
+    }
+
 
     if (!date || !organizationId) {
       return new Response(
         JSON.stringify({ error: "date and organizationId are required" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { status: 400, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
       );
     }
 
@@ -204,13 +218,13 @@ Return ONLY the JSON response, no markdown or explanation.`
       if (aiResponse.status === 429) {
         return new Response(
           JSON.stringify({ error: "Rate limit exceeded. Please try again in a moment." }),
-          { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          { status: 429, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
         );
       }
       if (aiResponse.status === 402) {
         return new Response(
           JSON.stringify({ error: "AI usage limit reached. Please contact support." }),
-          { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          { status: 402, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
         );
       }
       const errorText = await aiResponse.text();
@@ -275,14 +289,14 @@ Return ONLY the JSON response, no markdown or explanation.`
         suggestions: suggestions.slice(0, 5),
         existingCount: enrichedAppointments.length
       }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
     );
 
   } catch (error) {
     console.error("Scheduling copilot error:", error);
     return new Response(
       JSON.stringify({ error: error instanceof Error ? error.message : "Unknown error" }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { status: 500, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
     );
   }
 });

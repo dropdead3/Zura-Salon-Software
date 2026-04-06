@@ -2,11 +2,8 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "@supabase/supabase-js";
 import { loadZuraConfig, buildZuraPromptPrefix } from "../_shared/zura-config-loader.ts";
 import { AI_ASSISTANT_NAME_DEFAULT as AI_ASSISTANT_NAME } from "../_shared/brand.ts";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
-};
+import { requireAuth, requireOrgMember, authErrorResponse } from "../_shared/auth.ts";
+import { getCorsHeaders } from "../_shared/cors.ts";
 
 const SYSTEM_PROMPT = `You are ${AI_ASSISTANT_NAME}, the AI assistant for a salon management system. Users may address you as "${AI_ASSISTANT_NAME}" or "Hey ${AI_ASSISTANT_NAME}". You help staff members manage appointments, look up client information, and check availability. You are friendly, efficient, and professional.
 
@@ -425,10 +422,19 @@ function parseTimeString(timeStr: string): string {
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { headers: getCorsHeaders(req) });
   }
 
   try {
+    // Auth guard
+    let authResult;
+    try {
+      authResult = await requireAuth(req);
+    } catch (authErr) {
+      return authErrorResponse(authErr, getCorsHeaders(req));
+    }
+    const { user, supabaseAdmin } = authResult;
+
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
@@ -442,12 +448,20 @@ serve(async (req) => {
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
     
-    const { messages, userId, organizationId, userRole } = await req.json();
+        const body = await req.json();
+    const { messages, userId, organizationId, userRole } = body;
+    // Verify org access
+    try {
+      await requireOrgMember(supabaseAdmin, user.id, body.organizationId || body.organization_id);
+    } catch (orgErr) {
+      return authErrorResponse(orgErr, getCorsHeaders(req));
+    }
+
 
     if (!messages || !Array.isArray(messages)) {
       return new Response(
         JSON.stringify({ error: "Messages array is required" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { status: 400, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
       );
     }
 
@@ -494,14 +508,14 @@ serve(async (req) => {
       if (response.status === 429) {
         return new Response(
           JSON.stringify({ error: "Rate limit exceeded. Please try again in a moment." }),
-          { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          { status: 429, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
         );
       }
       const errorText = await response.text();
       console.error("AI gateway error:", response.status, errorText);
       return new Response(
         JSON.stringify({ error: "AI service temporarily unavailable" }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { status: 500, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
       );
     }
 
@@ -511,7 +525,7 @@ serve(async (req) => {
     if (!choice) {
       return new Response(
         JSON.stringify({ error: "No response from AI" }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { status: 500, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
       );
     }
 
@@ -573,7 +587,7 @@ serve(async (req) => {
         console.error("Follow-up AI error:", followUpResponse.status, errorText);
         return new Response(
           JSON.stringify({ error: "AI service error during follow-up" }),
-          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          { status: 500, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
         );
       }
 
@@ -586,7 +600,7 @@ serve(async (req) => {
           action,
           toolsUsed: toolResults.map(tr => (tr as { name: string }).name)
         }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
       );
     }
 
@@ -596,14 +610,14 @@ serve(async (req) => {
         message: choice.message?.content || "I'm not sure how to help with that.",
         action: null
       }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
     );
 
   } catch (e) {
     console.error("ai-agent-chat error:", e);
     return new Response(
       JSON.stringify({ error: e instanceof Error ? e.message : "Unknown error" }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { status: 500, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
     );
   }
 });

@@ -1,17 +1,23 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "@supabase/supabase-js";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
-};
+import { requireAuth, requireOrgMember, authErrorResponse } from "../_shared/auth.ts";
+import { getCorsHeaders } from "../_shared/cors.ts";
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { headers: getCorsHeaders(req) });
   }
 
   try {
+    // Auth guard
+    let authResult;
+    try {
+      authResult = await requireAuth(req);
+    } catch (authErr) {
+      return authErrorResponse(authErr, getCorsHeaders(req));
+    }
+    const { user, supabaseAdmin } = authResult;
+
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 
@@ -21,12 +27,20 @@ serve(async (req) => {
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
     
-    const { actionType, params, userId, organizationId, actionId } = await req.json();
+        const body = await req.json();
+    const { actionType, params, userId, organizationId, actionId } = body;
+    // Verify org access
+    try {
+      await requireOrgMember(supabaseAdmin, user.id, body.organizationId || body.organization_id);
+    } catch (orgErr) {
+      return authErrorResponse(orgErr, getCorsHeaders(req));
+    }
+
 
     if (!actionType || !params) {
       return new Response(
         JSON.stringify({ error: "Action type and params are required" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { status: 400, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
       );
     }
 
@@ -161,7 +175,7 @@ serve(async (req) => {
 
     return new Response(
       JSON.stringify(result),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
     );
 
   } catch (e) {
@@ -171,7 +185,7 @@ serve(async (req) => {
         success: false, 
         error: e instanceof Error ? e.message : "Unknown error" 
       }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { status: 500, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
     );
   }
 });
