@@ -1,64 +1,35 @@
 
 
-# Floating Scrollbar Handles — Remove Gutters and Background Fill
+# Fix Fullscreen View with God Mode Banner
 
 ## Problem
-The scrollbars in the criteria matrix (and globally) show visible track gutters and background fills, making them look like traditional system scrollbars rather than modern floating handles overlaid on content.
+The fullscreen criteria matrix uses `fixed inset-0 z-50`, but the God Mode bar is `z-[60]` and `fixed top-0`. This means the fullscreen overlay sits behind the God Mode bar, and its top content is hidden underneath it.
 
 ## Solution
-Update the Radix ScrollArea tokens and the global native scrollbar CSS so tracks are fully transparent with no padding/gutter, and thumbs appear to float over content with a slight inset and rounded pill shape.
+Two changes in `StylistLevelsEditor.tsx`:
 
-### Changes
+1. **Import `useOrganizationContext`** to detect if God Mode (impersonation) is active.
+2. **Adjust the fullscreen container** (~line 159):
+   - Increase z-index to `z-[70]` (above God Mode's `z-[60]`)
+   - When impersonating, add `top-[44px]` (desktop) / `top-[40px]` (mobile) so the fullscreen view sits below the God Mode bar instead of overlapping it
+   - Use the existing `useIsMobile` hook (already likely available or import it) to pick the correct offset
 
-**1. Design tokens (`src/lib/design-tokens.ts`) — scrollbar section**
+### Code change (line ~159)
+```tsx
+// Before
+<div className="fixed inset-0 z-50 bg-background flex flex-col">
 
-- **Track**: Remove `p-[1px]` padding from `trackV` and `trackH` — this creates the gutter effect. Make tracks thinner (e.g. `w-1.5` / `h-1.5`) so the thumb floats.
-- **Thumb**: Add margin/inset so the thumb doesn't touch the container edge. Use `bg-foreground/20 hover:bg-foreground/35` for a softer, floating appearance against any background.
-
-Updated tokens:
+// After — conditionally offset for God Mode bar
+<div className={cn(
+  "fixed inset-x-0 bottom-0 z-[70] bg-background flex flex-col",
+  isImpersonating ? (isMobile ? 'top-[40px]' : 'top-[44px]') : 'top-0'
+)}>
 ```
-track: 'flex touch-none select-none bg-transparent opacity-0 transition-opacity duration-700 ease-in-out group-hover/scroll:opacity-100'
-trackV: 'h-full w-2.5 border-l-[3px] border-l-transparent'  // transparent border creates inset
-trackH: 'h-2.5 flex-col border-t-[3px] border-t-transparent'
-thumb: 'relative flex-1 rounded-full bg-foreground/15 hover:bg-foreground/30'
-```
 
-The `border-l-transparent` / `border-t-transparent` trick pushes the thumb inward without a visible gutter.
-
-**2. Global native scrollbar CSS (`src/index.css`)**
-
-Update the global `::webkit-scrollbar` rules (lines ~1440-1483 and ~1520-1532):
-- Set scrollbar width/height to `6px` (thinner)
-- Remove any background on `::-webkit-scrollbar` itself (already transparent but ensure no override)
-- Use `border-radius: 9999px` on thumb
-- Add transparent border on thumb to create float effect: `border: 2px solid transparent; background-clip: padding-box`
-- Firefox: keep `scrollbar-width: thin` with transparent track
-
-Key CSS changes:
-```css
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-  background: transparent;
-}
-
-::-webkit-scrollbar-thumb {
-  background: transparent;
-  border-radius: 9999px;
-  border: 1px solid transparent;
-  background-clip: padding-box;
-}
-
-*:hover > ::-webkit-scrollbar-thumb,
-*:hover::-webkit-scrollbar-thumb {
-  background: rgba(128, 128, 128, 0.3);
-  background-clip: padding-box;
-}
-```
+This keeps the God Mode bar visible and functional while the fullscreen editor fills the remaining viewport.
 
 ### Files Modified
-- `src/lib/design-tokens.ts` — scrollbar token updates (3 lines)
-- `src/index.css` — native scrollbar CSS refinement (~15 lines across two sections)
+- `src/components/dashboard/settings/StylistLevelsEditor.tsx` — add `useOrganizationContext` import, add `useIsMobile` import (if not already present), update fullscreen container classes
 
 ### No database changes.
 
