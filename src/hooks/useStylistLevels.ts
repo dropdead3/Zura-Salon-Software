@@ -341,7 +341,11 @@ export function useSaveStylistLevels() {
             const oldRetail = old.retail_commission_rate;
             const newService = newLevel.service_commission_rate ?? null;
             const newRetail = newLevel.retail_commission_rate ?? null;
-            if (oldService !== newService || oldRetail !== newRetail) {
+            const oldHourlyEnabled = old.hourly_wage_enabled;
+            const oldHourlyWage = old.hourly_wage;
+            const newHourlyEnabled = newLevel.hourly_wage_enabled ?? false;
+            const newHourlyWage = newLevel.hourly_wage ?? null;
+            if (oldService !== newService || oldRetail !== newRetail || oldHourlyEnabled !== newHourlyEnabled || oldHourlyWage !== newHourlyWage) {
               supabase.rpc('log_platform_action', {
                 _org_id: orgId,
                 _action: 'commission_rate_updated',
@@ -352,6 +356,10 @@ export function useSaveStylistLevels() {
                   new_service_rate: newService,
                   old_retail_rate: oldRetail,
                   new_retail_rate: newRetail,
+                  old_hourly_wage_enabled: oldHourlyEnabled,
+                  new_hourly_wage_enabled: newHourlyEnabled,
+                  old_hourly_wage: oldHourlyWage,
+                  new_hourly_wage: newHourlyWage,
                 },
               }).then(() => {});
             }
