@@ -660,7 +660,7 @@ function CriteriaComparisonTable({ levels, promotionCriteria, retentionCriteria,
     }
 
     // Read-only display (original logic)
-    if (metric.section === 'promotion' && isPromotionSkip) {
+    if (isPromotionSkip || isLastLevelTenure) {
       return (
         <TableCell key={level.id} className="text-center text-sm py-3 px-3">
           <span className="text-muted-foreground/30 text-xs select-none">N/A</span>
