@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect, useRef, forwardRef, useImperativeHandle } from 'react';
+import { sanitizeHtml } from '@/lib/sanitize';
 import { tokens } from '@/lib/design-tokens';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -3374,7 +3375,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                             onBlur={(e) => {
                               updateBlock(selectedBlock.id, { content: e.currentTarget.innerHTML });
                             }}
-                            dangerouslySetInnerHTML={{ __html: selectedBlock.content }}
+                            dangerouslySetInnerHTML={{ __html: sanitizeHtml(selectedBlock.content) }}
                             className="min-h-[180px] text-sm resize-y border rounded-md p-3 bg-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 overflow-y-auto whitespace-pre-wrap"
                             style={{ maxHeight: '400px' }}
                           />
@@ -5389,13 +5390,13 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                         {block.type === 'heading' && (
                           <h1 
                             style={{ margin: 0, fontSize: block.styles.fontSize }}
-                            dangerouslySetInnerHTML={{ __html: block.content.replace(/\n/g, '<br/>') }}
+                            dangerouslySetInnerHTML={{ __html: sanitizeHtml(block.content.replace(/\n/g, '<br/>')) }}
                           />
                         )}
                         {block.type === 'text' && (
                           <p 
                             style={{ margin: 0, lineHeight: 1.6 }}
-                            dangerouslySetInnerHTML={{ __html: block.content.replace(/\n/g, '<br/>') }}
+                            dangerouslySetInnerHTML={{ __html: sanitizeHtml(block.content.replace(/\n/g, '<br/>')) }}
                           />
                         )}
                         {block.type === 'image' && (
@@ -5948,7 +5949,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
               <div
                 className="[&_a]:cursor-pointer [&_a:hover]:opacity-80 [&_a]:transition-opacity"
                 dangerouslySetInnerHTML={{
-                  __html: renderPreviewHtml(blocksToHtml(blocks)),
+                  __html: sanitizeHtml(renderPreviewHtml(blocksToHtml(blocks))),
                 }}
               />
             </div>

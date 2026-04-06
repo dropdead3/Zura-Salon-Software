@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
+import { sanitizeHtml } from '@/lib/sanitize';
 import { tokens } from '@/lib/design-tokens';
 import { PLATFORM_NAME, PLATFORM_URL } from '@/lib/brand';
 import { supabase } from '@/integrations/supabase/client';
@@ -687,7 +688,7 @@ export function EmailBrandingSettings() {
                   }}
                 >
                   {templatePreviewHtml ? (
-                    <div dangerouslySetInnerHTML={{ __html: templatePreviewHtml }} />
+                    <div dangerouslySetInnerHTML={{ __html: sanitizeHtml(templatePreviewHtml) }} />
                   ) : (
                     <>
                       <p style={{ fontSize: 16, color: '#18181b', margin: '0 0 16px' }}>
