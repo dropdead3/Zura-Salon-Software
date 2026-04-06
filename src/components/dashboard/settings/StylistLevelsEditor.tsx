@@ -1867,7 +1867,7 @@ export function StylistLevelsEditor({ embedded = false }: StylistLevelsEditorPro
 
               {/* Inline add-new form */}
               {isAddingNew && (
-                <div className="flex items-center gap-3 px-4 py-3 rounded-xl border-2 border-dashed border-primary/30 bg-primary/5">
+                <div className="flex items-center gap-3 px-4 py-3 rounded-lg border-2 border-dashed border-primary/30 bg-primary/5">
                   <div className="w-[1.75rem]" />
                   <span className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center text-xs font-medium text-primary shrink-0">
                     {levels.length + 1}
@@ -1926,7 +1926,7 @@ export function StylistLevelsEditor({ embedded = false }: StylistLevelsEditorPro
                   <div
                     key={level.id}
                     className={cn(
-                      "group rounded-xl bg-card border transition-all duration-200",
+                      "group rounded-lg bg-card border transition-all duration-200",
                       editingIndex === index && "ring-2 ring-primary/50 shadow-sm",
                       !isExpanded && "hover:bg-muted/30"
                     )}
@@ -2317,7 +2317,7 @@ export function StylistLevelsEditor({ embedded = false }: StylistLevelsEditorPro
           <TabsContent value="team">
             {/* Team Distribution summary */}
             {levels.length > 0 && (
-              <div className="rounded-xl border bg-card p-4 mb-4">
+              <div className="rounded-lg border bg-card p-4 mb-4">
                 <div className="flex items-center gap-2 text-sm text-muted-foreground mb-3">
                   <Users className="w-4 h-4" />
                   <span>Team Distribution</span>
