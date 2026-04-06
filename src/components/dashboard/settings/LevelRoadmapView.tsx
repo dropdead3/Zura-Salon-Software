@@ -110,10 +110,30 @@ export function LevelRoadmapView({
 
     // Clone content and force-expand all accordion sections
     const clone = contentRef.current.cloneNode(true) as HTMLElement;
+
+    // Force ALL hidden/collapsed content visible
     clone.querySelectorAll('.hidden').forEach(el => {
       (el as HTMLElement).classList.remove('hidden');
       (el as HTMLElement).style.display = 'block';
     });
+    // Ensure accordion content marked with print:!block is visible
+    clone.querySelectorAll('[class*="print\\:\\!block"]').forEach(el => {
+      (el as HTMLElement).style.display = 'block';
+    });
+
+    // Strip UI-only elements: jump nav, expand/collapse controls, accordion toggle buttons
+    clone.querySelectorAll('[class*="print:hidden"], [class*="print\\:hidden"]').forEach(el => el.remove());
+
+    // Remove overflow scroll from timeline
+    const timelineWrap = clone.querySelector('[class*="overflow-x-auto"]');
+    if (timelineWrap) {
+      (timelineWrap as HTMLElement).style.overflow = 'visible';
+      (timelineWrap as HTMLElement).style.flexWrap = 'wrap';
+      (timelineWrap as HTMLElement).style.justifyContent = 'center';
+    }
+
+    // Remove gradient overlays from timeline
+    clone.querySelectorAll('[class*="pointer-events-none"]').forEach(el => el.remove());
 
     const html = `<!DOCTYPE html>
 <html><head>
@@ -121,15 +141,51 @@ export function LevelRoadmapView({
 <title>Level Roadmap — ${orgName}</title>
 <style>${cssText}</style>
 <style>
-  @media print {
-    body { margin: 0; padding: 0; }
+  @page {
+    size: A4 portrait;
+    margin: 18mm 14mm 22mm 14mm;
   }
-  body { background: white; margin: 0; padding: 0; }
-  .print\\:hidden { display: none !important; }
+  @media print {
+    body { margin: 0; padding: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  }
+  * { box-sizing: border-box; }
+  body { background: white; margin: 0; padding: 0; color: #1a1a1a; }
+
+  /* Force card visibility and page-break handling */
+  [data-level-card] {
+    break-inside: avoid;
+    page-break-inside: avoid;
+    margin-bottom: 12px;
+  }
+  [data-level-card]:nth-child(4n+1):not(:first-child) {
+    page-break-before: always;
+  }
+
+  /* Hide scrollbars and overflow artifacts */
+  ::-webkit-scrollbar { display: none; }
+  .overflow-x-auto { overflow: visible !important; flex-wrap: wrap !important; justify-content: center !important; }
+  .overflow-auto { overflow: visible !important; }
+
+  /* Print footer */
+  .print-footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    text-align: center;
+    font-size: 8px;
+    color: #b0b0b0;
+    padding: 6px 0;
+    font-family: sans-serif;
+    letter-spacing: 0.03em;
+  }
 </style>
 </head><body>
-<div style="max-width: 800px; margin: 0 auto; padding: 24px;">
+<div style="max-width: 760px; margin: 0 auto; padding: 16px 0;">
 ${clone.innerHTML}
+</div>
+<div class="print-footer">
+  Confidential — For internal use only · ${orgName}
 </div>
 </body></html>`;
 
@@ -142,7 +198,7 @@ ${clone.innerHTML}
         printWindow.focus();
         printWindow.print();
         printWindow.close();
-      }, 300);
+      }, 400);
     };
   };
 

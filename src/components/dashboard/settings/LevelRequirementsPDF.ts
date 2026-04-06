@@ -324,7 +324,7 @@ export function generateLevelRequirementsPDF(options: LevelRequirementsPDFOption
     // Status badge
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(6);
-    const badgeText = isConfigured ? 'Configured' : 'Incomplete';
+    const badgeText = isConfigured ? 'Configured' : 'Setup Incomplete';
     const badgeW = doc.getTextWidth(badgeText) + 7;
     const titleW = doc.getTextWidth(titleText);
     doc.setFontSize(13);
