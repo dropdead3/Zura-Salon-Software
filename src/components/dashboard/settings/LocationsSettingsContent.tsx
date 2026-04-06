@@ -499,6 +499,199 @@ export function LocationsSettingsContent() {
         </CardContent>
       </Card>
 
+      {/* Location Groups Management */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className={tokens.card.iconBox}>
+                <Layers className="w-5 h-5 text-primary" />
+              </div>
+              <div>
+                <CardTitle className="font-display text-lg">LOCATION GROUPS</CardTitle>
+                <CardDescription>Organize locations into regions or markets for grouped overrides</CardDescription>
+              </div>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {/* Create new group */}
+          <div className="flex items-end gap-2">
+            <div className="flex-1 space-y-1">
+              <Label className="text-xs">New Group Name</Label>
+              <Input
+                value={newGroupName}
+                onChange={e => setNewGroupName(e.target.value)}
+                placeholder="e.g., East Region"
+                className="h-9"
+                onKeyDown={e => e.key === 'Enter' && handleCreateGroup()}
+              />
+            </div>
+            <Button
+              size={tokens.button.card}
+              onClick={handleCreateGroup}
+              disabled={!newGroupName.trim() || createGroup.isPending}
+              className="gap-1.5"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              Add Group
+            </Button>
+          </div>
+
+          {/* Groups list */}
+          {loadingGroups ? (
+            <p className="text-sm text-muted-foreground text-center py-6">Loading groups...</p>
+          ) : locationGroups.length === 0 ? (
+            <div className="text-center py-8">
+              <FolderOpen className="w-8 h-8 mx-auto mb-2 text-muted-foreground/50" />
+              <p className="text-muted-foreground">No location groups yet</p>
+              <p className="text-sm text-muted-foreground mt-1">Create groups to organize locations by region or market</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {locationGroups.map(group => {
+                const groupLocs = groupedLocations.get(group.id) || [];
+                const isEditing = editingGroupId === group.id;
+
+                return (
+                  <div key={group.id} className="rounded-lg border p-4 space-y-3">
+                    <div className="flex items-center justify-between">
+                      {isEditing ? (
+                        <div className="flex items-center gap-2 flex-1 mr-2">
+                          <Input
+                            value={editingGroupName}
+                            onChange={e => setEditingGroupName(e.target.value)}
+                            className="h-8 text-sm"
+                            autoFocus
+                            onKeyDown={e => {
+                              if (e.key === 'Enter') {
+                                updateGroup.mutate({ id: group.id, name: editingGroupName });
+                                setEditingGroupId(null);
+                              }
+                              if (e.key === 'Escape') setEditingGroupId(null);
+                            }}
+                          />
+                          <Button
+                            size={tokens.button.inline}
+                            onClick={() => {
+                              updateGroup.mutate({ id: group.id, name: editingGroupName });
+                              setEditingGroupId(null);
+                            }}
+                          >
+                            Save
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size={tokens.button.inline}
+                            onClick={() => setEditingGroupId(null)}
+                          >
+                            <X className="w-3.5 h-3.5" />
+                          </Button>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-2">
+                          <Layers className="w-4 h-4 text-muted-foreground" />
+                          <span className="font-medium text-sm">{group.name}</span>
+                          <span className="text-xs text-muted-foreground">({groupLocs.length} locations)</span>
+                        </div>
+                      )}
+
+                      {!isEditing && (
+                        <div className="flex items-center gap-1">
+                          <button
+                            className="p-1.5 rounded-md hover:bg-muted transition-colors"
+                            onClick={() => {
+                              setEditingGroupId(group.id);
+                              setEditingGroupName(group.name);
+                            }}
+                          >
+                            <Pencil className="w-3.5 h-3.5 text-muted-foreground" />
+                          </button>
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <button className="p-1.5 rounded-md hover:bg-destructive/10 transition-colors">
+                                <Trash2 className="w-3.5 h-3.5 text-destructive" />
+                              </button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Delete "{group.name}"?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  Locations in this group will become ungrouped. Commission and criteria overrides tied to this group will no longer apply.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction
+                                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                  onClick={() => deleteGroup.mutate(group.id)}
+                                >
+                                  Delete Group
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Assigned locations */}
+                    {groupLocs.length > 0 ? (
+                      <div className="flex flex-wrap gap-1.5">
+                        {groupLocs.map(loc => (
+                          <Badge key={loc.id} variant="outline" className="text-xs gap-1">
+                            <MapPin className="w-2.5 h-2.5" />
+                            {loc.name}
+                            <button
+                              className="ml-0.5 hover:text-destructive transition-colors"
+                              onClick={() => assignToGroup.mutate({ locationId: loc.id, groupId: null })}
+                            >
+                              <X className="w-2.5 h-2.5" />
+                            </button>
+                          </Badge>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-xs text-muted-foreground">No locations assigned</p>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Ungrouped locations */}
+          {(groupedLocations.get(null)?.length ?? 0) > 0 && locationGroups.length > 0 && (
+            <div className="pt-4 border-t space-y-2">
+              <h4 className="text-xs text-muted-foreground font-medium">Ungrouped Locations</h4>
+              <div className="space-y-2">
+                {(groupedLocations.get(null) || []).map(loc => (
+                  <div key={loc.id} className="flex items-center justify-between p-2 rounded-md bg-muted/30">
+                    <div className="flex items-center gap-2 text-sm">
+                      <MapPin className="w-3.5 h-3.5 text-muted-foreground" />
+                      {loc.name}
+                    </div>
+                    <Select
+                      value=""
+                      onValueChange={(groupId) => assignToGroup.mutate({ locationId: loc.id, groupId })}
+                    >
+                      <SelectTrigger className="w-36 h-8 text-xs">
+                        <SelectValue placeholder="Assign to group" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {locationGroups.map(g => (
+                          <SelectItem key={g.id} value={g.id}>{g.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
       {/* Add/Edit Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
