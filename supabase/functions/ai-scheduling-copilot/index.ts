@@ -46,11 +46,11 @@ serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-        const body = await req.json();
+    const body = await validateBody(req, SchedulingCopilotSchema, getCorsHeaders(req));
     const { 
       date, 
       locationId, 
-      serviceDurationMinutes = 60, 
+      serviceDurationMinutes, 
       staffUserId,
       organizationId 
     } = body;

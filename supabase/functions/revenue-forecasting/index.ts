@@ -2,6 +2,15 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "@supabase/supabase-js";
 import { requireAuth, requireOrgMember, authErrorResponse } from "../_shared/auth.ts";
 import { getCorsHeaders } from "../_shared/cors.ts";
+import { validateBody, ValidationError, z } from "../_shared/validation.ts";
+
+const RevenueForecastSchema = z.object({
+  organizationId: z.string().uuid(),
+  organization_id: z.string().uuid().optional(),
+  locationId: z.string().uuid().optional(),
+  forecastDays: z.number().int().min(1).max(90).optional().default(7),
+  forecastType: z.enum(["daily", "weekly", "monthly"]).optional().default("daily"),
+});
 
 interface DailyForecast {
   date: string;
@@ -34,12 +43,12 @@ serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-        const body = await req.json();
+    const body = await validateBody(req, RevenueForecastSchema, getCorsHeaders(req));
     const { 
       organizationId,
       locationId,
-      forecastDays = 7,
-      forecastType = 'daily'
+      forecastDays,
+      forecastType
     } = body;
     // Verify org access
     try {
