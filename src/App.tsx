@@ -37,7 +37,11 @@ import DashboardHome from "./pages/dashboard/DashboardHome";
 import { OrgPublicRoute } from "./components/org/OrgPublicRoute";
 
 // Dashboard pages
+import { OrgAccessDenied } from "./components/auth/OrgAccessDenied";
 
+function AccessDeniedPreview() {
+  return <OrgAccessDenied organizationName="Luxe Hair Studio" />;
+}
 
 
 // Team Challenges & Shift Swaps
