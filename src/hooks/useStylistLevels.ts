@@ -259,6 +259,8 @@ export function useSaveStylistLevels() {
       display_order: number;
       service_commission_rate?: number | null;
       retail_commission_rate?: number | null;
+      hourly_wage_enabled?: boolean;
+      hourly_wage?: number | null;
     }[]) => {
       const orgId = effectiveOrganization?.id;
       if (!orgId) throw new Error('No organization selected');
@@ -297,6 +299,8 @@ export function useSaveStylistLevels() {
               display_order: level.display_order,
               service_commission_rate: level.service_commission_rate ?? null,
               retail_commission_rate: level.retail_commission_rate ?? null,
+              hourly_wage_enabled: level.hourly_wage_enabled ?? false,
+              hourly_wage: level.hourly_wage ?? null,
             })
             .eq('slug', level.slug)
             .eq('organization_id', orgId);
@@ -314,6 +318,8 @@ export function useSaveStylistLevels() {
               display_order: level.display_order,
               service_commission_rate: level.service_commission_rate ?? null,
               retail_commission_rate: level.retail_commission_rate ?? null,
+              hourly_wage_enabled: level.hourly_wage_enabled ?? false,
+              hourly_wage: level.hourly_wage ?? null,
             });
           if (error) throw error;
         }
