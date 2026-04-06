@@ -1150,7 +1150,7 @@ export function StylistLevelsEditor({ embedded = false }: StylistLevelsEditorPro
                   >
                     {/* Collapsed header row — grid layout for column alignment */}
                     <div
-                      className="grid grid-cols-[auto_auto_1fr_7rem_6rem_auto] items-center px-3 py-2 cursor-pointer select-none"
+                      className="grid grid-cols-[auto_auto_1fr_7rem_6rem_5rem_auto] items-center px-3 py-2 cursor-pointer select-none"
                       onClick={(e) => {
                         if ((e.target as HTMLElement).closest('button, input, [role="dialog"]')) return;
                         toggleExpanded(level.id);
@@ -1194,13 +1194,17 @@ export function StylistLevelsEditor({ embedded = false }: StylistLevelsEditorPro
                         {level.retailCommissionRate ? `Retail ${level.retailCommissionRate}%` : '—'}
                       </span>
 
-                      {/* Col 6: Actions — right-aligned */}
+                      {/* Col 6: Stylist count — center-aligned */}
+                      <div className="text-center">
+                        {hasStylists && (
+                          <span className="text-xs text-muted-foreground">
+                            {stylistCount} <span className="hidden sm:inline">stylist{stylistCount !== 1 ? 's' : ''}</span>
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Col 7: Actions — right-aligned */}
                         <div className="flex items-center gap-1.5 justify-end">
-                          {hasStylists && (
-                            <span className="text-xs text-muted-foreground mr-1">
-                              {stylistCount} <span className="hidden sm:inline">stylist{stylistCount !== 1 ? 's' : ''}</span>
-                            </span>
-                          )}
                           <div onClick={(e) => e.stopPropagation()}>
                             <AlertDialog onOpenChange={(open) => { if (!open) { setDeleteTargetIndex(null); setReassignToSlug(''); } }}>
                               <AlertDialogTrigger asChild>
