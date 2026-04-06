@@ -281,9 +281,9 @@ function calculateCompensationBreakdown(payrollRuns: any[]): CompensationBreakdo
   }
 
   const totals = processedRuns.reduce((acc, run) => ({
-    basePay: acc.basePay + (run.total_base_pay || run.total_gross_pay * 0.55 || 0),
-    serviceCommissions: acc.serviceCommissions + (run.total_service_commissions || run.total_commissions * 0.8 || 0),
-    productCommissions: acc.productCommissions + (run.total_product_commissions || run.total_commissions * 0.2 || 0),
+    basePay: acc.basePay + (run.total_base_pay || 0),
+    serviceCommissions: acc.serviceCommissions + (run.total_service_commissions || 0),
+    productCommissions: acc.productCommissions + (run.total_product_commissions || 0),
     bonuses: acc.bonuses + (run.total_bonuses || 0),
     tips: acc.tips + (run.total_tips || 0),
   }), {
