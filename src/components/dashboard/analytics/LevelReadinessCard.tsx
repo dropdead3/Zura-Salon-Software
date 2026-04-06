@@ -99,18 +99,34 @@ function StylistRow({ member, showArrow }: { member: TeamMemberProgress; showArr
 
 export function LevelReadinessCard() {
   const { teamProgress, isLoading } = useTeamLevelProgress();
+  const { data: snapshotMap } = useReadLevelSnapshots(6);
+
+  // Persist current month's scores (deduped by unique constraint)
+  useWriteLevelSnapshots(teamProgress);
 
   const { readyToPromote, stalled } = useMemo(() => {
     const readyToPromote = teamProgress.filter(
       m => m.status !== 'at_top_level' && (m.isFullyQualified || m.compositeScore >= 90)
     ).sort((a, b) => b.compositeScore - a.compositeScore);
 
-    const stalled = teamProgress.filter(
-      m => m.status !== 'at_top_level' && m.timeAtLevelDays >= 180 && m.compositeScore < 80
-    ).sort((a, b) => b.timeAtLevelDays - a.timeAtLevelDays);
+    const stalled = teamProgress.filter(m => {
+      if (m.status === 'at_top_level' || m.compositeScore >= 80) return false;
+
+      // Try snapshot-based staleness first
+      const userSnapshots = snapshotMap?.get(m.userId);
+      const snapshotResult = isSnapshotStalled(userSnapshots, m.compositeScore, 2);
+
+      if (snapshotResult !== null) {
+        // Have snapshot data — use trend-based detection
+        return snapshotResult;
+      }
+
+      // Fallback: time-at-level heuristic when no snapshots exist yet
+      return m.timeAtLevelDays >= 180;
+    }).sort((a, b) => b.timeAtLevelDays - a.timeAtLevelDays);
 
     return { readyToPromote, stalled };
-  }, [teamProgress]);
+  }, [teamProgress, snapshotMap]);
 
   if (isLoading) {
     return (
