@@ -812,7 +812,7 @@ function CriteriaComparisonTable({ levels, promotionCriteria, retentionCriteria,
               return renderMetricRow(metric, globalIdx, 'ret');
             })}
           </TableBody>
-        </Table>
+        </table>
       </ScrollableTableWrapper>
     </div>
   );
