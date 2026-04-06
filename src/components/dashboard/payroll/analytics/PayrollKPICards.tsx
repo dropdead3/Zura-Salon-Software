@@ -8,6 +8,7 @@ import {
   Building2,
   Wallet,
   Scale,
+  Banknote,
 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -187,7 +188,7 @@ export function PayrollKPICards({ kpis, isLoading }: PayrollKPICardsProps) {
           />
         }
         subtitle="this period"
-        icon={DollarSign}
+        icon={Banknote}
         iconClassName="bg-emerald-500/10"
         isLoading={isLoading}
       />

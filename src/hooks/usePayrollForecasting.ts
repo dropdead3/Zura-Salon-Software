@@ -49,6 +49,13 @@ export interface EmployeeProjection {
 
   commissionSource?: string;
   commissionSourceType?: 'override' | 'location_override' | 'level' | 'unassigned';
+
+  /** Effective hourly rate used for base pay calculation (null if not hourly) */
+  hourlyRate: number | null;
+  /** True when hourly rate was resolved from the stylist level rather than a personal override */
+  isLevelHourlyFallback: boolean;
+  /** Estimated hours used for base pay projection */
+  estimatedHours: number | null;
 }
 
 export interface PayrollProjection {
@@ -188,6 +195,9 @@ export function usePayrollForecasting() {
       // Calculate base pay
       let basePay = 0;
       const hoursPerPeriod = 80; // Assume 80 hours bi-weekly
+      let effectiveHourlyRate: number | null = null;
+      let isLevelFallback = false;
+      let estimatedHours: number | null = null;
       
       if (emp.pay_type === 'hourly' || emp.pay_type === 'hourly_plus_commission') {
         let rate = emp.hourly_rate || 0;
@@ -198,9 +208,12 @@ export function usePayrollForecasting() {
             const matchedLevel = allLevels.find(l => l.slug === empLevel.stylist_level);
             if (matchedLevel?.hourly_wage_enabled && matchedLevel.hourly_wage) {
               rate = matchedLevel.hourly_wage;
+              isLevelFallback = true;
             }
           }
         }
+        effectiveHourlyRate = rate || null;
+        estimatedHours = hoursPerPeriod;
         basePay = rate * hoursPerPeriod;
       } else if (emp.pay_type === 'salary' || emp.pay_type === 'salary_plus_commission') {
         basePay = (emp.salary_amount || 0) / 26; // Bi-weekly
@@ -268,6 +281,9 @@ export function usePayrollForecasting() {
         },
         commissionSource: resolved.sourceName,
         commissionSourceType: resolved.source,
+        hourlyRate: effectiveHourlyRate,
+        isLevelHourlyFallback: isLevelFallback,
+        estimatedHours,
       };
     });
 
@@ -307,7 +323,7 @@ export function usePayrollForecasting() {
       daysRemaining,
       vsLastPeriod,
     };
-  }, [currentPeriod, periodStart, periodEnd, employeeSettings, currentSalesData, lastPeriodSales, resolveCommission]);
+  }, [currentPeriod, periodStart, periodEnd, employeeSettings, currentSalesData, lastPeriodSales, resolveCommission, allLevels, allCriteria, employeeLevels]);
 
   const isLoading = isLoadingSettings || isLoadingSchedule || isLoadingTiers || isLoadingSales;
 

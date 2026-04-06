@@ -5,6 +5,7 @@ import {
   TrendingUp,
   AlertCircle
 } from 'lucide-react';
+import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import {
   Table,
   TableBody,
@@ -104,14 +105,14 @@ function EmployeeRow({ employee, isExpanded, onToggle }: EmployeeRowProps) {
         </TableCell>
         <TableCell className="text-right">
           <div className="text-sm">
-            <p>{formatCurrency(employee.projectedSales.services)}</p>
+            <BlurredAmount>{formatCurrency(employee.projectedSales.services)}</BlurredAmount>
             <p className="text-xs text-muted-foreground">
-              +{formatCurrency(employee.projectedSales.products)} products
+              +<BlurredAmount>{formatCurrency(employee.projectedSales.products)}</BlurredAmount> products
             </p>
           </div>
         </TableCell>
         <TableCell className="text-right font-medium">
-          {formatCurrency(employee.projectedCompensation.totalGross)}
+          <BlurredAmount>{formatCurrency(employee.projectedCompensation.totalGross)}</BlurredAmount>
         </TableCell>
       </TableRow>
       
@@ -120,12 +121,17 @@ function EmployeeRow({ employee, isExpanded, onToggle }: EmployeeRowProps) {
           <TableCell colSpan={5} className="bg-muted/30 p-4">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div>
-                <p className="text-xs text-muted-foreground font-display uppercase tracking-wide">Base Pay</p>
-                <p className="font-medium">{formatCurrency(employee.projectedCompensation.basePay)}</p>
+                <div className="flex items-center gap-1.5">
+                  <p className="text-xs text-muted-foreground font-display uppercase tracking-wide">Base Pay</p>
+                  {employee.isLevelHourlyFallback && (
+                    <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4">Level Rate</Badge>
+                  )}
+                </div>
+                <p className="font-medium"><BlurredAmount>{formatCurrency(employee.projectedCompensation.basePay)}</BlurredAmount></p>
                 {employee.projectedCompensation.basePay > 0 && (
                   <p className="text-[10px] text-muted-foreground mt-0.5">
-                    {(employee.payType === 'hourly' || employee.payType === 'hourly_plus_commission')
-                      ? '80 hrs estimated'
+                    {(employee.payType === 'hourly' || employee.payType === 'hourly_plus_commission') && employee.hourlyRate
+                      ? `${employee.estimatedHours ?? 80} hrs × ${formatCurrency(employee.hourlyRate)}/hr`
                       : employee.payType === 'salary' || employee.payType === 'salary_plus_commission'
                       ? 'Bi-weekly salary'
                       : ''}
@@ -135,19 +141,19 @@ function EmployeeRow({ employee, isExpanded, onToggle }: EmployeeRowProps) {
               <div>
                 <p className="text-xs text-muted-foreground font-display uppercase tracking-wide">Service Commission</p>
                 <p className="font-medium text-blue-600">
-                  {formatCurrency(employee.projectedCompensation.serviceCommission)}
+                  <BlurredAmount>{formatCurrency(employee.projectedCompensation.serviceCommission)}</BlurredAmount>
                 </p>
               </div>
               <div>
                 <p className="text-xs text-muted-foreground font-display uppercase tracking-wide">Product Commission</p>
                 <p className="font-medium text-purple-600">
-                  {formatCurrency(employee.projectedCompensation.productCommission)}
+                  <BlurredAmount>{formatCurrency(employee.projectedCompensation.productCommission)}</BlurredAmount>
                 </p>
               </div>
               <div>
                 <p className="text-xs text-muted-foreground font-display uppercase tracking-wide">Projected Total</p>
                 <p className="font-medium text-lg">
-                  {formatCurrency(employee.projectedCompensation.totalGross)}
+                  <BlurredAmount>{formatCurrency(employee.projectedCompensation.totalGross)}</BlurredAmount>
                 </p>
               </div>
             </div>
@@ -172,7 +178,7 @@ function EmployeeRow({ employee, isExpanded, onToggle }: EmployeeRowProps) {
                     Progress to {employee.nextTier.name} ({(employee.nextTier.rate * 100).toFixed(0)}%)
                   </p>
                   <p className="text-sm text-muted-foreground">
-                    {formatCurrency(employee.amountToNextTier)} more needed
+                    <BlurredAmount>{formatCurrency(employee.amountToNextTier)}</BlurredAmount> more needed
                   </p>
                 </div>
                 <Progress value={employee.tierProgress} className="h-2" />
@@ -245,7 +251,7 @@ export function TeamCompensationTable({ employees, isLoading, periodLabel }: Tea
           </div>
           <div className="text-right">
             <p className="text-sm text-muted-foreground">Total Projected</p>
-            <p className="text-2xl font-medium">{formatCurrency(totalProjected)}</p>
+            <p className="text-2xl font-medium"><BlurredAmount>{formatCurrency(totalProjected)}</BlurredAmount></p>
           </div>
         </div>
       </CardHeader>
