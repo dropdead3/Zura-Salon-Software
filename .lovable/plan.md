@@ -1,29 +1,39 @@
 
 
-# Add Vertical Divider to Frozen "Metric" Column on Scroll
+# Make Header Row Sticky for Vertical Scrolling
 
 ## Problem
 
-The sticky "Metric" column blends into the scrolling content when the table is scrolled horizontally. There's no visual separator to indicate where the frozen column ends.
+When scrolling vertically through the criteria table, the header row (Level 1, Level 2, etc.) scrolls away, making it hard to know which column belongs to which level.
 
 ## Solution
 
-Add a right border/shadow to all sticky `left-0` cells (the Metric column header and all metric label cells) so a visible vertical divider persists during horizontal scroll.
+Make the `TableHeader` row sticky at the top of the scroll container so it remains visible during vertical scroll.
 
-### Change in `StylistLevelsEditor.tsx`
+### Changes in `StylistLevelsEditor.tsx`
 
-Add a `border-r border-border/40` class to every sticky cell in the Metric column:
+1. **`TableHeader`** (~line 696): Add `sticky top-0 z-30` so the entire header row pins to the top of the overflow container.
 
-1. **Table header** (~line 698): Add `border-r border-border/40` to the sticky `TableHead`
-2. **Section header rows** (~line 640): Add `border-r border-border/40` to the sticky `TableCell` in section headers
-3. **Commission rows** (~line 756): Same addition
-4. **Hourly Wage row** (~line 775): Same addition
-5. **Promotion metric rows**: Same addition to all sticky metric label cells
+2. **`TableRow` inside header** (~line 697): Ensure the row has a solid `bg-card` background so it doesn't show content bleeding through underneath.
 
-Optionally add a subtle `shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)]` for extra depth, but the border alone should suffice given the existing vertical divider system.
+3. **All `TableHead` cells** (~line 698, 703): Ensure each header cell has `bg-card` so the sticky row is fully opaque. The "Metric" cell already has `bg-card`; the level columns need it added.
+
+4. **Z-index coordination**: The "Metric" header cell (sticky both left and top) needs the highest z-index (`z-30`) since it's frozen in both directions. Level header cells get `z-20` (sticky top only).
+
+```tsx
+// TableHeader
+<TableHeader className="sticky top-0 z-20">
+  <TableRow className="border-b-2 border-border/60 bg-card">
+    {/* Metric cell: sticky left + top → z-30 */}
+    <TableHead className="... sticky left-0 bg-card z-30 ...">Metric</TableHead>
+    {/* Level cells: sticky top via parent → z-20, need bg-card */}
+    <TableHead className="... bg-card ...">...</TableHead>
+  </TableRow>
+</TableHeader>
+```
 
 ### Files Modified
-- `src/components/dashboard/settings/StylistLevelsEditor.tsx` — add `border-r border-border/40` to all `sticky left-0` cells
+- `src/components/dashboard/settings/StylistLevelsEditor.tsx` — 3 small class additions
 
 ### No database changes.
 
