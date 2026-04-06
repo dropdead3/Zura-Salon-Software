@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useLevelPromotionCriteria, type LevelPromotionCriteria } from './useLevelPromotionCriteria';
 import { useLevelRetentionCriteria, type LevelRetentionCriteria } from './useLevelRetentionCriteria';
+import { useLevelCriteriaOverrides, resolveCriteriaValue } from './useLevelCriteriaOverrides';
 import { useStylistLevels, type StylistLevel } from './useStylistLevels';
 import { subDays, format } from 'date-fns';
 import { buildTimeOffSet, isUserOffOnDate } from '@/lib/time-off-utils';
