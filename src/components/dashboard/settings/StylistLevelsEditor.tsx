@@ -362,7 +362,7 @@ function CriteriaComparisonTable({ levels, promotionCriteria, retentionCriteria,
             {/* Retention section header */}
             <TableRow className="bg-muted/30 hover:bg-muted/30">
               <TableCell colSpan={levels.length + 1} className="py-2">
-                <span className="flex items-center gap-1.5 text-xs font-medium text-foreground">
+                <span className="flex items-center gap-1.5 text-xs font-display uppercase tracking-wide text-foreground">
                   <Shield className="w-3.5 h-3.5 text-primary" />
                   Retention — Required to Stay
                 </span>
