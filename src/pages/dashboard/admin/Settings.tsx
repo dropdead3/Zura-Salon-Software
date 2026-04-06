@@ -190,7 +190,7 @@ function SortableCard({ category, isEditMode, onClick }: SortableCardProps) {
           isEditMode && "border-dashed",
           isDragging && "opacity-50"
         )}
-        onClick={!isEditMode ? () => navigate(`?category=${category.id}`) : undefined}
+        onClick={!isEditMode ? () => onClick?.(category.id) : undefined}
       >
         <MetricInfoTooltip description={category.description} className="absolute top-4 right-4 w-4 h-4" />
         {isEditMode && (
