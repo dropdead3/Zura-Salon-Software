@@ -816,7 +816,7 @@ function CriteriaComparisonTable({ levels, promotionCriteria, retentionCriteria,
                   Compensation
                 </span>
               </TableCell>
-              <TableCell colSpan={levels.length} className="py-3 px-4 bg-muted/80 text-sm text-muted-foreground/60">
+              <TableCell colSpan={levels.length} className="py-3 px-4 bg-foreground/[0.09] text-sm text-muted-foreground/60">
                 At this level
               </TableCell>
             </TableRow>
@@ -863,7 +863,7 @@ function CriteriaComparisonTable({ levels, promotionCriteria, retentionCriteria,
                   Promotion
                 </span>
               </TableCell>
-              <TableCell colSpan={levels.length} className="py-3 px-4 bg-muted/80 text-sm text-muted-foreground/60">
+              <TableCell colSpan={levels.length} className="py-3 px-4 bg-foreground/[0.09] text-sm text-muted-foreground/60">
                 To reach this level
               </TableCell>
             </TableRow>
