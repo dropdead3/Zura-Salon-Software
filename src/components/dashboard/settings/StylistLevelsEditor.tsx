@@ -61,6 +61,7 @@ import { generateLevelRequirementsPDF } from '@/components/dashboard/settings/Le
 import { TeamCommissionRoster } from '@/components/dashboard/settings/TeamCommissionRoster';
 import { LocationOverridesTab } from '@/components/dashboard/settings/LocationOverridesTab';
 import { CommissionEconomicsTab } from '@/components/dashboard/settings/CommissionEconomicsTab';
+import { useActiveLocations } from '@/hooks/useLocations';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
   Dialog,
