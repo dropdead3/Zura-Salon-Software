@@ -8,8 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
-import { getLevelColor } from '@/lib/level-colors';
-import { CheckCircle2, ChevronRight, MapPin, Lock } from 'lucide-react';
+import { CheckCircle2, MapPin, Lock } from 'lucide-react';
 import { useStylistLevels, type StylistLevel } from '@/hooks/useStylistLevels';
 import { useLevelPromotionCriteria, type LevelPromotionCriteria } from '@/hooks/useLevelPromotionCriteria';
 
@@ -76,9 +75,10 @@ export function LevelProgressionLadder({ currentLevelId }: LevelProgressionLadde
               const isPast = currentIndex >= 0 && idx < currentIndex;
               const isFuture = currentIndex >= 0 && idx > currentIndex;
               const isNext = currentIndex >= 0 && idx === currentIndex + 1;
-              const levelColor = getLevelColor(idx, levels.length);
               const criteria = criteriaMap.get(level.id);
               const highlights = getCriteriaHighlights(criteria);
+              // Simple dot color based on position
+              const dotColor = idx === levels.length - 1 ? '#f59e0b' : idx >= levels.length * 0.6 ? '#fcd34d' : idx >= levels.length * 0.3 ? '#fde68a' : '#a1a1aa';
 
               return (
                 <div key={level.id} className="relative flex items-start gap-4 py-3">
@@ -110,7 +110,7 @@ export function LevelProgressionLadder({ currentLevelId }: LevelProgressionLadde
                       : 'border-border/60 bg-muted/20'
                   )}>
                     <div className="flex items-center gap-2">
-                      <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: levelColor.dot }} />
+                      <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: dotColor }} />
                       <span className={cn('text-sm', isCurrent ? 'text-foreground' : 'text-muted-foreground')}>{level.label}</span>
                       {isCurrent && (
                         <Badge variant="outline" className="text-[10px] h-5 border-primary/40 text-primary bg-primary/10">
