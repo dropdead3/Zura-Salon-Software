@@ -704,7 +704,7 @@ function CriteriaComparisonTable({ levels, promotionCriteria, retentionCriteria,
         }}
       >
         <TableCell className={cn(
-          "text-sm sticky left-0 z-10 py-3 px-4 border-r-2 border-border/60 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.08)] dark:shadow-[2px_0_4px_-2px_rgba(0,0,0,0.3)]",
+          "text-sm sticky left-0 z-10 py-3 px-4 border-r border-border shadow-[2px_0_4px_-2px_rgba(0,0,0,0.06)] dark:shadow-[2px_0_4px_-2px_rgba(0,0,0,0.4)]",
           isEditingRow ? "bg-primary/10 text-foreground" : "text-muted-foreground bg-muted"
         )}>
           <div className="flex items-center gap-1.5">
@@ -759,10 +759,10 @@ function CriteriaComparisonTable({ levels, promotionCriteria, retentionCriteria,
         Click any metric row to configure thresholds across all levels at once. Use "Edit" per-level for advanced settings.
       </p>
       <ScrollableTableWrapper isFullscreen={isTableFullscreen} onToggleFullscreen={toggleTableFullscreen}>
-        <table className="w-full caption-bottom text-sm [&_th]:border-r [&_th]:border-border/20 [&_th:last-child]:border-r-0 [&_td]:border-r [&_td]:border-border/20 [&_td:last-child]:border-r-0 [&_td[colspan]]:border-r-0">
+        <table className="w-full caption-bottom text-sm [&_th]:border-r [&_th]:border-border/30 [&_th:last-child]:border-r-0 [&_td]:border-r [&_td]:border-border/30 [&_td:last-child]:border-r-0 [&_td[colspan]]:border-r-0">
           <TableHeader className="sticky top-0 z-20 shadow-[0_2px_4px_-2px_rgba(0,0,0,0.08)] dark:shadow-[0_2px_4px_-2px_rgba(0,0,0,0.3)]">
-            <TableRow className="border-b-2 border-border bg-muted">
-              <TableHead className={cn("w-[128px] min-w-[128px] sticky left-0 bg-muted z-30 py-3 px-3 border-r-2 border-border/60 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.08)] dark:shadow-[2px_0_4px_-2px_rgba(0,0,0,0.3)]", tokens.table.columnHeader)}>Metric</TableHead>
+            <TableRow className="border-b border-border bg-muted">
+              <TableHead className={cn("w-[128px] min-w-[128px] sticky left-0 bg-muted z-30 py-3 px-3 border-r border-border shadow-[2px_0_4px_-2px_rgba(0,0,0,0.06)] dark:shadow-[2px_0_4px_-2px_rgba(0,0,0,0.4)]", tokens.table.columnHeader)}>Metric</TableHead>
               {levels.map((level, idx) => {
                 const ret = level.dbId ? getCriteria(level.dbId).retention : undefined;
                 const retentionActive = ret?.retention_enabled === true;
@@ -808,22 +808,22 @@ function CriteriaComparisonTable({ levels, promotionCriteria, retentionCriteria,
           </TableHeader>
           <TableBody>
             {/* Compensation section */}
-            <TableRow className="bg-muted hover:bg-muted border-t-2 border-border/60">
-              <TableCell className="sticky left-0 z-10 bg-muted py-3 px-3 border-l-2 border-l-primary border-r-2 border-border/60 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.08)] dark:shadow-[2px_0_4px_-2px_rgba(0,0,0,0.3)]">
+            <TableRow className="bg-muted/80 hover:bg-muted/80 border-t border-border">
+              <TableCell className="sticky left-0 z-10 bg-muted/80 py-3 px-3 border-r border-border shadow-[2px_0_4px_-2px_rgba(0,0,0,0.06)] dark:shadow-[2px_0_4px_-2px_rgba(0,0,0,0.4)]">
                 <span className="flex items-center gap-2 text-xs font-display uppercase tracking-wide text-foreground">
                   <DollarSign className="w-4 h-4 text-primary shrink-0" />
                   Compensation
                 </span>
               </TableCell>
-              <TableCell colSpan={levels.length} className="py-3 px-4 bg-muted text-sm text-muted-foreground">
+              <TableCell colSpan={levels.length} className="py-3 px-4 bg-muted/80 text-sm text-muted-foreground/60">
                 At this level
               </TableCell>
             </TableRow>
             {['Service Commission', 'Retail Commission'].map((commLabel) => {
               const field = commLabel === 'Service Commission' ? 'serviceCommissionRate' : 'retailCommissionRate';
               return (
-                <TableRow key={commLabel}>
-                  <TableCell className="text-sm text-muted-foreground sticky left-0 bg-muted z-10 py-3 px-4 border-r-2 border-border/60 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.08)] dark:shadow-[2px_0_4px_-2px_rgba(0,0,0,0.3)]">{commLabel}</TableCell>
+                <TableRow key={commLabel} className="border-b border-border/40 hover:bg-muted/20 transition-colors">
+                  <TableCell className="text-sm text-muted-foreground sticky left-0 bg-muted z-10 py-3 px-4 border-r border-border shadow-[2px_0_4px_-2px_rgba(0,0,0,0.06)] dark:shadow-[2px_0_4px_-2px_rgba(0,0,0,0.4)]">{commLabel}</TableCell>
                   {levels.map((level) => {
                     const rate = level[field];
                     return (
@@ -841,8 +841,8 @@ function CriteriaComparisonTable({ levels, promotionCriteria, retentionCriteria,
             })}
 
             {/* Hourly Wage row */}
-            <TableRow>
-              <TableCell className="text-sm text-muted-foreground sticky left-0 bg-muted z-10 py-3 px-4 border-r-2 border-border/60 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.08)] dark:shadow-[2px_0_4px_-2px_rgba(0,0,0,0.3)]">Hourly Wage</TableCell>
+            <TableRow className="border-b border-border/40 hover:bg-muted/20 transition-colors">
+              <TableCell className="text-sm text-muted-foreground sticky left-0 bg-muted z-10 py-3 px-4 border-r border-border shadow-[2px_0_4px_-2px_rgba(0,0,0,0.06)] dark:shadow-[2px_0_4px_-2px_rgba(0,0,0,0.4)]">Hourly Wage</TableCell>
               {levels.map((level) => (
                 <TableCell key={level.id} className="text-center text-sm tabular-nums py-3 px-3">
                   {level.hourlyWageEnabled && level.hourlyWage ? (
@@ -855,14 +855,14 @@ function CriteriaComparisonTable({ levels, promotionCriteria, retentionCriteria,
             </TableRow>
 
             {/* Promotion section header */}
-            <TableRow className="bg-muted hover:bg-muted border-t-2 border-border/60">
-              <TableCell className="sticky left-0 z-10 bg-muted py-3 px-3 border-l-2 border-l-primary border-r-2 border-border/60 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.08)] dark:shadow-[2px_0_4px_-2px_rgba(0,0,0,0.3)]">
+            <TableRow className="bg-muted/80 hover:bg-muted/80 border-t border-border">
+              <TableCell className="sticky left-0 z-10 bg-muted/80 py-3 px-3 border-r border-border shadow-[2px_0_4px_-2px_rgba(0,0,0,0.06)] dark:shadow-[2px_0_4px_-2px_rgba(0,0,0,0.4)]">
                 <span className="flex items-center gap-2 text-xs font-display uppercase tracking-wide text-foreground">
                   <TrendingUp className="w-4 h-4 text-primary shrink-0" />
                   Promotion
                 </span>
               </TableCell>
-              <TableCell colSpan={levels.length} className="py-3 px-4 bg-muted text-sm text-muted-foreground">
+              <TableCell colSpan={levels.length} className="py-3 px-4 bg-muted/80 text-sm text-muted-foreground/60">
                 To reach this level
               </TableCell>
             </TableRow>
@@ -871,14 +871,14 @@ function CriteriaComparisonTable({ levels, promotionCriteria, retentionCriteria,
             )}
 
             {/* Retention Policy section header */}
-            <TableRow className="bg-muted hover:bg-muted border-t-2 border-border/60">
-              <TableCell className="sticky left-0 z-10 bg-muted py-3 px-3 border-l-2 border-l-primary border-r-2 border-border/60 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.08)] dark:shadow-[2px_0_4px_-2px_rgba(0,0,0,0.3)]">
+            <TableRow className="bg-muted/80 hover:bg-muted/80 border-t border-border">
+              <TableCell className="sticky left-0 z-10 bg-muted/80 py-3 px-3 border-r border-border shadow-[2px_0_4px_-2px_rgba(0,0,0,0.06)] dark:shadow-[2px_0_4px_-2px_rgba(0,0,0,0.4)]">
                 <span className="flex items-center gap-2 text-xs font-display uppercase tracking-wide text-foreground">
                   <Shield className="w-4 h-4 text-primary shrink-0" />
                   Retention
                 </span>
               </TableCell>
-              <TableCell colSpan={levels.length} className="py-3 px-4 bg-muted text-sm text-muted-foreground">
+              <TableCell colSpan={levels.length} className="py-3 px-4 bg-muted/80 text-sm text-muted-foreground/60">
                 Policy settings · KPI minimums inherited from Level Requirements above
               </TableCell>
             </TableRow>
