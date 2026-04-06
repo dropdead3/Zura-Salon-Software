@@ -19,12 +19,6 @@ interface HuddleContent {
   birthdays_celebrations: string;
   training_reminders: string;
   sales_goals: { retail: number; service: number };
-  focus_of_the_day: string;
-  wins_from_yesterday: string;
-  announcements: string;
-  birthdays_celebrations: string;
-  training_reminders: string;
-  sales_goals: { retail: number; service: number };
 }
 
 serve(async (req) => {
