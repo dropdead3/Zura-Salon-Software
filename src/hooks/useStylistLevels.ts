@@ -317,9 +317,40 @@ export function useSaveStylistLevels() {
         }
       }
     },
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['stylist-levels'] });
       queryClient.invalidateQueries({ queryKey: ['stylist-levels-all'] });
+
+      // Audit log: compare old vs new commission rates
+      const orgId = effectiveOrganization?.id;
+      if (orgId) {
+        const oldLevels = queryClient.getQueryData<StylistLevel[]>(['stylist-levels', orgId]);
+        if (oldLevels) {
+          for (const newLevel of variables) {
+            const old = oldLevels.find(l => l.slug === newLevel.slug);
+            if (!old) continue;
+            const oldService = old.service_commission_rate;
+            const oldRetail = old.retail_commission_rate;
+            const newService = newLevel.service_commission_rate ?? null;
+            const newRetail = newLevel.retail_commission_rate ?? null;
+            if (oldService !== newService || oldRetail !== newRetail) {
+              supabase.rpc('log_platform_action', {
+                _org_id: orgId,
+                _action: 'commission_rate_updated',
+                _entity_type: 'stylist_level',
+                _details: {
+                  level_slug: newLevel.slug,
+                  old_service_rate: oldService,
+                  new_service_rate: newService,
+                  old_retail_rate: oldRetail,
+                  new_retail_rate: newRetail,
+                },
+              }).then(() => {});
+            }
+          }
+        }
+      }
+
       toast({
         title: 'Levels Saved',
         description: 'Stylist levels have been updated successfully.',
