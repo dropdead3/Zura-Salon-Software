@@ -1,11 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "@supabase/supabase-js";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
-};
+import { requireAuth, requireOrgMember, authErrorResponse } from "../_shared/auth.ts";
+import { getCorsHeaders } from "../_shared/cors.ts";
 
 interface QuarterData {
   quarter: string; // e.g. "Q1 2025"
@@ -132,16 +128,33 @@ function determineMomentum(growthRates: number[]): string {
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { headers: getCorsHeaders(req) });
   }
 
   try {
-    const { organizationId, locationId, granularity = 'quarterly', horizonMonths = 12 } = await req.json();
+    // Auth guard
+    let authResult;
+    try {
+      authResult = await requireAuth(req);
+    } catch (authErr) {
+      return authErrorResponse(authErr, getCorsHeaders(req));
+    }
+    const { user, supabaseAdmin } = authResult;
+
+        const body = await req.json();
+    const { organizationId, locationId, granularity = 'quarterly', horizonMonths = 12 } = body;
+    // Verify org access
+    try {
+      await requireOrgMember(supabaseAdmin, user.id, body.organizationId || body.organization_id);
+    } catch (orgErr) {
+      return authErrorResponse(orgErr, getCorsHeaders(req));
+    }
+
 
     if (!organizationId) {
       return new Response(JSON.stringify({ error: "organizationId required" }), {
         status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
       });
     }
 
@@ -169,7 +182,7 @@ serve(async (req) => {
 
         return new Response(
           JSON.stringify({ source: "cache", forecasts: cached, scenarios }),
-          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          { headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
         );
       }
     }
@@ -191,7 +204,7 @@ serve(async (req) => {
       console.error("Error fetching sales data:", fetchError);
       return new Response(JSON.stringify({ error: "Failed to fetch sales data" }), {
         status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
       });
     }
 
@@ -210,7 +223,7 @@ serve(async (req) => {
             quartersAvailable: 0,
           },
         }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
       );
     }
 
@@ -456,7 +469,7 @@ Monthly seasonal indices (revenue): ${Object.entries(revSeasonalIdx).map(([m, id
             projectedAppointments12m,
           },
         }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
       );
     }
 
@@ -771,13 +784,13 @@ Trend R²: ${regression.r2.toFixed(3)}`;
           nextQuarterLabel: projections.find((p) => p.scenario === "baseline")?.period_label || "",
         },
       }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
     );
   } catch (e) {
     console.error("growth-forecasting error:", e);
     return new Response(
       JSON.stringify({ error: e instanceof Error ? e.message : "Unknown error" }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { status: 500, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
     );
   }
 });
