@@ -2225,6 +2225,30 @@ export function StylistLevelsEditor({ embedded = false, onActions }: StylistLeve
                             </p>
                           )}
                         </div>
+
+                        {/* Mark as Configured toggle */}
+                        {level.dbId && (
+                          <div className="ml-[3.25rem] flex items-center justify-between rounded-lg border border-border/60 bg-muted/20 p-3">
+                            <div className="flex items-center gap-2">
+                              <Check className={cn("w-3.5 h-3.5", level.isConfigured ? "text-emerald-600" : "text-muted-foreground/40")} />
+                              <span className="text-xs font-sans text-foreground">Mark as Configured</span>
+                              <span className="text-[10px] text-muted-foreground">
+                                {level.isConfigured ? 'This level is ready and will appear as complete on the roadmap.' : 'Mark this level when setup is complete.'}
+                              </span>
+                            </div>
+                            <Switch
+                              checked={level.isConfigured}
+                              onCheckedChange={(checked) => {
+                                if (level.dbId) {
+                                  updateLevel.mutate({ id: level.dbId, is_configured: checked });
+                                  const newLevels = [...levels];
+                                  newLevels[index] = { ...newLevels[index], isConfigured: checked };
+                                  setLevels(newLevels);
+                                }
+                              }}
+                            />
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>
