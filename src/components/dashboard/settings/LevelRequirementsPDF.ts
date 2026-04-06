@@ -293,6 +293,9 @@ export function generateLevelRequirementsPDF(options: LevelRequirementsPDFOption
     } else {
       cardH += 4;
     }
+    if (!isBase && promo) cardH += 12; // eval details
+    if (retention?.retention_enabled) cardH += 16; // retention section
+    cardH += 4; // bottom padding
 
     y = ensureSpace(doc, y, cardH);
 
