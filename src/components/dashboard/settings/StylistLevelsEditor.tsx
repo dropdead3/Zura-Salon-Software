@@ -519,7 +519,7 @@ function CriteriaComparisonTable({ levels, promotionCriteria, retentionCriteria,
       const warn = editLevelIdx >= 0 && hasEditInconsistency(editLevelIdx, editableLevelIds);
       
       return (
-        <TableCell key={level.id} className="text-center px-1.5 py-1.5">
+        <TableCell key={level.id} className="text-center px-2 py-2">
           <div className="flex flex-col items-center gap-1">
             <div className="flex items-center gap-1">
               <Checkbox
@@ -534,7 +534,7 @@ function CriteriaComparisonTable({ levels, promotionCriteria, retentionCriteria,
               />
               <div className="relative">
                 {fieldMapping.isCurrency && (
-                  <span className="absolute left-1.5 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground">$</span>
+                  <span className="absolute left-2 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">$</span>
                 )}
                 <Input
                   type="number"
@@ -547,15 +547,15 @@ function CriteriaComparisonTable({ levels, promotionCriteria, retentionCriteria,
                   }}
                   disabled={!entry.enabled}
                   className={cn(
-                    "h-7 w-[72px] text-xs text-center",
-                    fieldMapping.isCurrency && "pl-4",
-                    fieldMapping.isPercent && "pr-5",
+                    "h-8 w-[90px] text-sm text-center bg-background text-foreground border-border/80",
+                    fieldMapping.isCurrency && "pl-5",
+                    fieldMapping.isPercent && "pr-6",
                     warn && "border-amber-500 focus-visible:ring-amber-500/30"
                   )}
                   placeholder="—"
                 />
                 {fieldMapping.isPercent && (
-                  <span className="absolute right-1.5 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground">%</span>
+                  <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">%</span>
                 )}
                 {fieldMapping.suffix && !fieldMapping.isCurrency && !fieldMapping.isPercent && (
                   <span className="absolute right-1.5 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground">{fieldMapping.suffix}</span>
@@ -611,7 +611,7 @@ function CriteriaComparisonTable({ levels, promotionCriteria, retentionCriteria,
       <TableRow
         key={`${sectionPrefix}-${metric.label}`}
         className={cn(
-          isEditingRow && "bg-primary/5 ring-1 ring-primary/20",
+          isEditingRow && "bg-primary/8 ring-1 ring-primary/30",
           isEditableMetric && !editingMetric && "cursor-pointer hover:bg-muted/40",
           metric.section === 'promotion' && !isEditingRow && "border-l-0"
         )}
