@@ -116,23 +116,6 @@ export function usePayrollSalesData(
 export function usePayrollCalculations() {
   const { data: levels } = useStylistLevels();
 
-  // Build a simple calculateCommission from levels (flat lookup, no user context)
-  const calculateCommission = (serviceRevenue: number, productRevenue: number) => {
-    // Without user context, use median level rate as fallback
-    if (!levels || levels.length === 0) {
-      return { serviceCommission: 0, productCommission: 0, totalCommission: 0, tierName: '' };
-    }
-    const midLevel = levels[Math.floor(levels.length / 2)];
-    const svcRate = midLevel.service_commission_rate ?? 0;
-    const retailRate = midLevel.retail_commission_rate ?? 0;
-    return {
-      serviceCommission: serviceRevenue * svcRate,
-      productCommission: productRevenue * retailRate,
-      totalCommission: serviceRevenue * svcRate + productRevenue * retailRate,
-      tierName: midLevel.label,
-    };
-  };
-
   const calculateEmployeeCompensation = (
     settings: EmployeePayrollSettings,
     hours: EmployeeHours,
