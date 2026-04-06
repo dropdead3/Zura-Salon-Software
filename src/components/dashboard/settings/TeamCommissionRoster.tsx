@@ -98,15 +98,25 @@ export function TeamCommissionRoster({
   // Filtered team
   const filteredTeam = useMemo(() => {
     if (!team) return [];
-    return team.filter(m => {
+    const filtered = team.filter(m => {
       const isAdminOnly = m.roles?.length === 1 && m.roles[0] === 'admin';
       if (isAdminOnly && !m.stylist_level) return false;
-      if (hideNonStylists && !m.roles?.includes('stylist')) return false;
+      if (hideNonStylists) {
+        if (!m.roles?.includes('stylist')) return false;
+        if (m.is_booking === false) return false;
+      }
       if (locationFilter !== 'all') {
         const memberLocs = getMemberLocationIds(m);
         if (!memberLocs.has(locationFilter)) return false;
       }
       return true;
+    });
+    // Sort: active booking members first, inactive at bottom
+    return filtered.sort((a, b) => {
+      const aActive = a.is_booking !== false;
+      const bActive = b.is_booking !== false;
+      if (aActive !== bActive) return aActive ? -1 : 1;
+      return 0;
     });
   }, [team, locationFilter, hideNonStylists]);
 
@@ -232,7 +242,7 @@ export function TeamCommissionRoster({
                   onCheckedChange={(v) => setHideNonStylists(!!v)}
                   className="h-3.5 w-3.5"
                 />
-                Hide non-stylists
+                Hide inactive
               </label>
             </div>
           </div>
@@ -254,6 +264,8 @@ export function TeamCommissionRoster({
             const levelIndex = level ? levels.indexOf(level) : -1;
             const color = levelIndex >= 0 ? getLevelColor(levelIndex, levels.length) : null;
             const isStylist = member.roles?.includes('stylist');
+            const isNotBooking = member.is_booking === false;
+            const isInactive = !isStylist || isNotBooking;
             const isMultiLocation = getMemberLocationIds(member).size > 1;
             
             // Get primary non-stylist role for badge
@@ -267,7 +279,7 @@ export function TeamCommissionRoster({
                 key={member.user_id}
                 className={cn(
                   "grid grid-cols-[28px_1fr_140px_70px_70px_90px] gap-2 items-center px-3 py-2.5 rounded-lg hover:bg-muted/50 cursor-pointer transition-colors group",
-                  !isStylist && "opacity-50"
+                  isInactive && "opacity-50"
                 )}
                 onClick={() => setDrilldownUserId(member.user_id)}
               >
@@ -293,6 +305,11 @@ export function TeamCommissionRoster({
                   {isMultiLocation && (
                     <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-accent text-accent-foreground border border-border shrink-0">
                       Multi-Location
+                    </span>
+                  )}
+                  {isStylist && isNotBooking && (
+                    <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-destructive/10 text-destructive border border-destructive/20 shrink-0">
+                      Not Booking
                     </span>
                   )}
                 </div>
