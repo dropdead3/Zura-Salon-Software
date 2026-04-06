@@ -263,8 +263,6 @@ function CriteriaComparisonTable({ levels, promotionCriteria, retentionCriteria,
   const { effectiveOrganization } = useOrganizationContext();
   const orgId = effectiveOrganization?.id;
   const queryClient = useQueryClient();
-  const upsertPromotion = useUpsertLevelPromotionCriteria();
-  const upsertRetention = useUpsertLevelRetentionCriteria();
 
   // Inline editing state
   const [editingMetric, setEditingMetric] = useState<{ label: string; section: 'promotion' | 'retention' } | null>(null);
