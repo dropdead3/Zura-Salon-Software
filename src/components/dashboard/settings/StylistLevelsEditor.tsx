@@ -593,7 +593,7 @@ function CriteriaComparisonTable({ levels, promotionCriteria, retentionCriteria,
     }
 
     const val = metric.getValue(promo, retention, levelIdx);
-    const warn = levelIdx > 0 && !(metric.section === 'promotion' && (isLastLevel || isBaseLevel)) && hasInconsistency(mIdx, levelIdx);
+    const warn = levelIdx > 0 && !(metric.section === 'promotion' && isBaseLevel) && hasInconsistency(mIdx, levelIdx);
 
     return (
       <TableCell key={level.id} className="text-center text-xs">
