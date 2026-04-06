@@ -300,6 +300,7 @@ export default function TeamDirectory() {
                             canViewStrikes={canViewStrikes}
                             strikeCount={strikeCounts[member.user_id] || 0}
                             onViewProfile={() => navigate(`/dashboard/profile/${member.user_id}`)}
+                            levelProgress={progressMap.get(member.user_id) || null}
                           />
                         ))}
                       </div>
@@ -733,10 +734,10 @@ interface TeamMemberCardProps {
   isSuperAdmin?: boolean;
   canViewStrikes?: boolean;
   strikeCount?: number;
-  onViewProfile?: () => void;
+  levelProgress?: TeamMemberProgress | null;
 }
 
-function TeamMemberCard({ member, locations, isSuperAdmin, canViewStrikes, strikeCount = 0, onViewProfile }: TeamMemberCardProps) {
+function TeamMemberCard({ member, locations, isSuperAdmin, canViewStrikes, strikeCount = 0, onViewProfile, levelProgress }: TeamMemberCardProps) {
   const navigate = useNavigate();
   const { getRoleIcon } = useRoleUtils();
   const { data: stylistLevels } = useStylistLevels();
