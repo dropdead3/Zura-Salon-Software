@@ -693,8 +693,9 @@ function CriteriaComparisonTable({ levels, promotionCriteria, retentionCriteria,
       <TableRow
         key={`${sectionPrefix}-${metric.label}`}
         className={cn(
+          "border-b border-border/40 transition-colors",
           isEditingRow && "bg-primary/8 ring-1 ring-primary/30",
-          isEditableMetric && !editingMetric && "cursor-pointer hover:bg-muted/40",
+          isEditableMetric && !editingMetric && "cursor-pointer hover:bg-muted/20",
           metric.section === 'promotion' && !isEditingRow && "border-l-0"
         )}
         onClick={() => {
