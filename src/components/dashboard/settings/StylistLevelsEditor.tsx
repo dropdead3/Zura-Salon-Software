@@ -119,6 +119,8 @@ function formatRetentionSummary(r: LevelRetentionCriteria): string {
 
 /** Scrollable table container with a right-edge fade + arrow indicator when content overflows */
 function ScrollableTableWrapper({ children, isFullscreen, onToggleFullscreen }: { children: React.ReactNode; isFullscreen: boolean; onToggleFullscreen: () => void }) {
+  const { isImpersonating } = useOrganizationContext();
+  const isMobile = useIsMobile();
   const scrollRef = useRef<HTMLDivElement>(null);
   const [canScrollRight, setCanScrollRight] = useState(false);
 
