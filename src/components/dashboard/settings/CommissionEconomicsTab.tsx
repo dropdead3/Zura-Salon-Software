@@ -113,6 +113,8 @@ export function CommissionEconomicsTab({ levels }: CommissionEconomicsTabProps) 
     let clamped = value;
     if (field === 'overhead_per_stylist') {
       clamped = Math.max(0, value);
+    } else if (field === 'hours_per_month') {
+      clamped = Math.max(0, Math.min(300, value));
     } else {
       // Percentage fields: clamp 0–1
       clamped = Math.min(1, Math.max(0, value));
@@ -155,6 +157,8 @@ export function CommissionEconomicsTab({ levels }: CommissionEconomicsTabProps) 
               label: l.label,
               service_commission_rate: l.service_commission_rate,
               retail_commission_rate: l.retail_commission_rate,
+              hourly_wage_enabled: l.hourly_wage_enabled,
+              hourly_wage: l.hourly_wage,
             })),
             assumptions: effectiveAssumptions,
             revenueByLevel: revenueData || [],
@@ -238,7 +242,7 @@ export function CommissionEconomicsTab({ levels }: CommissionEconomicsTabProps) 
           </div>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-3 gap-6">
+          <div className="grid grid-cols-4 gap-6">
             <div className="space-y-2">
               <Label className="text-xs text-muted-foreground">Monthly Overhead / Stylist</Label>
               <div className="relative">
@@ -285,6 +289,18 @@ export function CommissionEconomicsTab({ levels }: CommissionEconomicsTabProps) 
                 <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">%</span>
               </div>
               <p className="text-[10px] text-muted-foreground">Desired profit margin after all costs</p>
+            </div>
+            <div className="space-y-2">
+              <Label className="text-xs text-muted-foreground">Hours / Month</Label>
+              <Input
+                type="number"
+                value={effectiveAssumptions.hours_per_month}
+                onChange={e => handleAssumptionChange('hours_per_month', Number(e.target.value))}
+                min={0}
+                max={300}
+                step={8}
+              />
+              <p className="text-[10px] text-muted-foreground">Avg hours per stylist for hourly wage modeling</p>
             </div>
           </div>
         </CardContent>
@@ -338,18 +354,15 @@ export function CommissionEconomicsTab({ levels }: CommissionEconomicsTabProps) 
                 {levels.map((level, idx) => {
                   const serviceRate = whatIfRates[level.id]?.service ?? (level.service_commission_rate ?? 0);
                   const retailRate = whatIfRates[level.id]?.retail ?? (level.retail_commission_rate ?? 0);
-                  // Add hourly wage cost to overhead (~160 hours/month)
+                  // Compute hourly wage cost using configurable hours_per_month
                   const hourlyWageCost = level.hourly_wage_enabled && level.hourly_wage
-                    ? level.hourly_wage * 160
+                    ? level.hourly_wage * effectiveAssumptions.hours_per_month
                     : 0;
-                  const adjustedAssumptions = hourlyWageCost > 0
-                    ? { ...effectiveAssumptions, overhead_per_stylist: effectiveAssumptions.overhead_per_stylist + hourlyWageCost }
-                    : effectiveAssumptions;
-                  const { breakevenRevenue, targetRevenue } = computeEconomics(serviceRate, adjustedAssumptions, retailRate);
+                  const { breakevenRevenue, targetRevenue } = computeEconomics(serviceRate, effectiveAssumptions, retailRate, hourlyWageCost);
                   const revData = revenueMap.get(level.id);
                   const actualRevenue = revData?.avg ?? 0;
                   const actualMargin = actualRevenue > 0
-                    ? computeMarginAtRevenue(actualRevenue, serviceRate, adjustedAssumptions, retailRate)
+                    ? computeMarginAtRevenue(actualRevenue, serviceRate, effectiveAssumptions, retailRate, hourlyWageCost)
                     : null;
                   const status = actualMargin !== null
                     ? getMarginStatus(actualMargin, effectiveAssumptions.target_margin_pct)
