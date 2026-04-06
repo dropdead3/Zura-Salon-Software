@@ -698,7 +698,7 @@ function CriteriaComparisonTable({ levels, promotionCriteria, retentionCriteria,
         }}
       >
         <TableCell className={cn(
-          "text-sm sticky left-0 z-10 py-3 px-4 border-r border-border/40",
+          "text-sm sticky left-0 z-10 py-3 px-4 border-r-2 border-border/60 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.08)] dark:shadow-[2px_0_4px_-2px_rgba(0,0,0,0.3)]",
           isEditingRow ? "bg-primary/10 text-foreground" : "text-muted-foreground bg-muted"
         )}>
           <div className="flex items-center gap-1.5">
@@ -754,9 +754,9 @@ function CriteriaComparisonTable({ levels, promotionCriteria, retentionCriteria,
       </p>
       <ScrollableTableWrapper isFullscreen={isTableFullscreen} onToggleFullscreen={toggleTableFullscreen}>
         <table className="w-full caption-bottom text-sm [&_th]:border-r [&_th]:border-border/20 [&_th:last-child]:border-r-0 [&_td]:border-r [&_td]:border-border/20 [&_td:last-child]:border-r-0 [&_td[colspan]]:border-r-0">
-          <TableHeader className="sticky top-0 z-20">
-            <TableRow className="border-b-2 border-border/60 bg-muted">
-              <TableHead className={cn("w-[200px] sticky left-0 bg-muted z-30 py-4 px-4 border-r border-border/40", tokens.table.columnHeader)}>Metric</TableHead>
+          <TableHeader className="sticky top-0 z-20 shadow-[0_2px_4px_-2px_rgba(0,0,0,0.08)] dark:shadow-[0_2px_4px_-2px_rgba(0,0,0,0.3)]">
+            <TableRow className="border-b-2 border-border bg-muted">
+              <TableHead className={cn("w-[200px] sticky left-0 bg-muted z-30 py-4 px-4 border-r-2 border-border/60 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.08)] dark:shadow-[2px_0_4px_-2px_rgba(0,0,0,0.3)]", tokens.table.columnHeader)}>Metric</TableHead>
               {levels.map((level, idx) => {
                 const ret = level.dbId ? getCriteria(level.dbId).retention : undefined;
                 const retentionActive = ret?.retention_enabled === true;
@@ -802,8 +802,8 @@ function CriteriaComparisonTable({ levels, promotionCriteria, retentionCriteria,
           </TableHeader>
           <TableBody>
             {/* Compensation section */}
-            <TableRow className="bg-muted hover:bg-muted">
-              <TableCell className="sticky left-0 z-10 bg-muted py-4 px-4 border-l-2 border-l-primary border-r border-border/40">
+            <TableRow className="bg-muted hover:bg-muted border-t-2 border-border/60">
+              <TableCell className="sticky left-0 z-10 bg-muted py-4 px-4 border-l-2 border-l-primary border-r-2 border-border/60 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.08)] dark:shadow-[2px_0_4px_-2px_rgba(0,0,0,0.3)]">
                 <span className="flex items-center gap-2.5 text-sm font-display uppercase tracking-wide text-foreground whitespace-nowrap">
                   <DollarSign className="w-4 h-4 text-primary" />
                   Compensation — At This Level
@@ -815,7 +815,7 @@ function CriteriaComparisonTable({ levels, promotionCriteria, retentionCriteria,
               const field = commLabel === 'Service Commission' ? 'serviceCommissionRate' : 'retailCommissionRate';
               return (
                 <TableRow key={commLabel}>
-                  <TableCell className="text-sm text-muted-foreground sticky left-0 bg-muted z-10 py-3 px-4 border-r border-border/40">{commLabel}</TableCell>
+                  <TableCell className="text-sm text-muted-foreground sticky left-0 bg-muted z-10 py-3 px-4 border-r-2 border-border/60 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.08)] dark:shadow-[2px_0_4px_-2px_rgba(0,0,0,0.3)]">{commLabel}</TableCell>
                   {levels.map((level) => {
                     const rate = level[field];
                     return (
@@ -834,7 +834,7 @@ function CriteriaComparisonTable({ levels, promotionCriteria, retentionCriteria,
 
             {/* Hourly Wage row */}
             <TableRow>
-              <TableCell className="text-sm text-muted-foreground sticky left-0 bg-muted z-10 py-3 px-4 border-r border-border/40">Hourly Wage</TableCell>
+              <TableCell className="text-sm text-muted-foreground sticky left-0 bg-muted z-10 py-3 px-4 border-r-2 border-border/60 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.08)] dark:shadow-[2px_0_4px_-2px_rgba(0,0,0,0.3)]">Hourly Wage</TableCell>
               {levels.map((level) => (
                 <TableCell key={level.id} className="text-center text-sm tabular-nums py-3 px-3">
                   {level.hourlyWageEnabled && level.hourlyWage ? (
@@ -847,8 +847,8 @@ function CriteriaComparisonTable({ levels, promotionCriteria, retentionCriteria,
             </TableRow>
 
             {/* Promotion section header */}
-            <TableRow className="bg-muted hover:bg-muted">
-              <TableCell className="sticky left-0 z-10 bg-muted py-4 px-4 border-l-2 border-l-primary border-r border-border/40">
+            <TableRow className="bg-muted hover:bg-muted border-t-2 border-border/60">
+              <TableCell className="sticky left-0 z-10 bg-muted py-4 px-4 border-l-2 border-l-primary border-r-2 border-border/60 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.08)] dark:shadow-[2px_0_4px_-2px_rgba(0,0,0,0.3)]">
                 <span className="flex items-center gap-2.5 text-sm font-display uppercase tracking-wide text-foreground whitespace-nowrap">
                   <TrendingUp className="w-4 h-4 text-primary" />
                   Promotion — To Reach This Level
@@ -861,8 +861,8 @@ function CriteriaComparisonTable({ levels, promotionCriteria, retentionCriteria,
             )}
 
             {/* Retention Policy section header */}
-            <TableRow className="bg-muted hover:bg-muted">
-              <TableCell className="sticky left-0 z-10 bg-muted py-4 px-4 border-l-2 border-l-primary border-r border-border/40">
+            <TableRow className="bg-muted hover:bg-muted border-t-2 border-border/60">
+              <TableCell className="sticky left-0 z-10 bg-muted py-4 px-4 border-l-2 border-l-primary border-r-2 border-border/60 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.08)] dark:shadow-[2px_0_4px_-2px_rgba(0,0,0,0.3)]">
                 <span className="flex items-center gap-2.5 text-sm font-display uppercase tracking-wide text-foreground whitespace-nowrap">
                   <Shield className="w-4 h-4 text-primary" />
                   Retention Policy
