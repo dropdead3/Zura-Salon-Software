@@ -1,48 +1,46 @@
 
 
-# Redesign Team Directory Card Layout
+# Add "Access Denied" Page for Cross-Organization Dashboard URLs
 
-## Problems
-1. **Name truncation** — "ERIC ..." because name + role badge + calendar icon fight for horizontal space on one line
-2. **Crowded meta row** — Level badge, status indicator, tenure, and location count all crammed into a single `flex` row with `text-[10px]`
-3. **Responsive collapse** — At narrower grid widths, badges push the name into aggressive truncation
+## Problem
+When an authenticated user navigates to `/org/some-other-slug/dashboard/...` for an organization they don't belong to, the system currently either shows a broken empty state or falls through to NotFound. There's no clear message explaining the user isn't a member of that organization.
 
-## Redesign Strategy
+## Approach
+Add a membership check in `OrgDashboardRoute` after the organization resolves successfully. Query the user's `employee_profiles` and `organization_admins` to verify they belong to the URL's organization. Platform users bypass this check. If the user isn't a member, render a dedicated `OrgAccessDenied` page instead of `<Outlet />`.
 
-Restructure the card into clear **vertical zones** instead of cramming everything horizontally beside the avatar:
+## Changes
 
-```text
-┌──────────────────────────────────────┐
-│  [Avatar]   Full Name                │  ← Name gets full width, no truncation
-│             Role Badge  · Tenure     │  ← Row 2: role + meta
-│             Level Badge · Status     │  ← Row 3: level info (if applicable)
-│                                      │
-│  📞 (480) 543-0240                   │  ← Phone
-│  ✉ 📸                    📅         │  ← Contact icons + calendar right-aligned
-│──────────────────────────────────────│
-│  ✨ Luxury Transforms  ✨ Color     │  ← Specialties footer
-└──────────────────────────────────────┘
+### 1. Create `src/components/auth/OrgAccessDenied.tsx`
+A friendly, branded access-denied page styled consistently with the existing `AccessDeniedView` pattern:
+- Shield icon with the organization name
+- Clear message: "You don't have access to this organization's dashboard"
+- "Go to My Dashboard" button (navigates to the user's own org dashboard)
+- "Back to Home" secondary button
+- Uses design tokens, `font-display` for heading, calm/executive tone
+
+### 2. Update `src/components/OrgDashboardRoute.tsx`
+- Add a membership query after `useOrganizationBySlug` resolves: check if the authenticated user has a row in `employee_profiles` or `organization_admins` for the resolved `organization.id`
+- Platform users (`isPlatformUser` from `useAuth`) skip the membership check entirely
+- While the membership check loads, show `ZuraLoader`
+- If not a member, render `<OrgAccessDenied>` instead of `<Outlet />`
+- If a member, proceed as normal
+
+## Technical Details
+
+**Membership query** (runs only when org is resolved and user is authenticated):
+```sql
+-- Check employee_profiles
+SELECT 1 FROM employee_profiles WHERE user_id = ? AND organization_id = ? LIMIT 1
+-- OR check organization_admins
+SELECT 1 FROM organization_admins WHERE user_id = ? AND organization_id = ? LIMIT 1
 ```
 
-### Key changes in `TeamMemberCard` (TeamDirectory.tsx):
+Both queries run in parallel. If either returns a row, the user is a member.
 
-1. **Name row** — Remove role badges and calendar from the name row. Give `h3` the full width of the info column so names never truncate. Remove `truncate` class.
-
-2. **Role + meta row** — New dedicated row below the name containing: role badge, tenure, multi-location indicator. Use `flex-wrap gap-1.5` so it wraps cleanly.
-
-3. **Level + status row** — Separate row for the level badge and progression status indicator. This stops them from competing with tenure/location for horizontal space.
-
-4. **Calendar icon** — Move from the name row to the contact icons row (right-aligned). This frees significant horizontal space in the header area.
-
-5. **Spacing** — Increase gap between rows from `mt-1`/`mt-2` to `mt-1.5`/`mt-2.5` for breathing room. The card padding stays at `p-5`.
-
-6. **Responsibility badges** — Move `ResponsibilityBadges` to the role row to keep it grouped with role context.
-
-## Files
+**No database changes required** — this uses existing tables and RLS policies.
 
 | File | Change |
 |------|--------|
-| `src/pages/dashboard/TeamDirectory.tsx` | Restructure `TeamMemberCard` layout — separate name, role, and level into distinct rows; move calendar to contact row; remove `truncate` from name |
-
-Single file. No database changes.
+| `src/components/auth/OrgAccessDenied.tsx` | New — friendly access denied page for non-members |
+| `src/components/OrgDashboardRoute.tsx` | Add membership check before rendering `<Outlet />` |
 
