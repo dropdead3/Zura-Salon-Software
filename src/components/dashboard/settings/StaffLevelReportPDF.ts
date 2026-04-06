@@ -129,7 +129,7 @@ export function generateStaffLevelReportPDF(options: StaffLevelReportOptions): j
   ];
 
   const contentWidth = pageWidth - MARGIN * 2;
-  const stripH = 22;
+  const stripH = 26;
   doc.setFillColor(248, 248, 250);
   doc.setDrawColor(230, 230, 230);
   doc.setLineWidth(0.3);
@@ -141,11 +141,19 @@ export function generateStaffLevelReportPDF(options: StaffLevelReportOptions): j
     doc.setTextColor(130, 130, 130);
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(6.5);
-    doc.text(item.label, cx, y + 8, { align: 'center' });
+    doc.text(item.label, cx, y + 9, { align: 'center' });
     doc.setTextColor(...item.color);
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(14);
-    doc.text(item.value, cx, y + 17, { align: 'center' });
+    doc.setFontSize(16);
+    doc.text(item.value, cx, y + 20, { align: 'center' });
+
+    // Vertical divider between items
+    if (i < summaryItems.length - 1) {
+      const divX = MARGIN + colW * (i + 1);
+      doc.setDrawColor(220, 220, 225);
+      doc.setLineWidth(0.3);
+      doc.line(divX, y + 5, divX, y + stripH - 5);
+    }
   });
 
   y += stripH + 8;
