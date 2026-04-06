@@ -282,6 +282,7 @@ export function generateLevelRequirementsPDF(options: LevelRequirementsPDFOption
     const innerPadX = 8;
     let cardH = 16; // accent bar + title row + top padding
     if (isBase) cardH += 5; // subtitle
+    if (!isConfigured) cardH += 14; // incomplete warning box
     cardH += 16; // compensation section
     if (kpis.length > 0) {
       const kpiRows = Math.ceil(kpis.length / 4);
@@ -353,6 +354,21 @@ export function generateLevelRequirementsPDF(options: LevelRequirementsPDFOption
     }
 
     cy += 8;
+
+    // ── Incomplete warning box (matching digital's amber callout) ──
+    if (!isConfigured) {
+      const warningH = 10;
+      // Amber background
+      doc.setFillColor(255, 251, 235);
+      doc.setDrawColor(253, 230, 138);
+      doc.setLineWidth(0.3);
+      doc.roundedRect(MARGIN + innerPadX, cy, contentWidth - innerPadX * 2, warningH, 1.5, 1.5, 'FD');
+      doc.setTextColor(180, 83, 9);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(6.5);
+      doc.text('This level has not been marked as configured. The data shown may be incomplete.', MARGIN + innerPadX + 3, cy + 6);
+      cy += warningH + 4;
+    }
 
     // ── Compensation Section ──
     doc.setTextColor(170, 170, 170);
