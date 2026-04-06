@@ -795,39 +795,8 @@ function CriteriaComparisonTable({ levels, promotionCriteria, retentionCriteria,
             {!isEditingRow && METRIC_TOOLTIPS[metric.label] && (
               <MetricInfoTooltip description={METRIC_TOOLTIPS[metric.label]} side="right" />
             )}
-            {isEditingRow && (
-              <div className="flex items-center gap-1.5 ml-auto">
-                {autoStepAvailable && (
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <button
-                          onClick={(e) => { e.stopPropagation(); handleAutoStep(); }}
-                          className="text-xs px-2 py-1 rounded bg-muted hover:bg-muted/80 text-muted-foreground hover:text-foreground transition-colors"
-                        >
-                          Auto-step
-                        </button>
-                      </TooltipTrigger>
-                      <TooltipContent side="top" className="text-xs max-w-[200px]">
-                        Evenly distribute values between first and last level
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                )}
-                <button
-                  onClick={(e) => { e.stopPropagation(); saveMetricRow(); }}
-                  disabled={isSavingRow}
-                  className="text-xs px-2 py-1 rounded bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50"
-                >
-                  {isSavingRow ? '…' : 'Save'}
-                </button>
-                <button
-                  onClick={(e) => { e.stopPropagation(); cancelEditing(); }}
-                  className="text-xs px-1.5 py-1 rounded text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  <X className="w-3.5 h-3.5" />
-                </button>
-              </div>
+            {isEditingRow && METRIC_TOOLTIPS[metric.label] && (
+              <MetricInfoTooltip description={METRIC_TOOLTIPS[metric.label]} side="right" />
             )}
           </div>
         </TableCell>
@@ -1126,6 +1095,42 @@ function CriteriaComparisonTable({ levels, promotionCriteria, retentionCriteria,
           </TableBody>
         </table>
       </ScrollableTableWrapper>
+
+      {/* Floating action bar for row editing */}
+      <AnimatePresence>
+        {editingMetric && (
+          <motion.div
+            initial={{ opacity: 0, y: 12, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 8, scale: 0.95 }}
+            transition={{ duration: 0.15 }}
+            className="fixed bottom-20 right-6 z-50 flex items-center gap-2 bg-card/90 backdrop-blur-xl border border-border rounded-xl shadow-[0_8px_32px_-4px_rgba(0,0,0,0.4)] px-4 py-2.5"
+          >
+            <span className="text-xs font-display uppercase tracking-wide text-muted-foreground mr-1">{editingMetric}</span>
+            {autoStepAvailable && (
+              <button
+                onClick={handleAutoStep}
+                className="text-xs px-2.5 py-1.5 rounded-lg bg-muted hover:bg-muted/80 text-muted-foreground hover:text-foreground transition-colors"
+              >
+                Auto-step
+              </button>
+            )}
+            <button
+              onClick={saveMetricRow}
+              disabled={isSavingRow}
+              className="text-xs px-3 py-1.5 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50 font-medium"
+            >
+              {isSavingRow ? '…' : 'Save'}
+            </button>
+            <button
+              onClick={cancelEditing}
+              className="text-xs p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
