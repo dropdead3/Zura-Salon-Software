@@ -1797,7 +1797,7 @@ export function StylistLevelsEditor({ embedded = false }: StylistLevelsEditorPro
             </div>
           </div>
         ) : (
-          <div className="flex justify-end">{actionButtons}</div>
+          <div className="flex justify-end -mt-12">{actionButtons}</div>
         )}
 
         {/* Info Notice - standalone only */}
