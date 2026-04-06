@@ -465,14 +465,47 @@ function CriteriaComparisonTable({ levels, promotionCriteria, retentionCriteria,
 
     setIsSavingRow(true);
     try {
-      for (const level of levels) {
+      for (let li = 0; li < levels.length; li++) {
+        const level = levels[li];
         if (!level.dbId) continue;
         const entry = editValues[level.id];
         if (!entry) continue;
 
         const numVal = parseFloat(entry.value) || 0;
+        const isBaseLevelRet = editingMetric.section === 'promotion' && li === 0 && editingMetric.label !== 'Tenure' && editingMetric.label !== 'Eval Window' && editingMetric.label !== 'Approval';
 
-        if (editingMetric.section === 'promotion') {
+        if (isBaseLevelRet) {
+          // Base level promotion KPIs save to retention criteria
+          const existing = retentionCriteria.find(r => r.stylist_level_id === level.dbId && r.is_active);
+          const retDefaults = getZuraRetentionDefaults(0);
+          const base: any = existing ? { ...existing } : {
+            organization_id: orgId,
+            stylist_level_id: level.dbId,
+            retention_enabled: true,
+            revenue_enabled: false, revenue_minimum: 0,
+            retail_enabled: false, retail_pct_minimum: 0,
+            rebooking_enabled: false, rebooking_pct_minimum: 0,
+            avg_ticket_enabled: false, avg_ticket_minimum: 0,
+            retention_rate_enabled: false, retention_rate_minimum: 0,
+            new_clients_enabled: false, new_clients_minimum: 0,
+            utilization_enabled: false, utilization_minimum: 0,
+            rev_per_hour_enabled: false, rev_per_hour_minimum: 0,
+            evaluation_window_days: retDefaults.evaluation_window_days ?? 90,
+            grace_period_days: retDefaults.grace_period_days ?? 30,
+            action_type: retDefaults.action_type ?? 'coaching_flag',
+            is_active: true,
+          };
+          delete base.id; delete base.created_at; delete base.updated_at;
+          base[fieldMapping.retEnabledField] = entry.enabled;
+          base[fieldMapping.retValueField] = numVal;
+          base.retention_enabled = true;
+
+          const { error } = await supabase
+            .from('level_retention_criteria')
+            .upsert(base, { onConflict: 'organization_id,stylist_level_id' })
+            .select().single();
+          if (error) throw error;
+        } else if (editingMetric.section === 'promotion') {
           const existing = promotionCriteria.find(c => c.stylist_level_id === level.dbId && c.is_active);
           const defaults = getZuraDefaults(levels.findIndex(l => l.id === level.id));
           const base: any = existing ? { ...existing } : {
