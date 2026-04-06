@@ -288,7 +288,7 @@ function CriteriaComparisonTable({ levels, promotionCriteria, retentionCriteria,
             {/* Compensation section — rewards at this level */}
             <TableRow className="bg-primary/5 hover:bg-primary/5">
               <TableCell colSpan={levels.length + 1} className="py-2">
-                <span className="flex items-center gap-1.5 text-xs font-medium text-foreground">
+                <span className="flex items-center gap-1.5 text-xs font-display uppercase tracking-wide text-foreground">
                   <DollarSign className="w-3.5 h-3.5 text-primary" />
                   Compensation — At This Level
                 </span>
@@ -298,7 +298,7 @@ function CriteriaComparisonTable({ levels, promotionCriteria, retentionCriteria,
               const field = commLabel === 'Service Commission' ? 'serviceCommissionRate' : 'retailCommissionRate';
               return (
                 <TableRow key={commLabel} className="border-l-2 border-l-primary/20">
-                  <TableCell className="text-xs text-muted-foreground sticky left-0 bg-card z-10">{commLabel}</TableCell>
+                  <TableCell className="text-xs text-muted-foreground sticky left-0 bg-card z-10 border-l-2 border-l-primary/20">{commLabel}</TableCell>
                   {levels.map((level) => {
                     const rate = level[field];
                     return (
@@ -318,7 +318,7 @@ function CriteriaComparisonTable({ levels, promotionCriteria, retentionCriteria,
             {/* Promotion section header */}
             <TableRow className="bg-muted/30 hover:bg-muted/30">
               <TableCell colSpan={levels.length + 1} className="py-2">
-                <span className="flex items-center gap-1.5 text-xs font-medium text-foreground">
+                <span className="flex items-center gap-1.5 text-xs font-display uppercase tracking-wide text-foreground">
                   <TrendingUp className="w-3.5 h-3.5 text-primary" />
                   Promotion — To Reach This Level
                 </span>
