@@ -1,31 +1,49 @@
 
 
-# Fix Criteria Table UI + Resolve Build Errors
+# Condensed Level Cards with Collapsible Details
 
-## Issues Identified
+## Current Problem
+Each level card is ~120px tall even when not being edited because the description input, commission fields, and criteria section are always visible. With 7 levels, this creates excessive scrolling and visual noise.
 
-### 1. "Strange top left corner" — Sticky header cell clipping
-The `Metric` header cell (line 267) uses `sticky left-0 bg-card z-10`. Because the parent `ScrollableTableWrapper` has `rounded-xl border`, the sticky cell's square `bg-card` background bleeds past the rounded corner, creating a visible artifact. The same issue affects all sticky `TableCell` elements in the body rows (lines 310, 338, 384).
+## Design
 
-**Fix:** Add `first:rounded-tl-xl` to the sticky header cell so its background respects the parent's border radius. Also ensure the first body row's sticky cell doesn't overlap the corner.
+Each level becomes a single-line row (~48px) with a chevron toggle to expand details:
 
-### 2. Build Errors — `formatCurrency` not found
-The reported build errors at lines 374/377/381/554 reference bare `formatCurrency`. The current file uses `formatCurrencyLocal` at those positions, suggesting the build cache is stale. However, to be safe, I'll verify the file compiles cleanly and ensure no stale references exist.
+```text
+┌─────────────────────────────────────────────────────────────┐
+│ ▲▼  ① New Talent  [Entry]  Svc 35% · Ret 10%  1 stylist ✎🗑 ▸ │
+├─────────────────────────────────────────────────────────────┤
+│ ▲▼  ② Studio Artist         Svc 38% · Ret 10%  2 stylists ✎🗑 ▾ │
+│   ┌─────────────────────────────────────────────────────────┐   │
+│   │ Description: [input]                                    │   │
+│   │ Commission: [Svc ___%]  [Ret ___%]                     │   │
+│   │ ┌ Criteria ──────────────────────────────────────────┐  │   │
+│   │ │ ↗ $5K rev · 12% retail · 60% rebook — 90d window  │  │   │
+│   │ │ 🛡 Required to Stay: $3K rev · 8% retail — 30d    │  │   │
+│   │ └───────────────────────────────────────────────────-┘  │   │
+│   └─────────────────────────────────────────────────────────┘   │
+├─────────────────────────────────────────────────────────────┤
+│ ▲▼  ③ Core Artist            Svc 40% · Ret 10%           ✎🗑 ▸ │
+└─────────────────────────────────────────────────────────────┘
+```
 
-### 3. UI Enhancements for the Criteria Table
-- The `Metric` column header should use `tokens.table.columnHeader` per design canon (font-sans, Title Case)
-- Level name headers in columns should also follow token styling
-- Section header rows ("Compensation — At This Level", etc.) use `font-medium` which is acceptable but should use `font-display` per design canon for section kickers
-- The `Edit` buttons under level names have inconsistent conditional logic (lines 272-290) — the `idx === 0 && !level.dbId` vs `idx === 0 && level.dbId` branches duplicate the same Edit button; simplify
+**Collapsed state (default):** Single row — reorder arrows, number badge, name, entry tag, inline commission rates, stylist count, edit/delete icons, expand chevron.
 
----
+**Expanded state:** Clicking the row or chevron reveals the description input, commission edit fields, and criteria summary/setup CTA below.
 
-## Files Changed
+## Implementation
 
-| File | Change |
-|------|--------|
-| `src/components/dashboard/settings/StylistLevelsEditor.tsx` | Fix sticky corner radius on Metric header, simplify Edit button conditionals, apply `tokens.table.columnHeader` |
-| `src/components/dashboard/settings/CommissionEconomicsTab.tsx` | Verify/fix any remaining `formatCurrency` references (ensure `formatCurrencyLocal` is used everywhere) |
+**File:** `src/components/dashboard/settings/StylistLevelsEditor.tsx`
 
-**2 files. No new files. No database changes.**
+1. Add `expandedLevels` state (`Set<string>`) to track which cards are open
+2. Refactor each level card (lines 1062-1314):
+   - Move the header row content into a clickable row that toggles expansion
+   - Add a `ChevronRight` icon that rotates to `ChevronDown` when expanded
+   - Wrap the "expanded content" div (description, commission fields, criteria) in a conditional render gated on `expandedLevels.has(level.id)`
+   - When `editingIndex === index`, auto-expand that level
+3. Remove the always-visible description input from the collapsed view — only show in expanded
+4. Reduce card padding: `px-4 py-3` → `px-3 py-2` on collapsed, keep `px-4 pb-4` on expanded content
+5. Keep all existing functionality (reorder, edit, delete, reassign, criteria wizard) unchanged
+
+**No other files changed. No database changes.**
 
