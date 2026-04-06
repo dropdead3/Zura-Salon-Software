@@ -1,28 +1,29 @@
 
 
-# Move Inline Row Save to Fixed Bottom-Right Toast Bar
+# Show "N/A" for Unconfigured Retention Cells
 
 ## Problem
-The "Save" and "Auto-step" buttons currently appear inline within the metric label cell when editing a row. This is cramped, especially on narrower viewports, and the screenshot shows it pushing into the label text. Moving the save controls to a fixed bottom-right position (like a toast bar near the FAB area) gives more room and is consistent with the `hasChanges` save pattern.
+The retention section rows (Eval Window, Grace Period, Action) display a clickable "Configure" button for levels without retention criteria. This is misleading — retention KPI minimums are inherited from the promotion thresholds above, and dropping below them results in demotion all the way to Level 1. There's nothing to independently "configure" for most levels.
 
-## Approach
+## Change
 
 ### File: `src/components/dashboard/settings/StylistLevelsEditor.tsx`
 
-**1. Remove inline Save/Auto-step/Cancel from the metric label cell**
-Strip the button cluster (lines ~798–830) from inside the `TableCell`. Keep only the metric label and tooltip. The row still highlights with `isEditingRow` styling so users know which row is active.
+**Update the cell rendering logic (~line 757)** for retention-section metrics. When `metric.section === 'retention'` and no retention record exists, render `—` (or "N/A") instead of the "Configure" button. The "Configure" button should only appear for promotion-section cells that lack criteria.
 
-**2. Add a fixed-position action bar when `editingMetric` is active**
-Render a floating bar at `fixed bottom-6 right-6 z-50` (same position pattern as `DockLockFAB`). It should stack vertically or sit as a horizontal pill containing:
-- Metric name label (e.g. "Revenue")
-- "Auto-step" button (conditionally, same logic)
-- "Save" button
-- "✕" cancel button
+Specifically, change the conditional at line 757 so that retention cells without data always fall through to the `—` dash display, matching the base-level pattern. This is a single conditional tweak — roughly:
 
-Style: glass card aesthetic (`bg-card/90 backdrop-blur-xl border border-border rounded-xl shadow-lg p-3`) to match the platform's luxury feel. Use `animate-in` for entry.
+```
+) : (metric.section === 'promotion' && !promo) ? (
+  <button ...>Configure</button>
+) : (
+  <span>—</span>
+)
+```
 
-**3. Vertical alignment with existing FABs**
-Position using `bottom-6 right-6` and if there are other FABs on the page, stack above them with `bottom-20` or use a flex column container.
+This removes the "Configure" affordance from all retention rows, since retention policy is inherited from promotion requirements.
 
-### No other files changed. No database changes.
+**Also update the retention section header subtitle** to clarify the demotion model: "KPI minimums inherited from Level Requirements · Falling below triggers demotion to Level 1"
+
+### No database changes. Single file edit.
 
