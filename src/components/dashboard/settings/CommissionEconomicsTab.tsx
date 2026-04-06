@@ -17,6 +17,7 @@ import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { getLevelColor } from '@/lib/level-colors';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { formatCurrency as formatCurrencyUnified } from '@/lib/format';
 import { 
   Calculator, 
   ChevronDown, 
@@ -67,9 +68,8 @@ const CONFIDENCE_CONFIG: Record<string, { label: string; className: string }> = 
   low: { label: 'Low Confidence', className: 'bg-rose-500/10 text-rose-600 border-rose-500/20' },
 };
 
-function formatCurrency(val: number): string {
-  if (!isFinite(val)) return '—';
-  return `$${Math.round(val).toLocaleString()}`;
+function formatCurrencyLocal(val: number): string {
+  return formatCurrencyUnified(val, { noCents: true }) ?? '—';
 }
 
 function formatPct(val: number): string {
@@ -110,15 +110,23 @@ export function CommissionEconomicsTab({ levels }: CommissionEconomicsTabProps) 
   }, [revenueData]);
 
   const handleAssumptionChange = useCallback((field: keyof EconomicsAssumptions, value: number) => {
+    let clamped = value;
+    if (field === 'overhead_per_stylist') {
+      clamped = Math.max(0, value);
+    } else {
+      // Percentage fields: clamp 0–1
+      clamped = Math.min(1, Math.max(0, value));
+    }
     setLocalAssumptions(prev => ({
       ...(prev ?? assumptions),
-      [field]: value,
+      [field]: clamped,
     }));
   }, [assumptions]);
 
   const handleSaveAssumptions = () => {
     saveAssumptions(effectiveAssumptions);
     setLocalAssumptions(null);
+    toast.success('Assumptions saved');
   };
 
   const hasUnsavedChanges = localAssumptions !== null;
@@ -128,21 +136,40 @@ export function CommissionEconomicsTab({ levels }: CommissionEconomicsTabProps) 
     setAiLoading(true);
     setAiResult(null);
     try {
-      const { data, error } = await supabase.functions.invoke('ai-commission-optimizer', {
-        body: {
-          levels: levels.map(l => ({
-            id: l.id,
-            slug: l.slug,
-            label: l.label,
-            service_commission_rate: l.service_commission_rate,
-            retail_commission_rate: l.retail_commission_rate,
-          })),
-          assumptions: effectiveAssumptions,
-          revenueByLevel: revenueData || [],
-        },
-      });
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
+      const { data: session } = await supabase.auth.getSession();
+      const token = session?.session?.access_token;
+      if (!token) throw new Error('Not authenticated');
+
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-commission-optimizer`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            levels: levels.map(l => ({
+              id: l.id,
+              slug: l.slug,
+              label: l.label,
+              service_commission_rate: l.service_commission_rate,
+              retail_commission_rate: l.retail_commission_rate,
+            })),
+            assumptions: effectiveAssumptions,
+            revenueByLevel: revenueData || [],
+          }),
+        }
+      );
+
+      if (response.status === 429) throw new Error('Rate limit exceeded — please wait before retrying');
+      if (response.status === 402) throw new Error('AI credits exhausted');
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({}));
+        throw new Error(err.error || 'Failed to generate recommendations');
+      }
+
+      const data = await response.json();
       setAiResult(data as AICommissionOptimizerResult);
     } catch (err: any) {
       console.error('AI optimizer error:', err);
@@ -344,14 +371,14 @@ export function CommissionEconomicsTab({ levels }: CommissionEconomicsTabProps) 
                         </span>
                       </TableCell>
                       <TableCell className="text-center text-sm">
-                        <BlurredAmount>{formatCurrency(breakevenRevenue)}</BlurredAmount>
+                        <BlurredAmount>{formatCurrencyLocal(breakevenRevenue)}</BlurredAmount>
                       </TableCell>
                       <TableCell className="text-center text-sm">
-                        <BlurredAmount>{formatCurrency(targetRevenue)}</BlurredAmount>
+                        <BlurredAmount>{formatCurrencyLocal(targetRevenue)}</BlurredAmount>
                       </TableCell>
                       <TableCell className="text-center text-sm">
                         {actualRevenue > 0 ? (
-                          <BlurredAmount>{formatCurrency(actualRevenue)}</BlurredAmount>
+                          <BlurredAmount>{formatCurrencyLocal(actualRevenue)}</BlurredAmount>
                         ) : (
                           <span className="text-muted-foreground/40">—</span>
                         )}
@@ -524,7 +551,7 @@ export function CommissionEconomicsTab({ levels }: CommissionEconomicsTabProps) 
                       <div className="w-2 h-2 rounded-full" style={{ backgroundColor: dotColor }} />
                       <span className="text-sm">{level.label}</span>
                       <div className="ml-auto text-sm">
-                        <BlurredAmount>{formatCurrency(targetRevenue)}</BlurredAmount>
+                        <BlurredAmount>{formatCurrencyLocal(targetRevenue)}</BlurredAmount>
                         <span className="text-[10px] text-muted-foreground ml-1">target</span>
                       </div>
                     </div>

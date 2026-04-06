@@ -166,6 +166,11 @@ export function computeEconomics(
   const { overhead_per_stylist, product_cost_pct, target_margin_pct } = assumptions;
   const variableCostRate = serviceCommissionRate + retailCommissionRate + product_cost_pct;
 
+  // Guard: if variable costs eat ≥100% of revenue, no amount of revenue helps
+  if (variableCostRate >= 1) {
+    return { breakevenRevenue: Infinity, targetRevenue: Infinity };
+  }
+
   // Revenue needed just to cover costs (0% margin)
   const breakevenDenominator = 1 - variableCostRate;
   const breakevenRevenue = breakevenDenominator > 0
