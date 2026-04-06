@@ -1,38 +1,29 @@
 
 
-# Improve Table Column Headers: Level Numbers + Icon Swap
+# Add Vertical Divider to Frozen "Metric" Column on Scroll
 
-## Changes
+## Problem
 
-### 1. Add level number above each level name
-Show "Level 1", "Level 2", etc. as a small kicker above the level name in each column header.
+The sticky "Metric" column blends into the scrolling content when the table is scrolled horizontally. There's no visual separator to indicate where the frozen column ends.
 
-```tsx
-<div className="flex flex-col items-center gap-2">
-  <span className="text-[10px] font-display uppercase tracking-widest text-muted-foreground/50">
-    Level {idx + 1}
-  </span>
-  <span className="text-sm font-medium">{level.label}</span>
-  ...
-</div>
-```
+## Solution
 
-### 2. Replace ShieldCheck icon with a more appropriate indicator
-The shield icon doesn't communicate "retention monitoring" intuitively. Replace it with a small colored dot indicator — green when retention is active, gray when off. This is cleaner and more semantically clear.
+Add a right border/shadow to all sticky `left-0` cells (the Metric column header and all metric label cells) so a visible vertical divider persists during horizontal scroll.
 
-```tsx
-// Before: <ShieldCheck className="w-3.5 h-3.5 ..." />
-// After: simple status dot
-<span className={cn(
-  "w-2 h-2 rounded-full",
-  retentionActive ? "bg-emerald-500" : "bg-muted-foreground/20"
-)} />
-```
+### Change in `StylistLevelsEditor.tsx`
 
-The tooltip explaining retention status remains unchanged.
+Add a `border-r border-border/40` class to every sticky cell in the Metric column:
 
-## File Modified
-- `src/components/dashboard/settings/StylistLevelsEditor.tsx` — column header updates (~lines 700–737)
+1. **Table header** (~line 698): Add `border-r border-border/40` to the sticky `TableHead`
+2. **Section header rows** (~line 640): Add `border-r border-border/40` to the sticky `TableCell` in section headers
+3. **Commission rows** (~line 756): Same addition
+4. **Hourly Wage row** (~line 775): Same addition
+5. **Promotion metric rows**: Same addition to all sticky metric label cells
 
-## No database changes.
+Optionally add a subtle `shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)]` for extra depth, but the border alone should suffice given the existing vertical divider system.
+
+### Files Modified
+- `src/components/dashboard/settings/StylistLevelsEditor.tsx` — add `border-r border-border/40` to all `sticky left-0` cells
+
+### No database changes.
 
