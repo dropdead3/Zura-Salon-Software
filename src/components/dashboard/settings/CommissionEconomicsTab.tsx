@@ -326,6 +326,7 @@ export function CommissionEconomicsTab({ levels }: CommissionEconomicsTabProps) 
                   <TableHead className={tokens.table.columnHeader}>Level</TableHead>
                   <TableHead className={cn(tokens.table.columnHeader, 'text-center')}>Service %</TableHead>
                   <TableHead className={cn(tokens.table.columnHeader, 'text-center')}>Retail %</TableHead>
+                  <TableHead className={cn(tokens.table.columnHeader, 'text-center')}>Hourly Wage</TableHead>
                   <TableHead className={cn(tokens.table.columnHeader, 'text-center')}>Breakeven Rev</TableHead>
                   <TableHead className={cn(tokens.table.columnHeader, 'text-center')}>Target Rev</TableHead>
                   <TableHead className={cn(tokens.table.columnHeader, 'text-center')}>Actual Avg Rev</TableHead>
