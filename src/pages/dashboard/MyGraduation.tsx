@@ -44,6 +44,7 @@ import { useLevelProgress } from '@/hooks/useLevelProgress';
 import { PageExplainer } from '@/components/ui/PageExplainer';
 import { StylistScorecard } from '@/components/dashboard/StylistScorecard';
 import { LevelProgressionLadder } from '@/components/dashboard/LevelProgressionLadder';
+import { useStylistLevels } from '@/hooks/useStylistLevels';
 
 const STATUS_COLORS = {
   pending: 'bg-amber-500/10 text-amber-600 border-amber-500/20',
@@ -360,7 +361,8 @@ export default function MyGraduation() {
   const { data: submissions, isLoading: loadingSubs } = useGraduationSubmissions(effectiveUserId || undefined);
   const { data: promotions = [] } = usePromotionHistory(effectiveUserId || undefined);
   const progress = useLevelProgress(effectiveUserId || undefined);
-
+  const { data: allLevels = [] } = useStylistLevels();
+  const currentLevelId = progress?.currentLevelSlug ? allLevels.find(l => l.slug === progress.currentLevelSlug)?.id : undefined;
   const isLoading = loadingReqs || loadingSubs;
 
   // Create submission map
@@ -396,7 +398,7 @@ export default function MyGraduation() {
         <StylistScorecard userId={effectiveUserId || undefined} />
 
         {/* Level Progression Ladder */}
-        <LevelProgressionLadder currentLevelId={progress?.currentLevel?.id} />
+        <LevelProgressionLadder currentLevelId={currentLevelId} />
 
         {/* Retention guidance — shown when at risk */}
         {progress?.retention?.isAtRisk && (
