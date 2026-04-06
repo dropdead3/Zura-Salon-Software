@@ -1,64 +1,34 @@
 
 
-# View Level Roadmap with "Mark as Configured" Status
+# Improve Level Roadmap Timeline Visual
 
-## Summary
-Enhance the previously approved roadmap plan by adding an `is_configured` boolean column to `stylist_levels`. Each level starts unconfigured. The user explicitly marks a level as "configured" once they're satisfied with its setup. The roadmap view reflects this status — incomplete levels show a clear visual indicator so the operator knows at a glance what's done and what still needs attention.
+## Problem
+The current timeline nodes use `border-dashed` for unconfigured levels, creating a cheap "dotted-dashed" look. The overall circles feel flat and utilitarian.
 
-## Database Change
+## Proposed Design
+Replace the dashed-border approach with a cleaner, more polished visual using **solid rings with subtle inner shadow and a soft glow progression**:
 
-### Migration: Add `is_configured` to `stylist_levels`
+### Timeline Node Redesign
+- **Remove** all `border-dashed` usage
+- **Larger nodes**: Increase from `w-10 h-10` to `w-14 h-14` for better presence
+- **Solid double-ring effect**: Use `ring-2 ring-offset-2` with the level color for configured levels, and `ring-neutral-200` for unconfigured
+- **Inner gradient**: Apply inline `background` style using hardcoded hex values from the stone→amber→gold progression (since this is a force-light page, Tailwind dark-mode classes don't apply cleanly). This gives a richer, more dimensional feel than flat bg classes
+- **Subtle shadow**: Add `shadow-md` on configured levels for a slight lift effect
+- **Number styling**: Slightly larger, `font-display` stays
 
-```sql
-ALTER TABLE public.stylist_levels
-  ADD COLUMN is_configured boolean NOT NULL DEFAULT false;
-```
+### Status Indicator
+- **Configured**: Small green dot badge (absolute positioned, bottom-right of circle) instead of text below — cleaner
+- **Unconfigured**: Small amber dot badge with `AlertTriangle` micro-icon
+- Keep the text label ("Ready" / "Incomplete") below the level name
 
-No RLS changes needed — existing policies cover this column.
+### Connector Arrows
+- Replace `ArrowRight` icon with a simple styled `div` connector line (thin horizontal bar with a small chevron), using neutral-300 color — more elegant than an icon
 
-## Code Changes
-
-### 1. Update `StylistLevel` interface (`useStylistLevels.ts`)
-Add `is_configured: boolean` to the `StylistLevel` interface and include it in the `useSaveStylistLevels` mutation payloads.
-
-### 2. Add "Mark as Configured" toggle to editor (`StylistLevelsEditor.tsx`)
-- Per-level toggle button (checkmark icon) in the level column header or level card area
-- When clicked, calls `useUpdateStylistLevel` to set `is_configured = true/false`
-- Visual state: configured levels show a green check badge; unconfigured show an amber "incomplete" indicator
-- This is a deliberate user action — not auto-computed
-
-### 3. Replace "Export Roadmap" with "View Level Roadmap" button (`StylistLevelsEditor.tsx`)
-- Add `showRoadmap` state toggle
-- Button uses `Eye` icon + "View Level Roadmap" label
-- Opens the new `LevelRoadmapView` overlay
-
-### 4. Create `LevelRoadmapView.tsx` (new file)
-Full-screen white overlay (`fixed inset-0 z-50 bg-white overflow-auto`) with print-optimized layout.
-
-**Structure:**
-- **Sticky action bar** (hidden on print): Close, Download PDF, Print buttons
-- **Org header**: Logo + org name + "Level Graduation Roadmap" + date
-- **Career progression timeline**: Horizontal stepped nodes using `getLevelColor`, with configured/unconfigured badge per node
-- **Per-level detail cards**:
-  - Left accent bar using level color
-  - Configuration status badge (green "Configured" or amber "Setup Incomplete")
-  - Commission rates (service %, retail %, hourly)
-  - KPI requirements grid (only enabled metrics from promotion criteria)
-  - Evaluation window, tenure, manual approval
-  - Retention policy summary
-  - **Unconfigured levels**: Card shows a subtle amber border/background with "This level has not been marked as configured" notice — all data still visible but flagged
-- **Footer**: "Confidential — For internal use only"
-
-**Print styles:** `print:` Tailwind variants hide action bar, remove shadows, ensure `break-inside-avoid` on cards.
-
-**Data sources:** Same props already available in editor — levels, promotionCriteria, retentionCriteria, commissions, org info. Plus the new `is_configured` field.
-
-## Files
+## File Changed
 
 | File | Action |
 |------|--------|
-| `stylist_levels` table | **Migrate** — add `is_configured` column |
-| `src/hooks/useStylistLevels.ts` | **Edit** — add field to interface + mutations |
-| `src/components/dashboard/settings/LevelRoadmapView.tsx` | **Create** — roadmap overlay |
-| `src/components/dashboard/settings/StylistLevelsEditor.tsx` | **Edit** — add configured toggle, swap button, render overlay |
+| `src/components/dashboard/settings/LevelRoadmapView.tsx` | **Edit** — restyle timeline section (lines ~96–129) |
+
+No new files, no database changes.
 
