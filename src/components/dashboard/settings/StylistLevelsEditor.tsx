@@ -598,7 +598,7 @@ function CriteriaComparisonTable({ levels, promotionCriteria, retentionCriteria,
     if (isEditingRow && metric.editable && fieldMapping && level.dbId && !isPromotionSkip && !isLastLevelTenure) {
       const entry = editValues[level.id] || { enabled: false, value: '' };
       const editableLevelIds = levels.filter((_, idx) => {
-        if (metric.section === 'promotion') return idx > 0;
+        if (metric.section === 'promotion' && !isBaseLevelRetention) return idx > 0;
         return true;
       }).map(l => l.id);
       const editLevelIdx = editableLevelIds.indexOf(level.id);
