@@ -1,49 +1,40 @@
 
 
-# Condensed Level Cards with Collapsible Details
+# Improve Level Cards UI + Move Add Level to Top
 
-## Current Problem
-Each level card is ~120px tall even when not being edited because the description input, commission fields, and criteria section are always visible. With 7 levels, this creates excessive scrolling and visual noise.
-
-## Design
-
-Each level becomes a single-line row (~48px) with a chevron toggle to expand details:
-
-```text
-┌─────────────────────────────────────────────────────────────┐
-│ ▲▼  ① New Talent  [Entry]  Svc 35% · Ret 10%  1 stylist ✎🗑 ▸ │
-├─────────────────────────────────────────────────────────────┤
-│ ▲▼  ② Studio Artist         Svc 38% · Ret 10%  2 stylists ✎🗑 ▾ │
-│   ┌─────────────────────────────────────────────────────────┐   │
-│   │ Description: [input]                                    │   │
-│   │ Commission: [Svc ___%]  [Ret ___%]                     │   │
-│   │ ┌ Criteria ──────────────────────────────────────────┐  │   │
-│   │ │ ↗ $5K rev · 12% retail · 60% rebook — 90d window  │  │   │
-│   │ │ 🛡 Required to Stay: $3K rev · 8% retail — 30d    │  │   │
-│   │ └───────────────────────────────────────────────────-┘  │   │
-│   └─────────────────────────────────────────────────────────┘   │
-├─────────────────────────────────────────────────────────────┤
-│ ▲▼  ③ Core Artist            Svc 40% · Ret 10%           ✎🗑 ▸ │
-└─────────────────────────────────────────────────────────────┘
-```
-
-**Collapsed state (default):** Single row — reorder arrows, number badge, name, entry tag, inline commission rates, stylist count, edit/delete icons, expand chevron.
-
-**Expanded state:** Clicking the row or chevron reveals the description input, commission edit fields, and criteria summary/setup CTA below.
-
-## Implementation
+## Changes
 
 **File:** `src/components/dashboard/settings/StylistLevelsEditor.tsx`
 
-1. Add `expandedLevels` state (`Set<string>`) to track which cards are open
-2. Refactor each level card (lines 1062-1314):
-   - Move the header row content into a clickable row that toggles expansion
-   - Add a `ChevronRight` icon that rotates to `ChevronDown` when expanded
-   - Wrap the "expanded content" div (description, commission fields, criteria) in a conditional render gated on `expandedLevels.has(level.id)`
-   - When `editingIndex === index`, auto-expand that level
-3. Remove the always-visible description input from the collapsed view — only show in expanded
-4. Reduce card padding: `px-4 py-3` → `px-3 py-2` on collapsed, keep `px-4 pb-4` on expanded content
-5. Keep all existing functionality (reorder, edit, delete, reassign, criteria wizard) unchanged
+### 1. Move "Add Level" button to the top
+Move the `isAddingNew` block (lines 1348-1400) from below the levels list to above it — right after the quick stats row (line 1067). The inline input form for entering a new level name moves with it.
 
-**No other files changed. No database changes.**
+### 2. Replace dashed border button with a compact `+ Add Level` button
+Instead of the full-width dashed border CTA, use a standard `Button` with `variant="outline"` and `size="sm"` placed inline in the stats row (next to "7 levels · 1 stylist assigned"). This is cleaner and saves vertical space.
+
+```text
+Before:
+  7 levels · 1 stylist assigned
+  [cards...]
+  ┌─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─┐
+  │      + Add Level           │
+  └─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─┘
+
+After:
+  7 levels · 1 stylist assigned          [+ Add Level]
+  [inline input when adding...]
+  [cards...]
+```
+
+### 3. UI polish for level rows
+- Add `getLevelColor` color dot before the level number badge to provide visual hierarchy per the level-colors system
+- Use `font-display` on level names for consistency with design tokens (currently `font-medium text-sm`)
+- Reduce reorder arrow opacity to 40% default, 100% on card hover — less visual noise
+- Add subtle left border accent using level color on expanded cards
+
+### 4. Expanded content polish
+- Add a section label "Details" with a thin divider when expanded
+- Slightly increase left margin indentation for cleaner alignment
+
+**1 file changed. No database changes.**
 
