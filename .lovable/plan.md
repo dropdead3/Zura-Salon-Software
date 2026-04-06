@@ -1,29 +1,64 @@
 
 
-# Add Bottom Scroll Indicator to Criteria Matrix
+# View Level Roadmap with "Mark as Configured" Status
 
-## What We're Adding
-A vertical (bottom-edge) scroll indicator matching the existing right-edge pattern — a gradient fade at the bottom plus a ChevronDown button that scrolls down on click. This tells users there are more rows below (Retention section, etc.).
+## Summary
+Enhance the previously approved roadmap plan by adding an `is_configured` boolean column to `stylist_levels`. Each level starts unconfigured. The user explicitly marks a level as "configured" once they're satisfied with its setup. The roadmap view reflects this status — incomplete levels show a clear visual indicator so the operator knows at a glance what's done and what still needs attention.
 
-## Change
+## Database Change
 
-### File: `src/components/dashboard/settings/StylistLevelsEditor.tsx`
+### Migration: Add `is_configured` to `stylist_levels`
 
-**1. Add `canScrollDown` state** alongside `canScrollRight` in `ScrollableTableWrapper`.
-
-Update `checkScroll` to also compute:
-```ts
-const canDown = el.scrollHeight - el.scrollTop - el.clientHeight > 4;
-setCanScrollDown(canDown);
+```sql
+ALTER TABLE public.stylist_levels
+  ADD COLUMN is_configured boolean NOT NULL DEFAULT false;
 ```
 
-**2. Render bottom gradient + chevron button** in both fullscreen and inline modes, mirroring the right-edge pattern:
+No RLS changes needed — existing policies cover this column.
 
-- Bottom gradient: `absolute bottom-0 left-0 right-0 h-12 pointer-events-none bg-gradient-to-t from-card to-transparent` (or `from-background` in fullscreen)
-- ChevronDown button: `absolute bottom-2 left-1/2 -translate-x-1/2` with same styling as the right button (`w-7 h-7 rounded-full bg-muted/80 backdrop-blur-sm border border-border/60`)
-- `onClick` scrolls down by 200px with smooth behavior
+## Code Changes
 
-**3. Both render paths** (fullscreen `div` at ~line 175 and inline `div` at ~line 210) get the same bottom indicator treatment.
+### 1. Update `StylistLevel` interface (`useStylistLevels.ts`)
+Add `is_configured: boolean` to the `StylistLevel` interface and include it in the `useSaveStylistLevels` mutation payloads.
 
-### Single file edit. No database changes.
+### 2. Add "Mark as Configured" toggle to editor (`StylistLevelsEditor.tsx`)
+- Per-level toggle button (checkmark icon) in the level column header or level card area
+- When clicked, calls `useUpdateStylistLevel` to set `is_configured = true/false`
+- Visual state: configured levels show a green check badge; unconfigured show an amber "incomplete" indicator
+- This is a deliberate user action — not auto-computed
+
+### 3. Replace "Export Roadmap" with "View Level Roadmap" button (`StylistLevelsEditor.tsx`)
+- Add `showRoadmap` state toggle
+- Button uses `Eye` icon + "View Level Roadmap" label
+- Opens the new `LevelRoadmapView` overlay
+
+### 4. Create `LevelRoadmapView.tsx` (new file)
+Full-screen white overlay (`fixed inset-0 z-50 bg-white overflow-auto`) with print-optimized layout.
+
+**Structure:**
+- **Sticky action bar** (hidden on print): Close, Download PDF, Print buttons
+- **Org header**: Logo + org name + "Level Graduation Roadmap" + date
+- **Career progression timeline**: Horizontal stepped nodes using `getLevelColor`, with configured/unconfigured badge per node
+- **Per-level detail cards**:
+  - Left accent bar using level color
+  - Configuration status badge (green "Configured" or amber "Setup Incomplete")
+  - Commission rates (service %, retail %, hourly)
+  - KPI requirements grid (only enabled metrics from promotion criteria)
+  - Evaluation window, tenure, manual approval
+  - Retention policy summary
+  - **Unconfigured levels**: Card shows a subtle amber border/background with "This level has not been marked as configured" notice — all data still visible but flagged
+- **Footer**: "Confidential — For internal use only"
+
+**Print styles:** `print:` Tailwind variants hide action bar, remove shadows, ensure `break-inside-avoid` on cards.
+
+**Data sources:** Same props already available in editor — levels, promotionCriteria, retentionCriteria, commissions, org info. Plus the new `is_configured` field.
+
+## Files
+
+| File | Action |
+|------|--------|
+| `stylist_levels` table | **Migrate** — add `is_configured` column |
+| `src/hooks/useStylistLevels.ts` | **Edit** — add field to interface + mutations |
+| `src/components/dashboard/settings/LevelRoadmapView.tsx` | **Create** — roadmap overlay |
+| `src/components/dashboard/settings/StylistLevelsEditor.tsx` | **Edit** — add configured toggle, swap button, render overlay |
 
