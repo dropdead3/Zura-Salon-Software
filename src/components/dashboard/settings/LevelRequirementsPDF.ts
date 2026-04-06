@@ -139,7 +139,7 @@ export function generateLevelRequirementsPDF(options: LevelRequirementsPDFOption
       const cx = startX + spacing * i;
       const bgHex = getLevelHex(i, totalNodes);
       const rgb = hexToRgb(bgHex);
-      const isConfigured = criteria.some(c => c.stylist_level_id === level.dbId && c.is_active) || i === 0;
+      const isConfigured = level.isConfigured ?? (criteria.some(c => c.stylist_level_id === level.dbId && c.is_active) || i === 0);
 
       // Outer ring for configured levels
       if (isConfigured) {
@@ -211,7 +211,7 @@ export function generateLevelRequirementsPDF(options: LevelRequirementsPDFOption
       // Status text
       doc.setFontSize(4.5);
       doc.setTextColor(isConfigured ? 16 : 200, isConfigured ? 185 : 150, isConfigured ? 129 : 0);
-      doc.text(isConfigured ? 'Ready' : 'Incomplete', cx, nodeY + nodeR + 10, { align: 'center' });
+      doc.text(isConfigured ? 'Configured' : 'Setup Incomplete', cx, nodeY + nodeR + 10, { align: 'center' });
     });
 
     y = nodeY + nodeR + 16;
@@ -253,7 +253,7 @@ export function generateLevelRequirementsPDF(options: LevelRequirementsPDFOption
     const commission = commissions.find(cm => cm.dbId === level.dbId);
     const isBase = i === 0;
     const isTop = i === levels.length - 1;
-    const isConfigured = level.index === 0 || !!promo;
+    const isConfigured = level.isConfigured ?? (level.index === 0 || !!promo);
     const bgHex = getLevelHex(i, levels.length);
     const accentRgb = hexToRgb(bgHex);
 
@@ -287,13 +287,12 @@ export function generateLevelRequirementsPDF(options: LevelRequirementsPDFOption
     cardH += 16; // compensation section
     if (kpis.length > 0) {
       const kpiRows = Math.ceil(kpis.length / 4);
-      cardH += 8 + kpiRows * 16;
+      cardH += 8 + kpiRows * (14 + 3) + 2; // cellH + gap per row + trailing space
+    } else if (!isBase) {
+      cardH += 10; // "No KPI requirements" message — matches actual draw
     } else {
-      cardH += 14;
+      cardH += 4;
     }
-    if (!isBase && promo) cardH += 12; // eval details
-    if (retention?.retention_enabled) cardH += 16; // retention section
-    cardH += 4; // bottom padding
 
     y = ensureSpace(doc, y, cardH);
 
