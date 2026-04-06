@@ -68,8 +68,8 @@ export function useInvitationByToken(token: string | null) {
       if (!token) return null;
 
       // Use secure RPC instead of direct table query
-      const { data, error } = await supabase
-        .rpc('lookup_platform_invitation_by_token', { p_token: token }) as any;
+      const { data, error } = await (supabase
+        .rpc as any)('lookup_platform_invitation_by_token', { p_token: token });
 
       if (error) throw error;
       if (!data || data.length === 0) return null;

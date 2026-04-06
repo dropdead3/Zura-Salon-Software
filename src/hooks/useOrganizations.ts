@@ -97,8 +97,8 @@ export function useOrganizationBySlug(slug: string | undefined) {
       }
       
       // Fall back to public RPC (safe columns only, no credentials)
-      const { data: publicData, error: rpcError } = await supabase
-        .rpc('lookup_organization_by_slug', { p_slug: slug }) as any;
+      const { data: publicData, error: rpcError } = await (supabase
+        .rpc as any)('lookup_organization_by_slug', { p_slug: slug });
 
       if (rpcError) throw rpcError;
       if (!publicData || publicData.length === 0) throw new Error('Organization not found');
