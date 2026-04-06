@@ -695,14 +695,14 @@ function CriteriaComparisonTable({ levels, promotionCriteria, retentionCriteria,
       <ScrollableTableWrapper>
         <Table>
           <TableHeader>
-            <TableRow>
-              <TableHead className={cn("w-[180px] sticky left-0 bg-card z-20 rounded-tl-xl", tokens.table.columnHeader)}>Metric</TableHead>
+            <TableRow className="border-b-2 border-border/60">
+              <TableHead className={cn("w-[200px] sticky left-0 bg-card z-20 rounded-tl-xl py-4 px-4", tokens.table.columnHeader)}>Metric</TableHead>
               {levels.map((level, idx) => {
                 const ret = level.dbId ? getCriteria(level.dbId).retention : undefined;
                 const retentionActive = ret?.retention_enabled === true;
                 return (
-                  <TableHead key={level.id} className={cn("text-center min-w-[120px]", tokens.table.columnHeader)}>
-                    <div className="flex flex-col items-center gap-1.5">
+                  <TableHead key={level.id} className={cn("text-center min-w-[140px] py-4 px-3", tokens.table.columnHeader)}>
+                    <div className="flex flex-col items-center gap-2">
                       <div className="flex items-center gap-1.5">
                         <span className="text-sm font-medium">{level.label}</span>
                         {level.dbId && (
@@ -710,7 +710,7 @@ function CriteriaComparisonTable({ levels, promotionCriteria, retentionCriteria,
                             <TooltipTrigger asChild>
                               <span>
                                 <ShieldCheck className={cn(
-                                  "w-3 h-3 transition-colors",
+                                  "w-3.5 h-3.5 transition-colors",
                                   retentionActive ? "text-emerald-500" : "text-muted-foreground/30"
                                 )} />
                               </span>
@@ -726,7 +726,7 @@ function CriteriaComparisonTable({ levels, promotionCriteria, retentionCriteria,
                       {level.dbId ? (
                         <button
                           onClick={() => onEditLevel(level, idx)}
-                          className="text-xs text-primary hover:text-primary/80 transition-colors"
+                          className="text-xs text-primary hover:text-primary/80 transition-colors px-2.5 py-0.5 rounded-full border border-primary/20 hover:border-primary/40"
                         >
                           Edit
                         </button>
@@ -742,8 +742,8 @@ function CriteriaComparisonTable({ levels, promotionCriteria, retentionCriteria,
           <TableBody>
             {/* Compensation section */}
             <TableRow className="bg-muted/50 hover:bg-muted/50">
-              <TableCell colSpan={levels.length + 1} className="py-3 border-l-2 border-l-primary">
-                <span className="flex items-center gap-2 text-sm font-display uppercase tracking-wide text-foreground">
+              <TableCell colSpan={levels.length + 1} className="py-4 px-4 border-l-2 border-l-primary">
+                <span className="flex items-center gap-2.5 text-sm font-display uppercase tracking-wide text-foreground">
                   <DollarSign className="w-4 h-4 text-primary" />
                   Compensation — At This Level
                 </span>
@@ -753,11 +753,11 @@ function CriteriaComparisonTable({ levels, promotionCriteria, retentionCriteria,
               const field = commLabel === 'Service Commission' ? 'serviceCommissionRate' : 'retailCommissionRate';
               return (
                 <TableRow key={commLabel}>
-                  <TableCell className="text-sm text-muted-foreground sticky left-0 bg-card z-10">{commLabel}</TableCell>
+                  <TableCell className="text-sm text-muted-foreground sticky left-0 bg-card z-10 py-3 px-4">{commLabel}</TableCell>
                   {levels.map((level) => {
                     const rate = level[field];
                     return (
-                      <TableCell key={level.id} className="text-center text-sm tabular-nums">
+                      <TableCell key={level.id} className="text-center text-sm tabular-nums py-3 px-3">
                         {rate ? (
                           <span className="text-foreground font-medium">{rate}%</span>
                         ) : (
@@ -772,9 +772,9 @@ function CriteriaComparisonTable({ levels, promotionCriteria, retentionCriteria,
 
             {/* Hourly Wage row */}
             <TableRow>
-              <TableCell className="text-sm text-muted-foreground sticky left-0 bg-card z-10">Hourly Wage</TableCell>
+              <TableCell className="text-sm text-muted-foreground sticky left-0 bg-card z-10 py-3 px-4">Hourly Wage</TableCell>
               {levels.map((level) => (
-                <TableCell key={level.id} className="text-center text-sm tabular-nums">
+                <TableCell key={level.id} className="text-center text-sm tabular-nums py-3 px-3">
                   {level.hourlyWageEnabled && level.hourlyWage ? (
                     <span className="text-foreground font-medium">${level.hourlyWage}/hr</span>
                   ) : (
@@ -786,8 +786,8 @@ function CriteriaComparisonTable({ levels, promotionCriteria, retentionCriteria,
 
             {/* Promotion section header */}
             <TableRow className="bg-muted/50 hover:bg-muted/50">
-              <TableCell colSpan={levels.length + 1} className="py-3 border-l-2 border-l-primary">
-                <span className="flex items-center gap-2 text-sm font-display uppercase tracking-wide text-foreground">
+              <TableCell colSpan={levels.length + 1} className="py-4 px-4 border-l-2 border-l-primary">
+                <span className="flex items-center gap-2.5 text-sm font-display uppercase tracking-wide text-foreground">
                   <TrendingUp className="w-4 h-4 text-primary" />
                   Promotion — To Reach This Level
                 </span>
@@ -799,12 +799,12 @@ function CriteriaComparisonTable({ levels, promotionCriteria, retentionCriteria,
 
             {/* Retention Policy section header */}
             <TableRow className="bg-muted/50 hover:bg-muted/50">
-              <TableCell colSpan={levels.length + 1} className="py-3 border-l-2 border-l-primary">
-                <span className="flex items-center gap-2 text-sm font-display uppercase tracking-wide text-foreground">
+              <TableCell colSpan={levels.length + 1} className="py-4 px-4 border-l-2 border-l-primary">
+                <span className="flex items-center gap-2.5 text-sm font-display uppercase tracking-wide text-foreground">
                   <Shield className="w-4 h-4 text-primary" />
                   Retention Policy
                 </span>
-                <span className="text-xs text-muted-foreground ml-6 block mt-0.5">KPI minimums inherited from Level Requirements above</span>
+                <span className="text-xs text-muted-foreground ml-6 block mt-1">KPI minimums inherited from Level Requirements above</span>
               </TableCell>
             </TableRow>
             {metrics.filter(m => m.section === 'retention').map((metric, mIdx) => {
