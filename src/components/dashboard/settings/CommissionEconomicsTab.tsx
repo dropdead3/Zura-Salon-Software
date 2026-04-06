@@ -371,14 +371,14 @@ export function CommissionEconomicsTab({ levels }: CommissionEconomicsTabProps) 
                         </span>
                       </TableCell>
                       <TableCell className="text-center text-sm">
-                        <BlurredAmount>{formatCurrency(breakevenRevenue)}</BlurredAmount>
+                        <BlurredAmount>{formatCurrencyLocal(breakevenRevenue)}</BlurredAmount>
                       </TableCell>
                       <TableCell className="text-center text-sm">
-                        <BlurredAmount>{formatCurrency(targetRevenue)}</BlurredAmount>
+                        <BlurredAmount>{formatCurrencyLocal(targetRevenue)}</BlurredAmount>
                       </TableCell>
                       <TableCell className="text-center text-sm">
                         {actualRevenue > 0 ? (
-                          <BlurredAmount>{formatCurrency(actualRevenue)}</BlurredAmount>
+                          <BlurredAmount>{formatCurrencyLocal(actualRevenue)}</BlurredAmount>
                         ) : (
                           <span className="text-muted-foreground/40">—</span>
                         )}
@@ -551,7 +551,7 @@ export function CommissionEconomicsTab({ levels }: CommissionEconomicsTabProps) 
                       <div className="w-2 h-2 rounded-full" style={{ backgroundColor: dotColor }} />
                       <span className="text-sm">{level.label}</span>
                       <div className="ml-auto text-sm">
-                        <BlurredAmount>{formatCurrency(targetRevenue)}</BlurredAmount>
+                        <BlurredAmount>{formatCurrencyLocal(targetRevenue)}</BlurredAmount>
                         <span className="text-[10px] text-muted-foreground ml-1">target</span>
                       </div>
                     </div>
