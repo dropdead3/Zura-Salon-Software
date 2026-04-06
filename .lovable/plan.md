@@ -1,51 +1,52 @@
 
 
-# Improve Criteria Table Readability and Organization
+# Add MetricInfoTooltip Explainers to Every KPI Row
 
-## Problems Identified
+## Problem
 
-1. **Text too small** — `text-xs` (12px) used everywhere for labels, values, and headers. Hard to read at a glance.
-2. **Too dense** — minimal padding, tight rows, everything blends together visually.
-3. **Section headers are subtle** — thin tinted backgrounds don't create enough visual separation between Compensation, Promotion, and Retention sections.
-4. **Column headers cramped** — level names at `text-xs` with tiny Edit buttons and shield icons packed into narrow columns.
-5. **Read-only values lack weight** — displayed values like `$5000`, `80%` are the same size as labels, making scanning difficult.
-6. **Editing controls are tiny** — Auto-step, Save, X buttons at `text-[10px]` are hard to click and read.
+The criteria matrix lists 9+ KPI rows (Revenue, Retail %, Rebooking %, etc.) but none have contextual help explaining what the metric measures, how it's calculated, or what a reasonable target looks like. This makes configuration harder for operators unfamiliar with industry benchmarks.
 
 ## Solution
 
-### Typography bump across the board
+Add a `MetricInfoTooltip` next to each metric label in the left column of the criteria table. Each tooltip includes a description of what the metric measures and, where applicable, a suggested industry target range.
 
-| Element | Current | New |
-|---------|---------|-----|
-| Column headers (level names) | `text-xs` | `text-sm font-medium` |
-| Metric labels (left column) | `text-xs` | `text-sm` |
-| Cell values (read-only) | `text-xs` | `text-sm` |
-| Section headers | `text-xs` | `text-sm` |
-| Edit/Configure links | `text-[10px]` | `text-xs` |
-| Editing action buttons | `text-[10px]` | `text-xs` |
+### Metric Tooltip Content
 
-### Spacing improvements
+| Metric | Description | Suggested Target |
+|--------|-------------|-----------------|
+| Revenue | Total service revenue generated per evaluation period. | Varies by market — typical range $3K–$12K/week depending on level. |
+| Retail % | Retail product sales as a percentage of total revenue. | Industry benchmark: 10–20%. |
+| Rebooking % | Percentage of clients who rebook their next appointment before leaving. | Strong salons target 60–80%. |
+| Avg Ticket | Average revenue per completed appointment. | Varies by service mix — track trend over time. |
+| Client Retention | Percentage of clients who return within their expected rebooking window. | Healthy retention: 70–85%. |
+| New Clients | Number of new clients seen per month. | 15–30/mo for growth-stage stylists; lower for senior books. |
+| Utilization | Percentage of available hours that are booked with appointments. | Target: 75–90%. Below 70% signals underutilization. |
+| Rev/Hr | Average revenue generated per booked hour of service. | Varies by price point — use to compare across team members. |
+| Tenure | Minimum days at current level before promotion eligibility. | Typical: 90–180 days between levels. |
+| Eval Window | Time period over which KPI performance is measured. | — |
+| Approval | Whether promotion requires manual manager approval or is automatic. | — |
+| Grace Period | Days a stylist has to recover performance before action is taken. | — |
+| Action | What happens when a stylist falls below retention thresholds. | — |
 
-- Left "Metric" column: widen from `w-[160px]` to `w-[180px]`
-- Level columns: increase `min-w` from `100px` to `120px`
-- Row padding: ensure consistent `py-2.5` on data rows
-- Section header rows: increase to `py-3` with slightly stronger background
+### Implementation
 
-### Visual hierarchy
+1. **Create a constant map** `METRIC_TOOLTIPS: Record<string, string>` at the top of the `CriteriaComparisonTable` function (or near `METRIC_FIELD_MAP`) containing the description text for each metric label.
 
-- Section headers: use `bg-muted/50` (stronger) with a left accent border `border-l-2 border-l-primary`
-- Read-only values: use `text-foreground` with `tabular-nums` for aligned numbers
-- Empty dashes: keep at subdued `text-muted-foreground/40` but bump to `text-sm`
-- Checkbox in edit mode: increase from `w-3.5 h-3.5` to `w-4 h-4`
+2. **Update `renderMetricRow`** (line ~628): Insert a `MetricInfoTooltip` after the `<span>{metric.label}</span>`, pulling the description from the map. Only render when not in editing mode (to avoid crowding the edit controls).
 
-### Editing row improvements
+```tsx
+<div className="flex items-center gap-1.5">
+  <span>{metric.label}</span>
+  {METRIC_TOOLTIPS[metric.label] && !isEditingRow && (
+    <MetricInfoTooltip description={METRIC_TOOLTIPS[metric.label]} side="right" />
+  )}
+  {isEditingRow && ( /* existing edit controls */ )}
+</div>
+```
 
-- Action buttons (Auto-step, Save, Cancel): bump to `text-xs px-2 py-1` for easier clicking
-- Input width stays at `w-[90px]` (already improved), height stays `h-8`
+### Files Modified
 
-## Files Modified
+- `src/components/dashboard/settings/StylistLevelsEditor.tsx` — add tooltip map and render tooltips in metric label cells
 
-- `src/components/dashboard/settings/StylistLevelsEditor.tsx` — typography, spacing, and visual hierarchy updates within `CriteriaComparisonTable`
-
-## No database changes.
+### No database changes.
 
