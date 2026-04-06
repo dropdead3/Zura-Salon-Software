@@ -915,7 +915,7 @@ function TeamMemberCard({ member, locations, isSuperAdmin, canViewStrikes, strik
                 <div className="flex flex-wrap items-center gap-1.5">
                   <span className={cn("inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium", colors.bg, colors.text)}>
                     <Award className="w-3 h-3" />
-                    {levelIdx >= 0 ? `L${levelIdx + 1}` : ''} {levelDisplayName}
+                    {levelIdx >= 0 ? `${levelIdx + 1} – ${levelDisplayName}` : levelDisplayName}
                   </span>
                   {showIndicator && progress.status === 'ready' && (
                     <TooltipProvider>
