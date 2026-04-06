@@ -1,5 +1,4 @@
 import { useRef } from 'react';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { X, FileDown, Printer, Check, AlertTriangle, ArrowRight, Shield, Clock, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -53,32 +52,26 @@ export function LevelRoadmapView({
         <div className="max-w-4xl mx-auto px-6 py-3 flex items-center justify-between">
           <h2 className="font-display text-sm tracking-wide uppercase text-neutral-900">Level Roadmap</h2>
           <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              className="gap-2 text-neutral-700 border-neutral-300 hover:bg-neutral-50"
+            <button
               onClick={onDownloadPDF}
+              className="inline-flex items-center gap-2 h-9 px-4 rounded-full text-sm font-sans font-medium border border-neutral-300 bg-white text-neutral-700 hover:bg-neutral-100 hover:text-neutral-900 transition-colors"
             >
               <FileDown className="w-4 h-4" />
               Download PDF
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              className="gap-2 text-neutral-700 border-neutral-300 hover:bg-neutral-50"
+            </button>
+            <button
               onClick={() => window.print()}
+              className="inline-flex items-center gap-2 h-9 px-4 rounded-full text-sm font-sans font-medium border border-neutral-300 bg-white text-neutral-700 hover:bg-neutral-100 hover:text-neutral-900 transition-colors"
             >
               <Printer className="w-4 h-4" />
               Print
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8 text-neutral-500 hover:text-neutral-900"
+            </button>
+            <button
               onClick={onClose}
+              className="inline-flex items-center justify-center h-8 w-8 rounded-full text-neutral-500 hover:text-neutral-900 hover:bg-neutral-100 transition-colors"
             >
               <X className="w-4 h-4" />
-            </Button>
+            </button>
           </div>
         </div>
       </div>
