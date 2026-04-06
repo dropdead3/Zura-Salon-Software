@@ -733,7 +733,7 @@ interface TeamMemberCardProps {
   locations: Array<{ id: string; name: string }>;
   isSuperAdmin?: boolean;
   canViewStrikes?: boolean;
-  strikeCount?: number;
+  onViewProfile?: () => void;
   levelProgress?: TeamMemberProgress | null;
 }
 
