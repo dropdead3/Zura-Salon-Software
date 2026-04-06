@@ -1,94 +1,55 @@
 
 
-# Gaps, Improvements & Enhancements: Hourly Wage + Commission Pay Systems
+# Remaining Gaps & Enhancements: Hourly Wage + Commission Pay
 
-## Gaps Found
+## Issues Found
 
-### 1. `usePayrollAnalytics` forecast ignores level-based hourly wage fallback
-**File:** `src/hooks/usePayrollAnalytics.ts` (line 202)
-The `calculateForecast` function uses `emp.hourly_rate || 0` directly without falling back to the level's `hourly_wage`. The same fallback we added to `usePayrollForecasting` was never mirrored here, so the PayrollKPICards "Next Payroll Forecast" will undercount base pay for hourly employees whose rate comes from their level.
+### 1. `EmployeeProjection` doesn't carry hourly rate or source flag
+**File:** `src/hooks/usePayrollForecasting.ts`
+The `EmployeeProjection` interface has no `hourlyRate` or `isLevelFallback` field. The `TeamCompensationTable` expanded row hardcodes "80 hrs estimated" text but can't show the actual rate (e.g. "80 hrs × $18/hr") or indicate if the rate came from a level fallback — because that data isn't passed through.
 
-### 2. `useMyPayData` doesn't pass `employeeLevelSlug` to `calculateEmployeeCompensation`
-**File:** `src/hooks/useMyPayData.ts` (line 214)
-The My Pay page calls `calculateEmployeeCompensation` without the 6th `employeeLevelSlug` parameter, so stylists with level-defined hourly wages but no personal `hourly_rate` will see $0 base pay on their My Pay page.
+### 2. TeamCompensationTable hardcodes "80 hrs estimated"
+**File:** `src/components/dashboard/payroll/analytics/TeamCompensationTable.tsx` (line 128)
+The expanded Base Pay cell says `80 hrs estimated` without the actual rate. For hourly employees, it should show `80 hrs × $X/hr` and a "(Level Rate)" indicator when using fallback — matching the My Pay card pattern.
 
-### 3. My Pay "Current Period" card doesn't show hourly rate source
-**File:** `src/components/dashboard/mypay/CurrentPeriodCard.tsx`
-When base pay comes from a level-defined hourly wage (fallback), there's no indication of the rate being used. Stylists see a dollar amount but don't know their effective rate or that it comes from their level.
+### 3. `usePayrollForecasting` missing from `useMemo` dependency array
+**File:** `src/hooks/usePayrollForecasting.ts` (line 310)
+The `useMemo` deps include `resolveCommission` but are missing `allLevels`, `allCriteria`, and `employeeLevels`. This means the projection won't recalculate when levels or employee level assignments change until another dep triggers it.
 
-### 4. Economics calculator hardcodes 160 hrs/month for hourly wage cost
-**File:** `src/components/dashboard/settings/CommissionEconomicsTab.tsx` (line 343)
-The `160` constant assumes full-time. Should use an assumption input (like `hours_per_month`) so part-time or varied schedules can be modeled. This is a material margin modeling error for salons with part-time hourly staff.
-
-### 5. AI optimizer doesn't include hourly wage data
-**File:** `src/components/dashboard/settings/CommissionEconomicsTab.tsx` (line 152)
-The payload sent to `ai-commission-optimizer` doesn't include `hourly_wage_enabled` or `hourly_wage` per level, so AI recommendations can't factor in base wage costs when optimizing commission rates.
-
-### 6. `computeEconomics` doesn't natively understand hourly wages
-**File:** `src/hooks/useCommissionEconomics.ts`
-The overhead adjustment for hourly wages is done ad-hoc in the UI component. The core `computeEconomics` function should accept an optional `hourly_wage_cost` parameter so all callers get consistent math.
-
-### 7. Team Compensation Table doesn't show pay type breakdown for hourly employees
+### 4. `BlurredAmount` missing on TeamCompensationTable monetary values
 **File:** `src/components/dashboard/payroll/analytics/TeamCompensationTable.tsx`
-The expanded row shows "Base Pay" generically but doesn't distinguish hourly rate × hours from salary. Hourly employees should see their effective rate and estimated hours.
+Per UI Canon, all monetary values must be wrapped in `BlurredAmount`. The table's `formatCurrency` calls render raw dollar amounts without privacy wrapping.
 
-### 8. PayrollKPICards missing "Hourly vs Commission" split KPI
-**File:** `src/components/dashboard/payroll/analytics/PayrollKPICards.tsx`
-No KPI showing the ratio of hourly base pay to commission pay across the team. Owners need this to understand their compensation structure mix.
+### 5. Duplicate Tips KPI card — low value
+**File:** `src/components/dashboard/payroll/analytics/PayrollKPICards.tsx` (line 179-192)
+"Tips Collected" uses the same `DollarSign` icon as "Next Payroll Forecast". Per design tokens, each KPI should have a distinct icon. Consider using a dedicated icon (e.g. `HandCoins` or `Banknote`).
 
-### 9. Earnings Breakdown card level matching is fragile
-**File:** `src/components/dashboard/mypay/EarningsBreakdownCard.tsx` (line 31-38)
-Level detection uses reverse-engineering from commission rate math (`effectiveRate ≈ level.service_commission_rate`). Should instead fetch the employee's `stylist_level` slug from their profile for accurate matching.
+### 6. `ai-commission-optimizer` edge function may not handle hourly wage data
+The CommissionEconomicsTab now sends `hourly_wage_enabled` and `hourly_wage` in the payload, but the edge function itself may not use these fields in its prompt/logic. Should verify and update if needed.
 
 ## Plan
 
-### Phase 1: Fix Critical Gaps (data correctness)
+### A. Extend `EmployeeProjection` with hourly rate data (1 file)
+- Add `hourlyRate: number | null` and `isLevelHourlyFallback: boolean` to the interface
+- Populate them during the projection calculation in `usePayrollForecasting`
 
-**A. Wire level-based hourly fallback into `usePayrollAnalytics`** (1 file)
-- In `calculateForecast`, accept `allLevels` and `employeeLevels` arrays
-- Apply same fallback logic: if `emp.hourly_rate` is 0/null, look up level's `hourly_wage`
-- Requires fetching `employee_profiles` with `stylist_level` in the hook
+### B. Fix `useMemo` dependency array (1 file)
+- Add `allLevels`, `allCriteria`, `employeeLevels` to the deps in `usePayrollForecasting`
 
-**B. Pass `employeeLevelSlug` in `useMyPayData`** (1 file)
-- Fetch current user's `stylist_level` from `employee_profiles`
-- Pass it as the 6th arg to `calculateEmployeeCompensation`
+### C. Enhance TeamCompensationTable expanded row (1 file)
+- Show `X hrs × $Y/hr` for hourly employees using the new `hourlyRate` field
+- Add "(Level Rate)" badge when `isLevelHourlyFallback` is true
+- Wrap all monetary values in `BlurredAmount`
 
-**C. Fix `EarningsBreakdownCard` level detection** (1 file)
-- Fetch employee's `stylist_level` slug from profile instead of reverse-engineering from rate
-- Use it to look up the correct level from `useStylistLevels`
+### D. Fix duplicate Tips icon (1 file)
+- Change Tips KPI icon from `DollarSign` to a distinct icon (e.g. `Banknote`)
 
-### Phase 2: Economics Calculator Improvements
+### E. Verify AI optimizer edge function handles hourly wage (1 file)
+- Check the edge function prompt/logic includes hourly wage context
+- Update if it doesn't reference the new fields
 
-**D. Add configurable hours/month assumption** (2 files)
-- Add `hours_per_month` to `EconomicsAssumptions` (default 160)
-- Surface as a 4th input in the Business Assumptions panel
-- Use `hours_per_month * hourly_wage` instead of hardcoded `160`
-
-**E. Include hourly wage in AI optimizer payload** (1 file)
-- Add `hourly_wage_enabled` and `hourly_wage` to the level data sent to the edge function
-
-**F. Move hourly wage cost into `computeEconomics`** (2 files)
-- Add optional `hourlyWageCost` param to `computeEconomics` and `computeMarginAtRevenue`
-- Simplify the UI component to just pass the value
-
-### Phase 3: Pay Visibility Enhancements
-
-**G. Show effective hourly rate on My Pay** (1 file)
-- In `CurrentPeriodCard`, show "Hourly Pay (X hrs × $Y/hr)" when applicable
-- Add a subtle badge "(Level Rate)" when fallback is used
-
-**H. Enhance Team Compensation expanded row** (1 file)
-- Show hourly rate × hours breakdown for hourly pay types
-- Show "(from level)" indicator when using level fallback
-
-**I. Add Hourly vs Commission Mix KPI** (2 files)
-- Add `hourlyVsCommissionRatio` to `PayrollKPIs`
-- Show as a new KPI card: "Base vs Commission" with percentage split
-
-### Summary
-- **~10 files modified** across hooks, UI components, and economics calculator
-- **No database changes** needed
-- Phase 1 fixes data correctness bugs introduced by incomplete hourly wage wiring
-- Phase 2 improves the margin modeling accuracy
-- Phase 3 enhances pay transparency for both owners and stylists
+## Summary
+- **~4-5 files modified**
+- No database changes
+- Fixes data flow gaps, privacy compliance, and reactivity bugs
 
