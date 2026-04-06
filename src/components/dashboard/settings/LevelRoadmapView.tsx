@@ -229,7 +229,7 @@ ${clone.innerHTML}
                   <ChevronDown className="w-3 h-3 ml-0.5 opacity-50" />
                 </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-52">
+              <DropdownMenuContent align="end" className="w-52 z-[90]">
                 <DropdownMenuItem onClick={onDownloadPDF} className="gap-2 cursor-pointer">
                   <FileDown className="w-4 h-4" />
                   Level Roadmap
