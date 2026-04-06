@@ -1818,17 +1818,4 @@ html {
   .marketing-surface .mkt-persona-card:hover { transform: none; }
 }
 
-/* Print scope: only show the Level Roadmap document */
-@media print {
-  body.printing-roadmap > *:not(#root) {
-    display: none !important;
-  }
-  body.printing-roadmap #root > *:not(:has([data-roadmap-print])) {
-    display: none !important;
-  }
-  body.printing-roadmap [data-roadmap-print] {
-    position: static !important;
-    z-index: auto !important;
-    overflow: visible !important;
-  }
-}
+/* Print scope for Level Roadmap is handled via dedicated print window — no global rules needed */

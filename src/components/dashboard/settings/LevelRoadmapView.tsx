@@ -86,9 +86,64 @@ export function LevelRoadmapView({
   };
 
   const handlePrint = () => {
-    document.body.classList.add('printing-roadmap');
-    window.print();
-    document.body.classList.remove('printing-roadmap');
+    if (!contentRef.current) return;
+
+    const printWindow = window.open('', '_blank', 'width=800,height=600');
+    if (!printWindow) return;
+
+    // Gather stylesheets from current document
+    const styleSheets = Array.from(document.styleSheets);
+    let cssText = '';
+    styleSheets.forEach(sheet => {
+      try {
+        if (sheet.href) {
+          cssText += `@import url("${sheet.href}");\n`;
+        } else if (sheet.cssRules) {
+          Array.from(sheet.cssRules).forEach(rule => {
+            cssText += rule.cssText + '\n';
+          });
+        }
+      } catch {
+        if (sheet.href) cssText += `@import url("${sheet.href}");\n`;
+      }
+    });
+
+    // Clone content and force-expand all accordion sections
+    const clone = contentRef.current.cloneNode(true) as HTMLElement;
+    clone.querySelectorAll('.hidden').forEach(el => {
+      (el as HTMLElement).classList.remove('hidden');
+      (el as HTMLElement).style.display = 'block';
+    });
+
+    const html = `<!DOCTYPE html>
+<html><head>
+<meta charset="utf-8">
+<title>Level Roadmap — ${orgName}</title>
+<style>${cssText}</style>
+<style>
+  @media print {
+    body { margin: 0; padding: 0; }
+  }
+  body { background: white; margin: 0; padding: 0; }
+  .print\\:hidden { display: none !important; }
+</style>
+</head><body>
+<div style="max-width: 800px; margin: 0 auto; padding: 24px;">
+${clone.innerHTML}
+</div>
+</body></html>`;
+
+    printWindow.document.open();
+    printWindow.document.write(html);
+    printWindow.document.close();
+
+    printWindow.onload = () => {
+      setTimeout(() => {
+        printWindow.focus();
+        printWindow.print();
+        printWindow.close();
+      }, 300);
+    };
   };
 
   return (
