@@ -1009,7 +1009,9 @@ export function StylistLevelsEditor({ embedded = false }: StylistLevelsEditorPro
               description="Manage experience levels and pricing tiers"
               actions={actionButtons}
             />
-            <PageExplainer pageId="stylist-levels" />
+            <div className="mt-4">
+              <PageExplainer pageId="stylist-levels" />
+            </div>
           </div>
         ) : (
           <div className="flex justify-end">{actionButtons}</div>
