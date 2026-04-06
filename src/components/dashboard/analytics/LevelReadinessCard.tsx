@@ -38,7 +38,8 @@ function formatMonths(days: number): string {
 }
 
 function getInitials(name: string): string {
-  return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+  if (!name) return '?';
+  return name.split(' ').filter(Boolean).map(n => n[0]).join('').toUpperCase().slice(0, 2);
 }
 
 function StylistRow({ member, showArrow }: { member: TeamMemberProgress; showArrow?: boolean }) {

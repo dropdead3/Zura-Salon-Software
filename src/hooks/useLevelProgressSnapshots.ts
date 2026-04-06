@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
-import { format, startOfMonth, subMonths } from 'date-fns';
+import { format, startOfMonth, subMonths, differenceInMonths, parseISO } from 'date-fns';
 import type { TeamMemberProgress } from './useTeamLevelProgress';
 
 /** Get the first of the current month as YYYY-MM-DD */
@@ -17,7 +17,7 @@ function currentMonthKey(): string {
 export function useWriteLevelSnapshots(teamProgress: TeamMemberProgress[]) {
   const { effectiveOrganization } = useOrganizationContext();
   const orgId = effectiveOrganization?.id;
-  const hasWritten = useRef(false);
+  const writtenForOrg = useRef<string | null>(null);
   const queryClient = useQueryClient();
 
   const mutation = useMutation({
@@ -42,7 +42,10 @@ export function useWriteLevelSnapshots(teamProgress: TeamMemberProgress[]) {
         .from('level_progress_snapshots')
         .upsert(rows, { onConflict: 'organization_id,user_id,snapshot_month' });
 
-      if (error) throw error;
+      if (error) {
+        console.error('[LevelSnapshots] Write failed:', error.message);
+        throw error;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['level-progress-snapshots', orgId] });
@@ -50,8 +53,9 @@ export function useWriteLevelSnapshots(teamProgress: TeamMemberProgress[]) {
   });
 
   useEffect(() => {
-    if (!hasWritten.current && teamProgress.length > 0 && orgId) {
-      hasWritten.current = true;
+    // Reset when org changes so we write for the new org too
+    if (orgId && writtenForOrg.current !== orgId && teamProgress.length > 0) {
+      writtenForOrg.current = orgId;
       mutation.mutate(teamProgress);
     }
   }, [teamProgress, orgId]);
@@ -68,7 +72,7 @@ export function useReadLevelSnapshots(months = 6) {
   const sinceDate = format(startOfMonth(subMonths(new Date(), months)), 'yyyy-MM-dd');
 
   return useQuery({
-    queryKey: ['level-progress-snapshots', orgId, months],
+    queryKey: ['level-progress-snapshots', orgId, sinceDate],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('level_progress_snapshots')
@@ -99,16 +103,23 @@ export function useReadLevelSnapshots(months = 6) {
 /**
  * Determines if a stylist is stalled based on snapshot history.
  * Returns true if their score delta over the lookback period is <= threshold.
- * Falls back to null if insufficient data.
+ * Falls back to null if insufficient data (< 3 months of history).
  */
 export function isSnapshotStalled(
   snapshots: { compositeScore: number; snapshotMonth: string }[] | undefined,
   currentScore: number,
   deltaThreshold = 2,
 ): boolean | null {
-  if (!snapshots || snapshots.length === 0) return null; // no history → can't determine
+  if (!snapshots || snapshots.length < 2) return null; // need at least 2 data points
 
   const oldest = snapshots[0];
+  const now = startOfMonth(new Date());
+  const oldestDate = parseISO(oldest.snapshotMonth);
+  const spanMonths = differenceInMonths(now, oldestDate);
+
+  // Require at least 3 months of history to avoid false positives
+  if (spanMonths < 3) return null;
+
   const delta = currentScore - oldest.compositeScore;
   return delta <= deltaThreshold;
 }
