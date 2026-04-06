@@ -1,64 +1,29 @@
 
+# Final Median-Level Commission Fallbacks
 
-# Critical Gap: Payroll Commission Resolution Uses Median Level for All Employees
+## Issues Found
 
-## The Problem
+### 1. `ExecutiveSummaryCard` uses median-level commission for liability estimate
+**File:** `src/components/dashboard/analytics/ExecutiveSummaryCard.tsx` (lines 248-254)
+The "Commission Liability" KPI calculates total commission using the median level's rate for ALL stylists. Since `useSalesByStylist` returns `user_id` per stylist, we can resolve each user's actual rate via `useResolveCommission`.
 
-`calculateEmployeeCompensation` in `usePayrollCalculations.ts` (line 177) calls a local `calculateCommission` function that **uses the median level's commission rate for every employee**. It completely ignores:
-
-1. **Per-stylist commission overrides** (from `stylist_commission_overrides` table)
-2. **Location-based commission overrides** (from `level_commission_overrides` table)
-3. **The employee's assigned stylist level** (from `employee_profiles.stylist_level`)
-
-Meanwhile, the forecasting system (`usePayrollForecasting`) correctly uses `useResolveCommission` which handles the full 4-tier override hierarchy: individual override → location override → level default → unassigned.
-
-This means **every actual payroll run** calculates commissions using the wrong rate for any stylist who isn't coincidentally at the median level. This is the most impactful remaining bug — it directly affects real paychecks.
-
-The same bug affects `useMyPayData` — stylists see incorrect commission estimates on their My Pay page.
+### 2. `PayrollSummaryReport` uses median-level commission for PDF report
+**File:** `src/components/dashboard/reports/PayrollSummaryReport.tsx` (lines 60-71)
+The downloadable Payroll Summary PDF calculates commissions using the same median-level fallback, producing inaccurate per-stylist commission figures in the report.
 
 ## Plan
 
-### A. Replace `calculateCommission` with `resolveCommission` in `usePayrollCalculations` (1 file)
+### A. Fix ExecutiveSummaryCard (1 file)
+- Import `useResolveCommission`
+- Replace local `calculateCommission` with `resolveCommission(userId, serviceRev, productRev)`
+- The stylist data from `useSalesByStylist` already includes `user_id`
 
-**File:** `src/hooks/usePayrollCalculations.ts`
-
-- Import and call `useResolveCommission` inside `usePayrollCalculations`
-- Remove the local `calculateCommission` function (lines 120-134) that uses the median level
-- Update `calculateEmployeeCompensation` to accept `resolveCommission` as a parameter (or use the hook's instance) and call it with the employee's ID and sales data
-- This automatically handles: individual overrides, location overrides, level defaults, and the unassigned fallback
-
-### B. Wire `resolveCommission` through `RunPayrollWizard` (1 file)
-
-**File:** `src/components/dashboard/payroll/RunPayrollWizard.tsx`
-
-- Pass the employee ID into the commission resolution so the correct rate is used per employee during actual payroll generation
-
-### C. Wire `resolveCommission` through `useMyPayData` (1 file)
-
-**File:** `src/hooks/useMyPayData.ts`
-
-- Ensure the current user's commission estimate on My Pay uses the same resolution hierarchy (their override → location → level → default)
-
-## Technical Detail
-
-The `useResolveCommission` hook already exists and is battle-tested in the forecasting path. The fix is to make the payroll calculation path use the same resolution instead of the naive median-level fallback.
-
-```text
-Current (broken):
-  calculateEmployeeCompensation
-    → calculateCommission (median level for ALL employees)
-
-Fixed:
-  calculateEmployeeCompensation
-    → resolveCommission(userId, serviceRev, productRev, locationId)
-      → 1. per-stylist override
-      → 2. location commission override
-      → 3. stylist level default
-      → 4. unassigned (0%)
-```
+### B. Fix PayrollSummaryReport (1 file)
+- Import `useResolveCommission`
+- Replace local `calculateCommission` with per-user resolution
+- Update commission row mapping to use `resolveCommission(s.user_id, ...)`
 
 ## Summary
-- **3 files modified** (`usePayrollCalculations.ts`, `RunPayrollWizard.tsx`, `useMyPayData.ts`)
-- No database changes
-- This is the single most critical remaining bug — it affects real paycheck amounts for every employee not at the median level
-
+- **2 files modified** — no database changes
+- Eliminates the last remaining median-level fallback instances
+- Commission liability and PDF reports will now reflect actual per-stylist rates

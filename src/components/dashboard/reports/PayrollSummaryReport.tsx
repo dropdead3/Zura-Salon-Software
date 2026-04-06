@@ -45,7 +45,7 @@ export function PayrollSummaryReport({ dateFrom, dateTo, locationId, onClose }: 
   const { data: businessSettings } = useBusinessSettings();
   const locationInfo = useReportLocationInfo(locationId);
 
-  const { data: levels, isLoading: levelsLoading } = useStylistLevels();
+  const { resolveCommission, isLoading: resolverLoading } = useResolveCommission();
   const { currentPeriod } = usePaySchedule();
   const payFrom = currentPeriod?.periodStart ? format(currentPeriod.periodStart, 'yyyy-MM-dd') : dateFrom;
   const payTo = currentPeriod?.periodEnd ? format(currentPeriod.periodEnd, 'yyyy-MM-dd') : dateTo;
@@ -54,25 +54,11 @@ export function PayrollSummaryReport({ dateFrom, dateTo, locationId, onClose }: 
   const { data: rentData, isLoading: rentLoading } = useExpectedRentRevenue(payFrom, payTo);
   const { data: hasRenters } = useHasRenters();
 
-  const isLoading = levelsLoading || stylistLoading || rentLoading;
-
-  // Simple commission calculation using median level rate (no user context available here)
-  const calculateCommission = (serviceRevenue: number, productRevenue: number) => {
-    if (!levels || levels.length === 0) {
-      return { totalCommission: 0, tierName: '' };
-    }
-    const midLevel = levels[Math.floor(levels.length / 2)];
-    const svcRate = midLevel.service_commission_rate ?? 0;
-    const retailRate = midLevel.retail_commission_rate ?? 0;
-    return {
-      totalCommission: serviceRevenue * svcRate + productRevenue * retailRate,
-      tierName: midLevel.label,
-    };
-  };
+  const isLoading = resolverLoading || stylistLoading || rentLoading;
 
   const commissionRows = (stylistData || []).map(s => {
-    const c = calculateCommission(s.serviceRevenue, s.productRevenue);
-    return { name: s.name, serviceRevenue: s.serviceRevenue, productRevenue: s.productRevenue, tier: c.tierName, commission: c.totalCommission };
+    const resolved = resolveCommission(s.user_id, s.serviceRevenue, s.productRevenue);
+    return { name: s.name, serviceRevenue: s.serviceRevenue, productRevenue: s.productRevenue, tier: resolved.sourceName, commission: resolved.totalCommission };
   }).sort((a, b) => b.commission - a.commission);
 
   const totalCommission = commissionRows.reduce((s, r) => s + r.commission, 0);

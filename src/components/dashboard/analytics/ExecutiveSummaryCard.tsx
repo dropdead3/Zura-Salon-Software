@@ -244,14 +244,7 @@ export function ExecutiveSummaryCard() {
 
   // Commission liability for the current pay period to date
   const { currentPeriod } = usePaySchedule();
-  const { data: levels, isLoading: tiersLoading } = useStylistLevels();
-  const calculateCommission = (serviceRevenue: number, productRevenue: number) => {
-    if (!levels || levels.length === 0) return { totalCommission: 0 };
-    const midLevel = levels[Math.floor(levels.length / 2)];
-    const svcRate = midLevel.service_commission_rate ?? 0;
-    const retailRate = midLevel.retail_commission_rate ?? 0;
-    return { totalCommission: serviceRevenue * svcRate + productRevenue * retailRate };
-  };
+  const { resolveCommission, isLoading: resolverLoading } = useResolveCommission();
 
   const payPeriodFrom = format(currentPeriod.periodStart, 'yyyy-MM-dd');
   const payPeriodTo = format(new Date(), 'yyyy-MM-dd');
@@ -261,14 +254,14 @@ export function ExecutiveSummaryCard() {
     isLoading: stylistsLoading,
   } = useSalesByStylist(payPeriodFrom, payPeriodTo);
 
-  // Compute total commission liability across all stylists
+  // Compute total commission liability across all stylists using per-user resolution
   const commissionLiability = useMemo(() => {
     if (!payPeriodStylists?.length) return 0;
     return payPeriodStylists.reduce((sum, s) => {
-      const c = calculateCommission(s.serviceRevenue ?? 0, s.productRevenue ?? 0);
-      return sum + c.totalCommission;
+      const resolved = resolveCommission(s.user_id, s.serviceRevenue ?? 0, s.productRevenue ?? 0);
+      return sum + resolved.totalCommission;
     }, 0);
-  }, [payPeriodStylists, calculateCommission]);
+  }, [payPeriodStylists, resolveCommission]);
 
   // Booking pipeline health
   const pipeline = useBookingPipeline(locFilter);
