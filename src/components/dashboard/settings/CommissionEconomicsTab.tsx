@@ -379,6 +379,13 @@ export function CommissionEconomicsTab({ levels }: CommissionEconomicsTabProps) 
                         </span>
                       </TableCell>
                       <TableCell className="text-center text-sm">
+                        {level.hourly_wage_enabled && level.hourly_wage ? (
+                          <BlurredAmount>${level.hourly_wage}/hr</BlurredAmount>
+                        ) : (
+                          <span className="text-muted-foreground/40">—</span>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-center text-sm">
                         <BlurredAmount>{formatCurrencyLocal(breakevenRevenue)}</BlurredAmount>
                       </TableCell>
                       <TableCell className="text-center text-sm">
