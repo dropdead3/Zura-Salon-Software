@@ -754,7 +754,7 @@ function CriteriaComparisonTable({ levels, promotionCriteria, retentionCriteria,
           </span>
         ) : !level.dbId ? (
           <span className="text-muted-foreground/40">—</span>
-        ) : (metric.section === 'promotion' ? !promo : !retention) ? (
+        ) : (metric.section === 'promotion' && !promo) ? (
           <button
             onClick={() => onEditLevel(level, levelIdx)}
             className="text-xs text-primary/60 hover:text-primary transition-colors"
@@ -1086,7 +1086,7 @@ function CriteriaComparisonTable({ levels, promotionCriteria, retentionCriteria,
                 </span>
               </TableCell>
               <TableCell colSpan={levels.length} className="py-3 px-4 bg-muted-strong text-sm text-muted-foreground/60">
-                Policy settings · KPI minimums inherited from Level Requirements above
+                KPI minimums inherited from Level Requirements · Falling below triggers demotion to Level 1
               </TableCell>
             </TableRow>
             {metrics.filter(m => m.section === 'retention').map((metric, mIdx) => {
