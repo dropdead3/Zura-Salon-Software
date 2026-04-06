@@ -590,8 +590,9 @@ function CriteriaComparisonTable({ levels, promotionCriteria, retentionCriteria,
     const isBaseLevel = levelIdx === 0;
     const isLastLevel = levelIdx === levels.length - 1;
     const isPromotionSkip = metric.section === 'promotion' && isBaseLevel;
+    const isLastLevelTenure = metric.label === 'Tenure' && isLastLevel;
 
-    if (isEditingRow && metric.editable && fieldMapping && level.dbId && !isPromotionSkip) {
+    if (isEditingRow && metric.editable && fieldMapping && level.dbId && !isPromotionSkip && !isLastLevelTenure) {
       const entry = editValues[level.id] || { enabled: false, value: '' };
       const editableLevelIds = levels.filter((_, idx) => {
         if (metric.section === 'promotion') return idx > 0;
@@ -659,7 +660,7 @@ function CriteriaComparisonTable({ levels, promotionCriteria, retentionCriteria,
     }
 
     // Read-only display (original logic)
-    if (metric.section === 'promotion' && isPromotionSkip) {
+    if (isPromotionSkip || isLastLevelTenure) {
       return (
         <TableCell key={level.id} className="text-center text-sm py-3 px-3">
           <span className="text-muted-foreground/30 text-xs select-none">N/A</span>
