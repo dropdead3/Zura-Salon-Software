@@ -2,6 +2,15 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "@supabase/supabase-js";
 import { requireAuth, requireOrgMember, authErrorResponse } from "../_shared/auth.ts";
 import { getCorsHeaders } from "../_shared/cors.ts";
+import { validateBody, ValidationError, z } from "../_shared/validation.ts";
+
+const GrowthForecastSchema = z.object({
+  organizationId: z.string().uuid(),
+  organization_id: z.string().uuid().optional(),
+  locationId: z.string().uuid().optional(),
+  granularity: z.enum(["quarterly", "monthly"]).optional().default("quarterly"),
+  horizonMonths: z.number().int().min(1).max(36).optional().default(12),
+});
 
 interface QuarterData {
   quarter: string; // e.g. "Q1 2025"
@@ -141,21 +150,13 @@ serve(async (req) => {
     }
     const { user, supabaseAdmin } = authResult;
 
-        const body = await req.json();
-    const { organizationId, locationId, granularity = 'quarterly', horizonMonths = 12 } = body;
+    const body = await validateBody(req, GrowthForecastSchema, getCorsHeaders(req));
+    const { organizationId, locationId, granularity, horizonMonths } = body;
     // Verify org access
     try {
       await requireOrgMember(supabaseAdmin, user.id, body.organizationId || body.organization_id);
     } catch (orgErr) {
       return authErrorResponse(orgErr, getCorsHeaders(req));
-    }
-
-
-    if (!organizationId) {
-      return new Response(JSON.stringify({ error: "organizationId required" }), {
-        status: 400,
-        headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
-      });
     }
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;

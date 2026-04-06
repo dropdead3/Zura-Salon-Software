@@ -1,6 +1,12 @@
 import { createClient } from "@supabase/supabase-js";
 import { requireAuth, requireOrgMember, authErrorResponse } from "../_shared/auth.ts";
 import { getCorsHeaders } from "../_shared/cors.ts";
+import { z } from "../_shared/validation.ts";
+
+const HealthScoreSchema = z.object({
+  organizationId: z.string().uuid().optional(),
+  organization_id: z.string().uuid().optional(),
+});
 
 interface HealthBreakdown {
   adoption: {
@@ -76,15 +82,20 @@ Deno.serve(async (req) => {
     // Get request body for optional org filter
     let targetOrgId: string | null = null;
     try {
-      const body = await req.json();
-    // Verify org access
-    try {
-      await requireOrgMember(supabaseAdmin, user.id, body.organizationId || body.organization_id);
-    } catch (orgErr) {
-      return authErrorResponse(orgErr, getCorsHeaders(req));
-    }
-
-      targetOrgId = body.organizationId || null;
+      const raw = await req.json();
+      const parsed = HealthScoreSchema.safeParse(raw);
+      if (parsed.success) {
+        const body = parsed.data;
+        // Verify org access if org specified
+        if (body.organizationId || body.organization_id) {
+          try {
+            await requireOrgMember(supabaseAdmin, user.id, (body.organizationId || body.organization_id)!);
+          } catch (orgErr) {
+            return authErrorResponse(orgErr, getCorsHeaders(req));
+          }
+        }
+        targetOrgId = body.organizationId || body.organization_id || null;
+      }
     } catch {
       // No body, process all orgs
     }

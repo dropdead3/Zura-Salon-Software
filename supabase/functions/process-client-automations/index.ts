@@ -3,6 +3,13 @@ import { createClient } from "@supabase/supabase-js";
 import { sendOrgEmail } from "../_shared/email-sender.ts";
 import { requireAuth, requireOrgAdmin, authErrorResponse } from "../_shared/auth.ts";
 import { getCorsHeaders } from "../_shared/cors.ts";
+import { validateBody, ValidationError, z } from "../_shared/validation.ts";
+
+const ClientAutomationsSchema = z.object({
+  organizationId: z.string().uuid(),
+  organization_id: z.string().uuid().optional(),
+  dryRun: z.boolean().optional().default(false),
+});
 
 interface AutomationRule {
   id: string;
@@ -35,8 +42,8 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-        const body = await req.json();
-    const { organizationId, dryRun = false } = body;
+    const body = await validateBody(req, ClientAutomationsSchema, getCorsHeaders(req));
+    const { organizationId, dryRun } = body;
     // Verify org access
     try {
       await requireOrgAdmin(supabaseAdmin, user.id, body.organizationId || body.organization_id);

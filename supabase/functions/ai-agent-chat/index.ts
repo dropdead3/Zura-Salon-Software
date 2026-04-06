@@ -4,6 +4,18 @@ import { loadZuraConfig, buildZuraPromptPrefix } from "../_shared/zura-config-lo
 import { AI_ASSISTANT_NAME_DEFAULT as AI_ASSISTANT_NAME } from "../_shared/brand.ts";
 import { requireAuth, requireOrgMember, authErrorResponse } from "../_shared/auth.ts";
 import { getCorsHeaders } from "../_shared/cors.ts";
+import { validateBody, ValidationError, z } from "../_shared/validation.ts";
+
+const AgentChatSchema = z.object({
+  messages: z.array(z.object({
+    role: z.enum(["user", "assistant", "system"]),
+    content: z.string(),
+  })).min(1),
+  userId: z.string().uuid().optional(),
+  organizationId: z.string().uuid(),
+  organization_id: z.string().uuid().optional(),
+  userRole: z.string().max(50).optional(),
+});
 
 const SYSTEM_PROMPT = `You are ${AI_ASSISTANT_NAME}, the AI assistant for a salon management system. Users may address you as "${AI_ASSISTANT_NAME}" or "Hey ${AI_ASSISTANT_NAME}". You help staff members manage appointments, look up client information, and check availability. You are friendly, efficient, and professional.
 
@@ -448,21 +460,13 @@ serve(async (req) => {
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
     
-        const body = await req.json();
+    const body = await validateBody(req, AgentChatSchema, getCorsHeaders(req));
     const { messages, userId, organizationId, userRole } = body;
     // Verify org access
     try {
       await requireOrgMember(supabaseAdmin, user.id, body.organizationId || body.organization_id);
     } catch (orgErr) {
       return authErrorResponse(orgErr, getCorsHeaders(req));
-    }
-
-
-    if (!messages || !Array.isArray(messages)) {
-      return new Response(
-        JSON.stringify({ error: "Messages array is required" }),
-        { status: 400, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
-      );
     }
 
     // Load dynamic Zura config
