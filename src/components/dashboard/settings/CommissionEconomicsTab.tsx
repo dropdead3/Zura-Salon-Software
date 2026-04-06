@@ -15,6 +15,8 @@ import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { getLevelColor } from '@/lib/level-colors';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 import { 
   Calculator, 
   ChevronDown, 
@@ -25,6 +27,9 @@ import {
   CheckCircle2,
   Info,
   Loader2,
+  Sparkles,
+  ArrowRight,
+  ShieldCheck,
 } from 'lucide-react';
 import type { StylistLevel } from '@/hooks/useStylistLevels';
 import {
@@ -34,6 +39,8 @@ import {
   computeEconomics,
   computeMarginAtRevenue,
   type EconomicsAssumptions,
+  type AICommissionOptimizerResult,
+  type AICommissionRecommendation,
 } from '@/hooks/useCommissionEconomics';
 
 interface CommissionEconomicsTabProps {
@@ -54,6 +61,12 @@ const STATUS_CONFIG: Record<MarginStatus, { label: string; className: string; ic
   negative: { label: 'Negative', className: 'bg-rose-500/10 text-rose-600 border-rose-500/20', icon: AlertTriangle },
 };
 
+const CONFIDENCE_CONFIG: Record<string, { label: string; className: string }> = {
+  high: { label: 'High Confidence', className: 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20' },
+  medium: { label: 'Medium Confidence', className: 'bg-amber-500/10 text-amber-600 border-amber-500/20' },
+  low: { label: 'Low Confidence', className: 'bg-rose-500/10 text-rose-600 border-rose-500/20' },
+};
+
 function formatCurrency(val: number): string {
   if (!isFinite(val)) return '—';
   return `$${Math.round(val).toLocaleString()}`;
@@ -62,6 +75,15 @@ function formatCurrency(val: number): string {
 function formatPct(val: number): string {
   if (!isFinite(val)) return '—';
   return `${(val * 100).toFixed(1)}%`;
+}
+
+function getLevelDotColor(idx: number, total: number): string {
+  const levelColor = getLevelColor(idx, total);
+  if (levelColor.bg.includes('amber-500')) return '#f59e0b';
+  if (levelColor.bg.includes('amber-300')) return '#fcd34d';
+  if (levelColor.bg.includes('amber-200')) return '#fde68a';
+  if (levelColor.bg.includes('amber-100')) return '#fef3c7';
+  return '#a1a1aa';
 }
 
 export function CommissionEconomicsTab({ levels }: CommissionEconomicsTabProps) {
@@ -73,9 +95,13 @@ export function CommissionEconomicsTab({ levels }: CommissionEconomicsTabProps) 
   const [localAssumptions, setLocalAssumptions] = useState<EconomicsAssumptions | null>(null);
   const effectiveAssumptions = localAssumptions ?? assumptions;
 
-  // What-if overrides
+  // What-if overrides (keyed by level.id → { service, retail })
   const [whatIfOpen, setWhatIfOpen] = useState(false);
-  const [whatIfRates, setWhatIfRates] = useState<Record<string, number>>({});
+  const [whatIfRates, setWhatIfRates] = useState<Record<string, { service?: number; retail?: number }>>({});
+
+  // AI optimizer state
+  const [aiResult, setAiResult] = useState<AICommissionOptimizerResult | null>(null);
+  const [aiLoading, setAiLoading] = useState(false);
 
   const revenueMap = useMemo(() => {
     const map = new Map<string, { avg: number; count: number }>();
@@ -96,6 +122,52 @@ export function CommissionEconomicsTab({ levels }: CommissionEconomicsTabProps) 
   };
 
   const hasUnsavedChanges = localAssumptions !== null;
+
+  // AI optimizer
+  const handleOptimize = async () => {
+    setAiLoading(true);
+    setAiResult(null);
+    try {
+      const { data, error } = await supabase.functions.invoke('ai-commission-optimizer', {
+        body: {
+          levels: levels.map(l => ({
+            id: l.id,
+            slug: l.slug,
+            label: l.label,
+            service_commission_rate: l.service_commission_rate,
+            retail_commission_rate: l.retail_commission_rate,
+          })),
+          assumptions: effectiveAssumptions,
+          revenueByLevel: revenueData || [],
+        },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      setAiResult(data as AICommissionOptimizerResult);
+    } catch (err: any) {
+      console.error('AI optimizer error:', err);
+      toast.error(err.message || 'Failed to generate recommendations');
+    } finally {
+      setAiLoading(false);
+    }
+  };
+
+  // Apply AI recommendations to What-If
+  const handleApplyToWhatIf = () => {
+    if (!aiResult) return;
+    const newRates: Record<string, { service?: number; retail?: number }> = {};
+    for (const rec of aiResult.recommendations) {
+      const level = levels.find(l => l.slug === rec.level_slug);
+      if (!level) continue;
+      newRates[level.id] = {
+        service: rec.recommended_service_rate,
+        retail: rec.recommended_retail_rate,
+      };
+    }
+    setWhatIfRates(newRates);
+    setWhatIfOpen(true);
+    toast.success('AI recommendations applied to What-If simulator');
+  };
 
   if (loadingAssumptions || loadingRevenue) {
     return (
@@ -194,14 +266,29 @@ export function CommissionEconomicsTab({ levels }: CommissionEconomicsTabProps) 
       {/* Economics table */}
       <Card>
         <CardHeader className="pb-3">
-          <div className="flex items-center gap-3">
-            <div className={tokens.card.iconBox}>
-              <TrendingUp className="w-5 h-5 text-primary" />
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className={tokens.card.iconBox}>
+                <TrendingUp className="w-5 h-5 text-primary" />
+              </div>
+              <div>
+                <CardTitle className={tokens.card.title}>MARGIN BY LEVEL</CardTitle>
+                <CardDescription>Revenue required to sustain each commission level</CardDescription>
+              </div>
             </div>
-            <div>
-              <CardTitle className={tokens.card.title}>MARGIN BY LEVEL</CardTitle>
-              <CardDescription>Revenue required to sustain each commission level</CardDescription>
-            </div>
+            <Button
+              onClick={handleOptimize}
+              disabled={aiLoading}
+              className="h-9 px-4 rounded-full gap-1.5"
+              variant="outline"
+            >
+              {aiLoading ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              ) : (
+                <Sparkles className="w-3.5 h-3.5" />
+              )}
+              {aiLoading ? 'Analyzing...' : 'Optimize with Zura'}
+            </Button>
           </div>
         </CardHeader>
         <CardContent>
@@ -211,6 +298,7 @@ export function CommissionEconomicsTab({ levels }: CommissionEconomicsTabProps) 
                 <TableRow>
                   <TableHead className={tokens.table.columnHeader}>Level</TableHead>
                   <TableHead className={cn(tokens.table.columnHeader, 'text-center')}>Service %</TableHead>
+                  <TableHead className={cn(tokens.table.columnHeader, 'text-center')}>Retail %</TableHead>
                   <TableHead className={cn(tokens.table.columnHeader, 'text-center')}>Breakeven Rev</TableHead>
                   <TableHead className={cn(tokens.table.columnHeader, 'text-center')}>Target Rev</TableHead>
                   <TableHead className={cn(tokens.table.columnHeader, 'text-center')}>Actual Avg Rev</TableHead>
@@ -220,18 +308,19 @@ export function CommissionEconomicsTab({ levels }: CommissionEconomicsTabProps) 
               </TableHeader>
               <TableBody>
                 {levels.map((level, idx) => {
-                  const commissionRate = whatIfRates[level.id] ?? (level.service_commission_rate ?? 0);
-                  const { breakevenRevenue, targetRevenue } = computeEconomics(commissionRate, effectiveAssumptions);
+                  const serviceRate = whatIfRates[level.id]?.service ?? (level.service_commission_rate ?? 0);
+                  const retailRate = whatIfRates[level.id]?.retail ?? (level.retail_commission_rate ?? 0);
+                  const { breakevenRevenue, targetRevenue } = computeEconomics(serviceRate, effectiveAssumptions, retailRate);
                   const revData = revenueMap.get(level.id);
                   const actualRevenue = revData?.avg ?? 0;
                   const actualMargin = actualRevenue > 0
-                    ? computeMarginAtRevenue(actualRevenue, commissionRate, effectiveAssumptions)
+                    ? computeMarginAtRevenue(actualRevenue, serviceRate, effectiveAssumptions, retailRate)
                     : null;
                   const status = actualMargin !== null
                     ? getMarginStatus(actualMargin, effectiveAssumptions.target_margin_pct)
                     : null;
-                  const levelColor = getLevelColor(idx, levels.length);
-                  const dotColor = levelColor.bg.includes('amber-500') ? '#f59e0b' : levelColor.bg.includes('amber-300') ? '#fcd34d' : levelColor.bg.includes('amber-200') ? '#fde68a' : levelColor.bg.includes('amber-100') ? '#fef3c7' : '#a1a1aa';
+                  const dotColor = getLevelDotColor(idx, levels.length);
+                  const hasWhatIf = whatIfRates[level.id] !== undefined;
 
                   return (
                     <TableRow key={level.id}>
@@ -245,11 +334,14 @@ export function CommissionEconomicsTab({ levels }: CommissionEconomicsTabProps) 
                         </div>
                       </TableCell>
                       <TableCell className="text-center text-sm">
-                        {whatIfRates[level.id] !== undefined ? (
-                          <span className="text-primary">{(commissionRate * 100).toFixed(0)}%</span>
-                        ) : (
-                          <span>{(commissionRate * 100).toFixed(0)}%</span>
-                        )}
+                        <span className={hasWhatIf ? 'text-primary' : ''}>
+                          {(serviceRate * 100).toFixed(0)}%
+                        </span>
+                      </TableCell>
+                      <TableCell className="text-center text-sm">
+                        <span className={hasWhatIf ? 'text-primary' : ''}>
+                          {(retailRate * 100).toFixed(0)}%
+                        </span>
                       </TableCell>
                       <TableCell className="text-center text-sm">
                         <BlurredAmount>{formatCurrency(breakevenRevenue)}</BlurredAmount>
@@ -299,10 +391,102 @@ export function CommissionEconomicsTab({ levels }: CommissionEconomicsTabProps) 
 
           <div className="flex items-center gap-1.5 mt-3 text-[10px] text-muted-foreground/60">
             <Info className="w-3 h-3" />
-            Revenue is the trailing 90-day average per stylist, annualized to monthly. Stylist count in parentheses.
+            Monthly average revenue per stylist from trailing 90 days. Stylist count in parentheses.
           </div>
         </CardContent>
       </Card>
+
+      {/* AI Recommendations */}
+      {aiResult && (
+        <Card className="border-primary/20">
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className={cn(tokens.card.iconBox, 'bg-primary/10')}>
+                  <Sparkles className="w-5 h-5 text-primary" />
+                </div>
+                <div>
+                  <CardTitle className={tokens.card.title}>ZURA RECOMMENDATIONS</CardTitle>
+                  <CardDescription>{aiResult.summary}</CardDescription>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <Badge variant="outline" className={cn('text-xs', CONFIDENCE_CONFIG[aiResult.confidence]?.className)}>
+                  <ShieldCheck className="w-3 h-3 mr-1" />
+                  {CONFIDENCE_CONFIG[aiResult.confidence]?.label}
+                </Badge>
+                <Button
+                  onClick={handleApplyToWhatIf}
+                  className="h-9 px-4 rounded-full gap-1.5"
+                  variant="outline"
+                >
+                  <SlidersHorizontal className="w-3.5 h-3.5" />
+                  Apply to What-If
+                </Button>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {aiResult.recommendations.map((rec) => {
+                const level = levels.find(l => l.slug === rec.level_slug);
+                if (!level) return null;
+                const idx = levels.indexOf(level);
+                const dotColor = getLevelDotColor(idx, levels.length);
+                const serviceChanged = Math.abs(rec.recommended_service_rate - rec.current_service_rate) > 0.005;
+                const retailChanged = Math.abs(rec.recommended_retail_rate - rec.current_retail_rate) > 0.005;
+                const hasChange = serviceChanged || retailChanged;
+
+                return (
+                  <div
+                    key={rec.level_slug}
+                    className={cn(
+                      'flex items-start gap-4 p-3 rounded-lg border',
+                      hasChange ? 'bg-primary/[0.02] border-primary/10' : 'bg-muted/30 border-border/40'
+                    )}
+                  >
+                    <div className="w-2 h-2 rounded-full shrink-0 mt-1.5" style={{ backgroundColor: dotColor }} />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-3 mb-1">
+                        <span className="text-sm font-medium text-foreground">{level.label}</span>
+                        {hasChange && (
+                          <div className="flex items-center gap-2 text-xs">
+                            {serviceChanged && (
+                              <span className="flex items-center gap-1 text-muted-foreground">
+                                Svc {formatPct(rec.current_service_rate)}
+                                <ArrowRight className="w-3 h-3 text-primary" />
+                                <span className="text-primary">{formatPct(rec.recommended_service_rate)}</span>
+                              </span>
+                            )}
+                            {retailChanged && (
+                              <span className="flex items-center gap-1 text-muted-foreground">
+                                Ret {formatPct(rec.current_retail_rate)}
+                                <ArrowRight className="w-3 h-3 text-primary" />
+                                <span className="text-primary">{formatPct(rec.recommended_retail_rate)}</span>
+                              </span>
+                            )}
+                          </div>
+                        )}
+                        {!hasChange && (
+                          <Badge variant="outline" className="text-[10px] bg-emerald-500/10 text-emerald-600 border-emerald-500/20">
+                            <CheckCircle2 className="w-2.5 h-2.5 mr-0.5" /> No change needed
+                          </Badge>
+                        )}
+                      </div>
+                      <p className="text-xs text-muted-foreground leading-relaxed">{rec.rationale}</p>
+                      {rec.projected_margin_at_current_revenue !== 0 && (
+                        <span className="text-[10px] text-muted-foreground/60 mt-1 inline-block">
+                          Projected margin: {formatPct(rec.projected_margin_at_current_revenue)}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* What-If Simulator */}
       <Collapsible open={whatIfOpen} onOpenChange={setWhatIfOpen}>
@@ -326,45 +510,87 @@ export function CommissionEconomicsTab({ levels }: CommissionEconomicsTabProps) 
           <CollapsibleContent>
             <CardContent className="space-y-4 pt-0">
               {levels.map((level, idx) => {
-                const baseRate = level.service_commission_rate ?? 0;
-                const currentRate = whatIfRates[level.id] ?? baseRate;
-                const { targetRevenue } = computeEconomics(currentRate, effectiveAssumptions);
-                const levelColor = getLevelColor(idx, levels.length);
-                const dotColor = levelColor.bg.includes('amber-500') ? '#f59e0b' : levelColor.bg.includes('amber-300') ? '#fcd34d' : levelColor.bg.includes('amber-200') ? '#fde68a' : levelColor.bg.includes('amber-100') ? '#fef3c7' : '#a1a1aa';
+                const baseServiceRate = level.service_commission_rate ?? 0;
+                const baseRetailRate = level.retail_commission_rate ?? 0;
+                const currentServiceRate = whatIfRates[level.id]?.service ?? baseServiceRate;
+                const currentRetailRate = whatIfRates[level.id]?.retail ?? baseRetailRate;
+                const { targetRevenue } = computeEconomics(currentServiceRate, effectiveAssumptions, currentRetailRate);
+                const dotColor = getLevelDotColor(idx, levels.length);
                 const isModified = whatIfRates[level.id] !== undefined;
 
                 return (
-                  <div key={level.id} className="flex items-center gap-4 py-2">
-                    <div className="w-32 flex items-center gap-2 shrink-0">
+                  <div key={level.id} className="space-y-2 py-2">
+                    <div className="flex items-center gap-2 mb-1">
                       <div className="w-2 h-2 rounded-full" style={{ backgroundColor: dotColor }} />
-                      <span className="text-sm truncate">{level.label}</span>
+                      <span className="text-sm">{level.label}</span>
+                      <div className="ml-auto text-sm">
+                        <BlurredAmount>{formatCurrency(targetRevenue)}</BlurredAmount>
+                        <span className="text-[10px] text-muted-foreground ml-1">target</span>
+                      </div>
                     </div>
-                    <div className="flex-1">
-                      <Slider
-                        variant="filled"
-                        value={[currentRate * 100]}
-                        min={20}
-                        max={65}
-                        step={1}
-                        onValueChange={([v]) => {
-                          const newRate = v / 100;
-                          if (Math.abs(newRate - baseRate) < 0.005) {
-                            setWhatIfRates(prev => {
-                              const next = { ...prev };
-                              delete next[level.id];
-                              return next;
-                            });
-                          } else {
-                            setWhatIfRates(prev => ({ ...prev, [level.id]: newRate }));
-                          }
-                        }}
-                      />
+                    <div className="flex items-center gap-4">
+                      <span className="text-[10px] text-muted-foreground w-6 shrink-0">Svc</span>
+                      <div className="flex-1">
+                        <Slider
+                          variant="filled"
+                          value={[currentServiceRate * 100]}
+                          min={20}
+                          max={65}
+                          step={1}
+                          onValueChange={([v]) => {
+                            const newRate = v / 100;
+                            const sameAsBase = Math.abs(newRate - baseServiceRate) < 0.005;
+                            const retailSame = whatIfRates[level.id]?.retail === undefined;
+                            if (sameAsBase && retailSame) {
+                              setWhatIfRates(prev => {
+                                const next = { ...prev };
+                                delete next[level.id];
+                                return next;
+                              });
+                            } else {
+                              setWhatIfRates(prev => ({
+                                ...prev,
+                                [level.id]: { ...prev[level.id], service: sameAsBase ? undefined : newRate },
+                              }));
+                            }
+                          }}
+                        />
+                      </div>
+                      <span className={cn('w-12 text-sm text-right tabular-nums', isModified && 'text-primary')}>
+                        {(currentServiceRate * 100).toFixed(0)}%
+                      </span>
                     </div>
-                    <span className={cn('w-12 text-sm text-right tabular-nums', isModified && 'text-primary')}>
-                      {(currentRate * 100).toFixed(0)}%
-                    </span>
-                    <div className="w-24 text-right text-sm">
-                      <BlurredAmount>{formatCurrency(targetRevenue)}</BlurredAmount>
+                    <div className="flex items-center gap-4">
+                      <span className="text-[10px] text-muted-foreground w-6 shrink-0">Ret</span>
+                      <div className="flex-1">
+                        <Slider
+                          variant="filled"
+                          value={[currentRetailRate * 100]}
+                          min={0}
+                          max={30}
+                          step={1}
+                          onValueChange={([v]) => {
+                            const newRate = v / 100;
+                            const sameAsBase = Math.abs(newRate - baseRetailRate) < 0.005;
+                            const serviceSame = whatIfRates[level.id]?.service === undefined;
+                            if (sameAsBase && serviceSame) {
+                              setWhatIfRates(prev => {
+                                const next = { ...prev };
+                                delete next[level.id];
+                                return next;
+                              });
+                            } else {
+                              setWhatIfRates(prev => ({
+                                ...prev,
+                                [level.id]: { ...prev[level.id], retail: sameAsBase ? undefined : newRate },
+                              }));
+                            }
+                          }}
+                        />
+                      </div>
+                      <span className={cn('w-12 text-sm text-right tabular-nums', isModified && 'text-primary')}>
+                        {(currentRetailRate * 100).toFixed(0)}%
+                      </span>
                     </div>
                   </div>
                 );

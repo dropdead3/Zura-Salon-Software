@@ -156,13 +156,15 @@ export function useRevenueByLevel() {
 
 /**
  * Core margin math: compute breakeven and target revenue for a given commission rate.
+ * Includes both service and retail commission in variable cost calculation.
  */
 export function computeEconomics(
   serviceCommissionRate: number,
-  assumptions: EconomicsAssumptions
+  assumptions: EconomicsAssumptions,
+  retailCommissionRate: number = 0
 ) {
   const { overhead_per_stylist, product_cost_pct, target_margin_pct } = assumptions;
-  const variableCostRate = serviceCommissionRate + product_cost_pct;
+  const variableCostRate = serviceCommissionRate + retailCommissionRate + product_cost_pct;
 
   // Revenue needed just to cover costs (0% margin)
   const breakevenDenominator = 1 - variableCostRate;
@@ -181,15 +183,34 @@ export function computeEconomics(
 
 /**
  * Compute margin at actual revenue.
+ * Includes both service and retail commission in variable cost calculation.
  */
 export function computeMarginAtRevenue(
   revenue: number,
   serviceCommissionRate: number,
-  assumptions: EconomicsAssumptions
+  assumptions: EconomicsAssumptions,
+  retailCommissionRate: number = 0
 ): number {
   if (revenue <= 0) return -1;
   const { overhead_per_stylist, product_cost_pct } = assumptions;
-  const variableCost = revenue * (serviceCommissionRate + product_cost_pct);
+  const variableCost = revenue * (serviceCommissionRate + retailCommissionRate + product_cost_pct);
   const profit = revenue - variableCost - overhead_per_stylist;
   return profit / revenue;
+}
+
+/** AI optimizer response types */
+export interface AICommissionRecommendation {
+  level_slug: string;
+  current_service_rate: number;
+  recommended_service_rate: number;
+  current_retail_rate: number;
+  recommended_retail_rate: number;
+  rationale: string;
+  projected_margin_at_current_revenue: number;
+}
+
+export interface AICommissionOptimizerResult {
+  recommendations: AICommissionRecommendation[];
+  summary: string;
+  confidence: 'high' | 'medium' | 'low';
 }
