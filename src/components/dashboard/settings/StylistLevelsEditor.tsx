@@ -281,7 +281,7 @@ function CriteriaComparisonTable({ levels, promotionCriteria, retentionCriteria,
                         Edit
                       </button>
                     ) : (
-                      <span className="text-[10px] text-muted-foreground/50">{idx === 0 ? 'Entry' : 'Unsaved'}</span>
+                      <span className="text-[10px] text-muted-foreground/50">Unsaved</span>
                     )}
                   </div>
                 </TableHead>
@@ -1202,11 +1202,6 @@ export function StylistLevelsEditor({ embedded = false }: StylistLevelsEditorPro
                       ) : (
                         <div className="flex items-center gap-3 min-w-0">
                           <span className="font-display text-xs tracking-wide truncate">{level.label}</span>
-                          {index === 0 && (
-                            <span className="px-2 py-0.5 rounded-full text-[11px] font-medium bg-primary/10 text-primary shrink-0">
-                              Entry
-                            </span>
-                          )}
                         </div>
                       )}
 
