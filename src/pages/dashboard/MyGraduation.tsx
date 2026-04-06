@@ -357,7 +357,12 @@ function RequirementCard({
 export default function MyGraduation() {
   const effectiveUserId = useEffectiveUserId();
   const { formatDate } = useFormatDate();
-  const { data: requirements, isLoading: loadingReqs } = useGraduationRequirements();
+  const { data: allLevelsForFilter = [] } = useStylistLevels();
+  const progressForLevel = useLevelProgress(effectiveUserId || undefined);
+  const currentLevelIdForFilter = progressForLevel?.currentLevelSlug
+    ? allLevelsForFilter.find(l => l.slug === progressForLevel.currentLevelSlug)?.id
+    : undefined;
+  const { data: requirements, isLoading: loadingReqs } = useGraduationRequirements(currentLevelIdForFilter);
   const { data: submissions, isLoading: loadingSubs } = useGraduationSubmissions(effectiveUserId || undefined);
   const { data: promotions = [] } = usePromotionHistory(effectiveUserId || undefined);
   const progress = useLevelProgress(effectiveUserId || undefined);
