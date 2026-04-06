@@ -572,7 +572,7 @@ export function useLevelProgress(userId: string | undefined) {
       timeAtLevelDays,
       levelSince,
     };
-  }, [currentLevel, nextLevel, nextCriteria, retentionCriteria, salesData, apptData, shiftData, timeOffData, profile, promoEvalDays, latestPromotion]);
+  }, [currentLevel, nextLevel, nextCriteria, retentionCriteria, salesData, apptData, shiftData, timeOffData, profile, promoEvalDays, latestPromotion, criteriaOverrides, locationGroup]);
 
   return result;
 }
