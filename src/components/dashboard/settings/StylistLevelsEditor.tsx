@@ -1148,14 +1148,14 @@ export function StylistLevelsEditor({ embedded = false }: StylistLevelsEditorPro
                   >
                     {/* Collapsed header row — grid layout for column alignment */}
                     <div
-                      className="grid grid-cols-[auto_auto_1fr_auto_auto_auto] items-center gap-3 px-3 py-2 cursor-pointer select-none"
+                      className="grid grid-cols-[auto_auto_1fr_7rem_6rem_auto] items-center px-3 py-2 cursor-pointer select-none"
                       onClick={(e) => {
                         if ((e.target as HTMLElement).closest('button, input, [role="dialog"]')) return;
                         toggleExpanded(level.id);
                       }}
                     >
-                      {/* Reorder */}
-                      <div className="flex flex-col shrink-0 opacity-40 group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
+                      {/* Col 1: Reorder — left-aligned */}
+                      <div className="flex flex-col shrink-0 opacity-40 group-hover:opacity-100 transition-opacity mr-2" onClick={(e) => e.stopPropagation()}>
                         <button
                           className="p-0.5 text-muted-foreground hover:text-foreground disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                           disabled={index === 0}
@@ -1172,12 +1172,12 @@ export function StylistLevelsEditor({ embedded = false }: StylistLevelsEditorPro
                         </button>
                       </div>
 
-                      {/* Level badge */}
-                      <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-muted text-muted-foreground shrink-0 text-center w-7">
+                      {/* Col 2: Level badge — center-aligned */}
+                      <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-muted text-muted-foreground text-center w-7 mr-3">
                         {index + 1}
                       </span>
 
-                      {/* Name & entry tag */}
+                      {/* Col 3: Name & entry tag — left-aligned */}
                       {editingIndex === index ? (
                         <div className="flex items-center gap-2 min-w-0" onClick={(e) => e.stopPropagation()}>
                           <Input
@@ -1210,19 +1210,19 @@ export function StylistLevelsEditor({ embedded = false }: StylistLevelsEditorPro
                         </div>
                       )}
 
-                      {/* Service Commission */}
-                      <span className="text-xs text-muted-foreground shrink-0 text-center w-24 hidden sm:block">
+                      {/* Col 4: Service Commission — center-aligned */}
+                      <span className="text-xs text-muted-foreground text-center hidden sm:block">
                         {level.serviceCommissionRate ? `Service ${level.serviceCommissionRate}%` : '—'}
                       </span>
 
-                      {/* Retail Commission */}
-                      <span className="text-xs text-muted-foreground shrink-0 text-center w-20 hidden sm:block">
+                      {/* Col 5: Retail Commission — center-aligned */}
+                      <span className="text-xs text-muted-foreground text-center hidden sm:block">
                         {level.retailCommissionRate ? `Retail ${level.retailCommissionRate}%` : '—'}
                       </span>
 
-                      {/* Right side: count + actions + chevron */}
-                      {editingIndex !== index && (
-                        <div className="flex items-center gap-1.5 shrink-0">
+                      {/* Col 6: Actions — right-aligned */}
+                      {editingIndex !== index ? (
+                        <div className="flex items-center gap-1.5 justify-end">
                           {hasStylists && (
                             <span className="text-xs text-muted-foreground mr-1">
                               {stylistCount} <span className="hidden sm:inline">stylist{stylistCount !== 1 ? 's' : ''}</span>
