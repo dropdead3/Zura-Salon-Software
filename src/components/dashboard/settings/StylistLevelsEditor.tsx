@@ -40,6 +40,8 @@ import {
   Wand2,
   DollarSign,
   Clock,
+  Maximize2,
+  Minimize2,
 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -116,7 +118,7 @@ function formatRetentionSummary(r: LevelRetentionCriteria): string {
 }
 
 /** Scrollable table container with a right-edge fade + arrow indicator when content overflows */
-function ScrollableTableWrapper({ children }: { children: React.ReactNode }) {
+function ScrollableTableWrapper({ children, isFullscreen, onToggleFullscreen }: { children: React.ReactNode; isFullscreen: boolean; onToggleFullscreen: () => void }) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [canScrollRight, setCanScrollRight] = useState(false);
 
@@ -139,8 +141,65 @@ function ScrollableTableWrapper({ children }: { children: React.ReactNode }) {
     };
   }, [checkScroll]);
 
+  useEffect(() => {
+    if (!isFullscreen) return;
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onToggleFullscreen();
+    };
+    document.addEventListener('keydown', handleKey);
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.removeEventListener('keydown', handleKey);
+      document.body.style.overflow = '';
+    };
+  }, [isFullscreen, onToggleFullscreen]);
+
+  if (isFullscreen) {
+    return (
+      <div className="fixed inset-0 z-50 bg-background flex flex-col">
+        {/* Fullscreen header bar */}
+        <div className="flex items-center justify-between px-6 py-3 border-b border-border bg-muted/50">
+          <h2 className="font-display text-sm tracking-wide uppercase text-foreground">Criteria Matrix</h2>
+          <Button variant="ghost" size="icon" onClick={onToggleFullscreen} className="h-8 w-8">
+            <Minimize2 className="w-4 h-4" />
+          </Button>
+        </div>
+        {/* Scrollable table fills remaining space */}
+        <div className="relative flex-1 overflow-hidden">
+          <div ref={scrollRef} className="overflow-auto h-full">
+            {children}
+          </div>
+          <div
+            className={cn(
+              'absolute right-0 top-0 bottom-0 w-12 pointer-events-none transition-opacity duration-200',
+              'bg-gradient-to-l from-background to-transparent',
+              canScrollRight ? 'opacity-100' : 'opacity-0'
+            )}
+          />
+          {canScrollRight && (
+            <button
+              onClick={() => scrollRef.current?.scrollBy({ left: 200, behavior: 'smooth' })}
+              className="absolute right-2 top-1/2 -translate-y-1/2 z-20 w-7 h-7 rounded-full bg-muted/80 backdrop-blur-sm border border-border/60 flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+              aria-label="Scroll right"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          )}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="relative rounded-xl border bg-card overflow-hidden">
+      {/* Fullscreen toggle */}
+      <button
+        onClick={onToggleFullscreen}
+        className="absolute top-2 right-2 z-20 w-7 h-7 rounded-full bg-muted/80 backdrop-blur-sm border border-border/60 flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+        aria-label="Enter fullscreen"
+      >
+        <Maximize2 className="w-3.5 h-3.5" />
+      </button>
       <div ref={scrollRef} className="overflow-auto max-h-[70vh]">
         {children}
       </div>
