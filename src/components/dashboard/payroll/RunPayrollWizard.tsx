@@ -118,7 +118,7 @@ export function RunPayrollWizard({ onComplete, onCancel }: RunPayrollWizardProps
 
       return compensation;
     });
-  }, [activeEmployees, payPeriodStart, payPeriodEnd, employeeHours, salesData, employeeAdjustments, commissionOverrides, calculateEmployeeCompensation, getWeeksInPeriod]);
+  }, [activeEmployees, payPeriodStart, payPeriodEnd, employeeHours, salesData, employeeAdjustments, commissionOverrides, calculateEmployeeCompensation, getWeeksInPeriod, employeeLevelMap]);
 
   const totals = useMemo(() => 
     calculatePayrollTotals(compensations),

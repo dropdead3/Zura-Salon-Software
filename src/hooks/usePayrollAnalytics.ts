@@ -152,8 +152,9 @@ function calculateKPIs(
     ? ((forecast - lastRun.total_gross_pay) / lastRun.total_gross_pay) * 100
     : 0;
 
-  const commissionRatio = lastRun?.total_gross_pay 
-    ? ((lastRun.total_commissions || 0) / lastRun.total_gross_pay) * 100
+  // Derive commission ratio from current forecast (same time window as other KPIs)
+  const commissionRatio = forecast > 0
+    ? (totalCommissionPay / forecast) * 100
     : 0;
 
   const employerTaxBurden = forecast * 0.10;
@@ -202,10 +203,16 @@ function calculateForecast(
     employeeSales[row.user_id].products += Number(row.product_revenue) || 0;
   }
 
-  // Use median level rate as a simple estimator
+  // Look up per-employee level rates; fall back to median only for unassigned employees
   const midLevel = levels.length > 0 ? levels[Math.floor(levels.length / 2)] : null;
   const defaultSvcRate = midLevel?.service_commission_rate ?? 0;
   const defaultRetailRate = midLevel?.retail_commission_rate ?? 0;
+
+  // Build a slug-to-level map for fast lookups
+  const levelBySlug: Record<string, any> = {};
+  for (const l of levels) {
+    if (l.slug) levelBySlug[l.slug] = l;
+  }
 
   let totalForecast = 0;
   let totalTips = 0;
@@ -242,7 +249,12 @@ function calculateForecast(
 
     let commissionPay = 0;
     if (emp.commission_enabled) {
-      commissionPay = projectedServices * defaultSvcRate + projectedProducts * defaultRetailRate;
+      // Use employee's assigned level rates if available, otherwise fall back to median
+      const empLevel = employeeLevels.find(el => el.user_id === emp.employee_id);
+      const assignedLevel = empLevel?.stylist_level ? levelBySlug[empLevel.stylist_level] : null;
+      const svcRate = assignedLevel?.service_commission_rate ?? defaultSvcRate;
+      const retailRate = assignedLevel?.retail_commission_rate ?? defaultRetailRate;
+      commissionPay = projectedServices * svcRate + projectedProducts * retailRate;
     }
 
     totalBasePay += basePay;
