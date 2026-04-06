@@ -4,6 +4,17 @@ import { loadZuraConfig, buildZuraPromptPrefix } from "../_shared/zura-config-lo
 import { AI_ASSISTANT_NAME_DEFAULT as AI_ASSISTANT_NAME, PLATFORM_NAME } from "../_shared/brand.ts";
 import { requireAuth, requireOrgMember, authErrorResponse } from "../_shared/auth.ts";
 import { getCorsHeaders } from "../_shared/cors.ts";
+import { validateBody, ValidationError, z } from "../_shared/validation.ts";
+
+const AssistantSchema = z.object({
+  messages: z.array(z.object({
+    role: z.enum(["user", "assistant", "system"]),
+    content: z.string(),
+  })).min(1),
+  organizationId: z.string().uuid().optional(),
+  organization_id: z.string().uuid().optional(),
+  userRole: z.string().max(50).optional(),
+});
 
 const BASE_SYSTEM_PROMPT = `You are ${AI_ASSISTANT_NAME}, the AI assistant for a salon management platform called ${PLATFORM_NAME}. Users may call you "${AI_ASSISTANT_NAME}" or "Hey ${AI_ASSISTANT_NAME}". You help users navigate the dashboard, understand features, and answer questions about salon operations.
 
