@@ -826,18 +826,22 @@ export function StylistLevelsEditor({ embedded = false }: StylistLevelsEditorPro
   };
 
   const handleSave = async () => {
-    const levelsToSave = levels.map((level, idx) => ({
-      id: level.dbId,
-      slug: level.slug,
-      label: level.label,
-      client_label: `Level ${idx + 1}`,
-      description: level.description || undefined,
-      display_order: idx,
-      service_commission_rate: level.serviceCommissionRate ? parseFloat(level.serviceCommissionRate) / 100 : null,
-      retail_commission_rate: level.retailCommissionRate ? parseFloat(level.retailCommissionRate) / 100 : null,
-      hourly_wage_enabled: level.hourlyWageEnabled,
-      hourly_wage: level.hourlyWage ? parseFloat(level.hourlyWage) : null,
-    }));
+    const levelsToSave = levels.map((level, idx) => {
+      const isHourly = level.earningsStructure === 'hourly';
+      const isCommission = level.earningsStructure === 'commission';
+      return {
+        id: level.dbId,
+        slug: level.slug,
+        label: level.label,
+        client_label: `Level ${idx + 1}`,
+        description: level.description || undefined,
+        display_order: idx,
+        service_commission_rate: isHourly ? null : (level.serviceCommissionRate ? parseFloat(level.serviceCommissionRate) / 100 : null),
+        retail_commission_rate: isHourly ? null : (level.retailCommissionRate ? parseFloat(level.retailCommissionRate) / 100 : null),
+        hourly_wage_enabled: !isCommission,
+        hourly_wage: isCommission ? null : (level.hourlyWage ? parseFloat(level.hourlyWage) : null),
+      };
+    });
     saveLevels.mutate(levelsToSave, {
       onSuccess: () => {
         setHasChanges(false);
@@ -1365,8 +1369,88 @@ export function StylistLevelsEditor({ embedded = false }: StylistLevelsEditorPro
                           />
                         </div>
 
-                        {/* Commission fields */}
-                        <div className="ml-[3.25rem] grid grid-cols-2 gap-3">
+                        {/* Earnings Structure Selector */}
+                        <div className="ml-[3.25rem] space-y-3">
+                          <div className="flex items-center gap-2">
+                            <label className="text-xs font-medium text-muted-foreground">Earnings Structure</label>
+                            <MetricInfoTooltip description="Choose how stylists at this level are compensated: hourly wage, commission on services/retail, or a combination of both." />
+                          </div>
+                          <ToggleGroup
+                            type="single"
+                            value={level.earningsStructure}
+                            onValueChange={(value) => {
+                              if (!value) return;
+                              const structure = value as EarningsStructure;
+                              const newLevels = [...levels];
+                              const updated = { ...newLevels[index], earningsStructure: structure };
+                              // Smart defaults: clear irrelevant fields
+                              if (structure === 'hourly') {
+                                updated.serviceCommissionRate = '';
+                                updated.retailCommissionRate = '';
+                                updated.hourlyWageEnabled = true;
+                              } else if (structure === 'commission') {
+                                updated.hourlyWage = '';
+                                updated.hourlyWageEnabled = false;
+                              } else {
+                                updated.hourlyWageEnabled = true;
+                              }
+                              newLevels[index] = updated;
+                              setLevels(newLevels);
+                              setHasChanges(true);
+                            }}
+                            className="justify-start"
+                          >
+                            <ToggleGroupItem value="hourly" className="text-xs gap-1.5 data-[state=on]:bg-foreground data-[state=on]:text-background rounded-full px-3 h-8">
+                              <Clock className="w-3.5 h-3.5" />
+                              Hourly
+                            </ToggleGroupItem>
+                            <ToggleGroupItem value="commission" className="text-xs gap-1.5 data-[state=on]:bg-foreground data-[state=on]:text-background rounded-full px-3 h-8">
+                              <DollarSign className="w-3.5 h-3.5" />
+                              Commission
+                            </ToggleGroupItem>
+                            <ToggleGroupItem value="both" className="text-xs gap-1.5 data-[state=on]:bg-foreground data-[state=on]:text-background rounded-full px-3 h-8">
+                              <DollarSign className="w-3.5 h-3.5" />
+                              Hourly + Commission
+                            </ToggleGroupItem>
+                          </ToggleGroup>
+                          <p className="text-[11px] text-muted-foreground">
+                            {EARNINGS_STRUCTURE_DESCRIPTIONS[level.earningsStructure]}
+                          </p>
+                        </div>
+
+                        {/* Hourly Wage — visible for 'hourly' and 'both' */}
+                        <div className={cn(
+                          "ml-[3.25rem] transition-all duration-200",
+                          level.earningsStructure === 'commission' ? "h-0 overflow-hidden opacity-0" : "opacity-100"
+                        )}>
+                          <div className="space-y-1">
+                            <label className="text-xs font-medium text-muted-foreground">Starting Hourly Wage</label>
+                            <div className="relative">
+                              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">$</span>
+                              <Input
+                                type="number"
+                                placeholder="0.00"
+                                value={level.hourlyWage}
+                                onChange={(e) => {
+                                  const newLevels = [...levels];
+                                  newLevels[index] = { ...newLevels[index], hourlyWage: e.target.value };
+                                  setLevels(newLevels);
+                                  setHasChanges(true);
+                                }}
+                                className="h-8 text-xs pl-7 pr-10"
+                                min={0}
+                                step={0.25}
+                              />
+                              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">/hr</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Commission fields — visible for 'commission' and 'both' */}
+                        <div className={cn(
+                          "ml-[3.25rem] grid grid-cols-2 gap-3 transition-all duration-200",
+                          level.earningsStructure === 'hourly' ? "h-0 overflow-hidden opacity-0" : "opacity-100"
+                        )}>
                           <div className="space-y-1">
                             <label className="text-xs font-medium text-muted-foreground">Service Commission %</label>
                             <Input
@@ -1391,51 +1475,6 @@ export function StylistLevelsEditor({ embedded = false }: StylistLevelsEditorPro
                               max={100}
                             />
                           </div>
-                        </div>
-
-                        {/* Hourly Wage Toggle */}
-                        <div className="ml-[3.25rem] space-y-3">
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                              <Label className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
-                                <Clock className="w-3.5 h-3.5" />
-                                Hourly Wage
-                              </Label>
-                              <MetricInfoTooltip description="Enable if stylists at this level receive an hourly base wage in addition to or instead of commission." />
-                            </div>
-                            <Switch
-                              checked={level.hourlyWageEnabled}
-                              onCheckedChange={(checked) => {
-                                const newLevels = [...levels];
-                                newLevels[index] = { ...newLevels[index], hourlyWageEnabled: checked };
-                                setLevels(newLevels);
-                                setHasChanges(true);
-                              }}
-                            />
-                          </div>
-                          {level.hourlyWageEnabled && (
-                            <div className="space-y-1">
-                              <label className="text-xs font-medium text-muted-foreground">Starting Hourly Wage</label>
-                              <div className="relative">
-                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">$</span>
-                                <Input
-                                  type="number"
-                                  placeholder="0.00"
-                                  value={level.hourlyWage}
-                                  onChange={(e) => {
-                                    const newLevels = [...levels];
-                                    newLevels[index] = { ...newLevels[index], hourlyWage: e.target.value };
-                                    setLevels(newLevels);
-                                    setHasChanges(true);
-                                  }}
-                                  className="h-8 text-xs pl-7 pr-10"
-                                  min={0}
-                                  step={0.25}
-                                />
-                                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">/hr</span>
-                              </div>
-                            </div>
-                          )}
                         </div>
 
                         {/* Level Criteria */}
