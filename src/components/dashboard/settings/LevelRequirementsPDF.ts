@@ -219,7 +219,7 @@ export function generateLevelRequirementsPDF(options: LevelRequirementsPDFOption
 
   // ─── Summary Stats (matching digital's centered card style) ───
   y = ensureSpace(doc, y, 26);
-  const configuredCount = levels.filter(l => criteria.some(c => c.stylist_level_id === l.dbId && c.is_active)).length + (levels.length > 0 ? 1 : 0);
+  const configuredCount = levels.filter(l => l.isConfigured ?? (criteria.some(c => c.stylist_level_id === l.dbId && c.is_active) || l.index === 0)).length;
   const retentionCount = retentionCriteria.filter(r => r.is_active).length;
 
   const statsData = [
