@@ -141,7 +141,7 @@ function ScrollableTableWrapper({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="relative rounded-xl border bg-card">
-      <div ref={scrollRef} className="overflow-auto">
+      <div ref={scrollRef} className="overflow-auto max-h-[70vh]">
         {children}
       </div>
       {/* Right-edge scroll indicator */}
