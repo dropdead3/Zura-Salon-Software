@@ -1,6 +1,6 @@
-import { useRef } from 'react';
+import { useRef, useState, useMemo } from 'react';
 import { Badge } from '@/components/ui/badge';
-import { X, FileDown, Printer, Check, AlertTriangle, ChevronRight, Shield, Clock, Users } from 'lucide-react';
+import { X, FileDown, Printer, Check, AlertTriangle, ChevronRight, Shield, Clock, Users, ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { getLevelColor } from '@/lib/level-colors';
 import type { LevelPromotionCriteria } from '@/hooks/useLevelPromotionCriteria';
@@ -42,8 +42,48 @@ export function LevelRoadmapView({
   const getRetention = (dbId?: string) => retentionCriteria.find(r => r.stylist_level_id === dbId && r.is_active);
 
   const configuredCount = levels.filter(l => l.isConfigured).length;
+  const useAccordion = levels.length > 6;
+  const showJumpNav = levels.length >= 10;
+
+  // Default expanded: first card + any incomplete cards
+  const defaultExpanded = useMemo(() => {
+    const set = new Set<number>();
+    set.add(0);
+    levels.forEach((l, i) => { if (!l.isConfigured) set.add(i); });
+    return set;
+  }, [levels]);
+
+  const [expandedCards, setExpandedCards] = useState<Set<number>>(defaultExpanded);
+
+  const toggleCard = (index: number) => {
+    setExpandedCards(prev => {
+      const next = new Set(prev);
+      if (next.has(index)) next.delete(index);
+      else next.add(index);
+      return next;
+    });
+  };
+
+  const expandAll = () => setExpandedCards(new Set(levels.map((_, i) => i)));
+  const collapseAll = () => setExpandedCards(new Set());
+
+  const scrollToCard = (index: number) => {
+    const el = document.getElementById(`level-card-${index}`);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      if (!expandedCards.has(index)) toggleCard(index);
+    }
+  };
 
   const fmtCurrency = (v: number) => v >= 1000 ? `$${(v / 1000).toFixed(0)}K` : `$${v}`;
+
+  const getCompensationSummary = (level: LevelInfo) => {
+    const parts: string[] = [];
+    if (level.serviceCommissionRate > 0) parts.push(`${level.serviceCommissionRate}% svc`);
+    if (level.retailCommissionRate > 0) parts.push(`${level.retailCommissionRate}% retail`);
+    if (level.hourlyWageEnabled && level.hourlyWage != null) parts.push(`$${level.hourlyWage}/hr`);
+    return parts.length > 0 ? parts.join(' · ') : 'Not configured';
+  };
 
   return (
     <div className="fixed inset-0 z-[80] bg-white overflow-auto print:static print:z-auto">
@@ -93,7 +133,6 @@ export function LevelRoadmapView({
 
         {/* Career progression timeline */}
         <div className="mb-10 print:mb-6 relative">
-          {/* Fade edges for scroll indication */}
           {levels.length > 8 && (
             <>
               <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-white to-transparent z-10 pointer-events-none" />
@@ -114,7 +153,6 @@ export function LevelRoadmapView({
               const bgIdx = Math.round(ratio * (bgHexStops.length - 1));
               const bgHex = bgHexStops[Math.min(bgIdx, bgHexStops.length - 1)];
 
-              // Adaptive sizing based on level count
               const isCompact = levels.length > 10;
               const nodeSize = isCompact ? 'w-10 h-10' : 'w-14 h-14';
               const textSize = isCompact ? 'text-sm' : 'text-base';
@@ -172,8 +210,35 @@ export function LevelRoadmapView({
           </div>
         </div>
 
+        {/* Jump-to-level quick nav */}
+        {showJumpNav && (
+          <div className="sticky top-[57px] z-[5] bg-white/90 backdrop-blur-sm border-b border-neutral-100 -mx-6 px-6 py-2 mb-6 print:hidden">
+            <div className="flex items-center gap-2 overflow-x-auto">
+              <span className="text-[10px] font-display tracking-widest uppercase text-neutral-400 flex-shrink-0 mr-1">Jump to</span>
+              {levels.map((level, i) => {
+                const color = getLevelColor(i, levels.length);
+                return (
+                  <button
+                    key={level.slug}
+                    onClick={() => scrollToCard(i)}
+                    className={cn(
+                      "flex-shrink-0 inline-flex items-center gap-1 h-7 px-2.5 rounded-full text-[11px] font-sans font-medium border transition-colors",
+                      level.isConfigured
+                        ? "border-neutral-200 bg-neutral-50 text-neutral-700 hover:bg-neutral-100"
+                        : "border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100"
+                    )}
+                  >
+                    <span className="font-display text-[10px]">{i + 1}</span>
+                    <span className="hidden sm:inline truncate max-w-[80px]">{level.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
         {/* Summary stats */}
-        <div className="grid grid-cols-3 gap-4 mb-10 print:mb-6">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-10 print:mb-6 print:grid-cols-3">
           <div className="text-center p-4 rounded-lg border border-neutral-200 bg-neutral-50/50">
             <p className="font-display text-2xl tracking-wide text-neutral-900">{levels.length}</p>
             <p className="text-xs text-neutral-500 mt-1 font-sans">Total Levels</p>
@@ -190,6 +255,19 @@ export function LevelRoadmapView({
           </div>
         </div>
 
+        {/* Expand/Collapse controls for accordion mode */}
+        {useAccordion && (
+          <div className="flex items-center gap-3 mb-4 print:hidden">
+            <button onClick={expandAll} className="text-xs font-sans text-neutral-500 hover:text-neutral-900 underline underline-offset-2 transition-colors">
+              Expand all
+            </button>
+            <span className="text-neutral-300">·</span>
+            <button onClick={collapseAll} className="text-xs font-sans text-neutral-500 hover:text-neutral-900 underline underline-offset-2 transition-colors">
+              Collapse all
+            </button>
+          </div>
+        )}
+
         {/* Per-level detail cards */}
         <div className="space-y-6 print:space-y-4">
           {levels.map((level, i) => {
@@ -198,11 +276,11 @@ export function LevelRoadmapView({
             const color = getLevelColor(i, levels.length);
             const isBase = i === 0;
             const isTop = i === levels.length - 1;
+            const isExpanded = !useAccordion || expandedCards.has(i);
 
             // Gather enabled KPI requirements
             const kpis: { label: string; value: string }[] = [];
             if (isBase && retention) {
-              // Base level shows retention minimums
               if (retention.revenue_enabled && retention.revenue_minimum > 0) kpis.push({ label: 'Revenue', value: fmtCurrency(retention.revenue_minimum) });
               if (retention.retail_enabled && retention.retail_pct_minimum > 0) kpis.push({ label: 'Retail %', value: `${retention.retail_pct_minimum}%` });
               if (retention.rebooking_enabled && retention.rebooking_pct_minimum > 0) kpis.push({ label: 'Rebooking %', value: `${retention.rebooking_pct_minimum}%` });
@@ -222,133 +300,180 @@ export function LevelRoadmapView({
               if (promo.rev_per_hour_enabled && Number(promo.rev_per_hour_threshold) > 0) kpis.push({ label: 'Rev/Hr', value: `$${promo.rev_per_hour_threshold}` });
             }
 
+            // Print page break every 4th card
+            const printBreak = i > 0 && i % 4 === 0;
+
             return (
               <div
                 key={level.slug}
+                id={`level-card-${i}`}
                 className={cn(
                   'rounded-lg border overflow-hidden break-inside-avoid print:break-inside-avoid',
+                  printBreak && 'print:mt-0 print:[page-break-before:always]',
                   level.isConfigured ? 'border-neutral-200' : 'border-amber-200 bg-amber-50/20'
                 )}
               >
                 {/* Color accent bar */}
                 <div className={cn('h-1.5', color.bg)} />
 
-                <div className="p-5">
-                  {/* Level header */}
-                  <div className="flex items-start justify-between mb-4">
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <h3 className="font-display text-base tracking-wide uppercase text-neutral-900">
-                          Level {i + 1} — {level.label}
-                        </h3>
-                        {level.isConfigured ? (
-                          <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200 text-[10px] px-2 py-0.5">
-                            <Check className="w-2.5 h-2.5 mr-0.5" /> Configured
-                          </Badge>
-                        ) : (
-                          <Badge className="bg-amber-100 text-amber-700 border-amber-200 text-[10px] px-2 py-0.5">
-                            <AlertTriangle className="w-2.5 h-2.5 mr-0.5" /> Setup Incomplete
-                          </Badge>
+                {/* Accordion header (clickable when accordion mode) */}
+                {useAccordion ? (
+                  <button
+                    type="button"
+                    onClick={() => toggleCard(i)}
+                    className="w-full flex items-center justify-between p-4 text-left hover:bg-neutral-50/50 transition-colors print:hidden"
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      <span className="font-display text-sm tracking-wide text-neutral-900 flex-shrink-0">
+                        {i + 1}
+                      </span>
+                      <span className="font-display text-sm tracking-wide uppercase text-neutral-900 truncate">
+                        {level.label}
+                      </span>
+                      {level.isConfigured ? (
+                        <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200 text-[10px] px-2 py-0.5 flex-shrink-0">
+                          <Check className="w-2.5 h-2.5 mr-0.5" /> Ready
+                        </Badge>
+                      ) : (
+                        <Badge className="bg-amber-100 text-amber-700 border-amber-200 text-[10px] px-2 py-0.5 flex-shrink-0">
+                          <AlertTriangle className="w-2.5 h-2.5 mr-0.5" /> Incomplete
+                        </Badge>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-3 flex-shrink-0 ml-3">
+                      <span className="text-[11px] text-neutral-400 font-sans hidden sm:inline">
+                        {getCompensationSummary(level)}
+                      </span>
+                      <ChevronDown className={cn(
+                        "w-4 h-4 text-neutral-400 transition-transform duration-200",
+                        isExpanded && "rotate-180"
+                      )} />
+                    </div>
+                  </button>
+                ) : null}
+
+                {/* Card content — always visible on print */}
+                <div className={cn(
+                  useAccordion && !isExpanded ? 'hidden' : 'block',
+                  'print:!block'
+                )}>
+                  <div className="p-5">
+                    {/* Level header (always shown in non-accordion, or within expanded content for print) */}
+                    <div className="flex items-start justify-between mb-4">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h3 className="font-display text-base tracking-wide uppercase text-neutral-900">
+                            Level {i + 1} — {level.label}
+                          </h3>
+                          {level.isConfigured ? (
+                            <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200 text-[10px] px-2 py-0.5">
+                              <Check className="w-2.5 h-2.5 mr-0.5" /> Configured
+                            </Badge>
+                          ) : (
+                            <Badge className="bg-amber-100 text-amber-700 border-amber-200 text-[10px] px-2 py-0.5">
+                              <AlertTriangle className="w-2.5 h-2.5 mr-0.5" /> Setup Incomplete
+                            </Badge>
+                          )}
+                        </div>
+                        {isBase && (
+                          <p className="text-xs text-neutral-500 mt-1 font-sans">Entry Level — Retention Minimums</p>
                         )}
                       </div>
-                      {isBase && (
-                        <p className="text-xs text-neutral-500 mt-1 font-sans">Entry Level — Retention Minimums</p>
-                      )}
                     </div>
-                  </div>
 
-                  {!level.isConfigured && (
-                    <div className="mb-4 p-3 rounded-md bg-amber-50 border border-amber-200/60 text-xs text-amber-700 font-sans">
-                      This level has not been marked as configured. The data shown may be incomplete.
-                    </div>
-                  )}
+                    {!level.isConfigured && (
+                      <div className="mb-4 p-3 rounded-md bg-amber-50 border border-amber-200/60 text-xs text-amber-700 font-sans">
+                        This level has not been marked as configured. The data shown may be incomplete.
+                      </div>
+                    )}
 
-                  {/* Commission rates */}
-                  <div className="mb-4">
-                    <p className="font-display text-[10px] tracking-widest uppercase text-neutral-400 mb-2">Compensation</p>
-                    <div className="flex flex-wrap gap-3">
-                      {level.serviceCommissionRate > 0 && (
-                        <div className="flex items-center gap-1.5 text-sm text-neutral-700">
-                          <span className="text-[10px] text-neutral-400 font-display tracking-wide uppercase">Service</span>
-                          <span className="font-display text-neutral-900">{level.serviceCommissionRate}%</span>
-                        </div>
-                      )}
-                      {level.retailCommissionRate > 0 && (
-                        <div className="flex items-center gap-1.5 text-sm text-neutral-700">
-                          <span className="text-[10px] text-neutral-400 font-display tracking-wide uppercase">Retail</span>
-                          <span className="font-display text-neutral-900">{level.retailCommissionRate}%</span>
-                        </div>
-                      )}
-                      {level.hourlyWageEnabled && level.hourlyWage != null && (
-                        <div className="flex items-center gap-1.5 text-sm text-neutral-700">
-                          <span className="text-[10px] text-neutral-400 font-display tracking-wide uppercase">Hourly</span>
-                          <span className="font-display text-neutral-900">${level.hourlyWage}/hr</span>
-                        </div>
-                      )}
-                      {level.serviceCommissionRate === 0 && level.retailCommissionRate === 0 && !level.hourlyWageEnabled && (
-                        <span className="text-xs text-neutral-400 italic font-sans">No compensation configured</span>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* KPI Requirements */}
-                  {kpis.length > 0 && (
+                    {/* Commission rates */}
                     <div className="mb-4">
-                      <p className="font-display text-[10px] tracking-widest uppercase text-neutral-400 mb-2">
-                        {isBase ? 'Retention Minimums' : 'Graduation Requirements'}
-                      </p>
-                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                        {kpis.map(kpi => (
-                          <div key={kpi.label} className="p-2.5 rounded-md bg-neutral-50 border border-neutral-100">
-                            <p className="text-[10px] text-neutral-400 font-sans mb-0.5">{kpi.label}</p>
-                            <p className="font-display text-sm tracking-wide text-neutral-900">{kpi.value}</p>
+                      <p className="font-display text-[10px] tracking-widest uppercase text-neutral-400 mb-2">Compensation</p>
+                      <div className="flex flex-wrap gap-3">
+                        {level.serviceCommissionRate > 0 && (
+                          <div className="flex items-center gap-1.5 text-sm text-neutral-700">
+                            <span className="text-[10px] text-neutral-400 font-display tracking-wide uppercase">Service</span>
+                            <span className="font-display text-neutral-900">{level.serviceCommissionRate}%</span>
                           </div>
-                        ))}
+                        )}
+                        {level.retailCommissionRate > 0 && (
+                          <div className="flex items-center gap-1.5 text-sm text-neutral-700">
+                            <span className="text-[10px] text-neutral-400 font-display tracking-wide uppercase">Retail</span>
+                            <span className="font-display text-neutral-900">{level.retailCommissionRate}%</span>
+                          </div>
+                        )}
+                        {level.hourlyWageEnabled && level.hourlyWage != null && (
+                          <div className="flex items-center gap-1.5 text-sm text-neutral-700">
+                            <span className="text-[10px] text-neutral-400 font-display tracking-wide uppercase">Hourly</span>
+                            <span className="font-display text-neutral-900">${level.hourlyWage}/hr</span>
+                          </div>
+                        )}
+                        {level.serviceCommissionRate === 0 && level.retailCommissionRate === 0 && !level.hourlyWageEnabled && (
+                          <span className="text-xs text-neutral-400 italic font-sans">No compensation configured</span>
+                        )}
                       </div>
                     </div>
-                  )}
 
-                  {kpis.length === 0 && !isBase && (
-                    <div className="mb-4 p-3 rounded-md bg-neutral-50 border border-neutral-100 text-xs text-neutral-400 italic font-sans">
-                      No KPI requirements configured for this level.
-                    </div>
-                  )}
-
-                  {/* Evaluation details */}
-                  {!isBase && promo && (
-                    <div className="flex flex-wrap gap-4 mb-4 text-xs text-neutral-600 font-sans">
-                      <div className="flex items-center gap-1">
-                        <Clock className="w-3 h-3 text-neutral-400" />
-                        <span>{promo.evaluation_window_days}d eval window</span>
-                      </div>
-                      {promo.tenure_enabled && promo.tenure_days > 0 && !isTop && (
-                        <div className="flex items-center gap-1">
-                          <Users className="w-3 h-3 text-neutral-400" />
-                          <span>{promo.tenure_days}d tenure required</span>
+                    {/* KPI Requirements */}
+                    {kpis.length > 0 && (
+                      <div className="mb-4">
+                        <p className="font-display text-[10px] tracking-widest uppercase text-neutral-400 mb-2">
+                          {isBase ? 'Retention Minimums' : 'Graduation Requirements'}
+                        </p>
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                          {kpis.map(kpi => (
+                            <div key={kpi.label} className="p-2.5 rounded-md bg-neutral-50 border border-neutral-100">
+                              <p className="text-[10px] text-neutral-400 font-sans mb-0.5">{kpi.label}</p>
+                              <p className="font-display text-sm tracking-wide text-neutral-900">{kpi.value}</p>
+                            </div>
+                          ))}
                         </div>
-                      )}
-                      <div className="flex items-center gap-1">
-                        <Shield className="w-3 h-3 text-neutral-400" />
-                        <span>{promo.requires_manual_approval ? 'Manual approval' : 'Auto-promote'}</span>
                       </div>
-                    </div>
-                  )}
+                    )}
 
-                  {/* Retention policy */}
-                  {retention?.retention_enabled && (
-                    <div>
-                      <p className="font-display text-[10px] tracking-widest uppercase text-neutral-400 mb-2">Retention Policy</p>
-                      <div className="flex flex-wrap gap-4 text-xs text-neutral-600 font-sans">
-                        <span>{retention.evaluation_window_days}d evaluation window</span>
-                        <span>{retention.grace_period_days}d grace period</span>
-                        <span className={cn(
-                          retention.action_type === 'demotion_eligible' ? 'text-red-600' : 'text-amber-600'
-                        )}>
-                          {retention.action_type === 'demotion_eligible' ? 'Demotion eligible' : 'Coaching flag'}
-                        </span>
+                    {kpis.length === 0 && !isBase && (
+                      <div className="mb-4 p-3 rounded-md bg-neutral-50 border border-neutral-100 text-xs text-neutral-400 italic font-sans">
+                        No KPI requirements configured for this level.
                       </div>
-                    </div>
-                  )}
+                    )}
+
+                    {/* Evaluation details */}
+                    {!isBase && promo && (
+                      <div className="flex flex-wrap gap-4 mb-4 text-xs text-neutral-600 font-sans">
+                        <div className="flex items-center gap-1">
+                          <Clock className="w-3 h-3 text-neutral-400" />
+                          <span>{promo.evaluation_window_days}d eval window</span>
+                        </div>
+                        {promo.tenure_enabled && promo.tenure_days > 0 && !isTop && (
+                          <div className="flex items-center gap-1">
+                            <Users className="w-3 h-3 text-neutral-400" />
+                            <span>{promo.tenure_days}d tenure required</span>
+                          </div>
+                        )}
+                        <div className="flex items-center gap-1">
+                          <Shield className="w-3 h-3 text-neutral-400" />
+                          <span>{promo.requires_manual_approval ? 'Manual approval' : 'Auto-promote'}</span>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Retention policy */}
+                    {retention?.retention_enabled && (
+                      <div>
+                        <p className="font-display text-[10px] tracking-widest uppercase text-neutral-400 mb-2">Retention Policy</p>
+                        <div className="flex flex-wrap gap-4 text-xs text-neutral-600 font-sans">
+                          <span>{retention.evaluation_window_days}d evaluation window</span>
+                          <span>{retention.grace_period_days}d grace period</span>
+                          <span className={cn(
+                            retention.action_type === 'demotion_eligible' ? 'text-red-600' : 'text-amber-600'
+                          )}>
+                            {retention.action_type === 'demotion_eligible' ? 'Demotion eligible' : 'Coaching flag'}
+                          </span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             );
