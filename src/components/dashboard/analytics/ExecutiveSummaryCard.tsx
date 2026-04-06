@@ -39,7 +39,7 @@ import { useExpectedRentRevenue } from '@/hooks/useExpectedRentRevenue';
 import { useHasRenters } from '@/hooks/useHasRenters';
 import { useBookingPipeline } from '@/hooks/useBookingPipeline';
 import { usePaySchedule } from '@/hooks/usePaySchedule';
-import { useStylistLevels } from '@/hooks/useStylistLevels';
+import { useResolveCommission } from '@/hooks/useResolveCommission';
 import { subDays, differenceInDays, parseISO, format, startOfMonth, startOfYear } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { tokens } from '@/lib/design-tokens';

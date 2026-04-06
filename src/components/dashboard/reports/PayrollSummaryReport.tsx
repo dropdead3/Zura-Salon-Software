@@ -22,7 +22,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { addReportHeader, addReportFooter, fetchLogoAsDataUrl, getReportAutoTableBranding, buildReportFileName } from '@/lib/reportPdfLayout';
 import { useBusinessSettings } from '@/hooks/useBusinessSettings';
 import { useReportLocationInfo } from '@/hooks/useReportLocationInfo';
-import { useStylistLevels } from '@/hooks/useStylistLevels';
+import { useResolveCommission } from '@/hooks/useResolveCommission';
 import { useSalesByStylist } from '@/hooks/useSalesData';
 import { useExpectedRentRevenue } from '@/hooks/useExpectedRentRevenue';
 import { useHasRenters } from '@/hooks/useHasRenters';
