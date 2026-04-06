@@ -9234,6 +9234,7 @@ export type Database = {
           id: string
           new_clients_rank: number | null
           new_clients_value: number | null
+          organization_id: string | null
           overall_rank: number
           overall_score: number
           retail_rank: number | null
@@ -9250,6 +9251,7 @@ export type Database = {
           id?: string
           new_clients_rank?: number | null
           new_clients_value?: number | null
+          organization_id?: string | null
           overall_rank: number
           overall_score: number
           retail_rank?: number | null
@@ -9266,6 +9268,7 @@ export type Database = {
           id?: string
           new_clients_rank?: number | null
           new_clients_value?: number | null
+          organization_id?: string | null
           overall_rank?: number
           overall_score?: number
           retail_rank?: number | null
@@ -9275,7 +9278,15 @@ export type Database = {
           user_id?: string
           week_start?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "leaderboard_history_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       leaderboard_weights: {
         Row: {
