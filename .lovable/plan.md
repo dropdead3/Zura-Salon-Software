@@ -1,28 +1,30 @@
 
 
-# Differentiate Header Row and Left Column from Table Data
+# Fix Transparent Overlay on Sticky Row and Column
 
 ## Problem
 
-The top header row and left "Metric" column currently use `bg-card` — the same background as the data cells. This makes them visually blend with the table content instead of reading as distinct label regions.
+All sticky cells (header row, left metric column, section headers) use `bg-muted/50` -- a 50% opacity background. When scrolling, the underlying table content shows through these sticky cells, creating ugly visual overlap artifacts visible in the screenshot.
 
 ## Solution
 
-Apply a subtle tinted background (`bg-muted/50`) to all header cells and all sticky left-column cells so they stand out from the white/card-colored data area.
+Replace all `bg-muted/50` on sticky cells with fully opaque `bg-muted` so content scrolling underneath is completely hidden.
 
 ### Changes in `StylistLevelsEditor.tsx`
 
-1. **Header row** (~line 697): Change `bg-card` → `bg-muted/50` on the `TableRow`
-2. **"Metric" header cell** (~line 698): Change `bg-card` → `bg-muted/50`
-3. **Level header cells** (~line 703): Change `bg-card` → `bg-muted/50`
-4. **All sticky left body cells** (metric labels, commission labels, hourly wage — every `sticky left-0 bg-card` cell in the table body): Change `bg-card` → `bg-muted/50`
+1. **Header `TableRow`** (~line 697): `bg-muted/50` to `bg-muted`
+2. **Metric header cell** (~line 698): `bg-muted/50` to `bg-muted`
+3. **Level header cells** (~line 703): `bg-muted/50` to `bg-muted`
+4. **Section header rows** (Compensation ~744, Promotion ~789, Retention ~803): All `bg-muted/50` to `bg-muted` on both the `TableRow`, sticky `TableCell`, and spanning `TableCell`
+5. **Commission/Wage sticky cells** (~lines 757, 776): `bg-muted/50` to `bg-muted`
+6. **`renderMetricRow` sticky cell** (~line 641): Change fallback from `bg-muted/50` to `bg-muted`
+7. **Editing row sticky cell** (~line 641): Change `bg-primary/5` to `bg-primary/10` (slightly stronger so it's also opaque enough against scrolling content)
+8. **Right-edge fade gradient** (~line 151): Change `from-card` to `from-muted` so it blends with the new header background -- or keep `from-card` since data cells still use card background (keep as-is).
 
-This keeps section header rows (`Compensation`, `Promotion`, `Retention`) at their existing `bg-muted/50` — they'll now match the column/header tint for visual consistency.
-
-The corner cell (Metric header, sticky both ways at `z-30`) also gets `bg-muted/50`, ensuring it stays opaque and visually grouped with both the header row and the left column.
+All non-sticky cells (data cells) remain unchanged -- they use the default `bg-card` from the container.
 
 ### Files Modified
-- `src/components/dashboard/settings/StylistLevelsEditor.tsx` — ~6 class string updates (`bg-card` → `bg-muted/50` on header and left-column cells)
+- `src/components/dashboard/settings/StylistLevelsEditor.tsx` -- ~12 class string updates (`bg-muted/50` to `bg-muted` on all sticky elements)
 
 ### No database changes.
 
