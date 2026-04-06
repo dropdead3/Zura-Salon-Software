@@ -5,6 +5,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { CompensationBreakdown } from '@/hooks/usePayrollAnalytics';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
+import { AnimatedBlurredAmount } from '@/components/ui/AnimatedBlurredAmount';
+import { useHideNumbers } from '@/contexts/HideNumbersContext';
 
 interface CompensationBreakdownChartProps {
   breakdown: CompensationBreakdown;

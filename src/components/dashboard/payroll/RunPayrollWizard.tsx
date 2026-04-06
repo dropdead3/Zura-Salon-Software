@@ -12,6 +12,9 @@ import { ReviewStep } from './steps/ReviewStep';
 import { useEmployeePayrollSettings } from '@/hooks/useEmployeePayrollSettings';
 import { usePayrollCalculations, usePayrollSalesData, EmployeeHours, EmployeeAdjustments, EmployeeCompensation } from '@/hooks/usePayrollCalculations';
 import { usePayroll } from '@/hooks/usePayroll';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { useOrganizationContext } from '@/contexts/OrganizationContext';
 
 const STEPS = [
   { id: 'pay-period', label: 'Pay Period', description: 'Select dates' },
