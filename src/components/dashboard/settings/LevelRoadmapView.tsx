@@ -92,24 +92,46 @@ export function LevelRoadmapView({
         </div>
 
         {/* Career progression timeline */}
-        <div className="mb-10 print:mb-6">
-          <div className="flex items-center justify-center gap-0 overflow-x-auto py-6">
+        <div className="mb-10 print:mb-6 relative">
+          {/* Fade edges for scroll indication */}
+          {levels.length > 8 && (
+            <>
+              <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-white to-transparent z-10 pointer-events-none" />
+              <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-white to-transparent z-10 pointer-events-none" />
+            </>
+          )}
+          <div className={cn(
+            "flex items-center gap-0 py-6 print:flex-wrap print:justify-center",
+            levels.length > 8
+              ? "overflow-x-auto px-6 justify-start"
+              : "justify-center"
+          )}>
             {levels.map((level, i) => {
               const color = getLevelColor(i, levels.length);
               const isConfigured = level.isConfigured;
-              // Stone→amber→gold hex progression for force-light page
               const bgHexStops = ['#f5f5f4', '#e7e5e4', '#fef3c7', '#fde68a', '#fcd34d', '#f59e0b'];
               const ratio = levels.length <= 1 ? 1 : i / (levels.length - 1);
               const bgIdx = Math.round(ratio * (bgHexStops.length - 1));
               const bgHex = bgHexStops[Math.min(bgIdx, bgHexStops.length - 1)];
 
+              // Adaptive sizing based on level count
+              const isCompact = levels.length > 10;
+              const nodeSize = isCompact ? 'w-10 h-10' : 'w-14 h-14';
+              const textSize = isCompact ? 'text-sm' : 'text-base';
+              const dotSize = isCompact ? 'w-4 h-4' : 'w-5 h-5';
+              const dotIconSize = isCompact ? 'w-2 h-2' : 'w-2.5 h-2.5';
+              const minW = isCompact ? 'min-w-[70px]' : 'min-w-[90px]';
+              const maxW = isCompact ? 'max-w-[70px]' : 'max-w-[90px]';
+              const labelSize = isCompact ? 'text-[9px]' : 'text-[11px]';
+
               return (
-                <div key={level.slug} className="flex items-center">
-                  <div className="flex flex-col items-center min-w-[90px]">
+                <div key={level.slug} className="flex items-center flex-shrink-0">
+                  <div className={cn("flex flex-col items-center", minW)}>
                     <div className="relative">
                       <div
                         className={cn(
-                          'w-14 h-14 rounded-full flex items-center justify-center text-base font-display tracking-wide transition-all',
+                          nodeSize, 'rounded-full flex items-center justify-center font-display tracking-wide transition-all',
+                          textSize,
                           isConfigured
                             ? 'ring-2 ring-offset-2 ring-emerald-400 shadow-md'
                             : 'ring-2 ring-offset-2 ring-neutral-200'
@@ -118,18 +140,17 @@ export function LevelRoadmapView({
                       >
                         <span className="text-neutral-900 relative z-10">{i + 1}</span>
                       </div>
-                      {/* Status dot badge */}
                       {isConfigured ? (
-                        <span className="absolute -bottom-0.5 -right-0.5 w-5 h-5 rounded-full bg-emerald-500 border-2 border-white flex items-center justify-center">
-                          <Check className="w-2.5 h-2.5 text-white" strokeWidth={3} />
+                        <span className={cn("absolute -bottom-0.5 -right-0.5 rounded-full bg-emerald-500 border-2 border-white flex items-center justify-center", dotSize)}>
+                          <Check className={cn(dotIconSize, "text-white")} strokeWidth={3} />
                         </span>
                       ) : (
-                        <span className="absolute -bottom-0.5 -right-0.5 w-5 h-5 rounded-full bg-amber-400 border-2 border-white flex items-center justify-center">
-                          <AlertTriangle className="w-2.5 h-2.5 text-white" strokeWidth={3} />
+                        <span className={cn("absolute -bottom-0.5 -right-0.5 rounded-full bg-amber-400 border-2 border-white flex items-center justify-center", dotSize)}>
+                          <AlertTriangle className={cn(dotIconSize, "text-white")} strokeWidth={3} />
                         </span>
                       )}
                     </div>
-                    <span className="mt-2 text-[11px] font-display tracking-wide uppercase text-neutral-600 text-center leading-tight max-w-[90px]">
+                    <span className={cn("mt-2 font-display tracking-wide uppercase text-neutral-600 text-center leading-tight", labelSize, maxW)}>
                       {level.label}
                     </span>
                     <span className={cn(
@@ -140,9 +161,9 @@ export function LevelRoadmapView({
                     </span>
                   </div>
                   {i < levels.length - 1 && (
-                    <div className="flex items-center mx-1 flex-shrink-0">
-                      <div className="w-6 h-px bg-neutral-300" />
-                      <ChevronRight className="w-3 h-3 text-neutral-300 -ml-1" />
+                    <div className="flex items-center mx-0.5 flex-shrink-0">
+                      <div className={cn(isCompact ? "w-3" : "w-6", "h-px bg-neutral-300")} />
+                      <ChevronRight className={cn(isCompact ? "w-2.5 h-2.5" : "w-3 h-3", "text-neutral-300 -ml-0.5")} />
                     </div>
                   )}
                 </div>
