@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { usePayrollCalculations, EmployeeCompensation } from './usePayrollCalculations';
+import { useResolveCommission } from './useResolveCommission';
 import { EmployeePayrollSettings, PayType } from './useEmployeePayrollSettings';
 import { startOfMonth, endOfMonth, format, subDays, addDays } from 'date-fns';
 import { usePaySchedule, getCurrentPayPeriod } from './usePaySchedule';
@@ -79,6 +80,7 @@ export function useMyPayData(): MyPayData {
   const { selectedOrganization } = useOrganizationContext();
   const organizationId = selectedOrganization?.id;
   const { calculateEmployeeCompensation, getWeeksInPeriod } = usePayrollCalculations();
+  const { resolveCommission } = useResolveCommission();
   const { settings: payScheduleSettings, isLoading: payScheduleLoading } = usePaySchedule();
 
   // Use configured pay schedule or fall back to inferred period
@@ -236,7 +238,8 @@ export function useMyPayData(): MyPayData {
         { employeeId: user?.id || '', ...salesData },
         undefined,
         getWeeksInPeriod(currentPeriod.startDate, currentPeriod.endDate),
-        employeeLevelSlug
+        employeeLevelSlug,
+        resolveCommission
       )
     : null;
 

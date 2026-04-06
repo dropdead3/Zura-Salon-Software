@@ -15,6 +15,7 @@ import { usePayroll } from '@/hooks/usePayroll';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
+import { useResolveCommission } from '@/hooks/useResolveCommission';
 
 const STEPS = [
   { id: 'pay-period', label: 'Pay Period', description: 'Select dates' },
@@ -42,6 +43,7 @@ export function RunPayrollWizard({ onComplete, onCancel }: RunPayrollWizardProps
   const { calculateEmployeeCompensation, calculatePayrollTotals, getWeeksInPeriod } = usePayrollCalculations();
   const { createLocalPayrollRun, isCreatingLocalRun } = usePayroll();
   const { selectedOrganization } = useOrganizationContext();
+  const { resolveCommission } = useResolveCommission();
 
   // Fetch employee level slugs for hourly wage fallback
   const { data: employeeLevelMap } = useQuery({
@@ -104,7 +106,8 @@ export function RunPayrollWizard({ onComplete, onCancel }: RunPayrollWizardProps
         sales,
         adjustments,
         weeksInPeriod,
-        levelSlug
+        levelSlug,
+        resolveCommission
       );
 
       // Apply commission override if set
