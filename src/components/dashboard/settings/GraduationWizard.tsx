@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -29,16 +29,19 @@ import {
   CalendarClock,
   Info,
 } from 'lucide-react';
+import { useQueryClient } from '@tanstack/react-query';
 import {
   useLevelPromotionCriteriaForLevel,
   useUpsertLevelPromotionCriteria,
   useDeleteLevelPromotionCriteria,
+  type LevelPromotionCriteria,
   type LevelPromotionCriteriaUpsert,
 } from '@/hooks/useLevelPromotionCriteria';
 import {
   useLevelRetentionCriteriaForLevel,
   useUpsertLevelRetentionCriteria,
   useDeleteLevelRetentionCriteria,
+  type LevelRetentionCriteria,
   type LevelRetentionCriteriaUpsert,
 } from '@/hooks/useLevelRetentionCriteria';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
