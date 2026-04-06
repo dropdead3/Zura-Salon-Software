@@ -492,6 +492,7 @@ function LevelsQuickSetupWizard({ onGenerate, onDismiss, isGenerating }: QuickSe
         retailCommissionRate: retail,
         hourlyWageEnabled: false,
         hourlyWage: '',
+        earningsStructure: 'commission' as EarningsStructure,
       };
     });
 
@@ -798,6 +799,7 @@ export function StylistLevelsEditor({ embedded = false }: StylistLevelsEditorPro
       retailCommissionRate: '',
       hourlyWageEnabled: false,
       hourlyWage: '',
+      earningsStructure: 'commission' as EarningsStructure,
     };
     setLevels([...levels, newLevel]);
     setNewLevelName('');
