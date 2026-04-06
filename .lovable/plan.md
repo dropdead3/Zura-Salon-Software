@@ -1,34 +1,41 @@
 
 
-# Improve Level Roadmap Timeline Visual
+# Responsiveness Hardening for High Level Counts
 
-## Problem
-The current timeline nodes use `border-dashed` for unconfigured levels, creating a cheap "dotted-dashed" look. The overall circles feel flat and utilitarian.
+## Problem Areas
 
-## Proposed Design
-Replace the dashed-border approach with a cleaner, more polished visual using **solid rings with subtle inner shadow and a soft glow progression**:
+With 20+ levels, the roadmap document becomes unwieldy in three ways beyond the timeline:
 
-### Timeline Node Redesign
-- **Remove** all `border-dashed` usage
-- **Larger nodes**: Increase from `w-10 h-10` to `w-14 h-14` for better presence
-- **Solid double-ring effect**: Use `ring-2 ring-offset-2` with the level color for configured levels, and `ring-neutral-200` for unconfigured
-- **Inner gradient**: Apply inline `background` style using hardcoded hex values from the stone→amber→gold progression (since this is a force-light page, Tailwind dark-mode classes don't apply cleanly). This gives a richer, more dimensional feel than flat bg classes
-- **Subtle shadow**: Add `shadow-md` on configured levels for a slight lift effect
-- **Number styling**: Slightly larger, `font-display` stays
+1. **Detail cards scroll forever** — 20 full-height cards stacking vertically creates an extremely long document. No way to quickly navigate or collapse sections.
+2. **Summary stats grid breaks on mobile** — `grid-cols-3` crunches below ~400px viewport width.
+3. **Print pagination** — 20 detail cards span many pages with no explicit page-break control, risking cards splitting mid-content across pages.
+4. **PDF generation** — Same issue as print; the downloaded PDF could be unwieldy without pagination hints.
 
-### Status Indicator
-- **Configured**: Small green dot badge (absolute positioned, bottom-right of circle) instead of text below — cleaner
-- **Unconfigured**: Small amber dot badge with `AlertTriangle` micro-icon
-- Keep the text label ("Ready" / "Incomplete") below the level name
+## Proposed Changes
 
-### Connector Arrows
-- Replace `ArrowRight` icon with a simple styled `div` connector line (thin horizontal bar with a small chevron), using neutral-300 color — more elegant than an icon
+### 1. Collapsible Detail Cards (Accordion)
+- When `levels.length > 6`, render detail cards inside an accordion pattern (click header to expand/collapse)
+- First card and any "Incomplete" cards default to expanded; rest collapsed
+- Each card header shows: level number, name, configured badge, and commission summary — enough context without expanding
+- Print media query: force all cards expanded (`print:block`)
 
-## File Changed
+### 2. Mobile-Safe Summary Stats
+- Change `grid-cols-3` to `grid-cols-1 sm:grid-cols-3` so stats stack on narrow viewports
+
+### 3. Print Page-Break Control
+- Add `break-inside-avoid` (already present) plus `page-break-after: auto` on each card
+- Add `page-break-before: always` on every 4th card to prevent extremely long unbroken runs
+- Force timeline to `flex-wrap justify-center` on print (already done)
+
+### 4. "Jump to Level" Quick Nav (Optional Enhancement)
+- For 10+ levels, add a small sticky pill bar below the timeline with level number buttons that scroll to the corresponding detail card
+- Hidden on print
+
+## Files
 
 | File | Action |
 |------|--------|
-| `src/components/dashboard/settings/LevelRoadmapView.tsx` | **Edit** — restyle timeline section (lines ~96–129) |
+| `src/components/dashboard/settings/LevelRoadmapView.tsx` | **Edit** — add accordion, responsive grid, print breaks, optional quick nav |
 
 No new files, no database changes.
 
