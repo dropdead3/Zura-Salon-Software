@@ -1406,6 +1406,7 @@ export function StylistLevelsEditor({ embedded = false, onActions }: StylistLeve
   const { data: promotionCriteria } = useLevelPromotionCriteria();
   const { data: retentionCriteria } = useLevelRetentionCriteria();
   const { data: activeLocations = [] } = useActiveLocations();
+  const { teamProgress, counts: teamCounts } = useTeamLevelProgress();
 
   useEffect(() => {
     if (dbLevels && !hasChanges) {
