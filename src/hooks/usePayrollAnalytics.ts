@@ -17,6 +17,7 @@ export interface PayrollKPIs {
   activeEmployeeCount: number;
   overtimeHours: number;
   tipsCollected: number;
+  baseVsCommissionPct: number; // % of forecast that is base (hourly+salary) vs commission
 }
 
 export interface CompensationBreakdown {
@@ -45,6 +46,21 @@ export function usePayrollAnalytics(): PayrollAnalyticsData {
   const currentPeriod = paySchedule ? getCurrentPayPeriod(paySchedule) : null;
   const periodStart = currentPeriod ? format(currentPeriod.periodStart, 'yyyy-MM-dd') : null;
   const periodEnd = currentPeriod ? format(currentPeriod.periodEnd, 'yyyy-MM-dd') : null;
+
+  // Fetch employee level slugs for hourly wage fallback
+  const { data: employeeLevels } = useQuery({
+    queryKey: ['payroll-analytics-employee-levels', organizationId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('employee_profiles')
+        .select('user_id, stylist_level')
+        .eq('organization_id', organizationId!)
+        .eq('is_active', true);
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!organizationId,
+  });
 
   const { data: salesData, isLoading: isLoadingSales } = useQuery({
     queryKey: ['payroll-analytics-sales', periodStart, periodEnd, organizationId],
@@ -89,7 +105,8 @@ export function usePayrollAnalytics(): PayrollAnalyticsData {
     salesData || [],
     ytdRevenue || 0,
     currentPeriod,
-    levels || []
+    levels || [],
+    employeeLevels || []
   );
 
   const compensationBreakdown = calculateCompensationBreakdown(payrollRuns);
@@ -110,7 +127,8 @@ function calculateKPIs(
   salesData: any[],
   ytdRevenue: number,
   currentPeriod: { periodStart: Date; periodEnd: Date; nextPayDay: Date } | null,
-  levels: any[]
+  levels: any[],
+  employeeLevels: { user_id: string; stylist_level: string | null }[]
 ): PayrollKPIs {
   const activeEmployees = employeeSettings.filter(e => e.is_payroll_active);
   const activeEmployeeCount = activeEmployees.length;
@@ -121,11 +139,12 @@ function calculateKPIs(
 
   const laborCostRatio = ytdRevenue > 0 ? (ytdPayrollTotal / ytdRevenue) * 100 : 0;
 
-  const { forecast, tipsCollected } = calculateForecast(
+  const { forecast, tipsCollected, totalBasePay, totalCommissionPay } = calculateForecast(
     salesData,
     activeEmployees,
     currentPeriod,
-    levels
+    levels,
+    employeeLevels
   );
 
   const lastRun = payrollRuns.find(run => run.status === 'processed');
@@ -140,6 +159,8 @@ function calculateKPIs(
   const employerTaxBurden = forecast * 0.10;
   const overtimeHours = 0;
 
+  const baseVsCommissionPct = forecast > 0 ? (totalBasePay / forecast) * 100 : 0;
+
   return {
     nextPayrollForecast: forecast,
     forecastChange,
@@ -150,6 +171,7 @@ function calculateKPIs(
     activeEmployeeCount,
     overtimeHours,
     tipsCollected,
+    baseVsCommissionPct,
   };
 }
 
@@ -157,10 +179,11 @@ function calculateForecast(
   salesData: any[],
   employees: any[],
   currentPeriod: { periodStart: Date; periodEnd: Date; nextPayDay: Date } | null,
-  levels: any[]
-): { forecast: number; tipsCollected: number } {
+  levels: any[],
+  employeeLevels: { user_id: string; stylist_level: string | null }[]
+): { forecast: number; tipsCollected: number; totalBasePay: number; totalCommissionPay: number } {
   if (!currentPeriod || employees.length === 0) {
-    return { forecast: 0, tipsCollected: 0 };
+    return { forecast: 0, tipsCollected: 0, totalBasePay: 0, totalCommissionPay: 0 };
   }
 
   const today = new Date();
@@ -186,6 +209,8 @@ function calculateForecast(
 
   let totalForecast = 0;
   let totalTips = 0;
+  let totalBasePay = 0;
+  let totalCommissionPay = 0;
 
   for (const emp of employees) {
     const sales = employeeSales[emp.employee_id] || { services: 0, products: 0 };
@@ -199,7 +224,18 @@ function calculateForecast(
     const hoursPerPeriod = 80;
     
     if (emp.pay_type === 'hourly' || emp.pay_type === 'hourly_plus_commission') {
-      basePay = (emp.hourly_rate || 0) * hoursPerPeriod;
+      let rate = emp.hourly_rate || 0;
+      // Fallback: use level's hourly_wage if employee has no rate set
+      if (!rate) {
+        const empLevel = employeeLevels.find(el => el.user_id === emp.employee_id);
+        if (empLevel?.stylist_level) {
+          const matchedLevel = levels.find((l: any) => l.slug === empLevel.stylist_level);
+          if (matchedLevel?.hourly_wage_enabled && matchedLevel.hourly_wage) {
+            rate = matchedLevel.hourly_wage;
+          }
+        }
+      }
+      basePay = rate * hoursPerPeriod;
     } else if (emp.pay_type === 'salary' || emp.pay_type === 'salary_plus_commission') {
       basePay = (emp.salary_amount || 0) / 26;
     }
@@ -209,10 +245,12 @@ function calculateForecast(
       commissionPay = projectedServices * defaultSvcRate + projectedProducts * defaultRetailRate;
     }
 
+    totalBasePay += basePay;
+    totalCommissionPay += commissionPay;
     totalForecast += basePay + commissionPay;
   }
 
-  return { forecast: totalForecast, tipsCollected: totalTips };
+  return { forecast: totalForecast, tipsCollected: totalTips, totalBasePay, totalCommissionPay };
 }
 
 function calculateCompensationBreakdown(payrollRuns: any[]): CompensationBreakdown {

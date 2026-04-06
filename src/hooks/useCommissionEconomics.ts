@@ -13,12 +13,14 @@ export interface EconomicsAssumptions {
   target_margin_pct: number;       // e.g. 0.15 = 15%
   overhead_per_stylist: number;    // monthly $ overhead per stylist
   product_cost_pct: number;        // e.g. 0.10 = 10%
+  hours_per_month: number;         // default 160, adjustable for part-time modeling
 }
 
 const DEFAULT_ASSUMPTIONS: EconomicsAssumptions = {
   target_margin_pct: 0.15,
   overhead_per_stylist: 4000,
   product_cost_pct: 0.10,
+  hours_per_month: 160,
 };
 
 const SETTINGS_KEY = 'commission_economics_assumptions';
@@ -35,6 +37,7 @@ export function useEconomicsAssumptions() {
       target_margin_pct: typeof v.target_margin_pct === 'number' ? v.target_margin_pct : DEFAULT_ASSUMPTIONS.target_margin_pct,
       overhead_per_stylist: typeof v.overhead_per_stylist === 'number' ? v.overhead_per_stylist : DEFAULT_ASSUMPTIONS.overhead_per_stylist,
       product_cost_pct: typeof v.product_cost_pct === 'number' ? v.product_cost_pct : DEFAULT_ASSUMPTIONS.product_cost_pct,
+      hours_per_month: typeof v.hours_per_month === 'number' ? v.hours_per_month : DEFAULT_ASSUMPTIONS.hours_per_month,
     };
   }, [setting.data]);
 
@@ -161,9 +164,11 @@ export function useRevenueByLevel() {
 export function computeEconomics(
   serviceCommissionRate: number,
   assumptions: EconomicsAssumptions,
-  retailCommissionRate: number = 0
+  retailCommissionRate: number = 0,
+  hourlyWageCost: number = 0
 ) {
   const { overhead_per_stylist, product_cost_pct, target_margin_pct } = assumptions;
+  const totalFixedCost = overhead_per_stylist + hourlyWageCost;
   const variableCostRate = serviceCommissionRate + retailCommissionRate + product_cost_pct;
 
   // Guard: if variable costs eat ≥100% of revenue, no amount of revenue helps
@@ -174,13 +179,13 @@ export function computeEconomics(
   // Revenue needed just to cover costs (0% margin)
   const breakevenDenominator = 1 - variableCostRate;
   const breakevenRevenue = breakevenDenominator > 0
-    ? overhead_per_stylist / breakevenDenominator
+    ? totalFixedCost / breakevenDenominator
     : Infinity;
 
   // Revenue needed to hit target margin
   const targetDenominator = 1 - variableCostRate - target_margin_pct;
   const targetRevenue = targetDenominator > 0
-    ? overhead_per_stylist / targetDenominator
+    ? totalFixedCost / targetDenominator
     : Infinity;
 
   return { breakevenRevenue, targetRevenue };
@@ -194,12 +199,14 @@ export function computeMarginAtRevenue(
   revenue: number,
   serviceCommissionRate: number,
   assumptions: EconomicsAssumptions,
-  retailCommissionRate: number = 0
+  retailCommissionRate: number = 0,
+  hourlyWageCost: number = 0
 ): number {
   if (revenue <= 0) return -1;
   const { overhead_per_stylist, product_cost_pct } = assumptions;
+  const totalFixedCost = overhead_per_stylist + hourlyWageCost;
   const variableCost = revenue * (serviceCommissionRate + retailCommissionRate + product_cost_pct);
-  const profit = revenue - variableCost - overhead_per_stylist;
+  const profit = revenue - variableCost - totalFixedCost;
   return profit / revenue;
 }
 
