@@ -9375,6 +9375,54 @@ export type Database = {
           },
         ]
       }
+      level_progress_snapshots: {
+        Row: {
+          composite_score: number
+          created_at: string
+          criteria_snapshot: Json | null
+          id: string
+          organization_id: string
+          snapshot_month: string
+          stylist_level_id: string | null
+          user_id: string
+        }
+        Insert: {
+          composite_score?: number
+          created_at?: string
+          criteria_snapshot?: Json | null
+          id?: string
+          organization_id: string
+          snapshot_month: string
+          stylist_level_id?: string | null
+          user_id: string
+        }
+        Update: {
+          composite_score?: number
+          created_at?: string
+          criteria_snapshot?: Json | null
+          id?: string
+          organization_id?: string
+          snapshot_month?: string
+          stylist_level_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "level_progress_snapshots_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "level_progress_snapshots_stylist_level_id_fkey"
+            columns: ["stylist_level_id"]
+            isOneToOne: false
+            referencedRelation: "stylist_levels"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       level_promotion_criteria: {
         Row: {
           avg_ticket_enabled: boolean
