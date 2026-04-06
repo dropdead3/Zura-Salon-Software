@@ -12,6 +12,7 @@ export interface StylistLevel {
   description: string | null;
   display_order: number;
   is_active: boolean;
+  is_configured: boolean;
   service_commission_rate: number | null;
   retail_commission_rate: number | null;
   hourly_wage_enabled: boolean;
