@@ -1823,10 +1823,10 @@ export function StylistLevelsEditor({ embedded = false, onActions }: StylistLeve
                     <Button
                       variant="outline"
                       size={tokens.button.inline}
-                      className="h-7 border-dashed text-xs"
+                      className="h-8 px-4 border-dashed border-primary/40 text-sm text-primary hover:bg-primary/10 hover:border-primary/60"
                       onClick={() => setIsAddingNew(true)}
                     >
-                      <Plus className="w-3.5 h-3.5 mr-1" />
+                      <Plus className="w-4 h-4 mr-1.5" />
                       Add Level
                     </Button>
                   )}
