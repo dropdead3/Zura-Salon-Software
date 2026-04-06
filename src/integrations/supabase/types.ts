@@ -20834,6 +20834,7 @@ export type Database = {
           hourly_wage_enabled: boolean
           id: string
           is_active: boolean
+          is_configured: boolean
           label: string
           organization_id: string
           retail_commission_rate: number | null
@@ -20850,6 +20851,7 @@ export type Database = {
           hourly_wage_enabled?: boolean
           id?: string
           is_active?: boolean
+          is_configured?: boolean
           label: string
           organization_id: string
           retail_commission_rate?: number | null
@@ -20866,6 +20868,7 @@ export type Database = {
           hourly_wage_enabled?: boolean
           id?: string
           is_active?: boolean
+          is_configured?: boolean
           label?: string
           organization_id?: string
           retail_commission_rate?: number | null
