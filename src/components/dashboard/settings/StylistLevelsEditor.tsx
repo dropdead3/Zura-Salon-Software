@@ -43,6 +43,7 @@ import {
   Clock,
   Maximize2,
   Minimize2,
+  Check,
 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -58,7 +59,9 @@ import { toast } from 'sonner';
 import {
   useStylistLevels, 
   useSaveStylistLevels,
+  useUpdateStylistLevel,
 } from '@/hooks/useStylistLevels';
+import { LevelRoadmapView } from '@/components/dashboard/settings/LevelRoadmapView';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 import { PageExplainer } from '@/components/ui/PageExplainer';
 import { GraduationWizard, getZuraDefaults, getZuraRetentionDefaults } from '@/components/dashboard/settings/GraduationWizard';
