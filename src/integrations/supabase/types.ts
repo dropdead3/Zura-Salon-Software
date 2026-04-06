@@ -13774,6 +13774,24 @@ export type Database = {
           },
         ]
       }
+      pin_attempt_log: {
+        Row: {
+          attempted_at: string
+          id: string
+          target_org_id: string | null
+        }
+        Insert: {
+          attempted_at?: string
+          id?: string
+          target_org_id?: string | null
+        }
+        Update: {
+          attempted_at?: string
+          id?: string
+          target_org_id?: string | null
+        }
+        Relationships: []
+      }
       platform_audit_log: {
         Row: {
           action: string
