@@ -1736,6 +1736,19 @@ export function StylistLevelsEditor({ embedded = false, onActions }: StylistLeve
 
   const totalAssigned = Object.values(stylistsByLevel || {}).reduce((a, b) => a + b, 0);
 
+  if (isEarlyExit) {
+    if (isLoading) return <DashboardLoader className="min-h-[400px]" />;
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
+        <p className="text-destructive">Failed to load stylist levels</p>
+        <Button variant="outline" onClick={() => refetch()}>
+          <RefreshCw className="w-4 h-4 mr-2" />
+          Retry
+        </Button>
+      </div>
+    );
+  }
+
   return (
     <>
       <div className={cn("space-y-6", !embedded && "p-6 max-w-5xl mx-auto")}>
