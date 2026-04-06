@@ -194,6 +194,23 @@ function ScrollableTableWrapper({ children, isFullscreen, onToggleFullscreen }: 
               <ChevronRight className="w-4 h-4" />
             </button>
           )}
+          {/* Bottom-edge scroll indicator */}
+          <div
+            className={cn(
+              'absolute bottom-0 left-0 right-0 h-12 pointer-events-none transition-opacity duration-200',
+              'bg-gradient-to-t from-background to-transparent',
+              canScrollDown ? 'opacity-100' : 'opacity-0'
+            )}
+          />
+          {canScrollDown && (
+            <button
+              onClick={() => scrollRef.current?.scrollBy({ top: 200, behavior: 'smooth' })}
+              className="absolute bottom-2 left-1/2 -translate-x-1/2 z-20 w-7 h-7 rounded-full bg-muted/80 backdrop-blur-sm border border-border/60 flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+              aria-label="Scroll down"
+            >
+              <ChevronDown className="w-4 h-4" />
+            </button>
+          )}
         </div>
       </div>
     );
@@ -227,6 +244,23 @@ function ScrollableTableWrapper({ children, isFullscreen, onToggleFullscreen }: 
           aria-label="Scroll right"
         >
           <ChevronRight className="w-4 h-4" />
+        </button>
+      )}
+      {/* Bottom-edge scroll indicator */}
+      <div
+        className={cn(
+          'absolute bottom-0 left-0 right-0 h-12 pointer-events-none transition-opacity duration-200 rounded-b-xl',
+          'bg-gradient-to-t from-card to-transparent',
+          canScrollDown ? 'opacity-100' : 'opacity-0'
+        )}
+      />
+      {canScrollDown && (
+        <button
+          onClick={() => scrollRef.current?.scrollBy({ top: 200, behavior: 'smooth' })}
+          className="absolute bottom-2 left-1/2 -translate-x-1/2 z-20 w-7 h-7 rounded-full bg-muted/80 backdrop-blur-sm border border-border/60 flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+          aria-label="Scroll down"
+        >
+          <ChevronDown className="w-4 h-4" />
         </button>
       )}
     </div>
