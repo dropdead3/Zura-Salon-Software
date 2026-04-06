@@ -1,39 +1,30 @@
 
 
-# Wire Wizard and Inline Matrix Together
+# Improve Inline KPI Input Visibility
 
 ## Problem
 
-The inline criteria matrix (table) and the per-level GraduationWizard are two separate UIs editing the same `level_promotion_criteria` data, but they can get out of sync. The inline table saves via raw Supabase calls, while the wizard uses dedicated mutation hooks — and the wizard doesn't always reflect values saved from the matrix.
+The editing inputs in the criteria matrix have poor contrast — dark background with dark text and small size makes values nearly unreadable during editing. The `$ 500`, `$ 750` etc. are barely visible against the dark card background.
 
-## Root Cause
+## Solution
 
-Two issues:
+Improve the inline input cells with better contrast, slightly larger sizing, and clearer visual separation when in edit mode.
 
-1. **Inline table bypasses the mutation hooks** — it calls `supabase.from('level_promotion_criteria').upsert(...)` directly (StylistLevelsEditor.tsx ~line 412), then manually invalidates queries. This works for the table's own parent query but can miss the wizard's per-level query key if timing is off.
+### Changes to `StylistLevelsEditor.tsx`
 
-2. **Wizard defaults to INITIAL_STATE when no `existing` data is found** — if the per-level query hasn't re-fetched after an inline save, the wizard shows all toggles as OFF even though data exists in the DB.
+**Input styling (lines 539-556)**:
+- Increase input width from `w-[72px]` to `w-[90px]` and height from `h-7` to `h-8`
+- Add explicit light background: `bg-background text-foreground` so the value is always readable regardless of theme
+- Bump text size from `text-xs` to `text-sm` for better legibility
+- Increase the `$` and `%` prefix/suffix size from `text-[10px]` to `text-xs`
+- Add a stronger border: `border-border/80` for clearer input boundaries
 
-## Fix
+**Edit row highlight (lines 613-614)**:
+- Strengthen the active row background from `bg-primary/5` to `bg-primary/8` for better visual grouping
+- Make the ring slightly more visible: `ring-primary/30`
 
-### A. Inline table: use the same upsert mutation hook
+**Cell padding (line 522)**:
+- Increase cell padding from `px-1.5 py-1.5` to `px-2 py-2` for breathing room
 
-Replace the raw `supabase.from().upsert()` calls inside `saveMetricRow` with `useUpsertLevelPromotionCriteria` and `useUpsertLevelRetentionCriteria`. This ensures cache invalidation is consistent — same hooks, same query key invalidation, same toast feedback.
-
-Since the inline save iterates multiple levels, we'll call the mutation sequentially (awaiting each with `mutateAsync`), which matches the existing behavior but routes through the shared hooks.
-
-### B. Ensure wizard query keys match invalidation
-
-Verify that `useLevelPromotionCriteriaForLevel` query key `['level-promotion-criteria', orgId, stylistLevelId]` is invalidated when the parent key `['level-promotion-criteria', orgId]` is invalidated. React Query matches by prefix, so this should already work — but we'll add an explicit `await queryClient.invalidateQueries({ queryKey: ['level-promotion-criteria'] })` (no orgId suffix) as a safety net in the inline save path.
-
-### C. Wizard: await fresh data before hydrating
-
-Add `refetchOnMount: 'always'` to `useLevelPromotionCriteriaForLevel` when the wizard is open, ensuring it always hits the server when opened rather than relying on potentially stale cache.
-
-## Files Modified
-
-- `src/components/dashboard/settings/StylistLevelsEditor.tsx` — refactor `saveMetricRow` to use mutation hooks instead of raw Supabase calls
-- `src/hooks/useLevelPromotionCriteria.ts` — add `refetchOnMount: 'always'` to the per-level query
-
-## No Database Changes
+### No other files changed. No database changes.
 
