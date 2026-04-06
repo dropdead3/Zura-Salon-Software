@@ -2238,6 +2238,16 @@ export function StylistLevelsEditor({ embedded = false }: StylistLevelsEditorPro
                   setWizardLevelLabel(level.label);
                   setWizardLevelIndex(index);
                 }}
+                onCompensationChange={(index, field, value) => {
+                  const newLevels = [...levels];
+                  if (field === 'hourlyWageEnabled') {
+                    newLevels[index] = { ...newLevels[index], hourlyWageEnabled: value as boolean };
+                  } else {
+                    newLevels[index] = { ...newLevels[index], [field]: value as string };
+                  }
+                  setLevels(newLevels);
+                  setHasChanges(true);
+                }}
               />
             )}
           </TabsContent>
