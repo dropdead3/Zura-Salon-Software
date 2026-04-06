@@ -1,0 +1,1 @@
+DROP POLICY IF EXISTS "Anyone can view earned achievements" ON public.user_achievements;
