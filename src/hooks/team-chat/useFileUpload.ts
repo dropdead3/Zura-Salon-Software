@@ -53,9 +53,10 @@ export function useFileUpload() {
 
       if (uploadError) throw uploadError;
 
-      const { data: { publicUrl } } = supabase.storage
+      const { data: signedData } = await supabase.storage
         .from('chat-attachments')
-        .getPublicUrl(fileName);
+        .createSignedUrl(fileName, 60 * 60 * 24 * 7); // 7 day signed URL
+      const publicUrl = signedData?.signedUrl || '';
 
       // Save attachment record
       const { data, error } = await supabase

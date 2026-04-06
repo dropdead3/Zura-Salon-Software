@@ -195,9 +195,9 @@ export function useWeeklyAssignments(enrollmentId: string | undefined, currentDa
       return null;
     }
 
-    const { data: urlData } = supabase.storage
+    const { data: urlData } = await supabase.storage
       .from('proof-uploads')
-      .getPublicUrl(fileName);
+      .createSignedUrl(fileName, 60 * 60 * 24 * 30); // 30 day signed URL
 
     // Update or create completion record with proof URL
     const existing = completions.find((c) => c.assignment_id === assignmentId);
