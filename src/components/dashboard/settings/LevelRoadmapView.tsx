@@ -1,6 +1,6 @@
 import { useRef } from 'react';
 import { Badge } from '@/components/ui/badge';
-import { X, FileDown, Printer, Check, AlertTriangle, ArrowRight, Shield, Clock, Users } from 'lucide-react';
+import { X, FileDown, Printer, Check, AlertTriangle, ChevronRight, Shield, Clock, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { getLevelColor } from '@/lib/level-colors';
 import type { LevelPromotionCriteria } from '@/hooks/useLevelPromotionCriteria';
