@@ -643,6 +643,9 @@ function CriteriaComparisonTable({ levels, promotionCriteria, retentionCriteria,
         )}>
           <div className="flex items-center gap-1.5">
             <span>{metric.label}</span>
+            {!isEditingRow && METRIC_TOOLTIPS[metric.label] && (
+              <MetricInfoTooltip description={METRIC_TOOLTIPS[metric.label]} side="right" />
+            )}
             {isEditingRow && (
               <div className="flex items-center gap-1.5 ml-auto">
                 {autoStepAvailable && (
