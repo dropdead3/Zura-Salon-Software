@@ -1166,7 +1166,7 @@ export function StylistLevelsEditor({ embedded = false }: StylistLevelsEditorPro
                   >
                     {/* Collapsed header row — grid layout for column alignment */}
                     <div
-                      className="grid grid-cols-[auto_auto_1fr_7rem_6rem_5rem_auto] items-center px-3 py-2 cursor-pointer select-none"
+                      className="grid grid-cols-[auto_auto_1fr_7rem_6rem_5rem_5rem_auto] items-center px-3 py-2 cursor-pointer select-none"
                       onClick={(e) => {
                         if ((e.target as HTMLElement).closest('button, input, [role="dialog"]')) return;
                         toggleExpanded(level.id);
