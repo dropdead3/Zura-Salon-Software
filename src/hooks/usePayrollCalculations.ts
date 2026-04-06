@@ -122,7 +122,8 @@ export function usePayrollCalculations() {
     salesData: EmployeeSalesData | undefined,
     adjustments: EmployeeAdjustments | undefined,
     weeksInPeriod: number = 2,
-    employeeLevelSlug?: string | null
+    employeeLevelSlug?: string | null,
+    resolveCommissionFn?: (userId: string, serviceRevenue: number, productRevenue: number) => ResolvedCommission
   ): EmployeeCompensation => {
     let hourlyRate = settings.hourly_rate || 0;
     // Fallback: use level's hourly_wage if employee has no rate set
@@ -157,13 +158,29 @@ export function usePayrollCalculations() {
         payType === 'hourly_plus_commission' ||
         payType === 'salary_plus_commission')
     ) {
-      const commission = calculateCommission(
-        salesData.serviceRevenue,
-        salesData.productRevenue
-      );
-      serviceCommission = commission.serviceCommission;
-      productCommission = commission.productCommission;
-      commissionPay = commission.totalCommission;
+      if (resolveCommissionFn) {
+        // Use the 4-tier resolution: override → location → level → unassigned
+        const resolved = resolveCommissionFn(
+          settings.employee_id,
+          salesData.serviceRevenue,
+          salesData.productRevenue
+        );
+        serviceCommission = resolved.serviceCommission;
+        productCommission = resolved.retailCommission;
+        commissionPay = resolved.totalCommission;
+      } else {
+        // Fallback: use level default rates when no resolver provided
+        if (employeeLevelSlug && levels) {
+          const matchedLevel = levels.find(l => l.slug === employeeLevelSlug);
+          if (matchedLevel) {
+            const svcRate = matchedLevel.service_commission_rate ?? 0;
+            const retailRate = matchedLevel.retail_commission_rate ?? 0;
+            serviceCommission = salesData.serviceRevenue * svcRate;
+            productCommission = salesData.productRevenue * retailRate;
+            commissionPay = serviceCommission + productCommission;
+          }
+        }
+      }
     }
 
     const bonus = adjustments?.bonus || 0;
