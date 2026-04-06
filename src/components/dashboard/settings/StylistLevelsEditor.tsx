@@ -671,7 +671,19 @@ function CriteriaComparisonTable({ levels, promotionCriteria, retentionCriteria,
       );
     }
 
-    const val = metric.getValue(promo, retention, levelIdx);
+    // For base level editable KPIs, show retention minimum values instead of promotion thresholds
+    let val: string | null;
+    if (isBaseLevelRetention && fieldMapping && retention) {
+      const enabled = retention[fieldMapping.retEnabledField] as boolean;
+      const numVal = retention[fieldMapping.retValueField] as number;
+      if (enabled && numVal > 0) {
+        val = fieldMapping.isCurrency ? fmtCurrency(numVal) : fieldMapping.isPercent ? `${numVal}%` : fieldMapping.suffix ? `${numVal}${fieldMapping.suffix}` : String(numVal);
+      } else {
+        val = null;
+      }
+    } else {
+      val = metric.getValue(promo, retention, levelIdx);
+    }
     const warn = levelIdx > 0 && !(metric.section === 'promotion' && isBaseLevel) && hasInconsistency(mIdx, levelIdx);
 
     return (
