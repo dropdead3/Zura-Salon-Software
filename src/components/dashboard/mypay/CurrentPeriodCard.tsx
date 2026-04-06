@@ -9,6 +9,7 @@ import { useFormatDate } from '@/hooks/useFormatDate';
 import { CalendarDays, TrendingUp } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
+import { Badge } from '@/components/ui/badge';
 
 interface CurrentPeriodCardProps {
   currentPeriod: CurrentPeriod;
@@ -18,7 +19,7 @@ interface CurrentPeriodCardProps {
 
 export function CurrentPeriodCard({ currentPeriod, estimatedCompensation, settings }: CurrentPeriodCardProps) {
   const { formatDate: formatDateLocale } = useFormatDate();
-  const { formatCurrencyWhole } = useFormatCurrency();
+  const { formatCurrencyWhole, formatCurrency } = useFormatCurrency();
 
   const formatDate = (dateStr: string): string => {
     try {
@@ -28,6 +29,9 @@ export function CurrentPeriodCard({ currentPeriod, estimatedCompensation, settin
     }
   };
   const comp = estimatedCompensation;
+
+  // Determine if hourly rate is from level fallback
+  const isLevelRate = comp && comp.hourlyPay > 0 && !settings.hourly_rate && comp.hourlyRate;
   
   return (
     <Card>
@@ -55,13 +59,27 @@ export function CurrentPeriodCard({ currentPeriod, estimatedCompensation, settin
           <>
             {/* Base Pay Section */}
             {(comp.hourlyPay > 0 || comp.salaryPay > 0) && (
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-muted-foreground">
-                  {comp.salaryPay > 0 ? 'Salary' : 'Hourly Pay'}
-                </span>
-                <BlurredAmount className="text-sm">
-                  {formatCurrencyWhole(comp.salaryPay > 0 ? comp.salaryPay : comp.hourlyPay)}
-                </BlurredAmount>
+              <div className="space-y-1">
+                <div className="flex justify-between items-center">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-sm text-muted-foreground">
+                      {comp.salaryPay > 0 ? 'Salary' : 'Hourly Pay'}
+                    </span>
+                    {isLevelRate && (
+                      <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4">
+                        Level Rate
+                      </Badge>
+                    )}
+                  </div>
+                  <BlurredAmount className="text-sm">
+                    {formatCurrencyWhole(comp.salaryPay > 0 ? comp.salaryPay : comp.hourlyPay)}
+                  </BlurredAmount>
+                </div>
+                {comp.hourlyPay > 0 && comp.hourlyRate && (
+                  <p className="text-[10px] text-muted-foreground text-right">
+                    {comp.regularHours} hrs × {formatCurrency(comp.hourlyRate)}/hr
+                  </p>
+                )}
               </div>
             )}
 

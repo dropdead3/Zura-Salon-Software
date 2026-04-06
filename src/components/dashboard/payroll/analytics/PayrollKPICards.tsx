@@ -6,7 +6,8 @@ import {
   Percent,
   Clock,
   Building2,
-  Wallet
+  Wallet,
+  Scale,
 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -92,6 +93,9 @@ function KPICard({ title, value, subtitle, trend, icon: Icon, iconClassName, isL
 
 export function PayrollKPICards({ kpis, isLoading }: PayrollKPICardsProps) {
   const { currency } = useFormatCurrency();
+
+  const commissionPct = 100 - kpis.baseVsCommissionPct;
+
   return (
     <BentoGrid maxPerRow={4} gap="gap-4">
       <KPICard
@@ -131,6 +135,18 @@ export function PayrollKPICards({ kpis, isLoading }: PayrollKPICardsProps) {
         isLoading={isLoading}
       />
       <KPICard
+        title="Base vs Commission"
+        tooltipDescription="Ratio of base pay (hourly + salary) to commission in the current forecast. Helps understand your compensation structure mix — higher base % means more fixed costs."
+        value={
+          <span className="tabular-nums">
+            {kpis.baseVsCommissionPct.toFixed(0)}% / {commissionPct.toFixed(0)}%
+          </span>
+        }
+        subtitle="base / commission"
+        icon={Scale}
+        isLoading={isLoading}
+      />
+      <KPICard
         title="Commission Ratio"
         tooltipDescription="Commission paid as a percentage of total gross pay. Reflects how much of compensation is performance-based."
         value={<AnimatedNumber value={kpis.commissionRatio} decimals={1} suffix="%" className="tabular-nums" />}
@@ -158,14 +174,6 @@ export function PayrollKPICards({ kpis, isLoading }: PayrollKPICardsProps) {
         value={<AnimatedNumber value={kpis.activeEmployeeCount} className="tabular-nums" />}
         subtitle="on payroll"
         icon={Users}
-        isLoading={isLoading}
-      />
-      <KPICard
-        title="Overtime Hours"
-        tooltipDescription="Total overtime hours logged across all hourly employees in the current pay period."
-        value={<AnimatedNumber value={kpis.overtimeHours} suffix=" hrs" className="tabular-nums" />}
-        subtitle="this period"
-        icon={Clock}
         isLoading={isLoading}
       />
       <KPICard
