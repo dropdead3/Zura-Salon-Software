@@ -1,59 +1,49 @@
 
-Good catch — your prompt is strong because it points to the actual user-facing failure (“still not accurately printing the correct thing”) instead of prescribing a specific fix too early. An even stronger version would say: “Investigate why print preview still includes the settings page before the roadmap overlay; fix so only the roadmap renders in print.” That frames the bug, expected behavior, and symptom in one sentence.
 
-## What’s actually happening
-The current fix is only partially scoped.
+# Enhance Level Roadmap PDF to Match Digital Preview
 
-- `LevelRoadmapView` is rendered inline from `StylistLevelsEditor.tsx`, not in a separate print window or portal.
-- The print CSS hides only `#root > *` siblings that do not contain `[data-roadmap-print]`.
-- But the roadmap lives inside the same app subtree as the settings page, so its ancestors still include the entire settings screen.
-- In print mode, the roadmap overlay is changed to `position: static`, which makes it flow as normal page content after the parent page instead of replacing it.
+## Problem
+The current PDF uses a dark header bar, cramped spacing, and basic helvetica styling that diverges from the digital roadmap's clean, centered, airy aesthetic. The user wants the PDF to closely resemble the screenshot — centered org header, refined timeline, spacious cards with proper section hierarchy.
 
-That matches your screenshot: the browser is printing the settings page first, with the roadmap effectively treated as content inside that page.
+## Changes (single file: `LevelRequirementsPDF.ts`)
 
-## Best fix
-Use a dedicated print-only document instead of trying to hide the rest of the app in-place.
+### 1. Header — Match digital's centered layout
+- Remove the dark background bar
+- Center: org name (large, uppercase, tracked), "Level Graduation Roadmap" subtitle (small, tracked), "Generated: date" below
+- "X Levels" badge aligned right on the same line as the subtitle
 
-### Recommended implementation
-1. Keep the existing roadmap overlay for on-screen viewing.
-2. Replace the current `handlePrint` behavior with a new print flow that opens a temporary print window.
-3. Render only the roadmap markup into that window:
-   - copy the roadmap content from `contentRef`
-   - inject minimal print-safe styles
-   - include font and base styling needed for the document
-   - call `print()` from the new window
-4. Remove the current global `printing-roadmap` CSS approach, or leave it unused as fallback.
+### 2. Timeline — Refine to match digital
+- Larger node circles with proper ring effect (double-circle for "configured" nodes)
+- Thicker connector lines with chevron-like gaps between nodes
+- Better label spacing and truncation
 
-## Why this is the right approach
-- Guarantees only the roadmap prints
-- Avoids fighting nested app layout and fixed overlays
-- Prevents dashboard/sidebar/settings content from leaking into print
-- Makes print behavior deterministic across browsers
-- Keeps the digital preview and printed document decoupled
+### 3. Summary Stats — More generous padding
+- Taller stat boxes with more internal whitespace
+- Larger value text, matching the digital's `text-2xl` proportions
 
-## Files to update
+### 4. Level Detail Cards — Closer to digital cards
+- Thicker accent bar (2mm instead of 2mm but with rounded top corners)
+- More internal padding (match the p-5 feel)
+- Section headers: "COMPENSATION", "GRADUATION REQUIREMENTS", "RETENTION POLICY" with wider tracking (matching `tracking-widest`)
+- KPI grid cells: taller with more breathing room, label above value
+- Compensation displayed as `Service: 45%  ·  Retail: 20%` with the label/value pattern from the digital view
+- Evaluation details with bullet-dot separators
+- Retention policy with colored action type text
+
+### 5. Footer — Lighter, centered
+- Centered confidential text matching the digital footer style
+- Page numbering maintained
+
+### 6. Typography improvements
+- Use consistent font sizing hierarchy: 14pt card titles, 7pt section headers, 9pt values
+- Increase line spacing throughout
+- More generous margins between sections
+
+## Files
+
 | File | Action |
 |------|--------|
-| `src/components/dashboard/settings/LevelRoadmapView.tsx` | Replace in-place `window.print()` flow with isolated print-window generation using `contentRef` |
-| `src/index.css` | Remove or simplify the current `printing-roadmap` rules since they are not sufficient for nested rendering |
+| `src/components/dashboard/settings/LevelRequirementsPDF.ts` | Rewrite styling to match digital roadmap aesthetic |
 
-## Implementation notes
-- Print the document body content only, not the sticky action bar
-- Use `contentRef` as the exact print source
-- Ensure accordion content is fully expanded in the print window
-- Preserve page-break classes/styles for cards
-- Include a document title like `Level Roadmap - {orgName}`
-- Add a short delay or `onload` before `print()` so styles are applied
+No new files, no database changes.
 
-## Optional fallback
-If you want an even more robust long-term path, the print button could print the already-generated PDF instead of the live DOM. But for now, the cleanest fix is a dedicated print window containing only the roadmap HTML.
-
-## Prompt improvement for next time
-A tighter debugging prompt you can use:
-“Investigate the print preview bug: the Level Roadmap print action still includes the parent settings page. I need the print output to contain only the roadmap document itself, with no dashboard or settings content.”
-
-## Further enhancements after this fix
-- Add a print-specific header/footer with organization name and page numbers
-- Add a “Print current roadmap” vs “Download polished PDF” distinction so users understand the difference
-- Make the print view force-expand all accordion sections regardless of on-screen state
-- Add print QA for 10+ level roadmaps so pagination stays clean
