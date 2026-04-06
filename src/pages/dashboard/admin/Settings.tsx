@@ -738,139 +738,139 @@ export default function Settings() {
     'my-profile': {
       id: 'my-profile',
       label: 'My Profile',
-      description: 'Photo, bio & professional details',
+      description: 'Manage your profile photo, bio, specialties, and professional details visible to clients and teammates.',
       icon: Users,
     },
-    business: {
+    'business': {
       id: 'business',
       label: 'Business',
-      description: 'Name, logo, address & EIN',
+      description: 'Configure your business name, logo, address, EIN, and other organization-level identity details.',
       icon: Building2,
     },
-    email: {
+    'email': {
       id: 'email',
       label: 'Email',
-      description: 'Templates, variables & signatures',
+      description: 'Customize email templates, merge variables, sender signatures, and default communication settings.',
       icon: Mail,
     },
-    users: {
+    'users': {
       id: 'users',
       label: 'Users',
-      description: 'Team members & roles',
+      description: 'Add, remove, and manage team members. Assign roles and control access levels across the organization.',
       icon: Users,
     },
-    onboarding: {
+    'onboarding': {
       id: 'onboarding',
       label: 'Onboarding',
-      description: 'Tasks, handbooks & role configuration',
+      description: 'Define onboarding task lists, handbooks, and role-specific configuration for new team members.',
       icon: Rocket,
     },
-    leaderboard: {
+    'leaderboard': {
       id: 'leaderboard',
       label: 'Leaderboard',
-      description: 'Scoring weights & achievements',
+      description: 'Set scoring weights for KPIs, configure achievement badges, and customize how team performance is ranked.',
       icon: Trophy,
     },
-    integrations: {
+    'integrations': {
       id: 'integrations',
       label: 'Integrations',
-      description: 'Third-party connections',
+      description: 'Connect and manage third-party services such as POS systems, payment processors, and marketing platforms.',
       icon: Plug,
     },
-    system: {
+    'system': {
       id: 'system',
       label: 'System',
-      description: 'Appearance, notifications & security',
+      description: 'Control appearance themes, notification preferences, security settings, and global platform behavior.',
       icon: Cog,
     },
-    program: {
+    'program': {
       id: 'program',
       label: 'Program Editor',
-      description: 'Client Engine course configuration',
+      description: 'Build and edit Client Engine courses, modules, and learning paths for structured team development.',
       icon: GraduationCap,
     },
-    levels: {
+    'levels': {
       id: 'levels',
       label: 'Stylist Levels',
-      description: 'Experience tiers & pricing',
+      description: 'Define experience tiers, associate pricing multipliers, and set promotion criteria for stylists.',
       icon: Layers,
     },
     'access-hub': {
       id: 'access-hub',
       label: 'Roles & Controls Hub',
-      description: 'Modules, role visibility & permissions',
+      description: 'Configure which modules, pages, and features are visible to each role. Manage granular permissions.',
       icon: Shield,
     },
-    locations: {
+    'locations': {
       id: 'locations',
       label: 'Locations',
-      description: 'Salon addresses, hours & holidays',
+      description: 'Manage salon addresses, operating hours, holiday schedules, and location-specific settings.',
       icon: MapPin,
     },
-    dayrate: {
+    'dayrate': {
       id: 'dayrate',
       label: 'Day Rate',
-      description: 'Chair rentals, pricing & agreements',
+      description: 'Configure chair rental pricing, day-rate agreements, and independent contractor billing terms.',
       icon: Armchair,
     },
-    sms: {
+    'sms': {
       id: 'sms',
       label: 'Text Messages',
-      description: 'SMS templates & automation',
+      description: 'Create and manage SMS templates, automated text sequences, and messaging rules for client communication.',
       icon: MessageSquare,
     },
     'service-flows': {
       id: 'service-flows',
       label: 'Service Flows',
-      description: 'Automated emails & texts per service',
+      description: 'Design automated email and text sequences triggered by specific services, appointments, or client actions.',
       icon: Sparkles,
     },
-    forms: {
+    'forms': {
       id: 'forms',
       label: 'Forms',
-      description: 'Client agreements & waivers',
+      description: 'Create and manage client-facing agreements, consultation forms, waivers, and intake documents.',
       icon: FileCheck,
     },
-    loyalty: {
+    'loyalty': {
       id: 'loyalty',
       label: 'Client Rewards',
-      description: 'Points, tiers & gift cards',
+      description: 'Configure loyalty point earning rules, reward tiers, gift card settings, and client incentive programs.',
       icon: Gift,
     },
-    feedback: {
+    'feedback': {
       id: 'feedback',
       label: 'Feedback Settings',
-      description: 'Review thresholds & platform links',
+      description: 'Set review request thresholds, configure platform review links, and manage client feedback collection.',
       icon: MessageSquareHeart,
     },
     'team-rewards': {
       id: 'team-rewards',
       label: 'Team Rewards',
-      description: 'Staff points economy & reward catalog',
+      description: 'Manage the staff points economy, define reward catalog items, and set earning rules for team incentives.',
       icon: Gift,
     },
-    kiosk: {
+    'kiosk': {
       id: 'kiosk',
       label: 'Kiosks',
-      description: 'Check-in, self-service booking & device configuration',
+      description: 'Set up check-in kiosks, self-service booking terminals, and configure device-specific display settings.',
       icon: TabletSmartphone,
     },
-    services: {
+    'services': {
       id: 'services',
       label: 'Services',
-      description: 'Categories, services & pricing',
+      description: 'Manage service categories, individual services, durations, and pricing across all locations.',
       icon: Scissors,
     },
     'retail-products': {
       id: 'retail-products',
       label: 'Retail Products',
-      description: 'Brands, categories, inventory & pricing',
+      description: 'Manage product brands, categories, inventory levels, pricing, and retail display configurations.',
       icon: ShoppingBag,
     },
     'account-billing': {
       id: 'account-billing',
       label: 'Account & Billing',
-      description: 'Subscription, payments & invoices',
+      description: 'View and manage your subscription plan, payment methods, invoices, and billing history.',
       icon: Wallet,
     },
   };
