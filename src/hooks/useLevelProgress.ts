@@ -308,10 +308,13 @@ export function useLevelProgress(userId: string | undefined) {
     };
 
     if (retentionCriteria) {
+      // Read KPI thresholds from promotion criteria for the CURRENT level (not next)
+      const currentPromoCriteria = allCriteria.find(c => c.stylist_level_id === currentLevel.id && c.is_active) || null;
       const retMetrics = computeMetrics(retentionCriteria.evaluation_window_days);
       const failures: RetentionStatus['failures'] = [];
 
       // Helper: resolve a retention criteria minimum with location/group overrides
+      // Now sources KPI values from promotion criteria
       const resolveRet = (field: string, orgDefault: number): number => {
         if (!currentLevel) return orgDefault;
         return resolveCriteriaValue(
@@ -320,36 +323,37 @@ export function useLevelProgress(userId: string | undefined) {
         ).value;
       };
 
-      if (retentionCriteria.revenue_enabled) {
-        const min = resolveRet('revenue_minimum', retentionCriteria.revenue_minimum);
+      // Use promotion criteria enabled flags and thresholds as retention minimums
+      if (currentPromoCriteria?.revenue_enabled) {
+        const min = resolveRet('revenue_minimum', currentPromoCriteria.revenue_threshold);
         if (retMetrics.monthlyRevenue < min) failures.push({ key: 'revenue', label: 'Service Revenue', current: Math.round(retMetrics.monthlyRevenue), minimum: min, unit: '/mo' });
       }
-      if (retentionCriteria.retail_enabled) {
-        const min = resolveRet('retail_pct_minimum', retentionCriteria.retail_pct_minimum);
+      if (currentPromoCriteria?.retail_enabled) {
+        const min = resolveRet('retail_pct_minimum', currentPromoCriteria.retail_pct_threshold);
         if (retMetrics.retailPct < min) failures.push({ key: 'retail', label: 'Retail Attachment', current: Math.round(retMetrics.retailPct * 10) / 10, minimum: min, unit: '%' });
       }
-      if (retentionCriteria.rebooking_enabled) {
-        const min = resolveRet('rebooking_pct_minimum', retentionCriteria.rebooking_pct_minimum);
+      if (currentPromoCriteria?.rebooking_enabled) {
+        const min = resolveRet('rebooking_pct_minimum', currentPromoCriteria.rebooking_pct_threshold);
         if (retMetrics.rebookingPct < min) failures.push({ key: 'rebooking', label: 'Rebooking Rate', current: Math.round(retMetrics.rebookingPct * 10) / 10, minimum: min, unit: '%' });
       }
-      if (retentionCriteria.avg_ticket_enabled) {
-        const min = resolveRet('avg_ticket_minimum', retentionCriteria.avg_ticket_minimum);
+      if (currentPromoCriteria?.avg_ticket_enabled) {
+        const min = resolveRet('avg_ticket_minimum', currentPromoCriteria.avg_ticket_threshold);
         if (retMetrics.avgTicket < min) failures.push({ key: 'avg_ticket', label: 'Average Ticket', current: Math.round(retMetrics.avgTicket), minimum: min, unit: '$' });
       }
-      if (retentionCriteria.retention_rate_enabled) {
-        const min = resolveRet('retention_rate_minimum', Number(retentionCriteria.retention_rate_minimum));
+      if (currentPromoCriteria?.retention_rate_enabled) {
+        const min = resolveRet('retention_rate_minimum', Number(currentPromoCriteria.retention_rate_threshold));
         if (retMetrics.retentionRate < min) failures.push({ key: 'retention_rate', label: 'Client Retention', current: Math.round(retMetrics.retentionRate * 10) / 10, minimum: min, unit: '%' });
       }
-      if (retentionCriteria.new_clients_enabled) {
-        const min = resolveRet('new_clients_minimum', Number(retentionCriteria.new_clients_minimum));
+      if (currentPromoCriteria?.new_clients_enabled) {
+        const min = resolveRet('new_clients_minimum', Number(currentPromoCriteria.new_clients_threshold));
         if (retMetrics.newClientsMonthly < min) failures.push({ key: 'new_clients', label: 'New Clients', current: Math.round(retMetrics.newClientsMonthly * 10) / 10, minimum: min, unit: '/mo' });
       }
-      if (retentionCriteria.utilization_enabled) {
-        const min = resolveRet('utilization_minimum', Number(retentionCriteria.utilization_minimum));
+      if (currentPromoCriteria?.utilization_enabled) {
+        const min = resolveRet('utilization_minimum', Number(currentPromoCriteria.utilization_threshold));
         if (retMetrics.utilization < min) failures.push({ key: 'utilization', label: 'Schedule Utilization', current: Math.round(retMetrics.utilization * 10) / 10, minimum: min, unit: '%' });
       }
-      if (retentionCriteria.rev_per_hour_enabled) {
-        const min = resolveRet('rev_per_hour_minimum', Number(retentionCriteria.rev_per_hour_minimum));
+      if (currentPromoCriteria?.rev_per_hour_enabled) {
+        const min = resolveRet('rev_per_hour_minimum', Number(currentPromoCriteria.rev_per_hour_threshold));
         if (retMetrics.revPerHour < min) failures.push({ key: 'rev_per_hour', label: 'Revenue Per Hour', current: Math.round(retMetrics.revPerHour), minimum: min, unit: '$/hr' });
       }
 
