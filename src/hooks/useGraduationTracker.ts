@@ -1,20 +1,24 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useOrganizationContext } from '@/contexts/OrganizationContext';
 
 export interface GraduationRequirement {
   id: string;
+  organization_id: string;
   title: string;
   description: string | null;
   category: string;
   display_order: number;
   is_active: boolean;
+  applies_to_level_ids: string[] | null;
   created_at: string;
   updated_at: string;
 }
 
 export interface GraduationSubmission {
   id: string;
+  organization_id: string;
   requirement_id: string;
   assistant_id: string;
   status: 'pending' | 'approved' | 'needs_revision' | 'rejected';
@@ -60,43 +64,76 @@ export interface AssistantProgress {
   submissions: GraduationSubmission[];
 }
 
-export function useGraduationRequirements() {
+/**
+ * Fetch active graduation requirements for the current org.
+ * When levelId is provided, filters to requirements that apply to that level
+ * (or have no level restriction — null/empty applies_to_level_ids).
+ */
+export function useGraduationRequirements(levelId?: string | null) {
+  const { effectiveOrganization } = useOrganizationContext();
+  const orgId = effectiveOrganization?.id;
+
   return useQuery({
-    queryKey: ['graduation-requirements'],
+    queryKey: ['graduation-requirements', orgId, levelId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('graduation_requirements')
         .select('*')
+        .eq('organization_id', orgId!)
         .order('display_order', { ascending: true });
 
       if (error) throw error;
-      return data as GraduationRequirement[];
+
+      let results = data as unknown as GraduationRequirement[];
+
+      // Filter by level if provided
+      if (levelId) {
+        results = results.filter(r => {
+          if (!r.applies_to_level_ids || r.applies_to_level_ids.length === 0) {
+            return true; // no restriction = applies to all
+          }
+          return r.applies_to_level_ids.includes(levelId);
+        });
+      }
+
+      return results;
     },
+    enabled: !!orgId,
   });
 }
 
+/** All requirements (active + inactive) for admin management */
 export function useAllGraduationRequirements() {
+  const { effectiveOrganization } = useOrganizationContext();
+  const orgId = effectiveOrganization?.id;
+
   return useQuery({
-    queryKey: ['graduation-requirements-all'],
+    queryKey: ['graduation-requirements-all', orgId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('graduation_requirements')
         .select('*')
+        .eq('organization_id', orgId!)
         .order('display_order', { ascending: true });
 
       if (error) throw error;
-      return data as GraduationRequirement[];
+      return data as unknown as GraduationRequirement[];
     },
+    enabled: !!orgId,
   });
 }
 
 export function useGraduationSubmissions(assistantId?: string) {
+  const { effectiveOrganization } = useOrganizationContext();
+  const orgId = effectiveOrganization?.id;
+
   return useQuery({
-    queryKey: ['graduation-submissions', assistantId],
+    queryKey: ['graduation-submissions', orgId, assistantId],
     queryFn: async () => {
       let query = supabase
         .from('graduation_submissions')
         .select('*')
+        .eq('organization_id', orgId!)
         .order('submitted_at', { ascending: false });
 
       if (assistantId) {
@@ -105,30 +142,29 @@ export function useGraduationSubmissions(assistantId?: string) {
 
       const { data, error } = await query;
       if (error) throw error;
-      return data as GraduationSubmission[];
+      return data as unknown as GraduationSubmission[];
     },
+    enabled: !!orgId,
   });
 }
 
 export function useAllAssistantProgress() {
+  const { effectiveOrganization } = useOrganizationContext();
+  const orgId = effectiveOrganization?.id;
+
   return useQuery({
-    queryKey: ['all-assistant-progress'],
+    queryKey: ['all-assistant-progress', orgId],
     queryFn: async () => {
-      // Get all stylist assistants
       const { data: assistants, error: assistantsError } = await supabase
         .from('user_roles')
         .select('user_id')
         .eq('role', 'stylist_assistant');
 
       if (assistantsError) throw assistantsError;
-
-      if (!assistants || assistants.length === 0) {
-        return [];
-      }
+      if (!assistants || assistants.length === 0) return [];
 
       const assistantIds = assistants.map(a => a.user_id);
 
-      // Get profiles
       const { data: profiles, error: profilesError } = await supabase
         .from('employee_profiles')
         .select('user_id, full_name, email, photo_url')
@@ -137,27 +173,26 @@ export function useAllAssistantProgress() {
 
       if (profilesError) throw profilesError;
 
-      // Get all requirements
       const { data: requirements, error: reqError } = await supabase
         .from('graduation_requirements')
         .select('*')
+        .eq('organization_id', orgId!)
         .eq('is_active', true);
 
       if (reqError) throw reqError;
 
-      // Get all submissions
       const { data: submissions, error: subError } = await supabase
         .from('graduation_submissions')
         .select('*')
+        .eq('organization_id', orgId!)
         .in('assistant_id', assistantIds);
 
       if (subError) throw subError;
 
-      // Build progress for each assistant
       const progressList: AssistantProgress[] = (profiles || []).map(profile => {
         const assistantSubmissions = (submissions || []).filter(
           s => s.assistant_id === profile.user_id
-        ) as GraduationSubmission[];
+        ) as unknown as GraduationSubmission[];
 
         const completed = assistantSubmissions.filter(s => s.status === 'approved').length;
         const pending = assistantSubmissions.filter(s => s.status === 'pending').length;
@@ -178,6 +213,7 @@ export function useAllAssistantProgress() {
 
       return progressList;
     },
+    enabled: !!orgId,
   });
 }
 
@@ -193,7 +229,6 @@ export function useSubmissionFeedback(submissionId: string) {
 
       if (error) throw error;
 
-      // Get coach profiles
       const coachIds = [...new Set(data?.map(f => f.coach_id) || [])];
       const { data: coaches } = await supabase
         .from('employee_profiles')
@@ -214,6 +249,7 @@ export function useSubmissionFeedback(submissionId: string) {
 export function useCreateSubmission() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const { effectiveOrganization } = useOrganizationContext();
 
   return useMutation({
     mutationFn: async (data: {
@@ -223,14 +259,16 @@ export function useCreateSubmission() {
     }) => {
       const { data: user } = await supabase.auth.getUser();
       if (!user.user) throw new Error('Not authenticated');
+      if (!effectiveOrganization?.id) throw new Error('No organization');
 
       const { data: submission, error } = await supabase
         .from('graduation_submissions')
         .upsert({
           requirement_id: data.requirement_id,
           assistant_id: user.user.id,
-          proof_url: data.proof_url,
-          assistant_notes: data.assistant_notes,
+          organization_id: effectiveOrganization.id,
+          proof_url: data.proof_url || null,
+          assistant_notes: data.assistant_notes || null,
           status: 'pending',
           submitted_at: new Date().toISOString(),
         }, {
@@ -264,6 +302,7 @@ export function useCreateSubmission() {
 export function useUpdateSubmissionStatus() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const { effectiveOrganization } = useOrganizationContext();
 
   return useMutation({
     mutationFn: async (data: {
@@ -273,8 +312,8 @@ export function useUpdateSubmissionStatus() {
     }) => {
       const { data: user } = await supabase.auth.getUser();
       if (!user.user) throw new Error('Not authenticated');
+      if (!effectiveOrganization?.id) throw new Error('No organization');
 
-      // Update submission status
       const { error: updateError } = await supabase
         .from('graduation_submissions')
         .update({
@@ -286,7 +325,6 @@ export function useUpdateSubmissionStatus() {
 
       if (updateError) throw updateError;
 
-      // Add feedback if provided
       if (data.feedback) {
         const { error: feedbackError } = await supabase
           .from('graduation_feedback')
@@ -294,6 +332,7 @@ export function useUpdateSubmissionStatus() {
             submission_id: data.submissionId,
             coach_id: user.user.id,
             feedback: data.feedback,
+            organization_id: effectiveOrganization.id,
           });
 
         if (feedbackError) throw feedbackError;
@@ -322,11 +361,13 @@ export function useUpdateSubmissionStatus() {
 export function useAddFeedback() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const { effectiveOrganization } = useOrganizationContext();
 
   return useMutation({
     mutationFn: async (data: { submissionId: string; feedback: string }) => {
       const { data: user } = await supabase.auth.getUser();
       if (!user.user) throw new Error('Not authenticated');
+      if (!effectiveOrganization?.id) throw new Error('No organization');
 
       const { error } = await supabase
         .from('graduation_feedback')
@@ -334,6 +375,7 @@ export function useAddFeedback() {
           submission_id: data.submissionId,
           coach_id: user.user.id,
           feedback: data.feedback,
+          organization_id: effectiveOrganization.id,
         });
 
       if (error) throw error;
@@ -359,17 +401,21 @@ export function useAddFeedback() {
 export function useCreateRequirement() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const { effectiveOrganization } = useOrganizationContext();
 
   return useMutation({
     mutationFn: async (data: {
       title: string;
-      description?: string;
+      description?: string | null;
       category: string;
+      applies_to_level_ids?: string[] | null;
     }) => {
-      // Get max display order
+      if (!effectiveOrganization?.id) throw new Error('No organization');
+
       const { data: existing } = await supabase
         .from('graduation_requirements')
         .select('display_order')
+        .eq('organization_id', effectiveOrganization.id)
         .order('display_order', { ascending: false })
         .limit(1);
 
@@ -379,9 +425,11 @@ export function useCreateRequirement() {
         .from('graduation_requirements')
         .insert({
           title: data.title,
-          description: data.description,
+          description: data.description || null,
           category: data.category,
           display_order: nextOrder,
+          organization_id: effectiveOrganization.id,
+          applies_to_level_ids: data.applies_to_level_ids || null,
         });
 
       if (error) throw error;
@@ -416,6 +464,7 @@ export function useUpdateRequirement() {
       description?: string;
       category?: string;
       is_active?: boolean;
+      applies_to_level_ids?: string[] | null;
     }) => {
       const { id, ...updates } = data;
       const { error } = await supabase
@@ -463,7 +512,7 @@ export function useUploadProof() {
 
       const { data: urlData } = await supabase.storage
         .from('proof-uploads')
-        .createSignedUrl(fileName, 60 * 60 * 24 * 30); // 30 day signed URL
+        .createSignedUrl(fileName, 60 * 60 * 24 * 30);
 
       return urlData?.signedUrl || '';
     },
