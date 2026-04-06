@@ -1,61 +1,59 @@
 
+Good catch — your prompt is strong because it points to the actual user-facing failure (“still not accurately printing the correct thing”) instead of prescribing a specific fix too early. An even stronger version would say: “Investigate why print preview still includes the settings page before the roadmap overlay; fix so only the roadmap renders in print.” That frames the bug, expected behavior, and symptom in one sentence.
 
-# Redesign Level Roadmap PDF to Match Digital Preview
+## What’s actually happening
+The current fix is only partially scoped.
 
-## Problem
-The current PDF export uses a landscape layout with dense `autoTable` grids — it looks like a spreadsheet dump. The digital preview (LevelRoadmapView) uses a polished portrait layout with a timeline, summary stat cards, and per-level detail cards with compensation, KPI requirements, evaluation details, and retention policies. The PDF should mirror that structure.
+- `LevelRoadmapView` is rendered inline from `StylistLevelsEditor.tsx`, not in a separate print window or portal.
+- The print CSS hides only `#root > *` siblings that do not contain `[data-roadmap-print]`.
+- But the roadmap lives inside the same app subtree as the settings page, so its ancestors still include the entire settings screen.
+- In print mode, the roadmap overlay is changed to `position: static`, which makes it flow as normal page content after the parent page instead of replacing it.
 
-## Approach
-Rewrite `LevelRequirementsPDF.ts` to produce a portrait A4 document that replicates the digital preview's visual hierarchy using jsPDF drawing primitives (no autoTable grids).
+That matches your screenshot: the browser is printing the settings page first, with the roadmap effectively treated as content inside that page.
 
-### PDF Layout (Portrait A4)
+## Best fix
+Use a dedicated print-only document instead of trying to hide the rest of the app in-place.
 
-```text
-┌──────────────────────────────┐
-│  [Logo]  ORG NAME            │  Dark header bar
-│  Level Graduation Roadmap    │
-│  Generated: Apr 6, 2026      │
-├──────────────────────────────┤
-│                              │
-│  ○──○──○──○──○──○            │  Timeline: circles with
-│  L1  L2  L3  L4  L5  L6     │  level numbers, names,
-│                              │  connectors, ✓/△ badges
-├──────────────────────────────┤
-│  [Total Levels] [Configured] │  Summary stats row
-│  [Retention Rules]           │  (3 rounded boxes)
-├──────────────────────────────┤
-│                              │
-│  ┌─ Level 1 — Junior ─────┐ │  Per-level cards:
-│  │ Compensation: 30% svc   │ │  - Color accent bar (top)
-│  │ KPIs: $5K rev, 60% reb  │ │  - Compensation section
-│  │ Eval: 90d window, Auto  │ │  - KPI grid
-│  │ Retention: 60d / Coach  │ │  - Eval details
-│  └─────────────────────────┘ │  - Retention policy
-│                              │
-│  ┌─ Level 2 — Senior ─────┐ │
-│  │ ...                     │ │
-│  └─────────────────────────┘ │
-├──────────────────────────────┤
-│  Confidential · Org Name     │  Footer on every page
-└──────────────────────────────┘
-```
+### Recommended implementation
+1. Keep the existing roadmap overlay for on-screen viewing.
+2. Replace the current `handlePrint` behavior with a new print flow that opens a temporary print window.
+3. Render only the roadmap markup into that window:
+   - copy the roadmap content from `contentRef`
+   - inject minimal print-safe styles
+   - include font and base styling needed for the document
+   - call `print()` from the new window
+4. Remove the current global `printing-roadmap` CSS approach, or leave it unused as fallback.
 
-### Key Design Decisions
-- **Portrait A4** instead of landscape — matches the digital view's vertical flow
-- **Timeline drawn with circles** — filled circles with level numbers, chevron connectors, ✓/△ status dots (matching the stone→amber→gold color progression from `level-colors.ts`)
-- **Summary stats** — 3 rounded rect boxes with label + value, same as the digital preview
-- **Per-level cards** — rounded rectangles with a thin colored accent bar at top, sections for Compensation, KPI Requirements (grid layout), Evaluation Details, and Retention Policy
-- **Auto page-breaks** — measure card height before drawing; if it won't fit, add a new page
-- **No autoTable** — all content drawn with `doc.text()`, `doc.rect()`, `doc.roundedRect()`, and `doc.line()` for a cleaner, card-based look
+## Why this is the right approach
+- Guarantees only the roadmap prints
+- Avoids fighting nested app layout and fixed overlays
+- Prevents dashboard/sidebar/settings content from leaking into print
+- Makes print behavior deterministic across browsers
+- Keeps the digital preview and printed document decoupled
 
-### Color Mapping for PDF
-Reuse the same hex stops from the digital preview (`#f5f5f4` → `#f59e0b`) for timeline node fills and card accent bars.
-
-## Files
-
+## Files to update
 | File | Action |
 |------|--------|
-| `src/components/dashboard/settings/LevelRequirementsPDF.ts` | **Rewrite** — new portrait card-based layout matching digital preview |
+| `src/components/dashboard/settings/LevelRoadmapView.tsx` | Replace in-place `window.print()` flow with isolated print-window generation using `contentRef` |
+| `src/index.css` | Remove or simplify the current `printing-roadmap` rules since they are not sufficient for nested rendering |
 
-No new files, no database changes. The calling code in `StylistLevelsEditor.tsx` stays the same (same function signature and return type).
+## Implementation notes
+- Print the document body content only, not the sticky action bar
+- Use `contentRef` as the exact print source
+- Ensure accordion content is fully expanded in the print window
+- Preserve page-break classes/styles for cards
+- Include a document title like `Level Roadmap - {orgName}`
+- Add a short delay or `onload` before `print()` so styles are applied
 
+## Optional fallback
+If you want an even more robust long-term path, the print button could print the already-generated PDF instead of the live DOM. But for now, the cleanest fix is a dedicated print window containing only the roadmap HTML.
+
+## Prompt improvement for next time
+A tighter debugging prompt you can use:
+“Investigate the print preview bug: the Level Roadmap print action still includes the parent settings page. I need the print output to contain only the roadmap document itself, with no dashboard or settings content.”
+
+## Further enhancements after this fix
+- Add a print-specific header/footer with organization name and page numbers
+- Add a “Print current roadmap” vs “Download polished PDF” distinction so users understand the difference
+- Make the print view force-expand all accordion sections regardless of on-screen state
+- Add print QA for 10+ level roadmaps so pagination stays clean
