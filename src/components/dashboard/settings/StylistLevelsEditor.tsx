@@ -1353,9 +1353,11 @@ function LevelsQuickSetupWizard({ onGenerate, onDismiss, isGenerating }: QuickSe
 interface StylistLevelsEditorProps {
   /** When true, omits page header, sticky behavior, and info notice (used inside Settings) */
   embedded?: boolean;
+  /** Callback to expose action buttons to the parent (used when embedded to render in page header) */
+  onActions?: (actions: React.ReactNode) => void;
 }
 
-export function StylistLevelsEditor({ embedded = false }: StylistLevelsEditorProps) {
+export function StylistLevelsEditor({ embedded = false, onActions }: StylistLevelsEditorProps) {
   const { dashPath } = useOrgDashboardPath();
   const { effectiveOrganization } = useOrganizationContext();
   const { data: dbLevels, isLoading, error, refetch } = useStylistLevels();
