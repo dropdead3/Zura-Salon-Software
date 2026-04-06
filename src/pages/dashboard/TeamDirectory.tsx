@@ -883,7 +883,7 @@ function TeamMemberCard({ member, locations, isSuperAdmin, canViewStrikes, strik
                     const levelIdx = stylistLevels?.findIndex(l => l.client_label === member.stylist_level || l.slug === member.stylist_level) ?? -1;
                     const totalLevels = stylistLevels?.length ?? 1;
                     const colors = levelIdx >= 0 ? getLevelColor(levelIdx, totalLevels) : { bg: 'bg-muted', text: 'text-muted-foreground' };
-                    const progress = progressMap.get(member.user_id);
+                    const progress = levelProgress;
                     const showIndicator = isSuperAdmin && progress && !['in_progress', 'no_criteria', 'at_top_level'].includes(progress.status);
                     const isStalled = isSuperAdmin && progress && progress.timeAtLevelDays >= 180 && progress.status === 'in_progress';
                     return (
