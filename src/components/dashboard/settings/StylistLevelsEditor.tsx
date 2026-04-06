@@ -208,6 +208,58 @@ const EARNINGS_STRUCTURE_DESCRIPTIONS: Record<EarningsStructure, string> = {
   both: 'Hourly base wage plus commission on services and retail',
 };
 
+// Metric field mapping for inline save
+type MetricFieldKey = 'revenue' | 'retail_pct' | 'rebooking_pct' | 'avg_ticket' | 'retention_rate' | 'new_clients' | 'utilization' | 'rev_per_hour' | 'tenure';
+
+interface MetricFieldMapping {
+  key: MetricFieldKey;
+  promoEnabledField: keyof LevelPromotionCriteria;
+  promoValueField: keyof LevelPromotionCriteria;
+  retEnabledField: keyof LevelRetentionCriteria;
+  retValueField: keyof LevelRetentionCriteria;
+  isCurrency: boolean;
+  isPercent: boolean;
+  suffix?: string;
+}
+
+const METRIC_FIELD_MAP: Record<string, MetricFieldMapping> = {
+  'Revenue': { key: 'revenue', promoEnabledField: 'revenue_enabled', promoValueField: 'revenue_threshold', retEnabledField: 'revenue_enabled', retValueField: 'revenue_minimum', isCurrency: true, isPercent: false },
+  'Retail %': { key: 'retail_pct', promoEnabledField: 'retail_enabled', promoValueField: 'retail_pct_threshold', retEnabledField: 'retail_enabled', retValueField: 'retail_pct_minimum', isCurrency: false, isPercent: true },
+  'Rebooking %': { key: 'rebooking_pct', promoEnabledField: 'rebooking_enabled', promoValueField: 'rebooking_pct_threshold', retEnabledField: 'rebooking_enabled', retValueField: 'rebooking_pct_minimum', isCurrency: false, isPercent: true },
+  'Avg Ticket': { key: 'avg_ticket', promoEnabledField: 'avg_ticket_enabled', promoValueField: 'avg_ticket_threshold', retEnabledField: 'avg_ticket_enabled', retValueField: 'avg_ticket_minimum', isCurrency: true, isPercent: false },
+  'Client Retention': { key: 'retention_rate', promoEnabledField: 'retention_rate_enabled', promoValueField: 'retention_rate_threshold', retEnabledField: 'retention_rate_enabled', retValueField: 'retention_rate_minimum', isCurrency: false, isPercent: true },
+  'New Clients': { key: 'new_clients', promoEnabledField: 'new_clients_enabled', promoValueField: 'new_clients_threshold', retEnabledField: 'new_clients_enabled', retValueField: 'new_clients_minimum', isCurrency: false, isPercent: false, suffix: '/mo' },
+  'Utilization': { key: 'utilization', promoEnabledField: 'utilization_enabled', promoValueField: 'utilization_threshold', retEnabledField: 'utilization_enabled', retValueField: 'utilization_minimum', isCurrency: false, isPercent: true },
+  'Rev/Hr': { key: 'rev_per_hour', promoEnabledField: 'rev_per_hour_enabled', promoValueField: 'rev_per_hour_threshold', retEnabledField: 'rev_per_hour_enabled', retValueField: 'rev_per_hour_minimum', isCurrency: true, isPercent: false },
+  'Tenure': { key: 'tenure', promoEnabledField: 'tenure_enabled', promoValueField: 'tenure_days', retEnabledField: 'retention_enabled', retValueField: 'evaluation_window_days', isCurrency: false, isPercent: false, suffix: 'd' },
+};
+
+function autoStepValues(editValues: Record<string, { enabled: boolean; value: string }>, levelIds: string[]): Record<string, { enabled: boolean; value: string }> {
+  // Find first and last enabled values
+  const enabledEntries = levelIds
+    .map((id, idx) => ({ id, idx, ...editValues[id] }))
+    .filter(e => e.enabled && e.value && parseFloat(e.value) > 0);
+  
+  if (enabledEntries.length < 2) return editValues;
+  
+  const first = enabledEntries[0];
+  const last = enabledEntries[enabledEntries.length - 1];
+  const firstVal = parseFloat(first.value);
+  const lastVal = parseFloat(last.value);
+  const totalSteps = last.idx - first.idx;
+  
+  if (totalSteps <= 1) return editValues;
+  
+  const updated = { ...editValues };
+  for (let i = first.idx + 1; i < last.idx; i++) {
+    const levelId = levelIds[i];
+    const stepFraction = (i - first.idx) / totalSteps;
+    const interpolated = Math.round(firstVal + (lastVal - firstVal) * stepFraction);
+    updated[levelId] = { enabled: true, value: String(interpolated) };
+  }
+  return updated;
+}
+
 interface CriteriaComparisonTableProps {
   levels: LocalStylistLevel[];
   promotionCriteria: LevelPromotionCriteria[];
@@ -216,6 +268,15 @@ interface CriteriaComparisonTableProps {
 }
 
 function CriteriaComparisonTable({ levels, promotionCriteria, retentionCriteria, onEditLevel }: CriteriaComparisonTableProps) {
+  const { effectiveOrganization } = useOrganizationContext();
+  const orgId = effectiveOrganization?.id;
+  const queryClient = useQueryClient();
+
+  // Inline editing state
+  const [editingMetric, setEditingMetric] = useState<{ label: string; section: 'promotion' | 'retention' } | null>(null);
+  const [editValues, setEditValues] = useState<Record<string, { enabled: boolean; value: string }>>({});
+  const [isSavingRow, setIsSavingRow] = useState(false);
+
   const getCriteria = (levelDbId: string | undefined) => ({
     promo: promotionCriteria.find(c => c.stylist_level_id === levelDbId && c.is_active),
     retention: retentionCriteria.find(r => r.stylist_level_id === levelDbId && r.is_active),
@@ -228,32 +289,33 @@ function CriteriaComparisonTable({ levels, promotionCriteria, retentionCriteria,
     getValue: (promo: LevelPromotionCriteria | undefined, ret: LevelRetentionCriteria | undefined, levelIdx?: number) => string | null;
     getNumeric: (promo: LevelPromotionCriteria | undefined, ret: LevelRetentionCriteria | undefined) => number | null;
     section: 'promotion' | 'retention';
+    editable?: boolean;
   };
 
   const metrics: MetricRow[] = [
     // Promotion
-    { label: 'Revenue', section: 'promotion', getValue: (p) => p?.revenue_enabled ? fmtCurrency(p.revenue_threshold) : null, getNumeric: (p) => p?.revenue_enabled ? p.revenue_threshold : null },
-    { label: 'Retail %', section: 'promotion', getValue: (p) => p?.retail_enabled ? `${p.retail_pct_threshold}%` : null, getNumeric: (p) => p?.retail_enabled ? p.retail_pct_threshold : null },
-    { label: 'Rebooking %', section: 'promotion', getValue: (p) => p?.rebooking_enabled ? `${p.rebooking_pct_threshold}%` : null, getNumeric: (p) => p?.rebooking_enabled ? p.rebooking_pct_threshold : null },
-    { label: 'Avg Ticket', section: 'promotion', getValue: (p) => p?.avg_ticket_enabled ? `$${p.avg_ticket_threshold}` : null, getNumeric: (p) => p?.avg_ticket_enabled ? p.avg_ticket_threshold : null },
-    { label: 'Client Retention', section: 'promotion', getValue: (p) => p?.retention_rate_enabled ? `${p.retention_rate_threshold}%` : null, getNumeric: (p) => p?.retention_rate_enabled ? Number(p.retention_rate_threshold) : null },
-    { label: 'New Clients', section: 'promotion', getValue: (p) => p?.new_clients_enabled ? `${p.new_clients_threshold}/mo` : null, getNumeric: (p) => p?.new_clients_enabled ? Number(p.new_clients_threshold) : null },
-    { label: 'Utilization', section: 'promotion', getValue: (p) => p?.utilization_enabled ? `${p.utilization_threshold}%` : null, getNumeric: (p) => p?.utilization_enabled ? Number(p.utilization_threshold) : null },
-    { label: 'Rev/Hr', section: 'promotion', getValue: (p) => p?.rev_per_hour_enabled ? `$${p.rev_per_hour_threshold}` : null, getNumeric: (p) => p?.rev_per_hour_enabled ? Number(p.rev_per_hour_threshold) : null },
-    { label: 'Tenure', section: 'promotion', getValue: (p) => p?.tenure_enabled ? `${p.tenure_days}d` : null, getNumeric: (p) => p?.tenure_enabled ? p.tenure_days : null },
-    { label: 'Eval Window', section: 'promotion', getValue: (p) => p ? `${p.evaluation_window_days}d` : null, getNumeric: () => null },
-    { label: 'Approval', section: 'promotion', getValue: (p) => p ? (p.requires_manual_approval ? 'Manual' : 'Auto') : null, getNumeric: () => null },
+    { label: 'Revenue', section: 'promotion', editable: true, getValue: (p) => p?.revenue_enabled ? fmtCurrency(p.revenue_threshold) : null, getNumeric: (p) => p?.revenue_enabled ? p.revenue_threshold : null },
+    { label: 'Retail %', section: 'promotion', editable: true, getValue: (p) => p?.retail_enabled ? `${p.retail_pct_threshold}%` : null, getNumeric: (p) => p?.retail_enabled ? p.retail_pct_threshold : null },
+    { label: 'Rebooking %', section: 'promotion', editable: true, getValue: (p) => p?.rebooking_enabled ? `${p.rebooking_pct_threshold}%` : null, getNumeric: (p) => p?.rebooking_enabled ? p.rebooking_pct_threshold : null },
+    { label: 'Avg Ticket', section: 'promotion', editable: true, getValue: (p) => p?.avg_ticket_enabled ? `$${p.avg_ticket_threshold}` : null, getNumeric: (p) => p?.avg_ticket_enabled ? p.avg_ticket_threshold : null },
+    { label: 'Client Retention', section: 'promotion', editable: true, getValue: (p) => p?.retention_rate_enabled ? `${p.retention_rate_threshold}%` : null, getNumeric: (p) => p?.retention_rate_enabled ? Number(p.retention_rate_threshold) : null },
+    { label: 'New Clients', section: 'promotion', editable: true, getValue: (p) => p?.new_clients_enabled ? `${p.new_clients_threshold}/mo` : null, getNumeric: (p) => p?.new_clients_enabled ? Number(p.new_clients_threshold) : null },
+    { label: 'Utilization', section: 'promotion', editable: true, getValue: (p) => p?.utilization_enabled ? `${p.utilization_threshold}%` : null, getNumeric: (p) => p?.utilization_enabled ? Number(p.utilization_threshold) : null },
+    { label: 'Rev/Hr', section: 'promotion', editable: true, getValue: (p) => p?.rev_per_hour_enabled ? `$${p.rev_per_hour_threshold}` : null, getNumeric: (p) => p?.rev_per_hour_enabled ? Number(p.rev_per_hour_threshold) : null },
+    { label: 'Tenure', section: 'promotion', editable: true, getValue: (p) => p?.tenure_enabled ? `${p.tenure_days}d` : null, getNumeric: (p) => p?.tenure_enabled ? p.tenure_days : null },
+    { label: 'Eval Window', section: 'promotion', editable: false, getValue: (p) => p ? `${p.evaluation_window_days}d` : null, getNumeric: () => null },
+    { label: 'Approval', section: 'promotion', editable: false, getValue: (p) => p ? (p.requires_manual_approval ? 'Manual' : 'Auto') : null, getNumeric: () => null },
     // Retention
-    { label: 'Revenue', section: 'retention', getValue: (_, r) => r?.revenue_enabled ? fmtCurrency(r.revenue_minimum) : null, getNumeric: (_, r) => r?.revenue_enabled ? r.revenue_minimum : null },
-    { label: 'Retail %', section: 'retention', getValue: (_, r) => r?.retail_enabled ? `${r.retail_pct_minimum}%` : null, getNumeric: (_, r) => r?.retail_enabled ? r.retail_pct_minimum : null },
-    { label: 'Rebooking %', section: 'retention', getValue: (_, r) => r?.rebooking_enabled ? `${r.rebooking_pct_minimum}%` : null, getNumeric: (_, r) => r?.rebooking_enabled ? r.rebooking_pct_minimum : null },
-    { label: 'Avg Ticket', section: 'retention', getValue: (_, r) => r?.avg_ticket_enabled ? `$${r.avg_ticket_minimum}` : null, getNumeric: (_, r) => r?.avg_ticket_enabled ? r.avg_ticket_minimum : null },
-    { label: 'Client Retention', section: 'retention', getValue: (_, r) => r?.retention_rate_enabled ? `${r.retention_rate_minimum}%` : null, getNumeric: (_, r) => r?.retention_rate_enabled ? Number(r.retention_rate_minimum) : null },
-    { label: 'New Clients', section: 'retention', getValue: (_, r) => r?.new_clients_enabled ? `${r.new_clients_minimum}/mo` : null, getNumeric: (_, r) => r?.new_clients_enabled ? Number(r.new_clients_minimum) : null },
-    { label: 'Utilization', section: 'retention', getValue: (_, r) => r?.utilization_enabled ? `${r.utilization_minimum}%` : null, getNumeric: (_, r) => r?.utilization_enabled ? Number(r.utilization_minimum) : null },
-    { label: 'Rev/Hr', section: 'retention', getValue: (_, r) => r?.rev_per_hour_enabled ? `$${r.rev_per_hour_minimum}` : null, getNumeric: (_, r) => r?.rev_per_hour_enabled ? Number(r.rev_per_hour_minimum) : null },
-    { label: 'Grace Period', section: 'retention', getValue: (_, r) => r ? `${r.grace_period_days}d` : null, getNumeric: () => null },
-    { label: 'Action', section: 'retention', getValue: (_, r) => r ? (r.action_type === 'demotion_eligible' ? 'Demotion' : 'Coaching') : null, getNumeric: () => null },
+    { label: 'Revenue', section: 'retention', editable: true, getValue: (_, r) => r?.revenue_enabled ? fmtCurrency(r.revenue_minimum) : null, getNumeric: (_, r) => r?.revenue_enabled ? r.revenue_minimum : null },
+    { label: 'Retail %', section: 'retention', editable: true, getValue: (_, r) => r?.retail_enabled ? `${r.retail_pct_minimum}%` : null, getNumeric: (_, r) => r?.retail_enabled ? r.retail_pct_minimum : null },
+    { label: 'Rebooking %', section: 'retention', editable: true, getValue: (_, r) => r?.rebooking_enabled ? `${r.rebooking_pct_minimum}%` : null, getNumeric: (_, r) => r?.rebooking_enabled ? r.rebooking_pct_minimum : null },
+    { label: 'Avg Ticket', section: 'retention', editable: true, getValue: (_, r) => r?.avg_ticket_enabled ? `$${r.avg_ticket_minimum}` : null, getNumeric: (_, r) => r?.avg_ticket_enabled ? r.avg_ticket_minimum : null },
+    { label: 'Client Retention', section: 'retention', editable: true, getValue: (_, r) => r?.retention_rate_enabled ? `${r.retention_rate_minimum}%` : null, getNumeric: (_, r) => r?.retention_rate_enabled ? Number(r.retention_rate_minimum) : null },
+    { label: 'New Clients', section: 'retention', editable: true, getValue: (_, r) => r?.new_clients_enabled ? `${r.new_clients_minimum}/mo` : null, getNumeric: (_, r) => r?.new_clients_enabled ? Number(r.new_clients_minimum) : null },
+    { label: 'Utilization', section: 'retention', editable: true, getValue: (_, r) => r?.utilization_enabled ? `${r.utilization_minimum}%` : null, getNumeric: (_, r) => r?.utilization_enabled ? Number(r.utilization_minimum) : null },
+    { label: 'Rev/Hr', section: 'retention', editable: true, getValue: (_, r) => r?.rev_per_hour_enabled ? `$${r.rev_per_hour_minimum}` : null, getNumeric: (_, r) => r?.rev_per_hour_enabled ? Number(r.rev_per_hour_minimum) : null },
+    { label: 'Grace Period', section: 'retention', editable: false, getValue: (_, r) => r ? `${r.grace_period_days}d` : null, getNumeric: () => null },
+    { label: 'Action', section: 'retention', editable: false, getValue: (_, r) => r ? (r.action_type === 'demotion_eligible' ? 'Demotion' : 'Coaching') : null, getNumeric: () => null },
   ];
 
   const levelData = levels.map(l => getCriteria(l.dbId));
@@ -262,7 +324,6 @@ function CriteriaComparisonTable({ levels, promotionCriteria, retentionCriteria,
     const metric = metrics[metricIdx];
     if (levelIdx === 0) return false;
     const currentVal = metric.getNumeric(levelData[levelIdx].promo, levelData[levelIdx].retention);
-    // Find previous level that has a value
     for (let i = levelIdx - 1; i >= 0; i--) {
       const prevVal = metric.getNumeric(levelData[i].promo, levelData[i].retention);
       if (prevVal !== null && currentVal !== null) {
@@ -271,6 +332,177 @@ function CriteriaComparisonTable({ levels, promotionCriteria, retentionCriteria,
     }
     return false;
   };
+
+  // Check inline edit inconsistency
+  const hasEditInconsistency = (levelIdx: number, levelIds: string[]): boolean => {
+    if (levelIdx === 0) return false;
+    const currentEntry = editValues[levelIds[levelIdx]];
+    if (!currentEntry?.enabled || !currentEntry.value) return false;
+    const currentVal = parseFloat(currentEntry.value);
+    if (isNaN(currentVal)) return false;
+    for (let i = levelIdx - 1; i >= 0; i--) {
+      const prevEntry = editValues[levelIds[i]];
+      if (prevEntry?.enabled && prevEntry.value) {
+        const prevVal = parseFloat(prevEntry.value);
+        if (!isNaN(prevVal)) return currentVal < prevVal;
+      }
+    }
+    return false;
+  };
+
+  // Start editing a metric row
+  const startEditing = (label: string, section: 'promotion' | 'retention') => {
+    const fieldMapping = METRIC_FIELD_MAP[label];
+    if (!fieldMapping) return;
+
+    const values: Record<string, { enabled: boolean; value: string }> = {};
+    levels.forEach((level) => {
+      if (!level.dbId) {
+        values[level.id] = { enabled: false, value: '' };
+        return;
+      }
+      const { promo, retention } = getCriteria(level.dbId);
+      if (section === 'promotion' && promo) {
+        const enabled = promo[fieldMapping.promoEnabledField] as boolean;
+        const val = promo[fieldMapping.promoValueField] as number;
+        values[level.id] = { enabled: !!enabled, value: val ? String(val) : '' };
+      } else if (section === 'retention' && retention) {
+        const enabled = retention[fieldMapping.retEnabledField] as boolean;
+        const val = retention[fieldMapping.retValueField] as number;
+        values[level.id] = { enabled: !!enabled, value: val ? String(val) : '' };
+      } else {
+        values[level.id] = { enabled: false, value: '' };
+      }
+    });
+
+    setEditValues(values);
+    setEditingMetric({ label, section });
+  };
+
+  const cancelEditing = () => {
+    setEditingMetric(null);
+    setEditValues({});
+  };
+
+  // Save a metric row across all levels
+  const saveMetricRow = async () => {
+    if (!editingMetric || !orgId) return;
+    const fieldMapping = METRIC_FIELD_MAP[editingMetric.label];
+    if (!fieldMapping) return;
+
+    setIsSavingRow(true);
+    try {
+      for (const level of levels) {
+        if (!level.dbId) continue;
+        const entry = editValues[level.id];
+        if (!entry) continue;
+
+        const numVal = parseFloat(entry.value) || 0;
+
+        if (editingMetric.section === 'promotion') {
+          const existing = promotionCriteria.find(c => c.stylist_level_id === level.dbId && c.is_active);
+          const defaults = getZuraDefaults(levels.findIndex(l => l.id === level.id));
+          const base: any = existing ? { ...existing } : {
+            organization_id: orgId,
+            stylist_level_id: level.dbId,
+            revenue_enabled: false, revenue_threshold: 0,
+            retail_enabled: false, retail_pct_threshold: 0,
+            rebooking_enabled: false, rebooking_pct_threshold: 0,
+            avg_ticket_enabled: false, avg_ticket_threshold: 0,
+            tenure_enabled: false, tenure_days: 0,
+            revenue_weight: 30, retail_weight: 15, rebooking_weight: 20, avg_ticket_weight: 15,
+            retention_rate_enabled: false, retention_rate_threshold: 0, retention_rate_weight: 10,
+            new_clients_enabled: false, new_clients_threshold: 0, new_clients_weight: 5,
+            utilization_enabled: false, utilization_threshold: 0, utilization_weight: 5,
+            rev_per_hour_enabled: false, rev_per_hour_threshold: 0, rev_per_hour_weight: 0,
+            evaluation_window_days: defaults.evaluation_window_days ?? 90,
+            requires_manual_approval: true,
+            is_active: true,
+          };
+          // Remove non-upsert fields
+          delete base.id; delete base.created_at; delete base.updated_at;
+          base[fieldMapping.promoEnabledField] = entry.enabled;
+          base[fieldMapping.promoValueField] = numVal;
+
+          const { error } = await supabase
+            .from('level_promotion_criteria')
+            .upsert(base, { onConflict: 'organization_id,stylist_level_id' })
+            .select().single();
+          if (error) throw error;
+        } else {
+          const existing = retentionCriteria.find(r => r.stylist_level_id === level.dbId && r.is_active);
+          const retDefaults = getZuraRetentionDefaults(levels.findIndex(l => l.id === level.id));
+          const base: any = existing ? { ...existing } : {
+            organization_id: orgId,
+            stylist_level_id: level.dbId,
+            retention_enabled: false,
+            revenue_enabled: false, revenue_minimum: 0,
+            retail_enabled: false, retail_pct_minimum: 0,
+            rebooking_enabled: false, rebooking_pct_minimum: 0,
+            avg_ticket_enabled: false, avg_ticket_minimum: 0,
+            retention_rate_enabled: false, retention_rate_minimum: 0,
+            new_clients_enabled: false, new_clients_minimum: 0,
+            utilization_enabled: false, utilization_minimum: 0,
+            rev_per_hour_enabled: false, rev_per_hour_minimum: 0,
+            evaluation_window_days: retDefaults.evaluation_window_days ?? 90,
+            grace_period_days: retDefaults.grace_period_days ?? 30,
+            action_type: retDefaults.action_type ?? 'coaching_flag',
+            is_active: true,
+          };
+          delete base.id; delete base.created_at; delete base.updated_at;
+          base[fieldMapping.retEnabledField] = entry.enabled;
+          base[fieldMapping.retValueField] = numVal;
+
+          const { error } = await supabase
+            .from('level_retention_criteria')
+            .upsert(base, { onConflict: 'organization_id,stylist_level_id' })
+            .select().single();
+          if (error) throw error;
+        }
+      }
+
+      queryClient.invalidateQueries({ queryKey: ['level-promotion-criteria', orgId] });
+      queryClient.invalidateQueries({ queryKey: ['level-retention-criteria', orgId] });
+      toast.success(`${editingMetric.label} updated across all levels`);
+      cancelEditing();
+    } catch (err: any) {
+      toast.error('Failed to save: ' + err.message);
+    } finally {
+      setIsSavingRow(false);
+    }
+  };
+
+  const handleAutoStep = () => {
+    const editableLevelIds = levels
+      .filter((_, idx) => {
+        if (editingMetric?.section === 'promotion') return idx > 0 && idx < levels.length - 1;
+        return true;
+      })
+      .map(l => l.id);
+    setEditValues(autoStepValues(editValues, editableLevelIds));
+  };
+
+  // Check if auto-step is available (2+ enabled values)
+  const autoStepAvailable = (() => {
+    const editableLevelIds = levels
+      .filter((_, idx) => {
+        if (editingMetric?.section === 'promotion') return idx > 0 && idx < levels.length - 1;
+        return true;
+      })
+      .map(l => l.id);
+    const enabledCount = editableLevelIds.filter(id => editValues[id]?.enabled && editValues[id]?.value && parseFloat(editValues[id].value) > 0).length;
+    return enabledCount >= 2;
+  })();
+
+  // Handle escape key to cancel editing
+  useEffect(() => {
+    if (!editingMetric) return;
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') cancelEditing();
+    };
+    document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
+  }, [editingMetric]);
 
   if (levels.length === 0) {
     return (
@@ -282,18 +514,187 @@ function CriteriaComparisonTable({ levels, promotionCriteria, retentionCriteria,
     );
   }
 
+  const isEditing = (label: string, section: 'promotion' | 'retention') =>
+    editingMetric?.label === label && editingMetric?.section === section;
+
+  const renderMetricCell = (metric: MetricRow, level: LocalStylistLevel, levelIdx: number, mIdx: number, isEditingRow: boolean) => {
+    const { promo, retention } = levelData[levelIdx];
+    const fieldMapping = METRIC_FIELD_MAP[metric.label];
+    const isBaseLevel = levelIdx === 0;
+    const isLastLevel = levelIdx === levels.length - 1;
+    const isPromotionSkip = metric.section === 'promotion' && (isBaseLevel || isLastLevel);
+
+    if (isEditingRow && metric.editable && fieldMapping && level.dbId && !isPromotionSkip) {
+      const entry = editValues[level.id] || { enabled: false, value: '' };
+      const editableLevelIds = levels.filter((_, idx) => {
+        if (metric.section === 'promotion') return idx > 0 && idx < levels.length - 1;
+        return true;
+      }).map(l => l.id);
+      const editLevelIdx = editableLevelIds.indexOf(level.id);
+      const warn = editLevelIdx >= 0 && hasEditInconsistency(editLevelIdx, editableLevelIds);
+      
+      return (
+        <TableCell key={level.id} className="text-center px-1.5 py-1.5">
+          <div className="flex flex-col items-center gap-1">
+            <div className="flex items-center gap-1">
+              <Checkbox
+                checked={entry.enabled}
+                onCheckedChange={(checked) => {
+                  setEditValues(prev => ({
+                    ...prev,
+                    [level.id]: { ...prev[level.id], enabled: !!checked },
+                  }));
+                }}
+                className="w-3.5 h-3.5"
+              />
+              <div className="relative">
+                {fieldMapping.isCurrency && (
+                  <span className="absolute left-1.5 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground">$</span>
+                )}
+                <Input
+                  type="number"
+                  value={entry.value}
+                  onChange={(e) => {
+                    setEditValues(prev => ({
+                      ...prev,
+                      [level.id]: { ...prev[level.id], value: e.target.value, enabled: true },
+                    }));
+                  }}
+                  disabled={!entry.enabled}
+                  className={cn(
+                    "h-7 w-[72px] text-xs text-center",
+                    fieldMapping.isCurrency && "pl-4",
+                    fieldMapping.isPercent && "pr-5",
+                    warn && "border-amber-500 focus-visible:ring-amber-500/30"
+                  )}
+                  placeholder="—"
+                />
+                {fieldMapping.isPercent && (
+                  <span className="absolute right-1.5 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground">%</span>
+                )}
+                {fieldMapping.suffix && !fieldMapping.isCurrency && !fieldMapping.isPercent && (
+                  <span className="absolute right-1.5 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground">{fieldMapping.suffix}</span>
+                )}
+              </div>
+            </div>
+            {warn && <AlertTriangle className="w-3 h-3 text-amber-500" />}
+          </div>
+        </TableCell>
+      );
+    }
+
+    // Read-only display (original logic)
+    if (metric.section === 'promotion' && isPromotionSkip) {
+      return (
+        <TableCell key={level.id} className="text-center text-xs">
+          <span className="text-muted-foreground/40">—</span>
+        </TableCell>
+      );
+    }
+
+    const val = metric.getValue(promo, retention, levelIdx);
+    const warn = levelIdx > 0 && !(metric.section === 'promotion' && (isLastLevel || isBaseLevel)) && hasInconsistency(mIdx, levelIdx);
+
+    return (
+      <TableCell key={level.id} className="text-center text-xs">
+        {val ? (
+          <span className="flex items-center justify-center gap-1">
+            {warn && <AlertTriangle className="w-3 h-3 text-amber-500 shrink-0" />}
+            <span className={warn ? 'text-amber-600 dark:text-amber-400' : 'text-foreground'}>{val}</span>
+          </span>
+        ) : !level.dbId ? (
+          <span className="text-muted-foreground/40">—</span>
+        ) : (metric.section === 'promotion' ? !promo : !retention) ? (
+          <button
+            onClick={() => onEditLevel(level, levelIdx)}
+            className="text-[10px] text-primary/60 hover:text-primary transition-colors"
+          >
+            Configure
+          </button>
+        ) : (
+          <span className="text-muted-foreground/40">—</span>
+        )}
+      </TableCell>
+    );
+  };
+
+  const renderMetricRow = (metric: MetricRow, mIdx: number, sectionPrefix: string) => {
+    const isEditingRow = isEditing(metric.label, metric.section);
+    const isEditableMetric = metric.editable && !!METRIC_FIELD_MAP[metric.label];
+
+    return (
+      <TableRow
+        key={`${sectionPrefix}-${metric.label}`}
+        className={cn(
+          isEditingRow && "bg-primary/5 ring-1 ring-primary/20",
+          isEditableMetric && !editingMetric && "cursor-pointer hover:bg-muted/40",
+          metric.section === 'promotion' && !isEditingRow && "border-l-0"
+        )}
+        onClick={() => {
+          if (isEditableMetric && !editingMetric) {
+            startEditing(metric.label, metric.section);
+          }
+        }}
+      >
+        <TableCell className={cn(
+          "text-xs sticky left-0 z-10",
+          isEditingRow ? "bg-primary/5 text-foreground" : "text-muted-foreground bg-card"
+        )}>
+          <div className="flex items-center gap-1.5">
+            <span>{metric.label}</span>
+            {isEditingRow && (
+              <div className="flex items-center gap-1 ml-auto">
+                {autoStepAvailable && (
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); handleAutoStep(); }}
+                          className="text-[10px] px-1.5 py-0.5 rounded bg-muted hover:bg-muted/80 text-muted-foreground hover:text-foreground transition-colors"
+                        >
+                          Auto-step
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent side="top" className="text-xs max-w-[200px]">
+                        Evenly distribute values between first and last level
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                )}
+                <button
+                  onClick={(e) => { e.stopPropagation(); saveMetricRow(); }}
+                  disabled={isSavingRow}
+                  className="text-[10px] px-1.5 py-0.5 rounded bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50"
+                >
+                  {isSavingRow ? '…' : 'Save'}
+                </button>
+                <button
+                  onClick={(e) => { e.stopPropagation(); cancelEditing(); }}
+                  className="text-[10px] px-1 py-0.5 rounded text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              </div>
+            )}
+          </div>
+        </TableCell>
+        {levels.map((level, levelIdx) => renderMetricCell(metric, level, levelIdx, mIdx, isEditingRow))}
+      </TableRow>
+    );
+  };
+
   return (
     <div className="space-y-4">
       <p className="text-sm text-muted-foreground">
-        Compare promotion and retention criteria across all levels. Click "Edit" to modify a level's criteria.
+        Click any metric row to configure thresholds across all levels at once. Use "Edit" per-level for advanced settings.
       </p>
       <ScrollableTableWrapper>
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className={cn("w-[140px] sticky left-0 bg-card z-20 rounded-tl-xl", tokens.table.columnHeader)}>Metric</TableHead>
+              <TableHead className={cn("w-[160px] sticky left-0 bg-card z-20 rounded-tl-xl", tokens.table.columnHeader)}>Metric</TableHead>
               {levels.map((level, idx) => (
-                <TableHead key={level.id} className={cn("text-center min-w-[120px]", tokens.table.columnHeader)}>
+                <TableHead key={level.id} className={cn("text-center min-w-[100px]", tokens.table.columnHeader)}>
                   <div className="flex flex-col items-center gap-1">
                     <span className="text-xs">{level.label}</span>
                     {level.dbId ? (
@@ -312,7 +713,7 @@ function CriteriaComparisonTable({ levels, promotionCriteria, retentionCriteria,
             </TableRow>
           </TableHeader>
           <TableBody>
-            {/* Compensation section — rewards at this level */}
+            {/* Compensation section */}
             <TableRow className="bg-primary/5 hover:bg-primary/5">
               <TableCell colSpan={levels.length + 1} className="py-2">
                 <span className="flex items-center gap-1.5 text-xs font-display uppercase tracking-wide text-foreground">
@@ -365,41 +766,9 @@ function CriteriaComparisonTable({ levels, promotionCriteria, retentionCriteria,
                 </span>
               </TableCell>
             </TableRow>
-            {metrics.filter(m => m.section === 'promotion').map((metric, mIdx) => (
-              <TableRow key={`promo-${metric.label}`}>
-                <TableCell className="text-xs text-muted-foreground sticky left-0 bg-card z-10">{metric.label}</TableCell>
-                {levels.map((level, levelIdx) => {
-                  const { promo, retention } = levelData[levelIdx];
-                    const isLastLevel = levelIdx === levels.length - 1;
-                    const isBaseLevel = levelIdx === 0;
-                    const val = (isLastLevel || isBaseLevel) ? null : metric.getValue(promo, retention, levelIdx);
-                  const warn = levelIdx > 0 && !isLastLevel && !isBaseLevel && hasInconsistency(mIdx, levelIdx);
-                  return (
-                    <TableCell key={level.id} className="text-center text-xs">
-                      {(isLastLevel || isBaseLevel) ? (
-                        <span className="text-muted-foreground/40">—</span>
-                      ) : val ? (
-                        <span className="flex items-center justify-center gap-1">
-                          {warn && <AlertTriangle className="w-3 h-3 text-amber-500 shrink-0" />}
-                          <span className={warn ? 'text-amber-600 dark:text-amber-400' : 'text-foreground'}>{val}</span>
-                        </span>
-                      ) : !level.dbId ? (
-                        <span className="text-muted-foreground/40">—</span>
-                      ) : !promo ? (
-                        <button
-                          onClick={() => onEditLevel(level, levelIdx)}
-                          className="text-[10px] text-primary/60 hover:text-primary transition-colors"
-                        >
-                          Configure
-                        </button>
-                      ) : (
-                        <span className="text-muted-foreground/40">—</span>
-                      )}
-                    </TableCell>
-                  );
-                })}
-              </TableRow>
-            ))}
+            {metrics.filter(m => m.section === 'promotion').map((metric, mIdx) =>
+              renderMetricRow(metric, mIdx, 'promo')
+            )}
 
             {/* Retention section header */}
             <TableRow className="bg-muted/30 hover:bg-muted/30">
@@ -412,37 +781,7 @@ function CriteriaComparisonTable({ levels, promotionCriteria, retentionCriteria,
             </TableRow>
             {metrics.filter(m => m.section === 'retention').map((metric, mIdx) => {
               const globalIdx = metrics.findIndex(m => m.section === 'retention' && m.label === metric.label);
-              return (
-                <TableRow key={`ret-${metric.label}`}>
-                  <TableCell className="text-xs text-muted-foreground sticky left-0 bg-card z-10">{metric.label}</TableCell>
-                  {levels.map((level, levelIdx) => {
-                    const { promo, retention } = levelData[levelIdx];
-                    const val = metric.getValue(promo, retention, levelIdx);
-                    const warn = levelIdx > 0 && hasInconsistency(globalIdx, levelIdx);
-                    return (
-                      <TableCell key={level.id} className="text-center text-xs">
-                        {val ? (
-                          <span className="flex items-center justify-center gap-1">
-                            {warn && <AlertTriangle className="w-3 h-3 text-amber-500 shrink-0" />}
-                            <span className={warn ? 'text-amber-600 dark:text-amber-400' : 'text-foreground'}>{val}</span>
-                          </span>
-                        ) : !level.dbId ? (
-                          <span className="text-muted-foreground/40">—</span>
-                        ) : !retention ? (
-                          <button
-                            onClick={() => onEditLevel(level, levelIdx)}
-                            className="text-[10px] text-primary/60 hover:text-primary transition-colors"
-                          >
-                            Configure
-                          </button>
-                        ) : (
-                          <span className="text-muted-foreground/40">—</span>
-                        )}
-                      </TableCell>
-                    );
-                  })}
-                </TableRow>
-              );
+              return renderMetricRow(metric, globalIdx, 'ret');
             })}
           </TableBody>
         </Table>
