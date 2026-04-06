@@ -24410,6 +24410,27 @@ export type Database = {
         Args: { p_client_id: string; p_organization_id: string }
         Returns: string
       }
+      get_public_locations: {
+        Args: { p_organization_id?: string }
+        Returns: {
+          address: string
+          booking_url: string
+          city: string
+          country: string
+          display_order: number
+          google_maps_url: string
+          hours: string
+          hours_json: Json
+          id: string
+          is_active: boolean
+          major_crossroads: string
+          name: string
+          organization_id: string
+          phone: string
+          show_on_website: boolean
+          state_province: string
+        }[]
+      }
       get_staff_availability: {
         Args: {
           p_date: string
