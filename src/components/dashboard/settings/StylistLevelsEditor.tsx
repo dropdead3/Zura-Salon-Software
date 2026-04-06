@@ -706,7 +706,7 @@ function CriteriaComparisonTable({ levels, promotionCriteria, retentionCriteria,
       >
         <TableCell className={cn(
           "text-sm sticky left-0 z-10 py-3 px-4 border-r border-border shadow-[2px_0_4px_-2px_rgba(0,0,0,0.06)] dark:shadow-[2px_0_4px_-2px_rgba(0,0,0,0.4)]",
-          isEditingRow ? "bg-primary/10 text-foreground" : "text-muted-foreground bg-muted"
+          isEditingRow ? "bg-primary/10 text-foreground" : "text-muted-foreground bg-foreground/[0.07]"
         )}>
           <div className="flex items-center gap-1.5">
             <span>{metric.label}</span>
@@ -762,13 +762,13 @@ function CriteriaComparisonTable({ levels, promotionCriteria, retentionCriteria,
       <ScrollableTableWrapper isFullscreen={isTableFullscreen} onToggleFullscreen={toggleTableFullscreen}>
         <table className="w-full caption-bottom text-sm [&_th]:border-r [&_th]:border-border/30 [&_th:last-child]:border-r-0 [&_td]:border-r [&_td]:border-border/30 [&_td:last-child]:border-r-0 [&_td[colspan]]:border-r-0">
           <TableHeader className="sticky top-0 z-20 shadow-[0_2px_4px_-2px_rgba(0,0,0,0.08)] dark:shadow-[0_2px_4px_-2px_rgba(0,0,0,0.3)]">
-            <TableRow className="border-b border-border bg-muted">
-              <TableHead className={cn("w-[128px] min-w-[128px] sticky left-0 bg-muted z-30 py-3 px-3 border-r border-border shadow-[2px_0_4px_-2px_rgba(0,0,0,0.06)] dark:shadow-[2px_0_4px_-2px_rgba(0,0,0,0.4)]", tokens.table.columnHeader)}>Metric</TableHead>
+            <TableRow className="border-b border-border bg-foreground/[0.07]">
+              <TableHead className={cn("w-[128px] min-w-[128px] sticky left-0 bg-foreground/[0.07] z-30 py-3 px-3 border-r border-border shadow-[2px_0_4px_-2px_rgba(0,0,0,0.06)] dark:shadow-[2px_0_4px_-2px_rgba(0,0,0,0.4)]", tokens.table.columnHeader)}>Metric</TableHead>
               {levels.map((level, idx) => {
                 const ret = level.dbId ? getCriteria(level.dbId).retention : undefined;
                 const retentionActive = ret?.retention_enabled === true;
                 return (
-                  <TableHead key={level.id} className={cn("text-center min-w-[140px] py-4 px-3 bg-muted", tokens.table.columnHeader)}>
+                  <TableHead key={level.id} className={cn("text-center min-w-[140px] py-4 px-3 bg-foreground/[0.07]", tokens.table.columnHeader)}>
                     <div className="flex flex-col items-center gap-2">
                       <span className="text-[10px] font-display uppercase tracking-widest text-muted-foreground/50">
                         Level {idx + 1}
@@ -809,8 +809,8 @@ function CriteriaComparisonTable({ levels, promotionCriteria, retentionCriteria,
           </TableHeader>
           <TableBody>
             {/* Compensation section */}
-            <TableRow className="bg-muted/80 hover:bg-muted/80 border-t border-border">
-              <TableCell className="sticky left-0 z-10 bg-muted/80 py-3 px-3 border-r border-border shadow-[2px_0_4px_-2px_rgba(0,0,0,0.06)] dark:shadow-[2px_0_4px_-2px_rgba(0,0,0,0.4)]">
+            <TableRow className="bg-foreground/[0.09] hover:bg-foreground/[0.09] border-t border-border">
+              <TableCell className="sticky left-0 z-10 bg-foreground/[0.09] py-3 px-3 border-r border-border shadow-[2px_0_4px_-2px_rgba(0,0,0,0.06)] dark:shadow-[2px_0_4px_-2px_rgba(0,0,0,0.4)]">
                 <span className="flex items-center gap-2 text-xs font-display uppercase tracking-wide text-foreground">
                   <DollarSign className="w-4 h-4 text-primary shrink-0" />
                   Compensation
@@ -824,7 +824,7 @@ function CriteriaComparisonTable({ levels, promotionCriteria, retentionCriteria,
               const field = commLabel === 'Service Commission' ? 'serviceCommissionRate' : 'retailCommissionRate';
               return (
                 <TableRow key={commLabel} className="border-b border-border/40 hover:bg-muted/20 transition-colors">
-                  <TableCell className="text-sm text-muted-foreground sticky left-0 bg-muted z-10 py-3 px-4 border-r border-border shadow-[2px_0_4px_-2px_rgba(0,0,0,0.06)] dark:shadow-[2px_0_4px_-2px_rgba(0,0,0,0.4)]">{commLabel}</TableCell>
+                  <TableCell className="text-sm text-muted-foreground sticky left-0 bg-foreground/[0.07] z-10 py-3 px-4 border-r border-border shadow-[2px_0_4px_-2px_rgba(0,0,0,0.06)] dark:shadow-[2px_0_4px_-2px_rgba(0,0,0,0.4)]">{commLabel}</TableCell>
                   {levels.map((level) => {
                     const rate = level[field];
                     return (
@@ -843,7 +843,7 @@ function CriteriaComparisonTable({ levels, promotionCriteria, retentionCriteria,
 
             {/* Hourly Wage row */}
             <TableRow className="border-b border-border/40 hover:bg-muted/20 transition-colors">
-              <TableCell className="text-sm text-muted-foreground sticky left-0 bg-muted z-10 py-3 px-4 border-r border-border shadow-[2px_0_4px_-2px_rgba(0,0,0,0.06)] dark:shadow-[2px_0_4px_-2px_rgba(0,0,0,0.4)]">Hourly Wage</TableCell>
+              <TableCell className="text-sm text-muted-foreground sticky left-0 bg-foreground/[0.07] z-10 py-3 px-4 border-r border-border shadow-[2px_0_4px_-2px_rgba(0,0,0,0.06)] dark:shadow-[2px_0_4px_-2px_rgba(0,0,0,0.4)]">Hourly Wage</TableCell>
               {levels.map((level) => (
                 <TableCell key={level.id} className="text-center text-sm tabular-nums py-3 px-3">
                   {level.hourlyWageEnabled && level.hourlyWage ? (
@@ -856,8 +856,8 @@ function CriteriaComparisonTable({ levels, promotionCriteria, retentionCriteria,
             </TableRow>
 
             {/* Promotion section header */}
-            <TableRow className="bg-muted/80 hover:bg-muted/80 border-t border-border">
-              <TableCell className="sticky left-0 z-10 bg-muted/80 py-3 px-3 border-r border-border shadow-[2px_0_4px_-2px_rgba(0,0,0,0.06)] dark:shadow-[2px_0_4px_-2px_rgba(0,0,0,0.4)]">
+            <TableRow className="bg-foreground/[0.09] hover:bg-foreground/[0.09] border-t border-border">
+              <TableCell className="sticky left-0 z-10 bg-foreground/[0.09] py-3 px-3 border-r border-border shadow-[2px_0_4px_-2px_rgba(0,0,0,0.06)] dark:shadow-[2px_0_4px_-2px_rgba(0,0,0,0.4)]">
                 <span className="flex items-center gap-2 text-xs font-display uppercase tracking-wide text-foreground">
                   <TrendingUp className="w-4 h-4 text-primary shrink-0" />
                   Promotion
@@ -872,14 +872,14 @@ function CriteriaComparisonTable({ levels, promotionCriteria, retentionCriteria,
             )}
 
             {/* Retention Policy section header */}
-            <TableRow className="bg-muted/80 hover:bg-muted/80 border-t border-border">
-              <TableCell className="sticky left-0 z-10 bg-muted/80 py-3 px-3 border-r border-border shadow-[2px_0_4px_-2px_rgba(0,0,0,0.06)] dark:shadow-[2px_0_4px_-2px_rgba(0,0,0,0.4)]">
+            <TableRow className="bg-foreground/[0.09] hover:bg-foreground/[0.09] border-t border-border">
+              <TableCell className="sticky left-0 z-10 bg-foreground/[0.09] py-3 px-3 border-r border-border shadow-[2px_0_4px_-2px_rgba(0,0,0,0.06)] dark:shadow-[2px_0_4px_-2px_rgba(0,0,0,0.4)]">
                 <span className="flex items-center gap-2 text-xs font-display uppercase tracking-wide text-foreground">
                   <Shield className="w-4 h-4 text-primary shrink-0" />
                   Retention
                 </span>
               </TableCell>
-              <TableCell colSpan={levels.length} className="py-3 px-4 bg-muted/80 text-sm text-muted-foreground/60">
+              <TableCell colSpan={levels.length} className="py-3 px-4 bg-foreground/[0.09] text-sm text-muted-foreground/60">
                 Policy settings · KPI minimums inherited from Level Requirements above
               </TableCell>
             </TableRow>
