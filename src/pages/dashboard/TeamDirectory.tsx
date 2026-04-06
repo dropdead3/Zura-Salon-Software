@@ -881,11 +881,111 @@ function TeamMemberCard({ member, locations, isSuperAdmin, canViewStrikes, strik
                     const levelIdx = stylistLevels?.findIndex(l => l.client_label === member.stylist_level || l.slug === member.stylist_level) ?? -1;
                     const totalLevels = stylistLevels?.length ?? 1;
                     const colors = levelIdx >= 0 ? getLevelColor(levelIdx, totalLevels) : { bg: 'bg-muted', text: 'text-muted-foreground' };
+                    const progress = progressMap.get(member.user_id);
+                    const showIndicator = isSuperAdmin && progress && !['in_progress', 'no_criteria', 'at_top_level'].includes(progress.status);
+                    const isStalled = isSuperAdmin && progress && progress.timeAtLevelDays >= 180 && progress.status === 'in_progress';
                     return (
-                      <span className={cn("inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium", colors.bg, colors.text)}>
-                        <Award className="w-3 h-3" />
-                        {member.stylist_level.replace(' STYLIST', '')}
-                      </span>
+                      <>
+                        <span className={cn("inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium", colors.bg, colors.text)}>
+                          <Award className="w-3 h-3" />
+                          {member.stylist_level.replace(' STYLIST', '')}
+                        </span>
+                        {showIndicator && progress.status === 'ready' && (
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <span
+                                  className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400 cursor-pointer"
+                                  onClick={(e) => { e.stopPropagation(); navigate(`/dashboard/admin/graduation-tracker`); }}
+                                >
+                                  <TrendingUp className="w-3 h-3" />
+                                  Ready
+                                </span>
+                              </TooltipTrigger>
+                              <TooltipContent side="top" className="text-xs max-w-[220px]">
+                                <p className="font-medium">Ready to Promote</p>
+                                <p>Composite: {Math.round(progress.compositeScore)}%{progress.nextLevel ? ` · Next: ${progress.nextLevel.client_label}` : ''}</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        )}
+                        {showIndicator && progress.status === 'needs_attention' && (
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <span
+                                  className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400 cursor-pointer"
+                                  onClick={(e) => { e.stopPropagation(); navigate(`/dashboard/admin/graduation-tracker`); }}
+                                >
+                                  <TrendingDown className="w-3 h-3" />
+                                  Attention
+                                </span>
+                              </TooltipTrigger>
+                              <TooltipContent side="top" className="text-xs max-w-[220px]">
+                                <p className="font-medium">Needs Attention</p>
+                                <p>Composite: {Math.round(progress.compositeScore)}%</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        )}
+                        {showIndicator && progress.status === 'at_risk' && (
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <span
+                                  className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400 cursor-pointer"
+                                  onClick={(e) => { e.stopPropagation(); navigate(`/dashboard/admin/graduation-tracker`); }}
+                                >
+                                  <TrendingDown className="w-3 h-3" />
+                                  At Risk
+                                </span>
+                              </TooltipTrigger>
+                              <TooltipContent side="top" className="text-xs max-w-[220px]">
+                                <p className="font-medium">At Risk — Grace Period</p>
+                                <p>{progress.retentionFailures.map(f => f.label).join(', ')}</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        )}
+                        {showIndicator && progress.status === 'below_standard' && (
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <span
+                                  className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-400 cursor-pointer"
+                                  onClick={(e) => { e.stopPropagation(); navigate(`/dashboard/admin/graduation-tracker`); }}
+                                >
+                                  <TrendingDown className="w-3 h-3" />
+                                  Below Std
+                                </span>
+                              </TooltipTrigger>
+                              <TooltipContent side="top" className="text-xs max-w-[220px]">
+                                <p className="font-medium">Below Standard — Demotion Eligible</p>
+                                <p>{progress.retentionFailures.map(f => f.label).join(', ')}</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        )}
+                        {isStalled && (
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <span
+                                  className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-muted text-muted-foreground cursor-pointer"
+                                  onClick={(e) => { e.stopPropagation(); navigate(`/dashboard/admin/graduation-tracker`); }}
+                                >
+                                  <Pause className="w-3 h-3" />
+                                  Stalled
+                                </span>
+                              </TooltipTrigger>
+                              <TooltipContent side="top" className="text-xs max-w-[220px]">
+                                <p className="font-medium">Stalled Progression</p>
+                                <p>No level change in {Math.round(progress!.timeAtLevelDays / 30)} months</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        )}
+                      </>
                     );
                   })()}
                 </div>
