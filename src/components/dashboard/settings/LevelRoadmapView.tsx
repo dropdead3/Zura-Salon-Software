@@ -1,6 +1,6 @@
 import { useRef } from 'react';
 import { Badge } from '@/components/ui/badge';
-import { X, FileDown, Printer, Check, AlertTriangle, ArrowRight, Shield, Clock, Users } from 'lucide-react';
+import { X, FileDown, Printer, Check, AlertTriangle, ChevronRight, Shield, Clock, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { getLevelColor } from '@/lib/level-colors';
 import type { LevelPromotionCriteria } from '@/hooks/useLevelPromotionCriteria';
@@ -93,35 +93,57 @@ export function LevelRoadmapView({
 
         {/* Career progression timeline */}
         <div className="mb-10 print:mb-6">
-          <div className="flex items-center justify-center gap-0 overflow-x-auto py-4">
+          <div className="flex items-center justify-center gap-0 overflow-x-auto py-6">
             {levels.map((level, i) => {
               const color = getLevelColor(i, levels.length);
+              const isConfigured = level.isConfigured;
+              // Stone→amber→gold hex progression for force-light page
+              const bgHexStops = ['#f5f5f4', '#e7e5e4', '#fef3c7', '#fde68a', '#fcd34d', '#f59e0b'];
+              const ratio = levels.length <= 1 ? 1 : i / (levels.length - 1);
+              const bgIdx = Math.round(ratio * (bgHexStops.length - 1));
+              const bgHex = bgHexStops[Math.min(bgIdx, bgHexStops.length - 1)];
+
               return (
                 <div key={level.slug} className="flex items-center">
-                  <div className="flex flex-col items-center min-w-[80px]">
-                    <div className={cn(
-                      'w-10 h-10 rounded-full flex items-center justify-center text-sm font-display tracking-wide border-2',
-                      color.bg,
-                      color.text,
-                      level.isConfigured ? 'border-emerald-400' : 'border-amber-300 border-dashed'
-                    )}>
-                      {i + 1}
+                  <div className="flex flex-col items-center min-w-[90px]">
+                    <div className="relative">
+                      <div
+                        className={cn(
+                          'w-14 h-14 rounded-full flex items-center justify-center text-base font-display tracking-wide transition-all',
+                          isConfigured
+                            ? 'ring-2 ring-offset-2 ring-emerald-400 shadow-md'
+                            : 'ring-2 ring-offset-2 ring-neutral-200'
+                        )}
+                        style={{ background: bgHex }}
+                      >
+                        <span className={cn(color.text, 'relative z-10')}>{i + 1}</span>
+                      </div>
+                      {/* Status dot badge */}
+                      {isConfigured ? (
+                        <span className="absolute -bottom-0.5 -right-0.5 w-5 h-5 rounded-full bg-emerald-500 border-2 border-white flex items-center justify-center">
+                          <Check className="w-2.5 h-2.5 text-white" strokeWidth={3} />
+                        </span>
+                      ) : (
+                        <span className="absolute -bottom-0.5 -right-0.5 w-5 h-5 rounded-full bg-amber-400 border-2 border-white flex items-center justify-center">
+                          <AlertTriangle className="w-2.5 h-2.5 text-white" strokeWidth={3} />
+                        </span>
+                      )}
                     </div>
-                    <span className="mt-1.5 text-[11px] font-display tracking-wide uppercase text-neutral-600 text-center leading-tight max-w-[80px]">
+                    <span className="mt-2 text-[11px] font-display tracking-wide uppercase text-neutral-600 text-center leading-tight max-w-[90px]">
                       {level.label}
                     </span>
-                    {level.isConfigured ? (
-                      <span className="mt-1 flex items-center gap-0.5 text-[9px] text-emerald-600 font-medium">
-                        <Check className="w-2.5 h-2.5" /> Ready
-                      </span>
-                    ) : (
-                      <span className="mt-1 flex items-center gap-0.5 text-[9px] text-amber-600 font-medium">
-                        <AlertTriangle className="w-2.5 h-2.5" /> Incomplete
-                      </span>
-                    )}
+                    <span className={cn(
+                      'mt-0.5 text-[9px] font-medium',
+                      isConfigured ? 'text-emerald-600' : 'text-amber-600'
+                    )}>
+                      {isConfigured ? 'Ready' : 'Incomplete'}
+                    </span>
                   </div>
                   {i < levels.length - 1 && (
-                    <ArrowRight className="w-4 h-4 text-neutral-300 mx-1 flex-shrink-0" />
+                    <div className="flex items-center mx-1 flex-shrink-0">
+                      <div className="w-6 h-px bg-neutral-300" />
+                      <ChevronRight className="w-3 h-3 text-neutral-300 -ml-1" />
+                    </div>
                   )}
                 </div>
               );
