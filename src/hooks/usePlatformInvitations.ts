@@ -223,8 +223,8 @@ export function useAcceptPlatformInvitation() {
   return useMutation({
     mutationFn: async ({ token, userId }: { token: string; userId: string }) => {
       // Get the invitation via secure RPC
-      const { data: invRows, error: fetchError } = await supabase
-        .rpc('lookup_platform_invitation_by_token', { p_token: token }) as any;
+      const { data: invRows, error: fetchError } = await (supabase
+        .rpc as any)('lookup_platform_invitation_by_token', { p_token: token });
 
       if (fetchError) throw fetchError;
       if (!invRows || invRows.length === 0) throw new Error('Invitation not found');
