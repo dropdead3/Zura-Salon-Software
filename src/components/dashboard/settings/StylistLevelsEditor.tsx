@@ -37,6 +37,7 @@ import {
   Globe,
   TrendingUp,
   Shield,
+  ShieldCheck,
   Wand2,
   DollarSign,
   Clock,
@@ -677,23 +678,46 @@ function CriteriaComparisonTable({ levels, promotionCriteria, retentionCriteria,
           <TableHeader>
             <TableRow>
               <TableHead className={cn("w-[160px] sticky left-0 bg-card z-20 rounded-tl-xl", tokens.table.columnHeader)}>Metric</TableHead>
-              {levels.map((level, idx) => (
-                <TableHead key={level.id} className={cn("text-center min-w-[100px]", tokens.table.columnHeader)}>
-                  <div className="flex flex-col items-center gap-1">
-                    <span className="text-xs">{level.label}</span>
-                    {level.dbId ? (
-                      <button
-                        onClick={() => onEditLevel(level, idx)}
-                        className="text-[10px] text-primary hover:text-primary/80 transition-colors"
-                      >
-                        Edit
-                      </button>
-                    ) : (
-                      <span className="text-[10px] text-muted-foreground/50">Unsaved</span>
-                    )}
-                  </div>
-                </TableHead>
-              ))}
+              {levels.map((level, idx) => {
+                const ret = level.dbId ? getCriteria(level.dbId).retention : undefined;
+                const retentionActive = ret?.retention_enabled === true;
+                return (
+                  <TableHead key={level.id} className={cn("text-center min-w-[100px]", tokens.table.columnHeader)}>
+                    <div className="flex flex-col items-center gap-1">
+                      <div className="flex items-center gap-1">
+                        <span className="text-xs">{level.label}</span>
+                        {level.dbId && (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <span>
+                                <ShieldCheck className={cn(
+                                  "w-3 h-3 transition-colors",
+                                  retentionActive ? "text-emerald-500" : "text-muted-foreground/30"
+                                )} />
+                              </span>
+                            </TooltipTrigger>
+                            <TooltipContent side="top" className="text-xs">
+                              {retentionActive
+                                ? `Retention active · ${ret!.evaluation_window_days}d window`
+                                : 'Retention monitoring off'}
+                            </TooltipContent>
+                          </Tooltip>
+                        )}
+                      </div>
+                      {level.dbId ? (
+                        <button
+                          onClick={() => onEditLevel(level, idx)}
+                          className="text-[10px] text-primary hover:text-primary/80 transition-colors"
+                        >
+                          Edit
+                        </button>
+                      ) : (
+                        <span className="text-[10px] text-muted-foreground/50">Unsaved</span>
+                      )}
+                    </div>
+                  </TableHead>
+                );
+              })}
             </TableRow>
           </TableHeader>
           <TableBody>
