@@ -700,7 +700,7 @@ function CriteriaComparisonTable({ levels, promotionCriteria, retentionCriteria,
                 const ret = level.dbId ? getCriteria(level.dbId).retention : undefined;
                 const retentionActive = ret?.retention_enabled === true;
                 return (
-                  <TableHead key={level.id} className={cn("text-center min-w-[140px] py-4 px-3", tokens.table.columnHeader)}>
+                  <TableHead key={level.id} className={cn("text-center min-w-[140px] py-4 px-3 bg-card", tokens.table.columnHeader)}>
                     <div className="flex flex-col items-center gap-2">
                       <span className="text-[10px] font-display uppercase tracking-widest text-muted-foreground/50">
                         Level {idx + 1}
