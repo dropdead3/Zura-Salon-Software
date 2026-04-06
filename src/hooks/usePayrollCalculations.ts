@@ -1,7 +1,7 @@
-import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useStylistLevels } from './useStylistLevels';
+import { ResolvedCommission } from './useResolveCommission';
 import { EmployeePayrollSettings, PayType } from './useEmployeePayrollSettings';
 
 // EmployeeHours, EmployeeAdjustments, EmployeeSalesData, EmployeeCompensation, PayrollTotals interfaces and TAX_RATES
@@ -116,30 +116,14 @@ export function usePayrollSalesData(
 export function usePayrollCalculations() {
   const { data: levels } = useStylistLevels();
 
-  // Build a simple calculateCommission from levels (flat lookup, no user context)
-  const calculateCommission = (serviceRevenue: number, productRevenue: number) => {
-    // Without user context, use median level rate as fallback
-    if (!levels || levels.length === 0) {
-      return { serviceCommission: 0, productCommission: 0, totalCommission: 0, tierName: '' };
-    }
-    const midLevel = levels[Math.floor(levels.length / 2)];
-    const svcRate = midLevel.service_commission_rate ?? 0;
-    const retailRate = midLevel.retail_commission_rate ?? 0;
-    return {
-      serviceCommission: serviceRevenue * svcRate,
-      productCommission: productRevenue * retailRate,
-      totalCommission: serviceRevenue * svcRate + productRevenue * retailRate,
-      tierName: midLevel.label,
-    };
-  };
-
   const calculateEmployeeCompensation = (
     settings: EmployeePayrollSettings,
     hours: EmployeeHours,
     salesData: EmployeeSalesData | undefined,
     adjustments: EmployeeAdjustments | undefined,
     weeksInPeriod: number = 2,
-    employeeLevelSlug?: string | null
+    employeeLevelSlug?: string | null,
+    resolveCommissionFn?: (userId: string, serviceRevenue: number, productRevenue: number) => ResolvedCommission
   ): EmployeeCompensation => {
     let hourlyRate = settings.hourly_rate || 0;
     // Fallback: use level's hourly_wage if employee has no rate set
@@ -174,13 +158,29 @@ export function usePayrollCalculations() {
         payType === 'hourly_plus_commission' ||
         payType === 'salary_plus_commission')
     ) {
-      const commission = calculateCommission(
-        salesData.serviceRevenue,
-        salesData.productRevenue
-      );
-      serviceCommission = commission.serviceCommission;
-      productCommission = commission.productCommission;
-      commissionPay = commission.totalCommission;
+      if (resolveCommissionFn) {
+        // Use the 4-tier resolution: override → location → level → unassigned
+        const resolved = resolveCommissionFn(
+          settings.employee_id,
+          salesData.serviceRevenue,
+          salesData.productRevenue
+        );
+        serviceCommission = resolved.serviceCommission;
+        productCommission = resolved.retailCommission;
+        commissionPay = resolved.totalCommission;
+      } else {
+        // Fallback: use level default rates when no resolver provided
+        if (employeeLevelSlug && levels) {
+          const matchedLevel = levels.find(l => l.slug === employeeLevelSlug);
+          if (matchedLevel) {
+            const svcRate = matchedLevel.service_commission_rate ?? 0;
+            const retailRate = matchedLevel.retail_commission_rate ?? 0;
+            serviceCommission = salesData.serviceRevenue * svcRate;
+            productCommission = salesData.productRevenue * retailRate;
+            commissionPay = serviceCommission + productCommission;
+          }
+        }
+      }
     }
 
     const bonus = adjustments?.bonus || 0;
