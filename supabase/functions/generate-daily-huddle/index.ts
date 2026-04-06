@@ -3,14 +3,23 @@ import { createClient } from "@supabase/supabase-js";
 import { AI_ASSISTANT_NAME_DEFAULT as AI_ASSISTANT_NAME } from "../_shared/brand.ts";
 import { requireAuth, requireOrgMember, authErrorResponse } from "../_shared/auth.ts";
 import { getCorsHeaders } from "../_shared/cors.ts";
+import { validateBody, ValidationError, z } from "../_shared/validation.ts";
 
-interface HuddleRequest {
-  organizationId: string;
-  locationId?: string;
-  huddleDate: string; // YYYY-MM-DD
-}
+const HuddleSchema = z.object({
+  organizationId: z.string().uuid(),
+  organization_id: z.string().uuid().optional(),
+  locationId: z.string().uuid().optional(),
+  huddleDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+});
 
 interface HuddleContent {
+  focus_of_the_day: string;
+  wins_from_yesterday: string;
+  announcements: string;
+  birthdays_celebrations: string;
+  training_reminders: string;
+  sales_goals: { retail: number; service: number };
+}
   focus_of_the_day: string;
   wins_from_yesterday: string;
   announcements: string;
@@ -46,7 +55,7 @@ serve(async (req) => {
       );
     }
 
-    const body: HuddleRequest = await req.json();
+    const body = await validateBody(req, HuddleSchema, getCorsHeaders(req));
     // Verify org access
     try {
       await requireOrgMember(supabaseAdmin, user.id, body.organizationId || body.organization_id);
