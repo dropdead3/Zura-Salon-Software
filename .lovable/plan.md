@@ -1,49 +1,51 @@
 
 
-# Optimistic Wizard Hydration from Cache
+# Improve Criteria Table Readability and Organization
 
-## Problem
+## Problems Identified
 
-When opening the GraduationWizard after saving from the inline matrix, there's a brief loading flash. The wizard waits for `useLevelPromotionCriteriaForLevel` to refetch from the server before hydrating the form, even though the data already exists in the React Query cache.
+1. **Text too small** — `text-xs` (12px) used everywhere for labels, values, and headers. Hard to read at a glance.
+2. **Too dense** — minimal padding, tight rows, everything blends together visually.
+3. **Section headers are subtle** — thin tinted backgrounds don't create enough visual separation between Compensation, Promotion, and Retention sections.
+4. **Column headers cramped** — level names at `text-xs` with tiny Edit buttons and shield icons packed into narrow columns.
+5. **Read-only values lack weight** — displayed values like `$5000`, `80%` are the same size as labels, making scanning difficult.
+6. **Editing controls are tiny** — Auto-step, Save, X buttons at `text-[10px]` are hard to click and read.
 
 ## Solution
 
-Use React Query's `placeholderData` (or read from the cache synchronously via `queryClient.getQueryData`) so the wizard form hydrates instantly from cached data while the background refetch runs.
+### Typography bump across the board
 
-### Changes to `GraduationWizard.tsx`
+| Element | Current | New |
+|---------|---------|-----|
+| Column headers (level names) | `text-xs` | `text-sm font-medium` |
+| Metric labels (left column) | `text-xs` | `text-sm` |
+| Cell values (read-only) | `text-xs` | `text-sm` |
+| Section headers | `text-xs` | `text-sm` |
+| Edit/Configure links | `text-[10px]` | `text-xs` |
+| Editing action buttons | `text-[10px]` | `text-xs` |
 
-1. **Import `useQueryClient`** from `@tanstack/react-query`
-2. **Read cached promotion criteria** synchronously when the wizard opens:
-   - Use `queryClient.getQueryData(['level-promotion-criteria', orgId])` to find the matching level's criteria from the bulk query cache
-   - If found, use it as the initial form state immediately (before the per-level query resolves)
-3. **Read cached retention criteria** the same way from `['level-retention-criteria', orgId]`
-4. **Adjust the hydration `useEffect`**: Keep the existing effect as-is — when the per-level query resolves with fresh server data, it overwrites the cache-seeded values. No visual flash since the data will match.
+### Spacing improvements
 
-### Implementation Detail
+- Left "Metric" column: widen from `w-[160px]` to `w-[180px]`
+- Level columns: increase `min-w` from `100px` to `120px`
+- Row padding: ensure consistent `py-2.5` on data rows
+- Section header rows: increase to `py-3` with slightly stronger background
 
-Add a second `useEffect` (or adjust the existing one) that runs on `open` change:
+### Visual hierarchy
 
-```typescript
-useEffect(() => {
-  if (!open || !levelId) return;
-  // Try to seed from bulk cache immediately
-  const cached = queryClient.getQueryData<LevelPromotionCriteria[]>(
-    ['level-promotion-criteria', orgId]
-  );
-  const match = cached?.find(c => c.stylist_level_id === levelId);
-  if (match) {
-    setForm({ /* map match fields to FormState */ });
-  }
-}, [open, levelId]);
-```
+- Section headers: use `bg-muted/50` (stronger) with a left accent border `border-l-2 border-l-primary`
+- Read-only values: use `text-foreground` with `tabular-nums` for aligned numbers
+- Empty dashes: keep at subdued `text-muted-foreground/40` but bump to `text-sm`
+- Checkbox in edit mode: increase from `w-3.5 h-3.5` to `w-4 h-4`
 
-The existing `[existing, open, isLoading]` effect still runs and overwrites with authoritative server data — but since the values match, there's no flicker.
+### Editing row improvements
 
-Same pattern for retention form with `['level-retention-criteria', orgId]`.
+- Action buttons (Auto-step, Save, Cancel): bump to `text-xs px-2 py-1` for easier clicking
+- Input width stays at `w-[90px]` (already improved), height stays `h-8`
 
 ## Files Modified
 
-- `src/components/dashboard/settings/GraduationWizard.tsx` — add cache-seeded initial hydration
+- `src/components/dashboard/settings/StylistLevelsEditor.tsx` — typography, spacing, and visual hierarchy updates within `CriteriaComparisonTable`
 
 ## No database changes.
 
