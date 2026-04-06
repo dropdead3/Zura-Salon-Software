@@ -401,7 +401,7 @@ function CriteriaComparisonTable({ levels, promotionCriteria, retentionCriteria,
 
         if (editingMetric.section === 'promotion') {
           const existing = promotionCriteria.find(c => c.stylist_level_id === level.dbId && c.is_active);
-          const defaults = getZuraDefaults(levels.findIndex(l => l.id === level.id), levels.length);
+          const defaults = getZuraDefaults(levels.findIndex(l => l.id === level.id));
           const base: any = existing ? { ...existing } : {
             organization_id: orgId,
             stylist_level_id: level.dbId,
@@ -431,7 +431,7 @@ function CriteriaComparisonTable({ levels, promotionCriteria, retentionCriteria,
           if (error) throw error;
         } else {
           const existing = retentionCriteria.find(r => r.stylist_level_id === level.dbId && r.is_active);
-          const retDefaults = getZuraRetentionDefaults(levels.findIndex(l => l.id === level.id), levels.length);
+          const retDefaults = getZuraRetentionDefaults(levels.findIndex(l => l.id === level.id));
           const base: any = existing ? { ...existing } : {
             organization_id: orgId,
             stylist_level_id: level.dbId,
