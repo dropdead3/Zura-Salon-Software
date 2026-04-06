@@ -22,9 +22,10 @@ const SYSTEM_PROMPT = `You are Zura, a salon business intelligence advisor speci
 
 ## Margin Math Context
 - Variable cost rate = service_commission + retail_commission + product_cost_pct
-- Breakeven revenue = overhead / (1 - variable_cost_rate)
-- Target revenue = overhead / (1 - variable_cost_rate - target_margin_pct)
-- Margin at revenue = (revenue - revenue * variable_cost_rate - overhead) / revenue
+- Breakeven revenue = (overhead + hourly_wage_cost) / (1 - variable_cost_rate)
+- Target revenue = (overhead + hourly_wage_cost) / (1 - variable_cost_rate - target_margin_pct)
+- Margin at revenue = (revenue - revenue * variable_cost_rate - overhead - hourly_wage_cost) / revenue
+- hourly_wage_cost = hourly_wage × hours_per_month (only for levels with hourly wages enabled)
 
 ## Optimization Guidelines
 - Never recommend rates below 28% (uncompetitive, talent flight risk)
@@ -96,18 +97,22 @@ Deno.serve(async (req) => {
 - Monthly overhead per stylist: $${assumptions.overhead_per_stylist}
 - Product cost %: ${(assumptions.product_cost_pct * 100).toFixed(1)}%
 - Target margin %: ${(assumptions.target_margin_pct * 100).toFixed(1)}%
+- Hours per month (for hourly wage modeling): ${assumptions.hours_per_month ?? 160}
 
 ## Current Levels
 ${levels.map((l: any, i: number) => {
   const rev = revenueByLevel?.find((r: any) => r.level_id === l.id);
+  const hourlyInfo = l.hourly_wage_enabled && l.hourly_wage
+    ? `\n   - Hourly wage: $${l.hourly_wage}/hr (enabled) → fixed cost: $${(l.hourly_wage * (assumptions.hours_per_month ?? 160)).toLocaleString()}/mo`
+    : '\n   - Hourly wage: Not enabled';
   return `${i + 1}. ${l.label} (slug: ${l.slug})
    - Service commission: ${((l.service_commission_rate || 0) * 100).toFixed(1)}%
-   - Retail commission: ${((l.retail_commission_rate || 0) * 100).toFixed(1)}%
+   - Retail commission: ${((l.retail_commission_rate || 0) * 100).toFixed(1)}%${hourlyInfo}
    - Stylists at this level: ${rev?.stylist_count ?? 0}
    - Avg monthly revenue/stylist: $${rev?.avg_monthly_revenue ? Math.round(rev.avg_monthly_revenue).toLocaleString() : 'No data'}`;
 }).join('\n')}
 
-Recommend optimal service and retail commission rates for each level to hit the ${(assumptions.target_margin_pct * 100).toFixed(0)}% target margin. Consider actual revenue performance and industry benchmarks.`;
+Recommend optimal service and retail commission rates for each level to hit the ${(assumptions.target_margin_pct * 100).toFixed(0)}% target margin. Consider actual revenue performance, hourly wage fixed costs where applicable, and industry benchmarks.`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
