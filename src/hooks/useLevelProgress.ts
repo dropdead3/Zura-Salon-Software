@@ -63,20 +63,36 @@ export function useLevelProgress(userId: string | undefined) {
   const { data: allLevels = [] } = useStylistLevels();
   const { data: allCriteria = [] } = useLevelPromotionCriteria();
   const { data: allRetention = [] } = useLevelRetentionCriteria();
+  const { data: criteriaOverrides = [] } = useLevelCriteriaOverrides();
 
-  // Fetch employee profile to get current level slug
+  // Fetch employee profile to get current level slug + location
   const { data: profile } = useQuery({
     queryKey: ['employee-profile-level', userId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('employee_profiles')
-        .select('user_id, stylist_level, hire_date')
+        .select('user_id, stylist_level, hire_date, location_id')
         .eq('user_id', userId!)
         .single();
       if (error) throw error;
       return data;
     },
     enabled: !!userId,
+  });
+
+  // Fetch location's group_id for group-level override resolution
+  const { data: locationGroup } = useQuery({
+    queryKey: ['location-group-for-overrides', profile?.location_id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('locations')
+        .select('location_group_id')
+        .eq('id', profile!.location_id!)
+        .single();
+      if (error) return null;
+      return data?.location_group_id as string | null;
+    },
+    enabled: !!profile?.location_id,
   });
 
   // Determine current + next level + retention criteria
