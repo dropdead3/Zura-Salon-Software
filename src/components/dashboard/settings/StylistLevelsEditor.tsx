@@ -522,12 +522,12 @@ function CriteriaComparisonTable({ levels, promotionCriteria, retentionCriteria,
     const fieldMapping = METRIC_FIELD_MAP[metric.label];
     const isBaseLevel = levelIdx === 0;
     const isLastLevel = levelIdx === levels.length - 1;
-    const isPromotionSkip = metric.section === 'promotion' && (isBaseLevel || isLastLevel);
+    const isPromotionSkip = metric.section === 'promotion' && isBaseLevel;
 
     if (isEditingRow && metric.editable && fieldMapping && level.dbId && !isPromotionSkip) {
       const entry = editValues[level.id] || { enabled: false, value: '' };
       const editableLevelIds = levels.filter((_, idx) => {
-        if (metric.section === 'promotion') return idx > 0 && idx < levels.length - 1;
+        if (metric.section === 'promotion') return idx > 0;
         return true;
       }).map(l => l.id);
       const editLevelIdx = editableLevelIds.indexOf(level.id);
