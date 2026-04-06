@@ -20782,6 +20782,8 @@ export type Database = {
           created_at: string
           description: string | null
           display_order: number
+          hourly_wage: number | null
+          hourly_wage_enabled: boolean
           id: string
           is_active: boolean
           label: string
@@ -20796,6 +20798,8 @@ export type Database = {
           created_at?: string
           description?: string | null
           display_order?: number
+          hourly_wage?: number | null
+          hourly_wage_enabled?: boolean
           id?: string
           is_active?: boolean
           label: string
@@ -20810,6 +20814,8 @@ export type Database = {
           created_at?: string
           description?: string | null
           display_order?: number
+          hourly_wage?: number | null
+          hourly_wage_enabled?: boolean
           id?: string
           is_active?: boolean
           label?: string
