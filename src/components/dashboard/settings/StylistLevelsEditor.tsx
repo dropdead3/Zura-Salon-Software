@@ -458,6 +458,8 @@ function LevelsQuickSetupWizard({ onGenerate, onDismiss, isGenerating }: QuickSe
         description: '',
         serviceCommissionRate: String(rate),
         retailCommissionRate: retail,
+        hourlyWageEnabled: false,
+        hourlyWage: '',
       };
     });
 
