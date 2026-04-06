@@ -475,7 +475,7 @@ function CriteriaComparisonTable({ levels, promotionCriteria, retentionCriteria,
   const handleAutoStep = () => {
     const editableLevelIds = levels
       .filter((_, idx) => {
-        if (editingMetric?.section === 'promotion') return idx > 0 && idx < levels.length - 1;
+        if (editingMetric?.section === 'promotion') return idx > 0;
         return true;
       })
       .map(l => l.id);
@@ -486,7 +486,7 @@ function CriteriaComparisonTable({ levels, promotionCriteria, retentionCriteria,
   const autoStepAvailable = (() => {
     const editableLevelIds = levels
       .filter((_, idx) => {
-        if (editingMetric?.section === 'promotion') return idx > 0 && idx < levels.length - 1;
+        if (editingMetric?.section === 'promotion') return idx > 0;
         return true;
       })
       .map(l => l.id);
