@@ -1,30 +1,49 @@
 
 
-# Improve Inline KPI Input Visibility
+# Optimistic Wizard Hydration from Cache
 
 ## Problem
 
-The editing inputs in the criteria matrix have poor contrast — dark background with dark text and small size makes values nearly unreadable during editing. The `$ 500`, `$ 750` etc. are barely visible against the dark card background.
+When opening the GraduationWizard after saving from the inline matrix, there's a brief loading flash. The wizard waits for `useLevelPromotionCriteriaForLevel` to refetch from the server before hydrating the form, even though the data already exists in the React Query cache.
 
 ## Solution
 
-Improve the inline input cells with better contrast, slightly larger sizing, and clearer visual separation when in edit mode.
+Use React Query's `placeholderData` (or read from the cache synchronously via `queryClient.getQueryData`) so the wizard form hydrates instantly from cached data while the background refetch runs.
 
-### Changes to `StylistLevelsEditor.tsx`
+### Changes to `GraduationWizard.tsx`
 
-**Input styling (lines 539-556)**:
-- Increase input width from `w-[72px]` to `w-[90px]` and height from `h-7` to `h-8`
-- Add explicit light background: `bg-background text-foreground` so the value is always readable regardless of theme
-- Bump text size from `text-xs` to `text-sm` for better legibility
-- Increase the `$` and `%` prefix/suffix size from `text-[10px]` to `text-xs`
-- Add a stronger border: `border-border/80` for clearer input boundaries
+1. **Import `useQueryClient`** from `@tanstack/react-query`
+2. **Read cached promotion criteria** synchronously when the wizard opens:
+   - Use `queryClient.getQueryData(['level-promotion-criteria', orgId])` to find the matching level's criteria from the bulk query cache
+   - If found, use it as the initial form state immediately (before the per-level query resolves)
+3. **Read cached retention criteria** the same way from `['level-retention-criteria', orgId]`
+4. **Adjust the hydration `useEffect`**: Keep the existing effect as-is — when the per-level query resolves with fresh server data, it overwrites the cache-seeded values. No visual flash since the data will match.
 
-**Edit row highlight (lines 613-614)**:
-- Strengthen the active row background from `bg-primary/5` to `bg-primary/8` for better visual grouping
-- Make the ring slightly more visible: `ring-primary/30`
+### Implementation Detail
 
-**Cell padding (line 522)**:
-- Increase cell padding from `px-1.5 py-1.5` to `px-2 py-2` for breathing room
+Add a second `useEffect` (or adjust the existing one) that runs on `open` change:
 
-### No other files changed. No database changes.
+```typescript
+useEffect(() => {
+  if (!open || !levelId) return;
+  // Try to seed from bulk cache immediately
+  const cached = queryClient.getQueryData<LevelPromotionCriteria[]>(
+    ['level-promotion-criteria', orgId]
+  );
+  const match = cached?.find(c => c.stylist_level_id === levelId);
+  if (match) {
+    setForm({ /* map match fields to FormState */ });
+  }
+}, [open, levelId]);
+```
+
+The existing `[existing, open, isLoading]` effect still runs and overwrites with authoritative server data — but since the values match, there's no flicker.
+
+Same pattern for retention form with `['level-retention-criteria', orgId]`.
+
+## Files Modified
+
+- `src/components/dashboard/settings/GraduationWizard.tsx` — add cache-seeded initial hydration
+
+## No database changes.
 
