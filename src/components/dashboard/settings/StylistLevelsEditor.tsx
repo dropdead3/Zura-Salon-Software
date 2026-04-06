@@ -187,6 +187,8 @@ type LocalStylistLevel = {
   description: string;
   serviceCommissionRate: string;
   retailCommissionRate: string;
+  hourlyWageEnabled: boolean;
+  hourlyWage: string;
 };
 
 interface CriteriaComparisonTableProps {
