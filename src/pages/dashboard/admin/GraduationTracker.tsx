@@ -753,18 +753,58 @@ function AssistantRow({ assistant, requirements }: { assistant: AssistantProgres
 
 function RequirementsManager() {
   const { data: requirements = [], isLoading } = useAllGraduationRequirements();
+  const { data: allLevels = [] } = useStylistLevels();
   const createRequirement = useCreateRequirement();
+  const updateRequirement = useUpdateRequirement();
   const [showCreate, setShowCreate] = useState(false);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
+  const [selectedLevelIds, setSelectedLevelIds] = useState<string[]>([]);
+  const [allLevelsMode, setAllLevelsMode] = useState(true);
+
+  const toggleLevel = (levelId: string) => {
+    setSelectedLevelIds(prev =>
+      prev.includes(levelId) ? prev.filter(id => id !== levelId) : [...prev, levelId]
+    );
+  };
 
   const handleCreate = () => {
     if (!title.trim()) return;
     createRequirement.mutate(
-      { title: title.trim(), description: description.trim() || null, category: 'general' },
-      { onSuccess: () => { setTitle(''); setDescription(''); setShowCreate(false); } }
+      {
+        title: title.trim(),
+        description: description.trim() || null,
+        category: 'general',
+        applies_to_level_ids: allLevelsMode ? null : selectedLevelIds,
+      },
+      {
+        onSuccess: () => {
+          setTitle(''); setDescription(''); setShowCreate(false);
+          setSelectedLevelIds([]); setAllLevelsMode(true);
+        },
+      }
     );
   };
+
+  const handleToggleLevelForReq = (reqId: string, levelId: string, currentIds: string[] | null) => {
+    const current = currentIds || [];
+    const updated = current.includes(levelId)
+      ? current.filter(id => id !== levelId)
+      : [...current, levelId];
+    updateRequirement.mutate({
+      id: reqId,
+      applies_to_level_ids: updated.length > 0 ? updated : null,
+    });
+  };
+
+  const handleSetAllLevelsForReq = (reqId: string) => {
+    updateRequirement.mutate({ id: reqId, applies_to_level_ids: null });
+  };
+
+  const levelMap = useMemo(
+    () => new Map(allLevels.map(l => [l.id, l])),
+    [allLevels]
+  );
 
   return (
     <div className="space-y-4">
@@ -778,6 +818,28 @@ function RequirementsManager() {
         <Card className="p-4 space-y-3">
           <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Requirement title" />
           <Textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Description (optional)" />
+          <div className="space-y-2">
+            <p className="text-xs text-muted-foreground">Applies to levels:</p>
+            <div className="flex flex-wrap gap-2">
+              <Badge
+                variant={allLevelsMode ? 'default' : 'outline'}
+                className="cursor-pointer"
+                onClick={() => { setAllLevelsMode(true); setSelectedLevelIds([]); }}
+              >
+                All Levels
+              </Badge>
+              {allLevels.map(level => (
+                <Badge
+                  key={level.id}
+                  variant={!allLevelsMode && selectedLevelIds.includes(level.id) ? 'default' : 'outline'}
+                  className="cursor-pointer"
+                  onClick={() => { setAllLevelsMode(false); toggleLevel(level.id); }}
+                >
+                  {level.label}
+                </Badge>
+              ))}
+            </div>
+          </div>
           <div className="flex gap-2">
             <Button onClick={handleCreate} disabled={!title.trim() || createRequirement.isPending}>Save</Button>
             <Button variant="outline" onClick={() => setShowCreate(false)}>Cancel</Button>
@@ -787,15 +849,44 @@ function RequirementsManager() {
       {isLoading ? (
         <div className="space-y-2">{[1, 2, 3].map(i => <Skeleton key={i} className="h-12 w-full" />)}</div>
       ) : (
-        requirements.map((req) => (
-          <div key={req.id} className="flex items-center justify-between p-3 rounded-lg border">
-            <div>
-              <p className="font-medium text-sm">{req.title}</p>
-              {req.description && <p className="text-xs text-muted-foreground mt-0.5">{req.description}</p>}
+        requirements.map((req) => {
+          const appliesTo = (req as any).applies_to_level_ids as string[] | null;
+          const isAllLevels = !appliesTo || appliesTo.length === 0;
+          return (
+            <div key={req.id} className="p-3 rounded-lg border space-y-2">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="font-medium text-sm">{req.title}</p>
+                  {req.description && <p className="text-xs text-muted-foreground mt-0.5">{req.description}</p>}
+                </div>
+                <Badge variant="secondary" className="text-xs">{req.category}</Badge>
+              </div>
+              <div className="flex flex-wrap gap-1.5 items-center">
+                <span className="text-[10px] text-muted-foreground mr-1">Applies to:</span>
+                <Badge
+                  variant={isAllLevels ? 'default' : 'outline'}
+                  className="text-[10px] cursor-pointer h-5"
+                  onClick={() => handleSetAllLevelsForReq(req.id)}
+                >
+                  All
+                </Badge>
+                {allLevels.map(level => {
+                  const isSelected = appliesTo?.includes(level.id) ?? false;
+                  return (
+                    <Badge
+                      key={level.id}
+                      variant={isSelected ? 'default' : 'outline'}
+                      className="text-[10px] cursor-pointer h-5"
+                      onClick={() => handleToggleLevelForReq(req.id, level.id, appliesTo)}
+                    >
+                      {level.label}
+                    </Badge>
+                  );
+                })}
+              </div>
             </div>
-            <Badge variant="secondary" className="text-xs">{req.category}</Badge>
-          </div>
-        ))
+          );
+        })
       )}
     </div>
   );
