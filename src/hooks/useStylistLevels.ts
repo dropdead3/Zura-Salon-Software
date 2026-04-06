@@ -14,6 +14,8 @@ export interface StylistLevel {
   is_active: boolean;
   service_commission_rate: number | null;
   retail_commission_rate: number | null;
+  hourly_wage_enabled: boolean;
+  hourly_wage: number | null;
   organization_id: string;
   created_at: string;
   updated_at: string;
