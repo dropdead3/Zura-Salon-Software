@@ -67,22 +67,19 @@ export function useInvitationByToken(token: string | null) {
     queryFn: async (): Promise<PlatformInvitation | null> => {
       if (!token) return null;
 
-      const { data, error } = await supabase
-        .from('platform_invitations')
-        .select('*')
-        .eq('token', token)
-        .single();
+      // Use secure RPC instead of direct table query
+      const { data, error } = await (supabase
+        .rpc as any)('lookup_platform_invitation_by_token', { p_token: token });
 
-      if (error) {
-        if (error.code === 'PGRST116') return null; // Not found
-        throw error;
-      }
+      if (error) throw error;
+      if (!data || data.length === 0) return null;
 
-      return data ? {
-        ...data,
-        role: data.role as PlatformRole,
-        status: data.status as PlatformInvitation['status'],
-      } : null;
+      const row = data[0];
+      return {
+        ...row,
+        role: row.role as PlatformRole,
+        status: row.status as PlatformInvitation['status'],
+      };
     },
     enabled: !!token,
   });
@@ -225,15 +222,13 @@ export function useAcceptPlatformInvitation() {
 
   return useMutation({
     mutationFn: async ({ token, userId }: { token: string; userId: string }) => {
-      // Get the invitation
-      const { data: invitation, error: fetchError } = await supabase
-        .from('platform_invitations')
-        .select('*')
-        .eq('token', token)
-        .single();
+      // Get the invitation via secure RPC
+      const { data: invRows, error: fetchError } = await (supabase
+        .rpc as any)('lookup_platform_invitation_by_token', { p_token: token });
 
       if (fetchError) throw fetchError;
-      if (!invitation) throw new Error('Invitation not found');
+      if (!invRows || invRows.length === 0) throw new Error('Invitation not found');
+      const invitation = invRows[0];
       if (invitation.status !== 'pending') throw new Error('Invitation is no longer valid');
       if (new Date(invitation.expires_at) < new Date()) throw new Error('Invitation has expired');
 
