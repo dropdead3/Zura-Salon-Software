@@ -111,17 +111,8 @@ function formatCriteriaSummary(c: LevelPromotionCriteria): string {
 }
 
 function formatRetentionSummary(r: LevelRetentionCriteria): string {
-  const parts: string[] = [];
-  if (r.revenue_enabled && r.revenue_minimum > 0) parts.push(r.revenue_minimum >= 1000 ? `$${(r.revenue_minimum / 1000).toFixed(0)}K rev` : `$${r.revenue_minimum} rev`);
-  if (r.retail_enabled && r.retail_pct_minimum > 0) parts.push(`${r.retail_pct_minimum}% retail`);
-  if (r.rebooking_enabled && r.rebooking_pct_minimum > 0) parts.push(`${r.rebooking_pct_minimum}% rebook`);
-  if (r.avg_ticket_enabled && r.avg_ticket_minimum > 0) parts.push(`$${r.avg_ticket_minimum} avg`);
-  if (r.retention_rate_enabled && Number(r.retention_rate_minimum) > 0) parts.push(`${r.retention_rate_minimum}% retention`);
-  if (r.new_clients_enabled && Number(r.new_clients_minimum) > 0) parts.push(`${r.new_clients_minimum} new/mo`);
-  if (r.utilization_enabled && Number(r.utilization_minimum) > 0) parts.push(`${r.utilization_minimum}% util`);
-  if (r.rev_per_hour_enabled && Number(r.rev_per_hour_minimum) > 0) parts.push(`$${r.rev_per_hour_minimum}/hr`);
-  if (parts.length === 0) return '';
-  return `Required to Stay: ${parts.join(' · ')} — ${r.grace_period_days}d grace · ${r.action_type === 'demotion_eligible' ? 'Demotion' : 'Coaching'}`;
+  if (!r.retention_enabled) return '';
+  return `Retention: ${r.evaluation_window_days}d eval · ${r.grace_period_days}d grace · ${r.action_type === 'demotion_eligible' ? 'Demotion' : 'Coaching'}`;
 }
 
 /** Scrollable table container with a right-edge fade + arrow indicator when content overflows */
@@ -305,17 +296,10 @@ function CriteriaComparisonTable({ levels, promotionCriteria, retentionCriteria,
     { label: 'Tenure', section: 'promotion', editable: true, getValue: (p) => p?.tenure_enabled ? `${p.tenure_days}d` : null, getNumeric: (p) => p?.tenure_enabled ? p.tenure_days : null },
     { label: 'Eval Window', section: 'promotion', editable: false, getValue: (p) => p ? `${p.evaluation_window_days}d` : null, getNumeric: () => null },
     { label: 'Approval', section: 'promotion', editable: false, getValue: (p) => p ? (p.requires_manual_approval ? 'Manual' : 'Auto') : null, getNumeric: () => null },
-    // Retention
-    { label: 'Revenue', section: 'retention', editable: true, getValue: (_, r) => r?.revenue_enabled ? fmtCurrency(r.revenue_minimum) : null, getNumeric: (_, r) => r?.revenue_enabled ? r.revenue_minimum : null },
-    { label: 'Retail %', section: 'retention', editable: true, getValue: (_, r) => r?.retail_enabled ? `${r.retail_pct_minimum}%` : null, getNumeric: (_, r) => r?.retail_enabled ? r.retail_pct_minimum : null },
-    { label: 'Rebooking %', section: 'retention', editable: true, getValue: (_, r) => r?.rebooking_enabled ? `${r.rebooking_pct_minimum}%` : null, getNumeric: (_, r) => r?.rebooking_enabled ? r.rebooking_pct_minimum : null },
-    { label: 'Avg Ticket', section: 'retention', editable: true, getValue: (_, r) => r?.avg_ticket_enabled ? `$${r.avg_ticket_minimum}` : null, getNumeric: (_, r) => r?.avg_ticket_enabled ? r.avg_ticket_minimum : null },
-    { label: 'Client Retention', section: 'retention', editable: true, getValue: (_, r) => r?.retention_rate_enabled ? `${r.retention_rate_minimum}%` : null, getNumeric: (_, r) => r?.retention_rate_enabled ? Number(r.retention_rate_minimum) : null },
-    { label: 'New Clients', section: 'retention', editable: true, getValue: (_, r) => r?.new_clients_enabled ? `${r.new_clients_minimum}/mo` : null, getNumeric: (_, r) => r?.new_clients_enabled ? Number(r.new_clients_minimum) : null },
-    { label: 'Utilization', section: 'retention', editable: true, getValue: (_, r) => r?.utilization_enabled ? `${r.utilization_minimum}%` : null, getNumeric: (_, r) => r?.utilization_enabled ? Number(r.utilization_minimum) : null },
-    { label: 'Rev/Hr', section: 'retention', editable: true, getValue: (_, r) => r?.rev_per_hour_enabled ? `$${r.rev_per_hour_minimum}` : null, getNumeric: (_, r) => r?.rev_per_hour_enabled ? Number(r.rev_per_hour_minimum) : null },
-    { label: 'Grace Period', section: 'retention', editable: false, getValue: (_, r) => r ? `${r.grace_period_days}d` : null, getNumeric: () => null },
-    { label: 'Action', section: 'retention', editable: false, getValue: (_, r) => r ? (r.action_type === 'demotion_eligible' ? 'Demotion' : 'Coaching') : null, getNumeric: () => null },
+    // Retention Policy (no KPI rows — they inherit from promotion)
+    { label: 'Eval Window', section: 'retention', editable: false, getValue: (_, r) => r?.retention_enabled ? `${r.evaluation_window_days}d` : null, getNumeric: () => null },
+    { label: 'Grace Period', section: 'retention', editable: false, getValue: (_, r) => r?.retention_enabled ? `${r.grace_period_days}d` : null, getNumeric: () => null },
+    { label: 'Action', section: 'retention', editable: false, getValue: (_, r) => r?.retention_enabled ? (r.action_type === 'demotion_eligible' ? 'Demotion' : 'Coaching') : null, getNumeric: () => null },
   ];
 
   const levelData = levels.map(l => getCriteria(l.dbId));
@@ -770,13 +754,14 @@ function CriteriaComparisonTable({ levels, promotionCriteria, retentionCriteria,
               renderMetricRow(metric, mIdx, 'promo')
             )}
 
-            {/* Retention section header */}
+            {/* Retention Policy section header */}
             <TableRow className="bg-muted/30 hover:bg-muted/30">
               <TableCell colSpan={levels.length + 1} className="py-2">
                 <span className="flex items-center gap-1.5 text-xs font-display uppercase tracking-wide text-foreground">
                   <Shield className="w-3.5 h-3.5 text-primary" />
-                  Retention — Required to Stay
+                  Retention Policy
                 </span>
+                <span className="text-[10px] text-muted-foreground ml-5 block">KPI minimums inherited from Level Requirements above</span>
               </TableCell>
             </TableRow>
             {metrics.filter(m => m.section === 'retention').map((metric, mIdx) => {
