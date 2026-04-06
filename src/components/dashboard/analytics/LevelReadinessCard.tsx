@@ -6,6 +6,7 @@ import { Separator } from '@/components/ui/separator';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { PinnableCard } from '@/components/dashboard/PinnableCard';
 import { useTeamLevelProgress, type TeamMemberProgress } from '@/hooks/useTeamLevelProgress';
+import { useWriteLevelSnapshots, useReadLevelSnapshots, isSnapshotStalled } from '@/hooks/useLevelProgressSnapshots';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
