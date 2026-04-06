@@ -10328,6 +10328,7 @@ export type Database = {
           id: string
           is_active: boolean | null
           notes: string | null
+          organization_id: string | null
           platform: string | null
           spend_to_date: number | null
           start_date: string | null
@@ -10343,6 +10344,7 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           notes?: string | null
+          organization_id?: string | null
           platform?: string | null
           spend_to_date?: number | null
           start_date?: string | null
@@ -10358,13 +10360,22 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           notes?: string | null
+          organization_id?: string | null
           platform?: string | null
           spend_to_date?: number | null
           start_date?: string | null
           updated_at?: string | null
           utm_campaign?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "marketing_campaigns_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       meeting_notes: {
         Row: {
@@ -17709,6 +17720,7 @@ export type Database = {
           id: string
           is_pinned: boolean | null
           lead_source: Database["public"]["Enums"]["lead_source"]
+          organization_id: string | null
           screenshot_url: string | null
           service_booked: string
           ticket_value: number
@@ -17722,6 +17734,7 @@ export type Database = {
           id?: string
           is_pinned?: boolean | null
           lead_source?: Database["public"]["Enums"]["lead_source"]
+          organization_id?: string | null
           screenshot_url?: string | null
           service_booked: string
           ticket_value: number
@@ -17735,6 +17748,7 @@ export type Database = {
           id?: string
           is_pinned?: boolean | null
           lead_source?: Database["public"]["Enums"]["lead_source"]
+          organization_id?: string | null
           screenshot_url?: string | null
           service_booked?: string
           ticket_value?: number
@@ -17746,6 +17760,13 @@ export type Database = {
             columns: ["enrollment_id"]
             isOneToOne: false
             referencedRelation: "stylist_program_enrollment"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ring_the_bell_entries_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
         ]
@@ -19976,6 +19997,7 @@ export type Database = {
           created_at: string | null
           id: string
           message: string
+          organization_id: string | null
           swap_id: string
           user_id: string
         }
@@ -19983,6 +20005,7 @@ export type Database = {
           created_at?: string | null
           id?: string
           message: string
+          organization_id?: string | null
           swap_id: string
           user_id: string
         }
@@ -19990,10 +20013,18 @@ export type Database = {
           created_at?: string | null
           id?: string
           message?: string
+          organization_id?: string | null
           swap_id?: string
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "shift_swap_messages_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "shift_swap_messages_swap_id_fkey"
             columns: ["swap_id"]
@@ -20016,6 +20047,7 @@ export type Database = {
           location_id: string | null
           manager_id: string | null
           manager_notes: string | null
+          organization_id: string | null
           original_date: string
           original_end_time: string
           original_start_time: string
@@ -20036,6 +20068,7 @@ export type Database = {
           location_id?: string | null
           manager_id?: string | null
           manager_notes?: string | null
+          organization_id?: string | null
           original_date: string
           original_end_time: string
           original_start_time: string
@@ -20056,6 +20089,7 @@ export type Database = {
           location_id?: string | null
           manager_id?: string | null
           manager_notes?: string | null
+          organization_id?: string | null
           original_date?: string
           original_end_time?: string
           original_start_time?: string
@@ -20064,7 +20098,15 @@ export type Database = {
           status?: string | null
           swap_type?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "shift_swaps_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       signature_presets: {
         Row: {
@@ -20625,6 +20667,7 @@ export type Database = {
           created_at: string | null
           id: string
           location_id: string
+          organization_id: string | null
           record_date: string
           stylist_capacity: number | null
           stylist_count: number
@@ -20635,6 +20678,7 @@ export type Database = {
           created_at?: string | null
           id?: string
           location_id: string
+          organization_id?: string | null
           record_date?: string
           stylist_capacity?: number | null
           stylist_count?: number
@@ -20645,6 +20689,7 @@ export type Database = {
           created_at?: string | null
           id?: string
           location_id?: string
+          organization_id?: string | null
           record_date?: string
           stylist_capacity?: number | null
           stylist_count?: number
@@ -20655,6 +20700,13 @@ export type Database = {
             columns: ["location_id"]
             isOneToOne: false
             referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "staffing_history_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
         ]
