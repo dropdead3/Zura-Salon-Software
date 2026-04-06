@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -29,16 +29,19 @@ import {
   CalendarClock,
   Info,
 } from 'lucide-react';
+import { useQueryClient } from '@tanstack/react-query';
 import {
   useLevelPromotionCriteriaForLevel,
   useUpsertLevelPromotionCriteria,
   useDeleteLevelPromotionCriteria,
+  type LevelPromotionCriteria,
   type LevelPromotionCriteriaUpsert,
 } from '@/hooks/useLevelPromotionCriteria';
 import {
   useLevelRetentionCriteriaForLevel,
   useUpsertLevelRetentionCriteria,
   useDeleteLevelRetentionCriteria,
+  type LevelRetentionCriteria,
   type LevelRetentionCriteriaUpsert,
 } from '@/hooks/useLevelRetentionCriteria';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
@@ -311,12 +314,98 @@ export function GraduationWizard({ open, onOpenChange, levelId, levelLabel, leve
 
   const { effectiveOrganization } = useOrganizationContext();
   const orgId = effectiveOrganization?.id;
+  const queryClient = useQueryClient();
+  const cacheSeededPromotion = useRef(false);
+  const cacheSeededRetention = useRef(false);
   const { data: existing, isLoading } = useLevelPromotionCriteriaForLevel(open ? levelId : undefined);
   const { data: existingRetention, isLoading: loadingRetention } = useLevelRetentionCriteriaForLevel(open ? levelId : undefined);
   const upsert = useUpsertLevelPromotionCriteria();
   const deleteCriteria = useDeleteLevelPromotionCriteria();
   const upsertRetention = useUpsertLevelRetentionCriteria();
   const deleteRetention = useDeleteLevelRetentionCriteria();
+
+  // Optimistic cache-seed: hydrate form instantly from bulk cache to avoid loading flash
+  useEffect(() => {
+    if (!open || !levelId || !orgId) {
+      cacheSeededPromotion.current = false;
+      cacheSeededRetention.current = false;
+      return;
+    }
+
+    // Seed promotion form from bulk cache
+    if (!cacheSeededPromotion.current) {
+      const cachedPromo = queryClient.getQueryData<LevelPromotionCriteria[]>(
+        ['level-promotion-criteria', orgId]
+      );
+      const promoMatch = cachedPromo?.find(c => c.stylist_level_id === levelId);
+      if (promoMatch) {
+        setForm({
+          revenue_enabled: promoMatch.revenue_enabled,
+          revenue_threshold: promoMatch.revenue_threshold,
+          retail_enabled: promoMatch.retail_enabled,
+          retail_pct_threshold: promoMatch.retail_pct_threshold,
+          rebooking_enabled: promoMatch.rebooking_enabled,
+          rebooking_pct_threshold: promoMatch.rebooking_pct_threshold,
+          avg_ticket_enabled: promoMatch.avg_ticket_enabled,
+          avg_ticket_threshold: promoMatch.avg_ticket_threshold,
+          retention_rate_enabled: promoMatch.retention_rate_enabled,
+          retention_rate_threshold: Number(promoMatch.retention_rate_threshold),
+          new_clients_enabled: promoMatch.new_clients_enabled,
+          new_clients_threshold: Number(promoMatch.new_clients_threshold),
+          utilization_enabled: promoMatch.utilization_enabled,
+          utilization_threshold: Number(promoMatch.utilization_threshold),
+          rev_per_hour_enabled: promoMatch.rev_per_hour_enabled,
+          rev_per_hour_threshold: Number(promoMatch.rev_per_hour_threshold),
+          tenure_enabled: promoMatch.tenure_enabled,
+          tenure_days: promoMatch.tenure_days,
+          revenue_weight: promoMatch.revenue_weight,
+          retail_weight: promoMatch.retail_weight,
+          rebooking_weight: promoMatch.rebooking_weight,
+          avg_ticket_weight: promoMatch.avg_ticket_weight,
+          retention_rate_weight: promoMatch.retention_rate_weight,
+          new_clients_weight: promoMatch.new_clients_weight,
+          utilization_weight: promoMatch.utilization_weight,
+          rev_per_hour_weight: promoMatch.rev_per_hour_weight,
+          evaluation_window_days: promoMatch.evaluation_window_days,
+          requires_manual_approval: promoMatch.requires_manual_approval,
+        });
+        cacheSeededPromotion.current = true;
+      }
+    }
+
+    // Seed retention form from bulk cache
+    if (!cacheSeededRetention.current) {
+      const cachedRet = queryClient.getQueryData<LevelRetentionCriteria[]>(
+        ['level-retention-criteria', orgId]
+      );
+      const retMatch = cachedRet?.find(c => c.stylist_level_id === levelId);
+      if (retMatch) {
+        setRetForm({
+          retention_enabled: retMatch.retention_enabled,
+          revenue_enabled: retMatch.revenue_enabled,
+          revenue_minimum: Number(retMatch.revenue_minimum),
+          retail_enabled: retMatch.retail_enabled,
+          retail_pct_minimum: Number(retMatch.retail_pct_minimum),
+          rebooking_enabled: retMatch.rebooking_enabled,
+          rebooking_pct_minimum: Number(retMatch.rebooking_pct_minimum),
+          avg_ticket_enabled: retMatch.avg_ticket_enabled,
+          avg_ticket_minimum: Number(retMatch.avg_ticket_minimum),
+          retention_rate_enabled: retMatch.retention_rate_enabled,
+          retention_rate_minimum: Number(retMatch.retention_rate_minimum),
+          new_clients_enabled: retMatch.new_clients_enabled,
+          new_clients_minimum: Number(retMatch.new_clients_minimum),
+          utilization_enabled: retMatch.utilization_enabled,
+          utilization_minimum: Number(retMatch.utilization_minimum),
+          rev_per_hour_enabled: retMatch.rev_per_hour_enabled,
+          rev_per_hour_minimum: Number(retMatch.rev_per_hour_minimum),
+          evaluation_window_days: retMatch.evaluation_window_days,
+          grace_period_days: retMatch.grace_period_days,
+          action_type: retMatch.action_type as 'coaching_flag' | 'demotion_eligible',
+        });
+        cacheSeededRetention.current = true;
+      }
+    }
+  }, [open, levelId, orgId, queryClient]);
 
   // Hydrate promotion form
   useEffect(() => {
