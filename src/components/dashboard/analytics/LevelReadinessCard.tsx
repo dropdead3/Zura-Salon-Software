@@ -53,11 +53,11 @@ function StylistRow({ member, showArrow }: { member: TeamMemberProgress; showArr
       <div className="flex-1 min-w-0">
         <p className={cn(tokens.body.emphasis, 'truncate')}>{member.fullName}</p>
         <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-          <span>{member.currentLevel?.name || 'Unknown'}</span>
+          <span>{member.currentLevel?.label || 'Unknown'}</span>
           {showArrow && member.nextLevel && (
             <>
               <ArrowRight className="w-3 h-3" />
-              <span>{member.nextLevel.name}</span>
+              <span>{member.nextLevel.label}</span>
             </>
           )}
         </div>
