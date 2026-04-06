@@ -13,6 +13,7 @@ interface LevelInfo {
   slug: string;
   dbId?: string;
   index: number;
+  isConfigured?: boolean;
 }
 
 interface LevelCommission {
@@ -138,7 +139,7 @@ export function generateLevelRequirementsPDF(options: LevelRequirementsPDFOption
       const cx = startX + spacing * i;
       const bgHex = getLevelHex(i, totalNodes);
       const rgb = hexToRgb(bgHex);
-      const isConfigured = criteria.some(c => c.stylist_level_id === level.dbId && c.is_active) || i === 0;
+      const isConfigured = level.isConfigured ?? (criteria.some(c => c.stylist_level_id === level.dbId && c.is_active) || i === 0);
 
       // Outer ring for configured levels
       if (isConfigured) {
@@ -210,7 +211,7 @@ export function generateLevelRequirementsPDF(options: LevelRequirementsPDFOption
       // Status text
       doc.setFontSize(4.5);
       doc.setTextColor(isConfigured ? 16 : 200, isConfigured ? 185 : 150, isConfigured ? 129 : 0);
-      doc.text(isConfigured ? 'Ready' : 'Incomplete', cx, nodeY + nodeR + 10, { align: 'center' });
+      doc.text(isConfigured ? 'Configured' : 'Setup Incomplete', cx, nodeY + nodeR + 10, { align: 'center' });
     });
 
     y = nodeY + nodeR + 16;
@@ -218,7 +219,7 @@ export function generateLevelRequirementsPDF(options: LevelRequirementsPDFOption
 
   // ─── Summary Stats (matching digital's centered card style) ───
   y = ensureSpace(doc, y, 26);
-  const configuredCount = levels.filter(l => criteria.some(c => c.stylist_level_id === l.dbId && c.is_active)).length + (levels.length > 0 ? 1 : 0);
+  const configuredCount = levels.filter(l => l.isConfigured ?? (criteria.some(c => c.stylist_level_id === l.dbId && c.is_active) || l.index === 0)).length;
   const retentionCount = retentionCriteria.filter(r => r.is_active).length;
 
   const statsData = [
@@ -252,7 +253,7 @@ export function generateLevelRequirementsPDF(options: LevelRequirementsPDFOption
     const commission = commissions.find(cm => cm.dbId === level.dbId);
     const isBase = i === 0;
     const isTop = i === levels.length - 1;
-    const isConfigured = level.index === 0 || !!promo;
+    const isConfigured = level.isConfigured ?? (level.index === 0 || !!promo);
     const bgHex = getLevelHex(i, levels.length);
     const accentRgb = hexToRgb(bgHex);
 
@@ -286,9 +287,11 @@ export function generateLevelRequirementsPDF(options: LevelRequirementsPDFOption
     cardH += 16; // compensation section
     if (kpis.length > 0) {
       const kpiRows = Math.ceil(kpis.length / 4);
-      cardH += 8 + kpiRows * 16;
+      cardH += 8 + kpiRows * (14 + 3) + 2; // cellH + gap per row + trailing space
+    } else if (!isBase) {
+      cardH += 10; // "No KPI requirements" message — matches actual draw
     } else {
-      cardH += 14;
+      cardH += 4;
     }
     if (!isBase && promo) cardH += 12; // eval details
     if (retention?.retention_enabled) cardH += 16; // retention section
@@ -457,11 +460,14 @@ export function generateLevelRequirementsPDF(options: LevelRequirementsPDFOption
       const kpiRows = Math.ceil(kpis.length / cols);
       cy += kpiRows * (cellH + 3) + 2;
     } else if (!isBase) {
+      // Styled empty state box matching digital's bg-neutral-50 border-neutral-100 look
+      const emptyBoxH = 10;
+      drawRoundedRect(doc, MARGIN + innerPadX, cy, contentWidth - innerPadX * 2, emptyBoxH, 2, { fill: [250, 250, 252], stroke: [238, 238, 240], lineWidth: 0.2 });
       doc.setTextColor(170, 170, 170);
-      doc.setFont('helvetica', 'normal');
+      doc.setFont('helvetica', 'italic');
       doc.setFontSize(7);
-      doc.text('No KPI requirements configured for this level.', MARGIN + innerPadX, cy + 2);
-      cy += 10;
+      doc.text('No KPI requirements configured for this level.', MARGIN + innerPadX + 4, cy + 6);
+      cy += emptyBoxH + 2;
     } else {
       cy += 4;
     }
