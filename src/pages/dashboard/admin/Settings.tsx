@@ -5,7 +5,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useDashboardTheme } from '@/contexts/DashboardThemeContext';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { DashboardPageHeader } from '@/components/dashboard/DashboardPageHeader';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { Button } from '@/components/ui/button';
 import { tokens } from '@/lib/design-tokens';
 import { Switch } from '@/components/ui/switch';
@@ -210,8 +211,10 @@ function SortableCard({ category, isEditMode, onClick }: SortableCardProps) {
           </div>
         </CardHeader>
         <CardContent className="flex-1">
-          <CardTitle className={tokens.card.title}>{category.label}</CardTitle>
-          <CardDescription className="min-h-[2.5rem]">{category.description}</CardDescription>
+          <div className="flex items-center gap-2">
+            <CardTitle className={tokens.card.title}>{category.label}</CardTitle>
+            <MetricInfoTooltip description={category.description} />
+          </div>
         </CardContent>
       </Card>
     </DragFeedback>
