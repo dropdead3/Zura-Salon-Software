@@ -1412,8 +1412,6 @@ export function StylistLevelsEditor({ embedded = false }: StylistLevelsEditorPro
                 );
               })}
 
-                </button>
-              )}
 
               {/* Progression Roadmap removed — now in Criteria tab */}
             </div>
