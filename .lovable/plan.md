@@ -1,113 +1,125 @@
 
 
-# Security Hardening: Fix All Critical RLS Vulnerabilities
+# Security Hardening — Phase 3: Fix Remaining 12 Findings
 
 ## Summary
-The security scan identified **11 critical errors** and **5 warnings** across RLS policies. This plan fixes all critical issues and the actionable warnings in a single migration, plus minor frontend adjustments.
+
+The scan found 6 critical errors, 4 warnings, and 2 info items. Several are leftover from the previous migration where policies were added but old permissive policies were not dropped. This pass will fix all actionable items.
 
 ---
 
-## Vulnerabilities & Fixes
+## Critical Fixes
 
-### CRITICAL — Data Exposure Fixes
+### 1. Chat attachments — drop public SELECT policy
+The old `Anyone can view chat attachments` policy on `storage.objects` still grants unauthenticated access despite the bucket being private. Drop it. Authenticated access already works via signed URLs.
 
-#### 1. Organizations table — Stripe/Twilio credentials publicly readable
-**Problem**: Public SELECT policy `(status = 'active')` returns all columns including `twilio_auth_token`, `stripe_customer_id`, `billing_email`.
-**Fix**: Create a public-safe view `organizations_public` with only safe columns (id, name, slug, status, logo_url, timezone, website_url, business_type, is_multi_location, settings). Drop the permissive public policy. Add a new policy that uses the view pattern or restrict the public SELECT to use a security-definer function.
+### 2. Platform feedback screenshots — drop public SELECT policy
+Same issue: `Anyone can view feedback screenshots` still exists. Drop it.
 
-*Approach*: Replace the public SELECT policy with one that goes through a restricted view (`security_invoker = on`). Add a `USING (false)` base-table policy for anon role, and let authenticated org members/platform users use existing policies.
+### 3. Business settings — drop duplicate permissive policy
+Two SELECT policies exist: the new restricted one (`Admins and platform users can view business settings`) AND the old `Authenticated users can view business settings` which uses `auth.uid() IS NOT NULL`. The old one overrides the new one. Drop the old policy.
 
-#### 2. Employee profiles — login PINs publicly readable
-**Problem**: Public policy for homepage-visible stylists returns all columns including `login_pin`, `emergency_contact`, `birthday`, `phone`.
-**Fix**: Create a `employee_profiles_public` view with only safe display columns (user_id, display_name, full_name, photo_url, bio, specialties, instagram_handle, homepage_visible, is_active). Replace the anon SELECT policy to go through this view.
+### 4. Twilio credentials — create restricted organizations view
+The `Users can view their own organization` policy returns all columns including `twilio_auth_token` and `twilio_account_sid`. 
 
-#### 3. Client portal tokens — all tokens enumerable
-**Problem**: `USING (token IS NOT NULL)` is always true.
-**Fix**: Drop this policy. Token validation should happen server-side via edge function or be scoped to the specific token being looked up. Since the frontend queries by specific token via `.eq('token', token)`, we can restrict the policy to only return rows matching a token passed as a request parameter, or move to edge function. Simplest fix: remove the anon/public SELECT policy entirely and handle token lookup via a security-definer function.
+**Fix**: Create a `SECURITY DEFINER` function `get_organization_safe(org_id)` that returns all columns EXCEPT Twilio credentials. Restrict the existing SELECT policy to admins/platform users only. Non-admin org members use the safe function. Alternatively, move Twilio columns to a separate `organization_secrets` table with admin-only RLS.
 
-#### 4. Client feedback responses — all feedback readable
-**Problem**: `USING (token IS NOT NULL)` is always true since token is NOT NULL.
-**Fix**: Same approach — create a security-definer function `validate_feedback_token(token)` that returns the feedback row. Remove the permissive anon SELECT policy.
+**Chosen approach**: Move Twilio credentials to a new `organization_secrets` table:
+- Create `organization_secrets` table (organization_id FK, twilio_account_sid, twilio_auth_token)
+- Migrate data from organizations table
+- Drop columns from organizations
+- RLS: only platform users and org admins can SELECT
+- Update any edge functions that read Twilio creds
 
-#### 5. Platform invitations — all emails readable
-**Problem**: `USING (true)` on SELECT for public role.
-**Fix**: Drop the `Anyone can read invitation by token` policy. Create a security-definer function `lookup_platform_invitation(token)` for anonymous token validation.
+### 5. Employee login PINs — hash PINs
+PINs are stored in plaintext and readable by coaches. 
 
-#### 6. Staff invitations — all emails readable
-**Problem**: Same as platform invitations — `USING (true)`.
-**Fix**: Same approach — security-definer function `lookup_staff_invitation(token)`.
+**Difficulty**: High. This requires changing the PIN validation flow (`validate_dock_pin`, `validate_user_pin`), hashing existing PINs, and updating all PIN-set flows. This is a significant architectural change.
 
-#### 7. Day-rate bookings — PII publicly readable
-**Problem**: `USING (true)` on public SELECT exposes emails, phones, payment IDs.
-**Fix**: Drop the public SELECT policy. Public booking creation can stay. For viewing own booking, use a security-definer function that looks up by confirmation token or email.
+**Recommendation**: Flag as a follow-up architectural task. For now, we can remove `login_pin` from the SELECT columns returned by the coach policy, which at least prevents coaches from reading PINs directly. The validation RPCs (SECURITY DEFINER) already handle comparison server-side.
 
-#### 8. Organization kiosk settings — exit PIN exposed
-**Problem**: Anon policy allows reading kiosk settings including `exit_pin`.
-**Fix**: Drop the anon SELECT policy `Kiosk can read settings by location`. Serve kiosk config through a security-definer function `get_kiosk_settings(device_token)` that validates the device first and excludes `exit_pin`.
+**Interim fix**: Create a view or modify the coach SELECT policy to exclude `login_pin` from results returned to non-admin roles. Since RLS policies can't filter columns (only rows), the real fix is either:
+- Move `login_pin` to a separate table with admin-only access
+- Or hash the PINs
 
-#### 9. Business settings — EIN publicly readable
-**Problem**: `USING (true)` exposes `ein`, `phone`, `email`, `mailing_address`.
-**Fix**: Create `business_settings_public` view with only safe columns (business_name, logo_light_url, logo_dark_url, icon_light_url, icon_dark_url, sidebar_layout, website). Replace the public SELECT policy.
+We'll move `login_pin` to a new `employee_pins` table with SECURITY DEFINER-only access, and update the validation RPCs.
 
-#### 10. Kiosk devices — device tokens readable by anon
-**Problem**: `USING (true)` on anon SELECT returns all device records with `device_token`.
-**Fix**: Drop the anon SELECT policy. Device authentication should go through security-definer function.
+### 6. Realtime — no channel authorization
+`realtime.messages` has no RLS, so any authenticated user can subscribe to any channel topic.
 
-#### 11. Client notes — cross-org data leak
-**Problem**: `USING (is_private = false)` has no org scoping — any authenticated user reads all non-private notes across all organizations.
-**Fix**: Add org scoping. Since `client_notes` has no `organization_id`, scope via `client_id` → join to `phorest_clients.organization_id`. Replace policy with: `USING (is_private = false AND EXISTS (SELECT 1 FROM phorest_clients pc WHERE pc.id = client_id AND is_org_member(auth.uid(), pc.organization_id)))`.
+**Difficulty**: High. The `realtime` schema is Supabase-reserved — we cannot add RLS policies to `realtime.messages` directly. This requires Supabase-native Realtime authorization (channel-level policies via `supabase.channel()` config).
 
-#### 12. Client form signatures — cross-org data leak
-**Problem**: `USING (true)` for authenticated users, no org scoping.
-**Fix**: Scope via appointment or form_template. Replace with: `USING (EXISTS (SELECT 1 FROM appointments a WHERE a.id = appointment_id AND is_org_member(auth.uid(), a.organization_id)))` or similar join path.
+**Recommendation**: Mark as architectural limitation. Document that Realtime channel authorization must be enforced at the application layer by validating organization membership before subscribing.
 
-### WARNINGS — Secondary Fixes
+---
 
-#### 13. Signature presets — no ownership check
-**Fix**: Add `created_by = auth.uid()` to UPDATE/DELETE policies.
+## Warning Fixes
 
-#### 14. Kiosk devices — anonymous INSERT/UPDATE too permissive
-**Fix**: Move device registration to edge function. For now, tighten the INSERT check and remove the anonymous UPDATE policy.
+### 7. Kiosk assets — restrict upload/update/delete
+Replace the 3 kiosk storage policies that check only `auth.uid() IS NOT NULL` with proper authorization. Since storage policies can't easily join to org tables via file path, restrict to users who have the `can_manage_kiosk_settings()` function returning true.
 
-#### 15. Kiosk analytics — anonymous INSERT too permissive
-**Fix**: Tighten to require a valid device token or move to edge function.
+### 8. Leaked password protection
+This is a dashboard-level toggle (Cloud → Users → Auth Settings → HIBP check). Cannot be fixed via migration. Will note for user to enable manually.
+
+### 9-10. Extensions in public / permissive RLS
+Info-level. Extensions can't be moved without potential breakage. The remaining `USING(true)` policies need identification and fixing.
 
 ---
 
 ## Implementation
 
-### Migration 1: Security-definer lookup functions
-Create functions for token-based lookups:
-- `lookup_portal_token(p_token text)` → returns client_id, organization_id, expires_at
-- `lookup_feedback_by_token(p_token text)` → returns feedback row
-- `lookup_platform_invitation_by_token(p_token text)` → returns invitation row
-- `lookup_staff_invitation_by_token(p_token text)` → returns invitation row
-- `get_kiosk_config(p_device_token text)` → returns settings without exit_pin
+### Migration SQL
+```sql
+-- 1. Drop leftover public storage policies
+DROP POLICY IF EXISTS "Anyone can view chat attachments" ON storage.objects;
+DROP POLICY IF EXISTS "Anyone can view feedback screenshots" ON storage.objects;
 
-### Migration 2: Create restricted public views
-- `organizations_public` (safe columns only)
-- `employee_profiles_public` (safe columns only)
-- `business_settings_public` (safe columns only)
+-- 2. Drop old permissive business_settings policy
+DROP POLICY IF EXISTS "Authenticated users can view business settings" ON public.business_settings;
 
-### Migration 3: Drop/replace permissive policies
-- Drop all `USING (true)` and `USING (token IS NOT NULL)` public/anon SELECT policies
-- Add restricted replacement policies where needed
-- Fix cross-org leaks on `client_notes`, `client_form_signatures`, `signature_presets`
+-- 3. Fix kiosk asset policies
+DROP POLICY IF EXISTS "Org admins can upload kiosk assets" ON storage.objects;
+DROP POLICY IF EXISTS "Org admins can update kiosk assets" ON storage.objects;
+DROP POLICY IF EXISTS "Org admins can delete kiosk assets" ON storage.objects;
+-- Recreate with proper auth check using can_manage_kiosk_settings()
 
-### Frontend changes
-- Update `useClientPortalData.ts` to call `lookup_portal_token()` RPC instead of direct table query for anonymous validation
-- Update `usePlatformInvitations.ts` to call `lookup_platform_invitation_by_token()` RPC for token lookup
-- Update `useStaffInvitations.ts` to call `lookup_staff_invitation_by_token()` RPC for token lookup
-- Update any public-facing organization queries to use `organizations_public` view
-- Update public employee profile queries to use `employee_profiles_public` view
+-- 4. Move login_pin to separate table
+CREATE TABLE public.employee_pins (
+  user_id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+  login_pin TEXT NOT NULL,
+  organization_id UUID NOT NULL REFERENCES public.organizations(id) ON DELETE CASCADE,
+  updated_at TIMESTAMPTZ DEFAULT now()
+);
+ALTER TABLE public.employee_pins ENABLE ROW LEVEL SECURITY;
+-- No SELECT policy (access only via SECURITY DEFINER RPCs)
+-- Migrate data from employee_profiles
+INSERT INTO employee_pins SELECT user_id, login_pin, organization_id FROM employee_profiles WHERE login_pin IS NOT NULL;
+-- Update validate_dock_pin and validate_user_pin RPCs to read from employee_pins
+-- Drop login_pin column from employee_profiles
 
-### Files affected
+-- 5. Move Twilio creds to organization_secrets
+CREATE TABLE public.organization_secrets (...);
+-- Migrate, update edge functions, drop columns from organizations
+```
+
+### Frontend Changes
+- Update any PIN-setting hooks to write to `employee_pins` table
+- Update Twilio-related edge functions to read from `organization_secrets`
+- No changes needed for chat/feedback storage (signed URLs already in use)
+
+### Items Deferred (Architectural)
+- **Realtime authorization**: Cannot modify `realtime` schema. Requires application-layer enforcement.
+- **PIN hashing**: Moving to separate table is step 1; hashing is step 2 (follow-up).
+- **Leaked password protection**: User must enable via Cloud UI.
+
+---
+
+## Files Affected
+
 | File | Change |
 |------|--------|
-| New migration SQL | All policy drops, function/view creation, new policies |
-| `src/hooks/useClientPortalData.ts` | Use RPC for token validation |
-| `src/hooks/usePlatformInvitations.ts` | Use RPC for token lookup |
-| `src/hooks/useStaffInvitations.ts` | Use RPC for token lookup |
-| Public org queries (various) | Query `organizations_public` view |
-| Public employee queries (various) | Query `employee_profiles_public` view |
+| New migration SQL | Drop policies, create tables, move data, update RPCs |
+| Edge functions using Twilio | Read from `organization_secrets` |
+| PIN-related hooks | Write to `employee_pins` instead of `employee_profiles.login_pin` |
+| Security findings | Update/delete resolved findings |
 
