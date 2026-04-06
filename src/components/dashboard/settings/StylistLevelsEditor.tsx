@@ -37,7 +37,6 @@ import {
   Globe,
   TrendingUp,
   Shield,
-  ShieldCheck,
   Wand2,
   DollarSign,
   Clock,
