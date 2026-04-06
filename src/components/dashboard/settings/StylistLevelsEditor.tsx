@@ -1218,6 +1218,7 @@ function LevelsQuickSetupWizard({ onGenerate, onDismiss, isGenerating }: QuickSe
         hourlyWageEnabled: false,
         hourlyWage: '',
         earningsStructure: 'commission' as EarningsStructure,
+        isConfigured: false,
       };
     });
 
@@ -1420,6 +1421,7 @@ export function StylistLevelsEditor({ embedded = false, onActions }: StylistLeve
           hourlyWageEnabled: hEnabled,
           hourlyWage: l.hourly_wage != null ? String(l.hourly_wage) : '',
           earningsStructure: deriveEarningsStructure(hEnabled, sRate, rRate),
+          isConfigured: l.is_configured ?? false,
         };
       });
       setLevels(localLevels);
@@ -1527,6 +1529,7 @@ export function StylistLevelsEditor({ embedded = false, onActions }: StylistLeve
       hourlyWageEnabled: false,
       hourlyWage: '',
       earningsStructure: 'commission' as EarningsStructure,
+      isConfigured: false,
     };
     setLevels([...levels, newLevel]);
     setNewLevelName('');
