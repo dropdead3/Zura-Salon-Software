@@ -1351,6 +1351,51 @@ export function StylistLevelsEditor({ embedded = false }: StylistLevelsEditorPro
                           </div>
                         </div>
 
+                        {/* Hourly Wage Toggle */}
+                        <div className="ml-[3.25rem] space-y-3">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <Label className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
+                                <Clock className="w-3.5 h-3.5" />
+                                Hourly Wage
+                              </Label>
+                              <MetricInfoTooltip description="Enable if stylists at this level receive an hourly base wage in addition to or instead of commission." />
+                            </div>
+                            <Switch
+                              checked={level.hourlyWageEnabled}
+                              onCheckedChange={(checked) => {
+                                const newLevels = [...levels];
+                                newLevels[index] = { ...newLevels[index], hourlyWageEnabled: checked };
+                                setLevels(newLevels);
+                                setHasChanges(true);
+                              }}
+                            />
+                          </div>
+                          {level.hourlyWageEnabled && (
+                            <div className="space-y-1">
+                              <label className="text-xs font-medium text-muted-foreground">Starting Hourly Wage</label>
+                              <div className="relative">
+                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">$</span>
+                                <Input
+                                  type="number"
+                                  placeholder="0.00"
+                                  value={level.hourlyWage}
+                                  onChange={(e) => {
+                                    const newLevels = [...levels];
+                                    newLevels[index] = { ...newLevels[index], hourlyWage: e.target.value };
+                                    setLevels(newLevels);
+                                    setHasChanges(true);
+                                  }}
+                                  className="h-8 text-xs pl-7 pr-10"
+                                  min={0}
+                                  step={0.25}
+                                />
+                                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">/hr</span>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+
                         {/* Level Criteria */}
                         <div className="ml-[3.25rem]">
                         {level.dbId ? (
