@@ -231,12 +231,13 @@ export function CommissionEconomicsTab({ levels }: CommissionEconomicsTabProps) 
                     ? getMarginStatus(actualMargin, effectiveAssumptions.target_margin_pct)
                     : null;
                   const levelColor = getLevelColor(idx, levels.length);
+                  const dotColor = levelColor.bg.includes('amber-500') ? '#f59e0b' : levelColor.bg.includes('amber-300') ? '#fcd34d' : levelColor.bg.includes('amber-200') ? '#fde68a' : levelColor.bg.includes('amber-100') ? '#fef3c7' : '#a1a1aa';
 
                   return (
                     <TableRow key={level.id}>
                       <TableCell>
                         <div className="flex items-center gap-2">
-                          <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: levelColor.dot }} />
+                          <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: dotColor }} />
                           <span className="text-sm text-foreground">{level.label}</span>
                           {revData && (
                             <span className="text-[10px] text-muted-foreground">({revData.count})</span>
@@ -329,12 +330,13 @@ export function CommissionEconomicsTab({ levels }: CommissionEconomicsTabProps) 
                 const currentRate = whatIfRates[level.id] ?? baseRate;
                 const { targetRevenue } = computeEconomics(currentRate, effectiveAssumptions);
                 const levelColor = getLevelColor(idx, levels.length);
+                const dotColor = levelColor.bg.includes('amber-500') ? '#f59e0b' : levelColor.bg.includes('amber-300') ? '#fcd34d' : levelColor.bg.includes('amber-200') ? '#fde68a' : levelColor.bg.includes('amber-100') ? '#fef3c7' : '#a1a1aa';
                 const isModified = whatIfRates[level.id] !== undefined;
 
                 return (
                   <div key={level.id} className="flex items-center gap-4 py-2">
                     <div className="w-32 flex items-center gap-2 shrink-0">
-                      <div className="w-2 h-2 rounded-full" style={{ backgroundColor: levelColor.dot }} />
+                      <div className="w-2 h-2 rounded-full" style={{ backgroundColor: dotColor }} />
                       <span className="text-sm truncate">{level.label}</span>
                     </div>
                     <div className="flex-1">

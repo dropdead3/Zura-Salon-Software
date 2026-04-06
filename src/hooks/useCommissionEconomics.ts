@@ -75,15 +75,22 @@ export function useRevenueByLevel() {
   return useQuery({
     queryKey: ['commission-economics-revenue', orgId],
     queryFn: async (): Promise<LevelRevenueData[]> => {
-      // Get all staff with their levels
+      // Get all staff with their levels (stylist_level is a slug string)
       const { data: staff, error: staffErr } = await supabase
         .from('employee_profiles')
-        .select('user_id, stylist_level_id')
+        .select('user_id, stylist_level')
         .eq('organization_id', orgId!)
-        .not('stylist_level_id', 'is', null);
+        .not('stylist_level', 'is', null);
 
       if (staffErr) throw staffErr;
       if (!staff || staff.length === 0) return [];
+
+      // Get stylist_levels to map slugs → IDs
+      const { data: levelRows } = await supabase
+        .from('stylist_levels')
+        .select('id, slug')
+        .eq('organization_id', orgId!);
+      const slugToId = new Map((levelRows || []).map(l => [l.slug, l.id]));
 
       // Get appointment revenue for last 90 days
       const ninetyDaysAgo = new Date();
@@ -101,8 +108,13 @@ export function useRevenueByLevel() {
 
       if (apptErr) throw apptErr;
 
-      // Group revenue by level
-      const staffLevelMap = new Map(staff.map(s => [s.user_id, s.stylist_level_id]));
+      // Group revenue by level ID
+      const staffLevelMap = new Map<string, string>();
+      for (const s of staff) {
+        const levelId = s.stylist_level ? slugToId.get(s.stylist_level) : undefined;
+        if (levelId) staffLevelMap.set(s.user_id, levelId);
+      }
+
       const levelRevenue = new Map<string, { total: number; userIds: Set<string> }>();
 
       for (const appt of (appointments || [])) {
@@ -120,10 +132,11 @@ export function useRevenueByLevel() {
 
       // Also count stylists with 0 revenue
       for (const s of staff) {
-        if (s.stylist_level_id && !levelRevenue.has(s.stylist_level_id)) {
-          levelRevenue.set(s.stylist_level_id, { total: 0, userIds: new Set([s.user_id]) });
-        } else if (s.stylist_level_id) {
-          levelRevenue.get(s.stylist_level_id)!.userIds.add(s.user_id);
+        const levelId = s.stylist_level ? slugToId.get(s.stylist_level) : undefined;
+        if (levelId && !levelRevenue.has(levelId)) {
+          levelRevenue.set(levelId, { total: 0, userIds: new Set([s.user_id]) });
+        } else if (levelId) {
+          levelRevenue.get(levelId)!.userIds.add(s.user_id);
         }
       }
 
