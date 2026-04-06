@@ -9195,6 +9195,7 @@ export type Database = {
           is_active: boolean
           key: string
           name: string
+          organization_id: string | null
           requirement_type: string
           requirement_value: number
         }
@@ -9208,6 +9209,7 @@ export type Database = {
           is_active?: boolean
           key: string
           name: string
+          organization_id?: string | null
           requirement_type: string
           requirement_value?: number
         }
@@ -9221,10 +9223,19 @@ export type Database = {
           is_active?: boolean
           key?: string
           name?: string
+          organization_id?: string | null
           requirement_type?: string
           requirement_value?: number
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "leaderboard_achievements_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       leaderboard_history: {
         Row: {
@@ -9293,6 +9304,7 @@ export type Database = {
           extensions_weight: number
           id: string
           new_clients_weight: number
+          organization_id: string | null
           retail_weight: number
           retention_weight: number
           updated_at: string
@@ -9302,6 +9314,7 @@ export type Database = {
           extensions_weight?: number
           id?: string
           new_clients_weight?: number
+          organization_id?: string | null
           retail_weight?: number
           retention_weight?: number
           updated_at?: string
@@ -9311,12 +9324,21 @@ export type Database = {
           extensions_weight?: number
           id?: string
           new_clients_weight?: number
+          organization_id?: string | null
           retail_weight?: number
           retention_weight?: number
           updated_at?: string
           updated_by?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "leaderboard_weights_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       level_commission_overrides: {
         Row: {
@@ -22943,6 +22965,7 @@ export type Database = {
           earned_at: string
           id: string
           metadata: Json | null
+          organization_id: string | null
           user_id: string
         }
         Insert: {
@@ -22950,6 +22973,7 @@ export type Database = {
           earned_at?: string
           id?: string
           metadata?: Json | null
+          organization_id?: string | null
           user_id: string
         }
         Update: {
@@ -22957,6 +22981,7 @@ export type Database = {
           earned_at?: string
           id?: string
           metadata?: Json | null
+          organization_id?: string | null
           user_id?: string
         }
         Relationships: [
@@ -22965,6 +22990,13 @@ export type Database = {
             columns: ["achievement_id"]
             isOneToOne: false
             referencedRelation: "leaderboard_achievements"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_achievements_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
         ]
