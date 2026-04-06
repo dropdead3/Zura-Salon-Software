@@ -935,7 +935,9 @@ export default function Settings() {
               title={categoriesMap[activeCategory]?.label.toUpperCase() ?? ''}
               actions={categoryActions}
             />
-            <PageExplainer pageId="settings" />
+            <div className="mt-4">
+              <PageExplainer pageId="settings" />
+            </div>
           </div>
 
           {/* Category Content */}
