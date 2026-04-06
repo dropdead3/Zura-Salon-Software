@@ -338,11 +338,18 @@ export function CommissionEconomicsTab({ levels }: CommissionEconomicsTabProps) 
                 {levels.map((level, idx) => {
                   const serviceRate = whatIfRates[level.id]?.service ?? (level.service_commission_rate ?? 0);
                   const retailRate = whatIfRates[level.id]?.retail ?? (level.retail_commission_rate ?? 0);
-                  const { breakevenRevenue, targetRevenue } = computeEconomics(serviceRate, effectiveAssumptions, retailRate);
+                  // Add hourly wage cost to overhead (~160 hours/month)
+                  const hourlyWageCost = level.hourly_wage_enabled && level.hourly_wage
+                    ? level.hourly_wage * 160
+                    : 0;
+                  const adjustedAssumptions = hourlyWageCost > 0
+                    ? { ...effectiveAssumptions, overhead_per_stylist: effectiveAssumptions.overhead_per_stylist + hourlyWageCost }
+                    : effectiveAssumptions;
+                  const { breakevenRevenue, targetRevenue } = computeEconomics(serviceRate, adjustedAssumptions, retailRate);
                   const revData = revenueMap.get(level.id);
                   const actualRevenue = revData?.avg ?? 0;
                   const actualMargin = actualRevenue > 0
-                    ? computeMarginAtRevenue(actualRevenue, serviceRate, effectiveAssumptions, retailRate)
+                    ? computeMarginAtRevenue(actualRevenue, serviceRate, adjustedAssumptions, retailRate)
                     : null;
                   const status = actualMargin !== null
                     ? getMarginStatus(actualMargin, effectiveAssumptions.target_margin_pct)
