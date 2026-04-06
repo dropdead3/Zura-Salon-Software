@@ -692,7 +692,7 @@ function CriteriaComparisonTable({ levels, promotionCriteria, retentionCriteria,
         Click any metric row to configure thresholds across all levels at once. Use "Edit" per-level for advanced settings.
       </p>
       <ScrollableTableWrapper>
-        <Table>
+        <Table className="[&_th]:border-r [&_th]:border-border/20 [&_th:last-child]:border-r-0 [&_td]:border-r [&_td]:border-border/20 [&_td:last-child]:border-r-0 [&_td[colspan]]:border-r-0">
           <TableHeader>
             <TableRow className="border-b-2 border-border/60">
               <TableHead className={cn("w-[200px] sticky left-0 bg-card z-20 rounded-tl-xl py-4 px-4", tokens.table.columnHeader)}>Metric</TableHead>
