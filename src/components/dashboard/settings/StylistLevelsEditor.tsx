@@ -1177,33 +1177,10 @@ export function StylistLevelsEditor({ embedded = false }: StylistLevelsEditorPro
                         {index + 1}
                       </span>
 
-                      {/* Col 3: Name & entry tag — left-aligned */}
-                      {editingIndex === index ? (
-                        <div className="flex items-center gap-2 min-w-0" onClick={(e) => e.stopPropagation()}>
-                          <Input
-                            value={level.label}
-                            onChange={(e) => handleRename(index, e.target.value)}
-                            className="h-8 text-sm"
-                            autoFocus
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter') setEditingIndex(null);
-                              if (e.key === 'Escape') setEditingIndex(null);
-                            }}
-                          />
-                          <Button
-                            variant="ghost"
-                            size={tokens.button.inline}
-                            className="h-8 px-2 shrink-0"
-                            onClick={() => setEditingIndex(null)}
-                          >
-                            Done
-                          </Button>
-                        </div>
-                      ) : (
-                        <div className="flex items-center gap-3 min-w-0">
-                          <span className="font-display text-xs tracking-wide truncate">{level.label}</span>
-                        </div>
-                      )}
+                      {/* Col 3: Name — left-aligned, always static */}
+                      <div className="flex items-center gap-3 min-w-0">
+                        <span className="font-display text-xs tracking-wide truncate">{level.label}</span>
+                      </div>
 
                       {/* Col 4: Service Commission — center-aligned */}
                       <span className="text-xs text-muted-foreground text-center hidden sm:block">
@@ -1216,19 +1193,12 @@ export function StylistLevelsEditor({ embedded = false }: StylistLevelsEditorPro
                       </span>
 
                       {/* Col 6: Actions — right-aligned */}
-                      {editingIndex !== index ? (
                         <div className="flex items-center gap-1.5 justify-end">
                           {hasStylists && (
                             <span className="text-xs text-muted-foreground mr-1">
                               {stylistCount} <span className="hidden sm:inline">stylist{stylistCount !== 1 ? 's' : ''}</span>
                             </span>
                           )}
-                          <button
-                            className="p-1.5 rounded-md hover:bg-muted transition-colors opacity-60 hover:opacity-100"
-                            onClick={(e) => { e.stopPropagation(); setEditingIndex(index); toggleExpanded(level.id, true); }}
-                          >
-                            <Pencil className="w-3.5 h-3.5 text-muted-foreground" />
-                          </button>
                           <div onClick={(e) => e.stopPropagation()}>
                             <AlertDialog onOpenChange={(open) => { if (!open) { setDeleteTargetIndex(null); setReassignToSlug(''); } }}>
                               <AlertDialogTrigger asChild>
@@ -1295,7 +1265,7 @@ export function StylistLevelsEditor({ embedded = false }: StylistLevelsEditorPro
                             isExpanded && "rotate-90"
                           )} />
                         </div>
-                      ) : <div />}
+                      </div>
                     </div>
 
                     {/* Expanded content */}
@@ -1306,13 +1276,24 @@ export function StylistLevelsEditor({ embedded = false }: StylistLevelsEditorPro
                           <span className="text-[11px] font-display tracking-wide text-muted-foreground">Details</span>
                           <div className="flex-1 h-px bg-border/40" />
                         </div>
+                        {/* Level Name */}
+                        <div className="ml-[3.25rem]">
+                          <label className="text-xs font-medium text-muted-foreground">Level Name</label>
+                          <Input
+                            value={level.label}
+                            onChange={(e) => handleRename(index, e.target.value)}
+                            placeholder="Level name..."
+                            className="h-8 text-xs mt-1"
+                          />
+                        </div>
                         {/* Description */}
                         <div className="ml-[3.25rem]">
+                          <label className="text-xs font-medium text-muted-foreground">Description</label>
                           <Input
                             value={level.description}
                             onChange={(e) => handleDescriptionChange(index, e.target.value)}
                             placeholder="Brief description for tooltip..."
-                            className="h-8 text-xs text-muted-foreground bg-background/50 border focus-visible:ring-1"
+                            className="h-8 text-xs text-muted-foreground bg-background/50 border focus-visible:ring-1 mt-1"
                           />
                         </div>
 
