@@ -186,11 +186,13 @@ function SortableCard({ category, isEditMode, onClick }: SortableCardProps) {
       <Card 
         className={cn(
           "transition-all relative h-full flex flex-col",
-          isDragging && "ring-2 ring-primary/30",
-          !isEditMode && "cursor-pointer hover:border-primary/50"
+          !isEditMode && "cursor-pointer group hover:border-primary/30 hover:shadow-md",
+          isEditMode && "border-dashed",
+          isDragging && "opacity-50"
         )}
-        onClick={!isEditMode ? onClick : undefined}
+        onClick={!isEditMode ? () => navigate(`?category=${category.id}`) : undefined}
       >
+        <MetricInfoTooltip description={category.description} className="absolute top-4 right-4 w-4 h-4" />
         {isEditMode && (
           <div 
             {...attributes}
@@ -211,10 +213,7 @@ function SortableCard({ category, isEditMode, onClick }: SortableCardProps) {
           </div>
         </CardHeader>
         <CardContent className="flex-1">
-          <div className="flex items-center gap-2">
-            <CardTitle className={tokens.card.title}>{category.label}</CardTitle>
-            <MetricInfoTooltip description={category.description} />
-          </div>
+          <CardTitle className={tokens.card.title}>{category.label}</CardTitle>
         </CardContent>
       </Card>
     </DragFeedback>
