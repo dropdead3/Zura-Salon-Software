@@ -795,6 +795,8 @@ export function StylistLevelsEditor({ embedded = false }: StylistLevelsEditorPro
       display_order: idx,
       service_commission_rate: level.serviceCommissionRate ? parseFloat(level.serviceCommissionRate) / 100 : null,
       retail_commission_rate: level.retailCommissionRate ? parseFloat(level.retailCommissionRate) / 100 : null,
+      hourly_wage_enabled: level.hourlyWageEnabled,
+      hourly_wage: level.hourlyWage ? parseFloat(level.hourlyWage) : null,
     }));
     saveLevels.mutate(levelsToSave, {
       onSuccess: () => {
