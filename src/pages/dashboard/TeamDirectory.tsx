@@ -8,7 +8,7 @@ import { LocationSelect } from '@/components/ui/location-select';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Loader2, Search, MapPin, Phone, Mail, Instagram, User, Calendar, Clock, Award, PartyPopper, Building2, ExternalLink, AlertTriangle, Crown, Navigation, CalendarX, Signpost, Sparkles, Copy, Check } from 'lucide-react';
+import { Loader2, Search, MapPin, Phone, Mail, Instagram, User, Calendar, Clock, Award, PartyPopper, Building2, ExternalLink, AlertTriangle, Crown, Navigation, CalendarX, Signpost, Sparkles, Copy, Check, TrendingUp, TrendingDown, Pause } from 'lucide-react';
 import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useTeamDirectory } from '@/hooks/useEmployeeProfile';
@@ -28,6 +28,7 @@ import { useRoleUtils, getIconComponent } from '@/hooks/useRoleUtils';
 import { PageExplainer } from '@/components/ui/PageExplainer';
 import { getLevelColor } from '@/lib/level-colors';
 import { useStylistLevels } from '@/hooks/useStylistLevels';
+import { useTeamLevelProgress, type TeamMemberProgress } from '@/hooks/useTeamLevelProgress';
 
 const roleLabels: Record<string, string> = {
   super_admin: 'Super Admin',
