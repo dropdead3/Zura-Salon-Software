@@ -234,6 +234,9 @@ export function useCheckInvitation(email: string) {
     queryFn: async () => {
       if (!email) return null;
       
+      // Staff invitation check still uses direct table query (authenticated users have access
+      // via the "Admins and managers can view invitations" policy).
+      // For the signup flow, the user is authenticated by this point.
       const { data, error } = await supabase
         .from('staff_invitations')
         .select('*')

@@ -83,14 +83,44 @@ export function useOrganizationBySlug(slug: string | undefined) {
     queryKey: ['organization-slug', slug],
     queryFn: async () => {
       if (!slug) return null;
-      const { data, error } = await supabase
-        .from('organizations')
-        .select('*')
-        .eq('slug', slug)
-        .single();
+      
+      // First try authenticated direct query (for org members)
+      const { data: session } = await supabase.auth.getSession();
+      if (session?.session) {
+        const { data, error } = await supabase
+          .from('organizations')
+          .select('*')
+          .eq('slug', slug)
+          .single();
+        
+        if (!error && data) return data as Organization;
+      }
+      
+      // Fall back to public RPC (safe columns only, no credentials)
+      const { data: publicData, error: rpcError } = await supabase
+        .rpc('lookup_organization_by_slug', { p_slug: slug }) as any;
 
-      if (error) throw error;
-      return data as Organization;
+      if (rpcError) throw rpcError;
+      if (!publicData || publicData.length === 0) throw new Error('Organization not found');
+      
+      // RPC returns array, take first row and map to Organization shape
+      const row = publicData[0];
+      return {
+        ...row,
+        // Fields not returned by the public RPC
+        legal_name: null,
+        primary_contact_email: null,
+        primary_contact_phone: null,
+        source_software: null,
+        onboarding_stage: 'live',
+        subscription_tier: null,
+        created_at: '',
+        activated_at: null,
+        updated_at: '',
+        account_number: null,
+        go_live_date: null,
+        is_internal: false,
+      } as Organization;
     },
     enabled: !!slug,
   });

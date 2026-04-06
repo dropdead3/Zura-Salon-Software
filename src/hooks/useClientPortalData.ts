@@ -46,28 +46,22 @@ export function useClientPortalByToken(token?: string) {
   return useQuery({
     queryKey: ['client-portal-token', token],
     queryFn: async () => {
-      // First validate the token
-      const { data: tokenData, error: tokenError } = await supabase
-        .from('client_portal_tokens' as any)
-        .select('*')
-        .eq('token', token)
-        .maybeSingle();
+      // Validate the token via secure RPC (no direct table access needed)
+      const { data: tokenRows, error: tokenError } = await supabase
+        .rpc('lookup_portal_token', { p_token: token }) as any;
 
       if (tokenError) throw tokenError;
-      if (!tokenData) throw new Error('Invalid or expired token');
+      if (!tokenRows || tokenRows.length === 0) throw new Error('Invalid or expired token');
 
-      const portalToken = tokenData as unknown as ClientPortalToken;
+      const portalToken = tokenRows[0] as { id: string; client_id: string; organization_id: string; expires_at: string | null; last_accessed_at: string | null };
 
       // Check expiration
       if (portalToken.expires_at && new Date(portalToken.expires_at) < new Date()) {
         throw new Error('Token has expired');
       }
 
-      // Update last accessed
-      await supabase
-        .from('client_portal_tokens' as any)
-        .update({ last_accessed_at: new Date().toISOString() } as any)
-        .eq('id', portalToken.id);
+      // Update last accessed via secure RPC
+      await supabase.rpc('touch_portal_token', { p_token_id: portalToken.id });
 
       // Get client data
       const { data: clientData, error: clientError } = await supabase
