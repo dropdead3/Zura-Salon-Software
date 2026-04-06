@@ -58,7 +58,7 @@ import {
   type HolidayClosure,
 } from '@/hooks/useLocations';
 import { useFormatDate } from '@/hooks/useFormatDate';
-import { toast } from 'sonner';
+import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useBusinessCapacity } from '@/hooks/useBusinessCapacity';
 import { LocationCapacityBar } from './LocationCapacityBar';
 import { AddLocationSeatsDialog } from './AddLocationSeatsDialog';
@@ -140,9 +140,11 @@ const emptyForm: LocationFormData = {
   appointment_padding_minutes: 10,
 };
 
+import { toast } from 'sonner';
+
 export function LocationsSettingsContent() {
+  const { effectiveOrganization } = useOrganizationContext();
   const { formatDate } = useFormatDate();
-  const { data: locations = [], isLoading } = useLocations();
   const createLocation = useCreateLocation();
   const updateLocation = useUpdateLocation();
   const deleteLocation = useDeleteLocation();
