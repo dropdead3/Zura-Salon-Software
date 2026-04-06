@@ -123,6 +123,23 @@ export function useMyPayData(): MyPayData {
     enabled: !!user?.id && !!organizationId,
   });
 
+  // Fetch employee's stylist_level slug for level-based hourly wage fallback
+  const { data: employeeProfile } = useQuery({
+    queryKey: ['my-employee-profile-level', user?.id, organizationId],
+    queryFn: async () => {
+      if (!user?.id || !organizationId) return null;
+      const { data, error } = await supabase
+        .from('employee_profiles')
+        .select('stylist_level')
+        .eq('user_id', user.id)
+        .eq('organization_id', organizationId)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user?.id && !!organizationId,
+  });
+
   // Fetch current period sales data for commission calculation
   const { data: salesData, isLoading: salesLoading } = useQuery({
     queryKey: ['my-sales-data', user?.id, currentPeriod.startDate, currentPeriod.endDate],
@@ -209,14 +226,17 @@ export function useMyPayData(): MyPayData {
     enabled: !!user?.id,
   });
 
+  const employeeLevelSlug = employeeProfile?.stylist_level || null;
+
   // Calculate estimated compensation for current period
   const estimatedCompensation = settings && salesData
     ? calculateEmployeeCompensation(
         settings,
-        { employeeId: user?.id || '', regularHours: 80, overtimeHours: 0 }, // Default to standard 80hrs for estimate
+        { employeeId: user?.id || '', regularHours: 80, overtimeHours: 0 },
         { employeeId: user?.id || '', ...salesData },
         undefined,
-        getWeeksInPeriod(currentPeriod.startDate, currentPeriod.endDate)
+        getWeeksInPeriod(currentPeriod.startDate, currentPeriod.endDate),
+        employeeLevelSlug
       )
     : null;
 

@@ -122,6 +122,15 @@ function EmployeeRow({ employee, isExpanded, onToggle }: EmployeeRowProps) {
               <div>
                 <p className="text-xs text-muted-foreground font-display uppercase tracking-wide">Base Pay</p>
                 <p className="font-medium">{formatCurrency(employee.projectedCompensation.basePay)}</p>
+                {employee.projectedCompensation.basePay > 0 && (
+                  <p className="text-[10px] text-muted-foreground mt-0.5">
+                    {(employee.payType === 'hourly' || employee.payType === 'hourly_plus_commission')
+                      ? '80 hrs estimated'
+                      : employee.payType === 'salary' || employee.payType === 'salary_plus_commission'
+                      ? 'Bi-weekly salary'
+                      : ''}
+                  </p>
+                )}
               </div>
               <div>
                 <p className="text-xs text-muted-foreground font-display uppercase tracking-wide">Service Commission</p>
@@ -142,6 +151,18 @@ function EmployeeRow({ employee, isExpanded, onToggle }: EmployeeRowProps) {
                 </p>
               </div>
             </div>
+
+            {/* Commission Source */}
+            {employee.commissionSource && (
+              <div className="mt-3 flex items-center gap-2">
+                <Badge variant="outline" className="text-[10px]">
+                  {employee.commissionSourceType === 'override' ? 'Personal Override' :
+                   employee.commissionSourceType === 'location_override' ? 'Location Override' :
+                   employee.commissionSourceType === 'level' ? 'Level Rate' : 'Default'}
+                </Badge>
+                <span className="text-[10px] text-muted-foreground">{employee.commissionSource}</span>
+              </div>
+            )}
             
             {/* Tier Progression */}
             {employee.nextTier && (

@@ -3,7 +3,12 @@ import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { EmployeeCompensation } from '@/hooks/usePayrollCalculations';
 import { EmployeePayrollSettings } from '@/hooks/useEmployeePayrollSettings';
 import { useStylistLevels } from '@/hooks/useStylistLevels';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
+import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { TrendingUp, Award } from 'lucide-react';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 
 interface EarningsBreakdownCardProps {
   estimatedCompensation: EmployeeCompensation | null;
@@ -11,31 +16,38 @@ interface EarningsBreakdownCardProps {
   settings: EmployeePayrollSettings;
 }
 
-function formatCurrency(amount: number): string {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(amount);
-}
-
 export function EarningsBreakdownCard({ estimatedCompensation, salesData, settings }: EarningsBreakdownCardProps) {
   const { data: levels } = useStylistLevels();
+  const { user } = useAuth();
+  const { selectedOrganization } = useOrganizationContext();
+  const { formatCurrency } = useFormatCurrency();
   const comp = estimatedCompensation;
   
   const totalRevenue = salesData.serviceRevenue + salesData.productRevenue;
 
-  // Find the stylist's level based on their settings (if available)
-  // For the My Pay view, show current level info
-  const currentLevel = levels?.find(l => {
-    // Match based on commission rate if available
-    if (comp?.serviceCommission && salesData.serviceRevenue > 0) {
-      const effectiveRate = comp.serviceCommission / salesData.serviceRevenue;
-      return Math.abs((l.service_commission_rate ?? 0) - effectiveRate) < 0.01;
-    }
-    return false;
+  // Fetch the employee's stylist_level slug directly from their profile
+  const { data: employeeProfile } = useQuery({
+    queryKey: ['earnings-employee-level', user?.id, selectedOrganization?.id],
+    queryFn: async () => {
+      if (!user?.id || !selectedOrganization?.id) return null;
+      const { data, error } = await supabase
+        .from('employee_profiles')
+        .select('stylist_level')
+        .eq('user_id', user.id)
+        .eq('organization_id', selectedOrganization.id)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user?.id && !!selectedOrganization?.id,
   });
+
+  // Match level using the profile's slug (accurate) instead of reverse-engineering from rate
+  const currentLevel = levels?.find(l => l.slug === employeeProfile?.stylist_level);
+
+  // Determine if hourly rate came from level fallback
+  const isLevelHourlyFallback = comp && comp.hourlyPay > 0 && !settings.hourly_rate && 
+    currentLevel?.hourly_wage_enabled && currentLevel?.hourly_wage;
 
   return (
     <Card>
@@ -54,6 +66,14 @@ export function EarningsBreakdownCard({ estimatedCompensation, salesData, settin
             <BlurredAmount className="text-sm font-medium">
               {formatCurrency((comp?.hourlyPay || 0) + (comp?.salaryPay || 0))}
             </BlurredAmount>
+            {comp?.hourlyPay && comp.hourlyPay > 0 && comp.hourlyRate && (
+              <p className="text-[10px] text-muted-foreground mt-0.5">
+                {comp.regularHours} hrs × {formatCurrency(comp.hourlyRate)}
+                {isLevelHourlyFallback && (
+                  <span className="text-primary/70 ml-0.5">(Level)</span>
+                )}
+              </p>
+            )}
           </div>
           <div className="text-center p-3 rounded-lg bg-muted/50">
             <p className="text-xs text-muted-foreground mb-1">Commission</p>
