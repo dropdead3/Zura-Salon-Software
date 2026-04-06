@@ -326,6 +326,7 @@ export function CommissionEconomicsTab({ levels }: CommissionEconomicsTabProps) 
                   <TableHead className={tokens.table.columnHeader}>Level</TableHead>
                   <TableHead className={cn(tokens.table.columnHeader, 'text-center')}>Service %</TableHead>
                   <TableHead className={cn(tokens.table.columnHeader, 'text-center')}>Retail %</TableHead>
+                  <TableHead className={cn(tokens.table.columnHeader, 'text-center')}>Hourly Wage</TableHead>
                   <TableHead className={cn(tokens.table.columnHeader, 'text-center')}>Breakeven Rev</TableHead>
                   <TableHead className={cn(tokens.table.columnHeader, 'text-center')}>Target Rev</TableHead>
                   <TableHead className={cn(tokens.table.columnHeader, 'text-center')}>Actual Avg Rev</TableHead>
@@ -337,11 +338,18 @@ export function CommissionEconomicsTab({ levels }: CommissionEconomicsTabProps) 
                 {levels.map((level, idx) => {
                   const serviceRate = whatIfRates[level.id]?.service ?? (level.service_commission_rate ?? 0);
                   const retailRate = whatIfRates[level.id]?.retail ?? (level.retail_commission_rate ?? 0);
-                  const { breakevenRevenue, targetRevenue } = computeEconomics(serviceRate, effectiveAssumptions, retailRate);
+                  // Add hourly wage cost to overhead (~160 hours/month)
+                  const hourlyWageCost = level.hourly_wage_enabled && level.hourly_wage
+                    ? level.hourly_wage * 160
+                    : 0;
+                  const adjustedAssumptions = hourlyWageCost > 0
+                    ? { ...effectiveAssumptions, overhead_per_stylist: effectiveAssumptions.overhead_per_stylist + hourlyWageCost }
+                    : effectiveAssumptions;
+                  const { breakevenRevenue, targetRevenue } = computeEconomics(serviceRate, adjustedAssumptions, retailRate);
                   const revData = revenueMap.get(level.id);
                   const actualRevenue = revData?.avg ?? 0;
                   const actualMargin = actualRevenue > 0
-                    ? computeMarginAtRevenue(actualRevenue, serviceRate, effectiveAssumptions, retailRate)
+                    ? computeMarginAtRevenue(actualRevenue, serviceRate, adjustedAssumptions, retailRate)
                     : null;
                   const status = actualMargin !== null
                     ? getMarginStatus(actualMargin, effectiveAssumptions.target_margin_pct)
@@ -369,6 +377,13 @@ export function CommissionEconomicsTab({ levels }: CommissionEconomicsTabProps) 
                         <span className={hasWhatIf ? 'text-primary' : ''}>
                           {(retailRate * 100).toFixed(0)}%
                         </span>
+                      </TableCell>
+                      <TableCell className="text-center text-sm">
+                        {level.hourly_wage_enabled && level.hourly_wage ? (
+                          <BlurredAmount>${level.hourly_wage}/hr</BlurredAmount>
+                        ) : (
+                          <span className="text-muted-foreground/40">—</span>
+                        )}
                       </TableCell>
                       <TableCell className="text-center text-sm">
                         <BlurredAmount>{formatCurrencyLocal(breakevenRevenue)}</BlurredAmount>

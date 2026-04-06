@@ -20,6 +20,8 @@ interface LevelCommission {
   dbId?: string;
   serviceCommissionRate: number;
   retailCommissionRate: number;
+  hourlyWageEnabled?: boolean;
+  hourlyWage?: number | null;
 }
 
 export interface LevelRequirementsPDFOptions {
@@ -37,7 +39,7 @@ function formatCriteriaRow(
   commission: LevelCommission | undefined
 ): string[] {
   const commStr = commission
-    ? `Svc: ${commission.serviceCommissionRate}%\nRetail: ${commission.retailCommissionRate}%`
+    ? `Svc: ${commission.serviceCommissionRate}%\nRetail: ${commission.retailCommissionRate}%${commission.hourlyWageEnabled && commission.hourlyWage ? `\nHourly: $${commission.hourlyWage}/hr` : ''}`
     : '—';
 
   if (level.index === 0) {

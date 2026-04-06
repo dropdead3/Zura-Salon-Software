@@ -138,9 +138,17 @@ export function usePayrollCalculations() {
     hours: EmployeeHours,
     salesData: EmployeeSalesData | undefined,
     adjustments: EmployeeAdjustments | undefined,
-    weeksInPeriod: number = 2
+    weeksInPeriod: number = 2,
+    employeeLevelSlug?: string | null
   ): EmployeeCompensation => {
-    const hourlyRate = settings.hourly_rate || 0;
+    let hourlyRate = settings.hourly_rate || 0;
+    // Fallback: use level's hourly_wage if employee has no rate set
+    if (!hourlyRate && employeeLevelSlug && levels) {
+      const matchedLevel = levels.find(l => l.slug === employeeLevelSlug);
+      if (matchedLevel?.hourly_wage_enabled && matchedLevel.hourly_wage) {
+        hourlyRate = matchedLevel.hourly_wage;
+      }
+    }
     const annualSalary = settings.salary_amount || 0;
     const payType = settings.pay_type;
 

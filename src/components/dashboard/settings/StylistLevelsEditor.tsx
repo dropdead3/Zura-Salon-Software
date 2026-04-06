@@ -16,7 +16,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import { 
+import {
   Plus, 
    
   Trash2, 
@@ -39,10 +39,14 @@ import {
   Shield,
   Wand2,
   DollarSign,
+  Clock,
 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
+import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -183,6 +187,8 @@ type LocalStylistLevel = {
   description: string;
   serviceCommissionRate: string;
   retailCommissionRate: string;
+  hourlyWageEnabled: boolean;
+  hourlyWage: string;
 };
 
 interface CriteriaComparisonTableProps {
@@ -319,6 +325,20 @@ function CriteriaComparisonTable({ levels, promotionCriteria, retentionCriteria,
               );
             })}
 
+            {/* Hourly Wage row */}
+            <TableRow className="border-l-2 border-l-primary/20">
+              <TableCell className="text-xs text-muted-foreground sticky left-0 bg-card z-10 border-l-2 border-l-primary/20">Hourly Wage</TableCell>
+              {levels.map((level) => (
+                <TableCell key={level.id} className="text-center text-xs">
+                  {level.hourlyWageEnabled && level.hourlyWage ? (
+                    <span className="text-foreground font-medium">${level.hourlyWage}/hr</span>
+                  ) : (
+                    <span className="text-muted-foreground/40">—</span>
+                  )}
+                </TableCell>
+              ))}
+            </TableRow>
+
             {/* Promotion section header */}
             <TableRow className="bg-muted/30 hover:bg-muted/30">
               <TableCell colSpan={levels.length + 1} className="py-2">
@@ -452,6 +472,8 @@ function LevelsQuickSetupWizard({ onGenerate, onDismiss, isGenerating }: QuickSe
         description: '',
         serviceCommissionRate: String(rate),
         retailCommissionRate: retail,
+        hourlyWageEnabled: false,
+        hourlyWage: '',
       };
     });
 
@@ -645,6 +667,8 @@ export function StylistLevelsEditor({ embedded = false }: StylistLevelsEditorPro
         description: l.description || '',
         serviceCommissionRate: formatRate(l.service_commission_rate),
         retailCommissionRate: formatRate(l.retail_commission_rate),
+        hourlyWageEnabled: l.hourly_wage_enabled ?? false,
+        hourlyWage: l.hourly_wage != null ? String(l.hourly_wage) : '',
       }));
       setLevels(localLevels);
     }
@@ -748,6 +772,8 @@ export function StylistLevelsEditor({ embedded = false }: StylistLevelsEditorPro
       description: '',
       serviceCommissionRate: '',
       retailCommissionRate: '',
+      hourlyWageEnabled: false,
+      hourlyWage: '',
     };
     setLevels([...levels, newLevel]);
     setNewLevelName('');
@@ -783,6 +809,8 @@ export function StylistLevelsEditor({ embedded = false }: StylistLevelsEditorPro
       display_order: idx,
       service_commission_rate: level.serviceCommissionRate ? parseFloat(level.serviceCommissionRate) / 100 : null,
       retail_commission_rate: level.retailCommissionRate ? parseFloat(level.retailCommissionRate) / 100 : null,
+      hourly_wage_enabled: level.hourlyWageEnabled,
+      hourly_wage: level.hourlyWage ? parseFloat(level.hourlyWage) : null,
     }));
     saveLevels.mutate(levelsToSave, {
       onSuccess: () => {
@@ -804,6 +832,8 @@ export function StylistLevelsEditor({ embedded = false }: StylistLevelsEditorPro
         display_order: idx,
         service_commission_rate: level.serviceCommissionRate ? parseFloat(level.serviceCommissionRate) / 100 : null,
         retail_commission_rate: level.retailCommissionRate ? parseFloat(level.retailCommissionRate) / 100 : null,
+        hourly_wage_enabled: level.hourlyWageEnabled,
+        hourly_wage: level.hourlyWage ? parseFloat(level.hourlyWage) : null,
       }));
 
       await new Promise<void>((resolve, reject) => {
@@ -921,6 +951,8 @@ export function StylistLevelsEditor({ embedded = false }: StylistLevelsEditorPro
                 dbId: l.dbId,
                 serviceCommissionRate: parseFloat(String(l.serviceCommissionRate)) || 0,
                 retailCommissionRate: parseFloat(String(l.retailCommissionRate)) || 0,
+                hourlyWageEnabled: l.hourlyWageEnabled,
+                hourlyWage: l.hourlyWage ? parseFloat(l.hourlyWage) : null,
               }));
 
               // Pre-fetch org logo as base64 data URL
@@ -1150,7 +1182,7 @@ export function StylistLevelsEditor({ embedded = false }: StylistLevelsEditorPro
                   >
                     {/* Collapsed header row — grid layout for column alignment */}
                     <div
-                      className="grid grid-cols-[auto_auto_1fr_7rem_6rem_5rem_auto] items-center px-3 py-2 cursor-pointer select-none"
+                      className="grid grid-cols-[auto_auto_1fr_7rem_6rem_5rem_5rem_auto] items-center px-3 py-2 cursor-pointer select-none"
                       onClick={(e) => {
                         if ((e.target as HTMLElement).closest('button, input, [role="dialog"]')) return;
                         toggleExpanded(level.id);
@@ -1194,7 +1226,12 @@ export function StylistLevelsEditor({ embedded = false }: StylistLevelsEditorPro
                         {level.retailCommissionRate ? `Retail ${level.retailCommissionRate}%` : '—'}
                       </span>
 
-                      {/* Col 6: Stylist count — center-aligned */}
+                      {/* Col 6: Hourly Wage — center-aligned */}
+                      <span className="text-xs text-muted-foreground text-center hidden sm:block">
+                        {level.hourlyWageEnabled && level.hourlyWage ? `$${level.hourlyWage}/hr` : '—'}
+                      </span>
+
+                      {/* Col 7: Stylist count — center-aligned */}
                       <div className="text-center">
                         {hasStylists && (
                           <span className="text-xs text-muted-foreground">
@@ -1328,6 +1365,51 @@ export function StylistLevelsEditor({ embedded = false }: StylistLevelsEditorPro
                               max={100}
                             />
                           </div>
+                        </div>
+
+                        {/* Hourly Wage Toggle */}
+                        <div className="ml-[3.25rem] space-y-3">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <Label className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
+                                <Clock className="w-3.5 h-3.5" />
+                                Hourly Wage
+                              </Label>
+                              <MetricInfoTooltip description="Enable if stylists at this level receive an hourly base wage in addition to or instead of commission." />
+                            </div>
+                            <Switch
+                              checked={level.hourlyWageEnabled}
+                              onCheckedChange={(checked) => {
+                                const newLevels = [...levels];
+                                newLevels[index] = { ...newLevels[index], hourlyWageEnabled: checked };
+                                setLevels(newLevels);
+                                setHasChanges(true);
+                              }}
+                            />
+                          </div>
+                          {level.hourlyWageEnabled && (
+                            <div className="space-y-1">
+                              <label className="text-xs font-medium text-muted-foreground">Starting Hourly Wage</label>
+                              <div className="relative">
+                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">$</span>
+                                <Input
+                                  type="number"
+                                  placeholder="0.00"
+                                  value={level.hourlyWage}
+                                  onChange={(e) => {
+                                    const newLevels = [...levels];
+                                    newLevels[index] = { ...newLevels[index], hourlyWage: e.target.value };
+                                    setLevels(newLevels);
+                                    setHasChanges(true);
+                                  }}
+                                  className="h-8 text-xs pl-7 pr-10"
+                                  min={0}
+                                  step={0.25}
+                                />
+                                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">/hr</span>
+                              </div>
+                            </div>
+                          )}
                         </div>
 
                         {/* Level Criteria */}

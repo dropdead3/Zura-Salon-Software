@@ -190,7 +190,18 @@ export function usePayrollForecasting() {
       const hoursPerPeriod = 80; // Assume 80 hours bi-weekly
       
       if (emp.pay_type === 'hourly' || emp.pay_type === 'hourly_plus_commission') {
-        basePay = (emp.hourly_rate || 0) * hoursPerPeriod;
+        let rate = emp.hourly_rate || 0;
+        // Fallback: use level's hourly_wage if employee has no rate set
+        if (!rate) {
+          const empLevel = employeeLevels?.find(el => el.user_id === emp.employee_id);
+          if (empLevel?.stylist_level) {
+            const matchedLevel = allLevels.find(l => l.slug === empLevel.stylist_level);
+            if (matchedLevel?.hourly_wage_enabled && matchedLevel.hourly_wage) {
+              rate = matchedLevel.hourly_wage;
+            }
+          }
+        }
+        basePay = rate * hoursPerPeriod;
       } else if (emp.pay_type === 'salary' || emp.pay_type === 'salary_plus_commission') {
         basePay = (emp.salary_amount || 0) / 26; // Bi-weekly
       }
