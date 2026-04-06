@@ -1,55 +1,68 @@
 
 
-# Rename "Required to Graduate" → "Level Requirements" + UI Polish
+# Inline Row-Based KPI Configurator
 
-## Terminology Changes
+## Concept
 
-The promotion tab in the Level Criteria wizard should read **"Level Requirements"** (not "Required to Graduate") since this represents what a stylist must achieve to earn/reach that level. The concept is requirements-based, not graduation-based.
+Transform the existing read-only comparison table into an **inline-editable matrix**. Instead of clicking "Edit" → opening a wizard per level, you click a metric row (e.g., Revenue) and input fields appear for **all levels in that row** simultaneously. This lets you set escalating thresholds in one pass — you can see and adjust the progression across levels side-by-side.
 
-### Files requiring terminology updates:
-
-| File | Current | New |
-|------|---------|-----|
-| `GraduationWizard.tsx` (line 558) | "Required to Graduate" tab label | "Level Requirements" |
-| `GraduationWizard.tsx` (line 673) | "Toggle on the metrics that matter for promotion to this level." | "Toggle on the metrics that matter to earn this level." |
-| `GraduationWizard.tsx` (line 859) | "To become {levelLabel}, a stylist must maintain:" | "To earn {levelLabel}, a stylist must maintain:" |
-| `useLevelPromotionCriteria.ts` (line 103) | toast: "Graduation criteria saved" | "Level criteria saved" |
-| `useLevelPromotionCriteria.ts` (line 126) | toast: "Graduation criteria removed" | "Level criteria removed" |
-| `LevelRequirementsPDF.ts` (line 279) | "Required to Graduate — Promotion Criteria" | "Level Requirements — Promotion Criteria" |
-
-## UI Improvements (GraduationWizard.tsx)
-
-### A. Tab toggle redesign (lines 554-564)
-Replace the default `TabsList`/`TabsTrigger` with a custom segmented control using proper pill styling that matches the platform's design language. Use `ToggleGroup` with `rounded-full` items for a cleaner, more intentional selector:
+The per-level wizard (GraduationWizard) remains available for advanced settings (weights, eval window, approval mode), but the most common task — setting KPI thresholds — becomes a quick inline operation.
 
 ```text
-┌──────────────────────────────────────────┐
-│  ★ Level Requirements  │  ◐ Required to Stay  │
-└──────────────────────────────────────────┘
+┌──────────────┬──────────┬──────────┬──────────┬──────────┐
+│ Revenue      │   —      │ $15,000  │ $20,000  │ $28,000  │  ← click row
+├──────────────┼──────────┼──────────┼──────────┼──────────┤
+│ Revenue      │   —      │ [15000 ] │ [20000 ] │ [28000 ] │  ← inline inputs
+│              │ base     │          │          │  [Save]  │
+└──────────────┴──────────┴──────────┴──────────┴──────────┘
 ```
 
-- Use `ToggleGroup` single-select with `data-[state=on]:bg-foreground data-[state=on]:text-background` active styling (matching the earnings structure selector pattern)
-- Wrap in a `bg-muted rounded-full p-1` container for a proper segmented look
+## UX Details
 
-### B. Step indicators redesign (lines 568-602)
-Replace the numbered bubbles + dashes with a cleaner horizontal stepper:
+- **Click a metric row** → cells flip to compact number inputs for all non-base levels
+- **Base level** (first) stays as "—" for promotion metrics (unchanged behavior)
+- **Enable toggle**: A small checkbox appears in each cell — unchecked means "not tracked" for that level, checked enables the input
+- **Save row**: A single "Save" button at the end of the row saves all levels for that metric at once
+- **Cancel**: Clicking away or pressing Escape reverts to read-only
+- **Auto-step helper**: Optional "Even step" button that auto-distributes values linearly between the first and last level's thresholds (e.g., set Level 2 = $15K and Level 6 = $30K → auto-fills $18K, $21K, $24K, $27K)
+- **Inconsistency warnings** remain live as you type — if a higher level has a lower value, the amber triangle appears immediately
 
-- Remove the circled numbers (`1`, `2`, `3`) — replace with small dots or filled/unfilled indicators
-- Use a thin continuous progress line connecting steps
-- Active step: text in `text-foreground` with a small filled dot
-- Completed step: checkmark icon (keep existing `Check`)
-- Future step: hollow dot with `text-muted-foreground`
-- Remove the clickable pill buttons — use simpler inline text with dot indicators
+## Technical Plan
 
-```text
-  ● Requirements ——— ○ Weights ——— ○ Settings
-```
+### A. Refactor `CriteriaComparisonTable` (same file)
 
-### C. No database changes
+Add local state:
+- `editingMetric: { label: string; section: 'promotion' | 'retention' } | null`
+- `editValues: Record<levelDbId, { enabled: boolean; value: string }>`
 
-## Summary
-- **2 files modified** (`GraduationWizard.tsx`, `useLevelPromotionCriteria.ts`)
-- **1 file updated** (`LevelRequirementsPDF.ts`) — PDF header text
-- Terminology alignment across all surfaces
-- Polished tab toggle and step indicator UI
+When a row is clicked or "Configure" is clicked:
+1. Set `editingMetric` to that row
+2. Populate `editValues` from existing criteria data (or empty for unconfigured levels)
+3. Render `<Input type="number" />` in each cell instead of the display value
+
+### B. Save logic
+
+On "Save row":
+1. For each level that has `enabled: true` and a valid numeric value, call the existing `useUpsertLevelPromotionCriteria` or `useUpsertLevelRetentionCriteria` mutation
+2. Map the metric label back to the correct field (e.g., "Revenue" → `revenue_enabled` + `revenue_threshold`)
+3. Merge with existing criteria for that level (preserve weights, eval window, other metrics)
+4. Batch upserts sequentially per level (the upsert hook handles one level at a time)
+
+### C. "Even Step" helper
+
+A small button labeled "Auto-step" appears when 2+ levels have values. It takes the first and last non-base values and linearly interpolates the middle levels. Pure client-side math, updates `editValues` state only.
+
+### D. Files modified
+
+- `src/components/dashboard/settings/StylistLevelsEditor.tsx` — refactor `CriteriaComparisonTable` to support inline editing mode with row-level state, save, and auto-step
+
+### E. No database changes
+
+Uses existing upsert hooks and table structure.
+
+## Enhancement Suggestions
+
+1. **Percentage vs. currency formatting** — Show `$` prefix for revenue/avg ticket inputs and `%` suffix for rate inputs, matching the display format
+2. **Keyboard navigation** — Tab between level inputs in a row for fast data entry
+3. **Bulk enable/disable** — A row-level toggle to enable/disable a metric across all levels at once
 
