@@ -1,6 +1,12 @@
 import { useRef, useState, useMemo } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { X, FileDown, Printer, Check, AlertTriangle, ChevronRight, Shield, Clock, Users, ChevronDown } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
 import { getLevelColor } from '@/lib/level-colors';
 import type { LevelPromotionCriteria } from '@/hooks/useLevelPromotionCriteria';
@@ -26,6 +32,7 @@ interface LevelRoadmapViewProps {
   orgLogoUrl?: string | null;
   onClose: () => void;
   onDownloadPDF: () => void;
+  onDownloadStaffReport?: () => void;
 }
 
 export function LevelRoadmapView({
@@ -35,6 +42,7 @@ export function LevelRoadmapView({
   orgName,
   onClose,
   onDownloadPDF,
+  onDownloadStaffReport,
 }: LevelRoadmapViewProps) {
   const contentRef = useRef<HTMLDivElement>(null);
 
@@ -211,13 +219,29 @@ ${clone.innerHTML}
         <div className="max-w-4xl mx-auto px-6 py-3 flex items-center justify-between">
           <h2 className="font-display text-sm tracking-wide uppercase text-neutral-900">Level Roadmap</h2>
           <div className="flex items-center gap-2">
-            <button
-              onClick={onDownloadPDF}
-              className="inline-flex items-center gap-2 h-9 px-4 rounded-full text-sm font-sans font-medium border border-neutral-300 bg-white text-neutral-700 hover:bg-neutral-100 hover:text-neutral-900 transition-colors"
-            >
-              <FileDown className="w-4 h-4" />
-              Download PDF
-            </button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  className="inline-flex items-center gap-2 h-9 px-4 rounded-full text-sm font-sans font-medium border border-neutral-300 bg-white text-neutral-700 hover:bg-neutral-100 hover:text-neutral-900 transition-colors"
+                >
+                  <FileDown className="w-4 h-4" />
+                  Download
+                  <ChevronDown className="w-3 h-3 ml-0.5 opacity-50" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-52">
+                <DropdownMenuItem onClick={onDownloadPDF} className="gap-2 cursor-pointer">
+                  <FileDown className="w-4 h-4" />
+                  Level Roadmap
+                </DropdownMenuItem>
+                {onDownloadStaffReport && (
+                  <DropdownMenuItem onClick={onDownloadStaffReport} className="gap-2 cursor-pointer">
+                    <Users className="w-4 h-4" />
+                    Staff Level Report
+                  </DropdownMenuItem>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
             <button
               onClick={handlePrint}
               className="inline-flex items-center gap-2 h-9 px-4 rounded-full text-sm font-sans font-medium border border-neutral-300 bg-white text-neutral-700 hover:bg-neutral-100 hover:text-neutral-900 transition-colors"

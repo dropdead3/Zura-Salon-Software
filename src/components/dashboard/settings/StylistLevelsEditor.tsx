@@ -70,6 +70,8 @@ import { useLevelRetentionCriteria, type LevelRetentionCriteria } from '@/hooks/
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { generateLevelRequirementsPDF } from '@/components/dashboard/settings/LevelRequirementsPDF';
+import { generateStaffLevelReportPDF } from '@/components/dashboard/settings/StaffLevelReportPDF';
+import { useTeamLevelProgress } from '@/hooks/useTeamLevelProgress';
 
 import { TeamCommissionRoster } from '@/components/dashboard/settings/TeamCommissionRoster';
 import { LocationOverridesTab } from '@/components/dashboard/settings/LocationOverridesTab';
@@ -1404,6 +1406,7 @@ export function StylistLevelsEditor({ embedded = false, onActions }: StylistLeve
   const { data: promotionCriteria } = useLevelPromotionCriteria();
   const { data: retentionCriteria } = useLevelRetentionCriteria();
   const { data: activeLocations = [] } = useActiveLocations();
+  const { teamProgress, counts: teamCounts } = useTeamLevelProgress();
 
   useEffect(() => {
     if (dbLevels && !hasChanges) {
@@ -2646,6 +2649,15 @@ export function StylistLevelsEditor({ embedded = false, onActions }: StylistLeve
           orgName={effectiveOrganization?.name || 'Organization'}
           orgLogoUrl={effectiveOrganization?.logo_url}
           onClose={() => setShowRoadmap(false)}
+          onDownloadStaffReport={() => {
+            const doc = generateStaffLevelReportPDF({
+              orgName: effectiveOrganization?.name || 'Organization',
+              teamProgress,
+              counts: teamCounts,
+            });
+            doc.save('staff-level-report.pdf');
+            toast.success('Staff level report exported');
+          }}
           onDownloadPDF={async () => {
             const levelInfos = levels.map((l, i) => ({
               label: l.label,
