@@ -1,10 +1,9 @@
 /**
  * PDF Export for Stylist Level Graduation Requirements.
- * Generates a branded document listing all levels + promotion criteria + retention criteria.
+ * Portrait A4, card-based layout matching the digital LevelRoadmapView.
  */
 
 import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
 import { format } from 'date-fns';
 import type { LevelPromotionCriteria } from '@/hooks/useLevelPromotionCriteria';
 import type { LevelRetentionCriteria } from '@/hooks/useLevelRetentionCriteria';
@@ -33,326 +32,409 @@ export interface LevelRequirementsPDFOptions {
   commissions?: LevelCommission[];
 }
 
-function formatCriteriaRow(
-  level: LevelInfo,
-  criteria: LevelPromotionCriteria | undefined,
-  commission: LevelCommission | undefined
-): string[] {
-  const commStr = commission
-    ? `Svc: ${commission.serviceCommissionRate}%\nRetail: ${commission.retailCommissionRate}%${commission.hourlyWageEnabled && commission.hourlyWage ? `\nHourly: $${commission.hourlyWage}/hr` : ''}`
-    : '—';
+// Color stops matching level-colors.ts (stone → amber → gold)
+const BG_HEX_STOPS = ['#f5f5f4', '#e7e5e4', '#fef3c7', '#fde68a', '#fcd34d', '#f59e0b'];
 
-  if (level.index === 0) {
-    return [
-      `Level ${level.index + 1}`,
-      level.label,
-      commStr,
-      'Entry Level',
-      '—',
-      '—',
-      '—',
-    ];
-  }
-
-  if (!criteria || !criteria.is_active) {
-    return [
-      `Level ${level.index + 1}`,
-      level.label,
-      commStr,
-      'Not Configured',
-      '—',
-      '—',
-      '—',
-    ];
-  }
-
-  const reqs: string[] = [];
-  const weights: string[] = [];
-
-  if (criteria.revenue_enabled && criteria.revenue_threshold > 0) {
-    reqs.push(`$${criteria.revenue_threshold.toLocaleString()} rev/mo`);
-    weights.push(`Revenue: ${criteria.revenue_weight}%`);
-  }
-  if (criteria.retail_enabled && criteria.retail_pct_threshold > 0) {
-    reqs.push(`${criteria.retail_pct_threshold}% retail`);
-    weights.push(`Retail: ${criteria.retail_weight}%`);
-  }
-  if (criteria.rebooking_enabled && criteria.rebooking_pct_threshold > 0) {
-    reqs.push(`${criteria.rebooking_pct_threshold}% rebook`);
-    weights.push(`Rebook: ${criteria.rebooking_weight}%`);
-  }
-  if (criteria.avg_ticket_enabled && criteria.avg_ticket_threshold > 0) {
-    reqs.push(`$${criteria.avg_ticket_threshold} avg ticket`);
-    weights.push(`Avg Ticket: ${criteria.avg_ticket_weight}%`);
-  }
-  if (criteria.retention_rate_enabled && criteria.retention_rate_threshold > 0) {
-    reqs.push(`${criteria.retention_rate_threshold}% retention`);
-    weights.push(`Retention: ${criteria.retention_rate_weight}%`);
-  }
-  if (criteria.new_clients_enabled && criteria.new_clients_threshold > 0) {
-    reqs.push(`${criteria.new_clients_threshold} new clients`);
-    weights.push(`New Clients: ${criteria.new_clients_weight}%`);
-  }
-  if (criteria.utilization_enabled && criteria.utilization_threshold > 0) {
-    reqs.push(`${criteria.utilization_threshold}% utilization`);
-    weights.push(`Utilization: ${criteria.utilization_weight}%`);
-  }
-  if (criteria.rev_per_hour_enabled && criteria.rev_per_hour_threshold > 0) {
-    reqs.push(`$${criteria.rev_per_hour_threshold}/hr`);
-    weights.push(`Rev/Hr: ${criteria.rev_per_hour_weight}%`);
-  }
-  if (criteria.tenure_enabled && criteria.tenure_days > 0) {
-    reqs.push(`${criteria.tenure_days}d tenure`);
-  }
-
-  return [
-    `Level ${level.index + 1}`,
-    level.label,
-    commStr,
-    reqs.join('\n') || 'None set',
-    weights.join('\n') || '—',
-    `${criteria.evaluation_window_days}d`,
-    criteria.requires_manual_approval ? 'Yes' : 'No',
-  ];
+function getLevelHex(index: number, total: number): string {
+  if (total <= 1) return BG_HEX_STOPS[BG_HEX_STOPS.length - 1];
+  const ratio = index / (total - 1);
+  const idx = Math.round(ratio * (BG_HEX_STOPS.length - 1));
+  return BG_HEX_STOPS[Math.min(idx, BG_HEX_STOPS.length - 1)];
 }
 
-function formatRetentionRow(level: LevelInfo, retention: LevelRetentionCriteria | undefined): string[] {
-  if (!retention || !retention.is_active || !retention.retention_enabled) {
-    return [
-      `Level ${level.index + 1}`,
-      level.label,
-      'Not Configured',
-      '—',
-      '—',
-      '—',
-    ];
+function hexToRgb(hex: string): [number, number, number] {
+  const h = hex.replace('#', '');
+  return [parseInt(h.slice(0, 2), 16), parseInt(h.slice(2, 4), 16), parseInt(h.slice(4, 6), 16)];
+}
+
+const MARGIN = 14;
+const PAGE_BOTTOM_MARGIN = 20;
+
+function fmtCurrency(v: number): string {
+  return v >= 1000 ? `$${(v / 1000).toFixed(0)}K` : `$${v}`;
+}
+
+function ensureSpace(doc: jsPDF, y: number, needed: number): number {
+  const pageH = doc.internal.pageSize.getHeight();
+  if (y + needed > pageH - PAGE_BOTTOM_MARGIN) {
+    doc.addPage();
+    return 20;
   }
+  return y;
+}
 
-  const actionLabel = retention.action_type === 'demotion_eligible' ? 'Demotion Eligible' : 'Coaching Flag';
+function drawRoundedRect(
+  doc: jsPDF,
+  x: number, y: number, w: number, h: number, r: number,
+  opts: { fill?: [number, number, number]; stroke?: [number, number, number]; lineWidth?: number }
+) {
+  if (opts.lineWidth) doc.setLineWidth(opts.lineWidth);
+  if (opts.stroke) doc.setDrawColor(...opts.stroke);
+  if (opts.fill) doc.setFillColor(...opts.fill);
 
-  return [
-    `Level ${level.index + 1}`,
-    level.label,
-    'Same as Level Requirements',
-    `${retention.evaluation_window_days}d`,
-    `${retention.grace_period_days}d`,
-    actionLabel,
-  ];
+  const mode = opts.fill && opts.stroke ? 'FD' : opts.fill ? 'F' : 'D';
+  doc.roundedRect(x, y, w, h, r, r, mode);
 }
 
 export function generateLevelRequirementsPDF(options: LevelRequirementsPDFOptions): jsPDF {
   const { orgName, levels, criteria, retentionCriteria = [], logoDataUrl, commissions = [] } = options;
-  const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
   const pageWidth = doc.internal.pageSize.getWidth();
-  const pageHeight = doc.internal.pageSize.getHeight();
+  const contentWidth = pageWidth - MARGIN * 2;
   const now = new Date();
 
-  // --- Header ---
+  const getPromo = (dbId?: string) => criteria.find(c => c.stylist_level_id === dbId && c.is_active);
+  const getRetention = (dbId?: string) => retentionCriteria.find(r => r.stylist_level_id === dbId && r.is_active);
+
+  // ─── Header bar ───
   doc.setFillColor(30, 30, 30);
-  doc.rect(0, 0, pageWidth, 24, 'F');
+  doc.rect(0, 0, pageWidth, 26, 'F');
 
-  let titleX = 14;
-
-  // Logo
+  let titleX = MARGIN;
   if (logoDataUrl) {
     try {
-      doc.addImage(logoDataUrl, 'PNG', 14, 3, 0, 10);
-      // Estimate logo width (aspect ratio ~3:1 typical) and offset title
-      titleX = 14 + 34;
-    } catch {
-      // Logo failed, proceed without
-    }
+      doc.addImage(logoDataUrl, 'PNG', MARGIN, 3, 0, 10);
+      titleX = MARGIN + 34;
+    } catch { /* skip */ }
   }
 
   doc.setTextColor(255, 255, 255);
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(13);
-  doc.text('Stylist Level Graduation Roadmap', titleX, 11);
-
-  doc.setFontSize(8);
+  doc.setFontSize(14);
+  doc.text('Level Graduation Roadmap', titleX, 11);
   doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8);
   doc.text(orgName, titleX, 18);
-  doc.text(`Generated: ${format(now, 'MMM d, yyyy h:mm a')}`, pageWidth - 14, 11, { align: 'right' });
-  doc.text(`${levels.length} Levels Configured`, pageWidth - 14, 18, { align: 'right' });
+  doc.text(`Generated: ${format(now, 'MMM d, yyyy')}`, titleX, 23);
+  doc.text(`${levels.length} Levels`, pageWidth - MARGIN, 18, { align: 'right' });
 
-  // --- Level Progression Visual ---
-  let y = 30;
+  let y = 34;
+
+  // ─── Timeline ───
   if (levels.length > 1) {
-    doc.setFontSize(7);
-    doc.setFont('helvetica', 'normal');
-    doc.setTextColor(100, 100, 100);
-    doc.text('CAREER PROGRESSION', 14, y);
-    y += 4;
+    const timelineH = 32;
+    y = ensureSpace(doc, y, timelineH);
 
-    doc.setFillColor(248, 248, 250);
+    const nodeR = levels.length > 10 ? 5 : 7;
+    const totalNodes = levels.length;
+    const usableW = contentWidth - nodeR * 2;
+    const spacing = Math.min(usableW / (totalNodes - 1), 40);
+    const totalTimelineW = spacing * (totalNodes - 1);
+    const startX = MARGIN + (contentWidth - totalTimelineW) / 2;
+    const nodeY = y + 10;
+
+    // Connector line
     doc.setDrawColor(200, 200, 200);
-    doc.roundedRect(14, y, pageWidth - 28, 10, 2, 2, 'FD');
-
-    const flowY = y + 6;
-    const usableWidth = pageWidth - 28 - 8; // margins + padding
-    const totalItems = levels.length;
-    const segmentWidth = usableWidth / totalItems;
+    doc.setLineWidth(0.5);
+    doc.line(startX, nodeY, startX + totalTimelineW, nodeY);
 
     levels.forEach((level, i) => {
-      const cx = 18 + segmentWidth * i + segmentWidth / 2;
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(7);
-      doc.setTextColor(30, 30, 30);
-      doc.text(level.label, cx, flowY, { align: 'center' });
+      const cx = startX + spacing * i;
+      const bgHex = getLevelHex(i, totalNodes);
+      const rgb = hexToRgb(bgHex);
+      const isConfigured = criteria.some(c => c.stylist_level_id === level.dbId && c.is_active) || i === 0;
 
-      // Draw arrow to next
-      if (i < totalItems - 1) {
-        const arrowX = cx + segmentWidth / 2;
-        doc.setDrawColor(160, 160, 160);
-        doc.setLineWidth(0.3);
-        doc.line(arrowX - 4, flowY - 1.5, arrowX + 2, flowY - 1.5);
-        // Arrowhead
-        doc.line(arrowX + 2, flowY - 1.5, arrowX, flowY - 2.5);
-        doc.line(arrowX + 2, flowY - 1.5, arrowX, flowY - 0.5);
+      // Node circle
+      doc.setFillColor(...rgb);
+      if (isConfigured) {
+        doc.setDrawColor(52, 211, 153); // emerald-400
+        doc.setLineWidth(0.8);
+      } else {
+        doc.setDrawColor(200, 200, 200);
+        doc.setLineWidth(0.5);
       }
+      doc.circle(cx, nodeY, nodeR, 'FD');
+
+      // Level number
+      doc.setTextColor(30, 30, 30);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(nodeR > 5 ? 8 : 7);
+      doc.text(`${i + 1}`, cx, nodeY + (nodeR > 5 ? 1 : 0.8), { align: 'center' });
+
+      // Status dot
+      const dotR = 2;
+      const dotX = cx + nodeR * 0.6;
+      const dotY = nodeY + nodeR * 0.6;
+      if (isConfigured) {
+        doc.setFillColor(16, 185, 129); // emerald-500
+        doc.circle(dotX, dotY, dotR, 'F');
+        // checkmark
+        doc.setDrawColor(255, 255, 255);
+        doc.setLineWidth(0.5);
+        doc.line(dotX - 0.8, dotY, dotX - 0.2, dotY + 0.6);
+        doc.line(dotX - 0.2, dotY + 0.6, dotX + 0.8, dotY - 0.5);
+      } else {
+        doc.setFillColor(251, 191, 36); // amber-400
+        doc.circle(dotX, dotY, dotR, 'F');
+        doc.setTextColor(255, 255, 255);
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(5);
+        doc.text('!', dotX, dotY + 0.6, { align: 'center' });
+      }
+
+      // Level name below
+      doc.setTextColor(100, 100, 100);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(levels.length > 10 ? 5 : 6);
+      const maxLabelW = spacing * 0.9;
+      const labelText = level.label.length > 12 ? level.label.slice(0, 11) + '…' : level.label;
+      doc.text(labelText, cx, nodeY + nodeR + 5, { align: 'center', maxWidth: maxLabelW });
+
+      // Status label
+      doc.setFontSize(4.5);
+      doc.setTextColor(isConfigured ? 16 : 200, isConfigured ? 185 : 150, isConfigured ? 129 : 0);
+      doc.text(isConfigured ? 'Ready' : 'Incomplete', cx, nodeY + nodeR + 9, { align: 'center' });
     });
 
-    y += 14;
+    y = nodeY + nodeR + 14;
   }
 
-  // --- Summary Stats ---
-  const configuredCount = levels.filter((l, i) => i > 0 && criteria.some(c => c.stylist_level_id === l.dbId && c.is_active)).length;
-  const unconfiguredCount = levels.filter((_l, i) => i > 0).length - configuredCount;
-  const retentionCount = levels.filter(l => retentionCriteria.some(r => r.stylist_level_id === l.dbId && r.is_active && r.retention_enabled)).length;
+  // ─── Summary Stats ───
+  y = ensureSpace(doc, y, 22);
+  const configuredCount = levels.filter(l => criteria.some(c => c.stylist_level_id === l.dbId && c.is_active)).length + (levels.length > 0 ? 1 : 0); // +1 for base level
+  const retentionCount = retentionCriteria.filter(r => r.is_active).length;
 
-  doc.setFillColor(248, 248, 250);
-  doc.setDrawColor(200, 200, 200);
-  doc.roundedRect(14, y, pageWidth - 28, 16, 3, 3, 'FD');
-
-  const stats = [
+  const statsData = [
     { label: 'Total Levels', value: `${levels.length}` },
-    { label: 'Graduation Paths', value: `${configuredCount}` },
+    { label: 'Configured', value: `${Math.min(configuredCount, levels.length)}/${levels.length}` },
     { label: 'Retention Rules', value: `${retentionCount}` },
-    { label: 'Unconfigured', value: `${unconfiguredCount}` },
   ];
 
-  const statColW = (pageWidth - 28) / stats.length;
-  stats.forEach((stat, i) => {
-    const cx = 14 + statColW * i + statColW / 2;
-    doc.setTextColor(100, 100, 100);
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(7);
-    doc.text(stat.label, cx, y + 5, { align: 'center' });
+  const statBoxW = (contentWidth - 8) / 3;
+  statsData.forEach((stat, i) => {
+    const bx = MARGIN + i * (statBoxW + 4);
+    drawRoundedRect(doc, bx, y, statBoxW, 18, 2, { fill: [248, 248, 250], stroke: [220, 220, 220], lineWidth: 0.3 });
     doc.setTextColor(30, 30, 30);
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(12);
-    doc.text(stat.value, cx, y + 12, { align: 'center' });
+    doc.setFontSize(16);
+    doc.text(stat.value, bx + statBoxW / 2, y + 10, { align: 'center' });
+    doc.setTextColor(130, 130, 130);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(7);
+    doc.text(stat.label, bx + statBoxW / 2, y + 15.5, { align: 'center' });
   });
 
-  y += 22;
+  y += 26;
 
-  // --- Promotion Requirements Table ---
-  doc.setTextColor(30, 30, 30);
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(10);
-  doc.text('Level Requirements — Promotion Criteria by Level', 14, y);
-  y += 4;
+  // ─── Per-level detail cards ───
+  levels.forEach((level, i) => {
+    const promo = getPromo(level.dbId);
+    const retention = getRetention(level.dbId);
+    const commission = commissions.find(cm => cm.dbId === level.dbId);
+    const isBase = i === 0;
+    const isTop = i === levels.length - 1;
+    const isConfigured = level.index === 0 || !!promo;
+    const bgHex = getLevelHex(i, levels.length);
+    const accentRgb = hexToRgb(bgHex);
 
-  const tableHead = ['Tier', 'Level Name', 'Commission', 'Requirements', 'Weights', 'Eval Window', 'Approval'];
-  const tableBody = levels.map(level => {
-    const c = criteria.find(cr => cr.stylist_level_id === level.dbId);
-    const comm = commissions.find(cm => cm.dbId === level.dbId);
-    return formatCriteriaRow(level, c, comm);
-  });
-
-  autoTable(doc, {
-    startY: y,
-    head: [tableHead],
-    body: tableBody,
-    margin: { left: 14, right: 14 },
-    theme: 'grid',
-    headStyles: {
-      fillColor: [40, 40, 40],
-      textColor: [255, 255, 255],
-      fontSize: 7,
-      fontStyle: 'bold',
-    },
-    bodyStyles: {
-      fontSize: 7,
-      cellPadding: 2.5,
-    },
-    alternateRowStyles: {
-      fillColor: [248, 248, 250],
-    },
-    columnStyles: {
-      0: { cellWidth: 16 },
-      1: { cellWidth: 30 },
-      2: { cellWidth: 28 },
-      3: { cellWidth: 'auto' },
-      4: { cellWidth: 42 },
-      5: { cellWidth: 20 },
-      6: { cellWidth: 18 },
-    },
-  });
-
-  // --- Retention Requirements Table ---
-  if (retentionCriteria.length > 0) {
-    const finalY = (doc as any).lastAutoTable?.finalY || y + 40;
-    let retY = finalY + 10;
-
-    // Check if we need a new page
-    if (retY > pageHeight - 50) {
-      doc.addPage();
-      retY = 20;
+    // Gather KPIs
+    const kpis: { label: string; value: string }[] = [];
+    if (isBase && retention) {
+      if (retention.revenue_enabled && retention.revenue_minimum > 0) kpis.push({ label: 'Revenue', value: fmtCurrency(retention.revenue_minimum) });
+      if (retention.retail_enabled && retention.retail_pct_minimum > 0) kpis.push({ label: 'Retail %', value: `${retention.retail_pct_minimum}%` });
+      if (retention.rebooking_enabled && retention.rebooking_pct_minimum > 0) kpis.push({ label: 'Rebooking %', value: `${retention.rebooking_pct_minimum}%` });
+      if (retention.avg_ticket_enabled && retention.avg_ticket_minimum > 0) kpis.push({ label: 'Avg Ticket', value: `$${retention.avg_ticket_minimum}` });
+      if (retention.retention_rate_enabled && Number(retention.retention_rate_minimum) > 0) kpis.push({ label: 'Client Retention', value: `${retention.retention_rate_minimum}%` });
+      if (retention.new_clients_enabled && Number(retention.new_clients_minimum) > 0) kpis.push({ label: 'New Clients', value: `${retention.new_clients_minimum}/mo` });
+      if (retention.utilization_enabled && Number(retention.utilization_minimum) > 0) kpis.push({ label: 'Utilization', value: `${retention.utilization_minimum}%` });
+      if (retention.rev_per_hour_enabled && Number(retention.rev_per_hour_minimum) > 0) kpis.push({ label: 'Rev/Hr', value: `$${retention.rev_per_hour_minimum}` });
+    } else if (promo) {
+      if (promo.revenue_enabled && promo.revenue_threshold > 0) kpis.push({ label: 'Revenue', value: fmtCurrency(promo.revenue_threshold) });
+      if (promo.retail_enabled && promo.retail_pct_threshold > 0) kpis.push({ label: 'Retail %', value: `${promo.retail_pct_threshold}%` });
+      if (promo.rebooking_enabled && promo.rebooking_pct_threshold > 0) kpis.push({ label: 'Rebooking %', value: `${promo.rebooking_pct_threshold}%` });
+      if (promo.avg_ticket_enabled && promo.avg_ticket_threshold > 0) kpis.push({ label: 'Avg Ticket', value: `$${promo.avg_ticket_threshold}` });
+      if (promo.retention_rate_enabled && Number(promo.retention_rate_threshold) > 0) kpis.push({ label: 'Client Retention', value: `${promo.retention_rate_threshold}%` });
+      if (promo.new_clients_enabled && Number(promo.new_clients_threshold) > 0) kpis.push({ label: 'New Clients', value: `${promo.new_clients_threshold}/mo` });
+      if (promo.utilization_enabled && Number(promo.utilization_threshold) > 0) kpis.push({ label: 'Utilization', value: `${promo.utilization_threshold}%` });
+      if (promo.rev_per_hour_enabled && Number(promo.rev_per_hour_threshold) > 0) kpis.push({ label: 'Rev/Hr', value: `$${promo.rev_per_hour_threshold}` });
     }
 
+    // Estimate card height
+    let cardH = 14; // header + accent bar + padding
+    cardH += 14; // compensation section
+    if (kpis.length > 0) {
+      const kpiRows = Math.ceil(kpis.length / 4);
+      cardH += 6 + kpiRows * 14;
+    } else {
+      cardH += 14; // "no KPI" placeholder
+    }
+    if (!isBase && promo) cardH += 10; // eval details
+    if (retention?.retention_enabled) cardH += 14; // retention section
+    cardH += 6; // bottom padding
+
+    y = ensureSpace(doc, y, cardH);
+
+    // Card border
+    const borderColor: [number, number, number] = isConfigured ? [220, 220, 220] : [253, 224, 71];
+    drawRoundedRect(doc, MARGIN, y, contentWidth, cardH, 3, { stroke: borderColor, lineWidth: 0.4 });
+    if (!isConfigured) {
+      doc.setFillColor(255, 251, 235); // amber-50/20
+      doc.roundedRect(MARGIN, y, contentWidth, cardH, 3, 3, 'F');
+    }
+
+    // Accent bar at top
+    doc.setFillColor(...accentRgb);
+    doc.rect(MARGIN + 0.5, y + 0.5, contentWidth - 1, 2, 'F');
+
+    let cy = y + 7;
+
+    // Card title
     doc.setTextColor(30, 30, 30);
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(10);
-    doc.text('Required to Stay — Retention Criteria by Level', 14, retY);
-    retY += 4;
+    doc.text(`Level ${i + 1} — ${level.label}`, MARGIN + 6, cy);
 
-    const retHead = ['Tier', 'Level Name', 'Minimums', 'Eval Window', 'Grace Period', 'Action'];
-    const retBody = levels.map(level => {
-      const r = retentionCriteria.find(rc => rc.stylist_level_id === level.dbId);
-      return formatRetentionRow(level, r);
-    });
+    // Status badge
+    if (isConfigured) {
+      const badgeText = 'Configured';
+      const bw = doc.getTextWidth(badgeText) + 6;
+      const bx = MARGIN + 6 + doc.getTextWidth(`Level ${i + 1} — ${level.label}`) + 4;
+      doc.setFillColor(209, 250, 229); // emerald-100
+      doc.roundedRect(bx, cy - 3.5, bw, 5, 1.5, 1.5, 'F');
+      doc.setTextColor(21, 128, 61); // emerald-700
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(5.5);
+      doc.text(badgeText, bx + 3, cy - 0.3);
+    } else {
+      const badgeText = 'Incomplete';
+      const bw = doc.getTextWidth(badgeText) + 6;
+      doc.setFontSize(5.5);
+      const bx = MARGIN + 6 + doc.getTextWidth(`Level ${i + 1} — ${level.label}`) + 4;
+      doc.setFillColor(254, 243, 199); // amber-100
+      doc.roundedRect(bx, cy - 3.5, bw, 5, 1.5, 1.5, 'F');
+      doc.setTextColor(180, 83, 9); // amber-700
+      doc.setFont('helvetica', 'normal');
+      doc.text(badgeText, bx + 3, cy - 0.3);
+    }
 
-    autoTable(doc, {
-      startY: retY,
-      head: [retHead],
-      body: retBody,
-      margin: { left: 14, right: 14 },
-      theme: 'grid',
-      headStyles: {
-        fillColor: [120, 40, 40],
-        textColor: [255, 255, 255],
-        fontSize: 7,
-        fontStyle: 'bold',
-      },
-      bodyStyles: {
-        fontSize: 7,
-        cellPadding: 2.5,
-      },
-      alternateRowStyles: {
-        fillColor: [255, 248, 248],
-      },
-      columnStyles: {
-        0: { cellWidth: 18 },
-        1: { cellWidth: 35 },
-        2: { cellWidth: 'auto' },
-        3: { cellWidth: 25 },
-        4: { cellWidth: 25 },
-        5: { cellWidth: 30 },
-      },
-    });
-  }
+    if (isBase) {
+      cy += 4;
+      doc.setTextColor(130, 130, 130);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(6.5);
+      doc.text('Entry Level — Retention Minimums', MARGIN + 6, cy);
+    }
 
-  // --- Footer ---
+    cy += 6;
+
+    // ── Compensation ──
+    doc.setTextColor(160, 160, 160);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(6);
+    doc.text('COMPENSATION', MARGIN + 6, cy);
+    cy += 4;
+
+    const compParts: string[] = [];
+    if (commission) {
+      if (commission.serviceCommissionRate > 0) compParts.push(`Service: ${commission.serviceCommissionRate}%`);
+      if (commission.retailCommissionRate > 0) compParts.push(`Retail: ${commission.retailCommissionRate}%`);
+      if (commission.hourlyWageEnabled && commission.hourlyWage) compParts.push(`Hourly: $${commission.hourlyWage}/hr`);
+    }
+
+    doc.setTextColor(60, 60, 60);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(7.5);
+    doc.text(compParts.length > 0 ? compParts.join('   ·   ') : 'Not configured', MARGIN + 6, cy);
+    cy += 6;
+
+    // ── KPI Requirements ──
+    if (kpis.length > 0) {
+      doc.setTextColor(160, 160, 160);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(6);
+      doc.text(isBase ? 'RETENTION MINIMUMS' : 'GRADUATION REQUIREMENTS', MARGIN + 6, cy);
+      cy += 4;
+
+      const cols = 4;
+      const cellW = (contentWidth - 12) / cols;
+      const cellH = 12;
+
+      kpis.forEach((kpi, ki) => {
+        const col = ki % cols;
+        const row = Math.floor(ki / cols);
+        const cx = MARGIN + 6 + col * cellW;
+        const ky = cy + row * (cellH + 2);
+
+        drawRoundedRect(doc, cx, ky, cellW - 2, cellH, 1.5, { fill: [248, 248, 250], stroke: [235, 235, 235], lineWidth: 0.2 });
+
+        doc.setTextColor(150, 150, 150);
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(5.5);
+        doc.text(kpi.label, cx + 3, ky + 4);
+
+        doc.setTextColor(30, 30, 30);
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(8);
+        doc.text(kpi.value, cx + 3, ky + 9.5);
+      });
+
+      const kpiRows = Math.ceil(kpis.length / cols);
+      cy += kpiRows * (cellH + 2) + 2;
+    } else if (!isBase) {
+      doc.setTextColor(160, 160, 160);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(6.5);
+      doc.text('No KPI requirements configured for this level.', MARGIN + 6, cy + 2);
+      cy += 10;
+    } else {
+      cy += 4;
+    }
+
+    // ── Evaluation details ──
+    if (!isBase && promo) {
+      const evalParts: string[] = [];
+      evalParts.push(`${promo.evaluation_window_days}d eval window`);
+      if (promo.tenure_enabled && promo.tenure_days > 0 && !isTop) evalParts.push(`${promo.tenure_days}d tenure`);
+      evalParts.push(promo.requires_manual_approval ? 'Manual approval' : 'Auto-promote');
+
+      doc.setTextColor(100, 100, 100);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(6.5);
+      doc.text(evalParts.join('   ·   '), MARGIN + 6, cy);
+      cy += 6;
+    }
+
+    // ── Retention policy ──
+    if (retention?.retention_enabled) {
+      doc.setTextColor(160, 160, 160);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(6);
+      doc.text('RETENTION POLICY', MARGIN + 6, cy);
+      cy += 4;
+
+      const retParts = [
+        `${retention.evaluation_window_days}d eval window`,
+        `${retention.grace_period_days}d grace period`,
+        retention.action_type === 'demotion_eligible' ? 'Demotion eligible' : 'Coaching flag',
+      ];
+
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(6.5);
+      const actionColor: [number, number, number] = retention.action_type === 'demotion_eligible' ? [220, 38, 38] : [217, 119, 6];
+      // First two parts in neutral
+      doc.setTextColor(100, 100, 100);
+      const neutralText = retParts.slice(0, 2).join('   ·   ') + '   ·   ';
+      doc.text(neutralText, MARGIN + 6, cy);
+      // Action type in color
+      const neutralW = doc.getTextWidth(neutralText);
+      doc.setTextColor(...actionColor);
+      doc.text(retParts[2], MARGIN + 6 + neutralW, cy);
+    }
+
+    y += cardH + 5;
+  });
+
+  // ─── Footer on every page ───
   const totalPages = doc.getNumberOfPages();
+  const pageH = doc.internal.pageSize.getHeight();
   for (let p = 1; p <= totalPages; p++) {
     doc.setPage(p);
-    doc.setFontSize(7);
-    doc.setTextColor(150, 150, 150);
+    doc.setFontSize(6);
+    doc.setTextColor(170, 170, 170);
     doc.setFont('helvetica', 'normal');
-    doc.text(orgName, 14, pageHeight - 8);
-    doc.text(`Page ${p} of ${totalPages}`, pageWidth - 14, pageHeight - 8, { align: 'right' });
-    doc.text('Confidential — For internal use only', pageWidth / 2, pageHeight - 8, { align: 'center' });
+    doc.text(orgName, MARGIN, pageH - 8);
+    doc.text(`Page ${p} of ${totalPages}`, pageWidth - MARGIN, pageH - 8, { align: 'right' });
+    doc.text('Confidential — For internal use only', pageWidth / 2, pageH - 8, { align: 'center' });
   }
 
   return doc;
