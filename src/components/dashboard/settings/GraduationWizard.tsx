@@ -481,10 +481,32 @@ export function GraduationWizard({ open, onOpenChange, levelId, levelLabel, leve
 
   const handleSaveRetention = () => {
     if (!orgId) return;
+    // Auto-populate KPI fields from promotion criteria
     const payload: LevelRetentionCriteriaUpsert = {
       organization_id: orgId,
       stylist_level_id: levelId,
-      ...retForm,
+      retention_enabled: retForm.retention_enabled,
+      // Inherit KPI thresholds from promotion criteria
+      revenue_enabled: form.revenue_enabled,
+      revenue_minimum: form.revenue_threshold,
+      retail_enabled: form.retail_enabled,
+      retail_pct_minimum: form.retail_pct_threshold,
+      rebooking_enabled: form.rebooking_enabled,
+      rebooking_pct_minimum: form.rebooking_pct_threshold,
+      avg_ticket_enabled: form.avg_ticket_enabled,
+      avg_ticket_minimum: form.avg_ticket_threshold,
+      retention_rate_enabled: form.retention_rate_enabled,
+      retention_rate_minimum: form.retention_rate_threshold,
+      new_clients_enabled: form.new_clients_enabled,
+      new_clients_minimum: form.new_clients_threshold,
+      utilization_enabled: form.utilization_enabled,
+      utilization_minimum: form.utilization_threshold,
+      rev_per_hour_enabled: form.rev_per_hour_enabled,
+      rev_per_hour_minimum: form.rev_per_hour_threshold,
+      // Retention-specific policy settings
+      evaluation_window_days: retForm.evaluation_window_days,
+      grace_period_days: retForm.grace_period_days,
+      action_type: retForm.action_type,
       is_active: true,
     };
     upsertRetention.mutate(payload, {
@@ -526,12 +548,8 @@ export function GraduationWizard({ open, onOpenChange, levelId, levelLabel, leve
     else setStep(s => Math.max(s - 1, 0));
   };
 
-  const enabledRetentionCount = RETENTION_CRITERIA.filter(c => retForm[c.enabledKey] as boolean).length;
-  const retentionMinValid = RETENTION_CRITERIA.every(c => {
-    if (!(retForm[c.enabledKey] as boolean)) return true;
-    return (retForm[c.minimumKey] as number) > 0;
-  });
-  const canSaveRetention = retForm.retention_enabled && enabledRetentionCount > 0 && retentionMinValid;
+  // Retention just needs master toggle enabled — KPIs are inherited from promotion
+  const canSaveRetention = retForm.retention_enabled;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
