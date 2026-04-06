@@ -637,7 +637,7 @@ function CriteriaComparisonTable({ levels, promotionCriteria, retentionCriteria,
         }}
       >
         <TableCell className={cn(
-          "text-sm sticky left-0 z-10 py-3 px-4",
+          "text-sm sticky left-0 z-10 py-3 px-4 border-r border-border/40",
           isEditingRow ? "bg-primary/5 text-foreground" : "text-muted-foreground bg-card"
         )}>
           <div className="flex items-center gap-1.5">
@@ -695,7 +695,7 @@ function CriteriaComparisonTable({ levels, promotionCriteria, retentionCriteria,
         <Table className="[&_th]:border-r [&_th]:border-border/20 [&_th:last-child]:border-r-0 [&_td]:border-r [&_td]:border-border/20 [&_td:last-child]:border-r-0 [&_td[colspan]]:border-r-0">
           <TableHeader>
             <TableRow className="border-b-2 border-border/60">
-              <TableHead className={cn("w-[200px] sticky left-0 bg-card z-20 rounded-tl-xl py-4 px-4", tokens.table.columnHeader)}>Metric</TableHead>
+              <TableHead className={cn("w-[200px] sticky left-0 bg-card z-20 rounded-tl-xl py-4 px-4 border-r border-border/40", tokens.table.columnHeader)}>Metric</TableHead>
               {levels.map((level, idx) => {
                 const ret = level.dbId ? getCriteria(level.dbId).retention : undefined;
                 const retentionActive = ret?.retention_enabled === true;
@@ -753,7 +753,7 @@ function CriteriaComparisonTable({ levels, promotionCriteria, retentionCriteria,
               const field = commLabel === 'Service Commission' ? 'serviceCommissionRate' : 'retailCommissionRate';
               return (
                 <TableRow key={commLabel}>
-                  <TableCell className="text-sm text-muted-foreground sticky left-0 bg-card z-10 py-3 px-4">{commLabel}</TableCell>
+                  <TableCell className="text-sm text-muted-foreground sticky left-0 bg-card z-10 py-3 px-4 border-r border-border/40">{commLabel}</TableCell>
                   {levels.map((level) => {
                     const rate = level[field];
                     return (
@@ -772,7 +772,7 @@ function CriteriaComparisonTable({ levels, promotionCriteria, retentionCriteria,
 
             {/* Hourly Wage row */}
             <TableRow>
-              <TableCell className="text-sm text-muted-foreground sticky left-0 bg-card z-10 py-3 px-4">Hourly Wage</TableCell>
+              <TableCell className="text-sm text-muted-foreground sticky left-0 bg-card z-10 py-3 px-4 border-r border-border/40">Hourly Wage</TableCell>
               {levels.map((level) => (
                 <TableCell key={level.id} className="text-center text-sm tabular-nums py-3 px-3">
                   {level.hourlyWageEnabled && level.hourlyWage ? (
