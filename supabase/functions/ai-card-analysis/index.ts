@@ -3,6 +3,16 @@ import { createClient } from "@supabase/supabase-js";
 import { AI_ASSISTANT_NAME_DEFAULT as AI_ASSISTANT_NAME } from "../_shared/brand.ts";
 import { requireAuth, requireOrgMember, authErrorResponse } from "../_shared/auth.ts";
 import { getCorsHeaders } from "../_shared/cors.ts";
+import { validateBody, ValidationError, z } from "../_shared/validation.ts";
+
+const CardAnalysisSchema = z.object({
+  cardName: z.string().min(1).max(200),
+  metricData: z.unknown().optional(),
+  dateRange: z.string().max(50).optional(),
+  locationName: z.string().max(200).optional(),
+  organizationId: z.string().uuid(),
+  organization_id: z.string().uuid().optional(),
+});
 
 const ROUTE_MAP = `
 INTERNAL ROUTE REFERENCE — ONLY use these exact routes. NEVER invent or guess a route.
@@ -424,7 +434,7 @@ serve(async (req) => {
     }
     const { user, supabaseAdmin } = authResult;
 
-        const body = await req.json();
+    const body = await validateBody(req, CardAnalysisSchema, getCorsHeaders(req));
     const { cardName, metricData, dateRange, locationName } = body;
     // Verify org access
     try {

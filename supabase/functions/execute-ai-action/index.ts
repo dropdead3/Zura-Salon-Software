@@ -2,6 +2,16 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "@supabase/supabase-js";
 import { requireAuth, requireOrgMember, authErrorResponse } from "../_shared/auth.ts";
 import { getCorsHeaders } from "../_shared/cors.ts";
+import { validateBody, ValidationError, z } from "../_shared/validation.ts";
+
+const ExecuteActionSchema = z.object({
+  actionType: z.enum(["reschedule", "cancel", "confirm", "no_show"]),
+  params: z.record(z.unknown()),
+  userId: z.string().uuid().optional(),
+  organizationId: z.string().uuid().optional(),
+  organization_id: z.string().uuid().optional(),
+  actionId: z.string().uuid().optional(),
+});
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -27,21 +37,13 @@ serve(async (req) => {
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
     
-        const body = await req.json();
+    const body = await validateBody(req, ExecuteActionSchema, getCorsHeaders(req));
     const { actionType, params, userId, organizationId, actionId } = body;
     // Verify org access
     try {
       await requireOrgMember(supabaseAdmin, user.id, body.organizationId || body.organization_id);
     } catch (orgErr) {
       return authErrorResponse(orgErr, getCorsHeaders(req));
-    }
-
-
-    if (!actionType || !params) {
-      return new Response(
-        JSON.stringify({ error: "Action type and params are required" }),
-        { status: 400, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
-      );
     }
 
     let result: { success: boolean; message: string; data?: unknown };
