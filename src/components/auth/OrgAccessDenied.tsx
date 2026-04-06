@@ -2,22 +2,17 @@ import { ShieldX, ArrowLeft, Home } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useNavigate } from 'react-router-dom';
-import { useOrganizationContext } from '@/contexts/OrganizationContext';
 
 interface OrgAccessDeniedProps {
   organizationName?: string;
+  myDashboardPath?: string;
 }
 
-export function OrgAccessDenied({ organizationName }: OrgAccessDeniedProps) {
+export function OrgAccessDenied({ organizationName, myDashboardPath }: OrgAccessDeniedProps) {
   const navigate = useNavigate();
-  const { effectiveOrganization } = useOrganizationContext();
 
   const handleGoToMyDashboard = () => {
-    if (effectiveOrganization?.slug) {
-      navigate(`/org/${effectiveOrganization.slug}/dashboard`);
-    } else {
-      navigate('/dashboard');
-    }
+    navigate(myDashboardPath || '/dashboard');
   };
 
   return (

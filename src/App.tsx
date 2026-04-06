@@ -37,7 +37,11 @@ import DashboardHome from "./pages/dashboard/DashboardHome";
 import { OrgPublicRoute } from "./components/org/OrgPublicRoute";
 
 // Dashboard pages
+import { OrgAccessDenied } from "./components/auth/OrgAccessDenied";
 
+function AccessDeniedPreview() {
+  return <OrgAccessDenied organizationName="Luxe Hair Studio" />;
+}
 
 
 // Team Challenges & Shift Swaps
@@ -456,6 +460,8 @@ const App = () => (
                     <Route path="/rewards" element={<ClientPortalPage />} />
                     <Route path="/kiosk/:locationId" element={<Kiosk />} />
                     <Route path="/dock" element={<Dock />} />
+                    {/* TEMP: Preview access denied page — remove after review */}
+                    <Route path="/_preview/access-denied" element={<AccessDeniedPreview />} />
 
                     <Route element={<PrivateAppShell />}>
                       {/* ══════════════════════════════════════════════════

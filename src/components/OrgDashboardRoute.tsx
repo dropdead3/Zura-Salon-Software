@@ -67,7 +67,7 @@ export function OrgDashboardRoute() {
     }
 
     if (!isMember) {
-      return <OrgAccessDenied organizationName={organization.name} />;
+      return <OrgAccessDenied organizationName={organization.name} myDashboardPath="/dashboard" />;
     }
   }
 
