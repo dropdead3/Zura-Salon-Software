@@ -951,6 +951,8 @@ export function StylistLevelsEditor({ embedded = false }: StylistLevelsEditorPro
                 dbId: l.dbId,
                 serviceCommissionRate: parseFloat(String(l.serviceCommissionRate)) || 0,
                 retailCommissionRate: parseFloat(String(l.retailCommissionRate)) || 0,
+                hourlyWageEnabled: l.hourlyWageEnabled,
+                hourlyWage: l.hourlyWage ? parseFloat(l.hourlyWage) : null,
               }));
 
               // Pre-fetch org logo as base64 data URL
