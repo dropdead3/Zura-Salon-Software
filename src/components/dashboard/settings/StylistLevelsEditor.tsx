@@ -758,7 +758,7 @@ function CriteriaComparisonTable({ levels, promotionCriteria, retentionCriteria,
                     const rate = level[field];
                     return (
                       <TableCell key={level.id} className="text-center text-sm tabular-nums py-3 px-3">
-                        {rate ? (
+                        {rate != null && rate !== '' && parseFloat(String(rate)) > 0 ? (
                           <span className="text-foreground font-medium">{rate}%</span>
                         ) : (
                           <span className="text-muted-foreground/40">—</span>
