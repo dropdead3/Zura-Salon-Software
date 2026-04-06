@@ -47,6 +47,7 @@ export function TeamCommissionRoster({
 
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [locationFilter, setLocationFilter] = useState<string>('all');
+  const [hideNonStylists, setHideNonStylists] = useState(false);
   const [drilldownUserId, setDrilldownUserId] = useState<string | null>(null);
 
   // Maps
@@ -97,17 +98,17 @@ export function TeamCommissionRoster({
   // Filtered team
   const filteredTeam = useMemo(() => {
     if (!team) return [];
-    const stylists = team.filter(m => {
+    return team.filter(m => {
       const isAdminOnly = m.roles?.length === 1 && m.roles[0] === 'admin';
       if (isAdminOnly && !m.stylist_level) return false;
+      if (hideNonStylists && !m.roles?.includes('stylist')) return false;
+      if (locationFilter !== 'all') {
+        const memberLocs = getMemberLocationIds(m);
+        if (!memberLocs.has(locationFilter)) return false;
+      }
       return true;
     });
-    if (locationFilter === 'all') return stylists;
-    return stylists.filter(m => {
-      const memberLocs = getMemberLocationIds(m);
-      return memberLocs.has(locationFilter);
-    });
-  }, [team, locationFilter]);
+  }, [team, locationFilter, hideNonStylists]);
 
   // Resolve effective rates for a stylist
   const getEffective = (member: { user_id: string; stylist_level?: string | null }) => {
@@ -225,6 +226,14 @@ export function TeamCommissionRoster({
                   </SelectContent>
                 </Select>
               )}
+              <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer select-none">
+                <Checkbox
+                  checked={hideNonStylists}
+                  onCheckedChange={(v) => setHideNonStylists(!!v)}
+                  className="h-3.5 w-3.5"
+                />
+                Hide non-stylists
+              </label>
             </div>
           </div>
         </CardHeader>
@@ -232,7 +241,7 @@ export function TeamCommissionRoster({
           {/* Column headers */}
           <div className={cn("grid grid-cols-[28px_1fr_140px_70px_70px_90px] gap-2 px-3 py-2 border-b border-border/60", tokens.table.columnHeader)}>
             <div />
-            <div>Stylist</div>
+            <div>Team Member</div>
             <div>Level</div>
             <div className="text-right">Svc %</div>
             <div className="text-right">Retail %</div>
@@ -343,7 +352,7 @@ export function TeamCommissionRoster({
           {filteredTeam.length === 0 && (
             <div className="flex flex-col items-center gap-2 py-8 text-muted-foreground">
               <Users className="w-8 h-8" />
-              <p className="text-sm">No active stylists found.</p>
+              <p className="text-sm">No team members found.</p>
             </div>
           )}
 
