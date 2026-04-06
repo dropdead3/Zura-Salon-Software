@@ -404,7 +404,6 @@ function CriteriaComparisonTable({ levels, promotionCriteria, retentionCriteria,
             requires_manual_approval: true,
             is_active: true,
           };
-          // Remove non-upsert fields
           delete base.id; delete base.created_at; delete base.updated_at;
           base[fieldMapping.promoEnabledField] = entry.enabled;
           base[fieldMapping.promoValueField] = numVal;
@@ -446,8 +445,9 @@ function CriteriaComparisonTable({ levels, promotionCriteria, retentionCriteria,
         }
       }
 
-      queryClient.invalidateQueries({ queryKey: ['level-promotion-criteria', orgId] });
-      queryClient.invalidateQueries({ queryKey: ['level-retention-criteria', orgId] });
+      // Broad invalidation — catches all per-level query keys used by the wizard
+      await queryClient.invalidateQueries({ queryKey: ['level-promotion-criteria'] });
+      await queryClient.invalidateQueries({ queryKey: ['level-retention-criteria'] });
       toast.success(`${editingMetric.label} updated across all levels`);
       cancelEditing();
     } catch (err: any) {

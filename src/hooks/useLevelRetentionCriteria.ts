@@ -69,6 +69,7 @@ export function useLevelRetentionCriteriaForLevel(stylistLevelId: string | undef
       return data as LevelRetentionCriteria | null;
     },
     enabled: !!orgId && !!stylistLevelId,
+    refetchOnMount: 'always' as const,
   });
 }
 

@@ -77,6 +77,7 @@ export function useLevelPromotionCriteriaForLevel(stylistLevelId: string | undef
       return data as LevelPromotionCriteria | null;
     },
     enabled: !!orgId && !!stylistLevelId,
+    refetchOnMount: 'always',
   });
 }
 
