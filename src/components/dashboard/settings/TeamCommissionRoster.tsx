@@ -62,24 +62,51 @@ export function TeamCommissionRoster({
     return map;
   }, [overrides]);
 
-  // Locations
-  const locations = useMemo(() => {
-    if (!team) return [];
-    const locMap = new Map<string, string>();
-    team.forEach(m => { if (m.location_id) locMap.set(m.location_id, m.location_id); });
-    return Array.from(locMap.keys());
-  }, [team]);
+  // Location name lookup
+  const locationNameMap = useMemo(() => {
+    const map = new Map<string, string>();
+    activeLocations.forEach(l => map.set(l.id, l.name));
+    return map;
+  }, [activeLocations]);
 
-  // Filtered team (stylists only)
+  // Get unique locations from team members
+  const teamLocations = useMemo(() => {
+    if (!team) return [];
+    const locIds = new Set<string>();
+    team.forEach(m => {
+      if (m.location_id) locIds.add(m.location_id);
+      if (m.location_ids && Array.isArray(m.location_ids)) {
+        (m.location_ids as string[]).forEach(id => locIds.add(id));
+      }
+    });
+    return Array.from(locIds)
+      .map(id => ({ id, name: locationNameMap.get(id) || id }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }, [team, locationNameMap]);
+
+  // Helper: get all unique location IDs for a member
+  const getMemberLocationIds = (member: { location_id?: string | null; location_ids?: string[] | null }) => {
+    const ids = new Set<string>();
+    if (member.location_id) ids.add(member.location_id);
+    if (member.location_ids && Array.isArray(member.location_ids)) {
+      (member.location_ids as string[]).forEach(id => ids.add(id));
+    }
+    return ids;
+  };
+
+  // Filtered team
   const filteredTeam = useMemo(() => {
     if (!team) return [];
     const stylists = team.filter(m => {
-      const isAdmin = m.roles?.length === 1 && m.roles[0] === 'admin';
-      if (isAdmin && !m.stylist_level) return false;
+      const isAdminOnly = m.roles?.length === 1 && m.roles[0] === 'admin';
+      if (isAdminOnly && !m.stylist_level) return false;
       return true;
     });
     if (locationFilter === 'all') return stylists;
-    return stylists.filter(m => m.location_id === locationFilter);
+    return stylists.filter(m => {
+      const memberLocs = getMemberLocationIds(m);
+      return memberLocs.has(locationFilter);
+    });
   }, [team, locationFilter]);
 
   // Resolve effective rates for a stylist
