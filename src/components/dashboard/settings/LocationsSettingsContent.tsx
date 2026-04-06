@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { tokens } from '@/lib/design-tokens';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -42,6 +42,8 @@ import {
   Clock,
   Calendar,
   X,
+  FolderOpen,
+  Layers,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { 
@@ -61,6 +63,15 @@ import { useBusinessCapacity } from '@/hooks/useBusinessCapacity';
 import { LocationCapacityBar } from './LocationCapacityBar';
 import { AddLocationSeatsDialog } from './AddLocationSeatsDialog';
 import { LocationStationsTab } from './LocationStationsTab';
+import {
+  useLocationGroups,
+  useCreateLocationGroup,
+  useUpdateLocationGroup,
+  useDeleteLocationGroup,
+  useAssignLocationToGroup,
+  type LocationGroup,
+} from '@/hooks/useLocationGroups';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const DAYS = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'] as const;
 const DAY_LABELS: Record<string, string> = {
