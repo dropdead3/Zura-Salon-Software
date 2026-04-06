@@ -643,7 +643,16 @@ function CriteriaComparisonTable({ levels, promotionCriteria, retentionCriteria,
                 )}
               </div>
             </div>
-            {warn && <AlertTriangle className="w-3 h-3 text-amber-500" />}
+            {warn && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <AlertTriangle className="w-3 h-3 text-amber-500 cursor-help" />
+                </TooltipTrigger>
+                <TooltipContent side="bottom" className="text-xs max-w-[200px]">
+                  Value is lower than a previous level — thresholds should increase with each level
+                </TooltipContent>
+              </Tooltip>
+            )}
           </div>
         </TableCell>
       );
@@ -665,7 +674,16 @@ function CriteriaComparisonTable({ levels, promotionCriteria, retentionCriteria,
       <TableCell key={level.id} className="text-center text-sm tabular-nums py-3 px-3">
         {val ? (
           <span className="flex items-center justify-center gap-1">
-            {warn && <AlertTriangle className="w-3 h-3 text-amber-500 shrink-0" />}
+            {warn && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <AlertTriangle className="w-3 h-3 text-amber-500 shrink-0 cursor-help" />
+                </TooltipTrigger>
+                <TooltipContent side="bottom" className="text-xs max-w-[200px]">
+                  Value is lower than a previous level — thresholds should increase with each level
+                </TooltipContent>
+              </Tooltip>
+            )}
             <span className={warn ? 'text-amber-600 dark:text-amber-400' : 'text-foreground'}>{val}</span>
           </span>
         ) : !level.dbId ? (
