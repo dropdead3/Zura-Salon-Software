@@ -551,50 +551,66 @@ export function GraduationWizard({ open, onOpenChange, levelId, levelLabel, leve
           </DialogHeader>
 
           {/* Mode tabs */}
-          <Tabs value={activeTab} onValueChange={(v) => { setActiveTab(v as any); setStep(0); }} className="mt-4">
-            <TabsList className="w-full">
-              <TabsTrigger value="promotion" className="flex-1 text-xs gap-1.5" disabled={levelIndex === totalLevels - 1}>
-                <Sparkles className="w-3.5 h-3.5" />
-                Required to Graduate
-              </TabsTrigger>
-              <TabsTrigger value="retention" className="flex-1 text-xs gap-1.5">
-                <Shield className="w-3.5 h-3.5" />
-                Required to Stay
-              </TabsTrigger>
-            </TabsList>
-          </Tabs>
+          <div className="mt-4 flex bg-muted/70 rounded-full p-1 gap-1">
+            <button
+              onClick={() => { setActiveTab('promotion'); setStep(0); }}
+              disabled={levelIndex === totalLevels - 1}
+              className={cn(
+                "flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-sans transition-all",
+                activeTab === 'promotion'
+                  ? "bg-foreground text-background shadow-sm"
+                  : "text-muted-foreground hover:text-foreground",
+                levelIndex === totalLevels - 1 && "opacity-50 pointer-events-none"
+              )}
+            >
+              <Sparkles className="w-3.5 h-3.5" />
+              Level Requirements
+            </button>
+            <button
+              onClick={() => { setActiveTab('retention'); setStep(0); }}
+              className={cn(
+                "flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-sans transition-all",
+                activeTab === 'retention'
+                  ? "bg-foreground text-background shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              <Shield className="w-3.5 h-3.5" />
+              Required to Stay
+            </button>
+          </div>
 
           {/* Step indicators — only for promotion tab */}
           {activeTab === 'promotion' && (
-            <div className="flex items-center gap-2 mt-4">
+            <div className="flex items-center mt-4">
               {activeSteps.map((s, i) => {
                 const actualStep = showWeightsStep ? i : (i === 0 ? 0 : 2);
                 const isActive = step === actualStep;
                 const isDone = step > actualStep;
                 return (
-                  <div key={s} className="flex items-center gap-2">
-                    {i > 0 && <div className={cn("w-8 h-px", isDone || isActive ? "bg-primary" : "bg-border")} />}
+                  <div key={s} className="flex items-center flex-1 last:flex-none">
                     <button
                       onClick={() => setStep(actualStep)}
                       className={cn(
-                        "flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs transition-colors",
-                        isActive && "bg-primary/10 text-primary",
+                        "flex items-center gap-1.5 text-xs font-sans transition-colors whitespace-nowrap",
+                        isActive && "text-foreground",
                         isDone && "text-primary",
                         !isActive && !isDone && "text-muted-foreground"
                       )}
                     >
                       {isDone ? (
-                        <Check className="w-3 h-3" />
+                        <div className="w-2 h-2 rounded-full bg-primary" />
                       ) : (
-                        <span className={cn(
-                          "w-4 h-4 rounded-full flex items-center justify-center text-[10px]",
-                          isActive ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
-                        )}>
-                          {i + 1}
-                        </span>
+                        <div className={cn(
+                          "w-2 h-2 rounded-full border-[1.5px]",
+                          isActive ? "border-foreground bg-foreground" : "border-muted-foreground"
+                        )} />
                       )}
-                      <span className="font-sans">{s}</span>
+                      <span>{s}</span>
                     </button>
+                    {i < activeSteps.length - 1 && (
+                      <div className={cn("flex-1 h-px mx-3", isDone ? "bg-primary" : "bg-border")} />
+                    )}
                   </div>
                 );
               })}
@@ -670,7 +686,7 @@ export function GraduationWizard({ open, onOpenChange, levelId, levelLabel, leve
                   </Collapsible>
 
                   <p className={cn(tokens.body.muted, 'mb-4')}>
-                    Toggle on the metrics that matter for promotion to this level.
+                    Toggle on the metrics that matter to earn this level.
                   </p>
 
                   {CRITERIA.map(criterion => {
@@ -856,7 +872,7 @@ export function GraduationWizard({ open, onOpenChange, levelId, levelLabel, leve
                     <div className="p-4 rounded-lg bg-muted/50 border border-border/50 space-y-2">
                       <p className="text-xs text-muted-foreground font-medium">Summary</p>
                       <p className="text-sm">
-                        To become <span className="font-medium">{levelLabel}</span>, a stylist must maintain:
+                        To earn <span className="font-medium">{levelLabel}</span>, a stylist must maintain:
                       </p>
                       <ul className="text-sm space-y-1 text-muted-foreground">
                         {form.revenue_enabled && form.revenue_threshold > 0 && (

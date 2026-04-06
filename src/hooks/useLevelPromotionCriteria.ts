@@ -100,7 +100,7 @@ export function useUpsertLevelPromotionCriteria() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['level-promotion-criteria', orgId] });
-      toast.success('Graduation criteria saved');
+      toast.success('Level criteria saved');
     },
     onError: (error) => {
       toast.error('Failed to save criteria: ' + error.message);
@@ -123,7 +123,7 @@ export function useDeleteLevelPromotionCriteria() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['level-promotion-criteria', orgId] });
-      toast.success('Graduation criteria removed');
+      toast.success('Level criteria removed');
     },
     onError: (error) => {
       toast.error('Failed to remove criteria: ' + error.message);
