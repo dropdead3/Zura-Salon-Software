@@ -1397,7 +1397,9 @@ export function StylistLevelsEditor({ embedded = false, onActions }: StylistLeve
   const [analysisOpen, setAnalysisOpen] = useState(false);
   const [analysisLoading, setAnalysisLoading] = useState(false);
   const [analysisResult, setAnalysisResult] = useState<LevelAnalysisResult | null>(null);
+  const [showRoadmap, setShowRoadmap] = useState(false);
   const queryClient = useQueryClient();
+  const updateLevel = useUpdateStylistLevel();
 
   const { data: promotionCriteria } = useLevelPromotionCriteria();
   const { data: retentionCriteria } = useLevelRetentionCriteria();
