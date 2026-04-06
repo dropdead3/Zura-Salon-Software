@@ -693,14 +693,14 @@ function CriteriaComparisonTable({ levels, promotionCriteria, retentionCriteria,
       </p>
       <ScrollableTableWrapper>
         <Table className="[&_th]:border-r [&_th]:border-border/20 [&_th:last-child]:border-r-0 [&_td]:border-r [&_td]:border-border/20 [&_td:last-child]:border-r-0 [&_td[colspan]]:border-r-0">
-          <TableHeader>
-            <TableRow className="border-b-2 border-border/60">
-              <TableHead className={cn("w-[200px] sticky left-0 bg-card z-20 rounded-tl-xl py-4 px-4 border-r border-border/40", tokens.table.columnHeader)}>Metric</TableHead>
+          <TableHeader className="sticky top-0 z-20">
+            <TableRow className="border-b-2 border-border/60 bg-card">
+              <TableHead className={cn("w-[200px] sticky left-0 bg-card z-30 rounded-tl-xl py-4 px-4 border-r border-border/40", tokens.table.columnHeader)}>Metric</TableHead>
               {levels.map((level, idx) => {
                 const ret = level.dbId ? getCriteria(level.dbId).retention : undefined;
                 const retentionActive = ret?.retention_enabled === true;
                 return (
-                  <TableHead key={level.id} className={cn("text-center min-w-[140px] py-4 px-3", tokens.table.columnHeader)}>
+                  <TableHead key={level.id} className={cn("text-center min-w-[140px] py-4 px-3 bg-card", tokens.table.columnHeader)}>
                     <div className="flex flex-col items-center gap-2">
                       <span className="text-[10px] font-display uppercase tracking-widest text-muted-foreground/50">
                         Level {idx + 1}
