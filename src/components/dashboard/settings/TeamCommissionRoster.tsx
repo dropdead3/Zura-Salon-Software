@@ -4,7 +4,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
-import { Users, BarChart3 } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Users, BarChart3, MapPin } from 'lucide-react';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import { getLevelColor } from '@/lib/level-colors';
@@ -17,13 +18,17 @@ import type { StylistLevel } from '@/hooks/useStylistLevels';
 import type { StylistCommissionOverride } from '@/hooks/useStylistCommissionOverrides';
 import { differenceInDays } from 'date-fns';
 import {
-
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
+import { useActiveLocations } from '@/hooks/useLocations';
+import { getRoleBadgeConfig } from '@/lib/roleBadgeConfig';
+import type { Database } from '@/integrations/supabase/types';
+
+type AppRole = Database['public']['Enums']['app_role'];
 
 interface TeamCommissionRosterProps {
   orgId: string;
