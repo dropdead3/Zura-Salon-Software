@@ -60,7 +60,7 @@ import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { generateLevelRequirementsPDF } from '@/components/dashboard/settings/LevelRequirementsPDF';
 import { TeamCommissionRoster } from '@/components/dashboard/settings/TeamCommissionRoster';
 import { LocationOverridesTab } from '@/components/dashboard/settings/LocationOverridesTab';
-import { useActiveLocations } from '@/hooks/useLocations';
+import { CommissionEconomicsTab } from '@/components/dashboard/settings/CommissionEconomicsTab';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
   Dialog,
@@ -1032,6 +1032,7 @@ export function StylistLevelsEditor({ embedded = false }: StylistLevelsEditorPro
             {activeLocations.length >= 2 && (
               <TabsTrigger value="overrides">Location Overrides</TabsTrigger>
             )}
+            <TabsTrigger value="economics">Economics</TabsTrigger>
             <TabsTrigger value="team">Team Roster</TabsTrigger>
             <TabsTrigger value="previews">Previews</TabsTrigger>
           </TabsList>
@@ -1407,6 +1408,11 @@ export function StylistLevelsEditor({ embedded = false }: StylistLevelsEditorPro
               promotionCriteria={promotionCriteria || []}
               retentionCriteria={retentionCriteria || []}
             />
+          </TabsContent>
+
+          {/* === TAB: Economics === */}
+          <TabsContent value="economics">
+            <CommissionEconomicsTab levels={dbLevels || []} />
           </TabsContent>
 
           {/* === TAB 3: Team Roster === */}
