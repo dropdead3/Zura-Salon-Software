@@ -457,14 +457,7 @@ const App = () => (
                     <Route path="/kiosk/:locationId" element={<Kiosk />} />
                     <Route path="/dock" element={<Dock />} />
                     {/* TEMP: Preview access denied page — remove after review */}
-                    <Route path="/_preview/access-denied" element={
-                      <BrowserRouter>
-                        {(() => {
-                          const { OrgAccessDenied } = require('./components/auth/OrgAccessDenied');
-                          return <OrgAccessDenied organizationName="Luxe Hair Studio" />;
-                        })()}
-                      </BrowserRouter>
-                    } />
+                    <Route path="/_preview/access-denied" element={<AccessDeniedPreview />} />
 
                     <Route element={<PrivateAppShell />}>
                       {/* ══════════════════════════════════════════════════
