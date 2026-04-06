@@ -26,6 +26,7 @@ interface LevelRoadmapViewProps {
   orgLogoUrl?: string | null;
   onClose: () => void;
   onDownloadPDF: () => void;
+  onDownloadStaffReport?: () => void;
 }
 
 export function LevelRoadmapView({
@@ -35,6 +36,7 @@ export function LevelRoadmapView({
   orgName,
   onClose,
   onDownloadPDF,
+  onDownloadStaffReport,
 }: LevelRoadmapViewProps) {
   const contentRef = useRef<HTMLDivElement>(null);
 
