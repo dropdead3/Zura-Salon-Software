@@ -191,16 +191,16 @@ function ScrollableTableWrapper({ children, isFullscreen, onToggleFullscreen }: 
   }
 
   return (
-    <div className="relative rounded-xl border bg-card overflow-hidden">
+    <div className="relative rounded-xl border bg-card">
       {/* Fullscreen toggle */}
       <button
         onClick={onToggleFullscreen}
-        className="absolute top-2 right-2 z-20 w-7 h-7 rounded-full bg-muted/80 backdrop-blur-sm border border-border/60 flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+        className="absolute top-2 right-6 z-30 w-7 h-7 rounded-full bg-muted/80 backdrop-blur-sm border border-border/60 flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
         aria-label="Enter fullscreen"
       >
         <Maximize2 className="w-3.5 h-3.5" />
       </button>
-      <div ref={scrollRef} className="overflow-auto max-h-[70vh]">
+      <div ref={scrollRef} className="overflow-auto max-h-[70vh] rounded-xl">
         {children}
       </div>
       {/* Right-edge scroll indicator */}
