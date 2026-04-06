@@ -137,6 +137,16 @@ export default function TeamDirectory() {
   const { data: strikeCounts = {} } = useStrikeCounts(canViewStrikes ? userIds : []);
   const { data: stylistLevels } = useStylistLevels();
 
+  // Level progression status for super admins
+  const { teamProgress } = useTeamLevelProgress();
+  const progressMap = useMemo(() => {
+    const map = new Map<string, TeamMemberProgress>();
+    if (isSuperAdmin && teamProgress) {
+      teamProgress.forEach(p => map.set(p.userId, p));
+    }
+    return map;
+  }, [isSuperAdmin, teamProgress]);
+
   // Get all unique roles from team members for filter dropdown
   const allRoles = [...new Set(team.flatMap(member => 
     member.is_super_admin ? ['super_admin', ...member.roles] : member.roles
