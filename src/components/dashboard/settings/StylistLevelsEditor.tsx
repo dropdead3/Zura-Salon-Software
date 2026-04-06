@@ -406,16 +406,11 @@ function CriteriaComparisonTable({ levels, promotionCriteria, retentionCriteria,
             requires_manual_approval: true,
             is_active: true,
           };
-          // Remove non-upsert fields
           delete base.id; delete base.created_at; delete base.updated_at;
           base[fieldMapping.promoEnabledField] = entry.enabled;
           base[fieldMapping.promoValueField] = numVal;
 
-          const { error } = await supabase
-            .from('level_promotion_criteria')
-            .upsert(base, { onConflict: 'organization_id,stylist_level_id' })
-            .select().single();
-          if (error) throw error;
+          await upsertPromotion.mutateAsync(base);
         } else {
           const existing = retentionCriteria.find(r => r.stylist_level_id === level.dbId && r.is_active);
           const retDefaults = getZuraRetentionDefaults(levels.findIndex(l => l.id === level.id));
@@ -440,16 +435,13 @@ function CriteriaComparisonTable({ levels, promotionCriteria, retentionCriteria,
           base[fieldMapping.retEnabledField] = entry.enabled;
           base[fieldMapping.retValueField] = numVal;
 
-          const { error } = await supabase
-            .from('level_retention_criteria')
-            .upsert(base, { onConflict: 'organization_id,stylist_level_id' })
-            .select().single();
-          if (error) throw error;
+          await upsertRetention.mutateAsync(base);
         }
       }
 
-      queryClient.invalidateQueries({ queryKey: ['level-promotion-criteria', orgId] });
-      queryClient.invalidateQueries({ queryKey: ['level-retention-criteria', orgId] });
+      // Broad invalidation to catch all per-level query keys used by the wizard
+      await queryClient.invalidateQueries({ queryKey: ['level-promotion-criteria'] });
+      await queryClient.invalidateQueries({ queryKey: ['level-retention-criteria'] });
       toast.success(`${editingMetric.label} updated across all levels`);
       cancelEditing();
     } catch (err: any) {
