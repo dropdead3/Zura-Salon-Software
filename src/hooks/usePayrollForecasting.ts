@@ -48,7 +48,7 @@ export interface EmployeeProjection {
   };
 
   commissionSource?: string;
-  commissionSourceType?: 'override' | 'level' | 'unassigned';
+  commissionSourceType?: 'override' | 'location_override' | 'level' | 'unassigned';
 }
 
 export interface PayrollProjection {
