@@ -1368,7 +1368,7 @@ export default function Settings() {
             </Card>
           )}
 
-          {activeCategory === 'levels' && <StylistLevelsContent />}
+          {activeCategory === 'levels' && <StylistLevelsContent onActions={setCategoryActions} />}
 
 
 
