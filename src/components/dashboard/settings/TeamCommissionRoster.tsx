@@ -42,6 +42,7 @@ export function TeamCommissionRoster({
   const navigate = useNavigate();
   const { data: team, isLoading } = useTeamDirectory(undefined, { organizationId: orgId });
   const { data: overrides } = useStylistCommissionOverrides(orgId);
+  const { data: activeLocations = [] } = useActiveLocations();
   const bulkAssign = useBulkAssignStylistLevel();
 
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
