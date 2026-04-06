@@ -1,29 +1,29 @@
 
 
-# Show "N/A" for Unconfigured Retention Cells
+# Add Bottom Scroll Indicator to Criteria Matrix
 
-## Problem
-The retention section rows (Eval Window, Grace Period, Action) display a clickable "Configure" button for levels without retention criteria. This is misleading — retention KPI minimums are inherited from the promotion thresholds above, and dropping below them results in demotion all the way to Level 1. There's nothing to independently "configure" for most levels.
+## What We're Adding
+A vertical (bottom-edge) scroll indicator matching the existing right-edge pattern — a gradient fade at the bottom plus a ChevronDown button that scrolls down on click. This tells users there are more rows below (Retention section, etc.).
 
 ## Change
 
 ### File: `src/components/dashboard/settings/StylistLevelsEditor.tsx`
 
-**Update the cell rendering logic (~line 757)** for retention-section metrics. When `metric.section === 'retention'` and no retention record exists, render `—` (or "N/A") instead of the "Configure" button. The "Configure" button should only appear for promotion-section cells that lack criteria.
+**1. Add `canScrollDown` state** alongside `canScrollRight` in `ScrollableTableWrapper`.
 
-Specifically, change the conditional at line 757 so that retention cells without data always fall through to the `—` dash display, matching the base-level pattern. This is a single conditional tweak — roughly:
-
-```
-) : (metric.section === 'promotion' && !promo) ? (
-  <button ...>Configure</button>
-) : (
-  <span>—</span>
-)
+Update `checkScroll` to also compute:
+```ts
+const canDown = el.scrollHeight - el.scrollTop - el.clientHeight > 4;
+setCanScrollDown(canDown);
 ```
 
-This removes the "Configure" affordance from all retention rows, since retention policy is inherited from promotion requirements.
+**2. Render bottom gradient + chevron button** in both fullscreen and inline modes, mirroring the right-edge pattern:
 
-**Also update the retention section header subtitle** to clarify the demotion model: "KPI minimums inherited from Level Requirements · Falling below triggers demotion to Level 1"
+- Bottom gradient: `absolute bottom-0 left-0 right-0 h-12 pointer-events-none bg-gradient-to-t from-card to-transparent` (or `from-background` in fullscreen)
+- ChevronDown button: `absolute bottom-2 left-1/2 -translate-x-1/2` with same styling as the right button (`w-7 h-7 rounded-full bg-muted/80 backdrop-blur-sm border border-border/60`)
+- `onClick` scrolls down by 200px with smooth behavior
 
-### No database changes. Single file edit.
+**3. Both render paths** (fullscreen `div` at ~line 175 and inline `div` at ~line 210) get the same bottom indicator treatment.
+
+### Single file edit. No database changes.
 
