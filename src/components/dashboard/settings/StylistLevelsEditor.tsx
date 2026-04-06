@@ -900,10 +900,82 @@ function CriteriaComparisonTable({ levels, promotionCriteria, retentionCriteria,
             </TableRow>
             {['Service Commission', 'Retail Commission'].map((commLabel) => {
               const field = commLabel === 'Service Commission' ? 'serviceCommissionRate' : 'retailCommissionRate';
+              const compRowKey = commLabel === 'Service Commission' ? 'serviceCommission' : 'retailCommission';
+              const isEditingThisRow = editingCompRow === compRowKey;
+
               return (
-                <TableRow key={commLabel} className="border-b border-border/40 hover:bg-muted/20 transition-colors">
-                  <TableCell className="text-sm text-muted-foreground sticky left-0 bg-muted-strong z-10 py-3 px-4 border-r border-border shadow-[2px_0_4px_-2px_rgba(0,0,0,0.06)] dark:shadow-[2px_0_4px_-2px_rgba(0,0,0,0.4)]">{commLabel}</TableCell>
-                  {levels.map((level) => {
+                <TableRow
+                  key={commLabel}
+                  className={cn(
+                    "border-b border-border/40 transition-colors",
+                    isEditingThisRow && "bg-primary/8 ring-1 ring-primary/30",
+                    !editingCompRow && !editingMetric && "cursor-pointer hover:bg-muted/20"
+                  )}
+                  onClick={() => {
+                    if (!editingCompRow && !editingMetric) {
+                      setEditingCompRow(compRowKey as 'serviceCommission' | 'retailCommission');
+                      const vals: Record<number, string> = {};
+                      levels.forEach((level, idx) => {
+                        vals[idx] = level[field] || '';
+                      });
+                      setCompEditValues(vals);
+                    }
+                  }}
+                >
+                  <TableCell className={cn(
+                    "text-sm sticky left-0 z-10 py-3 px-4 border-r border-border shadow-[2px_0_4px_-2px_rgba(0,0,0,0.06)] dark:shadow-[2px_0_4px_-2px_rgba(0,0,0,0.4)]",
+                    isEditingThisRow ? "bg-primary/10 text-foreground" : "text-muted-foreground bg-muted-strong"
+                  )}>
+                    <div className="flex items-center gap-1.5">
+                      <span>{commLabel}</span>
+                      {isEditingThisRow && (
+                        <div className="flex items-center gap-1.5 ml-auto">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              // Apply all edited values
+                              Object.entries(compEditValues).forEach(([idx, val]) => {
+                                onCompensationChange(Number(idx), field as 'serviceCommissionRate' | 'retailCommissionRate', val);
+                              });
+                              setEditingCompRow(null);
+                              setCompEditValues({});
+                              toast.success(`${commLabel} updated — save to persist`);
+                            }}
+                            className="text-xs px-2 py-1 rounded bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+                          >
+                            Apply
+                          </button>
+                          <button
+                            onClick={(e) => { e.stopPropagation(); setEditingCompRow(null); setCompEditValues({}); }}
+                            className="text-xs px-1.5 py-1 rounded text-muted-foreground hover:text-foreground transition-colors"
+                          >
+                            <X className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </TableCell>
+                  {levels.map((level, idx) => {
+                    if (isEditingThisRow) {
+                      const val = compEditValues[idx] ?? '';
+                      return (
+                        <TableCell key={level.id} className="text-center px-3 py-3">
+                          <div className="relative inline-block">
+                            <Input
+                              type="number"
+                              value={val}
+                              onClick={(e) => e.stopPropagation()}
+                              onChange={(e) => {
+                                setCompEditValues(prev => ({ ...prev, [idx]: e.target.value }));
+                              }}
+                              className="h-8 w-[90px] text-sm text-center bg-background text-foreground border-border/80 pr-6"
+                              placeholder="—"
+                            />
+                            <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">%</span>
+                          </div>
+                        </TableCell>
+                      );
+                    }
                     const rate = level[field];
                     return (
                       <TableCell key={level.id} className="text-center text-sm tabular-nums py-3 px-3">
@@ -920,18 +992,100 @@ function CriteriaComparisonTable({ levels, promotionCriteria, retentionCriteria,
             })}
 
             {/* Hourly Wage row */}
-            <TableRow className="border-b border-border/40 hover:bg-muted/20 transition-colors">
-              <TableCell className="text-sm text-muted-foreground sticky left-0 bg-muted-strong z-10 py-3 px-4 border-r border-border shadow-[2px_0_4px_-2px_rgba(0,0,0,0.06)] dark:shadow-[2px_0_4px_-2px_rgba(0,0,0,0.4)]">Hourly Wage</TableCell>
-              {levels.map((level) => (
-                <TableCell key={level.id} className="text-center text-sm tabular-nums py-3 px-3">
-                  {level.hourlyWageEnabled && level.hourlyWage ? (
-                    <span className="text-foreground font-medium">${level.hourlyWage}/hr</span>
-                  ) : (
-                    <span className="text-muted-foreground/40">—</span>
+            {(() => {
+              const isEditingHourly = editingCompRow === 'hourlyWage';
+              return (
+                <TableRow
+                  className={cn(
+                    "border-b border-border/40 transition-colors",
+                    isEditingHourly && "bg-primary/8 ring-1 ring-primary/30",
+                    !editingCompRow && !editingMetric && "cursor-pointer hover:bg-muted/20"
                   )}
-                </TableCell>
-              ))}
-            </TableRow>
+                  onClick={() => {
+                    if (!editingCompRow && !editingMetric) {
+                      setEditingCompRow('hourlyWage');
+                      const vals: Record<number, string> = {};
+                      levels.forEach((level, idx) => {
+                        vals[idx] = level.hourlyWage || '';
+                      });
+                      setCompEditValues(vals);
+                    }
+                  }}
+                >
+                  <TableCell className={cn(
+                    "text-sm sticky left-0 z-10 py-3 px-4 border-r border-border shadow-[2px_0_4px_-2px_rgba(0,0,0,0.06)] dark:shadow-[2px_0_4px_-2px_rgba(0,0,0,0.4)]",
+                    isEditingHourly ? "bg-primary/10 text-foreground" : "text-muted-foreground bg-muted-strong"
+                  )}>
+                    <div className="flex items-center gap-1.5">
+                      <span>Hourly Wage</span>
+                      {isEditingHourly && (
+                        <div className="flex items-center gap-1.5 ml-auto">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              Object.entries(compEditValues).forEach(([idx, val]) => {
+                                const numIdx = Number(idx);
+                                if (val && parseFloat(val) > 0) {
+                                  onCompensationChange(numIdx, 'hourlyWageEnabled', true);
+                                  onCompensationChange(numIdx, 'hourlyWage', val);
+                                } else {
+                                  onCompensationChange(numIdx, 'hourlyWage', '');
+                                  onCompensationChange(numIdx, 'hourlyWageEnabled', false);
+                                }
+                              });
+                              setEditingCompRow(null);
+                              setCompEditValues({});
+                              toast.success('Hourly Wage updated — save to persist');
+                            }}
+                            className="text-xs px-2 py-1 rounded bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+                          >
+                            Apply
+                          </button>
+                          <button
+                            onClick={(e) => { e.stopPropagation(); setEditingCompRow(null); setCompEditValues({}); }}
+                            className="text-xs px-1.5 py-1 rounded text-muted-foreground hover:text-foreground transition-colors"
+                          >
+                            <X className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </TableCell>
+                  {levels.map((level, idx) => {
+                    if (isEditingHourly) {
+                      const val = compEditValues[idx] ?? '';
+                      return (
+                        <TableCell key={level.id} className="text-center px-3 py-3">
+                          <div className="relative inline-block">
+                            <span className="absolute left-2 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">$</span>
+                            <Input
+                              type="number"
+                              value={val}
+                              onClick={(e) => e.stopPropagation()}
+                              onChange={(e) => {
+                                setCompEditValues(prev => ({ ...prev, [idx]: e.target.value }));
+                              }}
+                              className="h-8 w-[90px] text-sm text-center bg-background text-foreground border-border/80 pl-5 pr-6"
+                              placeholder="—"
+                            />
+                            <span className="absolute right-1.5 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground">/hr</span>
+                          </div>
+                        </TableCell>
+                      );
+                    }
+                    return (
+                      <TableCell key={level.id} className="text-center text-sm tabular-nums py-3 px-3">
+                        {level.hourlyWageEnabled && level.hourlyWage ? (
+                          <span className="text-foreground font-medium">${level.hourlyWage}/hr</span>
+                        ) : (
+                          <span className="text-muted-foreground/40">—</span>
+                        )}
+                      </TableCell>
+                    );
+                  })}
+                </TableRow>
+              );
+            })()}
 
             {/* Promotion section header */}
             <TableRow className="bg-muted-strong hover:bg-muted-strong border-t border-border">
