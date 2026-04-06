@@ -4,7 +4,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
-import { Users, BarChart3 } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Users, BarChart3, MapPin } from 'lucide-react';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import { getLevelColor } from '@/lib/level-colors';
@@ -17,13 +18,17 @@ import type { StylistLevel } from '@/hooks/useStylistLevels';
 import type { StylistCommissionOverride } from '@/hooks/useStylistCommissionOverrides';
 import { differenceInDays } from 'date-fns';
 import {
-
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
+import { useActiveLocations } from '@/hooks/useLocations';
+import { getRoleBadgeConfig } from '@/lib/roleBadgeConfig';
+import type { Database } from '@/integrations/supabase/types';
+
+type AppRole = Database['public']['Enums']['app_role'];
 
 interface TeamCommissionRosterProps {
   orgId: string;
@@ -37,6 +42,7 @@ export function TeamCommissionRoster({
   const navigate = useNavigate();
   const { data: team, isLoading } = useTeamDirectory(undefined, { organizationId: orgId });
   const { data: overrides } = useStylistCommissionOverrides(orgId);
+  const { data: activeLocations = [] } = useActiveLocations();
   const bulkAssign = useBulkAssignStylistLevel();
 
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -56,24 +62,51 @@ export function TeamCommissionRoster({
     return map;
   }, [overrides]);
 
-  // Locations
-  const locations = useMemo(() => {
-    if (!team) return [];
-    const locMap = new Map<string, string>();
-    team.forEach(m => { if (m.location_id) locMap.set(m.location_id, m.location_id); });
-    return Array.from(locMap.keys());
-  }, [team]);
+  // Location name lookup
+  const locationNameMap = useMemo(() => {
+    const map = new Map<string, string>();
+    activeLocations.forEach(l => map.set(l.id, l.name));
+    return map;
+  }, [activeLocations]);
 
-  // Filtered team (stylists only)
+  // Get unique locations from team members
+  const teamLocations = useMemo(() => {
+    if (!team) return [];
+    const locIds = new Set<string>();
+    team.forEach(m => {
+      if (m.location_id) locIds.add(m.location_id);
+      if (m.location_ids && Array.isArray(m.location_ids)) {
+        (m.location_ids as string[]).forEach(id => locIds.add(id));
+      }
+    });
+    return Array.from(locIds)
+      .map(id => ({ id, name: locationNameMap.get(id) || id }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }, [team, locationNameMap]);
+
+  // Helper: get all unique location IDs for a member
+  const getMemberLocationIds = (member: { location_id?: string | null; location_ids?: string[] | null }) => {
+    const ids = new Set<string>();
+    if (member.location_id) ids.add(member.location_id);
+    if (member.location_ids && Array.isArray(member.location_ids)) {
+      (member.location_ids as string[]).forEach(id => ids.add(id));
+    }
+    return ids;
+  };
+
+  // Filtered team
   const filteredTeam = useMemo(() => {
     if (!team) return [];
     const stylists = team.filter(m => {
-      const isAdmin = m.roles?.length === 1 && m.roles[0] === 'admin';
-      if (isAdmin && !m.stylist_level) return false;
+      const isAdminOnly = m.roles?.length === 1 && m.roles[0] === 'admin';
+      if (isAdminOnly && !m.stylist_level) return false;
       return true;
     });
     if (locationFilter === 'all') return stylists;
-    return stylists.filter(m => m.location_id === locationFilter);
+    return stylists.filter(m => {
+      const memberLocs = getMemberLocationIds(m);
+      return memberLocs.has(locationFilter);
+    });
   }, [team, locationFilter]);
 
   // Resolve effective rates for a stylist
@@ -178,15 +211,16 @@ export function TeamCommissionRoster({
                 <BarChart3 className="h-3.5 w-3.5 mr-1" />
                 View Analytics
               </Button>
-              {locations.length > 1 && (
+              {teamLocations.length > 0 && (
                 <Select value={locationFilter} onValueChange={setLocationFilter}>
-                  <SelectTrigger className="w-[160px] h-9 text-sm">
+                  <SelectTrigger className="w-[180px] h-9 text-sm">
+                    <MapPin className="w-3.5 h-3.5 mr-1.5 text-muted-foreground" />
                     <SelectValue placeholder="Location" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Locations</SelectItem>
-                    {locations.map(loc => (
-                      <SelectItem key={loc} value={loc}>{loc}</SelectItem>
+                    {teamLocations.map(loc => (
+                      <SelectItem key={loc.id} value={loc.id}>{loc.name}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -210,11 +244,22 @@ export function TeamCommissionRoster({
             const level = member.stylist_level ? slugToLevel.get(member.stylist_level) : null;
             const levelIndex = level ? levels.indexOf(level) : -1;
             const color = levelIndex >= 0 ? getLevelColor(levelIndex, levels.length) : null;
+            const isStylist = member.roles?.includes('stylist');
+            const isMultiLocation = getMemberLocationIds(member).size > 1;
+            
+            // Get primary non-stylist role for badge
+            const primaryNonStylistRole = !isStylist
+              ? (member.roles as AppRole[])?.find(r => ['super_admin', 'admin', 'manager', 'receptionist', 'assistant'].includes(r))
+              : null;
+            const roleBadge = primaryNonStylistRole ? getRoleBadgeConfig(primaryNonStylistRole) : null;
 
             return (
               <div
                 key={member.user_id}
-                className="grid grid-cols-[28px_1fr_140px_70px_70px_90px] gap-2 items-center px-3 py-2.5 rounded-lg hover:bg-muted/50 cursor-pointer transition-colors group"
+                className={cn(
+                  "grid grid-cols-[28px_1fr_140px_70px_70px_90px] gap-2 items-center px-3 py-2.5 rounded-lg hover:bg-muted/50 cursor-pointer transition-colors group",
+                  !isStylist && "opacity-50"
+                )}
                 onClick={() => setDrilldownUserId(member.user_id)}
               >
                 <div onClick={(e) => e.stopPropagation()}>
@@ -224,9 +269,24 @@ export function TeamCommissionRoster({
                   />
                 </div>
 
-                <span className="text-sm font-medium truncate">
-                  {member.display_name || member.full_name}
-                </span>
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className="text-sm font-medium truncate">
+                    {member.full_name}
+                  </span>
+                  {roleBadge && (
+                    <span className={cn(
+                      "inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-medium shrink-0 border",
+                      roleBadge.colorClasses
+                    )}>
+                      {roleBadge.shortLabel}
+                    </span>
+                  )}
+                  {isMultiLocation && (
+                    <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-accent text-accent-foreground border border-border shrink-0">
+                      Multi-Location
+                    </span>
+                  )}
+                </div>
 
                 <div>
                   {level ? (
