@@ -3,6 +3,13 @@ import { createClient } from "@supabase/supabase-js";
 import { createNotification } from "../_shared/notify.ts";
 import { requireAuth, requireOrgMember, authErrorResponse } from "../_shared/auth.ts";
 import { getCorsHeaders } from "../_shared/cors.ts";
+import { validateBody, ValidationError, z } from "../_shared/validation.ts";
+
+const DetectAnomaliesSchema = z.object({
+  organizationId: z.string().uuid(),
+  organization_id: z.string().uuid().optional(),
+  locationId: z.string().uuid().optional(),
+});
 
 interface AnomalyResult {
   type: string;
@@ -33,7 +40,7 @@ serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-        const body = await req.json();
+    const body = await validateBody(req, DetectAnomaliesSchema, getCorsHeaders(req));
     const { organizationId, locationId } = body;
     // Verify org access
     try {
@@ -41,11 +48,6 @@ serve(async (req) => {
     } catch (orgErr) {
       return authErrorResponse(orgErr, getCorsHeaders(req));
     }
-
-
-    if (!organizationId) {
-      return new Response(
-        JSON.stringify({ error: "organizationId is required" }),
         { status: 400, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
       );
     }

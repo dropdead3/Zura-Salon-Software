@@ -3,6 +3,11 @@ import { createClient } from "@supabase/supabase-js";
 import { AI_ASSISTANT_NAME_DEFAULT as AI_ASSISTANT_NAME } from "../_shared/brand.ts";
 import { requireAuth, requireOrgMember, authErrorResponse } from "../_shared/auth.ts";
 import { getCorsHeaders } from "../_shared/cors.ts";
+import { validateBody, ValidationError, z } from "../_shared/validation.ts";
+
+const LeverEngineSchema = z.object({
+  organization_id: z.string().uuid(),
+});
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -19,11 +24,11 @@ serve(async (req) => {
     }
     const { user, supabaseAdmin } = authResult;
 
-        const body = await req.json();
+    const body = await validateBody(req, LeverEngineSchema, getCorsHeaders(req));
     const { organization_id } = body;
     // Verify org access
     try {
-      await requireOrgMember(supabaseAdmin, user.id, body.organization_id || body.organization_id);
+      await requireOrgMember(supabaseAdmin, user.id, body.organization_id);
     } catch (orgErr) {
       return authErrorResponse(orgErr, getCorsHeaders(req));
     }
