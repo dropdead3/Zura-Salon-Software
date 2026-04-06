@@ -64,6 +64,7 @@ import { GraduationWizard, getZuraDefaults, getZuraRetentionDefaults } from '@/c
 import { useLevelPromotionCriteria, type LevelPromotionCriteria } from '@/hooks/useLevelPromotionCriteria';
 import { useLevelRetentionCriteria, type LevelRetentionCriteria } from '@/hooks/useLevelRetentionCriteria';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { generateLevelRequirementsPDF } from '@/components/dashboard/settings/LevelRequirementsPDF';
 
 import { TeamCommissionRoster } from '@/components/dashboard/settings/TeamCommissionRoster';
@@ -119,6 +120,8 @@ function formatRetentionSummary(r: LevelRetentionCriteria): string {
 
 /** Scrollable table container with a right-edge fade + arrow indicator when content overflows */
 function ScrollableTableWrapper({ children, isFullscreen, onToggleFullscreen }: { children: React.ReactNode; isFullscreen: boolean; onToggleFullscreen: () => void }) {
+  const { isImpersonating } = useOrganizationContext();
+  const isMobile = useIsMobile();
   const scrollRef = useRef<HTMLDivElement>(null);
   const [canScrollRight, setCanScrollRight] = useState(false);
 
@@ -156,7 +159,10 @@ function ScrollableTableWrapper({ children, isFullscreen, onToggleFullscreen }: 
 
   if (isFullscreen) {
     return (
-      <div className="fixed inset-0 z-50 bg-background flex flex-col">
+      <div className={cn(
+        "fixed inset-x-0 bottom-0 z-[70] bg-background flex flex-col",
+        isImpersonating ? (isMobile ? 'top-[40px]' : 'top-[44px]') : 'top-0'
+      )}>
         {/* Fullscreen header bar */}
         <div className="flex items-center justify-between px-6 py-3 border-b border-border bg-muted/50">
           <h2 className="font-display text-sm tracking-wide uppercase text-foreground">Criteria Matrix</h2>
