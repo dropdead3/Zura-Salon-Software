@@ -58,6 +58,7 @@ import {
   useUpdateSubmissionStatus,
   useAddFeedback,
   useCreateRequirement,
+  useUpdateRequirement,
   useSubmissionFeedback,
   type AssistantProgress,
   type GraduationSubmission,
