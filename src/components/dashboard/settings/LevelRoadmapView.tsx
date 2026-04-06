@@ -116,7 +116,7 @@ export function LevelRoadmapView({
                         )}
                         style={{ background: bgHex }}
                       >
-                        <span className={cn(color.text, 'relative z-10')}>{i + 1}</span>
+                        <span className="text-neutral-900 relative z-10">{i + 1}</span>
                       </div>
                       {/* Status dot badge */}
                       {isConfigured ? (
