@@ -20785,6 +20785,7 @@ export type Database = {
           id: string
           is_active: boolean
           label: string
+          organization_id: string
           retail_commission_rate: number | null
           service_commission_rate: number | null
           slug: string
@@ -20798,6 +20799,7 @@ export type Database = {
           id?: string
           is_active?: boolean
           label: string
+          organization_id: string
           retail_commission_rate?: number | null
           service_commission_rate?: number | null
           slug: string
@@ -20811,12 +20813,21 @@ export type Database = {
           id?: string
           is_active?: boolean
           label?: string
+          organization_id?: string
           retail_commission_rate?: number | null
           service_commission_rate?: number | null
           slug?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "stylist_levels_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       stylist_personal_goals: {
         Row: {

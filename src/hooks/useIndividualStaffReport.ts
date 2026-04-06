@@ -83,7 +83,7 @@ export interface CommissionData {
   productCommission: number;
   totalCommission: number;
   tierName: string;
-  source?: 'override' | 'level' | 'unassigned';
+  source?: 'override' | 'location_override' | 'level' | 'unassigned';
   sourceName?: string;
 }
 

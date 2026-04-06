@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useLevelPromotionCriteria, type LevelPromotionCriteria } from './useLevelPromotionCriteria';
 import { useLevelRetentionCriteria, type LevelRetentionCriteria } from './useLevelRetentionCriteria';
+import { useLevelCriteriaOverrides, resolveCriteriaValue } from './useLevelCriteriaOverrides';
 import { useStylistLevels, type StylistLevel } from './useStylistLevels';
 import { subDays, format } from 'date-fns';
 import { buildTimeOffSet, isUserOffOnDate } from '@/lib/time-off-utils';
@@ -53,19 +54,36 @@ export function useTeamLevelProgress() {
   const { data: allLevels = [] } = useStylistLevels();
   const { data: allCriteria = [] } = useLevelPromotionCriteria();
   const { data: allRetention = [] } = useLevelRetentionCriteria();
+  const { data: criteriaOverrides = [] } = useLevelCriteriaOverrides();
 
-  // Fetch all active employee profiles with stylist levels
+  // Fetch all active employee profiles with stylist levels + location
   const { data: profiles = [], isLoading: loadingProfiles } = useQuery({
     queryKey: ['team-profiles-for-graduation', orgId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('employee_profiles')
-        .select('user_id, full_name, photo_url, stylist_level, hire_date, is_active')
+        .select('user_id, full_name, photo_url, stylist_level, hire_date, is_active, location_id')
         .eq('organization_id', orgId!)
         .eq('is_active', true)
         .not('stylist_level', 'is', null);
       if (error) throw error;
       return data || [];
+    },
+    enabled: !!orgId,
+  });
+
+  // Fetch location → group mappings for override resolution
+  const { data: locationGroupMap = {} } = useQuery({
+    queryKey: ['location-group-map', orgId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('locations')
+        .select('id, location_group_id')
+        .eq('organization_id', orgId!);
+      if (error) return {};
+      const map: Record<string, string | null> = {};
+      (data || []).forEach((l: any) => { map[l.id] = l.location_group_id; });
+      return map;
     },
     enabled: !!orgId,
   });
@@ -309,30 +327,22 @@ export function useTeamLevelProgress() {
       let retentionFailures: RetentionFailure[] = [];
       if (retCriteria) {
         const retMetrics = computeMetrics(retCriteria.evaluation_window_days);
-        if (retCriteria.revenue_enabled && retMetrics.monthlyRevenue < retCriteria.revenue_minimum) {
-          retentionFailures.push({ key: 'revenue', label: 'Service Revenue', current: Math.round(retMetrics.monthlyRevenue), minimum: retCriteria.revenue_minimum, unit: '/mo' });
-        }
-        if (retCriteria.retail_enabled && retMetrics.retailPct < retCriteria.retail_pct_minimum) {
-          retentionFailures.push({ key: 'retail', label: 'Retail Attachment', current: Math.round(retMetrics.retailPct * 10) / 10, minimum: retCriteria.retail_pct_minimum, unit: '%' });
-        }
-        if (retCriteria.rebooking_enabled && retMetrics.rebookingPct < retCriteria.rebooking_pct_minimum) {
-          retentionFailures.push({ key: 'rebooking', label: 'Rebooking Rate', current: Math.round(retMetrics.rebookingPct * 10) / 10, minimum: retCriteria.rebooking_pct_minimum, unit: '%' });
-        }
-        if (retCriteria.avg_ticket_enabled && retMetrics.avgTicket < retCriteria.avg_ticket_minimum) {
-          retentionFailures.push({ key: 'avg_ticket', label: 'Average Ticket', current: Math.round(retMetrics.avgTicket), minimum: retCriteria.avg_ticket_minimum, unit: '$' });
-        }
-        if (retCriteria.retention_rate_enabled && retMetrics.retentionRate < Number(retCriteria.retention_rate_minimum)) {
-          retentionFailures.push({ key: 'retention_rate', label: 'Client Retention', current: Math.round(retMetrics.retentionRate * 10) / 10, minimum: Number(retCriteria.retention_rate_minimum), unit: '%' });
-        }
-        if (retCriteria.new_clients_enabled && retMetrics.newClientsMonthly < Number(retCriteria.new_clients_minimum)) {
-          retentionFailures.push({ key: 'new_clients', label: 'New Clients', current: Math.round(retMetrics.newClientsMonthly * 10) / 10, minimum: Number(retCriteria.new_clients_minimum), unit: '/mo' });
-        }
-        if (retCriteria.utilization_enabled && retMetrics.utilization < Number(retCriteria.utilization_minimum)) {
-          retentionFailures.push({ key: 'utilization', label: 'Schedule Utilization', current: Math.round(retMetrics.utilization * 10) / 10, minimum: Number(retCriteria.utilization_minimum), unit: '%' });
-        }
-        if (retCriteria.rev_per_hour_enabled && retMetrics.revPerHour < Number(retCriteria.rev_per_hour_minimum)) {
-          retentionFailures.push({ key: 'rev_per_hour', label: 'Revenue Per Hour', current: Math.round(retMetrics.revPerHour), minimum: Number(retCriteria.rev_per_hour_minimum), unit: '$/hr' });
-        }
+        const userLocId = profile.location_id;
+        const userGroupId = userLocId ? (locationGroupMap as Record<string, string | null>)[userLocId] ?? null : null;
+
+        const resolveRet = (field: string, orgDefault: number): number => {
+          if (!currentLevel) return orgDefault;
+          return resolveCriteriaValue(orgDefault, criteriaOverrides, currentLevel.id, 'retention', field, userLocId, userGroupId).value;
+        };
+
+        if (retCriteria.revenue_enabled) { const min = resolveRet('revenue_minimum', retCriteria.revenue_minimum); if (retMetrics.monthlyRevenue < min) retentionFailures.push({ key: 'revenue', label: 'Service Revenue', current: Math.round(retMetrics.monthlyRevenue), minimum: min, unit: '/mo' }); }
+        if (retCriteria.retail_enabled) { const min = resolveRet('retail_pct_minimum', retCriteria.retail_pct_minimum); if (retMetrics.retailPct < min) retentionFailures.push({ key: 'retail', label: 'Retail Attachment', current: Math.round(retMetrics.retailPct * 10) / 10, minimum: min, unit: '%' }); }
+        if (retCriteria.rebooking_enabled) { const min = resolveRet('rebooking_pct_minimum', retCriteria.rebooking_pct_minimum); if (retMetrics.rebookingPct < min) retentionFailures.push({ key: 'rebooking', label: 'Rebooking Rate', current: Math.round(retMetrics.rebookingPct * 10) / 10, minimum: min, unit: '%' }); }
+        if (retCriteria.avg_ticket_enabled) { const min = resolveRet('avg_ticket_minimum', retCriteria.avg_ticket_minimum); if (retMetrics.avgTicket < min) retentionFailures.push({ key: 'avg_ticket', label: 'Average Ticket', current: Math.round(retMetrics.avgTicket), minimum: min, unit: '$' }); }
+        if (retCriteria.retention_rate_enabled) { const min = resolveRet('retention_rate_minimum', Number(retCriteria.retention_rate_minimum)); if (retMetrics.retentionRate < min) retentionFailures.push({ key: 'retention_rate', label: 'Client Retention', current: Math.round(retMetrics.retentionRate * 10) / 10, minimum: min, unit: '%' }); }
+        if (retCriteria.new_clients_enabled) { const min = resolveRet('new_clients_minimum', Number(retCriteria.new_clients_minimum)); if (retMetrics.newClientsMonthly < min) retentionFailures.push({ key: 'new_clients', label: 'New Clients', current: Math.round(retMetrics.newClientsMonthly * 10) / 10, minimum: min, unit: '/mo' }); }
+        if (retCriteria.utilization_enabled) { const min = resolveRet('utilization_minimum', Number(retCriteria.utilization_minimum)); if (retMetrics.utilization < min) retentionFailures.push({ key: 'utilization', label: 'Schedule Utilization', current: Math.round(retMetrics.utilization * 10) / 10, minimum: min, unit: '%' }); }
+        if (retCriteria.rev_per_hour_enabled) { const min = resolveRet('rev_per_hour_minimum', Number(retCriteria.rev_per_hour_minimum)); if (retMetrics.revPerHour < min) retentionFailures.push({ key: 'rev_per_hour', label: 'Revenue Per Hour', current: Math.round(retMetrics.revPerHour), minimum: min, unit: '$/hr' }); }
       }
 
       if (isTopLevel) {
@@ -383,95 +393,49 @@ export function useTeamLevelProgress() {
 
       const progress: CriterionProgress[] = [];
 
+      // Resolve promotion thresholds with location/group overrides
+      const userLocId = profile.location_id;
+      const userGroupId = userLocId ? (locationGroupMap as Record<string, string | null>)[userLocId] ?? null : null;
+      const resolvePromo = (field: string, orgDefault: number): number => {
+        if (!nextLevel) return orgDefault;
+        return resolveCriteriaValue(orgDefault, criteriaOverrides, nextLevel.id, 'promotion', field, userLocId, userGroupId).value;
+      };
+
       if (criteria.revenue_enabled) {
-        const target = criteria.revenue_threshold;
-        progress.push({
-          key: 'revenue', label: 'Service Revenue', enabled: true,
-          current: Math.round(promoMetrics.monthlyRevenue), priorCurrent: 0, target,
-          percent: target > 0 ? Math.min(100, (promoMetrics.monthlyRevenue / target) * 100) : 0,
-          weight: criteria.revenue_weight, unit: '/mo',
-          gap: Math.max(0, target - promoMetrics.monthlyRevenue),
-        });
+        const target = resolvePromo('revenue_threshold', criteria.revenue_threshold);
+        progress.push({ key: 'revenue', label: 'Service Revenue', enabled: true, current: Math.round(promoMetrics.monthlyRevenue), priorCurrent: 0, target, percent: target > 0 ? Math.min(100, (promoMetrics.monthlyRevenue / target) * 100) : 0, weight: criteria.revenue_weight, unit: '/mo', gap: Math.max(0, target - promoMetrics.monthlyRevenue) });
       }
       if (criteria.retail_enabled) {
-        const target = criteria.retail_pct_threshold;
-        progress.push({
-          key: 'retail', label: 'Retail Attachment', enabled: true,
-          current: Math.round(promoMetrics.retailPct * 10) / 10, priorCurrent: 0, target,
-          percent: target > 0 ? Math.min(100, (promoMetrics.retailPct / target) * 100) : 0,
-          weight: criteria.retail_weight, unit: '%',
-          gap: Math.max(0, target - promoMetrics.retailPct),
-        });
+        const target = resolvePromo('retail_pct_threshold', criteria.retail_pct_threshold);
+        progress.push({ key: 'retail', label: 'Retail Attachment', enabled: true, current: Math.round(promoMetrics.retailPct * 10) / 10, priorCurrent: 0, target, percent: target > 0 ? Math.min(100, (promoMetrics.retailPct / target) * 100) : 0, weight: criteria.retail_weight, unit: '%', gap: Math.max(0, target - promoMetrics.retailPct) });
       }
       if (criteria.rebooking_enabled) {
-        const target = criteria.rebooking_pct_threshold;
-        progress.push({
-          key: 'rebooking', label: 'Rebooking Rate', enabled: true,
-          current: Math.round(promoMetrics.rebookingPct * 10) / 10, priorCurrent: 0, target,
-          percent: target > 0 ? Math.min(100, (promoMetrics.rebookingPct / target) * 100) : 0,
-          weight: criteria.rebooking_weight, unit: '%',
-          gap: Math.max(0, target - promoMetrics.rebookingPct),
-        });
+        const target = resolvePromo('rebooking_pct_threshold', criteria.rebooking_pct_threshold);
+        progress.push({ key: 'rebooking', label: 'Rebooking Rate', enabled: true, current: Math.round(promoMetrics.rebookingPct * 10) / 10, priorCurrent: 0, target, percent: target > 0 ? Math.min(100, (promoMetrics.rebookingPct / target) * 100) : 0, weight: criteria.rebooking_weight, unit: '%', gap: Math.max(0, target - promoMetrics.rebookingPct) });
       }
       if (criteria.avg_ticket_enabled) {
-        const target = criteria.avg_ticket_threshold;
-        progress.push({
-          key: 'avg_ticket', label: 'Average Ticket', enabled: true,
-          current: Math.round(promoMetrics.avgTicket), priorCurrent: 0, target,
-          percent: target > 0 ? Math.min(100, (promoMetrics.avgTicket / target) * 100) : 0,
-          weight: criteria.avg_ticket_weight, unit: '$',
-          gap: Math.max(0, target - promoMetrics.avgTicket),
-        });
+        const target = resolvePromo('avg_ticket_threshold', criteria.avg_ticket_threshold);
+        progress.push({ key: 'avg_ticket', label: 'Average Ticket', enabled: true, current: Math.round(promoMetrics.avgTicket), priorCurrent: 0, target, percent: target > 0 ? Math.min(100, (promoMetrics.avgTicket / target) * 100) : 0, weight: criteria.avg_ticket_weight, unit: '$', gap: Math.max(0, target - promoMetrics.avgTicket) });
       }
       if (criteria.retention_rate_enabled) {
-        const target = Number(criteria.retention_rate_threshold);
-        progress.push({
-          key: 'retention_rate', label: 'Client Retention', enabled: true,
-          current: Math.round(promoMetrics.retentionRate * 10) / 10, priorCurrent: 0, target,
-          percent: target > 0 ? Math.min(100, (promoMetrics.retentionRate / target) * 100) : 0,
-          weight: criteria.retention_rate_weight, unit: '%',
-          gap: Math.max(0, target - promoMetrics.retentionRate),
-        });
+        const target = resolvePromo('retention_rate_threshold', Number(criteria.retention_rate_threshold));
+        progress.push({ key: 'retention_rate', label: 'Client Retention', enabled: true, current: Math.round(promoMetrics.retentionRate * 10) / 10, priorCurrent: 0, target, percent: target > 0 ? Math.min(100, (promoMetrics.retentionRate / target) * 100) : 0, weight: criteria.retention_rate_weight, unit: '%', gap: Math.max(0, target - promoMetrics.retentionRate) });
       }
       if (criteria.new_clients_enabled) {
-        const target = Number(criteria.new_clients_threshold);
-        progress.push({
-          key: 'new_clients', label: 'New Clients', enabled: true,
-          current: Math.round(promoMetrics.newClientsMonthly * 10) / 10, priorCurrent: 0, target,
-          percent: target > 0 ? Math.min(100, (promoMetrics.newClientsMonthly / target) * 100) : 0,
-          weight: criteria.new_clients_weight, unit: '/mo',
-          gap: Math.max(0, target - promoMetrics.newClientsMonthly),
-        });
+        const target = resolvePromo('new_clients_threshold', Number(criteria.new_clients_threshold));
+        progress.push({ key: 'new_clients', label: 'New Clients', enabled: true, current: Math.round(promoMetrics.newClientsMonthly * 10) / 10, priorCurrent: 0, target, percent: target > 0 ? Math.min(100, (promoMetrics.newClientsMonthly / target) * 100) : 0, weight: criteria.new_clients_weight, unit: '/mo', gap: Math.max(0, target - promoMetrics.newClientsMonthly) });
       }
       if (criteria.utilization_enabled) {
-        const target = Number(criteria.utilization_threshold);
-        progress.push({
-          key: 'utilization', label: 'Schedule Utilization', enabled: true,
-          current: Math.round(promoMetrics.utilization * 10) / 10, priorCurrent: 0, target,
-          percent: target > 0 ? Math.min(100, (promoMetrics.utilization / target) * 100) : 0,
-          weight: criteria.utilization_weight, unit: '%',
-          gap: Math.max(0, target - promoMetrics.utilization),
-        });
+        const target = resolvePromo('utilization_threshold', Number(criteria.utilization_threshold));
+        progress.push({ key: 'utilization', label: 'Schedule Utilization', enabled: true, current: Math.round(promoMetrics.utilization * 10) / 10, priorCurrent: 0, target, percent: target > 0 ? Math.min(100, (promoMetrics.utilization / target) * 100) : 0, weight: criteria.utilization_weight, unit: '%', gap: Math.max(0, target - promoMetrics.utilization) });
       }
       if (criteria.rev_per_hour_enabled) {
-        const target = Number(criteria.rev_per_hour_threshold);
-        progress.push({
-          key: 'rev_per_hour', label: 'Revenue Per Hour', enabled: true,
-          current: Math.round(promoMetrics.revPerHour), priorCurrent: 0, target,
-          percent: target > 0 ? Math.min(100, (promoMetrics.revPerHour / target) * 100) : 0,
-          weight: criteria.rev_per_hour_weight, unit: '$/hr',
-          gap: Math.max(0, target - promoMetrics.revPerHour),
-        });
+        const target = resolvePromo('rev_per_hour_threshold', Number(criteria.rev_per_hour_threshold));
+        progress.push({ key: 'rev_per_hour', label: 'Revenue Per Hour', enabled: true, current: Math.round(promoMetrics.revPerHour), priorCurrent: 0, target, percent: target > 0 ? Math.min(100, (promoMetrics.revPerHour / target) * 100) : 0, weight: criteria.rev_per_hour_weight, unit: '$/hr', gap: Math.max(0, target - promoMetrics.revPerHour) });
       }
       if (criteria.tenure_enabled) {
         const target = criteria.tenure_days;
-        progress.push({
-          key: 'tenure', label: 'Tenure', enabled: true,
-          current: tenureDays, priorCurrent: tenureDays, target,
-          percent: target > 0 ? Math.min(100, (tenureDays / target) * 100) : 0,
-          weight: 0, unit: 'd',
-          gap: Math.max(0, target - tenureDays),
-        });
+        progress.push({ key: 'tenure', label: 'Tenure', enabled: true, current: tenureDays, priorCurrent: tenureDays, target, percent: target > 0 ? Math.min(100, (tenureDays / target) * 100) : 0, weight: 0, unit: 'd', gap: Math.max(0, target - tenureDays) });
       }
 
       const weightedCriteria = progress.filter(p => p.weight > 0);
@@ -514,7 +478,7 @@ export function useTeamLevelProgress() {
       if (diff !== 0) return diff;
       return b.compositeScore - a.compositeScore;
     });
-  }, [profiles, allLevels, allCriteria, allRetention, allSalesData, allApptData, allShiftData, allLevelPromotions, allTimeOffData]);
+  }, [profiles, allLevels, allCriteria, allRetention, allSalesData, allApptData, allShiftData, allLevelPromotions, allTimeOffData, criteriaOverrides, locationGroupMap]);
 
   const counts = useMemo(() => {
     const ready = teamProgress.filter(t => t.status === 'ready').length;

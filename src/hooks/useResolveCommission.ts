@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useStylistLevels, StylistLevel } from './useStylistLevels';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 
-export type CommissionSource = 'override' | 'level' | 'unassigned';
+export type CommissionSource = 'override' | 'location_override' | 'level' | 'unassigned';
 
 export interface ResolvedCommission {
   serviceRate: number;
@@ -27,11 +27,19 @@ interface OverrideRow {
 interface EmployeeLevelRow {
   user_id: string;
   stylist_level: string | null;
+  location_id: string | null;
+}
+
+interface LocationCommissionOverride {
+  stylist_level_id: string;
+  location_id: string | null;
+  service_commission_rate: number | null;
+  retail_commission_rate: number | null;
 }
 
 /**
  * Unified commission resolution hook.
- * Priority: 1) per-stylist override  2) stylist-level default  3) unassigned (0%)
+ * Priority: 1) per-stylist override  2) location commission override  3) stylist-level default  4) unassigned (0%)
  */
 export function useResolveCommission() {
   const { selectedOrganization } = useOrganizationContext();
@@ -57,19 +65,34 @@ export function useResolveCommission() {
     },
   });
 
-  // Fetch employee → level mapping
+  // Fetch employee → level + location mapping
   const { data: employeeLevels, isLoading: empLoading } = useQuery({
     queryKey: ['employee-level-mapping', orgId],
     enabled: !!orgId,
     queryFn: async () => {
       const { data, error } = await supabase
         .from('employee_profiles')
-        .select('user_id, stylist_level')
+        .select('user_id, stylist_level, location_id')
         .eq('organization_id', orgId!)
         .eq('is_active', true);
 
       if (error) throw error;
       return (data || []) as EmployeeLevelRow[];
+    },
+  });
+
+  // Fetch location commission overrides
+  const { data: locationOverrides, isLoading: locOverridesLoading } = useQuery({
+    queryKey: ['level-commission-overrides-resolve', orgId],
+    enabled: !!orgId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('level_commission_overrides')
+        .select('stylist_level_id, location_id, service_commission_rate, retail_commission_rate')
+        .eq('organization_id', orgId!);
+
+      if (error) throw error;
+      return (data || []) as LocationCommissionOverride[];
     },
   });
 
@@ -86,19 +109,38 @@ export function useResolveCommission() {
     return map;
   }, [levels]);
 
+  const levelIdMap = useMemo(() => {
+    const map = new Map<string, StylistLevel>();
+    (levels || []).forEach(l => map.set(l.id, l));
+    return map;
+  }, [levels]);
+
   const empLevelMap = useMemo(() => {
-    const map = new Map<string, string | null>();
-    (employeeLevels || []).forEach(e => map.set(e.user_id, e.stylist_level));
+    const map = new Map<string, { level: string | null; locationId: string | null }>();
+    (employeeLevels || []).forEach(e => map.set(e.user_id, { level: e.stylist_level, locationId: e.location_id }));
     return map;
   }, [employeeLevels]);
 
+  // Location override map: key = `${levelId}:${locationId}`
+  const locOverrideMap = useMemo(() => {
+    const map = new Map<string, LocationCommissionOverride>();
+    (locationOverrides || []).forEach(o => {
+      if (o.location_id) {
+        map.set(`${o.stylist_level_id}:${o.location_id}`, o);
+      }
+    });
+    return map;
+  }, [locationOverrides]);
+
   /**
    * Resolve commission for a single stylist.
+   * Optionally pass locationId to check location-specific overrides.
    */
   const resolveCommission = (
     userId: string,
     serviceRevenue: number,
     productRevenue: number,
+    locationId?: string | null,
   ): ResolvedCommission => {
     // 1. Check per-stylist override
     const override = overrideMap.get(userId);
@@ -120,10 +162,33 @@ export function useResolveCommission() {
       }
     }
 
-    // 2. Check stylist level default
-    const levelSlug = empLevelMap.get(userId);
+    // Resolve employee's level and location
+    const empInfo = empLevelMap.get(userId);
+    const levelSlug = empInfo?.level;
+    const effectiveLocationId = locationId ?? empInfo?.locationId;
+
     if (levelSlug) {
       const level = levelMap.get(levelSlug);
+
+      // 2. Check location commission override
+      if (level && effectiveLocationId) {
+        const locOverride = locOverrideMap.get(`${level.id}:${effectiveLocationId}`);
+        if (locOverride && (locOverride.service_commission_rate !== null || locOverride.retail_commission_rate !== null)) {
+          const serviceRate = locOverride.service_commission_rate ?? level.service_commission_rate ?? 0;
+          const retailRate = locOverride.retail_commission_rate ?? level.retail_commission_rate ?? 0;
+          return {
+            serviceRate,
+            retailRate,
+            serviceCommission: serviceRevenue * serviceRate,
+            retailCommission: productRevenue * retailRate,
+            totalCommission: serviceRevenue * serviceRate + productRevenue * retailRate,
+            source: 'location_override',
+            sourceName: `Location Override: ${level.label}`,
+          };
+        }
+      }
+
+      // 3. Check stylist level default
       if (level && (level.service_commission_rate !== null || level.retail_commission_rate !== null)) {
         const serviceRate = level.service_commission_rate ?? 0;
         const retailRate = level.retail_commission_rate ?? 0;
@@ -139,7 +204,7 @@ export function useResolveCommission() {
       }
     }
 
-    // 3. Unassigned — no level, no override → 0% (enforces "define before payout")
+    // 4. Unassigned — no level, no override → 0% (enforces "define before payout")
     return {
       serviceRate: 0,
       retailRate: 0,
@@ -155,8 +220,8 @@ export function useResolveCommission() {
    * Legacy-compatible wrapper that matches the old calculateCommission signature
    * but resolves per-user. For components that still use flat calculation.
    */
-  const resolveForUser = (userId: string) => (serviceRevenue: number, productRevenue: number) => {
-    const resolved = resolveCommission(userId, serviceRevenue, productRevenue);
+  const resolveForUser = (userId: string, locationId?: string | null) => (serviceRevenue: number, productRevenue: number) => {
+    const resolved = resolveCommission(userId, serviceRevenue, productRevenue, locationId);
     return {
       serviceCommission: resolved.serviceCommission,
       productCommission: resolved.retailCommission,
@@ -167,7 +232,7 @@ export function useResolveCommission() {
     };
   };
 
-  const isLoading = levelsLoading || overridesLoading || empLoading;
+  const isLoading = levelsLoading || overridesLoading || empLoading || locOverridesLoading;
 
   return {
     resolveCommission,
