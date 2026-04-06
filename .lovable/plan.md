@@ -1,90 +1,80 @@
 
 
-# Items 4–7: Commission Economics, Location Groups UI, Audit Trail, Stylist Roadmap
+# AI Commission Rate Optimizer + Economics Tab Hardening
 
-## Item 4 — Commission Economics Tab
+## What This Delivers
 
-**What it does**: An interactive margin calculator inside the Stylist Levels Editor that answers "can I afford this commission rate at each level?"
+An "Optimize Rates" button on the Economics tab that sends the current level structure, assumptions, and actual revenue data to an AI edge function. The AI returns specific recommended commission rates per level that hit the owner's target margin while staying competitive with industry benchmarks. Results render inline on the Economics tab with one-click "Apply" to push recommended rates into the What-If simulator.
 
-**Implementation**:
-- New `CommissionEconomicsTab.tsx` component rendered as an "Economics" tab in `StylistLevelsEditor.tsx` (between "Location Overrides" and "Team Roster")
-- New `useCommissionEconomics.ts` hook that:
-  - Reads/writes three assumptions to `backroom_settings` (key-value store, already exists): `commission_target_margin_pct`, `commission_overhead_per_stylist`, `commission_product_cost_pct`
-  - Queries trailing 90-day average revenue per stylist grouped by their assigned level from appointment data
-- Per-level table columns: Level name, Service commission %, Retail commission %, Breakeven revenue, Target revenue, Actual avg revenue, Margin at actual, Status (Green/Yellow/Red)
-- Math: `Revenue needed = Overhead / (1 - commission_rate - product_cost_pct - target_margin_pct)`
-- "What If" slider panel (collapsible) — drag commission rate per level, see breakeven/target update in real-time
-- All monetary values wrapped in `BlurredAmount`
-
-| File | Change |
-|------|--------|
-| `src/components/dashboard/settings/CommissionEconomicsTab.tsx` | **New** — Calculator UI |
-| `src/hooks/useCommissionEconomics.ts` | **New** — Assumptions CRUD + revenue-per-level query |
-| `src/components/dashboard/settings/StylistLevelsEditor.tsx` | Add "Economics" TabsTrigger + TabsContent |
+Additionally: bug fixes and enhancements found during review.
 
 ---
 
-## Item 5 — Location Groups Management UI
+## Bugs and Gaps Found
 
-**What it does**: Admin UI to create/rename/reorder/delete location groups and assign locations to them.
-
-**Implementation**:
-- Add a "Groups" tab to `LocationsSettingsContent.tsx` (the existing component already uses Tabs)
-- Groups list with inline edit for name, drag-to-reorder (display_order), delete with confirmation
-- Each group shows its assigned locations as chips; unassigned locations shown in a separate "Ungrouped" section
-- Dropdown on each location card to assign/reassign to a group
-- Uses existing `useLocationGroups`, `useCreateLocationGroup`, `useUpdateLocationGroup`, `useDeleteLocationGroup`, `useAssignLocationToGroup` hooks (all already built)
-
-| File | Change |
-|------|--------|
-| `src/components/dashboard/settings/LocationsSettingsContent.tsx` | Add "Groups" tab with CRUD UI |
+1. **No AI recommendation capability** — the Economics tab is purely manual; no intelligence surfaces to suggest what rates *should* be
+2. **What-If has no "Apply to levels" path** — slider adjustments are throwaway; there is no way to commit what-if rates back to the actual level configuration
+3. **Missing retail commission in economics math** — `computeEconomics` only uses `serviceCommissionRate`; retail commission is a real cost that should factor into margin calculations
+4. **Revenue note is misleading** — says "annualized to monthly" but the code divides by 3 (correct for 90 days → monthly); the copy should just say "monthly average from trailing 90 days"
 
 ---
 
-## Item 6 — Audit Trail for Commission Rate Changes
+## Implementation
 
-**What it does**: Logs to `platform_audit_log` whenever commission rates on `stylist_levels` are saved.
+### 1. New Edge Function: `ai-commission-optimizer`
 
-**Implementation**:
-- In `useSaveStylistLevels` mutation's `onSuccess`, compare old vs new commission rates
-- For each level where `service_commission_rate` or `retail_commission_rate` changed, insert a `platform_audit_log` entry via the existing `useLogPlatformAction` pattern
-- Action type: `commission_rate_updated`, entity_type: `stylist_level`, details include `{ level_slug, old_service_rate, new_service_rate, old_retail_rate, new_retail_rate }`
-- Add `commission_rate_updated` to `AUDIT_ACTION_CONFIG` in `usePlatformAuditLog.ts`
+Creates `supabase/functions/ai-commission-optimizer/index.ts`:
+- Receives: levels (with current rates), assumptions (overhead, product cost, target margin), actual revenue per level, stylist counts
+- System prompt includes industry benchmarks (same as `ai-level-analysis`) plus margin math context
+- Uses tool-calling to return structured output:
+  ```
+  {
+    recommendations: [{
+      level_slug: string,
+      current_service_rate: number,
+      recommended_service_rate: number,
+      current_retail_rate: number,
+      recommended_retail_rate: number,
+      rationale: string,
+      projected_margin_at_current_revenue: number
+    }],
+    summary: string,
+    confidence: "high" | "medium" | "low"
+  }
+  ```
+- Handles 429/402 errors properly
 
-| File | Change |
-|------|--------|
-| `src/hooks/useStylistLevels.ts` | Add audit logging in save mutation |
-| `src/hooks/usePlatformAuditLog.ts` | Add `commission_rate_updated` to config map |
+### 2. Update `CommissionEconomicsTab.tsx`
+
+- Add "Optimize with Zura" button in the Economics table card header (right side, pill style per `tokens.button.cardAction`)
+- On click: calls the edge function with current data
+- Results render in a new card below the economics table:
+  - Summary banner with confidence badge
+  - Per-level recommendation rows showing current → recommended rate with rationale
+  - "Apply to What-If" button that pushes all recommended rates into the What-If slider state
+- Fix the revenue footnote copy
+
+### 3. Fix Retail Commission Gap in Math
+
+Update `computeEconomics` and `computeMarginAtRevenue` in `useCommissionEconomics.ts`:
+- Accept `retailCommissionRate` as a parameter
+- Include it in `variableCostRate = serviceCommissionRate + retailCommissionRate + product_cost_pct`
+- Update the table to show blended commission impact
+
+### 4. Update Economics Table Columns
+
+- Add "Retail %" column (already in the header but using only service rate in the math)
+- Pass both rates through to `computeEconomics`
 
 ---
 
-## Item 7 — Stylist-Facing Level Roadmap
-
-**What it does**: A "My Progression Ladder" card on the existing `MyGraduation` page showing the full level hierarchy with the stylist's current position highlighted and next-level criteria + commission rewards visible.
-
-**Implementation**:
-- New `LevelProgressionLadder.tsx` component — a vertical timeline/ladder rendering all active levels from `useStylistLevels`
-- Current level highlighted with accent border + "You are here" badge
-- Each level shows: commission rates (blurred), key promotion criteria thresholds for the next level
-- Levels above current show criteria needed; levels below show as completed checkmarks
-- Placed on `MyGraduation.tsx` between the `StylistScorecard` and the retention warning card
-- Read-only — no editing, just visibility into "what am I working toward"
+## Files Changed
 
 | File | Change |
 |------|--------|
-| `src/components/dashboard/LevelProgressionLadder.tsx` | **New** — Visual level ladder |
-| `src/pages/dashboard/MyGraduation.tsx` | Import and render ladder after scorecard |
+| `supabase/functions/ai-commission-optimizer/index.ts` | **New** — AI rate optimization edge function |
+| `src/components/dashboard/settings/CommissionEconomicsTab.tsx` | Add Optimize button, AI results card, fix footnote, pass retail rate |
+| `src/hooks/useCommissionEconomics.ts` | Add `retailCommissionRate` to math functions, export types for AI response |
 
----
-
-## Summary
-
-| # | Item | Files | New |
-|---|------|-------|-----|
-| 4 | Commission Economics Tab | 3 | 2 new |
-| 5 | Location Groups UI | 1 | 0 |
-| 6 | Audit trail | 2 | 0 |
-| 7 | Stylist roadmap | 2 | 1 new |
-
-**8 files total. 3 new components. No database changes** — all tables and hooks already exist.
+**3 files. 1 new edge function. No database changes.**
 
