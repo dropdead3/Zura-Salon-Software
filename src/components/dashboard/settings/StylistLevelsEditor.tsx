@@ -423,13 +423,19 @@ function CriteriaComparisonTable({ levels, promotionCriteria, retentionCriteria,
     if (!fieldMapping) return;
 
     const values: Record<string, { enabled: boolean; value: string }> = {};
-    levels.forEach((level) => {
+    levels.forEach((level, idx) => {
       if (!level.dbId) {
         values[level.id] = { enabled: false, value: '' };
         return;
       }
       const { promo, retention } = getCriteria(level.dbId);
-      if (section === 'promotion' && promo) {
+      // Base level editable promotion KPIs read from retention minimums
+      const isBaseLevelRet = section === 'promotion' && idx === 0 && label !== 'Tenure' && label !== 'Eval Window' && label !== 'Approval';
+      if (isBaseLevelRet && retention) {
+        const enabled = retention[fieldMapping.retEnabledField] as boolean;
+        const val = retention[fieldMapping.retValueField] as number;
+        values[level.id] = { enabled: !!enabled, value: val ? String(val) : '' };
+      } else if (section === 'promotion' && promo) {
         const enabled = promo[fieldMapping.promoEnabledField] as boolean;
         const val = promo[fieldMapping.promoValueField] as number;
         values[level.id] = { enabled: !!enabled, value: val ? String(val) : '' };
@@ -459,14 +465,47 @@ function CriteriaComparisonTable({ levels, promotionCriteria, retentionCriteria,
 
     setIsSavingRow(true);
     try {
-      for (const level of levels) {
+      for (let li = 0; li < levels.length; li++) {
+        const level = levels[li];
         if (!level.dbId) continue;
         const entry = editValues[level.id];
         if (!entry) continue;
 
         const numVal = parseFloat(entry.value) || 0;
+        const isBaseLevelRet = editingMetric.section === 'promotion' && li === 0 && editingMetric.label !== 'Tenure' && editingMetric.label !== 'Eval Window' && editingMetric.label !== 'Approval';
 
-        if (editingMetric.section === 'promotion') {
+        if (isBaseLevelRet) {
+          // Base level promotion KPIs save to retention criteria
+          const existing = retentionCriteria.find(r => r.stylist_level_id === level.dbId && r.is_active);
+          const retDefaults = getZuraRetentionDefaults(0);
+          const base: any = existing ? { ...existing } : {
+            organization_id: orgId,
+            stylist_level_id: level.dbId,
+            retention_enabled: true,
+            revenue_enabled: false, revenue_minimum: 0,
+            retail_enabled: false, retail_pct_minimum: 0,
+            rebooking_enabled: false, rebooking_pct_minimum: 0,
+            avg_ticket_enabled: false, avg_ticket_minimum: 0,
+            retention_rate_enabled: false, retention_rate_minimum: 0,
+            new_clients_enabled: false, new_clients_minimum: 0,
+            utilization_enabled: false, utilization_minimum: 0,
+            rev_per_hour_enabled: false, rev_per_hour_minimum: 0,
+            evaluation_window_days: retDefaults.evaluation_window_days ?? 90,
+            grace_period_days: retDefaults.grace_period_days ?? 30,
+            action_type: retDefaults.action_type ?? 'coaching_flag',
+            is_active: true,
+          };
+          delete base.id; delete base.created_at; delete base.updated_at;
+          base[fieldMapping.retEnabledField] = entry.enabled;
+          base[fieldMapping.retValueField] = numVal;
+          base.retention_enabled = true;
+
+          const { error } = await supabase
+            .from('level_retention_criteria')
+            .upsert(base, { onConflict: 'organization_id,stylist_level_id' })
+            .select().single();
+          if (error) throw error;
+        } else if (editingMetric.section === 'promotion') {
           const existing = promotionCriteria.find(c => c.stylist_level_id === level.dbId && c.is_active);
           const defaults = getZuraDefaults(levels.findIndex(l => l.id === level.id));
           const base: any = existing ? { ...existing } : {
@@ -589,13 +628,17 @@ function CriteriaComparisonTable({ levels, promotionCriteria, retentionCriteria,
     const fieldMapping = METRIC_FIELD_MAP[metric.label];
     const isBaseLevel = levelIdx === 0;
     const isLastLevel = levelIdx === levels.length - 1;
-    const isPromotionSkip = metric.section === 'promotion' && isBaseLevel;
+    // Base level skips only non-editable promotion rows + Tenure (no promotion target)
+    const isPromotionSkip = metric.section === 'promotion' && isBaseLevel && (!metric.editable || metric.label === 'Tenure' || metric.label === 'Eval Window' || metric.label === 'Approval');
     const isLastLevelTenure = metric.label === 'Tenure' && isLastLevel;
+    // Base level editable promotion KPIs map to retention minimums
+    const isBaseLevelRetention = metric.section === 'promotion' && isBaseLevel && metric.editable && metric.label !== 'Tenure';
 
     if (isEditingRow && metric.editable && fieldMapping && level.dbId && !isPromotionSkip && !isLastLevelTenure) {
       const entry = editValues[level.id] || { enabled: false, value: '' };
+      const baseLevelHasRetention = metric.section === 'promotion' && metric.editable && metric.label !== 'Tenure';
       const editableLevelIds = levels.filter((_, idx) => {
-        if (metric.section === 'promotion') return idx > 0;
+        if (metric.section === 'promotion' && !baseLevelHasRetention) return idx > 0;
         return true;
       }).map(l => l.id);
       const editLevelIdx = editableLevelIds.indexOf(level.id);
@@ -668,7 +711,19 @@ function CriteriaComparisonTable({ levels, promotionCriteria, retentionCriteria,
       );
     }
 
-    const val = metric.getValue(promo, retention, levelIdx);
+    // For base level editable KPIs, show retention minimum values instead of promotion thresholds
+    let val: string | null;
+    if (isBaseLevelRetention && fieldMapping && retention) {
+      const enabled = retention[fieldMapping.retEnabledField] as boolean;
+      const numVal = retention[fieldMapping.retValueField] as number;
+      if (enabled && numVal > 0) {
+        val = fieldMapping.isCurrency ? fmtCurrency(numVal) : fieldMapping.isPercent ? `${numVal}%` : fieldMapping.suffix ? `${numVal}${fieldMapping.suffix}` : String(numVal);
+      } else {
+        val = null;
+      }
+    } else {
+      val = metric.getValue(promo, retention, levelIdx);
+    }
     const warn = levelIdx > 0 && !(metric.section === 'promotion' && isBaseLevel) && hasInconsistency(mIdx, levelIdx);
 
     return (
@@ -882,7 +937,7 @@ function CriteriaComparisonTable({ levels, promotionCriteria, retentionCriteria,
                 </span>
               </TableCell>
               <TableCell colSpan={levels.length} className="py-3 px-4 bg-muted-strong text-sm text-muted-foreground/60">
-                To reach this level
+                To reach this level · <span className="italic">Level 1 shows retention minimums</span>
               </TableCell>
             </TableRow>
             {metrics.filter(m => m.section === 'promotion').map((metric, mIdx) =>
