@@ -37,7 +37,6 @@ import {
   Globe,
   TrendingUp,
   Shield,
-  ShieldCheck,
   Wand2,
   DollarSign,
   Clock,
@@ -703,17 +702,18 @@ function CriteriaComparisonTable({ levels, promotionCriteria, retentionCriteria,
                 return (
                   <TableHead key={level.id} className={cn("text-center min-w-[140px] py-4 px-3", tokens.table.columnHeader)}>
                     <div className="flex flex-col items-center gap-2">
+                      <span className="text-[10px] font-display uppercase tracking-widest text-muted-foreground/50">
+                        Level {idx + 1}
+                      </span>
                       <div className="flex items-center gap-1.5">
                         <span className="text-sm font-medium">{level.label}</span>
                         {level.dbId && (
                           <Tooltip>
                             <TooltipTrigger asChild>
-                              <span>
-                                <ShieldCheck className={cn(
-                                  "w-3.5 h-3.5 transition-colors",
-                                  retentionActive ? "text-emerald-500" : "text-muted-foreground/30"
-                                )} />
-                              </span>
+                              <span className={cn(
+                                "w-2 h-2 rounded-full inline-block",
+                                retentionActive ? "bg-emerald-500" : "bg-muted-foreground/20"
+                              )} />
                             </TooltipTrigger>
                             <TooltipContent side="top" className="text-xs">
                               {retentionActive
