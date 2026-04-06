@@ -535,7 +535,7 @@ function CriteriaComparisonTable({ levels, promotionCriteria, retentionCriteria,
       const warn = editLevelIdx >= 0 && hasEditInconsistency(editLevelIdx, editableLevelIds);
       
       return (
-        <TableCell key={level.id} className="text-center px-2 py-2">
+        <TableCell key={level.id} className="text-center px-3 py-3">
           <div className="flex flex-col items-center gap-1">
             <div className="flex items-center gap-1">
               <Checkbox
@@ -587,7 +587,7 @@ function CriteriaComparisonTable({ levels, promotionCriteria, retentionCriteria,
     // Read-only display (original logic)
     if (metric.section === 'promotion' && isPromotionSkip) {
       return (
-        <TableCell key={level.id} className="text-center text-sm">
+        <TableCell key={level.id} className="text-center text-sm py-3 px-3">
           <span className="text-muted-foreground/30 text-xs select-none">N/A</span>
         </TableCell>
       );
@@ -597,7 +597,7 @@ function CriteriaComparisonTable({ levels, promotionCriteria, retentionCriteria,
     const warn = levelIdx > 0 && !(metric.section === 'promotion' && isBaseLevel) && hasInconsistency(mIdx, levelIdx);
 
     return (
-      <TableCell key={level.id} className="text-center text-sm tabular-nums">
+      <TableCell key={level.id} className="text-center text-sm tabular-nums py-3 px-3">
         {val ? (
           <span className="flex items-center justify-center gap-1">
             {warn && <AlertTriangle className="w-3 h-3 text-amber-500 shrink-0" />}
@@ -638,7 +638,7 @@ function CriteriaComparisonTable({ levels, promotionCriteria, retentionCriteria,
         }}
       >
         <TableCell className={cn(
-          "text-sm sticky left-0 z-10",
+          "text-sm sticky left-0 z-10 py-3 px-4",
           isEditingRow ? "bg-primary/5 text-foreground" : "text-muted-foreground bg-card"
         )}>
           <div className="flex items-center gap-1.5">
