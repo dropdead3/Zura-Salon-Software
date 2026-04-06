@@ -94,16 +94,17 @@ export function generateStaffLevelReportPDF(options: StaffLevelReportOptions): j
 
   doc.setTextColor(30, 30, 30);
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(18);
-  doc.text(orgName.toUpperCase(), pageWidth / 2, y, { align: 'center', charSpace: 1.5 });
+  doc.setFontSize(20);
+  doc.text(orgName.toUpperCase(), pageWidth / 2, y, { align: 'center', charSpace: 1.0 });
 
   y += 7;
   doc.setTextColor(160, 160, 160);
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(8);
-  doc.text('STAFF LEVEL REPORT', pageWidth / 2, y, { align: 'center', charSpace: 2 });
+  doc.text('STAFF LEVEL REPORT', pageWidth / 2, y, { align: 'center', charSpace: 1.2 });
 
   y += 5;
+  doc.setCharSpace(0); // Reset charSpace so it doesn't leak into body text / autoTable
   doc.setTextColor(180, 180, 180);
   doc.setFontSize(7);
   doc.text(`Generated ${format(now, 'MMMM d, yyyy')}`, pageWidth / 2, y, { align: 'center' });
@@ -128,7 +129,7 @@ export function generateStaffLevelReportPDF(options: StaffLevelReportOptions): j
   ];
 
   const contentWidth = pageWidth - MARGIN * 2;
-  const stripH = 22;
+  const stripH = 26;
   doc.setFillColor(248, 248, 250);
   doc.setDrawColor(230, 230, 230);
   doc.setLineWidth(0.3);
@@ -140,11 +141,19 @@ export function generateStaffLevelReportPDF(options: StaffLevelReportOptions): j
     doc.setTextColor(130, 130, 130);
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(6.5);
-    doc.text(item.label, cx, y + 8, { align: 'center' });
+    doc.text(item.label, cx, y + 9, { align: 'center' });
     doc.setTextColor(...item.color);
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(14);
-    doc.text(item.value, cx, y + 17, { align: 'center' });
+    doc.setFontSize(16);
+    doc.text(item.value, cx, y + 20, { align: 'center' });
+
+    // Vertical divider between items
+    if (i < summaryItems.length - 1) {
+      const divX = MARGIN + colW * (i + 1);
+      doc.setDrawColor(220, 220, 225);
+      doc.setLineWidth(0.3);
+      doc.line(divX, y + 5, divX, y + stripH - 5);
+    }
   });
 
   y += stripH + 8;
@@ -198,6 +207,8 @@ export function generateStaffLevelReportPDF(options: StaffLevelReportOptions): j
     tableBody.push(['No team members with assigned levels', '', '', '', '', '', '']);
   }
 
+  doc.setCharSpace(0); // Ensure charSpace is reset before table
+
   autoTable(doc, {
     startY: y,
     head: [tableHead],
@@ -207,30 +218,43 @@ export function generateStaffLevelReportPDF(options: StaffLevelReportOptions): j
     headStyles: {
       fillColor: [40, 40, 40],
       textColor: [255, 255, 255],
-      fontSize: 7.5,
+      fontSize: 8,
       fontStyle: 'bold',
-      cellPadding: 2.5,
+      cellPadding: 3,
     },
     bodyStyles: {
-      fontSize: 7.5,
-      cellPadding: 2,
+      fontSize: 8,
+      cellPadding: 2.5,
       textColor: [50, 50, 50],
     },
     alternateRowStyles: {
       fillColor: [252, 252, 253],
     },
     columnStyles: {
-      0: { cellWidth: 40 },  // Name
+      0: { cellWidth: 45 },  // Name
       1: { cellWidth: 30 },  // Current Level
       2: { cellWidth: 30 },  // Status
       3: { cellWidth: 16, halign: 'center' },  // Score
       4: { cellWidth: 30 },  // Next Level
       5: { cellWidth: 22, halign: 'center' },  // Time at Level
-      6: { cellWidth: 'auto' },  // Key Gap
+      6: { cellWidth: 'auto', fontSize: 7 },  // Key Gap — smaller to fit long text
     },
     styles: {
       lineColor: [230, 230, 230],
       lineWidth: 0.3,
+    },
+    didParseCell: (data) => {
+      // Add colored dot before status text
+      if (data.section === 'body' && data.column.index === 2 && data.cell.text[0] && data.cell.text[0] !== '') {
+        const statusText = data.cell.text[0];
+        // Find matching status color
+        for (const [, label] of Object.entries(STATUS_LABELS)) {
+          if (label === statusText) {
+            data.cell.text[0] = `● ${statusText}`;
+            break;
+          }
+        }
+      }
     },
   });
 
@@ -244,9 +268,10 @@ export function generateStaffLevelReportPDF(options: StaffLevelReportOptions): j
     doc.setLineWidth(0.3);
     doc.line(MARGIN, pageH - 14, pageWidth - MARGIN, pageH - 14);
 
-    doc.setFontSize(6);
+    doc.setFontSize(6.5);
     doc.setTextColor(180, 180, 180);
     doc.setFont('helvetica', 'normal');
+    doc.setCharSpace(0);
     doc.text(`Confidential — For internal use only  ·  ${orgName}`, pageWidth / 2, pageH - 9, { align: 'center' });
     doc.text(`Page ${p} of ${totalPages}`, pageWidth / 2, pageH - 5, { align: 'center' });
   }
