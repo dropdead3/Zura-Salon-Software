@@ -638,7 +638,7 @@ function CriteriaComparisonTable({ levels, promotionCriteria, retentionCriteria,
       >
         <TableCell className={cn(
           "text-sm sticky left-0 z-10 py-3 px-4 border-r border-border/40",
-          isEditingRow ? "bg-primary/5 text-foreground" : "text-muted-foreground bg-muted/50"
+          isEditingRow ? "bg-primary/10 text-foreground" : "text-muted-foreground bg-muted"
         )}>
           <div className="flex items-center gap-1.5">
             <span>{metric.label}</span>
@@ -694,13 +694,13 @@ function CriteriaComparisonTable({ levels, promotionCriteria, retentionCriteria,
       <ScrollableTableWrapper>
         <table className="w-full caption-bottom text-sm [&_th]:border-r [&_th]:border-border/20 [&_th:last-child]:border-r-0 [&_td]:border-r [&_td]:border-border/20 [&_td:last-child]:border-r-0 [&_td[colspan]]:border-r-0">
           <TableHeader className="sticky top-0 z-20">
-            <TableRow className="border-b-2 border-border/60 bg-muted/50">
-              <TableHead className={cn("w-[200px] sticky left-0 bg-muted/50 z-30 py-4 px-4 border-r border-border/40", tokens.table.columnHeader)}>Metric</TableHead>
+            <TableRow className="border-b-2 border-border/60 bg-muted">
+              <TableHead className={cn("w-[200px] sticky left-0 bg-muted z-30 py-4 px-4 border-r border-border/40", tokens.table.columnHeader)}>Metric</TableHead>
               {levels.map((level, idx) => {
                 const ret = level.dbId ? getCriteria(level.dbId).retention : undefined;
                 const retentionActive = ret?.retention_enabled === true;
                 return (
-                  <TableHead key={level.id} className={cn("text-center min-w-[140px] py-4 px-3 bg-muted/50", tokens.table.columnHeader)}>
+                  <TableHead key={level.id} className={cn("text-center min-w-[140px] py-4 px-3 bg-muted", tokens.table.columnHeader)}>
                     <div className="flex flex-col items-center gap-2">
                       <span className="text-[10px] font-display uppercase tracking-widest text-muted-foreground/50">
                         Level {idx + 1}
@@ -741,20 +741,20 @@ function CriteriaComparisonTable({ levels, promotionCriteria, retentionCriteria,
           </TableHeader>
           <TableBody>
             {/* Compensation section */}
-            <TableRow className="bg-muted/50 hover:bg-muted/50">
-              <TableCell className="sticky left-0 z-10 bg-muted/50 py-4 px-4 border-l-2 border-l-primary border-r border-border/40">
+            <TableRow className="bg-muted hover:bg-muted">
+              <TableCell className="sticky left-0 z-10 bg-muted py-4 px-4 border-l-2 border-l-primary border-r border-border/40">
                 <span className="flex items-center gap-2.5 text-sm font-display uppercase tracking-wide text-foreground whitespace-nowrap">
                   <DollarSign className="w-4 h-4 text-primary" />
                   Compensation — At This Level
                 </span>
               </TableCell>
-              <TableCell colSpan={levels.length} className="py-4 px-4 bg-muted/50" />
+              <TableCell colSpan={levels.length} className="py-4 px-4 bg-muted" />
             </TableRow>
             {['Service Commission', 'Retail Commission'].map((commLabel) => {
               const field = commLabel === 'Service Commission' ? 'serviceCommissionRate' : 'retailCommissionRate';
               return (
                 <TableRow key={commLabel}>
-                  <TableCell className="text-sm text-muted-foreground sticky left-0 bg-muted/50 z-10 py-3 px-4 border-r border-border/40">{commLabel}</TableCell>
+                  <TableCell className="text-sm text-muted-foreground sticky left-0 bg-muted z-10 py-3 px-4 border-r border-border/40">{commLabel}</TableCell>
                   {levels.map((level) => {
                     const rate = level[field];
                     return (
@@ -773,7 +773,7 @@ function CriteriaComparisonTable({ levels, promotionCriteria, retentionCriteria,
 
             {/* Hourly Wage row */}
             <TableRow>
-              <TableCell className="text-sm text-muted-foreground sticky left-0 bg-muted/50 z-10 py-3 px-4 border-r border-border/40">Hourly Wage</TableCell>
+              <TableCell className="text-sm text-muted-foreground sticky left-0 bg-muted z-10 py-3 px-4 border-r border-border/40">Hourly Wage</TableCell>
               {levels.map((level) => (
                 <TableCell key={level.id} className="text-center text-sm tabular-nums py-3 px-3">
                   {level.hourlyWageEnabled && level.hourlyWage ? (
@@ -786,29 +786,29 @@ function CriteriaComparisonTable({ levels, promotionCriteria, retentionCriteria,
             </TableRow>
 
             {/* Promotion section header */}
-            <TableRow className="bg-muted/50 hover:bg-muted/50">
-              <TableCell className="sticky left-0 z-10 bg-muted/50 py-4 px-4 border-l-2 border-l-primary border-r border-border/40">
+            <TableRow className="bg-muted hover:bg-muted">
+              <TableCell className="sticky left-0 z-10 bg-muted py-4 px-4 border-l-2 border-l-primary border-r border-border/40">
                 <span className="flex items-center gap-2.5 text-sm font-display uppercase tracking-wide text-foreground whitespace-nowrap">
                   <TrendingUp className="w-4 h-4 text-primary" />
                   Promotion — To Reach This Level
                 </span>
               </TableCell>
-              <TableCell colSpan={levels.length} className="py-4 px-4 bg-muted/50" />
+              <TableCell colSpan={levels.length} className="py-4 px-4 bg-muted" />
             </TableRow>
             {metrics.filter(m => m.section === 'promotion').map((metric, mIdx) =>
               renderMetricRow(metric, mIdx, 'promo')
             )}
 
             {/* Retention Policy section header */}
-            <TableRow className="bg-muted/50 hover:bg-muted/50">
-              <TableCell className="sticky left-0 z-10 bg-muted/50 py-4 px-4 border-l-2 border-l-primary border-r border-border/40">
+            <TableRow className="bg-muted hover:bg-muted">
+              <TableCell className="sticky left-0 z-10 bg-muted py-4 px-4 border-l-2 border-l-primary border-r border-border/40">
                 <span className="flex items-center gap-2.5 text-sm font-display uppercase tracking-wide text-foreground whitespace-nowrap">
                   <Shield className="w-4 h-4 text-primary" />
                   Retention Policy
                 </span>
                 <span className="text-xs text-muted-foreground ml-6 block mt-1">KPI minimums inherited from Level Requirements above</span>
               </TableCell>
-              <TableCell colSpan={levels.length} className="py-4 px-4 bg-muted/50" />
+              <TableCell colSpan={levels.length} className="py-4 px-4 bg-muted" />
             </TableRow>
             {metrics.filter(m => m.section === 'retention').map((metric, mIdx) => {
               const globalIdx = metrics.findIndex(m => m.section === 'retention' && m.label === metric.label);
