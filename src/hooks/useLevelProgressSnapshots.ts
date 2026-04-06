@@ -32,7 +32,7 @@ export function useWriteLevelSnapshots(teamProgress: TeamMemberProgress[]) {
           user_id: m.userId,
           stylist_level_id: m.currentLevel!.id,
           composite_score: m.compositeScore,
-          criteria_snapshot: m.criteriaProgress,
+          criteria_snapshot: JSON.parse(JSON.stringify(m.criteriaProgress)),
           snapshot_month: monthKey,
         }));
 
