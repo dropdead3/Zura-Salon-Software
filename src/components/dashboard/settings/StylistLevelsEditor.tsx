@@ -1265,7 +1265,6 @@ export function StylistLevelsEditor({ embedded = false }: StylistLevelsEditorPro
                             isExpanded && "rotate-90"
                           )} />
                         </div>
-                      </div>
                     </div>
 
                     {/* Expanded content */}
