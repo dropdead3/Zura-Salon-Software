@@ -125,11 +125,13 @@ function ScrollableTableWrapper({ children, isFullscreen, onToggleFullscreen }: 
   const isMobile = useIsMobile();
   const scrollRef = useRef<HTMLDivElement>(null);
   const [canScrollRight, setCanScrollRight] = useState(false);
+  const [canScrollDown, setCanScrollDown] = useState(false);
 
   const checkScroll = useCallback(() => {
     const el = scrollRef.current;
     if (!el) return;
     setCanScrollRight(el.scrollWidth - el.scrollLeft - el.clientWidth > 4);
+    setCanScrollDown(el.scrollHeight - el.scrollTop - el.clientHeight > 4);
   }, []);
 
   useEffect(() => {
