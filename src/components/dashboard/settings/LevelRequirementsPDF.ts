@@ -128,38 +128,12 @@ function formatRetentionRow(level: LevelInfo, retention: LevelRetentionCriteria 
     ];
   }
 
-  const mins: string[] = [];
-  if (retention.revenue_enabled && retention.revenue_minimum > 0) {
-    mins.push(`$${retention.revenue_minimum.toLocaleString()} rev/mo`);
-  }
-  if (retention.retail_enabled && retention.retail_pct_minimum > 0) {
-    mins.push(`${retention.retail_pct_minimum}% retail`);
-  }
-  if (retention.rebooking_enabled && retention.rebooking_pct_minimum > 0) {
-    mins.push(`${retention.rebooking_pct_minimum}% rebook`);
-  }
-  if (retention.avg_ticket_enabled && retention.avg_ticket_minimum > 0) {
-    mins.push(`$${retention.avg_ticket_minimum} avg ticket`);
-  }
-  if (retention.retention_rate_enabled && retention.retention_rate_minimum > 0) {
-    mins.push(`${retention.retention_rate_minimum}% retention`);
-  }
-  if (retention.new_clients_enabled && retention.new_clients_minimum > 0) {
-    mins.push(`${retention.new_clients_minimum} new clients`);
-  }
-  if (retention.utilization_enabled && retention.utilization_minimum > 0) {
-    mins.push(`${retention.utilization_minimum}% utilization`);
-  }
-  if (retention.rev_per_hour_enabled && retention.rev_per_hour_minimum > 0) {
-    mins.push(`$${retention.rev_per_hour_minimum}/hr`);
-  }
-
   const actionLabel = retention.action_type === 'demotion_eligible' ? 'Demotion Eligible' : 'Coaching Flag';
 
   return [
     `Level ${level.index + 1}`,
     level.label,
-    mins.join('\n') || 'None set',
+    'Same as Level Requirements',
     `${retention.evaluation_window_days}d`,
     `${retention.grace_period_days}d`,
     actionLabel,

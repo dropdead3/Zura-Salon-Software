@@ -111,17 +111,8 @@ function formatCriteriaSummary(c: LevelPromotionCriteria): string {
 }
 
 function formatRetentionSummary(r: LevelRetentionCriteria): string {
-  const parts: string[] = [];
-  if (r.revenue_enabled && r.revenue_minimum > 0) parts.push(r.revenue_minimum >= 1000 ? `$${(r.revenue_minimum / 1000).toFixed(0)}K rev` : `$${r.revenue_minimum} rev`);
-  if (r.retail_enabled && r.retail_pct_minimum > 0) parts.push(`${r.retail_pct_minimum}% retail`);
-  if (r.rebooking_enabled && r.rebooking_pct_minimum > 0) parts.push(`${r.rebooking_pct_minimum}% rebook`);
-  if (r.avg_ticket_enabled && r.avg_ticket_minimum > 0) parts.push(`$${r.avg_ticket_minimum} avg`);
-  if (r.retention_rate_enabled && Number(r.retention_rate_minimum) > 0) parts.push(`${r.retention_rate_minimum}% retention`);
-  if (r.new_clients_enabled && Number(r.new_clients_minimum) > 0) parts.push(`${r.new_clients_minimum} new/mo`);
-  if (r.utilization_enabled && Number(r.utilization_minimum) > 0) parts.push(`${r.utilization_minimum}% util`);
-  if (r.rev_per_hour_enabled && Number(r.rev_per_hour_minimum) > 0) parts.push(`$${r.rev_per_hour_minimum}/hr`);
-  if (parts.length === 0) return '';
-  return `Required to Stay: ${parts.join(' · ')} — ${r.grace_period_days}d grace · ${r.action_type === 'demotion_eligible' ? 'Demotion' : 'Coaching'}`;
+  if (!r.retention_enabled) return '';
+  return `Retention: ${r.evaluation_window_days}d eval · ${r.grace_period_days}d grace · ${r.action_type === 'demotion_eligible' ? 'Demotion' : 'Coaching'}`;
 }
 
 /** Scrollable table container with a right-edge fade + arrow indicator when content overflows */
