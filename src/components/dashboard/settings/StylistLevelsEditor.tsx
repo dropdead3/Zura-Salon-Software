@@ -423,13 +423,19 @@ function CriteriaComparisonTable({ levels, promotionCriteria, retentionCriteria,
     if (!fieldMapping) return;
 
     const values: Record<string, { enabled: boolean; value: string }> = {};
-    levels.forEach((level) => {
+    levels.forEach((level, idx) => {
       if (!level.dbId) {
         values[level.id] = { enabled: false, value: '' };
         return;
       }
       const { promo, retention } = getCriteria(level.dbId);
-      if (section === 'promotion' && promo) {
+      // Base level editable promotion KPIs read from retention minimums
+      const isBaseLevelRet = section === 'promotion' && idx === 0 && label !== 'Tenure' && label !== 'Eval Window' && label !== 'Approval';
+      if (isBaseLevelRet && retention) {
+        const enabled = retention[fieldMapping.retEnabledField] as boolean;
+        const val = retention[fieldMapping.retValueField] as number;
+        values[level.id] = { enabled: !!enabled, value: val ? String(val) : '' };
+      } else if (section === 'promotion' && promo) {
         const enabled = promo[fieldMapping.promoEnabledField] as boolean;
         const val = promo[fieldMapping.promoValueField] as number;
         values[level.id] = { enabled: !!enabled, value: val ? String(val) : '' };
