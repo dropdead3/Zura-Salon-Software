@@ -302,7 +302,7 @@ export function WeekResourcesManager({ weekId, resources, assignments, onResourc
 
     setNewResource({
       ...newResource,
-      file_url: urlData.publicUrl,
+      file_url: urlData?.signedUrl || '',
       file_type: fileExt,
       title: newResource.title || file.name.replace(/\.[^/.]+$/, ''),
     });

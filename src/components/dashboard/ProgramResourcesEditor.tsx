@@ -144,7 +144,7 @@ export default function ProgramResourcesEditor() {
 
     setNewResource({
       ...newResource,
-      file_url: urlData.publicUrl,
+      file_url: urlData?.signedUrl || '',
       file_type: fileType,
       title: newResource.title || file.name.replace(/\.[^/.]+$/, ''),
     });

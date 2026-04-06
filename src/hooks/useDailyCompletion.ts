@@ -157,11 +157,11 @@ export function useDailyCompletion(userId: string | undefined) {
     if (todayCompletion) {
       await supabase
         .from('daily_completions')
-        .update({ proof_url: urlData.publicUrl })
+        .update({ proof_url: urlData?.signedUrl || '' })
         .eq('id', todayCompletion.id);
     }
 
-    return urlData.publicUrl;
+    return urlData?.signedUrl || '';
   };
 
   const submitDay = async (): Promise<boolean> => {
