@@ -76,6 +76,7 @@ html, body, #root {
     --secondary-foreground: 0 0% 6%;
 
     --muted: 40 8% 72%;
+    --muted-strong: 40 8% 65%;
     --muted-foreground: 0 0% 30%;
 
     --accent: 40 12% 76%;
@@ -175,6 +176,7 @@ html, body, #root {
     --secondary-foreground: 40 20% 92%;
 
     --muted: 0 0% 20%;
+    --muted-strong: 0 0% 14%;
     --muted-foreground: 40 10% 60%;
 
     --accent: 40 30% 85%;
@@ -238,6 +240,7 @@ html, body, #root {
     --secondary-foreground: 350 20% 8%;
 
     --muted: 350 6% 72%;
+    --muted-strong: 350 6% 65%;
     --muted-foreground: 350 5% 30%;
 
     --accent: 350 10% 76%;
@@ -299,6 +302,7 @@ html, body, #root {
     --secondary-foreground: 350 20% 92%;
 
     --muted: 350 10% 20%;
+    --muted-strong: 350 10% 14%;
     --muted-foreground: 350 15% 55%;
 
     --accent: 350 20% 20%;
@@ -361,6 +365,7 @@ html, body, #root {
     --secondary-foreground: 145 15% 8%;
 
     --muted: 145 5% 72%;
+    --muted-strong: 145 5% 65%;
     --muted-foreground: 145 4% 30%;
 
     --accent: 145 8% 76%;
@@ -422,6 +427,7 @@ html, body, #root {
     --secondary-foreground: 145 18% 92%;
 
     --muted: 145 8% 20%;
+    --muted-strong: 145 8% 14%;
     --muted-foreground: 145 12% 55%;
 
     --accent: 145 15% 20%;
@@ -484,6 +490,7 @@ html, body, #root {
     --secondary-foreground: 210 20% 8%;
 
     --muted: 210 6% 72%;
+    --muted-strong: 210 6% 65%;
     --muted-foreground: 210 5% 30%;
 
     --accent: 210 10% 76%;
@@ -545,6 +552,7 @@ html, body, #root {
     --secondary-foreground: 210 20% 92%;
 
     --muted: 210 10% 20%;
+    --muted-strong: 210 10% 14%;
     --muted-foreground: 210 15% 55%;
 
     --accent: 210 18% 20%;
