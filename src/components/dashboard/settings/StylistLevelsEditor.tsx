@@ -264,21 +264,12 @@ function CriteriaComparisonTable({ levels, promotionCriteria, retentionCriteria,
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-[140px] sticky left-0 bg-card z-10">Metric</TableHead>
+              <TableHead className={cn("w-[140px] sticky left-0 bg-card z-20 rounded-tl-xl", tokens.table.columnHeader)}>Metric</TableHead>
               {levels.map((level, idx) => (
-                <TableHead key={level.id} className="text-center min-w-[120px]">
+                <TableHead key={level.id} className={cn("text-center min-w-[120px]", tokens.table.columnHeader)}>
                   <div className="flex flex-col items-center gap-1">
                     <span className="text-xs">{level.label}</span>
-                    {idx === 0 && !level.dbId ? (
-                      <span className="text-[10px] text-muted-foreground/60">Entry</span>
-                    ) : idx === 0 && level.dbId ? (
-                      <button
-                        onClick={() => onEditLevel(level, idx)}
-                        className="text-[10px] text-primary hover:text-primary/80 transition-colors"
-                      >
-                        Edit
-                      </button>
-                    ) : level.dbId ? (
+                    {level.dbId ? (
                       <button
                         onClick={() => onEditLevel(level, idx)}
                         className="text-[10px] text-primary hover:text-primary/80 transition-colors"
@@ -286,7 +277,7 @@ function CriteriaComparisonTable({ levels, promotionCriteria, retentionCriteria,
                         Edit
                       </button>
                     ) : (
-                      <span className="text-[10px] text-muted-foreground/50">Unsaved</span>
+                      <span className="text-[10px] text-muted-foreground/50">{idx === 0 ? 'Entry' : 'Unsaved'}</span>
                     )}
                   </div>
                 </TableHead>
