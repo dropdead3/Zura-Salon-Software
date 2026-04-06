@@ -1,41 +1,61 @@
 
 
-# Responsiveness Hardening for High Level Counts
+# Print Scope: Only Print the Level Roadmap Document
 
-## Problem Areas
+## Problem
+When clicking "Print" from the Level Roadmap overlay, `window.print()` prints the entire page — including the dashboard, sidebar, God Mode bar, and the settings page beneath the overlay. Only the roadmap document should print.
 
-With 20+ levels, the roadmap document becomes unwieldy in three ways beyond the timeline:
+## Solution
+Add print-specific CSS that hides the root app content and only shows the roadmap overlay when printing. This is a targeted CSS-only fix.
 
-1. **Detail cards scroll forever** — 20 full-height cards stacking vertically creates an extremely long document. No way to quickly navigate or collapse sections.
-2. **Summary stats grid breaks on mobile** — `grid-cols-3` crunches below ~400px viewport width.
-3. **Print pagination** — 20 detail cards span many pages with no explicit page-break control, risking cards splitting mid-content across pages.
-4. **PDF generation** — Same issue as print; the downloaded PDF could be unwieldy without pagination hints.
+### Approach
+1. **Add a print stylesheet rule** in `index.css` (or the roadmap component) that:
+   - Hides `body > #root > *` (the main app tree) on print
+   - Shows the roadmap's fixed overlay as a static, full-width block on print
+   
+2. **In `LevelRoadmapView.tsx`**, give the outermost container a specific ID or class (e.g., `data-print-target="roadmap"`) so it can be selected in CSS.
 
-## Proposed Changes
+3. **Global print CSS** (in `index.css`):
+   ```css
+   @media print {
+     body > * { visibility: hidden; }
+     [data-print-target="roadmap"] { 
+       visibility: visible; 
+       position: static; 
+       z-index: auto; 
+     }
+   }
+   ```
 
-### 1. Collapsible Detail Cards (Accordion)
-- When `levels.length > 6`, render detail cards inside an accordion pattern (click header to expand/collapse)
-- First card and any "Incomplete" cards default to expanded; rest collapsed
-- Each card header shows: level number, name, configured badge, and commission summary — enough context without expanding
-- Print media query: force all cards expanded (`print:block`)
+   Alternatively, use a React Portal approach: when printing, the roadmap is already `fixed inset-0 z-[80]`, but sibling content still renders. The cleanest fix is toggling a `printing` class on the `<body>` element around `window.print()`, then using CSS to hide siblings.
 
-### 2. Mobile-Safe Summary Stats
-- Change `grid-cols-3` to `grid-cols-1 sm:grid-cols-3` so stats stack on narrow viewports
+### Implementation Detail
+- In `LevelRoadmapView.tsx`, update the print handler:
+  ```tsx
+  const handlePrint = () => {
+    document.body.classList.add('printing-roadmap');
+    window.print();
+    document.body.classList.remove('printing-roadmap');
+  };
+  ```
+- In `index.css`, add:
+  ```css
+  @media print {
+    body.printing-roadmap > #root { display: none; }
+  }
+  ```
+- The roadmap container already renders as a sibling or via portal — since it's inside `#root`, we need to instead hide everything except the roadmap. The better approach: mark the roadmap with a data attribute, then in print media hide all `#root` children except the roadmap's ancestor.
 
-### 3. Print Page-Break Control
-- Add `break-inside-avoid` (already present) plus `page-break-after: auto` on each card
-- Add `page-break-before: always` on every 4th card to prevent extremely long unbroken runs
-- Force timeline to `flex-wrap justify-center` on print (already done)
-
-### 4. "Jump to Level" Quick Nav (Optional Enhancement)
-- For 10+ levels, add a small sticky pill bar below the timeline with level number buttons that scroll to the corresponding detail card
-- Hidden on print
+Since the roadmap is rendered inside the `StylistLevelsEditor` component tree (inside `#root`), the simplest approach is:
+- Add `data-roadmap-print` to the roadmap's outermost `div`
+- In print CSS, hide everything except elements with that attribute by using visibility toggling
 
 ## Files
 
 | File | Action |
 |------|--------|
-| `src/components/dashboard/settings/LevelRoadmapView.tsx` | **Edit** — add accordion, responsive grid, print breaks, optional quick nav |
+| `src/components/dashboard/settings/LevelRoadmapView.tsx` | Add `data-roadmap-print` attribute; update print handler to toggle body class |
+| `src/index.css` | Add `@media print` rules for `body.printing-roadmap` to hide non-roadmap content |
 
 No new files, no database changes.
 
