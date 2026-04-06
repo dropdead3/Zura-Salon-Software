@@ -921,6 +921,9 @@ export default function Settings() {
     setHasChanges(false);
   };
 
+  // State for category-specific action buttons (e.g. Stylist Levels)
+  const [categoryActions, setCategoryActions] = useState<React.ReactNode>(null);
+
   // If a category is selected, show detailed view
   if (activeCategory) {
     return (
@@ -930,6 +933,7 @@ export default function Settings() {
           <div className="mb-6">
             <DashboardPageHeader
               title={categoriesMap[activeCategory]?.label.toUpperCase() ?? ''}
+              actions={categoryActions}
             />
             <PageExplainer pageId="settings" />
           </div>
