@@ -2,6 +2,16 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "@supabase/supabase-js";
 import { requireAuth, requireOrgMember, authErrorResponse } from "../_shared/auth.ts";
 import { getCorsHeaders } from "../_shared/cors.ts";
+import { validateBody, ValidationError, z } from "../_shared/validation.ts";
+
+const SchedulingCopilotSchema = z.object({
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  locationId: z.string().uuid().optional(),
+  serviceDurationMinutes: z.number().int().min(5).max(480).optional().default(60),
+  staffUserId: z.string().uuid().optional(),
+  organizationId: z.string().uuid(),
+  organization_id: z.string().uuid().optional(),
+});
 
 interface ScheduleSlot {
   time: string;
