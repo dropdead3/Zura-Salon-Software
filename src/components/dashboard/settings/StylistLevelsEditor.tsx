@@ -588,7 +588,7 @@ function CriteriaComparisonTable({ levels, promotionCriteria, retentionCriteria,
     if (metric.section === 'promotion' && isPromotionSkip) {
       return (
         <TableCell key={level.id} className="text-center text-sm">
-          <span className="text-muted-foreground/40">—</span>
+          <span className="text-muted-foreground/30 text-xs select-none">N/A</span>
         </TableCell>
       );
     }
