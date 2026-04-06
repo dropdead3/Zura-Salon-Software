@@ -1683,7 +1683,7 @@ export function StylistLevelsEditor({ embedded = false, onActions }: StylistLeve
 
   const isEarlyExit = isLoading || !!error;
 
-  const actionButtons = (
+  const actionButtons = useMemo(() => (
     <div className="flex items-center gap-2">
       {levels.length > 0 && (
         <>
@@ -1728,14 +1728,14 @@ export function StylistLevelsEditor({ embedded = false, onActions }: StylistLeve
         </>
       )}
     </div>
-  );
+  ), [levels.length, hasChanges, saveLevels.isPending, analysisLoading]);
 
   // Expose action buttons to parent when embedded
   useEffect(() => {
     if (embedded && onActions) {
       onActions(actionButtons);
     }
-  });
+  }, [embedded, onActions, actionButtons]);
 
   const totalAssigned = Object.values(stylistsByLevel || {}).reduce((a, b) => a + b, 0);
 
