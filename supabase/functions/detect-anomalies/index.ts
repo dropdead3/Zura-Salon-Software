@@ -48,9 +48,6 @@ serve(async (req) => {
     } catch (orgErr) {
       return authErrorResponse(orgErr, getCorsHeaders(req));
     }
-        { status: 400, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
-      );
-    }
 
     const anomalies: AnomalyResult[] = [];
     const today = new Date();
