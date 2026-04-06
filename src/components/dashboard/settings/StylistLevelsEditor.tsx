@@ -2629,6 +2629,71 @@ export function StylistLevelsEditor({ embedded = false, onActions }: StylistLeve
           )}
         </DialogContent>
       </Dialog>
+      {showRoadmap && (
+        <LevelRoadmapView
+          levels={levels.map((l, i) => ({
+            label: l.label,
+            slug: l.slug,
+            dbId: l.dbId,
+            index: i,
+            isConfigured: l.isConfigured,
+            serviceCommissionRate: parseFloat(String(l.serviceCommissionRate)) || 0,
+            retailCommissionRate: parseFloat(String(l.retailCommissionRate)) || 0,
+            hourlyWageEnabled: l.hourlyWageEnabled,
+            hourlyWage: l.hourlyWage ? parseFloat(l.hourlyWage) : null,
+          }))}
+          promotionCriteria={promotionCriteria || []}
+          retentionCriteria={retentionCriteria || []}
+          orgName={effectiveOrganization?.name || 'Organization'}
+          orgLogoUrl={effectiveOrganization?.logo_url}
+          onClose={() => setShowRoadmap(false)}
+          onDownloadPDF={async () => {
+            const levelInfos = levels.map((l, i) => ({
+              label: l.label,
+              slug: l.slug,
+              dbId: l.dbId,
+              index: i,
+            }));
+            const commissions = levels.map(l => ({
+              dbId: l.dbId,
+              serviceCommissionRate: parseFloat(String(l.serviceCommissionRate)) || 0,
+              retailCommissionRate: parseFloat(String(l.retailCommissionRate)) || 0,
+              hourlyWageEnabled: l.hourlyWageEnabled,
+              hourlyWage: l.hourlyWage ? parseFloat(l.hourlyWage) : null,
+            }));
+            let logoDataUrl: string | undefined;
+            const logoUrl = effectiveOrganization?.logo_url;
+            if (logoUrl) {
+              try {
+                logoDataUrl = await new Promise<string>((resolve, reject) => {
+                  const img = new Image();
+                  img.crossOrigin = 'anonymous';
+                  img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+                    const ctx = canvas.getContext('2d');
+                    ctx?.drawImage(img, 0, 0);
+                    resolve(canvas.toDataURL('image/png'));
+                  };
+                  img.onerror = reject;
+                  img.src = logoUrl;
+                });
+              } catch { /* proceed without logo */ }
+            }
+            const doc = generateLevelRequirementsPDF({
+              orgName: effectiveOrganization?.name || 'Organization',
+              levels: levelInfos,
+              criteria: promotionCriteria,
+              retentionCriteria: retentionCriteria || [],
+              logoDataUrl,
+              commissions,
+            });
+            doc.save('level-progression-roadmap.pdf');
+            toast.success('Progression roadmap exported');
+          }}
+        />
+      )}
     </>
   );
 }
