@@ -1,125 +1,99 @@
 
 
-# Security Hardening — Phase 3: Fix Remaining 12 Findings
+# Security Scan — Phase 5 Analysis
 
-## Summary
+## Current Status
 
-The scan found 6 critical errors, 4 warnings, and 2 info items. Several are leftover from the previous migration where policies were added but old permissive policies were not dropped. This pass will fix all actionable items.
-
----
-
-## Critical Fixes
-
-### 1. Chat attachments — drop public SELECT policy
-The old `Anyone can view chat attachments` policy on `storage.objects` still grants unauthenticated access despite the bucket being private. Drop it. Authenticated access already works via signed URLs.
-
-### 2. Platform feedback screenshots — drop public SELECT policy
-Same issue: `Anyone can view feedback screenshots` still exists. Drop it.
-
-### 3. Business settings — drop duplicate permissive policy
-Two SELECT policies exist: the new restricted one (`Admins and platform users can view business settings`) AND the old `Authenticated users can view business settings` which uses `auth.uid() IS NOT NULL`. The old one overrides the new one. Drop the old policy.
-
-### 4. Twilio credentials — create restricted organizations view
-The `Users can view their own organization` policy returns all columns including `twilio_auth_token` and `twilio_account_sid`. 
-
-**Fix**: Create a `SECURITY DEFINER` function `get_organization_safe(org_id)` that returns all columns EXCEPT Twilio credentials. Restrict the existing SELECT policy to admins/platform users only. Non-admin org members use the safe function. Alternatively, move Twilio columns to a separate `organization_secrets` table with admin-only RLS.
-
-**Chosen approach**: Move Twilio credentials to a new `organization_secrets` table:
-- Create `organization_secrets` table (organization_id FK, twilio_account_sid, twilio_auth_token)
-- Migrate data from organizations table
-- Drop columns from organizations
-- RLS: only platform users and org admins can SELECT
-- Update any edge functions that read Twilio creds
-
-### 5. Employee login PINs — hash PINs
-PINs are stored in plaintext and readable by coaches. 
-
-**Difficulty**: High. This requires changing the PIN validation flow (`validate_dock_pin`, `validate_user_pin`), hashing existing PINs, and updating all PIN-set flows. This is a significant architectural change.
-
-**Recommendation**: Flag as a follow-up architectural task. For now, we can remove `login_pin` from the SELECT columns returned by the coach policy, which at least prevents coaches from reading PINs directly. The validation RPCs (SECURITY DEFINER) already handle comparison server-side.
-
-**Interim fix**: Create a view or modify the coach SELECT policy to exclude `login_pin` from results returned to non-admin roles. Since RLS policies can't filter columns (only rows), the real fix is either:
-- Move `login_pin` to a separate table with admin-only access
-- Or hash the PINs
-
-We'll move `login_pin` to a new `employee_pins` table with SECURITY DEFINER-only access, and update the validation RPCs.
-
-### 6. Realtime — no channel authorization
-`realtime.messages` has no RLS, so any authenticated user can subscribe to any channel topic.
-
-**Difficulty**: High. The `realtime` schema is Supabase-reserved — we cannot add RLS policies to `realtime.messages` directly. This requires Supabase-native Realtime authorization (channel-level policies via `supabase.channel()` config).
-
-**Recommendation**: Mark as architectural limitation. Document that Realtime channel authorization must be enforced at the application layer by validating organization membership before subscribing.
+Down from **11 critical + 5 warnings** to **1 critical + 4 warnings + 2 info**. The previous 4 phases resolved the vast majority of issues.
 
 ---
 
-## Warning Fixes
+## Remaining Findings
 
-### 7. Kiosk assets — restrict upload/update/delete
-Replace the 3 kiosk storage policies that check only `auth.uid() IS NOT NULL` with proper authorization. Since storage policies can't easily join to org tables via file path, restrict to users who have the `can_manage_kiosk_settings()` function returning true.
+### CRITICAL — Fix Now
 
-### 8. Leaked password protection
-This is a dashboard-level toggle (Cloud → Users → Auth Settings → HIBP check). Cannot be fixed via migration. Will note for user to enable manually.
+**1. Client payment card details readable by all salon staff**
+- Table: `client_cards_on_file`
+- Current policy: `is_org_member(auth.uid(), organization_id)` on SELECT — every stylist, assistant, receptionist can read `stripe_payment_method_id`, `stripe_customer_id`, `card_last4`, expiry
+- Fix: Replace SELECT policy to restrict to admin, manager, receptionist, super_admin, primary_owner only
 
-### 9-10. Extensions in public / permissive RLS
-Info-level. Extensions can't be moved without potential breakage. The remaining `USING(true)` policies need identification and fixing.
+### WARNINGS — Recommended
+
+**2. Leaked Password Protection disabled**
+- Cannot be fixed via migration. You need to enable it manually: go to Lovable Cloud → Users → Auth Settings → Email → toggle "Password HIBP Check" on
+
+**3. Extensions in public schema**
+- `pg_trgm`, `unaccent`, etc. in public schema. Moving them risks breaking dependent functions. Acceptable risk — no action needed.
+
+**4-5. Two `USING(true)` / `WITH CHECK(true)` policies on INSERT for public forms**
+- `job_applications`: Public job application form — intentionally public INSERT, already has admin-only SELECT/UPDATE/DELETE
+- `day_rate_bookings`: Public booking form — intentionally public INSERT, already has admin-only management policies
+- These are legitimate public-facing forms. Should be marked as intentional/ignored.
+
+### INFO
+
+**6-7. RLS enabled but no policies on `employee_pins` and `demo_queries`**
+- `employee_pins`: Correct by design — access is exclusively through SECURITY DEFINER RPCs (`validate_dock_pin`, `set_employee_pin`, etc.)
+- `demo_queries`: Internal/dev table, no sensitive data
+
+### NEW DISCOVERY — Cross-Org Data Leaks (not flagged by scanner)
+
+Several tables with `USING(true)` SELECT for authenticated users lack `organization_id` columns, meaning **any authenticated user from any org can read all rows**:
+
+**8. `ring_the_bell_entries`** — Contains service_booked, ticket_value. No org_id. Cross-org leakage.
+**9. `shift_swaps` / `shift_swap_messages`** — Contains schedule data. No org_id, only `location_id`. Cross-org leakage.
+**10. `staffing_history`** — Contains headcount data. Only `location_id`, no org_id. Cross-org leakage.
+**11. `marketing_campaigns`** — Contains budget, spend data. Has `created_by` but no org_id. Cross-org leakage.
+**12. `leaderboard_history` / `leaderboard_weights` / `leaderboard_achievements`** — Performance data. No org_id.
+**13. `challenge_participants` / `challenge_progress_snapshots`** — No org_id.
+**14. `user_responsibilities` / `user_achievements`** — No org_id.
+
+These are architectural gaps — the tables were created without `organization_id` and would need schema changes + data backfill to fix properly.
 
 ---
 
-## Implementation
+## Implementation Plan
 
-### Migration SQL
+### Migration: Fix actionable items
+
+**Step 1 — Restrict `client_cards_on_file` SELECT**
 ```sql
--- 1. Drop leftover public storage policies
-DROP POLICY IF EXISTS "Anyone can view chat attachments" ON storage.objects;
-DROP POLICY IF EXISTS "Anyone can view feedback screenshots" ON storage.objects;
-
--- 2. Drop old permissive business_settings policy
-DROP POLICY IF EXISTS "Authenticated users can view business settings" ON public.business_settings;
-
--- 3. Fix kiosk asset policies
-DROP POLICY IF EXISTS "Org admins can upload kiosk assets" ON storage.objects;
-DROP POLICY IF EXISTS "Org admins can update kiosk assets" ON storage.objects;
-DROP POLICY IF EXISTS "Org admins can delete kiosk assets" ON storage.objects;
--- Recreate with proper auth check using can_manage_kiosk_settings()
-
--- 4. Move login_pin to separate table
-CREATE TABLE public.employee_pins (
-  user_id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
-  login_pin TEXT NOT NULL,
-  organization_id UUID NOT NULL REFERENCES public.organizations(id) ON DELETE CASCADE,
-  updated_at TIMESTAMPTZ DEFAULT now()
-);
-ALTER TABLE public.employee_pins ENABLE ROW LEVEL SECURITY;
--- No SELECT policy (access only via SECURITY DEFINER RPCs)
--- Migrate data from employee_profiles
-INSERT INTO employee_pins SELECT user_id, login_pin, organization_id FROM employee_profiles WHERE login_pin IS NOT NULL;
--- Update validate_dock_pin and validate_user_pin RPCs to read from employee_pins
--- Drop login_pin column from employee_profiles
-
--- 5. Move Twilio creds to organization_secrets
-CREATE TABLE public.organization_secrets (...);
--- Migrate, update edge functions, drop columns from organizations
+DROP POLICY "Org members can view cards" ON public.client_cards_on_file;
+CREATE POLICY "Authorized staff can view cards"
+  ON public.client_cards_on_file FOR SELECT TO authenticated
+  USING (
+    is_org_admin(auth.uid(), organization_id)
+    OR EXISTS (
+      SELECT 1 FROM user_roles ur
+      WHERE ur.user_id = auth.uid()
+        AND ur.role IN ('manager', 'receptionist')
+    )
+  );
 ```
 
-### Frontend Changes
-- Update any PIN-setting hooks to write to `employee_pins` table
-- Update Twilio-related edge functions to read from `organization_secrets`
-- No changes needed for chat/feedback storage (signed URLs already in use)
+**Step 2 — Add `organization_id` to cross-org tables (high-impact subset)**
+Add `organization_id` column + backfill from related tables for the most sensitive ones:
+- `ring_the_bell_entries` (via `enrollment_id` → program enrollments)
+- `shift_swaps` (via `location_id` → locations)
+- `staffing_history` (via `location_id` → locations)
+- `marketing_campaigns` (via `created_by` → employee_profiles)
 
-### Items Deferred (Architectural)
-- **Realtime authorization**: Cannot modify `realtime` schema. Requires application-layer enforcement.
-- **PIN hashing**: Moving to separate table is step 1; hashing is step 2 (follow-up).
-- **Leaked password protection**: User must enable via Cloud UI.
+Then replace `USING(true)` with `USING(is_org_member(auth.uid(), organization_id))`.
 
----
+**Step 3 — Update security findings**
+Mark `job_applications` INSERT, `day_rate_bookings` INSERT, `employee_pins` no-policy, and `demo_queries` as intentional/ignored.
 
-## Files Affected
+### Frontend changes
+- None expected — queries already filter by org on the frontend
 
-| File | Change |
+### Files affected
+| Area | Change |
 |------|--------|
-| New migration SQL | Drop policies, create tables, move data, update RPCs |
-| Edge functions using Twilio | Read from `organization_secrets` |
-| PIN-related hooks | Write to `employee_pins` instead of `employee_profiles.login_pin` |
-| Security findings | Update/delete resolved findings |
+| New migration SQL | Policy changes + schema additions |
+| Security findings | Mark intentional items as ignored |
+
+### Deferred items
+- **Remaining tables without org_id** (leaderboard_*, challenge_*, user_achievements, user_responsibilities) — lower sensitivity, can be addressed in a future pass
+- **Leaked Password Protection** — manual toggle in Cloud UI
+- **Realtime authorization** — Supabase-reserved schema, application-layer enforcement only
 
