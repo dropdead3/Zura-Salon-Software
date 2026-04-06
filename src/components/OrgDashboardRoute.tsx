@@ -5,17 +5,21 @@ import { useAuth } from '@/contexts/AuthContext';
 import { ZuraLoader } from '@/components/ui/ZuraLoader';
 import { PLATFORM_NAME } from '@/lib/brand';
 import NotFound from '@/pages/NotFound';
+import { OrgAccessDenied } from '@/components/auth/OrgAccessDenied';
 import { useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 
 /**
  * Route wrapper for /org/:orgSlug/dashboard/*.
  * Resolves the organization from the URL slug and syncs it into OrganizationContext.
- * Renders <Outlet /> for all nested dashboard routes.
+ * Verifies the authenticated user is a member before rendering <Outlet />.
  */
 export function OrgDashboardRoute() {
   const { orgSlug } = useParams<{ orgSlug: string }>();
   const { data: organization, isLoading, error } = useOrganizationBySlug(orgSlug);
   const { setSelectedOrganization, effectiveOrganization } = useOrganizationContext();
+  const { user, isPlatformUser } = useAuth();
 
   // Sync the URL-resolved org into context so all downstream hooks work
   useEffect(() => {
@@ -23,6 +27,22 @@ export function OrgDashboardRoute() {
       setSelectedOrganization(organization);
     }
   }, [organization, effectiveOrganization?.id, setSelectedOrganization]);
+
+  // Check membership: user must have a row in employee_profiles or organization_admins
+  const orgId = organization?.id;
+  const userId = user?.id;
+  const { data: isMember, isLoading: isMembershipLoading } = useQuery({
+    queryKey: ['org-membership', orgId, userId],
+    queryFn: async () => {
+      const [profileRes, adminRes] = await Promise.all([
+        supabase.from('employee_profiles').select('id').eq('organization_id', orgId!).eq('user_id', userId!).maybeSingle(),
+        supabase.from('organization_admins').select('id').eq('organization_id', orgId!).eq('user_id', userId!).maybeSingle(),
+      ]);
+      return !!(profileRes.data || adminRes.data);
+    },
+    enabled: !!orgId && !!userId && !isPlatformUser,
+    staleTime: 5 * 60 * 1000,
+  });
 
   if (isLoading) {
     return (
@@ -34,6 +54,21 @@ export function OrgDashboardRoute() {
 
   if (error || !organization || !orgSlug) {
     return <NotFound />;
+  }
+
+  // Platform users bypass membership check
+  if (!isPlatformUser) {
+    if (isMembershipLoading) {
+      return (
+        <div className="min-h-screen bg-background flex items-center justify-center">
+          <ZuraLoader size="lg" platformColors />
+        </div>
+      );
+    }
+
+    if (!isMember) {
+      return <OrgAccessDenied organizationName={organization.name} />;
+    }
   }
 
   return <Outlet />;
