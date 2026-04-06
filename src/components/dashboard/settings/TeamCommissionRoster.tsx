@@ -111,8 +111,23 @@ export function TeamCommissionRoster({
       }
       return true;
     });
-    // Sort: active booking members first, inactive at bottom
+    // Sort: admins by role level at top, then active stylists, then inactive at bottom
+    const ROLE_ORDER: Record<string, number> = { super_admin: 1, admin: 2, manager: 3, receptionist: 4, assistant: 5, stylist: 6 };
+    const getTopRole = (roles?: string[] | null) => {
+      if (!roles || roles.length === 0) return 99;
+      return Math.min(...roles.map(r => ROLE_ORDER[r] ?? 50));
+    };
     return filtered.sort((a, b) => {
+      const aIsStylistOnly = a.roles?.length === 1 && a.roles[0] === 'stylist';
+      const bIsStylistOnly = b.roles?.length === 1 && b.roles[0] === 'stylist';
+      // Non-stylist-only (admins/managers) first
+      if (aIsStylistOnly !== bIsStylistOnly) return aIsStylistOnly ? 1 : -1;
+      // Within non-stylist-only group, sort by role level
+      if (!aIsStylistOnly && !bIsStylistOnly) {
+        const roleCompare = getTopRole(a.roles) - getTopRole(b.roles);
+        if (roleCompare !== 0) return roleCompare;
+      }
+      // Then active before inactive
       const aActive = a.is_booking !== false;
       const bActive = b.is_booking !== false;
       if (aActive !== bActive) return aActive ? -1 : 1;
@@ -299,7 +314,7 @@ export function TeamCommissionRoster({
                       "inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-medium shrink-0 border",
                       roleBadge.colorClasses
                     )}>
-                      {roleBadge.shortLabel}
+                      {roleBadge.label}
                     </span>
                   )}
                   {isMultiLocation && (
