@@ -2649,6 +2649,15 @@ export function StylistLevelsEditor({ embedded = false, onActions }: StylistLeve
           orgName={effectiveOrganization?.name || 'Organization'}
           orgLogoUrl={effectiveOrganization?.logo_url}
           onClose={() => setShowRoadmap(false)}
+          onDownloadStaffReport={() => {
+            const doc = generateStaffLevelReportPDF({
+              orgName: effectiveOrganization?.name || 'Organization',
+              teamProgress,
+              counts: teamCounts,
+            });
+            doc.save('staff-level-report.pdf');
+            toast.success('Staff level report exported');
+          }}
           onDownloadPDF={async () => {
             const levelInfos = levels.map((l, i) => ({
               label: l.label,
