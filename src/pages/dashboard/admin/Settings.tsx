@@ -19,11 +19,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
 import { 
   Users, 
   Bell, 
@@ -33,7 +28,7 @@ import {
   Mail,
   Cog,
   Rocket,
-  Palette,
+  
   Sun,
   Moon,
   Monitor,
