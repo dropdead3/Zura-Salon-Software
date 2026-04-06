@@ -1304,7 +1304,7 @@ export function StylistLevelsEditor({ embedded = false }: StylistLevelsEditorPro
 
                     {/* Expanded content */}
                     {isExpanded && (
-                      <div className={cn("px-4 pb-4 pt-1 space-y-3 border-t border-border/40", isExpanded && "border-l-2")} style={{ borderLeftColor: `var(--${levelColor.bg.includes('amber-500') ? 'primary' : 'border'})` }}>
+                      <div className="px-4 pb-4 pt-1 space-y-3 border-t border-border/40">
                         {/* Details label */}
                         <div className="ml-[3.25rem] flex items-center gap-2 pt-1">
                           <span className="text-[11px] font-display tracking-wide text-muted-foreground">Details</span>
