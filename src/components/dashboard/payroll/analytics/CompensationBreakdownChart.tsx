@@ -5,6 +5,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { CompensationBreakdown } from '@/hooks/usePayrollAnalytics';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
+import { AnimatedBlurredAmount } from '@/components/ui/AnimatedBlurredAmount';
+import { useHideNumbers } from '@/contexts/HideNumbersContext';
 
 interface CompensationBreakdownChartProps {
   breakdown: CompensationBreakdown;
@@ -21,6 +23,7 @@ const COLORS = [
 
 export function CompensationBreakdownChart({ breakdown, isLoading }: CompensationBreakdownChartProps) {
   const { formatCurrencyWhole } = useFormatCurrency();
+  const { hideNumbers } = useHideNumbers();
   const chartData = useMemo(() => {
     const items = [
       { name: 'Base Pay', value: breakdown.basePay, color: COLORS[0] },
@@ -99,7 +102,7 @@ export function CompensationBreakdownChart({ breakdown, isLoading }: Compensatio
                 ))}
               </Pie>
               <Tooltip
-                formatter={(value: number) => formatCurrencyWhole(value)}
+                formatter={(value: number) => hideNumbers ? '••••' : formatCurrencyWhole(value)}
                 contentStyle={{
                   backgroundColor: 'hsl(var(--background))',
                   border: '1px solid hsl(var(--border))',
@@ -128,7 +131,7 @@ export function CompensationBreakdownChart({ breakdown, isLoading }: Compensatio
                 />
                 <span className="text-muted-foreground">{item.name}</span>
               </div>
-              <span className="font-medium">{formatCurrencyWhole(item.value)}</span>
+              <AnimatedBlurredAmount value={item.value} currency="USD" decimals={0} className="font-medium" />
             </div>
           ))}
         </div>
