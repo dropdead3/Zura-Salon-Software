@@ -602,6 +602,19 @@ export function StylistLevelsEditor({ embedded = false }: StylistLevelsEditorPro
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [newLevelName, setNewLevelName] = useState('');
   const [isAddingNew, setIsAddingNew] = useState(false);
+  const [expandedLevels, setExpandedLevels] = useState<Set<string>>(new Set());
+
+  const toggleExpanded = useCallback((id: string, forceOpen?: boolean) => {
+    setExpandedLevels(prev => {
+      const next = new Set(prev);
+      if (forceOpen || !next.has(id)) {
+        next.add(id);
+      } else {
+        next.delete(id);
+      }
+      return next;
+    });
+  }, []);
   const [hasChanges, setHasChanges] = useState(false);
   const [previewLevel, setPreviewLevel] = useState(0);
   const [wizardLevelId, setWizardLevelId] = useState<string | null>(null);
