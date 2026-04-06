@@ -342,6 +342,8 @@ function CriteriaComparisonTable({ levels, promotionCriteria, retentionCriteria,
   const [editingMetric, setEditingMetric] = useState<{ label: string; section: 'promotion' | 'retention' } | null>(null);
   const [editValues, setEditValues] = useState<Record<string, { enabled: boolean; value: string }>>({});
   const [isSavingRow, setIsSavingRow] = useState(false);
+  const [isTableFullscreen, setIsTableFullscreen] = useState(false);
+  const toggleTableFullscreen = useCallback(() => setIsTableFullscreen(prev => !prev), []);
 
   const getCriteria = (levelDbId: string | undefined) => ({
     promo: promotionCriteria.find(c => c.stylist_level_id === levelDbId && c.is_active),
@@ -750,7 +752,7 @@ function CriteriaComparisonTable({ levels, promotionCriteria, retentionCriteria,
       <p className="text-sm text-muted-foreground">
         Click any metric row to configure thresholds across all levels at once. Use "Edit" per-level for advanced settings.
       </p>
-      <ScrollableTableWrapper>
+      <ScrollableTableWrapper isFullscreen={isTableFullscreen} onToggleFullscreen={toggleTableFullscreen}>
         <table className="w-full caption-bottom text-sm [&_th]:border-r [&_th]:border-border/20 [&_th:last-child]:border-r-0 [&_td]:border-r [&_td]:border-border/20 [&_td:last-child]:border-r-0 [&_td[colspan]]:border-r-0">
           <TableHeader className="sticky top-0 z-20">
             <TableRow className="border-b-2 border-border/60 bg-muted">
