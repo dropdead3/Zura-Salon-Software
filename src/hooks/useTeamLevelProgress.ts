@@ -54,19 +54,36 @@ export function useTeamLevelProgress() {
   const { data: allLevels = [] } = useStylistLevels();
   const { data: allCriteria = [] } = useLevelPromotionCriteria();
   const { data: allRetention = [] } = useLevelRetentionCriteria();
+  const { data: criteriaOverrides = [] } = useLevelCriteriaOverrides();
 
-  // Fetch all active employee profiles with stylist levels
+  // Fetch all active employee profiles with stylist levels + location
   const { data: profiles = [], isLoading: loadingProfiles } = useQuery({
     queryKey: ['team-profiles-for-graduation', orgId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('employee_profiles')
-        .select('user_id, full_name, photo_url, stylist_level, hire_date, is_active')
+        .select('user_id, full_name, photo_url, stylist_level, hire_date, is_active, location_id')
         .eq('organization_id', orgId!)
         .eq('is_active', true)
         .not('stylist_level', 'is', null);
       if (error) throw error;
       return data || [];
+    },
+    enabled: !!orgId,
+  });
+
+  // Fetch location → group mappings for override resolution
+  const { data: locationGroupMap = {} } = useQuery({
+    queryKey: ['location-group-map', orgId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('locations')
+        .select('id, location_group_id')
+        .eq('organization_id', orgId!);
+      if (error) return {};
+      const map: Record<string, string | null> = {};
+      (data || []).forEach((l: any) => { map[l.id] = l.location_group_id; });
+      return map;
     },
     enabled: !!orgId,
   });
