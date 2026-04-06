@@ -327,30 +327,22 @@ export function useTeamLevelProgress() {
       let retentionFailures: RetentionFailure[] = [];
       if (retCriteria) {
         const retMetrics = computeMetrics(retCriteria.evaluation_window_days);
-        if (retCriteria.revenue_enabled && retMetrics.monthlyRevenue < retCriteria.revenue_minimum) {
-          retentionFailures.push({ key: 'revenue', label: 'Service Revenue', current: Math.round(retMetrics.monthlyRevenue), minimum: retCriteria.revenue_minimum, unit: '/mo' });
-        }
-        if (retCriteria.retail_enabled && retMetrics.retailPct < retCriteria.retail_pct_minimum) {
-          retentionFailures.push({ key: 'retail', label: 'Retail Attachment', current: Math.round(retMetrics.retailPct * 10) / 10, minimum: retCriteria.retail_pct_minimum, unit: '%' });
-        }
-        if (retCriteria.rebooking_enabled && retMetrics.rebookingPct < retCriteria.rebooking_pct_minimum) {
-          retentionFailures.push({ key: 'rebooking', label: 'Rebooking Rate', current: Math.round(retMetrics.rebookingPct * 10) / 10, minimum: retCriteria.rebooking_pct_minimum, unit: '%' });
-        }
-        if (retCriteria.avg_ticket_enabled && retMetrics.avgTicket < retCriteria.avg_ticket_minimum) {
-          retentionFailures.push({ key: 'avg_ticket', label: 'Average Ticket', current: Math.round(retMetrics.avgTicket), minimum: retCriteria.avg_ticket_minimum, unit: '$' });
-        }
-        if (retCriteria.retention_rate_enabled && retMetrics.retentionRate < Number(retCriteria.retention_rate_minimum)) {
-          retentionFailures.push({ key: 'retention_rate', label: 'Client Retention', current: Math.round(retMetrics.retentionRate * 10) / 10, minimum: Number(retCriteria.retention_rate_minimum), unit: '%' });
-        }
-        if (retCriteria.new_clients_enabled && retMetrics.newClientsMonthly < Number(retCriteria.new_clients_minimum)) {
-          retentionFailures.push({ key: 'new_clients', label: 'New Clients', current: Math.round(retMetrics.newClientsMonthly * 10) / 10, minimum: Number(retCriteria.new_clients_minimum), unit: '/mo' });
-        }
-        if (retCriteria.utilization_enabled && retMetrics.utilization < Number(retCriteria.utilization_minimum)) {
-          retentionFailures.push({ key: 'utilization', label: 'Schedule Utilization', current: Math.round(retMetrics.utilization * 10) / 10, minimum: Number(retCriteria.utilization_minimum), unit: '%' });
-        }
-        if (retCriteria.rev_per_hour_enabled && retMetrics.revPerHour < Number(retCriteria.rev_per_hour_minimum)) {
-          retentionFailures.push({ key: 'rev_per_hour', label: 'Revenue Per Hour', current: Math.round(retMetrics.revPerHour), minimum: Number(retCriteria.rev_per_hour_minimum), unit: '$/hr' });
-        }
+        const userLocId = profile.location_id;
+        const userGroupId = userLocId ? (locationGroupMap as Record<string, string | null>)[userLocId] ?? null : null;
+
+        const resolveRet = (field: string, orgDefault: number): number => {
+          if (!currentLevel) return orgDefault;
+          return resolveCriteriaValue(orgDefault, criteriaOverrides, currentLevel.id, 'retention', field, userLocId, userGroupId).value;
+        };
+
+        if (retCriteria.revenue_enabled) { const min = resolveRet('revenue_minimum', retCriteria.revenue_minimum); if (retMetrics.monthlyRevenue < min) retentionFailures.push({ key: 'revenue', label: 'Service Revenue', current: Math.round(retMetrics.monthlyRevenue), minimum: min, unit: '/mo' }); }
+        if (retCriteria.retail_enabled) { const min = resolveRet('retail_pct_minimum', retCriteria.retail_pct_minimum); if (retMetrics.retailPct < min) retentionFailures.push({ key: 'retail', label: 'Retail Attachment', current: Math.round(retMetrics.retailPct * 10) / 10, minimum: min, unit: '%' }); }
+        if (retCriteria.rebooking_enabled) { const min = resolveRet('rebooking_pct_minimum', retCriteria.rebooking_pct_minimum); if (retMetrics.rebookingPct < min) retentionFailures.push({ key: 'rebooking', label: 'Rebooking Rate', current: Math.round(retMetrics.rebookingPct * 10) / 10, minimum: min, unit: '%' }); }
+        if (retCriteria.avg_ticket_enabled) { const min = resolveRet('avg_ticket_minimum', retCriteria.avg_ticket_minimum); if (retMetrics.avgTicket < min) retentionFailures.push({ key: 'avg_ticket', label: 'Average Ticket', current: Math.round(retMetrics.avgTicket), minimum: min, unit: '$' }); }
+        if (retCriteria.retention_rate_enabled) { const min = resolveRet('retention_rate_minimum', Number(retCriteria.retention_rate_minimum)); if (retMetrics.retentionRate < min) retentionFailures.push({ key: 'retention_rate', label: 'Client Retention', current: Math.round(retMetrics.retentionRate * 10) / 10, minimum: min, unit: '%' }); }
+        if (retCriteria.new_clients_enabled) { const min = resolveRet('new_clients_minimum', Number(retCriteria.new_clients_minimum)); if (retMetrics.newClientsMonthly < min) retentionFailures.push({ key: 'new_clients', label: 'New Clients', current: Math.round(retMetrics.newClientsMonthly * 10) / 10, minimum: min, unit: '/mo' }); }
+        if (retCriteria.utilization_enabled) { const min = resolveRet('utilization_minimum', Number(retCriteria.utilization_minimum)); if (retMetrics.utilization < min) retentionFailures.push({ key: 'utilization', label: 'Schedule Utilization', current: Math.round(retMetrics.utilization * 10) / 10, minimum: min, unit: '%' }); }
+        if (retCriteria.rev_per_hour_enabled) { const min = resolveRet('rev_per_hour_minimum', Number(retCriteria.rev_per_hour_minimum)); if (retMetrics.revPerHour < min) retentionFailures.push({ key: 'rev_per_hour', label: 'Revenue Per Hour', current: Math.round(retMetrics.revPerHour), minimum: min, unit: '$/hr' }); }
       }
 
       if (isTopLevel) {
