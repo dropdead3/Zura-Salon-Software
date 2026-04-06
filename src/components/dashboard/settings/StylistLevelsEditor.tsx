@@ -1781,6 +1781,13 @@ export function StylistLevelsEditor({ embedded = false, onActions }: StylistLeve
     </div>
   );
 
+  // Expose action buttons to parent when embedded
+  useEffect(() => {
+    if (embedded && onActions) {
+      onActions(actionButtons);
+    }
+  });
+
   const totalAssigned = Object.values(stylistsByLevel || {}).reduce((a, b) => a + b, 0);
 
   return (
