@@ -1,36 +1,79 @@
 
 
-# Enable Retention Minimums for Level 1 (Base Level)
+# Promotion Readiness & Staleness Card
 
-## Problem
-Level 1 (New Talent) is the base level — it has no promotion criteria, so all KPI rows display "N/A". But the salon still needs to set **minimum thresholds to stay** at Level 1 (retention minimums). The database already has `revenue_minimum`, `retail_pct_minimum`, etc. on `level_retention_criteria`, but the UI never exposes them for the base level.
+## What We're Building
+A dual-section analytics card for the Staff Analytics surface that answers two questions:
+1. **Ready to Promote** — Stylists who meet all criteria for their next level (or are close, e.g. ≥90%)
+2. **Stale / Stalled** — Stylists who haven't improved their promotion readiness in 6+ months, with a staleness duration indicator
 
-## Solution
-Instead of showing "N/A" for all promotion KPIs on Level 1, show and allow editing of the **retention minimum** values. This makes it clear: "You don't need these to get promoted (you're already here), but you need them to stay."
+## Data Source
+All data comes from the existing `useTeamLevelProgress` hook, which already provides per-stylist:
+- `status` (ready, in_progress, needs_attention, at_top_level, etc.)
+- `compositeScore` (weighted 0–100 promotion progress)
+- `isFullyQualified` (boolean)
+- `timeAtLevelDays` (days since last promotion/assignment)
+- `criteriaProgress[]` (per-KPI current vs target)
 
-### Changes in `StylistLevelsEditor.tsx`
+**New data needed**: To measure *staleness* (no improvement over 6 months), we need a historical comparison. Two options:
 
-**1. Update `isPromotionSkip` logic**
-Currently, `isPromotionSkip = metric.section === 'promotion' && isBaseLevel` blankets all promotion KPIs as "N/A" for Level 1. Change this so only Tenure, Eval Window, and Approval skip — the editable KPIs (Revenue, Retail %, Rebooking %, etc.) should render the retention minimum instead.
+### Option A — Snapshot-based (requires new table)
+Store periodic `composite_score` snapshots and compare current vs 6-months-ago. More accurate but requires a new `level_progress_snapshots` table + a scheduled function.
 
-**2. Modify `renderMetricCell` for base level KPIs**
-When `isBaseLevel` and the metric is an editable promotion KPI:
-- **Read mode**: Display the retention minimum value (e.g., `$3K`) from `retention.revenue_minimum` instead of "N/A"
-- **Edit mode**: Save to the retention fields (`retEnabledField` / `retValueField`) instead of promotion fields
-- Add a subtle visual indicator (e.g., muted label or different text color) to signal these are "minimums to stay" rather than promotion targets
+### Option B — Time-at-level heuristic (no new infra)
+Use `timeAtLevelDays > 180` combined with `compositeScore < 80%` as the staleness signal. If someone has been at a level for 6+ months and isn't close to qualifying, they're stalled. This is a good Phase 1 proxy.
 
-**3. Update `startEditing` to load retention values for Level 1**
-When initializing edit values for a row, if the level is the base level, pull from the retention criteria fields instead of promotion criteria fields.
+**Recommendation**: Start with **Option B** (no new tables), then add snapshot tracking in a future iteration for true trend-based staleness.
 
-**4. Update `saveRow` to write retention for Level 1**
-When saving an editable KPI row, if the level is the base level, upsert into `level_retention_criteria` using `retEnabledField`/`retValueField` instead of the promotion table. Also set `retention_enabled: true` on the retention record.
+## Card Design
 
-**5. Update section header subtitle for base level**
-Add a note in the Promotion section header row that says something like "Level 1 values are retention minimums" to avoid confusion.
+### Layout
+Following the Luxury Analytics Card pattern:
+- **Header**: `GraduationCap` icon + "LEVEL READINESS" title + `MetricInfoTooltip` + `AnalyticsFilterBadge`
+- **Body**: Two sections with a subtle divider
 
-### Files Modified
-- `src/components/dashboard/settings/StylistLevelsEditor.tsx`
+**Section 1 — Ready to Promote**
+- List of stylists with `isFullyQualified === true` or `compositeScore >= 90`
+- Each row: avatar, name, current level → next level, composite score badge, time at level
+- Green accent for fully qualified; amber for ≥90%
+- Empty state: "No stylists currently qualify for promotion"
 
-### No database changes
-The `level_retention_criteria` table already has all the necessary columns (`revenue_enabled`, `revenue_minimum`, `retail_pct_minimum`, etc.).
+**Section 2 — Stalled Progression**
+- Stylists with `timeAtLevelDays >= 180` AND `compositeScore < 80` AND status not `at_top_level`
+- Each row: avatar, name, current level, composite score, staleness duration (e.g. "8 months at level")
+- Sorted by staleness duration descending
+- Muted red/amber accent for staleness severity
+
+### Staleness Tiers
+- 6–9 months: "Stalling" (amber)
+- 9–12 months: "Stale" (orange)
+- 12+ months: "Stagnant" (muted red)
+
+## Technical Plan
+
+### Files to Create
+1. **`src/components/dashboard/analytics/LevelReadinessCard.tsx`**
+   - Consumes `useTeamLevelProgress()` (already batches all team data)
+   - Filters and segments into "ready" and "stalled" groups
+   - Uses `PinnableCard` wrapper for Command Center pinning
+   - Follows canonical card header layout (icon + title + tooltip + filter badge)
+   - Uses `BlurredAmount` for any financial values if shown
+   - Includes `VisibilityGate` for role-based access (admin/manager only)
+
+### Files to Modify
+2. **Staff analytics page** (wherever the staff analytics cards are rendered) — add `<LevelReadinessCard />` to the layout
+
+### No database changes needed for Phase 1.
+
+## Copy
+- Card title: "LEVEL READINESS"
+- Tooltip: "Identifies stylists who qualify for promotion and flags those whose progression has stalled for 6+ months."
+- Section headers: "Ready to Promote" / "Stalled Progression"
+- Staleness labels: "6mo stalling" / "9mo stale" / "12mo+ stagnant"
+- Empty states: "No stylists currently qualify" / "No stalled progressions detected"
+
+## Future Enhancement (Phase 2)
+- Add `level_progress_snapshots` table with monthly composite score snapshots
+- Compare current score vs 6-month-ago score for true trend-based staleness (score delta ≤ 2% = stalled)
+- Add sparkline showing score trajectory per stylist
 
