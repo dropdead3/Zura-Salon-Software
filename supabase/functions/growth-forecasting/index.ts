@@ -158,10 +158,6 @@ serve(async (req) => {
     } catch (orgErr) {
       return authErrorResponse(orgErr, getCorsHeaders(req));
     }
-        status: 400,
-        headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
-      });
-    }
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
