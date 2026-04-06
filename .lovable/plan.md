@@ -1,54 +1,48 @@
 
-# Security Phase 3 — Zod Validation + Org-Scope Remaining Tables
 
-## Part A: Zod Input Validation for Edge Functions
+# Fix: Sidebar Navigation Breaks on Stylist Levels Page
 
-Add Zod schemas to validate `req.json()` bodies in all 17 auth-hardened functions. Each function gets a typed schema with proper field constraints, rejecting malformed requests with 400 errors.
+## Root Cause
 
-| Function | Schema Fields |
-|----------|--------------|
-| `ai-agent-chat` | `messages` (array), `organizationId` (uuid), `channelId` (uuid, optional) |
-| `ai-assistant` | `messages` (array), `organizationId` (uuid, optional) |
-| `execute-ai-action` | `actionType` (enum), `params` (object), `organizationId` (uuid), `actionId` (uuid, optional) |
-| `ai-card-analysis` | `organizationId` (uuid), `cardType` (string), `data` (object) |
-| `ai-scheduling-copilot` | `organizationId` (uuid), `query` (string) |
-| `revenue-forecasting` | `organizationId` (uuid), `forecastDays` (number 1-90), `forecastType` (enum) |
-| `growth-forecasting` | `organizationId` (uuid), `timeframe` (string) |
-| `detect-anomalies` | `organizationId` (uuid), `locationId` (uuid, optional) |
-| `process-client-automations` | `organizationId` (uuid) |
-| `lever-engine` | `organizationId` (uuid), `locationId` (uuid, optional) |
-| `calculate-health-scores` | `organizationId` (uuid) |
-| `calculate-org-benchmarks` | `organizationId` (uuid) |
-| `update-sales-leaderboard` | `organizationId` (uuid) |
-| `record-staffing-snapshot` | `organizationId` (uuid), `locationId` (uuid, optional) |
-| `check-staffing-levels` | `organizationId` (uuid), `locationId` (uuid, optional) |
-| `calculate-preferred-stylists` | `organizationId` (uuid) |
-| `generate-daily-huddle` | `organizationId` (uuid), `locationId` (uuid, optional) |
+**Infinite render loop** caused by a `useEffect` with no dependency array in `StylistLevelsEditor.tsx` (line 1734-1738):
 
-Approach: Create `supabase/functions/_shared/validation.ts` with a `validateBody()` helper that parses + returns typed data or throws 400.
+```typescript
+useEffect(() => {
+  if (embedded && onActions) {
+    onActions(actionButtons);  // calls setCategoryActions in Settings.tsx
+  }
+});  // ← NO dependency array = runs EVERY render
+```
 
----
+This triggers: Editor renders → calls `setCategoryActions` → Settings re-renders → Editor re-renders → calls `setCategoryActions` again → ∞ loop. The rapid DOM thrashing detaches sidebar nodes, making all navigation links unclickable.
 
-## Part B: Org-Scope 6 Gamification Tables
+## Fix (1 file)
 
-These tables currently allow cross-tenant data leakage:
+**`src/components/dashboard/settings/StylistLevelsEditor.tsx`**
 
-| Table | Issue | Fix |
-|-------|-------|-----|
-| `leaderboard_weights` | No `organization_id` column | Add column + org-scoped RLS |
-| `leaderboard_achievements` | No `organization_id` column (global definitions) | Add column (nullable for platform-wide defaults) + org-scoped SELECT |
-| `user_achievements` | No `organization_id` column | Add column + org-scoped RLS |
-| `challenge_participants` | SELECT uses `USING (true)` — any user sees all orgs | Scope via `team_challenges.organization_id` join |
-| `challenge_progress_snapshots` | SELECT uses `USING (true)` | Scope via challenge → org join |
-| `team_challenges` | SELECT shows all active challenges across orgs | Add `organization_id` filter to SELECT policy |
+1. **Memoize `actionButtons`** using `useMemo` — the JSX depends on `hasChanges`, `saveLevels.isPending`, `analysisLoading`, `showRoadmap`, and handler functions.
 
----
+2. **Add a dependency array** to the `useEffect` at line 1734 so it only fires when `actionButtons` actually changes:
 
-## Files Affected
+```typescript
+const actionButtons = useMemo(() => (
+  <div className="flex items-center gap-2">
+    {/* existing button JSX */}
+  </div>
+), [hasChanges, saveLevels.isPending, analysisLoading, showRoadmap]);
 
-| File | Change |
-|------|--------|
-| `supabase/functions/_shared/validation.ts` | New shared Zod helper |
-| 17 edge function `index.ts` files | Add Zod schemas + validateBody() |
-| New migration SQL | Add org_id columns + update RLS policies |
+useEffect(() => {
+  if (embedded && onActions) {
+    onActions(actionButtons);
+  }
+}, [embedded, onActions, actionButtons]);
+```
+
+This breaks the infinite loop by ensuring `onActions` is only called when the button state genuinely changes.
+
+## Scope
+
+- Single file edit: `StylistLevelsEditor.tsx`
+- No database or migration changes
+- No other components affected
 
