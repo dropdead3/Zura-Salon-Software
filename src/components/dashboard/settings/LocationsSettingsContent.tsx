@@ -145,6 +145,7 @@ import { toast } from 'sonner';
 export function LocationsSettingsContent() {
   const { effectiveOrganization } = useOrganizationContext();
   const { formatDate } = useFormatDate();
+  const { data: locations = [], isLoading } = useLocations();
   const createLocation = useCreateLocation();
   const updateLocation = useUpdateLocation();
   const deleteLocation = useDeleteLocation();
@@ -331,7 +332,7 @@ export function LocationsSettingsContent() {
   const handleCreateGroup = () => {
     if (!newGroupName.trim()) return;
     const slug = newGroupName.trim().toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
-    const orgId = locations[0]?.organization_id;
+    const orgId = effectiveOrganization?.id;
     if (!orgId) return;
     createGroup.mutate({
       organization_id: orgId,
