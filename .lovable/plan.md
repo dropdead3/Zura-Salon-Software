@@ -1,44 +1,64 @@
 
 
-# Enhance Sticky Row/Column Visual Separation
+# Floating Scrollbar Handles — Remove Gutters and Background Fill
 
 ## Problem
-From the screenshot, the sticky header row and sticky left column lack clear divider lines against the data area. The boundary between frozen elements and scrollable content is not distinct enough, making it hard to visually parse the matrix.
+The scrollbars in the criteria matrix (and globally) show visible track gutters and background fills, making them look like traditional system scrollbars rather than modern floating handles overlaid on content.
 
 ## Solution
-Add stronger border lines on the edges where sticky elements meet the data area, and refine the existing borders for better separation.
+Update the Radix ScrollArea tokens and the global native scrollbar CSS so tracks are fully transparent with no padding/gutter, and thumbs appear to float over content with a slight inset and rounded pill shape.
 
-### Changes in `StylistLevelsEditor.tsx`
+### Changes
 
-1. **Header row bottom border**: Strengthen from `border-b-2 border-border/60` to `border-b-2 border-border` (full opacity) on the header `TableRow` (~line 758).
+**1. Design tokens (`src/lib/design-tokens.ts`) — scrollbar section**
 
-2. **Left column right border on header cell**: Strengthen from `border-r border-border/40` to `border-r-2 border-border/60` on the sticky "Metric" `TableHead` (~line 759) — a thicker, more visible right edge.
+- **Track**: Remove `p-[1px]` padding from `trackV` and `trackH` — this creates the gutter effect. Make tracks thinner (e.g. `w-1.5` / `h-1.5`) so the thumb floats.
+- **Thumb**: Add margin/inset so the thumb doesn't touch the container edge. Use `bg-foreground/20 hover:bg-foreground/35` for a softer, floating appearance against any background.
 
-3. **Left column right border on all body sticky cells**: Change `border-r border-border/40` to `border-r-2 border-border/60` on:
-   - Section header sticky cells (Compensation ~806, Promotion ~851, Retention ~865)
-   - Commission/Wage label cells (~818, ~837)
-   - `renderMetricRow` sticky cell (~701)
+Updated tokens:
+```
+track: 'flex touch-none select-none bg-transparent opacity-0 transition-opacity duration-700 ease-in-out group-hover/scroll:opacity-100'
+trackV: 'h-full w-2.5 border-l-[3px] border-l-transparent'  // transparent border creates inset
+trackH: 'h-2.5 flex-col border-t-[3px] border-t-transparent'
+thumb: 'relative flex-1 rounded-full bg-foreground/15 hover:bg-foreground/30'
+```
 
-4. **Level column headers**: Add `border-b-2 border-border` to match the header row's bottom edge (already inherited from `TableRow`, but ensure consistency).
+The `border-l-transparent` / `border-t-transparent` trick pushes the thumb inward without a visible gutter.
 
-5. **Section header rows**: Add `border-t-2 border-border/60` to the section header `TableRow` elements (Compensation ~805, Promotion ~850, Retention ~864) to create clear visual breaks between sections.
+**2. Global native scrollbar CSS (`src/index.css`)**
 
-6. **Data cells bottom border**: The default `TableRow` border is fine (`border-b border-border/50`), no change needed.
+Update the global `::webkit-scrollbar` rules (lines ~1440-1483 and ~1520-1532):
+- Set scrollbar width/height to `6px` (thinner)
+- Remove any background on `::-webkit-scrollbar` itself (already transparent but ensure no override)
+- Use `border-radius: 9999px` on thumb
+- Add transparent border on thumb to create float effect: `border: 2px solid transparent; background-clip: padding-box`
+- Firefox: keep `scrollbar-width: thin` with transparent track
 
-7. **Add subtle shadow to sticky left column**: On all sticky `left-0` cells, add a box-shadow to create a drop-shadow effect when content scrolls underneath:
-   - Add `shadow-[2px_0_4px_-2px_rgba(0,0,0,0.08)]` (or `dark:shadow-[2px_0_4px_-2px_rgba(0,0,0,0.3)]`) to all sticky left cells.
-   - This provides a depth cue showing the frozen column is "above" the scrolling content.
+Key CSS changes:
+```css
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+  background: transparent;
+}
 
-8. **Add subtle shadow to sticky header**: On the `TableHeader` element, add `shadow-[0_2px_4px_-2px_rgba(0,0,0,0.08)]` for the same depth effect on the frozen header row.
+::-webkit-scrollbar-thumb {
+  background: transparent;
+  border-radius: 9999px;
+  border: 1px solid transparent;
+  background-clip: padding-box;
+}
 
-### Summary of visual improvements
-- Thicker right border (2px) on left column edge
-- Full-opacity bottom border on header row
-- Top borders on section headers for clear grouping
-- Subtle drop shadows on both sticky axes for depth separation
+*:hover > ::-webkit-scrollbar-thumb,
+*:hover::-webkit-scrollbar-thumb {
+  background: rgba(128, 128, 128, 0.3);
+  background-clip: padding-box;
+}
+```
 
 ### Files Modified
-- `src/components/dashboard/settings/StylistLevelsEditor.tsx` — ~12 class string updates for borders and shadows
+- `src/lib/design-tokens.ts` — scrollbar token updates (3 lines)
+- `src/index.css` — native scrollbar CSS refinement (~15 lines across two sections)
 
 ### No database changes.
 
