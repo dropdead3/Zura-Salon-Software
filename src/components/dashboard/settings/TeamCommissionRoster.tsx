@@ -244,11 +244,22 @@ export function TeamCommissionRoster({
             const level = member.stylist_level ? slugToLevel.get(member.stylist_level) : null;
             const levelIndex = level ? levels.indexOf(level) : -1;
             const color = levelIndex >= 0 ? getLevelColor(levelIndex, levels.length) : null;
+            const isStylist = member.roles?.includes('stylist');
+            const isMultiLocation = getMemberLocationIds(member).size > 1;
+            
+            // Get primary non-stylist role for badge
+            const primaryNonStylistRole = !isStylist
+              ? (member.roles as AppRole[])?.find(r => ['super_admin', 'admin', 'manager', 'receptionist', 'assistant'].includes(r))
+              : null;
+            const roleBadge = primaryNonStylistRole ? getRoleBadgeConfig(primaryNonStylistRole) : null;
 
             return (
               <div
                 key={member.user_id}
-                className="grid grid-cols-[28px_1fr_140px_70px_70px_90px] gap-2 items-center px-3 py-2.5 rounded-lg hover:bg-muted/50 cursor-pointer transition-colors group"
+                className={cn(
+                  "grid grid-cols-[28px_1fr_140px_70px_70px_90px] gap-2 items-center px-3 py-2.5 rounded-lg hover:bg-muted/50 cursor-pointer transition-colors group",
+                  !isStylist && "opacity-50"
+                )}
                 onClick={() => setDrilldownUserId(member.user_id)}
               >
                 <div onClick={(e) => e.stopPropagation()}>
@@ -258,9 +269,24 @@ export function TeamCommissionRoster({
                   />
                 </div>
 
-                <span className="text-sm font-medium truncate">
-                  {member.display_name || member.full_name}
-                </span>
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className="text-sm font-medium truncate">
+                    {member.full_name}
+                  </span>
+                  {roleBadge && (
+                    <span className={cn(
+                      "inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-medium shrink-0 border",
+                      roleBadge.colorClasses
+                    )}>
+                      {roleBadge.shortLabel}
+                    </span>
+                  )}
+                  {isMultiLocation && (
+                    <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-accent text-accent-foreground border border-border shrink-0">
+                      Multi-Location
+                    </span>
+                  )}
+                </div>
 
                 <div>
                   {level ? (
