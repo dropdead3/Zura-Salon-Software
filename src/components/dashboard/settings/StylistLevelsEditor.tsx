@@ -325,6 +325,20 @@ function CriteriaComparisonTable({ levels, promotionCriteria, retentionCriteria,
               );
             })}
 
+            {/* Hourly Wage row */}
+            <TableRow className="border-l-2 border-l-primary/20">
+              <TableCell className="text-xs text-muted-foreground sticky left-0 bg-card z-10 border-l-2 border-l-primary/20">Hourly Wage</TableCell>
+              {levels.map((level) => (
+                <TableCell key={level.id} className="text-center text-xs">
+                  {level.hourlyWageEnabled && level.hourlyWage ? (
+                    <span className="text-foreground font-medium">${level.hourlyWage}/hr</span>
+                  ) : (
+                    <span className="text-muted-foreground/40">—</span>
+                  )}
+                </TableCell>
+              ))}
+            </TableRow>
+
             {/* Promotion section header */}
             <TableRow className="bg-muted/30 hover:bg-muted/30">
               <TableCell colSpan={levels.length + 1} className="py-2">
