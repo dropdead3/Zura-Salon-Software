@@ -604,16 +604,6 @@ function CriteriaComparisonTable({ levels, promotionCriteria, retentionCriteria,
         <TableCell key={level.id} className="text-center px-3 py-3">
           <div className="flex flex-col items-center gap-1">
             <div className="flex items-center gap-1">
-              <Checkbox
-                checked={entry.enabled}
-                onCheckedChange={(checked) => {
-                  setEditValues(prev => ({
-                    ...prev,
-                    [level.id]: { ...prev[level.id], enabled: !!checked },
-                  }));
-                }}
-                className="w-4 h-4"
-              />
               <div className="relative">
                 {fieldMapping.isCurrency && (
                   <span className="absolute left-2 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">$</span>
@@ -622,12 +612,21 @@ function CriteriaComparisonTable({ levels, promotionCriteria, retentionCriteria,
                   type="number"
                   value={entry.value}
                   onChange={(e) => {
+                    const val = e.target.value;
                     setEditValues(prev => ({
                       ...prev,
-                      [level.id]: { ...prev[level.id], value: e.target.value, enabled: true },
+                      [level.id]: { ...prev[level.id], value: val, enabled: val !== '' && val !== '0' },
                     }));
                   }}
-                  disabled={!entry.enabled}
+                  onBlur={() => {
+                    // If cleared, mark as disabled
+                    if (entry.value === '' || entry.value === '0') {
+                      setEditValues(prev => ({
+                        ...prev,
+                        [level.id]: { ...prev[level.id], enabled: false },
+                      }));
+                    }
+                  }}
                   className={cn(
                     "h-8 w-[90px] text-sm text-center bg-background text-foreground border-border/80",
                     fieldMapping.isCurrency && "pl-5",
