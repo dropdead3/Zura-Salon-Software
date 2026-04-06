@@ -1412,57 +1412,6 @@ export function StylistLevelsEditor({ embedded = false }: StylistLevelsEditorPro
                 );
               })}
 
-              {/* Add new level */}
-              {isAddingNew ? (
-                <div className="flex items-center gap-3 px-4 py-3 rounded-xl border-2 border-dashed border-primary/30 bg-primary/5">
-                  <div className="w-[1.75rem]" />
-                  <span className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center text-xs font-medium text-primary shrink-0">
-                    {levels.length + 1}
-                  </span>
-                  <Input
-                    value={newLevelName}
-                    onChange={(e) => setNewLevelName(e.target.value)}
-                    placeholder="Enter level name..."
-                    className="h-8 text-sm flex-1"
-                    autoFocus
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') handleAddNew();
-                      if (e.key === 'Escape') {
-                        setIsAddingNew(false);
-                        setNewLevelName('');
-                      }
-                    }}
-                  />
-                  <div className="flex items-center gap-1">
-                    <Button
-                      variant="ghost"
-                      size={tokens.button.inline}
-                      className="h-8"
-                      onClick={handleAddNew}
-                      disabled={!newLevelName.trim()}
-                    >
-                      Add
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size={tokens.button.inline}
-                      className="h-8 px-2"
-                      onClick={() => {
-                        setIsAddingNew(false);
-                        setNewLevelName('');
-                      }}
-                    >
-                      <X className="w-4 h-4" />
-                    </Button>
-                  </div>
-                </div>
-              ) : (
-                <button
-                  className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl border-2 border-dashed text-muted-foreground hover:text-foreground hover:border-primary/30 hover:bg-primary/5 transition-all"
-                  onClick={() => setIsAddingNew(true)}
-                >
-                  <Plus className="w-4 h-4" />
-                  <span className="text-sm font-medium">Add Level</span>
                 </button>
               )}
 
