@@ -43,6 +43,7 @@ import {
 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
@@ -178,6 +179,8 @@ const formatRate = (rate: number | null | undefined): string => {
   return String(Math.round(rate * 100));
 };
 
+type EarningsStructure = 'hourly' | 'commission' | 'both';
+
 type LocalStylistLevel = {
   id: string;
   dbId?: string;
@@ -189,6 +192,20 @@ type LocalStylistLevel = {
   retailCommissionRate: string;
   hourlyWageEnabled: boolean;
   hourlyWage: string;
+  earningsStructure: EarningsStructure;
+};
+
+function deriveEarningsStructure(hourlyEnabled: boolean, serviceRate: string, retailRate: string): EarningsStructure {
+  const hasCommission = (parseFloat(serviceRate) || 0) > 0 || (parseFloat(retailRate) || 0) > 0;
+  if (hourlyEnabled && hasCommission) return 'both';
+  if (hourlyEnabled) return 'hourly';
+  return 'commission';
+}
+
+const EARNINGS_STRUCTURE_DESCRIPTIONS: Record<EarningsStructure, string> = {
+  hourly: 'Base hourly rate with no commission on services or retail',
+  commission: 'Commission-based earnings on services and retail sales',
+  both: 'Hourly base wage plus commission on services and retail',
 };
 
 interface CriteriaComparisonTableProps {
