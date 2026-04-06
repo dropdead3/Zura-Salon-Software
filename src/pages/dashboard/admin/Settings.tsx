@@ -19,11 +19,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
 import { 
   Users, 
   Bell, 
@@ -111,7 +106,7 @@ import { useServicesWithFlowsCount } from '@/hooks/useServiceCommunicationFlows'
 import { useColorTheme, colorThemes } from '@/hooks/useColorTheme';
 import { useRoleUtils } from '@/hooks/useRoleUtils';
 import { useBillingAccess } from '@/hooks/useBillingAccess';
-import { useSettingsLayout, useUpdateSettingsLayout, DEFAULT_ICON_COLORS, DEFAULT_ORDER, SECTION_GROUPS } from '@/hooks/useSettingsLayout';
+import { useSettingsLayout, useUpdateSettingsLayout, DEFAULT_ORDER, SECTION_GROUPS } from '@/hooks/useSettingsLayout';
 import { useStaffingAlertSettings, useUpdateStaffingAlertSettings } from '@/hooks/useStaffingAlertSettings';
 import { cn } from '@/lib/utils';
 import { useInfotainerSettings } from '@/hooks/useInfotainers';
@@ -149,14 +144,6 @@ interface UserWithRole {
 
 type SettingsCategory = 'my-profile' | 'business' | 'email' | 'sms' | 'service-flows' | 'users' | 'onboarding' | 'integrations' | 'system' | 'program' | 'levels' | 'access-hub' | 'locations' | 'dayrate' | 'forms' | 'loyalty' | 'feedback' | 'leaderboard' | 'team-rewards' | 'kiosk' | 'services' | 'retail-products' | 'account-billing' | null;
 
-// Preset colors for icon customization
-const PRESET_COLORS = [
-  '#8B5CF6', '#7C3AED', '#6366F1', '#4F46E5', // Purples
-  '#3B82F6', '#2563EB', '#0EA5E9', '#06B6D4', // Blues
-  '#14B8A6', '#10B981', '#22C55E', '#84CC16', // Greens
-  '#EAB308', '#F59E0B', '#F97316', '#EF4444', // Warm
-  '#EC4899', '#D946EF', '#A855F7', '#6B7280', // Pinks/Gray
-];
 
 interface SortableCardProps {
   category: {
@@ -166,12 +153,10 @@ interface SortableCardProps {
     icon: React.ComponentType<{ className?: string; style?: React.CSSProperties }>;
   };
   isEditMode: boolean;
-  iconColor: string;
-  onColorChange: (color: string) => void;
   onClick: () => void;
 }
 
-function SortableCard({ category, isEditMode, iconColor, onColorChange, onClick }: SortableCardProps) {
+function SortableCard({ category, isEditMode, onClick }: SortableCardProps) {
   const {
     attributes,
     listeners,
@@ -199,7 +184,7 @@ function SortableCard({ category, isEditMode, iconColor, onColorChange, onClick 
     >
       <Card 
         className={cn(
-          "transition-all relative",
+          "transition-all relative h-full flex flex-col",
           isDragging && "ring-2 ring-primary/30",
           !isEditMode && "cursor-pointer hover:border-primary/50"
         )}
@@ -216,53 +201,16 @@ function SortableCard({ category, isEditMode, iconColor, onColorChange, onClick 
         )}
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div 
-                className="w-10 h-10 rounded-lg flex items-center justify-center"
-                style={{ backgroundColor: `${iconColor}20` }}
-              >
-                <Icon className="w-5 h-5" style={{ color: iconColor }} />
-              </div>
-              {isEditMode && (
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <button 
-                      className="w-6 h-6 rounded-full border-2 border-border hover:scale-110 transition-transform"
-                      style={{ backgroundColor: iconColor }}
-                      onClick={(e) => e.stopPropagation()}
-                    />
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-3" align="start">
-                    <div className="space-y-2">
-                      <p className="text-xs font-medium text-muted-foreground">Icon Color</p>
-                      <div className="grid grid-cols-5 gap-1.5">
-                        {PRESET_COLORS.map((color) => (
-                          <button
-                            key={color}
-                            className={cn(
-                              "w-7 h-7 rounded-full transition-all hover:scale-110",
-                              iconColor === color && "ring-2 ring-offset-2 ring-primary"
-                            )}
-                            style={{ backgroundColor: color }}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              onColorChange(color);
-                            }}
-                          />
-                        ))}
-                      </div>
-                    </div>
-                  </PopoverContent>
-                </Popover>
-              )}
+            <div className={tokens.card.iconBox}>
+              <Icon className={tokens.card.icon} />
             </div>
             {!isEditMode && (
               <ChevronRight className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-colors" />
             )}
           </div>
         </CardHeader>
-        <CardContent>
-          <CardTitle className="font-display text-lg mb-1">{category.label}</CardTitle>
+        <CardContent className="flex-1">
+          <CardTitle className={tokens.card.title}>{category.label}</CardTitle>
           <CardDescription className="min-h-[2.5rem]">{category.description}</CardDescription>
         </CardContent>
       </Card>
@@ -666,14 +614,13 @@ export default function Settings() {
   const { data: layoutPrefs } = useSettingsLayout();
   const updateLayout = useUpdateSettingsLayout();
   const [localOrder, setLocalOrder] = useState<string[]>(DEFAULT_ORDER);
-  const [localColors, setLocalColors] = useState<Record<string, string>>(DEFAULT_ICON_COLORS);
+  
   const [hasChanges, setHasChanges] = useState(false);
 
   // Sync with stored preferences
   useEffect(() => {
     if (layoutPrefs) {
       setLocalOrder(layoutPrefs.order);
-      setLocalColors(layoutPrefs.iconColors);
     }
   }, [layoutPrefs]);
 
@@ -950,14 +897,9 @@ export default function Settings() {
     }
   };
 
-  const handleColorChange = (categoryId: string, color: string) => {
-    setLocalColors(prev => ({ ...prev, [categoryId]: color }));
-    setHasChanges(true);
-  };
-
   const handleSaveLayout = () => {
     updateLayout.mutate(
-      { order: localOrder, iconColors: localColors },
+      { order: localOrder, iconColors: {} },
       {
         onSuccess: () => {
           toast({ title: 'Layout saved', description: 'Your settings layout has been saved.' });
@@ -973,14 +915,12 @@ export default function Settings() {
 
   const handleResetLayout = () => {
     setLocalOrder(DEFAULT_ORDER);
-    setLocalColors(DEFAULT_ICON_COLORS);
     setHasChanges(true);
   };
 
   const handleCancelEdit = () => {
     if (layoutPrefs) {
       setLocalOrder(layoutPrefs.order);
-      setLocalColors(layoutPrefs.iconColors);
     }
     setIsEditMode(false);
     setHasChanges(false);
@@ -1531,7 +1471,7 @@ export default function Settings() {
         {isEditMode && (
           <div className="mb-4 p-3 bg-muted/50 border rounded-lg flex items-center gap-2 text-sm text-muted-foreground">
             <GripVertical className="w-4 h-4" />
-            <span>Drag cards to reorder. Click the color dot next to each icon to change its color.</span>
+            <span>Drag cards to reorder.</span>
           </div>
         )}
 
@@ -1575,8 +1515,6 @@ export default function Settings() {
                             key={category.id}
                             category={category}
                             isEditMode={isEditMode}
-                            iconColor={localColors[category.id] || DEFAULT_ICON_COLORS[category.id]}
-                            onColorChange={(color) => handleColorChange(category.id, color)}
                             onClick={() => {
                               if (category.id === 'my-profile') {
                                 navigate(dashPath('/profile'));
