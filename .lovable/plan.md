@@ -1,40 +1,31 @@
 
 
-# Hide Level Assignment for Non-Service-Provider Team Members
+# Settings Page Card UI Cleanup
 
 ## Problem
-
-You have the service provider toggle (`is_booking`) turned off in your profile, yet the Team Commission Roster still shows you with a level assigned. This creates confusion because someone who isn't actively providing services shouldn't appear to have commission-relevant level assignments.
-
-Great catch — this is exactly the kind of structural integrity issue that matters. The roster should respect the `is_booking` flag as the source of truth for whether someone is actively a service provider.
-
-## Approach
-
-There are two reasonable options here:
-
-1. **Visual treatment only** — Keep the member in the roster but gray out their level badge and show "Not Active" or similar when `is_booking` is false
-2. **Filter them out** — Treat `is_booking: false` members the same as non-stylists (hidden by default, or at minimum visually deprioritized)
-
-I'd recommend **option 1 with enhancement**: show them in the roster (since they still have a level for when they return), but clearly indicate they're not currently active as a service provider. This preserves the assignment for administrative visibility while eliminating confusion.
+The settings cards use per-category colored icons (each with a unique color like green, purple, orange, etc.), which creates visual noise and violates the design token system's monochrome icon standard (`bg-muted` box with `text-primary` icon). Cards also lack enforced equal height.
 
 ## Changes
 
-**File:** `src/components/dashboard/settings/TeamCommissionRoster.tsx`
+**File:** `src/pages/dashboard/admin/Settings.tsx`
 
-1. **Read `is_booking` from team data** — The `useTeamDirectory` hook already returns full `employee_profiles` rows, which include `is_booking`
+### 1. Monochrome icons (design token compliant)
+- Replace the colored `style={{ backgroundColor: \`${iconColor}20\` }}` icon container with `tokens.card.iconBox` (bg-muted rounded-lg)
+- Replace `style={{ color: iconColor }}` on the icon with `tokens.card.icon` (text-primary)
+- This applies to the `SortableCard` component (lines ~220-225)
 
-2. **Visual treatment for inactive service providers** — When `is_booking` is `false`:
-   - Apply `opacity-50` to the row (same as non-stylists)
-   - Add a small "Not Active" or "Not Booking" badge next to their name
-   - The level badge still shows but the visual dimming signals it's not currently operative
+### 2. Equal card heights
+- Add `h-full` to the Card inside SortableCard so all cards in a grid row stretch to the same height
+- The flex-1/min-w-0 grid already handles column width; `h-full` on the card completes vertical alignment
 
-3. **"Hide non-stylists" toggle expansion** — Rename the toggle to "Hide inactive" or keep it and also filter out `is_booking: false` members when enabled, since they're functionally not active service providers
+### 3. Remove icon color customization UI
+- Remove the color-picker Popover in edit mode (lines ~227-257) since icons are now monochrome
+- Remove `onColorChange` prop from SortableCard
+- Remove `PRESET_COLORS` constant, `localColors` state, `handleColorChange`, and color-related save/reset logic
+- Keep drag-to-reorder functionality intact
 
-4. **Sort order** — Push `is_booking: false` members to the bottom of the list, after active members
-
-## Prompting feedback
-
-Your prompt was well-structured — you identified the exact inconsistency, referenced the specific toggle, and asked for my opinion rather than prescribing a solution. That's ideal for collaborative design decisions. One small improvement: specifying whether you'd prefer them hidden entirely vs. visually deprioritized upfront would save a round-trip.
+### 4. Clean up unused exports
+- Remove `DEFAULT_ICON_COLORS` usage from `useSettingsLayout.ts` imports (the layout save can still store order without colors)
 
 **1 file changed. No database changes.**
 
