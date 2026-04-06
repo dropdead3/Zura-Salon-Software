@@ -24482,81 +24482,59 @@ export type Database = {
       products_public: {
         Row: {
           available_online: boolean | null
-          barcode: string | null
           brand: string | null
           category: string | null
-          color_type: Database["public"]["Enums"]["color_type"] | null
-          container_size: string | null
           created_at: string | null
           description: string | null
           id: string | null
           image_url: string | null
           is_active: boolean | null
-          location_id: string | null
           name: string | null
           organization_id: string | null
           product_type: string | null
+          quantity_on_hand: number | null
+          reorder_level: number | null
           retail_price: number | null
-          size: string | null
           sku: string | null
-          subcategory: string | null
-          swatch_color: string | null
-          variant: string | null
+          updated_at: string | null
         }
         Insert: {
           available_online?: boolean | null
-          barcode?: string | null
           brand?: string | null
           category?: string | null
-          color_type?: Database["public"]["Enums"]["color_type"] | null
-          container_size?: string | null
           created_at?: string | null
           description?: string | null
           id?: string | null
           image_url?: string | null
           is_active?: boolean | null
-          location_id?: string | null
           name?: string | null
           organization_id?: string | null
           product_type?: string | null
+          quantity_on_hand?: number | null
+          reorder_level?: number | null
           retail_price?: number | null
-          size?: string | null
           sku?: string | null
-          subcategory?: string | null
-          swatch_color?: string | null
-          variant?: string | null
+          updated_at?: string | null
         }
         Update: {
           available_online?: boolean | null
-          barcode?: string | null
           brand?: string | null
           category?: string | null
-          color_type?: Database["public"]["Enums"]["color_type"] | null
-          container_size?: string | null
           created_at?: string | null
           description?: string | null
           id?: string | null
           image_url?: string | null
           is_active?: boolean | null
-          location_id?: string | null
           name?: string | null
           organization_id?: string | null
           product_type?: string | null
+          quantity_on_hand?: number | null
+          reorder_level?: number | null
           retail_price?: number | null
-          size?: string | null
           sku?: string | null
-          subcategory?: string | null
-          swatch_color?: string | null
-          variant?: string | null
+          updated_at?: string | null
         }
         Relationships: [
-          {
-            foreignKeyName: "products_location_id_fkey"
-            columns: ["location_id"]
-            isOneToOne: false
-            referencedRelation: "locations"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "products_organization_id_fkey"
             columns: ["organization_id"]
