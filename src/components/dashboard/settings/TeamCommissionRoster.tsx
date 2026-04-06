@@ -211,15 +211,16 @@ export function TeamCommissionRoster({
                 <BarChart3 className="h-3.5 w-3.5 mr-1" />
                 View Analytics
               </Button>
-              {locations.length > 1 && (
+              {teamLocations.length > 0 && (
                 <Select value={locationFilter} onValueChange={setLocationFilter}>
-                  <SelectTrigger className="w-[160px] h-9 text-sm">
+                  <SelectTrigger className="w-[180px] h-9 text-sm">
+                    <MapPin className="w-3.5 h-3.5 mr-1.5 text-muted-foreground" />
                     <SelectValue placeholder="Location" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Locations</SelectItem>
-                    {locations.map(loc => (
-                      <SelectItem key={loc} value={loc}>{loc}</SelectItem>
+                    {teamLocations.map(loc => (
+                      <SelectItem key={loc.id} value={loc.id}>{loc.name}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
