@@ -242,23 +242,30 @@ export function useIndividualStaffReport(staffUserId: string | null, dateFrom?: 
 
       // ── Fetch transaction items for services/products (paginated) ──
       const PAGE_SIZE = 1000;
-      const items: any[] = [];
-      {
+      async function fetchTxnItems(fromDate: string, toDate: string) {
+        const result: any[] = [];
         let offset = 0;
         let hasMore = true;
         while (hasMore) {
           const { data, error } = await supabase
             .from('phorest_transaction_items')
-            .select('item_name, item_type, item_category, quantity, total_amount, phorest_client_id, transaction_date')
+            .select('item_name, item_type, item_category, quantity, total_amount, tax_amount, phorest_client_id, transaction_date')
             .eq('phorest_staff_id', phorestStaffId)
-            .gte('transaction_date', dateFrom).lte('transaction_date', dateTo)
+            .gte('transaction_date', `${fromDate}T00:00:00`).lte('transaction_date', `${toDate}T23:59:59`)
             .range(offset, offset + PAGE_SIZE - 1);
           if (error) throw error;
-          items.push(...(data || []));
+          result.push(...(data || []));
           hasMore = (data?.length || 0) === PAGE_SIZE;
           offset += PAGE_SIZE;
         }
+        return result;
       }
+
+      const [items, priorItems, twoPriorItems] = await Promise.all([
+        fetchTxnItems(dateFrom, dateTo),
+        fetchTxnItems(priorFrom, priorTo),
+        fetchTxnItems(twoPriorFrom, twoPriorTo),
+      ]);
 
       // ── Fetch performance metrics ──
       const [currentMetricsRes, priorMetricsRes, twoPriorMetricsRes] = await Promise.all([
@@ -280,32 +287,45 @@ export function useIndividualStaffReport(staffUserId: string | null, dateFrom?: 
       const priorMetrics = priorMetricsRes.data || [];
       const twoPriorMetrics = twoPriorMetricsRes.data || [];
 
-      // ── TEAM AVERAGES: fetch all staff appointments for the same period ──
-      const { data: allStaffApts } = await supabase
-        .from('phorest_appointments')
-        .select('phorest_staff_id, total_price, phorest_client_id, status')
-        .gte('appointment_date', dateFrom).lte('appointment_date', dateTo)
-        .not('phorest_staff_id', 'is', null);
+      // ── TEAM AVERAGES: fetch all staff transaction items + metrics for the same period ──
+      async function fetchAllTeamTxnItems(fromDate: string, toDate: string) {
+        const result: any[] = [];
+        let offset = 0;
+        let hasMore = true;
+        while (hasMore) {
+          const { data, error } = await supabase
+            .from('phorest_transaction_items')
+            .select('phorest_staff_id, item_type, total_amount, tax_amount, phorest_client_id, transaction_date')
+            .gte('transaction_date', `${fromDate}T00:00:00`).lte('transaction_date', `${toDate}T23:59:59`)
+            .not('phorest_staff_id', 'is', null)
+            .range(offset, offset + PAGE_SIZE - 1);
+          if (error) throw error;
+          result.push(...(data || []));
+          hasMore = (data?.length || 0) === PAGE_SIZE;
+          offset += PAGE_SIZE;
+        }
+        return result;
+      }
 
-      const { data: allStaffMetrics } = await supabase
-        .from('phorest_performance_metrics')
-        .select('phorest_staff_id, rebooking_rate, retention_rate, new_clients')
-        .gte('week_start', dateFrom).lte('week_start', dateTo)
-        .not('phorest_staff_id', 'is', null);
+      const [allStaffTxnItems, allStaffMetricsRes] = await Promise.all([
+        fetchAllTeamTxnItems(dateFrom, dateTo),
+        supabase.from('phorest_performance_metrics')
+          .select('phorest_staff_id, rebooking_rate, retention_rate, new_clients')
+          .gte('week_start', dateFrom).lte('week_start', dateTo)
+          .not('phorest_staff_id', 'is', null),
+      ]);
 
-      // ── Compute individual revenue ──
-      let totalRevenue = 0;
+      const allStaffMetrics = allStaffMetricsRes.data;
+
+      // ── Compute individual metrics from appointments (counts, tips, status) ──
       let totalTips = 0;
       let completed = 0;
       let noShows = 0;
       let cancelled = 0;
       const clientSet = new Set<string>();
-      const dailyRevMap = new Map<string, number>();
       let rebookedCount = 0;
 
       currentApts.forEach((a: any) => {
-        const price = Number(a.total_price) || 0;
-        totalRevenue += price;
         totalTips += Number(a.tip_amount) || 0;
         if (a.phorest_client_id) clientSet.add(a.phorest_client_id);
         if (a.rebooked_at_checkout) rebookedCount++;
@@ -314,27 +334,57 @@ export function useIndividualStaffReport(staffUserId: string | null, dateFrom?: 
         if (status === 'no_show' || status === 'noshow' || status === 'no-show') noShows++;
         else if (status === 'cancelled' || status === 'canceled') cancelled++;
         else completed++;
-
-        if (a.appointment_date) {
-          dailyRevMap.set(a.appointment_date, (dailyRevMap.get(a.appointment_date) || 0) + price);
-        }
       });
 
       const totalAppointments = currentApts.length;
-      const avgTicket = completed > 0 ? totalRevenue / completed : 0;
       const workingDays = Math.max(differenceInBusinessDays(to, from), 1);
       const avgPerDay = totalAppointments / workingDays;
 
-      // Prior period revenue
-      let priorTotalRevenue = 0;
-      priorApts.forEach((a: any) => { priorTotalRevenue += Number(a.total_price) || 0; });
+      // ── Revenue from transaction items (source of truth, matching POS) ──
+      function computeTxnRevenue(txnItems: any[]) {
+        let svcRev = 0, prodRev = 0, taxTotal = 0;
+        const visitKeys = new Set<string>();
+        txnItems.forEach((item: any) => {
+          const amount = Number(item.total_amount) || 0;
+          const tax = Number(item.tax_amount) || 0;
+          const isProduct = PRODUCT_TYPES.includes(item.item_type);
+          const isService = SERVICE_TYPES.includes(item.item_type);
+          if (isService) svcRev += amount;
+          if (isProduct) { prodRev += amount + tax; taxTotal += tax; }
+          // Track unique client visits for avg ticket
+          if (item.phorest_client_id && item.transaction_date) {
+            const dateOnly = typeof item.transaction_date === 'string' ? item.transaction_date.substring(0, 10) : item.transaction_date;
+            visitKeys.add(`${item.phorest_client_id}|${dateOnly}`);
+          }
+        });
+        return { svcRev, prodRev, total: svcRev + prodRev, uniqueVisits: visitKeys.size };
+      }
 
-      let twoPriorTotalRevenue = 0;
-      twoPriorApts.forEach((a: any) => { twoPriorTotalRevenue += Number(a.total_price) || 0; });
+      const currentTxnRev = computeTxnRevenue(items);
+      const priorTxnRev = computeTxnRevenue(priorItems);
+      const twoPriorTxnRev = computeTxnRevenue(twoPriorItems);
+
+      const totalRevenue = currentTxnRev.total;
+      const avgTicket = currentTxnRev.uniqueVisits > 0 ? totalRevenue / currentTxnRev.uniqueVisits : 0;
+
+      // Prior period revenue (from transaction items)
+      const priorTotalRevenue = priorTxnRev.total;
+      const twoPriorTotalRevenue = twoPriorTxnRev.total;
 
       const revenueChange = priorTotalRevenue > 0
         ? ((totalRevenue - priorTotalRevenue) / priorTotalRevenue) * 100
         : (totalRevenue > 0 ? 100 : 0);
+
+      // Daily trend from transaction items
+      const dailyRevMap = new Map<string, number>();
+      items.forEach((item: any) => {
+        if (!item.transaction_date) return;
+        const dateOnly = typeof item.transaction_date === 'string' ? item.transaction_date.substring(0, 10) : item.transaction_date;
+        const amount = Number(item.total_amount) || 0;
+        const tax = Number(item.tax_amount) || 0;
+        const isProduct = PRODUCT_TYPES.includes(item.item_type);
+        dailyRevMap.set(dateOnly, (dailyRevMap.get(dateOnly) || 0) + amount + (isProduct ? tax : 0));
+      });
 
       const dailyTrend = Array.from(dailyRevMap.entries())
         .map(([date, revenue]) => ({ date, revenue }))
@@ -469,15 +519,21 @@ export function useIndividualStaffReport(staffUserId: string | null, dateFrom?: 
         sourceName: resolved.sourceName,
       };
 
-      // ── Team averages ──
-      const teamStaffMap = new Map<string, { revenue: number; appointments: number }>();
-      (allStaffApts || []).forEach((a: any) => {
-        const sid = a.phorest_staff_id;
+      // ── Team averages (from transaction items for revenue consistency) ──
+      const teamStaffMap = new Map<string, { revenue: number; uniqueVisits: Set<string> }>();
+      (allStaffTxnItems || []).forEach((item: any) => {
+        const sid = item.phorest_staff_id;
         if (!sid) return;
-        if (!teamStaffMap.has(sid)) teamStaffMap.set(sid, { revenue: 0, appointments: 0 });
+        if (!teamStaffMap.has(sid)) teamStaffMap.set(sid, { revenue: 0, uniqueVisits: new Set() });
         const t = teamStaffMap.get(sid)!;
-        t.revenue += Number(a.total_price) || 0;
-        t.appointments++;
+        const amount = Number(item.total_amount) || 0;
+        const tax = Number(item.tax_amount) || 0;
+        const isProduct = PRODUCT_TYPES.includes(item.item_type);
+        t.revenue += amount + (isProduct ? tax : 0);
+        if (item.phorest_client_id && item.transaction_date) {
+          const dateOnly = typeof item.transaction_date === 'string' ? item.transaction_date.substring(0, 10) : item.transaction_date;
+          t.uniqueVisits.add(`${item.phorest_client_id}|${dateOnly}`);
+        }
       });
 
       const teamMetricsMap = new Map<string, { rebook: number; retention: number; newClients: number; count: number }>();
@@ -494,7 +550,7 @@ export function useIndividualStaffReport(staffUserId: string | null, dateFrom?: 
 
       const teamCount = Math.max(teamStaffMap.size, 1);
       const teamTotalRevenue = Array.from(teamStaffMap.values()).reduce((s, t) => s + t.revenue, 0);
-      const teamTotalApts = Array.from(teamStaffMap.values()).reduce((s, t) => s + t.appointments, 0);
+      const teamTotalVisits = Array.from(teamStaffMap.values()).reduce((s, t) => s + t.uniqueVisits.size, 0);
 
       let teamAvgRebook = 0, teamAvgRetention = 0, teamAvgNewClients = 0;
       teamMetricsMap.forEach(t => {
@@ -505,13 +561,13 @@ export function useIndividualStaffReport(staffUserId: string | null, dateFrom?: 
 
       const teamAverages: TeamAverages = {
         revenue: teamTotalRevenue / teamCount,
-        avgTicket: teamTotalApts > 0 ? teamTotalRevenue / teamTotalApts : 0,
-        appointments: teamTotalApts / teamCount,
+        avgTicket: teamTotalVisits > 0 ? teamTotalRevenue / teamTotalVisits : 0,
+        appointments: 0, // Not used for revenue-based reporting
         rebookingRate: teamAvgRebook / metricsTeamCount,
         retentionRate: teamAvgRetention / metricsTeamCount,
         newClients: teamAvgNewClients / metricsTeamCount,
         experienceScore: 0,
-        complianceRate: 0, // Populated below after individual compliance is computed
+        complianceRate: 0,
       };
 
       // ── Color Bar Compliance (color/chemical appointments vs mix_sessions) ──

@@ -207,7 +207,7 @@ export function MeetingPerformanceSummary({ staffUserId }: MeetingPerformanceSum
 
             <KpiTile
               label="Avg Ticket"
-              description="Average revenue per completed appointment."
+              description="Average revenue per client visit."
               value={revenue.avgTicket}
               teamAvg={teamAverages.avgTicket}
               teamUnit="$"

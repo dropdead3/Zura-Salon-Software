@@ -539,7 +539,7 @@ export function IndividualStaffReport({ dateFrom, dateTo, locationId, onClose, i
 
   const kpis = data ? [
     { label: 'Total Revenue', value: formatCurrencyWhole(data.revenue.total), teamAvg: formatCurrencyWhole(data.teamAverages.revenue), icon: DollarSign, change: data.revenue.revenueChange, tooltip: 'Total revenue from all appointments in the period.' },
-    { label: 'Avg Ticket', value: formatCurrencyWhole(data.revenue.avgTicket), teamAvg: formatCurrencyWhole(data.teamAverages.avgTicket), icon: Target, change: null, tooltip: 'Average revenue per completed appointment.' },
+    { label: 'Avg Ticket', value: formatCurrencyWhole(data.revenue.avgTicket), teamAvg: formatCurrencyWhole(data.teamAverages.avgTicket), icon: Target, change: null, tooltip: 'Average revenue per client visit (services + retail incl. tax).' },
     { label: 'Appointments', value: data.productivity.totalAppointments.toString(), teamAvg: Math.round(data.teamAverages.appointments).toString(), icon: Calendar, change: null, tooltip: 'Total appointments (all statuses) in the period.' },
     { label: 'Rebooking Rate', value: `${data.clientMetrics.rebookingRate.toFixed(1)}%`, teamAvg: `${data.teamAverages.rebookingRate.toFixed(1)}%`, icon: UserCheck, change: null, tooltip: 'Percentage of clients who rebooked at checkout.' },
     { label: 'Retention Rate', value: `${data.clientMetrics.retentionRate.toFixed(1)}%`, teamAvg: `${data.teamAverages.retentionRate.toFixed(1)}%`, icon: Users, change: null, tooltip: 'Percentage of clients who returned within the period.' },
