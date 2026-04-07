@@ -309,6 +309,7 @@ export function getZuraRetentionDefaults(levelIndex: number): RetentionFormState
 export function GraduationWizard({ open, onOpenChange, levelId, levelLabel, levelIndex, totalLevels }: GraduationWizardProps) {
   const [activeTab, setActiveTab] = useState<'promotion' | 'retention'>('promotion');
   const [step, setStep] = useState(0);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [form, setForm] = useState<FormState>(INITIAL_STATE);
   const [retForm, setRetForm] = useState<RetentionFormState>(INITIAL_RETENTION_STATE);
 
@@ -510,6 +511,18 @@ export function GraduationWizard({ open, onOpenChange, levelId, levelLabel, leve
         CRITERIA.filter(c => !(next[c.enabledKey] as boolean)).forEach(c => {
           next[c.weightKey] = 0 as never;
         });
+      }
+      // Auto-scroll to the toggled criterion after render
+      if (!prev[enabledKey]) {
+        const criterion = CRITERIA.find(c => c.enabledKey === enabledKey);
+        if (criterion) {
+          setTimeout(() => {
+            const el = document.getElementById(`criterion-${criterion.key}`);
+            if (el && scrollContainerRef.current) {
+              el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+          }, 50);
+        }
       }
       return next;
     });
@@ -726,7 +739,7 @@ export function GraduationWizard({ open, onOpenChange, levelId, levelLabel, leve
         </div>
 
         {/* Content */}
-        <div className="px-6 py-5 min-h-[280px] max-h-[50vh] overflow-y-auto">
+        <div ref={scrollContainerRef} className="px-6 py-5 min-h-[280px] max-h-[50vh] overflow-y-auto">
           {(isLoading || loadingRetention) ? (
             <div className="flex items-center justify-center h-40">
               <Loader2 className={tokens.loading.spinner} />
@@ -802,6 +815,7 @@ export function GraduationWizard({ open, onOpenChange, levelId, levelLabel, leve
                     const threshold = form[criterion.thresholdKey] as number;
                     return (
                       <div
+                        id={`criterion-${criterion.key}`}
                         key={criterion.key}
                         className={cn(
                           "rounded-lg border p-3 transition-all",
