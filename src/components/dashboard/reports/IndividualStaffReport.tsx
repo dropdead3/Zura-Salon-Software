@@ -1,4 +1,5 @@
 import { useState, useMemo, useCallback } from 'react';
+import { isWithinInterval } from 'date-fns';
 import { EmptyState } from '@/components/ui/empty-state';
 import { tokens } from '@/lib/design-tokens';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -38,6 +39,7 @@ import { useBusinessSettings } from '@/hooks/useBusinessSettings';
 import { useReportLocationInfo } from '@/hooks/useReportLocationInfo';
 import { useIndividualStaffReport, type IndividualStaffReportData } from '@/hooks/useIndividualStaffReport';
 import { useStaffComplianceSummary } from '@/hooks/color-bar/useStaffComplianceSummary';
+import { useStaffStrikes, STRIKE_TYPE_LABELS, SEVERITY_LABELS, SEVERITY_COLORS, type StaffStrikeWithDetails, type StrikeType, type StrikeSeverity } from '@/hooks/useStaffStrikes';
 import { LevelProgressCard } from '@/components/coaching/LevelProgressCard';
 import { EmptyDataBanner, DateRangeSubtitle } from '@/components/ui/EmptyDataBanner';
 
@@ -100,9 +102,25 @@ export function IndividualStaffReport({ dateFrom, dateTo, locationId, onClose, i
   const { data: orgUsers, isLoading: usersLoading } = useOrganizationUsers(effectiveOrganization?.id);
   const { data, isLoading } = useIndividualStaffReport(viewingStaffId || null, dateFrom, dateTo);
   const { data: complianceData } = useStaffComplianceSummary(viewingStaffId || null, dateFrom, dateTo, effectiveOrganization?.id);
+  const { data: strikesRaw } = useStaffStrikes(viewingStaffId || undefined);
   const { formatCurrencyWhole } = useFormatCurrency();
   const { formatDate } = useFormatDate();
   const [isGenerating, setIsGenerating] = useState(false);
+
+  // Filter strikes: active + resolved within report period
+  const reportStrikes = useMemo(() => {
+    if (!strikesRaw) return [];
+    return strikesRaw.filter(s =>
+      !s.is_resolved ||
+      (s.resolved_at && isWithinInterval(new Date(s.resolved_at), {
+        start: new Date(dateFrom),
+        end: new Date(dateTo),
+      }))
+    );
+  }, [strikesRaw, dateFrom, dateTo]);
+
+  const activeStrikes = useMemo(() => reportStrikes.filter(s => !s.is_resolved), [reportStrikes]);
+  const resolvedStrikes = useMemo(() => reportStrikes.filter(s => s.is_resolved), [reportStrikes]);
 
   // Filter to active staff with relevant roles
   const staffList = useMemo(() => {
@@ -143,6 +161,7 @@ export function IndividualStaffReport({ dateFrom, dateTo, locationId, onClose, i
     branding: any,
     fmtCurrency: (v: number) => string,
     fmtDate: (d: Date, fmt: string) => string,
+    strikes?: StaffStrikeWithDetails[],
   ) => {
     const headerOpts = {
       orgName: businessSettings?.business_name || effectiveOrganization?.name || 'Organization',
@@ -238,6 +257,40 @@ export function IndividualStaffReport({ dateFrom, dateTo, locationId, onClose, i
         margin: { ...branding.margin, left: 14, right: 14 },
       });
     }
+
+    // Staff Strikes section in PDF
+    if (strikes && strikes.length > 0) {
+      y = (doc as any).lastAutoTable?.finalY + 10 || y + 60;
+      if (y > 170) { doc.addPage(); y = 20; }
+      doc.setFontSize(12);
+      doc.setTextColor(0);
+      doc.text('Staff Strikes', 14, y);
+      y += 4;
+      autoTable(doc, {
+        ...branding,
+        startY: y,
+        head: [['Date', 'Type', 'Severity', 'Title', 'Status']],
+        body: strikes.map(s => [
+          s.incident_date,
+          STRIKE_TYPE_LABELS[s.strike_type as StrikeType] || s.strike_type,
+          SEVERITY_LABELS[s.severity as StrikeSeverity] || s.severity,
+          s.title,
+          s.is_resolved ? 'Resolved' : 'Active',
+        ]),
+        theme: 'striped',
+        headStyles: { fillColor: [51, 51, 51] },
+        margin: { ...branding.margin, left: 14, right: 14 },
+        didParseCell: (data: any) => {
+          if (data.section === 'body' && data.column.index === 2) {
+            const sev = data.cell.raw?.toString().toLowerCase();
+            if (sev === 'critical' || sev === 'high') {
+              data.cell.styles.fillColor = [255, 235, 235];
+              data.cell.styles.textColor = [180, 40, 40];
+            }
+          }
+        },
+      });
+    }
   }, [businessSettings, effectiveOrganization, dateFrom, dateTo, locationInfo]);
 
   // ── Single PDF Generation (current viewing member) ──
@@ -256,7 +309,7 @@ export function IndividualStaffReport({ dateFrom, dateTo, locationId, onClose, i
         locationInfo,
       } as const;
       const branding = { ...getReportAutoTableBranding(doc, headerOpts), __logoDataUrl: logoDataUrl };
-      addStaffReportToDoc(doc, data, complianceData, branding, formatCurrencyWhole, formatDate);
+      addStaffReportToDoc(doc, data, complianceData, branding, formatCurrencyWhole, formatDate, reportStrikes);
       addReportFooter(doc);
       doc.save(buildReportFileName({ orgName: headerOpts.orgName, locationName: locationInfo?.name, reportSlug: `staff-report-${data.profile.name.replace(/\s+/g, '-').toLowerCase()}`, dateFrom, dateTo }));
 
@@ -398,7 +451,22 @@ export function IndividualStaffReport({ dateFrom, dateTo, locationId, onClose, i
           totalColorAppointments: 0,
         } : null;
 
-        addStaffReportToDoc(doc, minimalData, staffComp, branding, formatCurrencyWhole, formatDate);
+        // Fetch strikes for this staff member
+        const { data: staffStrikes } = await supabase
+          .from('staff_strikes')
+          .select('*')
+          .eq('user_id', staffId)
+          .order('created_at', { ascending: false });
+
+        const bulkStrikes: StaffStrikeWithDetails[] = (staffStrikes || []).filter((s: any) =>
+          !s.is_resolved ||
+          (s.resolved_at && isWithinInterval(new Date(s.resolved_at), {
+            start: new Date(dateFrom),
+            end: new Date(dateTo),
+          }))
+        ) as any;
+
+        addStaffReportToDoc(doc, minimalData, staffComp, branding, formatCurrencyWhole, formatDate, bulkStrikes);
       }
 
       addReportFooter(doc);
@@ -514,6 +582,13 @@ export function IndividualStaffReport({ dateFrom, dateTo, locationId, onClose, i
       else if (data.colorBarCompliance.complianceRate < 70) improvements.push(`Color Bar compliance at ${data.colorBarCompliance.complianceRate}% — ${data.colorBarCompliance.missed} color services not tracked`);
       else improvements.push(`Color Bar compliance at ${data.colorBarCompliance.complianceRate}% — review color bar habits`);
     }
+  }
+
+  // Strikes analysis
+  if (activeStrikes.length > 0) {
+    improvements.push(`${activeStrikes.length} active strike${activeStrikes.length > 1 ? 's' : ''} on record — review during meeting`);
+  } else if (reportStrikes.length === 0 && data) {
+    strengths.push('Clean record — no strikes in this period');
   }
 
   // ── Render ──
@@ -1019,6 +1094,78 @@ export function IndividualStaffReport({ dateFrom, dateTo, locationId, onClose, i
                   icon={Beaker}
                   title="No Color Room Data"
                   description="No color or chemical services tracked during this period. Data will populate once appointments are processed through Zura Color Room."
+                />
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Section 9a: Staff Strikes */}
+          <Card>
+            <CardHeader className="pb-2">
+              <div className="flex items-center gap-2">
+                <AlertTriangle className="w-4 h-4 text-primary" />
+                <CardTitle className="font-display text-sm tracking-wide uppercase">Staff Strikes</CardTitle>
+                <MetricInfoTooltip description="Active strikes and strikes resolved during this period. Includes write-ups, complaints, warnings, and other documented incidents." />
+              </div>
+              {reportStrikes.length > 0 && (
+                <div className="flex items-center gap-3 mt-1">
+                  <Badge variant="outline" className="text-[10px]">
+                    {activeStrikes.length} Active
+                  </Badge>
+                  <Badge variant="secondary" className="text-[10px]">
+                    {resolvedStrikes.length} Resolved
+                  </Badge>
+                  <span className="text-[10px] text-muted-foreground">{reportStrikes.length} total</span>
+                </div>
+              )}
+            </CardHeader>
+            <CardContent>
+              {reportStrikes.length > 0 ? (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Date</TableHead>
+                      <TableHead>Type</TableHead>
+                      <TableHead>Severity</TableHead>
+                      <TableHead>Title</TableHead>
+                      <TableHead>Status</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {reportStrikes.map(strike => (
+                      <TableRow key={strike.id} className={cn(!strike.is_resolved && (strike.severity === 'critical' || strike.severity === 'high') && 'bg-red-50/50 dark:bg-red-950/10')}>
+                        <TableCell className="text-sm tabular-nums">{strike.incident_date}</TableCell>
+                        <TableCell>
+                          <Badge variant="outline" className="text-[10px]">
+                            {STRIKE_TYPE_LABELS[strike.strike_type as StrikeType] || strike.strike_type}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="outline" className={cn('text-[10px]', SEVERITY_COLORS[strike.severity as StrikeSeverity])}>
+                            {SEVERITY_LABELS[strike.severity as StrikeSeverity] || strike.severity}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-sm font-medium">{strike.title}</TableCell>
+                        <TableCell>
+                          {strike.is_resolved ? (
+                            <Badge variant="outline" className="text-[10px] text-emerald-600 border-emerald-300 dark:text-emerald-400 dark:border-emerald-800">
+                              <CheckCircle2 className="w-3 h-3 mr-1" />Resolved
+                            </Badge>
+                          ) : (
+                            <Badge variant="outline" className="text-[10px] text-red-600 border-red-300 dark:text-red-400 dark:border-red-800">
+                              <AlertTriangle className="w-3 h-3 mr-1" />Active
+                            </Badge>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              ) : (
+                <EmptyState
+                  icon={ShieldCheck}
+                  title="No Strikes on Record"
+                  description="No active or recently resolved strikes for this team member during the selected period."
                 />
               )}
             </CardContent>
