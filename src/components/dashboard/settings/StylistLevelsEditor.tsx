@@ -34,6 +34,8 @@ import {
   RefreshCw,
   Sparkles,
   FileDown,
+  FileSpreadsheet,
+  FileText,
   GraduationCap,
   Globe,
   TrendingUp,
@@ -85,6 +87,13 @@ import {
   DialogTitle,
   DialogDescription,
 } from '@/components/ui/dialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Download } from 'lucide-react';
 
 // Track which level cards are expanded
 type ExpandedSet = Set<string>;
@@ -850,9 +859,100 @@ function CriteriaComparisonTable({ levels, promotionCriteria, retentionCriteria,
 
   return (
     <div className="space-y-4">
-      <p className="text-sm text-muted-foreground">
-        Click any metric row to configure thresholds across all levels at once. Use "Edit" per-level for advanced settings.
-      </p>
+      <div className="flex items-center justify-between gap-4">
+        <p className="text-sm text-muted-foreground">
+          Click any metric row to configure thresholds across all levels at once. Use "Edit" per-level for advanced settings.
+        </p>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" size="sm" className="shrink-0 gap-1.5 font-sans">
+              <Download className="w-3.5 h-3.5" />
+              Export
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={() => {
+              const rows: string[][] = [];
+              rows.push(['Metric', ...levels.map((l, i) => `Level ${i + 1}: ${l.label}`)]);
+              rows.push(['— COMPENSATION —']);
+              ['Service Commission', 'Retail Commission'].forEach(label => {
+                const field = label === 'Service Commission' ? 'serviceCommissionRate' : 'retailCommissionRate';
+                rows.push([label, ...levels.map(l => l[field] ? `${l[field]}%` : '—')]);
+              });
+              rows.push(['— PROMOTION —']);
+              metrics.filter(m => m.section === 'promotion').forEach(m => {
+                rows.push([m.label, ...levelData.map(d => m.getValue(d.promo, d.retention) ?? '—')]);
+              });
+              rows.push(['— RETENTION —']);
+              metrics.filter(m => m.section === 'retention').forEach(m => {
+                rows.push([m.label, ...levelData.map(d => m.getValue(d.promo, d.retention) ?? '—')]);
+              });
+              const csv = rows.map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\n');
+              const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+              const link = document.createElement('a');
+              link.href = URL.createObjectURL(blob);
+              link.download = `level-criteria-comparison-${new Date().toISOString().split('T')[0]}.csv`;
+              document.body.appendChild(link);
+              link.click();
+              document.body.removeChild(link);
+              URL.revokeObjectURL(link.href);
+              toast.success('CSV exported');
+            }}>
+              <FileSpreadsheet className="w-4 h-4 mr-2" />
+              Export as Spreadsheet (.csv)
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={async () => {
+              let logoDataUrl: string | undefined;
+              const logoUrl = effectiveOrganization?.logo_url;
+              if (logoUrl) {
+                try {
+                  logoDataUrl = await new Promise<string>((resolve, reject) => {
+                    const img = new Image();
+                    img.crossOrigin = 'anonymous';
+                    img.onload = () => {
+                      const canvas = document.createElement('canvas');
+                      canvas.width = img.width;
+                      canvas.height = img.height;
+                      const ctx = canvas.getContext('2d');
+                      ctx?.drawImage(img, 0, 0);
+                      resolve(canvas.toDataURL('image/png'));
+                    };
+                    img.onerror = reject;
+                    img.src = logoUrl;
+                  });
+                } catch { /* proceed without logo */ }
+              }
+              const levelInfos = levels.filter(l => l.dbId).map((l, i) => ({
+                label: l.label,
+                slug: l.slug,
+                dbId: l.dbId,
+                index: i,
+                isConfigured: l.isConfigured,
+              }));
+              const commissions = levels.filter(l => l.dbId).map(l => ({
+                dbId: l.dbId,
+                serviceCommissionRate: parseFloat(String(l.serviceCommissionRate)) || 0,
+                retailCommissionRate: parseFloat(String(l.retailCommissionRate)) || 0,
+                hourlyWageEnabled: l.hourlyWageEnabled,
+                hourlyWage: l.hourlyWage ? parseFloat(l.hourlyWage) : null,
+              }));
+              const doc = generateLevelRequirementsPDF({
+                orgName: effectiveOrganization?.name || 'Organization',
+                levels: levelInfos,
+                criteria: promotionCriteria,
+                retentionCriteria: retentionCriteria || [],
+                logoDataUrl,
+                commissions,
+              });
+              doc.save('level-criteria-comparison.pdf');
+              toast.success('PDF exported');
+            }}>
+              <FileText className="w-4 h-4 mr-2" />
+              Export as PDF
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
       <ScrollableTableWrapper isFullscreen={isTableFullscreen} onToggleFullscreen={toggleTableFullscreen}>
         <table className="w-full caption-bottom text-sm [&_th]:border-r [&_th]:border-border/30 [&_th:last-child]:border-r-0 [&_td]:border-r [&_td]:border-border/30 [&_td:last-child]:border-r-0 [&_td[colspan]]:border-r-0">
           <TableHeader className="sticky top-0 z-20 shadow-[0_2px_4px_-2px_rgba(0,0,0,0.08)] dark:shadow-[0_2px_4px_-2px_rgba(0,0,0,0.3)]">
