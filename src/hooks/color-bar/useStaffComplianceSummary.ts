@@ -63,8 +63,10 @@ export function useStaffComplianceSummary(
       }
       if (!resolvedOrg) return null;
 
-      // Fetch color/chemical appointments for this staff member
-      const { data: appointments, error: apptErr } = await supabase
+      // --- Query BOTH appointment tables for color/chemical services ---
+
+      // 1. Local appointments table
+      const { data: localAppts } = await supabase
         .from('appointments')
         .select('id, appointment_date, service_name, service_category, start_time')
         .eq('organization_id', resolvedOrg)
@@ -73,11 +75,42 @@ export function useStaffComplianceSummary(
         .lte('appointment_date', dateTo)
         .not('status', 'in', '("cancelled","no_show")');
 
-      if (apptErr) throw apptErr;
-
-      const colorAppts = (appointments ?? []).filter((a: any) =>
+      const localColorAppts = (localAppts ?? []).filter((a: any) =>
         isColorOrChemicalService(a.service_name, a.service_category),
       );
+
+      // 2. Phorest appointments table (primary source for Phorest-integrated salons)
+      // Look up staff's phorest_staff_id first
+      let phorestColorAppts: any[] = [];
+      {
+        const { data: ep } = await supabase
+          .from('employee_profiles')
+          .select('phorest_staff_id')
+          .eq('user_id', staffUserId)
+          .maybeSingle();
+        const phorestStaffId = (ep as any)?.phorest_staff_id;
+
+        if (phorestStaffId) {
+          const pQuery = supabase
+            .from('phorest_appointments' as any)
+            .select('id, appointment_date, service_name, start_time')
+            .eq('organization_id', resolvedOrg)
+            .eq('staff_id', phorestStaffId)
+            .gte('appointment_date', dateFrom)
+            .lte('appointment_date', dateTo)
+            .not('status', 'in', '("cancelled","no_show")');
+          const { data: pAppts } = await pQuery;
+
+          phorestColorAppts = (pAppts ?? []).filter((a: any) =>
+            isColorOrChemicalService(a.service_name, null),
+          );
+        }
+      }
+
+      // Merge — use whichever source has more color appointments (avoid double-counting)
+      const colorAppts = phorestColorAppts.length >= localColorAppts.length
+        ? phorestColorAppts
+        : localColorAppts;
 
       if (colorAppts.length === 0) {
         return {
@@ -96,6 +129,13 @@ export function useStaffComplianceSummary(
         };
       }
 
+      // Merge IDs from both tables for cross-referencing mix_sessions
+      const allApptIds = [
+        ...new Set([
+          ...localColorAppts.map((a: any) => a.id),
+          ...phorestColorAppts.map((a: any) => a.id),
+        ]),
+      ].filter(Boolean);
       const apptIds = colorAppts.map((a: any) => a.id);
 
       // Cross-reference with mix_sessions
@@ -103,7 +143,7 @@ export function useStaffComplianceSummary(
         .from('mix_sessions')
         .select('id, appointment_id')
         .eq('organization_id', resolvedOrg)
-        .in('appointment_id', apptIds);
+        .in('appointment_id', allApptIds);
 
       const sessionApptSet = new Set((sessions ?? []).map((s: any) => s.appointment_id));
       const sessionIds = (sessions ?? []).map((s: any) => s.id);
@@ -139,20 +179,29 @@ export function useStaffComplianceSummary(
         }
       }
 
-      // Get dispensed weight from staff_backroom_performance for waste %
+      // Compute dispensed weight & cost directly from bowl_lines (source of truth)
       let totalDispensed = 0;
       let totalCost = 0;
-      {
-        const { data: perfData } = await supabase
-          .from('staff_backroom_performance')
-          .select('total_dispensed_weight, total_product_cost')
-          .eq('organization_id', resolvedOrg)
-          .eq('staff_id', staffUserId)
-          .gte('period_start', dateFrom)
-          .lte('period_end', dateTo);
-        for (const p of perfData ?? []) {
-          totalDispensed += (p as any).total_dispensed_weight ?? 0;
-          totalCost += (p as any).total_product_cost ?? 0;
+      if (sessionIds.length > 0) {
+        // Get bowl IDs for these sessions
+        const { data: bowls } = await (supabase
+          .from('mix_bowls')
+          .select('id') as any)
+          .in('session_id', sessionIds);
+        const bowlIds = (bowls ?? []).map((b: any) => b.id);
+
+        if (bowlIds.length > 0) {
+          const blQuery = supabase
+            .from('bowl_lines' as any)
+            .select('dispensed_quantity, dispensed_cost_snapshot')
+            .in('bowl_id', bowlIds);
+          const { data: lines } = await blQuery;
+          for (const l of lines ?? []) {
+            const qty = (l as any).dispensed_quantity ?? 0;
+            const cost = (l as any).dispensed_cost_snapshot ?? 0;
+            totalDispensed += qty;
+            totalCost += qty * cost;
+          }
         }
       }
 
@@ -165,11 +214,11 @@ export function useStaffComplianceSummary(
       // --- Overage charges for this staff's appointments ---
       let overageChargeTotal = 0;
       let appointmentsWithOverage = 0;
-      if (apptIds.length > 0) {
+      if (allApptIds.length > 0) {
         const { data: charges } = await supabase
           .from('checkout_usage_charges')
           .select('appointment_id, charge_amount')
-          .in('appointment_id', apptIds);
+          .in('appointment_id', allApptIds);
         const seen = new Set<string>();
         for (const c of charges ?? []) {
           overageChargeTotal += (c as any).charge_amount ?? 0;
