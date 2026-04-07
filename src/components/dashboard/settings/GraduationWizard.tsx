@@ -483,7 +483,7 @@ export function GraduationWizard({ open, onOpenChange, levelId, levelLabel, leve
   useEffect(() => {
     if (open) {
       setStep(0);
-      setActiveTab(levelIndex === totalLevels - 1 ? 'retention' : 'promotion');
+      setActiveTab((levelIndex === 0 || levelIndex === totalLevels - 1) ? 'retention' : 'promotion');
     }
   }, [open, levelIndex]);
 
@@ -586,28 +586,28 @@ export function GraduationWizard({ open, onOpenChange, levelId, levelLabel, leve
 
   const handleSaveRetention = () => {
     if (!orgId) return;
-    // Auto-populate KPI fields from promotion criteria
+    const isBaseLevel = levelIndex === 0;
     const payload: LevelRetentionCriteriaUpsert = {
       organization_id: orgId,
       stylist_level_id: levelId,
       retention_enabled: retForm.retention_enabled,
-      // Inherit KPI thresholds from promotion criteria
-      revenue_enabled: form.revenue_enabled,
-      revenue_minimum: form.revenue_threshold,
-      retail_enabled: form.retail_enabled,
-      retail_pct_minimum: form.retail_pct_threshold,
-      rebooking_enabled: form.rebooking_enabled,
-      rebooking_pct_minimum: form.rebooking_pct_threshold,
-      avg_ticket_enabled: form.avg_ticket_enabled,
-      avg_ticket_minimum: form.avg_ticket_threshold,
-      retention_rate_enabled: form.retention_rate_enabled,
-      retention_rate_minimum: form.retention_rate_threshold,
-      new_clients_enabled: form.new_clients_enabled,
-      new_clients_minimum: form.new_clients_threshold,
-      utilization_enabled: form.utilization_enabled,
-      utilization_minimum: form.utilization_threshold,
-      rev_per_hour_enabled: form.rev_per_hour_enabled,
-      rev_per_hour_minimum: form.rev_per_hour_threshold,
+      // For base level (Level 1), use retForm values directly; otherwise inherit from promotion criteria
+      revenue_enabled: isBaseLevel ? retForm.revenue_enabled : form.revenue_enabled,
+      revenue_minimum: isBaseLevel ? retForm.revenue_minimum : form.revenue_threshold,
+      retail_enabled: isBaseLevel ? retForm.retail_enabled : form.retail_enabled,
+      retail_pct_minimum: isBaseLevel ? retForm.retail_pct_minimum : form.retail_pct_threshold,
+      rebooking_enabled: isBaseLevel ? retForm.rebooking_enabled : form.rebooking_enabled,
+      rebooking_pct_minimum: isBaseLevel ? retForm.rebooking_pct_minimum : form.rebooking_pct_threshold,
+      avg_ticket_enabled: isBaseLevel ? retForm.avg_ticket_enabled : form.avg_ticket_enabled,
+      avg_ticket_minimum: isBaseLevel ? retForm.avg_ticket_minimum : form.avg_ticket_threshold,
+      retention_rate_enabled: isBaseLevel ? retForm.retention_rate_enabled : form.retention_rate_enabled,
+      retention_rate_minimum: isBaseLevel ? retForm.retention_rate_minimum : form.retention_rate_threshold,
+      new_clients_enabled: isBaseLevel ? retForm.new_clients_enabled : form.new_clients_enabled,
+      new_clients_minimum: isBaseLevel ? retForm.new_clients_minimum : form.new_clients_threshold,
+      utilization_enabled: isBaseLevel ? retForm.utilization_enabled : form.utilization_enabled,
+      utilization_minimum: isBaseLevel ? retForm.utilization_minimum : form.utilization_threshold,
+      rev_per_hour_enabled: isBaseLevel ? retForm.rev_per_hour_enabled : form.rev_per_hour_enabled,
+      rev_per_hour_minimum: isBaseLevel ? retForm.rev_per_hour_minimum : form.rev_per_hour_threshold,
       // Retention-specific policy settings
       evaluation_window_days: retForm.evaluation_window_days,
       grace_period_days: retForm.grace_period_days,
@@ -677,13 +677,13 @@ export function GraduationWizard({ open, onOpenChange, levelId, levelLabel, leve
           <div className="mt-4 flex bg-muted/70 rounded-full p-1 gap-1">
             <button
               onClick={() => { setActiveTab('promotion'); setStep(0); }}
-              disabled={levelIndex === totalLevels - 1}
+              disabled={levelIndex === 0 || levelIndex === totalLevels - 1}
               className={cn(
                 "flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-sans transition-all",
                 activeTab === 'promotion'
                   ? "bg-foreground text-background shadow-sm"
                   : "text-muted-foreground hover:text-foreground",
-                levelIndex === totalLevels - 1 && "opacity-50 pointer-events-none"
+                (levelIndex === 0 || levelIndex === totalLevels - 1) && "opacity-50 pointer-events-none"
               )}
             >
               <Sparkles className="w-3.5 h-3.5" />
@@ -1047,9 +1047,13 @@ export function GraduationWizard({ open, onOpenChange, levelId, levelLabel, leve
               <div className="flex items-center justify-between p-3 rounded-lg border">
                 <div className="flex items-center gap-3">
                   <Shield className="w-4 h-4 text-muted-foreground" />
-                  <div>
+                <div>
                     <p className="text-sm font-medium">Enable Retention Monitoring</p>
-                    <p className="text-[10px] text-muted-foreground">Flag stylists who fall below the level's KPI requirements</p>
+                    <p className="text-[10px] text-muted-foreground">
+                      {levelIndex === 0
+                        ? 'Set minimum performance standards for stylists at this level'
+                        : 'Flag stylists who fall below the level\'s KPI requirements'}
+                    </p>
                   </div>
                 </div>
                 <Switch
@@ -1060,18 +1064,125 @@ export function GraduationWizard({ open, onOpenChange, levelId, levelLabel, leve
 
               {retForm.retention_enabled && (
                 <>
-                  {/* Inherited KPI note */}
-                  <div className="flex items-center gap-3 rounded-lg border border-border bg-muted/30 p-3">
-                    <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center shrink-0">
-                      <Info className="w-4 h-4 text-muted-foreground" />
+                  {levelIndex === 0 ? (
+                    <>
+                      {/* Base level context note */}
+                      <div className="flex items-center gap-3 rounded-lg border border-amber-500/20 bg-amber-500/5 p-3">
+                        <div className="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center shrink-0">
+                          <Info className="w-4 h-4 text-amber-600" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm text-foreground font-medium font-sans">Baseline Standards</p>
+                          <p className="text-xs text-muted-foreground font-sans">
+                            As the entry level, these are the baseline standards all stylists must maintain. Toggle on the metrics you want to monitor.
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Zura Recommended for retention */}
+                      <div className="flex items-center gap-3 rounded-lg border border-primary/20 bg-primary/5 p-3">
+                        <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                          <Sparkles className="w-4 h-4 text-primary" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm text-foreground font-medium font-sans">Zura Recommended</p>
+                          <p className="text-xs text-muted-foreground font-sans">
+                            Apply baseline retention benchmarks for entry-level stylists.
+                          </p>
+                        </div>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="shrink-0 rounded-full h-8 px-3 text-xs border-primary/30 text-primary hover:bg-primary/10 font-sans"
+                          onClick={() => {
+                            const defaults = getZuraRetentionDefaults(0);
+                            setRetForm(defaults);
+                          }}
+                        >
+                          Apply Defaults
+                        </Button>
+                      </div>
+
+                      {/* Independent KPI toggles for base level */}
+                      <div className="space-y-3">
+                        {RETENTION_CRITERIA.map(criterion => {
+                          const Icon = criterion.icon;
+                          const enabled = retForm[criterion.enabledKey] as boolean;
+                          const minimum = retForm[criterion.minimumKey] as number;
+                          return (
+                            <div
+                              key={criterion.key}
+                              className={cn(
+                                "rounded-lg border p-3 transition-all",
+                                enabled ? "border-primary/30 bg-primary/5" : "border-border bg-transparent"
+                              )}
+                            >
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                  <div className={cn(
+                                    "w-8 h-8 rounded-lg flex items-center justify-center",
+                                    enabled ? "bg-primary/10" : "bg-muted"
+                                  )}>
+                                    <Icon className={cn("w-4 h-4", enabled ? "text-primary" : "text-muted-foreground")} />
+                                  </div>
+                                  <span className={cn("text-sm", enabled ? "text-foreground font-medium" : "text-muted-foreground")}>
+                                    {criterion.label}
+                                  </span>
+                                  <TooltipProvider delayDuration={200}>
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <Info className="w-3.5 h-3.5 text-muted-foreground/60 hover:text-muted-foreground cursor-help shrink-0" />
+                                      </TooltipTrigger>
+                                      <TooltipContent side="top" className="max-w-[220px] text-xs">
+                                        {criterion.description}
+                                      </TooltipContent>
+                                    </Tooltip>
+                                  </TooltipProvider>
+                                </div>
+                                <Switch
+                                  checked={enabled}
+                                  onCheckedChange={(v) => setRetField(criterion.enabledKey, v)}
+                                />
+                              </div>
+                              {enabled && (
+                                <div className="mt-3 pl-11">
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-xs text-muted-foreground">Min:</span>
+                                    <div className="relative flex-1 max-w-[160px]">
+                                      {(criterion.unit === '$' || criterion.unit === '/mo' || criterion.unit === '$/hr') && (
+                                        <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">$</span>
+                                      )}
+                                      <Input
+                                        type="number"
+                                        value={minimum || ''}
+                                        onChange={(e) => setRetField(criterion.minimumKey, Number(e.target.value))}
+                                        placeholder={criterion.placeholder}
+                                        className={cn("h-8 text-sm", (criterion.unit === '$' || criterion.unit === '/mo' || criterion.unit === '$/hr') && "pl-6")}
+                                      />
+                                    </div>
+                                    <span className="text-xs text-muted-foreground">{criterion.unit}</span>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </>
+                  ) : (
+                    /* Inherited KPI note for levels 2+ */
+                    <div className="flex items-center gap-3 rounded-lg border border-border bg-muted/30 p-3">
+                      <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center shrink-0">
+                        <Info className="w-4 h-4 text-muted-foreground" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm text-foreground font-medium font-sans">KPI Minimums Inherited</p>
+                        <p className="text-xs text-muted-foreground font-sans">
+                          Retention thresholds match the Level Requirements configured above. Only the evaluation policy settings below are unique to retention.
+                        </p>
+                      </div>
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm text-foreground font-medium font-sans">KPI Minimums Inherited</p>
-                      <p className="text-xs text-muted-foreground font-sans">
-                        Retention thresholds match the Level Requirements configured above. Only the evaluation policy settings below are unique to retention.
-                      </p>
-                    </div>
-                  </div>
+                  )}
 
                   {/* Settings */}
                   <div className="space-y-3 pt-3 border-t border-border/50">
