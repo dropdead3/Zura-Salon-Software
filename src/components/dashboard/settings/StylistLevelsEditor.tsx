@@ -968,6 +968,15 @@ function CriteriaComparisonTable({ levels, promotionCriteria, retentionCriteria,
                         Level {idx + 1}
                       </span>
                       <span className="text-sm font-medium">{level.label}</span>
+                      {level.isConfigured ? (
+                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 border border-emerald-500/20">
+                          Configured
+                        </span>
+                      ) : (
+                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-600 border border-amber-500/20">
+                          Incomplete
+                        </span>
+                      )}
                       {level.dbId ? (
                         <button
                           onClick={() => onEditLevel(level, idx)}
