@@ -364,6 +364,25 @@ export function ReportBuilder({ meetingId, teamMemberId, teamMemberName }: Repor
               )}
             </div>
 
+            {/* Performance Summary */}
+            {perfData && (
+              <div className="space-y-2">
+                <div className="flex items-start gap-2">
+                  <Checkbox
+                    id="include-performance"
+                    checked={includePerformance}
+                    onCheckedChange={(checked) => setIncludePerformance(!!checked)}
+                  />
+                  <label htmlFor="include-performance" className="text-sm cursor-pointer flex-1">
+                    <span className="font-medium">Include Performance Summary</span>
+                    <span className="text-muted-foreground ml-2">
+                      (revenue, tips, rebook, retention, attachment)
+                    </span>
+                  </label>
+                </div>
+              </div>
+            )}
+
             {/* Color Bar Performance */}
             {complianceData && complianceData.totalColorAppointments > 0 && (
               <div className="space-y-2">
