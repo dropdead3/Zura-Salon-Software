@@ -24901,6 +24901,13 @@ export type Database = {
           user_id: string
         }[]
       }
+      get_unread_counts: {
+        Args: { p_channel_ids: string[]; p_user_id: string }
+        Returns: {
+          channel_id: string
+          unread_count: number
+        }[]
+      }
       get_user_accessible_organizations: {
         Args: { _user_id: string }
         Returns: string[]
