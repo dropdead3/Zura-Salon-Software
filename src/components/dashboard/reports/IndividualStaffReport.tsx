@@ -690,7 +690,7 @@ export function IndividualStaffReport({ dateFrom, dateTo, locationId, onClose, i
           )}
 
           {/* Section 8b: Color Bar Compliance */}
-          {data.colorBarCompliance.totalColorAppointments > 0 && (
+          {(data.colorBarCompliance.totalColorAppointments > 0 || (complianceData && complianceData.totalColorAppointments > 0)) && (
             <Card>
               <CardHeader className="pb-2">
                 <div className="flex items-center gap-2">
