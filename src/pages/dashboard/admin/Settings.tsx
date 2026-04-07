@@ -628,8 +628,8 @@ export default function Settings() {
   }, []);
 
   useEffect(() => {
-    fetchUsers();
-  }, []);
+    if (activeCategory === 'users') fetchUsers();
+  }, [activeCategory]);
 
   const fetchUsers = async () => {
     const { data: profiles, error: profilesError } = await supabase
@@ -939,6 +939,7 @@ export default function Settings() {
             </div>
           </div>
 
+          <Suspense fallback={<DashboardLoader size="md" className="h-64" />}>
           {/* Category Content */}
           {activeCategory === 'email' && (
             <Tabs defaultValue="branding" className="w-full">
@@ -1402,6 +1403,7 @@ export default function Settings() {
           {activeCategory === 'retail-products' && <RetailProductsSettingsContent />}
 
           {activeCategory === 'account-billing' && <AccountBillingContent />}
+          </Suspense>
         </div>
       </DashboardLayout>
     );
