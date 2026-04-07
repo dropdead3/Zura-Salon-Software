@@ -146,14 +146,14 @@ interface RetentionCriterionConfig {
 }
 
 const RETENTION_CRITERIA: RetentionCriterionConfig[] = [
-  { key: 'revenue', label: 'Service Revenue', icon: DollarSign, unit: '/mo', enabledKey: 'revenue_enabled', minimumKey: 'revenue_minimum', placeholder: '5000' },
-  { key: 'retail', label: 'Retail Attachment', icon: ShoppingBag, unit: '%', enabledKey: 'retail_enabled', minimumKey: 'retail_pct_minimum', placeholder: '8' },
-  { key: 'rebooking', label: 'Rebooking Rate', icon: CalendarCheck, unit: '%', enabledKey: 'rebooking_enabled', minimumKey: 'rebooking_pct_minimum', placeholder: '50' },
-  { key: 'avg_ticket', label: 'Average Ticket', icon: Receipt, unit: '$', enabledKey: 'avg_ticket_enabled', minimumKey: 'avg_ticket_minimum', placeholder: '80' },
-  { key: 'retention_rate', label: 'Client Retention', icon: Users, unit: '%', enabledKey: 'retention_rate_enabled', minimumKey: 'retention_rate_minimum', placeholder: '50' },
-  { key: 'new_clients', label: 'New Clients', icon: UserPlus, unit: '/mo', enabledKey: 'new_clients_enabled', minimumKey: 'new_clients_minimum', placeholder: '3' },
-  { key: 'utilization', label: 'Schedule Utilization', icon: CalendarClock, unit: '%', enabledKey: 'utilization_enabled', minimumKey: 'utilization_minimum', placeholder: '50' },
-  { key: 'rev_per_hour', label: 'Revenue Per Hour', icon: DollarSign, unit: '$/hr', enabledKey: 'rev_per_hour_enabled', minimumKey: 'rev_per_hour_minimum', placeholder: '30' },
+  { key: 'revenue', label: 'Service Revenue', description: 'Total service revenue generated per evaluation period.', icon: DollarSign, unit: '/mo', enabledKey: 'revenue_enabled', minimumKey: 'revenue_minimum', placeholder: '5000' },
+  { key: 'retail', label: 'Retail Attachment', description: 'Retail product sales as a percentage of total revenue.', icon: ShoppingBag, unit: '%', enabledKey: 'retail_enabled', minimumKey: 'retail_pct_minimum', placeholder: '8' },
+  { key: 'rebooking', label: 'Rebooking Rate', description: 'Percentage of clients who rebook before leaving.', icon: CalendarCheck, unit: '%', enabledKey: 'rebooking_enabled', minimumKey: 'rebooking_pct_minimum', placeholder: '50' },
+  { key: 'avg_ticket', label: 'Average Ticket', description: 'Average revenue per completed appointment.', icon: Receipt, unit: '$', enabledKey: 'avg_ticket_enabled', minimumKey: 'avg_ticket_minimum', placeholder: '80' },
+  { key: 'retention_rate', label: 'Client Retention', description: 'Percentage of clients who return within their expected window.', icon: Users, unit: '%', enabledKey: 'retention_rate_enabled', minimumKey: 'retention_rate_minimum', placeholder: '50' },
+  { key: 'new_clients', label: 'New Clients', description: 'Number of first-time clients seen per month.', icon: UserPlus, unit: '/mo', enabledKey: 'new_clients_enabled', minimumKey: 'new_clients_minimum', placeholder: '3' },
+  { key: 'utilization', label: 'Schedule Utilization', description: 'Percentage of available hours that are booked.', icon: CalendarClock, unit: '%', enabledKey: 'utilization_enabled', minimumKey: 'utilization_minimum', placeholder: '50' },
+  { key: 'rev_per_hour', label: 'Revenue Per Hour', description: 'Revenue generated per booked hour.', icon: DollarSign, unit: '$/hr', enabledKey: 'rev_per_hour_enabled', minimumKey: 'rev_per_hour_minimum', placeholder: '30' },
 ];
 
 const INITIAL_STATE: FormState = {
