@@ -310,7 +310,7 @@ export function generateLevelRequirementsPDF(options: LevelRequirementsPDFOption
     y = ensureSpace(doc, y, cardH);
 
     // Card background & border
-    const borderColor: [number, number, number] = isConfigured ? [225, 225, 225] : [253, 224, 71];
+    const borderColor: [number, number, number] = isConfigured ? [230, 230, 232] : [253, 224, 71];
     drawRoundedRect(doc, MARGIN, y, contentWidth, cardH, 3, { fill: [255, 255, 255], stroke: borderColor, lineWidth: 0.4 });
     if (!isConfigured) {
       // Amber tint background
@@ -394,7 +394,7 @@ export function generateLevelRequirementsPDF(options: LevelRequirementsPDFOption
 
     // ── Compensation Section ──
     doc.setTextColor(170, 170, 170);
-    doc.setFont(F_BODY, 'normal');
+    doc.setFont(F_DISPLAY, 'normal');
     doc.setFontSize(6.5);
     doc.text('COMPENSATION', MARGIN + innerPadX, cy, { charSpace: 0.8 });
     cy += 5;
@@ -445,7 +445,7 @@ export function generateLevelRequirementsPDF(options: LevelRequirementsPDFOption
     // ── KPI Requirements ──
     if (kpis.length > 0) {
       doc.setTextColor(170, 170, 170);
-      doc.setFont(F_BODY, 'normal');
+      doc.setFont(F_DISPLAY, 'normal');
       doc.setFontSize(6.5);
       doc.text(isBase ? 'RETENTION MINIMUMS' : 'GRADUATION REQUIREMENTS', MARGIN + innerPadX, cy, { charSpace: 0.8 });
       cy += 5;
@@ -517,7 +517,7 @@ export function generateLevelRequirementsPDF(options: LevelRequirementsPDFOption
     // ── Retention policy ──
     if (retention?.retention_enabled) {
       doc.setTextColor(170, 170, 170);
-      doc.setFont(F_BODY, 'normal');
+      doc.setFont(F_DISPLAY, 'normal');
       doc.setFontSize(6.5);
       doc.text('RETENTION POLICY', MARGIN + innerPadX, cy, { charSpace: 0.8 });
       cy += 5;
