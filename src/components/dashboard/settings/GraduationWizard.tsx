@@ -512,6 +512,18 @@ export function GraduationWizard({ open, onOpenChange, levelId, levelLabel, leve
           next[c.weightKey] = 0 as never;
         });
       }
+      // Auto-scroll to the toggled criterion after render
+      if (!prev[enabledKey]) {
+        const criterion = CRITERIA.find(c => c.enabledKey === enabledKey);
+        if (criterion) {
+          setTimeout(() => {
+            const el = document.getElementById(`criterion-${criterion.key}`);
+            if (el && scrollContainerRef.current) {
+              el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+          }, 50);
+        }
+      }
       return next;
     });
   }, []);
