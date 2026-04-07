@@ -1,52 +1,84 @@
 
 
-# Fix Level Tenure Tracking for Admin-Assigned Levels
+# Redesign Level Progress Card for Clarity
 
 ## Problem
-When you assign a stylist to a level via the admin UI, no `level_promotions` record is created. The system calculates "time at level" by checking `level_promotions.promoted_at`, falling back to `hire_date`. Since neither exists for your stylists, tenure shows as 0 days / N/A.
+The current layout mixes retention warnings, progress bars, and targets in a way that makes it hard to quickly understand: (a) where you are now, (b) what's needed for the next level, and (c) how far off each metric is. The "current / target" format buried in small text next to progress bars doesn't create clear separation between "your stats" and "what's required."
 
-## Root Cause
-The `useAssignStylistLevel` hook only updates `employee_profiles.stylist_level` — it doesn't record *when* the level was set. The tenure calculation in `useLevelProgress` and `useTeamLevelProgress` has no reliable timestamp to work with.
+## Design
 
-## Solution
-Add a `stylist_level_since` column to `employee_profiles` that tracks when the current level was assigned. This column gets updated every time the level changes — whether through admin assignment, bulk assignment, or the promotion flow.
+### New Layout Structure
 
-## Changes
+```text
+┌──────────────────────────────────────────────┐
+│ 🎓 LEVEL PROGRESS                      25%  │
+│    Studio Artist → Core Artist               │
+├──────────────────────────────────────────────┤
+│  ⚠ Retention Warning (if applicable)        │
+│  ... failures listed ...                     │
+├──────────────────────────────────────────────┤
+│  Overall Readiness  ████████░░░░░░░░░  25%   │
+├──────────────────────────────────────────────┤
+│  ┌─ WHAT YOU NEED ─────────────────────────┐ │
+│  │ Metric        Target    You    Gap      │ │
+│  │ ──────────    ──────    ───    ───      │ │
+│  │ Svc Revenue   $8,000    $1,558  -$6,442 │ │
+│  │ Retail Att.   11.0%     5.9%   -5.1 pts │ │
+│  │ Rebooking     63.0%     0.0%   -63.0    │ │
+│  │ Avg Ticket    $200      $117   -$83     │ │
+│  │ Retention     73.0%     0.0%   -73.0    │ │
+│  │ Utilization   80.0%     71.0%  -9.0     │ │
+│  │ Rev/Hr        $75/hr    $48/hr -$27     │ │
+│  │ Tenure        90d       0d     90d      │ │
+│  └─────────────────────────────────────────┘ │
+│                                              │
+│  Each row has a thin progress bar below it   │
+│  Color: emerald (met) / primary (75%+) /     │
+│         amber (<75%)                         │
+├──────────────────────────────────────────────┤
+│  💲 Income Opportunity                       │
+│  Commission Today  |  At Core Artist  |  +$  │
+├──────────────────────────────────────────────┤
+│  90-day rolling window    Requires approval  │
+└──────────────────────────────────────────────┘
+```
 
-### 1. Database Migration
-- Add `stylist_level_since TIMESTAMPTZ` column to `employee_profiles`
-- Default to `now()` for new rows
-- Backfill existing rows: set `stylist_level_since` to the latest `level_promotions.promoted_at` where available, otherwise fall back to `updated_at` (which captured when level was last set — today for your stylists)
+### Key Changes
 
-### 2. `src/hooks/useAssignStylistLevel.ts`
-- Update both `useAssignStylistLevel` and `useBulkAssignStylistLevel` to also set `stylist_level_since: new Date().toISOString()` in the `.update()` call
+1. **Reframe section header**: Change "KPI Performance" to **"What You Need"** — a clear directive that this section shows next-level requirements vs current standing.
 
-### 3. `src/hooks/usePromoteLevel.ts`
-- Add `stylist_level_since: new Date().toISOString()` to the `.update()` call that sets the new level
+2. **Reorder columns**: Put **Target first, then You, then Gap**. The mental model becomes "here's what's required → here's where you are → here's the delta." This reverses the current "You / Target" order.
 
-### 4. `src/hooks/useLevelProgress.ts`
-- Fetch `stylist_level_since` in the employee profile query (line 74)
-- Change the `levelSince` resolution (line 227) to: `profile?.stylist_level_since || latestPromotion?.promoted_at || profile?.hire_date || null`
+3. **Show explicit gap column**: Add a **Gap** column showing the shortfall in human-readable form (e.g., `-$6,442`, `-5.1 pts`, `-63%`). Met criteria show a green checkmark instead. This replaces the buried "X more needed" text below each bar.
 
-### 5. `src/hooks/useTeamLevelProgress.ts`
-- Include `stylist_level_since` in the employee profiles select
-- Change `levelSince` resolution to prioritize `stylist_level_since`
+4. **Color-code the gap**: Red/amber text for shortfalls, emerald for met metrics. Instantly scannable.
 
-### 6. Admin Override — Allow Setting Custom Date
-- In the `StylistCommissionDrilldown.tsx` dialog, add an optional "Level Since" date picker below the level selector so admins can backdate the tenure when assigning levels during initial setup
+5. **Met metrics visual**: Rows where `percent >= 100` get a subtle emerald left-border or checkmark, making it obvious what's already achieved vs what needs work.
 
-## Backfill Strategy
-For your current stylists (all set to `studio-artist` today), the backfill will use `updated_at` which is today's date. You can then use the date picker in the drilldown to set the correct historical date for each stylist.
+6. **Keep progress bars** but make them secondary — thin `h-1` bars below each row for visual reinforcement, not the primary data communication.
+
+7. **Remove "X more needed" text lines**: Redundant with the new gap column. This also tightens vertical spacing significantly.
+
+### File: `src/components/coaching/LevelProgressCard.tsx`
+
+- Restructure `CriterionRow` to show Target → Current → Gap in a grid
+- Gap column: compute and format the delta with sign, color-code red vs green
+- Add checkmark icon for met criteria
+- Remove the standalone "X more needed" paragraph
+- Keep progress bar as `h-1` below the row
+
+### File: `src/components/dashboard/StylistScorecard.tsx`
+
+- Apply the same column reordering (Target → You → Gap → Trend)
+- Replace the "KPI Performance" heading with "What You Need" (only when `hasNextLevel`)
+- Add gap column with formatted shortfall values
+- For top-level stylists (no next level), keep heading as "Current Performance"
 
 ## Files Changed
 | File | Change |
 |---|---|
-| Migration | Add `stylist_level_since` column + backfill |
-| `useAssignStylistLevel.ts` | Set `stylist_level_since` on assignment |
-| `usePromoteLevel.ts` | Set `stylist_level_since` on promotion |
-| `useLevelProgress.ts` | Prefer `stylist_level_since` for tenure calc |
-| `useTeamLevelProgress.ts` | Prefer `stylist_level_since` for tenure calc |
-| `StylistCommissionDrilldown.tsx` | Add "Level Since" date picker for backdating |
+| `LevelProgressCard.tsx` | Restructure criterion rows: Target → You → Gap, remove "more needed" text |
+| `StylistScorecard.tsx` | Same column reorder + gap column, rename section header |
 
-6 files + 1 migration.
+2 files, no database changes.
 
