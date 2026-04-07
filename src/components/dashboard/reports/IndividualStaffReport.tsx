@@ -93,6 +93,7 @@ export function IndividualStaffReport({ dateFrom, dateTo, locationId, onClose, i
   const locationInfo = useReportLocationInfo(locationId);
   const { data: orgUsers, isLoading: usersLoading } = useOrganizationUsers(effectiveOrganization?.id);
   const { data, isLoading } = useIndividualStaffReport(selectedStaffId || null, dateFrom, dateTo);
+  const { data: complianceData } = useStaffComplianceSummary(selectedStaffId || null, dateFrom, dateTo, effectiveOrganization?.id);
   const { formatCurrencyWhole } = useFormatCurrency();
   const { formatDate } = useFormatDate();
   const [isGenerating, setIsGenerating] = useState(false);
