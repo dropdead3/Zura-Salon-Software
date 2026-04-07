@@ -1,4 +1,5 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserLocationAccess } from '@/hooks/useUserLocationAccess';
@@ -10,8 +11,9 @@ import { useUserLocationAccess } from '@/hooks/useUserLocationAccess';
 export function useUnreadAnnouncementCount() {
   const { user } = useAuth();
   const { assignedLocationIds, canViewAllLocations } = useUserLocationAccess();
+  const queryClient = useQueryClient();
 
-  return useQuery({
+  const query = useQuery({
     queryKey: ['unread-announcement-count', user?.id, assignedLocationIds, canViewAllLocations],
     queryFn: async () => {
       if (!user?.id) return 0;
@@ -44,4 +46,33 @@ export function useUnreadAnnouncementCount() {
     enabled: !!user?.id,
     staleTime: 30000,
   });
+
+  // Realtime subscription replaces polling
+  useEffect(() => {
+    if (!user?.id) return;
+
+    const channel = supabase
+      .channel('unread-announcement-count-realtime')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'announcements' },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ['unread-announcement-count'] });
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'announcement_reads', filter: `user_id=eq.${user.id}` },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ['unread-announcement-count'] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user?.id, queryClient]);
+
+  return query;
 }

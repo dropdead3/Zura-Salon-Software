@@ -95,6 +95,7 @@ export function useMentions() {
 
 export function useUnreadMentionCount() {
   const { user } = useAuth();
+  const queryClient = useQueryClient();
 
   const { data } = useQuery({
     queryKey: ['mentions-unread-count', user?.id],
@@ -112,6 +113,31 @@ export function useUnreadMentionCount() {
     },
     enabled: !!user?.id,
   });
+
+  // Realtime subscription replaces polling
+  useEffect(() => {
+    if (!user?.id) return;
+
+    const channel = supabase
+      .channel('unread-mention-count')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'user_mentions',
+          filter: `user_id=eq.${user.id}`,
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ['mentions-unread-count', user.id] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user?.id, queryClient]);
 
   return data || 0;
 }
