@@ -18,6 +18,7 @@ import { format, subDays } from 'date-fns';
 import { useLevelProgress } from '@/hooks/useLevelProgress';
 import { useResolveCommission } from '@/hooks/useResolveCommission';
 import { useStylistLevels } from '@/hooks/useStylistLevels';
+import { useLevelUpliftEstimate } from '@/hooks/useLevelUpliftEstimate';
 import { useIndividualStaffReport } from '@/hooks/useIndividualStaffReport';
 
 interface ReportBuilderProps {
