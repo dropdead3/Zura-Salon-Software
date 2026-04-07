@@ -1872,7 +1872,7 @@ export function StylistLevelsEditor({ embedded = false, onActions }: StylistLeve
   const totalAssigned = Object.values(stylistsByLevel || {}).reduce((a, b) => a + b, 0);
 
   if (isEarlyExit) {
-    if (isLoading) return <DashboardLoader />;
+    if (isLoading) return <DashboardLoader className="min-h-[calc(100vh-10rem)]" />;
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
         <p className="text-destructive">Failed to load stylist levels</p>
