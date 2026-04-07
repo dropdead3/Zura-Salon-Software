@@ -1,33 +1,31 @@
 
 
-# Add Eval Window ≥ Level Tenure Validation
+# Commission Override Toggle Guard
 
 ## Problem
-Evaluation window and level tenure are configured independently. An admin could set tenure to 180 days but eval window to 90 days, meaning the system would only assess half the tenure period — potentially missing poor early performance or rewarding a short hot streak.
-
-## Rule
-`evaluation_window_days` must be ≥ `tenure_days` whenever both are configured. This applies to both promotion and retention evaluation windows.
+The override fields are always visible, making it too easy for admins to accidentally set individual overrides. Overrides should be treated as exceptions, not defaults.
 
 ## Changes
 
-### 1. `src/components/dashboard/settings/GraduationWizard.tsx`
-- Add client-side validation in the save handler: if `tenure_enabled && tenure_days > evaluation_window_days`, show an error toast and block save
-- Add an inline warning below the Eval Window slider/input when the current value is less than tenure days (advisory text like "Eval window should be ≥ Level Tenure ({X}d) to ensure full-period assessment")
-- Auto-correct: when tenure days is increased past eval window, bump eval window to match (with a toast noting the adjustment)
+### File: `src/components/dashboard/settings/StylistCommissionDrilldown.tsx`
 
-### 2. `src/components/dashboard/settings/StylistLevelsEditor.tsx`
-- In the Criteria Comparison Table, add a visual warning indicator (amber text or icon) on the Eval Window cell if its value is less than the Level Tenure value for the same level
+1. **Add toggle state**: Add a `showOverride` boolean state, initialized to `true` if an existing override is loaded, `false` otherwise.
 
-## Behavior
-- **Soft guard in table**: amber highlight when eval < tenure
-- **Hard guard in wizard**: blocks save with clear message
-- **Auto-adjust**: raising tenure past eval window auto-bumps eval window
+2. **Replace the "Commission Override" label row** with a toggle row:
+   - Left: Label "Commission Override" + a small cautionary subtitle like "Only enable for individual rate exceptions"
+   - Right: `Switch` component bound to `showOverride`
+   - When an active override exists, the toggle starts ON and the "Remove" button remains available
+
+3. **Conditionally render override fields**: Wrap the inputs (Service %, Retail %, Reason, Expires, Save button) in an animated collapse that only shows when `showOverride` is true. Use `overflow: clip` with height transition or a simple conditional render.
+
+4. **Visual treatment**: When the toggle is OFF, the section is clean and minimal. When ON, add a subtle amber/warning left-border or background tint (`border-l-2 border-amber-500/60 pl-3`) to reinforce that this is an exception path.
+
+5. **Reset on toggle off**: When toggling OFF, if there is an existing override, prompt or auto-trigger the remove action. If no override was saved yet, simply clear the form fields.
 
 ## Files Changed
 | File | Change |
 |---|---|
-| `GraduationWizard.tsx` | Add validation on save + inline warning + auto-adjust logic |
-| `StylistLevelsEditor.tsx` | Amber warning on eval window cells that are < tenure |
+| `StylistCommissionDrilldown.tsx` | Add Switch toggle to guard override fields, conditional render, amber visual treatment |
 
-2 files, no database changes.
+1 file, no database changes.
 
