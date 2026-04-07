@@ -1,35 +1,37 @@
 
-Good catch — your prompt clearly identified both the unclear sentence and the intended rule. A slightly stronger prompt next time would specify whether you want only the visible table phrase updated or a full retention-copy consistency sweep across related screens.
 
-Plan
+# Make Table Edit Action Bar More Visible & Centered
 
-1. Update the retention header copy in `src/components/dashboard/settings/StylistLevelsEditor.tsx`
-- Replace the current line:
-  “KPI minimums inherited from Level Requirements · Falling below triggers demotion to Level 1”
-- With copy that makes three things explicit:
-  - retention uses that level’s configured standards
-  - falling below can surface coaching or demotion flags depending on the configured action
-  - Level 1 is a special case and should reference coaching or removal review, not demotion
+## Problem
+The floating action bar (with "Auto-step", "Save", and close buttons) that appears when editing a table row blends into the table cells. It's positioned `bottom-20 right-6`, making it easy to miss.
 
-2. Align the retention explainer copy in `src/components/dashboard/settings/GraduationWizard.tsx`
-- Update the levels 2+ “KPI Minimums Inherited” note so it matches the same flag-based language
-- Update the Level 1 explainer so it no longer says “review or termination” and instead uses the same clearer entry-level wording
+## Fix
 
-3. Tighten the hover-help language
-- Update the retention “Action” tooltip in `StylistLevelsEditor.tsx` so the helper text matches the new explanation and doesn’t imply every below-standard case becomes a demotion
+### File: `src/components/dashboard/settings/StylistLevelsEditor.tsx` (~line 1248)
 
-Recommended wording direction
-- Table header:
-  “Retention uses each level’s KPI standards. Falling below them surfaces coaching or demotion flags based on the action configured for that level. For Level 1, falling below entry-level standards surfaces coaching or removal review.”
-- Levels 2+ wizard note:
-  “Retention thresholds follow the KPI standards configured above. The settings below determine how below-standard performance is evaluated and whether it surfaces coaching or demotion flags.”
-- Level 1 wizard note:
-  “Use these standards to define minimum entry-level performance. Falling below them surfaces coaching or removal review.”
+Reposition and restyle the floating bar:
 
-Technical details
-- Files:
-  - `src/components/dashboard/settings/StylistLevelsEditor.tsx`
-  - `src/components/dashboard/settings/GraduationWizard.tsx`
-- No database or behavior changes
-- I recommend using “entry-level” or the dynamic first-level label instead of hardcoding “New Talent,” since Level 1 naming is customizable
-- I’ll keep the copy advisory-first so it doesn’t imply automatic demotion or automatic removal
+1. **Center it horizontally** — change from `right-6` to `left-1/2 -translate-x-1/2` so it sits center-bottom of the viewport
+2. **Lower it** — change `bottom-20` to `bottom-6` so it's clearly at the screen bottom
+3. **Increase visibility** — use a solid, higher-contrast background (`bg-card`) with a stronger shadow and a subtle top border accent (primary color glow or brighter border)
+4. **Increase size** — bump padding and text sizes slightly so buttons are more tappable and the bar reads as a prominent floating toolbar rather than a small pill
+
+**Before:**
+```
+className="fixed bottom-20 right-6 z-50 flex items-center gap-2 bg-card/90 backdrop-blur-xl border border-border rounded-xl shadow-[0_8px_32px_-4px_rgba(0,0,0,0.4)] px-4 py-2.5"
+```
+
+**After:**
+```
+className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[80] flex items-center gap-3 bg-card border border-border/60 rounded-xl shadow-[0_12px_48px_-8px_rgba(0,0,0,0.5)] px-5 py-3 ring-1 ring-primary/20"
+```
+
+Also bump the label and button text from `text-xs` to `text-sm` for better readability, and make the Save button slightly larger with more padding.
+
+## Files Changed
+| File | Change |
+|---|---|
+| `src/components/dashboard/settings/StylistLevelsEditor.tsx` | Reposition floating action bar to center-bottom, increase contrast and size |
+
+1 file, no database changes.
+
