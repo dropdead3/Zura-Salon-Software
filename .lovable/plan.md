@@ -1,58 +1,58 @@
 
 
-# Fix: Level Criteria Save Flow — Don't Close, Navigate to Next Tab
+# Fix: Recommended Weights Producing Negative Values and Not Totaling 100%
 
 ## Problem
 
-When an admin configures "Level Requirements" (promotion criteria) and clicks "Save Criteria," the dialog closes immediately. The admin then has to reopen the dialog to configure "Required to Stay" (retention). This is friction-heavy, especially for the final level where both tabs need configuration.
+Two bugs in the "Recommended" preset logic:
 
-The user expects: Save promotion criteria → automatically switch to the "Required to Stay" tab so they can configure retention → then close when done.
+1. **Negative weights**: `rev_per_hour_weight` has a recommended value of `0`. When it's enabled and happens to be last in the active list, it gets `100 - assigned` — but `assigned` can already exceed 100 due to rounding, producing a negative value.
+
+2. **Total exceeds 100%**: `Math.round` on each metric can round up cumulatively, so `assigned` overshoots 100 before the last metric is reached.
 
 ## Fix
 
 ### File: `src/components/dashboard/settings/GraduationWizard.tsx`
 
-**1. Change `handleSave` behavior (~line 584-589)**
+**1. Give zero-weight metrics a minimum fallback** (~line 141-150)
 
-After a successful promotion criteria save, instead of closing the dialog (`onOpenChange(false)`), switch to the retention tab:
+Change `rev_per_hour_weight: 0` to a small positive value (e.g., `3`) so it gets a fair share when enabled. Adjust other values so the defined totals still make sense as ratios:
 
 ```ts
-upsert.mutate(payload, {
-  onSuccess: () => {
-    updateLevel.mutate({ id: levelId, is_configured: true });
-    // Navigate to retention tab instead of closing
-    setActiveTab('retention');
-    setStep(0);
-    toast.success('Level requirements saved');
-  },
+const RECOMMENDED_WEIGHTS: Record<string, number> = {
+  revenue_weight: 40,
+  retail_weight: 10,
+  rebooking_weight: 15,
+  avg_ticket_weight: 10,
+  retention_rate_weight: 15,
+  new_clients_weight: 5,
+  utilization_weight: 5,
+  rev_per_hour_weight: 5,
+};
+```
+
+**2. Fix rounding to guarantee 100% total** (~lines 992-1003)
+
+Replace `Math.round` with `Math.floor` for all non-last metrics, ensuring the running total never exceeds 100. The last metric absorbs the remainder cleanly:
+
+```ts
+let assigned = 0;
+active.forEach((c, i) => {
+  const raw = RECOMMENDED_WEIGHTS[c.weightKey] || 5; // fallback to 5 if missing
+  if (i === active.length - 1) {
+    (next as any)[c.weightKey] = 100 - assigned;
+  } else {
+    const scaled = Math.floor((raw / totalRaw) * 100);
+    (next as any)[c.weightKey] = scaled;
+    assigned += scaled;
+  }
 });
 ```
 
-**2. Change `handleSaveRetention` behavior (~line 635-640)**
-
-After saving retention, NOW close the dialog (this is the final step):
-
-```ts
-upsertRetention.mutate(payload, {
-  onSuccess: () => {
-    updateLevel.mutate({ id: levelId, is_configured: true });
-    onOpenChange(false);
-  },
-});
-```
-
-This keeps the existing behavior for retention save (close on success) but makes promotion save flow into the retention tab naturally.
-
-**3. Add a "Save & Close" option to the retention footer**
-
-The retention tab already has "Save Retention" which closes. No change needed there — the flow becomes:
-
-- Open wizard → Level Requirements → configure → Save Criteria → auto-navigates to Required to Stay → configure → Save Retention → dialog closes
-
-For levels that only need one tab configured, the admin can still close the dialog manually via the X button at any point.
+This ensures weights are always non-negative and always sum to exactly 100%.
 
 ## Scope
 - Single file: `GraduationWizard.tsx`
-- ~5 lines changed
+- ~4 lines changed
 - No database changes
 
