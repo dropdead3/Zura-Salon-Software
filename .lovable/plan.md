@@ -1,64 +1,33 @@
 
 
-# Fix: Auto-Detect Level Configuration Status
+# Remove Redundant Title and Badge from Level Roadmap Cards
 
 ## Problem
 
-The roadmap's "Setup Incomplete" / "Configured" status is driven by a **manual toggle** ("Mark as Configured") buried inside the level editor card. Saving promotion or retention criteria does NOT update this flag. You configured New Talent's retention and clicked Save, but the `is_configured` field in the database was never flipped — it requires a separate, easy-to-miss manual action.
+Each level card in the roadmap shows the level name and configured/incomplete badge **twice**:
+1. In the accordion header row (e.g., "1 NEW TALENT ✓ Configured")
+2. Inside the expanded card content (e.g., "LEVEL 1 — NEW TALENT ✓ Configured")
 
-This is poor UX. Users reasonably expect that completing and saving criteria marks a level as configured.
+This is redundant — the user sees the same information stacked directly on top of itself.
 
-## Proposed Fix
+## Fix
 
-Replace the manual toggle with **automatic detection** based on whether meaningful criteria exist for each level.
+Remove the inner header block (lines 506-526 in `LevelRoadmapView.tsx`) that duplicates the title and badge inside the expanded card content. The accordion header already displays the level number, name, and status badge.
 
-### Detection Logic
-
-A level is considered "configured" when:
-- **Level 1 (base level, index 0):** Has active retention criteria saved (since base levels have no promotion criteria)
-- **Levels 2+ :** Has active promotion criteria saved (retention is optional/inherited)
-
-This mirrors the actual governance model: Level 1 needs retention minimums; higher levels need promotion thresholds.
+For non-accordion mode (≤6 levels where there's no clickable accordion header), convert the accordion header from conditional (`useAccordion ? ... : null`) to always render as a static (non-clickable) row. This ensures the title is always shown exactly once regardless of mode.
 
 ### Technical Changes
 
-**1. Remove the manual "Mark as Configured" toggle UI**
+**File: `src/components/dashboard/settings/LevelRoadmapView.tsx`**
 
-File: `src/components/dashboard/settings/StylistLevelsEditor.tsx`
+1. **Make the accordion header always render** (lines 464-497): Remove the `useAccordion ? ... : null` conditional — always show the header row. When not in accordion mode, render it as a `div` instead of a `button` (no click handler, no chevron).
 
-Remove the toggle block (~lines 2314-2334) from the level card expanded view. This eliminates the confusing manual step.
+2. **Remove the inner duplicate header** (lines 506-526): Delete the `div.flex.items-start.justify-between.mb-4` block containing the second "Level {i+1} — {level.label}" heading and badge. Keep the "Entry Level — Retention Minimums" subtitle — move it into the always-visible header row.
 
-**2. Compute `isConfigured` dynamically from criteria data**
-
-In the same file, where `levels` state is built from DB data (~line 1512), replace:
-```ts
-isConfigured: l.is_configured ?? false
-```
-with a computed value based on whether promotion criteria (for levels 2+) or retention criteria (for level 1) exist and are active. This requires checking the already-loaded `promotionCriteria` and `retentionCriteria` arrays.
-
-**3. Update the roadmap to use the same derived status**
-
-File: `src/components/dashboard/settings/LevelRoadmapView.tsx`
-
-No structural changes needed — it already reads `isConfigured` from the level objects passed in. The computed value will flow through automatically.
-
-**4. Keep the `is_configured` DB column as a cache/override**
-
-Optionally update `is_configured` in the database when criteria are saved (in the upsert mutation's `onSuccess`), so the value persists without needing to re-derive. This keeps the roadmap accurate even before criteria data loads.
-
-### Alternative: Simpler Approach
-
-If the manual toggle is intentionally part of a "review and confirm" workflow, instead of removing it:
-- **Auto-flip it to true** when criteria are saved successfully (in the `useUpsertLevelPromotionCriteria` and `useUpsertLevelRetentionCriteria` `onSuccess` callbacks)
-- Keep the toggle visible but make it pre-checked after save
-- This preserves the ability to manually un-configure a level if needed
-
-### Recommendation
-
-The simpler approach (auto-flip on save) is lower risk and preserves the admin's ability to manually override. The toggle stays but is no longer the only way to mark configuration complete.
+3. **Keep the "not configured" warning banner** (lines 528-532) — that's not redundant.
 
 ## Scope
-- 1-2 files modified
-- ~15 lines changed
-- No database migration needed (column already exists)
+- Single file: `LevelRoadmapView.tsx`
+- ~30 lines modified
+- No database changes
 
