@@ -45,6 +45,18 @@ export function ReportBuilder({ meetingId, teamMemberId, teamMemberName }: Repor
   const { resolveCommission } = useResolveCommission();
   const { data: allLevels = [] } = useStylistLevels();
 
+  // Service-price-aware uplift
+  const currentResolved = (levelProgress?.nextLevelLabel && teamMemberId) ? resolveCommission(teamMemberId, 1000, 0) : null;
+  const nextLevelObjReport = allLevels.find(l => l.id === levelProgress?.nextLevelId);
+  const upliftEstimate = useLevelUpliftEstimate({
+    userId: teamMemberId,
+    currentLevelId: levelProgress?.currentLevelId,
+    nextLevelId: levelProgress?.nextLevelId ?? undefined,
+    currentCommRate: currentResolved?.serviceRate ?? 0,
+    nextCommRate: nextLevelObjReport?.service_commission_rate ?? 0,
+    evaluationWindowDays: levelProgress?.evaluationWindowDays || 30,
+  });
+
   const [isBuilding, setIsBuilding] = useState(false);
   const [selectedNotes, setSelectedNotes] = useState<string[]>([]);
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
