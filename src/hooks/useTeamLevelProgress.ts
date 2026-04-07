@@ -403,35 +403,35 @@ export function useTeamLevelProgress() {
 
       if (criteria.revenue_enabled) {
         const target = resolvePromo('revenue_threshold', criteria.revenue_threshold);
-        progress.push({ key: 'revenue', label: 'Service Revenue', enabled: true, current: Math.round(promoMetrics.monthlyRevenue), priorCurrent: 0, target, percent: target > 0 ? Math.min(100, (promoMetrics.monthlyRevenue / target) * 100) : 0, weight: criteria.revenue_weight, unit: '/mo', gap: Math.max(0, target - promoMetrics.monthlyRevenue) });
+        progress.push({ key: 'revenue', label: 'Service Revenue', enabled: true, current: Math.round(promoMetrics.monthlyRevenue), priorCurrent: 0, target, percent: target > 0 ? (promoMetrics.monthlyRevenue / target) * 100 : 0, weight: criteria.revenue_weight, unit: '/mo', gap: Math.max(0, target - promoMetrics.monthlyRevenue) });
       }
       if (criteria.retail_enabled) {
         const target = resolvePromo('retail_pct_threshold', criteria.retail_pct_threshold);
-        progress.push({ key: 'retail', label: 'Retail Attachment', enabled: true, current: Math.round(promoMetrics.retailPct * 10) / 10, priorCurrent: 0, target, percent: target > 0 ? Math.min(100, (promoMetrics.retailPct / target) * 100) : 0, weight: criteria.retail_weight, unit: '%', gap: Math.max(0, target - promoMetrics.retailPct) });
+        progress.push({ key: 'retail', label: 'Retail Attachment', enabled: true, current: Math.round(promoMetrics.retailPct * 10) / 10, priorCurrent: 0, target, percent: target > 0 ? (promoMetrics.retailPct / target) * 100 : 0, weight: criteria.retail_weight, unit: '%', gap: Math.max(0, target - promoMetrics.retailPct) });
       }
       if (criteria.rebooking_enabled) {
         const target = resolvePromo('rebooking_pct_threshold', criteria.rebooking_pct_threshold);
-        progress.push({ key: 'rebooking', label: 'Rebooking Rate', enabled: true, current: Math.round(promoMetrics.rebookingPct * 10) / 10, priorCurrent: 0, target, percent: target > 0 ? Math.min(100, (promoMetrics.rebookingPct / target) * 100) : 0, weight: criteria.rebooking_weight, unit: '%', gap: Math.max(0, target - promoMetrics.rebookingPct) });
+        progress.push({ key: 'rebooking', label: 'Rebooking Rate', enabled: true, current: Math.round(promoMetrics.rebookingPct * 10) / 10, priorCurrent: 0, target, percent: target > 0 ? (promoMetrics.rebookingPct / target) * 100 : 0, weight: criteria.rebooking_weight, unit: '%', gap: Math.max(0, target - promoMetrics.rebookingPct) });
       }
       if (criteria.avg_ticket_enabled) {
         const target = resolvePromo('avg_ticket_threshold', criteria.avg_ticket_threshold);
-        progress.push({ key: 'avg_ticket', label: 'Average Ticket', enabled: true, current: Math.round(promoMetrics.avgTicket), priorCurrent: 0, target, percent: target > 0 ? Math.min(100, (promoMetrics.avgTicket / target) * 100) : 0, weight: criteria.avg_ticket_weight, unit: '$', gap: Math.max(0, target - promoMetrics.avgTicket) });
+        progress.push({ key: 'avg_ticket', label: 'Average Ticket', enabled: true, current: Math.round(promoMetrics.avgTicket), priorCurrent: 0, target, percent: target > 0 ? (promoMetrics.avgTicket / target) * 100 : 0, weight: criteria.avg_ticket_weight, unit: '$', gap: Math.max(0, target - promoMetrics.avgTicket) });
       }
       if (criteria.retention_rate_enabled) {
         const target = resolvePromo('retention_rate_threshold', Number(criteria.retention_rate_threshold));
-        progress.push({ key: 'retention_rate', label: 'Client Retention', enabled: true, current: Math.round(promoMetrics.retentionRate * 10) / 10, priorCurrent: 0, target, percent: target > 0 ? Math.min(100, (promoMetrics.retentionRate / target) * 100) : 0, weight: criteria.retention_rate_weight, unit: '%', gap: Math.max(0, target - promoMetrics.retentionRate) });
+        progress.push({ key: 'retention_rate', label: 'Client Retention', enabled: true, current: Math.round(promoMetrics.retentionRate * 10) / 10, priorCurrent: 0, target, percent: target > 0 ? (promoMetrics.retentionRate / target) * 100 : 0, weight: criteria.retention_rate_weight, unit: '%', gap: Math.max(0, target - promoMetrics.retentionRate) });
       }
       if (criteria.new_clients_enabled) {
         const target = resolvePromo('new_clients_threshold', Number(criteria.new_clients_threshold));
-        progress.push({ key: 'new_clients', label: 'New Clients', enabled: true, current: Math.round(promoMetrics.newClientsMonthly * 10) / 10, priorCurrent: 0, target, percent: target > 0 ? Math.min(100, (promoMetrics.newClientsMonthly / target) * 100) : 0, weight: criteria.new_clients_weight, unit: '/mo', gap: Math.max(0, target - promoMetrics.newClientsMonthly) });
+        progress.push({ key: 'new_clients', label: 'New Clients', enabled: true, current: Math.round(promoMetrics.newClientsMonthly * 10) / 10, priorCurrent: 0, target, percent: target > 0 ? (promoMetrics.newClientsMonthly / target) * 100 : 0, weight: criteria.new_clients_weight, unit: '/mo', gap: Math.max(0, target - promoMetrics.newClientsMonthly) });
       }
       if (criteria.utilization_enabled) {
         const target = resolvePromo('utilization_threshold', Number(criteria.utilization_threshold));
-        progress.push({ key: 'utilization', label: 'Schedule Utilization', enabled: true, current: Math.round(promoMetrics.utilization * 10) / 10, priorCurrent: 0, target, percent: target > 0 ? Math.min(100, (promoMetrics.utilization / target) * 100) : 0, weight: criteria.utilization_weight, unit: '%', gap: Math.max(0, target - promoMetrics.utilization) });
+        progress.push({ key: 'utilization', label: 'Schedule Utilization', enabled: true, current: Math.round(promoMetrics.utilization * 10) / 10, priorCurrent: 0, target, percent: target > 0 ? (promoMetrics.utilization / target) * 100 : 0, weight: criteria.utilization_weight, unit: '%', gap: Math.max(0, target - promoMetrics.utilization) });
       }
       if (criteria.rev_per_hour_enabled) {
         const target = resolvePromo('rev_per_hour_threshold', Number(criteria.rev_per_hour_threshold));
-        progress.push({ key: 'rev_per_hour', label: 'Revenue Per Hour', enabled: true, current: Math.round(promoMetrics.revPerHour), priorCurrent: 0, target, percent: target > 0 ? Math.min(100, (promoMetrics.revPerHour / target) * 100) : 0, weight: criteria.rev_per_hour_weight, unit: '$/hr', gap: Math.max(0, target - promoMetrics.revPerHour) });
+        progress.push({ key: 'rev_per_hour', label: 'Revenue Per Hour', enabled: true, current: Math.round(promoMetrics.revPerHour), priorCurrent: 0, target, percent: target > 0 ? (promoMetrics.revPerHour / target) * 100 : 0, weight: criteria.rev_per_hour_weight, unit: '$/hr', gap: Math.max(0, target - promoMetrics.revPerHour) });
       }
       if (criteria.tenure_enabled) {
         const target = criteria.tenure_days;
