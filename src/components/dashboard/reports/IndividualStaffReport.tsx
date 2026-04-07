@@ -15,7 +15,7 @@ import {
 import {
   DollarSign, Users, TrendingUp, TrendingDown, UserCheck, Package,
   Briefcase, Star, Calendar, Download, FileSpreadsheet, Loader2, ArrowLeft,
-  AlertTriangle, CheckCircle2, Target, Wallet, ShieldCheck, GraduationCap,
+  AlertTriangle, CheckCircle2, Target, Wallet, ShieldCheck, GraduationCap, Percent, Banknote, Beaker, Receipt,
 } from 'lucide-react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -33,6 +33,7 @@ import { addReportHeader, addReportFooter, fetchLogoAsDataUrl, getReportAutoTabl
 import { useBusinessSettings } from '@/hooks/useBusinessSettings';
 import { useReportLocationInfo } from '@/hooks/useReportLocationInfo';
 import { useIndividualStaffReport, type IndividualStaffReportData } from '@/hooks/useIndividualStaffReport';
+import { useStaffComplianceSummary } from '@/hooks/color-bar/useStaffComplianceSummary';
 import { LevelProgressCard } from '@/components/coaching/LevelProgressCard';
 import { EmptyDataBanner, DateRangeSubtitle } from '@/components/ui/EmptyDataBanner';
 
@@ -92,6 +93,7 @@ export function IndividualStaffReport({ dateFrom, dateTo, locationId, onClose, i
   const locationInfo = useReportLocationInfo(locationId);
   const { data: orgUsers, isLoading: usersLoading } = useOrganizationUsers(effectiveOrganization?.id);
   const { data, isLoading } = useIndividualStaffReport(selectedStaffId || null, dateFrom, dateTo);
+  const { data: complianceData } = useStaffComplianceSummary(selectedStaffId || null, dateFrom, dateTo, effectiveOrganization?.id);
   const { formatCurrencyWhole } = useFormatCurrency();
   const { formatDate } = useFormatDate();
   const [isGenerating, setIsGenerating] = useState(false);
@@ -149,8 +151,17 @@ export function IndividualStaffReport({ dateFrom, dateTo, locationId, onClose, i
           ['New Clients', data.clientMetrics.newClients.toString(), Math.round(data.teamAverages.newClients).toString()],
           ['Commission Earned', formatCurrencyWhole(data.commission.totalCommission), ''],
           ['Experience Score', `${data.experienceScore.composite}/100`, ''],
+          ['Tip Rate', `${(data.experienceScore.tipRate ?? 0).toFixed(1)}%`, ''],
+          ['Avg Tip', formatCurrencyWhole(avgTip), ''],
           ['Color Bar Compliance', `${data.colorBarCompliance.complianceRate}%`, `${data.teamAverages.complianceRate}%`],
           ['Color Appointments', `${data.colorBarCompliance.totalColorAppointments} (${data.colorBarCompliance.tracked} tracked)`, ''],
+          ...(complianceData ? [
+            ['Waste Rate', `${complianceData.wastePct}%`, ''],
+            ['Waste Cost', formatCurrencyWhole(complianceData.wasteCost), ''],
+            ['Reweigh Rate', `${complianceData.reweighRate}%`, ''],
+            ['Overage Attachment', `${complianceData.overageAttachmentRate}%`, ''],
+            ['Overage Charges', formatCurrencyWhole(complianceData.overageChargeTotal), ''],
+          ] : []),
         ],
         theme: 'striped',
         headStyles: { fillColor: [51, 51, 51] },
@@ -233,8 +244,17 @@ export function IndividualStaffReport({ dateFrom, dateTo, locationId, onClose, i
     csv += `New Clients,${data.clientMetrics.newClients},${Math.round(data.teamAverages.newClients)}\n`;
     csv += `Commission Earned,${data.commission.totalCommission},\n`;
     csv += `Experience Score,${data.experienceScore.composite},\n`;
+    csv += `Tip Rate,${(data.experienceScore.tipRate ?? 0).toFixed(1)}%,\n`;
+    csv += `Avg Tip,${avgTip.toFixed(2)},\n`;
     csv += `Color Bar Compliance,${data.colorBarCompliance.complianceRate}%,${data.teamAverages.complianceRate}%\n`;
     csv += `Color Appointments,${data.colorBarCompliance.totalColorAppointments} (${data.colorBarCompliance.tracked} tracked),\n`;
+    if (complianceData) {
+      csv += `Waste Rate,${complianceData.wastePct}%,\n`;
+      csv += `Waste Cost,${complianceData.wasteCost.toFixed(2)},\n`;
+      csv += `Reweigh Rate,${complianceData.reweighRate}%,\n`;
+      csv += `Overage Attachment,${complianceData.overageAttachmentRate}%,\n`;
+      csv += `Overage Charges,${complianceData.overageChargeTotal.toFixed(2)},\n`;
+    }
     csv += '\nTop Services\nService,Count,Revenue,Avg Price\n';
     data.topServices.forEach(s => { csv += `"${s.name}",${s.count},${s.revenue},${s.avgPrice}\n`; });
     csv += '\nTop Clients\nClient,Visits,Revenue,Avg Ticket,Last Visit,Status\n';
@@ -252,6 +272,10 @@ export function IndividualStaffReport({ dateFrom, dateTo, locationId, onClose, i
 
 
   // ── KPI cards data ──
+  const avgTip = data && data.productivity.completed > 0
+    ? Math.round((data.revenue.total * (data.experienceScore.tipRate ?? 0) / 100) / data.productivity.completed * 100) / 100
+    : 0;
+
   const kpis = data ? [
     { label: 'Total Revenue', value: formatCurrencyWhole(data.revenue.total), teamAvg: formatCurrencyWhole(data.teamAverages.revenue), icon: DollarSign, change: data.revenue.revenueChange, tooltip: 'Total revenue from all appointments in the period.' },
     { label: 'Avg Ticket', value: formatCurrencyWhole(data.revenue.avgTicket), teamAvg: formatCurrencyWhole(data.teamAverages.avgTicket), icon: Target, change: null, tooltip: 'Average revenue per completed appointment.' },
@@ -261,6 +285,8 @@ export function IndividualStaffReport({ dateFrom, dateTo, locationId, onClose, i
     { label: 'New Clients', value: data.clientMetrics.newClients.toString(), teamAvg: Math.round(data.teamAverages.newClients).toString(), icon: Star, change: null, tooltip: 'Number of first-time clients seen.' },
     { label: 'Commission Earned', value: formatCurrencyWhole(data.commission.totalCommission), teamAvg: '', icon: Wallet, change: null, tooltip: 'Estimated commission based on current tier and revenue.' },
     { label: 'Experience Score', value: `${data.experienceScore.composite}`, teamAvg: '', icon: Briefcase, change: null, tooltip: 'Composite score from rebooking, tips, retention, and retail.' },
+    { label: 'Tip Rate', value: `${(data.experienceScore.tipRate ?? 0).toFixed(1)}%`, teamAvg: '', icon: Percent, change: null, tooltip: 'Average tip percentage across completed appointments in the period.' },
+    { label: 'Avg Tip', value: formatCurrencyWhole(avgTip), teamAvg: '', icon: Banknote, change: null, tooltip: 'Average tip dollar amount per completed appointment.' },
   ] : [];
 
   // ── Strengths and improvements ──
@@ -398,7 +424,7 @@ export function IndividualStaffReport({ dateFrom, dateTo, locationId, onClose, i
           )}
 
           {/* Section 2: KPI Summary (4x2 grid) */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
             {kpis.map((kpi) => {
               const Icon = kpi.icon;
               return (
@@ -674,7 +700,7 @@ export function IndividualStaffReport({ dateFrom, dateTo, locationId, onClose, i
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-4 gap-4">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   <div className="space-y-1">
                     <p className="text-xs text-muted-foreground">Compliance Rate</p>
                     <p className="text-xl font-display tabular-nums">{data.colorBarCompliance.complianceRate}%</p>
@@ -693,6 +719,56 @@ export function IndividualStaffReport({ dateFrom, dateTo, locationId, onClose, i
                     <p className={cn('text-xl font-display tabular-nums', data.colorBarCompliance.missed > 0 && 'text-destructive')}>{data.colorBarCompliance.missed}</p>
                   </div>
                 </div>
+
+                {/* Enhanced waste & overage metrics from compliance summary */}
+                {complianceData && (
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4 pt-4 border-t border-border/60">
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-1">
+                        <Beaker className="w-3 h-3 text-muted-foreground" />
+                        <p className="text-xs text-muted-foreground">Waste Rate</p>
+                        <MetricInfoTooltip description="Waste as a percentage of total product dispensed for color services." />
+                      </div>
+                      <p className={cn('text-xl font-display tabular-nums', complianceData.wastePct > 10 && 'text-destructive')}>{complianceData.wastePct}%</p>
+                    </div>
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-1">
+                        <DollarSign className="w-3 h-3 text-muted-foreground" />
+                        <p className="text-xs text-muted-foreground">Waste Cost</p>
+                        <MetricInfoTooltip description="Estimated dollar cost of wasted product based on cost-per-gram." />
+                      </div>
+                      <p className={cn('text-xl font-display tabular-nums', complianceData.wasteCost > 50 && 'text-destructive')}>
+                        <BlurredAmount>{formatCurrencyWhole(complianceData.wasteCost)}</BlurredAmount>
+                      </p>
+                    </div>
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-1">
+                        <Receipt className="w-3 h-3 text-muted-foreground" />
+                        <p className="text-xs text-muted-foreground">Overage Attachment</p>
+                        <MetricInfoTooltip description="Percentage of color appointments that generated an overage charge for the client." />
+                      </div>
+                      <p className="text-xl font-display tabular-nums">{complianceData.overageAttachmentRate}%</p>
+                    </div>
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-1">
+                        <Wallet className="w-3 h-3 text-muted-foreground" />
+                        <p className="text-xs text-muted-foreground">Overage Charges</p>
+                        <MetricInfoTooltip description="Total dollar amount of overage charges billed for this staff member's color services." />
+                      </div>
+                      <p className="text-xl font-display tabular-nums">
+                        <BlurredAmount>{formatCurrencyWhole(complianceData.overageChargeTotal)}</BlurredAmount>
+                      </p>
+                    </div>
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-1">
+                        <ShieldCheck className="w-3 h-3 text-muted-foreground" />
+                        <p className="text-xs text-muted-foreground">Reweigh Rate</p>
+                        <MetricInfoTooltip description="Percentage of tracked color sessions where the bowl was reweighed after service." />
+                      </div>
+                      <p className="text-xl font-display tabular-nums">{complianceData.reweighRate}%</p>
+                    </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
           )}
