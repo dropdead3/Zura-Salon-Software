@@ -1356,6 +1356,25 @@ export function GraduationWizard({ open, onOpenChange, levelId, levelLabel, leve
                           </button>
                         ))}
                       </div>
+                      {/* Dynamic grace vs evaluation window explainer */}
+                      {(() => {
+                        const grace = retForm.grace_period_days;
+                        const evalW = retForm.evaluation_window_days;
+                        let msg = '';
+                        if (grace < evalW) {
+                          msg = 'Grace period is shorter than the evaluation window — action will be flagged before a full evaluation cycle completes. Use this for urgent metrics.';
+                        } else if (grace === evalW) {
+                          msg = 'Grace period matches the evaluation window — a stylist gets exactly one full evaluation cycle to recover before action is taken.';
+                        } else {
+                          msg = 'Grace period is longer than the evaluation window — the stylist may be re-evaluated multiple times before action is triggered. This is more forgiving.';
+                        }
+                        return (
+                          <div className="mt-2 flex items-start gap-2 rounded-lg bg-muted/50 border border-border/50 p-2.5">
+                            <Info className="w-3.5 h-3.5 text-muted-foreground shrink-0 mt-0.5" />
+                            <p className="text-[11px] text-muted-foreground leading-relaxed">{msg}</p>
+                          </div>
+                        );
+                      })()}
                     </div>
 
                     <div>
