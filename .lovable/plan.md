@@ -1,44 +1,52 @@
 
 
-# Fix Roadmap PDF Embedded Font Rendering
+# Add Staff Strikes History to 1:1 Reports
 
 ## Problem
-
-The Level Roadmap PDF renders garbled/unreadable text (visible in screenshot). This is because **jsPDF only supports TrueType (.ttf) fonts**, but the `pdf-fonts.ts` file embeds OpenType CFF (.otf) fonts. jsPDF silently accepts the OTF data but cannot parse the CFF glyph outlines, producing corrupted character mapping.
+The Individual Staff Report (used for 1:1 coaching prep) does not surface the team member's strikes history. Coaches have no visibility into write-ups, complaints, red flags, or warnings when preparing for meetings — they must check a separate screen.
 
 ## Solution
 
-Convert the three OTF font files to TTF format, then re-encode them as base64 for embedding.
+Add a "Staff Strikes" section to both the on-screen report and the PDF export, showing active and recent resolved strikes for the selected staff member.
 
-### Steps
+### 1. Fetch strikes data for the viewed staff member
+**File: `src/components/dashboard/reports/IndividualStaffReport.tsx`**
 
-**1. Convert OTF → TTF** (build-time, one-off script)
+- Import `useStaffStrikes` from `@/hooks/useStaffStrikes`
+- Call `useStaffStrikes(viewingStaffId)` to get the member's strike history
+- Filter to show: all active strikes + resolved strikes within the report date range
 
-Use `fonttools` (Python) to convert:
-- `public/fonts/Termina-Medium.otf` → `Termina-Medium.ttf`
-- `public/fonts/AeonikPro-Regular.otf` → `AeonikPro-Regular.ttf`
-- `public/fonts/AeonikPro-Medium.otf` → `AeonikPro-Medium.ttf`
+### 2. Add on-screen Strikes section (new Section 9b, before Strengths)
+**File: `src/components/dashboard/reports/IndividualStaffReport.tsx`**
 
-Place the TTF files in `public/fonts/` alongside the originals.
+- New card titled "Staff Strikes" with `AlertTriangle` icon
+- Summary row: active count, resolved count (in period), total count
+- Table with columns: Date, Type, Severity, Title, Status (Active/Resolved)
+- Each row uses existing `STRIKE_TYPE_LABELS`, `SEVERITY_LABELS`, and severity color badges
+- If no strikes, show a clean "No strikes on record" empty state with a `ShieldCheck` icon
 
-**2. Regenerate `src/lib/pdf-fonts.ts`**
+### 3. Add strikes to the PDF export
+**File: `src/components/dashboard/reports/IndividualStaffReport.tsx`** — `addStaffReportToDoc` callback
 
-- Replace the three base64 constants with base64 from the new `.ttf` files
-- Update `addFileToVFS` calls to reference `.ttf` filenames
-- No changes to the public API (`registerPdfFonts`, `setTermina`, `setAeonik`)
+- Accept strikes data as an additional parameter
+- After top clients table, add a "Staff Strikes" section with an autoTable listing: Date, Type, Severity, Title, Status
+- Critical/high severity rows highlighted with light red background
+- If no strikes, skip the section in PDF (keeps it clean)
 
-**3. No changes to PDF generation code**
+### 4. Add strikes to the bulk PDF flow
+**File: `src/components/dashboard/reports/IndividualStaffReport.tsx`** — `generateBulkPDF`
 
-`LevelRequirementsPDF.ts`, `StaffLevelReportPDF.ts`, and `IndividualStaffReport.tsx` all call `registerPdfFonts(doc)` — they will automatically pick up the fixed fonts.
+- For each staff member in the bulk loop, fetch their strikes via a direct supabase query (same pattern as the existing compliance fetch)
+- Pass strikes into `addStaffReportToDoc`
 
-### Files Changed
+### 5. Include strikes in Strengths/Improvements analysis
+- If active strikes > 0: add to improvements list (e.g., "2 active strikes on record — review during meeting")
+- If zero strikes in period: optionally add to strengths ("Clean record — no strikes in this period")
 
+## Files Changed
 | File | Change |
 |---|---|
-| `public/fonts/Termina-Medium.ttf` | New TTF conversion |
-| `public/fonts/AeonikPro-Regular.ttf` | New TTF conversion |
-| `public/fonts/AeonikPro-Medium.ttf` | New TTF conversion |
-| `src/lib/pdf-fonts.ts` | Re-encoded base64 from TTF files, updated VFS filenames |
+| `src/components/dashboard/reports/IndividualStaffReport.tsx` | Add strikes hook, on-screen section, PDF section, bulk PDF support, strengths/improvements integration |
 
-No database changes.
+1 file modified. No database changes.
 
