@@ -1,33 +1,40 @@
 
 
-# Improve Weights & Manual Approval Explainer
+# Add Table Export (Spreadsheet + PDF) to Criteria Comparison Table
 
-## Problem
+## What This Does
 
-1. The "How Weights Work" explainer still contains the old note saying all individual thresholds must be met — this was supposed to be removed when we made weights meaningful.
-2. The "Require Manager Approval" toggle lacks context. Admins need to understand that they can promote stylists at any time regardless of this setting, and that this toggle only controls whether the system **notifies** when criteria are met (manual = notification for review, automatic = auto-qualifies without notification).
+Adds a download button to the Criteria Comparison Table (the grid showing all levels' compensation, promotion, and retention metrics) that lets admins export the exact table view as either a CSV spreadsheet or a PDF document.
 
-## Changes
+## Technical Changes
 
-### 1. Update Weights explainer (lines 938-941)
+### File: `src/components/dashboard/settings/StylistLevelsEditor.tsx`
 
-Remove the outdated `Note: regardless of weights...` span (the blue text about all thresholds needing to be met). The current first sentence is correct — keep it. The blue example text stays. The old note was already removed in the code but the screenshot shows it's still there, so we need to verify and ensure only the correct copy exists.
+**1. Add export button next to the instruction text (line ~853)**
 
-### 2. Enhance "Require Manager Approval" section (lines 1031-1043)
+Place a small dropdown button (using the existing `CardExportButton` pattern with `DropdownMenu`) at the right side of the instruction text area, with two options: "Export as Spreadsheet (.csv)" and "Export as PDF".
 
-Add an explainer box below the toggle (same blue styling) clarifying:
+**2. Build CSV export function inside `CriteriaComparisonTable`**
 
-- **Title:** "ABOUT PROMOTION APPROVAL"
-- **Body:** "Admins with permissions can promote or demote stylists at any time from the Graduation Tracker — this setting does not restrict that ability. When enabled, the system will notify managers when a stylist meets their criteria, requiring manual sign-off before the level change takes effect. When disabled, qualifying stylists are automatically flagged as ready without requiring approval."
-- This makes it clear: the toggle controls notification/workflow behavior, not admin authority.
+Collect table data into a flat array of rows:
+- Header row: `Metric, Level 1 Name, Level 2 Name, ...`
+- Section header rows: `COMPENSATION`, `PROMOTION`, `RETENTION`
+- Data rows for each metric using the existing `metrics` array and `getCriteria()` — the same `getValue()` functions that render the cells
+- Compensation rows (Service Commission, Retail Commission, Hourly Wage) pulled from the `levels` prop
 
-### 3. Update the toggle description (line 1036)
+Generate a CSV blob and trigger browser download.
 
-Change from: `"Promotion needs sign-off even when criteria are met"`
-To: `"Notify managers for review when criteria are met instead of auto-qualifying"`
+**3. Build PDF export function**
+
+Reuse the existing `generateLevelRequirementsPDF` for the PDF option since it already renders the same data in a polished format. Wire it the same way the roadmap view does (lines 2679-2687), loading the org logo and passing levels/criteria.
+
+**4. Imports**
+
+Add `FileSpreadsheet` to lucide imports. `FileDown` and `DropdownMenu` components are already imported.
 
 ## Scope
-- Single file: `GraduationWizard.tsx`
-- ~15 lines added/modified
+- Single file modified: `StylistLevelsEditor.tsx`
+- ~60 lines added (CSV builder + dropdown UI)
 - No database changes
+- No new dependencies
 
