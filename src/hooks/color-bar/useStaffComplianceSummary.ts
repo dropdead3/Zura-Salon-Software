@@ -63,8 +63,10 @@ export function useStaffComplianceSummary(
       }
       if (!resolvedOrg) return null;
 
-      // Fetch color/chemical appointments for this staff member
-      const { data: appointments, error: apptErr } = await supabase
+      // --- Query BOTH appointment tables for color/chemical services ---
+
+      // 1. Local appointments table
+      const { data: localAppts } = await supabase
         .from('appointments')
         .select('id, appointment_date, service_name, service_category, start_time')
         .eq('organization_id', resolvedOrg)
@@ -73,11 +75,41 @@ export function useStaffComplianceSummary(
         .lte('appointment_date', dateTo)
         .not('status', 'in', '("cancelled","no_show")');
 
-      if (apptErr) throw apptErr;
-
-      const colorAppts = (appointments ?? []).filter((a: any) =>
+      const localColorAppts = (localAppts ?? []).filter((a: any) =>
         isColorOrChemicalService(a.service_name, a.service_category),
       );
+
+      // 2. Phorest appointments table (primary source for Phorest-integrated salons)
+      // Look up staff's phorest_staff_id first
+      let phorestColorAppts: any[] = [];
+      {
+        const { data: ep } = await supabase
+          .from('employee_profiles')
+          .select('phorest_staff_id')
+          .eq('user_id', staffUserId)
+          .maybeSingle();
+        const phorestStaffId = (ep as any)?.phorest_staff_id;
+
+        if (phorestStaffId) {
+          const { data: pAppts } = await supabase
+            .from('phorest_appointments')
+            .select('id, appointment_date, service_name, start_time')
+            .eq('organization_id', resolvedOrg)
+            .eq('staff_id', phorestStaffId)
+            .gte('appointment_date', dateFrom)
+            .lte('appointment_date', dateTo)
+            .not('status', 'in', '("cancelled","no_show")');
+
+          phorestColorAppts = (pAppts ?? []).filter((a: any) =>
+            isColorOrChemicalService(a.service_name, null),
+          );
+        }
+      }
+
+      // Merge — use whichever source has more color appointments (avoid double-counting)
+      const colorAppts = phorestColorAppts.length >= localColorAppts.length
+        ? phorestColorAppts
+        : localColorAppts;
 
       if (colorAppts.length === 0) {
         return {
@@ -96,6 +128,13 @@ export function useStaffComplianceSummary(
         };
       }
 
+      // Merge IDs from both tables for cross-referencing mix_sessions
+      const allApptIds = [
+        ...new Set([
+          ...localColorAppts.map((a: any) => a.id),
+          ...phorestColorAppts.map((a: any) => a.id),
+        ]),
+      ].filter(Boolean);
       const apptIds = colorAppts.map((a: any) => a.id);
 
       // Cross-reference with mix_sessions
