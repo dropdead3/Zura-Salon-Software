@@ -130,13 +130,15 @@ export function LevelProgressCard({ userId, compact = false }: LevelProgressCard
           <div>
             <p className="text-[10px] text-muted-foreground">Monthly Uplift</p>
             <BlurredAmount className="text-sm tabular-nums text-emerald-600 dark:text-emerald-400">
-              +${upliftEstimate.totalMonthlyUplift.toLocaleString()}
+              +${effectiveUplift.toLocaleString()}
             </BlurredAmount>
           </div>
         </div>
-        <p className="text-[9px] text-emerald-600/60 dark:text-emerald-400/60 mt-1 text-center">
-          includes service price increases
-        </p>
+        {hasPriceComponent && (
+          <p className="text-[9px] text-emerald-600/60 dark:text-emerald-400/60 mt-1 text-center">
+            includes service price increases
+          </p>
+        )}
       </div>
     );
   }
