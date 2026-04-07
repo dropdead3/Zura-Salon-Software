@@ -238,6 +238,7 @@ export function StylistScorecard({ userId, locationId }: StylistScorecardProps) 
             <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
               <DollarSign className="w-3.5 h-3.5" />
               <span>Commission Rates</span>
+              <MetricInfoTooltip description="Monthly Uplift is based on your actual service mix. It accounts for higher service prices at the next level and a higher commission rate applied to that revenue — showing the estimated increase in take-home pay if you were already at the next level." />
             </div>
             <div className="grid grid-cols-2 gap-3 text-xs">
               <div>
