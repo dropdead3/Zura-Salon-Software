@@ -411,12 +411,18 @@ function DashboardLayoutInner({ children, hideFooter, hideTopBar, hideSidebar }:
 
   const { isLocked, unlock } = useDashboardLock();
 
+  // Compute sidebar offset for dialog centering (half the sidebar's occupied width)
+  const sidebarOffset = hideSidebar ? '0px' : sidebarCollapsed ? '44px' : '170px';
+
   return (
-    <div className={cn(
-      "bg-background transition-[padding-top] duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]",
-      hideFooter ? "h-screen overflow-hidden" : "min-h-screen",
-      isImpersonating && "pt-[44px] god-mode-active"
-    )}>
+    <div
+      className={cn(
+        "bg-background transition-[padding-top] duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]",
+        hideFooter ? "h-screen overflow-hidden" : "min-h-screen",
+        isImpersonating && "pt-[44px] god-mode-active"
+      )}
+      style={{ '--sidebar-offset': sidebarOffset } as React.CSSProperties}
+    >
       {/* God Mode Bar — system-level layer above everything */}
       <GodModeBar />
 
