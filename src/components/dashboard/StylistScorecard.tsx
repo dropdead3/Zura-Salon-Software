@@ -20,6 +20,7 @@ import {
   Lightbulb,
   DollarSign,
   ArrowRight,
+  Check,
 } from 'lucide-react';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { useLevelProgress, type CriterionProgress } from '@/hooks/useLevelProgress';
@@ -47,6 +48,14 @@ function formatKpiValue(value: number, unit: string) {
   if (unit === '$/hr') return `$${value}`;
   if (unit === 'd') return `${value}d`;
   return String(value);
+}
+
+function formatGap(gap: number, unit: string) {
+  if (unit === '/mo' || unit === '$') return `-$${Math.round(gap).toLocaleString()}`;
+  if (unit === '%') return `-${gap.toFixed(1)} pts`;
+  if (unit === '$/hr') return `-$${Math.round(gap)}`;
+  if (unit === 'd') return `-${gap}d`;
+  return `-${gap}`;
 }
 
 export function StylistScorecard({ userId, locationId }: StylistScorecardProps) {
@@ -77,8 +86,6 @@ export function StylistScorecard({ userId, locationId }: StylistScorecardProps) 
     const current = sorted[currentIdx];
     const next = currentIdx < sorted.length - 1 ? sorted[currentIdx + 1] : null;
 
-    // Commission rates are stored as percentage numbers (e.g. 42 for 42%)
-    // Normalize: if value > 1 it's already a percentage; if <= 1 it's a decimal
     const normalize = (v: number) => v > 1 ? v : v * 100;
 
     const currentSvcRate = normalize(Number(current.service_commission_rate) || 0);
@@ -86,7 +93,6 @@ export function StylistScorecard({ userId, locationId }: StylistScorecardProps) 
     const nextSvcRate = next ? normalize(Number(next.service_commission_rate) || 0) : null;
     const nextRetRate = next ? normalize(Number(next.retail_commission_rate) || 0) : null;
 
-    // Estimate monthly uplift from commission increase
     const currentRevenue = progress.criteriaProgress.find(c => c.key === 'revenue')?.current || 0;
     let monthlyUplift = 0;
     if (nextSvcRate !== null && currentRevenue > 0) {
@@ -153,6 +159,9 @@ export function StylistScorecard({ userId, locationId }: StylistScorecardProps) 
   const hasNextLevel = !!progress.nextLevelLabel;
   const hasColorBar = !!colorBarMetrics;
   const isTopLevel = !hasNextLevel;
+
+  // Build dynamic column config
+  const hasPeers = !!peerAverages;
 
   return (
     <Card>
@@ -248,10 +257,12 @@ export function StylistScorecard({ userId, locationId }: StylistScorecardProps) 
 
         {/* KPI Performance Table */}
         {progress.criteriaProgress.length > 0 && (
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <h4 className="font-display text-xs tracking-wide text-foreground">KPI Performance</h4>
-              {peerAverages && (
+          <div className="space-y-1">
+            <div className="flex items-center justify-between mb-2">
+              <h4 className="font-display text-xs tracking-wide text-foreground">
+                {hasNextLevel ? 'What You Need' : 'Current Performance'}
+              </h4>
+              {hasPeers && (
                 <span className="text-[10px] text-muted-foreground">
                   vs {peerAverages.peerCount} peer{peerAverages.peerCount !== 1 ? 's' : ''}
                   {locationId ? ' at this location' : ' org-wide'}
@@ -260,32 +271,37 @@ export function StylistScorecard({ userId, locationId }: StylistScorecardProps) 
             </div>
 
             {/* Column headers */}
-            <div className="grid grid-cols-[1fr_auto_auto_auto_auto] gap-x-3 px-1 text-[10px] text-muted-foreground border-b border-border/40 pb-1">
+            <div className={cn(
+              'grid gap-x-3 px-2 text-[10px] text-muted-foreground border-b border-border/40 pb-1',
+              hasNextLevel
+                ? (hasPeers ? 'grid-cols-[1fr_auto_auto_auto_auto_auto]' : 'grid-cols-[1fr_auto_auto_auto_auto]')
+                : (hasPeers ? 'grid-cols-[1fr_auto_auto_auto]' : 'grid-cols-[1fr_auto_auto]')
+            )}>
               <span>Metric</span>
-              <span className="text-right w-16">You</span>
               {hasNextLevel && <span className="text-right w-16">Target</span>}
-              {peerAverages && <span className="text-right w-16">Avg</span>}
+              <span className="text-right w-16">You</span>
+              {hasNextLevel && <span className="text-right w-16">Gap</span>}
+              {hasPeers && <span className="text-right w-16">Avg</span>}
               <span className="w-4" />
             </div>
 
             {progress.criteriaProgress.filter(cp => cp.weight > 0).map(cp => {
               const peerVal = getPeerValue(cp.key, peerAverages);
               const trend = getTrend(cp);
+              const isMet = cp.percent >= 100;
+
               return (
-                <div key={cp.key} className="space-y-1">
+                <div key={cp.key} className={cn(
+                  'space-y-1',
+                  isMet && 'border-l-2 border-emerald-500/60 rounded-r-md'
+                )}>
                   <div className={cn(
-                    'grid gap-x-3 items-center px-1',
+                    'grid gap-x-3 items-center px-2',
                     hasNextLevel
-                      ? 'grid-cols-[1fr_auto_auto_auto_auto]'
-                      : 'grid-cols-[1fr_auto_auto_auto]'
+                      ? (hasPeers ? 'grid-cols-[1fr_auto_auto_auto_auto_auto]' : 'grid-cols-[1fr_auto_auto_auto_auto]')
+                      : (hasPeers ? 'grid-cols-[1fr_auto_auto_auto]' : 'grid-cols-[1fr_auto_auto]')
                   )}>
                     <span className="text-xs text-muted-foreground">{cp.label}</span>
-                    <span className={cn("text-xs tabular-nums text-right w-16", cp.percent > 100 && "text-emerald-600 dark:text-emerald-400")}>
-                      {cp.unit === '/mo' || cp.unit === '$'
-                        ? <BlurredAmount>{formatKpiValue(cp.current, cp.unit)}</BlurredAmount>
-                        : formatKpiValue(cp.current, cp.unit)
-                      }
-                    </span>
                     {hasNextLevel && (
                       <span className="text-xs text-muted-foreground tabular-nums text-right w-16">
                         {cp.unit === '/mo' || cp.unit === '$'
@@ -294,7 +310,27 @@ export function StylistScorecard({ userId, locationId }: StylistScorecardProps) 
                         }
                       </span>
                     )}
-                    {peerAverages && (
+                    <span className={cn(
+                      'text-xs tabular-nums text-right w-16',
+                      isMet ? 'text-emerald-600 dark:text-emerald-400' : 'text-foreground'
+                    )}>
+                      {cp.unit === '/mo' || cp.unit === '$'
+                        ? <BlurredAmount>{formatKpiValue(cp.current, cp.unit)}</BlurredAmount>
+                        : formatKpiValue(cp.current, cp.unit)
+                      }
+                    </span>
+                    {hasNextLevel && (
+                      <span className="w-16 text-right">
+                        {isMet ? (
+                          <Check className="w-3.5 h-3.5 text-emerald-500 inline-block" />
+                        ) : (
+                          <span className="text-xs tabular-nums text-amber-600 dark:text-amber-400">
+                            {formatGap(cp.gap, cp.unit)}
+                          </span>
+                        )}
+                      </span>
+                    )}
+                    {hasPeers && (
                       <span className="text-xs text-muted-foreground/70 tabular-nums text-right w-16">
                         {peerVal !== null
                           ? (cp.unit === '/mo' || cp.unit === '$'
@@ -311,9 +347,9 @@ export function StylistScorecard({ userId, locationId }: StylistScorecardProps) 
                   {hasNextLevel && (
                     <Progress
                       value={Math.min(100, cp.percent)}
-                      className="h-1 mx-1"
+                      className="h-1 mx-2"
                       indicatorClassName={cn(
-                        cp.percent >= 100 ? 'bg-emerald-500' : cp.percent >= 75 ? 'bg-primary' : 'bg-amber-500'
+                        isMet ? 'bg-emerald-500' : cp.percent >= 75 ? 'bg-primary' : 'bg-amber-500'
                       )}
                     />
                   )}
@@ -415,9 +451,8 @@ function getPeerValue(key: string, peers: ReturnType<typeof useStylistPeerAverag
  *  Uses priorCurrent from the previous eval window vs current value.
  *  A 3% relative change threshold determines up/down vs flat. */
 function getTrend(cp: CriterionProgress): 'up' | 'down' | 'flat' {
-  // If no prior data exists, can't determine trend
   if (cp.priorCurrent === 0 && cp.current === 0) return 'flat';
-  if (cp.priorCurrent === 0) return 'up'; // went from nothing to something
+  if (cp.priorCurrent === 0) return 'up';
 
   const changePct = ((cp.current - cp.priorCurrent) / cp.priorCurrent) * 100;
   if (changePct > 3) return 'up';

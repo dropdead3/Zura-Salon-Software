@@ -3,9 +3,9 @@ import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
-import { TrendingUp, GraduationCap, CheckCircle2, ShieldCheck, AlertTriangle, DollarSign } from 'lucide-react';
+import { GraduationCap, CheckCircle2, ShieldCheck, AlertTriangle, DollarSign, Check } from 'lucide-react';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
-import { useLevelProgress, type LevelProgressResult } from '@/hooks/useLevelProgress';
+import { useLevelProgress } from '@/hooks/useLevelProgress';
 import { useResolveCommission } from '@/hooks/useResolveCommission';
 import { useStylistLevels } from '@/hooks/useStylistLevels';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
@@ -13,6 +13,22 @@ import { BlurredAmount } from '@/contexts/HideNumbersContext';
 interface LevelProgressCardProps {
   userId: string | undefined;
   compact?: boolean;
+}
+
+function formatValue(val: number, unit: string) {
+  if (unit === '/mo' || unit === '$') return `$${val.toLocaleString()}`;
+  if (unit === '%') return `${val.toFixed(1)}%`;
+  if (unit === '$/hr') return `$${val}/hr`;
+  if (unit === 'd') return `${val}d`;
+  return String(val);
+}
+
+function formatGap(gap: number, unit: string) {
+  if (unit === '/mo' || unit === '$') return `-$${Math.round(gap).toLocaleString()}`;
+  if (unit === '%') return `-${gap.toFixed(1)} pts`;
+  if (unit === '$/hr') return `-$${Math.round(gap)}`;
+  if (unit === 'd') return `-${gap}d`;
+  return `-${gap}`;
 }
 
 function CriterionRow({ label, current, target, percent, unit, gap }: {
@@ -23,34 +39,41 @@ function CriterionRow({ label, current, target, percent, unit, gap }: {
   unit: string;
   gap: number;
 }) {
-  const formatValue = (val: number) => {
-    if (unit === '/mo' || unit === '$') return `$${val.toLocaleString()}`;
-    if (unit === '%') return `${val.toFixed(1)}%`;
-    if (unit === 'd') return `${val}d`;
-    return String(val);
-  };
+  const isMet = percent >= 100;
 
   return (
-    <div className="space-y-1.5">
-      <div className="flex items-center justify-between text-xs">
+    <div className={cn(
+      'rounded-md px-2 py-1.5',
+      isMet && 'border-l-2 border-emerald-500/60'
+    )}>
+      <div className="grid grid-cols-[1fr_auto_auto_auto] gap-x-3 items-center text-xs">
         <span className="text-muted-foreground">{label}</span>
-        <span className="tabular-nums">
-          <span className={cn("text-foreground", percent > 100 && "text-emerald-600 dark:text-emerald-400")}>{formatValue(current)}</span>
-          <span className="text-muted-foreground"> / {formatValue(target)}</span>
+        <span className="text-muted-foreground tabular-nums text-right w-16">
+          {formatValue(target, unit)}
+        </span>
+        <span className={cn(
+          'tabular-nums text-right w-16',
+          isMet ? 'text-emerald-600 dark:text-emerald-400' : 'text-foreground'
+        )}>
+          {formatValue(current, unit)}
+        </span>
+        <span className="w-16 text-right">
+          {isMet ? (
+            <Check className="w-3.5 h-3.5 text-emerald-500 inline-block" />
+          ) : (
+            <span className="text-xs tabular-nums text-amber-600 dark:text-amber-400">
+              {formatGap(gap, unit)}
+            </span>
+          )}
         </span>
       </div>
       <Progress
         value={Math.min(100, percent)}
-        className="h-1.5"
+        className="h-1 mt-1"
         indicatorClassName={cn(
-          percent >= 100 ? 'bg-emerald-500' : percent >= 75 ? 'bg-primary' : 'bg-amber-500'
+          isMet ? 'bg-emerald-500' : percent >= 75 ? 'bg-primary' : 'bg-amber-500'
         )}
       />
-      {gap > 0 && (
-        <p className="text-[10px] text-muted-foreground">
-          {formatValue(Math.round(gap))} more needed
-        </p>
-      )}
     </div>
   );
 }
@@ -61,7 +84,7 @@ export function LevelProgressCard({ userId, compact = false }: LevelProgressCard
   const { data: allLevels = [] } = useStylistLevels();
 
   if (!progress || (!progress.nextLevelLabel && !progress.retention?.isAtRisk)) {
-    return null; // No next level and no retention issues
+    return null;
   }
 
   // Commission uplift calculation
@@ -162,12 +185,12 @@ export function LevelProgressCard({ userId, compact = false }: LevelProgressCard
           </div>
         )}
 
-        {/* Composite progress bar — only show if there's a next level with criteria */}
+        {/* Composite progress bar */}
         {progress.nextLevelLabel && progress.criteria && (
           <>
             <div>
               <div className="flex items-center justify-between text-xs mb-1.5">
-                <span className="text-muted-foreground">Overall Progress</span>
+                <span className="text-muted-foreground">Overall Readiness</span>
                 <span className="font-medium tabular-nums">{progress.compositeScore}%</span>
               </div>
               <Progress
@@ -179,8 +202,19 @@ export function LevelProgressCard({ userId, compact = false }: LevelProgressCard
               />
             </div>
 
-            {/* Per-criterion breakdown */}
-            <div className="space-y-3">
+            {/* What You Need — criterion table */}
+            <div className="space-y-1">
+              <h4 className="font-display text-xs tracking-wide text-foreground mb-2">
+                What You Need
+              </h4>
+              {/* Column headers */}
+              <div className="grid grid-cols-[1fr_auto_auto_auto] gap-x-3 px-2 text-[10px] text-muted-foreground border-b border-border/40 pb-1">
+                <span>Metric</span>
+                <span className="text-right w-16">Target</span>
+                <span className="text-right w-16">You</span>
+                <span className="text-right w-16">Gap</span>
+              </div>
+
               {progress.criteriaProgress.map(cp => (
                 <CriterionRow
                   key={cp.key}
