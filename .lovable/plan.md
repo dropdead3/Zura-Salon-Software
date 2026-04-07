@@ -1,39 +1,35 @@
 
+Good catch — your prompt clearly identified both the unclear sentence and the intended rule. A slightly stronger prompt next time would specify whether you want only the visible table phrase updated or a full retention-copy consistency sweep across related screens.
 
-# Fix: Retention Settings Still Not Updating After Save
+Plan
 
-## Problem
-Despite the previous `await` fix, the Criteria Comparison Table's "Action" cell (showing "Demotion" vs "Coaching") does not reflect changes saved in the GraduationWizard. The database is correct (network response confirms `coaching_flag`), but the table doesn't re-render with fresh data reliably.
+1. Update the retention header copy in `src/components/dashboard/settings/StylistLevelsEditor.tsx`
+- Replace the current line:
+  “KPI minimums inherited from Level Requirements · Falling below triggers demotion to Level 1”
+- With copy that makes three things explicit:
+  - retention uses that level’s configured standards
+  - falling below can surface coaching or demotion flags depending on the configured action
+  - Level 1 is a special case and should reference coaching or removal review, not demotion
 
-## Root Cause
-The `upsertRetention.mutate()` fires two `onSuccess` handlers: the hook-level one (non-awaited) and the component-level one (awaited). While the component-level `await` should sequence correctly, using `.mutate()` with async callbacks has subtle timing issues — the hook-level `onSuccess` invalidates with the org-scoped key while the component-level one uses a broader key. Additionally, `updateLevel.mutate()` fires immediately after the awaits, triggering yet another cascade of invalidations that can race with React's render cycle.
+2. Align the retention explainer copy in `src/components/dashboard/settings/GraduationWizard.tsx`
+- Update the levels 2+ “KPI Minimums Inherited” note so it matches the same flag-based language
+- Update the Level 1 explainer so it no longer says “review or termination” and instead uses the same clearer entry-level wording
 
-## Fix
+3. Tighten the hover-help language
+- Update the retention “Action” tooltip in `StylistLevelsEditor.tsx` so the helper text matches the new explanation and doesn’t imply every below-standard case becomes a demotion
 
-### File: `src/components/dashboard/settings/GraduationWizard.tsx`
+Recommended wording direction
+- Table header:
+  “Retention uses each level’s KPI standards. Falling below them surfaces coaching or demotion flags based on the action configured for that level. For Level 1, falling below entry-level standards surfaces coaching or removal review.”
+- Levels 2+ wizard note:
+  “Retention thresholds follow the KPI standards configured above. The settings below determine how below-standard performance is evaluated and whether it surfaces coaching or demotion flags.”
+- Level 1 wizard note:
+  “Use these standards to define minimum entry-level performance. Falling below them surfaces coaching or removal review.”
 
-**Switch from `mutate` to `mutateAsync`** for both the promotion and retention save paths. This gives proper promise control over the full mutation lifecycle, ensuring all invalidations complete before any dialog close or level update:
-
-```typescript
-// handleSaveRetention
-const handleSaveRetention = async () => {
-  // ... payload construction stays the same ...
-  await upsertRetention.mutateAsync(payload);
-  // Hook-level onSuccess has already fired and invalidated
-  // Now explicitly await broader invalidation for the parent table
-  await queryClient.invalidateQueries({ queryKey: ['level-retention-criteria'] });
-  await queryClient.invalidateQueries({ queryKey: ['level-promotion-criteria'] });
-  updateLevel.mutate({ id: levelId, is_configured: true });
-  onOpenChange(false);
-};
-```
-
-Apply the same `mutateAsync` pattern to `handleSave` (promotion save). This eliminates the split between hook-level and component-level callbacks and gives deterministic ordering.
-
-## Files Changed
-| File | Change |
-|---|---|
-| `src/components/dashboard/settings/GraduationWizard.tsx` | Switch retention and promotion saves from `mutate` with async `onSuccess` to `mutateAsync` with sequential awaits |
-
-1 file modified. No database changes.
-
+Technical details
+- Files:
+  - `src/components/dashboard/settings/StylistLevelsEditor.tsx`
+  - `src/components/dashboard/settings/GraduationWizard.tsx`
+- No database or behavior changes
+- I recommend using “entry-level” or the dynamic first-level label instead of hardcoding “New Talent,” since Level 1 naming is customizable
+- I’ll keep the copy advisory-first so it doesn’t imply automatic demotion or automatic removal
