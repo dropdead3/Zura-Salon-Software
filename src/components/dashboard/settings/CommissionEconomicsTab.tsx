@@ -47,6 +47,7 @@ import { useAutoDetectEconomics } from '@/hooks/useAutoDetectEconomics';
 import { BENCHMARKS } from '@/hooks/useAutoDetectEconomics';
 import { EconomicsSmartDefaults, EconomicsDataBanner } from './EconomicsSmartDefaults';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
+import { LevelEconomicsSection } from './LevelEconomicsSection';
 
 interface CommissionEconomicsTabProps {
   levels: StylistLevel[];
@@ -593,6 +594,9 @@ export function CommissionEconomicsTab({ levels }: CommissionEconomicsTabProps) 
           </CardContent>
         </Card>
       )}
+
+      {/* Level Economics Analyzer */}
+      <LevelEconomicsSection levels={levels} whatIfRates={whatIfRates} />
 
       {/* What-If Simulator */}
       <Collapsible open={whatIfOpen} onOpenChange={setWhatIfOpen}>

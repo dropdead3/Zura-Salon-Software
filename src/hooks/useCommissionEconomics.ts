@@ -107,7 +107,7 @@ export function useRevenueByLevel() {
       const userIds = staff.map(s => s.user_id);
       const { data: appointments, error: apptErr } = await supabase
         .from('appointments')
-        .select('staff_user_id, total_price')
+        .select('staff_user_id, total_price, appointment_date')
         .eq('organization_id', orgId!)
         .gte('appointment_date', dateStr)
         .in('staff_user_id', userIds)
@@ -147,11 +147,29 @@ export function useRevenueByLevel() {
         }
       }
 
-      // Convert to monthly average per stylist (90 days ≈ 3 months)
+      // Calculate actual month span from appointment date range
+      let monthSpan = 3;
+      if (appointments && appointments.length > 0) {
+        let minDate = '';
+        let maxDate = '';
+        for (const a of appointments) {
+          if (!a.appointment_date) continue;
+          if (!minDate || a.appointment_date < minDate) minDate = a.appointment_date;
+          if (!maxDate || a.appointment_date > maxDate) maxDate = a.appointment_date;
+        }
+        if (minDate && maxDate) {
+          const startD = new Date(minDate);
+          const endD = new Date(maxDate);
+          const diffDays = Math.max(1, (endD.getTime() - startD.getTime()) / (1000 * 60 * 60 * 24));
+          monthSpan = Math.max(1, diffDays / 30.44);
+        }
+      }
+
+      // Convert to monthly average per stylist
       return Array.from(levelRevenue.entries()).map(([level_id, data]) => ({
         level_id,
         avg_monthly_revenue: data.userIds.size > 0
-          ? (data.total / 3) / data.userIds.size
+          ? (data.total / monthSpan) / data.userIds.size
           : 0,
         stylist_count: data.userIds.size,
       }));
