@@ -55,8 +55,8 @@ export default function SystemHealthPage() {
 
   const handleRefresh = async () => {
     try {
-      await refreshHealth();
-      await refetch();
+      await Promise.all([refreshHealth(), refreshInfra()]);
+      await Promise.all([refetch(), refetchInfra()]);
       toast.success('Health check completed');
     } catch (error) {
       toast.error('Failed to refresh health status');
