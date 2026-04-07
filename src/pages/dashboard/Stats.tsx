@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { formatName } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { DashboardPageHeader } from '@/components/dashboard/DashboardPageHeader';
@@ -135,7 +136,7 @@ export default function Stats() {
                 <SelectContent>
                   {teamMembers.map((member) => (
                     <SelectItem key={member.user_id} value={member.user_id}>
-                      {member.display_name || member.full_name}
+                      {formatName(member)}
                     </SelectItem>
                   ))}
                 </SelectContent>

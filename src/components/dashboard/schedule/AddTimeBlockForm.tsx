@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Command, CommandInput, CommandList, CommandEmpty, CommandGroup, CommandItem } from '@/components/ui/command';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { ChevronLeft, Clock, Loader2, Coffee, ChevronsUpDown, Check } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn, formatName } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useEffectiveRoles } from '@/hooks/useEffectiveUser';
@@ -265,14 +265,14 @@ export function AddTimeBlockForm({ date, time, onBack, onComplete, defaultStylis
                     {teamMembers.map(member => (
                       <CommandItem
                         key={member.user_id}
-                        value={member.display_name || member.full_name || ''}
+                        value={formatName(member) || ''}
                         onSelect={() => {
                           setSelectedUserId(member.user_id);
                           setStaffSearchOpen(false);
                         }}
                       >
                         <Check className={cn('mr-2 h-3.5 w-3.5', selectedUserId === member.user_id ? 'opacity-100' : 'opacity-0')} />
-                        {member.display_name || member.full_name}
+                        {formatName(member)}
                       </CommandItem>
                     ))}
                   </CommandGroup>

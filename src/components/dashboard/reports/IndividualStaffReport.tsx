@@ -20,7 +20,7 @@ import {
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { toast } from 'sonner';
-import { cn } from '@/lib/utils';
+import { cn, formatName } from '@/lib/utils';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { useFormatDate } from '@/hooks/useFormatDate';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
@@ -315,9 +315,9 @@ export function IndividualStaffReport({ dateFrom, dateTo, locationId, onClose, i
                   <div className="flex items-center gap-2">
                     <Avatar className="w-5 h-5">
                       <AvatarImage src={member.photo_url || undefined} />
-                      <AvatarFallback className="text-[8px]">{getInitials(member.display_name || member.full_name || '?')}</AvatarFallback>
+                      <AvatarFallback className="text-[8px]">{getInitials(formatName(member))}</AvatarFallback>
                     </Avatar>
-                    {member.display_name || member.full_name}
+                    {formatName(member)}
                   </div>
                 </SelectItem>
               ))}

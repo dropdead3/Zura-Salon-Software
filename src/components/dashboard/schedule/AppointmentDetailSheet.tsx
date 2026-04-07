@@ -86,7 +86,7 @@ import { formatRelativeTime } from '@/lib/format';
 import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { useAssistantTimeBlocks } from '@/hooks/useAssistantTimeBlocks';
 import { useLogAuditEvent } from '@/hooks/useAppointmentAuditLog';
-import { formatDisplayName } from '@/lib/utils';
+import { formatDisplayName, formatName } from '@/lib/utils';
 import { Users as UsersIcon, Home } from 'lucide-react';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 import { EditServicesDialog } from '@/components/shared/EditServicesDialog';
@@ -1356,9 +1356,9 @@ export function AppointmentDetailSheet({
                                     <div className="flex items-center gap-2">
                                       <Avatar className="h-5 w-5">
                                         <AvatarImage src={member.photo_url || undefined} />
-                                        <AvatarFallback className="text-[8px]">{(member.display_name || member.full_name || '?').slice(0, 2).toUpperCase()}</AvatarFallback>
+                                        <AvatarFallback className="text-[8px]">{(formatName(member) || '?').slice(0, 2).toUpperCase()}</AvatarFallback>
                                       </Avatar>
-                                      <span>{member.display_name || member.full_name}</span>
+                                      <span>{formatName(member)}</span>
                                       {conflicts.length > 0 && <AlertTriangle className="h-3.5 w-3.5 text-orange-500 shrink-0 ml-auto" />}
                                     </div>
                                     {conflicts.map((c, i) => (
@@ -2022,9 +2022,9 @@ export function AppointmentDetailSheet({
                           <div className="flex items-center gap-2.5">
                             <Avatar className="h-7 w-7">
                               <AvatarImage src={member.photo_url || undefined} />
-                              <AvatarFallback className="text-[9px]">{(member.display_name || member.full_name || '?').slice(0, 2).toUpperCase()}</AvatarFallback>
+                              <AvatarFallback className="text-[9px]">{(formatName(member) || '?').slice(0, 2).toUpperCase()}</AvatarFallback>
                             </Avatar>
-                            <span className="font-medium">{member.display_name || member.full_name}</span>
+                            <span className="font-medium">{formatName(member)}</span>
                             {conflicts.length > 0 && (
                               <Badge variant="outline" className="text-[10px] text-amber-700 dark:text-amber-300 border-amber-300 ml-auto shrink-0">
                                 <AlertTriangle className="h-2.5 w-2.5 mr-0.5" /> {conflicts.length} conflict{conflicts.length > 1 ? 's' : ''}
@@ -2091,9 +2091,9 @@ export function AppointmentDetailSheet({
                                 >
                                   <Avatar className="h-6 w-6">
                                     <AvatarImage src={member.photo_url || undefined} />
-                                    <AvatarFallback className="text-[8px]">{(member.display_name || member.full_name || '?').slice(0, 2).toUpperCase()}</AvatarFallback>
+                                    <AvatarFallback className="text-[8px]">{(formatName(member) || '?').slice(0, 2).toUpperCase()}</AvatarFallback>
                                   </Avatar>
-                                  <span className="text-sm">{member.display_name || member.full_name}</span>
+                                  <span className="text-sm">{formatName(member)}</span>
                                   {member.user_id === appointment.stylist_user_id && (
                                     <Badge variant="outline" className="text-[9px] ml-auto">Lead</Badge>
                                   )}

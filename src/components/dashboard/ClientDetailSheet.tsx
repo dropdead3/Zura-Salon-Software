@@ -49,7 +49,7 @@ import {
   Camera
 } from 'lucide-react';
 import { tokens } from '@/lib/design-tokens';
-import { cn, formatPhoneDisplay } from '@/lib/utils';
+import { cn, formatPhoneDisplay, formatName } from '@/lib/utils';
 import { calculateCLV, assignCLVTier, CLV_TIERS, type CLVTierConfig } from '@/lib/clv-calculator';
 import { LEAD_SOURCES, getLeadSourceLabel, getLeadSourceColor, isStandardSource } from '@/lib/leadSources';
 import { MergedProfileBanner } from './clients/merge/MergedProfileBanner';
@@ -1084,7 +1084,7 @@ export function ClientDetailSheet({ client, open, onOpenChange, locationName, on
                         )}
                         {teamMembers?.map(member => (
                           <SelectItem key={member.user_id} value={member.user_id}>
-                            {member.display_name || member.full_name}
+                            {formatName(member)}
                           </SelectItem>
                         ))}
                       </SelectContent>
