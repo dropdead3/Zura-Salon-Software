@@ -1500,6 +1500,7 @@ export function StylistLevelsEditor({ embedded = false, onActions }: StylistLeve
   const { data: retentionCriteria } = useLevelRetentionCriteria();
   const { data: activeLocations = [] } = useActiveLocations();
   const { teamProgress, counts: teamCounts } = useTeamLevelProgress();
+  const levelEconomics = useLevelEconomicsAnalyzer(dbLevels || []);
 
   useEffect(() => {
     if (dbLevels && !hasChanges) {
@@ -2032,9 +2033,29 @@ export function StylistLevelsEditor({ embedded = false, onActions }: StylistLeve
                         {index + 1}
                       </span>
 
-                      {/* Col 3: Name — left-aligned, always static */}
+                      {/* Col 3: Name + margin indicator — left-aligned */}
                       <div className="flex items-center gap-3 min-w-0">
                         <span className="font-display text-xs tracking-wide truncate">{level.label}</span>
+                        {(() => {
+                          const summary = levelEconomics.levelSummaries.find(s => s.levelLabel === level.label);
+                          if (!summary || !summary.hasEnoughData) return null;
+                          const color = summary.status === 'healthy'
+                            ? 'bg-emerald-500'
+                            : summary.status === 'tight'
+                            ? 'bg-amber-500'
+                            : 'bg-rose-500';
+                          const textColor = summary.status === 'healthy'
+                            ? 'text-emerald-600'
+                            : summary.status === 'tight'
+                            ? 'text-amber-600'
+                            : 'text-rose-600';
+                          return (
+                            <span className={cn('hidden sm:flex items-center gap-1 text-[10px]', textColor)}>
+                              <span className={cn('w-1.5 h-1.5 rounded-full', color)} />
+                              ~{(summary.weightedMarginPct * 100).toFixed(0)}%
+                            </span>
+                          );
+                        })()}
                       </div>
 
                       {/* Col 4: Service Commission — center-aligned */}
