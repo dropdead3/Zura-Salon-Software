@@ -63,21 +63,35 @@ export function useStaffRevenuePerformance(
     queryFn: async () => {
       const { startDate, endDate } = getDateRange(timeRange);
       
-      // Fetch daily sales summary data
-      let salesQuery = supabase
-        .from('phorest_daily_sales_summary')
-        .select('phorest_staff_id, total_revenue, service_revenue, product_revenue, total_transactions, summary_date, location_id')
-        .gte('summary_date', startDate)
-        .lte('summary_date', endDate)
+      // Query raw transactions (POS-first integrity model)
+      let txQuery = supabase
+        .from('phorest_sales_transactions')
+        .select('phorest_staff_id, total_amount, tax_amount, transaction_date, location_id')
+        .gte('transaction_date', startDate)
+        .lte('transaction_date', endDate)
         .not('phorest_staff_id', 'is', null);
       
       if (locationId) {
-        salesQuery = salesQuery.eq('location_id', locationId);
+        txQuery = txQuery.eq('location_id', locationId);
       }
       
-      const { data: salesData, error: salesError } = await salesQuery;
+      const { data: txData, error: txError } = await txQuery;
+      if (txError) throw txError;
+
+      // Also fetch transaction items for service/product breakdown
+      let itemQuery = supabase
+        .from('phorest_transaction_items')
+        .select('phorest_staff_id, item_type, total_amount, transaction_date')
+        .gte('transaction_date', startDate)
+        .lte('transaction_date', endDate)
+        .not('phorest_staff_id', 'is', null);
       
-      if (salesError) throw salesError;
+      if (locationId) {
+        itemQuery = itemQuery.eq('location_id', locationId);
+      }
+      
+      const { data: itemData, error: itemError } = await itemQuery;
+      if (itemError) throw itemError;
       
       // Get staff mappings to link phorest IDs to user profiles
       const { data: mappings, error: mappingsError } = await supabase
