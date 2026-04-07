@@ -102,6 +102,29 @@ export function ReportBuilder({ meetingId, teamMemberId, teamMemberName }: Repor
       content += `## Additional Notes\n\n${additionalContent}\n\n`;
     }
 
+    // Performance Summary section
+    if (includePerformance && perfData) {
+      const { revenue, productivity, clientMetrics, retail, experienceScore, teamAverages, commission } = perfData;
+      const tipRate = experienceScore.tipRate;
+      content += `## Performance Summary (Last 30 Days)\n\n`;
+      content += `| Metric | Value | Team Avg |\n`;
+      content += `|--------|-------|----------|\n`;
+      content += `| Revenue | $${Math.round(revenue.total).toLocaleString()} | $${Math.round(teamAverages.revenue).toLocaleString()} |\n`;
+      content += `| Avg Ticket | $${Math.round(revenue.avgTicket).toLocaleString()} | $${Math.round(teamAverages.avgTicket).toLocaleString()} |\n`;
+      content += `| Appointments | ${productivity.completed} | ${Math.round(teamAverages.appointments)} |\n`;
+      content += `| Tip Rate | ${tipRate.toFixed(1)}% | — |\n`;
+      content += `| Rebook Rate | ${clientMetrics.rebookingRate.toFixed(0)}% | ${teamAverages.rebookingRate.toFixed(0)}% |\n`;
+      content += `| Retention | ${clientMetrics.retentionRate.toFixed(0)}% | ${teamAverages.retentionRate.toFixed(0)}% |\n`;
+      content += `| Retail Attachment | ${retail.attachmentRate}% | — |\n`;
+      content += `| Experience Score | ${experienceScore.composite} (${experienceScore.status}) | — |\n`;
+      content += `| Commission | $${Math.round(commission.totalCommission).toLocaleString()} (${commission.tierName}) | — |\n`;
+      content += '\n';
+      if (revenue.revenueChange !== 0) {
+        const dir = revenue.revenueChange > 0 ? '📈' : '📉';
+        content += `${dir} Revenue ${revenue.revenueChange > 0 ? 'up' : 'down'} ${Math.abs(Math.round(revenue.revenueChange))}% vs prior period\n\n`;
+      }
+    }
+
     // Color Bar Performance section (renamed from Compliance)
     if (includeCompliance && complianceData && complianceData.totalColorAppointments > 0) {
       content += `## Color Bar Performance (Last 30 Days)\n\n`;
