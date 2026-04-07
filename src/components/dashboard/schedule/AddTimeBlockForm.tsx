@@ -265,14 +265,14 @@ export function AddTimeBlockForm({ date, time, onBack, onComplete, defaultStylis
                     {teamMembers.map(member => (
                       <CommandItem
                         key={member.user_id}
-                        value={member.display_name || member.full_name || ''}
+                        value={formatName(member) || ''}
                         onSelect={() => {
                           setSelectedUserId(member.user_id);
                           setStaffSearchOpen(false);
                         }}
                       >
                         <Check className={cn('mr-2 h-3.5 w-3.5', selectedUserId === member.user_id ? 'opacity-100' : 'opacity-0')} />
-                        {member.display_name || member.full_name}
+                        {formatName(member)}
                       </CommandItem>
                     ))}
                   </CommandGroup>
