@@ -84,24 +84,24 @@ export function LevelProgressCard({ userId, compact = false }: LevelProgressCard
   const { resolveCommission } = useResolveCommission();
   const { data: allLevels = [] } = useStylistLevels();
 
-  if (!progress || (!progress.nextLevelLabel && !progress.retention?.isAtRisk)) {
-    return null;
-  }
-
-  // Commission uplift calculation using service price-aware hook
-  const currentResolved = (progress.nextLevelLabel && userId) ? resolveCommission(userId, 1000, 0) : null;
-  const nextLevelObj = allLevels.find(l => l.id === progress.nextLevelId);
+  // Compute commission rates for uplift (must be before early return for hooks rules)
+  const currentResolved = (progress?.nextLevelLabel && userId) ? resolveCommission(userId, 1000, 0) : null;
+  const nextLevelObj = allLevels.find(l => l.id === progress?.nextLevelId);
   const currentSvcRate = currentResolved?.serviceRate ?? 0;
   const nextSvcRate = nextLevelObj?.service_commission_rate ?? 0;
 
   const upliftEstimate = useLevelUpliftEstimate({
     userId,
-    currentLevelId: progress.currentLevelId,
-    nextLevelId: progress.nextLevelId ?? undefined,
+    currentLevelId: progress?.currentLevelId,
+    nextLevelId: progress?.nextLevelId ?? undefined,
     currentCommRate: currentSvcRate,
     nextCommRate: nextSvcRate,
-    evaluationWindowDays: progress.evaluationWindowDays || 30,
+    evaluationWindowDays: progress?.evaluationWindowDays || 30,
   });
+
+  if (!progress || (!progress.nextLevelLabel && !progress.retention?.isAtRisk)) {
+    return null;
+  }
 
   let upliftSection: React.ReactNode = null;
   if (progress.nextLevelLabel && nextSvcRate > currentSvcRate && upliftEstimate.totalMonthlyUplift > 0) {
