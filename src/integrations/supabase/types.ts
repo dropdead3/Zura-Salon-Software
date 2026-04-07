@@ -6814,6 +6814,7 @@ export type Database = {
           preferred_social_handle: string | null
           specialties: string[] | null
           stylist_level: string | null
+          stylist_level_since: string | null
           stylist_type: Database["public"]["Enums"]["stylist_type"] | null
           tiktok: string | null
           updated_at: string
@@ -6869,6 +6870,7 @@ export type Database = {
           preferred_social_handle?: string | null
           specialties?: string[] | null
           stylist_level?: string | null
+          stylist_level_since?: string | null
           stylist_type?: Database["public"]["Enums"]["stylist_type"] | null
           tiktok?: string | null
           updated_at?: string
@@ -6924,6 +6926,7 @@ export type Database = {
           preferred_social_handle?: string | null
           specialties?: string[] | null
           stylist_level?: string | null
+          stylist_level_since?: string | null
           stylist_type?: Database["public"]["Enums"]["stylist_type"] | null
           tiktok?: string | null
           updated_at?: string
