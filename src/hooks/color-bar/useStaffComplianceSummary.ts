@@ -214,11 +214,11 @@ export function useStaffComplianceSummary(
       // --- Overage charges for this staff's appointments ---
       let overageChargeTotal = 0;
       let appointmentsWithOverage = 0;
-      if (apptIds.length > 0) {
+      if (allApptIds.length > 0) {
         const { data: charges } = await supabase
           .from('checkout_usage_charges')
           .select('appointment_id, charge_amount')
-          .in('appointment_id', apptIds);
+          .in('appointment_id', allApptIds);
         const seen = new Set<string>();
         for (const c of charges ?? []) {
           overageChargeTotal += (c as any).charge_amount ?? 0;
