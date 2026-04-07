@@ -31,6 +31,7 @@ import {
   Sparkles,
   ArrowRight,
   ShieldCheck,
+  RotateCcw,
 } from 'lucide-react';
 import type { StylistLevel } from '@/hooks/useStylistLevels';
 import {
@@ -43,6 +44,9 @@ import {
   type AICommissionOptimizerResult,
   type AICommissionRecommendation,
 } from '@/hooks/useCommissionEconomics';
+import { useAutoDetectEconomics } from '@/hooks/useAutoDetectEconomics';
+import { BENCHMARKS } from '@/hooks/useAutoDetectEconomics';
+import { EconomicsSmartDefaults, EconomicsDataBanner } from './EconomicsSmartDefaults';
 
 interface CommissionEconomicsTabProps {
   levels: StylistLevel[];
@@ -87,9 +91,10 @@ function getLevelDotColor(idx: number, total: number): string {
 }
 
 export function CommissionEconomicsTab({ levels }: CommissionEconomicsTabProps) {
-  const { assumptions, isLoading: loadingAssumptions } = useEconomicsAssumptions();
+  const { assumptions, hasCustomAssumptions, isLoading: loadingAssumptions } = useEconomicsAssumptions();
   const { save: saveAssumptions, isPending: isSaving } = useSaveEconomicsAssumptions();
   const { data: revenueData, isLoading: loadingRevenue } = useRevenueByLevel();
+  const { data: detection, isLoading: loadingDetection } = useAutoDetectEconomics();
 
   // Local editable assumptions
   const [localAssumptions, setLocalAssumptions] = useState<EconomicsAssumptions | null>(null);
