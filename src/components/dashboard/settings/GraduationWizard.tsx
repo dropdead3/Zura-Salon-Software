@@ -1357,16 +1357,17 @@ export function GraduationWizard({ open, onOpenChange, levelId, levelLabel, leve
                             key={days}
                             onClick={() => setRetField('grace_period_days', days)}
                             className={cn(
-                              "relative flex-1 py-2 rounded-lg text-sm transition-colors border",
+                              "relative flex-1 py-2.5 rounded-lg text-sm transition-colors border",
                               retForm.grace_period_days === days
                                 ? "bg-primary/10 border-primary/30 text-primary"
-                                : "bg-transparent border-border text-muted-foreground hover:bg-muted"
+                                : "bg-transparent border-border text-muted-foreground hover:bg-muted",
+                              days === 30 && retForm.grace_period_days !== days && "border-primary/15"
                             )}
                           >
-                            {days}d
+                            <span>{days}d</span>
                             {days === 30 && (
-                              <span className="absolute -top-2 left-1/2 -translate-x-1/2 text-[8px] tracking-wider uppercase font-display text-primary bg-primary/10 border border-primary/20 rounded-full px-1.5 py-px">
-                                Rec
+                              <span className="block text-[9px] tracking-wide uppercase font-display text-primary/60 mt-0.5">
+                                Recommended
                               </span>
                             )}
                           </button>
