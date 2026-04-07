@@ -1,84 +1,39 @@
 
 
-# Redesign Level Progress Card for Clarity
+# Replace Criteria Table PDF with Spreadsheet-Style Table PDF
 
 ## Problem
-The current layout mixes retention warnings, progress bars, and targets in a way that makes it hard to quickly understand: (a) where you are now, (b) what's needed for the next level, and (c) how far off each metric is. The "current / target" format buried in small text next to progress bars doesn't create clear separation between "your stats" and "what's required."
+The "Export as PDF" button currently generates a card-based Level Roadmap PDF. The user expects this button — which sits above the criteria comparison table — to export a PDF that mirrors the table itself, like a spreadsheet printout.
 
-## Design
+## Solution
+Replace the `generateLevelRequirementsPDF` call in the Export dropdown with a new function that renders the criteria table as a landscape PDF using `jspdf-autotable`. The data assembly already exists in the CSV export logic — we reuse that same row structure.
 
-### New Layout Structure
+## Changes
 
-```text
-┌──────────────────────────────────────────────┐
-│ 🎓 LEVEL PROGRESS                      25%  │
-│    Studio Artist → Core Artist               │
-├──────────────────────────────────────────────┤
-│  ⚠ Retention Warning (if applicable)        │
-│  ... failures listed ...                     │
-├──────────────────────────────────────────────┤
-│  Overall Readiness  ████████░░░░░░░░░  25%   │
-├──────────────────────────────────────────────┤
-│  ┌─ WHAT YOU NEED ─────────────────────────┐ │
-│  │ Metric        Target    You    Gap      │ │
-│  │ ──────────    ──────    ───    ───      │ │
-│  │ Svc Revenue   $8,000    $1,558  -$6,442 │ │
-│  │ Retail Att.   11.0%     5.9%   -5.1 pts │ │
-│  │ Rebooking     63.0%     0.0%   -63.0    │ │
-│  │ Avg Ticket    $200      $117   -$83     │ │
-│  │ Retention     73.0%     0.0%   -73.0    │ │
-│  │ Utilization   80.0%     71.0%  -9.0     │ │
-│  │ Rev/Hr        $75/hr    $48/hr -$27     │ │
-│  │ Tenure        90d       0d     90d      │ │
-│  └─────────────────────────────────────────┘ │
-│                                              │
-│  Each row has a thin progress bar below it   │
-│  Color: emerald (met) / primary (75%+) /     │
-│         amber (<75%)                         │
-├──────────────────────────────────────────────┤
-│  💲 Income Opportunity                       │
-│  Commission Today  |  At Core Artist  |  +$  │
-├──────────────────────────────────────────────┤
-│  90-day rolling window    Requires approval  │
-└──────────────────────────────────────────────┘
-```
+### New File: `src/components/dashboard/settings/LevelCriteriaTablePDF.ts`
+- Landscape A4 PDF using jsPDF + autoTable
+- Branded header: org name, "Level Criteria Comparison", date
+- Uses Termina for header, Aeonik Pro for table body (via `registerPdfFonts`)
+- Table columns: Metric | Level 1: Name | Level 2: Name | ... | Level N: Name
+- Sections separated by styled header rows: COMPENSATION, PROMOTION, RETENTION
+- Includes all metrics currently in the comparison table (commission rates, hourly wage, revenue, retail %, rebooking %, avg ticket, retention, new clients, utilization, rev/hr, tenure, eval window)
+- Alternating row shading, centered values, frozen first column styling
 
-### Key Changes
+### Modified File: `src/components/dashboard/settings/StylistLevelsEditor.tsx`
+- Replace the `generateLevelRequirementsPDF` call in the Export dropdown (lines 925-973) with a call to the new `generateLevelCriteriaTablePDF`
+- Pass the same data: levels, promotion criteria, retention criteria, commissions, org name
+- Import swap: new function instead of roadmap PDF generator
+- The roadmap PDF remains available from its own location (the Roadmap view) — it's just no longer attached to this button
 
-1. **Reframe section header**: Change "KPI Performance" to **"What You Need"** — a clear directive that this section shows next-level requirements vs current standing.
+## Technical Notes
+- `jspdf-autotable` is already a project dependency (used by StaffLevelReportPDF)
+- The CSV export logic (lines 896-920) already assembles the exact row data needed — the PDF function will follow the same structure
+- No database changes
 
-2. **Reorder columns**: Put **Target first, then You, then Gap**. The mental model becomes "here's what's required → here's where you are → here's the delta." This reverses the current "You / Target" order.
-
-3. **Show explicit gap column**: Add a **Gap** column showing the shortfall in human-readable form (e.g., `-$6,442`, `-5.1 pts`, `-63%`). Met criteria show a green checkmark instead. This replaces the buried "X more needed" text below each bar.
-
-4. **Color-code the gap**: Red/amber text for shortfalls, emerald for met metrics. Instantly scannable.
-
-5. **Met metrics visual**: Rows where `percent >= 100` get a subtle emerald left-border or checkmark, making it obvious what's already achieved vs what needs work.
-
-6. **Keep progress bars** but make them secondary — thin `h-1` bars below each row for visual reinforcement, not the primary data communication.
-
-7. **Remove "X more needed" text lines**: Redundant with the new gap column. This also tightens vertical spacing significantly.
-
-### File: `src/components/coaching/LevelProgressCard.tsx`
-
-- Restructure `CriterionRow` to show Target → Current → Gap in a grid
-- Gap column: compute and format the delta with sign, color-code red vs green
-- Add checkmark icon for met criteria
-- Remove the standalone "X more needed" paragraph
-- Keep progress bar as `h-1` below the row
-
-### File: `src/components/dashboard/StylistScorecard.tsx`
-
-- Apply the same column reordering (Target → You → Gap → Trend)
-- Replace the "KPI Performance" heading with "What You Need" (only when `hasNextLevel`)
-- Add gap column with formatted shortfall values
-- For top-level stylists (no next level), keep heading as "Current Performance"
-
-## Files Changed
 | File | Change |
 |---|---|
-| `LevelProgressCard.tsx` | Restructure criterion rows: Target → You → Gap, remove "more needed" text |
-| `StylistScorecard.tsx` | Same column reorder + gap column, rename section header |
+| `LevelCriteriaTablePDF.ts` | New — landscape table PDF generator |
+| `StylistLevelsEditor.tsx` | Swap PDF export to use table generator |
 
 2 files, no database changes.
 
