@@ -55,6 +55,7 @@ export function StylistCommissionDrilldown({
 
   // --- Local buffered state ---
   const [pendingLevel, setPendingLevel] = useState<string>('__unassign');
+  const [pendingLevelSince, setPendingLevelSince] = useState('');
   const [svcRate, setSvcRate] = useState('');
   const [retailRate, setRetailRate] = useState('');
   const [reason, setReason] = useState('');
