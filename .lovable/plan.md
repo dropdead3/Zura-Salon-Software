@@ -1,57 +1,81 @@
 
 
-# Wire Staff Reports & Add Level Graduation to 1:1 Reports
+# Surface In-Depth Staff Analytics on 1:1 Meeting Page
 
-## Problem Summary
+## Problem
 
-From the screenshot, the Individual Staff Report for "Gavin E." shows all zeros. Two root causes:
+The Meeting Details page currently shows only: Meeting Notes, Accountability Items, Level Progress card, and Report Builder. Coaches have no visual performance snapshot during 1:1s — they have to navigate away to the Individual Staff Report to see revenue, tip rate, retail attachment, Color Bar compliance, etc.
 
-1. **The report queries by `phorest_staff_id` correctly**, but the date filter is set to "Today" (a Sunday with no appointments). The data IS there — Gavin has 59 appointments and $6,497 revenue in the last 5 weeks. The report works when a meaningful date range is selected.
+## Solution
 
-2. **The name still shows "GAVIN E."** — the `formatDisplayName` change only applies when both `fullName` and `displayName` flow through the utility. The profile banner in IndividualStaffReport constructs the name via `formatDisplayName(profileData.full_name, profileData.display_name)` which should now return the full name. The staff selector dropdown also shows `member.display_name || member.full_name` directly. The "GAVIN E." in the banner header likely comes from the `data.profile.name` which was set before the fix was deployed — this should resolve automatically.
+Add a new `MeetingPerformanceSummary` component to the Meeting Details page that provides a comprehensive at-a-glance performance snapshot for the stylist. This reuses the existing `useIndividualStaffReport` hook (which already computes everything needed) and `useStaffComplianceSummary` (which has enhanced waste/overage data).
 
-3. **Level graduation stats are not included in the 1:1 meeting Report Builder** — the `LevelProgressCard` is shown on the meeting details page, but its data (composite score, per-criterion gaps, commission uplift) is NOT included in the generated check-in report that gets sent to the team member.
+## Architecture
 
-## Plan
+### 1. New Component: `src/components/coaching/MeetingPerformanceSummary.tsx`
 
-### 1. Add Level Progress Data to the 1:1 Report Builder
+A card-based performance dashboard with four sections, using trailing 30-day data:
 
-**File: `src/components/coaching/ReportBuilder.tsx`**
+**Section A — Revenue & Productivity KPIs (top row of tiles)**
+- Total Revenue (vs team avg, with period-over-period change %)
+- Average Ticket (vs team avg)
+- Appointments Completed
+- Revenue per Day
 
-Import `useLevelProgress` and add a "Level Progress" section to the generated report content. Include:
-- Current level → Next level label
-- Composite score (e.g., "72% ready")
-- Per-criterion breakdown showing current vs target and gap remaining
-- Commission uplift estimate ("At next level, your commission increases from X% to Y% — estimated +$Z/month based on current revenue")
-- Retention warnings if at risk
-- Add an "Include Level Progress" checkbox next to the existing "Include Compliance Data" checkbox
+**Section B — Client Experience Metrics (second row)**
+- Tip Rate % (tips / revenue × 100) — with team comparison
+- Average Tip $ amount
+- Rebooking Rate %
+- Retention Rate %
+- Retail Attachment Rate %
+- Experience Composite Score (with status badge: strong/watch/needs-attention)
 
-**File: `src/hooks/useLevelProgress.ts`** — No changes needed, already returns all required data.
+**Section C — Color Bar Operations (collapsible, only if staff has color appointments)**
+- Reweigh Compliance Rate %
+- Waste Rate % and Waste Cost $
+- Overage Attachment Rate %
+- Total Overage Charges $
+- Tracked vs Missed sessions
+- Coaching callouts (auto-generated if waste > 15% or compliance < 90%)
 
-### 2. Add Commission Uplift Intelligence to LevelProgressCard
+**Section D — Top Services & Commission (expandable)**
+- Top 3 services by revenue
+- Current commission tier + total commission earned
+- Commission uplift opportunity (from LevelProgress data already available)
 
-**File: `src/components/coaching/LevelProgressCard.tsx`**
+Each metric shows: current value, vs team average (when available), and trend indicator (↑/↓/→ vs prior period).
 
-Add a small "Income Opportunity" section below the criteria progress bars:
-- Show current commission rate vs next level's rate
-- Calculate monthly uplift estimate based on the user's trailing revenue
-- This gives stylists a concrete dollar amount incentive to focus on graduation
+**Data source**: `useIndividualStaffReport(staffUserId, dateFrom, dateTo)` — already computes all of these metrics including team averages and multi-period trends. No new hooks or queries needed.
 
-This requires importing `useResolveCommission` and `useStylistLevels` to look up commission rates for current vs next level.
+### 2. Update `src/pages/dashboard/MeetingDetails.tsx`
 
-### 3. Enhance the Meeting Details Level Progress Visibility
+- Import and render `MeetingPerformanceSummary` in the left column (above Meeting Notes)
+- Pass `teamMemberId` and a 30-day trailing date range
+- Visible to both coach and team member (both parties should see the same data during the meeting)
 
-**File: `src/pages/dashboard/MeetingDetails.tsx`**
+### 3. Enhance Report Builder Content Generation
 
-The `LevelProgressCard` is currently only visible to coaches (`canManage`). Also show it (non-compact) to the team member themselves, so both parties see the same graduation data during the meeting.
+Update `ReportBuilder.tsx` to include the new metrics in the generated check-in report when "Include Performance Summary" is checked:
+- Add a new checkbox: "Include Performance Summary"
+- When enabled, generate a markdown section with: revenue (vs team avg), tip rate, attachment rate, rebooking rate, experience score
+- This supplements the existing Color Bar Performance and Level Progress sections
 
 ## Files Changed
 
 | File | Change |
 |---|---|
-| `src/components/coaching/ReportBuilder.tsx` | Add level progress + commission uplift to generated report content |
-| `src/components/coaching/LevelProgressCard.tsx` | Add "Income Opportunity" section with commission uplift estimate |
-| `src/pages/dashboard/MeetingDetails.tsx` | Show LevelProgressCard to both coach and team member |
+| `src/components/coaching/MeetingPerformanceSummary.tsx` | New — comprehensive performance card using `useIndividualStaffReport` |
+| `src/pages/dashboard/MeetingDetails.tsx` | Add MeetingPerformanceSummary to meeting layout |
+| `src/components/coaching/ReportBuilder.tsx` | Add "Include Performance Summary" checkbox + report section |
 
-3 files, no database changes. The Individual Staff Report data issue is a date-range selection issue (user selected "Today" on a day with no appointments) — not a wiring bug.
+3 files (1 new, 2 modified). No database changes. No new hooks — reuses existing `useIndividualStaffReport` which already computes all required metrics.
+
+## Design Compliance
+
+- All metric tiles use `tokens.kpi.*` for labels/values
+- Card follows canonical header pattern with `tokens.card.iconBox` + `MetricInfoTooltip`
+- Financial values wrapped in `BlurredAmount`
+- Trend indicators use emerald/rose/muted color conventions
+- Font rules: `font-display` for KPI labels (uppercase), `font-sans` for values
+- No `font-bold` or `font-semibold` — max `font-medium`
 
