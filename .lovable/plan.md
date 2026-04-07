@@ -1,43 +1,39 @@
 
 
-# Fix: Retention Settings Not Displaying After Save
+# Fix: Retention Settings Still Not Updating After Save
 
 ## Problem
-After saving retention criteria via the GraduationWizard for a level (e.g., Level 5 Senior Artist), the Criteria Comparison Table still shows dashes for that level's retention row. The data IS correctly saved to the database — the issue is that the table's query cache doesn't reliably refetch after the wizard closes.
+Despite the previous `await` fix, the Criteria Comparison Table's "Action" cell (showing "Demotion" vs "Coaching") does not reflect changes saved in the GraduationWizard. The database is correct (network response confirms `coaching_flag`), but the table doesn't re-render with fresh data reliably.
 
 ## Root Cause
-The GraduationWizard's `handleSaveRetention` closes the dialog (`onOpenChange(false)`) inside the mutation's component-level `onSuccess`, which fires alongside the hook-level `onSuccess` that calls `queryClient.invalidateQueries`. The invalidation marks the parent's `useLevelRetentionCriteria` query as stale, but the refetch may not complete before the table re-renders — or the invalidation may race with the dialog unmount. Additionally, the wizard doesn't explicitly invalidate the broader parent query key, relying solely on the hook's `onSuccess`.
+The `upsertRetention.mutate()` fires two `onSuccess` handlers: the hook-level one (non-awaited) and the component-level one (awaited). While the component-level `await` should sequence correctly, using `.mutate()` with async callbacks has subtle timing issues — the hook-level `onSuccess` invalidates with the org-scoped key while the component-level one uses a broader key. Additionally, `updateLevel.mutate()` fires immediately after the awaits, triggering yet another cascade of invalidations that can race with React's render cycle.
 
 ## Fix
 
 ### File: `src/components/dashboard/settings/GraduationWizard.tsx`
 
-**In `handleSaveRetention` (line ~638):** Instead of closing the dialog immediately on mutation success, await the query invalidation before closing. Use `queryClient` (already available via the wizard's imports) to explicitly invalidate and await refetch of the parent retention criteria query:
+**Switch from `mutate` to `mutateAsync`** for both the promotion and retention save paths. This gives proper promise control over the full mutation lifecycle, ensuring all invalidations complete before any dialog close or level update:
 
 ```typescript
-upsertRetention.mutate(payload, {
-  onSuccess: async () => {
-    // Ensure parent table query refetches BEFORE closing dialog
-    await queryClient.invalidateQueries({ queryKey: ['level-retention-criteria'] });
-    await queryClient.invalidateQueries({ queryKey: ['level-promotion-criteria'] });
-    updateLevel.mutate({ id: levelId, is_configured: true });
-    onOpenChange(false);
-  },
-});
+// handleSaveRetention
+const handleSaveRetention = async () => {
+  // ... payload construction stays the same ...
+  await upsertRetention.mutateAsync(payload);
+  // Hook-level onSuccess has already fired and invalidated
+  // Now explicitly await broader invalidation for the parent table
+  await queryClient.invalidateQueries({ queryKey: ['level-retention-criteria'] });
+  await queryClient.invalidateQueries({ queryKey: ['level-promotion-criteria'] });
+  updateLevel.mutate({ id: levelId, is_configured: true });
+  onOpenChange(false);
+};
 ```
 
-This ensures the comparison table's data source has been refreshed before the dialog unmounts. The `invalidateQueries` with `await` waits for the refetch to complete.
-
-**Also apply the same pattern to `handleSave` (promotion save)** — ensure both save paths await invalidation before closing.
-
-### File: `src/hooks/useLevelRetentionCriteria.ts`
-
-No changes needed — the hook's invalidation is correct, but the wizard's explicit `await` will guarantee ordering.
+Apply the same `mutateAsync` pattern to `handleSave` (promotion save). This eliminates the split between hook-level and component-level callbacks and gives deterministic ordering.
 
 ## Files Changed
 | File | Change |
 |---|---|
-| `src/components/dashboard/settings/GraduationWizard.tsx` | Await query invalidation before closing dialog on retention and promotion save |
+| `src/components/dashboard/settings/GraduationWizard.tsx` | Switch retention and promotion saves from `mutate` with async `onSuccess` to `mutateAsync` with sequential awaits |
 
 1 file modified. No database changes.
 
