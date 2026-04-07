@@ -1,39 +1,64 @@
 
 
-# Replace Criteria Table PDF with Spreadsheet-Style Table PDF
+# Wire Service Price Uplift into Income Opportunity
 
 ## Problem
-The "Export as PDF" button currently generates a card-based Level Roadmap PDF. The user expects this button — which sits above the criteria comparison table — to export a PDF that mirrors the table itself, like a spreadsheet printout.
+The "Monthly Uplift" currently calculates only `currentRevenue × (nextCommissionRate - currentCommissionRate)`. This misses a major component: when a stylist levels up, their **service prices also increase** (via `service_level_prices`). The uplift should reflect both the higher commission rate *and* the higher prices the stylist would charge.
 
-## Solution
-Replace the `generateLevelRequirementsPDF` call in the Export dropdown with a new function that renders the criteria table as a landscape PDF using `jspdf-autotable`. The data assembly already exists in the CSV export logic — we reuse that same row structure.
+## Approach
+Create a dedicated hook that fetches the stylist's recent service mix (from appointments) and the price differentials between their current and next level (from `service_level_prices`). It computes a "price-adjusted" monthly revenue estimate and combines both uplift sources.
+
+## Calculation Logic
+
+```text
+For each service the stylist performed in the evaluation window:
+  currentPrice  = service_level_prices[currentLevelId][serviceId] ?? service.price
+  nextPrice     = service_level_prices[nextLevelId][serviceId] ?? currentPrice
+  priceDelta    = nextPrice - currentPrice
+  serviceVolume = count of completed appointments for this service in window
+
+Revenue at next level  = Σ (nextPrice × serviceVolume)
+Revenue at current     = Σ (currentPrice × serviceVolume)  ← actual current revenue
+
+Commission uplift = revenueAtNextLevel × nextCommRate - revenueAtCurrentLevel × currentCommRate
+Monthly uplift    = commission uplift (normalized to 30 days)
+```
+
+This captures both effects: higher prices generate more gross revenue, *and* a higher commission rate is applied to that larger number.
 
 ## Changes
 
-### New File: `src/components/dashboard/settings/LevelCriteriaTablePDF.ts`
-- Landscape A4 PDF using jsPDF + autoTable
-- Branded header: org name, "Level Criteria Comparison", date
-- Uses Termina for header, Aeonik Pro for table body (via `registerPdfFonts`)
-- Table columns: Metric | Level 1: Name | Level 2: Name | ... | Level N: Name
-- Sections separated by styled header rows: COMPENSATION, PROMOTION, RETENTION
-- Includes all metrics currently in the comparison table (commission rates, hourly wage, revenue, retail %, rebooking %, avg ticket, retention, new clients, utilization, rev/hr, tenure, eval window)
-- Alternating row shading, centered values, frozen first column styling
+### 1. New Hook: `src/hooks/useLevelUpliftEstimate.ts`
+- Accepts `userId`, `currentLevelId`, `nextLevelId`, `currentCommRate`, `nextCommRate`, `evaluationWindowDays`
+- Fetches stylist's completed appointments in the window (grouped by `service_id` with count + avg price)
+- Fetches `service_level_prices` for both current and next level
+- Returns: `{ priceUplift, commissionUplift, totalMonthlyUplift, serviceMix }`
+- `priceUplift` = extra revenue from price increases × nextCommRate
+- `commissionUplift` = current revenue × rate delta
+- `totalMonthlyUplift` = combined
 
-### Modified File: `src/components/dashboard/settings/StylistLevelsEditor.tsx`
-- Replace the `generateLevelRequirementsPDF` call in the Export dropdown (lines 925-973) with a call to the new `generateLevelCriteriaTablePDF`
-- Pass the same data: levels, promotion criteria, retention criteria, commissions, org name
-- Import swap: new function instead of roadmap PDF generator
-- The roadmap PDF remains available from its own location (the Roadmap view) — it's just no longer attached to this button
+### 2. Update: `src/components/coaching/LevelProgressCard.tsx`
+- Replace the inline `monthlyUplift = monthlyRevenue * (nextSvcRate - currentSvcRate)` with the hook
+- Show the combined uplift amount
+- Optionally break out "from higher prices" vs "from higher commission" in a tooltip or sub-line
 
-## Technical Notes
-- `jspdf-autotable` is already a project dependency (used by StaffLevelReportPDF)
-- The CSV export logic (lines 896-920) already assembles the exact row data needed — the PDF function will follow the same structure
-- No database changes
+### 3. Update: `src/components/dashboard/StylistScorecard.tsx`
+- Same replacement in the `commissionInfo` memo — use the hook's `totalMonthlyUplift`
+- Keep the commission rate display as-is, just fix the dollar uplift number
 
+### 4. Update: `src/components/coaching/ReportBuilder.tsx`
+- Update the report text to reflect the combined uplift calculation
+
+## UI Display
+The "Income Opportunity" section stays the same visually — Commission Today / At Next Level / Monthly Uplift. The uplift number just becomes more accurate by including the price component. A subtle sub-label like "includes service price increases" can be added below the uplift amount for transparency.
+
+## Files Changed
 | File | Change |
 |---|---|
-| `LevelCriteriaTablePDF.ts` | New — landscape table PDF generator |
-| `StylistLevelsEditor.tsx` | Swap PDF export to use table generator |
+| `useLevelUpliftEstimate.ts` | New hook — computes price + commission uplift from service mix |
+| `LevelProgressCard.tsx` | Use new hook for uplift |
+| `StylistScorecard.tsx` | Use new hook for uplift |
+| `ReportBuilder.tsx` | Update uplift text |
 
-2 files, no database changes.
+4 files, no database changes.
 
