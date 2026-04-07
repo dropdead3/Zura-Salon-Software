@@ -3,7 +3,7 @@
  * Composites revenue, experience scores, and color bar metrics per stylist.
  */
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
@@ -11,15 +11,17 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Users, ArrowUpDown, ChevronDown, AlertCircle } from 'lucide-react';
+import { Users, ArrowUpDown, ChevronDown, AlertCircle, DollarSign } from 'lucide-react';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { useFormatNumber } from '@/hooks/useFormatNumber';
 import { useStaffPerformanceComposite, type StaffPerformanceRow } from '@/hooks/useStaffPerformanceComposite';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { AnimatedBlurredAmount } from '@/components/ui/AnimatedBlurredAmount';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { useLevelEconomicsAnalyzer, type StylistSnapshot } from '@/hooks/useLevelEconomicsAnalyzer';
+import { useStylistLevels } from '@/hooks/useStylistLevels';
 
-type SortKey = 'revenue' | 'rebookRate' | 'retailConversion' | 'avgChemicalCostPerService' | 'experienceScore' | 'reweighComplianceRate' | 'wasteRate';
+type SortKey = 'revenue' | 'rebookRate' | 'retailConversion' | 'avgChemicalCostPerService' | 'experienceScore' | 'reweighComplianceRate' | 'wasteRate' | 'margin' | 'hourlyContribution';
 
 interface StaffPerformanceReportProps {
   dateFrom: string;
@@ -34,16 +36,47 @@ const STATUS_BADGE: Record<string, { label: string; variant: 'default' | 'second
   'needs-attention': { label: 'Needs Attention', variant: 'destructive' },
 };
 
+const MARGIN_STATUS_BADGE: Record<string, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' }> = {
+  healthy: { label: 'Healthy', variant: 'default' },
+  tight: { label: 'Tight', variant: 'secondary' },
+  negative: { label: 'Underpriced', variant: 'destructive' },
+};
+
 export function StaffPerformanceReport({ dateFrom, dateTo, locationId, className }: StaffPerformanceReportProps) {
-  const { formatCurrency } = useFormatCurrency();
+  const { formatCurrency, currency } = useFormatCurrency();
   const { formatPercent } = useFormatNumber();
   const { data: rows, isLoading } = useStaffPerformanceComposite(dateFrom, dateTo, locationId);
+  const { data: dbLevels = [] } = useStylistLevels();
+  const levelEconomics = useLevelEconomicsAnalyzer(dbLevels);
+
+  // Build userId → StylistSnapshot lookup
+  const snapshotMap = useMemo(() => {
+    const map = new Map<string, StylistSnapshot>();
+    for (const s of levelEconomics.stylistSnapshots) {
+      map.set(s.userId, s);
+    }
+    return map;
+  }, [levelEconomics.stylistSnapshots]);
 
   const [sortKey, setSortKey] = useState<SortKey>('revenue');
   const [sortAsc, setSortAsc] = useState(false);
   const [expandedRow, setExpandedRow] = useState<string | null>(null);
 
   const sorted = [...(rows ?? [])].sort((a, b) => {
+    if (sortKey === 'margin') {
+      const aSnap = snapshotMap.get(a.staffId);
+      const bSnap = snapshotMap.get(b.staffId);
+      const av = aSnap?.hasEnoughData ? aSnap.weightedMarginPct : -999;
+      const bv = bSnap?.hasEnoughData ? bSnap.weightedMarginPct : -999;
+      return sortAsc ? av - bv : bv - av;
+    }
+    if (sortKey === 'hourlyContribution') {
+      const aSnap = snapshotMap.get(a.staffId);
+      const bSnap = snapshotMap.get(b.staffId);
+      const av = aSnap?.hasEnoughData ? aSnap.effectiveHourlyContribution : -999;
+      const bv = bSnap?.hasEnoughData ? bSnap.effectiveHourlyContribution : -999;
+      return sortAsc ? av - bv : bv - av;
+    }
     const av = a[sortKey] as number;
     const bv = b[sortKey] as number;
     return sortAsc ? av - bv : bv - av;
@@ -62,6 +95,8 @@ export function StaffPerformanceReport({ dateFrom, dateTo, locationId, className
     { key: 'reweighComplianceRate', label: 'Reweigh %' },
     { key: 'wasteRate', label: 'Waste %' },
     { key: 'experienceScore', label: 'Score' },
+    { key: 'margin', label: 'Margin' },
+    { key: 'hourlyContribution', label: '$/hr' },
   ];
 
   return (
@@ -77,7 +112,7 @@ export function StaffPerformanceReport({ dateFrom, dateTo, locationId, className
                 <CardTitle className={tokens.card.title}>Staff Performance</CardTitle>
                 <MetricInfoTooltip
                   title="Staff Performance Intelligence"
-                  description="Unified view of each stylist's revenue, rebook rate, retail conversion, chemical cost efficiency, reweigh compliance, waste rate, and composite experience score. Expand rows for coaching signals."
+                  description="Unified view of each stylist's revenue, rebook rate, retail conversion, chemical cost efficiency, reweigh compliance, waste rate, composite experience score, margin %, and effective hourly contribution. Expand rows for coaching signals and economics breakdown."
                 />
               </div>
               <CardDescription className={tokens.body.muted}>
@@ -138,6 +173,8 @@ export function StaffPerformanceReport({ dateFrom, dateTo, locationId, className
                     formatCurrency={formatCurrency}
                     formatPercent={formatPercent}
                     columnCount={columns.length + 2}
+                    snapshot={snapshotMap.get(row.staffId)}
+                    currency={currency}
                   />
                 ))}
               </TableBody>
@@ -156,6 +193,8 @@ function StylistRow({
   formatCurrency,
   formatPercent,
   columnCount,
+  snapshot,
+  currency,
 }: {
   row: StaffPerformanceRow;
   expanded: boolean;
@@ -163,9 +202,13 @@ function StylistRow({
   formatCurrency: (n: number) => string;
   formatPercent: (n: number, wholeNumber?: boolean) => string;
   columnCount: number;
+  snapshot?: StylistSnapshot;
+  currency: string;
 }) {
   const badge = STATUS_BADGE[row.experienceStatus];
   const hasSignals = row.coachingSignals.length > 0;
+  const hasSnapshot = snapshot?.hasEnoughData;
+  const hasExpandContent = hasSignals || hasSnapshot;
   const initials = row.staffName.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
 
   return (
@@ -173,7 +216,7 @@ function StylistRow({
       <TableRow
         className={cn(
           'cursor-pointer transition-colors hover:bg-muted/30',
-          hasSignals && 'group',
+          hasExpandContent && 'group',
         )}
         onClick={onToggle}
       >
@@ -185,7 +228,7 @@ function StylistRow({
             </Avatar>
             <div className="flex items-center gap-1.5">
               <span className={tokens.body.emphasis}>{row.staffName}</span>
-              {hasSignals && (
+              {hasExpandContent && (
                 <ChevronDown className={cn(
                   'w-3.5 h-3.5 text-muted-foreground transition-transform',
                   expanded && 'rotate-180',
@@ -195,13 +238,13 @@ function StylistRow({
           </div>
         </TableCell>
         <TableCell>
-          <AnimatedBlurredAmount value={row.revenue} currency="USD" decimals={2} />
+          <AnimatedBlurredAmount value={row.revenue} currency={currency} decimals={2} />
         </TableCell>
         <TableCell>{row.rebookRate}%</TableCell>
         <TableCell>{row.retailConversion}%</TableCell>
         <TableCell>
           {row.avgChemicalCostPerService > 0
-            ? <AnimatedBlurredAmount value={row.avgChemicalCostPerService} currency="USD" decimals={2} />
+            ? <AnimatedBlurredAmount value={row.avgChemicalCostPerService} currency={currency} decimals={2} />
             : <span className="text-muted-foreground">—</span>
           }
         </TableCell>
@@ -227,6 +270,29 @@ function StylistRow({
             {row.experienceScore}
           </span>
         </TableCell>
+        {/* Margin % */}
+        <TableCell>
+          {hasSnapshot ? (
+            <span className={cn(
+              'font-display text-sm font-medium',
+              snapshot!.status === 'healthy' && 'text-green-600 dark:text-green-400',
+              snapshot!.status === 'tight' && 'text-amber-600 dark:text-amber-400',
+              snapshot!.status === 'negative' && 'text-destructive',
+            )}>
+              {(snapshot!.weightedMarginPct * 100).toFixed(1)}%
+            </span>
+          ) : (
+            <span className="text-muted-foreground">—</span>
+          )}
+        </TableCell>
+        {/* $/hr Contribution */}
+        <TableCell>
+          {hasSnapshot ? (
+            <AnimatedBlurredAmount value={snapshot!.effectiveHourlyContribution} currency={currency} decimals={2} />
+          ) : (
+            <span className="text-muted-foreground">—</span>
+          )}
+        </TableCell>
         <TableCell>
           <Badge variant={badge.variant} className="font-sans text-[10px]">
             {badge.label}
@@ -234,17 +300,49 @@ function StylistRow({
         </TableCell>
       </TableRow>
 
-      {/* Coaching signals expandable */}
-      {expanded && hasSignals && (
+      {/* Expanded section: coaching signals + economics */}
+      {expanded && hasExpandContent && (
         <TableRow className="bg-muted/20 hover:bg-muted/20">
           <TableCell colSpan={columnCount} className="py-3 px-6">
-            <div className="space-y-1.5">
-              {row.coachingSignals.map((signal, i) => (
-                <div key={i} className="flex items-start gap-2">
-                  <AlertCircle className="w-3.5 h-3.5 text-amber-500 mt-0.5 shrink-0" />
-                  <span className={tokens.body.muted}>{signal}</span>
+            <div className="space-y-3">
+              {/* Coaching signals */}
+              {hasSignals && (
+                <div className="space-y-1.5">
+                  {row.coachingSignals.map((signal, i) => (
+                    <div key={i} className="flex items-start gap-2">
+                      <AlertCircle className="w-3.5 h-3.5 text-amber-500 mt-0.5 shrink-0" />
+                      <span className={tokens.body.muted}>{signal}</span>
+                    </div>
+                  ))}
                 </div>
-              ))}
+              )}
+
+              {/* Economics section */}
+              {hasSnapshot && (
+                <div className="border-t border-border/50 pt-2.5">
+                  <div className="flex items-center gap-2 mb-1.5">
+                    <DollarSign className="w-3.5 h-3.5 text-primary" />
+                    <span className="font-display text-xs tracking-wide text-primary">ECONOMICS</span>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
+                    <span className="text-muted-foreground">
+                      Level: <span className="text-foreground font-medium">{snapshot!.levelLabel}</span>
+                    </span>
+                    <Badge variant={MARGIN_STATUS_BADGE[snapshot!.status].variant} className="font-sans text-[10px]">
+                      {MARGIN_STATUS_BADGE[snapshot!.status].label}
+                    </Badge>
+                    <span className="text-muted-foreground text-xs">
+                      Margin: <span className="text-foreground">{(snapshot!.weightedMarginPct * 100).toFixed(1)}%</span>
+                    </span>
+                    <span className="text-muted-foreground text-xs">
+                      Contribution: <span className="text-foreground">{formatCurrency(snapshot!.effectiveHourlyContribution)}/hr</span>
+                    </span>
+                    <span className="text-muted-foreground text-xs">
+                      Appts: <span className="text-foreground">{snapshot!.totalAppointments}</span>
+                    </span>
+                  </div>
+                </div>
+              )}
             </div>
           </TableCell>
         </TableRow>

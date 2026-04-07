@@ -9,6 +9,14 @@ import autoTable from 'jspdf-autotable';
 import { format } from 'date-fns';
 import { registerPdfFonts, setTermina, setAeonik } from '@/lib/pdf-fonts';
 import type { TeamMemberProgress, GraduationStatus } from '@/hooks/useTeamLevelProgress';
+import type { LevelSummary, ServiceLevelMargin } from '@/hooks/useLevelEconomicsAnalyzer';
+
+export interface LevelEconomicsPDFData {
+  levelSummaries: LevelSummary[];
+  serviceMatrix: ServiceLevelMargin[];
+  dateRange: { start: string; end: string } | null;
+  totalAppointments: number;
+}
 
 export interface StaffLevelReportOptions {
   orgName: string;
@@ -22,6 +30,8 @@ export interface StaffLevelReportOptions {
     belowStandard: number;
     total: number;
   };
+  levelEconomics?: LevelEconomicsPDFData;
+  targetMarginPct?: number;
 }
 
 const MARGIN = 18;
@@ -47,6 +57,18 @@ const STATUS_COLORS: Record<GraduationStatus, [number, number, number]> = {
   below_standard: [239, 68, 68],   // red
 };
 
+const MARGIN_STATUS_COLORS: Record<string, [number, number, number]> = {
+  healthy: [16, 185, 129],
+  tight: [245, 158, 11],
+  negative: [239, 68, 68],
+};
+
+const MARGIN_STATUS_LABELS: Record<string, string> = {
+  healthy: 'Healthy',
+  tight: 'Tight',
+  negative: 'Underpriced',
+};
+
 function formatDays(days: number): string {
   if (days >= 365) {
     const years = Math.floor(days / 365);
@@ -61,17 +83,14 @@ function formatDays(days: number): string {
 }
 
 function getKeyGap(member: TeamMemberProgress): string {
-  // Find the criterion with the largest gap (shortfall)
   const gaps = member.criteriaProgress
     .filter(c => c.enabled && c.gap > 0)
     .sort((a, b) => {
-      // Normalize gap as % of target to compare across metrics
       const aPct = a.target > 0 ? a.gap / a.target : 0;
       const bPct = b.target > 0 ? b.gap / b.target : 0;
       return bPct - aPct;
     });
   if (gaps.length === 0) {
-    // Check retention failures
     if (member.retentionFailures.length > 0) {
       const f = member.retentionFailures[0];
       return `${f.label}: ${f.current}${f.unit} (min ${f.minimum}${f.unit})`;
@@ -84,8 +103,25 @@ function getKeyGap(member: TeamMemberProgress): string {
   return `${g.label}: ${prefix}${Math.round(g.current)}${unit} → ${prefix}${Math.round(g.target)}${unit}`;
 }
 
+function fmtCurrency(v: number): string {
+  return '$' + Math.round(v).toLocaleString();
+}
+
+function fmtPct(v: number): string {
+  return (v * 100).toFixed(1) + '%';
+}
+
+function ensureSpace(doc: jsPDF, y: number, needed: number, F_BODY: string, orgName: string): number {
+  const pageH = doc.internal.pageSize.getHeight();
+  if (y + needed > pageH - PAGE_BOTTOM_MARGIN) {
+    doc.addPage();
+    return 20;
+  }
+  return y;
+}
+
 export function generateStaffLevelReportPDF(options: StaffLevelReportOptions): jsPDF {
-  const { orgName, teamProgress, counts } = options;
+  const { orgName, teamProgress, counts, levelEconomics, targetMarginPct = 0.15 } = options;
   const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
   const hasFonts = registerPdfFonts(doc);
   const F_DISPLAY = hasFonts ? 'Termina' : 'helvetica';
@@ -108,7 +144,7 @@ export function generateStaffLevelReportPDF(options: StaffLevelReportOptions): j
   doc.text('STAFF LEVEL REPORT', pageWidth / 2, y, { align: 'center', charSpace: 1.2 });
 
   y += 5;
-  doc.setCharSpace(0); // Reset charSpace so it doesn't leak into body text / autoTable
+  doc.setCharSpace(0);
   doc.setTextColor(180, 180, 180);
   doc.setFontSize(7);
   doc.text(`Generated ${format(now, 'MMMM d, yyyy')}`, pageWidth / 2, y, { align: 'center' });
@@ -151,7 +187,6 @@ export function generateStaffLevelReportPDF(options: StaffLevelReportOptions): j
     doc.setFontSize(16);
     doc.text(item.value, cx, y + 20, { align: 'center' });
 
-    // Vertical divider between items
     if (i < summaryItems.length - 1) {
       const divX = MARGIN + colW * (i + 1);
       doc.setDrawColor(220, 220, 225);
@@ -163,7 +198,6 @@ export function generateStaffLevelReportPDF(options: StaffLevelReportOptions): j
   y += stripH + 8;
 
   // ─── Staff Table ───
-  // Group by current level
   const levelGroups = new Map<string, TeamMemberProgress[]>();
   teamProgress.forEach(member => {
     const levelName = member.currentLevel?.label || 'Unassigned';
@@ -176,7 +210,6 @@ export function generateStaffLevelReportPDF(options: StaffLevelReportOptions): j
   const tableBody: (string | { content: string; styles?: Record<string, any> })[][] = [];
 
   for (const [levelName, members] of levelGroups) {
-    // Group header row
     tableBody.push([
       { content: levelName, styles: { fontStyle: 'bold', fillColor: [240, 240, 242], cellPadding: { top: 3, bottom: 3, left: 4, right: 4 }, textColor: [60, 60, 60] } },
       { content: '', styles: { fillColor: [240, 240, 242] } },
@@ -211,7 +244,7 @@ export function generateStaffLevelReportPDF(options: StaffLevelReportOptions): j
     tableBody.push(['No team members with assigned levels', '', '', '', '', '', '']);
   }
 
-  doc.setCharSpace(0); // Ensure charSpace is reset before table
+  doc.setCharSpace(0);
 
   autoTable(doc, {
     startY: y,
@@ -235,23 +268,21 @@ export function generateStaffLevelReportPDF(options: StaffLevelReportOptions): j
       fillColor: [252, 252, 253],
     },
     columnStyles: {
-      0: { cellWidth: 45 },  // Name
-      1: { cellWidth: 30 },  // Current Level
-      2: { cellWidth: 30 },  // Status
-      3: { cellWidth: 16, halign: 'center' },  // Score
-      4: { cellWidth: 30 },  // Next Level
-      5: { cellWidth: 22, halign: 'center' },  // Time at Level
-      6: { cellWidth: 'auto', fontSize: 7 },  // Key Gap — smaller to fit long text
+      0: { cellWidth: 45 },
+      1: { cellWidth: 30 },
+      2: { cellWidth: 30 },
+      3: { cellWidth: 16, halign: 'center' },
+      4: { cellWidth: 30 },
+      5: { cellWidth: 22, halign: 'center' },
+      6: { cellWidth: 'auto', fontSize: 7 },
     },
     styles: {
       lineColor: [230, 230, 230],
       lineWidth: 0.3,
     },
     didParseCell: (data) => {
-      // Add colored dot before status text
       if (data.section === 'body' && data.column.index === 2 && data.cell.text[0] && data.cell.text[0] !== '') {
         const statusText = data.cell.text[0];
-        // Find matching status color
         for (const [, label] of Object.entries(STATUS_LABELS)) {
           if (label === statusText) {
             data.cell.text[0] = `● ${statusText}`;
@@ -261,6 +292,192 @@ export function generateStaffLevelReportPDF(options: StaffLevelReportOptions): j
       }
     },
   });
+
+  // ─── Level Economics Section ───
+  if (levelEconomics) {
+    const { levelSummaries, serviceMatrix, dateRange, totalAppointments } = levelEconomics;
+    const validSummaries = levelSummaries.filter(s => s.hasEnoughData);
+
+    if (validSummaries.length > 0) {
+      // Get current Y after the staff table
+      y = (doc as any).lastAutoTable?.finalY ?? y + 10;
+      y += 10;
+
+      y = ensureSpace(doc, y, 50, F_BODY, orgName);
+
+      // Section header
+      doc.setFont(F_DISPLAY, 'normal');
+      doc.setFontSize(11);
+      doc.setTextColor(30, 30, 30);
+      doc.setCharSpace(0.8);
+      doc.text('LEVEL ECONOMICS SUMMARY', MARGIN, y);
+      doc.setCharSpace(0);
+
+      y += 3;
+
+      // Date range subtitle
+      if (dateRange) {
+        doc.setFont(F_BODY, 'normal');
+        doc.setFontSize(7);
+        doc.setTextColor(150, 150, 150);
+        doc.text(
+          `Based on ${totalAppointments.toLocaleString()} appointments · ${format(new Date(dateRange.start), 'MMM d')} – ${format(new Date(dateRange.end), 'MMM d, yyyy')}`,
+          MARGIN, y
+        );
+        y += 5;
+      }
+
+      // Level margin table
+      const econHead = ['Level', 'Wtd Margin', 'Avg Rev/Stylist', 'Commission', 'Product Cost', 'Overhead', 'Status'];
+      const econBody = validSummaries.map(s => {
+        const statusColor = MARGIN_STATUS_COLORS[s.status];
+        const statusLabel = MARGIN_STATUS_LABELS[s.status];
+        return [
+          s.levelLabel,
+          fmtPct(s.weightedMarginPct),
+          fmtCurrency(s.avgRevenuePerStylist) + '/mo',
+          fmtCurrency(s.commissionCostTotal),
+          fmtCurrency(s.productCostTotal),
+          fmtCurrency(s.overheadCostTotal),
+          { content: `● ${statusLabel}`, styles: { textColor: statusColor } },
+        ];
+      });
+
+      autoTable(doc, {
+        startY: y,
+        head: [econHead],
+        body: econBody,
+        margin: { left: MARGIN, right: MARGIN },
+        theme: 'grid',
+        headStyles: {
+          fillColor: [40, 40, 40],
+          textColor: [255, 255, 255],
+          fontSize: 7.5,
+          fontStyle: 'bold',
+          cellPadding: 2.5,
+        },
+        bodyStyles: {
+          fontSize: 7.5,
+          cellPadding: 2,
+          textColor: [50, 50, 50],
+        },
+        alternateRowStyles: { fillColor: [252, 252, 253] },
+        styles: { lineColor: [230, 230, 230], lineWidth: 0.3 },
+      });
+
+      y = (doc as any).lastAutoTable?.finalY ?? y + 30;
+      y += 8;
+
+      // ─── Flagged Services Below Target Margin ───
+      const flagged = serviceMatrix
+        .filter(m => m.marginPct < targetMarginPct && m.appointmentCount >= 10)
+        .sort((a, b) => a.marginPct - b.marginPct)
+        .slice(0, 15);
+
+      y = ensureSpace(doc, y, 30, F_BODY, orgName);
+
+      doc.setFont(F_DISPLAY, 'normal');
+      doc.setFontSize(9);
+      doc.setTextColor(30, 30, 30);
+      doc.setCharSpace(0.6);
+      doc.text('SERVICES BELOW TARGET MARGIN', MARGIN, y);
+      doc.setCharSpace(0);
+      y += 4;
+
+      if (flagged.length === 0) {
+        doc.setFont(F_BODY, 'normal');
+        doc.setFontSize(8);
+        doc.setTextColor(16, 185, 129);
+        doc.text('All service-level combinations are at or above target margin.', MARGIN, y, { maxWidth: contentWidth });
+        y += 6;
+      } else {
+        // Find level label from summaries
+        const levelLabelMap = new Map(levelSummaries.map(s => [s.levelId, s.levelLabel]));
+        const flagHead = ['Service', 'Level', 'Price', 'Margin %', 'Gap to Target'];
+        const flagBody = flagged.map(m => {
+          const gap = targetMarginPct - m.marginPct;
+          return [
+            m.serviceName,
+            levelLabelMap.get(m.levelId) || '—',
+            fmtCurrency(m.price),
+            { content: fmtPct(m.marginPct), styles: { textColor: MARGIN_STATUS_COLORS[m.status] } },
+            { content: '-' + fmtPct(gap), styles: { textColor: [239, 68, 68] as [number, number, number] } },
+          ];
+        });
+
+        autoTable(doc, {
+          startY: y,
+          head: [flagHead],
+          body: flagBody,
+          margin: { left: MARGIN, right: MARGIN },
+          theme: 'grid',
+          headStyles: {
+            fillColor: [60, 60, 60],
+            textColor: [255, 255, 255],
+            fontSize: 7,
+            fontStyle: 'bold',
+            cellPadding: 2,
+          },
+          bodyStyles: {
+            fontSize: 7,
+            cellPadding: 2,
+            textColor: [50, 50, 50],
+          },
+          alternateRowStyles: { fillColor: [252, 252, 253] },
+          styles: { lineColor: [230, 230, 230], lineWidth: 0.3 },
+        });
+
+        y = (doc as any).lastAutoTable?.finalY ?? y + 30;
+        y += 6;
+      }
+
+      // ─── Silent Margin Erosion Callout ───
+      // Services using fallback (base) price but with higher commission rates
+      const baseLevelId = levelSummaries.length > 0 ? levelSummaries[0].levelId : null;
+      const baseCommissionMap = new Map<string, number>();
+      if (baseLevelId) {
+        for (const m of serviceMatrix) {
+          if (m.levelId === baseLevelId) {
+            baseCommissionMap.set(m.serviceId, m.commissionCost / (m.price || 1));
+          }
+        }
+      }
+
+      const erosionAlerts = serviceMatrix.filter(m => {
+        if (!m.isFallbackPrice || m.levelId === baseLevelId) return false;
+        const baseRate = baseCommissionMap.get(m.serviceId) ?? 0;
+        const thisRate = m.price > 0 ? m.commissionCost / m.price : 0;
+        return thisRate > baseRate + 0.01; // meaningful difference
+      });
+
+      if (erosionAlerts.length > 0) {
+        y = ensureSpace(doc, y, 15 + erosionAlerts.length * 4, F_BODY, orgName);
+
+        doc.setFont(F_DISPLAY, 'normal');
+        doc.setFontSize(8);
+        doc.setTextColor(249, 115, 22); // orange
+        doc.setCharSpace(0.5);
+        doc.text('SILENT MARGIN EROSION', MARGIN, y);
+        doc.setCharSpace(0);
+        y += 4;
+
+        doc.setFont(F_BODY, 'normal');
+        doc.setFontSize(6.5);
+        doc.setTextColor(100, 100, 100);
+
+        const levelLabelMap = new Map(levelSummaries.map(s => [s.levelId, s.levelLabel]));
+        for (const alert of erosionAlerts.slice(0, 10)) {
+          const levelLabel = levelLabelMap.get(alert.levelId) || '—';
+          doc.text(
+            `⚠ ${alert.serviceName} at ${levelLabel}: using base price (${fmtCurrency(alert.price)}) with higher commission rate — margin eroding silently`,
+            MARGIN + 2, y, { maxWidth: contentWidth - 4 }
+          );
+          y += 4;
+        }
+        y += 2;
+      }
+    }
+  }
 
   // ─── Footer on every page ───
   const totalPages = doc.getNumberOfPages();
