@@ -76,7 +76,7 @@ export default function MeetingDetails() {
   if (loadingMeetings) {
     return (
       <DashboardLayout>
-        <DashboardLoader size="lg" className="p-6 lg:p-8 min-h-[400px]" />
+        <DashboardLoader size="lg" className="p-6 lg:p-8" />
       </DashboardLayout>
     );
   }

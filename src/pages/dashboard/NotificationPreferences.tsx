@@ -150,7 +150,7 @@ export default function NotificationPreferences() {
   if (isLoading) {
     return (
       <DashboardLayout>
-        <DashboardLoader size="lg" className="min-h-[400px]" />
+        <DashboardLoader size="lg" />
       </DashboardLayout>
     );
   }
