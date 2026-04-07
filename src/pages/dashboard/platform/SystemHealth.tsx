@@ -264,6 +264,122 @@ export default function SystemHealthPage() {
           </div>
         </div>
       </div>
+
+      {/* Infrastructure Monitoring */}
+      <div>
+        <h3 className="text-lg font-medium text-white mb-4 flex items-center gap-2">
+          <Server className="h-5 w-5 text-violet-400" />
+          Infrastructure Monitor
+        </h3>
+        <div className="grid gap-4 md:grid-cols-3">
+          {/* Connection Pool */}
+          <div className="rounded-xl border border-slate-700/50 bg-slate-800/40 p-4">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-sm text-slate-400">Connection Pool</span>
+              <StatusBadge status={infra?.dbConnections.latest?.status} />
+            </div>
+            {infraLoading ? (
+              <Skeleton className="h-16 bg-slate-700/50" />
+            ) : infra?.dbConnections.latest ? (
+              <>
+                <p className="text-2xl font-medium text-white mb-1">
+                  {infra.dbConnections.latest.value}%
+                </p>
+                <Progress 
+                  value={infra.dbConnections.latest.value} 
+                  className="h-2 mb-2"
+                />
+                <div className="flex justify-between text-xs text-slate-500">
+                  <span>{(infra.dbConnections.latest.metadata?.active as number) || 0} active</span>
+                  <span>{(infra.dbConnections.latest.metadata?.total as number) || 0} / {(infra.dbConnections.latest.metadata?.max as number) || '?'}</span>
+                </div>
+                {infra.dbConnections.history.length > 1 && (
+                  <MiniSparkline data={infra.dbConnections.history.map(m => m.value).reverse()} />
+                )}
+              </>
+            ) : (
+              <p className="text-sm text-slate-500">No data yet — run a health check</p>
+            )}
+          </div>
+
+          {/* Edge Function Performance */}
+          <div className="rounded-xl border border-slate-700/50 bg-slate-800/40 p-4">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-sm text-slate-400">Edge Functions</span>
+              <StatusBadge status={infra?.edgeFunctions.coldStartRate?.status} />
+            </div>
+            {infraLoading ? (
+              <Skeleton className="h-16 bg-slate-700/50" />
+            ) : infra?.edgeFunctions.coldStartRate ? (
+              <>
+                <p className="text-2xl font-medium text-white mb-1">
+                  {infra.edgeFunctions.coldStartRate.value}% <span className="text-sm text-slate-400">cold starts</span>
+                </p>
+                <div className="mt-2 space-y-1 max-h-32 overflow-y-auto">
+                  {infra.edgeFunctions.functions.slice(0, 5).map(fn => (
+                    <div key={fn.metric_key} className="flex items-center justify-between text-xs">
+                      <span className="text-slate-400 truncate max-w-[120px]">
+                        {(fn.metadata?.function_name as string) || fn.metric_key.replace('function:', '')}
+                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className={cn(
+                          fn.status === 'critical' ? 'text-rose-400' :
+                          fn.status === 'warning' ? 'text-amber-400' : 'text-slate-300'
+                        )}>
+                          {fn.value}ms
+                        </span>
+                        {((fn.metadata?.cold_starts as number) || 0) > 0 && (
+                          <Zap className="h-3 w-3 text-amber-400" />
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </>
+            ) : (
+              <p className="text-sm text-slate-500">No data yet — run a health check</p>
+            )}
+          </div>
+
+          {/* Storage Usage */}
+          <div className="rounded-xl border border-slate-700/50 bg-slate-800/40 p-4">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-sm text-slate-400">Storage</span>
+              <StatusBadge status={infra?.storage.total?.status} />
+            </div>
+            {infraLoading ? (
+              <Skeleton className="h-16 bg-slate-700/50" />
+            ) : infra?.storage.total ? (
+              <>
+                <p className="text-2xl font-medium text-white mb-2">
+                  {infra.storage.total.value >= 1024
+                    ? `${(infra.storage.total.value / 1024).toFixed(1)} GB`
+                    : `${infra.storage.total.value} MB`
+                  }
+                </p>
+                <div className="space-y-1">
+                  {infra.storage.buckets.slice(0, 5).map(bucket => {
+                    const sizeMB = bucket.value;
+                    const fileCount = (bucket.metadata?.file_count as number) || 0;
+                    return (
+                      <div key={bucket.metric_key} className="flex items-center justify-between text-xs">
+                        <span className="text-slate-400 truncate max-w-[120px]">
+                          {bucket.metric_key.replace('bucket:', '')}
+                        </span>
+                        <span className="text-slate-300">
+                          {sizeMB >= 1024 ? `${(sizeMB / 1024).toFixed(1)}GB` : `${sizeMB}MB`} · {fileCount} files
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </>
+            ) : (
+              <p className="text-sm text-slate-500">No data yet — run a health check</p>
+            )}
+          </div>
+        </div>
+      </div>
     </PlatformPageContainer>
   );
 }
