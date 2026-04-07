@@ -1,83 +1,54 @@
 
 
-# Wire Phorest Staff Into Zura — Revised Plan
+# Wire Phorest Staff Into Analytics — Continued
 
-## Problem Summary
+## Problem Diagnosis
 
-- **165 of 183** `phorest_daily_sales_summary` rows have NULL `user_id` (synced before staff mappings existed)
-- **306 of 1917** `phorest_sales_transactions` / `phorest_transaction_items` rows missing `stylist_user_id`
-- **22 of 23** active employee profiles have NULL `location_id`
-- Alex Day is correctly Zura-only (admin, no Phorest mapping needed)
+After the previous backfill (user_id + location_id), the database is correctly linked. However, three issues remain:
 
-## Plan (4 steps)
+### Issue 1: Staff Revenue Leaderboard shows "No revenue data"
+The `useStaffRevenuePerformance` hook queries `phorest_daily_sales_summary`, which has **no data after Feb 25** (sync stopped). Meanwhile, `phorest_sales_transactions` has data through Apr 4. Per the project's POS-first data integrity standard, the leaderboard should query raw transactions directly.
 
-### 1. Backfill `user_id` on Sales Tables (data update)
+### Issue 2: Stylist Workload Distribution shows "No appointment data"
+Bug in `useStaffUtilization.ts` line 69: `endDateStr = format(today, ...)` instead of `format(endDate, ...)`. For the default 30-day forward range, this creates a query where `startDate > endDate` (tomorrow > today), returning zero rows. There are 145 future appointments waiting to display.
 
-Use the insert tool to run UPDATE statements that resolve `user_id` from existing `phorest_staff_mapping`:
+### Issue 3: Stale summary data blocks multiple downstream surfaces
+The `phorest_daily_sales_summary` table feeds the leaderboard, forecasting, anomaly detection, health scores, and more. A re-sync of sales data will repopulate it. But the leaderboard should also be resilient to stale summaries by falling back to raw transactions.
 
-```sql
--- Daily sales summaries
-UPDATE phorest_daily_sales_summary pds
-SET user_id = psm.user_id
-FROM phorest_staff_mapping psm
-WHERE pds.phorest_staff_id = psm.phorest_staff_id
-  AND psm.is_active = true AND pds.user_id IS NULL;
+## Plan
 
--- Sales transactions
-UPDATE phorest_sales_transactions pst
-SET stylist_user_id = psm.user_id
-FROM phorest_staff_mapping psm
-WHERE pst.phorest_staff_id = psm.phorest_staff_id
-  AND psm.is_active = true AND pst.stylist_user_id IS NULL;
+### 1. Fix `useStaffUtilization.ts` — endDate bug
+**File: `src/hooks/useStaffUtilization.ts`**
 
--- Transaction items
-UPDATE phorest_transaction_items pti
-SET stylist_user_id = psm.user_id
-FROM phorest_staff_mapping psm
-WHERE pti.phorest_staff_id = psm.phorest_staff_id
-  AND psm.is_active = true AND pti.stylist_user_id IS NULL;
+Change line 69 from:
+```typescript
+const endDateStr = format(today, 'yyyy-MM-dd');
+```
+to:
+```typescript
+const endDateStr = format(endDate, 'yyyy-MM-dd');
 ```
 
-### 2. Backfill `location_id` on Employee Profiles (data update)
+This immediately unblocks Stylist Workload Distribution for all 22 mapped staff.
 
-Map branch IDs to location IDs using the known mapping:
-- `hYztERWvOdMpLUcvRSNbSA` → `north-mesa`
-- `6YPlWL5os-Fnj0MmifbvVA` → `val-vista-lakes`
+### 2. Rebuild `useStaffRevenuePerformance` to use raw transactions
+**File: `src/hooks/useStaffRevenuePerformance.ts`**
 
-For multi-branch staff, use the most recent mapping. Skip Alex Day (no mapping = no location needed for admin).
+Replace the `phorest_daily_sales_summary` query with a query against `phorest_sales_transactions` (which has current data). Aggregate by `phorest_staff_id` from the transactions table, joining to `phorest_staff_mapping` and `employee_profiles` the same way. This follows the POS-first integrity model and makes the leaderboard resilient to summary sync gaps.
 
-### 3. Fix `useUserSalesSummary` — Phorest Staff ID Fallback
-
-**File: `src/hooks/useSalesData.ts`**
-
-Currently queries `phorest_daily_sales_summary` by `user_id` only. Add a fallback: first resolve the user's `phorest_staff_id(s)` via `phorest_staff_mapping`, then query by **both** `user_id` OR `phorest_staff_id IN (...)`. This makes the hook resilient to future syncs that miss `user_id`.
-
-### 4. Fix `PerformanceTrendChart` — Same Fallback
-
-**File: `src/components/dashboard/sales/PerformanceTrendChart.tsx`**
-
-Same pattern: resolve phorest staff IDs for the user, then query summaries using both `user_id` and `phorest_staff_id` match.
-
-## What This Fixes
-
-After these changes, all 22 mapped team members will immediately show:
-- Revenue on Team Stats (weekly/monthly)
-- Performance Trend Chart (8-week history)
-- Location-scoped analytics across all hub pages
-- Staff Performance Report economics columns
+### 3. Trigger a sales re-sync to repopulate daily summaries
+Use the existing sync mechanism to re-sync sales data, which will rebuild `phorest_daily_sales_summary` with current data. This fixes all downstream edge functions (forecasting, anomaly detection, health scores, daily huddle) that depend on the summary table.
 
 ## Files Changed
 
 | File | Change |
 |---|---|
-| Data update (insert tool) | Backfill `user_id` on 3 sales tables + `location_id` on employee profiles |
-| `src/hooks/useSalesData.ts` | `useUserSalesSummary` adds phorest_staff_id fallback query |
-| `src/components/dashboard/sales/PerformanceTrendChart.tsx` | Same fallback pattern for trend data |
+| `src/hooks/useStaffUtilization.ts` | Fix endDateStr to use `endDate` instead of `today` |
+| `src/hooks/useStaffRevenuePerformance.ts` | Query `phorest_sales_transactions` instead of stale summary table |
 
-## Not Needed
+## What This Fixes
 
-- **Alex Day**: Correctly admin-only, no Phorest mapping required
-- **Auto-mapping hook**: All 22 service staff already have valid mappings
-- **Mapping health UI**: Not needed since mappings are complete
-- **Sync function fix**: The sync already includes `user_id` — the issue was timing (mappings created after initial sync). A re-sync would also fix this, but the backfill is faster and more reliable.
+- Stylist Workload Distribution: Shows 22 staff with future appointment counts
+- Staff Revenue Leaderboard: Shows current month revenue rankings from live transaction data
+- All downstream analytics that depend on appointment and transaction data being properly user-scoped (already fixed by previous backfill)
 
