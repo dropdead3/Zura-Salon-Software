@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -584,7 +585,9 @@ export function GraduationWizard({ open, onOpenChange, levelId, levelLabel, leve
     upsert.mutate(payload, {
       onSuccess: () => {
         updateLevel.mutate({ id: levelId, is_configured: true });
-        onOpenChange(false);
+        setActiveTab('retention');
+        setStep(0);
+        toast.success('Level requirements saved — now configure retention criteria');
       },
     });
   };
