@@ -86,6 +86,9 @@ function drawRoundedRect(
 export function generateLevelRequirementsPDF(options: LevelRequirementsPDFOptions): jsPDF {
   const { orgName, levels, criteria, retentionCriteria = [], commissions = [] } = options;
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+  const hasFonts = registerPdfFonts(doc);
+  const F_DISPLAY = hasFonts ? 'Termina' : 'helvetica';
+  const F_BODY = hasFonts ? 'AeonikPro' : 'helvetica';
   const pageWidth = doc.internal.pageSize.getWidth();
   const contentWidth = pageWidth - MARGIN * 2;
   const now = new Date();
@@ -97,19 +100,20 @@ export function generateLevelRequirementsPDF(options: LevelRequirementsPDFOption
   let y = 22;
 
   doc.setTextColor(30, 30, 30);
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(20);
+  doc.setFont(F_DISPLAY, 'normal');
+  doc.setFontSize(18);
   const orgNameUpper = orgName.toUpperCase();
-  doc.text(orgNameUpper, pageWidth / 2, y, { align: 'center', charSpace: 1.5 });
+  doc.text(orgNameUpper, pageWidth / 2, y, { align: 'center', charSpace: 1.8 });
 
   y += 8;
   doc.setTextColor(160, 160, 160);
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(8);
-  doc.text('LEVEL GRADUATION ROADMAP', pageWidth / 2, y, { align: 'center', charSpace: 2 });
+  doc.setFont(F_DISPLAY, 'normal');
+  doc.setFontSize(7);
+  doc.text('LEVEL GRADUATION ROADMAP', pageWidth / 2, y, { align: 'center', charSpace: 2.5 });
 
   y += 6;
   doc.setTextColor(180, 180, 180);
+  doc.setFont(F_BODY, 'normal');
   doc.setFontSize(7);
   doc.text(`Generated ${format(now, 'MMMM d, yyyy')}`, pageWidth / 2, y, { align: 'center' });
 
