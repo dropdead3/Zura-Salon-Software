@@ -925,9 +925,47 @@ export function GraduationWizard({ open, onOpenChange, levelId, levelLabel, leve
               {/* Step 1: Weights */}
               {step === 1 && (
                 <div className="space-y-4">
-                  <p className={cn(tokens.body.muted, 'mb-4')}>
-                    Set the relative importance of each metric. Weights must total 100%.
-                  </p>
+                  {/* Explainer */}
+                  <div className="rounded-xl border border-blue-500/20 bg-blue-500/[0.04] p-4">
+                    <div className="flex gap-3">
+                      <div className="flex-shrink-0 mt-0.5">
+                        <div className="h-7 w-7 rounded-lg bg-blue-500/10 flex items-center justify-center">
+                          <BookOpen className="h-3.5 w-3.5 text-blue-400" />
+                        </div>
+                      </div>
+                      <div className="space-y-1 min-w-0">
+                        <h4 className="font-display text-[11px] tracking-wide text-blue-400">HOW WEIGHTS WORK</h4>
+                        <p className="text-xs text-muted-foreground leading-relaxed">
+                          Weights control how much each metric contributes to the overall readiness score. A higher weight means that metric has more influence on the progress percentage.
+                          <span className="block mt-1 text-blue-400/80">Note: regardless of weights, a stylist must meet every individual threshold to qualify for promotion. Weights only affect the composite score used to track overall progress.</span>
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Distribute Evenly */}
+                  <div className="flex justify-end">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="text-xs gap-1.5 text-muted-foreground hover:text-foreground"
+                      onClick={() => {
+                        const active = CRITERIA.filter(c => form[c.enabledKey] as boolean);
+                        if (active.length === 0) return;
+                        const base = Math.floor(100 / active.length);
+                        const remainder = 100 - base * active.length;
+                        const next = { ...form };
+                        active.forEach((c, i) => {
+                          (next as any)[c.weightKey] = base + (i < remainder ? 1 : 0);
+                        });
+                        setForm(next);
+                      }}
+                    >
+                      <Scale className="h-3.5 w-3.5" />
+                      Distribute Evenly
+                    </Button>
+                  </div>
 
                   {enabledCriteria.map(criterion => {
                     const weight = form[criterion.weightKey] as number;
