@@ -21,7 +21,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useLevelEconomicsAnalyzer, type StylistSnapshot } from '@/hooks/useLevelEconomicsAnalyzer';
 import { useStylistLevels } from '@/hooks/useStylistLevels';
 
-type SortKey = 'revenue' | 'rebookRate' | 'retailConversion' | 'avgChemicalCostPerService' | 'experienceScore' | 'reweighComplianceRate' | 'wasteRate' | 'margin' | 'hourlyContribution';
+type SortKey = 'revenue' | 'serviceRevenue' | 'productRevenue' | 'rebookRate' | 'retailConversion' | 'avgChemicalCostPerService' | 'experienceScore' | 'reweighComplianceRate' | 'wasteRate' | 'margin' | 'hourlyContribution';
 
 interface StaffPerformanceReportProps {
   dateFrom: string;
@@ -89,6 +89,8 @@ export function StaffPerformanceReport({ dateFrom, dateTo, locationId, className
 
   const columns: { key: SortKey; label: string }[] = [
     { key: 'revenue', label: 'Revenue' },
+    { key: 'serviceRevenue', label: 'Services' },
+    { key: 'productRevenue', label: 'Retail' },
     { key: 'rebookRate', label: 'Rebook Rate' },
     { key: 'retailConversion', label: 'Retail %' },
     { key: 'avgChemicalCostPerService', label: 'Avg Chemical' },
@@ -239,6 +241,12 @@ function StylistRow({
         </TableCell>
         <TableCell>
           <AnimatedBlurredAmount value={row.revenue} currency={currency} decimals={2} />
+        </TableCell>
+        <TableCell>
+          <AnimatedBlurredAmount value={row.serviceRevenue} currency={currency} decimals={2} />
+        </TableCell>
+        <TableCell>
+          <AnimatedBlurredAmount value={row.productRevenue} currency={currency} decimals={2} />
         </TableCell>
         <TableCell>{row.rebookRate}%</TableCell>
         <TableCell>{row.retailConversion}%</TableCell>
