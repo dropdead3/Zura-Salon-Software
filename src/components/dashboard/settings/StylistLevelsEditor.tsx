@@ -871,7 +871,33 @@ function CriteriaComparisonTable({ levels, promotionCriteria, retentionCriteria,
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => exportTableAsCSV(levels, metrics, levelData, getCriteria)}>
+            <DropdownMenuItem onClick={() => {
+              const rows: string[][] = [];
+              rows.push(['Metric', ...levels.map((l, i) => `Level ${i + 1}: ${l.label}`)]);
+              rows.push(['— COMPENSATION —']);
+              ['Service Commission', 'Retail Commission'].forEach(label => {
+                const field = label === 'Service Commission' ? 'serviceCommissionRate' : 'retailCommissionRate';
+                rows.push([label, ...levels.map(l => l[field] ? `${l[field]}%` : '—')]);
+              });
+              rows.push(['— PROMOTION —']);
+              metrics.filter(m => m.section === 'promotion').forEach(m => {
+                rows.push([m.label, ...levelData.map(d => m.getValue(d.promo, d.retention) ?? '—')]);
+              });
+              rows.push(['— RETENTION —']);
+              metrics.filter(m => m.section === 'retention').forEach(m => {
+                rows.push([m.label, ...levelData.map(d => m.getValue(d.promo, d.retention) ?? '—')]);
+              });
+              const csv = rows.map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\n');
+              const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+              const link = document.createElement('a');
+              link.href = URL.createObjectURL(blob);
+              link.download = `level-criteria-comparison-${new Date().toISOString().split('T')[0]}.csv`;
+              document.body.appendChild(link);
+              link.click();
+              document.body.removeChild(link);
+              URL.revokeObjectURL(link.href);
+              toast.success('CSV exported');
+            }}>
               <FileSpreadsheet className="w-4 h-4 mr-2" />
               Export as Spreadsheet (.csv)
             </DropdownMenuItem>
@@ -896,11 +922,19 @@ function CriteriaComparisonTable({ levels, promotionCriteria, retentionCriteria,
                   });
                 } catch { /* proceed without logo */ }
               }
-              const levelInfos = levels.filter(l => l.dbId).map(l => ({ id: l.dbId!, name: l.label }));
+              const levelInfos = levels.filter(l => l.dbId).map((l, i) => ({
+                label: l.label,
+                slug: l.slug,
+                dbId: l.dbId,
+                index: i,
+                isConfigured: l.isConfigured,
+              }));
               const commissions = levels.filter(l => l.dbId).map(l => ({
-                level_id: l.dbId!,
-                service_commission_rate: l.serviceCommissionRate ? parseFloat(l.serviceCommissionRate) : null,
-                retail_commission_rate: l.retailCommissionRate ? parseFloat(l.retailCommissionRate) : null,
+                dbId: l.dbId,
+                serviceCommissionRate: parseFloat(String(l.serviceCommissionRate)) || 0,
+                retailCommissionRate: parseFloat(String(l.retailCommissionRate)) || 0,
+                hourlyWageEnabled: l.hourlyWageEnabled,
+                hourlyWage: l.hourlyWage ? parseFloat(l.hourlyWage) : null,
               }));
               const doc = generateLevelRequirementsPDF({
                 orgName: effectiveOrganization?.name || 'Organization',
