@@ -1,71 +1,45 @@
 
 
-# Auto-Detect Economics Assumptions from Org Data
+# Add "How to Find This Number" Tips to Economics Fields
 
-## Approach
+## What Changes
 
-Replace the raw input fields with a smart banner that computes suggested values from data already in Zura, then lets the owner accept or tweak. Zero questions asked — Zura figures it out.
+Add practical, actionable guidance to each economics field telling salon owners exactly where to find the real number and how to calculate it. This applies to both the **smart setup card** (first visit) and the **returning-user assumptions panel**.
 
-## What Data Is Already Available
+## Implementation
 
-| Assumption | Data Source | Computation |
-|---|---|---|
-| **Overhead per stylist** | Org locations (rent if stored), stylist count from `employee_profiles` | If no rent data: use industry median ($3,500) scaled by location count. Show "We estimated this — update if you know your actual rent." |
-| **Product cost %** | Color Bar chemical tracking (if enabled), or service mix from appointments | If Color Bar data exists: `total_chemical_cost / total_service_revenue` over 90 days. Otherwise: infer from service category mix (color-heavy → 12%, cut-focused → 6%). |
-| **Target margin %** | Current actual margin computed from revenue vs costs | Show current implied margin and suggest +3pp improvement as target. If no data: default 15% with benchmark context. |
-| **Hours per month** | Appointment data — average booked hours per stylist over 90 days | `total_appointment_hours / stylist_count / 3 months`. Fallback: 160 (5 days × 8 hrs × 4 weeks). |
+### Single change: Expand `FIELDS` config in `EconomicsSmartDefaults.tsx` and tooltip text in `CommissionEconomicsTab.tsx`
 
-## UX Design
+Each field gets a new `howToFind` string added to the `FieldConfig` interface. This renders as a collapsible "How to find this" section under each field in both the smart defaults card and the assumptions panel.
 
-### First Visit (no saved assumptions)
+**Overhead / Stylist**
+> *Pull your monthly P&L or accounting software. Add up: rent, utilities, insurance, supplies, front desk payroll, software subscriptions, and any other fixed costs. Divide that total by your number of stylists. Example: $19,000 total fixed costs ÷ 5 stylists = $3,800/stylist.*
 
-Instead of blank fields, show a **single "smart defaults" card**:
+**Product Cost %**
+> *From your P&L, find "Cost of Goods Sold" or "Chemical/Backbar" expense. Divide by your total service revenue (not including retail). Example: $4,500 in chemicals ÷ $40,000 service revenue = 11.3%. If you use a distributor, check your monthly invoices for a faster number.*
 
-```text
-┌─────────────────────────────────────────────────────┐
-│ ✦  Zura computed these based on your data           │
-│                                                      │
-│  Overhead/Stylist    $3,800/mo   ← estimated         │
-│  Product Cost        11.3%       ← from your data    │
-│  Target Margin       15%         ← industry avg      │
-│  Hours/Month         152 hrs     ← from your data    │
-│                                                      │
-│  Each value shows a source badge:                    │
-│    "From your data" (green) or "Industry avg" (amber)│
-│                                                      │
-│  [Accept & Continue]    [Adjust First]               │
-└─────────────────────────────────────────────────────┘
-```
+**Target Margin %**
+> *Look at your P&L bottom line: Net Income ÷ Total Revenue = your current margin. If you're at 8%, setting a target of 12% gives you a goal to work toward. Most healthy salons target 10–15% net margin.*
 
-- **"Accept & Continue"** saves immediately, shows the margin table.
-- **"Adjust First"** expands inline editors for each field (same inputs as today, but pre-filled with smart values).
+**Hours / Month**
+> *Check your booking software for average booked hours per stylist. Or calculate: days worked per week × hours per day × 4.3 weeks. Example: 5 days × 8 hours × 4.3 = 172 hrs/mo. Part-time stylists will be lower — use their actual schedule.*
 
-### Returning Visit (assumptions already saved)
+### Where tips appear
 
-Current layout stays, but add:
-- A subtle banner at top: *"Based on 90 days of data, your actual product cost is ~11.3%. Your saved assumption is 10%."* with an **[Update]** button.
-- Industry benchmark ranges shown as muted text under each field (e.g., "Typical: $3,200–$5,500").
+1. **Smart setup card** (`EconomicsSmartDefaults.tsx`): Below each field description in the non-adjusting view, add a small "How to find this →" link that expands the tip inline.
+2. **Assumptions panel** (`CommissionEconomicsTab.tsx`): Replace the current static description text (e.g., "Rent, utilities, insurance per stylist") with the expanded how-to-find guidance, shown as a subtle expandable section under the benchmark text.
 
-## New Hook: `useAutoDetectEconomics`
+### Technical details
 
-Computes suggested values by querying existing data:
+- Add `howToFind` field to the `FieldConfig` interface in `EconomicsSmartDefaults.tsx`
+- Use a `Collapsible` component (already imported in the file's parent) or a simple `useState` toggle per field to show/hide the tip
+- Style: `text-[11px] text-muted-foreground/70 leading-relaxed` with a `HelpCircle` icon trigger
+- Update `MetricInfoTooltip` descriptions in `CommissionEconomicsTab.tsx` to include the P&L guidance alongside the existing definition
 
-1. **Stylist count**: from `employee_profiles` (already fetched elsewhere, reuse query key)
-2. **Appointment hours**: sum of appointment durations over 90 days, divided by stylist count and 3
-3. **Product cost from Color Bar**: check if `backroom_settings` has chemical cost tracking data; if yes, compute ratio
-4. **Service mix**: categorize appointments by service type to infer product cost if no Color Bar data
-5. Returns `{ suggestions: EconomicsAssumptions, sources: Record<keyof EconomicsAssumptions, 'data' | 'estimate'> }`
-
-## Files Changed
+### Files changed
 
 | File | Change |
 |---|---|
-| `src/hooks/useAutoDetectEconomics.ts` (new) | Hook that queries appointment/staff/Color Bar data and returns smart defaults with source labels |
-| `src/components/dashboard/settings/EconomicsSmartDefaults.tsx` (new) | The "Zura computed these" card with accept/adjust flow |
-| `src/components/dashboard/settings/CommissionEconomicsTab.tsx` | Show `EconomicsSmartDefaults` when no saved assumptions exist; add data-vs-saved comparison banner for returning users; add benchmark hints under fields |
-| `src/hooks/useCommissionEconomics.ts` | Add `hasCustomAssumptions` boolean export (true when settings key exists with non-default values) |
-
-## No database changes required
-
-All data sources already exist. The hook reads from `appointments`, `employee_profiles`, and `backroom_settings` — all tables the user already has RLS access to.
+| `src/components/dashboard/settings/EconomicsSmartDefaults.tsx` | Add `howToFind` to `FieldConfig`, render expandable tip under each field |
+| `src/components/dashboard/settings/CommissionEconomicsTab.tsx` | Update tooltip descriptions to include P&L calculation guidance |
 
