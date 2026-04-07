@@ -161,6 +161,15 @@ export function StylistCommissionDrilldown({
         await assignLevel.mutateAsync({ userId: member.user_id, levelSlug: targetSlug });
       }
 
+      // 1b. Level-since date override (update directly if changed)
+      if (levelSinceChanged && pendingLevelSince) {
+        const { error: sinceError } = await (await import('@/integrations/supabase/client')).supabase
+          .from('employee_profiles')
+          .update({ stylist_level_since: new Date(pendingLevelSince).toISOString() } as any)
+          .eq('user_id', member.user_id);
+        if (sinceError) throw sinceError;
+      }
+
       // 2. Override changes
       if (showOverride && (overrideToggleChanged || overrideFieldsChanged)) {
         await upsertOverride.mutateAsync({
@@ -258,6 +267,19 @@ export function StylistCommissionDrilldown({
               <p className="text-xs text-muted-foreground">
                 Default rates: Svc {fmtRate(currentLevel.service_commission_rate)} / Retail {fmtRate(currentLevel.retail_commission_rate)}
               </p>
+            )}
+            {pendingLevel !== '__unassign' && (
+              <div className="space-y-1 pt-1">
+                <Label className="text-[11px] text-muted-foreground">Level Since</Label>
+                <Input
+                  type="date"
+                  value={pendingLevelSince}
+                  onChange={(e) => setPendingLevelSince(e.target.value)}
+                  max={new Date().toISOString().split('T')[0]}
+                  className="h-9 text-sm w-48"
+                />
+                <p className="text-[10px] text-muted-foreground/70">Backdate if this level was earned before today</p>
+              </div>
             )}
           </section>
 
