@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { formatName } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { DashboardPageHeader } from '@/components/dashboard/DashboardPageHeader';

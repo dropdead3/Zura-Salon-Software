@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { formatName } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
