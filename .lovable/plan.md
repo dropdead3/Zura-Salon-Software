@@ -1,37 +1,39 @@
 
 
-# Make Table Edit Action Bar More Visible & Centered
+# Relabel "Tenure" to "Level Tenure" Across All Surfaces
 
 ## Problem
-The floating action bar (with "Auto-step", "Save", and close buttons) that appears when editing a table row blends into the table cells. It's positioned `bottom-20 right-6`, making it easy to miss.
+The KPI labeled "Tenure" is ambiguous — it could be interpreted as total salon employment tenure rather than time spent at the current level.
 
-## Fix
+## Changes
 
-### File: `src/components/dashboard/settings/StylistLevelsEditor.tsx` (~line 1248)
+### 1. `src/components/dashboard/settings/StylistLevelsEditor.tsx`
+- Change the row label from `'Tenure'` to `'Level Tenure'` in the `metricRows` array (~line 438)
+- Update the `METRIC_FIELD_MAPPING` key from `'Tenure'` to `'Level Tenure'` (~line 344)
+- Update the tooltip text from `'Tenure': 'Minimum days at current level...'` to `'Level Tenure': ...` (~line 390)
+- Update all references that check `label !== 'Tenure'` to `label !== 'Level Tenure'` (~lines 492, 534, 694)
 
-Reposition and restyle the floating bar:
+### 2. `src/components/dashboard/settings/GraduationWizard.tsx`
+- Change the label from `"Minimum Tenure"` to `"Level Tenure"` (~line 914)
+- Keep the sub-label "Time at current level before eligible" as-is (already clear)
 
-1. **Center it horizontally** — change from `right-6` to `left-1/2 -translate-x-1/2` so it sits center-bottom of the viewport
-2. **Lower it** — change `bottom-20` to `bottom-6` so it's clearly at the screen bottom
-3. **Increase visibility** — use a solid, higher-contrast background (`bg-card`) with a stronger shadow and a subtle top border accent (primary color glow or brighter border)
-4. **Increase size** — bump padding and text sizes slightly so buttons are more tappable and the bar reads as a prominent floating toolbar rather than a small pill
+### 3. `src/hooks/useLevelProgress.ts`
+- Change `label: 'Tenure'` to `label: 'Level Tenure'` (~line 548)
 
-**Before:**
-```
-className="fixed bottom-20 right-6 z-50 flex items-center gap-2 bg-card/90 backdrop-blur-xl border border-border rounded-xl shadow-[0_8px_32px_-4px_rgba(0,0,0,0.4)] px-4 py-2.5"
-```
+### 4. `src/hooks/useTeamLevelProgress.ts`
+- Change `label: 'Tenure'` to `label: 'Level Tenure'` (~line 438)
 
-**After:**
-```
-className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[80] flex items-center gap-3 bg-card border border-border/60 rounded-xl shadow-[0_12px_48px_-8px_rgba(0,0,0,0.5)] px-5 py-3 ring-1 ring-primary/20"
-```
-
-Also bump the label and button text from `text-xs` to `text-sm` for better readability, and make the Save button slightly larger with more padding.
+### 5. `src/components/dashboard/LevelProgressionLadder.tsx`
+- Change `formatThreshold('Tenure', ...)` to `formatThreshold('Level Tenure', ...)` (~line 41)
 
 ## Files Changed
 | File | Change |
 |---|---|
-| `src/components/dashboard/settings/StylistLevelsEditor.tsx` | Reposition floating action bar to center-bottom, increase contrast and size |
+| `StylistLevelsEditor.tsx` | Rename label, mapping key, tooltip, and conditional checks |
+| `GraduationWizard.tsx` | Rename toggle label |
+| `useLevelProgress.ts` | Rename progress item label |
+| `useTeamLevelProgress.ts` | Rename progress item label |
+| `LevelProgressionLadder.tsx` | Rename threshold label |
 
-1 file, no database changes.
+5 files, no database changes.
 
