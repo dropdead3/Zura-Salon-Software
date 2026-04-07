@@ -45,7 +45,7 @@ export function useAutoDetectEconomics() {
         hours_per_month: 'estimate',
       };
 
-      // 1. Stylist count
+      // 1. Stylist count (active approved stylists with stylist role)
       const { data: stylists } = await supabase
         .from('employee_profiles')
         .select('user_id')
@@ -68,23 +68,36 @@ export function useAutoDetectEconomics() {
 
       const { data: appointments } = await supabase
         .from('appointments')
-        .select('duration_minutes, total_price, service_name, service_category')
+        .select('duration_minutes, total_price, service_name, service_category, staff_user_id, appointment_date')
         .eq('organization_id', orgId!)
         .gte('appointment_date', dateStr)
         .in('status', ['completed', 'checked_out']);
 
       const appts = appointments ?? [];
 
-      // 3. Hours per month
+      // 3. Hours per month — use stylists who actually had appointments
+      //    and calculate actual months from the data range, not hardcoded 3
       let hoursPerMonth = 160; // fallback
-      if (appts.length > 0 && stylistCount > 0) {
+      if (appts.length > 0) {
         const totalMinutes = appts.reduce((sum, a) => sum + (a.duration_minutes ?? 0), 0);
         const totalHours = totalMinutes / 60;
-        hoursPerMonth = Math.round(totalHours / stylistCount / 3); // 3 months
-        if (hoursPerMonth > 10) {
+
+        // Count distinct stylists who actually had booked appointments
+        const activeStylists = new Set(appts.map(a => a.staff_user_id).filter(Boolean));
+        const activeStylistCount = activeStylists.size || 1;
+
+        // Calculate actual month span from min/max appointment dates
+        const dates = appts.map(a => a.appointment_date).filter(Boolean).sort();
+        const firstDate = new Date(dates[0]);
+        const lastDate = new Date(dates[dates.length - 1]);
+        const daySpan = Math.max(1, (lastDate.getTime() - firstDate.getTime()) / (1000 * 60 * 60 * 24));
+        const monthSpan = Math.max(1, daySpan / 30.44); // average days per month
+
+        hoursPerMonth = Math.round(totalHours / activeStylistCount / monthSpan);
+        if (hoursPerMonth >= 40 && hoursPerMonth <= 300) {
           sources.hours_per_month = 'data';
         } else {
-          hoursPerMonth = 160; // too low, use fallback
+          hoursPerMonth = 160; // outside plausible range, use fallback
         }
       }
 
@@ -128,9 +141,9 @@ export function useAutoDetectEconomics() {
       if (computedProductCostPct !== null) {
         productCostPct = Math.round(computedProductCostPct * 1000) / 1000; // 3 decimal precision
       } else if (totalServiceCount > 20) {
-        // Enough data to infer from service mix
+        // Inferred from service mix — still an estimate, not actual cost data
         productCostPct = colorHeavy ? 0.12 : 0.06;
-        sources.product_cost_pct = totalServiceCount > 50 ? 'data' : 'estimate';
+        sources.product_cost_pct = 'estimate';
       } else {
         productCostPct = 0.10; // generic default
       }
