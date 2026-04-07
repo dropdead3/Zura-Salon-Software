@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { EmptyState } from '@/components/ui/empty-state';
 import { tokens } from '@/lib/design-tokens';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -6,7 +6,9 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Command, CommandInput, CommandList, CommandEmpty, CommandGroup, CommandItem } from '@/components/ui/command';
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table';
@@ -17,6 +19,7 @@ import {
   DollarSign, Users, TrendingUp, TrendingDown, UserCheck, Package,
   Briefcase, Star, Calendar, Download, FileSpreadsheet, Loader2, ArrowLeft,
   AlertTriangle, CheckCircle2, Target, Wallet, ShieldCheck, GraduationCap, Percent, Banknote, Beaker, Receipt,
+  ChevronsUpDown, Check,
 } from 'lucide-react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -87,14 +90,16 @@ function TrendIndicator({ values }: { values: [number, number, number] }) {
 
 
 export function IndividualStaffReport({ dateFrom, dateTo, locationId, onClose, initialStaffId, dateRangeKey }: IndividualStaffReportProps) {
-  const [selectedStaffId, setSelectedStaffId] = useState<string>(initialStaffId || '');
+  const [selectedStaffIds, setSelectedStaffIds] = useState<string[]>(initialStaffId ? [initialStaffId] : []);
+  const [viewingStaffId, setViewingStaffId] = useState<string>(initialStaffId || '');
+  const [staffPickerOpen, setStaffPickerOpen] = useState(false);
   const { user } = useAuth();
   const { effectiveOrganization } = useOrganizationContext();
   const { data: businessSettings } = useBusinessSettings();
   const locationInfo = useReportLocationInfo(locationId);
   const { data: orgUsers, isLoading: usersLoading } = useOrganizationUsers(effectiveOrganization?.id);
-  const { data, isLoading } = useIndividualStaffReport(selectedStaffId || null, dateFrom, dateTo);
-  const { data: complianceData } = useStaffComplianceSummary(selectedStaffId || null, dateFrom, dateTo, effectiveOrganization?.id);
+  const { data, isLoading } = useIndividualStaffReport(viewingStaffId || null, dateFrom, dateTo);
+  const { data: complianceData } = useStaffComplianceSummary(viewingStaffId || null, dateFrom, dateTo, effectiveOrganization?.id);
   const { formatCurrencyWhole } = useFormatCurrency();
   const { formatDate } = useFormatDate();
   const [isGenerating, setIsGenerating] = useState(false);
