@@ -146,7 +146,7 @@ const RECOMMENDED_WEIGHTS: Record<string, number> = {
   retention_rate_weight: 15,
   new_clients_weight: 5,
   utilization_weight: 5,
-  rev_per_hour_weight: 0,
+  rev_per_hour_weight: 5,
 };
 
 interface RetentionCriterionConfig {
@@ -979,7 +979,7 @@ export function GraduationWizard({ open, onOpenChange, levelId, levelLabel, leve
                         // Assign recommended weights to enabled metrics
                         let totalRaw = 0;
                         active.forEach(c => {
-                          totalRaw += (RECOMMENDED_WEIGHTS[c.weightKey] || 0);
+                          totalRaw += (RECOMMENDED_WEIGHTS[c.weightKey] || 5);
                         });
                         if (totalRaw === 0) {
                           // Fallback to even distribution
@@ -992,11 +992,11 @@ export function GraduationWizard({ open, onOpenChange, levelId, levelLabel, leve
                           // Scale proportionally to 100
                           let assigned = 0;
                           active.forEach((c, i) => {
-                            const raw = RECOMMENDED_WEIGHTS[c.weightKey] || 0;
+                            const raw = RECOMMENDED_WEIGHTS[c.weightKey] || 5;
                             if (i === active.length - 1) {
                               (next as any)[c.weightKey] = 100 - assigned;
                             } else {
-                              const scaled = Math.round((raw / totalRaw) * 100);
+                              const scaled = Math.floor((raw / totalRaw) * 100);
                               (next as any)[c.weightKey] = scaled;
                               assigned += scaled;
                             }
