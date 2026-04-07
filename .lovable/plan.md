@@ -1,131 +1,83 @@
 
 
-# Level Economics Analyzer — Final Build Plan
+# PDF Economics Section + Staff Analytics Surface
 
-## Summary
+## Overview
 
-Build a **Level Economics Analyzer** as an embedded section within the existing Economics tab of the Stylist Levels Editor. It answers: "For each level, given what they charge and what it costs, am I making money?" Also surface read-only margin indicators on level cards and in staff analytics reports.
+Two deliverables:
+1. Add a "Level Economics" section to `StaffLevelReportPDF` showing per-level margin summaries and flagged services
+2. Add economics metrics (margin status, effective hourly contribution) to the `StaffPerformanceReport` in the analytics hub
 
-## Architecture
+## 1. PDF Export — Level Economics Section
 
-```text
-Data Sources (all existing — no new tables)
-├── stylist_levels          → commission rates, hourly wages
-├── service_level_prices    → per-service pricing by level
-├── services                → base prices, categories
-├── service_recipe_baselines → product cost per service
-├── products                → cost_per_gram
-├── appointments (90d)      → actual volume by staff × service
-├── employee_profiles       → staff → level mapping
-└── economics assumptions   → overhead, target margin (from settings)
+**File: `src/components/dashboard/settings/StaffLevelReportPDF.ts`**
 
-                    ↓
+After the existing staff table, add a new section:
 
-useLevelEconomicsAnalyzer (new hook)
-├── LevelSummary[]          → weighted margin per level
-├── ServiceLevelCell[][]    → margin heatmap data
-└── StylistSnapshot[]       → per-stylist effective contribution
-```
+**"Level Economics Summary" header** — same style as "Staff Level Report" subheader
 
-## What Gets Built
+**Level margin table** (one row per level):
+- Columns: Level, Weighted Margin, Avg Revenue/Stylist, Commission Cost, Product Cost, Overhead, Status
+- Status column uses color-coded text (green/amber/red matching Healthy/Tight/Underpriced)
+- Only show levels with `hasEnoughData`; skip levels with insufficient appointments
 
-### 1. Data Hook — `src/hooks/useLevelEconomicsAnalyzer.ts`
+**Flagged services mini-table** (below level summary):
+- Header: "Services Below Target Margin"
+- Columns: Service, Level, Price, Margin %, Gap
+- Only include service-level combos where `marginPct < target` AND `appointmentCount >= 10`
+- Cap at 15 rows, sorted by worst margin first
+- If no flagged services, show "All service-level combinations are at or above target margin" in italic
 
-Joins all six data sources. For each level × service combination, computes:
+**Silent margin erosion callout:**
+- Below flagged services, list any service-level combos where `isFallbackPrice === true` and commission rate is higher than base level — one-line alert per item
 
-- **Revenue**: level-specific price (from `service_level_prices`, fallback to `services.price`)
-- **Product cost**: from `service_recipe_baselines` × `products.cost_per_gram`
-- **Commission cost**: price × level's `service_commission_rate`
-- **Hourly wage impact**: if `hourly_wage_enabled`, (hourly_wage × hours_per_month) as monthly fixed cost
-- **Overhead allocation**: monthly overhead ÷ average monthly services for that level
-- **Net margin**: revenue − commission − product cost − overhead share − wage share
+**Interface change:** Expand `StaffLevelReportOptions` to accept `levelEconomics?: LevelEconomicsData` and `targetMarginPct?: number`. The PDF generator remains a pure function — the caller passes pre-computed data.
 
-Key calculations:
-- **Weighted level margin**: uses actual 90-day appointment mix, not theoretical average. A level doing 60% color gets a margin reflecting that mix.
-- **Month span**: calculated from actual min/max appointment dates (same fix applied to `useAutoDetectEconomics`), not hardcoded `/3`.
-- **Data thresholds**: requires 10+ appointments per service-level combo before showing specific margins. Below that, shows "Insufficient data."
+**Caller change in `StylistLevelsEditor.tsx`:** When calling `generateStaffLevelReportPDF`, pass the economics data from the already-loaded `useLevelEconomicsAnalyzer` hook.
 
-### 2. Bug Fix — `src/hooks/useCommissionEconomics.ts`
+**Page management:** Check `y` position before rendering economics section; add `doc.addPage()` if needed. Footer renders on all pages (existing logic handles this).
 
-Line 154: `data.total / 3` → calculate actual `monthSpan` from min/max appointment dates, matching the fix already in `useAutoDetectEconomics`.
+## 2. Staff Analytics Surface — Economics Columns
 
-### 3. UI Component — `src/components/dashboard/settings/LevelEconomicsSection.tsx`
+**File: `src/components/dashboard/analytics/StaffPerformanceReport.tsx`**
 
-Embedded within `CommissionEconomicsTab`, below the existing margin table. Two views:
+Add two new columns to the existing staff performance table:
 
-**Level Summary Cards** (default)
-- One card per active level
-- Weighted avg margin, revenue per stylist, cost breakdown (commission + product + overhead + wage)
-- Status badge: Healthy (≥ target margin) / Tight (≥ 0%) / Underpriced (< 0%)
-- Count of services with margin below target
-- Responsive: `grid-cols-1 sm:grid-cols-2 lg:grid-cols-3`
+- **Margin** — weighted margin % from `StylistSnapshot`, color-coded (green ≥ target, amber ≥ 0, red < 0). Shows "—" if `hasEnoughData` is false.
+- **$/hr Contribution** — `effectiveHourlyContribution` from `StylistSnapshot`, formatted as currency. Shows "—" if insufficient data.
 
-**Service × Level Matrix** (expandable drill-down)
-- Rows = services (grouped by category), Columns = levels
-- Each cell: price, margin %, color-coded (green/amber/red)
-- Highlights specific service-level combos that are underpriced
-- Sortable by worst margin first
-- Minimum 10 appointments threshold — cells below show "—"
+**Data integration:**
+- Import `useLevelEconomicsAnalyzer` and `useStylistLevels` into `StaffPerformanceReport`
+- Build a lookup map: `userId → StylistSnapshot` from `stylistSnapshots`
+- Merge into existing rows during render (no changes to `useStaffPerformanceComposite`)
 
-**Stylist Snapshots** (collapsible per-person view)
-- For each stylist: their level, actual service mix, weighted margin, effective hourly contribution
-- Sorted by contribution (lowest first to surface problems)
+**Expanded row enhancement:**
+- When a row is expanded, below existing coaching signals, add an "Economics" mini-section showing:
+  - Level name + margin status badge
+  - Cost breakdown: Commission / Product / Overhead / Wage as a simple inline list
+  - Only visible when snapshot data exists for that stylist
 
-### 4. Level Card Indicators — `src/components/dashboard/settings/StylistLevelsEditor.tsx`
+**Sort integration:** Add `'margin'` and `'hourlyContribution'` to the `SortKey` union type so these columns are sortable.
 
-Small margin indicator on each level card in the Levels tab:
-- Green/amber/red dot + "~12% margin" text
-- Uses data from the same hook
-- Only shows when sufficient data exists (10+ appointments at that level)
+## 3. Staffing Content Integration
 
-### 5. Staff Analytics Surface
+**File: `src/components/dashboard/analytics/StaffingContent.tsx`**
 
-Surface per-stylist economics in the staff analytics tab (not team directory cards):
-- Effective hourly contribution metric
-- Margin status relative to level target
-- Reuses `StylistSnapshot` data from the hook
-
-### 6. PDF Export Enhancement — Staff Level Report
-
-Add a "Level Economics" section to the existing `StaffLevelReportPDF`:
-- Per-level margin summary row
-- Flagged services where margin is below target
-- Reuses the same hook data
-
-### 7. Integration with What-If Simulator
-
-When the admin drags commission sliders in the What-If section, the Level Summary Cards update in real time — showing "Level 4 margin drops from 12% to 3% on balayage" instead of just "target revenue goes up."
-
-## Alerts Surfaced
-
-- Services where margin < target at any level (specific callout with level + service name)
-- Levels where weighted margin is below target
-- **Silent margin erosion**: services where level price falls back to base price but commission rate is higher than base — margin erodes without the admin realizing
-
-## Data Freshness
-
-- Show "Based on [date range], [N] appointments analyzed" header
-- If fewer than 50 total appointments for a level, flag as "Limited data — margins may not be representative"
-- Data sourced badge: "From your data" vs "Insufficient data" per cell
-
-## Responsive Design
-
-- Summary cards: `grid-cols-1 sm:grid-cols-2 lg:grid-cols-3`
-- Matrix: horizontal scroll on mobile with sticky service name column
-- Stylist snapshots: card layout on mobile, table on desktop
+No changes needed — `StaffPerformanceReport` is already surfaced in `SalesTabContent` and available as a standalone component. The economics data will flow through it automatically.
 
 ## Files Changed
 
 | File | Change |
 |---|---|
-| `src/hooks/useLevelEconomicsAnalyzer.ts` | **New** — joins level prices, recipe costs, commission rates, hourly wages, appointments |
-| `src/hooks/useCommissionEconomics.ts` | **Fix** — replace hardcoded `/3` with actual monthSpan calculation |
-| `src/components/dashboard/settings/LevelEconomicsSection.tsx` | **New** — summary cards + service×level matrix + stylist snapshots |
-| `src/components/dashboard/settings/CommissionEconomicsTab.tsx` | **Modified** — import and render `LevelEconomicsSection` below margin table; wire What-If rates into it |
-| `src/components/dashboard/settings/StylistLevelsEditor.tsx` | **Modified** — add margin indicator dot on level cards |
-| `src/components/dashboard/settings/StaffLevelReportPDF.ts` | **Modified** — add level economics summary section |
+| `src/components/dashboard/settings/StaffLevelReportPDF.ts` | Add Level Economics Summary section + flagged services table after staff table |
+| `src/components/dashboard/settings/StylistLevelsEditor.tsx` | Pass `levelEconomics` data to PDF generator call |
+| `src/components/dashboard/analytics/StaffPerformanceReport.tsx` | Add Margin + $/hr columns, economics expandable section, sort keys |
 
-## No New Routes or Database Changes
+## Technical Notes
 
-Embedded within existing Economics tab. All data sources already exist with appropriate RLS.
+- PDF economics section uses same font/color conventions as existing report (Termina headers, Aeonik body, status dot colors from `STATUS_COLORS`)
+- `BlurredAmount` / `AnimatedBlurredAmount` wraps all monetary values in the analytics surface
+- `useLevelEconomicsAnalyzer` is already loaded in `StylistLevelsEditor` — just pass its output to the PDF function
+- For `StaffPerformanceReport`, the hook call is new but uses the same 90-day window the analyzer defaults to — no date range prop needed
+- No database changes required
 
