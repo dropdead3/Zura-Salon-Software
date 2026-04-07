@@ -739,7 +739,7 @@ export function GraduationWizard({ open, onOpenChange, levelId, levelLabel, leve
         </div>
 
         {/* Content */}
-        <div className="px-6 py-5 min-h-[280px] max-h-[50vh] overflow-y-auto">
+        <div ref={scrollContainerRef} className="px-6 py-5 min-h-[280px] max-h-[50vh] overflow-y-auto">
           {(isLoading || loadingRetention) ? (
             <div className="flex items-center justify-center h-40">
               <Loader2 className={tokens.loading.spinner} />
@@ -815,6 +815,7 @@ export function GraduationWizard({ open, onOpenChange, levelId, levelLabel, leve
                     const threshold = form[criterion.thresholdKey] as number;
                     return (
                       <div
+                        id={`criterion-${criterion.key}`}
                         key={criterion.key}
                         className={cn(
                           "rounded-lg border p-3 transition-all",
