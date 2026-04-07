@@ -205,7 +205,7 @@ export function CommissionEconomicsTab({ levels }: CommissionEconomicsTabProps) 
     toast.success('AI recommendations applied to What-If simulator');
   };
 
-  if (loadingAssumptions || loadingRevenue) {
+  if (loadingAssumptions || loadingRevenue || loadingDetection) {
     return (
       <div className="flex items-center justify-center h-64">
         <Loader2 className={tokens.loading.spinner} />
@@ -223,8 +223,35 @@ export function CommissionEconomicsTab({ levels }: CommissionEconomicsTabProps) 
     );
   }
 
+  // First-time: show smart defaults instead of raw inputs
+  if (!hasCustomAssumptions && detection) {
+    return (
+      <div className="space-y-6 pt-4">
+        <EconomicsSmartDefaults
+          detection={detection}
+          onAccept={(vals) => {
+            saveAssumptions(vals);
+          }}
+          isSaving={isSaving}
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6 pt-4">
+      {/* Data comparison banner for returning users */}
+      {detection && hasCustomAssumptions && (
+        <EconomicsDataBanner
+          detection={detection}
+          savedAssumptions={assumptions}
+          onUpdate={(key, value) => {
+            const updated = { ...assumptions, [key]: value };
+            saveAssumptions(updated);
+          }}
+        />
+      )}
+
       {/* Assumptions panel */}
       <Card>
         <CardHeader className="pb-3">
