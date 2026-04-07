@@ -1720,8 +1720,7 @@ export function StylistLevelsEditor({ embedded = false, onActions }: StylistLeve
           if (savedLevels) {
             for (const dbLevel of savedLevels) {
               const levelIndex = dbLevel.display_order;
-              // Skip last level (no promotion target beyond top)
-              if (levelIndex < savedLevels.length - 1) {
+              {
                 const promoDefaults = getZuraDefaults(levelIndex);
                 await supabase.from('level_promotion_criteria').upsert({
                   organization_id: orgId,
