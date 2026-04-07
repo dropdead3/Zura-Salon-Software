@@ -584,7 +584,9 @@ export function GraduationWizard({ open, onOpenChange, levelId, levelLabel, leve
     upsert.mutate(payload, {
       onSuccess: () => {
         updateLevel.mutate({ id: levelId, is_configured: true });
-        onOpenChange(false);
+        setActiveTab('retention');
+        setStep(0);
+        toast.success('Level requirements saved — now configure retention criteria');
       },
     });
   };
