@@ -8319,6 +8319,45 @@ export type Database = {
           },
         ]
       }
+      infrastructure_metrics: {
+        Row: {
+          id: string
+          metadata: Json | null
+          metric_key: string
+          metric_type: string
+          recorded_at: string | null
+          status: string | null
+          threshold_critical: number | null
+          threshold_warning: number | null
+          unit: string | null
+          value: number
+        }
+        Insert: {
+          id?: string
+          metadata?: Json | null
+          metric_key: string
+          metric_type: string
+          recorded_at?: string | null
+          status?: string | null
+          threshold_critical?: number | null
+          threshold_warning?: number | null
+          unit?: string | null
+          value: number
+        }
+        Update: {
+          id?: string
+          metadata?: Json | null
+          metric_key?: string
+          metric_type?: string
+          recorded_at?: string | null
+          status?: string | null
+          threshold_critical?: number | null
+          threshold_warning?: number | null
+          unit?: string | null
+          value?: number
+        }
+        Relationships: []
+      }
       inquiry_activity_log: {
         Row: {
           action: string
@@ -24796,6 +24835,7 @@ export type Database = {
         Args: { _user_id: string }
         Returns: string
       }
+      get_db_connection_stats: { Args: never; Returns: Json }
       get_kiosk_settings: {
         Args: { p_location_id?: string; p_organization_id: string }
         Returns: {
@@ -24883,6 +24923,7 @@ export type Database = {
           slot_start: string
         }[]
       }
+      get_storage_bucket_stats: { Args: never; Returns: Json }
       get_supply_library_brand_summaries: {
         Args: never
         Returns: {
