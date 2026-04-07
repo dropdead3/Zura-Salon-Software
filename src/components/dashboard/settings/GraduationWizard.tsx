@@ -836,6 +836,16 @@ export function GraduationWizard({ open, onOpenChange, levelId, levelLabel, leve
                             <span className={cn("text-sm", enabled ? "text-foreground font-medium" : "text-muted-foreground")}>
                               {criterion.label}
                             </span>
+                            <TooltipProvider delayDuration={200}>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Info className="w-3.5 h-3.5 text-muted-foreground/60 hover:text-muted-foreground cursor-help shrink-0" />
+                                </TooltipTrigger>
+                                <TooltipContent side="top" className="max-w-[220px] text-xs">
+                                  {criterion.description}
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
                           </div>
                           <Switch
                             checked={enabled}
