@@ -1,27 +1,40 @@
 
 
-# Fix Level Criteria Table PDF to Match UI for Level 1
+# Break Down Total Revenue by Services, Retail & Tips
 
 ## Problem
-The PDF export only reads from `promotion_criteria` for all levels in the PROMOTION section. But the UI shows **retention minimums** for Level 1's promotion KPI rows (Revenue, Retail %, Rebooking %, etc.). This causes Level 1 values like "$2.5K Revenue" to appear as "—" in the PDF.
+The "Total Revenue" KPI tile on the 1:1 Performance Summary shows a single number. It should break this down into Services, Retail, and Tips — and clarify whether tips are included or excluded from the total.
 
-## Root Cause
-In the UI (`StylistLevelsEditor.tsx`), Level 1 (index 0) promotion KPI rows are sourced from `retention_criteria` fields (`revenue_minimum`, `retail_pct_minimum`, etc.) instead of `promotion_criteria`. The PDF generator (`LevelCriteriaTablePDF.ts`) doesn't have this logic — it calls `findPromo()` for every level uniformly.
+## Data Availability
+The hook (`useIndividualStaffReport`) already returns:
+- `revenue.service` — service revenue from transaction items
+- `revenue.product` — product/retail revenue from transaction items
+- `experienceScore.tipRate` — tip rate as % of total revenue
+- Tips total can be derived: `revenue.total * (tipRate / 100)`
 
-## Fix
+Note: `revenue.total` comes from `phorest_appointments.total_price` which may or may not include tips depending on POS config. We need to also expose `totalTips` directly from the hook (it's computed but not returned).
 
-### File: `src/components/dashboard/settings/LevelCriteriaTablePDF.ts`
-- For each promotion KPI row (Revenue, Retail %, Rebooking %, Avg Ticket, Client Retention, New Clients, Utilization, Rev/Hr), check if the level is index 0
-- If index 0, read from retention criteria fields (`revenue_minimum`, `retail_pct_minimum`, etc.) instead of promotion criteria
-- Non-KPI rows (Level Tenure, Eval Window, Approval) remain promotion-only for all levels — matching the UI behavior
-- Add a `findRetention` lookup parameter to each promo row lambda for Level 1 fallback
+## Changes
 
-The logic mirrors the `isBaseLevelRetention` pattern already established in the UI component.
+### 1. `src/hooks/useIndividualStaffReport.ts`
+- Add `tips: number` to the `StaffRevenue` interface
+- Return `totalTips` in the revenue object so it's directly accessible
+
+### 2. `src/components/coaching/MeetingPerformanceSummary.tsx`
+- Replace the single "Total Revenue" KPI tile with a stacked breakdown:
+  - Keep "Total Revenue" as the primary value at the top
+  - Add sub-lines below in `text-xs text-muted-foreground`:
+    - Services: `$X,XXX`
+    - Retail: `$X,XXX`
+    - Tips: `$X,XXX`
+  - Add a subtle label: "excl. tips" or "incl. tips" based on whether tips are part of the total
+- Keep the trend badge and team avg comparison on the total
 
 ## Files Changed
 | File | Change |
 |---|---|
-| `LevelCriteriaTablePDF.ts` | Add Level 1 retention-fallback logic for promotion KPI rows |
+| `useIndividualStaffReport.ts` | Add `tips` to StaffRevenue, return `totalTips` |
+| `MeetingPerformanceSummary.tsx` | Add service/retail/tips breakdown lines under Total Revenue tile |
 
-1 file, no database changes.
+2 files, no database changes.
 
