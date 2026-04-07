@@ -7,6 +7,7 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { format } from 'date-fns';
+import { registerPdfFonts, setTermina, setAeonik } from '@/lib/pdf-fonts';
 import type { TeamMemberProgress, GraduationStatus } from '@/hooks/useTeamLevelProgress';
 
 export interface StaffLevelReportOptions {
@@ -86,6 +87,9 @@ function getKeyGap(member: TeamMemberProgress): string {
 export function generateStaffLevelReportPDF(options: StaffLevelReportOptions): jsPDF {
   const { orgName, teamProgress, counts } = options;
   const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+  const hasFonts = registerPdfFonts(doc);
+  const F_DISPLAY = hasFonts ? 'Termina' : 'helvetica';
+  const F_BODY = hasFonts ? 'AeonikPro' : 'helvetica';
   const pageWidth = doc.internal.pageSize.getWidth();
   const now = new Date();
 
@@ -93,13 +97,13 @@ export function generateStaffLevelReportPDF(options: StaffLevelReportOptions): j
   let y = 18;
 
   doc.setTextColor(30, 30, 30);
-  doc.setFont('helvetica', 'bold');
+  doc.setFont(F_DISPLAY, 'normal');
   doc.setFontSize(20);
   doc.text(orgName.toUpperCase(), pageWidth / 2, y, { align: 'center', charSpace: 1.0 });
 
   y += 7;
   doc.setTextColor(160, 160, 160);
-  doc.setFont('helvetica', 'normal');
+  doc.setFont(F_BODY, 'normal');
   doc.setFontSize(8);
   doc.text('STAFF LEVEL REPORT', pageWidth / 2, y, { align: 'center', charSpace: 1.2 });
 
@@ -139,11 +143,11 @@ export function generateStaffLevelReportPDF(options: StaffLevelReportOptions): j
   summaryItems.forEach((item, i) => {
     const cx = MARGIN + colW * i + colW / 2;
     doc.setTextColor(130, 130, 130);
-    doc.setFont('helvetica', 'normal');
+    doc.setFont(F_BODY, 'normal');
     doc.setFontSize(6.5);
     doc.text(item.label, cx, y + 9, { align: 'center' });
     doc.setTextColor(...item.color);
-    doc.setFont('helvetica', 'bold');
+    doc.setFont(F_DISPLAY, 'normal');
     doc.setFontSize(16);
     doc.text(item.value, cx, y + 20, { align: 'center' });
 
@@ -270,7 +274,7 @@ export function generateStaffLevelReportPDF(options: StaffLevelReportOptions): j
 
     doc.setFontSize(6.5);
     doc.setTextColor(180, 180, 180);
-    doc.setFont('helvetica', 'normal');
+    doc.setFont(F_BODY, 'normal');
     doc.setCharSpace(0);
     doc.text(`Confidential — For internal use only  ·  ${orgName}`, pageWidth / 2, pageH - 9, { align: 'center' });
     doc.text(`Page ${p} of ${totalPages}`, pageWidth / 2, pageH - 5, { align: 'center' });
