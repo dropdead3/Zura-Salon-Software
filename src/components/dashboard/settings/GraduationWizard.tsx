@@ -1033,13 +1033,31 @@ export function GraduationWizard({ open, onOpenChange, levelId, levelLabel, leve
                       <ShieldCheck className="w-4 h-4 text-muted-foreground" />
                       <div>
                         <p className="text-sm">Require Manager Approval</p>
-                        <p className="text-[10px] text-muted-foreground">Promotion needs sign-off even when criteria are met</p>
+                        <p className="text-[10px] text-muted-foreground">Notify managers for review when criteria are met instead of auto-qualifying</p>
                       </div>
                     </div>
                     <Switch
                       checked={form.requires_manual_approval}
                       onCheckedChange={(v) => setField('requires_manual_approval', v)}
                     />
+                  </div>
+
+                  {/* Promotion approval explainer */}
+                  <div className="rounded-xl border border-blue-500/20 bg-blue-500/[0.04] p-4">
+                    <div className="flex gap-3">
+                      <div className="flex-shrink-0 mt-0.5">
+                        <div className="h-7 w-7 rounded-lg bg-blue-500/10 flex items-center justify-center">
+                          <ShieldCheck className="h-3.5 w-3.5 text-blue-400" />
+                        </div>
+                      </div>
+                      <div className="space-y-1 min-w-0">
+                        <h4 className="font-display text-[11px] tracking-wide text-blue-400">ABOUT PROMOTION APPROVAL</h4>
+                        <p className="text-xs text-muted-foreground leading-relaxed">
+                          Admins with permissions can promote or demote stylists at any time from the Graduation Tracker — this setting does not restrict that ability.
+                          <span className="block mt-1">When enabled, the system will notify managers when a stylist meets their criteria, requiring manual sign-off before the level change takes effect. When disabled, qualifying stylists are automatically flagged as ready without requiring approval.</span>
+                        </p>
+                      </div>
+                    </div>
                   </div>
 
                   {enabledCount > 0 && (
