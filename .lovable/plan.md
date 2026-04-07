@@ -1,39 +1,29 @@
 
 
-# Reconstruct Level Criteria Wizard for Base Level (Level 1)
+# Add Explainer for Level 1 — No Promotion Requirements
 
-## Problem
+## What & Why
 
-Level 1 (the base level) has **no promotion requirements** — every stylist starts here. It only has "Required to Stay" retention criteria. But the wizard currently:
+When an admin opens the Level 1 configurator, the "Level Requirements" tab is disabled but there's no explanation of **why**. The user needs a clear, contextual explainer that communicates: Level 1 is where every stylist starts — there are no requirements to earn it. The only configurable criteria are retention minimums (standards to stay / not get terminated).
 
-1. Opens on the "Level Requirements" tab by default — showing empty KPI toggles with a disabled "Next" button
-2. The "Required to Stay" tab says "KPI Minimums Inherited" from promotion criteria — but Level 1 has none, so nothing is inherited
-3. The retention save handler (`handleSaveRetention`) copies KPI values from the promotion form, which is empty for Level 1
-
-This makes the wizard unusable for Level 1.
-
-## Fix
+## Change
 
 **File:** `src/components/dashboard/settings/GraduationWizard.tsx`
 
-### 1. Default to retention tab for Level 1
-Line 486: Change condition from `levelIndex === totalLevels - 1` to `levelIndex === 0 || levelIndex === totalLevels - 1` — both the base level and the top level skip promotion requirements.
+**Location:** Inside the retention tab content for `levelIndex === 0`, immediately above the existing "Baseline Standards" amber info box (~line 1067-1068).
 
-### 2. Disable the "Level Requirements" tab for Level 1
-Line 680: Same condition change — disable the promotion tab button for `levelIndex === 0` (base level), matching the existing pattern for the last level.
+Add a blue explainer box (matching the Page Explainer aesthetic) with:
 
-### 3. Show independent KPI toggles on retention tab for Level 1
-When `levelIndex === 0`, replace the "KPI Minimums Inherited" info box (lines 1063-1074) with the full list of retention KPI toggles using `RETENTION_CRITERIA`. Each toggle shows the metric name, info tooltip, switch, and threshold input — similar to the promotion step 0 UI but using `retForm` fields (`enabledKey` / `minimumKey`).
+- **Icon:** `BookOpen` in a blue icon container
+- **Eyebrow:** "PAGE EXPLAINER" (uppercase, `font-display`)
+- **Title:** "No Requirements to Earn This Level"
+- **Body:** "Every stylist begins here. There are no promotion criteria for the entry level — it is the starting point. Use the retention standards below to define minimum performance expectations. Stylists who fall below these thresholds can be flagged for review or termination."
 
-### 4. Fix retention save for Level 1
-In `handleSaveRetention` (lines 587-620), when `levelIndex === 0`, use `retForm` field values directly instead of inheriting from the empty promotion `form`. For all other levels, keep the existing inheritance behavior.
-
-### 5. Update description text
-- On the retention tab for Level 1, change the "Enable Retention Monitoring" subtitle to: "Set minimum performance standards for stylists at this level"
-- Add a contextual note: "As the entry level, these are the baseline standards all stylists must maintain."
+This uses the same visual language as `Infotainer` / `FirstTimeCallout` (blue-500/[0.04] bg, blue-500/20 border) but is **not dismissible** — it's permanent contextual guidance, not a one-time callout.
 
 ## Scope
-- Single file: `GraduationWizard.tsx`
-- No database changes — retention criteria table already supports independent KPI values
-- No new components needed
+
+- Single file edit, ~15 lines added
+- No database or component changes
+- Inline explainer, not a registered `PageExplainer` (this is wizard-context-specific)
 
