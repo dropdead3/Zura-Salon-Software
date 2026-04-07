@@ -867,24 +867,7 @@ function CriteriaComparisonTable({ levels, promotionCriteria, retentionCriteria,
                       <span className="text-[10px] font-display uppercase tracking-widest text-muted-foreground/50">
                         Level {idx + 1}
                       </span>
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-sm font-medium">{level.label}</span>
-                        {level.dbId && (
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <span className={cn(
-                                "w-2 h-2 rounded-full inline-block",
-                                retentionActive ? "bg-emerald-500" : "bg-muted-foreground/20"
-                              )} />
-                            </TooltipTrigger>
-                            <TooltipContent side="top" className="text-xs">
-                              {retentionActive
-                                ? `Retention active · ${ret!.evaluation_window_days}d window`
-                                : 'Retention monitoring off'}
-                            </TooltipContent>
-                          </Tooltip>
-                        )}
-                      </div>
+                      <span className="text-sm font-medium">{level.label}</span>
                       {level.dbId ? (
                         <button
                           onClick={() => onEditLevel(level, idx)}
