@@ -659,7 +659,7 @@ export function GraduationWizard({ open, onOpenChange, levelId, levelLabel, leve
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg p-0 gap-0 overflow-hidden">
+      <DialogContent className="sm:max-w-lg sm:left-[calc(50%+140px)] p-0 gap-0 overflow-hidden">
         {/* Header */}
         <div className="px-6 pt-6 pb-4 border-b border-border/50">
           <DialogHeader>
