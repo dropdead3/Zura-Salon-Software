@@ -45,7 +45,6 @@ export function useColorBarStations(locationId?: string) {
     },
     enabled: !!orgId,
     staleTime: 2 * 60 * 1000,
-    refetchInterval: 30000,
   });
 }
 

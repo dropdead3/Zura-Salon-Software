@@ -342,7 +342,7 @@ export function useKioskDeviceStatus(organizationId?: string) {
       return map;
     },
     enabled: !!organizationId,
-    refetchInterval: 60_000,
+    staleTime: 120_000, // Settings don't change per-minute
   });
 }
 

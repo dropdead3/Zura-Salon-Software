@@ -196,7 +196,7 @@ export function useTodaysQueue(locationId?: string) {
         },
       };
     },
-    refetchInterval: 30000, // Auto-refresh every 30 seconds
+    staleTime: 30000, // Has realtime subscription, no polling needed
   });
 
   // Set up realtime subscription

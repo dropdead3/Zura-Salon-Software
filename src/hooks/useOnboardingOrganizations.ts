@@ -33,7 +33,8 @@ export function useOnboardingOrganizations() {
         .from('organizations')
         .select('*')
         .neq('onboarding_stage', 'live')
-        .order('go_live_date', { ascending: true, nullsFirst: false });
+        .order('go_live_date', { ascending: true, nullsFirst: false })
+        .limit(200);
 
       if (error) throw error;
 
@@ -102,6 +103,6 @@ export function useOnboardingOrganizations() {
 
       return { organizations: enrichedOrgs, stats };
     },
-    refetchInterval: 30000, // 30 seconds
+    refetchInterval: 300000, // 5 minutes (platform admin, low traffic)
   });
 }

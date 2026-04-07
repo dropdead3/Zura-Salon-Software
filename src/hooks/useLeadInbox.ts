@@ -49,7 +49,7 @@ export function useLeadInbox(filters: LeadFilters = {}) {
         query = query.eq('assigned_to', filters.assignedTo);
       }
 
-      const { data, error } = await query;
+      const { data, error } = await query.limit(200);
       if (error) throw error;
 
       // Transform the data to flatten the nested objects
@@ -61,7 +61,7 @@ export function useLeadInbox(filters: LeadFilters = {}) {
         assigner: undefined,
       })) as LeadWithAssignee[];
     },
-    refetchInterval: 30000, // Refresh every 30 seconds for real-time feel
+    staleTime: 30000,
   });
 
   // Fetch location names for display
@@ -355,6 +355,6 @@ export function useLeadCounts() {
         lost: leads.filter(l => l.status === 'lost').length,
       };
     },
-    refetchInterval: 30000,
+    staleTime: 30000,
   });
 }

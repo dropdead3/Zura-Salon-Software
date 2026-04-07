@@ -93,7 +93,7 @@ export function useLatestBenchmarks() {
         metadata: b.metadata as Record<string, unknown>,
       }));
     },
-    refetchInterval: 60000,
+    staleTime: 300000, // Benchmark data changes daily, no frequent polling needed
   });
 }
 

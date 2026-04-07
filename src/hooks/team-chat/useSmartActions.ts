@@ -71,7 +71,7 @@ export function useSmartActions() {
       return data as unknown as SmartAction[];
     },
     enabled: !!user?.id,
-    refetchInterval: 30000, // Refetch every 30s to check expiry
+    staleTime: 30000, // Has realtime subscription, no polling needed
   });
 
   // Subscribe to realtime changes for new smart actions
