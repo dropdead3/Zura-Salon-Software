@@ -1268,6 +1268,7 @@ function CriteriaComparisonTable({ levels, promotionCriteria, retentionCriteria,
               className="text-sm p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
             >
               <X className="w-4 h-4" />
+            </button>
           </motion.div>
         )}
       </AnimatePresence>
