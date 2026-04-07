@@ -525,39 +525,91 @@ export function IndividualStaffReport({ dateFrom, dateTo, locationId, onClose, i
           <ArrowLeft className="w-4 h-4" /> Back to Reports
         </button>
         <div className="flex items-center gap-3 flex-wrap">
-          <Select value={selectedStaffId} onValueChange={setSelectedStaffId}>
-            <SelectTrigger className="w-[260px]">
-              <SelectValue placeholder="Select a staff member..." />
-            </SelectTrigger>
-            <SelectContent>
-              {staffList.map((member) => (
-                <SelectItem key={member.user_id} value={member.user_id}>
-                  <div className="flex items-center gap-2">
-                    <Avatar className="w-5 h-5">
-                      <AvatarImage src={member.photo_url || undefined} />
-                      <AvatarFallback className="text-[8px]">{getInitials(formatName(member))}</AvatarFallback>
-                    </Avatar>
-                    {formatName(member)}
+          {/* Multi-select staff picker */}
+          <Popover open={staffPickerOpen} onOpenChange={setStaffPickerOpen}>
+            <PopoverTrigger asChild>
+              <Button variant="outline" role="combobox" aria-expanded={staffPickerOpen} className="w-[280px] justify-between">
+                {selectedStaffIds.length === 0 ? (
+                  <span className="text-muted-foreground">Select staff members...</span>
+                ) : (
+                  <div className="flex items-center gap-1.5 overflow-hidden">
+                    <div className="flex -space-x-1.5">
+                      {selectedStaffIds.slice(0, 3).map(id => {
+                        const m = staffList.find(s => s.user_id === id);
+                        return m ? (
+                          <Avatar key={id} className="w-5 h-5 border border-background">
+                            <AvatarImage src={m.photo_url || undefined} />
+                            <AvatarFallback className="text-[7px]">{getInitials(formatName(m))}</AvatarFallback>
+                          </Avatar>
+                        ) : null;
+                      })}
+                    </div>
+                    <span className="text-sm truncate">
+                      {selectedStaffIds.length === 1
+                        ? formatName(staffList.find(s => s.user_id === selectedStaffIds[0]) || { full_name: 'Unknown', display_name: null })
+                        : `${selectedStaffIds.length} selected`}
+                    </span>
                   </div>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+                )}
+                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-[280px] p-0" align="start">
+              <Command>
+                <CommandInput placeholder="Search staff..." />
+                <CommandList>
+                  <CommandEmpty>No staff found.</CommandEmpty>
+                  <CommandGroup>
+                    {/* Select All */}
+                    <CommandItem onSelect={toggleSelectAll} className="font-medium">
+                      <Checkbox
+                        checked={selectedStaffIds.length === staffList.length && staffList.length > 0}
+                        className="mr-2"
+                      />
+                      {selectedStaffIds.length === staffList.length && staffList.length > 0 ? 'Deselect All' : 'Select All'}
+                      <Badge variant="secondary" className="ml-auto text-[10px]">{staffList.length}</Badge>
+                    </CommandItem>
+                    {/* Individual members */}
+                    {staffList.map((member) => (
+                      <CommandItem key={member.user_id} value={formatName(member)} onSelect={() => toggleStaffId(member.user_id)}>
+                        <Checkbox checked={selectedStaffIds.includes(member.user_id)} className="mr-2" />
+                        <Avatar className="w-5 h-5 mr-2">
+                          <AvatarImage src={member.photo_url || undefined} />
+                          <AvatarFallback className="text-[7px]">{getInitials(formatName(member))}</AvatarFallback>
+                        </Avatar>
+                        <span className="truncate">{formatName(member)}</span>
+                        {member.user_id === viewingStaffId && (
+                          <Check className="ml-auto h-3 w-3 text-primary" />
+                        )}
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                </CommandList>
+              </Command>
+            </PopoverContent>
+          </Popover>
+
           {data && (
             <>
               <Button variant="outline" size={tokens.button.card} onClick={exportCSV}>
                 <FileSpreadsheet className="w-4 h-4 mr-2" /> CSV
               </Button>
-              <Button size={tokens.button.card} onClick={generatePDF} disabled={isGenerating}>
-                {isGenerating ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Generating...</> : <><Download className="w-4 h-4 mr-2" /> Download PDF</>}
-              </Button>
+              {selectedStaffIds.length > 1 ? (
+                <Button size={tokens.button.card} onClick={generateBulkPDF} disabled={isGenerating}>
+                  {isGenerating ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Generating...</> : <><Download className="w-4 h-4 mr-2" /> Download All ({selectedStaffIds.length})</>}
+                </Button>
+              ) : (
+                <Button size={tokens.button.card} onClick={generatePDF} disabled={isGenerating}>
+                  {isGenerating ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Generating...</> : <><Download className="w-4 h-4 mr-2" /> Download PDF</>}
+                </Button>
+              )}
             </>
           )}
         </div>
       </div>
 
       {/* No selection state */}
-      {!selectedStaffId && (
+      {!viewingStaffId && (
         <Card>
           <CardContent className="p-12 text-center">
             <Users className="w-12 h-12 mx-auto mb-4 text-muted-foreground/30" />
@@ -568,7 +620,7 @@ export function IndividualStaffReport({ dateFrom, dateTo, locationId, onClose, i
       )}
 
       {/* Loading */}
-      {selectedStaffId && isLoading && (
+      {viewingStaffId && isLoading && (
         <div className="space-y-4">
           <Skeleton className="h-24 w-full" />
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">{[1,2,3,4,5,6,7,8].map(i => <Skeleton key={i} className="h-28" />)}</div>
