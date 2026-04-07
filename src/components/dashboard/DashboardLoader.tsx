@@ -25,7 +25,7 @@ export function DashboardLoader({ size = 'lg', className }: DashboardLoaderProps
 
   if (useSkeletons) {
     return (
-      <div className={cn('flex flex-col items-center justify-center gap-3', className)}>
+      <div className={cn('flex flex-col items-center justify-center gap-3', !(className?.includes('min-h-') || className?.includes('h-')) && 'min-h-[60vh]', className)}>
         <Skeleton className="h-4 w-48 rounded" />
         <Skeleton className="h-3 w-32 rounded" />
         <Skeleton className="h-3 w-40 rounded" />
@@ -35,8 +35,10 @@ export function DashboardLoader({ size = 'lg', className }: DashboardLoaderProps
 
   const LoaderComponent = LOADER_MAP[loaderStyle] || ZuraLoader;
 
+  const hasHeightClass = className?.includes('min-h-') || className?.includes('h-');
+
   return (
-    <div className={cn('flex items-center justify-center', className)}>
+    <div className={cn('flex items-center justify-center', !hasHeightClass && 'min-h-[60vh]', className)}>
       <LoaderComponent size={size} />
     </div>
   );
