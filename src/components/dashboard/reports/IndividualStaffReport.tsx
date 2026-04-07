@@ -161,6 +161,7 @@ export function IndividualStaffReport({ dateFrom, dateTo, locationId, onClose, i
     branding: any,
     fmtCurrency: (v: number) => string,
     fmtDate: (d: Date, fmt: string) => string,
+    strikes?: StaffStrikeWithDetails[],
   ) => {
     const headerOpts = {
       orgName: businessSettings?.business_name || effectiveOrganization?.name || 'Organization',
