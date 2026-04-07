@@ -1075,24 +1075,24 @@ export function GraduationWizard({ open, onOpenChange, levelId, levelLabel, leve
                     </div>
                     <div className="flex gap-2">
                       {EVAL_WINDOWS.map(days => (
-                        <button
-                          key={days}
-                          onClick={() => setField('evaluation_window_days', days)}
-                          className={cn(
-                            "relative flex-1 py-2.5 rounded-lg text-sm transition-colors border",
-                            form.evaluation_window_days === days
-                              ? "bg-primary/10 border-primary/30 text-primary"
-                              : "bg-transparent border-border text-muted-foreground hover:bg-muted",
-                            days === 90 && form.evaluation_window_days !== days && "border-primary/15"
-                          )}
-                        >
-                          <span>{days} days</span>
+                        <div key={days} className="flex-1 flex flex-col items-center">
                           {days === 90 && (
-                            <span className="block text-[9px] tracking-wide uppercase font-display text-primary/60 mt-0.5">
+                            <span className="text-[9px] tracking-wide uppercase font-display text-success mb-1">
                               Recommended
                             </span>
                           )}
-                        </button>
+                          <button
+                            onClick={() => setField('evaluation_window_days', days)}
+                            className={cn(
+                              "w-full py-2 rounded-lg text-sm transition-colors border",
+                              form.evaluation_window_days === days
+                                ? "bg-primary/10 border-primary/30 text-primary"
+                                : "bg-transparent border-border text-muted-foreground hover:bg-muted"
+                            )}
+                          >
+                            {days} days
+                          </button>
+                        </div>
                       ))}
                     </div>
                   </div>
@@ -1327,24 +1327,24 @@ export function GraduationWizard({ open, onOpenChange, levelId, levelLabel, leve
                       <p className="text-[10px] text-muted-foreground mb-2">Rolling period used to evaluate retention</p>
                       <div className="flex gap-2">
                         {EVAL_WINDOWS.map(days => (
-                          <button
-                            key={days}
-                            onClick={() => setRetField('evaluation_window_days', days)}
-                            className={cn(
-                              "relative flex-1 py-2.5 rounded-lg text-sm transition-colors border",
-                              retForm.evaluation_window_days === days
-                                ? "bg-primary/10 border-primary/30 text-primary"
-                                : "bg-transparent border-border text-muted-foreground hover:bg-muted",
-                              days === 90 && retForm.evaluation_window_days !== days && "border-primary/15"
-                            )}
-                          >
-                            <span>{days} days</span>
+                          <div key={days} className="flex-1 flex flex-col items-center">
                             {days === 90 && (
-                              <span className="block text-[9px] tracking-wide uppercase font-display text-primary/60 mt-0.5">
+                              <span className="text-[9px] tracking-wide uppercase font-display text-success mb-1">
                                 Recommended
                               </span>
                             )}
-                          </button>
+                            <button
+                              onClick={() => setRetField('evaluation_window_days', days)}
+                              className={cn(
+                                "w-full py-2 rounded-lg text-sm transition-colors border",
+                                retForm.evaluation_window_days === days
+                                  ? "bg-primary/10 border-primary/30 text-primary"
+                                  : "bg-transparent border-border text-muted-foreground hover:bg-muted"
+                              )}
+                            >
+                              {days} days
+                            </button>
+                          </div>
                         ))}
                       </div>
                     </div>
@@ -1354,24 +1354,24 @@ export function GraduationWizard({ open, onOpenChange, levelId, levelLabel, leve
                       <p className="text-[10px] text-muted-foreground mb-2">How long below threshold before flagged for action</p>
                       <div className="flex gap-2">
                         {GRACE_PERIODS.map(days => (
-                          <button
-                            key={days}
-                            onClick={() => setRetField('grace_period_days', days)}
-                            className={cn(
-                              "relative flex-1 py-2.5 rounded-lg text-sm transition-colors border",
-                              retForm.grace_period_days === days
-                                ? "bg-primary/10 border-primary/30 text-primary"
-                                : "bg-transparent border-border text-muted-foreground hover:bg-muted",
-                              days === 30 && retForm.grace_period_days !== days && "border-primary/15"
-                            )}
-                          >
-                            <span>{days}d</span>
+                          <div key={days} className="flex-1 flex flex-col items-center">
                             {days === 30 && (
-                              <span className="block text-[9px] tracking-wide uppercase font-display text-primary/60 mt-0.5">
+                              <span className="text-[9px] tracking-wide uppercase font-display text-success mb-1">
                                 Recommended
                               </span>
                             )}
-                          </button>
+                            <button
+                              onClick={() => setRetField('grace_period_days', days)}
+                              className={cn(
+                                "w-full py-2 rounded-lg text-sm transition-colors border",
+                                retForm.grace_period_days === days
+                                  ? "bg-primary/10 border-primary/30 text-primary"
+                                  : "bg-transparent border-border text-muted-foreground hover:bg-muted"
+                              )}
+                            >
+                              {days}d
+                            </button>
+                          </div>
                         ))}
                       </div>
                       {/* Dynamic grace vs evaluation window explainer */}
