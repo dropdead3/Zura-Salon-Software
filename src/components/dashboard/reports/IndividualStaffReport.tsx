@@ -383,7 +383,7 @@ export function IndividualStaffReport({ dateFrom, dateTo, locationId, onClose, i
 
         // Fetch compliance data for this staff member
         const { data: compRows } = await supabase
-          .from('staff_backroom_performance')
+          .from('staff_backroom_performance' as any)
           .select('*')
           .eq('staff_user_id', staffId)
           .gte('period_date', dateFrom)
@@ -697,7 +697,7 @@ export function IndividualStaffReport({ dateFrom, dateTo, locationId, onClose, i
           </div>
 
           {/* Level Progression */}
-          <LevelProgressCard userId={selectedStaffId} />
+          <LevelProgressCard userId={viewingStaffId} />
 
           {/* Section 3: Multi-Period Trend Indicators */}
           <Card>
