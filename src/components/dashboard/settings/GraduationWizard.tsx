@@ -48,6 +48,7 @@ import {
   type LevelRetentionCriteriaUpsert,
 } from '@/hooks/useLevelRetentionCriteria';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
+import { useUpdateStylistLevel } from '@/hooks/useStylistLevels';
 
 interface GraduationWizardProps {
   open: boolean;
@@ -329,6 +330,7 @@ export function GraduationWizard({ open, onOpenChange, levelId, levelLabel, leve
   const deleteCriteria = useDeleteLevelPromotionCriteria();
   const upsertRetention = useUpsertLevelRetentionCriteria();
   const deleteRetention = useDeleteLevelRetentionCriteria();
+  const updateLevel = useUpdateStylistLevel();
 
   // Optimistic cache-seed: hydrate form instantly from bulk cache to avoid loading flash
   useEffect(() => {
@@ -569,7 +571,10 @@ export function GraduationWizard({ open, onOpenChange, levelId, levelLabel, leve
       is_active: true,
     };
     upsert.mutate(payload, {
-      onSuccess: () => onOpenChange(false),
+      onSuccess: () => {
+        updateLevel.mutate({ id: levelId, is_configured: true });
+        onOpenChange(false);
+      },
     });
   };
 
@@ -617,7 +622,10 @@ export function GraduationWizard({ open, onOpenChange, levelId, levelLabel, leve
       is_active: true,
     };
     upsertRetention.mutate(payload, {
-      onSuccess: () => onOpenChange(false),
+      onSuccess: () => {
+        updateLevel.mutate({ id: levelId, is_configured: true });
+        onOpenChange(false);
+      },
     });
   };
 
