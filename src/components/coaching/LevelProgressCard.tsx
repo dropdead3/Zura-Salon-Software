@@ -8,6 +8,7 @@ import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { useLevelProgress } from '@/hooks/useLevelProgress';
 import { useResolveCommission } from '@/hooks/useResolveCommission';
 import { useStylistLevels } from '@/hooks/useStylistLevels';
+import { useLevelUpliftEstimate } from '@/hooks/useLevelUpliftEstimate';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
 
 interface LevelProgressCardProps {
@@ -87,43 +88,50 @@ export function LevelProgressCard({ userId, compact = false }: LevelProgressCard
     return null;
   }
 
-  // Commission uplift calculation
+  // Commission uplift calculation using service price-aware hook
+  const currentResolved = (progress.nextLevelLabel && userId) ? resolveCommission(userId, 1000, 0) : null;
+  const nextLevelObj = allLevels.find(l => l.id === progress.nextLevelId);
+  const currentSvcRate = currentResolved?.serviceRate ?? 0;
+  const nextSvcRate = nextLevelObj?.service_commission_rate ?? 0;
+
+  const upliftEstimate = useLevelUpliftEstimate({
+    userId,
+    currentLevelId: progress.currentLevelId,
+    nextLevelId: progress.nextLevelId ?? undefined,
+    currentCommRate: currentSvcRate,
+    nextCommRate: nextSvcRate,
+    evaluationWindowDays: progress.evaluationWindowDays || 30,
+  });
+
   let upliftSection: React.ReactNode = null;
-  if (progress.nextLevelLabel && progress.nextLevelId && userId) {
-    const currentResolved = resolveCommission(userId, 1000, 0);
-    const nextLevelObj = allLevels.find(l => l.id === progress.nextLevelId);
-    if (nextLevelObj && currentResolved) {
-      const currentSvcRate = currentResolved.serviceRate;
-      const nextSvcRate = nextLevelObj.service_commission_rate ?? 0;
-      if (nextSvcRate > currentSvcRate) {
-        const monthlyRevenue = progress.criteriaProgress.find(cp => cp.key === 'revenue')?.current || 0;
-        const monthlyUplift = monthlyRevenue * (nextSvcRate - currentSvcRate);
-        upliftSection = (
-          <div className="p-3 rounded-lg border border-emerald-200 bg-emerald-50/50 dark:border-emerald-800 dark:bg-emerald-950/20">
-            <div className="flex items-center gap-2 text-xs text-emerald-700 dark:text-emerald-400 mb-1.5">
-              <DollarSign className="w-3.5 h-3.5" />
-              <span className="font-medium">Income Opportunity</span>
-            </div>
-            <div className="grid grid-cols-3 gap-2 text-center">
-              <div>
-                <p className="text-[10px] text-muted-foreground">Commission Today</p>
-                <p className="text-sm tabular-nums">{(currentSvcRate * 100).toFixed(0)}%</p>
-              </div>
-              <div>
-                <p className="text-[10px] text-muted-foreground">At {progress.nextLevelLabel}</p>
-                <p className="text-sm tabular-nums text-emerald-600 dark:text-emerald-400">{(nextSvcRate * 100).toFixed(0)}%</p>
-              </div>
-              <div>
-                <p className="text-[10px] text-muted-foreground">Monthly Uplift</p>
-                <BlurredAmount className="text-sm tabular-nums text-emerald-600 dark:text-emerald-400">
-                  +${Math.round(monthlyUplift).toLocaleString()}
-                </BlurredAmount>
-              </div>
-            </div>
+  if (progress.nextLevelLabel && nextSvcRate > currentSvcRate && upliftEstimate.totalMonthlyUplift > 0) {
+    upliftSection = (
+      <div className="p-3 rounded-lg border border-emerald-200 bg-emerald-50/50 dark:border-emerald-800 dark:bg-emerald-950/20">
+        <div className="flex items-center gap-2 text-xs text-emerald-700 dark:text-emerald-400 mb-1.5">
+          <DollarSign className="w-3.5 h-3.5" />
+          <span className="font-medium">Income Opportunity</span>
+        </div>
+        <div className="grid grid-cols-3 gap-2 text-center">
+          <div>
+            <p className="text-[10px] text-muted-foreground">Commission Today</p>
+            <p className="text-sm tabular-nums">{(currentSvcRate * 100).toFixed(0)}%</p>
           </div>
-        );
-      }
-    }
+          <div>
+            <p className="text-[10px] text-muted-foreground">At {progress.nextLevelLabel}</p>
+            <p className="text-sm tabular-nums text-emerald-600 dark:text-emerald-400">{(nextSvcRate * 100).toFixed(0)}%</p>
+          </div>
+          <div>
+            <p className="text-[10px] text-muted-foreground">Monthly Uplift</p>
+            <BlurredAmount className="text-sm tabular-nums text-emerald-600 dark:text-emerald-400">
+              +${upliftEstimate.totalMonthlyUplift.toLocaleString()}
+            </BlurredAmount>
+          </div>
+        </div>
+        <p className="text-[9px] text-emerald-600/60 dark:text-emerald-400/60 mt-1 text-center">
+          includes service price increases
+        </p>
+      </div>
+    );
   }
 
   return (
