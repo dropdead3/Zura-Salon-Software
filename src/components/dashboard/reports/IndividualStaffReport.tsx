@@ -254,6 +254,10 @@ export function IndividualStaffReport({ dateFrom, dateTo, locationId, onClose, i
 
 
   // ── KPI cards data ──
+  const avgTip = data && data.productivity.completed > 0
+    ? Math.round((data.revenue.total * (data.experienceScore.tipRate ?? 0) / 100) / data.productivity.completed * 100) / 100
+    : 0;
+
   const kpis = data ? [
     { label: 'Total Revenue', value: formatCurrencyWhole(data.revenue.total), teamAvg: formatCurrencyWhole(data.teamAverages.revenue), icon: DollarSign, change: data.revenue.revenueChange, tooltip: 'Total revenue from all appointments in the period.' },
     { label: 'Avg Ticket', value: formatCurrencyWhole(data.revenue.avgTicket), teamAvg: formatCurrencyWhole(data.teamAverages.avgTicket), icon: Target, change: null, tooltip: 'Average revenue per completed appointment.' },
@@ -263,6 +267,8 @@ export function IndividualStaffReport({ dateFrom, dateTo, locationId, onClose, i
     { label: 'New Clients', value: data.clientMetrics.newClients.toString(), teamAvg: Math.round(data.teamAverages.newClients).toString(), icon: Star, change: null, tooltip: 'Number of first-time clients seen.' },
     { label: 'Commission Earned', value: formatCurrencyWhole(data.commission.totalCommission), teamAvg: '', icon: Wallet, change: null, tooltip: 'Estimated commission based on current tier and revenue.' },
     { label: 'Experience Score', value: `${data.experienceScore.composite}`, teamAvg: '', icon: Briefcase, change: null, tooltip: 'Composite score from rebooking, tips, retention, and retail.' },
+    { label: 'Tip Rate', value: `${(data.experienceScore.tipRate ?? 0).toFixed(1)}%`, teamAvg: '', icon: Percent, change: null, tooltip: 'Average tip percentage across completed appointments in the period.' },
+    { label: 'Avg Tip', value: formatCurrencyWhole(avgTip), teamAvg: '', icon: Banknote, change: null, tooltip: 'Average tip dollar amount per completed appointment.' },
   ] : [];
 
   // ── Strengths and improvements ──
