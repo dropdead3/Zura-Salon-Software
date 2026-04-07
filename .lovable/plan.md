@@ -1,59 +1,46 @@
 
 
-# Upgrade Level Roadmap PDF to Match Digital Typography
+# Fix Dialog Centering to Account for Sidebar
 
-## Why It Looks Different Today
+## Problem
 
-The PDF generator (`LevelRequirementsPDF.ts`) uses jsPDF's built-in `helvetica` font for everything. The digital roadmap uses **Termina** (headlines, uppercase labels) and **Aeonik Pro** (body text). That font mismatch is the single biggest gap between the two outputs.
+All dialogs (`DialogContent`) use `left-[50%] translate-x-[-50%]` which centers them relative to the full viewport. The persistent sidebar (320px expanded / 64px collapsed + margins) eats into the visible content area, causing dialogs to appear shifted left and partially hidden behind the sidebar on narrower screens.
 
-jsPDF *can* embed custom fonts, but OTF files must be converted to base64 and registered via `doc.addFileToVFS()` + `doc.addFont()`. The project already has the font files in `public/fonts/`.
+## Solution — CSS Custom Property on Layout Root
 
-## What Changes
+Set a CSS variable `--sidebar-offset` on the `DashboardLayout` root that equals **half the sidebar's occupied width**. The dialog component reads this variable to shift its center point into the content area.
 
-### 1. Embed Termina and Aeonik Pro into jsPDF
+```
+Viewport:  |--- sidebar (340px) ---|------------- content area --------------|
+Old center:                    ↑ (50% of viewport — partially behind sidebar)
+New center:                                      ↑ (50% of content area)
+```
 
-- Convert `Termina-Medium.otf` and `AeonikPro-Regular.otf` + `AeonikPro-Medium.otf` to base64 strings (generated once at build time or stored as static TS modules)
-- Register them with jsPDF at the start of `generateLevelRequirementsPDF()`
-- Replace all `doc.setFont('helvetica', ...)` calls with the correct font family
+### How the math works
 
-**Font mapping:**
-| Current (helvetica) | New font | Usage |
-|---------------------|----------|-------|
-| `helvetica, bold` for titles | `Termina, normal` (weight 500) | Card titles, org name, section headers, KPI values |
-| `helvetica, normal` for body | `AeonikPro, normal` (weight 400) | Descriptions, labels, footer text |
-| `helvetica, bold` for stats | `Termina, normal` | Stat values, level numbers |
+- Sidebar expanded: occupies ~340px → offset = 170px → dialog `left: calc(50% + 170px)`
+- Sidebar collapsed: occupies ~88px → offset = 44px → dialog `left: calc(50% + 44px)`  
+- Mobile (no sidebar): offset = 0 → standard centering
 
-### 2. Typography Refinements
-
-- Increase letter-spacing (`charSpace`) on Termina text to match the digital `tracking-[0.08em]` feel
-- Adjust font sizes slightly — Termina renders larger than Helvetica at the same point size
-- Section headers (COMPENSATION, RETENTION MINIMUMS) get Termina with wide tracking to match the digital eyebrow style
-- KPI labels stay Aeonik Pro (normal case in digital, but uppercase is acceptable in PDF context since they're short metric names)
-
-### 3. Visual Polish to Match Digital
-
-- Slightly softer card border color (currently `225,225,225` → match the digital's `border-border/60`)
-- Footer text in Aeonik Pro instead of Helvetica
-- Org name header in Termina with proper tracking
-
-## Technical Approach
-
-Create a new file `src/lib/pdf-fonts.ts` that exports the base64 font data as constants. This keeps the main PDF file clean and allows reuse by `StaffLevelReportPDF.ts`.
-
-The font files are ~50-80KB each as OTF. Base64 encoding adds ~33% overhead, so total addition is ~200-300KB of static JS. This is acceptable since it only loads when the user clicks "Download PDF."
-
-## Files Changed
+### Files Changed
 
 | File | Change |
 |------|--------|
-| `src/lib/pdf-fonts.ts` (new) | Base64 font data + jsPDF registration helper |
-| `src/components/dashboard/settings/LevelRequirementsPDF.ts` | Replace all `helvetica` → Termina/Aeonik Pro, adjust spacing |
-| `src/components/dashboard/settings/StaffLevelReportPDF.ts` | Same font swap for consistency |
+| `src/components/dashboard/DashboardLayout.tsx` | Set `--sidebar-offset` CSS variable on the layout wrapper, reactive to `sidebarCollapsed` state. Only applied at `lg:` breakpoint. |
+| `src/components/ui/dialog.tsx` | Replace `left-[50%]` with inline style `left: calc(50% + var(--sidebar-offset, 0px))`. Update slide-in/slide-out animations to match. |
+| `src/components/dashboard/drilldownDialogStyles.ts` | Same left-offset adjustment for drill-down dialogs. |
 
-## No Risk
+### Why CSS variable instead of React context
 
-- Fonts only load on PDF download (lazy import)
-- No UI changes
-- No database changes
-- Fallback: if font registration fails, jsPDF falls back to Helvetica automatically
+- Zero coupling between the dialog primitive and dashboard layout
+- Works for all dialogs globally — no per-dialog prop needed
+- The variable naturally falls back to `0px` outside the dashboard (login pages, public pages)
+- Animations stay in CSS, no JS re-renders on sidebar toggle
+
+### Edge cases handled
+
+- **Mobile**: No sidebar → variable unset → `var(--sidebar-offset, 0px)` = standard centering
+- **Hidden sidebar** (`hideSidebar` routes): Variable set to 0
+- **Sidebar toggle animation**: Variable updates with the same 500ms transition as the sidebar
+- **Drilldown dialogs**: Use the same variable via the shared constant
 
