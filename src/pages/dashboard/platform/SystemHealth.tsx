@@ -9,7 +9,11 @@ import {
   Database,
   Mail,
   Phone,
-  Globe
+  Globe,
+  HardDrive,
+  Zap,
+  Server,
+  TrendingUp
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { PlatformPageContainer } from '@/components/platform/ui/PlatformPageContainer';
@@ -17,9 +21,11 @@ import { PlatformPageHeader } from '@/components/platform/ui/PlatformPageHeader'
 import { PlatformButton } from '@/components/platform/ui/PlatformButton';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Progress } from '@/components/ui/progress';
 import { useSystemHealth, useRefreshSystemHealth } from '@/hooks/useSystemHealth';
 import { useLatestJobRuns, useJobStats } from '@/hooks/useEdgeFunctionLogs';
 import { usePOSProviderLabel } from '@/hooks/usePOSProviderLabel';
+import { useInfrastructureMetrics, useRefreshInfrastructureMetrics, type InfraMetric } from '@/hooks/useInfrastructureMetrics';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { PageExplainer } from '@/components/ui/PageExplainer';
