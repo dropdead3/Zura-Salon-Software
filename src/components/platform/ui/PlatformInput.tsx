@@ -41,6 +41,7 @@ const PlatformInput = React.forwardRef<HTMLInputElement, PlatformInputProps>(
           )}
           ref={ref}
           onChange={handleChange}
+          onWheel={type === 'number' ? (e) => e.currentTarget.blur() : undefined}
           {...props}
         />
       </div>
