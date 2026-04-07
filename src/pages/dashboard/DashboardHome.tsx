@@ -41,13 +41,8 @@ import { TaskDetailDrilldown } from '@/components/dashboard/TaskDetailDrilldown'
 import { TasksCard } from '@/components/dashboard/TasksCard';
 import { TodaysBirthdayBanner } from '@/components/dashboard/TodaysBirthdayBanner';
 import { TrialCountdownBanner } from '@/components/dashboard/TrialCountdownBanner';
-import { WidgetsSection } from '@/components/dashboard/WidgetsSection';
-import { useBirthdayNotifications } from '@/hooks/useBirthdayNotifications';
-import { useViewAs } from '@/contexts/ViewAsContext';
-import { AnnouncementsBento } from '@/components/dashboard/AnnouncementsBento';
-import { AnnouncementsDrawer } from '@/components/dashboard/AnnouncementsDrawer';
-import { LiveSessionIndicator } from '@/components/dashboard/LiveSessionIndicator';
-import { DashboardSetupWizard } from '@/components/dashboard/DashboardSetupWizard';
+const WidgetsSection = React.lazy(() => import('@/components/dashboard/WidgetsSection').then(m => ({ default: m.WidgetsSection })));
+const DashboardSetupWizard = React.lazy(() => import('@/components/dashboard/DashboardSetupWizard').then(m => ({ default: m.DashboardSetupWizard })));
 import { DashboardCustomizeMenu, getCardSize } from '@/components/dashboard/DashboardCustomizeMenu';
 import { useDashboardLayout, isPinnedCardEntry, getPinnedCardId, getPinnedVisibilityKey, PINNABLE_CARD_IDS, getPinnedCardIdsFromLayout, isPinnedInLayout } from '@/hooks/useDashboardLayout';
 import { TodaysQueueSection } from '@/components/dashboard/TodaysQueueSection';
