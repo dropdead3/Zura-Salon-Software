@@ -140,6 +140,7 @@ export function LevelEconomicsSection({ levels, whatIfRates }: LevelEconomicsSec
           <div className="flex items-center gap-2 mb-1.5">
             <AlertTriangle className="w-3.5 h-3.5 text-amber-600" />
             <span className="font-display text-xs tracking-wide text-amber-600">SILENT MARGIN EROSION</span>
+            <MetricInfoTooltip description="Detected when a level uses the base service price (no level-specific override) but has a higher commission rate than base. The salon pays more commission without charging more — margin shrinks silently." />
           </div>
           <p className="text-xs text-muted-foreground leading-relaxed">
             {erosionAlerts.length} service–level combination{erosionAlerts.length !== 1 ? 's use' : ' uses'} the base price instead of a level-specific price.
@@ -194,7 +195,7 @@ export function LevelEconomicsSection({ levels, whatIfRates }: LevelEconomicsSec
                           {formatPct(summary.weightedMarginPct)}
                         </span>
                       </BlurredAmount>
-                      <p className="text-[10px] text-muted-foreground mt-0.5">weighted margin</p>
+                      <p className="text-[10px] text-muted-foreground mt-0.5 flex items-center justify-center gap-1">weighted margin <MetricInfoTooltip description="Average margin across all services this level performs, weighted by how often each service is booked." /></p>
                     </div>
                   ) : (
                     <div className="text-center py-3">
@@ -207,7 +208,7 @@ export function LevelEconomicsSection({ levels, whatIfRates }: LevelEconomicsSec
                   {/* Cost breakdown */}
                   <div className="space-y-1.5 text-xs">
                     <div className="flex justify-between">
-                      <span className="text-muted-foreground">Revenue / stylist</span>
+                      <span className="text-muted-foreground flex items-center gap-1">Revenue / stylist <MetricInfoTooltip description="Average monthly service revenue per stylist at this level from trailing 90-day data." /></span>
                       <BlurredAmount>
                         <span className="text-foreground">{formatCurrencyLocal(summary.avgRevenuePerStylist)}/mo</span>
                       </BlurredAmount>
@@ -222,7 +223,7 @@ export function LevelEconomicsSection({ levels, whatIfRates }: LevelEconomicsSec
                     </div>
                     {summary.servicesBelow > 0 && (
                       <div className="flex justify-between">
-                        <span className="text-amber-600">Services below target</span>
+                        <span className="text-amber-600 flex items-center gap-1">Services below target <MetricInfoTooltip description="Number of services where the margin at this level falls below your target margin percentage." /></span>
                         <span className="text-amber-600">{summary.servicesBelow}</span>
                       </div>
                     )}
@@ -354,11 +355,11 @@ export function LevelEconomicsSection({ levels, whatIfRates }: LevelEconomicsSec
                       <TableRow>
                         <TableHead className={tokens.table.columnHeader}>Stylist</TableHead>
                         <TableHead className={cn(tokens.table.columnHeader, 'text-center')}>Level</TableHead>
-                        <TableHead className={cn(tokens.table.columnHeader, 'text-center')}>Appointments</TableHead>
-                        <TableHead className={cn(tokens.table.columnHeader, 'text-center')}>Revenue</TableHead>
-                        <TableHead className={cn(tokens.table.columnHeader, 'text-center')}>Margin</TableHead>
-                        <TableHead className={cn(tokens.table.columnHeader, 'text-center')}>Hourly Contribution</TableHead>
-                        <TableHead className={cn(tokens.table.columnHeader, 'text-center')}>Status</TableHead>
+                        <TableHead className={cn(tokens.table.columnHeader, 'text-center')}><div className="flex items-center justify-center gap-1">Appointments <MetricInfoTooltip description="Total appointments for this stylist in the 90-day analysis window." /></div></TableHead>
+                        <TableHead className={cn(tokens.table.columnHeader, 'text-center')}><div className="flex items-center justify-center gap-1">Revenue <MetricInfoTooltip description="Total service revenue for this stylist in the analysis window." /></div></TableHead>
+                        <TableHead className={cn(tokens.table.columnHeader, 'text-center')}><div className="flex items-center justify-center gap-1">Margin <MetricInfoTooltip description="Weighted average margin across all services this stylist performed, accounting for their actual service mix." /></div></TableHead>
+                        <TableHead className={cn(tokens.table.columnHeader, 'text-center')}><div className="flex items-center justify-center gap-1">Hourly Contribution <MetricInfoTooltip description="Effective margin earned per hour worked. Calculated as: (total margin dollars) ÷ (estimated hours worked). Higher is better." /></div></TableHead>
+                        <TableHead className={cn(tokens.table.columnHeader, 'text-center')}><div className="flex items-center justify-center gap-1">Status <MetricInfoTooltip description="Healthy means margin meets target. Tight means positive but below target. Underpriced means costs exceed revenue for this stylist's mix." /></div></TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>

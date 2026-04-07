@@ -367,7 +367,10 @@ export function CommissionEconomicsTab({ levels }: CommissionEconomicsTabProps) 
                 <TrendingUp className="w-5 h-5 text-primary" />
               </div>
               <div>
-                <CardTitle className={tokens.card.title}>MARGIN BY LEVEL</CardTitle>
+                <div className="flex items-center gap-1.5">
+                  <CardTitle className={tokens.card.title}>MARGIN BY LEVEL</CardTitle>
+                  <MetricInfoTooltip description="Shows each level's commission rate, breakeven revenue, and actual margin based on trailing 90-day average revenue per stylist. Breakeven is the revenue where costs equal income; Target Rev adds your desired profit margin on top." />
+                </div>
                 <CardDescription>Revenue required to sustain each commission level</CardDescription>
               </div>
             </div>
@@ -392,14 +395,14 @@ export function CommissionEconomicsTab({ levels }: CommissionEconomicsTabProps) 
               <TableHeader>
                 <TableRow>
                   <TableHead className={tokens.table.columnHeader}>Level</TableHead>
-                  <TableHead className={cn(tokens.table.columnHeader, 'text-center')}>Service %</TableHead>
-                  <TableHead className={cn(tokens.table.columnHeader, 'text-center')}>Retail %</TableHead>
-                  <TableHead className={cn(tokens.table.columnHeader, 'text-center')}>Hourly Wage</TableHead>
-                  <TableHead className={cn(tokens.table.columnHeader, 'text-center')}>Breakeven Rev</TableHead>
-                  <TableHead className={cn(tokens.table.columnHeader, 'text-center')}>Target Rev</TableHead>
-                  <TableHead className={cn(tokens.table.columnHeader, 'text-center')}>Actual Avg Rev</TableHead>
-                  <TableHead className={cn(tokens.table.columnHeader, 'text-center')}>Margin</TableHead>
-                  <TableHead className={cn(tokens.table.columnHeader, 'text-center')}>Status</TableHead>
+                  <TableHead className={cn(tokens.table.columnHeader, 'text-center')}><div className="flex items-center justify-center gap-1">Service % <MetricInfoTooltip description="Commission percentage paid on service revenue at this level." /></div></TableHead>
+                  <TableHead className={cn(tokens.table.columnHeader, 'text-center')}><div className="flex items-center justify-center gap-1">Retail % <MetricInfoTooltip description="Commission percentage paid on retail product sales at this level." /></div></TableHead>
+                  <TableHead className={cn(tokens.table.columnHeader, 'text-center')}><div className="flex items-center justify-center gap-1">Hourly Wage <MetricInfoTooltip description="Base hourly pay for this level, if enabled. This fixed cost is factored into breakeven and margin calculations." /></div></TableHead>
+                  <TableHead className={cn(tokens.table.columnHeader, 'text-center')}><div className="flex items-center justify-center gap-1">Breakeven Rev <MetricInfoTooltip description="Monthly revenue per stylist needed to cover all costs (commission + product + overhead + wage) with zero profit." /></div></TableHead>
+                  <TableHead className={cn(tokens.table.columnHeader, 'text-center')}><div className="flex items-center justify-center gap-1">Target Rev <MetricInfoTooltip description="Monthly revenue per stylist needed to cover all costs and achieve your target margin percentage." /></div></TableHead>
+                  <TableHead className={cn(tokens.table.columnHeader, 'text-center')}><div className="flex items-center justify-center gap-1">Actual Avg Rev <MetricInfoTooltip description="Average monthly service revenue per stylist at this level, calculated from trailing 90-day appointment data." /></div></TableHead>
+                  <TableHead className={cn(tokens.table.columnHeader, 'text-center')}><div className="flex items-center justify-center gap-1">Margin <MetricInfoTooltip description="Actual profit margin at this level's current revenue. Calculated as: (Revenue − Commission − Product Cost − Overhead − Wage) ÷ Revenue." /></div></TableHead>
+                  <TableHead className={cn(tokens.table.columnHeader, 'text-center')}><div className="flex items-center justify-center gap-1">Status <MetricInfoTooltip description="On Target means margin meets your goal. Tight means positive but below target. Negative means costs exceed revenue." /></div></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -513,7 +516,10 @@ export function CommissionEconomicsTab({ levels }: CommissionEconomicsTabProps) 
                   <Sparkles className="w-5 h-5 text-primary" />
                 </div>
                 <div>
-                  <CardTitle className={tokens.card.title}>ZURA RECOMMENDATIONS</CardTitle>
+                   <div className="flex items-center gap-1.5">
+                     <CardTitle className={tokens.card.title}>ZURA RECOMMENDATIONS</CardTitle>
+                     <MetricInfoTooltip description="AI-generated commission rate suggestions based on your cost structure, current revenue, and industry benchmarks. Apply to the What-If simulator to preview impact before making changes." />
+                   </div>
                   <CardDescription>{aiResult.summary}</CardDescription>
                 </div>
               </div>
@@ -609,7 +615,10 @@ export function CommissionEconomicsTab({ levels }: CommissionEconomicsTabProps) 
                     <SlidersHorizontal className="w-5 h-5 text-primary" />
                   </div>
                   <div>
-                    <CardTitle className={tokens.card.title}>WHAT-IF SIMULATOR</CardTitle>
+                    <div className="flex items-center gap-1.5">
+                      <CardTitle className={tokens.card.title}>WHAT-IF SIMULATOR</CardTitle>
+                      <MetricInfoTooltip description="Drag commission sliders to model how rate changes affect target revenue and margin. Changes here are hypothetical and do not save. Use 'Optimize with Zura' to get AI-recommended rates." />
+                    </div>
                     <CardDescription>Drag commission rates to see real-time margin impact</CardDescription>
                   </div>
                 </div>
