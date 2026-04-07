@@ -435,7 +435,7 @@ export function useTeamLevelProgress() {
       }
       if (criteria.tenure_enabled) {
         const target = criteria.tenure_days;
-        progress.push({ key: 'tenure', label: 'Tenure', enabled: true, current: tenureDays, priorCurrent: tenureDays, target, percent: target > 0 ? Math.min(100, (tenureDays / target) * 100) : 0, weight: 0, unit: 'd', gap: Math.max(0, target - tenureDays) });
+        progress.push({ key: 'tenure', label: 'Level Tenure', enabled: true, current: tenureDays, priorCurrent: tenureDays, target, percent: target > 0 ? Math.min(100, (tenureDays / target) * 100) : 0, weight: 0, unit: 'd', gap: Math.max(0, target - tenureDays) });
       }
 
       const weightedCriteria = progress.filter(p => p.weight > 0);
