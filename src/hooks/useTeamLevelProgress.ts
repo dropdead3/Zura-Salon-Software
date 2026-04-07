@@ -446,7 +446,7 @@ export function useTeamLevelProgress() {
       const tenurePasses = !criteria.tenure_enabled || tenureDays >= criteria.tenure_days;
       const isFullyQualified = compositeScore >= 100 && tenurePasses;
 
-      const score = Math.min(100, Math.round(compositeScore));
+      const score = Math.round(compositeScore);
 
       let status: GraduationStatus = 'in_progress';
       if (retentionFailures.length > 0) {

@@ -467,7 +467,7 @@ export function useLevelProgress(userId: string | undefined) {
       progress.push({
         key: 'revenue', label: 'Service Revenue', enabled: true,
         current: Math.round(promoMetrics.monthlyRevenue), priorCurrent: Math.round(priorMetrics.monthlyRevenue), target,
-        percent: target > 0 ? Math.min(100, (promoMetrics.monthlyRevenue / target) * 100) : 0,
+        percent: target > 0 ? (promoMetrics.monthlyRevenue / target) * 100 : 0,
         weight: nextCriteria.revenue_weight, unit: '/mo',
         gap: Math.max(0, target - promoMetrics.monthlyRevenue),
       });
@@ -477,7 +477,7 @@ export function useLevelProgress(userId: string | undefined) {
       progress.push({
         key: 'retail', label: 'Retail Attachment', enabled: true,
         current: Math.round(promoMetrics.retailPct * 10) / 10, priorCurrent: Math.round(priorMetrics.retailPct * 10) / 10, target,
-        percent: target > 0 ? Math.min(100, (promoMetrics.retailPct / target) * 100) : 0,
+        percent: target > 0 ? (promoMetrics.retailPct / target) * 100 : 0,
         weight: nextCriteria.retail_weight, unit: '%',
         gap: Math.max(0, target - promoMetrics.retailPct),
       });
@@ -487,7 +487,7 @@ export function useLevelProgress(userId: string | undefined) {
       progress.push({
         key: 'rebooking', label: 'Rebooking Rate', enabled: true,
         current: Math.round(promoMetrics.rebookingPct * 10) / 10, priorCurrent: Math.round(priorMetrics.rebookingPct * 10) / 10, target,
-        percent: target > 0 ? Math.min(100, (promoMetrics.rebookingPct / target) * 100) : 0,
+        percent: target > 0 ? (promoMetrics.rebookingPct / target) * 100 : 0,
         weight: nextCriteria.rebooking_weight, unit: '%',
         gap: Math.max(0, target - promoMetrics.rebookingPct),
       });
@@ -497,7 +497,7 @@ export function useLevelProgress(userId: string | undefined) {
       progress.push({
         key: 'avg_ticket', label: 'Average Ticket', enabled: true,
         current: Math.round(promoMetrics.avgTicket), priorCurrent: Math.round(priorMetrics.avgTicket), target,
-        percent: target > 0 ? Math.min(100, (promoMetrics.avgTicket / target) * 100) : 0,
+        percent: target > 0 ? (promoMetrics.avgTicket / target) * 100 : 0,
         weight: nextCriteria.avg_ticket_weight, unit: '$',
         gap: Math.max(0, target - promoMetrics.avgTicket),
       });
@@ -507,7 +507,7 @@ export function useLevelProgress(userId: string | undefined) {
       progress.push({
         key: 'retention_rate', label: 'Client Retention', enabled: true,
         current: Math.round(promoMetrics.retentionRate * 10) / 10, priorCurrent: Math.round(priorMetrics.retentionRate * 10) / 10, target,
-        percent: target > 0 ? Math.min(100, (promoMetrics.retentionRate / target) * 100) : 0,
+        percent: target > 0 ? (promoMetrics.retentionRate / target) * 100 : 0,
         weight: nextCriteria.retention_rate_weight, unit: '%',
         gap: Math.max(0, target - promoMetrics.retentionRate),
       });
@@ -517,7 +517,7 @@ export function useLevelProgress(userId: string | undefined) {
       progress.push({
         key: 'new_clients', label: 'New Clients', enabled: true,
         current: Math.round(promoMetrics.newClientsMonthly * 10) / 10, priorCurrent: Math.round(priorMetrics.newClientsMonthly * 10) / 10, target,
-        percent: target > 0 ? Math.min(100, (promoMetrics.newClientsMonthly / target) * 100) : 0,
+        percent: target > 0 ? (promoMetrics.newClientsMonthly / target) * 100 : 0,
         weight: nextCriteria.new_clients_weight, unit: '/mo',
         gap: Math.max(0, target - promoMetrics.newClientsMonthly),
       });
@@ -527,7 +527,7 @@ export function useLevelProgress(userId: string | undefined) {
       progress.push({
         key: 'utilization', label: 'Schedule Utilization', enabled: true,
         current: Math.round(promoMetrics.utilization * 10) / 10, priorCurrent: Math.round(priorMetrics.utilization * 10) / 10, target,
-        percent: target > 0 ? Math.min(100, (promoMetrics.utilization / target) * 100) : 0,
+        percent: target > 0 ? (promoMetrics.utilization / target) * 100 : 0,
         weight: nextCriteria.utilization_weight, unit: '%',
         gap: Math.max(0, target - promoMetrics.utilization),
       });
@@ -537,7 +537,7 @@ export function useLevelProgress(userId: string | undefined) {
       progress.push({
         key: 'rev_per_hour', label: 'Revenue Per Hour', enabled: true,
         current: Math.round(promoMetrics.revPerHour), priorCurrent: Math.round(priorMetrics.revPerHour), target,
-        percent: target > 0 ? Math.min(100, (promoMetrics.revPerHour / target) * 100) : 0,
+        percent: target > 0 ? (promoMetrics.revPerHour / target) * 100 : 0,
         weight: nextCriteria.rev_per_hour_weight, unit: '$/hr',
         gap: Math.max(0, target - promoMetrics.revPerHour),
       });
@@ -568,7 +568,7 @@ export function useLevelProgress(userId: string | undefined) {
       nextLevelId: nextLevel.id,
       criteria: nextCriteria,
       criteriaProgress: progress,
-      compositeScore: Math.min(100, Math.round(compositeScore)),
+      compositeScore: Math.round(compositeScore),
       isFullyQualified,
       requiresApproval: nextCriteria.requires_manual_approval,
       evaluationWindowDays: promoEvalDays,
