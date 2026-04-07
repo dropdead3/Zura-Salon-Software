@@ -2774,6 +2774,12 @@ export function StylistLevelsEditor({ embedded = false, onActions }: StylistLeve
               orgName: effectiveOrganization?.name || 'Organization',
               teamProgress,
               counts: teamCounts,
+              levelEconomics: levelEconomics.levelSummaries.length > 0 ? {
+                levelSummaries: levelEconomics.levelSummaries,
+                serviceMatrix: levelEconomics.serviceMatrix,
+                dateRange: levelEconomics.dateRange,
+                totalAppointments: levelEconomics.totalAppointments,
+              } : undefined,
             });
             doc.save('staff-level-report.pdf');
             toast.success('Staff level report exported');
