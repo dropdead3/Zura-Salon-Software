@@ -39,6 +39,7 @@ import { useBusinessSettings } from '@/hooks/useBusinessSettings';
 import { useReportLocationInfo } from '@/hooks/useReportLocationInfo';
 import { useIndividualStaffReport, type IndividualStaffReportData } from '@/hooks/useIndividualStaffReport';
 import { useStaffComplianceSummary } from '@/hooks/color-bar/useStaffComplianceSummary';
+import { useStaffStrikes, STRIKE_TYPE_LABELS, SEVERITY_LABELS, SEVERITY_COLORS, type StaffStrikeWithDetails, type StrikeType, type StrikeSeverity } from '@/hooks/useStaffStrikes';
 import { LevelProgressCard } from '@/components/coaching/LevelProgressCard';
 import { EmptyDataBanner, DateRangeSubtitle } from '@/components/ui/EmptyDataBanner';
 
