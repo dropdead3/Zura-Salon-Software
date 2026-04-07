@@ -1,31 +1,49 @@
 
 
-# Commission Override Toggle Guard
+# Save & Discard Guard for Commission Drilldown
 
 ## Problem
-The override fields are always visible, making it too easy for admins to accidentally set individual overrides. Overrides should be treated as exceptions, not defaults.
+Currently, level assignment fires immediately on select change, and override save is a separate action. The user wants all changes buffered locally and only committed when "Save Changes" is clicked. The dialog should block dismissal when there are unsaved changes, offering a discard option instead.
 
 ## Changes
 
 ### File: `src/components/dashboard/settings/StylistCommissionDrilldown.tsx`
 
-1. **Add toggle state**: Add a `showOverride` boolean state, initialized to `true` if an existing override is loaded, `false` otherwise.
+1. **Buffer level changes locally**: Replace the immediate `assignLevel.mutate` call in `handleLevelChange` with a local `pendingLevel` state. The Select updates `pendingLevel` instead of firing the mutation.
 
-2. **Replace the "Commission Override" label row** with a toggle row:
-   - Left: Label "Commission Override" + a small cautionary subtitle like "Only enable for individual rate exceptions"
-   - Right: `Switch` component bound to `showOverride`
-   - When an active override exists, the toggle starts ON and the "Remove" button remains available
+2. **Track dirty state**: Compute `isDirty` by comparing:
+   - `pendingLevel` vs current `member.stylist_level`
+   - Override form fields vs loaded `override` values
+   - `showOverride` toggle vs initial state (was there an existing override?)
 
-3. **Conditionally render override fields**: Wrap the inputs (Service %, Retail %, Reason, Expires, Save button) in an animated collapse that only shows when `showOverride` is true. Use `overflow: clip` with height transition or a simple conditional render.
+3. **Block dialog close**: Override `onOpenChange` — if `isDirty` and the user tries to close (clicking overlay, X, or pressing Escape), show an inline confirmation bar at the bottom: "You have unsaved changes" with **Discard** and **Save Changes** buttons instead of closing.
 
-4. **Visual treatment**: When the toggle is OFF, the section is clean and minimal. When ON, add a subtle amber/warning left-border or background tint (`border-l-2 border-amber-500/60 pl-3`) to reinforce that this is an exception path.
+4. **Save Changes handler**: A single "Save Changes" button in the footer that:
+   - If level changed → fires `assignLevel.mutate`
+   - If override toggled ON with data → fires `upsertOverride.mutate`
+   - If override toggled OFF (was previously on) → fires `deleteOverride.mutate`
+   - On all success → closes dialog
 
-5. **Reset on toggle off**: When toggling OFF, if there is an existing override, prompt or auto-trigger the remove action. If no override was saved yet, simply clear the form fields.
+5. **Discard handler**: Resets all local state to initial values and closes dialog.
+
+6. **Footer redesign**: Replace the current "Review Services & Pricing" footer with a two-button footer when dirty:
+   - Left: `Discard` (ghost/outline)
+   - Right: `Save Changes` (primary)
+   - When clean (no changes): show original "Review Services & Pricing" link
+
+7. **Remove individual Save/Remove buttons from override section**: The per-field "Save Override" and "Remove" buttons are replaced by the unified footer save. The override section becomes purely a form area.
+
+## Behavior Summary
+- Open dialog → local snapshot of current state
+- Make changes (level, override toggle, rates, reason, expiry) → all local only
+- Try to close with unsaved changes → blocked, shown discard/save prompt
+- Click "Save Changes" → commits all mutations, then closes
+- Click "Discard" → resets to snapshot, closes
 
 ## Files Changed
 | File | Change |
 |---|---|
-| `StylistCommissionDrilldown.tsx` | Add Switch toggle to guard override fields, conditional render, amber visual treatment |
+| `StylistCommissionDrilldown.tsx` | Buffer all changes locally, add dirty tracking, block close, unified save/discard footer |
 
 1 file, no database changes.
 
