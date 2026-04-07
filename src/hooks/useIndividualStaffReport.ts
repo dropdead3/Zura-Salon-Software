@@ -242,23 +242,30 @@ export function useIndividualStaffReport(staffUserId: string | null, dateFrom?: 
 
       // ── Fetch transaction items for services/products (paginated) ──
       const PAGE_SIZE = 1000;
-      const items: any[] = [];
-      {
+      async function fetchTxnItems(fromDate: string, toDate: string) {
+        const result: any[] = [];
         let offset = 0;
         let hasMore = true;
         while (hasMore) {
           const { data, error } = await supabase
             .from('phorest_transaction_items')
-            .select('item_name, item_type, item_category, quantity, total_amount, phorest_client_id, transaction_date')
+            .select('item_name, item_type, item_category, quantity, total_amount, tax_amount, phorest_client_id, transaction_date')
             .eq('phorest_staff_id', phorestStaffId)
-            .gte('transaction_date', dateFrom).lte('transaction_date', dateTo)
+            .gte('transaction_date', `${fromDate}T00:00:00`).lte('transaction_date', `${toDate}T23:59:59`)
             .range(offset, offset + PAGE_SIZE - 1);
           if (error) throw error;
-          items.push(...(data || []));
+          result.push(...(data || []));
           hasMore = (data?.length || 0) === PAGE_SIZE;
           offset += PAGE_SIZE;
         }
+        return result;
       }
+
+      const [items, priorItems, twoPriorItems] = await Promise.all([
+        fetchTxnItems(dateFrom, dateTo),
+        fetchTxnItems(priorFrom, priorTo),
+        fetchTxnItems(twoPriorFrom, twoPriorTo),
+      ]);
 
       // ── Fetch performance metrics ──
       const [currentMetricsRes, priorMetricsRes, twoPriorMetricsRes] = await Promise.all([
@@ -280,18 +287,35 @@ export function useIndividualStaffReport(staffUserId: string | null, dateFrom?: 
       const priorMetrics = priorMetricsRes.data || [];
       const twoPriorMetrics = twoPriorMetricsRes.data || [];
 
-      // ── TEAM AVERAGES: fetch all staff appointments for the same period ──
-      const { data: allStaffApts } = await supabase
-        .from('phorest_appointments')
-        .select('phorest_staff_id, total_price, phorest_client_id, status')
-        .gte('appointment_date', dateFrom).lte('appointment_date', dateTo)
-        .not('phorest_staff_id', 'is', null);
+      // ── TEAM AVERAGES: fetch all staff transaction items + metrics for the same period ──
+      async function fetchAllTeamTxnItems(fromDate: string, toDate: string) {
+        const result: any[] = [];
+        let offset = 0;
+        let hasMore = true;
+        while (hasMore) {
+          const { data, error } = await supabase
+            .from('phorest_transaction_items')
+            .select('phorest_staff_id, item_type, total_amount, tax_amount, phorest_client_id, transaction_date')
+            .gte('transaction_date', `${fromDate}T00:00:00`).lte('transaction_date', `${toDate}T23:59:59`)
+            .not('phorest_staff_id', 'is', null)
+            .range(offset, offset + PAGE_SIZE - 1);
+          if (error) throw error;
+          result.push(...(data || []));
+          hasMore = (data?.length || 0) === PAGE_SIZE;
+          offset += PAGE_SIZE;
+        }
+        return result;
+      }
 
-      const { data: allStaffMetrics } = await supabase
-        .from('phorest_performance_metrics')
-        .select('phorest_staff_id, rebooking_rate, retention_rate, new_clients')
-        .gte('week_start', dateFrom).lte('week_start', dateTo)
-        .not('phorest_staff_id', 'is', null);
+      const [allStaffTxnItems, allStaffMetricsRes] = await Promise.all([
+        fetchAllTeamTxnItems(dateFrom, dateTo),
+        supabase.from('phorest_performance_metrics')
+          .select('phorest_staff_id, rebooking_rate, retention_rate, new_clients')
+          .gte('week_start', dateFrom).lte('week_start', dateTo)
+          .not('phorest_staff_id', 'is', null),
+      ]);
+
+      const allStaffMetrics = allStaffMetricsRes.data;
 
       // ── Compute individual revenue ──
       let totalRevenue = 0;
