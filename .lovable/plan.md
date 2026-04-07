@@ -1,74 +1,65 @@
 
 
-# Settings Page Slow Load — Diagnosis and Fix
+# Apply Lazy-Loading to Other Heavy Pages
 
-## Root Cause
+## Pages Identified
 
-The Admin Settings page (`src/pages/dashboard/admin/Settings.tsx`) is a 1556-line monolithic file that **eagerly imports ~35 heavy components** at the top level. Every sub-page (Email Templates, Stylist Levels, Integrations, Onboarding, Loyalty, etc.) is bundled into a single chunk — even though only ONE category is visible at a time.
+After auditing the codebase, here are the pages that would benefit most from the same lazy-loading pattern applied to Settings:
 
-Additionally, `fetchUsers()` fires on mount unconditionally, and several hooks (`useBusinessCapacity`, `useSettingsLayout`, `useColorTheme`, `useRoleUtils`, `useBillingAccess`) all execute queries immediately regardless of which settings category the user is viewing.
+### High Impact
 
-## Fix — Two Changes
+**1. `DashboardHome.tsx` (845 lines, ~30 imports)**
+The main dashboard eagerly imports ~30 components including analytics cards, drawers, banners, and widgets. Many are conditionally rendered based on role or layout config. Lazy-loading the heavier, role-gated sections would significantly reduce initial chunk size.
 
-### 1. Lazy-load category content components
+Components to lazy-load:
+- `AIInsightsDrawer`, `PersonalInsightsDrawer`
+- `PinnedAnalyticsCard`, `AnalyticsFilterBar`
+- `WidgetsSection`, `DashboardSetupWizard`, `DashboardCustomizeMenu`
+- `TodaysQueueSection`, `TodaysPrepSection`, `StylistPushList`
+- `ActiveCampaignsCard`, `InventoryManagerDashboardCard`
+- `GraduationKpiTile`, `LevelProgressNudge`
+- `PaydayCountdownBanner`, `InsightsNudgeBanner`
 
-Convert the ~20 heavy content imports to `React.lazy()` so they only load when their category is selected:
+**2. `PlatformSettings.tsx` (7 tab components, all eager)**
+Every tab (Account, Team, Appearance, Security, Import Templates, Defaults, Integrations) loads upfront even though only one is visible at a time.
 
-```ts
-// Before (all loaded immediately):
-import { EmailTemplatesManager } from '...';
-import { OnboardingConfigurator } from '...';
-import { StylistLevelsContent } from '...';
-// ... 15+ more
+**3. `AccountDetail.tsx` (622 lines, ~8 heavy tab components)**
+Platform account detail page loads all tab content (Users, Settings, Import History, Billing, Notes, Integrations, Apps) eagerly.
 
-// After (loaded on demand):
-const EmailTemplatesManager = lazy(() => import('...'));
-const OnboardingConfigurator = lazy(() => import('...'));
-const StylistLevelsContent = lazy(() => import('...'));
-```
+### Medium Impact
 
-Wrap the category detail view in `<Suspense fallback={<DashboardLoader />}>` so it shows a loader while the chunk downloads.
+**4. `TrainingHub.tsx` (4 tab components)**
+`VideoLibraryManager`, `IndividualAssignments`, `TeamProgressDashboard`, `TrainingQuizManager` — all load even when only "Library" tab is active.
 
-Components to lazy-load (~18 total):
-- `EmailTemplatesManager`, `EmailVariablesManager`, `SignaturePresetsManager`, `EmailBrandingSettings`
-- `SmsTemplatesManager`
-- `OnboardingTasksManager`, `OnboardingConfigurator`
-- `LeaderboardConfigurator`, `LeaderboardWeightsManager`
-- `IntegrationsTab`
-- `StylistLevelsContent`
-- `CommandCenterContent`
-- `LocationsSettingsContent`, `DayRateSettingsContent`
-- `RoleAccessConfigurator`
-- `FormsTemplatesContent`, `MetricsGlossaryContent`
-- `LoyaltySettingsContent`, `TeamRewardsConfigurator`
-- `KioskSettingsContent`, `ServiceEmailFlowsManager`
-- `ServicesSettingsContent`, `RetailProductsSettingsContent`
-- `AccountBillingContent`
+**5. `ZuraConfigPage.tsx` (4 tab components)**
+`PersonalityTab`, `KnowledgeBaseTab`, `RoleRulesTab`, `GuardrailsTab` — all eager.
 
-### 2. Defer `fetchUsers()` until the "Users" category is active
+**6. `WebsiteSectionsHub.tsx` (5 editor components in COMPONENT_MAP)**
+`HeroEditor`, `TestimonialsEditor`, `FAQEditor`, `GalleryDisplayEditor`, `CustomSectionEditor` — all imported statically even though only one section editor renders at a time.
 
-Move the `fetchUsers()` call from the top-level `useEffect` into the users category render path, so it only fires when the admin actually opens the Users section.
+**7. `DayRateSettings.tsx` (2 tab components)**
+`ChairManager` and `AgreementEditor` — minor impact but follows the same pattern.
 
-```ts
-// Before:
-useEffect(() => { fetchUsers(); }, []);
+## Approach
 
-// After:
-useEffect(() => {
-  if (activeCategory === 'users') fetchUsers();
-}, [activeCategory]);
-```
+Same pattern used in Settings:
+- Convert tab/section content imports to `React.lazy()` with named-export wrapper
+- Wrap render areas in `<Suspense fallback={<DashboardLoader />}>`
+- Use `lazyWithRetry` for route-level pages (already done in App.tsx for most)
 
-## Impact
+## Priority Order
 
-- **Initial load**: Only the grid of category cards + their icons need to render. The heavy content components are deferred.
-- **Bundle splitting**: Vite will automatically code-split each lazy import into its own chunk.
-- **No UX change**: The grid renders instantly; clicking a category shows a brief loader while the chunk downloads (typically <200ms on fast connections).
+1. **DashboardHome** — highest traffic page, biggest bundle impact
+2. **PlatformSettings** — 7 tabs, platform admin page
+3. **AccountDetail** — 622 lines, 8 tabs
+4. **WebsiteSectionsHub** — 5 editor components
+5. **TrainingHub** — 4 tabs
+6. **ZuraConfigPage** — 4 tabs
+7. **DayRateSettings** — 2 tabs (smallest gain)
 
 ## Scope
-- Single file: `src/pages/dashboard/admin/Settings.tsx`
-- ~25 import lines changed from static to `lazy()`
-- 1 `Suspense` wrapper added
-- 1 `useEffect` condition added
+- 7 files modified
+- ~40 imports converted to lazy
+- Suspense wrappers added per file
 - No database changes
 
