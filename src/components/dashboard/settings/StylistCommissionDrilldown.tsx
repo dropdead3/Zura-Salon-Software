@@ -81,6 +81,7 @@ export function StylistCommissionDrilldown({
       return;
     }
     setPendingLevel(member?.stylist_level || '__unassign');
+    setPendingLevelSince(member?.stylist_level_since ? member.stylist_level_since.split('T')[0] : '');
     if (override) {
       setSvcRate(override.service_commission_rate != null ? String(Math.round(override.service_commission_rate * 100)) : '');
       setRetailRate(override.retail_commission_rate != null ? String(Math.round(override.retail_commission_rate * 100)) : '');
@@ -99,9 +100,10 @@ export function StylistCommissionDrilldown({
 
   // --- Dirty tracking ---
   const levelChanged = pendingLevel !== initialLevel;
+  const levelSinceChanged = pendingLevelSince !== initialLevelSince;
   const overrideToggleChanged = showOverride !== initialShowOverride;
   const overrideFieldsChanged = svcRate !== initialSvcRate || retailRate !== initialRetailRate || reason !== initialReason || expiresAt !== initialExpiresAt;
-  const isDirty = levelChanged || overrideToggleChanged || (showOverride && overrideFieldsChanged);
+  const isDirty = levelChanged || levelSinceChanged || overrideToggleChanged || (showOverride && overrideFieldsChanged);
 
   const slugToLevel = useMemo(() => {
     const map = new Map<string, StylistLevel>();
