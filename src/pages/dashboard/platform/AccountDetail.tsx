@@ -34,11 +34,12 @@ import { EditOrganizationDialog } from '@/components/platform/EditOrganizationDi
 import { AccountIntegrationsCard } from '@/components/platform/account/AccountIntegrationsCard';
 import { AccountAppsCard } from '@/components/platform/account/AccountAppsCard';
 import { MigrationCredentialsCard } from '@/components/platform/account/MigrationCredentialsCard';
-import { AccountUsersTab } from '@/components/platform/account/AccountUsersTab';
-import { AccountSettingsTab } from '@/components/platform/account/AccountSettingsTab';
-import { AccountImportHistoryTab } from '@/components/platform/account/AccountImportHistoryTab';
-import { BillingConfigurationPanel } from '@/components/platform/billing/BillingConfigurationPanel';
-import { AccountNotesSection } from '@/components/platform/notes/AccountNotesSection';
+const AccountUsersTab = lazy(() => import('@/components/platform/account/AccountUsersTab').then(m => ({ default: m.AccountUsersTab })));
+const AccountSettingsTab = lazy(() => import('@/components/platform/account/AccountSettingsTab').then(m => ({ default: m.AccountSettingsTab })));
+const AccountImportHistoryTab = lazy(() => import('@/components/platform/account/AccountImportHistoryTab').then(m => ({ default: m.AccountImportHistoryTab })));
+const BillingConfigurationPanel = lazy(() => import('@/components/platform/billing/BillingConfigurationPanel').then(m => ({ default: m.BillingConfigurationPanel })));
+const AccountNotesSection = lazy(() => import('@/components/platform/notes/AccountNotesSection').then(m => ({ default: m.AccountNotesSection })));
+import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { format, parseISO, isBefore, startOfDay } from 'date-fns';
 import {
   PlatformCard,
@@ -423,40 +424,39 @@ export default function AccountDetail() {
           <AccountAppsCard organizationId={organization.id} />
         </TabsContent>
 
-        <TabsContent value="locations">
-          <LocationSeatsTab organizationId={organization.id} />
-        </TabsContent>
+        <Suspense fallback={<DashboardLoader size="lg" className="h-64" />}>
+          <TabsContent value="locations">
+            <LocationSeatsTab organizationId={organization.id} />
+          </TabsContent>
 
-        <TabsContent value="users">
-          <AccountUsersTab organizationId={organization.id} organizationName={organization.name} />
-        </TabsContent>
+          <TabsContent value="users">
+            <AccountUsersTab organizationId={organization.id} organizationName={organization.name} />
+          </TabsContent>
 
-        <TabsContent value="migration" className="space-y-4">
-          {/* Migration Credentials Card */}
-          <MigrationCredentialsCard organizationId={organization.id} organization={organization} />
+          <TabsContent value="migration" className="space-y-4">
+            <MigrationCredentialsCard organizationId={organization.id} organization={organization} />
+            <AccountImportHistoryTab organizationId={organization.id} />
+          </TabsContent>
 
-          {/* Import History */}
-          <AccountImportHistoryTab organizationId={organization.id} />
-        </TabsContent>
+          <TabsContent value="billing">
+            <BillingConfigurationPanel
+              organizationId={organization.id}
+              billingStatus={(organization as any).billing_status as BillingStatus || 'draft'}
+              locationCount={organization.locationCount}
+            />
+          </TabsContent>
 
-        <TabsContent value="billing">
-          <BillingConfigurationPanel
-            organizationId={organization.id}
-            billingStatus={(organization as any).billing_status as BillingStatus || 'draft'}
-            locationCount={organization.locationCount}
-          />
-        </TabsContent>
+          <TabsContent value="notes">
+            <AccountNotesSection
+              organizationId={organization.id}
+              organizationName={organization.name}
+            />
+          </TabsContent>
 
-        <TabsContent value="notes">
-          <AccountNotesSection
-            organizationId={organization.id}
-            organizationName={organization.name}
-          />
-        </TabsContent>
-
-        <TabsContent value="settings">
-          <AccountSettingsTab organizationId={organization.id} />
-        </TabsContent>
+          <TabsContent value="settings">
+            <AccountSettingsTab organizationId={organization.id} />
+          </TabsContent>
+        </Suspense>
       </Tabs>
 
       <EditOrganizationDialog
