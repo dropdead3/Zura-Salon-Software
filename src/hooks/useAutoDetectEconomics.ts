@@ -141,9 +141,9 @@ export function useAutoDetectEconomics() {
       if (computedProductCostPct !== null) {
         productCostPct = Math.round(computedProductCostPct * 1000) / 1000; // 3 decimal precision
       } else if (totalServiceCount > 20) {
-        // Enough data to infer from service mix
+        // Inferred from service mix — still an estimate, not actual cost data
         productCostPct = colorHeavy ? 0.12 : 0.06;
-        sources.product_cost_pct = totalServiceCount > 50 ? 'data' : 'estimate';
+        sources.product_cost_pct = 'estimate';
       } else {
         productCostPct = 0.10; // generic default
       }
