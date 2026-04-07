@@ -231,7 +231,13 @@ const PlatformLayout = lazyWithRetry(() => import("./components/platform/layout/
 const TeamCalendar = lazyWithRetry(() => import("./pages/dashboard/TeamCalendar"));
 const SalesDashboard = lazyWithRetry(() => import("./pages/dashboard/admin/SalesDashboard"));
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 30_000, // 30s global default — prevents redundant refetches on navigation/tab switches
+    },
+  },
+});
 
 function PrivateAppShell() {
   return (
