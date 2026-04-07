@@ -5,6 +5,7 @@
 
 import jsPDF from 'jspdf';
 import { format } from 'date-fns';
+import { registerPdfFonts, setTermina, setAeonik } from '@/lib/pdf-fonts';
 import type { LevelPromotionCriteria } from '@/hooks/useLevelPromotionCriteria';
 import type { LevelRetentionCriteria } from '@/hooks/useLevelRetentionCriteria';
 

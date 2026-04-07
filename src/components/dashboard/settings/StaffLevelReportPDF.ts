@@ -7,6 +7,7 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { format } from 'date-fns';
+import { registerPdfFonts, setTermina, setAeonik } from '@/lib/pdf-fonts';
 import type { TeamMemberProgress, GraduationStatus } from '@/hooks/useTeamLevelProgress';
 
 export interface StaffLevelReportOptions {
