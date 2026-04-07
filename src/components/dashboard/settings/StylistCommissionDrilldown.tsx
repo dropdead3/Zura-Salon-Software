@@ -12,7 +12,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { Loader2, Trash2, ExternalLink, Info, AlertTriangle } from 'lucide-react';
+import { Loader2, ExternalLink, Info, AlertTriangle } from 'lucide-react';
 import { cn, formatDisplayName } from '@/lib/utils';
 import { getLevelColor } from '@/lib/level-colors';
 import { useNavigate } from 'react-router-dom';
@@ -37,7 +37,6 @@ interface StylistCommissionDrilldownProps {
   orgId: string;
   levels: StylistLevel[];
   override: StylistCommissionOverride | null;
-  
 }
 
 export function StylistCommissionDrilldown({
@@ -47,7 +46,6 @@ export function StylistCommissionDrilldown({
   orgId,
   levels,
   override,
-  
 }: StylistCommissionDrilldownProps) {
   const { dashPath } = useOrgDashboardPath();
   const navigate = useNavigate();
@@ -55,15 +53,31 @@ export function StylistCommissionDrilldown({
   const upsertOverride = useUpsertCommissionOverride();
   const deleteOverride = useDeleteCommissionOverride();
 
-  // Override form state
+  // --- Local buffered state ---
+  const [pendingLevel, setPendingLevel] = useState<string>('__unassign');
   const [svcRate, setSvcRate] = useState('');
   const [retailRate, setRetailRate] = useState('');
   const [reason, setReason] = useState('');
   const [expiresAt, setExpiresAt] = useState('');
   const [showOverride, setShowOverride] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [showUnsavedWarning, setShowUnsavedWarning] = useState(false);
 
-  // Reset form when member changes
+  // Snapshot initial values
+  const initialLevel = member?.stylist_level || '__unassign';
+  const initialShowOverride = !!override;
+  const initialSvcRate = override?.service_commission_rate != null ? String(Math.round(override.service_commission_rate * 100)) : '';
+  const initialRetailRate = override?.retail_commission_rate != null ? String(Math.round(override.retail_commission_rate * 100)) : '';
+  const initialReason = override?.reason || '';
+  const initialExpiresAt = override?.expires_at ? override.expires_at.split('T')[0] : '';
+
+  // Reset form when dialog opens or member changes
   useEffect(() => {
+    if (!open) {
+      setShowUnsavedWarning(false);
+      return;
+    }
+    setPendingLevel(member?.stylist_level || '__unassign');
     if (override) {
       setSvcRate(override.service_commission_rate != null ? String(Math.round(override.service_commission_rate * 100)) : '');
       setRetailRate(override.retail_commission_rate != null ? String(Math.round(override.retail_commission_rate * 100)) : '');
@@ -77,32 +91,14 @@ export function StylistCommissionDrilldown({
       setExpiresAt('');
       setShowOverride(false);
     }
+    setShowUnsavedWarning(false);
   }, [override, member?.user_id, open]);
 
-  const handleToggleOverride = useCallback((checked: boolean) => {
-    if (!checked && override) {
-      // Existing override — remove it
-      deleteOverride.mutate(override.id, {
-        onSuccess: () => {
-          setSvcRate('');
-          setRetailRate('');
-          setReason('');
-          setExpiresAt('');
-          setShowOverride(false);
-          toast.success('Override removed');
-        },
-      });
-    } else if (!checked) {
-      // No saved override, just clear form
-      setSvcRate('');
-      setRetailRate('');
-      setReason('');
-      setExpiresAt('');
-      setShowOverride(false);
-    } else {
-      setShowOverride(true);
-    }
-  }, [override, deleteOverride]);
+  // --- Dirty tracking ---
+  const levelChanged = pendingLevel !== initialLevel;
+  const overrideToggleChanged = showOverride !== initialShowOverride;
+  const overrideFieldsChanged = svcRate !== initialSvcRate || retailRate !== initialRetailRate || reason !== initialReason || expiresAt !== initialExpiresAt;
+  const isDirty = levelChanged || overrideToggleChanged || (showOverride && overrideFieldsChanged);
 
   const slugToLevel = useMemo(() => {
     const map = new Map<string, StylistLevel>();
@@ -112,61 +108,95 @@ export function StylistCommissionDrilldown({
 
   if (!member) return null;
 
-  const currentLevel = member.stylist_level ? slugToLevel.get(member.stylist_level) : null;
+  const currentLevel = pendingLevel !== '__unassign' ? slugToLevel.get(pendingLevel) : null;
   const currentLevelIndex = currentLevel ? levels.indexOf(currentLevel) : -1;
   const levelColor = currentLevelIndex >= 0 ? getLevelColor(currentLevelIndex, levels.length) : null;
 
-  // Effective rates resolution
-  const effectiveSvc = override?.service_commission_rate ?? currentLevel?.service_commission_rate ?? null;
-  const effectiveRetail = override?.retail_commission_rate ?? currentLevel?.retail_commission_rate ?? null;
-  const effectiveSource = override ? 'Override' : currentLevel ? 'Level Default' : 'None';
+  // Effective rates based on current local state (preview)
+  const previewSvc = showOverride && svcRate ? parseFloat(svcRate) / 100 : currentLevel?.service_commission_rate ?? null;
+  const previewRetail = showOverride && retailRate ? parseFloat(retailRate) / 100 : currentLevel?.retail_commission_rate ?? null;
+  const effectiveSource = showOverride && (svcRate || retailRate) ? 'Override' : currentLevel ? 'Level Default' : 'None';
 
   const displayName = formatDisplayName(member.full_name || '', member.display_name);
 
-  const handleLevelChange = (slug: string) => {
-    const targetSlug = slug === '__unassign' ? null : slug;
-    assignLevel.mutate({ userId: member.user_id, levelSlug: targetSlug }, {
-      onSuccess: () => {
-        const lvl = targetSlug ? slugToLevel.get(targetSlug) : null;
-        toast.success(`${displayName} → ${lvl?.label || 'Unassigned'}`);
-      },
-    });
+  // --- Dialog close guard ---
+  const handleDialogOpenChange = (nextOpen: boolean) => {
+    if (!nextOpen && isDirty) {
+      setShowUnsavedWarning(true);
+      return; // block close
+    }
+    onOpenChange(nextOpen);
   };
 
-  const handleSaveOverride = () => {
-    if (!reason.trim()) {
+  // --- Discard ---
+  const handleDiscard = () => {
+    setPendingLevel(initialLevel);
+    setSvcRate(initialSvcRate);
+    setRetailRate(initialRetailRate);
+    setReason(initialReason);
+    setExpiresAt(initialExpiresAt);
+    setShowOverride(initialShowOverride);
+    setShowUnsavedWarning(false);
+    onOpenChange(false);
+  };
+
+  // --- Save all ---
+  const handleSaveAll = async () => {
+    // Validate override fields if toggled on
+    if (showOverride && !reason.trim()) {
       toast.error('Please provide a reason for the override.');
       return;
     }
-    upsertOverride.mutate({
-      organization_id: orgId,
-      user_id: member.user_id,
-      service_commission_rate: svcRate ? parseFloat(svcRate) / 100 : null,
-      retail_commission_rate: retailRate ? parseFloat(retailRate) / 100 : null,
-      reason: reason.trim(),
-      expires_at: expiresAt ? new Date(expiresAt).toISOString() : null,
-    }, {
-      onSuccess: () => toast.success('Override saved'),
-    });
+
+    setIsSaving(true);
+    try {
+      // 1. Level change
+      if (levelChanged) {
+        const targetSlug = pendingLevel === '__unassign' ? null : pendingLevel;
+        await assignLevel.mutateAsync({ userId: member.user_id, levelSlug: targetSlug });
+      }
+
+      // 2. Override changes
+      if (showOverride && (overrideToggleChanged || overrideFieldsChanged)) {
+        await upsertOverride.mutateAsync({
+          organization_id: orgId,
+          user_id: member.user_id,
+          service_commission_rate: svcRate ? parseFloat(svcRate) / 100 : null,
+          retail_commission_rate: retailRate ? parseFloat(retailRate) / 100 : null,
+          reason: reason.trim(),
+          expires_at: expiresAt ? new Date(expiresAt).toISOString() : null,
+        });
+      } else if (!showOverride && initialShowOverride && override) {
+        // Override was toggled off — delete it
+        await deleteOverride.mutateAsync(override.id);
+      }
+
+      toast.success('Changes saved');
+      setShowUnsavedWarning(false);
+      onOpenChange(false);
+    } catch (err) {
+      console.error('Save failed:', err);
+      toast.error('Failed to save changes');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
-  const handleRemoveOverride = () => {
-    if (!override) return;
-    deleteOverride.mutate(override.id, {
-      onSuccess: () => {
-        setSvcRate('');
-        setRetailRate('');
-        setReason('');
-        setExpiresAt('');
-        toast.success('Override removed');
-      },
-    });
+  const handleToggleOverride = (checked: boolean) => {
+    if (!checked) {
+      // Clear form fields when toggling off
+      setSvcRate('');
+      setRetailRate('');
+      setReason('');
+      setExpiresAt('');
+    }
+    setShowOverride(checked);
   };
 
   const fmtRate = (r: number | null) => (r != null ? `${Math.round(r * 100)}%` : '—');
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleDialogOpenChange}>
       <DialogContent
         className={DRILLDOWN_DIALOG_CONTENT_CLASS}
         overlayClassName={DRILLDOWN_OVERLAY_CLASS}
@@ -196,8 +226,8 @@ export function StylistCommissionDrilldown({
           <section className="space-y-2">
             <Label className="text-[11px] font-display uppercase tracking-wider text-muted-foreground font-medium">Level</Label>
             <Select
-              value={member.stylist_level && slugToLevel.has(member.stylist_level) ? member.stylist_level : '__unassign'}
-              onValueChange={handleLevelChange}
+              value={pendingLevel}
+              onValueChange={setPendingLevel}
             >
               <SelectTrigger className="h-9 text-sm">
                 <SelectValue placeholder="Select Level" />
@@ -236,7 +266,6 @@ export function StylistCommissionDrilldown({
               <Switch
                 checked={showOverride}
                 onCheckedChange={handleToggleOverride}
-                disabled={deleteOverride.isPending}
               />
             </div>
 
@@ -293,30 +322,6 @@ export function StylistCommissionDrilldown({
                     className="h-9 text-sm"
                   />
                 </div>
-
-                <div className="flex items-center gap-2">
-                  <Button
-                    size="sm"
-                    className="flex-1"
-                    onClick={handleSaveOverride}
-                    disabled={(!svcRate && !retailRate) || !reason.trim() || upsertOverride.isPending}
-                  >
-                    {upsertOverride.isPending && <Loader2 className="w-3 h-3 animate-spin mr-1.5" />}
-                    {override ? 'Update Override' : 'Save Override'}
-                  </Button>
-                  {override && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-8 text-xs text-destructive hover:text-destructive hover:bg-destructive/10"
-                      onClick={handleRemoveOverride}
-                      disabled={deleteOverride.isPending}
-                    >
-                      {deleteOverride.isPending ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : <Trash2 className="w-3 h-3 mr-1" />}
-                      Remove
-                    </Button>
-                  )}
-                </div>
               </div>
             )}
           </section>
@@ -330,34 +335,64 @@ export function StylistCommissionDrilldown({
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <p className="text-xs text-muted-foreground">Service</p>
-                <p className="text-lg font-medium tabular-nums">{fmtRate(effectiveSvc)}</p>
+                <p className="text-lg font-medium tabular-nums">{fmtRate(previewSvc)}</p>
               </div>
               <div>
                 <p className="text-xs text-muted-foreground">Retail</p>
-                <p className="text-lg font-medium tabular-nums">{fmtRate(effectiveRetail)}</p>
+                <p className="text-lg font-medium tabular-nums">{fmtRate(previewRetail)}</p>
               </div>
             </div>
             <p className="text-xs text-muted-foreground">
               Source: <span className="font-medium text-foreground">{effectiveSource}</span>
-              {override && <span className="ml-1">— {override.reason}</span>}
+              {showOverride && reason && <span className="ml-1">— {reason}</span>}
             </p>
           </section>
         </div>
 
         {/* Footer */}
         <div className="px-5 py-3 border-t border-border/50">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="w-full text-xs text-muted-foreground hover:text-foreground"
-            onClick={() => {
-              onOpenChange(false);
-              navigate(dashPath('/admin/settings?category=services'));
-            }}
-          >
-            <ExternalLink className="w-3.5 h-3.5 mr-1.5" />
-            Review Services & Pricing
-          </Button>
+          {isDirty || showUnsavedWarning ? (
+            <div className="space-y-2">
+              {showUnsavedWarning && (
+                <p className="text-xs text-amber-600 dark:text-amber-400 text-center font-medium">
+                  You have unsaved changes
+                </p>
+              )}
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="flex-1"
+                  onClick={handleDiscard}
+                  disabled={isSaving}
+                >
+                  Discard
+                </Button>
+                <Button
+                  size="sm"
+                  className="flex-1"
+                  onClick={handleSaveAll}
+                  disabled={isSaving}
+                >
+                  {isSaving && <Loader2 className="w-3 h-3 animate-spin mr-1.5" />}
+                  Save Changes
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="w-full text-xs text-muted-foreground hover:text-foreground"
+              onClick={() => {
+                onOpenChange(false);
+                navigate(dashPath('/admin/settings?category=services'));
+              }}
+            >
+              <ExternalLink className="w-3.5 h-3.5 mr-1.5" />
+              Review Services & Pricing
+            </Button>
+          )}
         </div>
       </DialogContent>
     </Dialog>
