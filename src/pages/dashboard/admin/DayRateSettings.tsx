@@ -1,11 +1,14 @@
+import { lazy, Suspense } from 'react';
 import { Tabs, TabsContent, TabsTrigger, ResponsiveTabsList } from '@/components/ui/tabs';
 import { Armchair, FileText } from 'lucide-react';
-import { ChairManager } from '@/components/dashboard/day-rate/ChairManager';
-import { AgreementEditor } from '@/components/dashboard/day-rate/AgreementEditor';
 import { VisibilityGate } from '@/components/visibility/VisibilityGate';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { DashboardPageHeader } from '@/components/dashboard/DashboardPageHeader';
 import { PageExplainer } from '@/components/ui/PageExplainer';
+import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
+
+const ChairManager = lazy(() => import('@/components/dashboard/day-rate/ChairManager').then(m => ({ default: m.ChairManager })));
+const AgreementEditor = lazy(() => import('@/components/dashboard/day-rate/AgreementEditor').then(m => ({ default: m.AgreementEditor })));
 
 export default function DayRateSettings() {
   return (
@@ -33,13 +36,15 @@ export default function DayRateSettings() {
             </VisibilityGate>
           </ResponsiveTabsList>
 
-          <TabsContent value="chairs" className="mt-6">
-            <ChairManager />
-          </TabsContent>
+          <Suspense fallback={<DashboardLoader size="lg" className="h-64" />}>
+            <TabsContent value="chairs" className="mt-6">
+              <ChairManager />
+            </TabsContent>
 
-          <TabsContent value="agreement" className="mt-6">
-            <AgreementEditor />
-          </TabsContent>
+            <TabsContent value="agreement" className="mt-6">
+              <AgreementEditor />
+            </TabsContent>
+          </Suspense>
         </Tabs>
       </div>
     </DashboardLayout>

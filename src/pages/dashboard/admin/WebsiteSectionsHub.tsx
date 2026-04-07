@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, lazy, Suspense } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
@@ -16,14 +16,16 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
-import { HeroEditor } from '@/components/dashboard/website-editor/HeroEditor';
-import { TestimonialsEditor } from '@/components/dashboard/website-editor/TestimonialsEditor';
-import { FAQEditor } from '@/components/dashboard/website-editor/FAQEditor';
-import { GalleryDisplayEditor } from '@/components/dashboard/website-editor/GalleryDisplayEditor';
-import { CustomSectionEditor } from '@/components/dashboard/website-editor/CustomSectionEditor';
 import { PageExplainer } from '@/components/ui/PageExplainer';
+import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 
-const COMPONENT_MAP: Record<string, React.ComponentType<any>> = {
+const HeroEditor = lazy(() => import('@/components/dashboard/website-editor/HeroEditor').then(m => ({ default: m.HeroEditor })));
+const TestimonialsEditor = lazy(() => import('@/components/dashboard/website-editor/TestimonialsEditor').then(m => ({ default: m.TestimonialsEditor })));
+const FAQEditor = lazy(() => import('@/components/dashboard/website-editor/FAQEditor').then(m => ({ default: m.FAQEditor })));
+const GalleryDisplayEditor = lazy(() => import('@/components/dashboard/website-editor/GalleryDisplayEditor').then(m => ({ default: m.GalleryDisplayEditor })));
+const CustomSectionEditor = lazy(() => import('@/components/dashboard/website-editor/CustomSectionEditor').then(m => ({ default: m.CustomSectionEditor })));
+
+const COMPONENT_MAP: Record<string, React.LazyExoticComponent<React.ComponentType<any>>> = {
   hero: HeroEditor,
   testimonials: TestimonialsEditor,
   faq: FAQEditor,

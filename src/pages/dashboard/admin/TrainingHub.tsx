@@ -1,13 +1,15 @@
-import { useState } from 'react';
+import { useState, lazy, Suspense } from 'react';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { DashboardPageHeader } from '@/components/dashboard/DashboardPageHeader';
 import { Tabs, TabsContent, TabsTrigger, ResponsiveTabsList } from '@/components/ui/tabs';
 import { Video, UserPlus, BarChart3, HelpCircle } from 'lucide-react';
-import { VideoLibraryManager } from '@/components/training/VideoLibraryManager';
-import { IndividualAssignments } from '@/components/training/IndividualAssignments';
-import { TeamProgressDashboard } from '@/components/training/TeamProgressDashboard';
-import { TrainingQuizManager } from '@/components/training/TrainingQuizManager';
 import { PageExplainer } from '@/components/ui/PageExplainer';
+import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
+
+const VideoLibraryManager = lazy(() => import('@/components/training/VideoLibraryManager').then(m => ({ default: m.VideoLibraryManager })));
+const IndividualAssignments = lazy(() => import('@/components/training/IndividualAssignments').then(m => ({ default: m.IndividualAssignments })));
+const TeamProgressDashboard = lazy(() => import('@/components/training/TeamProgressDashboard').then(m => ({ default: m.TeamProgressDashboard })));
+const TrainingQuizManager = lazy(() => import('@/components/training/TrainingQuizManager').then(m => ({ default: m.TrainingQuizManager })));
 
 export default function TrainingHub() {
   const [activeTab, setActiveTab] = useState('library');
@@ -21,7 +23,6 @@ export default function TrainingHub() {
         />
         <PageExplainer pageId="training-hub" />
 
-        {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           <ResponsiveTabsList onTabChange={setActiveTab}>
             <TabsTrigger value="library" className="gap-2">
@@ -42,21 +43,23 @@ export default function TrainingHub() {
             </TabsTrigger>
           </ResponsiveTabsList>
 
-          <TabsContent value="library" className="mt-6">
-            <VideoLibraryManager />
-          </TabsContent>
+          <Suspense fallback={<DashboardLoader size="lg" className="h-64" />}>
+            <TabsContent value="library" className="mt-6">
+              <VideoLibraryManager />
+            </TabsContent>
 
-          <TabsContent value="assignments" className="mt-6">
-            <IndividualAssignments />
-          </TabsContent>
+            <TabsContent value="assignments" className="mt-6">
+              <IndividualAssignments />
+            </TabsContent>
 
-          <TabsContent value="quizzes" className="mt-6">
-            <TrainingQuizManager />
-          </TabsContent>
+            <TabsContent value="quizzes" className="mt-6">
+              <TrainingQuizManager />
+            </TabsContent>
 
-          <TabsContent value="progress" className="mt-6">
-            <TeamProgressDashboard />
-          </TabsContent>
+            <TabsContent value="progress" className="mt-6">
+              <TeamProgressDashboard />
+            </TabsContent>
+          </Suspense>
         </Tabs>
       </div>
     </DashboardLayout>
