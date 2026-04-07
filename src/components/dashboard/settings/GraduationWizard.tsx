@@ -583,7 +583,9 @@ export function GraduationWizard({ open, onOpenChange, levelId, levelLabel, leve
       is_active: true,
     };
     upsert.mutate(payload, {
-      onSuccess: () => {
+      onSuccess: async () => {
+        await queryClient.invalidateQueries({ queryKey: ['level-promotion-criteria'] });
+        await queryClient.invalidateQueries({ queryKey: ['level-retention-criteria'] });
         updateLevel.mutate({ id: levelId, is_configured: true });
         setActiveTab('retention');
         setStep(0);
@@ -636,7 +638,9 @@ export function GraduationWizard({ open, onOpenChange, levelId, levelLabel, leve
       is_active: true,
     };
     upsertRetention.mutate(payload, {
-      onSuccess: () => {
+      onSuccess: async () => {
+        await queryClient.invalidateQueries({ queryKey: ['level-retention-criteria'] });
+        await queryClient.invalidateQueries({ queryKey: ['level-promotion-criteria'] });
         updateLevel.mutate({ id: levelId, is_configured: true });
         onOpenChange(false);
       },
