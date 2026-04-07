@@ -227,18 +227,12 @@ export function ReportBuilder({ meetingId, teamMemberId, teamMemberName }: Repor
           }
         }
 
-        // Commission uplift estimate
-        const currentResolved = resolveCommission(teamMemberId, 1000, 0);
-        const nextLevelObj = allLevels.find(l => l.id === levelProgress.nextLevelId);
-        if (nextLevelObj && currentResolved) {
-          const currentSvcRate = currentResolved.serviceRate;
-          const nextSvcRate = nextLevelObj.service_commission_rate ?? 0;
-          if (nextSvcRate > currentSvcRate) {
-            const monthlyRevenue = levelProgress.criteriaProgress.find(cp => cp.key === 'revenue')?.current || 0;
-            const monthlyUplift = monthlyRevenue * (nextSvcRate - currentSvcRate);
-            content += `### Income Opportunity\n\n`;
-            content += `> At **${levelProgress.nextLevelLabel}**, your service commission increases from **${(currentSvcRate * 100).toFixed(0)}%** to **${(nextSvcRate * 100).toFixed(0)}%** — estimated **+$${Math.round(monthlyUplift).toLocaleString()}/month** based on current revenue.\n\n`;
-          }
+        // Commission + price uplift estimate
+        if (upliftEstimate.totalMonthlyUplift > 0) {
+          const curRate = currentResolved?.serviceRate ?? 0;
+          const nxtRate = nextLevelObjReport?.service_commission_rate ?? 0;
+          content += `### Income Opportunity\n\n`;
+          content += `> At **${levelProgress.nextLevelLabel}**, your service commission increases from **${(curRate * 100).toFixed(0)}%** to **${(nxtRate * 100).toFixed(0)}%** — estimated **+$${upliftEstimate.totalMonthlyUplift.toLocaleString()}/month** (includes service price increases).\n\n`;
         }
       } else {
         content += `**Current Level:** ${levelProgress.currentLevelLabel}\n`;
