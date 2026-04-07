@@ -584,6 +584,13 @@ export function IndividualStaffReport({ dateFrom, dateTo, locationId, onClose, i
     }
   }
 
+  // Strikes analysis
+  if (activeStrikes.length > 0) {
+    improvements.push(`${activeStrikes.length} active strike${activeStrikes.length > 1 ? 's' : ''} on record — review during meeting`);
+  } else if (reportStrikes.length === 0 && data) {
+    strengths.push('Clean record — no strikes in this period');
+  }
+
   // ── Render ──
   return (
     <div className="space-y-6">
@@ -1087,6 +1094,78 @@ export function IndividualStaffReport({ dateFrom, dateTo, locationId, onClose, i
                   icon={Beaker}
                   title="No Color Room Data"
                   description="No color or chemical services tracked during this period. Data will populate once appointments are processed through Zura Color Room."
+                />
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Section 9a: Staff Strikes */}
+          <Card>
+            <CardHeader className="pb-2">
+              <div className="flex items-center gap-2">
+                <AlertTriangle className="w-4 h-4 text-primary" />
+                <CardTitle className="font-display text-sm tracking-wide uppercase">Staff Strikes</CardTitle>
+                <MetricInfoTooltip description="Active strikes and strikes resolved during this period. Includes write-ups, complaints, warnings, and other documented incidents." />
+              </div>
+              {reportStrikes.length > 0 && (
+                <div className="flex items-center gap-3 mt-1">
+                  <Badge variant="outline" className="text-[10px]">
+                    {activeStrikes.length} Active
+                  </Badge>
+                  <Badge variant="secondary" className="text-[10px]">
+                    {resolvedStrikes.length} Resolved
+                  </Badge>
+                  <span className="text-[10px] text-muted-foreground">{reportStrikes.length} total</span>
+                </div>
+              )}
+            </CardHeader>
+            <CardContent>
+              {reportStrikes.length > 0 ? (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Date</TableHead>
+                      <TableHead>Type</TableHead>
+                      <TableHead>Severity</TableHead>
+                      <TableHead>Title</TableHead>
+                      <TableHead>Status</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {reportStrikes.map(strike => (
+                      <TableRow key={strike.id} className={cn(!strike.is_resolved && (strike.severity === 'critical' || strike.severity === 'high') && 'bg-red-50/50 dark:bg-red-950/10')}>
+                        <TableCell className="text-sm tabular-nums">{strike.incident_date}</TableCell>
+                        <TableCell>
+                          <Badge variant="outline" className="text-[10px]">
+                            {STRIKE_TYPE_LABELS[strike.strike_type as StrikeType] || strike.strike_type}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="outline" className={cn('text-[10px]', SEVERITY_COLORS[strike.severity as StrikeSeverity])}>
+                            {SEVERITY_LABELS[strike.severity as StrikeSeverity] || strike.severity}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-sm font-medium">{strike.title}</TableCell>
+                        <TableCell>
+                          {strike.is_resolved ? (
+                            <Badge variant="outline" className="text-[10px] text-emerald-600 border-emerald-300 dark:text-emerald-400 dark:border-emerald-800">
+                              <CheckCircle2 className="w-3 h-3 mr-1" />Resolved
+                            </Badge>
+                          ) : (
+                            <Badge variant="outline" className="text-[10px] text-red-600 border-red-300 dark:text-red-400 dark:border-red-800">
+                              <AlertTriangle className="w-3 h-3 mr-1" />Active
+                            </Badge>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              ) : (
+                <EmptyState
+                  icon={ShieldCheck}
+                  title="No Strikes on Record"
+                  description="No active or recently resolved strikes for this team member during the selected period."
                 />
               )}
             </CardContent>
