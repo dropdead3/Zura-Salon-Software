@@ -63,21 +63,35 @@ export function useStaffRevenuePerformance(
     queryFn: async () => {
       const { startDate, endDate } = getDateRange(timeRange);
       
-      // Fetch daily sales summary data
-      let salesQuery = supabase
-        .from('phorest_daily_sales_summary')
-        .select('phorest_staff_id, total_revenue, service_revenue, product_revenue, total_transactions, summary_date, location_id')
-        .gte('summary_date', startDate)
-        .lte('summary_date', endDate)
+      // Query raw transactions (POS-first integrity model)
+      let txQuery = supabase
+        .from('phorest_sales_transactions')
+        .select('phorest_staff_id, total_amount, tax_amount, transaction_date, location_id')
+        .gte('transaction_date', startDate)
+        .lte('transaction_date', endDate)
         .not('phorest_staff_id', 'is', null);
       
       if (locationId) {
-        salesQuery = salesQuery.eq('location_id', locationId);
+        txQuery = txQuery.eq('location_id', locationId);
       }
       
-      const { data: salesData, error: salesError } = await salesQuery;
+      const { data: txData, error: txError } = await txQuery;
+      if (txError) throw txError;
+
+      // Also fetch transaction items for service/product breakdown
+      let itemQuery = supabase
+        .from('phorest_transaction_items')
+        .select('phorest_staff_id, item_type, total_amount, transaction_date')
+        .gte('transaction_date', startDate)
+        .lte('transaction_date', endDate)
+        .not('phorest_staff_id', 'is', null);
       
-      if (salesError) throw salesError;
+      if (locationId) {
+        itemQuery = itemQuery.eq('location_id', locationId);
+      }
+      
+      const { data: itemData, error: itemError } = await itemQuery;
+      if (itemError) throw itemError;
       
       // Get staff mappings to link phorest IDs to user profiles
       const { data: mappings, error: mappingsError } = await supabase
@@ -102,7 +116,7 @@ export function useStaffRevenuePerformance(
         (profiles || []).map(p => [p.user_id, p])
       );
       
-      // Aggregate by phorest_staff_id
+      // Aggregate transactions by phorest_staff_id
       const aggregatedData = new Map<string, {
         totalRevenue: number;
         serviceRevenue: number;
@@ -111,8 +125,9 @@ export function useStaffRevenuePerformance(
         daysWithData: Set<string>;
       }>();
       
-      for (const sale of salesData || []) {
-        const staffId = sale.phorest_staff_id;
+      // Sum revenue from raw transactions (total_amount + tax_amount per POS-first standard)
+      for (const tx of txData || []) {
+        const staffId = tx.phorest_staff_id;
         if (!staffId) continue;
         
         const existing = aggregatedData.get(staffId) || {
@@ -123,13 +138,26 @@ export function useStaffRevenuePerformance(
           daysWithData: new Set<string>(),
         };
         
-        existing.totalRevenue += Number(sale.total_revenue) || 0;
-        existing.serviceRevenue += Number(sale.service_revenue) || 0;
-        existing.productRevenue += Number(sale.product_revenue) || 0;
-        existing.transactionCount += Number(sale.total_transactions) || 0;
-        existing.daysWithData.add(sale.summary_date);
+        existing.totalRevenue += (Number(tx.total_amount) || 0) + (Number(tx.tax_amount) || 0);
+        existing.transactionCount += 1;
+        if (tx.transaction_date) existing.daysWithData.add(tx.transaction_date);
         
         aggregatedData.set(staffId, existing);
+      }
+
+      // Enrich with service/product breakdown from transaction items
+      for (const item of itemData || []) {
+        const staffId = item.phorest_staff_id;
+        if (!staffId) continue;
+        const existing = aggregatedData.get(staffId);
+        if (!existing) continue;
+
+        const amount = Number(item.total_amount) || 0;
+        if (item.item_type === 'service') {
+          existing.serviceRevenue += amount;
+        } else if (item.item_type === 'product') {
+          existing.productRevenue += amount;
+        }
       }
       
       // Build final staff list

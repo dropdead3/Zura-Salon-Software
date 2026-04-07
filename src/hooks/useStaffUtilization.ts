@@ -66,7 +66,7 @@ export function useStaffUtilization(locationId?: string, dateRange: StaffDateRan
   }
 
   const startDateStr = format(startDate, 'yyyy-MM-dd');
-  const endDateStr = format(today, 'yyyy-MM-dd');
+  const endDateStr = format(endDate, 'yyyy-MM-dd');
 
   // Fetch service provider IDs (stylists and stylist assistants only)
   const roleQuery = useQuery({
