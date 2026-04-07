@@ -1509,7 +1509,14 @@ export function StylistLevelsEditor({ embedded = false, onActions }: StylistLeve
           hourlyWageEnabled: hEnabled,
           hourlyWage: l.hourly_wage != null ? String(l.hourly_wage) : '',
           earningsStructure: deriveEarningsStructure(hEnabled, sRate, rRate),
-          isConfigured: l.is_configured ?? false,
+          isConfigured: (() => {
+            if (l.is_configured) return true;
+            const idx = dbLevels!.indexOf(l);
+            if (idx === 0) {
+              return retentionCriteria?.some(rc => rc.stylist_level_id === l.id && rc.is_active) ?? false;
+            }
+            return promotionCriteria?.some(pc => pc.stylist_level_id === l.id && pc.is_active) ?? false;
+          })(),
         };
       });
       setLevels(localLevels);
