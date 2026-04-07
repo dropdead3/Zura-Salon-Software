@@ -281,7 +281,7 @@ export function CommissionEconomicsTab({ levels }: CommissionEconomicsTabProps) 
             <div className="space-y-2">
               <div className="flex items-center gap-1">
                 <Label className="text-xs text-muted-foreground">Monthly Overhead / Stylist</Label>
-                <MetricInfoTooltip description="Divide your total monthly fixed costs (rent, utilities, insurance, supplies, front desk) by the number of stylists." />
+                <MetricInfoTooltip description="Divide your total monthly fixed costs (rent, utilities, insurance, supplies, front desk) by the number of stylists. From your P&L: add up rent, utilities, insurance, supplies, front desk payroll, and software subscriptions — then divide by stylist count." />
               </div>
               <div className="relative">
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">$</span>
@@ -300,7 +300,7 @@ export function CommissionEconomicsTab({ levels }: CommissionEconomicsTabProps) 
             <div className="space-y-2">
               <div className="flex items-center gap-1">
                 <Label className="text-xs text-muted-foreground">Product Cost %</Label>
-                <MetricInfoTooltip description="Chemical and backbar costs as a percentage of service revenue. Color-heavy salons typically run 10–15%, cut-focused salons 5–8%." />
+                <MetricInfoTooltip description='Chemical and backbar costs as a percentage of service revenue. Color-heavy salons typically run 10–15%, cut-focused salons 5–8%. From your P&L: find "Cost of Goods Sold" or chemical expense, divide by total service revenue (exclude retail).' />
               </div>
               <div className="relative">
                 <Input
@@ -320,7 +320,7 @@ export function CommissionEconomicsTab({ levels }: CommissionEconomicsTabProps) 
             <div className="space-y-2">
               <div className="flex items-center gap-1">
                 <Label className="text-xs text-muted-foreground">Target Margin %</Label>
-                <MetricInfoTooltip description='Most salons operate at 8–15% net margin. "Sustainable" is 10–12%, "Growth" is 15–18%.' />
+                <MetricInfoTooltip description='Most salons operate at 8–15% net margin. "Sustainable" is 10–12%, "Growth" is 15–18%. From your P&L: Net Income ÷ Total Revenue = your current margin. Set your target a few points above that.' />
               </div>
               <div className="relative">
                 <Input
@@ -340,7 +340,7 @@ export function CommissionEconomicsTab({ levels }: CommissionEconomicsTabProps) 
             <div className="space-y-2">
               <div className="flex items-center gap-1">
                 <Label className="text-xs text-muted-foreground">Hours / Month</Label>
-                <MetricInfoTooltip description="A full-time stylist working 5 days × 8 hours = 160 hrs/mo. Used to model hourly wage costs against commission revenue." />
+                <MetricInfoTooltip description="A full-time stylist working 5 days × 8 hours = 160 hrs/mo. Used to model hourly wage costs against commission revenue. Calculate: days worked/week × hours/day × 4.3 weeks. Part-time stylists should use their actual schedule." />
               </div>
               <Input
                 type="number"
