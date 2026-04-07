@@ -1203,7 +1203,7 @@ export function GraduationWizard({ open, onOpenChange, levelId, levelLabel, leve
                               No Requirements to Earn This Level
                             </h4>
                             <p className="text-sm text-muted-foreground leading-relaxed font-sans">
-                              Every stylist begins here. There are no promotion criteria for the entry level — it is the starting point. Use the retention standards below to define minimum performance expectations. Stylists who fall below these thresholds can be flagged for review or termination.
+                              Every stylist begins here. There are no promotion criteria for the entry level — it is the starting point. Use the retention standards below to define minimum entry-level performance. Falling below them surfaces coaching or removal review.
                             </p>
                           </div>
                         </div>
@@ -1308,7 +1308,7 @@ export function GraduationWizard({ open, onOpenChange, levelId, levelLabel, leve
                       <div className="flex-1 min-w-0">
                         <p className="text-sm text-foreground font-medium font-sans">KPI Minimums Inherited</p>
                         <p className="text-xs text-muted-foreground font-sans">
-                          Retention thresholds match the Level Requirements configured above. Only the evaluation policy settings below are unique to retention.
+                          Retention thresholds follow the KPI standards configured above. The settings below determine how below-standard performance is evaluated and whether it surfaces coaching or demotion flags.
                         </p>
                       </div>
                     </div>
