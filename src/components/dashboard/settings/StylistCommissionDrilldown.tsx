@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -11,7 +11,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Loader2, Trash2, ExternalLink, Info } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
+import { Loader2, Trash2, ExternalLink, Info, AlertTriangle } from 'lucide-react';
 import { cn, formatDisplayName } from '@/lib/utils';
 import { getLevelColor } from '@/lib/level-colors';
 import { useNavigate } from 'react-router-dom';
@@ -59,6 +60,7 @@ export function StylistCommissionDrilldown({
   const [retailRate, setRetailRate] = useState('');
   const [reason, setReason] = useState('');
   const [expiresAt, setExpiresAt] = useState('');
+  const [showOverride, setShowOverride] = useState(false);
 
   // Reset form when member changes
   useEffect(() => {
@@ -67,13 +69,40 @@ export function StylistCommissionDrilldown({
       setRetailRate(override.retail_commission_rate != null ? String(Math.round(override.retail_commission_rate * 100)) : '');
       setReason(override.reason);
       setExpiresAt(override.expires_at ? override.expires_at.split('T')[0] : '');
+      setShowOverride(true);
     } else {
       setSvcRate('');
       setRetailRate('');
       setReason('');
       setExpiresAt('');
+      setShowOverride(false);
     }
   }, [override, member?.user_id, open]);
+
+  const handleToggleOverride = useCallback((checked: boolean) => {
+    if (!checked && override) {
+      // Existing override — remove it
+      deleteOverride.mutate(override.id, {
+        onSuccess: () => {
+          setSvcRate('');
+          setRetailRate('');
+          setReason('');
+          setExpiresAt('');
+          setShowOverride(false);
+          toast.success('Override removed');
+        },
+      });
+    } else if (!checked) {
+      // No saved override, just clear form
+      setSvcRate('');
+      setRetailRate('');
+      setReason('');
+      setExpiresAt('');
+      setShowOverride(false);
+    } else {
+      setShowOverride(true);
+    }
+  }, [override, deleteOverride]);
 
   const slugToLevel = useMemo(() => {
     const map = new Map<string, StylistLevel>();
@@ -200,77 +229,96 @@ export function StylistCommissionDrilldown({
           {/* Section 2: Override */}
           <section className="space-y-3">
             <div className="flex items-center justify-between">
-              <Label className="text-[11px] font-display uppercase tracking-wider text-muted-foreground font-medium">Commission Override</Label>
-              {override && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-7 text-xs text-destructive hover:text-destructive hover:bg-destructive/10"
-                  onClick={handleRemoveOverride}
-                  disabled={deleteOverride.isPending}
-                >
-                  {deleteOverride.isPending ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : <Trash2 className="w-3 h-3 mr-1" />}
-                  Remove
-                </Button>
-              )}
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1">
-                <Label className="text-xs">Service %</Label>
-                <Input
-                  type="number"
-                  placeholder="e.g. 45"
-                  value={svcRate}
-                  onChange={(e) => setSvcRate(e.target.value)}
-                  min={0}
-                  max={100}
-                  className="h-9 text-sm"
-                />
+              <div className="space-y-0.5">
+                <Label className="text-[11px] font-display uppercase tracking-wider text-muted-foreground font-medium">Commission Override</Label>
+                <p className="text-[10px] text-muted-foreground/70">Only enable for individual rate exceptions</p>
               </div>
-              <div className="space-y-1">
-                <Label className="text-xs">Retail %</Label>
-                <Input
-                  type="number"
-                  placeholder="e.g. 15"
-                  value={retailRate}
-                  onChange={(e) => setRetailRate(e.target.value)}
-                  min={0}
-                  max={100}
-                  className="h-9 text-sm"
-                />
-              </div>
-            </div>
-
-            <div className="space-y-1">
-              <Label className="text-xs">Reason</Label>
-              <Textarea
-                placeholder="e.g. Negotiated contract, 90-day probation..."
-                value={reason}
-                onChange={(e) => setReason(e.target.value)}
-                className="min-h-[56px] text-sm"
+              <Switch
+                checked={showOverride}
+                onCheckedChange={handleToggleOverride}
+                disabled={deleteOverride.isPending}
               />
             </div>
 
-            <div className="space-y-1">
-              <Label className="text-xs">Expires (optional)</Label>
-              <Input
-                type="date"
-                value={expiresAt}
-                onChange={(e) => setExpiresAt(e.target.value)}
-                className="h-9 text-sm"
-              />
-            </div>
+            {showOverride && (
+              <div className="border-l-2 border-amber-500/60 pl-3 space-y-3">
+                <div className="flex items-center gap-1.5 text-amber-600 dark:text-amber-400">
+                  <AlertTriangle className="w-3 h-3" />
+                  <span className="text-[10px] font-medium">This overrides the level default rates for this team member only</span>
+                </div>
 
-            <Button
-              size="sm"
-              className="w-full"
-              onClick={handleSaveOverride}
-              disabled={(!svcRate && !retailRate) || !reason.trim() || upsertOverride.isPending}
-            >
-              {upsertOverride.isPending && <Loader2 className="w-3 h-3 animate-spin mr-1.5" />}
-              {override ? 'Update Override' : 'Save Override'}
-            </Button>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <Label className="text-xs">Service %</Label>
+                    <Input
+                      type="number"
+                      placeholder="e.g. 45"
+                      value={svcRate}
+                      onChange={(e) => setSvcRate(e.target.value)}
+                      min={0}
+                      max={100}
+                      className="h-9 text-sm"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs">Retail %</Label>
+                    <Input
+                      type="number"
+                      placeholder="e.g. 15"
+                      value={retailRate}
+                      onChange={(e) => setRetailRate(e.target.value)}
+                      min={0}
+                      max={100}
+                      className="h-9 text-sm"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-1">
+                  <Label className="text-xs">Reason</Label>
+                  <Textarea
+                    placeholder="e.g. Negotiated contract, 90-day probation..."
+                    value={reason}
+                    onChange={(e) => setReason(e.target.value)}
+                    className="min-h-[56px] text-sm"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <Label className="text-xs">Expires (optional)</Label>
+                  <Input
+                    type="date"
+                    value={expiresAt}
+                    onChange={(e) => setExpiresAt(e.target.value)}
+                    className="h-9 text-sm"
+                  />
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <Button
+                    size="sm"
+                    className="flex-1"
+                    onClick={handleSaveOverride}
+                    disabled={(!svcRate && !retailRate) || !reason.trim() || upsertOverride.isPending}
+                  >
+                    {upsertOverride.isPending && <Loader2 className="w-3 h-3 animate-spin mr-1.5" />}
+                    {override ? 'Update Override' : 'Save Override'}
+                  </Button>
+                  {override && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 text-xs text-destructive hover:text-destructive hover:bg-destructive/10"
+                      onClick={handleRemoveOverride}
+                      disabled={deleteOverride.isPending}
+                    >
+                      {deleteOverride.isPending ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : <Trash2 className="w-3 h-3 mr-1" />}
+                      Remove
+                    </Button>
+                  )}
+                </div>
+              </div>
+            )}
           </section>
 
           {/* Section 3: Effective Rates Summary */}
