@@ -110,21 +110,70 @@ export function generateLevelCriteriaTablePDF(options: LevelCriteriaTablePDFOpti
   // Section: PROMOTION
   body.push({ cells: ['PROMOTION CRITERIA', ...levels.map(() => '')], style: 'section' });
 
-  const promoRows: { label: string; fn: (p: LevelPromotionCriteria | null) => string }[] = [
-    { label: 'Revenue', fn: p => p?.revenue_enabled ? `${currencySymbol}${p.revenue_threshold.toLocaleString()}` : '—' },
-    { label: 'Retail %', fn: p => p?.retail_enabled ? `${p.retail_pct_threshold}%` : '—' },
-    { label: 'Rebooking %', fn: p => p?.rebooking_enabled ? `${p.rebooking_pct_threshold}%` : '—' },
-    { label: 'Avg Ticket', fn: p => p?.avg_ticket_enabled ? `${currencySymbol}${p.avg_ticket_threshold}` : '—' },
-    { label: 'Client Retention', fn: p => p?.retention_rate_enabled ? `${p.retention_rate_threshold}%` : '—' },
-    { label: 'New Clients', fn: p => p?.new_clients_enabled ? `${p.new_clients_threshold}/mo` : '—' },
-    { label: 'Utilization', fn: p => p?.utilization_enabled ? `${p.utilization_threshold}%` : '—' },
-    { label: 'Rev/Hr', fn: p => p?.rev_per_hour_enabled ? `${currencySymbol}${p.rev_per_hour_threshold}` : '—' },
+  // KPI rows: for Level 1 (index 0), source from retention criteria; for higher levels, from promotion criteria
+  const kpiPromoRows: { label: string; promoFn: (p: LevelPromotionCriteria | null) => string; retFn: (r: LevelRetentionCriteria | null) => string }[] = [
+    {
+      label: 'Revenue',
+      promoFn: p => p?.revenue_enabled ? `${currencySymbol}${p.revenue_threshold.toLocaleString()}` : '—',
+      retFn: r => r?.revenue_enabled ? `${currencySymbol}${r.revenue_minimum.toLocaleString()}` : '—',
+    },
+    {
+      label: 'Retail %',
+      promoFn: p => p?.retail_enabled ? `${p.retail_pct_threshold}%` : '—',
+      retFn: r => r?.retail_enabled ? `${r.retail_pct_minimum}%` : '—',
+    },
+    {
+      label: 'Rebooking %',
+      promoFn: p => p?.rebooking_enabled ? `${p.rebooking_pct_threshold}%` : '—',
+      retFn: r => r?.rebooking_enabled ? `${r.rebooking_pct_minimum}%` : '—',
+    },
+    {
+      label: 'Avg Ticket',
+      promoFn: p => p?.avg_ticket_enabled ? `${currencySymbol}${p.avg_ticket_threshold}` : '—',
+      retFn: r => r?.avg_ticket_enabled ? `${currencySymbol}${r.avg_ticket_minimum}` : '—',
+    },
+    {
+      label: 'Client Retention',
+      promoFn: p => p?.retention_rate_enabled ? `${p.retention_rate_threshold}%` : '—',
+      retFn: r => r?.retention_rate_enabled ? `${r.retention_rate_minimum}%` : '—',
+    },
+    {
+      label: 'New Clients',
+      promoFn: p => p?.new_clients_enabled ? `${p.new_clients_threshold}/mo` : '—',
+      retFn: r => r?.new_clients_enabled ? `${r.new_clients_minimum}/mo` : '—',
+    },
+    {
+      label: 'Utilization',
+      promoFn: p => p?.utilization_enabled ? `${p.utilization_threshold}%` : '—',
+      retFn: r => r?.utilization_enabled ? `${r.utilization_minimum}%` : '—',
+    },
+    {
+      label: 'Rev/Hr',
+      promoFn: p => p?.rev_per_hour_enabled ? `${currencySymbol}${p.rev_per_hour_threshold}` : '—',
+      retFn: r => r?.rev_per_hour_enabled ? `${currencySymbol}${r.rev_per_hour_minimum}` : '—',
+    },
+  ];
+
+  // Non-KPI promo rows remain promotion-only for all levels
+  const metaPromoRows: { label: string; fn: (p: LevelPromotionCriteria | null) => string }[] = [
     { label: 'Level Tenure', fn: p => p?.tenure_enabled ? `${p.tenure_days}d` : '—' },
     { label: 'Eval Window', fn: p => p ? `${p.evaluation_window_days}d` : '—' },
     { label: 'Approval', fn: p => p ? (p.requires_manual_approval ? 'Manual' : 'Auto') : '—' },
   ];
 
-  promoRows.forEach(row => {
+  kpiPromoRows.forEach(row => {
+    body.push({
+      cells: [row.label, ...levels.map(l => {
+        if (l.index === 0) {
+          return row.retFn(findRetention(retentionCriteria, l.dbId));
+        }
+        return row.promoFn(findPromo(criteria, l.dbId));
+      })],
+      style: 'normal',
+    });
+  });
+
+  metaPromoRows.forEach(row => {
     body.push({
       cells: [row.label, ...levels.map(l => row.fn(findPromo(criteria, l.dbId)))],
       style: 'normal',
