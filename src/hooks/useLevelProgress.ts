@@ -16,7 +16,7 @@ export interface CriterionProgress {
   current: number;
   priorCurrent: number; // value from prior eval window for PoP trend
   target: number;
-  percent: number; // 0-100
+  percent: number; // 0-100+ (uncapped; over-performance flows into weighted composite)
   weight: number;
   unit: string;
   gap: number;
