@@ -1,55 +1,64 @@
 
 
-# Improve Weights Step with Explainer and "Equal Weight" Option
+# Make Weights Meaningful — Allow Metric Compensation
 
 ## Problem
 
-The "Weights" step in the Level Criteria wizard is confusing. Users don't understand:
-1. **What weights do** — they control the composite score (0-100%) used to determine promotion readiness
-2. **How they work** — a metric at 20% weight contributes more to the overall score than one at 10%
-3. **What if I want equal importance?** — there's no quick "distribute evenly" action; users must manually slide each one
+Currently, each metric's progress percentage is capped at 100% before the weighted average is calculated. This means the composite score can only reach 100% if **every** metric is individually at 100%. Weights are cosmetic — they affect visual fill speed but not the promotion decision.
 
-## How Weights Actually Work (for context)
+## New Behavior
 
-In `useTeamLevelProgress.ts`, the composite score is calculated as:
+A stylist who exceeds one threshold (e.g., 150% of revenue target) can compensate for being slightly below another (e.g., 85% of retail target), as long as the **weighted composite** reaches 100%. This makes weights architecturally meaningful: a metric weighted at 40% contributes more to qualification than one at 10%.
+
+**Example:** Revenue weighted 60%, Retail weighted 40%. Stylist hits 120% of revenue, 70% of retail.
+- Composite = (120 × 60 + 70 × 40) / 100 = 72 + 28 = 100% → Qualified
+
+## Technical Changes
+
+### 1. Uncap individual metric percentages in composite calculation
+
+**Files:** `src/hooks/useTeamLevelProgress.ts` and `src/hooks/useLevelProgress.ts`
+
+In the progress array construction (lines building `percent`), change:
 ```
-compositeScore = sum(each metric's percent × weight) / totalWeight
+percent: target > 0 ? Math.min(100, (actual / target) * 100) : 0
 ```
-This score drives the "Overall Progress" bar, "Ready to Promote" status, and "Stalled Progression" detection. A stylist is "fully qualified" when compositeScore >= 100% AND all individual thresholds are met.
+to:
+```
+percent: target > 0 ? (actual / target) * 100 : 0
+```
 
-**Key insight**: Even with equal weights, every individual KPI threshold must still be met for full qualification. Weights only affect the composite progress percentage — they don't make metrics optional.
+This allows over-performance (e.g., 130%) to flow into the weighted average. The composite score still determines `isFullyQualified` via `compositeScore >= 100 && tenurePasses` — no change needed there.
 
-## Changes
+### 2. Cap display values in UI components
+
+Progress bars and visual indicators still need capping at 100 for rendering. Add `Math.min(100, cp.percent)` in the UI layer where `cp.percent` is passed to `<Progress value={...}>`. Key files:
+
+- `src/components/dashboard/StylistScorecard.tsx` — progress bar value
+- `src/components/coaching/LevelProgressCard.tsx` — progress bar value
+- `src/pages/dashboard/admin/GraduationTracker.tsx` — progress bar value
+
+Display the raw percent as text (e.g., "130%") so stylists can see they're exceeding a target.
+
+### 3. Update the Weights explainer in GraduationWizard
 
 **File:** `src/components/dashboard/settings/GraduationWizard.tsx`
 
-### 1. Add explainer box above the weight sliders (step === 1)
+Rewrite the "How Weights Work" explainer body to:
 
-Replace the single-line "Set the relative importance..." text with a blue explainer box:
+"Weights determine how much each metric contributes to the overall readiness score. A stylist qualifies for promotion when their weighted composite score reaches 100%. Exceeding one threshold can compensate for being slightly below another — a metric with higher weight has more influence on qualification. For example, if Revenue is weighted at 60% and a stylist hits 120% of their revenue target, that surplus offsets shortfalls in lower-weighted metrics."
 
-- **Title:** "How Weights Work"
-- **Body:** "Weights control how much each metric contributes to the overall readiness score. A higher weight means that metric has more influence on the progress percentage. Note: regardless of weights, a stylist must meet every individual threshold to qualify for promotion. Weights only affect the composite score used to track overall progress."
-- Same blue styling as the Level 1 explainer (bg-blue-500/[0.04], border-blue-500/20, BookOpen icon)
+Remove the "Note: regardless of weights..." paragraph since it's no longer true.
 
-### 2. Add "Distribute Evenly" button
+### 4. Add over-performance visual indicator
 
-Add a small action button (ghost variant, `Scale` icon) above the slider list that sets all enabled metrics to equal weight (100 / count, with remainder distributed). Label: "Distribute Evenly"
-
-This directly addresses the "what if I want all KPIs to be equal importance" question with a single click.
-
-### 3. Implementation detail
-
-The even-distribution logic:
-```ts
-const active = CRITERIA.filter(c => form[c.enabledKey]);
-const base = Math.floor(100 / active.length);
-const remainder = 100 - base * active.length;
-active.forEach((c, i) => { form[c.weightKey] = base + (i < remainder ? 1 : 0); });
-```
+In the scorecard and tracker, when a metric's `percent > 100`, show the value in emerald with a small "exceeds" indicator (e.g., "130%" in green text) so both stylists and admins can see where surplus is being generated.
 
 ## Scope
-- Single file: `GraduationWizard.tsx`
-- Add `Scale` to lucide imports
-- ~25 lines added/modified
+
+- 2 hooks modified (uncap percent calculation) — ~6 lines each
+- 3 UI components updated (cap progress bar values, show raw percent) — ~3 lines each  
+- 1 explainer rewrite — ~5 lines
 - No database changes
+- No new components
 
