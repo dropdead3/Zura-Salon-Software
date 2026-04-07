@@ -64,13 +64,11 @@ export function generateLevelCriteriaTablePDF(options: LevelCriteriaTablePDFOpti
   doc.setFillColor(30, 30, 30);
   doc.rect(0, 0, pageWidth, 22, 'F');
 
-  setTermina(doc);
+  setTermina(doc, 11);
   doc.setTextColor(255, 255, 255);
-  doc.setFontSize(11);
   doc.text('LEVEL CRITERIA COMPARISON', 14, 10);
 
-  setAeonik(doc);
-  doc.setFontSize(8);
+  setAeonik(doc, 8);
   doc.text(orgName, 14, 17);
   doc.text(`Generated ${format(now, 'MMM d, yyyy')}`, pageWidth - 14, 17, { align: 'right' });
 
@@ -200,8 +198,7 @@ export function generateLevelCriteriaTablePDF(options: LevelCriteriaTablePDFOpti
   const totalPages = doc.getNumberOfPages();
   for (let p = 1; p <= totalPages; p++) {
     doc.setPage(p);
-    setAeonik(doc);
-    doc.setFontSize(7);
+    setAeonik(doc, 7);
     doc.setTextColor(150, 150, 150);
     doc.text(orgName, 14, pageHeight - 8);
     doc.text(`Page ${p} of ${totalPages}`, pageWidth - 14, pageHeight - 8, { align: 'right' });
