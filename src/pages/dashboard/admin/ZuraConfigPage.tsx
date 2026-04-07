@@ -1,14 +1,17 @@
+import { lazy, Suspense } from 'react';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { DashboardPageHeader } from '@/components/dashboard/DashboardPageHeader';
 import { Tabs, TabsContent, TabsTrigger, ResponsiveTabsList } from '@/components/ui/tabs';
 import { Brain, BookOpen, Users, ShieldCheck } from 'lucide-react';
-import { PersonalityTab } from '@/components/zura-config/PersonalityTab';
-import { KnowledgeBaseTab } from '@/components/zura-config/KnowledgeBaseTab';
-import { RoleRulesTab } from '@/components/zura-config/RoleRulesTab';
-import { GuardrailsTab } from '@/components/zura-config/GuardrailsTab';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { PLATFORM_NAME } from '@/lib/brand';
 import { PageExplainer } from '@/components/ui/PageExplainer';
+import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
+
+const PersonalityTab = lazy(() => import('@/components/zura-config/PersonalityTab').then(m => ({ default: m.PersonalityTab })));
+const KnowledgeBaseTab = lazy(() => import('@/components/zura-config/KnowledgeBaseTab').then(m => ({ default: m.KnowledgeBaseTab })));
+const RoleRulesTab = lazy(() => import('@/components/zura-config/RoleRulesTab').then(m => ({ default: m.RoleRulesTab })));
+const GuardrailsTab = lazy(() => import('@/components/zura-config/GuardrailsTab').then(m => ({ default: m.GuardrailsTab })));
 
 export default function ZuraConfigPage() {
   const { currentOrganization } = useOrganizationContext();
@@ -40,21 +43,23 @@ export default function ZuraConfigPage() {
               </TabsTrigger>
             </ResponsiveTabsList>
 
-            <TabsContent value="personality">
-              <PersonalityTab organizationId={orgId} />
-            </TabsContent>
+            <Suspense fallback={<DashboardLoader size="lg" className="h-64" />}>
+              <TabsContent value="personality">
+                <PersonalityTab organizationId={orgId} />
+              </TabsContent>
 
-            <TabsContent value="knowledge">
-              <KnowledgeBaseTab organizationId={orgId} />
-            </TabsContent>
+              <TabsContent value="knowledge">
+                <KnowledgeBaseTab organizationId={orgId} />
+              </TabsContent>
 
-            <TabsContent value="roles">
-              <RoleRulesTab organizationId={orgId} />
-            </TabsContent>
+              <TabsContent value="roles">
+                <RoleRulesTab organizationId={orgId} />
+              </TabsContent>
 
-            <TabsContent value="guardrails">
-              <GuardrailsTab organizationId={orgId} />
-            </TabsContent>
+              <TabsContent value="guardrails">
+                <GuardrailsTab organizationId={orgId} />
+              </TabsContent>
+            </Suspense>
           </Tabs>
         ) : (
           <div className="text-center py-12 text-muted-foreground">
