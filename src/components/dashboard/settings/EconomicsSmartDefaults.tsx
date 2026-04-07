@@ -140,7 +140,7 @@ export function EconomicsSmartDefaults({ detection, onAccept, isSaving }: Econom
         </div>
       </CardHeader>
       <CardContent className="space-y-5">
-        <div className="grid grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {FIELDS.map((field) => {
             const value = isAdjusting ? localValues[field.key] : detection.suggestions[field.key];
             const source = detection.sources[field.key];
@@ -305,7 +305,7 @@ export function EconomicsDataBanner({ detection, savedAssumptions, onUpdate, onR
       {diffs.length > 0 && (
         <div className="space-y-2">
           {diffs.map(diff => (
-            <div key={diff.key} className="flex items-center justify-between text-sm">
+            <div key={diff.key} className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-sm">
               <div className="flex items-center gap-2 text-muted-foreground">
                 <Sparkles className="w-3.5 h-3.5 text-primary shrink-0" />
                 <span>

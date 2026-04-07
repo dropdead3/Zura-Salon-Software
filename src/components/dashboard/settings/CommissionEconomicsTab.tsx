@@ -277,7 +277,7 @@ export function CommissionEconomicsTab({ levels }: CommissionEconomicsTabProps) 
           </div>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             <div className="space-y-2">
               <Label className="text-xs text-muted-foreground">Monthly Overhead / Stylist</Label>
               <div className="relative">
