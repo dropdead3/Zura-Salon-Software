@@ -170,7 +170,7 @@ export function generateLevelRequirementsPDF(options: LevelRequirementsPDFOption
 
       // Level number
       doc.setTextColor(30, 30, 30);
-      doc.setFont('helvetica', 'bold');
+      doc.setFont(F_DISPLAY, 'normal');
       doc.setFontSize(isCompact ? 7 : 9);
       doc.text(`${i + 1}`, cx, nodeY + (isCompact ? 0.8 : 1), { align: 'center' });
 
@@ -194,7 +194,7 @@ export function generateLevelRequirementsPDF(options: LevelRequirementsPDFOption
         doc.setLineWidth(0.5);
         doc.circle(dotX, dotY, dotR, 'FD');
         doc.setTextColor(255, 255, 255);
-        doc.setFont('helvetica', 'bold');
+        doc.setFont(F_DISPLAY, 'normal');
         doc.setFontSize(5);
         doc.text('!', dotX, dotY + 0.6, { align: 'center' });
       }
@@ -211,7 +211,7 @@ export function generateLevelRequirementsPDF(options: LevelRequirementsPDFOption
 
       // Level name below
       doc.setTextColor(120, 120, 120);
-      doc.setFont('helvetica', 'normal');
+      doc.setFont(F_BODY, 'normal');
       doc.setFontSize(isCompact ? 5 : 6);
       const maxLabelW = spacing * 0.9;
       const maxChars = isCompact ? 8 : 14;
@@ -245,11 +245,11 @@ export function generateLevelRequirementsPDF(options: LevelRequirementsPDFOption
     const bx = MARGIN + i * (statBoxW + statGap);
     drawRoundedRect(doc, bx, y, statBoxW, statBoxH, 2.5, { fill: [250, 250, 252], stroke: [225, 225, 225], lineWidth: 0.3 });
     doc.setTextColor(30, 30, 30);
-    doc.setFont('helvetica', 'bold');
+    doc.setFont(F_DISPLAY, 'normal');
     doc.setFontSize(18);
     doc.text(stat.value, bx + statBoxW / 2, y + 12, { align: 'center', charSpace: 0.5 });
     doc.setTextColor(140, 140, 140);
-    doc.setFont('helvetica', 'normal');
+    doc.setFont(F_BODY, 'normal');
     doc.setFontSize(7);
     doc.text(stat.label, bx + statBoxW / 2, y + 18, { align: 'center' });
   });
@@ -330,7 +330,7 @@ export function generateLevelRequirementsPDF(options: LevelRequirementsPDFOption
 
     // Card title row
     doc.setTextColor(30, 30, 30);
-    doc.setFont('helvetica', 'bold');
+    doc.setFont(F_DISPLAY, 'normal');
     doc.setFontSize(11);
     const titleCharSpace = 0.3;
     const titleText = `LEVEL ${i + 1} — ${level.label.toUpperCase()}`;
@@ -349,7 +349,7 @@ export function generateLevelRequirementsPDF(options: LevelRequirementsPDFOption
 
     // Status badge
     const actualTitleW = textWidthWithCharSpace(doc, displayTitle, titleCharSpace);
-    doc.setFont('helvetica', 'normal');
+    doc.setFont(F_BODY, 'normal');
     doc.setFontSize(6);
     const badgeText = isConfigured ? 'Configured' : 'Setup Incomplete';
     const badgeW = doc.getTextWidth(badgeText) + 7;
@@ -370,7 +370,7 @@ export function generateLevelRequirementsPDF(options: LevelRequirementsPDFOption
     if (isBase) {
       cy += 5;
       doc.setTextColor(140, 140, 140);
-      doc.setFont('helvetica', 'normal');
+      doc.setFont(F_BODY, 'normal');
       doc.setFontSize(7);
       doc.text('Entry Level — Retention Minimums', MARGIN + innerPadX, cy);
     }
@@ -386,7 +386,7 @@ export function generateLevelRequirementsPDF(options: LevelRequirementsPDFOption
       doc.setLineWidth(0.3);
       doc.roundedRect(MARGIN + innerPadX, cy, contentWidth - innerPadX * 2, warningH, 1.5, 1.5, 'FD');
       doc.setTextColor(180, 83, 9);
-      doc.setFont('helvetica', 'normal');
+      doc.setFont(F_BODY, 'normal');
       doc.setFontSize(6.5);
       doc.text('This level has not been marked as configured. The data shown may be incomplete.', MARGIN + innerPadX + 3, cy + 6);
       cy += warningH + 4;
@@ -394,7 +394,7 @@ export function generateLevelRequirementsPDF(options: LevelRequirementsPDFOption
 
     // ── Compensation Section ──
     doc.setTextColor(170, 170, 170);
-    doc.setFont('helvetica', 'normal');
+    doc.setFont(F_BODY, 'normal');
     doc.setFontSize(6.5);
     doc.text('COMPENSATION', MARGIN + innerPadX, cy, { charSpace: 0.8 });
     cy += 5;
@@ -411,13 +411,13 @@ export function generateLevelRequirementsPDF(options: LevelRequirementsPDFOption
       compParts.forEach((part, pi) => {
         // Label — no charSpace at small size
         doc.setTextColor(170, 170, 170);
-        doc.setFont('helvetica', 'normal');
+        doc.setFont(F_BODY, 'normal');
         doc.setFontSize(6);
         doc.text(part.label, compX, cy);
         const labelW = doc.getTextWidth(part.label) + 3; // 3mm gap
         // Value
         doc.setTextColor(30, 30, 30);
-        doc.setFont('helvetica', 'bold');
+        doc.setFont(F_DISPLAY, 'normal');
         doc.setFontSize(9);
         doc.text(part.value, compX + labelW, cy);
         const valueW = doc.getTextWidth(part.value);
@@ -427,7 +427,7 @@ export function generateLevelRequirementsPDF(options: LevelRequirementsPDFOption
         if (pi < compParts.length - 1) {
           compX += 4;
           doc.setTextColor(200, 200, 200);
-          doc.setFont('helvetica', 'normal');
+          doc.setFont(F_BODY, 'normal');
           doc.setFontSize(7);
           doc.text('·', compX, cy);
           compX += 5;
@@ -435,7 +435,7 @@ export function generateLevelRequirementsPDF(options: LevelRequirementsPDFOption
       });
     } else {
       doc.setTextColor(180, 180, 180);
-      doc.setFont('helvetica', 'normal');
+      doc.setFont(F_BODY, 'normal');
       doc.setFontSize(7.5);
       doc.text('No compensation configured', MARGIN + innerPadX, cy);
     }
@@ -445,7 +445,7 @@ export function generateLevelRequirementsPDF(options: LevelRequirementsPDFOption
     // ── KPI Requirements ──
     if (kpis.length > 0) {
       doc.setTextColor(170, 170, 170);
-      doc.setFont('helvetica', 'normal');
+      doc.setFont(F_BODY, 'normal');
       doc.setFontSize(6.5);
       doc.text(isBase ? 'RETENTION MINIMUMS' : 'GRADUATION REQUIREMENTS', MARGIN + innerPadX, cy, { charSpace: 0.8 });
       cy += 5;
@@ -465,13 +465,13 @@ export function generateLevelRequirementsPDF(options: LevelRequirementsPDFOption
 
         // KPI label
         doc.setTextColor(160, 160, 160);
-        doc.setFont('helvetica', 'normal');
+        doc.setFont(F_BODY, 'normal');
         doc.setFontSize(5.5);
         doc.text(kpi.label, cellX + 3.5, ky + 5);
 
         // KPI value
         doc.setTextColor(30, 30, 30);
-        doc.setFont('helvetica', 'bold');
+        doc.setFont(F_DISPLAY, 'normal');
         doc.setFontSize(9);
         doc.text(kpi.value, cellX + 3.5, ky + 11);
       });
@@ -483,7 +483,7 @@ export function generateLevelRequirementsPDF(options: LevelRequirementsPDFOption
       const emptyBoxH = 10;
       drawRoundedRect(doc, MARGIN + innerPadX, cy, contentWidth - innerPadX * 2, emptyBoxH, 2, { fill: [250, 250, 252], stroke: [238, 238, 240], lineWidth: 0.2 });
       doc.setTextColor(170, 170, 170);
-      doc.setFont('helvetica', 'italic');
+      doc.setFont(F_BODY, 'normal');
       doc.setFontSize(7);
       doc.text('No KPI requirements configured for this level.', MARGIN + innerPadX + 4, cy + 6);
       cy += emptyBoxH + 2;
@@ -499,7 +499,7 @@ export function generateLevelRequirementsPDF(options: LevelRequirementsPDFOption
       evalParts.push(promo.requires_manual_approval ? 'Manual approval' : 'Auto-promote');
 
       doc.setTextColor(110, 110, 110);
-      doc.setFont('helvetica', 'normal');
+      doc.setFont(F_BODY, 'normal');
       doc.setFontSize(7);
 
       let evalX = MARGIN + innerPadX;
@@ -517,12 +517,12 @@ export function generateLevelRequirementsPDF(options: LevelRequirementsPDFOption
     // ── Retention policy ──
     if (retention?.retention_enabled) {
       doc.setTextColor(170, 170, 170);
-      doc.setFont('helvetica', 'normal');
+      doc.setFont(F_BODY, 'normal');
       doc.setFontSize(6.5);
       doc.text('RETENTION POLICY', MARGIN + innerPadX, cy, { charSpace: 0.8 });
       cy += 5;
 
-      doc.setFont('helvetica', 'normal');
+      doc.setFont(F_BODY, 'normal');
       doc.setFontSize(7);
       const retParts = [
         `${retention.evaluation_window_days}d evaluation window`,
@@ -538,7 +538,7 @@ export function generateLevelRequirementsPDF(options: LevelRequirementsPDFOption
       // Action type in color
       const neutralW = doc.getTextWidth(neutralText);
       doc.setTextColor(...actionColor);
-      doc.setFont('helvetica', 'bold');
+      doc.setFont(F_DISPLAY, 'normal');
       doc.text(actionLabel, MARGIN + innerPadX + neutralW, cy);
     }
 
@@ -558,7 +558,7 @@ export function generateLevelRequirementsPDF(options: LevelRequirementsPDFOption
 
     doc.setFontSize(6);
     doc.setTextColor(180, 180, 180);
-    doc.setFont('helvetica', 'normal');
+    doc.setFont(F_BODY, 'normal');
     doc.text(`Confidential — For internal use only  ·  ${orgName}`, pageWidth / 2, pageH - 9, { align: 'center' });
     doc.text(`Page ${p} of ${totalPages}`, pageWidth / 2, pageH - 5, { align: 'center' });
   }
