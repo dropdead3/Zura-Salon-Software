@@ -857,7 +857,7 @@ function CriteriaComparisonTable({ levels, promotionCriteria, retentionCriteria,
         <table className="w-full caption-bottom text-sm [&_th]:border-r [&_th]:border-border/30 [&_th:last-child]:border-r-0 [&_td]:border-r [&_td]:border-border/30 [&_td:last-child]:border-r-0 [&_td[colspan]]:border-r-0">
           <TableHeader className="sticky top-0 z-20 shadow-[0_2px_4px_-2px_rgba(0,0,0,0.08)] dark:shadow-[0_2px_4px_-2px_rgba(0,0,0,0.3)]">
             <TableRow className="border-b border-border bg-muted-strong">
-              <TableHead className={cn("w-[128px] min-w-[128px] sticky left-0 bg-muted-strong z-30 py-3 px-3 border-r border-border shadow-[2px_0_4px_-2px_rgba(0,0,0,0.06)] dark:shadow-[2px_0_4px_-2px_rgba(0,0,0,0.4)]", tokens.table.columnHeader)}>Metric</TableHead>
+              <TableHead className={cn("w-[128px] min-w-[128px] sticky left-0 bg-muted-strong z-30 py-3 px-3 border-r border-border shadow-[2px_0_4px_-2px_rgba(0,0,0,0.06)] dark:shadow-[2px_0_4px_-2px_rgba(0,0,0,0.4)] text-center align-middle", tokens.table.columnHeader)}>Metric</TableHead>
               {levels.map((level, idx) => {
                 const ret = level.dbId ? getCriteria(level.dbId).retention : undefined;
                 const retentionActive = ret?.retention_enabled === true;
