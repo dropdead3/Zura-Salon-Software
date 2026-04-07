@@ -691,10 +691,10 @@ function CriteriaComparisonTable({ levels, promotionCriteria, retentionCriteria,
     const fieldMapping = METRIC_FIELD_MAP[metric.label];
     const isBaseLevel = levelIdx === 0;
     const isLastLevel = levelIdx === levels.length - 1;
-    // Base level skips only non-editable promotion rows + Tenure (no promotion target)
-    const isPromotionSkip = metric.section === 'promotion' && isBaseLevel && (!metric.editable || metric.label === 'Level Tenure' || metric.label === 'Eval Window' || metric.label === 'Approval');
+    // Base level skips only non-editable promotion rows (Level Tenure is editable on all levels)
+    const isPromotionSkip = metric.section === 'promotion' && isBaseLevel && (!metric.editable || metric.label === 'Eval Window' || metric.label === 'Approval');
     const isLastLevelTenure = metric.label === 'Level Tenure' && isLastLevel;
-    // Base level editable promotion KPIs map to retention minimums
+    // Base level editable promotion KPIs (except Level Tenure) map to retention minimums
     const isBaseLevelRetention = metric.section === 'promotion' && isBaseLevel && metric.editable && metric.label !== 'Level Tenure';
 
     if (isEditingRow && metric.editable && fieldMapping && level.dbId && !isPromotionSkip && !isLastLevelTenure) {
