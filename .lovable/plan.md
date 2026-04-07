@@ -1,46 +1,47 @@
 
 
-# Fix Dialog Centering to Account for Sidebar
+# Speed Up Settings Page: Card Grid First, Everything Else Lazy
 
 ## Problem
 
-All dialogs (`DialogContent`) use `left-[50%] translate-x-[-50%]` which centers them relative to the full viewport. The persistent sidebar (320px expanded / 64px collapsed + margins) eats into the visible content area, causing dialogs to appear shifted left and partially hidden behind the sidebar on narrower screens.
+The Settings page imports ~20 lazy components, DnD libraries, and fires multiple hooks (auth, business capacity, billing access, role utils, layout prefs, color theme, etc.) **before** the card grid can render. The card grid itself is pure UI — icons, labels, and click handlers — but it's blocked by all this initialization.
 
-## Solution — CSS Custom Property on Layout Root
+## Approach
 
-Set a CSS variable `--sidebar-offset` on the `DashboardLayout` root that equals **half the sidebar's occupied width**. The dialog component reads this variable to shift its center point into the content area.
+Split the Settings page into two layers:
 
-```
-Viewport:  |--- sidebar (340px) ---|------------- content area --------------|
-Old center:                    ↑ (50% of viewport — partially behind sidebar)
-New center:                                      ↑ (50% of content area)
-```
+1. **`SettingsCardGrid`** — the card grid view (what you see on load). Renders immediately with minimal dependencies: just the `categoriesMap`, `SECTION_GROUPS`, icons, and the layout order hook. No DnD on first paint — DnD initializes only when "Edit Layout" is clicked.
 
-### How the math works
+2. **`SettingsCategoryDetail`** — the detail view (lazy loaded). Only mounts when a category is selected. Contains all 20+ lazy component imports and the heavy sub-page logic.
 
-- Sidebar expanded: occupies ~340px → offset = 170px → dialog `left: calc(50% + 170px)`
-- Sidebar collapsed: occupies ~88px → offset = 44px → dialog `left: calc(50% + 44px)`  
-- Mobile (no sidebar): offset = 0 → standard centering
+### What makes it faster
 
-### Files Changed
+| Before | After |
+|--------|-------|
+| DnD kit loaded on mount | DnD kit lazy-loaded only when Edit Mode toggled |
+| All 20+ lazy component declarations evaluated on mount | Lazy declarations move to detail component, not evaluated until needed |
+| `useBusinessCapacity`, `useRoleUtils`, `useColorTheme`, `useBillingAccess` fire immediately | These hooks move into their respective sub-views; card grid doesn't need them |
+| `useStaffingAlertSettings` fires on mount | Moves into System category detail only |
+
+### Card grid dependencies (minimal)
+- `useAuth` (already cached)
+- `useSettingsLayout` (already cached, just the order array)
+- `useBillingAccess` (needed to filter account-billing card visibility — keep but it's lightweight)
+- Icon imports from lucide (tree-shaken)
+- `categoriesMap` static object
+
+### Files changed
 
 | File | Change |
 |------|--------|
-| `src/components/dashboard/DashboardLayout.tsx` | Set `--sidebar-offset` CSS variable on the layout wrapper, reactive to `sidebarCollapsed` state. Only applied at `lg:` breakpoint. |
-| `src/components/ui/dialog.tsx` | Replace `left-[50%]` with inline style `left: calc(50% + var(--sidebar-offset, 0px))`. Update slide-in/slide-out animations to match. |
-| `src/components/dashboard/drilldownDialogStyles.ts` | Same left-offset adjustment for drill-down dialogs. |
+| `src/pages/dashboard/admin/Settings.tsx` | Extract card grid to render immediately; wrap DnD context in a lazy-loaded wrapper that only mounts when `isEditMode` is true; move all category detail rendering into a separate lazy component |
+| `src/components/dashboard/settings/SettingsCategoryDetail.tsx` (new) | Contains all 20+ lazy imports and the category-specific rendering logic |
+| `src/components/dashboard/settings/SettingsDndWrapper.tsx` (new) | Contains DnD context, sensors, sortable logic — only loaded when Edit Layout is clicked |
 
-### Why CSS variable instead of React context
+### DnD lazy-load detail
 
-- Zero coupling between the dialog primitive and dashboard layout
-- Works for all dialogs globally — no per-dialog prop needed
-- The variable naturally falls back to `0px` outside the dashboard (login pages, public pages)
-- Animations stay in CSS, no JS re-renders on sidebar toggle
+The card grid renders plain `div` wrappers by default. When "Edit Layout" is clicked, `SettingsDndWrapper` lazy-loads and wraps the same cards with `DndContext` + `SortableContext`. This removes `@dnd-kit/core` and `@dnd-kit/sortable` from the initial bundle for this page entirely.
 
-### Edge cases handled
-
-- **Mobile**: No sidebar → variable unset → `var(--sidebar-offset, 0px)` = standard centering
-- **Hidden sidebar** (`hideSidebar` routes): Variable set to 0
-- **Sidebar toggle animation**: Variable updates with the same 500ms transition as the sidebar
-- **Drilldown dialogs**: Use the same variable via the shared constant
+### No visual changes
+The page looks and behaves identically. Cards appear faster because the JS bundle for the initial view is dramatically smaller.
 
