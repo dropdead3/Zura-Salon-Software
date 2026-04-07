@@ -87,7 +87,9 @@ function getKeyGap(member: TeamMemberProgress): string {
 export function generateStaffLevelReportPDF(options: StaffLevelReportOptions): jsPDF {
   const { orgName, teamProgress, counts } = options;
   const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
-  const pageWidth = doc.internal.pageSize.getWidth();
+  const hasFonts = registerPdfFonts(doc);
+  const F_DISPLAY = hasFonts ? 'Termina' : 'helvetica';
+  const F_BODY = hasFonts ? 'AeonikPro' : 'helvetica';
   const now = new Date();
 
   // ─── Centered Header (matching roadmap PDF) ───
