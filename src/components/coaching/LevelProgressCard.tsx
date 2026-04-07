@@ -110,6 +110,7 @@ export function LevelProgressCard({ userId, compact = false }: LevelProgressCard
         <div className="flex items-center gap-2 text-xs text-emerald-700 dark:text-emerald-400 mb-1.5">
           <DollarSign className="w-3.5 h-3.5" />
           <span className="font-medium">Income Opportunity</span>
+          <MetricInfoTooltip description="This estimate is based on your actual service mix over the evaluation window. It accounts for two factors: (1) higher service prices at the next level, and (2) a higher commission rate applied to that revenue. The uplift reflects what you'd earn monthly if you were already at the next level, compared to today." />
         </div>
         <div className="grid grid-cols-3 gap-2 text-center">
           <div>
