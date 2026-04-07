@@ -244,8 +244,17 @@ export function IndividualStaffReport({ dateFrom, dateTo, locationId, onClose, i
     csv += `New Clients,${data.clientMetrics.newClients},${Math.round(data.teamAverages.newClients)}\n`;
     csv += `Commission Earned,${data.commission.totalCommission},\n`;
     csv += `Experience Score,${data.experienceScore.composite},\n`;
+    csv += `Tip Rate,${(data.experienceScore.tipRate ?? 0).toFixed(1)}%,\n`;
+    csv += `Avg Tip,${avgTip.toFixed(2)},\n`;
     csv += `Color Bar Compliance,${data.colorBarCompliance.complianceRate}%,${data.teamAverages.complianceRate}%\n`;
     csv += `Color Appointments,${data.colorBarCompliance.totalColorAppointments} (${data.colorBarCompliance.tracked} tracked),\n`;
+    if (complianceData) {
+      csv += `Waste Rate,${complianceData.wastePct}%,\n`;
+      csv += `Waste Cost,${complianceData.wasteCost.toFixed(2)},\n`;
+      csv += `Reweigh Rate,${complianceData.reweighRate}%,\n`;
+      csv += `Overage Attachment,${complianceData.overageAttachmentRate}%,\n`;
+      csv += `Overage Charges,${complianceData.overageChargeTotal.toFixed(2)},\n`;
+    }
     csv += '\nTop Services\nService,Count,Revenue,Avg Price\n';
     data.topServices.forEach(s => { csv += `"${s.name}",${s.count},${s.revenue},${s.avgPrice}\n`; });
     csv += '\nTop Clients\nClient,Visits,Revenue,Avg Ticket,Last Visit,Status\n';
