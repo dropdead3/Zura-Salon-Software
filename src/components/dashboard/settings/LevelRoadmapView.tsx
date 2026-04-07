@@ -460,70 +460,65 @@ ${clone.innerHTML}
                 {/* Color accent bar */}
                 <div className={cn('h-1.5', color.bg)} />
 
-                {/* Accordion header (clickable when accordion mode) */}
-                {useAccordion ? (
-                  <button
-                    type="button"
-                    onClick={() => toggleCard(i)}
-                    className="w-full flex items-center justify-between p-4 text-left hover:bg-neutral-50/50 transition-colors print:hidden"
-                  >
-                    <div className="flex items-center gap-3 min-w-0">
-                      <span className="font-display text-sm tracking-wide text-neutral-900 flex-shrink-0">
-                        {i + 1}
-                      </span>
-                      <span className="font-display text-sm tracking-wide uppercase text-neutral-900 truncate">
-                        {level.label}
-                      </span>
-                      {level.isConfigured ? (
-                        <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200 text-[10px] px-2 py-0.5 flex-shrink-0">
-                          <Check className="w-2.5 h-2.5 mr-0.5" /> Configured
-                        </Badge>
-                      ) : (
-                        <Badge className="bg-amber-100 text-amber-700 border-amber-200 text-[10px] px-2 py-0.5 flex-shrink-0">
-                          <AlertTriangle className="w-2.5 h-2.5 mr-0.5" /> Setup Incomplete
-                        </Badge>
-                      )}
+                {/* Level header — always visible */}
+                {(() => {
+                  const headerContent = (
+                    <>
+                      <div className="flex items-center gap-3 min-w-0">
+                        <span className="font-display text-sm tracking-wide text-neutral-900 flex-shrink-0">
+                          {i + 1}
+                        </span>
+                        <span className="font-display text-sm tracking-wide uppercase text-neutral-900 truncate">
+                          {level.label}
+                        </span>
+                        {level.isConfigured ? (
+                          <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200 text-[10px] px-2 py-0.5 flex-shrink-0">
+                            <Check className="w-2.5 h-2.5 mr-0.5" /> Configured
+                          </Badge>
+                        ) : (
+                          <Badge className="bg-amber-100 text-amber-700 border-amber-200 text-[10px] px-2 py-0.5 flex-shrink-0">
+                            <AlertTriangle className="w-2.5 h-2.5 mr-0.5" /> Setup Incomplete
+                          </Badge>
+                        )}
+                        {isBase && (
+                          <span className="text-[11px] text-neutral-400 font-sans hidden sm:inline">Entry Level — Retention Minimums</span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-3 flex-shrink-0 ml-3">
+                        <span className="text-[11px] text-neutral-400 font-sans hidden sm:inline">
+                          {getCompensationSummary(level)}
+                        </span>
+                        {useAccordion && (
+                          <ChevronDown className={cn(
+                            "w-4 h-4 text-neutral-400 transition-transform duration-200",
+                            isExpanded && "rotate-180"
+                          )} />
+                        )}
+                      </div>
+                    </>
+                  );
+
+                  return useAccordion ? (
+                    <button
+                      type="button"
+                      onClick={() => toggleCard(i)}
+                      className="w-full flex items-center justify-between p-4 text-left hover:bg-neutral-50/50 transition-colors"
+                    >
+                      {headerContent}
+                    </button>
+                  ) : (
+                    <div className="flex items-center justify-between p-4">
+                      {headerContent}
                     </div>
-                    <div className="flex items-center gap-3 flex-shrink-0 ml-3">
-                      <span className="text-[11px] text-neutral-400 font-sans hidden sm:inline">
-                        {getCompensationSummary(level)}
-                      </span>
-                      <ChevronDown className={cn(
-                        "w-4 h-4 text-neutral-400 transition-transform duration-200",
-                        isExpanded && "rotate-180"
-                      )} />
-                    </div>
-                  </button>
-                ) : null}
+                  );
+                })()}
 
                 {/* Card content — always visible on print */}
                 <div className={cn(
                   useAccordion && !isExpanded ? 'hidden' : 'block',
                   'print:!block'
                 )}>
-                  <div className="p-5">
-                    {/* Level header (always shown in non-accordion, or within expanded content for print) */}
-                    <div className="flex items-start justify-between mb-4">
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <h3 className="font-display text-base tracking-wide uppercase text-neutral-900">
-                            Level {i + 1} — {level.label}
-                          </h3>
-                          {level.isConfigured ? (
-                            <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200 text-[10px] px-2 py-0.5">
-                              <Check className="w-2.5 h-2.5 mr-0.5" /> Configured
-                            </Badge>
-                          ) : (
-                            <Badge className="bg-amber-100 text-amber-700 border-amber-200 text-[10px] px-2 py-0.5">
-                              <AlertTriangle className="w-2.5 h-2.5 mr-0.5" /> Setup Incomplete
-                            </Badge>
-                          )}
-                        </div>
-                        {isBase && (
-                          <p className="text-xs text-neutral-500 mt-1 font-sans">Entry Level — Retention Minimums</p>
-                        )}
-                      </div>
-                    </div>
+                  <div className="p-5 pt-0">
 
                     {!level.isConfigured && (
                       <div className="mb-4 p-3 rounded-md bg-amber-50 border border-amber-200/60 text-xs text-amber-700 font-sans">
