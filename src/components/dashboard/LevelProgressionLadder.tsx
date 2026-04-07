@@ -1,16 +1,20 @@
 /**
  * LevelProgressionLadder — Stylist-facing vertical level ladder.
- * Shows the full progression path with current position highlighted.
+ * Shows the full progression path with current position highlighted,
+ * including expandable service pricing per level.
  */
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
-import { CheckCircle2, MapPin, Lock } from 'lucide-react';
+import { CheckCircle2, MapPin, Lock, ChevronDown, DollarSign } from 'lucide-react';
 import { useStylistLevels, type StylistLevel } from '@/hooks/useStylistLevels';
 import { useLevelPromotionCriteria, type LevelPromotionCriteria } from '@/hooks/useLevelPromotionCriteria';
+import { useAllServiceLevelPrices, type ServiceLevelPrice } from '@/hooks/useAllServiceLevelPrices';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
+import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible';
 
 interface LevelProgressionLadderProps {
   currentLevelId?: string | null;
@@ -38,15 +42,109 @@ function getCriteriaHighlights(criteria?: LevelPromotionCriteria): string[] {
   return highlights;
 }
 
+/** Filter to only services whose prices vary across levels */
+function getVariablePricedServices(pricesByLevel: Map<string, ServiceLevelPrice[]>): Set<string> {
+  const priceMap = new Map<string, Set<number>>();
+  for (const services of pricesByLevel.values()) {
+    for (const s of services) {
+      const prices = priceMap.get(s.serviceName) ?? new Set();
+      prices.add(s.price);
+      priceMap.set(s.serviceName, prices);
+    }
+  }
+  const variable = new Set<string>();
+  for (const [name, prices] of priceMap) {
+    if (prices.size > 1) variable.add(name);
+  }
+  return variable;
+}
+
+function ServicePricingSection({
+  levelId,
+  pricesByLevel,
+  currentLevelPrices,
+  variableServices,
+  isCurrent,
+  isPast,
+  formatCurrency,
+}: {
+  levelId: string;
+  pricesByLevel: Map<string, ServiceLevelPrice[]>;
+  currentLevelPrices: Map<string, number>;
+  variableServices: Set<string>;
+  isCurrent: boolean;
+  isPast: boolean;
+  formatCurrency: (amount: number) => string;
+}) {
+  const services = (pricesByLevel.get(levelId) ?? []).filter(s => variableServices.has(s.serviceName));
+  if (services.length === 0) return null;
+
+  return (
+    <Collapsible>
+      <CollapsibleTrigger className="flex items-center gap-1 mt-2 text-[11px] text-muted-foreground hover:text-foreground transition-colors group">
+        <DollarSign className="w-3 h-3" />
+        <span>Service pricing</span>
+        <ChevronDown className="w-3 h-3 transition-transform group-data-[state=open]:rotate-180" />
+      </CollapsibleTrigger>
+      <CollapsibleContent>
+        <div className="mt-1.5 rounded-md bg-muted/30 p-2 space-y-0.5">
+          {services.map(s => {
+            const currentPrice = currentLevelPrices.get(s.serviceName);
+            const delta = currentPrice != null && !isCurrent ? s.price - currentPrice : null;
+
+            return (
+              <div key={s.serviceName} className={cn(
+                'flex items-center justify-between text-[11px]',
+                isPast ? 'text-muted-foreground/60' : 'text-muted-foreground'
+              )}>
+                <span className="truncate mr-2">{s.serviceName}</span>
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <BlurredAmount>
+                    <span>{formatCurrency(s.price)}</span>
+                  </BlurredAmount>
+                  {delta != null && delta !== 0 && (
+                    <BlurredAmount>
+                      <span className={cn(
+                        'text-[10px]',
+                        delta > 0 ? 'text-emerald-500' : 'text-destructive'
+                      )}>
+                        {delta > 0 ? '+' : ''}{formatCurrency(delta)}
+                      </span>
+                    </BlurredAmount>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </CollapsibleContent>
+    </Collapsible>
+  );
+}
+
 export function LevelProgressionLadder({ currentLevelId }: LevelProgressionLadderProps) {
   const { data: levels = [] } = useStylistLevels();
   const { data: allCriteria = [] } = useLevelPromotionCriteria();
+  const { pricesByLevel } = useAllServiceLevelPrices();
+  const { formatCurrency } = useFormatCurrency();
 
   const criteriaMap = useMemo(() => {
     const map = new Map<string, LevelPromotionCriteria>();
     allCriteria.filter(c => c.is_active).forEach(c => map.set(c.stylist_level_id, c));
     return map;
   }, [allCriteria]);
+
+  const variableServices = useMemo(() => getVariablePricedServices(pricesByLevel), [pricesByLevel]);
+
+  const currentLevelPrices = useMemo(() => {
+    const map = new Map<string, number>();
+    if (!currentLevelId) return map;
+    const services = pricesByLevel.get(currentLevelId) ?? [];
+    for (const s of services) {
+      map.set(s.serviceName, s.price);
+    }
+    return map;
+  }, [pricesByLevel, currentLevelId]);
 
   const currentIndex = levels.findIndex(l => l.id === currentLevelId);
 
@@ -77,7 +175,6 @@ export function LevelProgressionLadder({ currentLevelId }: LevelProgressionLadde
               const isNext = currentIndex >= 0 && idx === currentIndex + 1;
               const criteria = criteriaMap.get(level.id);
               const highlights = getCriteriaHighlights(criteria);
-              // Simple dot color based on position
               const dotColor = idx === levels.length - 1 ? '#f59e0b' : idx >= levels.length * 0.6 ? '#fcd34d' : idx >= levels.length * 0.3 ? '#fde68a' : '#a1a1aa';
 
               return (
@@ -153,6 +250,17 @@ export function LevelProgressionLadder({ currentLevelId }: LevelProgressionLadde
                         )}
                       </div>
                     )}
+
+                    {/* Service pricing — collapsible */}
+                    <ServicePricingSection
+                      levelId={level.id}
+                      pricesByLevel={pricesByLevel}
+                      currentLevelPrices={currentLevelPrices}
+                      variableServices={variableServices}
+                      isCurrent={isCurrent}
+                      isPast={isPast}
+                      formatCurrency={formatCurrency}
+                    />
                   </div>
                 </div>
               );
