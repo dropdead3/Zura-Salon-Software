@@ -507,7 +507,15 @@ export function GraduationWizard({ open, onOpenChange, levelId, levelLabel, leve
   const enabledCount = enabledCriteria.length + (form.tenure_enabled ? 1 : 0);
 
   const setField = useCallback(<K extends keyof FormState>(key: K, value: FormState[K]) => {
-    setForm(prev => ({ ...prev, [key]: value }));
+    setForm(prev => {
+      const next = { ...prev, [key]: value };
+      // Auto-correct: if tenure_days exceeds eval window, bump eval window to match
+      if (key === 'tenure_days' && typeof value === 'number' && value > prev.evaluation_window_days) {
+        next.evaluation_window_days = value as never;
+        toast.info(`Evaluation window auto-adjusted to ${value} days to match Level Tenure`);
+      }
+      return next;
+    });
   }, []);
 
   const setRetField = useCallback(<K extends keyof RetentionFormState>(key: K, value: RetentionFormState[K]) => {
@@ -576,6 +584,11 @@ export function GraduationWizard({ open, onOpenChange, levelId, levelLabel, leve
 
   const handleSave = async () => {
     if (!orgId) return;
+    // Validate: eval window must be >= tenure days
+    if (form.tenure_enabled && form.tenure_days > 0 && form.evaluation_window_days < form.tenure_days) {
+      toast.error(`Evaluation window (${form.evaluation_window_days}d) must be ≥ Level Tenure (${form.tenure_days}d)`);
+      return;
+    }
     const payload: LevelPromotionCriteriaUpsert = {
       organization_id: orgId,
       stylist_level_id: levelId,
@@ -1089,6 +1102,11 @@ export function GraduationWizard({ open, onOpenChange, levelId, levelLabel, leve
                         </div>
                       ))}
                     </div>
+                    {form.tenure_enabled && form.tenure_days > 0 && form.evaluation_window_days < form.tenure_days && (
+                      <p className="text-xs text-amber-500 mt-1.5">
+                        Eval window should be ≥ Level Tenure ({form.tenure_days}d) to ensure full-period assessment
+                      </p>
+                    )}
                   </div>
 
                   <div className="flex items-center justify-between p-3 rounded-lg border">

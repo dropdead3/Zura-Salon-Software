@@ -803,6 +803,25 @@ function CriteriaComparisonTable({ levels, promotionCriteria, retentionCriteria,
                 </TooltipContent>
               </Tooltip>
             )}
+            {/* Eval Window < Level Tenure warning */}
+            {metric.label === 'Eval Window' && (() => {
+              const tenureDays = metric.section === 'promotion'
+                ? (promo?.tenure_enabled && promo?.tenure_days ? promo.tenure_days : 0)
+                : (promo?.tenure_enabled && promo?.tenure_days ? promo.tenure_days : 0);
+              const evalDays = metric.section === 'promotion'
+                ? (promo?.evaluation_window_days ?? 0)
+                : (retention?.evaluation_window_days ?? 0);
+              return tenureDays > 0 && evalDays < tenureDays ? (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <AlertTriangle className="w-3 h-3 text-amber-500 shrink-0 cursor-help" />
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom" className="text-xs max-w-[220px]">
+                    Eval window ({evalDays}d) is shorter than Level Tenure ({tenureDays}d) — should be ≥ tenure for full-period assessment
+                  </TooltipContent>
+                </Tooltip>
+              ) : null;
+            })()}
             <span className={warn ? 'text-amber-600 dark:text-amber-400' : 'text-foreground'}>{val}</span>
           </span>
         ) : !level.dbId ? (
