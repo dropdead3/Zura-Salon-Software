@@ -15,6 +15,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import ReactMarkdown from 'react-markdown';
 import { useStaffComplianceSummary } from '@/hooks/color-bar/useStaffComplianceSummary';
 import { format, subDays } from 'date-fns';
+import { useLevelProgress } from '@/hooks/useLevelProgress';
+import { useResolveCommission } from '@/hooks/useResolveCommission';
+import { useStylistLevels } from '@/hooks/useStylistLevels';
 
 interface ReportBuilderProps {
   meetingId: string;
@@ -35,10 +38,16 @@ export function ReportBuilder({ meetingId, teamMemberId, teamMemberName }: Repor
   const complianceDateFrom = format(subDays(new Date(), 30), 'yyyy-MM-dd');
   const { data: complianceData } = useStaffComplianceSummary(teamMemberId, complianceDateFrom, complianceDateTo);
 
+  // Level progress data
+  const levelProgress = useLevelProgress(teamMemberId);
+  const { resolveCommission } = useResolveCommission();
+  const { data: allLevels = [] } = useStylistLevels();
+
   const [isBuilding, setIsBuilding] = useState(false);
   const [selectedNotes, setSelectedNotes] = useState<string[]>([]);
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [includeCompliance, setIncludeCompliance] = useState(true);
+  const [includeLevelProgress, setIncludeLevelProgress] = useState(true);
   const [additionalContent, setAdditionalContent] = useState('');
   const [previewContent, setPreviewContent] = useState('');
   const [showPreview, setShowPreview] = useState(false);
@@ -133,6 +142,82 @@ export function ReportBuilder({ meetingId, teamMemberId, teamMemberName }: Repor
         });
       }
       content += '\n';
+    }
+
+    // Level Progress section
+    if (includeLevelProgress && levelProgress) {
+      content += `## Level Progress\n\n`;
+      if (levelProgress.nextLevelLabel) {
+        content += `**Current Level:** ${levelProgress.currentLevelLabel}\n`;
+        content += `**Next Level:** ${levelProgress.nextLevelLabel}\n`;
+        content += `**Overall Readiness:** ${levelProgress.compositeScore}%${levelProgress.isFullyQualified ? ' ✅ Qualified' : ''}\n\n`;
+
+        if (levelProgress.criteriaProgress.length > 0) {
+          content += `### Criteria Breakdown\n\n`;
+          content += `| Metric | Current | Target | Progress |\n`;
+          content += `|--------|---------|--------|----------|\n`;
+          levelProgress.criteriaProgress.forEach(cp => {
+            const formatVal = (val: number) => {
+              if (cp.unit === '/mo' || cp.unit === '$') return `$${val.toLocaleString()}`;
+              if (cp.unit === '%') return `${val.toFixed(1)}%`;
+              if (cp.unit === 'd') return `${val}d`;
+              return String(val);
+            };
+            const statusIcon = cp.percent >= 100 ? '✅' : cp.percent >= 75 ? '🔶' : '🔴';
+            content += `| ${cp.label} | ${formatVal(cp.current)} | ${formatVal(cp.target)} | ${statusIcon} ${Math.round(cp.percent)}% |\n`;
+          });
+          content += '\n';
+
+          // Highlight gaps
+          const gaps = levelProgress.criteriaProgress.filter(cp => cp.gap > 0);
+          if (gaps.length > 0) {
+            content += `### Focus Areas\n\n`;
+            gaps.forEach(cp => {
+              const formatVal = (val: number) => {
+                if (cp.unit === '/mo' || cp.unit === '$') return `$${Math.round(val).toLocaleString()}`;
+                if (cp.unit === '%') return `${val.toFixed(1)}%`;
+                return String(Math.round(val));
+              };
+              content += `- **${cp.label}**: ${formatVal(cp.gap)} more needed to reach target\n`;
+            });
+            content += '\n';
+          }
+        }
+
+        // Commission uplift estimate
+        const currentResolved = resolveCommission(teamMemberId, 1000, 0);
+        const nextLevelObj = allLevels.find(l => l.id === levelProgress.nextLevelId);
+        if (nextLevelObj && currentResolved) {
+          const currentSvcRate = currentResolved.serviceRate;
+          const nextSvcRate = nextLevelObj.service_commission_rate ?? 0;
+          if (nextSvcRate > currentSvcRate) {
+            const monthlyRevenue = levelProgress.criteriaProgress.find(cp => cp.key === 'revenue')?.current || 0;
+            const monthlyUplift = monthlyRevenue * (nextSvcRate - currentSvcRate);
+            content += `### Income Opportunity\n\n`;
+            content += `> At **${levelProgress.nextLevelLabel}**, your service commission increases from **${(currentSvcRate * 100).toFixed(0)}%** to **${(nextSvcRate * 100).toFixed(0)}%** — estimated **+$${Math.round(monthlyUplift).toLocaleString()}/month** based on current revenue.\n\n`;
+          }
+        }
+      } else {
+        content += `**Current Level:** ${levelProgress.currentLevelLabel}\n`;
+        content += `*Top level reached.*\n\n`;
+      }
+
+      // Retention warnings
+      if (levelProgress.retention?.isAtRisk) {
+        content += `### ⚠️ Retention Alert\n\n`;
+        content += `Performance is below minimum standards in the following areas:\n\n`;
+        levelProgress.retention.failures.forEach(f => {
+          const formatVal = (val: number) => {
+            if (f.unit === '/mo' || f.unit === '$') return `$${val.toLocaleString()}`;
+            return `${val}${f.unit}`;
+          };
+          content += `- **${f.label}**: ${formatVal(f.current)} (minimum: ${formatVal(f.minimum)})\n`;
+        });
+        if (levelProgress.retention.gracePeriodDays > 0) {
+          content += `\n*${levelProgress.retention.gracePeriodDays}-day improvement window*\n`;
+        }
+        content += '\n';
+      }
     }
 
     return content;
@@ -262,6 +347,25 @@ export function ReportBuilder({ meetingId, teamMemberId, teamMemberName }: Repor
                     <span className="font-medium">Include Color Bar Performance</span>
                     <span className="text-muted-foreground ml-2">
                       ({complianceSummaryParts.join(' · ')})
+                    </span>
+                  </label>
+                </div>
+              </div>
+            )}
+
+            {/* Level Progress */}
+            {levelProgress && (
+              <div className="space-y-2">
+                <div className="flex items-start gap-2">
+                  <Checkbox
+                    id="include-level-progress"
+                    checked={includeLevelProgress}
+                    onCheckedChange={(checked) => setIncludeLevelProgress(!!checked)}
+                  />
+                  <label htmlFor="include-level-progress" className="text-sm cursor-pointer flex-1">
+                    <span className="font-medium">Include Level Progress</span>
+                    <span className="text-muted-foreground ml-2">
+                      ({levelProgress.currentLevelLabel}{levelProgress.nextLevelLabel ? ` → ${levelProgress.nextLevelLabel} · ${levelProgress.compositeScore}% ready` : ' · Top level'})
                     </span>
                   </label>
                 </div>

@@ -199,15 +199,13 @@ export default function MeetingDetails() {
                 teamMemberId={meeting.requester_id}
                 isCoach={canManage} 
               />
+              <LevelProgressCard userId={meeting.requester_id} compact={!canManage} />
               {canManage && (
-                <>
-                  <LevelProgressCard userId={meeting.requester_id} compact />
-                  <ReportBuilder 
-                    meetingId={meeting.id}
-                    teamMemberId={meeting.requester_id}
-                    teamMemberName={teamMemberName}
-                  />
-                </>
+                <ReportBuilder 
+                  meetingId={meeting.id}
+                  teamMemberId={meeting.requester_id}
+                  teamMemberName={teamMemberName}
+                />
               )}
             </div>
           </div>
