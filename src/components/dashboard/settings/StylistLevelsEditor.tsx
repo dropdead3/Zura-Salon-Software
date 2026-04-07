@@ -1245,13 +1245,13 @@ function CriteriaComparisonTable({ levels, promotionCriteria, retentionCriteria,
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 8, scale: 0.95 }}
             transition={{ duration: 0.15 }}
-            className="fixed bottom-20 right-6 z-50 flex items-center gap-2 bg-card/90 backdrop-blur-xl border border-border rounded-xl shadow-[0_8px_32px_-4px_rgba(0,0,0,0.4)] px-4 py-2.5"
+            className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[80] flex items-center gap-3 bg-card border border-border/60 rounded-xl shadow-[0_12px_48px_-8px_rgba(0,0,0,0.5)] px-5 py-3 ring-1 ring-primary/20"
           >
-            <span className="text-xs font-display uppercase tracking-wide text-muted-foreground mr-1">{editingMetric.label}</span>
+            <span className="text-sm font-display uppercase tracking-wide text-muted-foreground mr-1">{editingMetric.label}</span>
             {autoStepAvailable && (
               <button
                 onClick={handleAutoStep}
-                className="text-xs px-2.5 py-1.5 rounded-lg bg-muted hover:bg-muted/80 text-muted-foreground hover:text-foreground transition-colors"
+                className="text-sm px-3 py-2 rounded-lg bg-muted hover:bg-muted/80 text-muted-foreground hover:text-foreground transition-colors"
               >
                 Auto-step
               </button>
@@ -1259,15 +1259,15 @@ function CriteriaComparisonTable({ levels, promotionCriteria, retentionCriteria,
             <button
               onClick={saveMetricRow}
               disabled={isSavingRow}
-              className="text-xs px-3 py-1.5 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50 font-medium"
+              className="text-sm px-4 py-2 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50 font-medium"
             >
               {isSavingRow ? '…' : 'Save'}
             </button>
             <button
               onClick={cancelEditing}
-              className="text-xs p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+              className="text-sm p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
             >
-              <X className="w-3.5 h-3.5" />
+              <X className="w-4 h-4" />
             </button>
           </motion.div>
         )}
