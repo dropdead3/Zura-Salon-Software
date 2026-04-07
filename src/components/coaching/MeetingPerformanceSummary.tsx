@@ -20,6 +20,7 @@ import {
 import { useIndividualStaffReport } from '@/hooks/useIndividualStaffReport';
 import { useStaffComplianceSummary } from '@/hooks/color-bar/useStaffComplianceSummary';
 import { format, subDays } from 'date-fns';
+import { EmptyDataBanner } from '@/components/ui/EmptyDataBanner';
 
 interface MeetingPerformanceSummaryProps {
   staffUserId: string;
@@ -174,6 +175,10 @@ export function MeetingPerformanceSummary({ staffUserId }: MeetingPerformanceSum
       </CardHeader>
 
       <CardContent className="space-y-5">
+        {isAllEmpty && (
+          <EmptyDataBanner dateRangeKey="30d" />
+        )}
+
         {/* Section A: Revenue & Productivity */}
         <div>
           <h4 className={cn(tokens.heading.subsection, 'mb-3')}>Revenue & Productivity</h4>
