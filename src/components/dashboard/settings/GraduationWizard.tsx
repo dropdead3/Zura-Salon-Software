@@ -1064,18 +1064,27 @@ export function GraduationWizard({ open, onOpenChange, levelId, levelLabel, leve
 
               {retForm.retention_enabled && (
                 <>
-                  {levelIndex === 0 ? (
+                   {levelIndex === 0 ? (
                     <>
-                      {/* Base level context note */}
-                      <div className="flex items-center gap-3 rounded-lg border border-amber-500/20 bg-amber-500/5 p-3">
-                        <div className="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center shrink-0">
-                          <Info className="w-4 h-4 text-amber-600" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm text-foreground font-medium font-sans">Baseline Standards</p>
-                          <p className="text-xs text-muted-foreground font-sans">
-                            As the entry level, these are the baseline standards all stylists must maintain. Toggle on the metrics you want to monitor.
-                          </p>
+                      {/* Blue explainer — why there are no "Requirements to Earn" */}
+                      <div className="rounded-xl border border-blue-500/20 bg-blue-500/[0.04] p-5">
+                        <div className="flex gap-3.5">
+                          <div className="flex-shrink-0 mt-0.5">
+                            <div className="h-8 w-8 rounded-xl bg-blue-500/10 flex items-center justify-center">
+                              <BookOpen className="h-4 w-4 text-blue-400" />
+                            </div>
+                          </div>
+                          <div className="space-y-1.5 min-w-0">
+                            <span className="font-display text-[10px] tracking-[0.1em] uppercase text-blue-400/70">
+                              Page Explainer
+                            </span>
+                            <h4 className="font-display text-sm tracking-wide text-foreground">
+                              No Requirements to Earn This Level
+                            </h4>
+                            <p className="text-sm text-muted-foreground leading-relaxed font-sans">
+                              Every stylist begins here. There are no promotion criteria for the entry level — it is the starting point. Use the retention standards below to define minimum performance expectations. Stylists who fall below these thresholds can be flagged for review or termination.
+                            </p>
+                          </div>
                         </div>
                       </div>
 
