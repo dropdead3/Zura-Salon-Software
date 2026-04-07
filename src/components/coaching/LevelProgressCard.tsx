@@ -32,12 +32,12 @@ function CriterionRow({ label, current, target, percent, unit, gap }: {
       <div className="flex items-center justify-between text-xs">
         <span className="text-muted-foreground">{label}</span>
         <span className="tabular-nums">
-          <span className="text-foreground">{formatValue(current)}</span>
+          <span className={cn("text-foreground", percent > 100 && "text-emerald-600 dark:text-emerald-400")}>{formatValue(current)}</span>
           <span className="text-muted-foreground"> / {formatValue(target)}</span>
         </span>
       </div>
       <Progress
-        value={percent}
+        value={Math.min(100, percent)}
         className="h-1.5"
         indicatorClassName={cn(
           percent >= 100 ? 'bg-emerald-500' : percent >= 75 ? 'bg-primary' : 'bg-amber-500'
@@ -127,7 +127,7 @@ export function LevelProgressCard({ userId, compact = false }: LevelProgressCard
                 <span className="font-medium tabular-nums">{progress.compositeScore}%</span>
               </div>
               <Progress
-                value={progress.compositeScore}
+                value={Math.min(100, progress.compositeScore)}
                 className="h-2"
                 indicatorClassName={cn(
                   progress.compositeScore >= 100 ? 'bg-emerald-500' : 'bg-primary'

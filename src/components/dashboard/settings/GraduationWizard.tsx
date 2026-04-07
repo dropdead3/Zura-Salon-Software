@@ -936,8 +936,8 @@ export function GraduationWizard({ open, onOpenChange, levelId, levelLabel, leve
                       <div className="space-y-1 min-w-0">
                         <h4 className="font-display text-[11px] tracking-wide text-blue-400">HOW WEIGHTS WORK</h4>
                         <p className="text-xs text-muted-foreground leading-relaxed">
-                          Weights control how much each metric contributes to the overall readiness score. A higher weight means that metric has more influence on the progress percentage.
-                          <span className="block mt-1 text-blue-400/80">Note: regardless of weights, a stylist must meet every individual threshold to qualify for promotion. Weights only affect the composite score used to track overall progress.</span>
+                          Weights determine how much each metric contributes to the overall readiness score. A stylist qualifies for promotion when their weighted composite score reaches 100%. Exceeding one threshold can compensate for being slightly below another — a metric with higher weight has more influence on qualification.
+                          <span className="block mt-1 text-blue-400/80">For example, if Revenue is weighted at 60% and a stylist hits 120% of their revenue target, that surplus offsets shortfalls in lower-weighted metrics.</span>
                         </p>
                       </div>
                     </div>

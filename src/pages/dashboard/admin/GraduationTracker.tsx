@@ -141,17 +141,22 @@ function CriterionRow({ cp }: { cp: CriterionProgress }) {
       <div className="flex items-center justify-between text-xs">
         <span className="text-muted-foreground">{cp.label}</span>
         <span className="tabular-nums">
-          <span className="text-foreground">{formatValue(cp.current)}</span>
+          <span className={cn("text-foreground", cp.percent > 100 && "text-emerald-600 dark:text-emerald-400")}>{formatValue(cp.current)}</span>
           <span className="text-muted-foreground"> / {formatValue(cp.target)}</span>
         </span>
       </div>
       <Progress
-        value={cp.percent}
+        value={Math.min(100, cp.percent)}
         className="h-1.5"
         indicatorClassName={cn(
           cp.percent >= 100 ? 'bg-emerald-500' : cp.percent >= 75 ? 'bg-primary' : 'bg-amber-500'
         )}
       />
+      {cp.percent > 100 && (
+        <p className="text-[10px] text-emerald-600 dark:text-emerald-400 tabular-nums">
+          {Math.round(cp.percent)}% — exceeds target
+        </p>
+      )}
     </div>
   );
 }
@@ -424,13 +429,13 @@ function StylistProgressRow({ member, totalLevels, promotions, allLevels }: { me
           {member.status !== 'at_top_level' && member.status !== 'no_criteria' && !isAtRisk && (
             <div className="flex items-center gap-3 mt-1.5">
               <Progress
-                value={member.compositeScore}
+                value={Math.min(100, member.compositeScore)}
                 className="h-2 flex-1 max-w-[200px]"
                 indicatorClassName={cn(
                   member.compositeScore >= 100 ? 'bg-emerald-500' : 'bg-primary'
                 )}
               />
-              <span className="text-xs tabular-nums text-muted-foreground">{member.compositeScore}%</span>
+              <span className={cn("text-xs tabular-nums", member.compositeScore >= 100 ? "text-emerald-600 dark:text-emerald-400" : "text-muted-foreground")}>{member.compositeScore}%</span>
             </div>
           )}
           {/* Retention failure indicators */}

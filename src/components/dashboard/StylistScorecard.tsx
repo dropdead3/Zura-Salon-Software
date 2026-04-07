@@ -207,7 +207,7 @@ export function StylistScorecard({ userId, locationId }: StylistScorecardProps) 
               <span className="font-medium tabular-nums">{progress.compositeScore}%</span>
             </div>
             <Progress
-              value={progress.compositeScore}
+              value={Math.min(100, progress.compositeScore)}
               className="h-2.5"
               indicatorClassName={cn(
                 progress.compositeScore >= 100 ? 'bg-emerald-500' : 'bg-primary'
@@ -280,7 +280,7 @@ export function StylistScorecard({ userId, locationId }: StylistScorecardProps) 
                       : 'grid-cols-[1fr_auto_auto_auto]'
                   )}>
                     <span className="text-xs text-muted-foreground">{cp.label}</span>
-                    <span className="text-xs text-foreground tabular-nums text-right w-16">
+                    <span className={cn("text-xs tabular-nums text-right w-16", cp.percent > 100 && "text-emerald-600 dark:text-emerald-400")}>
                       {cp.unit === '/mo' || cp.unit === '$'
                         ? <BlurredAmount>{formatKpiValue(cp.current, cp.unit)}</BlurredAmount>
                         : formatKpiValue(cp.current, cp.unit)
@@ -310,7 +310,7 @@ export function StylistScorecard({ userId, locationId }: StylistScorecardProps) 
                   </div>
                   {hasNextLevel && (
                     <Progress
-                      value={cp.percent}
+                      value={Math.min(100, cp.percent)}
                       className="h-1 mx-1"
                       indicatorClassName={cn(
                         cp.percent >= 100 ? 'bg-emerald-500' : cp.percent >= 75 ? 'bg-primary' : 'bg-amber-500'
