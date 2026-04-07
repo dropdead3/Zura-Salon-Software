@@ -95,6 +95,7 @@ export function CommissionEconomicsTab({ levels }: CommissionEconomicsTabProps) 
   const { save: saveAssumptions, isPending: isSaving } = useSaveEconomicsAssumptions();
   const { data: revenueData, isLoading: loadingRevenue } = useRevenueByLevel();
   const { data: detection, isLoading: loadingDetection } = useAutoDetectEconomics();
+  const [showReconfigure, setShowReconfigure] = useState(false);
 
   // Local editable assumptions
   const [localAssumptions, setLocalAssumptions] = useState<EconomicsAssumptions | null>(null);
