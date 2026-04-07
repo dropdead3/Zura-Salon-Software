@@ -341,7 +341,7 @@ const METRIC_FIELD_MAP: Record<string, MetricFieldMapping> = {
   'New Clients': { key: 'new_clients', promoEnabledField: 'new_clients_enabled', promoValueField: 'new_clients_threshold', retEnabledField: 'new_clients_enabled', retValueField: 'new_clients_minimum', isCurrency: false, isPercent: false, suffix: '/mo' },
   'Utilization': { key: 'utilization', promoEnabledField: 'utilization_enabled', promoValueField: 'utilization_threshold', retEnabledField: 'utilization_enabled', retValueField: 'utilization_minimum', isCurrency: false, isPercent: true },
   'Rev/Hr': { key: 'rev_per_hour', promoEnabledField: 'rev_per_hour_enabled', promoValueField: 'rev_per_hour_threshold', retEnabledField: 'rev_per_hour_enabled', retValueField: 'rev_per_hour_minimum', isCurrency: true, isPercent: false },
-  'Tenure': { key: 'tenure', promoEnabledField: 'tenure_enabled', promoValueField: 'tenure_days', retEnabledField: 'retention_enabled', retValueField: 'evaluation_window_days', isCurrency: false, isPercent: false, suffix: 'd' },
+  'Level Tenure': { key: 'tenure', promoEnabledField: 'tenure_enabled', promoValueField: 'tenure_days', retEnabledField: 'retention_enabled', retValueField: 'evaluation_window_days', isCurrency: false, isPercent: false, suffix: 'd' },
 };
 
 function autoStepValues(editValues: Record<string, { enabled: boolean; value: string }>, levelIds: string[]): Record<string, { enabled: boolean; value: string }> {
@@ -387,7 +387,7 @@ const METRIC_TOOLTIPS: Record<string, string> = {
   'New Clients': 'Number of new clients seen per month. 15–30/mo for growth-stage stylists; lower for senior books.',
   'Utilization': 'Percentage of available hours that are booked with appointments. Target: 75–90%. Below 70% signals underutilization.',
   'Rev/Hr': 'Average revenue generated per booked hour of service. Varies by price point — use to compare across team members.',
-  'Tenure': 'Minimum days at current level before promotion eligibility. Typical: 90–180 days between levels.',
+  'Level Tenure': 'Minimum days at current level before promotion eligibility. Typical: 90–180 days between levels.',
   'Eval Window': 'Time period over which KPI performance is measured for evaluation.',
   'Approval': 'Whether promotion requires manual manager approval or triggers automatically when thresholds are met.',
   'Grace Period': 'Days a stylist has to recover performance before the configured action is taken.',
@@ -435,7 +435,7 @@ function CriteriaComparisonTable({ levels, promotionCriteria, retentionCriteria,
     { label: 'New Clients', section: 'promotion', editable: true, getValue: (p) => p?.new_clients_enabled ? `${p.new_clients_threshold}/mo` : null, getNumeric: (p) => p?.new_clients_enabled ? Number(p.new_clients_threshold) : null },
     { label: 'Utilization', section: 'promotion', editable: true, getValue: (p) => p?.utilization_enabled ? `${p.utilization_threshold}%` : null, getNumeric: (p) => p?.utilization_enabled ? Number(p.utilization_threshold) : null },
     { label: 'Rev/Hr', section: 'promotion', editable: true, getValue: (p) => p?.rev_per_hour_enabled ? `$${p.rev_per_hour_threshold}` : null, getNumeric: (p) => p?.rev_per_hour_enabled ? Number(p.rev_per_hour_threshold) : null },
-    { label: 'Tenure', section: 'promotion', editable: true, getValue: (p) => p?.tenure_enabled ? `${p.tenure_days}d` : null, getNumeric: (p) => p?.tenure_enabled ? p.tenure_days : null },
+    { label: 'Level Tenure', section: 'promotion', editable: true, getValue: (p) => p?.tenure_enabled ? `${p.tenure_days}d` : null, getNumeric: (p) => p?.tenure_enabled ? p.tenure_days : null },
     { label: 'Eval Window', section: 'promotion', editable: false, getValue: (p) => p ? `${p.evaluation_window_days}d` : null, getNumeric: () => null },
     { label: 'Approval', section: 'promotion', editable: false, getValue: (p) => p ? (p.requires_manual_approval ? 'Manual' : 'Auto') : null, getNumeric: () => null },
     // Retention Policy (no KPI rows — they inherit from promotion)
@@ -489,7 +489,7 @@ function CriteriaComparisonTable({ levels, promotionCriteria, retentionCriteria,
       }
       const { promo, retention } = getCriteria(level.dbId);
       // Base level editable promotion KPIs read from retention minimums
-      const isBaseLevelRet = section === 'promotion' && idx === 0 && label !== 'Tenure' && label !== 'Eval Window' && label !== 'Approval';
+      const isBaseLevelRet = section === 'promotion' && idx === 0 && label !== 'Level Tenure' && label !== 'Eval Window' && label !== 'Approval';
       if (isBaseLevelRet && retention) {
         const enabled = retention[fieldMapping.retEnabledField] as boolean;
         const val = retention[fieldMapping.retValueField] as number;
@@ -531,7 +531,7 @@ function CriteriaComparisonTable({ levels, promotionCriteria, retentionCriteria,
         if (!entry) continue;
 
         const numVal = parseFloat(entry.value) || 0;
-        const isBaseLevelRet = editingMetric.section === 'promotion' && li === 0 && editingMetric.label !== 'Tenure' && editingMetric.label !== 'Eval Window' && editingMetric.label !== 'Approval';
+        const isBaseLevelRet = editingMetric.section === 'promotion' && li === 0 && editingMetric.label !== 'Level Tenure' && editingMetric.label !== 'Eval Window' && editingMetric.label !== 'Approval';
 
         if (isBaseLevelRet) {
           // Base level promotion KPIs save to retention criteria
@@ -692,14 +692,14 @@ function CriteriaComparisonTable({ levels, promotionCriteria, retentionCriteria,
     const isBaseLevel = levelIdx === 0;
     const isLastLevel = levelIdx === levels.length - 1;
     // Base level skips only non-editable promotion rows + Tenure (no promotion target)
-    const isPromotionSkip = metric.section === 'promotion' && isBaseLevel && (!metric.editable || metric.label === 'Tenure' || metric.label === 'Eval Window' || metric.label === 'Approval');
-    const isLastLevelTenure = metric.label === 'Tenure' && isLastLevel;
+    const isPromotionSkip = metric.section === 'promotion' && isBaseLevel && (!metric.editable || metric.label === 'Level Tenure' || metric.label === 'Eval Window' || metric.label === 'Approval');
+    const isLastLevelTenure = metric.label === 'Level Tenure' && isLastLevel;
     // Base level editable promotion KPIs map to retention minimums
-    const isBaseLevelRetention = metric.section === 'promotion' && isBaseLevel && metric.editable && metric.label !== 'Tenure';
+    const isBaseLevelRetention = metric.section === 'promotion' && isBaseLevel && metric.editable && metric.label !== 'Level Tenure';
 
     if (isEditingRow && metric.editable && fieldMapping && level.dbId && !isPromotionSkip && !isLastLevelTenure) {
       const entry = editValues[level.id] || { enabled: false, value: '' };
-      const baseLevelHasRetention = metric.section === 'promotion' && metric.editable && metric.label !== 'Tenure';
+      const baseLevelHasRetention = metric.section === 'promotion' && metric.editable && metric.label !== 'Level Tenure';
       const editableLevelIds = levels.filter((_, idx) => {
         if (metric.section === 'promotion' && !baseLevelHasRetention) return idx > 0;
         return true;

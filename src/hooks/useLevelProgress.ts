@@ -545,7 +545,7 @@ export function useLevelProgress(userId: string | undefined) {
     if (nextCriteria.tenure_enabled) {
       const target = nextCriteria.tenure_days;
       progress.push({
-        key: 'tenure', label: 'Tenure', enabled: true,
+        key: 'tenure', label: 'Level Tenure', enabled: true,
         current: tenureDays, priorCurrent: tenureDays, target,
         percent: target > 0 ? Math.min(100, (tenureDays / target) * 100) : 0,
         weight: 0, unit: 'd',

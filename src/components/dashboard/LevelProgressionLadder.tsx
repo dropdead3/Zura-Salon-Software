@@ -38,7 +38,7 @@ function getCriteriaHighlights(criteria?: LevelPromotionCriteria): string[] {
   if (criteria.avg_ticket_enabled && criteria.avg_ticket_threshold > 0) highlights.push(formatThreshold('Avg Ticket', criteria.avg_ticket_threshold, '$'));
   if (criteria.retention_rate_enabled && Number(criteria.retention_rate_threshold) > 0) highlights.push(formatThreshold('Retention', Number(criteria.retention_rate_threshold), '%'));
   if (criteria.utilization_enabled && Number(criteria.utilization_threshold) > 0) highlights.push(formatThreshold('Utilization', Number(criteria.utilization_threshold), '%'));
-  if (criteria.tenure_enabled && criteria.tenure_days > 0) highlights.push(formatThreshold('Tenure', criteria.tenure_days, 'd'));
+  if (criteria.tenure_enabled && criteria.tenure_days > 0) highlights.push(formatThreshold('Level Tenure', criteria.tenure_days, 'd'));
   return highlights;
 }
 

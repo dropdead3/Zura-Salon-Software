@@ -911,7 +911,7 @@ export function GraduationWizard({ open, onOpenChange, levelId, levelLabel, leve
                         </div>
                         <div>
                           <span className={cn("text-sm", form.tenure_enabled ? "text-foreground font-medium" : "text-muted-foreground")}>
-                            Minimum Tenure
+                            Level Tenure
                           </span>
                           <p className="text-[10px] text-muted-foreground">Time at current level before eligible</p>
                         </div>
