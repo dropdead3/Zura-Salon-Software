@@ -191,10 +191,11 @@ export function useStaffComplianceSummary(
         const bowlIds = (bowls ?? []).map((b: any) => b.id);
 
         if (bowlIds.length > 0) {
-          const { data: lines } = await (supabase
-            .from('bowl_lines')
-            .select('dispensed_quantity, dispensed_cost_snapshot') as any)
+          const blQuery = supabase
+            .from('bowl_lines' as any)
+            .select('dispensed_quantity, dispensed_cost_snapshot')
             .in('bowl_id', bowlIds);
+          const { data: lines } = await blQuery;
           for (const l of lines ?? []) {
             const qty = (l as any).dispensed_quantity ?? 0;
             const cost = (l as any).dispensed_cost_snapshot ?? 0;
