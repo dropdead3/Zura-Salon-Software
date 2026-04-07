@@ -1,29 +1,30 @@
 
 
-# Add Explainer for Level 1 — No Promotion Requirements
+# Fix Level Criteria Dialog Responsiveness
 
-## What & Why
+## Problem
 
-When an admin opens the Level 1 configurator, the "Level Requirements" tab is disabled but there's no explanation of **why**. The user needs a clear, contextual explainer that communicates: Level 1 is where every stylist starts — there are no requirements to earn it. The only configurable criteria are retention minimums (standards to stay / not get terminated).
+The Level Criteria dialog is positioned at `left-[50%]` of the **full viewport**, but the sidebar (~280px) occupies the left side. At narrower window widths, the dialog's left edge gets hidden behind the sidebar.
 
-## Change
+## Fix
 
-**File:** `src/components/dashboard/settings/GraduationWizard.tsx`
+**File:** `src/components/dashboard/settings/GraduationWizard.tsx` (line 662)
 
-**Location:** Inside the retention tab content for `levelIndex === 0`, immediately above the existing "Baseline Standards" amber info box (~line 1067-1068).
+Update the `DialogContent` className to shift the dialog's centering to account for the sidebar on larger screens:
 
-Add a blue explainer box (matching the Page Explainer aesthetic) with:
+- Add `sm:left-[calc(50%+140px)] sm:translate-x-[calc(-50%-140px)]` — this offsets the dialog center by half the sidebar width (~280px) so it stays centered within the **content area**, not the viewport.
 
-- **Icon:** `BookOpen` in a blue icon container
-- **Eyebrow:** "PAGE EXPLAINER" (uppercase, `font-display`)
-- **Title:** "No Requirements to Earn This Level"
-- **Body:** "Every stylist begins here. There are no promotion criteria for the entry level — it is the starting point. Use the retention standards below to define minimum performance expectations. Stylists who fall below these thresholds can be flagged for review or termination."
+Alternatively (simpler, more robust): add `mx-auto` and constrain with `sm:max-w-[min(32rem,calc(100vw-320px))]` so the dialog never exceeds the available content width.
 
-This uses the same visual language as `Infotainer` / `FirstTimeCallout` (blue-500/[0.04] bg, blue-500/20 border) but is **not dismissible** — it's permanent contextual guidance, not a one-time callout.
+**Recommended approach:** Override just the `left` positioning on the `DialogContent` for this specific dialog:
+
+```
+className="sm:max-w-lg sm:left-[calc(50%+140px)] p-0 gap-0 overflow-hidden"
+```
+
+This keeps the dialog centered in the visible content area rather than the full viewport, preventing the sidebar from clipping it.
 
 ## Scope
-
-- Single file edit, ~15 lines added
-- No database or component changes
-- Inline explainer, not a registered `PageExplainer` (this is wizard-context-specific)
+- Single className change on line 662
+- No structural or database changes
 
