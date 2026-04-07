@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { Suspense, useEffect, useMemo, useState } from 'react';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
@@ -74,8 +74,6 @@ const InsightsNudgeBanner = React.lazy(() => import('@/components/dashboard/Insi
 const ActiveCampaignsCard = React.lazy(() => import('@/components/dashboard/ActiveCampaignsCard').then(m => ({ default: m.ActiveCampaignsCard })));
 const InventoryManagerDashboardCard = React.lazy(() => import('@/components/dashboard/InventoryManagerDashboardCard').then(m => ({ default: m.InventoryManagerDashboardCard })));
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
-import { Suspense } from 'react';
-import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 
 const ROLE_MESSAGES = {
   leadership: {

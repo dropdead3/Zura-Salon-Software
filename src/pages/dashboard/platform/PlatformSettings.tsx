@@ -1,12 +1,6 @@
+import { lazy, Suspense } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Settings, Database, Plug, Palette, User, Shield } from 'lucide-react';
-import { PlatformTeamManager } from '@/components/platform/PlatformTeamManager';
-import { PlatformAppearanceTab } from '@/components/platform/settings/PlatformAppearanceTab';
-import { PlatformIntegrationsTab } from '@/components/platform/settings/PlatformIntegrationsTab';
-import { PlatformAccountTab } from '@/components/platform/settings/PlatformAccountTab';
-import { PlatformSecurityTab } from '@/components/platform/settings/PlatformSecurityTab';
-import { PlatformImportTemplatesTab } from '@/components/platform/settings/PlatformImportTemplatesTab';
-import { PlatformDefaultsTab } from '@/components/platform/settings/PlatformDefaultsTab';
 import { cn } from '@/lib/utils';
 import {
   PlatformCard,
@@ -18,6 +12,15 @@ import {
 import { PlatformPageContainer } from '@/components/platform/ui/PlatformPageContainer';
 import { PlatformPageHeader } from '@/components/platform/ui/PlatformPageHeader';
 import { PageExplainer } from '@/components/ui/PageExplainer';
+import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
+
+const PlatformTeamManager = lazy(() => import('@/components/platform/PlatformTeamManager').then(m => ({ default: m.PlatformTeamManager })));
+const PlatformAppearanceTab = lazy(() => import('@/components/platform/settings/PlatformAppearanceTab').then(m => ({ default: m.PlatformAppearanceTab })));
+const PlatformIntegrationsTab = lazy(() => import('@/components/platform/settings/PlatformIntegrationsTab').then(m => ({ default: m.PlatformIntegrationsTab })));
+const PlatformAccountTab = lazy(() => import('@/components/platform/settings/PlatformAccountTab').then(m => ({ default: m.PlatformAccountTab })));
+const PlatformSecurityTab = lazy(() => import('@/components/platform/settings/PlatformSecurityTab').then(m => ({ default: m.PlatformSecurityTab })));
+const PlatformImportTemplatesTab = lazy(() => import('@/components/platform/settings/PlatformImportTemplatesTab').then(m => ({ default: m.PlatformImportTemplatesTab })));
+const PlatformDefaultsTab = lazy(() => import('@/components/platform/settings/PlatformDefaultsTab').then(m => ({ default: m.PlatformDefaultsTab })));
 
 export default function PlatformSettings() {
   const tabTriggerClass = 'data-[state=active]:bg-violet-600 data-[state=active]:text-white text-[hsl(var(--platform-foreground-muted))] hover:text-[hsl(var(--platform-foreground))]';
@@ -58,34 +61,35 @@ export default function PlatformSettings() {
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="account">
-          <PlatformAccountTab />
-        </TabsContent>
+        <Suspense fallback={<DashboardLoader size="lg" className="h-64" />}>
+          <TabsContent value="account">
+            <PlatformAccountTab />
+          </TabsContent>
 
-        <TabsContent value="team">
-          <PlatformTeamManager />
-        </TabsContent>
+          <TabsContent value="team">
+            <PlatformTeamManager />
+          </TabsContent>
 
-        <TabsContent value="appearance">
-          <PlatformAppearanceTab />
-        </TabsContent>
+          <TabsContent value="appearance">
+            <PlatformAppearanceTab />
+          </TabsContent>
 
-        <TabsContent value="security">
-          <PlatformSecurityTab />
-        </TabsContent>
+          <TabsContent value="security">
+            <PlatformSecurityTab />
+          </TabsContent>
 
-        <TabsContent value="templates">
-          <PlatformImportTemplatesTab />
-        </TabsContent>
+          <TabsContent value="templates">
+            <PlatformImportTemplatesTab />
+          </TabsContent>
 
-        <TabsContent value="defaults">
-          <PlatformDefaultsTab />
-        </TabsContent>
+          <TabsContent value="defaults">
+            <PlatformDefaultsTab />
+          </TabsContent>
 
-
-        <TabsContent value="integrations">
-          <PlatformIntegrationsTab />
-        </TabsContent>
+          <TabsContent value="integrations">
+            <PlatformIntegrationsTab />
+          </TabsContent>
+        </Suspense>
       </Tabs>
     </PlatformPageContainer>
   );
