@@ -1,50 +1,83 @@
 
 
-# Add MetricInfoTooltip Explainers to Economics Tab
+# Wire Phorest Staff Into Zura — Revised Plan
 
-## What's Missing
+## Problem Summary
 
-Three card titles and most table column headers lack tooltip explainers. The Business Assumptions fields and the Level Margin Analysis / Service × Level Matrix / Stylist Snapshots card titles already have them.
+- **165 of 183** `phorest_daily_sales_summary` rows have NULL `user_id` (synced before staff mappings existed)
+- **306 of 1917** `phorest_sales_transactions` / `phorest_transaction_items` rows missing `stylist_user_id`
+- **22 of 23** active employee profiles have NULL `location_id`
+- Alex Day is correctly Zura-only (admin, no Phorest mapping needed)
 
-## Changes
+## Plan (4 steps)
 
-### File: `src/components/dashboard/settings/CommissionEconomicsTab.tsx`
+### 1. Backfill `user_id` on Sales Tables (data update)
 
-**1. Margin by Level card title** (line ~370) — add tooltip after `MARGIN BY LEVEL`:
-> "Shows each level's commission rate, breakeven revenue, and actual margin based on trailing 90-day average revenue per stylist. Breakeven is the revenue where costs equal income; Target Rev adds your desired profit margin on top."
+Use the insert tool to run UPDATE statements that resolve `user_id` from existing `phorest_staff_mapping`:
 
-**2. Margin by Level table column headers** (lines ~394–402) — add tooltips to each column head:
-- **Service %** — "Commission percentage paid on service revenue at this level."
-- **Retail %** — "Commission percentage paid on retail product sales at this level."
-- **Hourly Wage** — "Base hourly pay for this level, if enabled. This fixed cost is factored into breakeven and margin calculations."
-- **Breakeven Rev** — "Monthly revenue per stylist needed to cover all costs (commission + product + overhead + wage) with zero profit."
-- **Target Rev** — "Monthly revenue per stylist needed to cover all costs and achieve your target margin percentage."
-- **Actual Avg Rev** — "Average monthly service revenue per stylist at this level, calculated from trailing 90-day appointment data."
-- **Margin** — "Actual profit margin at this level's current revenue. Calculated as: (Revenue − Commission − Product Cost − Overhead − Wage) ÷ Revenue."
-- **Status** — "On Target means margin meets your goal. Tight means positive but below target. Negative means costs exceed revenue."
+```sql
+-- Daily sales summaries
+UPDATE phorest_daily_sales_summary pds
+SET user_id = psm.user_id
+FROM phorest_staff_mapping psm
+WHERE pds.phorest_staff_id = psm.phorest_staff_id
+  AND psm.is_active = true AND pds.user_id IS NULL;
 
-**3. What-If Simulator card title** (line ~612) — add tooltip after `WHAT-IF SIMULATOR`:
-> "Drag commission sliders to model how rate changes affect target revenue and margin. Changes here are hypothetical and do not save. Use 'Optimize with Zura' to get AI-recommended rates."
+-- Sales transactions
+UPDATE phorest_sales_transactions pst
+SET stylist_user_id = psm.user_id
+FROM phorest_staff_mapping psm
+WHERE pst.phorest_staff_id = psm.phorest_staff_id
+  AND psm.is_active = true AND pst.stylist_user_id IS NULL;
 
-**4. Zura Recommendations card title** (line ~516) — add tooltip after `ZURA RECOMMENDATIONS`:
-> "AI-generated commission rate suggestions based on your cost structure, current revenue, and industry benchmarks. Apply to the What-If simulator to preview impact before making changes."
+-- Transaction items
+UPDATE phorest_transaction_items pti
+SET stylist_user_id = psm.user_id
+FROM phorest_staff_mapping psm
+WHERE pti.phorest_staff_id = psm.phorest_staff_id
+  AND psm.is_active = true AND pti.stylist_user_id IS NULL;
+```
 
-### File: `src/components/dashboard/settings/LevelEconomicsSection.tsx`
+### 2. Backfill `location_id` on Employee Profiles (data update)
 
-**5. Level Summary Card inline metrics** — add small tooltips next to key labels inside each level card:
-- **"weighted margin"** label (line ~197) — tooltip: "Average margin across all services this level performs, weighted by how often each service is booked."
-- **"Revenue / stylist"** (line ~210) — tooltip: "Average monthly service revenue per stylist at this level from trailing 90-day data."
-- **"Services below target"** (line ~224) — tooltip: "Number of services where the margin at this level falls below your target margin percentage."
+Map branch IDs to location IDs using the known mapping:
+- `hYztERWvOdMpLUcvRSNbSA` → `north-mesa`
+- `6YPlWL5os-Fnj0MmifbvVA` → `val-vista-lakes`
 
-**6. Stylist Snapshots table column headers** (lines ~355–361) — add tooltips:
-- **Appointments** — "Total appointments for this stylist in the 90-day analysis window."
-- **Revenue** — "Total service revenue for this stylist in the analysis window."
-- **Margin** — "Weighted average margin across all services this stylist performed, accounting for their actual service mix."
-- **Hourly Contribution** — "Effective margin earned per hour worked. Calculated as: (total margin dollars) ÷ (estimated hours worked). Higher is better."
-- **Status** — "Healthy means margin meets target. Tight means positive but below target. Underpriced means costs exceed revenue for this stylist's mix."
+For multi-branch staff, use the most recent mapping. Skip Alex Day (no mapping = no location needed for admin).
 
-**7. Silent Margin Erosion alert** (line ~142) — add tooltip next to the heading:
-> "Detected when a level uses the base service price (no level-specific override) but has a higher commission rate than base. The salon pays more commission without charging more — margin shrinks silently."
+### 3. Fix `useUserSalesSummary` — Phorest Staff ID Fallback
 
-## Total: ~20 new tooltips across 2 files. No logic changes, no database changes.
+**File: `src/hooks/useSalesData.ts`**
+
+Currently queries `phorest_daily_sales_summary` by `user_id` only. Add a fallback: first resolve the user's `phorest_staff_id(s)` via `phorest_staff_mapping`, then query by **both** `user_id` OR `phorest_staff_id IN (...)`. This makes the hook resilient to future syncs that miss `user_id`.
+
+### 4. Fix `PerformanceTrendChart` — Same Fallback
+
+**File: `src/components/dashboard/sales/PerformanceTrendChart.tsx`**
+
+Same pattern: resolve phorest staff IDs for the user, then query summaries using both `user_id` and `phorest_staff_id` match.
+
+## What This Fixes
+
+After these changes, all 22 mapped team members will immediately show:
+- Revenue on Team Stats (weekly/monthly)
+- Performance Trend Chart (8-week history)
+- Location-scoped analytics across all hub pages
+- Staff Performance Report economics columns
+
+## Files Changed
+
+| File | Change |
+|---|---|
+| Data update (insert tool) | Backfill `user_id` on 3 sales tables + `location_id` on employee profiles |
+| `src/hooks/useSalesData.ts` | `useUserSalesSummary` adds phorest_staff_id fallback query |
+| `src/components/dashboard/sales/PerformanceTrendChart.tsx` | Same fallback pattern for trend data |
+
+## Not Needed
+
+- **Alex Day**: Correctly admin-only, no Phorest mapping required
+- **Auto-mapping hook**: All 22 service staff already have valid mappings
+- **Mapping health UI**: Not needed since mappings are complete
+- **Sync function fix**: The sync already includes `user_id` — the issue was timing (mappings created after initial sync). A re-sync would also fix this, but the backfill is faster and more reliable.
 
