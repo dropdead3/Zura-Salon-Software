@@ -1,4 +1,5 @@
 import { useState, useMemo, useCallback } from 'react';
+import { isWithinInterval } from 'date-fns';
 import { EmptyState } from '@/components/ui/empty-state';
 import { tokens } from '@/lib/design-tokens';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
