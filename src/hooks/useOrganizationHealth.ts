@@ -76,7 +76,8 @@ export function useOrganizationHealthScores() {
           *,
           organization:organizations(name, slug, status)
         `)
-        .order('score_date', { ascending: false });
+        .order('score_date', { ascending: false })
+        .limit(500);
 
       if (error) throw error;
 
