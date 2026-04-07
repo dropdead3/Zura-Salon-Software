@@ -143,7 +143,7 @@ export function useStaffComplianceSummary(
         .from('mix_sessions')
         .select('id, appointment_id')
         .eq('organization_id', resolvedOrg)
-        .in('appointment_id', apptIds);
+        .in('appointment_id', allApptIds);
 
       const sessionApptSet = new Set((sessions ?? []).map((s: any) => s.appointment_id));
       const sessionIds = (sessions ?? []).map((s: any) => s.id);
