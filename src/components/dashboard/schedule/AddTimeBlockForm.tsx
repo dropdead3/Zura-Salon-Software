@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Command, CommandInput, CommandList, CommandEmpty, CommandGroup, CommandItem } from '@/components/ui/command';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { ChevronLeft, Clock, Loader2, Coffee, ChevronsUpDown, Check } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn, formatName } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useEffectiveRoles } from '@/hooks/useEffectiveUser';

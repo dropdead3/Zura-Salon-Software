@@ -398,7 +398,7 @@ export default function TeamOverview() {
                       {/* Info */}
                       <div className="flex-1 min-w-0">
                         <p className="font-sans font-medium truncate">
-                          {member.display_name || member.full_name}
+                          {formatName(member)}
                         </p>
                         <p className="text-xs text-muted-foreground font-sans">
                           Started {formatDate(new Date(member.start_date), 'MMM d, yyyy')}
