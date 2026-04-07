@@ -1,34 +1,52 @@
 
 
-# Remove Onboarding Requirements from My Level Progress Page
+# Add Service Pricing Visibility to Progression Ladder
 
 ## Context
 
-You're absolutely right — onboarding checklists (proving you can do a haircut, wash a head, etc.) are a **new-hire onboarding** concern, not a **level graduation** concern. The platform already has a dedicated onboarding system (`/onboarding` for staff, `/admin/onboarding-tracker` for admins, Settings > Onboarding for configuration). The graduation requirements checklist was incorrectly co-located on the "My Level Progress" page.
+The "My Progression Path" ladder currently shows commission rates and KPI thresholds for each level, but stylists can't see how their **service prices** change as they advance. The `service_level_prices` table already has this data (e.g., "Buzz Cut" goes from $35 at New Talent to $61 at Signature Artist). Surfacing this gives stylists a tangible financial incentive to progress.
 
-## Changes
+## Design
 
-### 1. Clean up `MyGraduation.tsx`
-Remove the entire onboarding requirements section (progress overview card + requirements-by-category cards, ~lines 476-543). Also remove the now-unused imports: `useGraduationRequirements`, `useGraduationSubmissions`, `useCreateSubmission`, `useUploadProof`, `useSubmissionFeedback`, `RequirementCard`, `FeedbackSection`, related state variables, and the `submissionMap`/progress calculations.
+Each level card in the ladder gets an expandable "Service Pricing" section. Clicking it reveals a compact table of services and their prices at that level. To keep the ladder clean, this is collapsed by default and toggled via a small "View pricing" link.
 
-The page retains:
-- **StylistScorecard** (performance metrics)
-- **LevelProgressionLadder** (career path visualization)
-- **Retention risk warnings**
-- **Level History timeline**
+For the stylist's **current level**, prices are shown as-is. For **future levels**, prices show the delta vs. current level (e.g., "$61 (+$26)") so the stylist can immediately see the financial upside.
 
-### 2. Remove `RequirementCard` and `FeedbackSection` components
-These are defined inline in `MyGraduation.tsx` (~lines 63-355). Remove them entirely since they're only used by the graduation requirements checklist being removed.
+Only services that have level-differentiated pricing are shown (i.e., services where the price actually varies across levels). Flat-price services like consultations are excluded to reduce noise.
 
-### 3. Clean up unused imports
-Remove `useStylistLevels` import added for level filtering, the `STATUS_COLORS`/`STATUS_LABELS`/`CATEGORY_ICONS`/`CATEGORY_LABELS` constants, and all graduation-tracker hook imports that are no longer needed on this page.
+## Implementation
 
-## What stays untouched
-- The **admin Graduation Tracker** (`/admin/graduation-tracker`) — admins may still want to manage and review onboarding requirement submissions there
-- The **Onboarding page** (`/onboarding`) — the existing staff-facing onboarding system
-- The **graduation_requirements** database tables and hooks — they still serve the admin tracker and the onboarding system
-- The `LevelProgressNudge` and `GraduationKpiTile` dashboard widgets
+### 1. New hook: `useAllServiceLevelPrices`
+A lightweight query that fetches all `service_level_prices` joined with `services.name` for the org. Returns a map of `levelId → Array<{ serviceName, price }>`.
 
-## Result
-"My Level Progress" becomes purely about **performance KPIs, level advancement, and retention** — no onboarding checklists mixed in. Onboarding stays in the onboarding system where it belongs.
+Could alternatively extend `useBookingLevelPricing` but a separate read-only hook is cleaner for this use case.
+
+### 2. Update `LevelProgressionLadder.tsx`
+
+**Data layer:**
+- Import the new hook
+- Build a `Map<levelId, ServicePriceRow[]>` from the query results
+- Determine the current level's prices as the baseline for delta calculations
+
+**UI additions per level card:**
+- Below the criteria highlights section, add a collapsible "Service Pricing" toggle (Collapsible from Radix or simple state toggle)
+- When expanded, render a compact two-column list: service name | price
+- For future levels: show price with a green `+$X` delta badge
+- For current level: show prices without delta
+- For past levels: show prices dimmed (consistent with existing opacity treatment)
+- All prices wrapped in `BlurredAmount` for financial privacy
+
+**Visual treatment:**
+- Toggle link: `text-[11px] text-muted-foreground` with a ChevronDown icon
+- Price list: compact `text-[11px]` rows, no borders, subtle `bg-muted/30` background
+- Delta badges: `text-emerald-500 text-[10px]`
+
+### 3. Files changed
+
+| File | Change |
+|------|--------|
+| `src/components/dashboard/LevelProgressionLadder.tsx` | Add pricing toggle, price list UI, delta calculations |
+| New: `src/hooks/useServicePricesByLevel.ts` (or inline query) | Fetch service_level_prices + service names for the org |
+
+No database changes needed — all data already exists.
 
