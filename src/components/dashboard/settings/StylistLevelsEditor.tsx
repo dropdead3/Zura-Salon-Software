@@ -1481,7 +1481,7 @@ export function StylistLevelsEditor({ embedded = false, onActions }: StylistLeve
     });
   }, []);
   const [hasChanges, setHasChanges] = useState(false);
-  const [previewLevel, setPreviewLevel] = useState(0);
+  
   const [wizardLevelId, setWizardLevelId] = useState<string | null>(null);
   const [wizardLevelLabel, setWizardLevelLabel] = useState('');
   const [deleteTargetIndex, setDeleteTargetIndex] = useState<number | null>(null);
@@ -1899,7 +1899,7 @@ export function StylistLevelsEditor({ embedded = false, onActions }: StylistLeve
             )}
             <TabsTrigger value="economics">Economics</TabsTrigger>
             <TabsTrigger value="team">Team Roster</TabsTrigger>
-            <TabsTrigger value="previews">Previews</TabsTrigger>
+            
           </TabsList>
 
           {/* === TAB 1: Levels === */}
@@ -2481,127 +2481,6 @@ export function StylistLevelsEditor({ embedded = false, onActions }: StylistLeve
             )}
           </TabsContent>
 
-          {/* === TAB 4: Previews === */}
-          <TabsContent value="previews">
-            <div className="space-y-6 max-w-lg">
-              {/* Level selector for previews */}
-              <div className="flex items-center gap-3">
-                <span className="text-sm text-muted-foreground">Preview level:</span>
-                <div className="flex flex-wrap gap-1">
-                  {levels.map((level, idx) => (
-                    <button
-                      key={level.id}
-                      onClick={() => setPreviewLevel(idx)}
-                      className={cn(
-                        "px-3 py-1.5 rounded-full text-xs transition-colors",
-                        previewLevel === idx 
-                          ? "bg-foreground text-background" 
-                          : "bg-muted text-muted-foreground hover:bg-muted/80"
-                      )}
-                    >
-                      {level.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Card Preview */}
-              <div className="space-y-3">
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Eye className="w-4 h-4" />
-                  <span>Card Preview</span>
-                </div>
-                <div className="relative rounded-xl overflow-hidden aspect-[3/4] bg-gradient-to-b from-neutral-600 to-neutral-800 max-w-[280px]">
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-                  <div className="absolute bottom-0 left-0 right-0 p-4 text-white">
-                    <div className="flex items-center gap-1.5 mb-1">
-                      <p className="text-[10px] tracking-[0.2em] text-white/70">
-                        LEVEL {previewLevel + 1} STYLIST
-                      </p>
-                      <TooltipProvider delayDuration={100}>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <button className="text-white/50 hover:text-white/90 transition-colors">
-                              <Info className="w-3 h-3" />
-                            </button>
-                          </TooltipTrigger>
-                          <TooltipContent side="top" className="max-w-[240px] p-3">
-                            <p className="font-medium text-xs mb-1.5">Stylist Level System</p>
-                            <ul className="text-[10px] space-y-1 text-muted-foreground">
-                              {levels.map((level, idx) => (
-                                <li key={level.id}>
-                                  <span className="font-medium text-foreground">Level {idx + 1}:</span>{' '}
-                                  {level.description}
-                                </li>
-                              ))}
-                            </ul>
-                          </TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
-                    </div>
-                    <h3 className="font-display text-lg">Stylist Name</h3>
-                  </div>
-                </div>
-              </div>
-
-              {/* Services Dropdown */}
-              <div className="space-y-3">
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Eye className="w-4 h-4" />
-                  <span>Services Dropdown</span>
-                </div>
-                <div className="bg-foreground rounded-xl p-4 space-y-3 max-w-[320px]">
-                  <button
-                    className="w-full flex items-center justify-between gap-2 px-3 py-2 border border-background/30 rounded-full text-xs font-sans bg-background/10 text-background"
-                  >
-                    <span className="text-background/70">Level:</span>
-                    <span className="font-medium truncate">
-                      {levels[previewLevel]?.label || 'New Talent'}
-                    </span>
-                    <ChevronDown size={14} className="text-background/70 shrink-0" />
-                  </button>
-                  <div className="bg-card rounded-lg border shadow-lg overflow-hidden max-h-32 overflow-y-auto">
-                    {levels.map((level, idx) => (
-                      <button
-                        key={level.id}
-                        onClick={() => setPreviewLevel(idx)}
-                        className={cn(
-                          "w-full px-3 py-2 text-left text-xs font-sans transition-colors",
-                          previewLevel === idx 
-                            ? "bg-foreground text-background" 
-                            : "hover:bg-secondary text-foreground"
-                        )}
-                      >
-                        Level {idx + 1} — {level.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              {/* Tooltip Preview */}
-              <div className="space-y-3">
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Info className="w-4 h-4" />
-                  <span>Tooltip Preview</span>
-                </div>
-                <div className="bg-card border rounded-xl p-4 space-y-3 max-w-[320px]">
-                  <p className="font-medium text-sm">Stylist Level System</p>
-                  <ul className="text-xs space-y-1.5 text-muted-foreground">
-                    {levels.map((level, idx) => (
-                      <li key={level.id}>
-                        <span className="font-medium text-foreground">Level {idx + 1}:</span>{' '}
-                        {level.description || 'No description'}
-                      </li>
-                    ))}
-                  </ul>
-                  <p className="text-xs text-muted-foreground/70 pt-1 border-t">
-                    Higher levels reflect experience, training, and demand.
-                  </p>
-                </div>
-              </div>
-            </div>
-          </TabsContent>
         </Tabs>
       </div>
 
