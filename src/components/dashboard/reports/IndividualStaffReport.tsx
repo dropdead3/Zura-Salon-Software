@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { EmptyState } from '@/components/ui/empty-state';
 import { tokens } from '@/lib/design-tokens';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
