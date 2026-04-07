@@ -72,6 +72,7 @@ import { useLevelRetentionCriteria, type LevelRetentionCriteria } from '@/hooks/
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { generateLevelRequirementsPDF } from '@/components/dashboard/settings/LevelRequirementsPDF';
+import { generateLevelCriteriaTablePDF } from '@/components/dashboard/settings/LevelCriteriaTablePDF';
 import { generateStaffLevelReportPDF } from '@/components/dashboard/settings/StaffLevelReportPDF';
 import { useTeamLevelProgress } from '@/hooks/useTeamLevelProgress';
 
@@ -922,50 +923,27 @@ function CriteriaComparisonTable({ levels, promotionCriteria, retentionCriteria,
               <FileSpreadsheet className="w-4 h-4 mr-2" />
               Export as Spreadsheet (.csv)
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={async () => {
-              let logoDataUrl: string | undefined;
-              const logoUrl = effectiveOrganization?.logo_url;
-              if (logoUrl) {
-                try {
-                  logoDataUrl = await new Promise<string>((resolve, reject) => {
-                    const img = new Image();
-                    img.crossOrigin = 'anonymous';
-                    img.onload = () => {
-                      const canvas = document.createElement('canvas');
-                      canvas.width = img.width;
-                      canvas.height = img.height;
-                      const ctx = canvas.getContext('2d');
-                      ctx?.drawImage(img, 0, 0);
-                      resolve(canvas.toDataURL('image/png'));
-                    };
-                    img.onerror = reject;
-                    img.src = logoUrl;
-                  });
-                } catch { /* proceed without logo */ }
-              }
+            <DropdownMenuItem onClick={() => {
               const levelInfos = levels.filter(l => l.dbId).map((l, i) => ({
                 label: l.label,
-                slug: l.slug,
                 dbId: l.dbId,
                 index: i,
-                isConfigured: l.isConfigured,
               }));
-              const commissions = levels.filter(l => l.dbId).map(l => ({
+              const comms = levels.filter(l => l.dbId).map(l => ({
                 dbId: l.dbId,
                 serviceCommissionRate: parseFloat(String(l.serviceCommissionRate)) || 0,
                 retailCommissionRate: parseFloat(String(l.retailCommissionRate)) || 0,
                 hourlyWageEnabled: l.hourlyWageEnabled,
                 hourlyWage: l.hourlyWage ? parseFloat(l.hourlyWage) : null,
               }));
-              const doc = generateLevelRequirementsPDF({
+              const doc = generateLevelCriteriaTablePDF({
                 orgName: effectiveOrganization?.name || 'Organization',
                 levels: levelInfos,
                 criteria: promotionCriteria,
                 retentionCriteria: retentionCriteria || [],
-                logoDataUrl,
-                commissions,
+                commissions: comms,
               });
-              doc.save('level-criteria-comparison.pdf');
+              doc.save(`level-criteria-comparison-${new Date().toISOString().split('T')[0]}.pdf`);
               toast.success('PDF exported');
             }}>
               <FileText className="w-4 h-4 mr-2" />
