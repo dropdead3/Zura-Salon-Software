@@ -88,6 +88,18 @@ const ServiceEmailFlowsManager = lazy(() => import('@/components/dashboard/setti
 const ServicesSettingsContent = lazy(() => import('@/components/dashboard/settings/ServicesSettingsContent').then(m => ({ default: m.ServicesSettingsContent })));
 const RetailProductsSettingsContent = lazy(() => import('@/components/dashboard/settings/RetailProductsSettingsContent').then(m => ({ default: m.RetailProductsSettingsContent })));
 
+import { useBusinessCapacity } from '@/hooks/useBusinessCapacity';
+import { UserCapacityBar } from '@/components/dashboard/settings/UserCapacityBar';
+import { AddUserSeatsDialog } from '@/components/dashboard/settings/AddUserSeatsDialog';
+import { useToast } from '@/hooks/use-toast';
+import { OnboardingTasksManager } from '@/components/dashboard/OnboardingTasksManager';
+import { LeaderboardWeightsManager } from '@/components/dashboard/LeaderboardWeightsManager';
+import { BusinessSettingsDialog } from '@/components/dashboard/settings/BusinessSettingsDialog';
+import { UserPinSettings } from '@/components/dashboard/settings/UserPinSettings';
+import { SoundSettingsSection } from '@/components/dashboard/settings/SoundSettingsSection';
+import { CheckoutAlertsSection } from '@/components/dashboard/settings/CheckoutAlertsSection';
+import { ReviewThresholdSettings } from '@/components/feedback/ReviewThresholdSettings';
+
 import { MessageSquareHeart } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useServicesWithFlowsCount } from '@/hooks/useServiceCommunicationFlows';
