@@ -1,111 +1,59 @@
 
 
-# Platform Infrastructure Monitoring Dashboard (Revised)
+# Upgrade Level Roadmap PDF to Match Digital Typography
 
-## Feasibility Confirmation
+## Why It Looks Different Today
 
-All required tables and infrastructure exist. One adjustment: raw SQL queries (`pg_stat_activity`, `storage.objects`) cannot run from edge functions via the JS client. We use **security definer RPC functions** instead.
+The PDF generator (`LevelRequirementsPDF.ts`) uses jsPDF's built-in `helvetica` font for everything. The digital roadmap uses **Termina** (headlines, uppercase labels) and **Aeonik Pro** (body text). That font mismatch is the single biggest gap between the two outputs.
 
-## Technical Design
+jsPDF *can* embed custom fonts, but OTF files must be converted to base64 and registered via `doc.addFileToVFS()` + `doc.addFont()`. The project already has the font files in `public/fonts/`.
 
-### 1. Database Migration
+## What Changes
 
-**New table** — `infrastructure_metrics` for time-series snapshots:
+### 1. Embed Termina and Aeonik Pro into jsPDF
 
-```sql
-CREATE TABLE public.infrastructure_metrics (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  metric_type text NOT NULL,        -- 'db_connections' | 'edge_function_perf' | 'storage_usage'
-  metric_key text NOT NULL,          -- 'pool_utilization', 'cold_start_rate', 'bucket:chat-attachments'
-  value numeric NOT NULL,
-  unit text,                         -- '%', 'ms', 'MB', 'count'
-  threshold_warning numeric,
-  threshold_critical numeric,
-  status text DEFAULT 'normal',      -- 'normal' | 'warning' | 'critical'
-  metadata jsonb DEFAULT '{}',
-  recorded_at timestamptz DEFAULT now()
-);
+- Convert `Termina-Medium.otf` and `AeonikPro-Regular.otf` + `AeonikPro-Medium.otf` to base64 strings (generated once at build time or stored as static TS modules)
+- Register them with jsPDF at the start of `generateLevelRequirementsPDF()`
+- Replace all `doc.setFont('helvetica', ...)` calls with the correct font family
 
-CREATE INDEX idx_infra_metrics_type_recorded 
-  ON infrastructure_metrics(metric_type, recorded_at DESC);
+**Font mapping:**
+| Current (helvetica) | New font | Usage |
+|---------------------|----------|-------|
+| `helvetica, bold` for titles | `Termina, normal` (weight 500) | Card titles, org name, section headers, KPI values |
+| `helvetica, normal` for body | `AeonikPro, normal` (weight 400) | Descriptions, labels, footer text |
+| `helvetica, bold` for stats | `Termina, normal` | Stat values, level numbers |
 
--- RLS: platform users only
-ALTER TABLE infrastructure_metrics ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Platform users can read"
-  ON infrastructure_metrics FOR SELECT
-  USING (public.is_platform_user(auth.uid()));
-```
+### 2. Typography Refinements
 
-**Two RPC functions** (security definer, bypasses RLS safely):
+- Increase letter-spacing (`charSpace`) on Termina text to match the digital `tracking-[0.08em]` feel
+- Adjust font sizes slightly — Termina renders larger than Helvetica at the same point size
+- Section headers (COMPENSATION, RETENTION MINIMUMS) get Termina with wide tracking to match the digital eyebrow style
+- KPI labels stay Aeonik Pro (normal case in digital, but uppercase is acceptable in PDF context since they're short metric names)
 
-```sql
--- 1. Connection pool stats
-CREATE FUNCTION public.get_db_connection_stats()
-RETURNS jsonb LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
-  SELECT jsonb_build_object(
-    'active', (SELECT count(*) FROM pg_stat_activity WHERE state = 'active'),
-    'idle', (SELECT count(*) FROM pg_stat_activity WHERE state = 'idle'),
-    'total', (SELECT count(*) FROM pg_stat_activity),
-    'max', current_setting('max_connections')::int
-  );
-$$;
+### 3. Visual Polish to Match Digital
 
--- 2. Storage bucket stats
-CREATE FUNCTION public.get_storage_bucket_stats()
-RETURNS jsonb LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
-  SELECT COALESCE(jsonb_agg(bucket_stats), '[]'::jsonb)
-  FROM (
-    SELECT jsonb_build_object(
-      'bucket_id', bucket_id,
-      'file_count', count(*),
-      'total_bytes', COALESCE(sum((metadata->>'size')::bigint), 0)
-    ) as bucket_stats
-    FROM storage.objects
-    GROUP BY bucket_id
-  ) sub;
-$$;
-```
+- Slightly softer card border color (currently `225,225,225` → match the digital's `border-border/60`)
+- Footer text in Aeonik Pro instead of Helvetica
+- Org name header in Termina with proper tracking
 
-### 2. Edge Function — `monitor-infrastructure`
+## Technical Approach
 
-Collects three metric categories every 15 minutes (scheduled via pg_cron):
+Create a new file `src/lib/pdf-fonts.ts` that exports the base64 font data as constants. This keeps the main PDF file clean and allows reuse by `StaffLevelReportPDF.ts`.
 
-- **DB Connections**: Calls `get_db_connection_stats()` RPC. Calculates utilization %. Warning at 70%, critical at 85%.
-- **Edge Function Cold Starts**: Queries `edge_function_logs` for functions where `duration_ms > 3000` after >5min idle gap. Reports cold start rate per function.
-- **Storage Usage**: Calls `get_storage_bucket_stats()` RPC. Reports per-bucket file count and total MB.
-
-Writes snapshots to `infrastructure_metrics`. Creates `platform_notifications` via existing `createNotification` helper with 2-hour cooldown when thresholds breach.
-
-### 3. Frontend Hook — `useInfrastructureMetrics`
-
-Queries `infrastructure_metrics` for latest snapshot per `metric_type` + 24h history for sparklines. Refresh: 5 minutes. Platform users only.
-
-### 4. UI — Infrastructure Section in SystemHealth.tsx
-
-Three cards added below existing service health section:
-
-| Card | Data Source | Visual |
-|------|------------|--------|
-| **Connection Pool** | `db_connections` metrics | Utilization gauge + 24h sparkline |
-| **Edge Function Performance** | `edge_function_perf` metrics | Table: function name, avg ms, cold starts, status badge |
-| **Storage Usage** | `storage_usage` metrics | Per-bucket bars with file count + MB |
-
-Each card shows status badge (normal/warning/critical) from latest metric.
-
-### 5. Scheduled Job
-
-pg_cron entry to invoke `monitor-infrastructure` every 15 minutes.
+The font files are ~50-80KB each as OTF. Base64 encoding adds ~33% overhead, so total addition is ~200-300KB of static JS. This is acceptable since it only loads when the user clicks "Download PDF."
 
 ## Files Changed
 
 | File | Change |
 |------|--------|
-| Migration (new) | `infrastructure_metrics` table + 2 RPC functions + indexes + RLS |
-| `supabase/functions/monitor-infrastructure/index.ts` (new) | Metric collection edge function |
-| `src/hooks/useInfrastructureMetrics.ts` (new) | Frontend data hook |
-| `src/pages/dashboard/platform/SystemHealth.tsx` | Add 3 infrastructure cards |
+| `src/lib/pdf-fonts.ts` (new) | Base64 font data + jsPDF registration helper |
+| `src/components/dashboard/settings/LevelRequirementsPDF.ts` | Replace all `helvetica` → Termina/Aeonik Pro, adjust spacing |
+| `src/components/dashboard/settings/StaffLevelReportPDF.ts` | Same font swap for consistency |
 
-## What Won't Work Without This Fix
+## No Risk
 
-The original plan assumed raw SQL from edge functions — that would have silently failed. The RPC approach is the correct pattern and is already used elsewhere in this codebase (e.g., `get_unread_counts`).
+- Fonts only load on PDF download (lazy import)
+- No UI changes
+- No database changes
+- Fallback: if font registration fails, jsPDF falls back to Helvetica automatically
 
