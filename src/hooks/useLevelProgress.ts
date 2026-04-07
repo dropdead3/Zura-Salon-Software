@@ -39,6 +39,7 @@ export interface RetentionStatus {
 export interface LevelProgressResult {
   currentLevelLabel: string;
   currentLevelSlug: string;
+  currentLevelId: string;
   nextLevelLabel: string | null;
   nextLevelId: string | null;
   criteria: LevelPromotionCriteria | null;
@@ -370,6 +371,7 @@ export function useLevelProgress(userId: string | undefined) {
       return {
         currentLevelLabel: currentLevel.label,
         currentLevelSlug: currentLevel.slug,
+        currentLevelId: currentLevel.id,
         nextLevelLabel: null,
         nextLevelId: null,
         criteria: null,
@@ -564,6 +566,7 @@ export function useLevelProgress(userId: string | undefined) {
     return {
       currentLevelLabel: currentLevel.label,
       currentLevelSlug: currentLevel.slug,
+      currentLevelId: currentLevel.id,
       nextLevelLabel: nextLevel.label,
       nextLevelId: nextLevel.id,
       criteria: nextCriteria,

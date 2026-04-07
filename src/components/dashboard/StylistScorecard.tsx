@@ -28,6 +28,7 @@ import { useStylistLevels } from '@/hooks/useStylistLevels';
 import { useStaffColorBarPerformance } from '@/hooks/color-bar/useStaffColorBarPerformance';
 import { useStylistPeerAverages } from '@/hooks/useStylistPeerAverages';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
+import { useLevelUpliftEstimate } from '@/hooks/useLevelUpliftEstimate';
 import { format, subDays } from 'date-fns';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
 
@@ -93,20 +94,26 @@ export function StylistScorecard({ userId, locationId }: StylistScorecardProps) 
     const nextSvcRate = next ? normalize(Number(next.service_commission_rate) || 0) : null;
     const nextRetRate = next ? normalize(Number(next.retail_commission_rate) || 0) : null;
 
-    const currentRevenue = progress.criteriaProgress.find(c => c.key === 'revenue')?.current || 0;
-    let monthlyUplift = 0;
-    if (nextSvcRate !== null && currentRevenue > 0) {
-      monthlyUplift = currentRevenue * ((nextSvcRate - currentSvcRate) / 100);
-    }
-
     return {
       currentSvcRate: Math.round(currentSvcRate),
       currentRetRate: Math.round(currentRetRate),
       nextSvcRate: nextSvcRate !== null ? Math.round(nextSvcRate) : null,
       nextRetRate: nextRetRate !== null ? Math.round(nextRetRate) : null,
-      monthlyUplift: Math.round(monthlyUplift),
+      // Raw decimal rates for uplift hook
+      currentSvcRateDecimal: (Number(current.service_commission_rate) || 0),
+      nextSvcRateDecimal: next ? (Number(next.service_commission_rate) || 0) : 0,
     };
   }, [progress, allLevels]);
+
+  // Service-price-aware uplift calculation
+  const upliftEstimate = useLevelUpliftEstimate({
+    userId,
+    currentLevelId: progress?.currentLevelId,
+    nextLevelId: progress?.nextLevelId ?? undefined,
+    currentCommRate: commissionInfo?.currentSvcRateDecimal ?? 0,
+    nextCommRate: commissionInfo?.nextSvcRateDecimal ?? 0,
+    evaluationWindowDays: progress?.evaluationWindowDays || 30,
+  });
 
   // Aggregate color bar metrics
   const colorBarMetrics = useMemo(() => {
@@ -246,11 +253,16 @@ export function StylistScorecard({ userId, locationId }: StylistScorecardProps) 
                 </span>
               </div>
             </div>
-            {commissionInfo.monthlyUplift > 0 && (
-              <p className="text-[10px] text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
-                <ArrowRight className="w-3 h-3" />
-                Est. +<BlurredAmount>{formatCurrency(commissionInfo.monthlyUplift)}</BlurredAmount>/mo at next level
-              </p>
+            {upliftEstimate.totalMonthlyUplift > 0 && (
+              <div>
+                <p className="text-[10px] text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                  <ArrowRight className="w-3 h-3" />
+                  Est. +<BlurredAmount>{formatCurrency(upliftEstimate.totalMonthlyUplift)}</BlurredAmount>/mo at next level
+                </p>
+                <p className="text-[9px] text-muted-foreground/60 ml-4">
+                  includes service price increases
+                </p>
+              </div>
             )}
           </div>
         )}

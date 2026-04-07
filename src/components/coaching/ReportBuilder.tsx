@@ -18,6 +18,7 @@ import { format, subDays } from 'date-fns';
 import { useLevelProgress } from '@/hooks/useLevelProgress';
 import { useResolveCommission } from '@/hooks/useResolveCommission';
 import { useStylistLevels } from '@/hooks/useStylistLevels';
+import { useLevelUpliftEstimate } from '@/hooks/useLevelUpliftEstimate';
 import { useIndividualStaffReport } from '@/hooks/useIndividualStaffReport';
 
 interface ReportBuilderProps {
@@ -43,6 +44,18 @@ export function ReportBuilder({ meetingId, teamMemberId, teamMemberName }: Repor
   const levelProgress = useLevelProgress(teamMemberId);
   const { resolveCommission } = useResolveCommission();
   const { data: allLevels = [] } = useStylistLevels();
+
+  // Service-price-aware uplift
+  const currentResolved = (levelProgress?.nextLevelLabel && teamMemberId) ? resolveCommission(teamMemberId, 1000, 0) : null;
+  const nextLevelObjReport = allLevels.find(l => l.id === levelProgress?.nextLevelId);
+  const upliftEstimate = useLevelUpliftEstimate({
+    userId: teamMemberId,
+    currentLevelId: levelProgress?.currentLevelId,
+    nextLevelId: levelProgress?.nextLevelId ?? undefined,
+    currentCommRate: currentResolved?.serviceRate ?? 0,
+    nextCommRate: nextLevelObjReport?.service_commission_rate ?? 0,
+    evaluationWindowDays: levelProgress?.evaluationWindowDays || 30,
+  });
 
   const [isBuilding, setIsBuilding] = useState(false);
   const [selectedNotes, setSelectedNotes] = useState<string[]>([]);
@@ -214,18 +227,12 @@ export function ReportBuilder({ meetingId, teamMemberId, teamMemberName }: Repor
           }
         }
 
-        // Commission uplift estimate
-        const currentResolved = resolveCommission(teamMemberId, 1000, 0);
-        const nextLevelObj = allLevels.find(l => l.id === levelProgress.nextLevelId);
-        if (nextLevelObj && currentResolved) {
-          const currentSvcRate = currentResolved.serviceRate;
-          const nextSvcRate = nextLevelObj.service_commission_rate ?? 0;
-          if (nextSvcRate > currentSvcRate) {
-            const monthlyRevenue = levelProgress.criteriaProgress.find(cp => cp.key === 'revenue')?.current || 0;
-            const monthlyUplift = monthlyRevenue * (nextSvcRate - currentSvcRate);
-            content += `### Income Opportunity\n\n`;
-            content += `> At **${levelProgress.nextLevelLabel}**, your service commission increases from **${(currentSvcRate * 100).toFixed(0)}%** to **${(nextSvcRate * 100).toFixed(0)}%** — estimated **+$${Math.round(monthlyUplift).toLocaleString()}/month** based on current revenue.\n\n`;
-          }
+        // Commission + price uplift estimate
+        if (upliftEstimate.totalMonthlyUplift > 0) {
+          const curRate = currentResolved?.serviceRate ?? 0;
+          const nxtRate = nextLevelObjReport?.service_commission_rate ?? 0;
+          content += `### Income Opportunity\n\n`;
+          content += `> At **${levelProgress.nextLevelLabel}**, your service commission increases from **${(curRate * 100).toFixed(0)}%** to **${(nxtRate * 100).toFixed(0)}%** — estimated **+$${upliftEstimate.totalMonthlyUplift.toLocaleString()}/month** (includes service price increases).\n\n`;
         }
       } else {
         content += `**Current Level:** ${levelProgress.currentLevelLabel}\n`;
