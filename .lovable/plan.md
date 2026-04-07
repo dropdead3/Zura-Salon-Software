@@ -1,39 +1,33 @@
 
 
-# Relabel "Tenure" to "Level Tenure" Across All Surfaces
+# Add Eval Window ≥ Level Tenure Validation
 
 ## Problem
-The KPI labeled "Tenure" is ambiguous — it could be interpreted as total salon employment tenure rather than time spent at the current level.
+Evaluation window and level tenure are configured independently. An admin could set tenure to 180 days but eval window to 90 days, meaning the system would only assess half the tenure period — potentially missing poor early performance or rewarding a short hot streak.
+
+## Rule
+`evaluation_window_days` must be ≥ `tenure_days` whenever both are configured. This applies to both promotion and retention evaluation windows.
 
 ## Changes
 
-### 1. `src/components/dashboard/settings/StylistLevelsEditor.tsx`
-- Change the row label from `'Tenure'` to `'Level Tenure'` in the `metricRows` array (~line 438)
-- Update the `METRIC_FIELD_MAPPING` key from `'Tenure'` to `'Level Tenure'` (~line 344)
-- Update the tooltip text from `'Tenure': 'Minimum days at current level...'` to `'Level Tenure': ...` (~line 390)
-- Update all references that check `label !== 'Tenure'` to `label !== 'Level Tenure'` (~lines 492, 534, 694)
+### 1. `src/components/dashboard/settings/GraduationWizard.tsx`
+- Add client-side validation in the save handler: if `tenure_enabled && tenure_days > evaluation_window_days`, show an error toast and block save
+- Add an inline warning below the Eval Window slider/input when the current value is less than tenure days (advisory text like "Eval window should be ≥ Level Tenure ({X}d) to ensure full-period assessment")
+- Auto-correct: when tenure days is increased past eval window, bump eval window to match (with a toast noting the adjustment)
 
-### 2. `src/components/dashboard/settings/GraduationWizard.tsx`
-- Change the label from `"Minimum Tenure"` to `"Level Tenure"` (~line 914)
-- Keep the sub-label "Time at current level before eligible" as-is (already clear)
+### 2. `src/components/dashboard/settings/StylistLevelsEditor.tsx`
+- In the Criteria Comparison Table, add a visual warning indicator (amber text or icon) on the Eval Window cell if its value is less than the Level Tenure value for the same level
 
-### 3. `src/hooks/useLevelProgress.ts`
-- Change `label: 'Tenure'` to `label: 'Level Tenure'` (~line 548)
-
-### 4. `src/hooks/useTeamLevelProgress.ts`
-- Change `label: 'Tenure'` to `label: 'Level Tenure'` (~line 438)
-
-### 5. `src/components/dashboard/LevelProgressionLadder.tsx`
-- Change `formatThreshold('Tenure', ...)` to `formatThreshold('Level Tenure', ...)` (~line 41)
+## Behavior
+- **Soft guard in table**: amber highlight when eval < tenure
+- **Hard guard in wizard**: blocks save with clear message
+- **Auto-adjust**: raising tenure past eval window auto-bumps eval window
 
 ## Files Changed
 | File | Change |
 |---|---|
-| `StylistLevelsEditor.tsx` | Rename label, mapping key, tooltip, and conditional checks |
-| `GraduationWizard.tsx` | Rename toggle label |
-| `useLevelProgress.ts` | Rename progress item label |
-| `useTeamLevelProgress.ts` | Rename progress item label |
-| `LevelProgressionLadder.tsx` | Rename threshold label |
+| `GraduationWizard.tsx` | Add validation on save + inline warning + auto-adjust logic |
+| `StylistLevelsEditor.tsx` | Amber warning on eval window cells that are < tenure |
 
-5 files, no database changes.
+2 files, no database changes.
 
