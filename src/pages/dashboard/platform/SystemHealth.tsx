@@ -50,6 +50,8 @@ export default function SystemHealthPage() {
   const { syncLabel } = usePOSProviderLabel();
   const { data: stats } = useJobStats(24);
   const refreshHealth = useRefreshSystemHealth();
+  const { data: infra, isLoading: infraLoading, refetch: refetchInfra } = useInfrastructureMetrics();
+  const refreshInfra = useRefreshInfrastructureMetrics();
 
   const handleRefresh = async () => {
     try {
