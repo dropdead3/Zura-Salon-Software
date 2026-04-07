@@ -16,6 +16,7 @@ import { MeetingNotes } from '@/components/coaching/MeetingNotes';
 import { AccountabilityItems } from '@/components/coaching/AccountabilityItems';
 import { ReportBuilder } from '@/components/coaching/ReportBuilder';
 import { LevelProgressCard } from '@/components/coaching/LevelProgressCard';
+import { MeetingPerformanceSummary } from '@/components/coaching/MeetingPerformanceSummary';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { PageExplainer } from '@/components/ui/PageExplainer';
@@ -191,6 +192,7 @@ export default function MeetingDetails() {
         {isMyMeeting && (
           <div className="grid gap-6 lg:grid-cols-2">
             <div className="space-y-6">
+              <MeetingPerformanceSummary staffUserId={meeting.requester_id} />
               <MeetingNotes meetingId={meeting.id} isCoach={canManage} />
             </div>
             <div className="space-y-6">

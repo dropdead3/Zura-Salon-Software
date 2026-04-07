@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { tokens } from '@/lib/design-tokens';
@@ -18,6 +18,7 @@ import { format, subDays } from 'date-fns';
 import { useLevelProgress } from '@/hooks/useLevelProgress';
 import { useResolveCommission } from '@/hooks/useResolveCommission';
 import { useStylistLevels } from '@/hooks/useStylistLevels';
+import { useIndividualStaffReport } from '@/hooks/useIndividualStaffReport';
 
 interface ReportBuilderProps {
   meetingId: string;
@@ -48,9 +49,15 @@ export function ReportBuilder({ meetingId, teamMemberId, teamMemberName }: Repor
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [includeCompliance, setIncludeCompliance] = useState(true);
   const [includeLevelProgress, setIncludeLevelProgress] = useState(true);
+  const [includePerformance, setIncludePerformance] = useState(true);
   const [additionalContent, setAdditionalContent] = useState('');
   const [previewContent, setPreviewContent] = useState('');
   const [showPreview, setShowPreview] = useState(false);
+
+  // Performance data for the trailing 30 days
+  const perfDateTo = useMemo(() => format(new Date(), 'yyyy-MM-dd'), []);
+  const perfDateFrom = useMemo(() => format(subDays(new Date(), 30), 'yyyy-MM-dd'), []);
+  const { data: perfData } = useIndividualStaffReport(teamMemberId, perfDateFrom, perfDateTo);
 
   // Filter only non-private notes for report
   const shareableNotes = notes?.filter(n => !n.is_private) || [];
@@ -93,6 +100,29 @@ export function ReportBuilder({ meetingId, teamMemberId, teamMemberName }: Repor
 
     if (additionalContent.trim()) {
       content += `## Additional Notes\n\n${additionalContent}\n\n`;
+    }
+
+    // Performance Summary section
+    if (includePerformance && perfData) {
+      const { revenue, productivity, clientMetrics, retail, experienceScore, teamAverages, commission } = perfData;
+      const tipRate = experienceScore.tipRate;
+      content += `## Performance Summary (Last 30 Days)\n\n`;
+      content += `| Metric | Value | Team Avg |\n`;
+      content += `|--------|-------|----------|\n`;
+      content += `| Revenue | $${Math.round(revenue.total).toLocaleString()} | $${Math.round(teamAverages.revenue).toLocaleString()} |\n`;
+      content += `| Avg Ticket | $${Math.round(revenue.avgTicket).toLocaleString()} | $${Math.round(teamAverages.avgTicket).toLocaleString()} |\n`;
+      content += `| Appointments | ${productivity.completed} | ${Math.round(teamAverages.appointments)} |\n`;
+      content += `| Tip Rate | ${tipRate.toFixed(1)}% | — |\n`;
+      content += `| Rebook Rate | ${clientMetrics.rebookingRate.toFixed(0)}% | ${teamAverages.rebookingRate.toFixed(0)}% |\n`;
+      content += `| Retention | ${clientMetrics.retentionRate.toFixed(0)}% | ${teamAverages.retentionRate.toFixed(0)}% |\n`;
+      content += `| Retail Attachment | ${retail.attachmentRate}% | — |\n`;
+      content += `| Experience Score | ${experienceScore.composite} (${experienceScore.status}) | — |\n`;
+      content += `| Commission | $${Math.round(commission.totalCommission).toLocaleString()} (${commission.tierName}) | — |\n`;
+      content += '\n';
+      if (revenue.revenueChange !== 0) {
+        const dir = revenue.revenueChange > 0 ? '📈' : '📉';
+        content += `${dir} Revenue ${revenue.revenueChange > 0 ? 'up' : 'down'} ${Math.abs(Math.round(revenue.revenueChange))}% vs prior period\n\n`;
+      }
     }
 
     // Color Bar Performance section (renamed from Compliance)
@@ -333,6 +363,25 @@ export function ReportBuilder({ meetingId, teamMemberId, teamMemberName }: Repor
                 </div>
               )}
             </div>
+
+            {/* Performance Summary */}
+            {perfData && (
+              <div className="space-y-2">
+                <div className="flex items-start gap-2">
+                  <Checkbox
+                    id="include-performance"
+                    checked={includePerformance}
+                    onCheckedChange={(checked) => setIncludePerformance(!!checked)}
+                  />
+                  <label htmlFor="include-performance" className="text-sm cursor-pointer flex-1">
+                    <span className="font-medium">Include Performance Summary</span>
+                    <span className="text-muted-foreground ml-2">
+                      (revenue, tips, rebook, retention, attachment)
+                    </span>
+                  </label>
+                </div>
+              </div>
+            )}
 
             {/* Color Bar Performance */}
             {complianceData && complianceData.totalColorAppointments > 0 && (
