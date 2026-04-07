@@ -179,20 +179,28 @@ export function useStaffComplianceSummary(
         }
       }
 
-      // Get dispensed weight from staff_backroom_performance for waste %
+      // Compute dispensed weight & cost directly from bowl_lines (source of truth)
       let totalDispensed = 0;
       let totalCost = 0;
-      {
-        const { data: perfData } = await supabase
-          .from('staff_backroom_performance')
-          .select('total_dispensed_weight, total_product_cost')
-          .eq('organization_id', resolvedOrg)
-          .eq('staff_id', staffUserId)
-          .gte('period_start', dateFrom)
-          .lte('period_end', dateTo);
-        for (const p of perfData ?? []) {
-          totalDispensed += (p as any).total_dispensed_weight ?? 0;
-          totalCost += (p as any).total_product_cost ?? 0;
+      if (sessionIds.length > 0) {
+        // Get bowl IDs for these sessions
+        const { data: bowls } = await (supabase
+          .from('mix_bowls')
+          .select('id') as any)
+          .in('session_id', sessionIds);
+        const bowlIds = (bowls ?? []).map((b: any) => b.id);
+
+        if (bowlIds.length > 0) {
+          const { data: lines } = await (supabase
+            .from('bowl_lines')
+            .select('dispensed_quantity, dispensed_cost_snapshot') as any)
+            .in('bowl_id', bowlIds);
+          for (const l of lines ?? []) {
+            const qty = (l as any).dispensed_quantity ?? 0;
+            const cost = (l as any).dispensed_cost_snapshot ?? 0;
+            totalDispensed += qty;
+            totalCost += qty * cost;
+          }
         }
       }
 
