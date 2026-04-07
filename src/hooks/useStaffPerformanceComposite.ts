@@ -14,6 +14,10 @@ export interface StaffPerformanceRow {
   photoUrl: string | null;
   /** Total revenue from POS */
   revenue: number;
+  /** Service revenue from POS */
+  serviceRevenue: number;
+  /** Product/retail revenue from POS */
+  productRevenue: number;
   /** Rebook rate 0-100 */
   rebookRate: number;
   /** Retail attachment rate 0-100 */
@@ -49,6 +53,8 @@ export function useStaffPerformanceComposite(
   const { data: experienceScores, isLoading: expLoading } = useStylistExperienceScore(
     locationId,
     '30days',
+    dateFrom,
+    dateTo,
   );
   const { data: salesData, isLoading: salesLoading } = useSalesByStylist(
     dateFrom,
@@ -67,10 +73,12 @@ export function useStaffPerformanceComposite(
     if (!experienceScores?.length) return [];
 
     // Build sales lookup by user_id
-    const salesMap = new Map<string, { revenue: number; name: string; photoUrl: string | null }>();
+    const salesMap = new Map<string, { revenue: number; serviceRevenue: number; productRevenue: number; name: string; photoUrl: string | null }>();
     for (const s of salesData ?? []) {
       salesMap.set(s.user_id, {
         revenue: s.totalRevenue ?? 0,
+        serviceRevenue: s.serviceRevenue ?? 0,
+        productRevenue: s.productRevenue ?? 0,
         name: s.name,
         photoUrl: s.photo_url ?? null,
       });
@@ -147,6 +155,8 @@ export function useStaffPerformanceComposite(
         staffName: score.staffName,
         photoUrl: score.photoUrl,
         revenue: sales?.revenue ?? 0,
+        serviceRevenue: sales?.serviceRevenue ?? 0,
+        productRevenue: sales?.productRevenue ?? 0,
         rebookRate: score.metrics.rebookRate,
         retailConversion: score.metrics.retailAttachment,
         tipRate: score.metrics.tipRate,
