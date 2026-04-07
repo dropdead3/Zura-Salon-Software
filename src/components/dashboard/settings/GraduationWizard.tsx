@@ -137,6 +137,17 @@ const CRITERIA: CriterionConfig[] = [
   { key: 'rev_per_hour', label: 'Revenue Per Hour', description: 'Revenue generated per booked hour. The ultimate efficiency signal for pricing decisions.', icon: DollarSign, unit: '$/hr', enabledKey: 'rev_per_hour_enabled', thresholdKey: 'rev_per_hour_threshold', weightKey: 'rev_per_hour_weight', placeholder: '55' },
 ];
 
+const RECOMMENDED_WEIGHTS: Record<string, number> = {
+  revenue_weight: 40,
+  retail_weight: 10,
+  rebooking_weight: 15,
+  avg_ticket_weight: 10,
+  retention_rate_weight: 15,
+  new_clients_weight: 5,
+  utilization_weight: 5,
+  rev_per_hour_weight: 0,
+};
+
 interface RetentionCriterionConfig {
   key: string;
   label: string;
@@ -944,15 +955,56 @@ export function GraduationWizard({ open, onOpenChange, levelId, levelLabel, leve
                       <div className="space-y-1 min-w-0">
                         <h4 className="font-display text-[11px] tracking-wide text-blue-400">HOW WEIGHTS WORK</h4>
                         <p className="text-xs text-muted-foreground leading-relaxed">
-                          Weights determine how much each metric contributes to the overall readiness score. A stylist qualifies for promotion when their weighted composite score reaches 100%. Exceeding one threshold can compensate for being slightly below another — a metric with higher weight has more influence on qualification.
-                          <span className="block mt-1 text-blue-400/80">For example, if Revenue is weighted at 60% and a stylist hits 120% of their revenue target, that surplus offsets shortfalls in lower-weighted metrics.</span>
+                          Weights determine how much each metric contributes to the overall readiness score. Most salons weight Service Revenue highest (40%+) since it's the clearest indicator of client demand and book strength. Use the Recommended preset for a proven starting point.
+                          <span className="block mt-1 text-blue-400/80">Exceeding one threshold can compensate for being slightly below another — a metric with higher weight has more influence on qualification.</span>
                         </p>
                       </div>
                     </div>
                   </div>
 
-                  {/* Distribute Evenly */}
-                  <div className="flex justify-end">
+                  {/* Weight Presets */}
+                  <div className="flex justify-end gap-2">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="text-xs gap-1.5 text-muted-foreground hover:text-foreground"
+                      onClick={() => {
+                        const active = CRITERIA.filter(c => form[c.enabledKey] as boolean);
+                        if (active.length === 0) return;
+                        const next = { ...form };
+                        // Assign recommended weights to enabled metrics
+                        let totalRaw = 0;
+                        active.forEach(c => {
+                          totalRaw += (RECOMMENDED_WEIGHTS[c.weightKey] || 0);
+                        });
+                        if (totalRaw === 0) {
+                          // Fallback to even distribution
+                          const base = Math.floor(100 / active.length);
+                          const rem = 100 - base * active.length;
+                          active.forEach((c, i) => {
+                            (next as any)[c.weightKey] = base + (i < rem ? 1 : 0);
+                          });
+                        } else {
+                          // Scale proportionally to 100
+                          let assigned = 0;
+                          active.forEach((c, i) => {
+                            const raw = RECOMMENDED_WEIGHTS[c.weightKey] || 0;
+                            if (i === active.length - 1) {
+                              (next as any)[c.weightKey] = 100 - assigned;
+                            } else {
+                              const scaled = Math.round((raw / totalRaw) * 100);
+                              (next as any)[c.weightKey] = scaled;
+                              assigned += scaled;
+                            }
+                          });
+                        }
+                        setForm(next);
+                      }}
+                    >
+                      <Sparkles className="h-3.5 w-3.5" />
+                      Recommended
+                    </Button>
                     <Button
                       type="button"
                       variant="ghost"
