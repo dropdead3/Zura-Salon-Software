@@ -410,6 +410,7 @@ export function IndividualStaffReport({ dateFrom, dateTo, locationId, onClose, i
             total: totalRevenue,
             service: completed.filter(a => a.service_category !== 'retail').reduce((s, a) => s + (a.total_price || 0), 0),
             product: completed.filter(a => a.service_category === 'retail').reduce((s, a) => s + (a.total_price || 0), 0),
+            tips: completed.reduce((s, a) => s + (a.tip_amount || 0), 0),
             avgTicket,
             priorTotal: 0,
             revenueChange: 0,

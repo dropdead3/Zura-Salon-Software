@@ -24,6 +24,7 @@ export interface StaffRevenue {
   total: number;
   service: number;
   product: number;
+  tips: number;
   avgTicket: number;
   priorTotal: number;
   revenueChange: number;
@@ -585,6 +586,7 @@ export function useIndividualStaffReport(staffUserId: string | null, dateFrom?: 
           total: totalRevenue,
           service: serviceRevenue,
           product: productRevenue,
+          tips: totalTips,
           avgTicket,
           priorTotal: priorTotalRevenue,
           revenueChange,
@@ -643,7 +645,7 @@ export function useIndividualStaffReport(staffUserId: string | null, dateFrom?: 
 function buildEmptyResult(profile: StaffProfile, calculateCommission: any): IndividualStaffReportData {
   return {
     profile,
-    revenue: { total: 0, service: 0, product: 0, avgTicket: 0, priorTotal: 0, revenueChange: 0, dailyTrend: [] },
+    revenue: { total: 0, service: 0, product: 0, tips: 0, avgTicket: 0, priorTotal: 0, revenueChange: 0, dailyTrend: [] },
     productivity: { totalAppointments: 0, completed: 0, noShows: 0, cancelled: 0, avgPerDay: 0, uniqueClients: 0 },
     clientMetrics: { rebookingRate: 0, retentionRate: 0, newClients: 0, totalUniqueClients: 0 },
     retail: { productRevenue: 0, unitsSold: 0, attachmentRate: 0 },
