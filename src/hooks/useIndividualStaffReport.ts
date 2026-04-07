@@ -24,6 +24,7 @@ export interface StaffRevenue {
   total: number;
   service: number;
   product: number;
+  tips: number;
   avgTicket: number;
   priorTotal: number;
   revenueChange: number;
@@ -585,6 +586,7 @@ export function useIndividualStaffReport(staffUserId: string | null, dateFrom?: 
           total: totalRevenue,
           service: serviceRevenue,
           product: productRevenue,
+          tips: totalTips,
           avgTicket,
           priorTotal: priorTotalRevenue,
           revenueChange,

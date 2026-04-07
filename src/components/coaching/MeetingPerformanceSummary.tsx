@@ -185,13 +185,24 @@ export function MeetingPerformanceSummary({ staffUserId }: MeetingPerformanceSum
           <div className="grid grid-cols-2 gap-3">
             <KpiTile
               label="Total Revenue"
-              description="Total revenue from all appointments in the last 30 days."
+              description="Total revenue from all appointments in the last 30 days, broken down by services, retail, and tips."
               value={revenue.total}
               teamAvg={teamAverages.revenue}
               teamUnit="$"
               trend={<TrendBadge current={revenue.total} prior={revenue.priorTotal} suffix="%" />}
             >
               <AnimatedBlurredAmount value={revenue.total} currency="USD" decimals={0} />
+              <div className="flex flex-col gap-0.5 mt-1">
+                <span className="text-xs text-muted-foreground">
+                  Services: <AnimatedBlurredAmount value={revenue.service} currency="USD" decimals={0} className="inline text-xs" />
+                </span>
+                <span className="text-xs text-muted-foreground">
+                  Retail: <AnimatedBlurredAmount value={revenue.product} currency="USD" decimals={0} className="inline text-xs" />
+                </span>
+                <span className="text-xs text-muted-foreground">
+                  Tips: <AnimatedBlurredAmount value={revenue.tips} currency="USD" decimals={0} className="inline text-xs" />
+                </span>
+              </div>
             </KpiTile>
 
             <KpiTile
