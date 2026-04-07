@@ -1,37 +1,35 @@
 
 
-# Add "Configured" Badge to Criteria Comparison Table Column Headers
+# Fix: Final Level Cannot Set Level Requirements
 
 ## Problem
 
-The column headers in the Criteria Comparison Table show each level's number, name, and an "Edit" button — but no indication of whether the level has been fully configured. Admins must switch to the roadmap view to see configuration status.
+The Graduation Wizard explicitly disables the "Level Requirements" tab for the final (highest) level, treating it identically to Level 1 (the base/entry level). This is incorrect — while Level 1 has no promotion criteria because it's the starting point, the **final level absolutely needs promotion criteria** because stylists must earn their way to the top.
+
+The bug appears in three places in `GraduationWizard.tsx`:
+
+1. **Line 501** — Default tab selection forces `retention` for the last level
+2. **Line 701** — Tab button is `disabled` for the last level
+3. **Line 707** — Tab styling applies `opacity-50 pointer-events-none` for the last level
+
+Additionally, in `StylistLevelsEditor.tsx` **line 1723-1724**, the "Zura Defaults" seeding skips generating promotion criteria for the last level.
 
 ## Fix
 
-Add a small badge below each level name in the table header showing "Configured" (green) or "Incomplete" (amber), using the existing `isConfigured` property already available on each level object.
+### File: `src/components/dashboard/settings/GraduationWizard.tsx`
 
-### Technical Change
+Remove `levelIndex === totalLevels - 1` from all three locations:
 
-**File: `src/components/dashboard/settings/StylistLevelsEditor.tsx` (~lines 966-981)**
+- **Line 501**: Change condition to `levelIndex === 0` only
+- **Line 701**: Change `disabled` to `levelIndex === 0` only
+- **Line 707**: Change opacity condition to `levelIndex === 0` only
 
-Insert a status badge between the level name and the Edit button inside the column header `div`. Logic:
+### File: `src/components/dashboard/settings/StylistLevelsEditor.tsx`
 
-```
-{level.isConfigured ? (
-  <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 border border-emerald-500/20">
-    Configured
-  </span>
-) : (
-  <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-600 border border-amber-500/20">
-    Incomplete
-  </span>
-)}
-```
-
-This reuses the same `level.isConfigured` flag that already drives the roadmap badges and the manual toggle — no new data fetching or logic needed.
+- **Line 1724**: Remove the `if (levelIndex < savedLevels.length - 1)` guard so the last level also gets default promotion criteria seeded.
 
 ## Scope
-- Single file: `StylistLevelsEditor.tsx`
-- ~6 lines added
+- 2 files modified
+- ~4 lines changed (condition removals)
 - No database changes
 
