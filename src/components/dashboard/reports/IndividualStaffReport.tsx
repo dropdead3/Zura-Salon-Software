@@ -15,7 +15,7 @@ import {
 import {
   DollarSign, Users, TrendingUp, TrendingDown, UserCheck, Package,
   Briefcase, Star, Calendar, Download, FileSpreadsheet, Loader2, ArrowLeft,
-  AlertTriangle, CheckCircle2, Target, Wallet, ShieldCheck, GraduationCap,
+  AlertTriangle, CheckCircle2, Target, Wallet, ShieldCheck, GraduationCap, Percent, Banknote, Beaker, Receipt,
 } from 'lucide-react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
