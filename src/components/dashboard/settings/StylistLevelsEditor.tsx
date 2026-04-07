@@ -1226,7 +1226,7 @@ function CriteriaComparisonTable({ levels, promotionCriteria, retentionCriteria,
                 </span>
               </TableCell>
               <TableCell colSpan={levels.length} className="py-3 px-4 bg-muted-strong text-sm text-muted-foreground/60">
-                KPI minimums inherited from Level Requirements · Falling below triggers demotion to Level 1
+                Retention uses each level's KPI standards. Falling below surfaces coaching or demotion flags based on the configured action. For {levels[0]?.name || 'Level 1'}, falling below entry-level standards surfaces coaching or removal review.
               </TableCell>
             </TableRow>
             {metrics.filter(m => m.section === 'retention').map((metric, mIdx) => {
