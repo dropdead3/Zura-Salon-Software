@@ -107,7 +107,7 @@ export function useRevenueByLevel() {
       const userIds = staff.map(s => s.user_id);
       const { data: appointments, error: apptErr } = await supabase
         .from('appointments')
-        .select('staff_user_id, total_price')
+        .select('staff_user_id, total_price, appointment_date')
         .eq('organization_id', orgId!)
         .gte('appointment_date', dateStr)
         .in('staff_user_id', userIds)
