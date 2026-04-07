@@ -60,6 +60,7 @@ export function StylistCommissionDrilldown({
   const [retailRate, setRetailRate] = useState('');
   const [reason, setReason] = useState('');
   const [expiresAt, setExpiresAt] = useState('');
+  const [showOverride, setShowOverride] = useState(false);
 
   // Reset form when member changes
   useEffect(() => {
@@ -68,13 +69,40 @@ export function StylistCommissionDrilldown({
       setRetailRate(override.retail_commission_rate != null ? String(Math.round(override.retail_commission_rate * 100)) : '');
       setReason(override.reason);
       setExpiresAt(override.expires_at ? override.expires_at.split('T')[0] : '');
+      setShowOverride(true);
     } else {
       setSvcRate('');
       setRetailRate('');
       setReason('');
       setExpiresAt('');
+      setShowOverride(false);
     }
   }, [override, member?.user_id, open]);
+
+  const handleToggleOverride = useCallback((checked: boolean) => {
+    if (!checked && override) {
+      // Existing override — remove it
+      deleteOverride.mutate(override.id, {
+        onSuccess: () => {
+          setSvcRate('');
+          setRetailRate('');
+          setReason('');
+          setExpiresAt('');
+          setShowOverride(false);
+          toast.success('Override removed');
+        },
+      });
+    } else if (!checked) {
+      // No saved override, just clear form
+      setSvcRate('');
+      setRetailRate('');
+      setReason('');
+      setExpiresAt('');
+      setShowOverride(false);
+    } else {
+      setShowOverride(true);
+    }
+  }, [override, deleteOverride]);
 
   const slugToLevel = useMemo(() => {
     const map = new Map<string, StylistLevel>();
