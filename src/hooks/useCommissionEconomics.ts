@@ -28,20 +28,24 @@ const SETTINGS_KEY = 'commission_economics_assumptions';
 export function useEconomicsAssumptions() {
   const setting = useColorBarSetting(SETTINGS_KEY);
 
+  const hasCustomAssumptions = useMemo(() => {
+    return !!(setting.data?.value && Object.keys(setting.data.value).length > 0);
+  }, [setting.data]);
+
   const assumptions = useMemo<EconomicsAssumptions>(() => {
-    if (!setting.data?.value || Object.keys(setting.data.value).length === 0) {
+    if (!hasCustomAssumptions) {
       return DEFAULT_ASSUMPTIONS;
     }
-    const v = setting.data.value as Record<string, unknown>;
+    const v = setting.data!.value as Record<string, unknown>;
     return {
       target_margin_pct: typeof v.target_margin_pct === 'number' ? v.target_margin_pct : DEFAULT_ASSUMPTIONS.target_margin_pct,
       overhead_per_stylist: typeof v.overhead_per_stylist === 'number' ? v.overhead_per_stylist : DEFAULT_ASSUMPTIONS.overhead_per_stylist,
       product_cost_pct: typeof v.product_cost_pct === 'number' ? v.product_cost_pct : DEFAULT_ASSUMPTIONS.product_cost_pct,
       hours_per_month: typeof v.hours_per_month === 'number' ? v.hours_per_month : DEFAULT_ASSUMPTIONS.hours_per_month,
     };
-  }, [setting.data]);
+  }, [setting.data, hasCustomAssumptions]);
 
-  return { assumptions, isLoading: setting.isLoading };
+  return { assumptions, hasCustomAssumptions, isLoading: setting.isLoading };
 }
 
 export function useSaveEconomicsAssumptions() {
