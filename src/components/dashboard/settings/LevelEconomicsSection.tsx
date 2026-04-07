@@ -78,18 +78,11 @@ export function LevelEconomicsSection({ levels, whatIfRates }: LevelEconomicsSec
   const [matrixOpen, setMatrixOpen] = useState(false);
   const [snapshotsOpen, setSnapshotsOpen] = useState(false);
 
-  if (data.isLoading) {
-    return (
-      <div className="flex items-center justify-center h-32">
-        <Loader2 className={tokens.loading.spinner} />
-      </div>
-    );
-  }
-
-  if (data.levelSummaries.length === 0) return null;
-
   // Find silent margin erosion alerts
-  const erosionAlerts = data.serviceMatrix.filter(m => m.isFallbackPrice && m.appointmentCount >= 10);
+  const erosionAlerts = useMemo(() =>
+    data.serviceMatrix.filter(m => m.isFallbackPrice && m.appointmentCount >= 10),
+    [data.serviceMatrix]
+  );
 
   // Group matrix by service category
   const categorizedServices = useMemo(() => {
