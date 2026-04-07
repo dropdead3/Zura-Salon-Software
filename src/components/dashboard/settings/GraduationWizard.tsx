@@ -58,6 +58,7 @@ interface GraduationWizardProps {
 interface CriterionConfig {
   key: string;
   label: string;
+  description: string;
   icon: React.ElementType;
   unit: string;
   enabledKey: keyof FormState;
