@@ -31,7 +31,6 @@ import {
   Sparkles,
   ArrowRight,
   ShieldCheck,
-  RotateCcw,
 } from 'lucide-react';
 import type { StylistLevel } from '@/hooks/useStylistLevels';
 import {
