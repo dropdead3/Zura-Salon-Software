@@ -1,58 +1,74 @@
 
 
-# Fix: Recommended Weights Producing Negative Values and Not Totaling 100%
+# Settings Page Slow Load — Diagnosis and Fix
 
-## Problem
+## Root Cause
 
-Two bugs in the "Recommended" preset logic:
+The Admin Settings page (`src/pages/dashboard/admin/Settings.tsx`) is a 1556-line monolithic file that **eagerly imports ~35 heavy components** at the top level. Every sub-page (Email Templates, Stylist Levels, Integrations, Onboarding, Loyalty, etc.) is bundled into a single chunk — even though only ONE category is visible at a time.
 
-1. **Negative weights**: `rev_per_hour_weight` has a recommended value of `0`. When it's enabled and happens to be last in the active list, it gets `100 - assigned` — but `assigned` can already exceed 100 due to rounding, producing a negative value.
+Additionally, `fetchUsers()` fires on mount unconditionally, and several hooks (`useBusinessCapacity`, `useSettingsLayout`, `useColorTheme`, `useRoleUtils`, `useBillingAccess`) all execute queries immediately regardless of which settings category the user is viewing.
 
-2. **Total exceeds 100%**: `Math.round` on each metric can round up cumulatively, so `assigned` overshoots 100 before the last metric is reached.
+## Fix — Two Changes
 
-## Fix
+### 1. Lazy-load category content components
 
-### File: `src/components/dashboard/settings/GraduationWizard.tsx`
-
-**1. Give zero-weight metrics a minimum fallback** (~line 141-150)
-
-Change `rev_per_hour_weight: 0` to a small positive value (e.g., `3`) so it gets a fair share when enabled. Adjust other values so the defined totals still make sense as ratios:
+Convert the ~20 heavy content imports to `React.lazy()` so they only load when their category is selected:
 
 ```ts
-const RECOMMENDED_WEIGHTS: Record<string, number> = {
-  revenue_weight: 40,
-  retail_weight: 10,
-  rebooking_weight: 15,
-  avg_ticket_weight: 10,
-  retention_rate_weight: 15,
-  new_clients_weight: 5,
-  utilization_weight: 5,
-  rev_per_hour_weight: 5,
-};
+// Before (all loaded immediately):
+import { EmailTemplatesManager } from '...';
+import { OnboardingConfigurator } from '...';
+import { StylistLevelsContent } from '...';
+// ... 15+ more
+
+// After (loaded on demand):
+const EmailTemplatesManager = lazy(() => import('...'));
+const OnboardingConfigurator = lazy(() => import('...'));
+const StylistLevelsContent = lazy(() => import('...'));
 ```
 
-**2. Fix rounding to guarantee 100% total** (~lines 992-1003)
+Wrap the category detail view in `<Suspense fallback={<DashboardLoader />}>` so it shows a loader while the chunk downloads.
 
-Replace `Math.round` with `Math.floor` for all non-last metrics, ensuring the running total never exceeds 100. The last metric absorbs the remainder cleanly:
+Components to lazy-load (~18 total):
+- `EmailTemplatesManager`, `EmailVariablesManager`, `SignaturePresetsManager`, `EmailBrandingSettings`
+- `SmsTemplatesManager`
+- `OnboardingTasksManager`, `OnboardingConfigurator`
+- `LeaderboardConfigurator`, `LeaderboardWeightsManager`
+- `IntegrationsTab`
+- `StylistLevelsContent`
+- `CommandCenterContent`
+- `LocationsSettingsContent`, `DayRateSettingsContent`
+- `RoleAccessConfigurator`
+- `FormsTemplatesContent`, `MetricsGlossaryContent`
+- `LoyaltySettingsContent`, `TeamRewardsConfigurator`
+- `KioskSettingsContent`, `ServiceEmailFlowsManager`
+- `ServicesSettingsContent`, `RetailProductsSettingsContent`
+- `AccountBillingContent`
+
+### 2. Defer `fetchUsers()` until the "Users" category is active
+
+Move the `fetchUsers()` call from the top-level `useEffect` into the users category render path, so it only fires when the admin actually opens the Users section.
 
 ```ts
-let assigned = 0;
-active.forEach((c, i) => {
-  const raw = RECOMMENDED_WEIGHTS[c.weightKey] || 5; // fallback to 5 if missing
-  if (i === active.length - 1) {
-    (next as any)[c.weightKey] = 100 - assigned;
-  } else {
-    const scaled = Math.floor((raw / totalRaw) * 100);
-    (next as any)[c.weightKey] = scaled;
-    assigned += scaled;
-  }
-});
+// Before:
+useEffect(() => { fetchUsers(); }, []);
+
+// After:
+useEffect(() => {
+  if (activeCategory === 'users') fetchUsers();
+}, [activeCategory]);
 ```
 
-This ensures weights are always non-negative and always sum to exactly 100%.
+## Impact
+
+- **Initial load**: Only the grid of category cards + their icons need to render. The heavy content components are deferred.
+- **Bundle splitting**: Vite will automatically code-split each lazy import into its own chunk.
+- **No UX change**: The grid renders instantly; clicking a category shows a brief loader while the chunk downloads (typically <200ms on fast connections).
 
 ## Scope
-- Single file: `GraduationWizard.tsx`
-- ~4 lines changed
+- Single file: `src/pages/dashboard/admin/Settings.tsx`
+- ~25 import lines changed from static to `lazy()`
+- 1 `Suspense` wrapper added
+- 1 `useEffect` condition added
 - No database changes
 
