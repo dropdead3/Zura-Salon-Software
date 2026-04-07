@@ -1,47 +1,71 @@
 
 
-# Speed Up Settings Page: Card Grid First, Everything Else Lazy
-
-## Problem
-
-The Settings page imports ~20 lazy components, DnD libraries, and fires multiple hooks (auth, business capacity, billing access, role utils, layout prefs, color theme, etc.) **before** the card grid can render. The card grid itself is pure UI — icons, labels, and click handlers — but it's blocked by all this initialization.
+# Auto-Detect Economics Assumptions from Org Data
 
 ## Approach
 
-Split the Settings page into two layers:
+Replace the raw input fields with a smart banner that computes suggested values from data already in Zura, then lets the owner accept or tweak. Zero questions asked — Zura figures it out.
 
-1. **`SettingsCardGrid`** — the card grid view (what you see on load). Renders immediately with minimal dependencies: just the `categoriesMap`, `SECTION_GROUPS`, icons, and the layout order hook. No DnD on first paint — DnD initializes only when "Edit Layout" is clicked.
+## What Data Is Already Available
 
-2. **`SettingsCategoryDetail`** — the detail view (lazy loaded). Only mounts when a category is selected. Contains all 20+ lazy component imports and the heavy sub-page logic.
+| Assumption | Data Source | Computation |
+|---|---|---|
+| **Overhead per stylist** | Org locations (rent if stored), stylist count from `employee_profiles` | If no rent data: use industry median ($3,500) scaled by location count. Show "We estimated this — update if you know your actual rent." |
+| **Product cost %** | Color Bar chemical tracking (if enabled), or service mix from appointments | If Color Bar data exists: `total_chemical_cost / total_service_revenue` over 90 days. Otherwise: infer from service category mix (color-heavy → 12%, cut-focused → 6%). |
+| **Target margin %** | Current actual margin computed from revenue vs costs | Show current implied margin and suggest +3pp improvement as target. If no data: default 15% with benchmark context. |
+| **Hours per month** | Appointment data — average booked hours per stylist over 90 days | `total_appointment_hours / stylist_count / 3 months`. Fallback: 160 (5 days × 8 hrs × 4 weeks). |
 
-### What makes it faster
+## UX Design
 
-| Before | After |
-|--------|-------|
-| DnD kit loaded on mount | DnD kit lazy-loaded only when Edit Mode toggled |
-| All 20+ lazy component declarations evaluated on mount | Lazy declarations move to detail component, not evaluated until needed |
-| `useBusinessCapacity`, `useRoleUtils`, `useColorTheme`, `useBillingAccess` fire immediately | These hooks move into their respective sub-views; card grid doesn't need them |
-| `useStaffingAlertSettings` fires on mount | Moves into System category detail only |
+### First Visit (no saved assumptions)
 
-### Card grid dependencies (minimal)
-- `useAuth` (already cached)
-- `useSettingsLayout` (already cached, just the order array)
-- `useBillingAccess` (needed to filter account-billing card visibility — keep but it's lightweight)
-- Icon imports from lucide (tree-shaken)
-- `categoriesMap` static object
+Instead of blank fields, show a **single "smart defaults" card**:
 
-### Files changed
+```text
+┌─────────────────────────────────────────────────────┐
+│ ✦  Zura computed these based on your data           │
+│                                                      │
+│  Overhead/Stylist    $3,800/mo   ← estimated         │
+│  Product Cost        11.3%       ← from your data    │
+│  Target Margin       15%         ← industry avg      │
+│  Hours/Month         152 hrs     ← from your data    │
+│                                                      │
+│  Each value shows a source badge:                    │
+│    "From your data" (green) or "Industry avg" (amber)│
+│                                                      │
+│  [Accept & Continue]    [Adjust First]               │
+└─────────────────────────────────────────────────────┘
+```
+
+- **"Accept & Continue"** saves immediately, shows the margin table.
+- **"Adjust First"** expands inline editors for each field (same inputs as today, but pre-filled with smart values).
+
+### Returning Visit (assumptions already saved)
+
+Current layout stays, but add:
+- A subtle banner at top: *"Based on 90 days of data, your actual product cost is ~11.3%. Your saved assumption is 10%."* with an **[Update]** button.
+- Industry benchmark ranges shown as muted text under each field (e.g., "Typical: $3,200–$5,500").
+
+## New Hook: `useAutoDetectEconomics`
+
+Computes suggested values by querying existing data:
+
+1. **Stylist count**: from `employee_profiles` (already fetched elsewhere, reuse query key)
+2. **Appointment hours**: sum of appointment durations over 90 days, divided by stylist count and 3
+3. **Product cost from Color Bar**: check if `backroom_settings` has chemical cost tracking data; if yes, compute ratio
+4. **Service mix**: categorize appointments by service type to infer product cost if no Color Bar data
+5. Returns `{ suggestions: EconomicsAssumptions, sources: Record<keyof EconomicsAssumptions, 'data' | 'estimate'> }`
+
+## Files Changed
 
 | File | Change |
-|------|--------|
-| `src/pages/dashboard/admin/Settings.tsx` | Extract card grid to render immediately; wrap DnD context in a lazy-loaded wrapper that only mounts when `isEditMode` is true; move all category detail rendering into a separate lazy component |
-| `src/components/dashboard/settings/SettingsCategoryDetail.tsx` (new) | Contains all 20+ lazy imports and the category-specific rendering logic |
-| `src/components/dashboard/settings/SettingsDndWrapper.tsx` (new) | Contains DnD context, sensors, sortable logic — only loaded when Edit Layout is clicked |
+|---|---|
+| `src/hooks/useAutoDetectEconomics.ts` (new) | Hook that queries appointment/staff/Color Bar data and returns smart defaults with source labels |
+| `src/components/dashboard/settings/EconomicsSmartDefaults.tsx` (new) | The "Zura computed these" card with accept/adjust flow |
+| `src/components/dashboard/settings/CommissionEconomicsTab.tsx` | Show `EconomicsSmartDefaults` when no saved assumptions exist; add data-vs-saved comparison banner for returning users; add benchmark hints under fields |
+| `src/hooks/useCommissionEconomics.ts` | Add `hasCustomAssumptions` boolean export (true when settings key exists with non-default values) |
 
-### DnD lazy-load detail
+## No database changes required
 
-The card grid renders plain `div` wrappers by default. When "Edit Layout" is clicked, `SettingsDndWrapper` lazy-loads and wraps the same cards with `DndContext` + `SortableContext`. This removes `@dnd-kit/core` and `@dnd-kit/sortable` from the initial bundle for this page entirely.
-
-### No visual changes
-The page looks and behaves identically. Cards appear faster because the JS bundle for the initial view is dramatically smaller.
+All data sources already exist. The hook reads from `appointments`, `employee_profiles`, and `backroom_settings` — all tables the user already has RLS access to.
 
