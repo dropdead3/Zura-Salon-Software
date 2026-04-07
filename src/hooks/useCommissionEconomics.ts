@@ -173,8 +173,6 @@ export function useRevenueByLevel() {
           : 0,
         stylist_count: data.userIds.size,
       }));
-        stylist_count: data.userIds.size,
-      }));
     },
     enabled: !!orgId,
     staleTime: 5 * 60_000,
