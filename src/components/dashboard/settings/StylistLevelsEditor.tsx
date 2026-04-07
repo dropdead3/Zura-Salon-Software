@@ -302,6 +302,7 @@ type LocalStylistLevel = {
   hourlyWage: string;
   earningsStructure: EarningsStructure;
   isConfigured: boolean;
+  configStatus: 'configured' | 'retention_not_set' | 'incomplete';
 };
 
 function deriveEarningsStructure(hourlyEnabled: boolean, serviceRate: string, retailRate: string): EarningsStructure {
@@ -969,9 +970,13 @@ function CriteriaComparisonTable({ levels, promotionCriteria, retentionCriteria,
                         Level {idx + 1}
                       </span>
                       <span className="text-sm font-medium">{level.label}</span>
-                      {level.isConfigured ? (
+                      {level.configStatus === 'configured' ? (
                         <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 border border-emerald-500/20">
                           Configured
+                        </span>
+                      ) : level.configStatus === 'retention_not_set' ? (
+                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-600 border border-amber-500/20">
+                          Retention Not Set
                         </span>
                       ) : (
                         <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-600 border border-amber-500/20">
@@ -1314,6 +1319,7 @@ function LevelsQuickSetupWizard({ onGenerate, onDismiss, isGenerating }: QuickSe
         hourlyWage: '',
         earningsStructure: 'commission' as EarningsStructure,
         isConfigured: false,
+        configStatus: 'incomplete' as const,
       };
     });
 
@@ -1520,13 +1526,19 @@ export function StylistLevelsEditor({ embedded = false, onActions }: StylistLeve
           hourlyWageEnabled: hEnabled,
           hourlyWage: l.hourly_wage != null ? String(l.hourly_wage) : '',
           earningsStructure: deriveEarningsStructure(hEnabled, sRate, rRate),
-          isConfigured: (() => {
-            if (l.is_configured) return true;
+          ...(() => {
+            if (l.is_configured) return { isConfigured: true, configStatus: 'configured' as const };
             const idx = dbLevels!.indexOf(l);
+            const hasRetention = retentionCriteria?.some(rc => rc.stylist_level_id === l.id && rc.is_active) ?? false;
             if (idx === 0) {
-              return retentionCriteria?.some(rc => rc.stylist_level_id === l.id && rc.is_active) ?? false;
+              return hasRetention
+                ? { isConfigured: true, configStatus: 'configured' as const }
+                : { isConfigured: false, configStatus: 'incomplete' as const };
             }
-            return promotionCriteria?.some(pc => pc.stylist_level_id === l.id && pc.is_active) ?? false;
+            const hasPromotion = promotionCriteria?.some(pc => pc.stylist_level_id === l.id && pc.is_active) ?? false;
+            if (hasPromotion && hasRetention) return { isConfigured: true, configStatus: 'configured' as const };
+            if (hasPromotion) return { isConfigured: false, configStatus: 'retention_not_set' as const };
+            return { isConfigured: false, configStatus: 'incomplete' as const };
           })(),
         };
       });
@@ -1636,6 +1648,7 @@ export function StylistLevelsEditor({ embedded = false, onActions }: StylistLeve
       hourlyWage: '',
       earningsStructure: 'commission' as EarningsStructure,
       isConfigured: false,
+      configStatus: 'incomplete' as const,
     };
     setLevels([...levels, newLevel]);
     setNewLevelName('');
@@ -2352,10 +2365,10 @@ export function StylistLevelsEditor({ embedded = false, onActions }: StylistLeve
                         {level.dbId && (
                           <div className="ml-[3.25rem] flex items-center justify-between rounded-lg border border-border/60 bg-muted/20 p-3">
                             <div className="flex items-center gap-2">
-                              <Check className={cn("w-3.5 h-3.5", level.isConfigured ? "text-emerald-600" : "text-muted-foreground/40")} />
+                              <Check className={cn("w-3.5 h-3.5", level.configStatus === 'configured' ? "text-emerald-600" : level.configStatus === 'retention_not_set' ? "text-amber-500" : "text-muted-foreground/40")} />
                               <span className="text-xs font-sans text-foreground">Mark as Configured</span>
                               <span className="text-[10px] text-muted-foreground">
-                                {level.isConfigured ? 'This level is ready and will appear as complete on the roadmap.' : 'Mark this level when setup is complete.'}
+                                {level.configStatus === 'configured' ? 'This level is ready and will appear as complete on the roadmap.' : level.configStatus === 'retention_not_set' ? 'Promotion criteria set — retention monitoring still needed.' : 'Mark this level when setup is complete.'}
                               </span>
                             </div>
                             <Switch
