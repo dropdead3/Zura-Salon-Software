@@ -498,7 +498,7 @@ export function GraduationWizard({ open, onOpenChange, levelId, levelLabel, leve
   useEffect(() => {
     if (open) {
       setStep(0);
-      setActiveTab((levelIndex === 0 || levelIndex === totalLevels - 1) ? 'retention' : 'promotion');
+      setActiveTab(levelIndex === 0 ? 'retention' : 'promotion');
     }
   }, [open, levelIndex]);
 
@@ -698,13 +698,13 @@ export function GraduationWizard({ open, onOpenChange, levelId, levelLabel, leve
           <div className="mt-4 flex bg-muted/70 rounded-full p-1 gap-1">
             <button
               onClick={() => { setActiveTab('promotion'); setStep(0); }}
-              disabled={levelIndex === 0 || levelIndex === totalLevels - 1}
+              disabled={levelIndex === 0}
               className={cn(
                 "flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-sans transition-all",
                 activeTab === 'promotion'
                   ? "bg-foreground text-background shadow-sm"
                   : "text-muted-foreground hover:text-foreground",
-                (levelIndex === 0 || levelIndex === totalLevels - 1) && "opacity-50 pointer-events-none"
+                levelIndex === 0 && "opacity-50 pointer-events-none"
               )}
             >
               <Sparkles className="w-3.5 h-3.5" />
