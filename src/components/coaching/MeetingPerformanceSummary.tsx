@@ -117,6 +117,9 @@ export function MeetingPerformanceSummary({ staffUserId }: MeetingPerformanceSum
 
   if (!data) return null;
 
+  // Check if all data is empty/zero
+  const isAllEmpty = data.revenue.total === 0 && data.productivity.totalAppointments === 0;
+
   const { revenue, productivity, clientMetrics, retail, experienceScore, topServices, commission, teamAverages, colorBarCompliance } = data;
   const tipRate = experienceScore.tipRate;
   const avgTipDollar = productivity.completed > 0 ? (revenue.total * (tipRate / 100)) / productivity.completed : 0;

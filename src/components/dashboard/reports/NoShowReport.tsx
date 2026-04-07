@@ -27,6 +27,7 @@ import { useBusinessSettings } from '@/hooks/useBusinessSettings';
 import { useReportLocationInfo } from '@/hooks/useReportLocationInfo';
 import { toast } from 'sonner';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
+import { EmptyDataBanner } from '@/components/ui/EmptyDataBanner';
 
 interface NoShowReportProps {
   reportType: string;
@@ -249,9 +250,8 @@ export function NoShowReport({
       )}
     </>
   ) : (
-    <div className="text-center py-12 text-muted-foreground">
-      <FileText className="w-12 h-12 mx-auto mb-3 opacity-30" />
-      <p>No appointment data available for this period</p>
+    <div className="py-4">
+      <EmptyDataBanner />
     </div>
   );
 

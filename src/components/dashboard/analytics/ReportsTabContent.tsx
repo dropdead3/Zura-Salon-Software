@@ -232,6 +232,7 @@ export function ReportsTabContent({ filters }: ReportsTabContentProps) {
             locationId={location}
             onClose={handleCloseReport}
             initialStaffId={deepLinkStaffId.current || undefined}
+            dateRangeKey={filters.dateRange}
           />
         );
       case 'payroll-summary':
