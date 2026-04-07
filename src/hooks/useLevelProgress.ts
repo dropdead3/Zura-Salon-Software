@@ -71,7 +71,7 @@ export function useLevelProgress(userId: string | undefined) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('employee_profiles')
-        .select('user_id, stylist_level, hire_date, location_id')
+        .select('user_id, stylist_level, hire_date, location_id, stylist_level_since')
         .eq('user_id', userId!)
         .single();
       if (error) throw error;
@@ -224,7 +224,7 @@ export function useLevelProgress(userId: string | undefined) {
     if (!currentLevel) return null;
 
     // Time at level
-    const levelSince = latestPromotion?.promoted_at || profile?.hire_date || null;
+    const levelSince = (profile as any)?.stylist_level_since || latestPromotion?.promoted_at || profile?.hire_date || null;
     const timeAtLevelDays = levelSince
       ? Math.max(0, Math.floor((Date.now() - new Date(levelSince).getTime()) / (1000 * 60 * 60 * 24)))
       : 0;

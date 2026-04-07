@@ -62,7 +62,7 @@ export function useTeamLevelProgress() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('employee_profiles')
-        .select('user_id, full_name, photo_url, stylist_level, hire_date, is_active, location_id')
+        .select('user_id, full_name, photo_url, stylist_level, hire_date, is_active, location_id, stylist_level_since')
         .eq('organization_id', orgId!)
         .eq('is_active', true)
         .not('stylist_level', 'is', null);
@@ -313,7 +313,7 @@ export function useTeamLevelProgress() {
 
       // Compute time at current level
       const latestPromo = allLevelPromotions.find((p: any) => p.user_id === profile.user_id);
-      const levelSince = latestPromo?.promoted_at || profile.hire_date || null;
+      const levelSince = (profile as any)?.stylist_level_since || latestPromo?.promoted_at || profile.hire_date || null;
       const timeAtLevelDays = levelSince
         ? Math.max(0, Math.floor((Date.now() - new Date(levelSince).getTime()) / (1000 * 60 * 60 * 24)))
         : 0;
