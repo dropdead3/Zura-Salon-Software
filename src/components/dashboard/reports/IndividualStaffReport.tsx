@@ -257,6 +257,40 @@ export function IndividualStaffReport({ dateFrom, dateTo, locationId, onClose, i
         margin: { ...branding.margin, left: 14, right: 14 },
       });
     }
+
+    // Staff Strikes section in PDF
+    if (strikes && strikes.length > 0) {
+      y = (doc as any).lastAutoTable?.finalY + 10 || y + 60;
+      if (y > 170) { doc.addPage(); y = 20; }
+      doc.setFontSize(12);
+      doc.setTextColor(0);
+      doc.text('Staff Strikes', 14, y);
+      y += 4;
+      autoTable(doc, {
+        ...branding,
+        startY: y,
+        head: [['Date', 'Type', 'Severity', 'Title', 'Status']],
+        body: strikes.map(s => [
+          s.incident_date,
+          STRIKE_TYPE_LABELS[s.strike_type as StrikeType] || s.strike_type,
+          SEVERITY_LABELS[s.severity as StrikeSeverity] || s.severity,
+          s.title,
+          s.is_resolved ? 'Resolved' : 'Active',
+        ]),
+        theme: 'striped',
+        headStyles: { fillColor: [51, 51, 51] },
+        margin: { ...branding.margin, left: 14, right: 14 },
+        didParseCell: (data: any) => {
+          if (data.section === 'body' && data.column.index === 2) {
+            const sev = data.cell.raw?.toString().toLowerCase();
+            if (sev === 'critical' || sev === 'high') {
+              data.cell.styles.fillColor = [255, 235, 235];
+              data.cell.styles.textColor = [180, 40, 40];
+            }
+          }
+        },
+      });
+    }
   }, [businessSettings, effectiveOrganization, dateFrom, dateTo, locationInfo]);
 
   // ── Single PDF Generation (current viewing member) ──
