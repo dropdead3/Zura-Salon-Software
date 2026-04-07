@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import { 
@@ -136,6 +137,7 @@ const CRITERIA: CriterionConfig[] = [
 interface RetentionCriterionConfig {
   key: string;
   label: string;
+  description: string;
   icon: React.ElementType;
   unit: string;
   enabledKey: keyof RetentionFormState;
