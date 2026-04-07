@@ -85,8 +85,8 @@ export function usePlatformAuditLog(options: UsePlatformAuditLogOptions = {}) {
         user_photo: log.user_id ? userMap[log.user_id]?.photo_url : undefined,
       }));
     },
-    staleTime: 1000 * 30, // 30 seconds
-    refetchInterval: 1000 * 60, // Refetch every minute for "live" feel
+    staleTime: 1000 * 60,
+    refetchInterval: 1000 * 300, // Refetch every 5 minutes (platform admin)
   });
 }
 

@@ -35,6 +35,6 @@ export function usePandaDocStats() {
         lastWebhookAt: documents.length > 0 ? documents[0].created_at : null,
       };
     },
-    refetchInterval: 30000, // Refresh every 30 seconds
+    refetchInterval: 300000, // Refresh every 5 minutes
   });
 }

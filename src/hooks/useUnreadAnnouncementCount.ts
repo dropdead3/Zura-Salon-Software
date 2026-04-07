@@ -42,6 +42,6 @@ export function useUnreadAnnouncementCount() {
       return filtered.filter(a => !readIds.has(a.id)).length;
     },
     enabled: !!user?.id,
-    refetchInterval: 30000,
+    staleTime: 30000,
   });
 }

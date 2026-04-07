@@ -76,7 +76,7 @@ export function useOrganizationStats() {
         recentActivity,
       };
     },
-    refetchInterval: 30000, // Refresh every 30 seconds
+    refetchInterval: 300000, // Refresh every 5 minutes (platform admin, low traffic)
   });
 }
 

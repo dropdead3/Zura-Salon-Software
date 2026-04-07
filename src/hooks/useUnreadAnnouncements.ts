@@ -54,6 +54,6 @@ export function useUnreadAnnouncements() {
       return unreadAnnouncementCount + (unreadNotificationCount || 0);
     },
     enabled: !!user?.id,
-    refetchInterval: 30000,
+    staleTime: 30000,
   });
 }

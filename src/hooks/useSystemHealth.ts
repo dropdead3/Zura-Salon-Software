@@ -105,8 +105,8 @@ export function useSystemHealth() {
         },
       };
     },
-    staleTime: 1000 * 30, // 30 seconds
-    refetchInterval: 1000 * 60, // 1 minute
+    staleTime: 1000 * 60,
+    refetchInterval: 1000 * 300, // 5 minutes
   });
 }
 

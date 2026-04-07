@@ -194,7 +194,7 @@ export function useStripePaymentsHealth() {
   const query = useQuery({
     queryKey: ['stripe-payments-health'],
     queryFn: fetchStripePaymentsHealth,
-    refetchInterval: 60000, // Refetch every minute
+    staleTime: 60000, // Has realtime subscription, no polling needed
   });
 
   // Set up real-time subscription for payment events

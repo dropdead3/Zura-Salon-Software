@@ -477,7 +477,7 @@ export function useServiceEmailQueue(filters?: { status?: string; limit?: number
       return data as ServiceEmailQueueItem[];
     },
     enabled: !!orgId,
-    refetchInterval: 60000, // refresh every minute
+    staleTime: 120000, // Config data, no frequent polling needed
   });
 }
 

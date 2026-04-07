@@ -111,7 +111,6 @@ export function useUnreadMentionCount() {
       return count || 0;
     },
     enabled: !!user?.id,
-    refetchInterval: 30000, // Refresh every 30 seconds
   });
 
   return data || 0;

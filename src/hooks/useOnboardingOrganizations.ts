@@ -102,6 +102,6 @@ export function useOnboardingOrganizations() {
 
       return { organizations: enrichedOrgs, stats };
     },
-    refetchInterval: 30000, // 30 seconds
+    refetchInterval: 300000, // 5 minutes (platform admin, low traffic)
   });
 }

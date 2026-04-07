@@ -100,8 +100,7 @@ export function usePlatformNotifications(limit = 50) {
       }));
     },
     enabled: !!user?.id,
-    staleTime: 1000 * 10,
-    refetchInterval: 1000 * 30, // Auto-refresh every 30 seconds
+    staleTime: 1000 * 30,
   });
 }
 
@@ -121,8 +120,7 @@ export function useUnreadNotificationCount() {
       return count || 0;
     },
     enabled: !!user?.id,
-    staleTime: 1000 * 10,
-    refetchInterval: 1000 * 30,
+    staleTime: 1000 * 30,
   });
 }
 

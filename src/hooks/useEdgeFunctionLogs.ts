@@ -69,8 +69,8 @@ export function useEdgeFunctionLogs(functionName?: string, limit = 50) {
         metadata: (log.metadata as Record<string, unknown>) || {},
       }));
     },
-    staleTime: 1000 * 10, // 10 seconds for fresher data
-    refetchInterval: 1000 * 30, // Auto-refresh every 30 seconds
+    staleTime: 1000 * 30,
+    refetchInterval: 1000 * 120, // Auto-refresh every 2 minutes
   });
 }
 
@@ -144,8 +144,8 @@ export function useLatestJobRuns() {
 
       return latest;
     },
-    staleTime: 1000 * 10,
-    refetchInterval: 1000 * 30,
+    staleTime: 1000 * 30,
+    refetchInterval: 1000 * 120, // 2 minutes
   });
 }
 
