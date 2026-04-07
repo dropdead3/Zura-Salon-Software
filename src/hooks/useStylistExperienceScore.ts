@@ -42,10 +42,16 @@ function normalizeTipRate(tipRate: number): number {
 
 export function useStylistExperienceScore(
   locationId?: string,
-  dateRange: 'tomorrow' | '7days' | '30days' | '90days' = '30days'
+  dateRange: 'tomorrow' | '7days' | '30days' | '90days' = '30days',
+  customDateFrom?: string,
+  customDateTo?: string,
 ) {
   // Calculate date range
   const getDateRange = () => {
+    // If custom dates provided, use them directly
+    if (customDateFrom && customDateTo) {
+      return { startDate: customDateFrom, endDate: customDateTo };
+    }
     const today = startOfDay(new Date());
     switch (dateRange) {
       case 'tomorrow':
@@ -169,8 +175,9 @@ export function useStylistExperienceScore(
         staffRetention.get(metric.phorest_staff_id)!.push(metric.retention_rate);
       });
 
-      // Build staff name/photo lookup
+      // Build staff name/photo lookup + phorest→user_id mapping
       const staffInfo = new Map<string, { name: string; photoUrl: string | null }>();
+      const phorestToUserId = new Map<string, string>();
       staffMappings?.forEach(mapping => {
         const profile = mapping.employee_profiles as any;
         const name = profile?.display_name || profile?.full_name || mapping.phorest_staff_name || 'Unknown';
@@ -178,6 +185,9 @@ export function useStylistExperienceScore(
           name,
           photoUrl: profile?.photo_url || null,
         });
+        if (mapping.user_id) {
+          phorestToUserId.set(mapping.phorest_staff_id, mapping.user_id);
+        }
       });
 
       // Calculate scores for each staff
@@ -227,7 +237,7 @@ export function useStylistExperienceScore(
           (retailAttachment * WEIGHTS.retailAttachment);
 
         scores.push({
-          staffId,
+          staffId: phorestToUserId.get(staffId) || staffId,
           staffName: info.name,
           photoUrl: info.photoUrl,
           compositeScore: Math.round(compositeScore),
