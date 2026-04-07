@@ -90,6 +90,7 @@ export function generateStaffLevelReportPDF(options: StaffLevelReportOptions): j
   const hasFonts = registerPdfFonts(doc);
   const F_DISPLAY = hasFonts ? 'Termina' : 'helvetica';
   const F_BODY = hasFonts ? 'AeonikPro' : 'helvetica';
+  const pageWidth = doc.internal.pageSize.getWidth();
   const now = new Date();
 
   // ─── Centered Header (matching roadmap PDF) ───
