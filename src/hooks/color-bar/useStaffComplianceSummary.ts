@@ -91,14 +91,14 @@ export function useStaffComplianceSummary(
         const phorestStaffId = (ep as any)?.phorest_staff_id;
 
         if (phorestStaffId) {
-          const { data: pAppts } = await supabase
+          const { data: pAppts } = await (supabase
             .from('phorest_appointments')
             .select('id, appointment_date, service_name, start_time')
             .eq('organization_id', resolvedOrg)
             .eq('staff_id', phorestStaffId)
             .gte('appointment_date', dateFrom)
             .lte('appointment_date', dateTo)
-            .not('status', 'in', '("cancelled","no_show")');
+            .not('status', 'in', '("cancelled","no_show")') as any);
 
           phorestColorAppts = (pAppts ?? []).filter((a: any) =>
             isColorOrChemicalService(a.service_name, null),
