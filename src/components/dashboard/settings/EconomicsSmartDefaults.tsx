@@ -111,6 +111,15 @@ const FIELDS: FieldConfig[] = [
 export function EconomicsSmartDefaults({ detection, onAccept, isSaving }: EconomicsSmartDefaultsProps) {
   const [isAdjusting, setIsAdjusting] = useState(false);
   const [localValues, setLocalValues] = useState<EconomicsAssumptions>({ ...detection.suggestions });
+  const [expandedTips, setExpandedTips] = useState<Set<string>>(new Set());
+
+  const toggleTip = useCallback((key: string) => {
+    setExpandedTips(prev => {
+      const next = new Set(prev);
+      next.has(key) ? next.delete(key) : next.add(key);
+      return next;
+    });
+  }, []);
 
   const handleFieldChange = useCallback((key: keyof EconomicsAssumptions, raw: number, inputType: string) => {
     const value = inputType === 'percent' ? raw / 100 : raw;
@@ -207,6 +216,19 @@ export function EconomicsSmartDefaults({ detection, onAccept, isSaving }: Econom
                       {field.format(value)}
                     </span>
                     <p className="text-[10px] text-muted-foreground/50 mt-1 leading-relaxed">{field.description}</p>
+                    <button
+                      type="button"
+                      onClick={() => toggleTip(field.key)}
+                      className="flex items-center gap-1 mt-1.5 text-[10px] text-primary/70 hover:text-primary transition-colors"
+                    >
+                      <HelpCircle className="w-3 h-3" />
+                      {expandedTips.has(field.key) ? 'Hide tip' : 'How to find this'}
+                    </button>
+                    {expandedTips.has(field.key) && (
+                      <p className="text-[11px] text-muted-foreground/70 leading-relaxed mt-1.5 border-l-2 border-primary/20 pl-2">
+                        {field.howToFind}
+                      </p>
+                    )}
                   </div>
                 )}
               </div>
