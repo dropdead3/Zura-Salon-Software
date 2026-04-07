@@ -253,11 +253,16 @@ export function StylistScorecard({ userId, locationId }: StylistScorecardProps) 
                 </span>
               </div>
             </div>
-            {commissionInfo.monthlyUplift > 0 && (
-              <p className="text-[10px] text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
-                <ArrowRight className="w-3 h-3" />
-                Est. +<BlurredAmount>{formatCurrency(commissionInfo.monthlyUplift)}</BlurredAmount>/mo at next level
-              </p>
+            {upliftEstimate.totalMonthlyUplift > 0 && (
+              <div>
+                <p className="text-[10px] text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                  <ArrowRight className="w-3 h-3" />
+                  Est. +<BlurredAmount>{formatCurrency(upliftEstimate.totalMonthlyUplift)}</BlurredAmount>/mo at next level
+                </p>
+                <p className="text-[9px] text-muted-foreground/60 ml-4">
+                  includes service price increases
+                </p>
+              </div>
             )}
           </div>
         )}
