@@ -309,7 +309,7 @@ export function IndividualStaffReport({ dateFrom, dateTo, locationId, onClose, i
         locationInfo,
       } as const;
       const branding = { ...getReportAutoTableBranding(doc, headerOpts), __logoDataUrl: logoDataUrl };
-      addStaffReportToDoc(doc, data, complianceData, branding, formatCurrencyWhole, formatDate);
+      addStaffReportToDoc(doc, data, complianceData, branding, formatCurrencyWhole, formatDate, reportStrikes);
       addReportFooter(doc);
       doc.save(buildReportFileName({ orgName: headerOpts.orgName, locationName: locationInfo?.name, reportSlug: `staff-report-${data.profile.name.replace(/\s+/g, '-').toLowerCase()}`, dateFrom, dateTo }));
 
@@ -451,7 +451,22 @@ export function IndividualStaffReport({ dateFrom, dateTo, locationId, onClose, i
           totalColorAppointments: 0,
         } : null;
 
-        addStaffReportToDoc(doc, minimalData, staffComp, branding, formatCurrencyWhole, formatDate);
+        // Fetch strikes for this staff member
+        const { data: staffStrikes } = await supabase
+          .from('staff_strikes')
+          .select('*')
+          .eq('user_id', staffId)
+          .order('created_at', { ascending: false });
+
+        const bulkStrikes: StaffStrikeWithDetails[] = (staffStrikes || []).filter((s: any) =>
+          !s.is_resolved ||
+          (s.resolved_at && isWithinInterval(new Date(s.resolved_at), {
+            start: new Date(dateFrom),
+            end: new Date(dateTo),
+          }))
+        ) as any;
+
+        addStaffReportToDoc(doc, minimalData, staffComp, branding, formatCurrencyWhole, formatDate, bulkStrikes);
       }
 
       addReportFooter(doc);
