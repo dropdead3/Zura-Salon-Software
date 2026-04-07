@@ -47,6 +47,7 @@ import {
 import { useAutoDetectEconomics } from '@/hooks/useAutoDetectEconomics';
 import { BENCHMARKS } from '@/hooks/useAutoDetectEconomics';
 import { EconomicsSmartDefaults, EconomicsDataBanner } from './EconomicsSmartDefaults';
+import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 
 interface CommissionEconomicsTabProps {
   levels: StylistLevel[];
