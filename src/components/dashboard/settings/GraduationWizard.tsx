@@ -1328,11 +1328,9 @@ export function GraduationWizard({ open, onOpenChange, levelId, levelLabel, leve
                       <div className="flex gap-2">
                         {EVAL_WINDOWS.map(days => (
                           <div key={days} className="flex-1 flex flex-col items-center">
-                            {days === 90 && (
-                              <span className="text-[9px] tracking-wide uppercase font-display text-success mb-1">
-                                Recommended
-                              </span>
-                            )}
+                            <span className={cn("h-4 text-[9px] tracking-wide uppercase font-display mb-1", days === 90 ? "text-success" : "invisible")}>
+                              Recommended
+                            </span>
                             <button
                               onClick={() => setRetField('evaluation_window_days', days)}
                               className={cn(
