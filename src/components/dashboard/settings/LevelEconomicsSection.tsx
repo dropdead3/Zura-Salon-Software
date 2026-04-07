@@ -110,6 +110,16 @@ export function LevelEconomicsSection({ levels, whatIfRates }: LevelEconomicsSec
     return result;
   }, [data.serviceMatrix]);
 
+  if (data.isLoading) {
+    return (
+      <div className="flex items-center justify-center h-32">
+        <Loader2 className={tokens.loading.spinner} />
+      </div>
+    );
+  }
+
+  if (data.levelSummaries.length === 0) return null;
+
   return (
     <div className="space-y-6">
       {/* Data freshness header */}
