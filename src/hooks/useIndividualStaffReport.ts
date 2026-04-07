@@ -522,12 +522,10 @@ export function useIndividualStaffReport(staffUserId: string | null, dateFrom?: 
       };
 
       if (staffColorAppts.length > 0) {
-        // Use the appointments table (already queried above via phorest_appointments,
-        // but compliance cross-refs the local appointments table). Query mix_sessions
-        // by phorest appointment or internal appointment id.
-        const colorIds = staffColorAppts.map((a: any) => a.id ?? a.appointment_id).filter(Boolean);
+        // Gather IDs from phorest_appointments (source of truth for this report)
+        const phorestColorIds = staffColorAppts.map((a: any) => a.id).filter(Boolean);
 
-        // Try fetching from the appointments table for this staff
+        // Also check local appointments table for mix_session cross-reference
         const { data: localColorAppts } = await supabase
           .from('appointments')
           .select('id')
@@ -535,14 +533,16 @@ export function useIndividualStaffReport(staffUserId: string | null, dateFrom?: 
           .gte('appointment_date', dateFrom!).lte('appointment_date', dateTo!)
           .not('status', 'in', '("cancelled","no_show")');
 
-        const localColorIds = (localColorAppts ?? [])
-          .map((a: any) => a.id);
+        const localColorIds = (localColorAppts ?? []).map((a: any) => a.id);
 
-        if (localColorIds.length > 0) {
+        // Merge both ID sets — mix_sessions may reference either table's IDs
+        const allLookupIds = [...new Set([...phorestColorIds, ...localColorIds])];
+
+        if (allLookupIds.length > 0) {
           const { data: mixSessions } = await supabase
             .from('mix_sessions')
             .select('id, appointment_id')
-            .in('appointment_id', localColorIds);
+            .in('appointment_id', allLookupIds);
 
           const trackedSet = new Set((mixSessions ?? []).map((s: any) => s.appointment_id));
           const tracked = trackedSet.size;
@@ -553,7 +553,17 @@ export function useIndividualStaffReport(staffUserId: string | null, dateFrom?: 
             totalColorAppointments: totalColor,
             tracked,
             missed: totalColor - tracked,
-            reweighRate: 100, // Simplified — full reweigh check would need mix_bowls query
+            reweighRate: 100,
+            manualOverrides: 0,
+          };
+        } else {
+          // No IDs to cross-reference but we know color appointments exist
+          brCompliance = {
+            complianceRate: 0,
+            totalColorAppointments: staffColorAppts.length,
+            tracked: 0,
+            missed: staffColorAppts.length,
+            reweighRate: 0,
             manualOverrides: 0,
           };
         }
