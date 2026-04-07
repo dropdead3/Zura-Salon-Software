@@ -1,35 +1,56 @@
 
 
-# Center Z Loader in Content Area — Universal Fix
+# Fix Level Configuration Status to Reflect Retention Monitoring
 
 ## Problem
-The ZuraLoader / DashboardLoader appears off-center because it centers within small containers (e.g., `min-h-[400px]`) rather than filling the remaining viewport height. The horizontal centering is already handled by the sidebar's margin on `<main>`, but vertical centering falls short when the container doesn't fill the visible area.
+
+The "Configured" badge on levels 2+ only checks whether **promotion criteria** exist. It ignores whether **retention monitoring** has been set up. In the screenshot, levels 2, 3, 4, 5, and 7 show "Configured" even though their retention section shows "—" (no retention criteria). This gives a false sense of completeness.
 
 ## Solution
 
-Two changes to ensure the loader is always dead-center of the visible content area:
+Introduce a tri-state configuration status instead of a binary configured/incomplete:
 
-### 1. Update `DashboardLoader` default height
-**File: `src/components/dashboard/DashboardLoader.tsx`**
+| Status | Condition | Badge |
+|---|---|---|
+| **Configured** | Promotion criteria active AND retention criteria active (or Level 1 with retention active) | Green "Configured" |
+| **Retention Not Set** | Promotion criteria active but NO retention criteria | Amber "Retention Not Set" |
+| **Incomplete** | No promotion criteria (or Level 1 with no retention) | Amber "Incomplete" |
 
-When no explicit height/min-height className is passed, apply `min-h-[60vh]` as the default so the loader vertically centers in a meaningful viewport slice. This ensures every `<DashboardLoader />` call without a size override fills enough space to appear centered.
+### File: `src/components/dashboard/settings/StylistLevelsEditor.tsx`
 
-### 2. Audit and fix call sites using raw `ZuraLoader` inside dashboard
-**File: `src/components/dashboard/settings/StylistLevelsEditor.tsx`** (line 1843)
+**1. Update `isConfigured` derivation (lines 1523-1530)**
 
-Change `<DashboardLoader className="min-h-[400px]" />` to just `<DashboardLoader />` so it picks up the new default full-height centering.
+Change from a boolean to also track whether retention is missing. Add a new field `configStatus: 'configured' | 'retention_not_set' | 'incomplete'` to the level state type (line 302-305), computed as:
 
-Scan other dashboard files for similar short containers — any `DashboardLoader` used as a full-page loading state should drop explicit `min-h-[Npx]` overrides and inherit the new default.
+- Level 1: `configured` if retention criteria exists and is active; otherwise `incomplete`
+- Levels 2+: 
+  - `configured` if promotion AND retention criteria both exist and are active
+  - `retention_not_set` if promotion criteria exists but retention does not
+  - `incomplete` if no promotion criteria exists
+- Manual override (`is_configured` flag in DB) still forces `configured`
 
-### Pre-layout loaders (no change needed)
-`OrgDashboardRoute.tsx` and `main.tsx` render loaders before the sidebar exists, so `min-h-screen flex items-center justify-center` is correct for those contexts.
+Keep `isConfigured` as a derived boolean (`configStatus === 'configured'`) for backward compatibility with PDF exports and roadmap.
 
-## Files Changed
+**2. Update comparison table badge (lines 972-980)**
+
+Render three badge variants:
+- Green "Configured" — fully set up
+- Amber "Retention Not Set" — promotion done, retention missing
+- Amber "Incomplete" — nothing set up
+
+**3. Update edit dialog badge (line 2355)**
+
+Same tri-state badge in the individual level edit panel.
+
+**4. PDF exports**
+
+The `LevelRequirementsPDF.ts` and `LevelRoadmapView.tsx` already consume `isConfigured` as a boolean — they will continue to work since we keep that derived field. The "Retention Not Set" state will render as "Setup Incomplete" in PDFs, which is accurate.
+
+### Files Changed
+
 | File | Change |
 |---|---|
-| `src/components/dashboard/DashboardLoader.tsx` | Add `min-h-[60vh]` default when no height class provided |
-| `src/components/dashboard/settings/StylistLevelsEditor.tsx` | Remove explicit `min-h-[400px]` on page-level loader |
-| Various dashboard pages | Audit ~5-10 call sites using `DashboardLoader` as page-level loader to ensure they inherit the default |
+| `src/components/dashboard/settings/StylistLevelsEditor.tsx` | Add `configStatus` field, update derivation logic, update badge rendering in table headers and edit dialog |
 
-No database changes.
+1 file modified. No database changes.
 
