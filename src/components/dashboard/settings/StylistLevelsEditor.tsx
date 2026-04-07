@@ -34,6 +34,8 @@ import {
   RefreshCw,
   Sparkles,
   FileDown,
+  FileSpreadsheet,
+  FileText,
   GraduationCap,
   Globe,
   TrendingUp,
@@ -850,9 +852,66 @@ function CriteriaComparisonTable({ levels, promotionCriteria, retentionCriteria,
 
   return (
     <div className="space-y-4">
-      <p className="text-sm text-muted-foreground">
-        Click any metric row to configure thresholds across all levels at once. Use "Edit" per-level for advanced settings.
-      </p>
+      <div className="flex items-center justify-between gap-4">
+        <p className="text-sm text-muted-foreground">
+          Click any metric row to configure thresholds across all levels at once. Use "Edit" per-level for advanced settings.
+        </p>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" size="sm" className="shrink-0 gap-1.5 font-sans">
+              <Download className="w-3.5 h-3.5" />
+              Export
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={() => exportTableAsCSV(levels, metrics, levelData, getCriteria)}>
+              <FileSpreadsheet className="w-4 h-4 mr-2" />
+              Export as Spreadsheet (.csv)
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={async () => {
+              let logoDataUrl: string | undefined;
+              const logoUrl = effectiveOrganization?.logo_url;
+              if (logoUrl) {
+                try {
+                  logoDataUrl = await new Promise<string>((resolve, reject) => {
+                    const img = new Image();
+                    img.crossOrigin = 'anonymous';
+                    img.onload = () => {
+                      const canvas = document.createElement('canvas');
+                      canvas.width = img.width;
+                      canvas.height = img.height;
+                      const ctx = canvas.getContext('2d');
+                      ctx?.drawImage(img, 0, 0);
+                      resolve(canvas.toDataURL('image/png'));
+                    };
+                    img.onerror = reject;
+                    img.src = logoUrl;
+                  });
+                } catch { /* proceed without logo */ }
+              }
+              const levelInfos = levels.filter(l => l.dbId).map(l => ({ id: l.dbId!, name: l.label }));
+              const commissions = levels.filter(l => l.dbId).map(l => ({
+                level_id: l.dbId!,
+                service_commission_rate: l.serviceCommissionRate ? parseFloat(l.serviceCommissionRate) : null,
+                retail_commission_rate: l.retailCommissionRate ? parseFloat(l.retailCommissionRate) : null,
+              }));
+              const doc = generateLevelRequirementsPDF({
+                orgName: effectiveOrganization?.name || 'Organization',
+                levels: levelInfos,
+                criteria: promotionCriteria,
+                retentionCriteria: retentionCriteria || [],
+                logoDataUrl,
+                commissions,
+              });
+              doc.save('level-criteria-comparison.pdf');
+              toast.success('PDF exported');
+            }}>
+              <FileText className="w-4 h-4 mr-2" />
+              Export as PDF
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
       <ScrollableTableWrapper isFullscreen={isTableFullscreen} onToggleFullscreen={toggleTableFullscreen}>
         <table className="w-full caption-bottom text-sm [&_th]:border-r [&_th]:border-border/30 [&_th:last-child]:border-r-0 [&_td]:border-r [&_td]:border-border/30 [&_td:last-child]:border-r-0 [&_td[colspan]]:border-r-0">
           <TableHeader className="sticky top-0 z-20 shadow-[0_2px_4px_-2px_rgba(0,0,0,0.08)] dark:shadow-[0_2px_4px_-2px_rgba(0,0,0,0.3)]">
