@@ -70,7 +70,7 @@ export function useDockMixSessions(appointmentId: string | null) {
         mixed_by_name: s.mixed_by_staff_id ? (nameMap.get(s.mixed_by_staff_id) || null) : null,
       }));
     },
-    enabled: !!appointmentId,
+    enabled: !!appointmentId && typeof document !== 'undefined' && document.visibilityState === 'visible',
     staleTime: 15_000,
     refetchInterval: 30_000,
   });

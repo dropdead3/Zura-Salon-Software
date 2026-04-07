@@ -118,7 +118,7 @@ export function useUserStatuses(userIds: string[]) {
       })) as UserStatus[];
     },
     enabled: userIds.length > 0,
-    refetchInterval: 60000, // Refresh every minute
+    refetchInterval: 300_000, // Refresh every 5 minutes (presence handles real-time)
   });
 
   const getStatus = (userId: string): UserStatusType | 'offline' => {

@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -11,46 +12,50 @@ export function useUnreadMessages(channelIds: string[]) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
+  // Realtime listener — invalidate on new/deleted messages
+  useEffect(() => {
+    if (!user?.id || channelIds.length === 0) return;
+
+    const channel = supabase
+      .channel('unread-messages-rt')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'chat_messages' },
+        (payload) => {
+          const row = (payload.new ?? payload.old) as any;
+          if (row?.channel_id && channelIds.includes(row.channel_id)) {
+            queryClient.invalidateQueries({ queryKey: ['unread-counts'] });
+          }
+        },
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user?.id, channelIds.join(','), queryClient]);
+
   const { data: unreadCounts } = useQuery({
     queryKey: ['unread-counts', channelIds, user?.id],
     queryFn: async () => {
       if (!user?.id || channelIds.length === 0) return [];
 
-      // Get last read timestamps for all channels
-      const { data: memberships } = await supabase
-        .from('chat_channel_members')
-        .select('channel_id, last_read_at')
-        .eq('user_id', user.id)
-        .in('channel_id', channelIds);
+      // Single RPC call instead of N+1 loop
+      const { data, error } = await supabase.rpc('get_unread_counts', {
+        p_user_id: user.id,
+        p_channel_ids: channelIds,
+      });
 
-      if (!memberships) return [];
+      if (error) throw error;
 
-      // Get message counts after last_read_at for each channel
-      const counts: UnreadCount[] = [];
-
-      for (const membership of memberships) {
-        const lastRead = membership.last_read_at || '1970-01-01';
-        
-        const { count } = await supabase
-          .from('chat_messages')
-          .select('*', { count: 'exact', head: true })
-          .eq('channel_id', membership.channel_id)
-          .eq('is_deleted', false)
-          .is('parent_message_id', null)
-          .gt('created_at', lastRead)
-          .neq('sender_id', user.id); // Don't count own messages
-
-        counts.push({
-          channelId: membership.channel_id,
-          count: count || 0,
-        });
-      }
-
-      return counts;
+      return (data || []).map((row: any) => ({
+        channelId: row.channel_id,
+        count: Number(row.unread_count),
+      })) as UnreadCount[];
     },
     enabled: !!user?.id && channelIds.length > 0,
     staleTime: 15_000,
-    refetchInterval: 30000, // Refetch every 30 seconds
+    // No refetchInterval — realtime handles updates
   });
 
   const markAsReadMutation = useMutation({
