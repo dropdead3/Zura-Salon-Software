@@ -3,9 +3,12 @@ import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
-import { TrendingUp, GraduationCap, CheckCircle2, ShieldCheck, AlertTriangle } from 'lucide-react';
+import { TrendingUp, GraduationCap, CheckCircle2, ShieldCheck, AlertTriangle, DollarSign } from 'lucide-react';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { useLevelProgress, type LevelProgressResult } from '@/hooks/useLevelProgress';
+import { useResolveCommission } from '@/hooks/useResolveCommission';
+import { useStylistLevels } from '@/hooks/useStylistLevels';
+import { BlurredAmount } from '@/contexts/HideNumbersContext';
 
 interface LevelProgressCardProps {
   userId: string | undefined;
@@ -54,9 +57,50 @@ function CriterionRow({ label, current, target, percent, unit, gap }: {
 
 export function LevelProgressCard({ userId, compact = false }: LevelProgressCardProps) {
   const progress = useLevelProgress(userId);
+  const { resolveCommission } = useResolveCommission();
+  const { data: allLevels = [] } = useStylistLevels();
 
   if (!progress || (!progress.nextLevelLabel && !progress.retention?.isAtRisk)) {
     return null; // No next level and no retention issues
+  }
+
+  // Commission uplift calculation
+  let upliftSection: React.ReactNode = null;
+  if (progress.nextLevelLabel && progress.nextLevelId && userId) {
+    const currentResolved = resolveCommission(userId, 1000, 0);
+    const nextLevelObj = allLevels.find(l => l.id === progress.nextLevelId);
+    if (nextLevelObj && currentResolved) {
+      const currentSvcRate = currentResolved.serviceRate;
+      const nextSvcRate = nextLevelObj.service_commission_rate ?? 0;
+      if (nextSvcRate > currentSvcRate) {
+        const monthlyRevenue = progress.criteriaProgress.find(cp => cp.key === 'revenue')?.current || 0;
+        const monthlyUplift = monthlyRevenue * (nextSvcRate - currentSvcRate);
+        upliftSection = (
+          <div className="p-3 rounded-lg border border-emerald-200 bg-emerald-50/50 dark:border-emerald-800 dark:bg-emerald-950/20">
+            <div className="flex items-center gap-2 text-xs text-emerald-700 dark:text-emerald-400 mb-1.5">
+              <DollarSign className="w-3.5 h-3.5" />
+              <span className="font-medium">Income Opportunity</span>
+            </div>
+            <div className="grid grid-cols-3 gap-2 text-center">
+              <div>
+                <p className="text-[10px] text-muted-foreground">Commission Today</p>
+                <p className="text-sm tabular-nums">{(currentSvcRate * 100).toFixed(0)}%</p>
+              </div>
+              <div>
+                <p className="text-[10px] text-muted-foreground">At {progress.nextLevelLabel}</p>
+                <p className="text-sm tabular-nums text-emerald-600 dark:text-emerald-400">{(nextSvcRate * 100).toFixed(0)}%</p>
+              </div>
+              <div>
+                <p className="text-[10px] text-muted-foreground">Monthly Uplift</p>
+                <BlurredAmount className="text-sm tabular-nums text-emerald-600 dark:text-emerald-400">
+                  +${Math.round(monthlyUplift).toLocaleString()}
+                </BlurredAmount>
+              </div>
+            </div>
+          </div>
+        );
+      }
+    }
   }
 
   return (
@@ -151,6 +195,9 @@ export function LevelProgressCard({ userId, compact = false }: LevelProgressCard
             </div>
           </>
         )}
+
+        {/* Income Opportunity */}
+        {upliftSection}
 
         {/* Footer info */}
         <div className="flex items-center justify-between pt-2 border-t text-[10px] text-muted-foreground">

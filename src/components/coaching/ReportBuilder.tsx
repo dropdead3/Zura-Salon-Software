@@ -353,6 +353,25 @@ export function ReportBuilder({ meetingId, teamMemberId, teamMemberName }: Repor
               </div>
             )}
 
+            {/* Level Progress */}
+            {levelProgress && (
+              <div className="space-y-2">
+                <div className="flex items-start gap-2">
+                  <Checkbox
+                    id="include-level-progress"
+                    checked={includeLevelProgress}
+                    onCheckedChange={(checked) => setIncludeLevelProgress(!!checked)}
+                  />
+                  <label htmlFor="include-level-progress" className="text-sm cursor-pointer flex-1">
+                    <span className="font-medium">Include Level Progress</span>
+                    <span className="text-muted-foreground ml-2">
+                      ({levelProgress.currentLevelLabel}{levelProgress.nextLevelLabel ? ` → ${levelProgress.nextLevelLabel} · ${levelProgress.compositeScore}% ready` : ' · Top level'})
+                    </span>
+                  </label>
+                </div>
+              </div>
+            )}
+
             <div className="space-y-2">
               <Label>Additional Message (optional)</Label>
               <Textarea
