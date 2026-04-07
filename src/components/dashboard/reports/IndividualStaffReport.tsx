@@ -102,9 +102,25 @@ export function IndividualStaffReport({ dateFrom, dateTo, locationId, onClose, i
   const { data: orgUsers, isLoading: usersLoading } = useOrganizationUsers(effectiveOrganization?.id);
   const { data, isLoading } = useIndividualStaffReport(viewingStaffId || null, dateFrom, dateTo);
   const { data: complianceData } = useStaffComplianceSummary(viewingStaffId || null, dateFrom, dateTo, effectiveOrganization?.id);
+  const { data: strikesRaw } = useStaffStrikes(viewingStaffId || undefined);
   const { formatCurrencyWhole } = useFormatCurrency();
   const { formatDate } = useFormatDate();
   const [isGenerating, setIsGenerating] = useState(false);
+
+  // Filter strikes: active + resolved within report period
+  const reportStrikes = useMemo(() => {
+    if (!strikesRaw) return [];
+    return strikesRaw.filter(s =>
+      !s.is_resolved ||
+      (s.resolved_at && isWithinInterval(new Date(s.resolved_at), {
+        start: new Date(dateFrom),
+        end: new Date(dateTo),
+      }))
+    );
+  }, [strikesRaw, dateFrom, dateTo]);
+
+  const activeStrikes = useMemo(() => reportStrikes.filter(s => !s.is_resolved), [reportStrikes]);
+  const resolvedStrikes = useMemo(() => reportStrikes.filter(s => s.is_resolved), [reportStrikes]);
 
   // Filter to active staff with relevant roles
   const staffList = useMemo(() => {
