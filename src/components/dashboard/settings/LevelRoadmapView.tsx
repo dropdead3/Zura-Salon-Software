@@ -251,8 +251,9 @@ ${clone.innerHTML}
             </button>
             <button
               onClick={onClose}
-              className="inline-flex items-center justify-center h-8 w-8 rounded-full text-neutral-500 hover:text-neutral-900 hover:bg-neutral-100 transition-colors"
+              className="inline-flex items-center gap-1.5 h-8 px-3 rounded-full text-neutral-500 hover:text-neutral-900 hover:bg-neutral-100 transition-colors text-xs font-sans"
             >
+              Exit View
               <X className="w-4 h-4" />
             </button>
           </div>

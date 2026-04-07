@@ -16,15 +16,20 @@ const AEONIK_MEDIUM_B64 = 'T1RUTwANAIAAAwBQR0RFRm3tcQQAAW5oAAABuEdQT1OehFrcAAFwI
  * Register Termina + Aeonik Pro into a jsPDF instance.
  * Call once per doc, before any setFont().
  */
-export function registerPdfFonts(doc: jsPDF) {
-  doc.addFileToVFS('Termina-Medium.ttf', TERMINA_MEDIUM_B64);
-  doc.addFont('Termina-Medium.ttf', 'Termina', 'normal', 500);
+export function registerPdfFonts(doc: jsPDF): boolean {
+  try {
+    doc.addFileToVFS('Termina-Medium.ttf', TERMINA_MEDIUM_B64);
+    doc.addFont('Termina-Medium.ttf', 'Termina', 'normal', 500);
 
-  doc.addFileToVFS('AeonikPro-Regular.ttf', AEONIK_REGULAR_B64);
-  doc.addFont('AeonikPro-Regular.ttf', 'Aeonik', 'normal', 400);
+    doc.addFileToVFS('AeonikPro-Regular.ttf', AEONIK_REGULAR_B64);
+    doc.addFont('AeonikPro-Regular.ttf', 'Aeonik', 'normal', 400);
 
-  doc.addFileToVFS('AeonikPro-Medium.ttf', AEONIK_MEDIUM_B64);
-  doc.addFont('AeonikPro-Medium.ttf', 'Aeonik', 'normal', 500);
+    doc.addFileToVFS('AeonikPro-Medium.ttf', AEONIK_MEDIUM_B64);
+    doc.addFont('AeonikPro-Medium.ttf', 'Aeonik', 'normal', 500);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 /** Shorthand: set Termina Medium */
