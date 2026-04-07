@@ -13,6 +13,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Loader2, ExternalLink, Info, AlertTriangle } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 import { cn, formatDisplayName } from '@/lib/utils';
 import { getLevelColor } from '@/lib/level-colors';
 import { useNavigate } from 'react-router-dom';
@@ -33,6 +34,7 @@ interface StylistCommissionDrilldownProps {
     display_name?: string | null;
     full_name?: string | null;
     stylist_level?: string | null;
+    stylist_level_since?: string | null;
   } | null;
   orgId: string;
   levels: StylistLevel[];
@@ -55,6 +57,7 @@ export function StylistCommissionDrilldown({
 
   // --- Local buffered state ---
   const [pendingLevel, setPendingLevel] = useState<string>('__unassign');
+  const [pendingLevelSince, setPendingLevelSince] = useState('');
   const [svcRate, setSvcRate] = useState('');
   const [retailRate, setRetailRate] = useState('');
   const [reason, setReason] = useState('');
@@ -65,6 +68,7 @@ export function StylistCommissionDrilldown({
 
   // Snapshot initial values
   const initialLevel = member?.stylist_level || '__unassign';
+  const initialLevelSince = member?.stylist_level_since ? member.stylist_level_since.split('T')[0] : '';
   const initialShowOverride = !!override;
   const initialSvcRate = override?.service_commission_rate != null ? String(Math.round(override.service_commission_rate * 100)) : '';
   const initialRetailRate = override?.retail_commission_rate != null ? String(Math.round(override.retail_commission_rate * 100)) : '';
@@ -78,6 +82,7 @@ export function StylistCommissionDrilldown({
       return;
     }
     setPendingLevel(member?.stylist_level || '__unassign');
+    setPendingLevelSince(member?.stylist_level_since ? member.stylist_level_since.split('T')[0] : '');
     if (override) {
       setSvcRate(override.service_commission_rate != null ? String(Math.round(override.service_commission_rate * 100)) : '');
       setRetailRate(override.retail_commission_rate != null ? String(Math.round(override.retail_commission_rate * 100)) : '');
@@ -96,9 +101,10 @@ export function StylistCommissionDrilldown({
 
   // --- Dirty tracking ---
   const levelChanged = pendingLevel !== initialLevel;
+  const levelSinceChanged = pendingLevelSince !== initialLevelSince;
   const overrideToggleChanged = showOverride !== initialShowOverride;
   const overrideFieldsChanged = svcRate !== initialSvcRate || retailRate !== initialRetailRate || reason !== initialReason || expiresAt !== initialExpiresAt;
-  const isDirty = levelChanged || overrideToggleChanged || (showOverride && overrideFieldsChanged);
+  const isDirty = levelChanged || levelSinceChanged || overrideToggleChanged || (showOverride && overrideFieldsChanged);
 
   const slugToLevel = useMemo(() => {
     const map = new Map<string, StylistLevel>();
@@ -154,6 +160,15 @@ export function StylistCommissionDrilldown({
       if (levelChanged) {
         const targetSlug = pendingLevel === '__unassign' ? null : pendingLevel;
         await assignLevel.mutateAsync({ userId: member.user_id, levelSlug: targetSlug });
+      }
+
+      // 1b. Level-since date override (update directly if changed)
+      if (levelSinceChanged && pendingLevelSince) {
+        const { error: sinceError } = await supabase
+          .from('employee_profiles')
+          .update({ stylist_level_since: new Date(pendingLevelSince).toISOString() } as any)
+          .eq('user_id', member.user_id);
+        if (sinceError) throw sinceError;
       }
 
       // 2. Override changes
@@ -253,6 +268,19 @@ export function StylistCommissionDrilldown({
               <p className="text-xs text-muted-foreground">
                 Default rates: Svc {fmtRate(currentLevel.service_commission_rate)} / Retail {fmtRate(currentLevel.retail_commission_rate)}
               </p>
+            )}
+            {pendingLevel !== '__unassign' && (
+              <div className="space-y-1 pt-1">
+                <Label className="text-[11px] text-muted-foreground">Level Since</Label>
+                <Input
+                  type="date"
+                  value={pendingLevelSince}
+                  onChange={(e) => setPendingLevelSince(e.target.value)}
+                  max={new Date().toISOString().split('T')[0]}
+                  className="h-9 text-sm w-48"
+                />
+                <p className="text-[10px] text-muted-foreground/70">Backdate if this level was earned before today</p>
+              </div>
             )}
           </section>
 

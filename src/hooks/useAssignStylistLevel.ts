@@ -9,7 +9,7 @@ export function useAssignStylistLevel() {
     mutationFn: async ({ userId, levelSlug }: { userId: string; levelSlug: string | null }) => {
       const { error } = await supabase
         .from('employee_profiles')
-        .update({ stylist_level: levelSlug })
+        .update({ stylist_level: levelSlug, stylist_level_since: new Date().toISOString() } as any)
         .eq('user_id', userId);
       if (error) throw error;
     },
@@ -33,7 +33,7 @@ export function useBulkAssignStylistLevel() {
     mutationFn: async ({ userIds, levelSlug }: { userIds: string[]; levelSlug: string | null }) => {
       const { error } = await supabase
         .from('employee_profiles')
-        .update({ stylist_level: levelSlug })
+        .update({ stylist_level: levelSlug, stylist_level_since: new Date().toISOString() } as any)
         .in('user_id', userIds);
       if (error) throw error;
     },

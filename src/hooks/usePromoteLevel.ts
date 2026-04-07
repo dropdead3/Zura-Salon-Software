@@ -24,7 +24,7 @@ export function usePromoteLevel() {
       // 1. Update the employee's stylist_level
       const { error: updateError } = await supabase
         .from('employee_profiles')
-        .update({ stylist_level: toLevelSlug })
+        .update({ stylist_level: toLevelSlug, stylist_level_since: new Date().toISOString() } as any)
         .eq('user_id', userId)
         .eq('organization_id', orgId);
 
