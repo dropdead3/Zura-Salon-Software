@@ -72,6 +72,7 @@ import { useLevelRetentionCriteria, type LevelRetentionCriteria } from '@/hooks/
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { generateLevelRequirementsPDF } from '@/components/dashboard/settings/LevelRequirementsPDF';
+import { generateLevelCriteriaTablePDF } from '@/components/dashboard/settings/LevelCriteriaTablePDF';
 import { generateStaffLevelReportPDF } from '@/components/dashboard/settings/StaffLevelReportPDF';
 import { useTeamLevelProgress } from '@/hooks/useTeamLevelProgress';
 
