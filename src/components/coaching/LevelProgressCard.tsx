@@ -103,8 +103,14 @@ export function LevelProgressCard({ userId, compact = false }: LevelProgressCard
     return null;
   }
 
+  // Use price-aware uplift if available, otherwise fall back to simple rate-delta calculation
+  const monthlyRevenue = progress.criteriaProgress.find(cp => cp.key === 'revenue')?.current || 0;
+  const simpleUplift = Math.round(monthlyRevenue * (nextSvcRate - currentSvcRate));
+  const effectiveUplift = upliftEstimate.totalMonthlyUplift > 0 ? upliftEstimate.totalMonthlyUplift : simpleUplift;
+  const hasPriceComponent = upliftEstimate.totalMonthlyUplift > 0 && upliftEstimate.priceUplift > 0;
+
   let upliftSection: React.ReactNode = null;
-  if (progress.nextLevelLabel && nextSvcRate > currentSvcRate && upliftEstimate.totalMonthlyUplift > 0) {
+  if (progress.nextLevelLabel && nextSvcRate > currentSvcRate && effectiveUplift > 0) {
     upliftSection = (
       <div className="p-3 rounded-lg border border-emerald-200 bg-emerald-50/50 dark:border-emerald-800 dark:bg-emerald-950/20">
         <div className="flex items-center gap-2 text-xs text-emerald-700 dark:text-emerald-400 mb-1.5">
@@ -124,13 +130,15 @@ export function LevelProgressCard({ userId, compact = false }: LevelProgressCard
           <div>
             <p className="text-[10px] text-muted-foreground">Monthly Uplift</p>
             <BlurredAmount className="text-sm tabular-nums text-emerald-600 dark:text-emerald-400">
-              +${upliftEstimate.totalMonthlyUplift.toLocaleString()}
+              +${effectiveUplift.toLocaleString()}
             </BlurredAmount>
           </div>
         </div>
-        <p className="text-[9px] text-emerald-600/60 dark:text-emerald-400/60 mt-1 text-center">
-          includes service price increases
-        </p>
+        {hasPriceComponent && (
+          <p className="text-[9px] text-emerald-600/60 dark:text-emerald-400/60 mt-1 text-center">
+            includes service price increases
+          </p>
+        )}
       </div>
     );
   }
