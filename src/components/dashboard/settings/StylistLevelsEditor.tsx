@@ -1319,6 +1319,7 @@ function LevelsQuickSetupWizard({ onGenerate, onDismiss, isGenerating }: QuickSe
         hourlyWage: '',
         earningsStructure: 'commission' as EarningsStructure,
         isConfigured: false,
+        configStatus: 'incomplete' as const,
       };
     });
 
@@ -1647,6 +1648,7 @@ export function StylistLevelsEditor({ embedded = false, onActions }: StylistLeve
       hourlyWage: '',
       earningsStructure: 'commission' as EarningsStructure,
       isConfigured: false,
+      configStatus: 'incomplete' as const,
     };
     setLevels([...levels, newLevel]);
     setNewLevelName('');
