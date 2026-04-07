@@ -51,6 +51,11 @@ function hexToRgb(hex: string): [number, number, number] {
 const MARGIN = 18;
 const PAGE_BOTTOM_MARGIN = 22;
 
+/** jsPDF.getTextWidth() ignores charSpace — this returns the true rendered width */
+function textWidthWithCharSpace(doc: jsPDF, text: string, charSpace: number): number {
+  return doc.getTextWidth(text) + charSpace * Math.max(0, text.length - 1);
+}
+
 function fmtCurrency(v: number): string {
   return v >= 1000 ? `$${(v / 1000).toFixed(0)}K` : `$${v}`;
 }
