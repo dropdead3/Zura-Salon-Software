@@ -116,7 +116,7 @@ export function useStaffRevenuePerformance(
         (profiles || []).map(p => [p.user_id, p])
       );
       
-      // Aggregate by phorest_staff_id
+      // Aggregate transactions by phorest_staff_id
       const aggregatedData = new Map<string, {
         totalRevenue: number;
         serviceRevenue: number;
@@ -125,8 +125,9 @@ export function useStaffRevenuePerformance(
         daysWithData: Set<string>;
       }>();
       
-      for (const sale of salesData || []) {
-        const staffId = sale.phorest_staff_id;
+      // Sum revenue from raw transactions (total_amount + tax_amount per POS-first standard)
+      for (const tx of txData || []) {
+        const staffId = tx.phorest_staff_id;
         if (!staffId) continue;
         
         const existing = aggregatedData.get(staffId) || {
@@ -137,13 +138,26 @@ export function useStaffRevenuePerformance(
           daysWithData: new Set<string>(),
         };
         
-        existing.totalRevenue += Number(sale.total_revenue) || 0;
-        existing.serviceRevenue += Number(sale.service_revenue) || 0;
-        existing.productRevenue += Number(sale.product_revenue) || 0;
-        existing.transactionCount += Number(sale.total_transactions) || 0;
-        existing.daysWithData.add(sale.summary_date);
+        existing.totalRevenue += (Number(tx.total_amount) || 0) + (Number(tx.tax_amount) || 0);
+        existing.transactionCount += 1;
+        if (tx.transaction_date) existing.daysWithData.add(tx.transaction_date);
         
         aggregatedData.set(staffId, existing);
+      }
+
+      // Enrich with service/product breakdown from transaction items
+      for (const item of itemData || []) {
+        const staffId = item.phorest_staff_id;
+        if (!staffId) continue;
+        const existing = aggregatedData.get(staffId);
+        if (!existing) continue;
+
+        const amount = Number(item.total_amount) || 0;
+        if (item.item_type === 'service') {
+          existing.serviceRevenue += amount;
+        } else if (item.item_type === 'product') {
+          existing.productRevenue += amount;
+        }
       }
       
       // Build final staff list
