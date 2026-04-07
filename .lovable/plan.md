@@ -1,63 +1,111 @@
 
 
-# Remaining Speed and Load-Time Fixes Before Scaling
+# Platform Infrastructure Monitoring Dashboard (Revised)
 
-## Issues Found
+## Feasibility Confirmation
 
-### 1. N+1 Query in `useUnreadMessages` (Critical)
-`useUnreadMessages.ts` runs a **sequential loop** — one `SELECT COUNT(*)` per channel inside a `for` loop. A user in 10 channels = 10 sequential DB round-trips every 30 seconds. At scale this is devastating.
+All required tables and infrastructure exist. One adjustment: raw SQL queries (`pg_stat_activity`, `storage.objects`) cannot run from edge functions via the JS client. We use **security definer RPC functions** instead.
 
-**Fix**: Replace the loop with a single RPC call or a batched query using `.in('channel_id', channelIds)` with a group-by approach, or create a database function that returns unread counts for all channels in one call.
+## Technical Design
 
-### 2. `useUnreadMessages` Still Polling at 30s
-This hook was missed in Phase 1. It polls every 30 seconds and should use a realtime listener on `chat_messages` instead.
+### 1. Database Migration
 
-**Fix**: Add a realtime subscription on `chat_messages` to invalidate the query, remove `refetchInterval`.
+**New table** — `infrastructure_metrics` for time-series snapshots:
 
-### 3. `useUserStatus` Polling at 60s
-`useUserStatus.ts` polls every 60 seconds for online/offline status of team members. This should use Supabase Presence (already set up in `usePlatformPresence.ts`) instead of polling a table.
+```sql
+CREATE TABLE public.infrastructure_metrics (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  metric_type text NOT NULL,        -- 'db_connections' | 'edge_function_perf' | 'storage_usage'
+  metric_key text NOT NULL,          -- 'pool_utilization', 'cold_start_rate', 'bucket:chat-attachments'
+  value numeric NOT NULL,
+  unit text,                         -- '%', 'ms', 'MB', 'count'
+  threshold_warning numeric,
+  threshold_critical numeric,
+  status text DEFAULT 'normal',      -- 'normal' | 'warning' | 'critical'
+  metadata jsonb DEFAULT '{}',
+  recorded_at timestamptz DEFAULT now()
+);
 
-**Fix**: Increase to 5 min or replace with presence-based status.
+CREATE INDEX idx_infra_metrics_type_recorded 
+  ON infrastructure_metrics(metric_type, recorded_at DESC);
 
-### 4. `useQuickStats` Creates 4 Parallel Hook Waterfalls
-`useQuickStats` calls `useAppointmentSummary`, `useSalesMetrics`, `useRebookingRate`, and its own `useQuery` — each firing independent queries. While parallel, each sub-hook may itself run multiple queries. At the dashboard level this means 6-8 DB calls just for the stats row.
+-- RLS: platform users only
+ALTER TABLE infrastructure_metrics ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Platform users can read"
+  ON infrastructure_metrics FOR SELECT
+  USING (public.is_platform_user(auth.uid()));
+```
 
-**Fix**: Consolidate into a single `useQuery` with `Promise.all` to batch the 4 data fetches into one hook invocation, reducing React render cycles and query key overhead.
+**Two RPC functions** (security definer, bypasses RLS safely):
 
-### 5. `useDockAppointments` and `useDockMixSessions` — Active Session Polling
-These poll at 30-60s which is correct for active sessions, but they lack `enabled` guards when the dock is not visible. If the dock component is mounted but hidden, it still polls.
+```sql
+-- 1. Connection pool stats
+CREATE FUNCTION public.get_db_connection_stats()
+RETURNS jsonb LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
+  SELECT jsonb_build_object(
+    'active', (SELECT count(*) FROM pg_stat_activity WHERE state = 'active'),
+    'idle', (SELECT count(*) FROM pg_stat_activity WHERE state = 'idle'),
+    'total', (SELECT count(*) FROM pg_stat_activity),
+    'max', current_setting('max_connections')::int
+  );
+$$;
 
-**Fix**: Add `enabled: isVisible` guards so these only poll when the dock tab is active.
+-- 2. Storage bucket stats
+CREATE FUNCTION public.get_storage_bucket_stats()
+RETURNS jsonb LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
+  SELECT COALESCE(jsonb_agg(bucket_stats), '[]'::jsonb)
+  FROM (
+    SELECT jsonb_build_object(
+      'bucket_id', bucket_id,
+      'file_count', count(*),
+      'total_bytes', COALESCE(sum((metadata->>'size')::bigint), 0)
+    ) as bucket_stats
+    FROM storage.objects
+    GROUP BY bucket_id
+  ) sub;
+$$;
+```
 
-### 6. Missing `staleTime` on Many Hooks
-~30 hooks have no `staleTime` set (defaults to 0), meaning every component mount triggers a refetch even if data was fetched milliseconds ago. This causes duplicate requests on tab switches and navigation.
+### 2. Edge Function — `monitor-infrastructure`
 
-**Fix**: Add sensible `staleTime` defaults to hooks that fetch org-scoped config/settings data (e.g., `useKpiDefinitions`, `useSignaturePresets`, `useContractAdjustments`, `useLocationSchedules`). Config data should have `staleTime: 5 * 60_000` (5 min).
+Collects three metric categories every 15 minutes (scheduled via pg_cron):
 
-### 7. Global React Query Defaults
-No global `staleTime` or `gcTime` is configured in the QueryClient. Setting a global `staleTime: 30_000` (30s) would immediately reduce redundant refetches across all ~230 hooks without touching each file.
+- **DB Connections**: Calls `get_db_connection_stats()` RPC. Calculates utilization %. Warning at 70%, critical at 85%.
+- **Edge Function Cold Starts**: Queries `edge_function_logs` for functions where `duration_ms > 3000` after >5min idle gap. Reports cold start rate per function.
+- **Storage Usage**: Calls `get_storage_bucket_stats()` RPC. Reports per-bucket file count and total MB.
 
-**Fix**: Update the QueryClient instantiation to set `defaultOptions.queries.staleTime = 30_000`.
+Writes snapshots to `infrastructure_metrics`. Creates `platform_notifications` via existing `createNotification` helper with 2-hour cooldown when thresholds breach.
 
-### 8. `select('*')` Over-fetching
-262 files use `select('*')` — most fetch all columns when only 2-3 are needed. This increases payload size and transfer time. The highest-impact ones to fix are the frequently-called hooks on the dashboard home path.
+### 3. Frontend Hook — `useInfrastructureMetrics`
 
-**Fix**: For the top 10 most-called hooks (quick stats, tasks, profile, roles, locations), replace `select('*')` with explicit column lists.
+Queries `infrastructure_metrics` for latest snapshot per `metric_type` + 24h history for sparklines. Refresh: 5 minutes. Platform users only.
 
-## Priority Order
+### 4. UI — Infrastructure Section in SystemHealth.tsx
 
-1. **N+1 in `useUnreadMessages`** — single biggest per-user query amplifier
-2. **Global `staleTime` default** — one-line fix, reduces redundant fetches across 230 hooks
-3. **`useUnreadMessages` polling → realtime** — removes 30s polling for all chat users
-4. **`useUserStatus` polling reduction** — reduce from 60s to 5min
-5. **`useQuickStats` consolidation** — reduce dashboard home query count
-6. **`select('*')` → explicit columns** — top 10 hooks on critical path
-7. **Dock `enabled` guards** — prevent background polling when dock is hidden
-8. **Config hook `staleTime`** — add 5min staleTime to ~15 settings/config hooks
+Three cards added below existing service health section:
 
-## Scope
-- ~20 hook files modified (1-5 lines each for most)
-- 1 QueryClient config change (1 line)
-- 1 possible DB function for batched unread counts
-- No breaking UI changes
+| Card | Data Source | Visual |
+|------|------------|--------|
+| **Connection Pool** | `db_connections` metrics | Utilization gauge + 24h sparkline |
+| **Edge Function Performance** | `edge_function_perf` metrics | Table: function name, avg ms, cold starts, status badge |
+| **Storage Usage** | `storage_usage` metrics | Per-bucket bars with file count + MB |
+
+Each card shows status badge (normal/warning/critical) from latest metric.
+
+### 5. Scheduled Job
+
+pg_cron entry to invoke `monitor-infrastructure` every 15 minutes.
+
+## Files Changed
+
+| File | Change |
+|------|--------|
+| Migration (new) | `infrastructure_metrics` table + 2 RPC functions + indexes + RLS |
+| `supabase/functions/monitor-infrastructure/index.ts` (new) | Metric collection edge function |
+| `src/hooks/useInfrastructureMetrics.ts` (new) | Frontend data hook |
+| `src/pages/dashboard/platform/SystemHealth.tsx` | Add 3 infrastructure cards |
+
+## What Won't Work Without This Fix
+
+The original plan assumed raw SQL from edge functions — that would have silently failed. The RPC approach is the correct pattern and is already used elsewhere in this codebase (e.g., `get_unread_counts`).
 
