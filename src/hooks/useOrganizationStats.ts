@@ -84,13 +84,15 @@ export function useOrganizationsByStatus(status?: string) {
   return useQuery({
     queryKey: ['organizations-by-status', status],
     queryFn: async () => {
-      let query = supabase.from('organizations').select('*');
+      let query = supabase.from('organizations').select('*', { count: 'exact' });
       
       if (status && status !== 'all') {
         query = query.eq('status', status as any);
       }
 
-      const { data, error } = await query.order('created_at', { ascending: false });
+      const { data, error, count } = await query
+        .order('created_at', { ascending: false })
+        .limit(500);
 
       if (error) throw error;
       return data as Organization[];

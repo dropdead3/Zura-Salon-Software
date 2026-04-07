@@ -49,7 +49,7 @@ export function useLeadInbox(filters: LeadFilters = {}) {
         query = query.eq('assigned_to', filters.assignedTo);
       }
 
-      const { data, error } = await query;
+      const { data, error } = await query.limit(200);
       if (error) throw error;
 
       // Transform the data to flatten the nested objects
