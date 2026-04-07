@@ -1,35 +1,58 @@
 
 
-# Fix: Final Level Cannot Set Level Requirements
+# Fix: Level Criteria Save Flow — Don't Close, Navigate to Next Tab
 
 ## Problem
 
-The Graduation Wizard explicitly disables the "Level Requirements" tab for the final (highest) level, treating it identically to Level 1 (the base/entry level). This is incorrect — while Level 1 has no promotion criteria because it's the starting point, the **final level absolutely needs promotion criteria** because stylists must earn their way to the top.
+When an admin configures "Level Requirements" (promotion criteria) and clicks "Save Criteria," the dialog closes immediately. The admin then has to reopen the dialog to configure "Required to Stay" (retention). This is friction-heavy, especially for the final level where both tabs need configuration.
 
-The bug appears in three places in `GraduationWizard.tsx`:
-
-1. **Line 501** — Default tab selection forces `retention` for the last level
-2. **Line 701** — Tab button is `disabled` for the last level
-3. **Line 707** — Tab styling applies `opacity-50 pointer-events-none` for the last level
-
-Additionally, in `StylistLevelsEditor.tsx` **line 1723-1724**, the "Zura Defaults" seeding skips generating promotion criteria for the last level.
+The user expects: Save promotion criteria → automatically switch to the "Required to Stay" tab so they can configure retention → then close when done.
 
 ## Fix
 
 ### File: `src/components/dashboard/settings/GraduationWizard.tsx`
 
-Remove `levelIndex === totalLevels - 1` from all three locations:
+**1. Change `handleSave` behavior (~line 584-589)**
 
-- **Line 501**: Change condition to `levelIndex === 0` only
-- **Line 701**: Change `disabled` to `levelIndex === 0` only
-- **Line 707**: Change opacity condition to `levelIndex === 0` only
+After a successful promotion criteria save, instead of closing the dialog (`onOpenChange(false)`), switch to the retention tab:
 
-### File: `src/components/dashboard/settings/StylistLevelsEditor.tsx`
+```ts
+upsert.mutate(payload, {
+  onSuccess: () => {
+    updateLevel.mutate({ id: levelId, is_configured: true });
+    // Navigate to retention tab instead of closing
+    setActiveTab('retention');
+    setStep(0);
+    toast.success('Level requirements saved');
+  },
+});
+```
 
-- **Line 1724**: Remove the `if (levelIndex < savedLevels.length - 1)` guard so the last level also gets default promotion criteria seeded.
+**2. Change `handleSaveRetention` behavior (~line 635-640)**
+
+After saving retention, NOW close the dialog (this is the final step):
+
+```ts
+upsertRetention.mutate(payload, {
+  onSuccess: () => {
+    updateLevel.mutate({ id: levelId, is_configured: true });
+    onOpenChange(false);
+  },
+});
+```
+
+This keeps the existing behavior for retention save (close on success) but makes promotion save flow into the retention tab naturally.
+
+**3. Add a "Save & Close" option to the retention footer**
+
+The retention tab already has "Save Retention" which closes. No change needed there — the flow becomes:
+
+- Open wizard → Level Requirements → configure → Save Criteria → auto-navigates to Required to Stay → configure → Save Retention → dialog closes
+
+For levels that only need one tab configured, the admin can still close the dialog manually via the X button at any point.
 
 ## Scope
-- 2 files modified
-- ~4 lines changed (condition removals)
+- Single file: `GraduationWizard.tsx`
+- ~5 lines changed
 - No database changes
 
