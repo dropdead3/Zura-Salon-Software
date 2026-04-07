@@ -95,6 +95,7 @@ export function CommissionEconomicsTab({ levels }: CommissionEconomicsTabProps) 
   const { save: saveAssumptions, isPending: isSaving } = useSaveEconomicsAssumptions();
   const { data: revenueData, isLoading: loadingRevenue } = useRevenueByLevel();
   const { data: detection, isLoading: loadingDetection } = useAutoDetectEconomics();
+  const [showReconfigure, setShowReconfigure] = useState(false);
 
   // Local editable assumptions
   const [localAssumptions, setLocalAssumptions] = useState<EconomicsAssumptions | null>(null);
@@ -223,14 +224,15 @@ export function CommissionEconomicsTab({ levels }: CommissionEconomicsTabProps) 
     );
   }
 
-  // First-time: show smart defaults instead of raw inputs
-  if (!hasCustomAssumptions && detection) {
+  // First-time or reconfigure mode: show smart defaults
+  if ((!hasCustomAssumptions || showReconfigure) && detection) {
     return (
       <div className="space-y-6 pt-4">
         <EconomicsSmartDefaults
           detection={detection}
           onAccept={(vals) => {
             saveAssumptions(vals);
+            setShowReconfigure(false);
           }}
           isSaving={isSaving}
         />
@@ -249,6 +251,7 @@ export function CommissionEconomicsTab({ levels }: CommissionEconomicsTabProps) 
             const updated = { ...assumptions, [key]: value };
             saveAssumptions(updated);
           }}
+          onReconfigure={() => setShowReconfigure(true)}
         />
       )}
 
