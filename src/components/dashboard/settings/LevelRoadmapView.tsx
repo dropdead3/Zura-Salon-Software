@@ -83,7 +83,7 @@ export function LevelRoadmapView({
     }
   };
 
-  const fmtCurrency = (v: number) => v >= 1000 ? `$${(v / 1000).toFixed(0)}K` : `$${v}`;
+  const fmtCurrency = (v: number) => v >= 1000 ? `$${parseFloat((v / 1000).toFixed(1))}K` : `$${v}`;
 
   const getCompensationSummary = (level: LevelInfo) => {
     const parts: string[] = [];
