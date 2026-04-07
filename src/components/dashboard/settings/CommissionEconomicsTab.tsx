@@ -289,6 +289,7 @@ export function CommissionEconomicsTab({ levels }: CommissionEconomicsTabProps) 
                 />
               </div>
               <p className="text-[10px] text-muted-foreground">Rent, utilities, insurance per stylist</p>
+              <p className="text-[10px] text-muted-foreground/40">{BENCHMARKS.overhead_per_stylist.label}</p>
             </div>
             <div className="space-y-2">
               <Label className="text-xs text-muted-foreground">Product Cost %</Label>
@@ -305,6 +306,7 @@ export function CommissionEconomicsTab({ levels }: CommissionEconomicsTabProps) 
                 <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">%</span>
               </div>
               <p className="text-[10px] text-muted-foreground">Chemical + backbar cost as % of revenue</p>
+              <p className="text-[10px] text-muted-foreground/40">{BENCHMARKS.product_cost_pct.label}</p>
             </div>
             <div className="space-y-2">
               <Label className="text-xs text-muted-foreground">Target Margin %</Label>
@@ -321,6 +323,7 @@ export function CommissionEconomicsTab({ levels }: CommissionEconomicsTabProps) 
                 <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">%</span>
               </div>
               <p className="text-[10px] text-muted-foreground">Desired profit margin after all costs</p>
+              <p className="text-[10px] text-muted-foreground/40">{BENCHMARKS.target_margin_pct.label}</p>
             </div>
             <div className="space-y-2">
               <Label className="text-xs text-muted-foreground">Hours / Month</Label>
@@ -333,6 +336,7 @@ export function CommissionEconomicsTab({ levels }: CommissionEconomicsTabProps) 
                 step={8}
               />
               <p className="text-[10px] text-muted-foreground">Avg hours per stylist for hourly wage modeling</p>
+              <p className="text-[10px] text-muted-foreground/40">{BENCHMARKS.hours_per_month.label}</p>
             </div>
           </div>
         </CardContent>
