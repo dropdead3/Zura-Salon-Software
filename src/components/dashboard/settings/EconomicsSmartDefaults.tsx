@@ -1,0 +1,283 @@
+/**
+ * EconomicsSmartDefaults — "Zura computed these" card for first-time setup.
+ * Shows auto-detected assumptions with source badges and accept/adjust flow.
+ */
+import { useState, useCallback } from 'react';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { tokens } from '@/lib/design-tokens';
+import { cn } from '@/lib/utils';
+import { Sparkles, Check, Pencil, DollarSign, Percent, Clock, TrendingUp, Loader2 } from 'lucide-react';
+import type { EconomicsAssumptions } from '@/hooks/useCommissionEconomics';
+import type { AutoDetectResult, SourceType } from '@/hooks/useAutoDetectEconomics';
+import { BENCHMARKS } from '@/hooks/useAutoDetectEconomics';
+
+interface EconomicsSmartDefaultsProps {
+  detection: AutoDetectResult;
+  onAccept: (assumptions: EconomicsAssumptions) => void;
+  isSaving: boolean;
+}
+
+const SOURCE_BADGE: Record<SourceType, { label: string; className: string }> = {
+  data: { label: 'From your data', className: 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20' },
+  estimate: { label: 'Industry avg', className: 'bg-amber-500/10 text-amber-600 border-amber-500/20' },
+};
+
+interface FieldConfig {
+  key: keyof EconomicsAssumptions;
+  label: string;
+  icon: typeof DollarSign;
+  format: (v: number) => string;
+  prefix?: string;
+  suffix?: string;
+  inputType: 'dollar' | 'percent' | 'number';
+  min: number;
+  max: number;
+  step: number;
+}
+
+const FIELDS: FieldConfig[] = [
+  {
+    key: 'overhead_per_stylist',
+    label: 'Overhead / Stylist',
+    icon: DollarSign,
+    format: (v) => `$${v.toLocaleString()}/mo`,
+    prefix: '$',
+    inputType: 'dollar',
+    min: 0,
+    max: 20000,
+    step: 100,
+  },
+  {
+    key: 'product_cost_pct',
+    label: 'Product Cost',
+    icon: Percent,
+    format: (v) => `${(v * 100).toFixed(1)}%`,
+    suffix: '%',
+    inputType: 'percent',
+    min: 0,
+    max: 100,
+    step: 1,
+  },
+  {
+    key: 'target_margin_pct',
+    label: 'Target Margin',
+    icon: TrendingUp,
+    format: (v) => `${(v * 100).toFixed(0)}%`,
+    suffix: '%',
+    inputType: 'percent',
+    min: 0,
+    max: 100,
+    step: 1,
+  },
+  {
+    key: 'hours_per_month',
+    label: 'Hours / Month',
+    icon: Clock,
+    format: (v) => `${v} hrs`,
+    suffix: 'hrs',
+    inputType: 'number',
+    min: 40,
+    max: 300,
+    step: 8,
+  },
+];
+
+export function EconomicsSmartDefaults({ detection, onAccept, isSaving }: EconomicsSmartDefaultsProps) {
+  const [isAdjusting, setIsAdjusting] = useState(false);
+  const [localValues, setLocalValues] = useState<EconomicsAssumptions>({ ...detection.suggestions });
+
+  const handleFieldChange = useCallback((key: keyof EconomicsAssumptions, raw: number, inputType: string) => {
+    const value = inputType === 'percent' ? raw / 100 : raw;
+    setLocalValues(prev => ({ ...prev, [key]: value }));
+  }, []);
+
+  const handleAccept = () => {
+    onAccept(isAdjusting ? localValues : detection.suggestions);
+  };
+
+  return (
+    <Card className="border-primary/20 bg-primary/[0.02]">
+      <CardHeader className="pb-3">
+        <div className="flex items-center gap-3">
+          <div className={cn(tokens.card.iconBox, 'bg-primary/10')}>
+            <Sparkles className="w-5 h-5 text-primary" />
+          </div>
+          <div>
+            <CardTitle className={tokens.card.title}>ZURA COMPUTED THESE FOR YOU</CardTitle>
+            <CardDescription>
+              Based on {detection.details.stylistCount > 0
+                ? `${detection.details.stylistCount} stylists and ${Math.round(detection.details.totalAppointmentHours)} tracked hours`
+                : 'industry averages for salons like yours'}
+            </CardDescription>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-5">
+        <div className="grid grid-cols-2 gap-4">
+          {FIELDS.map((field) => {
+            const value = isAdjusting ? localValues[field.key] : detection.suggestions[field.key];
+            const source = detection.sources[field.key];
+            const benchmark = BENCHMARKS[field.key];
+            const Icon = field.icon;
+            const displayValue = field.inputType === 'percent' ? Math.round(value * 100) : value;
+
+            return (
+              <div
+                key={field.key}
+                className="p-4 rounded-xl border bg-card/60 space-y-2"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Icon className="w-3.5 h-3.5 text-muted-foreground" />
+                    <span className="text-xs text-muted-foreground">{field.label}</span>
+                  </div>
+                  <Badge variant="outline" className={cn('text-[10px] h-5', SOURCE_BADGE[source].className)}>
+                    {SOURCE_BADGE[source].label}
+                  </Badge>
+                </div>
+
+                {isAdjusting ? (
+                  <div className="space-y-1">
+                    <div className="relative">
+                      {field.prefix && (
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
+                          {field.prefix}
+                        </span>
+                      )}
+                      <Input
+                        type="number"
+                        value={displayValue}
+                        onChange={e => handleFieldChange(field.key, Number(e.target.value), field.inputType)}
+                        className={cn(field.prefix && 'pl-7', field.suffix && 'pr-10')}
+                        min={field.min}
+                        max={field.max}
+                        step={field.step}
+                      />
+                      {field.suffix && (
+                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
+                          {field.suffix}
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-[10px] text-muted-foreground/60">{benchmark.label}</p>
+                  </div>
+                ) : (
+                  <div>
+                    <span className="text-lg font-medium text-foreground font-display tracking-wide">
+                      {field.format(value)}
+                    </span>
+                    <p className="text-[10px] text-muted-foreground/60 mt-0.5">{benchmark.label}</p>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+
+        {detection.details.hasChemicalData && (
+          <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-emerald-500/5 border border-emerald-500/10 text-xs text-emerald-700">
+            <Check className="w-3.5 h-3.5 shrink-0" />
+            Product cost calculated from actual chemical tracking data over 90 days.
+          </div>
+        )}
+
+        <div className="flex items-center gap-3 pt-1">
+          <Button
+            onClick={handleAccept}
+            disabled={isSaving}
+            className="gap-1.5"
+          >
+            {isSaving ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            ) : (
+              <Check className="w-3.5 h-3.5" />
+            )}
+            {isAdjusting ? 'Save & Continue' : 'Accept & Continue'}
+          </Button>
+          {!isAdjusting && (
+            <Button
+              variant="outline"
+              onClick={() => setIsAdjusting(true)}
+              className="gap-1.5"
+            >
+              <Pencil className="w-3.5 h-3.5" />
+              Adjust First
+            </Button>
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+/**
+ * EconomicsDataBanner — Shown for returning users when detected data
+ * differs from saved assumptions.
+ */
+interface EconomicsDataBannerProps {
+  detection: AutoDetectResult;
+  savedAssumptions: EconomicsAssumptions;
+  onUpdate: (key: keyof EconomicsAssumptions, value: number) => void;
+}
+
+export function EconomicsDataBanner({ detection, savedAssumptions, onUpdate }: EconomicsDataBannerProps) {
+  const diffs: { key: keyof EconomicsAssumptions; label: string; savedDisplay: string; detectedDisplay: string; detectedValue: number }[] = [];
+
+  // Only show diffs for data-sourced values
+  if (detection.sources.product_cost_pct === 'data') {
+    const saved = savedAssumptions.product_cost_pct;
+    const detected = detection.suggestions.product_cost_pct;
+    if (Math.abs(saved - detected) > 0.005) {
+      diffs.push({
+        key: 'product_cost_pct',
+        label: 'product cost',
+        savedDisplay: `${(saved * 100).toFixed(1)}%`,
+        detectedDisplay: `${(detected * 100).toFixed(1)}%`,
+        detectedValue: detected,
+      });
+    }
+  }
+
+  if (detection.sources.hours_per_month === 'data') {
+    const saved = savedAssumptions.hours_per_month;
+    const detected = detection.suggestions.hours_per_month;
+    if (Math.abs(saved - detected) > 5) {
+      diffs.push({
+        key: 'hours_per_month',
+        label: 'hours/month',
+        savedDisplay: `${saved}`,
+        detectedDisplay: `${detected}`,
+        detectedValue: detected,
+      });
+    }
+  }
+
+  if (diffs.length === 0) return null;
+
+  return (
+    <div className="rounded-xl border border-primary/10 bg-primary/[0.02] p-4 space-y-2">
+      {diffs.map(diff => (
+        <div key={diff.key} className="flex items-center justify-between text-sm">
+          <span className="text-muted-foreground">
+            Based on 90 days of data, your actual {diff.label} is{' '}
+            <span className="text-foreground font-medium">~{diff.detectedDisplay}</span>.
+            Your saved assumption is{' '}
+            <span className="text-foreground">{diff.savedDisplay}</span>.
+          </span>
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-7 px-3 text-xs shrink-0 ml-3"
+            onClick={() => onUpdate(diff.key, diff.detectedValue)}
+          >
+            Update
+          </Button>
+        </div>
+      ))}
+    </div>
+  );
+}

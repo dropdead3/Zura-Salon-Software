@@ -31,6 +31,7 @@ import {
   Sparkles,
   ArrowRight,
   ShieldCheck,
+  RotateCcw,
 } from 'lucide-react';
 import type { StylistLevel } from '@/hooks/useStylistLevels';
 import {
@@ -43,6 +44,9 @@ import {
   type AICommissionOptimizerResult,
   type AICommissionRecommendation,
 } from '@/hooks/useCommissionEconomics';
+import { useAutoDetectEconomics } from '@/hooks/useAutoDetectEconomics';
+import { BENCHMARKS } from '@/hooks/useAutoDetectEconomics';
+import { EconomicsSmartDefaults, EconomicsDataBanner } from './EconomicsSmartDefaults';
 
 interface CommissionEconomicsTabProps {
   levels: StylistLevel[];
@@ -87,9 +91,10 @@ function getLevelDotColor(idx: number, total: number): string {
 }
 
 export function CommissionEconomicsTab({ levels }: CommissionEconomicsTabProps) {
-  const { assumptions, isLoading: loadingAssumptions } = useEconomicsAssumptions();
+  const { assumptions, hasCustomAssumptions, isLoading: loadingAssumptions } = useEconomicsAssumptions();
   const { save: saveAssumptions, isPending: isSaving } = useSaveEconomicsAssumptions();
   const { data: revenueData, isLoading: loadingRevenue } = useRevenueByLevel();
+  const { data: detection, isLoading: loadingDetection } = useAutoDetectEconomics();
 
   // Local editable assumptions
   const [localAssumptions, setLocalAssumptions] = useState<EconomicsAssumptions | null>(null);
@@ -200,7 +205,7 @@ export function CommissionEconomicsTab({ levels }: CommissionEconomicsTabProps) 
     toast.success('AI recommendations applied to What-If simulator');
   };
 
-  if (loadingAssumptions || loadingRevenue) {
+  if (loadingAssumptions || loadingRevenue || loadingDetection) {
     return (
       <div className="flex items-center justify-center h-64">
         <Loader2 className={tokens.loading.spinner} />
@@ -218,8 +223,35 @@ export function CommissionEconomicsTab({ levels }: CommissionEconomicsTabProps) 
     );
   }
 
+  // First-time: show smart defaults instead of raw inputs
+  if (!hasCustomAssumptions && detection) {
+    return (
+      <div className="space-y-6 pt-4">
+        <EconomicsSmartDefaults
+          detection={detection}
+          onAccept={(vals) => {
+            saveAssumptions(vals);
+          }}
+          isSaving={isSaving}
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6 pt-4">
+      {/* Data comparison banner for returning users */}
+      {detection && hasCustomAssumptions && (
+        <EconomicsDataBanner
+          detection={detection}
+          savedAssumptions={assumptions}
+          onUpdate={(key, value) => {
+            const updated = { ...assumptions, [key]: value };
+            saveAssumptions(updated);
+          }}
+        />
+      )}
+
       {/* Assumptions panel */}
       <Card>
         <CardHeader className="pb-3">
@@ -257,6 +289,7 @@ export function CommissionEconomicsTab({ levels }: CommissionEconomicsTabProps) 
                 />
               </div>
               <p className="text-[10px] text-muted-foreground">Rent, utilities, insurance per stylist</p>
+              <p className="text-[10px] text-muted-foreground/40">{BENCHMARKS.overhead_per_stylist.label}</p>
             </div>
             <div className="space-y-2">
               <Label className="text-xs text-muted-foreground">Product Cost %</Label>
@@ -273,6 +306,7 @@ export function CommissionEconomicsTab({ levels }: CommissionEconomicsTabProps) 
                 <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">%</span>
               </div>
               <p className="text-[10px] text-muted-foreground">Chemical + backbar cost as % of revenue</p>
+              <p className="text-[10px] text-muted-foreground/40">{BENCHMARKS.product_cost_pct.label}</p>
             </div>
             <div className="space-y-2">
               <Label className="text-xs text-muted-foreground">Target Margin %</Label>
@@ -289,6 +323,7 @@ export function CommissionEconomicsTab({ levels }: CommissionEconomicsTabProps) 
                 <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">%</span>
               </div>
               <p className="text-[10px] text-muted-foreground">Desired profit margin after all costs</p>
+              <p className="text-[10px] text-muted-foreground/40">{BENCHMARKS.target_margin_pct.label}</p>
             </div>
             <div className="space-y-2">
               <Label className="text-xs text-muted-foreground">Hours / Month</Label>
@@ -301,6 +336,7 @@ export function CommissionEconomicsTab({ levels }: CommissionEconomicsTabProps) 
                 step={8}
               />
               <p className="text-[10px] text-muted-foreground">Avg hours per stylist for hourly wage modeling</p>
+              <p className="text-[10px] text-muted-foreground/40">{BENCHMARKS.hours_per_month.label}</p>
             </div>
           </div>
         </CardContent>
