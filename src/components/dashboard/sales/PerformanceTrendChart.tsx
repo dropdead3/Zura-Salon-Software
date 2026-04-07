@@ -61,12 +61,20 @@ export function PerformanceTrendChart({ userId, weeks = 8 }: PerformanceTrendCha
         });
       }
 
+      // Resolve phorest staff IDs for fallback
+      const { data: staffMappings } = await supabase
+        .from('phorest_staff_mapping')
+        .select('phorest_staff_id')
+        .eq('user_id', userId)
+        .eq('is_active', true);
+      const phorestStaffIds = staffMappings?.map(m => m.phorest_staff_id) || [];
+
       // Fetch locations for mapping
       const { data: locations } = await supabase
         .from('locations')
         .select('id, name');
 
-      // Fetch all summaries in date range with location info
+      // Fetch all summaries in date range by user_id
       const { data: summaries, error } = await supabase
         .from('phorest_daily_sales_summary')
         .select('*, location_id, branch_name')
@@ -77,9 +85,23 @@ export function PerformanceTrendChart({ userId, weeks = 8 }: PerformanceTrendCha
 
       if (error) throw error;
 
+      // Fallback: if no data by user_id, try phorest_staff_id
+      let allSummaries = summaries || [];
+      if (allSummaries.length === 0 && phorestStaffIds.length > 0) {
+        const { data: fallbackData, error: fbError } = await supabase
+          .from('phorest_daily_sales_summary')
+          .select('*, location_id, branch_name')
+          .in('phorest_staff_id', phorestStaffIds)
+          .gte('summary_date', weekRanges[0].start)
+          .lte('summary_date', weekRanges[weekRanges.length - 1].end)
+          .order('summary_date', { ascending: true });
+        if (fbError) throw fbError;
+        allSummaries = fallbackData || [];
+      }
+
       // Extract unique locations from the data
       const locationMap = new Map<string, LocationOption>();
-      summaries?.forEach(s => {
+      allSummaries.forEach(s => {
         const key = s.location_id || s.branch_name;
         if (key && !locationMap.has(key)) {
           const loc = locations?.find(l => l.id === s.location_id);
@@ -91,7 +113,7 @@ export function PerformanceTrendChart({ userId, weeks = 8 }: PerformanceTrendCha
       });
 
       return {
-        summaries: summaries || [],
+        summaries: allSummaries,
         weekRanges,
         locations: Array.from(locationMap.values()),
       };

@@ -141,6 +141,16 @@ export function useDailySalesSummary(filters: SalesFilters = {}) {
   });
 }
 
+// Resolve phorest staff IDs for a user from the staff mapping table
+async function resolvePhorestStaffIds(userId: string): Promise<string[]> {
+  const { data } = await supabase
+    .from('phorest_staff_mapping')
+    .select('phorest_staff_id')
+    .eq('user_id', userId)
+    .eq('is_active', true);
+  return data?.map(m => m.phorest_staff_id) || [];
+}
+
 // Get sales summary for a specific user (for My Stats page)
 export function useUserSalesSummary(userId: string | undefined, dateFrom?: string, dateTo?: string) {
   return useQuery({
@@ -148,6 +158,10 @@ export function useUserSalesSummary(userId: string | undefined, dateFrom?: strin
     queryFn: async () => {
       if (!userId) return null;
 
+      // Resolve phorest staff IDs for fallback querying
+      const phorestStaffIds = await resolvePhorestStaffIds(userId);
+
+      // Query by user_id first
       let query = supabase
         .from('phorest_daily_sales_summary')
         .select('*')
@@ -163,11 +177,28 @@ export function useUserSalesSummary(userId: string | undefined, dateFrom?: strin
 
       const { data, error } = await query;
       if (error) throw error;
+
+      // Fallback: if no data by user_id but we have phorest staff IDs, query by those
+      let allData = data || [];
+      if (allData.length === 0 && phorestStaffIds.length > 0) {
+        let fallbackQuery = supabase
+          .from('phorest_daily_sales_summary')
+          .select('*')
+          .in('phorest_staff_id', phorestStaffIds)
+          .order('summary_date', { ascending: false });
+
+        if (dateFrom) fallbackQuery = fallbackQuery.gte('summary_date', dateFrom);
+        if (dateTo) fallbackQuery = fallbackQuery.lte('summary_date', dateTo);
+
+        const { data: fallbackData, error: fbError } = await fallbackQuery;
+        if (fbError) throw fbError;
+        allData = fallbackData || [];
+      }
       
       // Aggregate the data
-      if (!data || data.length === 0) return null;
+      if (allData.length === 0) return null;
 
-      const totals = data.reduce((acc, day) => ({
+      const totals = allData.reduce((acc, day) => ({
         totalRevenue: acc.totalRevenue + (Number(day.total_revenue) || 0),
         serviceRevenue: acc.serviceRevenue + (Number(day.service_revenue) || 0),
         productRevenue: acc.productRevenue + (Number(day.product_revenue) || 0),
@@ -190,8 +221,8 @@ export function useUserSalesSummary(userId: string | undefined, dateFrom?: strin
         averageTicket: totals.totalTransactions > 0 
           ? totals.totalRevenue / totals.totalTransactions 
           : 0,
-        daysWithData: data.length,
-        dailyData: data,
+        daysWithData: allData.length,
+        dailyData: allData,
       };
     },
     enabled: !!userId,
