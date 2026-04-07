@@ -1,40 +1,49 @@
 
 
-# Break Down Total Revenue by Services, Retail & Tips
+# Fix Staff Performance Data Accuracy & Date Range Alignment
 
-## Problem
-The "Total Revenue" KPI tile on the 1:1 Performance Summary shows a single number. It should break this down into Services, Retail, and Tips — and clarify whether tips are included or excluded from the total.
+## Problems Found
 
-## Data Availability
-The hook (`useIndividualStaffReport`) already returns:
-- `revenue.service` — service revenue from transaction items
-- `revenue.product` — product/retail revenue from transaction items
-- `experienceScore.tipRate` — tip rate as % of total revenue
-- Tips total can be derived: `revenue.total * (tipRate / 100)`
+Three root causes for inaccurate numbers:
 
-Note: `revenue.total` comes from `phorest_appointments.total_price` which may or may not include tips depending on POS config. We need to also expose `totalTips` directly from the hook (it's computed but not returned).
+### 1. Broken ID Join (Critical)
+`useStaffPerformanceComposite` joins experience scores (keyed by `phorest_staff_id`) with sales data (keyed by `user_id`). These are different ID formats, so the lookup `salesMap.get(score.staffId)` **never matches** — every stylist shows $0 revenue even though sales data exists.
 
-## Changes
+### 2. Hardcoded 30-Day Window (Critical)
+The composite hook calls `useStylistExperienceScore(locationId, '30days')` regardless of the date range filter. When a user selects "Last Month" or any custom range, rebook rate, retail %, tip rate, retention, and experience score all reflect the wrong time period.
 
-### 1. `src/hooks/useIndividualStaffReport.ts`
-- Add `tips: number` to the `StaffRevenue` interface
-- Return `totalTips` in the revenue object so it's directly accessible
+### 3. Missing Service/Retail Breakdown
+Phorest shows Services and Retails as separate columns. Zura only shows a single "Revenue" column, making it impossible to verify accuracy against POS data.
 
-### 2. `src/components/coaching/MeetingPerformanceSummary.tsx`
-- Replace the single "Total Revenue" KPI tile with a stacked breakdown:
-  - Keep "Total Revenue" as the primary value at the top
-  - Add sub-lines below in `text-xs text-muted-foreground`:
-    - Services: `$X,XXX`
-    - Retail: `$X,XXX`
-    - Tips: `$X,XXX`
-  - Add a subtle label: "excl. tips" or "incl. tips" based on whether tips are part of the total
-- Keep the trend badge and team avg comparison on the total
+## Verified: Revenue Data Is Correct
+DB query confirmed: for Gavin Eagan in March, Zura's `phorest_transaction_items` shows $3,550 services + $306 retail + $25.40 tax = $3,881.40 — matching Phorest exactly. The data is correct; it's the **join and display** that's broken.
 
-## Files Changed
+## Fix Plan
+
+### File 1: `src/hooks/useStylistExperienceScore.ts`
+- Add an overload that accepts explicit `dateFrom`/`dateTo` strings instead of the preset enum
+- When custom dates are passed, use them directly instead of computing from the enum
+- Map `staffId` output to `user_id` (via `phorest_staff_mapping`) instead of `phorest_staff_id`, so downstream joins work
+
+### File 2: `src/hooks/useStaffPerformanceComposite.ts`
+- Pass `dateFrom`/`dateTo` to the experience score hook instead of hardcoded `'30days'`
+- Both data sources now keyed by `user_id` — the join works correctly
+- Add `serviceRevenue` and `productRevenue` fields to `StaffPerformanceRow` from the sales data
+
+### File 3: `src/components/dashboard/analytics/StaffPerformanceReport.tsx`
+- Add "Services" and "Retails" columns to the table (between Stylist and Revenue, or replacing the single Revenue column with Total / Services / Retail)
+- Wire the new fields from the composite row data
+
+## Impact
+- Revenue numbers will actually display (currently showing $0 due to broken join)
+- Rebook/retail/tip/retention metrics will respect the selected time range
+- Service vs retail breakdown visible for POS cross-referencing
+
 | File | Change |
 |---|---|
-| `useIndividualStaffReport.ts` | Add `tips` to StaffRevenue, return `totalTips` |
-| `MeetingPerformanceSummary.tsx` | Add service/retail/tips breakdown lines under Total Revenue tile |
+| `useStylistExperienceScore.ts` | Accept custom date range, map staffId to user_id |
+| `useStaffPerformanceComposite.ts` | Forward date range, fix join, add service/retail fields |
+| `StaffPerformanceReport.tsx` | Add Services and Retails columns |
 
-2 files, no database changes.
+3 files, no database changes.
 
