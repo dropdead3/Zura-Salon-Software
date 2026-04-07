@@ -33,6 +33,7 @@ interface StylistCommissionDrilldownProps {
     display_name?: string | null;
     full_name?: string | null;
     stylist_level?: string | null;
+    stylist_level_since?: string | null;
   } | null;
   orgId: string;
   levels: StylistLevel[];
@@ -66,6 +67,7 @@ export function StylistCommissionDrilldown({
 
   // Snapshot initial values
   const initialLevel = member?.stylist_level || '__unassign';
+  const initialLevelSince = member?.stylist_level_since ? member.stylist_level_since.split('T')[0] : '';
   const initialShowOverride = !!override;
   const initialSvcRate = override?.service_commission_rate != null ? String(Math.round(override.service_commission_rate * 100)) : '';
   const initialRetailRate = override?.retail_commission_rate != null ? String(Math.round(override.retail_commission_rate * 100)) : '';
