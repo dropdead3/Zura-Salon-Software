@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { tokens } from '@/lib/design-tokens';
@@ -18,6 +18,7 @@ import { format, subDays } from 'date-fns';
 import { useLevelProgress } from '@/hooks/useLevelProgress';
 import { useResolveCommission } from '@/hooks/useResolveCommission';
 import { useStylistLevels } from '@/hooks/useStylistLevels';
+import { useIndividualStaffReport } from '@/hooks/useIndividualStaffReport';
 
 interface ReportBuilderProps {
   meetingId: string;
@@ -48,9 +49,15 @@ export function ReportBuilder({ meetingId, teamMemberId, teamMemberName }: Repor
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [includeCompliance, setIncludeCompliance] = useState(true);
   const [includeLevelProgress, setIncludeLevelProgress] = useState(true);
+  const [includePerformance, setIncludePerformance] = useState(true);
   const [additionalContent, setAdditionalContent] = useState('');
   const [previewContent, setPreviewContent] = useState('');
   const [showPreview, setShowPreview] = useState(false);
+
+  // Performance data for the trailing 30 days
+  const perfDateTo = useMemo(() => format(new Date(), 'yyyy-MM-dd'), []);
+  const perfDateFrom = useMemo(() => format(subDays(new Date(), 30), 'yyyy-MM-dd'), []);
+  const { data: perfData } = useIndividualStaffReport(teamMemberId, perfDateFrom, perfDateTo);
 
   // Filter only non-private notes for report
   const shareableNotes = notes?.filter(n => !n.is_private) || [];
