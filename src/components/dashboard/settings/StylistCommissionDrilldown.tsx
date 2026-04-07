@@ -13,6 +13,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Loader2, ExternalLink, Info, AlertTriangle } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 import { cn, formatDisplayName } from '@/lib/utils';
 import { getLevelColor } from '@/lib/level-colors';
 import { useNavigate } from 'react-router-dom';
@@ -163,7 +164,7 @@ export function StylistCommissionDrilldown({
 
       // 1b. Level-since date override (update directly if changed)
       if (levelSinceChanged && pendingLevelSince) {
-        const { error: sinceError } = await (await import('@/integrations/supabase/client')).supabase
+        const { error: sinceError } = await supabase
           .from('employee_profiles')
           .update({ stylist_level_since: new Date(pendingLevelSince).toISOString() } as any)
           .eq('user_id', member.user_id);
