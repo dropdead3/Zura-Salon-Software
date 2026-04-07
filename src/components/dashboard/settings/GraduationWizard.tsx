@@ -574,7 +574,7 @@ export function GraduationWizard({ open, onOpenChange, levelId, levelLabel, leve
 
   const totalWeight = CRITERIA.reduce((sum, c) => sum + (form[c.weightKey] as number), 0);
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!orgId) return;
     const payload: LevelPromotionCriteriaUpsert = {
       organization_id: orgId,
@@ -582,16 +582,13 @@ export function GraduationWizard({ open, onOpenChange, levelId, levelLabel, leve
       ...form,
       is_active: true,
     };
-    upsert.mutate(payload, {
-      onSuccess: async () => {
-        await queryClient.invalidateQueries({ queryKey: ['level-promotion-criteria'] });
-        await queryClient.invalidateQueries({ queryKey: ['level-retention-criteria'] });
-        updateLevel.mutate({ id: levelId, is_configured: true });
-        setActiveTab('retention');
-        setStep(0);
-        toast.success('Level requirements saved — now configure retention criteria');
-      },
-    });
+    await upsert.mutateAsync(payload);
+    await queryClient.invalidateQueries({ queryKey: ['level-promotion-criteria'] });
+    await queryClient.invalidateQueries({ queryKey: ['level-retention-criteria'] });
+    updateLevel.mutate({ id: levelId, is_configured: true });
+    setActiveTab('retention');
+    setStep(0);
+    toast.success('Level requirements saved — now configure retention criteria');
   };
 
   const handleClear = () => {
@@ -607,14 +604,13 @@ export function GraduationWizard({ open, onOpenChange, levelId, levelLabel, leve
     }
   };
 
-  const handleSaveRetention = () => {
+  const handleSaveRetention = async () => {
     if (!orgId) return;
     const isBaseLevel = levelIndex === 0;
     const payload: LevelRetentionCriteriaUpsert = {
       organization_id: orgId,
       stylist_level_id: levelId,
       retention_enabled: retForm.retention_enabled,
-      // For base level (Level 1), use retForm values directly; otherwise inherit from promotion criteria
       revenue_enabled: isBaseLevel ? retForm.revenue_enabled : form.revenue_enabled,
       revenue_minimum: isBaseLevel ? retForm.revenue_minimum : form.revenue_threshold,
       retail_enabled: isBaseLevel ? retForm.retail_enabled : form.retail_enabled,
@@ -631,20 +627,16 @@ export function GraduationWizard({ open, onOpenChange, levelId, levelLabel, leve
       utilization_minimum: isBaseLevel ? retForm.utilization_minimum : form.utilization_threshold,
       rev_per_hour_enabled: isBaseLevel ? retForm.rev_per_hour_enabled : form.rev_per_hour_enabled,
       rev_per_hour_minimum: isBaseLevel ? retForm.rev_per_hour_minimum : form.rev_per_hour_threshold,
-      // Retention-specific policy settings
       evaluation_window_days: retForm.evaluation_window_days,
       grace_period_days: retForm.grace_period_days,
       action_type: retForm.action_type,
       is_active: true,
     };
-    upsertRetention.mutate(payload, {
-      onSuccess: async () => {
-        await queryClient.invalidateQueries({ queryKey: ['level-retention-criteria'] });
-        await queryClient.invalidateQueries({ queryKey: ['level-promotion-criteria'] });
-        updateLevel.mutate({ id: levelId, is_configured: true });
-        onOpenChange(false);
-      },
-    });
+    await upsertRetention.mutateAsync(payload);
+    await queryClient.invalidateQueries({ queryKey: ['level-retention-criteria'] });
+    await queryClient.invalidateQueries({ queryKey: ['level-promotion-criteria'] });
+    updateLevel.mutate({ id: levelId, is_configured: true });
+    onOpenChange(false);
   };
 
   const handleClearRetention = () => {
