@@ -13,20 +13,12 @@ export function cn(...inputs: ClassValue[]) {
 export function formatDisplayName(fullName: string, displayName?: string | null): string {
   if (!fullName?.trim()) return displayName?.trim() || '';
   
-  const nameParts = fullName.trim().split(' ');
-  const lastInitial = nameParts.length > 1 
-    ? ` ${nameParts[nameParts.length - 1].charAt(0).toUpperCase()}.` 
-    : '';
-  
-  // If nickname/display name exists, use that as first name
+  // If nickname exists, replace first name with nickname, keep last name
   if (displayName && displayName.trim()) {
-    const nickname = displayName.trim().split(' ')[0]; // Get first word of nickname
-    return nickname + lastInitial;
+    return formatFullDisplayName(fullName, displayName);
   }
   
-  // Otherwise use first name from full name
-  const firstName = nameParts[0];
-  return firstName + lastInitial;
+  return fullName.trim();
 }
 
 /**
