@@ -209,7 +209,7 @@ export function generateLevelRequirementsPDF(options: LevelRequirementsPDFOption
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(isCompact ? 5 : 6);
       const maxLabelW = spacing * 0.9;
-      const maxChars = isCompact ? 8 : 12;
+      const maxChars = isCompact ? 8 : 14;
       const labelText = level.label.length > maxChars ? level.label.slice(0, maxChars - 1) + '…' : level.label;
       doc.text(labelText.toUpperCase(), cx, nodeY + nodeR + 6, { align: 'center', maxWidth: maxLabelW, charSpace: 0.3 });
 
@@ -326,19 +326,28 @@ export function generateLevelRequirementsPDF(options: LevelRequirementsPDFOption
     // Card title row
     doc.setTextColor(30, 30, 30);
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(13);
+    doc.setFontSize(11);
+    const titleCharSpace = 0.3;
     const titleText = `LEVEL ${i + 1} — ${level.label.toUpperCase()}`;
-    doc.text(titleText, MARGIN + innerPadX, cy, { charSpace: 0.5 });
+    const maxTitleW = contentWidth - innerPadX * 2 - 45; // leave room for badge
+    const titleRenderedW = textWidthWithCharSpace(doc, titleText, titleCharSpace);
+    // Truncate if too wide
+    let displayTitle = titleText;
+    if (titleRenderedW > maxTitleW) {
+      let truncated = titleText;
+      while (truncated.length > 5 && textWidthWithCharSpace(doc, truncated + '…', titleCharSpace) > maxTitleW) {
+        truncated = truncated.slice(0, -1);
+      }
+      displayTitle = truncated + '…';
+    }
+    doc.text(displayTitle, MARGIN + innerPadX, cy, { charSpace: titleCharSpace });
 
     // Status badge
+    const actualTitleW = textWidthWithCharSpace(doc, displayTitle, titleCharSpace);
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(6);
     const badgeText = isConfigured ? 'Configured' : 'Setup Incomplete';
     const badgeW = doc.getTextWidth(badgeText) + 7;
-    const titleW = doc.getTextWidth(titleText);
-    doc.setFontSize(13);
-    const actualTitleW = doc.getTextWidth(titleText);
-    doc.setFontSize(6);
     const badgeX = MARGIN + innerPadX + actualTitleW + 5;
     const badgeY = cy - 3.5;
 
@@ -382,7 +391,7 @@ export function generateLevelRequirementsPDF(options: LevelRequirementsPDFOption
     doc.setTextColor(170, 170, 170);
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(6.5);
-    doc.text('COMPENSATION', MARGIN + innerPadX, cy, { charSpace: 1.5 });
+    doc.text('COMPENSATION', MARGIN + innerPadX, cy, { charSpace: 0.8 });
     cy += 5;
 
     const compParts: { label: string; value: string }[] = [];
@@ -395,12 +404,12 @@ export function generateLevelRequirementsPDF(options: LevelRequirementsPDFOption
     if (compParts.length > 0) {
       let compX = MARGIN + innerPadX;
       compParts.forEach((part, pi) => {
-        // Label
+        // Label — no charSpace at small size
         doc.setTextColor(170, 170, 170);
         doc.setFont('helvetica', 'normal');
         doc.setFontSize(6);
-        doc.text(part.label, compX, cy, { charSpace: 0.8 });
-        const labelW = doc.getTextWidth(part.label) + 2;
+        doc.text(part.label, compX, cy);
+        const labelW = doc.getTextWidth(part.label) + 3; // 3mm gap
         // Value
         doc.setTextColor(30, 30, 30);
         doc.setFont('helvetica', 'bold');
@@ -433,7 +442,7 @@ export function generateLevelRequirementsPDF(options: LevelRequirementsPDFOption
       doc.setTextColor(170, 170, 170);
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(6.5);
-      doc.text(isBase ? 'RETENTION MINIMUMS' : 'GRADUATION REQUIREMENTS', MARGIN + innerPadX, cy, { charSpace: 1.5 });
+      doc.text(isBase ? 'RETENTION MINIMUMS' : 'GRADUATION REQUIREMENTS', MARGIN + innerPadX, cy, { charSpace: 0.8 });
       cy += 5;
 
       const cols = 4;
@@ -505,7 +514,7 @@ export function generateLevelRequirementsPDF(options: LevelRequirementsPDFOption
       doc.setTextColor(170, 170, 170);
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(6.5);
-      doc.text('RETENTION POLICY', MARGIN + innerPadX, cy, { charSpace: 1.5 });
+      doc.text('RETENTION POLICY', MARGIN + innerPadX, cy, { charSpace: 0.8 });
       cy += 5;
 
       doc.setFont('helvetica', 'normal');
