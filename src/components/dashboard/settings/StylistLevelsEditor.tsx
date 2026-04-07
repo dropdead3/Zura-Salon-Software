@@ -1521,7 +1521,7 @@ export function StylistLevelsEditor({ embedded = false, onActions }: StylistLeve
       });
       setLevels(localLevels);
     }
-  }, [dbLevels, hasChanges]);
+  }, [dbLevels, hasChanges, promotionCriteria, retentionCriteria]);
 
   // Save/Discard buttons provide sufficient unsaved-changes UX signal
 
