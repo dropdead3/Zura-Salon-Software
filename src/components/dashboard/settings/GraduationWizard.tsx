@@ -123,14 +123,14 @@ export interface RetentionFormState {
 }
 
 const CRITERIA: CriterionConfig[] = [
-  { key: 'revenue', label: 'Service Revenue', icon: DollarSign, unit: '/mo', enabledKey: 'revenue_enabled', thresholdKey: 'revenue_threshold', weightKey: 'revenue_weight', placeholder: '8000' },
-  { key: 'retail', label: 'Retail Attachment', icon: ShoppingBag, unit: '%', enabledKey: 'retail_enabled', thresholdKey: 'retail_pct_threshold', weightKey: 'retail_weight', placeholder: '15' },
-  { key: 'rebooking', label: 'Rebooking Rate', icon: CalendarCheck, unit: '%', enabledKey: 'rebooking_enabled', thresholdKey: 'rebooking_pct_threshold', weightKey: 'rebooking_weight', placeholder: '70' },
-  { key: 'avg_ticket', label: 'Average Ticket', icon: Receipt, unit: '$', enabledKey: 'avg_ticket_enabled', thresholdKey: 'avg_ticket_threshold', weightKey: 'avg_ticket_weight', placeholder: '120' },
-  { key: 'retention_rate', label: 'Client Retention', icon: Users, unit: '%', enabledKey: 'retention_rate_enabled', thresholdKey: 'retention_rate_threshold', weightKey: 'retention_rate_weight', placeholder: '70' },
-  { key: 'new_clients', label: 'New Clients', icon: UserPlus, unit: '/mo', enabledKey: 'new_clients_enabled', thresholdKey: 'new_clients_threshold', weightKey: 'new_clients_weight', placeholder: '10' },
-  { key: 'utilization', label: 'Schedule Utilization', icon: CalendarClock, unit: '%', enabledKey: 'utilization_enabled', thresholdKey: 'utilization_threshold', weightKey: 'utilization_weight', placeholder: '75' },
-  { key: 'rev_per_hour', label: 'Revenue Per Hour', icon: DollarSign, unit: '$/hr', enabledKey: 'rev_per_hour_enabled', thresholdKey: 'rev_per_hour_threshold', weightKey: 'rev_per_hour_weight', placeholder: '55' },
+  { key: 'revenue', label: 'Service Revenue', description: 'Total service revenue generated per evaluation period. Typical range: $3K–$12K/mo depending on level and market.', icon: DollarSign, unit: '/mo', enabledKey: 'revenue_enabled', thresholdKey: 'revenue_threshold', weightKey: 'revenue_weight', placeholder: '8000' },
+  { key: 'retail', label: 'Retail Attachment', description: 'Retail product sales as a percentage of total revenue. Industry benchmark: 10–20%.', icon: ShoppingBag, unit: '%', enabledKey: 'retail_enabled', thresholdKey: 'retail_pct_threshold', weightKey: 'retail_weight', placeholder: '15' },
+  { key: 'rebooking', label: 'Rebooking Rate', description: 'Percentage of clients who rebook their next appointment before leaving. Strong salons target 60–80%.', icon: CalendarCheck, unit: '%', enabledKey: 'rebooking_enabled', thresholdKey: 'rebooking_pct_threshold', weightKey: 'rebooking_weight', placeholder: '70' },
+  { key: 'avg_ticket', label: 'Average Ticket', description: 'Average revenue per completed appointment. Varies by service mix — track trend over time.', icon: Receipt, unit: '$', enabledKey: 'avg_ticket_enabled', thresholdKey: 'avg_ticket_threshold', weightKey: 'avg_ticket_weight', placeholder: '120' },
+  { key: 'retention_rate', label: 'Client Retention', description: 'Percentage of clients who return within their expected rebooking window. Healthy retention: 70–85%.', icon: Users, unit: '%', enabledKey: 'retention_rate_enabled', thresholdKey: 'retention_rate_threshold', weightKey: 'retention_rate_weight', placeholder: '70' },
+  { key: 'new_clients', label: 'New Clients', description: 'Number of first-time clients seen per month. Proves book-building ability beyond existing base.', icon: UserPlus, unit: '/mo', enabledKey: 'new_clients_enabled', thresholdKey: 'new_clients_threshold', weightKey: 'new_clients_weight', placeholder: '10' },
+  { key: 'utilization', label: 'Schedule Utilization', description: 'Percentage of available hours that are booked. Proves demand at current pricing. Target: 70–85%.', icon: CalendarClock, unit: '%', enabledKey: 'utilization_enabled', thresholdKey: 'utilization_threshold', weightKey: 'utilization_weight', placeholder: '75' },
+  { key: 'rev_per_hour', label: 'Revenue Per Hour', description: 'Revenue generated per booked hour. The ultimate efficiency signal for pricing decisions.', icon: DollarSign, unit: '$/hr', enabledKey: 'rev_per_hour_enabled', thresholdKey: 'rev_per_hour_threshold', weightKey: 'rev_per_hour_weight', placeholder: '55' },
 ];
 
 interface RetentionCriterionConfig {
