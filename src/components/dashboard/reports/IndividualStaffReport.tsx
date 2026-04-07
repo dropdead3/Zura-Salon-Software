@@ -33,6 +33,7 @@ import { addReportHeader, addReportFooter, fetchLogoAsDataUrl, getReportAutoTabl
 import { useBusinessSettings } from '@/hooks/useBusinessSettings';
 import { useReportLocationInfo } from '@/hooks/useReportLocationInfo';
 import { useIndividualStaffReport, type IndividualStaffReportData } from '@/hooks/useIndividualStaffReport';
+import { useStaffComplianceSummary } from '@/hooks/color-bar/useStaffComplianceSummary';
 import { LevelProgressCard } from '@/components/coaching/LevelProgressCard';
 import { EmptyDataBanner, DateRangeSubtitle } from '@/components/ui/EmptyDataBanner';
 
