@@ -440,3 +440,44 @@ function ServiceCard({
     </div>
   );
 }
+
+const INFRA_STATUS_CONFIG: Record<string, { color: string; bg: string; label: string }> = {
+  normal: { color: 'text-emerald-400', bg: 'bg-emerald-500/20', label: 'Normal' },
+  warning: { color: 'text-amber-400', bg: 'bg-amber-500/20', label: 'Warning' },
+  critical: { color: 'text-rose-400', bg: 'bg-rose-500/20', label: 'Critical' },
+};
+
+function StatusBadge({ status }: { status?: string }) {
+  const config = INFRA_STATUS_CONFIG[status || 'normal'] || INFRA_STATUS_CONFIG.normal;
+  return (
+    <Badge className={cn(config.bg, config.color, "text-xs")}>
+      {config.label}
+    </Badge>
+  );
+}
+
+function MiniSparkline({ data }: { data: number[] }) {
+  if (data.length < 2) return null;
+  const max = Math.max(...data);
+  const min = Math.min(...data);
+  const range = max - min || 1;
+  const h = 24;
+  const w = 120;
+  const step = w / (data.length - 1);
+
+  const points = data
+    .map((v, i) => `${i * step},${h - ((v - min) / range) * h}`)
+    .join(' ');
+
+  return (
+    <svg viewBox={`0 0 ${w} ${h}`} className="w-full h-6 mt-2" preserveAspectRatio="none">
+      <polyline
+        points={points}
+        fill="none"
+        stroke="hsl(var(--primary))"
+        strokeWidth="1.5"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
