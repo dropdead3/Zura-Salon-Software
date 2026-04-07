@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
-import { Sparkles, Check, Pencil, DollarSign, Percent, Clock, TrendingUp, Loader2, Palette, X, RotateCcw } from 'lucide-react';
+import { Sparkles, Check, Pencil, DollarSign, Percent, Clock, TrendingUp, Loader2, Palette, X, RotateCcw, HelpCircle } from 'lucide-react';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import type { EconomicsAssumptions } from '@/hooks/useCommissionEconomics';
 import type { AutoDetectResult, SourceType } from '@/hooks/useAutoDetectEconomics';
@@ -31,6 +31,7 @@ interface FieldConfig {
   label: string;
   description: string;
   tooltip: string;
+  howToFind: string;
   icon: typeof DollarSign;
   format: (v: number) => string;
   prefix?: string;
@@ -41,12 +42,20 @@ interface FieldConfig {
   step: number;
 }
 
+const HOW_TO_FIND = {
+  overhead_per_stylist: 'Pull your monthly P&L or accounting software. Add up: rent, utilities, insurance, supplies, front desk payroll, software subscriptions, and any other fixed costs. Divide that total by your number of stylists. Example: $19,000 total fixed costs ÷ 5 stylists = $3,800/stylist.',
+  product_cost_pct: 'From your P&L, find "Cost of Goods Sold" or "Chemical/Backbar" expense. Divide by your total service revenue (not including retail). Example: $4,500 in chemicals ÷ $40,000 service revenue = 11.3%. If you use a distributor, check your monthly invoices for a faster number.',
+  target_margin_pct: 'Look at your P&L bottom line: Net Income ÷ Total Revenue = your current margin. If you\'re at 8%, setting a target of 12% gives you a goal to work toward. Most healthy salons target 10–15% net margin.',
+  hours_per_month: 'Check your booking software for average booked hours per stylist. Or calculate: days worked per week × hours per day × 4.3 weeks. Example: 5 days × 8 hours × 4.3 = 172 hrs/mo. Part-time stylists will be lower — use their actual schedule.',
+};
+
 const FIELDS: FieldConfig[] = [
   {
     key: 'overhead_per_stylist',
     label: 'Overhead / Stylist',
     description: 'Your fixed monthly cost for each stylist — rent, utilities, insurance, supplies.',
     tooltip: 'Divide your total monthly fixed costs (rent, utilities, insurance, supplies, front desk) by the number of stylists.',
+    howToFind: HOW_TO_FIND.overhead_per_stylist,
     icon: DollarSign,
     format: (v) => `$${v.toLocaleString()}/mo`,
     prefix: '$',
@@ -60,6 +69,7 @@ const FIELDS: FieldConfig[] = [
     label: 'Product Cost',
     description: 'How much of your service revenue goes to color, chemicals, and backbar.',
     tooltip: 'Chemical and backbar costs as a percentage of service revenue. Color-heavy salons typically run 10–15%, cut-focused salons 5–8%.',
+    howToFind: HOW_TO_FIND.product_cost_pct,
     icon: Percent,
     format: (v) => `${(v * 100).toFixed(1)}%`,
     suffix: '%',
@@ -73,6 +83,7 @@ const FIELDS: FieldConfig[] = [
     label: 'Target Margin',
     description: 'The profit you want left after paying all costs and commissions.',
     tooltip: 'Most salons operate at 8–15% net margin. "Sustainable" is 10–12%, "Growth" is 15–18%.',
+    howToFind: HOW_TO_FIND.target_margin_pct,
     icon: TrendingUp,
     format: (v) => `${(v * 100).toFixed(0)}%`,
     suffix: '%',
@@ -86,6 +97,7 @@ const FIELDS: FieldConfig[] = [
     label: 'Hours / Month',
     description: 'Average booked hours per stylist — used to calculate hourly wage costs.',
     tooltip: 'A full-time stylist working 5 days × 8 hours = 160 hrs/mo. This is used to model hourly wage costs against commission revenue.',
+    howToFind: HOW_TO_FIND.hours_per_month,
     icon: Clock,
     format: (v) => `${v} hrs`,
     suffix: 'hrs',
