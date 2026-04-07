@@ -406,7 +406,7 @@ export function IndividualStaffReport({ dateFrom, dateTo, locationId, onClose, i
           )}
 
           {/* Section 2: KPI Summary (4x2 grid) */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
             {kpis.map((kpi) => {
               const Icon = kpi.icon;
               return (
@@ -682,7 +682,7 @@ export function IndividualStaffReport({ dateFrom, dateTo, locationId, onClose, i
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-4 gap-4">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   <div className="space-y-1">
                     <p className="text-xs text-muted-foreground">Compliance Rate</p>
                     <p className="text-xl font-display tabular-nums">{data.colorBarCompliance.complianceRate}%</p>
@@ -701,6 +701,56 @@ export function IndividualStaffReport({ dateFrom, dateTo, locationId, onClose, i
                     <p className={cn('text-xl font-display tabular-nums', data.colorBarCompliance.missed > 0 && 'text-destructive')}>{data.colorBarCompliance.missed}</p>
                   </div>
                 </div>
+
+                {/* Enhanced waste & overage metrics from compliance summary */}
+                {complianceData && (
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4 pt-4 border-t border-border/60">
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-1">
+                        <Beaker className="w-3 h-3 text-muted-foreground" />
+                        <p className="text-xs text-muted-foreground">Waste Rate</p>
+                        <MetricInfoTooltip description="Waste as a percentage of total product dispensed for color services." />
+                      </div>
+                      <p className={cn('text-xl font-display tabular-nums', complianceData.wastePct > 10 && 'text-destructive')}>{complianceData.wastePct}%</p>
+                    </div>
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-1">
+                        <DollarSign className="w-3 h-3 text-muted-foreground" />
+                        <p className="text-xs text-muted-foreground">Waste Cost</p>
+                        <MetricInfoTooltip description="Estimated dollar cost of wasted product based on cost-per-gram." />
+                      </div>
+                      <p className={cn('text-xl font-display tabular-nums', complianceData.wasteCost > 50 && 'text-destructive')}>
+                        <BlurredAmount>{formatCurrencyWhole(complianceData.wasteCost)}</BlurredAmount>
+                      </p>
+                    </div>
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-1">
+                        <Receipt className="w-3 h-3 text-muted-foreground" />
+                        <p className="text-xs text-muted-foreground">Overage Attachment</p>
+                        <MetricInfoTooltip description="Percentage of color appointments that generated an overage charge for the client." />
+                      </div>
+                      <p className="text-xl font-display tabular-nums">{complianceData.overageAttachmentRate}%</p>
+                    </div>
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-1">
+                        <Wallet className="w-3 h-3 text-muted-foreground" />
+                        <p className="text-xs text-muted-foreground">Overage Charges</p>
+                        <MetricInfoTooltip description="Total dollar amount of overage charges billed for this staff member's color services." />
+                      </div>
+                      <p className="text-xl font-display tabular-nums">
+                        <BlurredAmount>{formatCurrencyWhole(complianceData.overageChargeTotal)}</BlurredAmount>
+                      </p>
+                    </div>
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-1">
+                        <ShieldCheck className="w-3 h-3 text-muted-foreground" />
+                        <p className="text-xs text-muted-foreground">Reweigh Rate</p>
+                        <MetricInfoTooltip description="Percentage of tracked color sessions where the bowl was reweighed after service." />
+                      </div>
+                      <p className="text-xl font-display tabular-nums">{complianceData.reweighRate}%</p>
+                    </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
           )}
