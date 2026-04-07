@@ -1,49 +1,72 @@
 
 
-# Fix Staff Performance Data Accuracy & Date Range Alignment
+# Fix Revenue Calculation to Match POS Source of Truth
 
-## Problems Found
+## Problem
 
-Three root causes for inaccurate numbers:
+DB investigation confirms the revenue mismatch:
 
-### 1. Broken ID Join (Critical)
-`useStaffPerformanceComposite` joins experience scores (keyed by `phorest_staff_id`) with sales data (keyed by `user_id`). These are different ID formats, so the lookup `salesMap.get(score.staffId)` **never matches** — every stylist shows $0 revenue even though sales data exists.
+| Metric | Zura (current) | Phorest | Source |
+|---|---|---|---|
+| Total Revenue | $4,872.00 | $3,881.40 | Zura uses `phorest_appointments.total_price`; Phorest uses transaction items (services + retail + tax) |
+| Avg Ticket | $113.30 | $176.43 | Zura divides by 43 appointments; Phorest divides by 22 unique client visits |
+| Services | (not shown separately) | $3,550.00 | Available in `phorest_transaction_items` |
+| Retails | (not shown separately) | $331.40 | $306.00 + $25.40 tax |
 
-### 2. Hardcoded 30-Day Window (Critical)
-The composite hook calls `useStylistExperienceScore(locationId, '30days')` regardless of the date range filter. When a user selects "Last Month" or any custom range, rebook rate, retail %, tip rate, retention, and experience score all reflect the wrong time period.
+**Root cause**: `useIndividualStaffReport` computes `totalRevenue` by summing `total_price` from `phorest_appointments` (lines 297-321). This field includes tips and other non-performance amounts. Phorest's "Performance Revenue" is strictly `service items + product items + tax` from transaction items.
 
-### 3. Missing Service/Retail Breakdown
-Phorest shows Services and Retails as separate columns. Zura only shows a single "Revenue" column, making it impossible to verify accuracy against POS data.
+**Avg Ticket root cause**: Zura divides total revenue by completed appointment count (36 completed → $4,872/43≈$113). Phorest divides by unique client visits (distinct `client_id + date` combos = 22 → $3,881.40/22 = $176.43).
 
-## Verified: Revenue Data Is Correct
-DB query confirmed: for Gavin Eagan in March, Zura's `phorest_transaction_items` shows $3,550 services + $306 retail + $25.40 tax = $3,881.40 — matching Phorest exactly. The data is correct; it's the **join and display** that's broken.
+## Fix
 
-## Fix Plan
+### File: `src/hooks/useIndividualStaffReport.ts`
 
-### File 1: `src/hooks/useStylistExperienceScore.ts`
-- Add an overload that accepts explicit `dateFrom`/`dateTo` strings instead of the preset enum
-- When custom dates are passed, use them directly instead of computing from the enum
-- Map `staffId` output to `user_id` (via `phorest_staff_mapping`) instead of `phorest_staff_id`, so downstream joins work
+**Revenue source switch** (lines 296-324):
+- Replace `totalRevenue` calculation: instead of summing `total_price` from appointments, compute from transaction items:
+  - `totalRevenue = serviceRevenue + productRevenue + taxTotal` (tax-inclusive, matching Phorest)
+  - `serviceRevenue` = sum of `total_amount` where `item_type` is service
+  - `productRevenue` = sum of `total_amount + tax_amount` where `item_type` is product (tax-inclusive retail)
+- Keep tips from `phorest_appointments.tip_amount` (unchanged)
+- Keep appointment counts from appointments table (unchanged)
 
-### File 2: `src/hooks/useStaffPerformanceComposite.ts`
-- Pass `dateFrom`/`dateTo` to the experience score hook instead of hardcoded `'30days'`
-- Both data sources now keyed by `user_id` — the join works correctly
-- Add `serviceRevenue` and `productRevenue` fields to `StaffPerformanceRow` from the sales data
+**Avg Ticket fix** (line 324):
+- Change from `totalRevenue / completed` to `totalRevenue / uniqueVisits`
+- `uniqueVisits` = count of distinct `phorest_client_id + transaction_date` combos from transaction items
 
-### File 3: `src/components/dashboard/analytics/StaffPerformanceReport.tsx`
-- Add "Services" and "Retails" columns to the table (between Stylist and Revenue, or replacing the single Revenue column with Total / Services / Retail)
-- Wire the new fields from the composite row data
+**Daily trend fix** (lines 318-320):
+- Build `dailyRevMap` from transaction items (sum of `total_amount + tax_amount` per `transaction_date`) instead of appointment `total_price`
 
-## Impact
-- Revenue numbers will actually display (currently showing $0 due to broken join)
-- Rebook/retail/tip/retention metrics will respect the selected time range
-- Service vs retail breakdown visible for POS cross-referencing
+**Prior period revenue fix** (lines 328-333):
+- Fetch prior + two-prior period transaction items (same batched pagination pattern)
+- Compute `priorTotalRevenue` and `twoPriorTotalRevenue` from transaction items instead of appointments
+- This fixes the multi-period trend comparison (line 578)
 
+**Team averages fix** (lines 472-515):
+- Fetch all staff transaction items for the period (not just appointments)
+- Compute team revenue from transaction items to ensure team avg uses the same methodology
+
+**Product revenue tax inclusion**:
+- Update `productRevenue` to include `tax_amount` so retail matches Phorest's tax-inclusive display ($306 + $25.40 = $331.40)
+
+### File: `src/components/dashboard/reports/IndividualStaffReport.tsx`
+
+No structural changes needed — the KPI tiles already display `data.revenue.total`, `data.revenue.service`, `data.revenue.product`, `data.revenue.avgTicket`. The values will automatically correct once the hook returns accurate numbers.
+
+Update the Avg Ticket tooltip from "Average revenue per completed appointment" to "Average revenue per client visit" to reflect the new calculation.
+
+## Verification
+After fix, for Gavin Eagan March 2026:
+- Total Revenue: $3,881.40 (matches Phorest)
+- Services: $3,550.00 (matches Phorest)
+- Retails: $331.40 (matches Phorest, tax-inclusive)
+- Avg Ticket: $176.43 (matches Phorest)
+- Tips: $2,262.75 (from appointments, shown separately)
+
+## Files Changed
 | File | Change |
 |---|---|
-| `useStylistExperienceScore.ts` | Accept custom date range, map staffId to user_id |
-| `useStaffPerformanceComposite.ts` | Forward date range, fix join, add service/retail fields |
-| `StaffPerformanceReport.tsx` | Add Services and Retails columns |
+| `useIndividualStaffReport.ts` | Switch revenue from appointments to transaction items; fix avg ticket denominator; include tax in retail; fix prior periods and team averages |
+| `IndividualStaffReport.tsx` | Update avg ticket tooltip text |
 
-3 files, no database changes.
+2 files, no database changes.
 
