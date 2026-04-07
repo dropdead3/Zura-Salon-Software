@@ -689,47 +689,48 @@ export function IndividualStaffReport({ dateFrom, dateTo, locationId, onClose, i
             </Card>
           )}
 
-          {/* Section 8b: Color Bar Compliance */}
-          {(data.colorBarCompliance.totalColorAppointments > 0 || (complianceData && complianceData.totalColorAppointments > 0)) && (
-            <Card>
-              <CardHeader className="pb-2">
-                <div className="flex items-center gap-2">
-                  <ShieldCheck className="w-4 h-4 text-primary" />
-                  <CardTitle className="font-display text-sm tracking-wide uppercase">Color Bar Compliance</CardTitle>
-                  <MetricInfoTooltip description="Percentage of color/chemical appointments that were tracked in Zura Color Bar with a mix session and reweigh." />
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <div className="space-y-1">
-                    <p className="text-xs text-muted-foreground">Compliance Rate</p>
-                    <p className="text-xl font-display tabular-nums">{data.colorBarCompliance.complianceRate}%</p>
-                    <p className="text-[10px] text-muted-foreground">Team Avg: {data.teamAverages.complianceRate}%</p>
+          {/* Section 8b: Zura Color Room */}
+          <Card>
+            <CardHeader className="pb-2">
+              <div className="flex items-center gap-2">
+                <Beaker className="w-4 h-4 text-primary" />
+                <CardTitle className="font-display text-sm tracking-wide uppercase">Zura Color Room</CardTitle>
+                <MetricInfoTooltip description="Color and chemical service tracking metrics from Zura Color Room, including compliance, waste, and overage data." />
+              </div>
+            </CardHeader>
+            <CardContent>
+              {(data.colorBarCompliance.totalColorAppointments > 0 || (complianceData && complianceData.totalColorAppointments > 0)) ? (
+                <>
+                  {/* Row 1 — Compliance */}
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="space-y-1">
+                      <p className="text-xs text-muted-foreground">Compliance Rate</p>
+                      <p className="text-xl font-display tabular-nums">{data.colorBarCompliance.complianceRate}%</p>
+                      <p className="text-[10px] text-muted-foreground">Team Avg: {data.teamAverages.complianceRate}%</p>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-xs text-muted-foreground">Color Appointments</p>
+                      <p className="text-xl font-display tabular-nums">{data.colorBarCompliance.totalColorAppointments}</p>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-xs text-muted-foreground">Tracked</p>
+                      <p className="text-xl font-display tabular-nums">{data.colorBarCompliance.tracked}</p>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-xs text-muted-foreground">Missed</p>
+                      <p className={cn('text-xl font-display tabular-nums', data.colorBarCompliance.missed > 0 && 'text-destructive')}>{data.colorBarCompliance.missed}</p>
+                    </div>
                   </div>
-                  <div className="space-y-1">
-                    <p className="text-xs text-muted-foreground">Color Appointments</p>
-                    <p className="text-xl font-display tabular-nums">{data.colorBarCompliance.totalColorAppointments}</p>
-                  </div>
-                  <div className="space-y-1">
-                    <p className="text-xs text-muted-foreground">Tracked</p>
-                    <p className="text-xl font-display tabular-nums">{data.colorBarCompliance.tracked}</p>
-                  </div>
-                  <div className="space-y-1">
-                    <p className="text-xs text-muted-foreground">Missed</p>
-                    <p className={cn('text-xl font-display tabular-nums', data.colorBarCompliance.missed > 0 && 'text-destructive')}>{data.colorBarCompliance.missed}</p>
-                  </div>
-                </div>
 
-                {/* Enhanced waste & overage metrics from compliance summary */}
-                {complianceData && (
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4 pt-4 border-t border-border/60">
+                  {/* Row 2 — Operations */}
+                  <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mt-4 pt-4 border-t border-border/60">
                     <div className="space-y-1">
                       <div className="flex items-center gap-1">
                         <Beaker className="w-3 h-3 text-muted-foreground" />
                         <p className="text-xs text-muted-foreground">Waste Rate</p>
                         <MetricInfoTooltip description="Waste as a percentage of total product dispensed for color services." />
                       </div>
-                      <p className={cn('text-xl font-display tabular-nums', complianceData.wastePct > 10 && 'text-destructive')}>{complianceData.wastePct}%</p>
+                      <p className={cn('text-xl font-display tabular-nums', (complianceData?.wastePct ?? 0) > 10 && 'text-destructive')}>{complianceData?.wastePct ?? 0}%</p>
                     </div>
                     <div className="space-y-1">
                       <div className="flex items-center gap-1">
@@ -737,26 +738,8 @@ export function IndividualStaffReport({ dateFrom, dateTo, locationId, onClose, i
                         <p className="text-xs text-muted-foreground">Waste Cost</p>
                         <MetricInfoTooltip description="Estimated dollar cost of wasted product based on cost-per-gram." />
                       </div>
-                      <p className={cn('text-xl font-display tabular-nums', complianceData.wasteCost > 50 && 'text-destructive')}>
-                        <BlurredAmount>{formatCurrencyWhole(complianceData.wasteCost)}</BlurredAmount>
-                      </p>
-                    </div>
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-1">
-                        <Receipt className="w-3 h-3 text-muted-foreground" />
-                        <p className="text-xs text-muted-foreground">Overage Attachment</p>
-                        <MetricInfoTooltip description="Percentage of color appointments that generated an overage charge for the client." />
-                      </div>
-                      <p className="text-xl font-display tabular-nums">{complianceData.overageAttachmentRate}%</p>
-                    </div>
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-1">
-                        <Wallet className="w-3 h-3 text-muted-foreground" />
-                        <p className="text-xs text-muted-foreground">Overage Charges</p>
-                        <MetricInfoTooltip description="Total dollar amount of overage charges billed for this staff member's color services." />
-                      </div>
-                      <p className="text-xl font-display tabular-nums">
-                        <BlurredAmount>{formatCurrencyWhole(complianceData.overageChargeTotal)}</BlurredAmount>
+                      <p className={cn('text-xl font-display tabular-nums', (complianceData?.wasteCost ?? 0) > 50 && 'text-destructive')}>
+                        <BlurredAmount>{formatCurrencyWhole(complianceData?.wasteCost ?? 0)}</BlurredAmount>
                       </p>
                     </div>
                     <div className="space-y-1">
@@ -765,13 +748,37 @@ export function IndividualStaffReport({ dateFrom, dateTo, locationId, onClose, i
                         <p className="text-xs text-muted-foreground">Reweigh Rate</p>
                         <MetricInfoTooltip description="Percentage of tracked color sessions where the bowl was reweighed after service." />
                       </div>
-                      <p className="text-xl font-display tabular-nums">{complianceData.reweighRate}%</p>
+                      <p className="text-xl font-display tabular-nums">{complianceData?.reweighRate ?? 0}%</p>
+                    </div>
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-1">
+                        <Receipt className="w-3 h-3 text-muted-foreground" />
+                        <p className="text-xs text-muted-foreground">Overage Attachment</p>
+                        <MetricInfoTooltip description="Percentage of color appointments that generated an overage charge for the client." />
+                      </div>
+                      <p className="text-xl font-display tabular-nums">{complianceData?.overageAttachmentRate ?? 0}%</p>
+                    </div>
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-1">
+                        <Wallet className="w-3 h-3 text-muted-foreground" />
+                        <p className="text-xs text-muted-foreground">Overage Charges</p>
+                        <MetricInfoTooltip description="Total dollar amount of overage charges billed for this staff member's color services." />
+                      </div>
+                      <p className="text-xl font-display tabular-nums">
+                        <BlurredAmount>{formatCurrencyWhole(complianceData?.overageChargeTotal ?? 0)}</BlurredAmount>
+                      </p>
                     </div>
                   </div>
-                )}
-              </CardContent>
-            </Card>
-          )}
+                </>
+              ) : (
+                <EmptyState
+                  icon={Beaker}
+                  title="No Color Room Data"
+                  description="No color or chemical services tracked during this period. Data will populate once appointments are processed through Zura Color Room."
+                />
+              )}
+            </CardContent>
+          </Card>
 
           {/* Section 9: Strengths & Areas for Improvement */}
           {(strengths.length > 0 || improvements.length > 0) && (
