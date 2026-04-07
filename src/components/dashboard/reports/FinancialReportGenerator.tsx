@@ -30,6 +30,7 @@ import { useReportLocationInfo } from '@/hooks/useReportLocationInfo';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { useFormatDate } from '@/hooks/useFormatDate';
 import { toast } from 'sonner';
+import { EmptyDataBanner } from '@/components/ui/EmptyDataBanner';
 
 interface FinancialReportGeneratorProps {
   reportType: string;
@@ -355,7 +356,9 @@ export function FinancialReportGenerator({
       )}
 
       {reportType === 'revenue-trend' && !trendData?.overall?.length && (
-        <p className="text-sm text-muted-foreground py-8 text-center">No revenue data for this period.</p>
+        <div className="py-4">
+          <EmptyDataBanner />
+        </div>
       )}
 
       {reportType === 'goals' && goals && (

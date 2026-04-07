@@ -20,6 +20,7 @@ import {
 import { useIndividualStaffReport } from '@/hooks/useIndividualStaffReport';
 import { useStaffComplianceSummary } from '@/hooks/color-bar/useStaffComplianceSummary';
 import { format, subDays } from 'date-fns';
+import { EmptyDataBanner } from '@/components/ui/EmptyDataBanner';
 
 interface MeetingPerformanceSummaryProps {
   staffUserId: string;
@@ -117,6 +118,9 @@ export function MeetingPerformanceSummary({ staffUserId }: MeetingPerformanceSum
 
   if (!data) return null;
 
+  // Check if all data is empty/zero
+  const isAllEmpty = data.revenue.total === 0 && data.productivity.totalAppointments === 0;
+
   const { revenue, productivity, clientMetrics, retail, experienceScore, topServices, commission, teamAverages, colorBarCompliance } = data;
   const tipRate = experienceScore.tipRate;
   const avgTipDollar = productivity.completed > 0 ? (revenue.total * (tipRate / 100)) / productivity.completed : 0;
@@ -171,6 +175,10 @@ export function MeetingPerformanceSummary({ staffUserId }: MeetingPerformanceSum
       </CardHeader>
 
       <CardContent className="space-y-5">
+        {isAllEmpty && (
+          <EmptyDataBanner dateRangeKey="30d" />
+        )}
+
         {/* Section A: Revenue & Productivity */}
         <div>
           <h4 className={cn(tokens.heading.subsection, 'mb-3')}>Revenue & Productivity</h4>

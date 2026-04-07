@@ -34,6 +34,7 @@ import { useBusinessSettings } from '@/hooks/useBusinessSettings';
 import { useReportLocationInfo } from '@/hooks/useReportLocationInfo';
 import { useIndividualStaffReport, type IndividualStaffReportData } from '@/hooks/useIndividualStaffReport';
 import { LevelProgressCard } from '@/components/coaching/LevelProgressCard';
+import { EmptyDataBanner, DateRangeSubtitle } from '@/components/ui/EmptyDataBanner';
 
 interface IndividualStaffReportProps {
   dateFrom: string;
@@ -41,6 +42,7 @@ interface IndividualStaffReportProps {
   locationId?: string;
   onClose: () => void;
   initialStaffId?: string;
+  dateRangeKey?: string;
 }
 
 const PIE_COLORS = ['hsl(var(--chart-1))', 'hsl(var(--chart-2))', 'hsl(var(--chart-3))', 'hsl(var(--chart-4))'];
@@ -82,7 +84,7 @@ function TrendIndicator({ values }: { values: [number, number, number] }) {
 }
 
 
-export function IndividualStaffReport({ dateFrom, dateTo, locationId, onClose, initialStaffId }: IndividualStaffReportProps) {
+export function IndividualStaffReport({ dateFrom, dateTo, locationId, onClose, initialStaffId, dateRangeKey }: IndividualStaffReportProps) {
   const [selectedStaffId, setSelectedStaffId] = useState<string>(initialStaffId || '');
   const { user } = useAuth();
   const { effectiveOrganization } = useOrganizationContext();
@@ -375,6 +377,7 @@ export function IndividualStaffReport({ dateFrom, dateTo, locationId, onClose, i
                     {data.profile.locationName && <span className="text-xs text-muted-foreground">{data.profile.locationName}</span>}
                     {data.profile.hireDate && <span className="text-xs text-muted-foreground">Hired {formatDate(new Date(data.profile.hireDate), 'MMM yyyy')}</span>}
                   </div>
+                  <DateRangeSubtitle dateRangeKey={dateRangeKey} dateFrom={dateFrom} dateTo={dateTo} className="mt-1" />
                 </div>
                 <div className="flex items-center gap-3">
                   {data.commission.tierName && (
@@ -388,6 +391,11 @@ export function IndividualStaffReport({ dateFrom, dateTo, locationId, onClose, i
               </div>
             </CardContent>
           </Card>
+
+          {/* Empty data guidance */}
+          {data.revenue.total === 0 && data.productivity.totalAppointments === 0 && (
+            <EmptyDataBanner dateRangeKey={dateRangeKey} />
+          )}
 
           {/* Section 2: KPI Summary (4x2 grid) */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
