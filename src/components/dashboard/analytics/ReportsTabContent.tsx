@@ -82,6 +82,8 @@ import { TimeAttendanceReport } from '@/components/dashboard/reports/TimeAttenda
 import { PTOBalancesReport } from '@/components/dashboard/reports/PTOBalancesReport';
 import { StaffStrikesReport } from '@/components/dashboard/reports/StaffStrikesReport';
 import { TrainingCompletionReport } from '@/components/dashboard/reports/TrainingCompletionReport';
+import { ClientFeedbackReport } from '@/components/dashboard/reports/ClientFeedbackReport';
+import { ChurnRiskReport } from '@/components/dashboard/reports/ChurnRiskReport';
 import type { AnalyticsFilters } from '@/pages/dashboard/admin/AnalyticsHub';
 
 const reportCategories = [
@@ -134,6 +136,8 @@ const clientReports = [
   { id: 'client-birthdays', name: 'Client Birthdays', description: 'Upcoming birthdays for marketing outreach', icon: CalendarDays },
   { id: 'client-source', name: 'Client Source', description: 'Where clients came from (referral, online, walk-in)', icon: UserCheck },
   { id: 'duplicate-clients', name: 'Duplicate Clients', description: 'Potential duplicate client records by email/phone match', icon: AlertTriangle },
+  { id: 'client-feedback', name: 'Client Feedback & NPS', description: 'NPS scores, ratings, and individual feedback responses', icon: Star },
+  { id: 'churn-risk', name: 'Churn Risk', description: 'AI-driven churn risk scores with factors and recommendations', icon: AlertTriangle },
 ];
 
 const operationsReports = [
