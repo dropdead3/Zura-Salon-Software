@@ -1,54 +1,46 @@
 
 
-# Bug & Gap Analysis — Pass 6
+# Bug & Gap Analysis — Pass 7
 
 ## Bugs
 
-### Bug 1 (Medium): `ScheduleReportForm` crashes when `locations` is undefined
-Line 266: `locations.length > 1` accesses `.length` on the result of `useActiveLocations()`, which returns `undefined` while loading. This will throw a runtime error on first render before locations load.
+### Bug 1 (Medium): `ScheduleReportForm` — `locations.map` crashes when `locations` is undefined
+Line 275: `{locations.map(loc => ...)}` — the guard on line 266 uses `(locations?.length ?? 0) > 1`, which correctly prevents rendering the outer block when `locations` is undefined. However, if `locations` starts as `undefined` and then loads with length > 1, the render on line 275 accesses `locations.map` without optional chaining. Since the guard already passed, `locations` should be defined at that point — but there's a race where React may render with stale state. Safer to use `locations?.map`.
 
-**Fix:** Change to `(locations?.length ?? 0) > 1`. Also fix line 73 where `locations?.length || 1` is already safe, but the JSX access is not.
+**Fix:** Change `locations.map` to `locations?.map` on line 275.
 
-### Bug 2 (Medium): `useUpdateScheduledReport` loses existing `schedule_config` when only `schedule_type` changes
-Line 187-190: `calculateNextRunTime(effectiveType, updates.schedule_config)` — if only `schedule_type` is updated (e.g., changing from weekly to daily), `updates.schedule_config` is `undefined`. The function then defaults to `dayOfWeek: 1` and `timeUtc: 09:00`. The user's configured delivery time and day preferences are silently discarded.
+### Bug 2 (Medium): `tax-summary` batch report has no tax data
+Lines 335-366: `tax-summary` falls through to the generic handler that groups by `item_type` and shows `[Category, Revenue]`. The `v_all_transaction_items` view **does** have a `tax_amount` column (confirmed in schema), but the select on line 341 doesn't include it. The interactive `useTaxSummary` hook queries `phorest_transaction_items` directly and computes tax breakdowns. The batch version shows zero tax information.
 
-**Fix:** When `updates.schedule_config` is undefined, fetch the existing `schedule_config` from the database alongside `schedule_type` (already fetched on line 180-184). Use the existing config as fallback:
-```
-const { data: existing } = await supabase
-  .from('scheduled_reports')
-  .select('schedule_type, schedule_config')
-  .eq('id', id)
-  .single();
-const effectiveConfig = updates.schedule_config || existing?.schedule_config;
-```
+**Fix:** Add a dedicated `tax-summary` case that selects `tax_amount` alongside `total_amount, item_type, location_id, branch_name, transaction_date` and produces a summary table with Total Tax, Pre-Tax Revenue, Gross Revenue, and a by-item-type breakdown showing tax per category.
 
-### Bug 3 (Low): `client-birthdays` batch report doesn't show birthday column
-Lines 175-195: The `client-birthdays` case falls through to the generic client handler which renders `[Client, Email, Spend, Visits]`. The `birthday` field is selected in the query but never included in the output columns. The report is misleading — users expect to see birthday dates.
+### Bug 3 (Low): `service-profitability` and `chemical-cost` batch reports are generic category summaries
+Both fall through to the generic `[Category, Revenue]` handler. Neither provides profitability margins or chemical cost breakdowns. Users downloading these expect actionable financial data, not a two-column summary.
 
-**Fix:** Add a dedicated handler for `client-birthdays` that includes the birthday column and filters to clients with birthdays set.
+**Fix:** `service-profitability` — group services by name, show revenue, avg price, and quantity. `chemical-cost` — filter to services, show revenue and quantity (cost data isn't in the view, so note limitation in output).
 
-### Bug 4 (Low): `duplicate-clients` batch report doesn't detect duplicates
-Same generic handler — the report just lists clients. It doesn't filter by `is_duplicate = true` or group by matching names/emails. The interactive `DuplicateClientsReport` component does real duplicate detection; the batch version is a generic client list.
+### Bug 4 (Low): `compensation-ratio` batch report is just a staff revenue list
+Lines 119-139: `compensation-ratio` falls through to the generic staff handler showing `[Stylist, Revenue]`. No compensation or ratio data is included. The report name implies payroll-to-revenue ratio analysis.
 
-**Fix:** Add `.eq('is_duplicate', true)` filter and show relevant columns (name, email, phone) to help identify duplicates.
+**Fix:** Add a dedicated handler that shows revenue per staff member and includes tip amounts. Note in output that actual compensation data requires payroll integration.
 
-### Bug 5 (Low): `demand-heatmap` batch report is just an appointment list
-Lines 199-222: Falls through to the generic appointments handler showing Date/Time/Client/Staff/Price. A heatmap should aggregate appointments by day-of-week and hour. The batch version provides no heatmap analysis.
+### Bug 5 (Low): `deleted-appointments` query has no date filter
+Lines 277-278: When `reportId === 'deleted-appointments'`, the query filters only by `deleted_at IS NOT NULL` but doesn't apply date range filters. This fetches ALL deleted appointments ever, ignoring `dateFrom`/`dateTo`. Could return thousands of rows spanning years.
 
-**Fix:** Add a dedicated handler that aggregates by `appointment_date` day-of-week and `start_time` hour, producing a summary table.
+**Fix:** Add `.gte('appointment_date', dateFrom).lte('appointment_date', dateTo)` for the deleted-appointments case.
 
-### Bug 6 (Low): `location-benchmark` batch report is a generic category summary
-Lines 231-259: Falls through to the generic transaction handler which groups by `item_type`. The interactive `LocationBenchmarkReport` compares metrics across locations. The batch version provides no location comparison.
+### Bug 6 (Low): `client-attrition` batch report is just a generic client list
+Line 238: Falls through to the generic `[Client, Email, Spend, Visits]` handler. No attrition analysis — no filtering by last visit date, no "days since last visit", no at-risk classification. The interactive `useClientRetentionReport` does real retention cohort analysis.
 
-**Fix:** Add a dedicated handler that groups transactions by `location_id` and computes per-location revenue, appointment counts, etc.
+**Fix:** Add a dedicated handler that filters clients whose `last_visit` is older than 90 days, sorts by last visit ascending, and includes a "Days Since Visit" column.
 
 ## Gaps
 
-### Gap 1: Several batch reports produce generic/misleading output
-Reports `client-birthdays`, `duplicate-clients`, `demand-heatmap`, `location-benchmark`, `compensation-ratio`, `service-profitability`, `chemical-cost`, and `tax-summary` all fall through to generic handlers. The batch PDF output doesn't match what the interactive report shows. Users downloading a "Tax Summary" PDF get a category revenue breakdown — no tax data.
+### Gap 1: `tax-summary`, `service-profitability`, `chemical-cost`, `compensation-ratio`, `client-attrition` still use generic handlers
+These 5 reports produce misleading output. Combined with the 4 already fixed in Pass 6, this was originally an 8-report gap. 4 remain.
 
-### Gap 2: No "Select All" / category toggle in `ScheduleReportForm`
-`BatchReportDialog` has `toggleCategory` for bulk selection. `ScheduleReportForm` lacks this — each report must be individually checked.
+### Gap 2: No batch report for `location-sales`
+The `location-sales` report ID in the catalog falls through to the generic transaction handler which shows `[Date, Item, Type, Qty, Total]` — no location grouping. For multi-location orgs this is a key report.
 
 ---
 
@@ -56,9 +48,13 @@ Reports `client-birthdays`, `duplicate-clients`, `demand-heatmap`, `location-ben
 
 | File | Change |
 |---|---|
-| `ScheduleReportForm.tsx` | Fix `locations.length` crash → `locations?.length ?? 0` |
-| `useScheduledReports.ts` | Fetch existing `schedule_config` alongside `schedule_type` when recalculating `next_run_at` |
-| `useBatchReportGenerator.ts` | Add dedicated handlers for `client-birthdays` (filter + show birthday), `duplicate-clients` (filter `is_duplicate`), `demand-heatmap` (aggregate by day/hour), and `location-benchmark` (group by location) |
+| `ScheduleReportForm.tsx` | `locations.map` → `locations?.map` on line 275 |
+| `useBatchReportGenerator.ts` | Add dedicated `tax-summary` handler using `tax_amount` from `v_all_transaction_items` |
+| `useBatchReportGenerator.ts` | Add dedicated `service-profitability` handler (group services by name, show revenue/qty/avg) |
+| `useBatchReportGenerator.ts` | Add dedicated `compensation-ratio` handler (staff revenue + tips) |
+| `useBatchReportGenerator.ts` | Add dedicated `client-attrition` handler (filter by last_visit > 90 days, add "Days Since" column) |
+| `useBatchReportGenerator.ts` | Fix `deleted-appointments` to apply date range filter |
+| `useBatchReportGenerator.ts` | Add dedicated `location-sales` handler (group transactions by location) |
 
-3 file edits. No migrations. Bug 1 is a crash risk on every render before locations load.
+2 file edits. No migrations. Bug 2 (tax-summary showing no tax data) is the most user-visible issue.
 
