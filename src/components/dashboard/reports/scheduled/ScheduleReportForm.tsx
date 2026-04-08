@@ -17,6 +17,7 @@ import {
   FileText,
   Users,
   X,
+  MapPin,
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
@@ -40,8 +41,7 @@ interface StaffOption {
 const FREQUENCIES = [
   { value: 'daily', label: 'Daily' },
   { value: 'weekly', label: 'Weekly' },
-  { value: 'monthly', label: 'Monthly (1st)' },
-  { value: 'first_of_month', label: '1st of Month' },
+  { value: 'first_of_month', label: 'Monthly (1st)' },
   { value: 'last_of_month', label: 'End of Month' },
 ];
 
@@ -82,6 +82,7 @@ export function ScheduleReportForm({ open, onOpenChange, editReport }: ScheduleR
   const [timeUtc, setTimeUtc] = useState('09:00');
   const [timezone, setTimezone] = useState('America/New_York');
   const [format, setFormat] = useState('pdf');
+  const [selectedLocationId, setSelectedLocationId] = useState('all');
   const [recipients, setRecipients] = useState<{ email: string; userId?: string; name?: string }[]>([]);
   const [externalEmail, setExternalEmail] = useState('');
   const [staffOptions, setStaffOptions] = useState<StaffOption[]>([]);
@@ -116,6 +117,7 @@ export function ScheduleReportForm({ open, onOpenChange, editReport }: ScheduleR
       setTimeUtc(editReport.schedule_config?.timeUtc ?? '09:00');
       setTimezone(editReport.schedule_config?.timezone ?? 'America/New_York');
       setFormat(editReport.format || 'pdf');
+      setSelectedLocationId(editReport.filters?.locationId || 'all');
       setRecipients(editReport.recipients || []);
     } else {
       setName('');
@@ -125,6 +127,7 @@ export function ScheduleReportForm({ open, onOpenChange, editReport }: ScheduleR
       setTimeUtc('09:00');
       setTimezone('America/New_York');
       setFormat('pdf');
+      setSelectedLocationId('all');
       setRecipients([]);
     }
   }, [editReport, open]);
@@ -194,7 +197,10 @@ export function ScheduleReportForm({ open, onOpenChange, editReport }: ScheduleR
       },
       recipients,
       format,
-      filters: { report_ids: Array.from(selectedReportIds) },
+      filters: {
+        report_ids: Array.from(selectedReportIds),
+        ...(selectedLocationId !== 'all' ? { locationId: selectedLocationId } : {}),
+      },
     };
 
     if (editReport) {
@@ -255,6 +261,24 @@ export function ScheduleReportForm({ open, onOpenChange, editReport }: ScheduleR
               ))}
             </div>
           </div>
+
+          {/* Location Scope */}
+          {locations.length > 1 && (
+            <div className="space-y-2">
+              <Label className="text-xs font-medium flex items-center gap-2">
+                <MapPin className="w-3.5 h-3.5" /> Location
+              </Label>
+              <Select value={selectedLocationId} onValueChange={setSelectedLocationId}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Locations</SelectItem>
+                  {locations.map(loc => (
+                    <SelectItem key={loc.id} value={loc.id}>{loc.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
 
           <Separator />
 

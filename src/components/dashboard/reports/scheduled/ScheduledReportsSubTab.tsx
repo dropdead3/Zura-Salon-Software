@@ -131,6 +131,7 @@ export function ScheduledReportsSubTab() {
         configs,
         dateFrom,
         dateTo,
+        locationId: report.filters?.locationId,
         outputFormat: report.format === 'pdf-separate' ? 'zip' : 'merged',
       });
 
