@@ -391,8 +391,8 @@ export function StylistScorecard({ userId, locationId, onTrendProjection }: Styl
                           // Threshold: meaningful difference
                           if (Math.abs(diff) < 0.01) return null;
                           return diff > 0
-                            ? <TrendingUp className="w-2.5 h-2.5 text-emerald-500 shrink-0" title="Improving faster than peers" />
-                            : <TrendingDown className="w-2.5 h-2.5 text-rose-400 shrink-0" title="Peers improving faster" />;
+                            ? <TrendingUp className="w-2.5 h-2.5 text-emerald-500 shrink-0" />
+                            : <TrendingDown className="w-2.5 h-2.5 text-rose-400 shrink-0" />;
                         })()}
                       </span>
                     )}
