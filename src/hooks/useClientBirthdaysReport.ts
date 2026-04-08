@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { fetchAllBatched } from '@/utils/fetchAllBatched';
 import { parseISO, getMonth, getDate, format, differenceInDays, setYear } from 'date-fns';
 
 export interface ClientBirthdayEntry {
@@ -24,15 +25,27 @@ export function useClientBirthdaysReport(filters: Filters) {
   return useQuery({
     queryKey: ['client-birthdays-report', filters],
     queryFn: async (): Promise<ClientBirthdayEntry[]> => {
-      let q = supabase
-        .from('v_all_clients')
-        .select('id, phorest_client_id, name, first_name, last_name, birthday, email, phone, total_spend, visit_count')
-        .not('birthday', 'is', null)
-        .eq('is_archived', false);
-      if (filters.locationId) q = q.eq('location_id', filters.locationId);
-
-      const { data, error } = await q.limit(5000);
-      if (error) throw error;
+      const data = await fetchAllBatched<{
+        id: string;
+        phorest_client_id: string | null;
+        name: string | null;
+        first_name: string | null;
+        last_name: string | null;
+        birthday: string | null;
+        email: string | null;
+        phone: string | null;
+        total_spend: number | null;
+        visit_count: number | null;
+      }>((from, to) => {
+        let q = supabase
+          .from('v_all_clients')
+          .select('id, phorest_client_id, name, first_name, last_name, birthday, email, phone, total_spend, visit_count')
+          .not('birthday', 'is', null)
+          .eq('is_archived', false)
+          .range(from, to);
+        if (filters.locationId) q = q.eq('location_id', filters.locationId);
+        return q;
+      });
 
       const today = new Date();
       const currentYear = today.getFullYear();

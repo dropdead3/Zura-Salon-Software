@@ -25,6 +25,7 @@ export function useTipAnalysisReport(filters: TipAnalysisFilters) {
       // Fetch appointments with tips (deduplicated at checkout level)
       const rows = await fetchAllBatched<{
         staff_name: string | null;
+        stylist_user_id: string | null;
         phorest_staff_id: string | null;
         tip_amount: number | null;
         total_price: number | null;
@@ -33,7 +34,7 @@ export function useTipAnalysisReport(filters: TipAnalysisFilters) {
       }>((from, to) => {
         let q = supabase
           .from('v_all_appointments')
-          .select('staff_name, phorest_staff_id, tip_amount, total_price, appointment_date, phorest_client_id')
+          .select('staff_name, stylist_user_id, phorest_staff_id, tip_amount, total_price, appointment_date, phorest_client_id')
           .gte('appointment_date', filters.dateFrom)
           .lte('appointment_date', filters.dateTo)
           .not('status', 'in', '("cancelled","no_show")')
@@ -48,7 +49,7 @@ export function useTipAnalysisReport(filters: TipAnalysisFilters) {
       const staffMap = new Map<string, { name: string; tips: number; revenue: number; count: number }>();
 
       for (const row of rows) {
-        const staffId = row.phorest_staff_id || 'unknown';
+        const staffId = row.stylist_user_id || row.phorest_staff_id || 'unknown';
         const entry = staffMap.get(staffId) || { name: row.staff_name || 'Unknown', tips: 0, revenue: 0, count: 0 };
         entry.tips += Number(row.tip_amount) || 0;
         entry.revenue += Number(row.total_price) || 0;
