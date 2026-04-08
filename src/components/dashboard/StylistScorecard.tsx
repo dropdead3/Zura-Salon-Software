@@ -376,13 +376,24 @@ export function StylistScorecard({ userId, locationId, onTrendProjection }: Styl
                       </span>
                     )}
                     {hasPeers && (
-                      <span className="text-xs text-muted-foreground/70 tabular-nums text-right w-16">
+                      <span className="text-xs text-muted-foreground/70 tabular-nums text-right w-16 flex items-center justify-end gap-0.5">
                         {peerVal !== null
                           ? (cp.unit === '/mo' || cp.unit === '$'
                             ? <BlurredAmount>{formatKpiValue(peerVal, cp.unit)}</BlurredAmount>
                             : formatKpiValue(peerVal, cp.unit))
                           : '—'
                         }
+                        {(() => {
+                          const myVelocity = proj?.velocityPerDay ?? 0;
+                          const peerVel = getPeerVelocityForKey(cp.key, peerAverages);
+                          if (peerVel === null) return null;
+                          const diff = myVelocity - peerVel;
+                          // Threshold: meaningful difference
+                          if (Math.abs(diff) < 0.01) return null;
+                          return diff > 0
+                            ? <TrendingUp className="w-2.5 h-2.5 text-emerald-500 shrink-0" />
+                            : <TrendingDown className="w-2.5 h-2.5 text-rose-400 shrink-0" />;
+                        })()}
                       </span>
                     )}
                     <div className="w-4 flex justify-center">
@@ -506,6 +517,22 @@ function getPeerValue(key: string, peers: ReturnType<typeof useStylistPeerAverag
     case 'utilization': return peers.avgUtilization;
     case 'rev_per_hour': return peers.avgRevPerHour;
     case 'new_clients': return peers.avgNewClients;
+    default: return null;
+  }
+}
+
+/** Map criterion key to peer velocity value (change/day) */
+function getPeerVelocityForKey(key: string, peers: ReturnType<typeof useStylistPeerAverages>): number | null {
+  if (!peers?.velocity) return null;
+  switch (key) {
+    case 'revenue': return peers.velocity.revenueVelocity;
+    case 'retail': return peers.velocity.retailVelocity;
+    case 'rebooking': return peers.velocity.rebookVelocity;
+    case 'avg_ticket': return peers.velocity.ticketVelocity;
+    case 'retention_rate': return peers.velocity.retentionVelocity;
+    case 'utilization': return peers.velocity.utilizationVelocity;
+    case 'rev_per_hour': return peers.velocity.revPerHourVelocity;
+    case 'new_clients': return peers.velocity.newClientsVelocity;
     default: return null;
   }
 }

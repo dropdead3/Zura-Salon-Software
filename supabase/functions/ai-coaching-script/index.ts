@@ -1,0 +1,163 @@
+import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+};
+
+interface KpiSnapshotItem {
+  metric: string;
+  current: number;
+  target: number;
+  gap: number;
+  unit: string;
+  trajectory: "improving" | "declining" | "flat";
+  daysToTarget: number | null;
+}
+
+serve(async (req) => {
+  if (req.method === "OPTIONS") {
+    return new Response(null, { headers: corsHeaders });
+  }
+
+  try {
+    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
+
+    const { stylistName, currentLevel, nextLevel, kpiSnapshot } = await req.json() as {
+      stylistName: string;
+      currentLevel: string;
+      nextLevel: string | null;
+      kpiSnapshot: KpiSnapshotItem[];
+    };
+
+    if (!kpiSnapshot?.length) {
+      return new Response(JSON.stringify({ error: "No KPI data provided" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Identify strengths and weaknesses
+    const met = kpiSnapshot.filter((k) => k.gap <= 0);
+    const unmet = kpiSnapshot.filter((k) => k.gap > 0);
+    const declining = unmet.filter((k) => k.trajectory === "declining");
+
+    const strengthsList = met.map((k) => k.metric).join(", ") || "None yet";
+    const weakList = unmet.map((k) => `${k.metric} (gap: ${k.gap.toFixed(1)} ${k.unit}, ${k.trajectory})`).join("; ");
+
+    const systemPrompt = `You are a salon performance coach for a platform called Zura. Your tone is calm, structured, advisory, and protective — never shaming. You help stylists understand exactly what to do to level up.
+
+Context:
+- Stylist: ${stylistName}
+- Current level: ${currentLevel}
+- Next level: ${nextLevel || "Top level (maintenance)"}
+- Strengths (metrics already met): ${strengthsList}
+- Gaps: ${weakList || "None — all met"}
+- Declining metrics: ${declining.length > 0 ? declining.map((k) => k.metric).join(", ") : "None"}
+
+Generate a structured coaching plan.`;
+
+    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "google/gemini-3-flash-preview",
+        messages: [
+          { role: "system", content: systemPrompt },
+          {
+            role: "user",
+            content: `Generate a coaching plan for this stylist. Focus on the top 3 highest-impact gaps.`,
+          },
+        ],
+        tools: [
+          {
+            type: "function",
+            function: {
+              name: "generate_coaching_plan",
+              description: "Return a structured coaching plan with summary, actions, and strengths.",
+              parameters: {
+                type: "object",
+                properties: {
+                  summary: {
+                    type: "string",
+                    description: "2-3 sentence coaching summary. Advisory tone, no shame language.",
+                  },
+                  actions: {
+                    type: "array",
+                    items: {
+                      type: "object",
+                      properties: {
+                        title: { type: "string", description: "Short action title (e.g., 'Request walk-in routing')" },
+                        script: {
+                          type: "string",
+                          description: "A specific, actionable script or step-by-step instruction the stylist can follow. Include exact words to say if applicable.",
+                        },
+                        priority: { type: "string", enum: ["high", "medium", "low"] },
+                        kpi: { type: "string", description: "Which KPI this action targets" },
+                      },
+                      required: ["title", "script", "priority", "kpi"],
+                      additionalProperties: false,
+                    },
+                    description: "3 specific action items ranked by impact",
+                  },
+                  strengths: {
+                    type: "array",
+                    items: { type: "string" },
+                    description: "1-2 sentence acknowledgments of what the stylist is doing well",
+                  },
+                },
+                required: ["summary", "actions", "strengths"],
+                additionalProperties: false,
+              },
+            },
+          },
+        ],
+        tool_choice: { type: "function", function: { name: "generate_coaching_plan" } },
+      }),
+    });
+
+    if (!response.ok) {
+      const status = response.status;
+      const text = await response.text();
+      console.error("AI gateway error:", status, text);
+
+      if (status === 429) {
+        return new Response(JSON.stringify({ error: "Rate limited — try again shortly." }), {
+          status: 429,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      if (status === 402) {
+        return new Response(JSON.stringify({ error: "AI credits exhausted." }), {
+          status: 402,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      throw new Error(`AI gateway returned ${status}`);
+    }
+
+    const result = await response.json();
+    const toolCall = result.choices?.[0]?.message?.tool_calls?.[0];
+    if (!toolCall?.function?.arguments) {
+      throw new Error("No structured response from AI");
+    }
+
+    const coaching = JSON.parse(toolCall.function.arguments);
+
+    return new Response(JSON.stringify(coaching), {
+      status: 200,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  } catch (error) {
+    console.error("ai-coaching-script error:", error);
+    return new Response(
+      JSON.stringify({ error: error instanceof Error ? error.message : "Unknown error" }),
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
+  }
+});
