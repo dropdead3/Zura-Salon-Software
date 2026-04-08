@@ -1,72 +1,64 @@
 
 
-# Fix Revenue Calculation to Match POS Source of Truth
+# Level Progress Card — Gaps, Improvements & Enhancements
 
-## Problem
+## Gaps Found
 
-DB investigation confirms the revenue mismatch:
+### 1. Data Source Inconsistency (Critical)
+`useLevelProgress` and `useStylistPeerAverages` compute **Avg Ticket** and **Revenue Per Hour** from `appointments.total_price`, which includes tips and non-performance amounts. We just fixed `useIndividualStaffReport` to use `phorest_transaction_items` as the POS source of truth. These hooks are still on the old methodology, meaning:
+- Avg Ticket here ≠ Avg Ticket on the 1:1 report
+- Revenue Per Hour is inflated by tips
 
-| Metric | Zura (current) | Phorest | Source |
-|---|---|---|---|
-| Total Revenue | $4,872.00 | $3,881.40 | Zura uses `phorest_appointments.total_price`; Phorest uses transaction items (services + retail + tax) |
-| Avg Ticket | $113.30 | $176.43 | Zura divides by 43 appointments; Phorest divides by 22 unique client visits |
-| Services | (not shown separately) | $3,550.00 | Available in `phorest_transaction_items` |
-| Retails | (not shown separately) | $331.40 | $306.00 + $25.40 tax |
+**Fix:** Switch `computeMetrics()` in `useLevelProgress` to derive Avg Ticket from `phorest_daily_sales_summary` (service + product revenue / unique client visits) instead of `appointments.total_price`. Same for Revenue Per Hour. Apply identical fix to `useStylistPeerAverages`.
 
-**Root cause**: `useIndividualStaffReport` computes `totalRevenue` by summing `total_price` from `phorest_appointments` (lines 297-321). This field includes tips and other non-performance amounts. Phorest's "Performance Revenue" is strictly `service items + product items + tax` from transaction items.
+### 2. Avg Ticket Denominator Mismatch
+Both hooks divide by appointment count. The POS-first standard is **unique client visits** (distinct `client_id` + `date`). This inflates the denominator and deflates Avg Ticket when a client has multiple services in one visit.
 
-**Avg Ticket root cause**: Zura divides total revenue by completed appointment count (36 completed → $4,872/43≈$113). Phorest divides by unique client visits (distinct `client_id + date` combos = 22 → $3,881.40/22 = $176.43).
+**Fix:** Use distinct `client_id + appointment_date` from the appointments table as the denominator for Avg Ticket in both `useLevelProgress.computeMetrics()` and `useStylistPeerAverages`.
 
-## Fix
+### 3. Card Hidden for Top-Level Stylists Without Retention Risk (UX Gap)
+Line 102: `if (!progress.nextLevelLabel && !progress.retention?.isAtRisk) return null`. Top-level stylists in good standing see **nothing**. They lose visibility into their own performance metrics entirely.
 
-### File: `src/hooks/useIndividualStaffReport.ts`
+**Fix:** Show a condensed "Current Performance" view for top-level stylists — display their KPI metrics against retention minimums as a health check, without the "What You Need" promotion framing.
 
-**Revenue source switch** (lines 296-324):
-- Replace `totalRevenue` calculation: instead of summing `total_price` from appointments, compute from transaction items:
-  - `totalRevenue = serviceRevenue + productRevenue + taxTotal` (tax-inclusive, matching Phorest)
-  - `serviceRevenue` = sum of `total_amount` where `item_type` is service
-  - `productRevenue` = sum of `total_amount + tax_amount` where `item_type` is product (tax-inclusive retail)
-- Keep tips from `phorest_appointments.tip_amount` (unchanged)
-- Keep appointment counts from appointments table (unchanged)
+### 4. No Period-over-Period Trends Displayed
+The hook already computes `priorCurrent` for every criterion (for PoP trend arrows), but the `LevelProgressCard` component **never renders them**. The `StylistScorecard` does show trends, but the standalone card used in 1:1 reports does not.
 
-**Avg Ticket fix** (line 324):
-- Change from `totalRevenue / completed` to `totalRevenue / uniqueVisits`
-- `uniqueVisits` = count of distinct `phorest_client_id + transaction_date` combos from transaction items
+**Fix:** Add a small trend arrow (↑/↓/—) next to each criterion's "You" value in the card, using the same 3% relative threshold logic as the Scorecard.
 
-**Daily trend fix** (lines 318-320):
-- Build `dailyRevMap` from transaction items (sum of `total_amount + tax_amount` per `transaction_date`) instead of appointment `total_price`
+### 5. Missing Weight Visibility
+The composite score uses weighted criteria, but the card doesn't show which metrics carry more weight. A stylist can't tell if Revenue (at 40% weight) matters more than Retail (at 10% weight).
 
-**Prior period revenue fix** (lines 328-333):
-- Fetch prior + two-prior period transaction items (same batched pagination pattern)
-- Compute `priorTotalRevenue` and `twoPriorTotalRevenue` from transaction items instead of appointments
-- This fixes the multi-period trend comparison (line 578)
+**Fix:** Add a subtle weight indicator (e.g., "40%" in muted text) next to each metric label, so stylists understand where to focus effort.
 
-**Team averages fix** (lines 472-515):
-- Fetch all staff transaction items for the period (not just appointments)
-- Compute team revenue from transaction items to ensure team avg uses the same methodology
+### 6. Revenue Values Not Wrapped in BlurredAmount
+The criterion rows display raw dollar values (`$1,558`, `$8,000`) without `BlurredAmount` wrapping, violating the financial data privacy requirement. Only the Income Opportunity section uses it.
 
-**Product revenue tax inclusion**:
-- Update `productRevenue` to include `tax_amount` so retail matches Phorest's tax-inclusive display ($306 + $25.40 = $331.40)
+**Fix:** Wrap all monetary criterion values (revenue, avg ticket, rev/hr, and their gaps) in `BlurredAmount`.
 
-### File: `src/components/dashboard/reports/IndividualStaffReport.tsx`
+## Implementation Plan
 
-No structural changes needed — the KPI tiles already display `data.revenue.total`, `data.revenue.service`, `data.revenue.product`, `data.revenue.avgTicket`. The values will automatically correct once the hook returns accurate numbers.
+### File 1: `src/hooks/useLevelProgress.ts`
+- In `computeMetrics()` and `computePriorMetrics()`: change Avg Ticket from `total_price / appointment_count` to `(serviceRevenue + productRevenue) / uniqueClientVisits` using sales summary data and distinct client+date from appointments
+- Same fix for Revenue Per Hour: use `(serviceRevenue + productRevenue) / totalBookedHours` instead of `total_price / totalBookedHours`
 
-Update the Avg Ticket tooltip from "Average revenue per completed appointment" to "Average revenue per client visit" to reflect the new calculation.
+### File 2: `src/hooks/useStylistPeerAverages.ts`
+- Same Avg Ticket denominator fix: unique client visits instead of appointment count
+- Same Revenue Per Hour fix: use sales-based revenue instead of `total_price`
 
-## Verification
-After fix, for Gavin Eagan March 2026:
-- Total Revenue: $3,881.40 (matches Phorest)
-- Services: $3,550.00 (matches Phorest)
-- Retails: $331.40 (matches Phorest, tax-inclusive)
-- Avg Ticket: $176.43 (matches Phorest)
-- Tips: $2,262.75 (from appointments, shown separately)
+### File 3: `src/components/coaching/LevelProgressCard.tsx`
+- Add trend arrows to each CriterionRow (using `priorCurrent` already in the data)
+- Add subtle weight display per metric row
+- Wrap monetary values in `BlurredAmount`
+- Handle top-level stylists: show retention KPI status instead of returning null
+- Add `priorCurrent` and `weight` props to `CriterionRow`
 
 ## Files Changed
 | File | Change |
 |---|---|
-| `useIndividualStaffReport.ts` | Switch revenue from appointments to transaction items; fix avg ticket denominator; include tax in retail; fix prior periods and team averages |
-| `IndividualStaffReport.tsx` | Update avg ticket tooltip text |
+| `useLevelProgress.ts` | Fix Avg Ticket denominator + Revenue Per Hour to use sales-based revenue |
+| `useStylistPeerAverages.ts` | Same Avg Ticket + Rev/Hr fixes for peer consistency |
+| `LevelProgressCard.tsx` | Add trend arrows, weight indicators, BlurredAmount, top-level view |
 
-2 files, no database changes.
+3 files, no database changes.
 
