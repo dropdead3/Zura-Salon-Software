@@ -40,6 +40,8 @@ export function useNoShowReport(dateFrom: string, dateTo: string, locationId?: s
 
         return q;
       });
+
+      if (appointments.length === 0) {
         return {
           totalAppointments: 0,
           noShows: 0,
