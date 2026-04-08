@@ -132,14 +132,24 @@ export function useLevelProgress(userId: string | undefined) {
   const { data: salesData } = useQuery({
     queryKey: ['level-progress-sales', userId, startStr, endStr],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('phorest_daily_sales_summary')
-        .select('service_revenue, product_revenue, summary_date')
-        .eq('user_id', userId!)
-        .gte('summary_date', startStr)
-        .lte('summary_date', endStr);
-      if (error) throw error;
-      return data || [];
+      const pageSize = 1000;
+      let allData: any[] = [];
+      let page = 0;
+      let hasMore = true;
+      while (hasMore) {
+        const { data, error } = await supabase
+          .from('phorest_transaction_items')
+          .select('total_amount, tax_amount, item_type, transaction_date')
+          .eq('stylist_user_id', userId!)
+          .gte('transaction_date', startStr)
+          .lte('transaction_date', endStr)
+          .range(page * pageSize, (page + 1) * pageSize - 1);
+        if (error) throw error;
+        allData = allData.concat(data || []);
+        hasMore = (data?.length || 0) === pageSize;
+        page++;
+      }
+      return allData;
     },
     enabled: !!userId && !!(nextCriteria || retentionCriteria),
   });
@@ -233,11 +243,19 @@ export function useLevelProgress(userId: string | undefined) {
     // Helper: compute metrics for a given window (all 8 criteria)
     const computeMetrics = (evalDays: number) => {
       const evalStart = format(subDays(new Date(), evalDays), 'yyyy-MM-dd');
-      const filteredSales = (salesData || []).filter(s => s.summary_date >= evalStart);
+      const filteredSales = (salesData || []).filter((s: any) => s.transaction_date >= evalStart);
       const filteredAppts = (apptData || []).filter(a => a.appointment_date >= evalStart && a.status !== 'no_show');
 
-      const totalServiceRevenue = filteredSales.reduce((sum, r) => sum + (Number(r.service_revenue) || 0), 0);
-      const totalProductRevenue = filteredSales.reduce((sum, r) => sum + (Number(r.product_revenue) || 0), 0);
+      let totalServiceRevenue = 0;
+      let totalProductRevenue = 0;
+      for (const item of filteredSales) {
+        const amount = (Number(item.total_amount) || 0) + (Number(item.tax_amount) || 0);
+        if (item.item_type === 'service') {
+          totalServiceRevenue += amount;
+        } else if (item.item_type === 'product') {
+          totalProductRevenue += amount;
+        }
+      }
       const totalRevenue = totalServiceRevenue + totalProductRevenue;
       const monthlyRevenue = evalDays > 0 ? (totalRevenue / evalDays) * 30 : 0;
       const retailPct = totalRevenue > 0 ? (totalProductRevenue / totalRevenue) * 100 : 0;
@@ -395,11 +413,19 @@ export function useLevelProgress(userId: string | undefined) {
     const computePriorMetrics = (evalDays: number) => {
       const evalStart = format(subDays(new Date(), evalDays * 2), 'yyyy-MM-dd');
       const evalEnd = format(subDays(new Date(), evalDays), 'yyyy-MM-dd');
-      const filteredSales = (salesData || []).filter(s => s.summary_date >= evalStart && s.summary_date < evalEnd);
+      const filteredSales = (salesData || []).filter((s: any) => s.transaction_date >= evalStart && s.transaction_date < evalEnd);
       const filteredAppts = (apptData || []).filter(a => a.appointment_date >= evalStart && a.appointment_date < evalEnd && a.status !== 'no_show');
 
-      const totalServiceRevenue = filteredSales.reduce((sum, r) => sum + (Number(r.service_revenue) || 0), 0);
-      const totalProductRevenue = filteredSales.reduce((sum, r) => sum + (Number(r.product_revenue) || 0), 0);
+      let totalServiceRevenue = 0;
+      let totalProductRevenue = 0;
+      for (const item of filteredSales) {
+        const amount = (Number(item.total_amount) || 0) + (Number(item.tax_amount) || 0);
+        if (item.item_type === 'service') {
+          totalServiceRevenue += amount;
+        } else if (item.item_type === 'product') {
+          totalProductRevenue += amount;
+        }
+      }
       const totalRevenue = totalServiceRevenue + totalProductRevenue;
       const monthlyRevenue = evalDays > 0 ? (totalRevenue / evalDays) * 30 : 0;
       const retailPct = totalRevenue > 0 ? (totalProductRevenue / totalRevenue) * 100 : 0;
