@@ -30,7 +30,7 @@ interface ExecutiveSummaryReportProps {
   dateRangeKey?: string;
 }
 
-export function ExecutiveSummaryReport({ dateFrom, dateTo, locationId, onClose }: ExecutiveSummaryReportProps) {
+export function ExecutiveSummaryReport({ dateFrom, dateTo, locationId, onClose, dateRangeKey }: ExecutiveSummaryReportProps) {
   const [isGenerating, setIsGenerating] = useState(false);
   const { formatCurrency } = useFormatCurrency();
   const { formatDate } = useFormatDate();

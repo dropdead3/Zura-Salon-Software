@@ -47,6 +47,7 @@ export function FinancialReportGenerator({
   dateTo,
   locationId,
   onClose,
+  dateRangeKey,
 }: FinancialReportGeneratorProps) {
   const [isGenerating, setIsGenerating] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);

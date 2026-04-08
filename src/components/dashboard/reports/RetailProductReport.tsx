@@ -32,7 +32,7 @@ interface RetailProductReportProps {
   dateRangeKey?: string;
 }
 
-export function RetailProductReport({ dateFrom, dateTo, locationId, onClose }: RetailProductReportProps) {
+export function RetailProductReport({ dateFrom, dateTo, locationId, onClose, dateRangeKey }: RetailProductReportProps) {
   const [isGenerating, setIsGenerating] = useState(false);
   const { formatCurrencyWhole } = useFormatCurrency();
   const { formatDate } = useFormatDate();

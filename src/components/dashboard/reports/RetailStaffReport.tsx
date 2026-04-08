@@ -36,7 +36,7 @@ interface RetailStaffReportProps {
 const getInitials = (name: string) =>
   name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
 
-export function RetailStaffReport({ dateFrom, dateTo, locationId, onClose }: RetailStaffReportProps) {
+export function RetailStaffReport({ dateFrom, dateTo, locationId, onClose, dateRangeKey }: RetailStaffReportProps) {
   const [isGenerating, setIsGenerating] = useState(false);
   const { formatCurrencyWhole } = useFormatCurrency();
   const { formatDate } = useFormatDate();
