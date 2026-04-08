@@ -24671,6 +24671,7 @@ export type Database = {
           service_category: string | null
           service_name: string | null
           source: string | null
+          staff_name: string | null
           start_time: string | null
           status: string | null
           stylist_user_id: string | null
