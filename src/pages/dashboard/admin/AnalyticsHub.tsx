@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, Link } from 'react-router-dom';
 import { format, subDays, startOfWeek, endOfWeek, startOfMonth, endOfMonth, subMonths, startOfYear } from 'date-fns';
 import { getNextPayDay } from '@/hooks/usePaySchedule';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
@@ -346,6 +346,13 @@ export default function AnalyticsHub() {
                   </PopoverContent>
                 </Popover>
               )}
+
+              <Button variant="outline" size={tokens.button.card} asChild className="gap-2">
+                <Link to="/dashboard/admin/reports">
+                  <FileText className="w-4 h-4" />
+                  <span className="hidden lg:inline">Reports</span>
+                </Link>
+              </Button>
             </div>
           ) : undefined}
         />
