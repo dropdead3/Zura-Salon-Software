@@ -23,6 +23,11 @@ import {
   ShoppingBag,
   Wallet,
   ClipboardList,
+  Beaker,
+  Receipt,
+  PieChart,
+  AlertTriangle,
+  Coins,
 } from 'lucide-react';
 import { useLocations } from '@/hooks/useLocations';
 import { getReportTier, filterReportsByTier } from '@/config/reportCatalog';
@@ -42,6 +47,12 @@ import { RetailStaffReport } from '@/components/dashboard/reports/RetailStaffRep
 import { EndOfMonthReport } from '@/components/dashboard/reports/EndOfMonthReport';
 import { ReportBuilderPage } from '@/components/dashboard/reports/builder/ReportBuilderPage';
 import { ScheduledReportsSubTab } from '@/components/dashboard/reports/scheduled/ScheduledReportsSubTab';
+import { ServiceProfitabilityReport } from '@/components/dashboard/reports/ServiceProfitabilityReport';
+import { ChemicalCostReport } from '@/components/dashboard/reports/ChemicalCostReport';
+import { TipAnalysisReport } from '@/components/dashboard/reports/TipAnalysisReport';
+import { ServiceCategoryMixReport } from '@/components/dashboard/reports/ServiceCategoryMixReport';
+import { TaxSummaryReport } from '@/components/dashboard/reports/TaxSummaryReport';
+import { ClientAttritionReport } from '@/components/dashboard/reports/ClientAttritionReport';
 import type { AnalyticsFilters } from '@/pages/dashboard/admin/AnalyticsHub';
 
 const reportCategories = [
@@ -61,6 +72,8 @@ const salesReports = [
   { id: 'product-sales', name: 'Product Sales Report', description: 'Top products and attachment rates', icon: DollarSign },
   { id: 'retail-products', name: 'Retail Product Report', description: 'Full product performance with red flags and categories', icon: ShoppingBag },
   { id: 'retail-staff', name: 'Retail Sales by Staff', description: 'Per-stylist retail revenue, units, and attachment rates', icon: Users },
+  { id: 'category-mix', name: 'Service Category Mix', description: 'Revenue share by service category (Color, Cut, Extensions, etc.)', icon: PieChart },
+  { id: 'tax-summary', name: 'Tax Summary', description: 'Tax collected by period and location for remittance', icon: Receipt },
 ];
 
 const staffReports = [
@@ -69,6 +82,7 @@ const staffReports = [
   { id: 'productivity', name: 'Productivity Report', description: 'Hours worked vs revenue generated', icon: Clock },
   { id: 'rebooking', name: 'Rebooking Analysis', description: 'Staff rebooking rates and trends', icon: UserCheck },
   { id: 'new-clients', name: 'New Client Acquisition', description: "Who's bringing in new clients", icon: UserCheck },
+  { id: 'tip-analysis', name: 'Tip Analysis', description: 'Tip distribution, avg tip per visit, tip-to-revenue ratio by stylist', icon: Coins },
 ];
 
 const clientReports = [
@@ -76,6 +90,7 @@ const clientReports = [
   { id: 'lifetime-value', name: 'Client Lifetime Value', description: 'Top spenders and average LTV', icon: DollarSign },
   { id: 'new-vs-returning', name: 'New vs Returning', description: 'Acquisition funnel analysis', icon: TrendingUp },
   { id: 'visit-frequency', name: 'Visit Frequency', description: 'Visit patterns by segment', icon: CalendarDays },
+  { id: 'client-attrition', name: 'Client Attrition', description: 'At-risk, lapsed, and lost clients with revenue impact', icon: AlertTriangle },
 ];
 
 const operationsReports = [
@@ -93,13 +108,17 @@ const financialReports = [
   { id: 'yoy', name: 'Year-over-Year', description: 'Historical performance comparison', icon: TrendingUp, visibilityKey: 'report_yoy' },
   { id: 'payroll-summary', name: 'Payroll Summary', description: 'Commission + rent for pay period processing', icon: Wallet },
   { id: 'end-of-month', name: 'End-of-Month Summary', description: 'Comprehensive monthly business report', icon: ClipboardList },
+  { id: 'service-profitability', name: 'Service Profitability', description: 'Revenue vs chemical + labor cost per service', icon: TrendingUp },
+  { id: 'chemical-cost', name: 'Chemical Cost Report', description: 'Chemical cost per service, waste %, and margin from Color Bar', icon: Beaker },
 ];
 
 interface ReportsTabContentProps {
   filters: AnalyticsFilters;
+  /** When true, hides the back-to-analytics link logic since we're a standalone page */
+  isStandalone?: boolean;
 }
 
-export function ReportsTabContent({ filters }: ReportsTabContentProps) {
+export function ReportsTabContent({ filters, isStandalone }: ReportsTabContentProps) {
   const { hasPermission } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
   const [activeCategory, setActiveCategory] = useState('sales');
@@ -218,7 +237,7 @@ export function ReportsTabContent({ filters }: ReportsTabContentProps) {
   );
 
   // Reports that manage their own back button
-  const selfContainedReports = ['individual-staff', 'payroll-summary', 'retail-products', 'retail-staff', 'end-of-month'];
+  const selfContainedReports = ['individual-staff', 'payroll-summary', 'retail-products', 'retail-staff', 'end-of-month', 'service-profitability', 'chemical-cost', 'tip-analysis', 'category-mix', 'tax-summary', 'client-attrition'];
 
   const renderSelectedReport = () => {
     const location = filters.locationId === 'all' ? undefined : filters.locationId;
@@ -353,6 +372,18 @@ export function ReportsTabContent({ filters }: ReportsTabContentProps) {
             onClose={handleCloseReport}
           />
         );
+      case 'service-profitability':
+        return <ServiceProfitabilityReport dateFrom={filters.dateFrom} dateTo={filters.dateTo} locationId={location} onClose={handleCloseReport} />;
+      case 'chemical-cost':
+        return <ChemicalCostReport dateFrom={filters.dateFrom} dateTo={filters.dateTo} locationId={location} onClose={handleCloseReport} />;
+      case 'tip-analysis':
+        return <TipAnalysisReport dateFrom={filters.dateFrom} dateTo={filters.dateTo} locationId={location} onClose={handleCloseReport} />;
+      case 'category-mix':
+        return <ServiceCategoryMixReport dateFrom={filters.dateFrom} dateTo={filters.dateTo} locationId={location} onClose={handleCloseReport} />;
+      case 'tax-summary':
+        return <TaxSummaryReport dateFrom={filters.dateFrom} dateTo={filters.dateTo} locationId={location} onClose={handleCloseReport} />;
+      case 'client-attrition':
+        return <ClientAttritionReport dateFrom={filters.dateFrom} dateTo={filters.dateTo} locationId={location} onClose={handleCloseReport} />;
       default:
         return null;
     }
