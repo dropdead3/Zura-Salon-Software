@@ -16,12 +16,14 @@ import { StaffUtilizationContent } from '@/components/dashboard/analytics/StaffU
 import { BookingPipelineContent } from '@/components/dashboard/analytics/BookingPipelineContent';
 import { AssistantUtilizationCard } from '@/components/dashboard/analytics/AssistantUtilizationCard';
 import { SubtabFavoriteStar } from '@/components/dashboard/analytics/SubtabFavoriteStar';
+import { HealthDashboard } from '@/components/dashboard/health-engine/HealthDashboard';
 import type { AnalyticsFilters } from '@/pages/dashboard/admin/AnalyticsHub';
 
 interface OperationsTabContentProps {
   filters: AnalyticsFilters;
   subTab?: string;
   onSubTabChange: (value: string) => void;
+  organizationId?: string;
 }
 
 // Map analytics hub date ranges to operational analytics date ranges
@@ -44,7 +46,7 @@ function mapDateRange(dateRange: string): 'tomorrow' | '7days' | '30days' | '90d
   }
 }
 
-export function OperationsTabContent({ filters, subTab = 'overview', onSubTabChange }: OperationsTabContentProps) {
+export function OperationsTabContent({ filters, subTab = 'overview', onSubTabChange, organizationId }: OperationsTabContentProps) {
   const { data: locations } = useLocations();
   const locationFilter = filters.locationId !== 'all' ? filters.locationId : undefined;
   const operationalDateRange = mapDateRange(filters.dateRange);
@@ -122,6 +124,12 @@ export function OperationsTabContent({ filters, subTab = 'overview', onSubTabCha
                 <SubtabFavoriteStar tab="operations" subtab="assistant-coverage" label="Assistant Coverage" />
               </div>
             </VisibilityGate>
+            <VisibilityGate elementKey="operations_health_engine_subtab" elementName="Health Engine" elementCategory="Page Tabs">
+              <div className="group/subtab relative inline-flex items-center">
+                <SubTabsTrigger value="health-engine">Health Engine</SubTabsTrigger>
+                <SubtabFavoriteStar tab="operations" subtab="health-engine" label="Health Engine" />
+              </div>
+            </VisibilityGate>
           </SubTabsList>
 
         <TabsContent value="overview" className="mt-6">
@@ -188,6 +196,12 @@ export function OperationsTabContent({ filters, subTab = 'overview', onSubTabCha
         <TabsContent value="assistant-coverage" className="mt-6">
           <AssistantUtilizationCard />
         </TabsContent>
+
+        {organizationId && (
+          <TabsContent value="health-engine" className="mt-6">
+            <HealthDashboard organizationId={organizationId} />
+          </TabsContent>
+        )}
         </Tabs>
       </div>
     </div>
