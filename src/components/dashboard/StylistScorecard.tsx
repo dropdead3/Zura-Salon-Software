@@ -388,6 +388,24 @@ export function StylistScorecard({ userId, locationId, onTrendProjection }: Styl
                     <div className="w-4 flex justify-center">
                       <TrendIcon direction={trend} />
                     </div>
+                    {hasNextLevel && (
+                      <span className="w-14 text-right">
+                        {isMet ? (
+                          <span className="text-[9px] text-emerald-600 dark:text-emerald-400">✓ Met</span>
+                        ) : proj?.daysToTarget !== null && proj?.daysToTarget !== undefined ? (
+                          <span className={cn(
+                            'text-[9px] tabular-nums',
+                            proj.trajectory === 'improving' ? 'text-emerald-600 dark:text-emerald-400'
+                              : proj.trajectory === 'declining' ? 'text-rose-600 dark:text-rose-400'
+                              : 'text-muted-foreground'
+                          )}>
+                            ~{proj.daysToTarget}d
+                          </span>
+                        ) : (
+                          <span className="text-[9px] text-muted-foreground">—</span>
+                        )}
+                      </span>
+                    )}
                   </div>
                   {hasNextLevel && (
                     <Progress
