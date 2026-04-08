@@ -295,7 +295,7 @@ export function ReportsTabContent({ filters, isStandalone }: ReportsTabContentPr
   );
 
   // Reports that manage their own back button
-  const selfContainedReports = ['individual-staff', 'payroll-summary', 'retail-products', 'retail-staff', 'end-of-month', 'service-profitability', 'chemical-cost', 'tip-analysis', 'category-mix', 'tax-summary', 'client-attrition', 'compensation-ratio', 'location-benchmark', 'demand-heatmap', 'discounts', 'future-appointments', 'top-clients', 'client-birthdays', 'client-source', 'duplicate-clients', 'staff-transaction-detail', 'deleted-appointments', 'no-show-enhanced', 'gift-cards', 'vouchers', 'staff-milestones', 'permissions-audit', 'time-attendance', 'pto-balances', 'staff-strikes', 'training-completion'];
+  const selfContainedReports = ['individual-staff', 'payroll-summary', 'retail-products', 'retail-staff', 'end-of-month', 'service-profitability', 'chemical-cost', 'tip-analysis', 'category-mix', 'tax-summary', 'client-attrition', 'compensation-ratio', 'location-benchmark', 'demand-heatmap', 'discounts', 'future-appointments', 'top-clients', 'client-birthdays', 'client-source', 'duplicate-clients', 'staff-transaction-detail', 'deleted-appointments', 'no-show-enhanced', 'gift-cards', 'vouchers', 'staff-milestones', 'permissions-audit', 'time-attendance', 'pto-balances', 'staff-strikes', 'training-completion', 'client-feedback', 'churn-risk'];
 
   const renderSelectedReport = () => {
     const location = filters.locationId === 'all' ? undefined : filters.locationId;
@@ -482,6 +482,10 @@ export function ReportsTabContent({ filters, isStandalone }: ReportsTabContentPr
         return <StaffStrikesReport dateFrom={filters.dateFrom} dateTo={filters.dateTo} locationId={location} onClose={handleCloseReport} />;
       case 'training-completion':
         return <TrainingCompletionReport dateFrom={filters.dateFrom} dateTo={filters.dateTo} locationId={location} onClose={handleCloseReport} />;
+      case 'client-feedback':
+        return <ClientFeedbackReport dateFrom={filters.dateFrom} dateTo={filters.dateTo} locationId={location} onClose={handleCloseReport} />;
+      case 'churn-risk':
+        return <ChurnRiskReport dateFrom={filters.dateFrom} dateTo={filters.dateTo} locationId={location} onClose={handleCloseReport} />;
       default:
         return null;
     }
