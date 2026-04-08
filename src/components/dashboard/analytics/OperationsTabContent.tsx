@@ -124,6 +124,12 @@ export function OperationsTabContent({ filters, subTab = 'overview', onSubTabCha
                 <SubtabFavoriteStar tab="operations" subtab="assistant-coverage" label="Assistant Coverage" />
               </div>
             </VisibilityGate>
+            <VisibilityGate elementKey="operations_health_engine_subtab" elementName="Health Engine" elementCategory="Page Tabs">
+              <div className="group/subtab relative inline-flex items-center">
+                <SubTabsTrigger value="health-engine">Health Engine</SubTabsTrigger>
+                <SubtabFavoriteStar tab="operations" subtab="health-engine" label="Health Engine" />
+              </div>
+            </VisibilityGate>
           </SubTabsList>
 
         <TabsContent value="overview" className="mt-6">
