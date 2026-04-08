@@ -1,54 +1,38 @@
 
 
-# Bug & Gap Analysis — Pass 9
+# Fix: Restrict Future Date Selection for Historical Reports
 
-## Bugs
+## Problem
+The ReportsHub global date picker allows selecting future dates for all reports. This is incorrect for historical/actuals-based reports (e.g. Daily Sales Summary, Tax Summary) since no sales data can exist in the future. However, some reports like "Future Appointments Value" explicitly need future dates.
 
-### Bug 1 (High): `useDailySalesSummary` queries `phorest_transaction_items` directly, bypassing dual-source pattern
-Line 118 in `useSalesData.ts`: The hook queries `phorest_transaction_items` instead of `v_all_transaction_items`. This violates the POS-First data integrity model and will miss all Zura-native transactions. The batch generator (`useBatchReportGenerator.ts` line 98) correctly uses `v_all_transaction_items` for the same `daily-sales` report. This means the interactive Daily Sales Summary and the batch version show different data.
+The same issue exists in the AnalyticsHub date picker — no `disabled` constraint prevents future date selection.
 
-**Fix:** Change `useDailySalesSummary` to query `v_all_transaction_items` and use `fetchAllBatched`. Adjust column references (`total_amount` stays, `tax_amount` stays, `stylist_user_id` → `staff_user_id` per view normalization).
+## Report Classification
 
-### Bug 2 (Medium): `useLocationBenchmark` queries `phorest_appointments` directly
-Line 33 in `useLocationBenchmark.ts`: The interactive Location Benchmarking report queries `phorest_appointments` instead of `v_all_appointments`. The batch version was fixed in Pass 8, but the interactive hook was not. Same dual-source violation — misses Zura-native appointments.
+**Historical-only (must NOT allow future dates):**
+All reports except the ones listed below. These include: `daily-sales`, `stylist-sales`, `location-sales`, `product-sales`, `retail-products`, `retail-staff`, `category-mix`, `tax-summary`, `discounts`, `staff-kpi`, `tip-analysis`, `staff-transaction-detail`, `compensation-ratio`, `client-attrition`, `top-clients`, `client-source`, `duplicate-clients`, `no-show-enhanced`, `deleted-appointments`, `demand-heatmap`, `executive-summary`, `payroll-summary`, `end-of-month`, `service-profitability`, `chemical-cost`, `location-benchmark`, `gift-cards`, `vouchers`.
 
-**Fix:** Switch to `v_all_appointments` in `useLocationBenchmark.ts`.
+**Future-aware (CAN allow future dates):**
+- `future-appointments` — entire purpose is forward-looking
+- `client-birthdays` — birthday lookups can span future months
 
-### Bug 3 (Medium): Daily Sales Summary monetary values not wrapped in `BlurredAmount`
-Lines 339-353 and 378-383 in `SalesReportGenerator.tsx`: All currency values in the KPI tiles and daily table are rendered as raw text. Every other report component wraps monetary values in `<BlurredAmount>` for the hide-numbers privacy toggle. This report leaks real revenue when the toggle is active.
+## Approach
 
-**Fix:** Import `BlurredAmount` and wrap all `formatCurrencyWhole(...)` calls in the daily sales UI.
+Rather than restricting the global date picker (which would break future-aware reports), the fix should:
 
-### Bug 4 (Low): Daily Sales Summary table headers missing `tokens.table.columnHeader`
-Lines 363-370: `<TableHead>` elements use no className or `className="text-right"` instead of the required `tokens.table.columnHeader`. Per UI Canon, all table column headers must use this token (Aeonik Pro, Title Case, never uppercase).
-
-**Fix:** Add `className={tokens.table.columnHeader}` (and `cn(tokens.table.columnHeader, 'text-right')` for numeric columns) to all `<TableHead>` elements in the daily sales table and preview modal duplicate.
-
-### Bug 5 (Low): Batch `daily-sales` only shows `[Date, Revenue]` — no breakdown
-Line 106-109 in `useBatchReportGenerator.ts`: The batch handler for `daily-sales` aggregates to just two columns `[Date, Revenue]`. The interactive version now shows 7 columns (Date, Total Revenue, Service Rev, Product Rev, Services, Products, Avg Ticket). Users expect the batch PDF to match.
-
-**Fix:** Expand the batch `daily-sales` handler to group by date with service/product split, matching the interactive table structure.
-
-### Bug 6 (Low): `useDailySalesSummary` revenue formula uses `total_amount + tax_amount`
-Line 152: Revenue is calculated as `total_amount + tax_amount`. Per the data integrity standards, Gross Revenue = `total_amount + tax_amount` is correct for historical actuals. However, the `SalesReportGenerator` KPI tiles use `useSalesMetrics` which may use a different formula, creating potential discrepancy between the KPI totals and the sum of the daily breakdown rows.
-
-**Impact:** Informational — verify formulas align. No fix needed if both use the same Gross Revenue formula.
-
-## Gaps
-
-### Gap 1: `useSalesByStylist` and `useSalesByLocation` not checked for dual-source compliance
-These hooks (used by the interactive `stylist-sales` and `location-sales` reports) may also query Phorest tables directly. Should be verified and migrated if needed.
-
----
+1. **Cap the global calendar at today by default** — add `toDate={new Date()}` to the `<Calendar>` in `ReportsHub.tsx`, which disables all future days visually
+2. **Also cap "This Month" preset** — when clicking "This Month", set `to` as `min(endOfMonth, today)` instead of always `endOfMonth` (which goes into the future)
+3. **Override for future-aware reports** — when a user opens `future-appointments` or `client-birthdays`, the individual report components already handle their own date logic (e.g. `useFutureAppointmentsReport` uses `today` as the start and ignores `dateFrom`). No change needed for those.
+4. **Same fix for AnalyticsHub** — cap the calendar picker at today and adjust "This Month" / "Today → End of Month" presets appropriately. Note: `todayToEom` is explicitly a future-looking preset used by Operations analytics, so that preset should remain but be scoped correctly.
 
 ## Fix Plan
 
 | File | Change |
 |---|---|
-| `useSalesData.ts` | Switch `useDailySalesSummary` from `phorest_transaction_items` to `v_all_transaction_items`; use `fetchAllBatched` |
-| `useLocationBenchmark.ts` | Switch from `phorest_appointments` to `v_all_appointments` |
-| `SalesReportGenerator.tsx` | Wrap all monetary values in `<BlurredAmount>`; add `tokens.table.columnHeader` to all `<TableHead>` elements in daily table + preview modal |
-| `useBatchReportGenerator.ts` | Expand batch `daily-sales` handler to show 7-column breakdown matching interactive version |
+| `ReportsHub.tsx` | Add `toDate={new Date()}` to `<Calendar>` to disable future dates. Cap "This Month" preset `to` at `min(endOfMonth, today)`. Cap initial state `to` at today. |
+| `AnalyticsHub.tsx` | Add `toDate={new Date()}` to the calendar picker. Adjust "This Month" preset to cap at today. Keep `todayToEom` preset functional (it's used for operations forecasting). |
+| `FutureAppointmentsReport.tsx` | No change — already uses its own date logic starting from today. |
+| `ClientBirthdaysReport.tsx` | No change — birthday lookups are date-agnostic (month/day matching). |
 
-4 file edits. No migrations. Bug 1 is the most impactful — it causes the interactive daily sales report to silently exclude all Zura-native data.
+2 file edits. No migrations. The `toDate` prop on `react-day-picker` is the standard way to disable dates after a given date — it greys them out and prevents selection.
 
