@@ -148,20 +148,49 @@ export function useOrganizationAnalytics() {
     staleTime: 5 * 60 * 1000,
   });
 
-  // Fetch daily sales summary for revenue
+  // Fetch sales data from live POS transaction items
   const { data: salesData, isLoading: salesLoading } = useQuery({
     queryKey: ['platform-analytics-sales'],
     queryFn: async () => {
-      // Get last 60 days of sales
       const sixtyDaysAgo = new Date();
       sixtyDaysAgo.setDate(sixtyDaysAgo.getDate() - 60);
+      const startDate = sixtyDaysAgo.toISOString().split('T')[0];
       
-      const { data, error } = await supabase
-        .from('phorest_daily_sales_summary')
-        .select('location_id, summary_date, total_revenue, service_revenue, product_revenue, average_ticket')
-        .gte('summary_date', sixtyDaysAgo.toISOString().split('T')[0]);
-      if (error) throw error;
-      return data || [];
+      const allData: any[] = [];
+      const pageSize = 1000;
+      let from = 0;
+      let hasMore = true;
+      while (hasMore) {
+        const { data, error } = await supabase
+          .from('phorest_transaction_items')
+          .select('location_id, transaction_date, total_amount, tax_amount, item_type')
+          .gte('transaction_date', startDate)
+          .range(from, from + pageSize - 1);
+        if (error) throw error;
+        allData.push(...(data || []));
+        hasMore = (data?.length || 0) === pageSize;
+        from += pageSize;
+      }
+
+      // Aggregate by location + date to produce summary-like rows
+      const byKey: Record<string, any> = {};
+      for (const item of allData) {
+        const date = (item.transaction_date || '').slice(0, 10);
+        const key = `${item.location_id || ''}|${date}`;
+        if (!byKey[key]) {
+          byKey[key] = { location_id: item.location_id, summary_date: date, total_revenue: 0, service_revenue: 0, product_revenue: 0, average_ticket: 0, _count: 0 };
+        }
+        const amount = (Number(item.total_amount) || 0) + (Number(item.tax_amount) || 0);
+        byKey[key].total_revenue += amount;
+        if (item.item_type === 'service') byKey[key].service_revenue += amount;
+        else byKey[key].product_revenue += amount;
+        byKey[key]._count += 1;
+      }
+      // Calculate average ticket
+      for (const row of Object.values(byKey)) {
+        row.average_ticket = row._count > 0 ? row.total_revenue / row._count : 0;
+      }
+      return Object.values(byKey);
     },
     staleTime: 5 * 60 * 1000,
   });

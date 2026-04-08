@@ -99,21 +99,28 @@ export function useRevenueByLevel() {
         .eq('organization_id', orgId!);
       const slugToId = new Map((levelRows || []).map(l => [l.slug, l.id]));
 
-      // Get appointment revenue for last 90 days
+      // Get revenue from live POS transaction items for last 90 days
       const ninetyDaysAgo = new Date();
       ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
       const dateStr = ninetyDaysAgo.toISOString().slice(0, 10);
 
       const userIds = staff.map(s => s.user_id);
-      const { data: appointments, error: apptErr } = await supabase
-        .from('appointments')
-        .select('staff_user_id, total_price, appointment_date')
-        .eq('organization_id', orgId!)
-        .gte('appointment_date', dateStr)
-        .in('staff_user_id', userIds)
-        .in('status', ['completed', 'checked_out']);
-
-      if (apptErr) throw apptErr;
+      const allTxnItems: any[] = [];
+      const pageSize = 1000;
+      let from = 0;
+      let hasMore = true;
+      while (hasMore) {
+        const { data, error: txErr } = await supabase
+          .from('phorest_transaction_items')
+          .select('stylist_user_id, total_amount, tax_amount, item_type, transaction_date')
+          .in('stylist_user_id', userIds)
+          .gte('transaction_date', dateStr)
+          .range(from, from + pageSize - 1);
+        if (txErr) throw txErr;
+        allTxnItems.push(...(data || []));
+        hasMore = (data?.length || 0) === pageSize;
+        from += pageSize;
+      }
 
       // Group revenue by level ID
       const staffLevelMap = new Map<string, string>();
@@ -124,17 +131,17 @@ export function useRevenueByLevel() {
 
       const levelRevenue = new Map<string, { total: number; userIds: Set<string> }>();
 
-      for (const appt of (appointments || [])) {
-        if (!appt.staff_user_id || !appt.total_price) continue;
-        const levelId = staffLevelMap.get(appt.staff_user_id);
+      for (const item of allTxnItems) {
+        if (!item.stylist_user_id) continue;
+        const levelId = staffLevelMap.get(item.stylist_user_id);
         if (!levelId) continue;
 
         if (!levelRevenue.has(levelId)) {
           levelRevenue.set(levelId, { total: 0, userIds: new Set() });
         }
         const entry = levelRevenue.get(levelId)!;
-        entry.total += appt.total_price;
-        entry.userIds.add(appt.staff_user_id);
+        entry.total += (Number(item.total_amount) || 0) + (Number(item.tax_amount) || 0);
+        entry.userIds.add(item.stylist_user_id);
       }
 
       // Also count stylists with 0 revenue
@@ -147,15 +154,16 @@ export function useRevenueByLevel() {
         }
       }
 
-      // Calculate actual month span from appointment date range
+      // Calculate actual month span from transaction date range
       let monthSpan = 3;
-      if (appointments && appointments.length > 0) {
+      if (allTxnItems.length > 0) {
         let minDate = '';
         let maxDate = '';
-        for (const a of appointments) {
-          if (!a.appointment_date) continue;
-          if (!minDate || a.appointment_date < minDate) minDate = a.appointment_date;
-          if (!maxDate || a.appointment_date > maxDate) maxDate = a.appointment_date;
+        for (const item of allTxnItems) {
+          const d = (item.transaction_date || '').slice(0, 10);
+          if (!d) continue;
+          if (!minDate || d < minDate) minDate = d;
+          if (!maxDate || d > maxDate) maxDate = d;
         }
         if (minDate && maxDate) {
           const startD = new Date(minDate);
