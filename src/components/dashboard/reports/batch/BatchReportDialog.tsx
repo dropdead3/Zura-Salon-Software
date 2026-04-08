@@ -95,7 +95,7 @@ export function BatchReportDialog({ open, onOpenChange, dateFrom, dateTo, locati
     if (configs.length === 0) return;
     await generate({ configs, dateFrom, dateTo, locationId, outputFormat });
     setSelectedIds(new Set());
-    setTimeout(() => onOpenChange(false), 600);
+    onOpenChange(false);
   };
 
   return (
