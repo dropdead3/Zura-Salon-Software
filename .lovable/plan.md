@@ -1,64 +1,63 @@
 
 
-# Fix Sales Overview Revenue Discrepancy
+# Plan Verification: Fix Walk-in Labels and Client Name Resolution
 
-## Root Cause (Three Issues)
+## Bugs and Issues Found
 
-### Issue 1: Tips included in "Scheduled Services Today"
-`originalExpected` sums `total_price` which includes `tip_amount` ($76 today). The card says "Excludes Tips" but the scheduled total doesn't exclude them. Should be $5,143, not $5,219.
+### Bug 1: Duplicate return statement (line 559-561)
+In `supabase/functions/sync-phorest-data/index.ts`, lines 559 and 561 both contain `return { total: allAppointments.length, synced };`. The second return is dead code. Not blocking, but the backfill code needs to be inserted **before** line 559 (before the first return), not between the two returns.
 
-### Issue 2: Completed-but-not-checked-out appointments treated as $0
-Phorest marks appointments "completed" when the service finishes, but POS checkout happens later. Today: 26 completed appointments, but only 2 clients have POS transactions ($257.31). The hook looks up POS data for completed clients — if no POS record exists yet, their revenue contribution is $0. This creates a $2,467 gap.
+### Bug 2: Gap analysis missing `'booked'` status — confirmed
+Line 112 of `useRevenueGapAnalysis.ts` filters with `.in('status', ['cancelled', 'no_show', 'completed', 'confirmed', 'pending', 'arrived', 'started'])`. The `'booked'` status is missing. Since the sync function maps most Phorest `ACTIVE` appointments to `'booked'` (then upgrades past ones to `'completed'`), any future-time booked appointments today are excluded from the gap analysis entirely.
 
-### Issue 3: "Still expected to collect" only shows booked/pending
-`pendingExpectedRevenue` only counts appointments with status `booked/confirmed/arrived/started/pending/in_progress`. The 24 completed-without-checkout appointments fall through the cracks — they're "resolved" (so not pending) but have no POS data (so contribute ~$0 to actuals).
+### Bug 3: `is_walk_in` column does not exist yet
+The plan correctly calls for adding it, but the migration must also update the `v_all_appointments` view to expose it. The current view (migration `20260408170436`) does not include this column. The plan accounts for this but worth confirming: the view must be `DROP`ped and recreated since Postgres doesn't allow `ALTER VIEW` to add columns.
 
-## Fix Plan
+### Bug 4: `useScheduledRevenue` does NOT subtract tips
+The `useScheduledRevenue` hook (line 37) sums `expected_price || total_price` without subtracting `tip_amount`. This feeds `todayExpectedDisplay` (line 387 of AggregateSalesCard), which is the "Scheduled Services Today" number. The previous fix in `useAdjustedExpectedRevenue` correctly subtracts tips for `originalExpected`, but `scheduledRevenue` (used for past ranges and as fallback) still includes tips. The plan should address this for consistency.
 
-### File: `src/hooks/useAdjustedExpectedRevenue.ts`
+### Inconsistency 1: `originalExpected` vs `scheduledRevenue` divergence
+`todayExpectedDisplay` (line 387) uses `adjustedExpected?.originalExpected ?? scheduledRevenue`. After the tip fix, `originalExpected` excludes tips but `scheduledRevenue` still includes them. When `adjustedExpected` is null (loading state), the fallback shows the wrong number.
 
-**Change 1: Subtract tips from originalExpected**
-Line 65: Change from summing `total_price` to summing `total_price - tip_amount`.
+## Gap: View doesn't join `phorest_clients` for name resolution
+The plan proposes adding a `COALESCE` join to `v_all_appointments` to resolve names from `phorest_clients`. This is the right approach for immediate resolution, but note: the `phorest_clients` table uses `phorest_client_id` as a text column, not a UUID FK. The LEFT JOIN must use `pa.phorest_client_id = pc.phorest_client_id` (string match). No schema issue, just confirming the join key.
 
-**Change 2: Add a "completed but not checked out" category**
-After fetching POS data for completed appointments, compare each completed appointment's scheduled price against whether POS data was found for that client. If a completed appointment's client has no POS transactions, count its scheduled price as "awaiting checkout" revenue rather than $0.
+## Revised Plan
 
-Add new fields to `AdjustedExpectedResult`:
-- `awaitingCheckoutCount: number`
-- `awaitingCheckoutRevenue: number`
+### 1. Database Migration
+- Add `is_walk_in BOOLEAN DEFAULT false` to `phorest_appointments`
+- Recreate `v_all_appointments` with:
+  - `COALESCE(pa.client_name, pc.name, NULLIF(TRIM(pc.first_name || ' ' || pc.last_name), ''))` as `client_name`
+  - LEFT JOIN to `phorest_clients` on `phorest_client_id`
+  - Expose `is_walk_in` column
 
-**Change 3: Include awaiting-checkout in adjusted expected**
-```
-adjustedExpected = completedActualRevenue + awaitingCheckoutRevenue + pendingExpectedRevenue
-```
+### 2. Edge Function: Backfill client names post-sync
+**File**: `supabase/functions/sync-phorest-data/index.ts`
+- Insert backfill step **before line 559** (before the first return, remove the duplicate return on 561)
+- Query `phorest_appointments` with null `client_name` + non-null `phorest_client_id`
+- Batch-join against `phorest_clients` to resolve names
+- Update `phorest_appointments.client_name` in bulk
+- Set `is_walk_in = true` where `phorest_client_id IS NULL`
 
-**Change 4: Subtract tips from pending/completed scheduled sums**
-All intermediate sums (`pendingScheduledRevenue`, `completedScheduledRevenue`) should use `total_price - tip_amount`.
+### 3. Add `'booked'` to gap analysis status filter
+**File**: `src/hooks/useRevenueGapAnalysis.ts` (line 112)
+- Add `'booked'` to the `.in('status', [...])` array
 
-### File: `src/components/dashboard/AggregateSalesCard.tsx`
+### 4. Fix `useScheduledRevenue` tip inclusion
+**File**: `src/hooks/useRevenueGapAnalysis.ts` (line 23-37)
+- Fetch `tip_amount` alongside `total_price` and `expected_price`
+- Subtract `tip_amount` from the sum for consistency with `originalExpected`
 
-**Change 5: Update "still expected to collect"**
-`remainingExpected` should include both pending appointments AND awaiting-checkout appointments:
-```
-remainingExpected = pendingExpectedRevenue + awaitingCheckoutRevenue
-```
-
-**Change 6: Update appointment completion fraction**
-Add awaiting-checkout context: e.g., "26 of 42 completed · 16 pending · 24 awaiting checkout"
-
-## Expected Result After Fix
-
-| Metric | Before | After |
-|--------|--------|-------|
-| Scheduled Services Today | $5,219 (inc tips) | $5,143 (ex tips) |
-| Still expected to collect | $2,495 (pending only) | ~$4,886 (pending + awaiting checkout) |
-| Projected finish | $2,752 | $5,143 (realistic) |
+### 5. Remove duplicate return statement
+**File**: `supabase/functions/sync-phorest-data/index.ts` (line 561)
+- Delete the dead `return` on line 561
 
 ## Summary
 
 | Type | Count |
 |------|-------|
-| Modified files | 2 |
-| New fields added | 2 (`awaitingCheckoutCount`, `awaitingCheckoutRevenue`) |
-| Root causes fixed | 3 (tips inclusion, checkout gap, pending-only scope) |
+| Migration | 1 (add column + recreate view with client name join) |
+| Modified files | 2 (`sync-phorest-data/index.ts`, `useRevenueGapAnalysis.ts`) |
+| Bugs found | 4 (duplicate return, missing booked status, no is_walk_in column, tips in scheduledRevenue) |
+| Inconsistencies | 1 (originalExpected vs scheduledRevenue tip handling) |
 
