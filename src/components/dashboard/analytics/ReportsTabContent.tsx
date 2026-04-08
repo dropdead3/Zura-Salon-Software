@@ -97,9 +97,11 @@ const financialReports = [
 
 interface ReportsTabContentProps {
   filters: AnalyticsFilters;
+  /** When true, hides the back-to-analytics link logic since we're a standalone page */
+  isStandalone?: boolean;
 }
 
-export function ReportsTabContent({ filters }: ReportsTabContentProps) {
+export function ReportsTabContent({ filters, isStandalone }: ReportsTabContentProps) {
   const { hasPermission } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
   const [activeCategory, setActiveCategory] = useState('sales');
