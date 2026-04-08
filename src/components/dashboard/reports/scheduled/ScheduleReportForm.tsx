@@ -40,8 +40,7 @@ interface StaffOption {
 const FREQUENCIES = [
   { value: 'daily', label: 'Daily' },
   { value: 'weekly', label: 'Weekly' },
-  { value: 'monthly', label: 'Monthly (1st)' },
-  { value: 'first_of_month', label: '1st of Month' },
+  { value: 'first_of_month', label: 'Monthly (1st)' },
   { value: 'last_of_month', label: 'End of Month' },
 ];
 

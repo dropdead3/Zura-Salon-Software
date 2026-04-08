@@ -369,8 +369,8 @@ export function useBatchReportGenerator() {
               headStyles: { fillColor: [41, 41, 41], textColor: [255, 255, 255], fontSize: 8 },
             });
           }
-          addReportFooter(mergedDoc, orgName);
         }
+        addReportFooter(mergedDoc, orgName);
 
         setProgress(95);
         setProgressLabel('Assembling PDF...');
