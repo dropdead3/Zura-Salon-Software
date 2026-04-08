@@ -182,7 +182,7 @@ export function useCapacityUtilization(period: CapacityPeriod, locationId?: stri
       // Fetch appointments
       let query = supabase
         .from('phorest_appointments')
-        .select('id, appointment_date, total_price, status, service_name, start_time, end_time')
+        .select('id, appointment_date, total_price, tip_amount, status, service_name, start_time, end_time')
         .gte('appointment_date', startDate)
         .lte('appointment_date', endDate)
         .not('status', 'in', '("cancelled","no_show")');
@@ -241,7 +241,7 @@ export function useCapacityUtilization(period: CapacityPeriod, locationId?: stri
         if (!byDate[dateKey]) return;
 
         const duration = getAppointmentDuration(apt.start_time, apt.end_time);
-        const price = Number(apt.total_price) || 0;
+        const price = (Number(apt.total_price) || 0) - (Number((apt as any).tip_amount) || 0);
         const category = getServiceCategory(apt.service_name);
 
         byDate[dateKey].bookedHours += duration;

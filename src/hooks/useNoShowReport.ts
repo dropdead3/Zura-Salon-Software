@@ -27,7 +27,7 @@ export function useNoShowReport(dateFrom: string, dateTo: string, locationId?: s
     queryFn: async (): Promise<NoShowData> => {
       let query = supabase
         .from('phorest_appointments')
-        .select('id, appointment_date, status, total_price')
+        .select('id, appointment_date, status, total_price, tip_amount')
         .gte('appointment_date', dateFrom)
         .lte('appointment_date', dateTo);
 
@@ -58,7 +58,7 @@ export function useNoShowReport(dateFrom: string, dateTo: string, locationId?: s
       // Calculate revenue lost from no-shows
       const revenueLost = appointments
         .filter(a => a.status?.toLowerCase() === 'no_show' || a.status?.toLowerCase() === 'no-show')
-        .reduce((sum, a) => sum + (Number(a.total_price) || 0), 0);
+        .reduce((sum, a) => sum + ((Number(a.total_price) || 0) - (Number(a.tip_amount) || 0)), 0);
 
       // Group by day of week
       const byDay: Record<number, { total: number; noShows: number }> = {};

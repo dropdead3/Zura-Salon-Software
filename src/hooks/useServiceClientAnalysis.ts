@@ -64,7 +64,8 @@ export function useServiceClientAnalysis(
       if (a.is_new_client) existing.newClient += 1;
       if (a.rebooked_at_checkout) existing.rebooked += 1;
       existing.totalTips += Number(a.tip_amount) || 0;
-      existing.totalPrice += Number(a.total_price) || 0;
+      // Use tip-adjusted price for accurate service revenue
+      existing.totalPrice += (Number(a.total_price) || 0) - (Number(a.tip_amount) || 0);
 
       // Stylist rebook tracking
       const staffId = a.phorest_staff_id || 'unknown';

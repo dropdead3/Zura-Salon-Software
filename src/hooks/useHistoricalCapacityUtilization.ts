@@ -138,7 +138,7 @@ export function useHistoricalCapacityUtilization(
     queryFn: async () => {
       let query = supabase
         .from('phorest_appointments')
-        .select('appointment_date, start_time, end_time, total_price, service_name, location_id, status')
+        .select('appointment_date, start_time, end_time, total_price, tip_amount, service_name, location_id, status')
         .gte('appointment_date', startDateStr)
         .lte('appointment_date', endDateStr)
         .not('status', 'in', '("cancelled","no_show")')
@@ -241,7 +241,7 @@ export function useHistoricalCapacityUtilization(
         if (durationHours <= 0) durationHours = 1;
       }
 
-      const revenue = Number(apt.total_price) || 0;
+      const revenue = (Number(apt.total_price) || 0) - (Number(apt.tip_amount) || 0);
 
       dayData.bookedHours += durationHours;
       dayData.appointmentCount += 1;

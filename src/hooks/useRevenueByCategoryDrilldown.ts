@@ -38,24 +38,62 @@ export function useRevenueByCategoryDrilldown({
   return useQuery({
     queryKey: ['revenue-by-category-drilldown', dateFrom, dateTo, locationId || 'all'],
     queryFn: async (): Promise<CategoryBreakdownData[]> => {
-      // Fetch appointments with service info, staff, and client new/returning status
-      let query = supabase
-        .from('phorest_appointments')
-        .select('service_name, total_price, phorest_staff_id, is_new_client, client_name')
-        .gte('appointment_date', dateFrom)
-        .lte('appointment_date', dateTo)
-        .not('status', 'in', '("cancelled","no_show")')
-        .not('total_price', 'is', null);
+      // Fetch transaction items for accurate POS revenue
+      const allItems: any[] = [];
+      const PAGE_SIZE = 1000;
+      let offset = 0;
+      let hasMore = true;
 
-      if (locationId && locationId !== 'all') {
-        query = query.eq('location_id', locationId);
+      while (hasMore) {
+        let query = supabase
+          .from('phorest_transaction_items')
+          .select('item_name, item_type, total_amount, tax_amount, phorest_staff_id, phorest_client_id, transaction_date')
+          .gte('transaction_date', dateFrom)
+          .lte('transaction_date', dateTo)
+          .range(offset, offset + PAGE_SIZE - 1);
+
+        if (locationId && locationId !== 'all') {
+          query = query.eq('location_id', locationId);
+        }
+
+        const { data, error } = await query;
+        if (error) throw error;
+        allItems.push(...(data || []));
+        hasMore = (data?.length || 0) === PAGE_SIZE;
+        offset += PAGE_SIZE;
       }
 
-      const { data: appointments, error } = await query;
-      if (error) throw error;
+      // Also fetch appointment new/returning status for client classification
+      const clientNewMap = new Map<string, boolean>();
+      {
+        let aptOffset = 0;
+        let aptHasMore = true;
+        while (aptHasMore) {
+          let aptQuery = supabase
+            .from('phorest_appointments')
+            .select('phorest_client_id, is_new_client')
+            .gte('appointment_date', dateFrom)
+            .lte('appointment_date', dateTo)
+            .not('status', 'in', '("cancelled","no_show")')
+            .range(aptOffset, aptOffset + PAGE_SIZE - 1);
+
+          if (locationId && locationId !== 'all') {
+            aptQuery = aptQuery.eq('location_id', locationId);
+          }
+
+          const { data: aptData } = await aptQuery;
+          (aptData || []).forEach((a: any) => {
+            if (a.phorest_client_id && !clientNewMap.has(a.phorest_client_id)) {
+              clientNewMap.set(a.phorest_client_id, a.is_new_client === true);
+            }
+          });
+          aptHasMore = (aptData?.length || 0) === PAGE_SIZE;
+          aptOffset += PAGE_SIZE;
+        }
+      }
 
       // Get staff name mappings
-      const staffIds = [...new Set((appointments || []).map(a => a.phorest_staff_id).filter(Boolean))];
+      const staffIds = [...new Set(allItems.map(a => a.phorest_staff_id).filter(Boolean))];
       const staffNameMap: Record<string, string> = {};
 
       if (staffIds.length > 0) {
@@ -85,19 +123,21 @@ export function useRevenueByCategoryDrilldown({
 
       let totalRevenue = 0;
 
-      (appointments || []).forEach(apt => {
-        const category = getServiceCategory(apt.service_name);
-        const price = Number(apt.total_price) || 0;
-        const staffId = apt.phorest_staff_id || 'unknown';
-        const clientKey = apt.client_name || 'walk-in';
-        const isNew = apt.is_new_client === true;
+      allItems.forEach(item => {
+        const category = item.item_type === 'service'
+          ? getServiceCategory(item.item_name)
+          : (item.item_type === 'product' ? 'Retail' : 'Other');
+        const amount = (Number(item.total_amount) || 0) + (Number(item.tax_amount) || 0);
+        const staffId = item.phorest_staff_id || 'unknown';
+        const clientKey = item.phorest_client_id || 'walk-in';
+        const isNew = clientNewMap.get(clientKey) === true;
 
-        totalRevenue += price;
+        totalRevenue += amount;
 
         if (!categoryMap[category]) {
           categoryMap[category] = { revenue: 0, count: 0, stylists: {} };
         }
-        categoryMap[category].revenue += price;
+        categoryMap[category].revenue += amount;
         categoryMap[category].count += 1;
 
         if (!categoryMap[category].stylists[staffId]) {
@@ -110,7 +150,7 @@ export function useRevenueByCategoryDrilldown({
           };
         }
         const s = categoryMap[category].stylists[staffId];
-        s.revenue += price;
+        s.revenue += amount;
         s.count += 1;
         s.allClients.add(clientKey);
         if (isNew) {

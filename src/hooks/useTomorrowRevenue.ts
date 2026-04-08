@@ -10,9 +10,10 @@ export function useTomorrowRevenue(locationId?: string) {
   return useQuery({
     queryKey: ['tomorrow-revenue', tomorrowStr, locationId ?? 'all'],
     queryFn: async () => {
+      // Future-dated: use appointments with tip-adjusted price
       let query = supabase
         .from('phorest_appointments')
-        .select('total_price, status')
+        .select('total_price, tip_amount, status')
         .eq('appointment_date', tomorrowStr)
         .not('status', 'in', '("cancelled","no_show")');
 
@@ -26,12 +27,11 @@ export function useTomorrowRevenue(locationId?: string) {
       }
 
       const { data, error } = await query;
-
       if (error) throw error;
 
       const appointments = data || [];
       const totalRevenue = appointments.reduce(
-        (sum, apt) => sum + (Number(apt.total_price) || 0), 
+        (sum, apt) => sum + ((Number(apt.total_price) || 0) - (Number(apt.tip_amount) || 0)),
         0
       );
 

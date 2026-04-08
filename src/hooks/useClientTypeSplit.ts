@@ -51,7 +51,7 @@ export function useClientTypeSplit({ dateFrom, dateTo, locationId, enabled = tru
       // Step 2: Get appointment data for new/returning classification + revenue
       let aptQuery = supabase
         .from('phorest_appointments')
-        .select('phorest_client_id, is_new_client, total_price, rebooked_at_checkout, appointment_date')
+        .select('phorest_client_id, is_new_client, total_price, tip_amount, rebooked_at_checkout, appointment_date')
         .gte('appointment_date', dateFrom)
         .lte('appointment_date', dateTo)
         .not('status', 'in', '("cancelled","no_show")')
@@ -74,10 +74,10 @@ export function useClientTypeSplit({ dateFrom, dateTo, locationId, enabled = tru
         const visitKey = `${clientId}|${apt.appointment_date}`;
         const existing = visitMap.get(visitKey);
         if (existing) {
-          existing.revenue += Number(apt.total_price) || 0;
+          existing.revenue += (Number(apt.total_price) || 0) - (Number(apt.tip_amount) || 0);
         } else {
           visitMap.set(visitKey, {
-            revenue: Number(apt.total_price) || 0,
+            revenue: (Number(apt.total_price) || 0) - (Number(apt.tip_amount) || 0),
             isNew: apt.is_new_client === true,
             rebooked: apt.rebooked_at_checkout === true,
           });

@@ -1,6 +1,7 @@
 /**
  * useStylistIncomeForecast — Calculates booked revenue and estimated earnings
  * for the current week, scoped to the authenticated stylist.
+ * Uses tip-adjusted pricing (total_price - tip_amount) for forecast accuracy.
  */
 
 import { useQuery } from '@tanstack/react-query';
@@ -36,10 +37,10 @@ export function useStylistIncomeForecast() {
       const startStr = format(weekStart, 'yyyy-MM-dd');
       const endStr = format(weekEnd, 'yyyy-MM-dd');
 
-      // Fetch this week's appointments for the stylist
+      // Fetch this week's appointments for the stylist (tip-adjusted)
       const { data: appointments, error: aptError } = await supabase
         .from('phorest_appointments')
-        .select('total_price, status')
+        .select('total_price, tip_amount, status')
         .eq('stylist_user_id', userId)
         .gte('appointment_date', startStr)
         .lte('appointment_date', endStr)
@@ -49,7 +50,8 @@ export function useStylistIncomeForecast() {
       if (aptError) throw aptError;
 
       const bookedRevenue = (appointments || []).reduce(
-        (sum, a) => sum + (a.total_price || 0), 0,
+        (sum, a) => sum + ((Number(a.total_price) || 0) - (Number(a.tip_amount) || 0)),
+        0,
       );
       const appointmentCount = appointments?.length || 0;
 

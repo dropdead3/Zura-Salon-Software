@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { getServiceCategory } from '@/utils/serviceCategorization';
+import { formatDisplayName } from '@/lib/utils';
 
 export interface StylistCategoryBreakdown {
   category: string;
@@ -29,23 +30,33 @@ export function useAvgTicketByStylist({ dateFrom, dateTo, locationId, enabled = 
   return useQuery({
     queryKey: ['avg-ticket-by-stylist', dateFrom, dateTo, locationId || 'all'],
     queryFn: async (): Promise<StylistTicketData[]> => {
-      let query = supabase
-        .from('phorest_appointments')
-        .select('phorest_staff_id, total_price, service_name')
-        .gte('appointment_date', dateFrom)
-        .lte('appointment_date', dateTo)
-        .not('status', 'in', '("cancelled","no_show")')
-        .not('total_price', 'is', null);
+      // Fetch transaction items for accurate POS revenue
+      const allItems: any[] = [];
+      const PAGE_SIZE = 1000;
+      let offset = 0;
+      let hasMore = true;
 
-      if (locationId && locationId !== 'all') {
-        query = query.eq('location_id', locationId);
+      while (hasMore) {
+        let query = supabase
+          .from('phorest_transaction_items')
+          .select('phorest_staff_id, total_amount, tax_amount, item_name, item_type, phorest_client_id, transaction_date')
+          .gte('transaction_date', dateFrom)
+          .lte('transaction_date', dateTo)
+          .range(offset, offset + PAGE_SIZE - 1);
+
+        if (locationId && locationId !== 'all') {
+          query = query.eq('location_id', locationId);
+        }
+
+        const { data, error } = await query;
+        if (error) throw error;
+        allItems.push(...(data || []));
+        hasMore = (data?.length || 0) === PAGE_SIZE;
+        offset += PAGE_SIZE;
       }
 
-      const { data: appointments, error } = await query;
-      if (error) throw error;
-
       // Staff name lookup
-      const staffIds = [...new Set((appointments || []).map(a => a.phorest_staff_id).filter(Boolean))];
+      const staffIds = [...new Set(allItems.map(a => a.phorest_staff_id).filter(Boolean))];
       const staffNameMap: Record<string, string> = {};
 
       if (staffIds.length > 0) {
@@ -59,47 +70,57 @@ export function useAvgTicketByStylist({ dateFrom, dateTo, locationId, enabled = 
         });
       }
 
-      // Aggregate by stylist → category
+      // Aggregate by stylist → category, using unique client visits for avg ticket
       const stylistMap: Record<string, {
         revenue: number;
         count: number;
+        clientVisits: Set<string>;
         categories: Record<string, { revenue: number; count: number }>;
       }> = {};
 
-      (appointments || []).forEach(apt => {
-        const staffId = apt.phorest_staff_id || 'unknown';
-        const price = Number(apt.total_price) || 0;
-        const category = getServiceCategory(apt.service_name);
+      allItems.forEach(item => {
+        const staffId = item.phorest_staff_id || 'unknown';
+        const amount = (Number(item.total_amount) || 0) + (Number(item.tax_amount) || 0);
+        const category = item.item_type === 'service'
+          ? getServiceCategory(item.item_name)
+          : (item.item_type === 'product' ? 'Retail' : 'Other');
 
         if (!stylistMap[staffId]) {
-          stylistMap[staffId] = { revenue: 0, count: 0, categories: {} };
+          stylistMap[staffId] = { revenue: 0, count: 0, clientVisits: new Set(), categories: {} };
         }
-        stylistMap[staffId].revenue += price;
+        stylistMap[staffId].revenue += amount;
         stylistMap[staffId].count += 1;
+
+        // Track unique client visits for avg ticket denominator
+        const visitKey = `${item.phorest_client_id || 'walk-in'}|${item.transaction_date}`;
+        stylistMap[staffId].clientVisits.add(visitKey);
 
         if (!stylistMap[staffId].categories[category]) {
           stylistMap[staffId].categories[category] = { revenue: 0, count: 0 };
         }
-        stylistMap[staffId].categories[category].revenue += price;
+        stylistMap[staffId].categories[category].revenue += amount;
         stylistMap[staffId].categories[category].count += 1;
       });
 
       return Object.entries(stylistMap)
-        .map(([staffId, data]) => ({
-          phorestStaffId: staffId,
-          staffName: staffNameMap[staffId] || 'Unknown',
-          avgTicket: data.count > 0 ? data.revenue / data.count : 0,
-          totalRevenue: data.revenue,
-          transactionCount: data.count,
-          categories: Object.entries(data.categories)
-            .map(([category, c]) => ({
-              category,
-              revenue: c.revenue,
-              count: c.count,
-              sharePercent: data.revenue > 0 ? Math.round((c.revenue / data.revenue) * 100) : 0,
-            }))
-            .sort((a, b) => b.revenue - a.revenue),
-        }))
+        .map(([staffId, data]) => {
+          const visits = data.clientVisits.size || 1;
+          return {
+            phorestStaffId: staffId,
+            staffName: staffNameMap[staffId] || 'Unknown',
+            avgTicket: visits > 0 ? data.revenue / visits : 0,
+            totalRevenue: data.revenue,
+            transactionCount: data.count,
+            categories: Object.entries(data.categories)
+              .map(([category, c]) => ({
+                category,
+                revenue: c.revenue,
+                count: c.count,
+                sharePercent: data.revenue > 0 ? Math.round((c.revenue / data.revenue) * 100) : 0,
+              }))
+              .sort((a, b) => b.revenue - a.revenue),
+          };
+        })
         .sort((a, b) => b.avgTicket - a.avgTicket);
     },
     enabled: enabled && !!dateFrom && !!dateTo,

@@ -39,36 +39,45 @@ export function useStaffKPIReport(dateFrom: string, dateTo: string, locationId?:
         };
       });
 
-      // Get performance metrics
-      let metricsQuery = supabase
+      // Get performance metrics (for rebooking/retention KPIs)
+      const { data: metrics } = await supabase
         .from('phorest_performance_metrics')
         .select('phorest_staff_id, week_start, rebooking_rate, retention_rate, new_clients')
         .gte('week_start', dateFrom)
         .lte('week_start', dateTo);
 
-      const { data: metrics } = await metricsQuery;
+      // Get transaction items for accurate POS revenue
+      const allItems: any[] = [];
+      const PAGE_SIZE = 1000;
+      let offset = 0;
+      let hasMore = true;
 
-      // Get appointments for revenue
-      let appointmentsQuery = supabase
-        .from('phorest_appointments')
-        .select('phorest_staff_id, total_price, phorest_client_id, appointment_date')
-        .gte('appointment_date', dateFrom)
-        .lte('appointment_date', dateTo)
-        .not('total_price', 'is', null);
+      while (hasMore) {
+        let query = supabase
+          .from('phorest_transaction_items')
+          .select('phorest_staff_id, total_amount, tax_amount, phorest_client_id, transaction_date')
+          .gte('transaction_date', dateFrom)
+          .lte('transaction_date', dateTo)
+          .range(offset, offset + PAGE_SIZE - 1);
 
-      if (locationId) {
-        appointmentsQuery = appointmentsQuery.eq('location_id', locationId);
+        if (locationId) {
+          query = query.eq('location_id', locationId);
+        }
+
+        const { data, error } = await query;
+        if (error) throw error;
+        allItems.push(...(data || []));
+        hasMore = (data?.length || 0) === PAGE_SIZE;
+        offset += PAGE_SIZE;
       }
-
-      const { data: appointments } = await appointmentsQuery;
 
       // Aggregate by staff
       const staffData: Record<string, StaffKPI> = {};
       const staffVisitSets: Record<string, Set<string>> = {};
 
-      // Process appointments for revenue
-      appointments?.forEach(apt => {
-        const staffId = apt.phorest_staff_id;
+      // Process transaction items for revenue
+      allItems.forEach(item => {
+        const staffId = item.phorest_staff_id;
         if (!staffId) return;
 
         const mapping = mappingLookup[staffId];
@@ -88,10 +97,11 @@ export function useStaffKPIReport(dateFrom: string, dateTo: string, locationId?:
           staffVisitSets[mapping.userId] = new Set();
         }
 
-        staffData[mapping.userId].totalRevenue += Number(apt.total_price) || 0;
+        const amount = (Number(item.total_amount) || 0) + (Number(item.tax_amount) || 0);
+        staffData[mapping.userId].totalRevenue += amount;
         staffData[mapping.userId].totalServices += 1;
         // Track unique client visits
-        const visitKey = `${apt.phorest_client_id}|${(apt as any).appointment_date}`;
+        const visitKey = `${item.phorest_client_id}|${item.transaction_date}`;
         staffVisitSets[mapping.userId].add(visitKey);
       });
 

@@ -143,7 +143,7 @@ export function useServiceEfficiency(
 
     for (const a of appointments) {
       if (!a.service_name) continue;
-      const rev = Number(a.total_price) || 0;
+      const rev = (Number(a.total_price) || 0) - (Number(a.tip_amount) || 0);
       
       // Calculate duration from start/end time or catalog
       let durationMin = 0;
