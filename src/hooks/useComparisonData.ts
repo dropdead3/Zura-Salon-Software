@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { format, subYears, startOfYear, endOfYear, startOfMonth, endOfMonth, subMonths, startOfWeek, endOfWeek, subWeeks } from 'date-fns';
+import { fetchAllBatched } from '@/utils/fetchAllBatched';
 
 export type CompareMode = 'time' | 'location' | 'category' | 'yoy';
 
@@ -249,34 +250,36 @@ export function useComparisonData(params: ComparisonParams) {
 
       // Category breakdown for category mode
       if (mode === 'category') {
-        // Fetch category data for both periods
-        let catQueryA = supabase
-          .from('phorest_sales_transactions')
-          .select('item_category, total_amount')
-          .gte('transaction_date', periodA.dateFrom)
-          .lte('transaction_date', periodA.dateTo);
-
-        let catQueryB = supabase
-          .from('phorest_sales_transactions')
-          .select('item_category, total_amount')
-          .gte('transaction_date', periodB.dateFrom)
-          .lte('transaction_date', periodB.dateTo);
-
-        const [{ data: catDataA }, { data: catDataB }] = await Promise.all([
-          catQueryA,
-          catQueryB,
+        // Fetch category data for both periods with pagination
+        const [catDataA, catDataB] = await Promise.all([
+          fetchAllBatched<any>((from, to) =>
+            supabase
+              .from('phorest_sales_transactions')
+              .select('item_category, total_amount')
+              .gte('transaction_date', periodA.dateFrom)
+              .lte('transaction_date', periodA.dateTo)
+              .range(from, to)
+          ),
+          fetchAllBatched<any>((from, to) =>
+            supabase
+              .from('phorest_sales_transactions')
+              .select('item_category, total_amount')
+              .gte('transaction_date', periodB.dateFrom)
+              .lte('transaction_date', periodB.dateTo)
+              .range(from, to)
+          ),
         ]);
 
         // Aggregate by category for both periods
         const catAggA: Record<string, number> = {};
         const catAggB: Record<string, number> = {};
 
-        (catDataA || []).forEach(row => {
+        catDataA.forEach(row => {
           const cat = row.item_category || 'Uncategorized';
           catAggA[cat] = (catAggA[cat] || 0) + (Number(row.total_amount) || 0);
         });
 
-        (catDataB || []).forEach(row => {
+        catDataB.forEach(row => {
           const cat = row.item_category || 'Uncategorized';
           catAggB[cat] = (catAggB[cat] || 0) + (Number(row.total_amount) || 0);
         });

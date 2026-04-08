@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useActiveLocations } from './useLocations';
 import { subDays, addDays, format } from 'date-fns';
+import { fetchAllBatched } from '@/utils/fetchAllBatched';
 
 interface LocationForecast {
   locationId: string;
@@ -68,17 +69,24 @@ export function useHiringForecast() {
         : { data: [] };
 
       // Fetch appointment counts for growth calculation - use location_id
-      const { data: recentAppointments } = await supabase
-        .from('phorest_appointments')
-        .select('location_id, start_time')
-        .gte('start_time', format(thirtyDaysAgo, 'yyyy-MM-dd'))
-        .lt('start_time', format(today, 'yyyy-MM-dd'));
-
-      const { data: priorAppointments } = await supabase
-        .from('phorest_appointments')
-        .select('location_id, start_time')
-        .gte('start_time', format(sixtyDaysAgo, 'yyyy-MM-dd'))
-        .lt('start_time', format(thirtyDaysAgo, 'yyyy-MM-dd'));
+      const [recentAppointments, priorAppointments] = await Promise.all([
+        fetchAllBatched<any>((from, to) =>
+          supabase
+            .from('phorest_appointments')
+            .select('location_id, start_time')
+            .gte('start_time', format(thirtyDaysAgo, 'yyyy-MM-dd'))
+            .lt('start_time', format(today, 'yyyy-MM-dd'))
+            .range(from, to)
+        ),
+        fetchAllBatched<any>((from, to) =>
+          supabase
+            .from('phorest_appointments')
+            .select('location_id, start_time')
+            .gte('start_time', format(sixtyDaysAgo, 'yyyy-MM-dd'))
+            .lt('start_time', format(thirtyDaysAgo, 'yyyy-MM-dd'))
+            .range(from, to)
+        ),
+      ]);
 
       // Fetch current staff counts
       const { data: employees } = await supabase
@@ -123,13 +131,13 @@ export function useHiringForecast() {
         }).filter(d => d.role !== 'unknown');
 
         // Calculate appointment growth rate - use location_id instead of branch_id
-        const recentCount = recentAppointments?.filter(a => 
+        const recentCount = recentAppointments.filter(a => 
           a.location_id === loc.id
-        ).length || 0;
+        ).length;
         
-        const priorCount = priorAppointments?.filter(a => 
+        const priorCount = priorAppointments.filter(a => 
           a.location_id === loc.id
-        ).length || 0;
+        ).length;
 
         const growthRate = priorCount > 0 
           ? ((recentCount - priorCount) / priorCount) * 100 

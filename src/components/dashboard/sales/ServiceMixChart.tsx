@@ -8,6 +8,7 @@ import { format, subDays } from 'date-fns';
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { useServiceCategoryColorsMap } from '@/hooks/useServiceCategoryColors';
+import { fetchAllBatched } from '@/utils/fetchAllBatched';
 
 const FALLBACK_COLOR = '#888888';
 
@@ -32,19 +33,20 @@ export function ServiceMixChart({ userId, days = 30 }: ServiceMixChartProps) {
   const { data, isLoading } = useQuery({
     queryKey: ['stylist-service-mix', userId, days],
     queryFn: async () => {
-      const { data: transactions, error } = await supabase
-        .from('phorest_sales_transactions')
-        .select('item_name, item_category, item_type, total_amount')
-        .eq('stylist_user_id', userId)
-        .eq('item_type', 'service')
-        .gte('transaction_date', startDate);
-
-      if (error) throw error;
+      const transactions = await fetchAllBatched<any>((from, to) =>
+        supabase
+          .from('phorest_sales_transactions')
+          .select('item_name, item_category, item_type, total_amount')
+          .eq('stylist_user_id', userId)
+          .eq('item_type', 'service')
+          .gte('transaction_date', startDate)
+          .range(from, to)
+      );
 
       // Aggregate by category
       const categoryMap: Record<string, { count: number; revenue: number }> = {};
       
-      transactions?.forEach(tx => {
+      transactions.forEach(tx => {
         const category = tx.item_category || 'Other';
         if (!categoryMap[category]) {
           categoryMap[category] = { count: 0, revenue: 0 };

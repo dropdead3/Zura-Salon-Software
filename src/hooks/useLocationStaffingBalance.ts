@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { format, addDays } from 'date-fns';
+import { fetchAllBatched } from '@/utils/fetchAllBatched';
 
 // ── Thresholds ──
 const UNDERSTAFFED_THRESHOLD = 85; // utilization > 85% → demand exceeds capacity
@@ -109,14 +110,15 @@ export function useLocationStaffingBalance(dateRange: DateRange = '30days'): Loc
   const appointmentsQuery = useQuery({
     queryKey: ['location-staffing-balance-appointments', startStr, endStr],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('phorest_appointments')
-        .select('location_id, appointment_date, start_time, end_time')
-        .gte('appointment_date', startStr)
-        .lte('appointment_date', endStr)
-        .not('status', 'in', '("cancelled","no_show")');
-      if (error) throw error;
-      return data || [];
+      return fetchAllBatched<any>((from, to) =>
+        supabase
+          .from('phorest_appointments')
+          .select('location_id, appointment_date, start_time, end_time')
+          .gte('appointment_date', startStr)
+          .lte('appointment_date', endStr)
+          .not('status', 'in', '("cancelled","no_show")')
+          .range(from, to)
+      );
     },
   });
 
