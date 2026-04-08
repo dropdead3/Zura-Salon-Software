@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { tokens } from '@/lib/design-tokens';
+import { ScheduleReportForm } from './ScheduleReportForm';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -58,6 +59,8 @@ export function ScheduledReportsManager({ onScheduleNew }: ScheduledReportsManag
   
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [historyId, setHistoryId] = useState<string | null>(null);
+  const [editFormOpen, setEditFormOpen] = useState(false);
+  const [editingReport, setEditingReport] = useState<any>(null);
 
   const handleToggleActive = (id: string, currentlyActive: boolean) => {
     updateReport.mutate({ id, is_active: !currentlyActive });
