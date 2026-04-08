@@ -10,6 +10,17 @@ import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { buildTimeOffSet, isUserOffOnDate } from '@/lib/time-off-utils';
 import { subDays, format } from 'date-fns';
 
+export interface PeerVelocity {
+  revenueVelocity: number;
+  retailVelocity: number;
+  rebookVelocity: number;
+  retentionVelocity: number;
+  ticketVelocity: number;
+  utilizationVelocity: number;
+  revPerHourVelocity: number;
+  newClientsVelocity: number;
+}
+
 export interface PeerAverages {
   avgRevenue: number;
   avgRetailPct: number;
@@ -20,6 +31,8 @@ export interface PeerAverages {
   avgRevPerHour: number;
   avgNewClients: number;
   peerCount: number;
+  /** Peer velocity: avg change per day across peers (current - prior window) */
+  velocity: PeerVelocity | null;
 }
 
 export function useStylistPeerAverages(
