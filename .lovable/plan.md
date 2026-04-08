@@ -1,84 +1,63 @@
 
 
-# Pre-Tax / Tax-Inclusive Revenue Toggle
+# Fix: Revenue Breakdown Doesn't Add Up — Missing Item Types
 
-## Approach
+## Root Cause
 
-Rather than refactoring 40+ files to change their revenue formulas, we'll create a **Revenue Display Context** that wraps all revenue values at the display layer — similar to how `HideNumbersContext` wraps values for privacy. Revenue hooks continue computing tax-inclusive totals (the POS source of truth), and the context subtracts tax when pre-tax mode is active.
+The database has **6 distinct `item_type` values**, but the Services/Retail tiles only account for 2:
 
-## Architecture
+| item_type | Total Revenue | Currently Counted In |
+|---|---|---|
+| `service` | $3,151.00 (today) | Services tile ✓ |
+| `product` | $168.95 (today) | Retail tile ✓ |
+| `sale_fee` (Vish charges) | $120.75 (today) | **Hero only — invisible to tiles** |
+| `special_offer_item` | — | **Hero only — invisible to tiles** |
+| `appointment_deposit` | — | **Hero only — invisible to tiles** |
+| `outstanding_balance_pmt` | — | **Hero only — invisible to tiles** |
 
-```text
-┌──────────────────────────────────────────┐
-│  site_settings: 'revenue_display_mode'   │
-│  { mode: 'inclusive' | 'exclusive' }     │
-└──────────────┬───────────────────────────┘
-               │
-┌──────────────▼───────────────────────────┐
-│  RevenueDisplayContext (React Context)   │
-│  - revenueMode: 'inclusive' | 'exclusive'│
-│  - toggleRevenueMode()                   │
-│  - adjustRevenue(gross, tax) → display   │
-└──────────────┬───────────────────────────┘
-               │
-   Used by AggregateSalesCard, KPI tiles,
-   Staff Reports, Comparison cards, etc.
-```
+The **hero** (via `useActualRevenue`) uses an `if service → else everything else` pattern, so it correctly sums $3,440.70. But the **Retail tile** (via `useRetailBreakdown`) hardcodes `item_type IN ('product', 'Product', 'retail', 'Retail')`, missing 4 types worth **$4,806.79 historically**.
 
-## Implementation Plan
+## Fix Strategy
 
-### Task 1 — Create `RevenueDisplayContext`
-New file `src/contexts/RevenueDisplayContext.tsx`:
-- Reads org setting from `site_settings` key `revenue_display_mode` via `useSiteSettings`
-- Exposes `revenueMode`, `toggleRevenueMode()`, and `adjustRevenue(grossAmount, taxAmount)` helper
-- `adjustRevenue` returns `grossAmount - taxAmount` when mode is `'exclusive'`, otherwise returns `grossAmount`
-- Persists toggle via `useUpdateSiteSetting`
-- Provider wraps the dashboard (add to existing provider tree)
+Categorize the 6 item types properly:
 
-### Task 2 — Add toggle to Settings UI
-Add a "Revenue Display" toggle in the organization settings area:
-- Simple switch: "Show revenue as tax-inclusive" / "Show revenue pre-tax (excludes sales tax)"
-- Uses `toggleRevenueMode()` from context
+- **Service-adjacent** (add to Services tile): `sale_fee` (Vish chemical charges are service costs), `special_offer_item` (promotional service packages)
+- **Financial** (add as "Other" in Retail or separate): `appointment_deposit`, `outstanding_balance_pmt`
 
-### Task 3 — Update `useTaxSummary` to export tax amounts alongside revenue hooks
-Ensure the tax summary hook's data is accessible where needed. Most revenue hooks already query `tax_amount` — we just need to ensure the display components have both `gross` and `tax` values available to pass to `adjustRevenue()`.
+Since `sale_fee` items are Vish (color bar chemical pass-through charges billed to clients) and `special_offer_item` are promotional service bundles, they belong with Services revenue. Deposits and balance payments are financial items that should appear in the retail/other bucket so the total still reconciles.
 
-### Task 4 — Update key revenue display surfaces
-Apply `adjustRevenue()` in the highest-impact surfaces:
-- **AggregateSalesCard** — hero revenue display, service/product breakdowns
-- **Sales KPI tiles** — total revenue, service revenue, product revenue
-- **Individual Staff Report** — revenue KPIs
-- **Comparison cards** — period A/B revenue
-- **Transactions page** — summary stat
+## Implementation
 
-Each surface already has both `total_amount` and `tax_amount` available in their hooks. The change is wrapping the displayed value: `adjustRevenue(totalRevenue, totalTax)`.
+### Task 1 — Fix `useRetailBreakdown.ts` to include financial item types
+Add `sale_fee`, `special_offer_item`, `appointment_deposit`, `outstanding_balance_pmt` to the query filter. Categorize deposits and balance payments as an "Other" sub-category.
 
-### Task 5 — Update label dynamically
-Change the "Excludes Tips · Incl. Tax" label in AggregateSalesCard to reflect the current mode:
-- Inclusive: "Excludes Tips · Incl. Tax"
-- Exclusive: "Excludes Tips · Excl. Tax"
+Actually, the cleaner approach: **query all non-service items** instead of hardcoding product types. Change the filter from `IN ('product',...)` to `NOT IN ('service', 'Service', 'SERVICE')` — this future-proofs against new item types.
 
-Similarly update MetricInfoTooltip descriptions.
+### Task 2 — Fix `useActualRevenue.ts` and `useTodayActualRevenue.tsx` service categorization
+Currently `sale_fee` and `special_offer_item` are lumped into product revenue. Since `sale_fee` (Vish) and `special_offer_item` (promo bundles) are service-adjacent, update the categorization:
+- Service: `service`, `sale_fee`, `special_offer_item`
+- Product/Other: `product`, `appointment_deposit`, `outstanding_balance_pmt`, and any future unknowns
 
-## Key Design Decisions
+This ensures:
+- Hero total stays the same ($3,440.70) ✓
+- Services tile: $3,151.00 + $120.75 = $3,271.75 (Vish charges now included)
+- Retail tile: $168.95 (products only — deposits/balance pmts are negligible today)
+- Services + Retail = Hero total ✓
 
-- **No formula changes in hooks** — hooks continue computing tax-inclusive totals (POS truth). The context adjusts at display time only.
-- **Org-level persistence** — stored in `site_settings`, same pattern as other org preferences.
-- **Gradual rollout** — start with the 5 highest-impact surfaces. Lower-traffic surfaces can be updated incrementally.
-- **Default: inclusive** — matches current behavior. No breaking change for existing orgs.
+### Task 3 — Add "Fees & Deposits" sub-category to retail breakdown
+In `useRetailBreakdown.ts`, add categorization for `appointment_deposit` and `outstanding_balance_pmt` so they appear as a visible "Fees & Deposits" line in the retail breakdown, not silently absorbed.
 
-## Files
+### Task 4 — Update `RetailBreakdownData` interface and display
+Add `feesRevenue` / `feesCount` to the interface and display it in the retail breakdown expansion in `AggregateSalesCard.tsx`.
 
-| Action | File |
-|--------|------|
-| Create | `src/contexts/RevenueDisplayContext.tsx` |
-| Create | `src/hooks/useRevenueDisplayMode.ts` (thin hook wrapping context) |
-| Edit | `src/components/dashboard/AggregateSalesCard.tsx` (hero + label) |
-| Edit | `src/components/dashboard/reports/IndividualStaffReport.tsx` (KPIs) |
-| Edit | `src/components/dashboard/sales/compare/ComparisonResultsGrid.tsx` |
-| Edit | `src/pages/dashboard/Transactions.tsx` (summary stat) |
-| Edit | Settings UI (add toggle — exact file TBD based on settings layout) |
-| Edit | Provider tree (wrap dashboard with `RevenueDisplayProvider`) |
+## Files Changed
 
-No database changes — uses existing `site_settings` table.
+| File | Change |
+|---|---|
+| `src/hooks/useActualRevenue.ts` | Categorize `sale_fee` + `special_offer_item` as service revenue |
+| `src/hooks/useTodayActualRevenue.tsx` | Same categorization fix (2 spots: aggregate + per-location) |
+| `src/hooks/useRetailBreakdown.ts` | Query all non-service items; add fees/deposits sub-category |
+| `src/components/dashboard/AggregateSalesCard.tsx` | Display "Fees & Deposits" in retail breakdown |
+
+No database changes. 4 files edited.
 
