@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { tokens } from '@/lib/design-tokens';
-import { format, startOfMonth, endOfMonth, subMonths } from 'date-fns';
+import { format, startOfMonth, endOfMonth, subMonths, min } from 'date-fns';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { DashboardPageHeader } from '@/components/dashboard/DashboardPageHeader';
 import { Button } from '@/components/ui/button';
