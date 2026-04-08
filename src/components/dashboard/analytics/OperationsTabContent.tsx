@@ -46,7 +46,7 @@ function mapDateRange(dateRange: string): 'tomorrow' | '7days' | '30days' | '90d
   }
 }
 
-export function OperationsTabContent({ filters, subTab = 'overview', onSubTabChange }: OperationsTabContentProps) {
+export function OperationsTabContent({ filters, subTab = 'overview', onSubTabChange, organizationId }: OperationsTabContentProps) {
   const { data: locations } = useLocations();
   const locationFilter = filters.locationId !== 'all' ? filters.locationId : undefined;
   const operationalDateRange = mapDateRange(filters.dateRange);
