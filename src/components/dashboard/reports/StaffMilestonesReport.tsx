@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { tokens } from '@/lib/design-tokens';
+import { differenceInDays, parseISO } from 'date-fns';
 import { buildCsvString } from '@/utils/csvExport';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -23,7 +24,13 @@ export function StaffMilestonesReport({ dateFrom, dateTo, locationId, onClose }:
   const { effectiveOrganization } = useOrganizationContext();
   const { data: businessSettings } = useBusinessSettings();
   const locationInfo = useReportLocationInfo(locationId);
-  const { data: entries = [], isLoading } = useStaffMilestonesReport({ daysAhead: 30, milestoneType: 'both', locationId });
+  const daysAhead = useMemo(() => {
+    try {
+      const d = differenceInDays(parseISO(dateTo), parseISO(dateFrom));
+      return d > 0 ? d : 30;
+    } catch { return 30; }
+  }, [dateFrom, dateTo]);
+  const { data: entries = [], isLoading } = useStaffMilestonesReport({ daysAhead, milestoneType: 'both', locationId });
 
   const generatePDF = async () => {
     setIsGenerating(true);
@@ -31,7 +38,7 @@ export function StaffMilestonesReport({ dateFrom, dateTo, locationId, onClose }:
       const doc = new jsPDF();
       const logoDataUrl = await fetchLogoAsDataUrl(businessSettings?.logo_light_url || effectiveOrganization?.logo_url || null);
       const today = format(new Date(), 'yyyy-MM-dd');
-      const headerOpts = { orgName: businessSettings?.business_name || effectiveOrganization?.name || 'Organization', logoDataUrl, reportTitle: 'Staff Milestones Report', dateFrom: today, dateTo: 'Next 30 days', locationInfo } as const;
+      const headerOpts = { orgName: businessSettings?.business_name || effectiveOrganization?.name || 'Organization', logoDataUrl, reportTitle: 'Staff Milestones Report', dateFrom: today, dateTo: `Next ${daysAhead} days`, locationInfo } as const;
       const branding = getReportAutoTableBranding(doc, headerOpts);
       let y = addReportHeader(doc, headerOpts);
       autoTable(doc, { ...branding, startY: y, head: [['Staff', 'Type', 'Date', 'Days Until', 'Years']], body: entries.map(e => [e.staffName, e.type === 'birthday' ? '🎂 Birthday' : '🏆 Anniversary', e.date, e.daysUntil === 0 ? 'Today!' : `${e.daysUntil}d`, e.years !== null ? `${e.years} yr${e.years !== 1 ? 's' : ''}` : '—']) });
@@ -58,7 +65,7 @@ export function StaffMilestonesReport({ dateFrom, dateTo, locationId, onClose }:
           <Button variant="ghost" size="icon" onClick={onClose}><ArrowLeft className="w-4 h-4" /></Button>
           <div>
             <CardTitle className={tokens.card.title}>Staff Milestones</CardTitle>
-            <p className="text-sm text-muted-foreground mt-1">{entries.length} upcoming milestones in the next 30 days</p>
+            <p className="text-sm text-muted-foreground mt-1">{entries.length} upcoming milestones in the next {daysAhead} days</p>
           </div>
         </div>
         <div className="flex gap-2">
@@ -67,7 +74,7 @@ export function StaffMilestonesReport({ dateFrom, dateTo, locationId, onClose }:
         </div>
       </CardHeader>
       <CardContent>
-        {entries.length === 0 ? <p className={tokens.empty.description}>No upcoming milestones in the next 30 days.</p> : (
+        {entries.length === 0 ? <p className={tokens.empty.description}>No upcoming milestones in the next {daysAhead} days.</p> : (
           <Table>
             <TableHeader><TableRow>
               <TableHead className={tokens.table.columnHeader}>Staff</TableHead>

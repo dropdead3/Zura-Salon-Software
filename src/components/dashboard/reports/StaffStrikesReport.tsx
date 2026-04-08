@@ -24,7 +24,7 @@ export function StaffStrikesReport({ dateFrom, dateTo, locationId, onClose }: Pr
   const { effectiveOrganization } = useOrganizationContext();
   const { data: businessSettings } = useBusinessSettings();
   const locationInfo = useReportLocationInfo(locationId);
-  const { data: entries = [], isLoading } = useStaffStrikesReport({ dateFrom, dateTo });
+  const { data: entries = [], isLoading } = useStaffStrikesReport({ dateFrom, dateTo, locationId });
 
   const generatePDF = async () => {
     setIsGenerating(true);
