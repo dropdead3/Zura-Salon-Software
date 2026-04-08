@@ -7,7 +7,7 @@ import { validateBody, ValidationError, z } from "../_shared/validation.ts";
 const GrowthForecastSchema = z.object({
   organizationId: z.string().uuid(),
   organization_id: z.string().uuid().optional(),
-  locationId: z.string().uuid().optional(),
+  locationId: z.string().optional(),
   granularity: z.enum(["quarterly", "monthly"]).optional().default("quarterly"),
   horizonMonths: z.number().int().min(1).max(36).optional().default(12),
 });

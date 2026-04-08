@@ -105,7 +105,7 @@ export function useGrowthForecast(locationId?: string) {
       const { data, error } = await supabase.functions.invoke('growth-forecasting', {
         body: {
           organizationId: effectiveOrganization.id,
-          locationId: locationId || 'all',
+          locationId: locationId && locationId !== 'all' ? locationId : undefined,
         },
       });
 
@@ -141,7 +141,7 @@ export function useMonthlyForecast(
       const { data, error } = await supabase.functions.invoke('growth-forecasting', {
         body: {
           organizationId: effectiveOrganization.id,
-          locationId: locationId || 'all',
+          locationId: locationId && locationId !== 'all' ? locationId : undefined,
           granularity: 'monthly',
           horizonMonths,
         },
