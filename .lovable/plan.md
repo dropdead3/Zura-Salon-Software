@@ -1,70 +1,54 @@
 
 
-# Analytics Audit Pass 3: Remaining Gaps and Bugs
+# Analytics Audit Pass 5: Remaining Issues
 
 ## Findings
 
-### Bug 1 — `useYearlyGoalProgress.ts` uses raw `total_price` (tip-inclusive, no pagination)
-**File:** `src/hooks/useYearlyGoalProgress.ts` (line 48-49)
-YTD revenue sums `total_price` without subtracting `tip_amount`. Also no pagination — a full year of appointments could exceed the 1000-row limit, silently truncating revenue. Should switch to `phorest_transaction_items` with `fetchAllBatched` for accurate POS-based YTD revenue.
+### Bug 1 — `useIndividualStaffReport.ts` client revenue uses raw `total_price` (line 471)
+The "Top Clients" section computes client revenue from `total_price` without subtracting `tip_amount`. Additionally, the prior/two-prior appointment queries (lines 230, 234) don't select `tip_amount`, so if those are used for revenue elsewhere in the same hook they'd also be tip-inclusive.
 
-### Bug 2 — `useServiceProductDrilldown.ts` uses `total_price` for service revenue (tip-inclusive)
-**File:** `src/hooks/useServiceProductDrilldown.ts` (line 125)
-Service revenue per staff is summed from `total_price` without subtracting `tip_amount`. The tip is already tracked separately (line 127), so the service revenue figure is inflated. Should use `total_price - tip_amount`.
+**Fix:** Line 471: `c.revenue += (Number(a.total_price) || 0) - (Number(a.tip_amount) || 0)`. Add `tip_amount` to the prior/two-prior select strings.
 
-### Bug 3 — `useSalesData.ts` fallback paths still use raw `total_price`
-**File:** `src/hooks/useSalesData.ts`
-Three fallback/secondary code paths still sum `total_price` without tip adjustment:
-- Line 408: Revenue fallback when no transaction data
-- Lines 599-600: Location breakdown revenue
-- Lines 647, 707-708: `useServiceMix` and `useSalesTrend` — both use raw `total_price` from appointments without tip subtraction or pagination
+### Bug 2 — `useServiceMix` and `useSalesTrend` have no pagination (lines 612, 648)
+Both query `phorest_appointments` without pagination. A month of data for a multi-location org can exceed 1000 rows, silently truncating results. The tip adjustment was added but pagination was not.
 
-### Bug 4 — `useRealizationRate.ts` uses raw `total_price` for scheduled revenue (no pagination)
-**File:** `src/hooks/useRealizationRate.ts` (line 51)
-Scheduled revenue sums `total_price` without subtracting tips. This inflates the scheduled side, making realization rate artificially low. Also no pagination for the appointment query. Should select `tip_amount` and subtract it.
+**Fix:** Use `fetchAllBatched` for both queries.
 
-### Bug 5 — `useStaffKPIReport.ts` still queries `phorest_performance_metrics`
-**File:** `src/hooks/useStaffKPIReport.ts` (lines 42-47)
-This was identified in the prior audit but was NOT fixed. It still reads `rebooking_rate`, `retention_rate`, `new_clients` from the stale `phorest_performance_metrics` table. Should compute these live from appointments (same pattern as `useIndividualStaffReport.ts`).
+### Bug 3 — `useGoalPeriodRevenue.ts` still has local pagination instead of `fetchAllBatched`
+This file has the old manual `while (hasMore)` loop. Functionally correct but inconsistent — should use the shared utility per the consolidation initiative.
 
-### Bug 6 — `useStylistExperienceScore.ts` still falls back to `phorest_performance_metrics` for retention
-**File:** `src/hooks/useStylistExperienceScore.ts` (lines 118-123, 228-233)
-Still queries `phorest_performance_metrics` for retention rates as a fallback. The computed retention from appointments (line 225) is already the primary path, but the stale fallback should be removed and the default should be neutral (50 or 0) when no client data exists.
+**Fix:** Replace manual loop with `fetchAllBatched`.
 
-### Bug 7 — `fetchAllBatched` utility created but not adopted
-**File:** `src/utils/fetchAllBatched.ts` exists, but 7 files still define their own local copies. The prior task said it would update 10 files but didn't. The duplicated implementations have subtly different signatures (some take `buildQuery(from, to)`, the shared one takes `queryBuilder()` returning `.range()`).
+### Bug 4 — `ai-scheduling-copilot` edge function queries `phorest_staff_mappings` (plural, line 107)
+The table name is `phorest_staff_mapping` (singular). This silently fails, returning no staff names for scheduling copilot responses.
 
-### Enhancement — `useSalesTrend` and `useServiceMix` should use transaction items
-These two functions in `useSalesData.ts` use `total_price` from appointments for historical revenue trends and category mix. For completed dates, they should use `phorest_transaction_items` for accuracy, consistent with the POS-first standard.
+**Fix:** Change to `phorest_staff_mapping` and adjust the select to match actual column names (`staff_first_name`/`staff_last_name` may not exist — verify and use the join to `employee_profiles` instead).
+
+### Bug 5 — `useIndividualStaffReport.ts` daily revenue includes tax only for products (line 387)
+`dailyRevMap` adds `tax_amount` only for product items: `amount + (isProduct ? tax : 0)`. This means service revenue in the daily trend excludes tax, while product revenue includes it. Should be consistent — include tax for both, matching POS-first standard (`total_amount + tax_amount`).
+
+**Fix:** Line 387: change to `dailyRevMap.set(dateOnly, (dailyRevMap.get(dateOnly) || 0) + amount + tax)`.
+
+### Enhancement — ~15 hooks still use manual pagination loops
+Files like `useMyPayData`, `useComparisonData`, `usePayrollAnalytics`, `useAvgTicketByStylist`, `useOrganizationAnalytics`, `usePayrollForecasting`, `useNewClientConversion`, `useStaffRebookDrilldown`, `useServiceRetailAttachment`, `useStylistPeerAverages`, `useClientEngagement`, `useIndividualStaffReport`, `useGoalPeriodRevenue` still have manual pagination. Not a bug (functionally equivalent), but a maintainability debt.
 
 ---
 
 ## Implementation Plan
 
-### Task 1 — Fix `useYearlyGoalProgress.ts`
-Switch to `phorest_transaction_items` with `fetchAllBatched`. Sum `total_amount + tax_amount`.
+### Task 1 — Fix `useIndividualStaffReport.ts` (3 issues)
+- Line 471: subtract `tip_amount` from client revenue
+- Line 387: include tax for all item types in daily trend
+- Lines 230, 234: add `tip_amount` to prior/two-prior appointment selects
 
-### Task 2 — Fix `useServiceProductDrilldown.ts` tip adjustment
-Change line 125 to `(Number(appt.total_price) || 0) - (Number(appt.tip_amount) || 0)`.
+### Task 2 — Add pagination to `useServiceMix` and `useSalesTrend`
+Replace single query with `fetchAllBatched` in both functions.
 
-### Task 3 — Fix `useSalesData.ts` fallback/secondary paths
-- Tip-adjust the `total_price` fallback (line 408)
-- Tip-adjust location breakdown (lines 599-600)
-- Switch `useServiceMix` to tip-adjusted `total_price - tip_amount` and add `tip_amount` to select
-- Switch `useSalesTrend` to tip-adjusted and add `tip_amount` to select
-- Add pagination where missing
+### Task 3 — Migrate `useGoalPeriodRevenue.ts` to `fetchAllBatched`
+Replace manual loop with shared utility.
 
-### Task 4 — Fix `useRealizationRate.ts`
-Add `tip_amount` to select, subtract from scheduled revenue calculation. Add pagination.
-
-### Task 5 — Fix `useStaffKPIReport.ts` stale `phorest_performance_metrics`
-Remove the `phorest_performance_metrics` query. Compute rebooking from `phorest_appointments.rebooked_at_checkout`, retention from unique/returning clients, new clients from `is_new_client`. Fetch appointments alongside transactions.
-
-### Task 6 — Clean up `useStylistExperienceScore.ts`
-Remove the `phorest_performance_metrics` query and `staffRetention` fallback map entirely. Use computed retention only (already the primary path).
-
-### Task 7 — Align `fetchAllBatched` utility signature and adopt
-Update the shared utility signature to match the `buildQuery(from, to)` pattern used by the 7 local copies (more ergonomic). Then replace local copies in: `useActualRevenue`, `useExtensionProductRevenue`, `useOperationalAnalytics`, `usePerLocationColorServices`, `useProductCoPurchase`, `useProductVelocity`, `useSalesData`.
+### Task 4 — Fix `ai-scheduling-copilot` edge function table name
+Change `phorest_staff_mappings` to `phorest_staff_mapping`. Use employee_profiles join for names.
 
 ---
 
@@ -72,9 +56,9 @@ Update the shared utility signature to match the `buildQuery(from, to)` pattern 
 
 | Type | Count | Files |
 |---|---|---|
-| Bugs (wrong data now) | 4 | `useYearlyGoalProgress`, `useServiceProductDrilldown`, `useSalesData` (3 paths), `useRealizationRate` |
-| Bugs (stale on detach) | 2 | `useStaffKPIReport`, `useStylistExperienceScore` |
-| Enhancement (dedup) | 1 | `fetchAllBatched` consolidation across 7 files |
+| Bugs (wrong data) | 3 | `useIndividualStaffReport` (client rev + daily trend tax), `useServiceMix` + `useSalesTrend` (truncation) |
+| Bugs (silent failure) | 1 | `ai-scheduling-copilot` (table name) |
+| Consistency | 1 | `useGoalPeriodRevenue` (manual pagination) |
 
-7 tasks, ~12 files changed, no database changes.
+4 tasks, 5 files changed, no database changes.
 
