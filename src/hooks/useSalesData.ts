@@ -609,18 +609,23 @@ export function useServiceMix(dateFrom?: string, dateTo?: string, locationId?: s
   return useQuery({
     queryKey: ['service-mix', dateFrom, dateTo, locationId],
     queryFn: async (): Promise<ServiceMixItem[]> => {
-      let query = supabase
-        .from('phorest_appointments')
-        .select('service_category, total_price, tip_amount')
-        .not('total_price', 'is', null)
-        .in('status', ['completed']);
+      const data = await fetchAllBatched<{
+        service_category: string | null;
+        total_price: number | null;
+        tip_amount: number | null;
+      }>((from, to) => {
+        let q = supabase
+          .from('phorest_appointments')
+          .select('service_category, total_price, tip_amount')
+          .not('total_price', 'is', null)
+          .in('status', ['completed'])
+          .range(from, to);
 
-      if (dateFrom) query = query.gte('appointment_date', dateFrom);
-      if (dateTo) query = query.lte('appointment_date', dateTo);
-      if (locationId && locationId !== 'all') query = query.eq('location_id', locationId);
-
-      const { data, error } = await query;
-      if (error) throw error;
+        if (dateFrom) q = q.gte('appointment_date', dateFrom);
+        if (dateTo) q = q.lte('appointment_date', dateTo);
+        if (locationId && locationId !== 'all') q = q.eq('location_id', locationId);
+        return q;
+      });
 
       const byCategory: Record<string, { revenue: number; count: number }> = {};
       (data || []).forEach((row) => {
@@ -649,24 +654,24 @@ export function useSalesTrend(dateFrom?: string, dateTo?: string, locationId?: s
   return useQuery({
     queryKey: ['sales-trend-from-appointments', dateFrom, dateTo, locationId],
     queryFn: async () => {
-      let query = supabase
-        .from('phorest_appointments')
-        .select('appointment_date, total_price, tip_amount, location_id')
-        .not('total_price', 'is', null)
-        .order('appointment_date', { ascending: true });
+      const data = await fetchAllBatched<{
+        appointment_date: string | null;
+        total_price: number | null;
+        tip_amount: number | null;
+        location_id: string | null;
+      }>((from, to) => {
+        let q = supabase
+          .from('phorest_appointments')
+          .select('appointment_date, total_price, tip_amount, location_id')
+          .not('total_price', 'is', null)
+          .order('appointment_date', { ascending: true })
+          .range(from, to);
 
-      if (dateFrom) {
-        query = query.gte('appointment_date', dateFrom);
-      }
-      if (dateTo) {
-        query = query.lte('appointment_date', dateTo);
-      }
-      if (locationId) {
-        query = query.eq('location_id', locationId);
-      }
-
-      const { data, error } = await query;
-      if (error) throw error;
+        if (dateFrom) q = q.gte('appointment_date', dateFrom);
+        if (dateTo) q = q.lte('appointment_date', dateTo);
+        if (locationId) q = q.eq('location_id', locationId);
+        return q;
+      });
 
       // Aggregate by date (for overall trend)
       const byDate: Record<string, any> = {};

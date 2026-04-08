@@ -227,11 +227,11 @@ export function useIndividualStaffReport(staffUserId: string | null, dateFrom?: 
           .eq('phorest_staff_id', phorestStaffId)
           .gte('appointment_date', dateFrom).lte('appointment_date', dateTo),
         supabase.from('phorest_appointments')
-          .select('total_price, phorest_client_id, rebooked_at_checkout, status')
+          .select('total_price, tip_amount, phorest_client_id, rebooked_at_checkout, status')
           .eq('phorest_staff_id', phorestStaffId)
           .gte('appointment_date', priorFrom).lte('appointment_date', priorTo),
         supabase.from('phorest_appointments')
-          .select('total_price, phorest_client_id, rebooked_at_checkout, status')
+          .select('total_price, tip_amount, phorest_client_id, rebooked_at_checkout, status')
           .eq('phorest_staff_id', phorestStaffId)
           .gte('appointment_date', twoPriorFrom).lte('appointment_date', twoPriorTo),
       ]);
@@ -384,7 +384,7 @@ export function useIndividualStaffReport(staffUserId: string | null, dateFrom?: 
         const amount = Number(item.total_amount) || 0;
         const tax = Number(item.tax_amount) || 0;
         const isProduct = PRODUCT_TYPES.includes(item.item_type);
-        dailyRevMap.set(dateOnly, (dailyRevMap.get(dateOnly) || 0) + amount + (isProduct ? tax : 0));
+        dailyRevMap.set(dateOnly, (dailyRevMap.get(dateOnly) || 0) + amount + tax);
       });
 
       const dailyTrend = Array.from(dailyRevMap.entries())
@@ -468,7 +468,7 @@ export function useIndividualStaffReport(staffUserId: string | null, dateFrom?: 
         if (!clientRevMap.has(cid)) clientRevMap.set(cid, { visits: 0, revenue: 0, lastVisit: '' });
         const c = clientRevMap.get(cid)!;
         c.visits++;
-        c.revenue += Number(a.total_price) || 0;
+        c.revenue += (Number(a.total_price) || 0) - (Number(a.tip_amount) || 0);
         if (a.appointment_date > c.lastVisit) c.lastVisit = a.appointment_date;
       });
 
