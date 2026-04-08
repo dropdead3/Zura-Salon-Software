@@ -203,6 +203,10 @@ export function useStylistPeerAverages(
         u.appts.push(a);
         if (a.rebooked_at_checkout) u.rebooked++;
         if (a.is_new_client) u.newClients++;
+      } else {
+        u.priorAppts.push(a);
+        if (a.rebooked_at_checkout) u.priorRebooked++;
+        if (a.is_new_client) u.priorNewClients++;
       }
     }
 
