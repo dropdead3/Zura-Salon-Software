@@ -25,7 +25,7 @@ export function useClientBirthdaysReport(filters: Filters) {
     queryKey: ['client-birthdays-report', filters],
     queryFn: async (): Promise<ClientBirthdayEntry[]> => {
       let q = supabase
-        .from('phorest_clients')
+        .from('v_all_clients')
         .select('id, phorest_client_id, name, first_name, last_name, birthday, email, phone, total_spend, visit_count')
         .not('birthday', 'is', null)
         .eq('is_archived', false);

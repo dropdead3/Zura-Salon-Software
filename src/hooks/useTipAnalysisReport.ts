@@ -32,7 +32,7 @@ export function useTipAnalysisReport(filters: TipAnalysisFilters) {
         phorest_client_id: string | null;
       }>((from, to) => {
         let q = supabase
-          .from('phorest_appointments')
+          .from('v_all_appointments')
           .select('staff_name, phorest_staff_id, tip_amount, total_price, appointment_date, phorest_client_id')
           .gte('appointment_date', filters.dateFrom)
           .lte('appointment_date', filters.dateTo)

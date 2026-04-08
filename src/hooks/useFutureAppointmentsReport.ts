@@ -36,7 +36,7 @@ export function useFutureAppointmentsReport(filters: Filters) {
         status: string | null;
       }>((from, to) => {
         let q = supabase
-          .from('phorest_appointments')
+          .from('v_all_appointments')
           .select('appointment_date, total_price, expected_price, is_new_client, status')
           .gte('appointment_date', today)
           .lte('appointment_date', filters.dateTo)

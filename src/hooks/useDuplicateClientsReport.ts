@@ -24,7 +24,7 @@ export function useDuplicateClientsReport(filters: Filters) {
     queryKey: ['duplicate-clients-report', filters],
     queryFn: async (): Promise<DuplicateGroup[]> => {
       let q = supabase
-        .from('phorest_clients')
+        .from('v_all_clients')
         .select('id, phorest_client_id, name, first_name, last_name, email, email_normalized, phone, phone_normalized, total_spend, visit_count, last_visit, is_duplicate, canonical_client_id')
         .eq('is_archived', false);
       if (filters.locationId) q = q.eq('location_id', filters.locationId);
