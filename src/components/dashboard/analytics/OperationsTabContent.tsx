@@ -16,12 +16,14 @@ import { StaffUtilizationContent } from '@/components/dashboard/analytics/StaffU
 import { BookingPipelineContent } from '@/components/dashboard/analytics/BookingPipelineContent';
 import { AssistantUtilizationCard } from '@/components/dashboard/analytics/AssistantUtilizationCard';
 import { SubtabFavoriteStar } from '@/components/dashboard/analytics/SubtabFavoriteStar';
+import { HealthDashboard } from '@/components/dashboard/health-engine/HealthDashboard';
 import type { AnalyticsFilters } from '@/pages/dashboard/admin/AnalyticsHub';
 
 interface OperationsTabContentProps {
   filters: AnalyticsFilters;
   subTab?: string;
   onSubTabChange: (value: string) => void;
+  organizationId?: string;
 }
 
 // Map analytics hub date ranges to operational analytics date ranges
