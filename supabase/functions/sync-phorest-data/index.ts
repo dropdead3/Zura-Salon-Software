@@ -188,12 +188,76 @@ async function syncStaff(supabase: any, businessId: string, username: string, pa
     
     console.log(`Found ${uniqueStaff.length} unique staff members total`);
 
+    // Log full shape of first staff object to confirm photo field name
+    if (uniqueStaff.length > 0) {
+      console.log("Sample staff object keys:", Object.keys(uniqueStaff[0]));
+      const sample = uniqueStaff[0];
+      console.log("Photo field candidates:", {
+        photo: sample.photo,
+        photoUrl: sample.photoUrl,
+        photoURL: sample.photoURL,
+        imageUrl: sample.imageUrl,
+        image: sample.image,
+        avatarUrl: sample.avatarUrl,
+        avatar: sample.avatar,
+        pictureUrl: sample.pictureUrl,
+        picture: sample.picture,
+      });
+    }
+
     // Get existing mappings
     const { data: existingMappings } = await supabase
       .from("phorest_staff_mapping")
-      .select("phorest_staff_id, user_id");
+      .select("phorest_staff_id, user_id, phorest_photo_url");
 
-    const mappedIds = new Set(existingMappings?.map((m: any) => m.phorest_staff_id) || []);
+    const mappingsByPhorestId = new Map(
+      (existingMappings || []).map((m: any) => [m.phorest_staff_id, m])
+    );
+
+    // Update phorest_photo_url for all mapped staff
+    let photosUpdated = 0;
+    let profilePhotosPopulated = 0;
+
+    for (const s of uniqueStaff) {
+      const phorestId = s.staffId || s.id;
+      const photoUrl = s.photo || s.photoUrl || s.photoURL || s.imageUrl || s.image || s.avatarUrl || s.avatar || s.pictureUrl || s.picture || null;
+
+      if (!photoUrl) continue;
+
+      // Update phorest_photo_url on mapping table
+      const existing = mappingsByPhorestId.get(phorestId);
+      if (existing) {
+        // Always refresh the Phorest photo URL
+        const { error: updateErr } = await supabase
+          .from("phorest_staff_mapping")
+          .update({ phorest_photo_url: photoUrl })
+          .eq("phorest_staff_id", phorestId);
+
+        if (!updateErr) photosUpdated++;
+
+        // Auto-populate employee_profiles.photo_url if currently null
+        if (existing.user_id) {
+          const { data: profile } = await supabase
+            .from("employee_profiles")
+            .select("photo_url")
+            .eq("user_id", existing.user_id)
+            .maybeSingle();
+
+          if (profile && !profile.photo_url) {
+            const { error: profileErr } = await supabase
+              .from("employee_profiles")
+              .update({ photo_url: photoUrl })
+              .eq("user_id", existing.user_id);
+
+            if (!profileErr) profilePhotosPopulated++;
+          }
+        }
+      }
+    }
+
+    console.log(`Photo sync: ${photosUpdated} mapping photos updated, ${profilePhotosPopulated} profile photos populated`);
+
+    const mappedIds = new Set(mappingsByPhorestId.keys());
 
     // Return staff that aren't mapped yet
     const unmappedStaff = uniqueStaff.filter((s: any) => !mappedIds.has(s.staffId || s.id));
@@ -202,6 +266,8 @@ async function syncStaff(supabase: any, businessId: string, username: string, pa
       total_staff: uniqueStaff.length,
       mapped: mappedIds.size,
       unmapped: unmappedStaff.length,
+      photos_updated: photosUpdated,
+      profile_photos_populated: profilePhotosPopulated,
       unmapped_staff: unmappedStaff.map((s: any) => ({
         phorest_id: s.staffId || s.id,
         name: `${s.firstName || ''} ${s.lastName || ''}`.trim() || 'Unknown',
