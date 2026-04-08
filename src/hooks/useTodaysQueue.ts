@@ -16,6 +16,7 @@ interface PhorestAppointment {
   service_category: string | null;
   status: string;
   total_price: number | null;
+  tip_amount: number | null;
   notes: string | null;
   stylist_user_id: string | null;
   phorest_staff_id: string | null;
@@ -174,9 +175,9 @@ export function useTodaysQueue(locationId?: string) {
         }
       }
 
-      // Calculate revenue from completed appointments
+      // Calculate revenue from completed appointments (tip-adjusted)
       const totalRevenue = completed.reduce(
-        (sum, apt) => sum + (apt.total_price || 0),
+        (sum, apt) => sum + ((apt.total_price || 0) - (apt.tip_amount || 0)),
         0
       );
 
