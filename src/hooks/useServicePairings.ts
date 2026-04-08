@@ -50,7 +50,7 @@ export function useServicePairings(
       while (hasMore) {
         let q = supabase
           .from('phorest_appointments')
-          .select('phorest_client_id, appointment_date, service_name, total_price')
+          .select('phorest_client_id, appointment_date, service_name, total_price, tip_amount')
           .neq('status', 'cancelled')
           .gte('appointment_date', dateFrom)
           .lte('appointment_date', dateTo)
@@ -88,7 +88,7 @@ export function useServicePairings(
       if (!visits.has(key)) visits.set(key, { services: new Set(), items: [] });
       const visit = visits.get(key)!;
       visit.services.add(a.service_name);
-      visit.items.push({ service: a.service_name, price: a.total_price || 0 });
+      visit.items.push({ service: a.service_name, price: (a.total_price || 0) - (a.tip_amount || 0) });
     }
 
     // === Pairings (existing logic) ===

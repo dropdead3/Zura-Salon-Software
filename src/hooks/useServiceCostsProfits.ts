@@ -36,7 +36,7 @@ async function fetchAllAppointments(dateFrom: string, dateTo: string, locationId
   while (hasMore) {
     let query = supabase
       .from('phorest_appointments')
-      .select('service_name, service_category, total_price, location_id')
+      .select('service_name, service_category, total_price, tip_amount, location_id')
       .gte('appointment_date', dateFrom)
       .lte('appointment_date', dateTo)
       .not('service_name', 'is', null)
@@ -102,7 +102,7 @@ export function useServiceCostsProfits(dateFrom: string, dateTo: string, locatio
           sales: 0,
         };
         existing.count += 1;
-        existing.sales += (appt.total_price || 0);
+        existing.sales += (appt.total_price || 0) - (appt.tip_amount || 0);
         grouped.set(key, existing);
       }
 
