@@ -74,7 +74,7 @@ export function useClientTransactionHistory(clientId: string | null) {
         itemCategory: item.item_category,
         quantity: item.quantity || 1,
         totalAmount: Number(item.total_amount) || 0,
-        staffName: item.phorest_staff_id ? staffNameMap.get(item.phorest_staff_id) || null : null,
+        staffName: item.phorest_staff_id ? staffNameMap[item.phorest_staff_id] || null : null,
         staffId: item.phorest_staff_id,
         branchName: item.branch_name,
       }));
@@ -151,7 +151,7 @@ export function useClientTransactionHistory(clientId: string | null) {
         visitCount,
         averageTicket: visitCount > 0 ? totalSpend / visitCount : 0,
         preferredStaffId,
-        preferredStaffName: preferredStaffId ? staffNameMap.get(preferredStaffId) || null : null,
+        preferredStaffName: preferredStaffId ? staffNameMap[preferredStaffId] || null : null,
         firstVisit: sortedDates[0] || null,
         lastVisit: sortedDates[sortedDates.length - 1] || null,
       };
