@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { fetchAllBatched } from '@/utils/fetchAllBatched';
 import { formatDisplayName } from '@/lib/utils';
 import { differenceInDays, parseISO, subDays, format, differenceInBusinessDays } from 'date-fns';
 import { isExtensionProduct, isColorOrChemicalService } from '@/utils/serviceCategorization';
