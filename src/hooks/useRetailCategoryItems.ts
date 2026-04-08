@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { isAllLocations, parseLocationIds } from '@/lib/locationFilter';
 import { isExtensionProduct, isGiftCardProduct, isMerchProduct } from '@/utils/serviceCategorization';
 
-type RetailCategory = 'Products' | 'Merch' | 'Gift Cards' | 'Extensions';
+type RetailCategory = 'Products' | 'Merch' | 'Gift Cards' | 'Extensions' | 'Fees & Deposits';
 
 function addLocationFilter(query: any, locationId?: string) {
   if (isAllLocations(locationId)) return query;
@@ -14,13 +14,17 @@ function addLocationFilter(query: any, locationId?: string) {
 
 import { fetchAllBatched } from '@/utils/fetchAllBatched';
 
-function matchesCategory(name: string | null, category: RetailCategory): boolean {
+const FEE_ITEM_TYPES = new Set(['appointment_deposit', 'outstanding_balance_pmt']);
+
+function matchesCategory(name: string | null, itemType: string | null, category: RetailCategory): boolean {
+  const type = (itemType || '').toLowerCase();
   switch (category) {
-    case 'Extensions': return isExtensionProduct(name);
-    case 'Gift Cards': return isGiftCardProduct(name);
-    case 'Merch': return isMerchProduct(name);
+    case 'Fees & Deposits': return FEE_ITEM_TYPES.has(type);
+    case 'Extensions': return !FEE_ITEM_TYPES.has(type) && isExtensionProduct(name);
+    case 'Gift Cards': return !FEE_ITEM_TYPES.has(type) && !isExtensionProduct(name) && isGiftCardProduct(name);
+    case 'Merch': return !FEE_ITEM_TYPES.has(type) && !isExtensionProduct(name) && !isGiftCardProduct(name) && isMerchProduct(name);
     case 'Products':
-      return !isExtensionProduct(name) && !isGiftCardProduct(name) && !isMerchProduct(name);
+      return !FEE_ITEM_TYPES.has(type) && !isExtensionProduct(name) && !isGiftCardProduct(name) && !isMerchProduct(name);
   }
 }
 
