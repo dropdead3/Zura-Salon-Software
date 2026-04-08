@@ -35,6 +35,8 @@ import {
   Cake,
   CreditCard,
   Ticket,
+  Gift,
+  Shield,
 } from 'lucide-react';
 import { useLocations } from '@/hooks/useLocations';
 import { getReportTier, filterReportsByTier } from '@/config/reportCatalog';
@@ -111,6 +113,9 @@ const staffReports = [
   { id: 'tip-analysis', name: 'Tip Analysis', description: 'Tip distribution, avg tip per visit, tip-to-revenue ratio by stylist', icon: Coins },
   { id: 'staff-transaction-detail', name: 'Staff Transaction Detail', description: 'Line-item detail per stylist per day', icon: FileText },
   { id: 'compensation-ratio', name: 'Compensation Ratio', description: 'Labor cost as % of revenue per stylist with commission source', icon: Percent },
+  { id: 'staff-milestones', name: 'Staff Milestones', description: 'Upcoming birthdays and hire anniversaries', icon: Gift },
+  { id: 'permissions-audit', name: 'Permissions Audit', description: 'Role assignments and access matrix for all staff', icon: Shield },
+  { id: 'time-attendance', name: 'Time & Attendance', description: 'Hours worked, overtime, and break tracking by staff', icon: Clock },
 ];
 
 const clientReports = [
