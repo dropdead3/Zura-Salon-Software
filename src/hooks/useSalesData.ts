@@ -795,11 +795,11 @@ export function useSalesByPhorestStaff(dateFrom?: string, dateTo?: string) {
       const { data, error } = await query;
       if (error) throw error;
 
-      // Build staff name lookup from mappings (the staff names come from the mapping table)
+      // Build staff name lookup using centralized resolution
       const staffNameLookup: Record<string, string> = {};
-      mappings?.forEach(m => {
-        if (m.phorest_staff_id && m.phorest_staff_name) {
-          staffNameLookup[m.phorest_staff_id] = m.phorest_staff_name;
+      (mappings || []).forEach(m => {
+        if (m.phorest_staff_id) {
+          staffNameLookup[m.phorest_staff_id] = staffNameData.byPhorestId[m.phorest_staff_id] || m.phorest_staff_name || 'Unknown';
         }
       });
 
