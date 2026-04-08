@@ -61,7 +61,7 @@ function formatGap(gap: number, unit: string) {
   return `-${gap}`;
 }
 
-export function StylistScorecard({ userId, locationId }: StylistScorecardProps) {
+export function StylistScorecard({ userId, locationId, onTrendProjection }: StylistScorecardProps) {
   const progress = useLevelProgress(userId);
   const { data: allLevels = [] } = useStylistLevels();
   const { formatCurrency } = useFormatCurrency();
