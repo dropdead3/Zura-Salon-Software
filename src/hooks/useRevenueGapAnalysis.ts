@@ -20,10 +20,10 @@ export function useScheduledRevenue(
   return useQuery<number>({
     queryKey: ['scheduled-revenue', dateFrom, dateTo, locationId],
     queryFn: async () => {
-      const data = await fetchAllBatched<{ total_price: number | null; expected_price: number | null }>((from, to) => {
+      const data = await fetchAllBatched<{ total_price: number | null; expected_price: number | null; tip_amount: number | null }>((from, to) => {
         let q = supabase
           .from('phorest_appointments')
-          .select('total_price, expected_price')
+          .select('total_price, expected_price, tip_amount')
           .gte('appointment_date', dateFrom)
           .lte('appointment_date', dateTo)
           .not('total_price', 'is', null)
@@ -33,8 +33,12 @@ export function useScheduledRevenue(
         }
         return q;
       });
-      // Use expected_price (discount-adjusted) when available, fall back to total_price
-      return data?.reduce((sum, r) => sum + (Number(r.expected_price) || Number(r.total_price) || 0), 0) ?? 0;
+      // Use expected_price (discount-adjusted) when available, fall back to total_price; subtract tips
+      return data?.reduce((sum, r) => {
+        const base = Number(r.expected_price) || Number(r.total_price) || 0;
+        const tip = Number(r.tip_amount) || 0;
+        return sum + (base - tip);
+      }, 0) ?? 0;
     },
     enabled,
     staleTime: 2 * 60 * 1000,
@@ -109,7 +113,7 @@ export function useRevenueGapAnalysis(
           .select('id, service_name, client_name, total_price, expected_price, discount_amount, discount_reason, appointment_date, start_time, phorest_staff_id, phorest_client_id, status')
           .gte('appointment_date', dateFrom)
           .lte('appointment_date', dateTo)
-          .in('status', ['cancelled', 'no_show', 'completed', 'confirmed', 'pending', 'arrived', 'started'])
+          .in('status', ['cancelled', 'no_show', 'completed', 'confirmed', 'pending', 'arrived', 'started', 'booked'])
           .range(from, to);
         if (locationId && locationId !== 'all') {
           q = q.eq('location_id', locationId);
