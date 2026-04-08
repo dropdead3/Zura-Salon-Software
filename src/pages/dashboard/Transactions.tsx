@@ -141,7 +141,7 @@ export default function Transactions() {
             {/* Stats Cards */}
             <BentoGrid maxPerRow={4} gap="gap-4">
               <Card className="p-4">
-                <p className="text-sm text-muted-foreground">Total Revenue</p>
+                <p className="text-sm text-muted-foreground">Total Revenue <span className="text-[10px] text-muted-foreground/50">({taxLabel})</span></p>
                 <p className="text-2xl font-display font-medium">{formatCurrency(totalRevenue)}</p>
               </Card>
               <Card className="p-4">
