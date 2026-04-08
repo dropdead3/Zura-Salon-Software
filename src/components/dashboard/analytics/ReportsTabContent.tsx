@@ -118,6 +118,7 @@ const financialReports = [
   { id: 'end-of-month', name: 'End-of-Month Summary', description: 'Comprehensive monthly business report', icon: ClipboardList },
   { id: 'service-profitability', name: 'Service Profitability', description: 'Revenue vs chemical + labor cost per service', icon: TrendingUp },
   { id: 'chemical-cost', name: 'Chemical Cost Report', description: 'Chemical cost per service, waste %, and margin from Color Bar', icon: Beaker },
+  { id: 'location-benchmark', name: 'Location Benchmarking', description: 'Side-by-side KPI comparison across all locations', icon: Building },
 ];
 
 interface ReportsTabContentProps {
