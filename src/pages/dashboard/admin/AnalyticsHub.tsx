@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
-import { format, subDays, startOfWeek, endOfWeek, startOfMonth, endOfMonth, subMonths, startOfYear } from 'date-fns';
+import { format, subDays, startOfWeek, endOfWeek, startOfMonth, endOfMonth, subMonths, startOfYear, min } from 'date-fns';
 import { getNextPayDay } from '@/hooks/usePaySchedule';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Tabs, TabsContent, TabsTrigger, ResponsiveTabsList } from '@/components/ui/tabs';
@@ -151,7 +151,7 @@ export default function AnalyticsHub() {
   const [dateRange, setDateRange] = useState<DateRangeType>('today');
   const [customDateRange, setCustomDateRange] = useState<{ from: Date; to: Date }>({
     from: startOfMonth(new Date()),
-    to: endOfMonth(new Date()),
+    to: min([endOfMonth(new Date()), new Date()]),
   });
   
   // Set default location when access data loads
@@ -313,10 +313,10 @@ export default function AnalyticsHub() {
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => setCustomDateRange({
-                            from: startOfMonth(new Date()),
-                            to: endOfMonth(new Date()),
-                          })}
+                          onClick={() => { const now = new Date(); setCustomDateRange({
+                            from: startOfMonth(now),
+                            to: min([endOfMonth(now), now]),
+                          }); }}
                         >
                           {tc('date_range.this_month')}
                         </Button>
@@ -339,6 +339,7 @@ export default function AnalyticsHub() {
                             setCustomDateRange({ from: range.from, to: range.to });
                           }
                         }}
+                        toDate={new Date()}
                         numberOfMonths={2}
                         className="pointer-events-auto"
                       />
