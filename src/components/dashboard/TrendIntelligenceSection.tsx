@@ -208,6 +208,10 @@ export function TrendIntelligenceSection({
   const unmetProjections = projection.projections.filter(p => !p.isMet);
   const allMet = unmetProjections.length === 0;
 
+  // Remaining metrics not shown in top actions
+  const topKeys = new Set(projection.topActions.map(a => a.key));
+  const remainingMetrics = projection.projections.filter(p => !topKeys.has(p.key) && p.weight > 0);
+
   // Build goal target lookup
   const goalTargetMap = new Map<string, { dailyLabel: string; feasibility: 'achievable' | 'aggressive' | 'extreme' }>();
   if (goalMode?.isActive && goalMode.goalTargets.length > 0) {
