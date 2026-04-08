@@ -47,6 +47,12 @@ import { RetailStaffReport } from '@/components/dashboard/reports/RetailStaffRep
 import { EndOfMonthReport } from '@/components/dashboard/reports/EndOfMonthReport';
 import { ReportBuilderPage } from '@/components/dashboard/reports/builder/ReportBuilderPage';
 import { ScheduledReportsSubTab } from '@/components/dashboard/reports/scheduled/ScheduledReportsSubTab';
+import { ServiceProfitabilityReport } from '@/components/dashboard/reports/ServiceProfitabilityReport';
+import { ChemicalCostReport } from '@/components/dashboard/reports/ChemicalCostReport';
+import { TipAnalysisReport } from '@/components/dashboard/reports/TipAnalysisReport';
+import { ServiceCategoryMixReport } from '@/components/dashboard/reports/ServiceCategoryMixReport';
+import { TaxSummaryReport } from '@/components/dashboard/reports/TaxSummaryReport';
+import { ClientAttritionReport } from '@/components/dashboard/reports/ClientAttritionReport';
 import type { AnalyticsFilters } from '@/pages/dashboard/admin/AnalyticsHub';
 
 const reportCategories = [
