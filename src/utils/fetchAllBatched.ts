@@ -14,12 +14,10 @@
  *   );
  */
 
-import type { PostgrestFilterBuilder } from '@supabase/postgrest-js';
-
 const DEFAULT_PAGE_SIZE = 1000;
 
 export async function fetchAllBatched<T = any>(
-  queryBuilder: () => PostgrestFilterBuilder<any, any, any>,
+  queryBuilder: () => { range: (from: number, to: number) => Promise<{ data: T[] | null; error: any }> },
   pageSize: number = DEFAULT_PAGE_SIZE
 ): Promise<T[]> {
   const allRows: T[] = [];
