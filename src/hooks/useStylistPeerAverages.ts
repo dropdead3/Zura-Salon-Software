@@ -169,18 +169,18 @@ export function useStylistPeerAverages(
       });
     }
 
-    // Only use current eval window for sales (POS transaction items)
     for (const s of peerSales || []) {
-      if (s.transaction_date < evalStartStr) continue;
       const u = perUser.get(s.stylist_user_id);
-      if (u) {
-        const amount = (Number(s.total_amount) || 0) + (Number(s.tax_amount) || 0);
-        const itemType = (s.item_type || '').toLowerCase();
-        if (itemType === 'service') {
-          u.serviceRev += amount;
-        } else if (itemType === 'product') {
-          u.productRev += amount;
-        }
+      if (!u) continue;
+      const amount = (Number(s.total_amount) || 0) + (Number(s.tax_amount) || 0);
+      const itemType = (s.item_type || '').toLowerCase();
+      const isCurrent = s.transaction_date >= evalStartStr;
+      if (itemType === 'service') {
+        if (isCurrent) u.serviceRev += amount;
+        else u.priorServiceRev += amount;
+      } else if (itemType === 'product') {
+        if (isCurrent) u.productRev += amount;
+        else u.priorProductRev += amount;
       }
     }
 
