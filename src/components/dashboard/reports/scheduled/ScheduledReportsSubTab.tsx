@@ -112,8 +112,10 @@ export function ScheduledReportsSubTab() {
     }
 
     setRunningId(report.id);
+    let runId: string | undefined;
     try {
-      const { runId } = await runNow.mutateAsync(report);
+      const result = await runNow.mutateAsync(report);
+      runId = result.runId;
 
       const configs: BatchReportConfig[] = reportIds
         .map(id => {
@@ -135,6 +137,9 @@ export function ScheduledReportsSubTab() {
       await completeRun.mutateAsync({ runId, reportId: report.id, success: true });
       toast.success('Report pack generated and downloaded');
     } catch (err: any) {
+      if (runId) {
+        await completeRun.mutateAsync({ runId, reportId: report.id, success: false, errorMessage: err.message }).catch(() => {});
+      }
       toast.error('Run failed', { description: err.message });
     } finally {
       setRunningId(null);

@@ -19,6 +19,7 @@ import {
   X,
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useCreateScheduledReport, useUpdateScheduledReport, type ScheduledReport } from '@/hooks/useScheduledReports';
 import { REPORT_CATALOG, REPORT_CATEGORIES } from '@/config/reportCatalog';
 import { toast } from 'sonner';
@@ -65,6 +66,8 @@ const TIMEZONES = [
 ];
 
 export function ScheduleReportForm({ open, onOpenChange, editReport }: ScheduleReportFormProps) {
+  const { effectiveOrganization } = useOrganizationContext();
+  const orgId = effectiveOrganization?.id;
   const createReport = useCreateScheduledReport();
   const updateReport = useUpdateScheduledReport();
 
@@ -83,12 +86,13 @@ export function ScheduleReportForm({ open, onOpenChange, editReport }: ScheduleR
 
   // Load staff for recipient picker
   useEffect(() => {
-    if (!open) return;
+    if (!open || !orgId) return;
     setLoadingStaff(true);
     supabase
       .from('employee_profiles')
       .select('user_id, full_name, email')
       .eq('is_active', true)
+      .eq('organization_id', orgId)
       .then(({ data }) => {
         setStaffOptions((data || []).map(p => ({
           userId: p.user_id,
@@ -97,7 +101,7 @@ export function ScheduleReportForm({ open, onOpenChange, editReport }: ScheduleR
         })));
         setLoadingStaff(false);
       });
-  }, [open]);
+  }, [open, orgId]);
 
   // Populate form when editing
   useEffect(() => {

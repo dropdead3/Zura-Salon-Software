@@ -42,6 +42,7 @@ async function generateSingleReportPdf(
   orgName: string,
   logoDataUrl: Awaited<ReturnType<typeof fetchLogoAsDataUrl>>,
   locationInfo: any,
+  orgId?: string,
 ): Promise<ArrayBuffer> {
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
   const headerOpts: ReportHeaderOptions = {
@@ -56,7 +57,7 @@ async function generateSingleReportPdf(
   const y = addReportHeader(doc, headerOpts);
 
   // Fetch data based on report type and render table
-  const data = await fetchReportData(config.reportId, dateFrom, dateTo, locationId, undefined);
+  const data = await fetchReportData(config.reportId, dateFrom, dateTo, locationId, orgId);
 
   if (data.rows.length === 0) {
     doc.setFontSize(11);
