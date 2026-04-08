@@ -93,8 +93,7 @@ async function fetchReportData(
   switch (reportId) {
     case 'daily-sales':
     case 'stylist-sales':
-    case 'product-sales':
-    case 'location-sales': {
+    case 'product-sales': {
       const data = await fetchAllBatched<any>((from, to) => {
         let q = supabase.from('v_all_transaction_items')
           .select('transaction_date, staff_name, item_name, item_type, quantity, total_amount, location_id')
@@ -116,9 +115,35 @@ async function fetchReportData(
       }
       return { columns: ['Date', 'Item', 'Type', 'Qty', 'Total'], rows: data.slice(0, 500).map(r => [r.transaction_date, r.item_name || '', r.item_type || '', String(r.quantity || 1), `$${(Number(r.total_amount) || 0).toFixed(2)}`]) };
     }
+    case 'compensation-ratio': {
+      const compData = await fetchAllBatched<any>((from, to) => {
+        let q = supabase.from('v_all_transaction_items')
+          .select('staff_name, item_type, total_amount, tip_amount')
+          .gte('transaction_date', dateFrom)
+          .lte('transaction_date', dateTo)
+          .range(from, to);
+        if (locationId) q = q.eq('location_id', locationId);
+        return q;
+      });
+      const byStaff = new Map<string, { serviceRev: number; productRev: number; tips: number; count: number }>();
+      for (const r of compData) {
+        const n = r.staff_name || 'Unknown';
+        const e = byStaff.get(n) || { serviceRev: 0, productRev: 0, tips: 0, count: 0 };
+        const amt = Number(r.total_amount) || 0;
+        if (r.item_type === 'service') e.serviceRev += amt; else e.productRev += amt;
+        e.tips += Number(r.tip_amount) || 0;
+        e.count++;
+        byStaff.set(n, e);
+      }
+      return {
+        columns: ['Staff', 'Service Rev', 'Product Rev', 'Tips', 'Total Rev'],
+        rows: Array.from(byStaff.entries())
+          .sort((a, b) => (b[1].serviceRev + b[1].productRev) - (a[1].serviceRev + a[1].productRev))
+          .map(([n, e]) => [n, `$${e.serviceRev.toFixed(2)}`, `$${e.productRev.toFixed(2)}`, `$${e.tips.toFixed(2)}`, `$${(e.serviceRev + e.productRev).toFixed(2)}`]),
+      };
+    }
     case 'staff-kpi':
     case 'tip-analysis':
-    case 'compensation-ratio':
     case 'staff-transaction-detail': {
       const data = await fetchAllBatched<any>((from, to) => {
         let q = supabase.from('v_all_transaction_items')
@@ -215,7 +240,33 @@ async function fetchReportData(
         ]),
       };
     }
-    case 'client-attrition':
+    case 'client-attrition': {
+      const attrData = await fetchAllBatched<any>((from, to) => {
+        let q = (supabase.from('v_all_clients') as any)
+          .select('name, first_name, last_name, email, total_spend, visit_count, last_visit')
+          .eq('is_archived', false)
+          .range(from, to);
+        if (locationId) q = q.eq('location_id', locationId);
+        return q;
+      });
+      const today = new Date();
+      const atRisk = attrData
+        .filter((c: any) => {
+          if (!c.last_visit) return true;
+          const days = Math.round((today.getTime() - new Date(c.last_visit).getTime()) / (1000 * 60 * 60 * 24));
+          return days >= 60;
+        })
+        .map((c: any) => {
+          const name = c.name || `${c.first_name || ''} ${c.last_name || ''}`.trim() || 'Unknown';
+          const days = c.last_visit ? Math.round((today.getTime() - new Date(c.last_visit).getTime()) / (1000 * 60 * 60 * 24)) : 999;
+          let tier = 'At-Risk';
+          if (days >= 120) tier = 'Lost';
+          else if (days >= 90) tier = 'Lapsed';
+          return [name, c.last_visit || 'Never', String(days), tier, `$${(Number(c.total_spend) || 0).toFixed(2)}`, String(c.visit_count || 0)];
+        })
+        .sort((a: any, b: any) => Number(b[4].replace('$', '')) - Number(a[4].replace('$', '')));
+      return { columns: ['Client', 'Last Visit', 'Days Since', 'Risk Tier', 'Spend', 'Visits'], rows: atRisk.slice(0, 500) };
+    }
     case 'top-clients':
     case 'client-source': {
       const data = await fetchAllBatched<any>((from, to) => {
@@ -230,12 +281,9 @@ async function fetchReportData(
         const sorted = data.sort((a: any, b: any) => (Number(b.total_spend) || 0) - (Number(a.total_spend) || 0)).slice(0, 100);
         return { columns: ['Client', 'Spend', 'Visits'], rows: sorted.map((c: any) => [c.name || `${c.first_name || ''} ${c.last_name || ''}`.trim() || 'Unknown', `$${(Number(c.total_spend) || 0).toFixed(2)}`, String(c.visit_count || 0)]) };
       }
-      if (reportId === 'client-source') {
-        const bySource = new Map<string, number>();
-        for (const c of data) { const src = c.lead_source || 'Unknown'; bySource.set(src, (bySource.get(src) || 0) + 1); }
-        return { columns: ['Source', 'Clients'], rows: Array.from(bySource.entries()).sort((a, b) => b[1] - a[1]).map(([s, c]) => [s, String(c)]) };
-      }
-      return { columns: ['Client', 'Email', 'Spend', 'Visits'], rows: data.slice(0, 300).map((c: any) => [c.name || `${c.first_name || ''} ${c.last_name || ''}`.trim() || 'Unknown', c.email || '', `$${(Number(c.total_spend) || 0).toFixed(2)}`, String(c.visit_count || 0)]) };
+      const bySource = new Map<string, number>();
+      for (const c of data) { const src = c.lead_source || 'Unknown'; bySource.set(src, (bySource.get(src) || 0) + 1); }
+      return { columns: ['Source', 'Clients'], rows: Array.from(bySource.entries()).sort((a, b) => b[1] - a[1]).map(([s, c]) => [s, String(c)]) };
     }
     case 'demand-heatmap': {
       const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -275,7 +323,7 @@ async function fetchReportData(
           .select('appointment_date, start_time, status, staff_name, client_name, total_price, deleted_at')
           .range(from, to);
         if (reportId === 'deleted-appointments') {
-          q = q.not('deleted_at', 'is', null);
+          q = q.not('deleted_at', 'is', null).gte('appointment_date', dateFrom).lte('appointment_date', dateTo);
         } else if (reportId === 'future-appointments') {
           q = q.gte('appointment_date', dateFrom);
         } else {
@@ -329,13 +377,122 @@ async function fetchReportData(
         .sort((a, b) => parseFloat(b[1].replace('$', '')) - parseFloat(a[1].replace('$', '')));
       return { columns: ['Location', 'Revenue', 'Appointments', 'Avg Ticket', 'Clients', 'No-Show %'], rows };
     }
+    case 'tax-summary': {
+      const taxData = await fetchAllBatched<any>((from, to) => {
+        let q = supabase.from('v_all_transaction_items')
+          .select('item_type, total_amount, tax_amount, branch_name, transaction_date')
+          .gte('transaction_date', dateFrom)
+          .lte('transaction_date', dateTo)
+          .range(from, to);
+        if (locationId) q = q.eq('location_id', locationId);
+        return q;
+      });
+      let totalTax = 0, totalPreTax = 0;
+      const byType = new Map<string, { tax: number; rev: number }>();
+      for (const r of taxData) {
+        const tax = Number(r.tax_amount) || 0;
+        const amt = Number(r.total_amount) || 0;
+        totalTax += tax;
+        totalPreTax += amt;
+        const t = (r.item_type || 'other').toLowerCase();
+        const e = byType.get(t) || { tax: 0, rev: 0 };
+        e.tax += tax; e.rev += amt;
+        byType.set(t, e);
+      }
+      const summaryRows: string[][] = [
+        ['Total Tax Collected', `$${totalTax.toFixed(2)}`, ''],
+        ['Pre-Tax Revenue', `$${totalPreTax.toFixed(2)}`, ''],
+        ['Gross Revenue', `$${(totalPreTax + totalTax).toFixed(2)}`, ''],
+        ['', '', ''],
+        ...Array.from(byType.entries())
+          .filter(([, v]) => v.tax > 0)
+          .sort((a, b) => b[1].tax - a[1].tax)
+          .map(([t, v]) => [t, `$${v.tax.toFixed(2)}`, `$${v.rev.toFixed(2)}`]),
+      ];
+      return { columns: ['Category', 'Tax', 'Revenue'], rows: summaryRows };
+    }
+    case 'service-profitability': {
+      const spData = await fetchAllBatched<any>((from, to) => {
+        let q = supabase.from('v_all_transaction_items')
+          .select('item_name, item_type, total_amount, quantity')
+          .eq('item_type', 'service')
+          .gte('transaction_date', dateFrom)
+          .lte('transaction_date', dateTo)
+          .range(from, to);
+        if (locationId) q = q.eq('location_id', locationId);
+        return q;
+      });
+      const byService = new Map<string, { rev: number; qty: number }>();
+      for (const r of spData) {
+        const n = r.item_name || 'Unknown';
+        const e = byService.get(n) || { rev: 0, qty: 0 };
+        e.rev += Number(r.total_amount) || 0;
+        e.qty += Number(r.quantity) || 1;
+        byService.set(n, e);
+      }
+      return {
+        columns: ['Service', 'Revenue', 'Quantity', 'Avg Price'],
+        rows: Array.from(byService.entries())
+          .sort((a, b) => b[1].rev - a[1].rev)
+          .map(([n, e]) => [n, `$${e.rev.toFixed(2)}`, String(e.qty), `$${(e.qty > 0 ? e.rev / e.qty : 0).toFixed(2)}`]),
+      };
+    }
+    case 'chemical-cost': {
+      const ccData = await fetchAllBatched<any>((from, to) => {
+        let q = supabase.from('v_all_transaction_items')
+          .select('item_name, item_type, total_amount, quantity')
+          .eq('item_type', 'service')
+          .gte('transaction_date', dateFrom)
+          .lte('transaction_date', dateTo)
+          .range(from, to);
+        if (locationId) q = q.eq('location_id', locationId);
+        return q;
+      });
+      const byService = new Map<string, { rev: number; qty: number }>();
+      for (const r of ccData) {
+        const n = r.item_name || 'Unknown';
+        const e = byService.get(n) || { rev: 0, qty: 0 };
+        e.rev += Number(r.total_amount) || 0;
+        e.qty += Number(r.quantity) || 1;
+        byService.set(n, e);
+      }
+      return {
+        columns: ['Service', 'Revenue', 'Quantity', 'Note'],
+        rows: Array.from(byService.entries())
+          .sort((a, b) => b[1].rev - a[1].rev)
+          .map(([n, e]) => [n, `$${e.rev.toFixed(2)}`, String(e.qty), 'Cost data requires backroom integration']),
+      };
+    }
+    case 'location-sales': {
+      const lsData = await fetchAllBatched<any>((from, to) => {
+        let q = supabase.from('v_all_transaction_items')
+          .select('location_id, branch_name, total_amount, item_type')
+          .gte('transaction_date', dateFrom)
+          .lte('transaction_date', dateTo)
+          .range(from, to);
+        if (locationId) q = q.eq('location_id', locationId);
+        return q;
+      });
+      const byLoc = new Map<string, { name: string; serviceRev: number; productRev: number; count: number }>();
+      for (const r of lsData) {
+        const lid = r.location_id || 'unknown';
+        const e = byLoc.get(lid) || { name: r.branch_name || 'Unknown', serviceRev: 0, productRev: 0, count: 0 };
+        const amt = Number(r.total_amount) || 0;
+        if (r.item_type === 'service') e.serviceRev += amt; else e.productRev += amt;
+        e.count++;
+        byLoc.set(lid, e);
+      }
+      return {
+        columns: ['Location', 'Service Rev', 'Product Rev', 'Total Rev', 'Transactions'],
+        rows: Array.from(byLoc.values())
+          .sort((a, b) => (b.serviceRev + b.productRev) - (a.serviceRev + a.productRev))
+          .map(e => [e.name, `$${e.serviceRev.toFixed(2)}`, `$${e.productRev.toFixed(2)}`, `$${(e.serviceRev + e.productRev).toFixed(2)}`, String(e.count)]),
+      };
+    }
     case 'retail-products':
     case 'retail-staff':
     case 'category-mix':
-    case 'tax-summary':
-    case 'discounts':
-    case 'service-profitability':
-    case 'chemical-cost': {
+    case 'discounts': {
       const data = await fetchAllBatched<any>((from, to) => {
         let q = supabase.from('v_all_transaction_items')
           .select('item_name, item_type, total_amount, quantity, staff_name, transaction_date, discount')
@@ -360,7 +517,7 @@ async function fetchReportData(
         const withDiscount = data.filter((r: any) => Number(r.discount) > 0);
         return { columns: ['Date', 'Item', 'Staff', 'Discount'], rows: withDiscount.slice(0, 500).map((r: any) => [r.transaction_date, r.item_name || '', r.staff_name || '', `$${(Number(r.discount) || 0).toFixed(2)}`]) };
       }
-      // Generic summary
+      // category-mix
       const byType = new Map<string, number>();
       for (const r of data) { const t = r.item_type || 'other'; byType.set(t, (byType.get(t) || 0) + (Number(r.total_amount) || 0)); }
       return { columns: ['Category', 'Revenue'], rows: Array.from(byType.entries()).map(([t, v]) => [t, `$${v.toFixed(2)}`]) };
