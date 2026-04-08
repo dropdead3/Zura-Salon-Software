@@ -1,65 +1,60 @@
 
 
-# Bug & Gap Analysis — Batch Reports, Scheduled Reports, Run Now
+# Bug & Gap Analysis — Pass 3
 
-## Critical Bugs
+## Bugs
 
-### Bug 1: Column name mismatches in `useBatchReportGenerator.ts` — queries return empty/null values
+### Bug 1: Gift Cards PDF references non-existent columns `balance` and `status`
+Line 268 in `useBatchReportGenerator.ts` maps `g.balance` and `g.status` but the `gift_cards` table has `current_balance` and `is_active` (boolean). Every gift card row will show `$0.00` balance and empty status.
 
-The `fetchReportData` function references columns that **do not exist** in the union views:
+**Fix:** Map `current_balance` instead of `balance`, and render `is_active ? 'Active' : 'Inactive'` instead of `status`.
 
-| Queried Column | Actual View Column | Affected Reports |
-|---|---|---|
-| `line_total` | `total_amount` | All sales, staff, financial, retail, discounts (13 reports) |
-| `discount_amount` | `discount` | Discounts report |
+### Bug 2: Vouchers PDF references `v.value` and `v.status` — `status` doesn't exist
+Line 270 maps `v.value` (correct) and `v.status` (doesn't exist — table has `is_active` and `is_redeemed`). Voucher status will always be blank.
 
-Every `Number(r.line_total)` evaluates to `NaN` → `0`. **All revenue figures in batch-generated PDFs are $0.00.** This is a silent data corruption bug — no error is thrown, just wrong numbers.
+**Fix:** Derive status string from `is_redeemed` / `is_active` fields. Also use `created_at` (which does exist via `issued_by`? No — `vouchers` has no `created_at`). Replace `v.created_at` with `v.valid_from` or remove.
 
-**Fix:** Replace all `line_total` references with `total_amount`, and `discount_amount` with `discount` throughout `fetchReportData`.
+### Bug 3: `v_all_clients` query filters `.eq('is_archived', false)` but doesn't org-scope
+Line 178-183: The clients query has no `organization_id` filter. RLS may cover it, but this violates the org-scoping doctrine. Gift cards and vouchers were fixed with `orgId`, but the clients query was missed.
 
-### Bug 2: `gift_cards` and `vouchers` queries in batch generator are not org-scoped
+**Fix:** Add `.eq('organization_id', orgId)` if orgId is available (same pattern as gift cards).
 
-Lines 260-261: `supabase.from(table).select('*').limit(500)` — no `organization_id` filter. With RLS this may be safe, but it violates the data architecture doctrine and could leak data if RLS has gaps.
+### Bug 4: `v_all_appointments` query has no org-scope filter
+Lines 200-212: The appointments query lacks `organization_id` filtering. Same gap as clients.
 
-**Fix:** Pass `orgId` into `fetchReportData` and add `.eq('organization_id', orgId)` to gift card/voucher queries.
+**Fix:** The view may not have `organization_id` directly, but it does have `location_id` which implicitly scopes. However, when `locationId` is not passed (i.e. "All Locations"), the query fetches unscoped data — relying entirely on RLS. Should filter by org's location IDs if no specific location is selected.
 
-### Bug 3: `ScheduleReportForm` staff query is not org-scoped
+### Bug 5: `ScheduledReportsManager` is dead code — imported nowhere
+The search confirms `ScheduledReportsManager` is not imported or rendered by any parent component. It duplicates `ScheduledReportsSubTab` but lacks Run Now, uses different UI patterns, and will drift further. Dead code creates confusion.
 
-Lines 88-99: Fetches all active `employee_profiles` without filtering by `organization_id`. An org owner could see staff from other organizations in the recipient picker.
+**Fix:** Delete `ScheduledReportsManager.tsx`.
 
-**Fix:** Import `useOrganizationContext`, filter by `organization_id`.
+### Bug 6: `handleRunNow` uses current month but should respect schedule context
+Lines 126-128 in `ScheduledReportsSubTab.tsx`: Run Now always uses `startOfMonth(now)` to `endOfMonth(now)`. If the schedule was for "last month" or has a custom date range in `filters`, Run Now ignores it. This is surprising — users expect Run Now to produce the same report the schedule would deliver.
 
-### Bug 4: `handleRunNow` does not call `completeRun` on failure
+**Fix:** Check `report.filters` for `dateFrom`/`dateTo` and fall back to current month only if absent. Or document this as "generates for the current period."
 
-Lines 107-141 in `ScheduledReportsSubTab.tsx`: The catch block toasts an error but never calls `completeRun` with `success: false`. The run record stays stuck in `'running'` status permanently.
+### Bug 7: `BatchReportDialog` closes immediately after generate completes (line 97)
+`onOpenChange(false)` is called right after `generate()` resolves. But `generate()` sets `isGenerating = false` internally. The dialog closes before the user can see the 100% completion state. Minor UX issue.
 
-**Fix:** Add `completeRun.mutateAsync({ runId, reportId: report.id, success: false, errorMessage: err.message })` in the catch block. Requires capturing `runId` before the try/catch scope or restructuring.
+**Fix:** Add a short delay or show a success state before closing.
 
-### Bug 5: `handleRunNow` references `runId` but it's scoped inside try — failure path can't access it
+### Bug 8: Vouchers query missing `created_at` column
+Line 270: `v.created_at?.split('T')[0]` — the `vouchers` table has no `created_at` column. This will always render empty string.
 
-The `runId` is obtained from `runNow.mutateAsync(report)` inside try. If `batchGenerator.generate()` fails, the catch needs `runId` but it's not accessible if the mutation itself succeeded but generation failed.
-
-**Fix:** Hoist `runId` declaration outside try block, set it after the mutation succeeds.
+**Fix:** Use `v.valid_from` instead.
 
 ## Gaps
 
-### Gap 1: Merged PDF only has footer on last page
+### Gap 1: `ScheduleReportForm` doesn't filter report catalog by org tier
+`BatchReportDialog` correctly uses `filterReportsByTier` to hide reports unavailable for the org's location count (e.g., single-location orgs don't see "Sales by Location"). `ScheduleReportForm` shows the full `REPORT_CATALOG` unfiltered — users can schedule reports that would produce no data.
 
-Line 371: `addReportFooter(mergedDoc, orgName)` is called once after the loop. For a 10-report pack, only the final page has a footer. Individual report PDFs in ZIP mode do have footers (via `generateSingleReportPdf`).
+**Fix:** Import `useLocations`, compute tier, and filter `REPORT_CATALOG` in the form.
 
-**Fix:** Call `addReportFooter` inside the loop after each report's autoTable, or accept this as a design choice (footer = document-level, not page-level).
+### Gap 2: No `organization_id` column on `v_all_transaction_items` or `v_all_appointments`
+These views expose `location_id` but not `organization_id`. This means batch reports for "All Locations" can't be org-filtered at the query level — they rely entirely on RLS. If RLS has any gap, data leaks. Consider adding `organization_id` to the views.
 
-### Gap 2: `v_all_clients` has `lead_source` column but batch generator queries `source`
-
-Line 178: `.select('... source, birthday')`. The view has both `source` and `lead_source`. The `source` column identifies data origin (phorest vs zura), while `lead_source` is the marketing acquisition channel. The Client Source report uses `source` when it should likely use `lead_source` for meaningful results.
-
-**Fix:** Use `lead_source` for the client-source report aggregation.
-
-### Gap 3: `ScheduledReportsManager` duplicates `ScheduledReportsSubTab` functionality
-
-Both components render the same scheduled reports list with nearly identical UI. `ScheduledReportsManager` lacks Run Now and uses a different pattern (dropdown menu vs inline buttons). This creates maintenance burden and inconsistent behavior.
-
-**Note:** Not a bug, but worth consolidating in a future pass.
+**Note:** This is a view schema change — not blocking but worth addressing in a hardening pass.
 
 ---
 
@@ -67,10 +62,10 @@ Both components render the same scheduled reports list with nearly identical UI.
 
 | File | Change |
 |---|---|
-| `useBatchReportGenerator.ts` | Replace `line_total` → `total_amount`, `discount_amount` → `discount`; add org-scoping to gift card/voucher queries; pass `orgId` param to `fetchReportData` |
-| `ScheduleReportForm.tsx` | Add org-scoping to staff query via `useOrganizationContext` |
-| `ScheduledReportsSubTab.tsx` | Fix `handleRunNow` to hoist `runId` and call `completeRun` on failure |
-| `useBatchReportGenerator.ts` | Fix client-source to use `lead_source` instead of `source` |
+| `useBatchReportGenerator.ts` | Fix gift card column mapping (`current_balance`, `is_active`); fix voucher column mapping (`is_active`/`is_redeemed`, `valid_from`); add org-scoping to client queries |
+| `ScheduledReportsManager.tsx` | Delete (dead code) |
+| `ScheduleReportForm.tsx` | Add tier-based report filtering |
+| `ScheduledReportsSubTab.tsx` | Consider documenting or fixing Run Now date range behavior |
 
-4 file edits. No migrations. The column mismatch fix is the highest priority — it makes all batch PDFs show zero revenue.
+3 file edits + 1 deletion. No migrations.
 
