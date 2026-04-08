@@ -1,96 +1,67 @@
 
 
-# Build All Missing Reports — Priority Order with Gap Passes
+# Gap and Bug Pass — Batch 1-4 Reports
 
-This is a large body of work covering 10 new reports across 6 categories. Each report follows the established pattern: hook for data, report component with table + PDF/CSV export, registration in `ReportsTabContent.tsx` and `reportCatalog.ts`.
+## Findings
 
-## Priority Order and Batching
+### Bugs
 
-### Batch 1 — Governance and HR (High Priority)
+1. **Staff Strikes hook missing org scope** — `useStaffStrikesReport` queries `staff_strikes` without filtering by organization. The table lacks an `organization_id` column, so strikes from all orgs could leak. Fix: join through `employee_profiles` to scope to org members only.
 
-**Report 1: Staff Milestones (Birthdays and Hire Anniversaries)**
-- Data source: `employee_profiles` — has `birthday` (date), `hire_date` (date)
-- Hook: `useStaffMilestonesReport.ts` — queries `employee_profiles` for active staff, computes days-until for both birthday and hire anniversary, accepts `daysAhead` and `milestoneType` filter (birthday/anniversary/both)
-- Component: `StaffMilestonesReport.tsx` — table with Name, Type (Birthday/Anniversary), Date, Days Until, Years (for anniversaries), Role, Location. PDF + CSV export
-- Category: Staff reports
+2. **Staff Milestones ignores date range** — The component receives `dateFrom`/`dateTo` props but the hook uses a hardcoded `daysAhead: 30`. Should either use the date range to compute `daysAhead` or expose a filter control in the UI.
 
-**Report 2: Permissions Audit**
-- Data source: `user_roles` (role assignments), `employee_profiles` (names, status, location), `dashboard_element_visibility` (UI visibility config)
-- Hook: `usePermissionsAuditReport.ts` — joins `user_roles` with `employee_profiles` to produce a matrix of who has what role, grouped by staff member
-- Component: `PermissionsAuditReport.tsx` — table with Staff Name, Roles (badges), Location, Status, Last Login. PDF + CSV export
-- Category: Staff reports
+3. **Permissions Audit ignores date range** — Receives `dateFrom`/`dateTo` props but doesn't use them (permissions are point-in-time). Minor, but the PDF header shows the date range which is misleading. Should display "As of [today]" instead.
 
-**Report 3: Time and Attendance**
-- Data source: `time_entries` — has `clock_in`, `clock_out`, `duration_minutes`, `break_minutes`, `location_id`
-- Hook: `useTimeAttendanceReport.ts` — aggregates time entries by staff within date range: total hours, avg hours/day, overtime (>8h days), late clock-ins, total break time
-- Component: `TimeAttendanceReport.tsx` — table with Staff Name, Days Worked, Total Hours, Avg Hours/Day, Break Hours, Overtime Hours. PDF + CSV export
-- Category: Staff reports
+4. **PTO Balances ignores date range** — Same issue as Permissions Audit. Point-in-time data, but the PDF header may show a misleading date range.
 
-### Batch 2 — HR / Culture
+5. **Churn Risk ignores date range** — Hook pulls all scores without date filtering. Should either filter by `analyzed_at` or show "Current" in PDF header.
 
-**Report 4: PTO Balances**
-- Data source: `employee_pto_balances` + `pto_policies`
-- Hook: `usePTOBalancesReport.ts` — joins balances with policy names, staff profiles
-- Component: `PTOBalancesReport.tsx` — table with Staff Name, Policy, Current Balance, Accrued YTD, Used YTD, Carried Over
-- Category: Staff reports
+6. **Booth Renter ignores date range** — Same pattern. Point-in-time snapshot. PDF header should say "Current" not a date range.
 
-**Report 5: Staff Strikes**
-- Data source: `staff_strikes` + `employee_profiles`
-- Hook: `useStaffStrikesReport.ts` — queries active/resolved strikes within date range, joins with staff names
-- Component: `StaffStrikesReport.tsx` — table with Staff Name, Strike Type, Severity, Title, Incident Date, Status (Active/Resolved), Resolution Notes
-- Category: Staff reports
+7. **Training Completion ignores date range** — Point-in-time. Same fix needed.
 
-**Report 6: Training Completion**
-- Data source: `training_progress` + `training_videos` + `employee_profiles`
-- Hook: `useTrainingCompletionReport.ts` — joins progress with video metadata, calculates completion % per staff
-- Component: `TrainingCompletionReport.tsx` — table with Staff Name, Videos Completed, Total Required, Completion %, Last Completed Date
-- Category: Staff reports
+8. **`future-appointments` is listed in `financialReports` array** (line 168) but cataloged under `operations` in `REPORT_CATALOG`. Misplaced — it renders under the Financial tab in the UI but belongs in Operations.
 
-### Batch 3 — Client Intelligence
+9. **Console error: RecentReports ref warning** — `RecentReports` is a function component receiving a ref from somewhere. Non-breaking but noisy.
 
-**Report 7: Client Feedback / NPS**
-- Data source: `client_feedback_responses` + `nps_daily_snapshots`
-- Hook: `useClientFeedbackReport.ts` — aggregates NPS scores, ratings, and comments within date range
-- Component: `ClientFeedbackReport.tsx` — summary tiles (NPS Score, Avg Rating, Promoters/Passives/Detractors) + table of individual responses with Staff, Rating, NPS, Comments
-- Category: Clients reports
+### Gaps
 
-**Report 8: Churn Risk**
-- Data source: `churn_risk_scores`
-- Hook: `useChurnRiskReport.ts` — queries risk scores with factors and recommendations
-- Component: `ChurnRiskReport.tsx` — summary tiles (High/Medium/Low counts) + table with Risk Level, Score, Factors, Recommendations
-- Category: Clients reports
+10. **Staff Strikes not scoped by `locationId`** — The hook accepts no location filter; should filter via employee_profiles join.
 
-### Batch 4 — Operational / Financial
+11. **Several "point-in-time" reports accept dateFrom/dateTo but don't use them** — Creates false expectation. These reports should either not show the date picker context or clearly label their PDF as "Current Snapshot".
 
-**Report 9: Booth Renter Summary**
-- Data source: `booth_renter_profiles` + `employee_profiles`
-- Hook: `useBoothRenterReport.ts` — joins renter profiles with staff info: status, business name, insurance status, start/end dates
-- Component: `BoothRenterReport.tsx` — table with Staff Name, Business Name, Status, Start Date, Insurance Status, Insurance Expiry
-- Category: Financial reports
+## Plan
 
-**Report 10: Client Formula History**
-- Data source: `client_formula_history`
-- Hook: `useFormulaHistoryReport.ts` — aggregates formula usage: total formulas recorded, by type, by staff
-- Component: `FormulaHistoryReport.tsx` — summary tiles + table with Staff, Client, Service, Formula Type, Date
-- Category: Operations reports
+### Fix 1: Staff Strikes org + location scoping
+- In `useStaffStrikesReport.ts`, fetch `employee_profiles` for the org, build a user ID set, then filter strikes to only those users. Also accept `locationId` and filter profiles by it.
 
-## Registration (applies to all reports)
+### Fix 2: Move `future-appointments` from `financialReports` to `operationsReports`
+- In `ReportsTabContent.tsx`, move the entry from `financialReports` array to `operationsReports` array.
 
-Each report requires updates to 3 files:
-1. **`src/config/reportCatalog.ts`** — add entry to `REPORT_CATALOG` array
-2. **`src/components/dashboard/analytics/ReportsTabContent.tsx`** — add to category array, import component, add switch case, add to `selfContainedReports`
-3. Each report component follows the exact same pattern as `ClientBirthdaysReport.tsx`: Card wrapper, loading skeleton, data table, PDF (jsPDF + autoTable with branded header/footer), CSV export, back button
+### Fix 3: Point-in-time reports — correct PDF date headers
+- For Permissions Audit, PTO Balances, Churn Risk, Booth Renter, Training Completion, and Staff Milestones:
+  - Update `generatePDF` to show `dateFrom: 'Current'` / `dateTo: 'Snapshot'` or `dateFrom: format(new Date(), 'yyyy-MM-dd')` with `dateTo: 'Current'` so the header is not misleading.
+  - No hook changes needed for these — they're correctly point-in-time.
 
-## File Summary
+### Fix 4: Staff Milestones — derive daysAhead from date range
+- Calculate `daysAhead` from `differenceInDays(dateTo, dateFrom)` in the component, pass to hook. Fallback to 30 if range is invalid.
 
-| Batch | New Files | Modified Files |
-|-------|-----------|----------------|
-| 1 | 6 hooks + 3 components | `ReportsTabContent.tsx`, `reportCatalog.ts` |
-| 2 | 3 hooks + 3 components | `ReportsTabContent.tsx`, `reportCatalog.ts` |
-| 3 | 2 hooks + 2 components | `ReportsTabContent.tsx`, `reportCatalog.ts` |
-| 4 | 2 hooks + 2 components | `ReportsTabContent.tsx`, `reportCatalog.ts` |
+### Fix 5: Console warning — RecentReports
+- Wrap `RecentReports` with `React.forwardRef` or ensure it's not receiving a ref.
 
-**Total: 13 new hooks, 10 new report components, 2 shared files updated incrementally per batch.**
+### Files Modified
 
-No migrations needed — all data tables already exist. Gap/bug passes will be run between each batch.
+| File | Change |
+|---|---|
+| `useStaffStrikesReport.ts` | Add org-scoping via employee_profiles join; add locationId filter |
+| `ReportsTabContent.tsx` | Move `future-appointments` from financialReports to operationsReports |
+| `StaffMilestonesReport.tsx` | Derive `daysAhead` from date range |
+| `PermissionsAuditReport.tsx` | Fix PDF header to "Current Snapshot" |
+| `PTOBalancesReport.tsx` | Fix PDF header to "Current Snapshot" |
+| `ChurnRiskReport.tsx` | Fix PDF header to "Current Snapshot" |
+| `BoothRenterReport.tsx` | Fix PDF header to "Current Snapshot" |
+| `TrainingCompletionReport.tsx` | Fix PDF header to "Current Snapshot" |
+| `RecentReports.tsx` | Add forwardRef to fix console warning |
+
+9 file edits. No migrations.
 
