@@ -31,6 +31,8 @@ import {
   Percent,
   Building,
   Grid3X3,
+  Tag,
+  Cake,
 } from 'lucide-react';
 import { useLocations } from '@/hooks/useLocations';
 import { getReportTier, filterReportsByTier } from '@/config/reportCatalog';
@@ -59,6 +61,15 @@ import { ClientAttritionReport } from '@/components/dashboard/reports/ClientAttr
 import { StaffCompensationRatioReport } from '@/components/dashboard/reports/StaffCompensationRatioReport';
 import { LocationBenchmarkReport } from '@/components/dashboard/reports/LocationBenchmarkReport';
 import { DemandHeatmapReport } from '@/components/dashboard/reports/DemandHeatmapReport';
+import { DiscountsReport } from '@/components/dashboard/reports/DiscountsReport';
+import { FutureAppointmentsReport } from '@/components/dashboard/reports/FutureAppointmentsReport';
+import { TopClientsReport } from '@/components/dashboard/reports/TopClientsReport';
+import { ClientBirthdaysReport } from '@/components/dashboard/reports/ClientBirthdaysReport';
+import { ClientSourceReport } from '@/components/dashboard/reports/ClientSourceReport';
+import { DuplicateClientsReport } from '@/components/dashboard/reports/DuplicateClientsReport';
+import { StaffTransactionDetailReport } from '@/components/dashboard/reports/StaffTransactionDetailReport';
+import { DeletedAppointmentsReport } from '@/components/dashboard/reports/DeletedAppointmentsReport';
+import { NoShowEnhancedReport } from '@/components/dashboard/reports/NoShowEnhancedReport';
 import type { AnalyticsFilters } from '@/pages/dashboard/admin/AnalyticsHub';
 
 const reportCategories = [
@@ -80,6 +91,7 @@ const salesReports = [
   { id: 'retail-staff', name: 'Retail Sales by Staff', description: 'Per-stylist retail revenue, units, and attachment rates', icon: Users },
   { id: 'category-mix', name: 'Service Category Mix', description: 'Revenue share by service category (Color, Cut, Extensions, etc.)', icon: PieChart },
   { id: 'tax-summary', name: 'Tax Summary', description: 'Tax collected by period and location for remittance', icon: Receipt },
+  { id: 'discounts', name: 'Discounts & Promotions', description: 'Discount amounts by staff, promotion usage, and discount-to-revenue ratio', icon: Tag },
 ];
 
 const staffReports = [
@@ -89,6 +101,7 @@ const staffReports = [
   { id: 'rebooking', name: 'Rebooking Analysis', description: 'Staff rebooking rates and trends', icon: UserCheck },
   { id: 'new-clients', name: 'New Client Acquisition', description: "Who's bringing in new clients", icon: UserCheck },
   { id: 'tip-analysis', name: 'Tip Analysis', description: 'Tip distribution, avg tip per visit, tip-to-revenue ratio by stylist', icon: Coins },
+  { id: 'staff-transaction-detail', name: 'Staff Transaction Detail', description: 'Line-item detail per stylist per day', icon: FileText },
   { id: 'compensation-ratio', name: 'Compensation Ratio', description: 'Labor cost as % of revenue per stylist with commission source', icon: Percent },
 ];
 
@@ -98,11 +111,17 @@ const clientReports = [
   { id: 'new-vs-returning', name: 'New vs Returning', description: 'Acquisition funnel analysis', icon: TrendingUp },
   { id: 'visit-frequency', name: 'Visit Frequency', description: 'Visit patterns by segment', icon: CalendarDays },
   { id: 'client-attrition', name: 'Client Attrition', description: 'At-risk, lapsed, and lost clients with revenue impact', icon: AlertTriangle },
+  { id: 'top-clients', name: 'Top Clients', description: 'Ranked by spend with visit frequency, avg ticket, and top service', icon: DollarSign },
+  { id: 'client-birthdays', name: 'Client Birthdays', description: 'Upcoming birthdays for marketing outreach', icon: CalendarDays },
+  { id: 'client-source', name: 'Client Source', description: 'Where clients came from (referral, online, walk-in)', icon: UserCheck },
+  { id: 'duplicate-clients', name: 'Duplicate Clients', description: 'Potential duplicate client records by email/phone match', icon: AlertTriangle },
 ];
 
 const operationsReports = [
   { id: 'capacity', name: 'Capacity Utilization', description: 'Booking density and peak hours', icon: BarChart3 },
   { id: 'no-show', name: 'No-Show Report', description: 'No-show rates by staff, day, time', icon: Clock },
+  { id: 'no-show-enhanced', name: 'No-Shows & Cancellations', description: 'Combined report with revenue impact and repeat offenders', icon: AlertTriangle },
+  { id: 'deleted-appointments', name: 'Deleted Appointments', description: 'Audit trail of removed appointments with lost revenue', icon: Clock },
   { id: 'service-duration', name: 'Service Duration', description: 'Actual vs expected times', icon: Clock },
   { id: 'lead-time', name: 'Appointment Lead Time', description: 'How far ahead clients book', icon: CalendarDays },
   { id: 'demand-heatmap', name: 'Demand Heatmap', description: 'Appointment volume by hour and day-of-week', icon: Grid3X3 },
@@ -119,6 +138,7 @@ const financialReports = [
   { id: 'service-profitability', name: 'Service Profitability', description: 'Revenue vs chemical + labor cost per service', icon: TrendingUp },
   { id: 'chemical-cost', name: 'Chemical Cost Report', description: 'Chemical cost per service, waste %, and margin from Color Bar', icon: Beaker },
   { id: 'location-benchmark', name: 'Location Benchmarking', description: 'Side-by-side KPI comparison across all locations', icon: Building },
+  { id: 'future-appointments', name: 'Future Appointments Value', description: 'Revenue pipeline from upcoming booked appointments', icon: CalendarDays },
 ];
 
 interface ReportsTabContentProps {
@@ -246,7 +266,7 @@ export function ReportsTabContent({ filters, isStandalone }: ReportsTabContentPr
   );
 
   // Reports that manage their own back button
-  const selfContainedReports = ['individual-staff', 'payroll-summary', 'retail-products', 'retail-staff', 'end-of-month', 'service-profitability', 'chemical-cost', 'tip-analysis', 'category-mix', 'tax-summary', 'client-attrition', 'compensation-ratio', 'location-benchmark', 'demand-heatmap'];
+  const selfContainedReports = ['individual-staff', 'payroll-summary', 'retail-products', 'retail-staff', 'end-of-month', 'service-profitability', 'chemical-cost', 'tip-analysis', 'category-mix', 'tax-summary', 'client-attrition', 'compensation-ratio', 'location-benchmark', 'demand-heatmap', 'discounts', 'future-appointments', 'top-clients', 'client-birthdays', 'client-source', 'duplicate-clients', 'staff-transaction-detail', 'deleted-appointments', 'no-show-enhanced'];
 
   const renderSelectedReport = () => {
     const location = filters.locationId === 'all' ? undefined : filters.locationId;
@@ -399,6 +419,24 @@ export function ReportsTabContent({ filters, isStandalone }: ReportsTabContentPr
         return <LocationBenchmarkReport dateFrom={filters.dateFrom} dateTo={filters.dateTo} onClose={handleCloseReport} />;
       case 'demand-heatmap':
         return <DemandHeatmapReport dateFrom={filters.dateFrom} dateTo={filters.dateTo} locationId={location} onClose={handleCloseReport} />;
+      case 'discounts':
+        return <DiscountsReport dateFrom={filters.dateFrom} dateTo={filters.dateTo} locationId={location} onClose={handleCloseReport} />;
+      case 'future-appointments':
+        return <FutureAppointmentsReport dateFrom={filters.dateFrom} dateTo={filters.dateTo} locationId={location} onClose={handleCloseReport} />;
+      case 'top-clients':
+        return <TopClientsReport dateFrom={filters.dateFrom} dateTo={filters.dateTo} locationId={location} onClose={handleCloseReport} />;
+      case 'client-birthdays':
+        return <ClientBirthdaysReport dateFrom={filters.dateFrom} dateTo={filters.dateTo} locationId={location} onClose={handleCloseReport} />;
+      case 'client-source':
+        return <ClientSourceReport dateFrom={filters.dateFrom} dateTo={filters.dateTo} locationId={location} onClose={handleCloseReport} />;
+      case 'duplicate-clients':
+        return <DuplicateClientsReport dateFrom={filters.dateFrom} dateTo={filters.dateTo} locationId={location} onClose={handleCloseReport} />;
+      case 'staff-transaction-detail':
+        return <StaffTransactionDetailReport dateFrom={filters.dateFrom} dateTo={filters.dateTo} locationId={location} onClose={handleCloseReport} />;
+      case 'deleted-appointments':
+        return <DeletedAppointmentsReport dateFrom={filters.dateFrom} dateTo={filters.dateTo} locationId={location} onClose={handleCloseReport} />;
+      case 'no-show-enhanced':
+        return <NoShowEnhancedReport dateFrom={filters.dateFrom} dateTo={filters.dateTo} locationId={location} onClose={handleCloseReport} />;
       default:
         return null;
     }
