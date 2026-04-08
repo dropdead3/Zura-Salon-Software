@@ -1,145 +1,71 @@
 
 
-# Phorest Detach — Make All Reports Standalone-Ready
+# Reports Standalone Audit — Findings
 
-## Problem
+## Report Hooks & Components: VERIFIED CLEAN
 
-Every report hook directly queries `phorest_*` tables. When Phorest is disconnected, these tables will be empty — **all 14 report hooks and 3 report components with inline queries will return zero data**, making the entire reporting system non-functional.
+All 15 migrated report hooks and 3 report components correctly query the union views (`v_all_appointments`, `v_all_clients`, `v_all_transaction_items`). Zero direct `phorest_*` table references remain in report files.
 
-Zura-native tables (`appointments`, `clients`, `transaction_items`) already exist with compatible schemas, and a union view `v_all_transaction_items` exists but is unused by any report.
+**Views confirmed deployed** with correct columns and `security_invoker = true`.
 
-## Strategy: Dual-Source Resolution
+---
 
-Rather than rewriting all 17 files to use the POS adapter (which is high-level and doesn't cover the raw queries these reports need), we use a **table resolution pattern**:
+## Bugs Found
 
-1. Create a shared utility `src/utils/dataSourceResolver.ts` that determines whether to query `phorest_*` tables, Zura-native tables, or both (union views)
-2. For transaction items: use `v_all_transaction_items` (already exists as a union of both sources)
-3. For appointments: create `v_all_appointments` union view
-4. For clients: create `v_all_clients` union view  
-5. For staff mapping: fall back gracefully when `phorest_staff_mapping` has no rows — use `employee_profiles` instead
+### Bug 1: `staff_name` is NULL for all Phorest-sourced appointments (2,137 rows)
 
-This approach is minimally invasive: each hook swaps a table name reference, and the union views ensure historical Phorest data is still included if it exists.
+The `v_all_appointments` view hardcodes `NULL::text AS staff_name` for Phorest rows because `phorest_appointments` has no `staff_name` column — only `phorest_staff_id`.
 
-## Database Migrations
+**Impact:** Two reports show "Unknown" for staff on Phorest-sourced data:
+- **Tip Analysis Report** — groups by `phorest_staff_id` but displays `staff_name`, which is NULL → "Unknown"
+- **Client Attrition Report** — shows `staff_name` as last stylist, NULL for Phorest rows
 
-### Migration 1: Create `v_all_appointments` union view
+**Fix:** Update the `v_all_appointments` view to LEFT JOIN `phorest_staff_mapping` and resolve `staff_name` from `phorest_staff_name`:
 
 ```sql
-CREATE OR REPLACE VIEW public.v_all_appointments AS
-SELECT 
-  pa.id, pa.location_id, pa.phorest_staff_id,
-  pa.staff_name, pa.phorest_client_id AS client_id,
-  pa.client_name, pa.service_name, pa.appointment_date,
-  pa.start_time, pa.end_time, pa.status,
-  pa.total_price, pa.tip_amount, pa.rebooked_at_checkout,
-  pa.is_new_client, pa.deleted_at, pa.deleted_by,
-  pa.is_demo,
-  'phorest' AS source
+SELECT ...
+  psm.phorest_staff_name AS staff_name,
+  ...
 FROM phorest_appointments pa
-UNION ALL
-SELECT
-  a.id::text, a.location_id, a.staff_user_id::text,
-  a.staff_name, a.client_id::text,
-  a.client_name, a.service_name, a.appointment_date::text,
-  a.start_time::text, a.end_time::text, a.status,
-  a.total_price, a.tip_amount, a.rebooked_at_checkout,
-  a.is_new_client, a.deleted_at, a.deleted_by::text,
-  false AS is_demo,
-  COALESCE(a.import_source, 'zura') AS source
-FROM appointments a;
+LEFT JOIN phorest_staff_mapping psm ON psm.phorest_staff_id = pa.phorest_staff_id
 ```
 
-### Migration 2: Create `v_all_clients` union view
+This is a single migration (recreate the view). No hook changes needed — they already select `staff_name`.
 
-```sql
-CREATE OR REPLACE VIEW public.v_all_clients AS
-SELECT
-  pc.id, pc.phorest_client_id AS client_id,
-  pc.name, pc.first_name, pc.last_name,
-  pc.email, pc.email_normalized, pc.phone, pc.phone_normalized,
-  pc.birthday, pc.total_spend, pc.visit_count,
-  pc.last_visit AS last_visit_date, pc.lead_source,
-  pc.is_archived, pc.is_duplicate, pc.canonical_client_id,
-  pc.location_id, pc.created_at, pc.client_since,
-  'phorest' AS source
-FROM phorest_clients pc
-UNION ALL
-SELECT
-  c.id::text, COALESCE(c.external_id, c.id::text),
-  COALESCE(c.first_name || ' ' || c.last_name, 'Unknown'),
-  c.first_name, c.last_name,
-  c.email, c.email_normalized, c.mobile AS phone, c.phone_normalized,
-  c.birthday, c.total_spend, c.visit_count,
-  c.last_visit_date::text, c.lead_source,
-  COALESCE(c.is_archived, false), false, NULL,
-  c.location_id, c.created_at, c.client_since,
-  COALESCE(c.import_source, 'zura') AS source
-FROM clients c;
-```
+### Bug 2: `useTipAnalysisReport` groups by `phorest_staff_id` — breaks standalone
 
-## Files to Modify
+Line 51: `const staffId = row.phorest_staff_id || 'unknown'`. When running standalone (no Phorest), native appointments have `phorest_staff_id = NULL`, so all tips aggregate under "unknown".
 
-### Report hooks — swap `phorest_*` table to union view (14 files)
+**Fix:** Group by `stylist_user_id` instead (which is always populated for both sources), falling back to `phorest_staff_id` only if `stylist_user_id` is null.
 
-| File | `phorest_*` table used | Swap to |
-|---|---|---|
-| `useTopClientsReport.ts` | `phorest_transaction_items` | `v_all_transaction_items` |
-| `useCategoryMixReport.ts` | `phorest_transaction_items` | `v_all_transaction_items` |
-| `useDiscountsReport.ts` | `phorest_transaction_items` | `v_all_transaction_items` |
-| `useStaffTransactionDetailReport.ts` | `phorest_transaction_items` | `v_all_transaction_items` |
-| `useTipAnalysisReport.ts` | `phorest_appointments` | `v_all_appointments` |
-| `useFutureAppointmentsReport.ts` | `phorest_appointments` | `v_all_appointments` |
-| `useCapacityReport.ts` | `phorest_appointments` | `v_all_appointments` |
-| `useNoShowReport.ts` | `phorest_appointments` | `v_all_appointments` |
-| `useClientAttritionReport.ts` | `phorest_appointments` | `v_all_appointments` |
-| `useRebookingRate.ts` | `phorest_appointments` | `v_all_appointments` |
-| `useClientRetentionReport.ts` | `phorest_clients` + `phorest_appointments` | `v_all_clients` + `v_all_appointments` |
-| `useClientBirthdaysReport.ts` | `phorest_clients` | `v_all_clients` |
-| `useDuplicateClientsReport.ts` | `phorest_clients` | `v_all_clients` |
-| `useIndividualStaffReport.ts` | `phorest_staff_mapping` + `phorest_appointments` + `phorest_transaction_items` + `phorest_clients` | Union views + `employee_profiles` fallback |
-| `useStaffKPIReport.ts` | `phorest_staff_mapping` + `phorest_appointments` + `phorest_transaction_items` | Union views + `employee_profiles` fallback |
+### Bug 3: Deleted Appointments report uses `phorest_staff_id` for staff column
 
-### Report components with inline queries (3 files)
+`DeletedAppointmentsReport.tsx` line 41/48 selects `phorest_staff_id` and displays it raw as the "Staff" column. For Zura-native appointments, this will be NULL. Should use `staff_name` or resolve via `stylist_user_id`.
 
-| File | Table | Swap to |
-|---|---|---|
-| `ClientSourceReport.tsx` | `phorest_clients` | `v_all_clients` |
-| `DeletedAppointmentsReport.tsx` | `phorest_appointments` | `v_all_appointments` |
-| `NoShowEnhancedReport.tsx` | `phorest_appointments` | `v_all_appointments` |
+### Bug 4: `v_all_clients` query limit of 5,000 rows
 
-### Already standalone (no changes needed)
+`useDuplicateClientsReport`, `useClientBirthdaysReport`, and `ClientSourceReport` all use `.limit(5000)` instead of `fetchAllBatched`. For organizations with large client bases, this silently truncates results.
 
-| File | Data source |
+**Fix:** Switch to `fetchAllBatched` for consistency with all other report hooks.
+
+---
+
+## Non-Report Phorest Dependencies (Out of Scope but Noted)
+
+97 other files across the codebase still directly query `phorest_*` tables (scheduling, POS, analytics, payroll, kiosk, etc.). These are outside the report system and are tracked under the broader "Phorest Detach" roadmap. The report system itself is standalone-ready pending the 4 bugs above.
+
+---
+
+## Fix Plan
+
+| File | Change |
 |---|---|
-| `useGiftCardsReport.ts` | `gift_cards` (Zura-owned) |
-| `useVouchersReport.ts` | `vouchers` (Zura-owned) |
+| New migration | Recreate `v_all_appointments` with LEFT JOIN to `phorest_staff_mapping` for `staff_name` resolution |
+| `src/hooks/useTipAnalysisReport.ts` | Group by `stylist_user_id` instead of `phorest_staff_id` |
+| `src/components/dashboard/reports/DeletedAppointmentsReport.tsx` | Use `staff_name` (or `stylist_user_id` + lookup) instead of raw `phorest_staff_id` |
+| `src/hooks/useDuplicateClientsReport.ts` | Replace `.limit(5000)` with `fetchAllBatched` |
+| `src/hooks/useClientBirthdaysReport.ts` | Replace `.limit(5000)` with `fetchAllBatched` |
+| `src/components/dashboard/reports/ClientSourceReport.tsx` | Replace `.limit(5000)` with `fetchAllBatched` |
 
-### Staff mapping resolution
-
-`useIndividualStaffReport.ts` and `useStaffKPIReport.ts` depend on `phorest_staff_mapping` to resolve `user_id → phorest_staff_id`. When Phorest is disconnected, this table will have no rows. The fix:
-
-- Query `v_all_appointments` and `v_all_transaction_items` using `staff_user_id` (the Zura-native column) instead of `phorest_staff_id`
-- Both union views already expose `staff_user_id` / `staff_name`
-- Fall back to `employee_profiles` for staff name resolution
-
-### New utility file
-
-`src/utils/dataSourceResolver.ts` — exports table name constants and a helper to check if Phorest data exists. Not strictly required for the table swap approach, but useful for future conditional logic.
-
-## Column Mapping Notes
-
-The union views normalize column names. Key mappings:
-- `phorest_client_id` → `client_id` (in union views)
-- `phorest_staff_id` → `staff_user_id` (in union views, maps to `employee_profiles.user_id`)
-- `stylist_user_id` → `staff_user_id` (already consistent in `v_all_transaction_items`)
-- `stylist_name` → `staff_name` (already consistent)
-
-Some hooks reference `phorest_client_id` or `phorest_staff_id` as column names in their queries — these will need to be updated to the union view's normalized column names.
-
-## Scope
-
-- 2 database migrations (union views)
-- 17 file edits (14 hooks + 3 components)
-- 1 new utility file
-- No breaking changes — union views include all existing Phorest data plus Zura-native data
+1 migration + 5 file edits. No breaking changes.
 
