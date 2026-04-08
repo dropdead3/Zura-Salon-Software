@@ -30,16 +30,20 @@ function useClientSourceReport(filters: { dateFrom?: string; dateTo?: string; lo
   return useQuery({
     queryKey: ['client-source-report', filters],
     queryFn: async () => {
-      let q = supabase
-        .from('v_all_clients')
-        .select('lead_source, total_spend')
-        .eq('is_archived', false);
-      if (filters.locationId) q = q.eq('location_id', filters.locationId);
-      if (filters.dateFrom) q = q.gte('created_at', filters.dateFrom);
-      if (filters.dateTo) q = q.lte('created_at', filters.dateTo + 'T23:59:59');
-
-      const { data, error } = await q.limit(5000);
-      if (error) throw error;
+      const data = await fetchAllBatched<{
+        lead_source: string | null;
+        total_spend: number | null;
+      }>((from, to) => {
+        let q = supabase
+          .from('v_all_clients')
+          .select('lead_source, total_spend')
+          .eq('is_archived', false)
+          .range(from, to);
+        if (filters.locationId) q = q.eq('location_id', filters.locationId);
+        if (filters.dateFrom) q = q.gte('created_at', filters.dateFrom);
+        if (filters.dateTo) q = q.lte('created_at', filters.dateTo + 'T23:59:59');
+        return q;
+      });
 
       const sourceMap = new Map<string, { count: number; spend: number }>();
       for (const c of data || []) {
