@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { fetchAllBatched } from '@/utils/fetchAllBatched';
 import { parseISO, getMonth, getDate, format, differenceInDays, setYear } from 'date-fns';
 
 export interface ClientBirthdayEntry {

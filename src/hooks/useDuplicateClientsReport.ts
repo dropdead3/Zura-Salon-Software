@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { fetchAllBatched } from '@/utils/fetchAllBatched';
 
 export interface DuplicateGroup {
   matchType: string;
