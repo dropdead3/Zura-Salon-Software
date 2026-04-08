@@ -202,79 +202,54 @@ export default function ReportsHub() {
   return (
     <DashboardLayout>
       <div className="p-4 md:p-6 lg:p-8 space-y-6">
-        {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-display">Reports</h1>
-            <p className="text-muted-foreground">Generate and export business reports</p>
-          </div>
-          
-          {/* Filters */}
-          <div className="flex items-center gap-3">
-            {/* Date Range Picker */}
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button variant="outline" size={tokens.button.card} className="min-w-[200px] justify-start">
-                  <CalendarIcon className="w-4 h-4 mr-2" />
-                  {format(dateRange.from, 'MMM d')} - {format(dateRange.to, 'MMM d, yyyy')}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="end">
-                <div className="p-3 space-y-3">
-                  <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      size={tokens.button.inline}
-                      onClick={() => setDateRange({
-                        from: startOfMonth(new Date()),
-                        to: endOfMonth(new Date()),
-                      })}
-                    >
-                      This Month
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size={tokens.button.inline}
-                      onClick={() => setDateRange({
-                        from: startOfMonth(subMonths(new Date(), 1)),
-                        to: endOfMonth(subMonths(new Date(), 1)),
-                      })}
-                    >
-                      Last Month
-                    </Button>
+        <DashboardPageHeader
+          title="Report Generator"
+          description="Generate, schedule, and export business reports"
+          backTo="/dashboard/admin/analytics"
+          backLabel="Back to Analytics Hub"
+          actions={
+            <div className="flex items-center gap-3">
+              {/* Date Range Picker */}
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" size={tokens.button.card} className="min-w-[200px] justify-start">
+                    <CalendarIcon className="w-4 h-4 mr-2" />
+                    {format(dateRange.from, 'MMM d')} - {format(dateRange.to, 'MMM d, yyyy')}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="end">
+                  <div className="p-3 space-y-3">
+                    <div className="flex gap-2">
+                      <Button variant="outline" size={tokens.button.inline} onClick={() => setDateRange({ from: startOfMonth(new Date()), to: endOfMonth(new Date()) })}>This Month</Button>
+                      <Button variant="outline" size={tokens.button.inline} onClick={() => setDateRange({ from: startOfMonth(subMonths(new Date(), 1)), to: endOfMonth(subMonths(new Date(), 1)) })}>Last Month</Button>
+                    </div>
+                    <Calendar
+                      mode="range"
+                      selected={{ from: dateRange.from, to: dateRange.to }}
+                      onSelect={(range) => { if (range?.from && range?.to) setDateRange({ from: range.from, to: range.to }); }}
+                      numberOfMonths={2}
+                      className="pointer-events-auto"
+                    />
                   </div>
-                  <Calendar
-                    mode="range"
-                    selected={{ from: dateRange.from, to: dateRange.to }}
-                    onSelect={(range) => {
-                      if (range?.from && range?.to) {
-                        setDateRange({ from: range.from, to: range.to });
-                      }
-                    }}
-                    numberOfMonths={2}
-                    className="pointer-events-auto"
-                  />
-                </div>
-              </PopoverContent>
-            </Popover>
+                </PopoverContent>
+              </Popover>
 
-            {/* Location Filter */}
-            <Select value={locationId} onValueChange={setLocationId}>
-              <SelectTrigger className="w-[180px]">
-                <Building2 className="w-4 h-4 mr-2" />
-                <SelectValue placeholder="All Locations" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Locations</SelectItem>
-                {locations?.map((loc) => (
-                  <SelectItem key={loc.id} value={loc.id}>
-                    {loc.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
+              {/* Location Filter */}
+              <Select value={locationId} onValueChange={setLocationId}>
+                <SelectTrigger className="w-[180px]">
+                  <Building2 className="w-4 h-4 mr-2" />
+                  <SelectValue placeholder="All Locations" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Locations</SelectItem>
+                  {locations?.map((loc) => (
+                    <SelectItem key={loc.id} value={loc.id}>{loc.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          }
+        />
 
         {/* Selected Report View */}
         {selectedReport ? (
