@@ -156,7 +156,7 @@ export function TransactionList({
                 </TableCell>
                 <TableCell>
                   <div className="flex items-center gap-2">
-                    {transaction.item_type === 'service' ? (
+                    {(transaction.item_type || '').toLowerCase() === 'service' ? (
                       <Scissors className="w-4 h-4 text-muted-foreground flex-shrink-0" />
                     ) : (
                       <Package className="w-4 h-4 text-muted-foreground flex-shrink-0" />
@@ -173,8 +173,8 @@ export function TransactionList({
                 <TableCell>
                   <Badge variant="outline" className={cn(
                     "capitalize",
-                    transaction.item_type === 'service' && "border-blue-300 text-blue-700 bg-blue-50 dark:bg-blue-950 dark:text-blue-400",
-                    transaction.item_type === 'product' && "border-green-300 text-green-700 bg-green-50 dark:bg-green-950 dark:text-green-400"
+                    (transaction.item_type || '').toLowerCase() === 'service' && "border-blue-300 text-blue-700 bg-blue-50 dark:bg-blue-950 dark:text-blue-400",
+                    (transaction.item_type || '').toLowerCase() === 'product' && "border-green-300 text-green-700 bg-green-50 dark:bg-green-950 dark:text-green-400"
                   )}>
                     {transaction.item_type}
                   </Badge>

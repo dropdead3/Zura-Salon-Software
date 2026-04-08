@@ -191,7 +191,8 @@ export function createPhorestAdapter(organizationId: string): POSAdapter {
         if (!byDate[date]) byDate[date] = { date, location_id: item.location_id, total_revenue: 0, service_revenue: 0, product_revenue: 0, total_transactions: 0, total_services: 0 };
         const amount = (Number(item.total_amount) || 0) + (Number(item.tax_amount) || 0);
         byDate[date].total_revenue += amount;
-        if (item.item_type === 'service') { byDate[date].service_revenue += amount; byDate[date].total_services += 1; }
+        const itemType = (item.item_type || '').toLowerCase();
+        if (itemType === 'service') { byDate[date].service_revenue += amount; byDate[date].total_services += 1; }
         else byDate[date].product_revenue += amount;
         byDate[date].total_transactions += 1;
       }

@@ -112,7 +112,8 @@ export function usePayrollSalesData(
           aggregated[uid] = { serviceRevenue: 0, productRevenue: 0 };
         }
         const amount = (Number(item.total_amount) || 0) + (Number(item.tax_amount) || 0);
-        if (item.item_type === 'service') {
+        const itemType = (item.item_type || '').toLowerCase();
+        if (itemType === 'service') {
           aggregated[uid].serviceRevenue += amount;
         } else {
           aggregated[uid].productRevenue += amount;

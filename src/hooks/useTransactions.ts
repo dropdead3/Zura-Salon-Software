@@ -13,6 +13,7 @@ export interface TransactionItem {
   quantity: number | null;
   unit_price: number | null;
   total_amount: number | null;
+  tax_amount: number | null;
   discount: number | null;
   phorest_staff_id: string | null;
   location_id: string | null;

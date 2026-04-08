@@ -71,9 +71,10 @@ export function useAvgTicketByStylist({ dateFrom, dateTo, locationId, enabled = 
       allItems.forEach(item => {
         const staffId = item.phorest_staff_id || 'unknown';
         const amount = (Number(item.total_amount) || 0) + (Number(item.tax_amount) || 0);
-        const category = item.item_type === 'service'
+        const itemType = (item.item_type || '').toLowerCase();
+        const category = itemType === 'service'
           ? getServiceCategory(item.item_name)
-          : (item.item_type === 'product' ? 'Retail' : 'Other');
+          : (itemType === 'product' ? 'Retail' : 'Other');
 
         if (!stylistMap[staffId]) {
           stylistMap[staffId] = { revenue: 0, count: 0, clientVisits: new Set(), categories: {} };

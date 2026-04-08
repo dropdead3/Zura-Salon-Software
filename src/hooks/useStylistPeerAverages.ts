@@ -158,9 +158,10 @@ export function useStylistPeerAverages(
       const u = perUser.get(s.stylist_user_id);
       if (u) {
         const amount = (Number(s.total_amount) || 0) + (Number(s.tax_amount) || 0);
-        if (s.item_type === 'service') {
+        const itemType = (s.item_type || '').toLowerCase();
+        if (itemType === 'service') {
           u.serviceRev += amount;
-        } else if (s.item_type === 'product') {
+        } else if (itemType === 'product') {
           u.productRev += amount;
         }
       }

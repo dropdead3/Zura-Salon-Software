@@ -90,9 +90,9 @@ function TransactionsTab({ search }: { search: string }) {
     ? transactions.filter(t => (Number(t.discount) || 0) > 0)
     : transactions;
 
-  const totalRevenue = filteredTransactions.reduce((sum, t) => sum + (Number(t.total_amount) || 0), 0);
-  const serviceCount = filteredTransactions.filter(t => t.item_type === 'service').length;
-  const productCount = filteredTransactions.filter(t => t.item_type === 'product').length;
+  const totalRevenue = filteredTransactions.reduce((sum, t) => sum + (Number(t.total_amount) || 0) + (Number(t.tax_amount) || 0), 0);
+  const serviceCount = filteredTransactions.filter(t => (t.item_type || '').toLowerCase() === 'service').length;
+  const productCount = filteredTransactions.filter(t => (t.item_type || '').toLowerCase() === 'product').length;
   const refundedCount = filteredTransactions.filter(t => t.refund_status).length;
   const totalDiscounts = transactions.reduce((sum, t) => sum + (Number(t.discount) || 0), 0);
   const discountedCount = transactions.filter(t => (Number(t.discount) || 0) > 0).length;
