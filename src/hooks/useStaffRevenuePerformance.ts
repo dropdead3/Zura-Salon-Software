@@ -93,7 +93,7 @@ export function useStaffRevenuePerformance(
       }>((from, to) => {
         let q = supabase
           .from('phorest_transaction_items')
-          .select('phorest_staff_id, item_type, total_amount, transaction_date')
+          .select('phorest_staff_id, item_type, total_amount, tax_amount, transaction_date')
           .gte('transaction_date', startDate)
           .lte('transaction_date', endDate)
           .not('phorest_staff_id', 'is', null)
