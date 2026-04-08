@@ -86,7 +86,7 @@ export function useServicePopularity(dateFrom?: string, dateTo?: string, locatio
     queryFn: async () => {
       let query = supabase
         .from('phorest_appointments')
-        .select('service_name, total_price, location_id')
+        .select('service_name, total_price, tip_amount, location_id')
         .not('service_name', 'is', null)
         .not('total_price', 'is', null);
 
@@ -122,7 +122,8 @@ export function useServicePopularity(dateFrom?: string, dateTo?: string, locatio
           };
         }
         byService[name].frequency += 1;
-        byService[name].totalRevenue += Number(row.total_price) || 0;
+        // Use tip-adjusted price for accurate service revenue
+        byService[name].totalRevenue += (Number(row.total_price) || 0) - (Number((row as any).tip_amount) || 0);
       });
 
       // Calculate averages

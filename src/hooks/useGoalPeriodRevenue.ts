@@ -23,23 +23,35 @@ export function useGoalPeriodRevenue(period: GoalPeriod, locationId?: string) {
       const dateFrom = format(getPeriodStart(period), 'yyyy-MM-dd');
       const dateTo = format(new Date(), 'yyyy-MM-dd');
 
-      let query = supabase
-        .from('phorest_appointments')
-        .select('total_price')
-        .gte('appointment_date', dateFrom)
-        .lte('appointment_date', dateTo)
-        .not('status', 'in', '("cancelled","no_show")')
-        .not('total_price', 'is', null)
-        .eq('is_demo', false);
+      // Use phorest_transaction_items for accurate POS revenue
+      let allItems: { total_amount: number | null; tax_amount: number | null }[] = [];
+      const PAGE_SIZE = 1000;
+      let offset = 0;
+      let hasMore = true;
 
-      if (locationId && locationId !== 'all') {
-        query = query.eq('location_id', locationId);
+      while (hasMore) {
+        let query = supabase
+          .from('phorest_transaction_items')
+          .select('total_amount, tax_amount')
+          .gte('transaction_date', dateFrom)
+          .lte('transaction_date', dateTo)
+          .range(offset, offset + PAGE_SIZE - 1);
+
+        if (locationId && locationId !== 'all') {
+          query = query.eq('location_id', locationId);
+        }
+
+        const { data, error } = await query;
+        if (error) throw error;
+        allItems.push(...(data || []));
+        hasMore = (data?.length || 0) === PAGE_SIZE;
+        offset += PAGE_SIZE;
       }
 
-      const { data, error } = await query;
-      if (error) throw error;
-
-      return data?.reduce((sum, row) => sum + (Number(row.total_price) || 0), 0) ?? 0;
+      return allItems.reduce(
+        (sum, row) => sum + (Number(row.total_amount) || 0) + (Number(row.tax_amount) || 0),
+        0
+      );
     },
     staleTime: 5 * 60 * 1000,
   });
