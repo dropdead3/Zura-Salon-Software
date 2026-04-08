@@ -1,56 +1,65 @@
 
 
-# Gap Analysis, Bug Fixes & "Run Now" Feature
+# Bug & Gap Analysis — Batch Reports, Scheduled Reports, Run Now
 
-## Bugs Found
+## Critical Bugs
 
-### Bug 1: `useScheduledReports` query is not org-scoped
-The `useScheduledReports` hook fetches all `scheduled_reports` without filtering by `organization_id`. RLS may protect against cross-org leaks, but the query lacks the standard org-scoping pattern (`enabled: !!orgId`, org filter in query, org in cache key). This violates the data architecture doctrine.
+### Bug 1: Column name mismatches in `useBatchReportGenerator.ts` — queries return empty/null values
 
-**Fix:** Import `useOrganizationContext`, filter by `organization_id`, add org to query key, and gate with `enabled: !!orgId`.
+The `fetchReportData` function references columns that **do not exist** in the union views:
 
-### Bug 2: `useScheduledReportRuns` fires even when no reportId
-Line 78: `enabled: true` — this means the query runs even when `reportId` is undefined, fetching unfiltered runs. Should be `enabled: !!reportId`.
+| Queried Column | Actual View Column | Affected Reports |
+|---|---|---|
+| `line_total` | `total_amount` | All sales, staff, financial, retail, discounts (13 reports) |
+| `discount_amount` | `discount` | Discounts report |
 
-### Bug 3: `ScheduledReportsSubTab` has no Edit button on report cards
-The `ScheduledReportsSubTab` renders a card for each scheduled report but provides no way to edit it. Only History, Pause/Resume, and Delete are available. The `editingReport` state exists but is never set to a non-null value. Users must delete and recreate to change anything.
+Every `Number(r.line_total)` evaluates to `NaN` → `0`. **All revenue figures in batch-generated PDFs are $0.00.** This is a silent data corruption bug — no error is thrown, just wrong numbers.
 
-**Fix:** Add an Edit icon button to the card action buttons that sets `editingReport` and opens the form.
+**Fix:** Replace all `line_total` references with `total_amount`, and `discount_amount` with `discount` throughout `fetchReportData`.
 
-### Bug 4: Duplicate report catalogs — `BatchReportDialog` and `ScheduleReportForm` maintain separate hardcoded lists
-`BatchReportDialog` has 29 reports (ALL_REPORTS), `ScheduleReportForm` has 21 reports (REPORT_OPTIONS). They're out of sync — Schedule is missing: `location-sales`, `product-sales`, `staff-transaction-detail`, `client-source`, `duplicate-clients`, `future-appointments`, `chemical-cost`, `location-benchmark`, `service-profitability`. This means users can batch-download reports they can't schedule.
+### Bug 2: `gift_cards` and `vouchers` queries in batch generator are not org-scoped
 
-**Fix:** Extract a shared `REPORT_CATALOG` constant to a common file and import it in both components.
+Lines 260-261: `supabase.from(table).select('*').limit(500)` — no `organization_id` filter. With RLS this may be safe, but it violates the data architecture doctrine and could leak data if RLS has gaps.
 
-### Bug 5: Merged PDF re-fetches all data
-In `useBatchReportGenerator`, the merged PDF path (line 345-375) calls `fetchReportData` a second time for every report after already generating individual PDFs. This doubles the query load. The individual buffers are already generated but aren't used for merging (because jsPDF can't merge ArrayBuffers).
+**Fix:** Pass `orgId` into `fetchReportData` and add `.eq('organization_id', orgId)` to gift card/voucher queries.
 
-**Fix:** For merged output, skip the individual PDF generation loop entirely and go straight to the merged doc generation. Only generate individual PDFs when output is ZIP.
+### Bug 3: `ScheduleReportForm` staff query is not org-scoped
 
-### Bug 6: `calculateNextRunTime` weekly logic is incorrect
-When `schedule_type === 'weekly'`, line 257 first adds 7 days, then recalculates based on `dayOfWeek`. The `daysUntil` calculation uses `next.getDay()` (which is already 7 days ahead) but then adds `daysUntil` to `now.getDate()`. This can produce incorrect dates — the next run could be 2 weeks away instead of 1.
+Lines 88-99: Fetches all active `employee_profiles` without filtering by `organization_id`. An org owner could see staff from other organizations in the recipient picker.
 
-**Fix:** Calculate `daysUntil` from `now` directly without the initial `+7`.
+**Fix:** Import `useOrganizationContext`, filter by `organization_id`.
 
----
+### Bug 4: `handleRunNow` does not call `completeRun` on failure
 
-## "Run Now" Feature
+Lines 107-141 in `ScheduledReportsSubTab.tsx`: The catch block toasts an error but never calls `completeRun` with `success: false`. The run record stays stuck in `'running'` status permanently.
 
-### What it does
-Adds a "Run Now" button to each scheduled report card. When clicked, it triggers an immediate client-side generation of the selected reports (using the same `useBatchReportGenerator` logic) and downloads the result. A run record is inserted into `scheduled_report_runs` to maintain the audit trail. This is a local generation — no email delivery — since email delivery infrastructure (the cron-based dispatcher) is Phase 2.
+**Fix:** Add `completeRun.mutateAsync({ runId, reportId: report.id, success: false, errorMessage: err.message })` in the catch block. Requires capturing `runId` before the try/catch scope or restructuring.
 
-### Implementation
+### Bug 5: `handleRunNow` references `runId` but it's scoped inside try — failure path can't access it
 
-**Hook changes — `useScheduledReports.ts`:**
-- Add `useRunScheduledReportNow` mutation that:
-  1. Inserts a `scheduled_report_runs` row with `status: 'running'`
-  2. Returns the report config (report_ids from filters, format) for the caller to generate
-  3. On completion, updates the row to `status: 'completed'` and updates `last_run_at` on the parent schedule
+The `runId` is obtained from `runNow.mutateAsync(report)` inside try. If `batchGenerator.generate()` fails, the catch needs `runId` but it's not accessible if the mutation itself succeeded but generation failed.
 
-**UI changes — `ScheduledReportsSubTab.tsx`:**
-- Add a "Run Now" (`Play` or `Zap`) icon button next to History/Pause/Delete
-- On click, extract the report config from the schedule's `filters.report_ids`, invoke the batch generator with the current date range, and download the result
-- Show a loading spinner on the button while generating
+**Fix:** Hoist `runId` declaration outside try block, set it after the mutation succeeds.
+
+## Gaps
+
+### Gap 1: Merged PDF only has footer on last page
+
+Line 371: `addReportFooter(mergedDoc, orgName)` is called once after the loop. For a 10-report pack, only the final page has a footer. Individual report PDFs in ZIP mode do have footers (via `generateSingleReportPdf`).
+
+**Fix:** Call `addReportFooter` inside the loop after each report's autoTable, or accept this as a design choice (footer = document-level, not page-level).
+
+### Gap 2: `v_all_clients` has `lead_source` column but batch generator queries `source`
+
+Line 178: `.select('... source, birthday')`. The view has both `source` and `lead_source`. The `source` column identifies data origin (phorest vs zura), while `lead_source` is the marketing acquisition channel. The Client Source report uses `source` when it should likely use `lead_source` for meaningful results.
+
+**Fix:** Use `lead_source` for the client-source report aggregation.
+
+### Gap 3: `ScheduledReportsManager` duplicates `ScheduledReportsSubTab` functionality
+
+Both components render the same scheduled reports list with nearly identical UI. `ScheduledReportsManager` lacks Run Now and uses a different pattern (dropdown menu vs inline buttons). This creates maintenance burden and inconsistent behavior.
+
+**Note:** Not a bug, but worth consolidating in a future pass.
 
 ---
 
@@ -58,12 +67,10 @@ Adds a "Run Now" button to each scheduled report card. When clicked, it triggers
 
 | File | Change |
 |---|---|
-| New: `src/config/reportCatalog.ts` (extend) or `src/config/reportOptions.ts` | Shared `REPORT_CATALOG` constant with all 29 reports |
-| `src/hooks/useScheduledReports.ts` | Org-scope query, fix `enabled`, fix weekly calc, add `useRunScheduledReportNow` |
-| `src/components/dashboard/reports/scheduled/ScheduledReportsSubTab.tsx` | Add Edit + Run Now buttons |
-| `src/components/dashboard/reports/batch/BatchReportDialog.tsx` | Import shared catalog |
-| `src/components/dashboard/reports/scheduled/ScheduleReportForm.tsx` | Import shared catalog |
-| `src/components/dashboard/reports/batch/useBatchReportGenerator.ts` | Skip double-fetch for merged output |
+| `useBatchReportGenerator.ts` | Replace `line_total` → `total_amount`, `discount_amount` → `discount`; add org-scoping to gift card/voucher queries; pass `orgId` param to `fetchReportData` |
+| `ScheduleReportForm.tsx` | Add org-scoping to staff query via `useOrganizationContext` |
+| `ScheduledReportsSubTab.tsx` | Fix `handleRunNow` to hoist `runId` and call `completeRun` on failure |
+| `useBatchReportGenerator.ts` | Fix client-source to use `lead_source` instead of `source` |
 
-6 bugs fixed + 1 new feature. No migrations needed.
+4 file edits. No migrations. The column mismatch fix is the highest priority — it makes all batch PDFs show zero revenue.
 
