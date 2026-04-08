@@ -263,7 +263,7 @@ export function ScheduleReportForm({ open, onOpenChange, editReport }: ScheduleR
           </div>
 
           {/* Location Scope */}
-          {locations.length > 1 && (
+          {(locations?.length ?? 0) > 1 && (
             <div className="space-y-2">
               <Label className="text-xs font-medium flex items-center gap-2">
                 <MapPin className="w-3.5 h-3.5" /> Location

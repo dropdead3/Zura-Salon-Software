@@ -174,20 +174,15 @@ export function useUpdateScheduledReport() {
       if (updates.is_active !== undefined) updateData.is_active = updates.is_active;
 
       if (updates.schedule_type || updates.schedule_config) {
-        // Fetch existing schedule_type if not provided, to avoid defaulting to 'daily'
-        let effectiveType = updates.schedule_type;
-        if (!effectiveType) {
-          const { data: existing } = await supabase
-            .from('scheduled_reports')
-            .select('schedule_type')
-            .eq('id', id)
-            .single();
-          effectiveType = existing?.schedule_type || 'daily';
-        }
-        updateData.next_run_at = calculateNextRunTime(
-          effectiveType,
-          updates.schedule_config
-        );
+        // Fetch existing schedule_type and schedule_config to avoid losing either when only one changes
+        const { data: existing } = await supabase
+          .from('scheduled_reports')
+          .select('schedule_type, schedule_config')
+          .eq('id', id)
+          .single();
+        const effectiveType = updates.schedule_type || existing?.schedule_type || 'daily';
+        const effectiveConfig = updates.schedule_config || (existing?.schedule_config as any);
+        updateData.next_run_at = calculateNextRunTime(effectiveType, effectiveConfig);
       }
 
       const { data, error } = await supabase

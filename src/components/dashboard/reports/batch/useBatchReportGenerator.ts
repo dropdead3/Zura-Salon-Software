@@ -169,17 +169,60 @@ async function fetchReportData(
         ],
       };
     }
+    case 'client-birthdays': {
+      const data = await fetchAllBatched<any>((from, to) => {
+        let q = (supabase.from('v_all_clients') as any)
+          .select('name, first_name, last_name, email, phone, total_spend, visit_count, birthday')
+          .eq('is_archived', false)
+          .not('birthday', 'is', null)
+          .range(from, to);
+        if (locationId) q = q.eq('location_id', locationId);
+        return q;
+      });
+      const today = new Date();
+      const currentYear = today.getFullYear();
+      const entries = data
+        .map((c: any) => {
+          if (!c.birthday) return null;
+          const bday = new Date(c.birthday);
+          let thisYear = new Date(currentYear, bday.getMonth(), bday.getDate());
+          if (thisYear < today) thisYear = new Date(currentYear + 1, bday.getMonth(), bday.getDate());
+          const days = Math.round((thisYear.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+          const name = c.name || `${c.first_name || ''} ${c.last_name || ''}`.trim() || 'Unknown';
+          const bdayStr = `${String(bday.getMonth() + 1).padStart(2, '0')}/${String(bday.getDate()).padStart(2, '0')}`;
+          return [name, bdayStr, String(days), c.email || '', c.phone || '', `$${(Number(c.total_spend) || 0).toFixed(2)}`];
+        })
+        .filter(Boolean)
+        .sort((a: any, b: any) => Number(a[2]) - Number(b[2]));
+      return { columns: ['Client', 'Birthday', 'Days Until', 'Email', 'Phone', 'Spend'], rows: entries.slice(0, 500) };
+    }
+    case 'duplicate-clients': {
+      const data = await fetchAllBatched<any>((from, to) => {
+        let q = (supabase.from('v_all_clients') as any)
+          .select('name, first_name, last_name, email, phone')
+          .eq('is_archived', false)
+          .eq('is_duplicate', true)
+          .range(from, to);
+        if (locationId) q = q.eq('location_id', locationId);
+        return q;
+      });
+      return {
+        columns: ['Client', 'Email', 'Phone'],
+        rows: data.slice(0, 500).map((c: any) => [
+          c.name || `${c.first_name || ''} ${c.last_name || ''}`.trim() || 'Unknown',
+          c.email || '',
+          c.phone || '',
+        ]),
+      };
+    }
     case 'client-attrition':
     case 'top-clients':
-    case 'client-source':
-    case 'client-birthdays':
-    case 'duplicate-clients': {
+    case 'client-source': {
       const data = await fetchAllBatched<any>((from, to) => {
         let q = (supabase.from('v_all_clients') as any)
           .select('name, first_name, last_name, email, phone, total_spend, visit_count, created_at, lead_source, birthday')
           .eq('is_archived', false)
           .range(from, to);
-        // RLS via security_invoker scopes data; v_all_clients has no organization_id column
         if (locationId) q = q.eq('location_id', locationId);
         return q;
       });
@@ -194,9 +237,38 @@ async function fetchReportData(
       }
       return { columns: ['Client', 'Email', 'Spend', 'Visits'], rows: data.slice(0, 300).map((c: any) => [c.name || `${c.first_name || ''} ${c.last_name || ''}`.trim() || 'Unknown', c.email || '', `$${(Number(c.total_spend) || 0).toFixed(2)}`, String(c.visit_count || 0)]) };
     }
+    case 'demand-heatmap': {
+      const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+      const data = await fetchAllBatched<any>((from, to) => {
+        let q = supabase.from('v_all_appointments')
+          .select('appointment_date, start_time, status')
+          .gte('appointment_date', dateFrom)
+          .lte('appointment_date', dateTo)
+          .not('status', 'in', '("cancelled","no_show")')
+          .not('start_time', 'is', null)
+          .range(from, to);
+        if (locationId) q = q.eq('location_id', locationId);
+        return q;
+      });
+      const grid: Record<string, number> = {};
+      data.forEach((apt: any) => {
+        const day = new Date(apt.appointment_date).getDay();
+        const hour = parseInt(apt.start_time.split(':')[0]);
+        const key = `${day}:${hour}`;
+        grid[key] = (grid[key] || 0) + 1;
+      });
+      const rows: string[][] = [];
+      for (let h = 7; h <= 21; h++) {
+        const row = [`${h}:00`];
+        for (let d = 0; d < 7; d++) {
+          row.push(String(grid[`${d}:${h}`] || 0));
+        }
+        rows.push(row);
+      }
+      return { columns: ['Hour', ...DAY_NAMES], rows };
+    }
     case 'no-show-enhanced':
     case 'deleted-appointments':
-    case 'demand-heatmap':
     case 'future-appointments': {
       const data = await fetchAllBatched<any>((from, to) => {
         let q = supabase.from('v_all_appointments')
@@ -221,14 +293,49 @@ async function fetchReportData(
       }
       return { columns: ['Date', 'Time', 'Client', 'Staff', 'Price'], rows: data.slice(0, 500).map((a: any) => [a.appointment_date, a.start_time || '', a.client_name || '', a.staff_name || '', `$${(Number(a.total_price) || 0).toFixed(2)}`]) };
     }
+    case 'location-benchmark': {
+      const appts = await fetchAllBatched<any>((from, to) => {
+        let q = supabase.from('phorest_appointments')
+          .select('location_id, total_price, tip_amount, status, phorest_client_id')
+          .gte('appointment_date', dateFrom)
+          .lte('appointment_date', dateTo)
+          .not('location_id', 'is', null)
+          .range(from, to);
+        return q;
+      });
+      const locQuery = await supabase.from('locations').select('id, name');
+      const locMap = new Map((locQuery.data || []).map((l: any) => [l.id, l.name]));
+      const byLoc: Record<string, { rev: number; count: number; noShow: number; allCount: number; clients: Set<string> }> = {};
+      appts.forEach((apt: any) => {
+        const lid = apt.location_id;
+        if (!byLoc[lid]) byLoc[lid] = { rev: 0, count: 0, noShow: 0, allCount: 0, clients: new Set() };
+        const b = byLoc[lid];
+        b.allCount++;
+        if (apt.status === 'no_show') { b.noShow++; return; }
+        if (apt.status === 'cancelled') return;
+        b.rev += (Number(apt.total_price) || 0) - (Number(apt.tip_amount) || 0);
+        b.count++;
+        if (apt.phorest_client_id) b.clients.add(apt.phorest_client_id);
+      });
+      const rows = Object.entries(byLoc)
+        .map(([lid, b]) => [
+          locMap.get(lid) || 'Unknown',
+          `$${b.rev.toFixed(2)}`,
+          String(b.count),
+          b.count > 0 ? `$${(b.rev / b.count).toFixed(2)}` : '$0.00',
+          String(b.clients.size),
+          b.allCount > 0 ? `${((b.noShow / b.allCount) * 100).toFixed(1)}%` : '0.0%',
+        ])
+        .sort((a, b) => parseFloat(b[1].replace('$', '')) - parseFloat(a[1].replace('$', '')));
+      return { columns: ['Location', 'Revenue', 'Appointments', 'Avg Ticket', 'Clients', 'No-Show %'], rows };
+    }
     case 'retail-products':
     case 'retail-staff':
     case 'category-mix':
     case 'tax-summary':
     case 'discounts':
     case 'service-profitability':
-    case 'chemical-cost':
-    case 'location-benchmark': {
+    case 'chemical-cost': {
       const data = await fetchAllBatched<any>((from, to) => {
         let q = supabase.from('v_all_transaction_items')
           .select('item_name, item_type, total_amount, quantity, staff_name, transaction_date, discount')
