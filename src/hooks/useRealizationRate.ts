@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
+import { fetchAllBatched } from '@/utils/fetchAllBatched';
 
 interface RealizationRateResult {
   realizationRate: number | undefined;
