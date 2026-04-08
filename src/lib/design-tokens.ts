@@ -247,6 +247,16 @@ export const tokens = {
   },
 
   // ========================================
+  // DIALOG CENTERING TOKENS
+  // ========================================
+  dialog: {
+    /** CSS variable name used by DashboardLayout to offset dialog centering */
+    sidebarOffsetVar: '--sidebar-offset',
+    /** Centering rule: all fixed-position dialogs use left: calc(50% + var(--sidebar-offset, 0px)) for sidebar-aware centering */
+    centeringNote: 'All fixed-position dialogs (Dialog, AlertDialog) use left: calc(50% + var(--sidebar-offset, 0px)) to center relative to the content area, not the full viewport.',
+  },
+
+  // ========================================
   // PAGE EXPLAINER TOKENS
   // ========================================
   explainer: {
