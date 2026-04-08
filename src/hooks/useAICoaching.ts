@@ -1,9 +1,11 @@
 /**
  * useAICoaching — Fetches personalized AI coaching scripts
  * for a stylist based on their KPI gaps and trajectory.
+ *
+ * Includes localStorage caching with 24h TTL and cooldown protection.
  */
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import type { KpiProjection } from './useTrendProjection';
@@ -21,9 +23,38 @@ export interface CoachingResult {
   strengths: string[];
 }
 
+const CACHE_PREFIX = 'zura_coaching_';
+const CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
+const COOLDOWN_MS = 60 * 1000; // 1 minute between requests
+
+interface CachedCoaching {
+  result: CoachingResult;
+  timestamp: number;
+}
+
+function getCacheKey(stylistName: string, currentLevel: string): string {
+  return `${CACHE_PREFIX}${stylistName}_${currentLevel}`;
+}
+
+function getCachedResult(key: string): CoachingResult | null {
+  try {
+    const stored = localStorage.getItem(key);
+    if (!stored) return null;
+    const cached: CachedCoaching = JSON.parse(stored);
+    if (Date.now() - cached.timestamp > CACHE_TTL_MS) {
+      localStorage.removeItem(key);
+      return null;
+    }
+    return cached.result;
+  } catch {
+    return null;
+  }
+}
+
 export function useAICoaching() {
   const [coaching, setCoaching] = useState<CoachingResult | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [lastRequestTime, setLastRequestTime] = useState(0);
 
   const generateCoaching = useCallback(async (
     stylistName: string,
@@ -31,7 +62,23 @@ export function useAICoaching() {
     nextLevel: string | null,
     projections: KpiProjection[],
   ) => {
+    // Cooldown check
+    const now = Date.now();
+    if (now - lastRequestTime < COOLDOWN_MS) {
+      toast.info('Please wait a moment before requesting another coaching plan.');
+      return;
+    }
+
+    // Check cache first
+    const cacheKey = getCacheKey(stylistName, currentLevel);
+    const cached = getCachedResult(cacheKey);
+    if (cached) {
+      setCoaching(cached);
+      return;
+    }
+
     setIsLoading(true);
+    setLastRequestTime(now);
     try {
       const kpiSnapshot = projections.map(p => ({
         metric: p.label,
@@ -55,7 +102,16 @@ export function useAICoaching() {
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
 
-      setCoaching(data as CoachingResult);
+      const result = data as CoachingResult;
+      setCoaching(result);
+
+      // Cache the result
+      try {
+        localStorage.setItem(cacheKey, JSON.stringify({
+          result,
+          timestamp: Date.now(),
+        } as CachedCoaching));
+      } catch {}
     } catch (err: any) {
       console.error('AI coaching error:', err);
       if (err?.message?.includes('429') || err?.status === 429) {
@@ -68,7 +124,7 @@ export function useAICoaching() {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [lastRequestTime]);
 
   const clearCoaching = useCallback(() => {
     setCoaching(null);
