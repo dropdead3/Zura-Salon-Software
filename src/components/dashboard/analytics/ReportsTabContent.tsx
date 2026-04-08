@@ -59,6 +59,15 @@ import { ClientAttritionReport } from '@/components/dashboard/reports/ClientAttr
 import { StaffCompensationRatioReport } from '@/components/dashboard/reports/StaffCompensationRatioReport';
 import { LocationBenchmarkReport } from '@/components/dashboard/reports/LocationBenchmarkReport';
 import { DemandHeatmapReport } from '@/components/dashboard/reports/DemandHeatmapReport';
+import { DiscountsReport } from '@/components/dashboard/reports/DiscountsReport';
+import { FutureAppointmentsReport } from '@/components/dashboard/reports/FutureAppointmentsReport';
+import { TopClientsReport } from '@/components/dashboard/reports/TopClientsReport';
+import { ClientBirthdaysReport } from '@/components/dashboard/reports/ClientBirthdaysReport';
+import { ClientSourceReport } from '@/components/dashboard/reports/ClientSourceReport';
+import { DuplicateClientsReport } from '@/components/dashboard/reports/DuplicateClientsReport';
+import { StaffTransactionDetailReport } from '@/components/dashboard/reports/StaffTransactionDetailReport';
+import { DeletedAppointmentsReport } from '@/components/dashboard/reports/DeletedAppointmentsReport';
+import { NoShowEnhancedReport } from '@/components/dashboard/reports/NoShowEnhancedReport';
 import type { AnalyticsFilters } from '@/pages/dashboard/admin/AnalyticsHub';
 
 const reportCategories = [
