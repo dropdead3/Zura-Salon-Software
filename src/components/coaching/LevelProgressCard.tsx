@@ -3,8 +3,9 @@ import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
-import { GraduationCap, CheckCircle2, ShieldCheck, AlertTriangle, DollarSign, Check, TrendingUp, TrendingDown, Minus } from 'lucide-react';
+import { GraduationCap, CheckCircle2, ShieldCheck, AlertTriangle, DollarSign, Check, TrendingUp, TrendingDown, Minus, Calendar } from 'lucide-react';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
+import { format, subDays } from 'date-fns';
 import { useLevelProgress } from '@/hooks/useLevelProgress';
 import { useResolveCommission } from '@/hooks/useResolveCommission';
 import { useStylistLevels } from '@/hooks/useStylistLevels';
@@ -51,7 +52,7 @@ function TrendIndicator({ current, prior }: { current: number; prior: number }) 
   return <Minus className="w-3 h-3 text-muted-foreground/50 inline-block" />;
 }
 
-function CriterionRow({ label, current, target, percent, unit, gap, priorCurrent, weight }: {
+function CriterionRow({ label, current, target, percent, unit, gap, priorCurrent, weight, isAverage }: {
   label: string;
   current: number;
   target: number;
@@ -60,6 +61,7 @@ function CriterionRow({ label, current, target, percent, unit, gap, priorCurrent
   gap: number;
   priorCurrent: number;
   weight: number;
+  isAverage?: boolean;
 }) {
   const isMet = percent >= 100;
   const monetary = isMonetary(unit);
@@ -71,7 +73,7 @@ function CriterionRow({ label, current, target, percent, unit, gap, priorCurrent
     )}>
       <div className="grid grid-cols-[1fr_auto_auto_auto] gap-x-3 items-center text-xs">
         <span className="text-muted-foreground flex items-center gap-1.5">
-          {label}
+          {label}{isAverage ? <span className="text-[9px] text-muted-foreground/50">(mo avg)</span> : null}
           {weight > 0 && (
             <span className="text-[9px] text-muted-foreground/50 tabular-nums">{weight}%</span>
           )}
@@ -199,7 +201,7 @@ export function LevelProgressCard({ userId, compact = false }: LevelProgressCard
             <div>
               <CardTitle className={cn(tokens.card.title, 'flex items-center gap-1.5')}>
                 Level Progress
-                <MetricInfoTooltip description="Shows how close this stylist is to meeting the graduation criteria for their next level, based on rolling performance data." />
+                <MetricInfoTooltip description="Performance is evaluated as a rolling average over the configured evaluation window. Revenue and ticket figures represent the monthly average across that period, not a single month snapshot." />
               </CardTitle>
               <CardDescription className="text-xs">
                 {showTopLevelView
@@ -238,6 +240,10 @@ export function LevelProgressCard({ userId, compact = false }: LevelProgressCard
               <span className="font-medium">
                 {progress.retention.actionType === 'demotion_eligible' ? 'Below minimum standards — demotion eligible' : 'Below minimum standards — coaching recommended'}
               </span>
+            </div>
+            <div className="flex items-center gap-1.5 text-[10px] text-rose-500/80 dark:text-rose-400/60">
+              <Calendar className="w-3 h-3" />
+              <span>Measured over a {progress.retention.evaluationWindowDays || 90}-day rolling window (monthly avg)</span>
             </div>
             {progress.retention.failures.map(f => (
               <div key={f.key} className="flex items-center justify-between text-xs">
@@ -298,9 +304,17 @@ export function LevelProgressCard({ userId, compact = false }: LevelProgressCard
 
             {/* What You Need — criterion table */}
             <div className="space-y-1">
-              <h4 className="font-display text-xs tracking-wide text-foreground mb-2">
-                What You Need
-              </h4>
+              <div className="mb-2">
+                <h4 className="font-display text-xs tracking-wide text-foreground">
+                  What You Need
+                </h4>
+                {progress.evaluationWindowDays > 0 && (
+                  <p className="text-[10px] text-muted-foreground flex items-center gap-1 mt-0.5">
+                    <Calendar className="w-3 h-3" />
+                    Rolling {progress.evaluationWindowDays}-day average · {format(subDays(new Date(), progress.evaluationWindowDays), 'MMM d')} – Today
+                  </p>
+                )}
+              </div>
               {/* Column headers */}
               <div className="grid grid-cols-[1fr_auto_auto_auto] gap-x-3 px-2 text-[10px] text-muted-foreground border-b border-border/40 pb-1">
                 <span>Metric</span>
@@ -320,6 +334,7 @@ export function LevelProgressCard({ userId, compact = false }: LevelProgressCard
                   gap={cp.gap}
                   priorCurrent={cp.priorCurrent}
                   weight={cp.weight}
+                  isAverage={isMonetary(cp.unit) && progress.evaluationWindowDays > 30}
                 />
               ))}
             </div>
@@ -331,7 +346,11 @@ export function LevelProgressCard({ userId, compact = false }: LevelProgressCard
 
         {/* Footer info */}
         <div className="flex items-center justify-between pt-2 border-t text-[10px] text-muted-foreground">
-          <span>{progress.evaluationWindowDays > 0 ? `${progress.evaluationWindowDays}-day rolling window` : ''}</span>
+          <span>
+            {progress.evaluationWindowDays > 0 && progress.nextLevelLabel && `Promotion: ${progress.evaluationWindowDays}-day window`}
+            {progress.evaluationWindowDays > 0 && progress.nextLevelLabel && progress.retention?.evaluationWindowDays && progress.retention.evaluationWindowDays !== progress.evaluationWindowDays && ` · Retention: ${progress.retention.evaluationWindowDays}-day window`}
+            {!progress.nextLevelLabel && progress.retention?.evaluationWindowDays && `Retention: ${progress.retention.evaluationWindowDays}-day window`}
+          </span>
           {progress.requiresApproval && (
             <span className="flex items-center gap-1">
               <ShieldCheck className="w-3 h-3" />
