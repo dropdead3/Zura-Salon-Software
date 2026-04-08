@@ -1,60 +1,46 @@
 
 
-# Bug & Gap Analysis — Pass 3
+# Bug & Gap Analysis — Pass 4
 
 ## Bugs
 
-### Bug 1: Gift Cards PDF references non-existent columns `balance` and `status`
-Line 268 in `useBatchReportGenerator.ts` maps `g.balance` and `g.status` but the `gift_cards` table has `current_balance` and `is_active` (boolean). Every gift card row will show `$0.00` balance and empty status.
+### Bug 1 (Critical): `v_all_clients` has no `organization_id` column — query silently fails
+Line 182 of `useBatchReportGenerator.ts` calls `.eq('organization_id', orgId)` on `v_all_clients`, but the view does not expose `organization_id`. Confirmed via schema inspection: the view has 21 columns and `organization_id` is not one of them. This will cause the Supabase query to error or return zero rows, making all client-related batch reports (client-attrition, top-clients, client-source, client-birthdays, duplicate-clients) return empty data.
 
-**Fix:** Map `current_balance` instead of `balance`, and render `is_active ? 'Active' : 'Inactive'` instead of `status`.
+**Fix:** Remove `.eq('organization_id', orgId)` from the `v_all_clients` query. RLS via `security_invoker` already scopes data. Alternatively, add `organization_id` to the view in a migration — but that's a larger change. For now, remove the broken filter and rely on RLS.
 
-### Bug 2: Vouchers PDF references `v.value` and `v.status` — `status` doesn't exist
-Line 270 maps `v.value` (correct) and `v.status` (doesn't exist — table has `is_active` and `is_redeemed`). Voucher status will always be blank.
+### Bug 2: `ScheduleReportForm` `groupedReports` has stale memo — empty dependency array
+Line 169-178: `useMemo(() => { ... }, [])` — the dependency array is empty but the computation depends on `tier`. If the user's location count changes (or on first render when `locations` loads asynchronously), the filtered reports won't update. The memo will use the initial tier value forever.
 
-**Fix:** Derive status string from `is_redeemed` / `is_active` fields. Also use `created_at` (which does exist via `issued_by`? No — `vouchers` has no `created_at`). Replace `v.created_at` with `v.valid_from` or remove.
+**Fix:** Add `tier` to the dependency array: `useMemo(() => { ... }, [tier])`.
 
-### Bug 3: `v_all_clients` query filters `.eq('is_archived', false)` but doesn't org-scope
-Line 178-183: The clients query has no `organization_id` filter. RLS may cover it, but this violates the org-scoping doctrine. Gift cards and vouchers were fixed with `orgId`, but the clients query was missed.
+### Bug 3: `vouchers` table has no `created_at` column
+Line 271: The voucher query `select('*')` then maps `v.valid_from` (correct per Pass 3 fix). However, `gift_cards` line 269 maps `g.created_at` — let me verify. Gift cards DO have `created_at` (confirmed). Vouchers do NOT have `created_at` but `valid_from` is correctly used. This is already fixed. No action needed.
 
-**Fix:** Add `.eq('organization_id', orgId)` if orgId is available (same pattern as gift cards).
+### Bug 4: `handleRunNow` doesn't disable button for paused reports
+Users can click "Run Now" on a paused (`is_active: false`) schedule. While not technically broken, it's confusing — the schedule is paused but can still be manually triggered. Minor UX issue.
 
-### Bug 4: `v_all_appointments` query has no org-scope filter
-Lines 200-212: The appointments query lacks `organization_id` filtering. Same gap as clients.
+**Fix:** Either disable Run Now for paused reports, or document this as intentional (manual override).
 
-**Fix:** The view may not have `organization_id` directly, but it does have `location_id` which implicitly scopes. However, when `locationId` is not passed (i.e. "All Locations"), the query fetches unscoped data — relying entirely on RLS. Should filter by org's location IDs if no specific location is selected.
+### Bug 5: `ScheduleReportForm` edit mode doesn't reset form when closing and reopening for "New"
+Lines 110-130: The `useEffect` resets form when `editReport` changes or `open` changes. But if user edits Report A, closes the panel, then clicks "New Schedule", `editReport` is set to `null` and `open` to `true` — this should trigger the reset via the else branch. This appears correct. No action needed.
 
-### Bug 5: `ScheduledReportsManager` is dead code — imported nowhere
-The search confirms `ScheduledReportsManager` is not imported or rendered by any parent component. It duplicates `ScheduledReportsSubTab` but lacks Run Now, uses different UI patterns, and will drift further. Dead code creates confusion.
+### Bug 6: Merged PDF footer only appears on the last page
+Line 376: `addReportFooter(mergedDoc, orgName)` is called once after all reports are rendered. For a multi-report merged PDF, only the final page gets the footer. Individual reports in ZIP mode each get their own footer.
 
-**Fix:** Delete `ScheduledReportsManager.tsx`.
-
-### Bug 6: `handleRunNow` uses current month but should respect schedule context
-Lines 126-128 in `ScheduledReportsSubTab.tsx`: Run Now always uses `startOfMonth(now)` to `endOfMonth(now)`. If the schedule was for "last month" or has a custom date range in `filters`, Run Now ignores it. This is surprising — users expect Run Now to produce the same report the schedule would deliver.
-
-**Fix:** Check `report.filters` for `dateFrom`/`dateTo` and fall back to current month only if absent. Or document this as "generates for the current period."
-
-### Bug 7: `BatchReportDialog` closes immediately after generate completes (line 97)
-`onOpenChange(false)` is called right after `generate()` resolves. But `generate()` sets `isGenerating = false` internally. The dialog closes before the user can see the 100% completion state. Minor UX issue.
-
-**Fix:** Add a short delay or show a success state before closing.
-
-### Bug 8: Vouchers query missing `created_at` column
-Line 270: `v.created_at?.split('T')[0]` — the `vouchers` table has no `created_at` column. This will always render empty string.
-
-**Fix:** Use `v.valid_from` instead.
+**Fix:** Move `addReportFooter` inside the report loop, after each report's autoTable completes. This gives each report section its own footer.
 
 ## Gaps
 
-### Gap 1: `ScheduleReportForm` doesn't filter report catalog by org tier
-`BatchReportDialog` correctly uses `filterReportsByTier` to hide reports unavailable for the org's location count (e.g., single-location orgs don't see "Sales by Location"). `ScheduleReportForm` shows the full `REPORT_CATALOG` unfiltered — users can schedule reports that would produce no data.
+### Gap 1: `v_all_appointments` and `v_all_transaction_items` have no `organization_id` column
+Neither view exposes `organization_id`. Batch reports for appointments (no-show, deleted, demand-heatmap, future-appointments) have no org filter when `locationId` is absent ("All Locations"). Data is scoped only by RLS. This is defense-in-depth concern — if RLS has any gap, cross-org data could leak.
 
-**Fix:** Import `useLocations`, compute tier, and filter `REPORT_CATALOG` in the form.
+**Note:** This requires a migration to add `organization_id` to both views. Recommended for a hardening pass but not blocking.
 
-### Gap 2: No `organization_id` column on `v_all_transaction_items` or `v_all_appointments`
-These views expose `location_id` but not `organization_id`. This means batch reports for "All Locations" can't be org-filtered at the query level — they rely entirely on RLS. If RLS has any gap, data leaks. Consider adding `organization_id` to the views.
+### Gap 2: No "Select All" / "Deselect All" in ScheduleReportForm
+`BatchReportDialog` has category-level toggle (select/deselect all in a category). `ScheduleReportForm` lacks this — each report must be toggled individually, which is tedious for 30 reports.
 
-**Note:** This is a view schema change — not blocking but worth addressing in a hardening pass.
+**Note:** Minor UX gap, not a bug.
 
 ---
 
@@ -62,10 +48,9 @@ These views expose `location_id` but not `organization_id`. This means batch rep
 
 | File | Change |
 |---|---|
-| `useBatchReportGenerator.ts` | Fix gift card column mapping (`current_balance`, `is_active`); fix voucher column mapping (`is_active`/`is_redeemed`, `valid_from`); add org-scoping to client queries |
-| `ScheduledReportsManager.tsx` | Delete (dead code) |
-| `ScheduleReportForm.tsx` | Add tier-based report filtering |
-| `ScheduledReportsSubTab.tsx` | Consider documenting or fixing Run Now date range behavior |
+| `useBatchReportGenerator.ts` | Remove `.eq('organization_id', orgId)` from `v_all_clients` query (column doesn't exist in view) |
+| `ScheduleReportForm.tsx` | Fix `groupedReports` memo dependency array: `[]` → `[tier]` |
+| `useBatchReportGenerator.ts` | Move `addReportFooter` inside the merged PDF loop so each report section gets a footer |
 
-3 file edits + 1 deletion. No migrations.
+3 edits. No migrations. Bug 1 is critical — it silently breaks all client batch reports.
 
