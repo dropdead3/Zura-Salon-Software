@@ -122,19 +122,18 @@ export function useClientEngagement(
       const priorFromStr = priorFrom.toISOString().split('T')[0];
       const priorToStr = priorTo.toISOString().split('T')[0];
 
-      // Fetch staff names via centralized resolver
-      const allStaffNames = await resolveStaffNames([]);
-      // We need all mappings, so fetch them for userId cross-ref
+      // Fetch all staff mappings for userId cross-ref
       const { data: allMappings } = await supabase
         .from('phorest_staff_mapping')
         .select('phorest_staff_id, user_id');
 
-      const staffNameMap = await resolveStaffNamesByPhorestIdsLocal(allMappings || []);
+      const allPhorestIds = (allMappings || []).map(m => m.phorest_staff_id);
+      const staffNames = await resolveStaffNames(allPhorestIds);
 
       const mappingLookup: Record<string, { userId: string | null; name: string }> = {};
       let resolvedNameCount = 0;
       (allMappings || []).forEach(m => {
-        const name = staffNameMap[m.phorest_staff_id] || '';
+        const name = staffNames.byPhorestId[m.phorest_staff_id] || '';
         if (name) resolvedNameCount++;
         mappingLookup[m.phorest_staff_id] = {
           userId: m.user_id,
