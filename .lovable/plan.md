@@ -1,52 +1,28 @@
 
 
-# Surface Date Range Label on Report Cards
+# Auto-Lock Dashboard After 2 Minutes of Inactivity
 
 ## Problem
-Report cards show only the date span (e.g., "Mar 9, 2026 - Apr 7, 2026") but not which preset was selected (e.g., "Last 30 Days"). The user wants both, separated by a bullet: **"Last 30 Days · Mar 9, 2026 – Apr 7, 2026"**.
+The dashboard has no auto-lock. Users who walk away from the app remain logged in indefinitely, which is a security concern — especially in shared salon environments.
 
 ## Approach
 
-### 1. Create `ReportDateSubtitle` component
-**New file:** `src/components/dashboard/reports/ReportDateSubtitle.tsx`
+### 1. Create `useAutoLock` hook
+**New file:** `src/hooks/useAutoLock.ts`
 
-A tiny shared component that accepts `dateRangeKey`, `dateFrom`, `dateTo` and renders:
-- If a key is provided and maps to a label: `"Last 30 Days · Mar 9, 2026 – Apr 7, 2026"`
-- If no key or `custom`: just the date span (current behavior)
+A window-level idle timer that listens for `pointerdown`, `pointermove`, `keydown`, and `touchstart` on `window` (not a container ref like the Dock version). After 2 minutes (120,000ms) of inactivity, calls `lock()` from `DashboardLockContext`.
 
-Uses `DATE_RANGE_LABELS` from `@/lib/dateRangeLabels` and `useFormatDate` for consistent formatting.
+- Disabled when already locked (`isLocked === true`)
+- Disabled when no user is authenticated
+- Resets on any interaction event
 
-### 2. Pass `dateRangeKey` from ReportsTabContent to all report components
-**Modified file:** `src/components/dashboard/analytics/ReportsTabContent.tsx`
+### 2. Wire into `DashboardLayout.tsx`
+Call `useAutoLock()` inside the inner layout component (where `useDashboardLock` is already consumed). One line addition — the hook is self-contained.
 
-Add `dateRangeKey={filters.dateRange}` prop to every report component in the switch statement (~35 cases). Currently only `IndividualStaffReport` receives it.
-
-### 3. Update report components to accept and use `dateRangeKey`
-**Modified files (~15 report components):** Every report that renders a `CardDescription` with the date span will:
-- Add `dateRangeKey?: string` to its props interface
-- Replace the inline `CardDescription` date formatting with `<ReportDateSubtitle>`
-
-Affected report files:
-- `SalesReportGenerator.tsx`
-- `StaffKPIReport.tsx` (if applicable)
-- `ClientRetentionReport.tsx`
-- `NoShowReport.tsx`
-- `CapacityReport.tsx`
-- `ExecutiveSummaryReport.tsx`
-- `FinancialReportGenerator.tsx`
-- `RetailProductReport.tsx`
-- `RetailStaffReport.tsx`
-- `EndOfMonthReport.tsx`
-- `PayrollSummaryReport.tsx`
-- Plus all Batch 1-4 reports that have `CardDescription` date spans
-
-Point-in-time reports (Permissions Audit, PTO Balances, etc.) that show "Current Snapshot" will keep their existing label — no change needed for those.
-
-## Summary
+### Summary
 
 | Type | Count |
 |------|-------|
-| New files | 1 (`ReportDateSubtitle.tsx`) |
-| Modified files | ~16 (ReportsTabContent + ~15 report components) |
-| Migrations | 0 |
+| New files | 1 (`useAutoLock.ts`) |
+| Modified files | 1 (`DashboardLayout.tsx` — add import + one hook call) |
 
