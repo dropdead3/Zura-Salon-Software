@@ -35,6 +35,9 @@ import {
   Cake,
   CreditCard,
   Ticket,
+  Gift,
+  Shield,
+  Star,
 } from 'lucide-react';
 import { useLocations } from '@/hooks/useLocations';
 import { getReportTier, filterReportsByTier } from '@/config/reportCatalog';
@@ -74,6 +77,16 @@ import { DeletedAppointmentsReport } from '@/components/dashboard/reports/Delete
 import { NoShowEnhancedReport } from '@/components/dashboard/reports/NoShowEnhancedReport';
 import { GiftCardsReport } from '@/components/dashboard/reports/GiftCardsReport';
 import { VouchersReport } from '@/components/dashboard/reports/VouchersReport';
+import { StaffMilestonesReport } from '@/components/dashboard/reports/StaffMilestonesReport';
+import { PermissionsAuditReport } from '@/components/dashboard/reports/PermissionsAuditReport';
+import { TimeAttendanceReport } from '@/components/dashboard/reports/TimeAttendanceReport';
+import { PTOBalancesReport } from '@/components/dashboard/reports/PTOBalancesReport';
+import { StaffStrikesReport } from '@/components/dashboard/reports/StaffStrikesReport';
+import { TrainingCompletionReport } from '@/components/dashboard/reports/TrainingCompletionReport';
+import { ClientFeedbackReport } from '@/components/dashboard/reports/ClientFeedbackReport';
+import { ChurnRiskReport } from '@/components/dashboard/reports/ChurnRiskReport';
+import { BoothRenterReport } from '@/components/dashboard/reports/BoothRenterReport';
+import { FormulaHistoryReport } from '@/components/dashboard/reports/FormulaHistoryReport';
 import type { AnalyticsFilters } from '@/pages/dashboard/admin/AnalyticsHub';
 
 const reportCategories = [
@@ -108,6 +121,12 @@ const staffReports = [
   { id: 'tip-analysis', name: 'Tip Analysis', description: 'Tip distribution, avg tip per visit, tip-to-revenue ratio by stylist', icon: Coins },
   { id: 'staff-transaction-detail', name: 'Staff Transaction Detail', description: 'Line-item detail per stylist per day', icon: FileText },
   { id: 'compensation-ratio', name: 'Compensation Ratio', description: 'Labor cost as % of revenue per stylist with commission source', icon: Percent },
+  { id: 'staff-milestones', name: 'Staff Milestones', description: 'Upcoming birthdays and hire anniversaries', icon: Gift },
+  { id: 'permissions-audit', name: 'Permissions Audit', description: 'Role assignments and access matrix for all staff', icon: Shield },
+  { id: 'time-attendance', name: 'Time & Attendance', description: 'Hours worked, overtime, and break tracking by staff', icon: Clock },
+  { id: 'pto-balances', name: 'PTO Balances', description: 'Current PTO balances, accrued, used, and carried over', icon: CalendarDays },
+  { id: 'staff-strikes', name: 'Staff Strikes', description: 'Active and resolved strikes with severity and resolution', icon: AlertTriangle },
+  { id: 'training-completion', name: 'Training Completion', description: 'Video training progress and completion rates by staff', icon: ClipboardList },
 ];
 
 const clientReports = [
@@ -120,6 +139,8 @@ const clientReports = [
   { id: 'client-birthdays', name: 'Client Birthdays', description: 'Upcoming birthdays for marketing outreach', icon: CalendarDays },
   { id: 'client-source', name: 'Client Source', description: 'Where clients came from (referral, online, walk-in)', icon: UserCheck },
   { id: 'duplicate-clients', name: 'Duplicate Clients', description: 'Potential duplicate client records by email/phone match', icon: AlertTriangle },
+  { id: 'client-feedback', name: 'Client Feedback & NPS', description: 'NPS scores, ratings, and individual feedback responses', icon: Star },
+  { id: 'churn-risk', name: 'Churn Risk', description: 'AI-driven churn risk scores with factors and recommendations', icon: AlertTriangle },
 ];
 
 const operationsReports = [
@@ -130,6 +151,7 @@ const operationsReports = [
   { id: 'service-duration', name: 'Service Duration', description: 'Actual vs expected times', icon: Clock },
   { id: 'lead-time', name: 'Appointment Lead Time', description: 'How far ahead clients book', icon: CalendarDays },
   { id: 'demand-heatmap', name: 'Demand Heatmap', description: 'Appointment volume by hour and day-of-week', icon: Grid3X3 },
+  { id: 'formula-history', name: 'Client Formula History', description: 'Formula usage and tracking by staff and service', icon: Beaker },
 ];
 
 const financialReports = [
@@ -144,6 +166,7 @@ const financialReports = [
   { id: 'chemical-cost', name: 'Chemical Cost Report', description: 'Chemical cost per service, waste %, and margin from Color Bar', icon: Beaker },
   { id: 'location-benchmark', name: 'Location Benchmarking', description: 'Side-by-side KPI comparison across all locations', icon: Building },
   { id: 'future-appointments', name: 'Future Appointments Value', description: 'Revenue pipeline from upcoming booked appointments', icon: CalendarDays },
+  { id: 'booth-renter', name: 'Booth Renter Summary', description: 'Booth renter profiles, insurance status, and business details', icon: Building },
 ];
 
 const giftCardReports = [
@@ -276,7 +299,7 @@ export function ReportsTabContent({ filters, isStandalone }: ReportsTabContentPr
   );
 
   // Reports that manage their own back button
-  const selfContainedReports = ['individual-staff', 'payroll-summary', 'retail-products', 'retail-staff', 'end-of-month', 'service-profitability', 'chemical-cost', 'tip-analysis', 'category-mix', 'tax-summary', 'client-attrition', 'compensation-ratio', 'location-benchmark', 'demand-heatmap', 'discounts', 'future-appointments', 'top-clients', 'client-birthdays', 'client-source', 'duplicate-clients', 'staff-transaction-detail', 'deleted-appointments', 'no-show-enhanced', 'gift-cards', 'vouchers'];
+  const selfContainedReports = ['individual-staff', 'payroll-summary', 'retail-products', 'retail-staff', 'end-of-month', 'service-profitability', 'chemical-cost', 'tip-analysis', 'category-mix', 'tax-summary', 'client-attrition', 'compensation-ratio', 'location-benchmark', 'demand-heatmap', 'discounts', 'future-appointments', 'top-clients', 'client-birthdays', 'client-source', 'duplicate-clients', 'staff-transaction-detail', 'deleted-appointments', 'no-show-enhanced', 'gift-cards', 'vouchers', 'staff-milestones', 'permissions-audit', 'time-attendance', 'pto-balances', 'staff-strikes', 'training-completion', 'client-feedback', 'churn-risk', 'booth-renter', 'formula-history'];
 
   const renderSelectedReport = () => {
     const location = filters.locationId === 'all' ? undefined : filters.locationId;
@@ -451,6 +474,26 @@ export function ReportsTabContent({ filters, isStandalone }: ReportsTabContentPr
         return <GiftCardsReport dateFrom={filters.dateFrom} dateTo={filters.dateTo} locationId={location} onClose={handleCloseReport} />;
       case 'vouchers':
         return <VouchersReport dateFrom={filters.dateFrom} dateTo={filters.dateTo} locationId={location} onClose={handleCloseReport} />;
+      case 'staff-milestones':
+        return <StaffMilestonesReport dateFrom={filters.dateFrom} dateTo={filters.dateTo} locationId={location} onClose={handleCloseReport} />;
+      case 'permissions-audit':
+        return <PermissionsAuditReport dateFrom={filters.dateFrom} dateTo={filters.dateTo} locationId={location} onClose={handleCloseReport} />;
+      case 'time-attendance':
+        return <TimeAttendanceReport dateFrom={filters.dateFrom} dateTo={filters.dateTo} locationId={location} onClose={handleCloseReport} />;
+      case 'pto-balances':
+        return <PTOBalancesReport dateFrom={filters.dateFrom} dateTo={filters.dateTo} locationId={location} onClose={handleCloseReport} />;
+      case 'staff-strikes':
+        return <StaffStrikesReport dateFrom={filters.dateFrom} dateTo={filters.dateTo} locationId={location} onClose={handleCloseReport} />;
+      case 'training-completion':
+        return <TrainingCompletionReport dateFrom={filters.dateFrom} dateTo={filters.dateTo} locationId={location} onClose={handleCloseReport} />;
+      case 'client-feedback':
+        return <ClientFeedbackReport dateFrom={filters.dateFrom} dateTo={filters.dateTo} locationId={location} onClose={handleCloseReport} />;
+      case 'churn-risk':
+        return <ChurnRiskReport dateFrom={filters.dateFrom} dateTo={filters.dateTo} locationId={location} onClose={handleCloseReport} />;
+      case 'booth-renter':
+        return <BoothRenterReport dateFrom={filters.dateFrom} dateTo={filters.dateTo} locationId={location} onClose={handleCloseReport} />;
+      case 'formula-history':
+        return <FormulaHistoryReport dateFrom={filters.dateFrom} dateTo={filters.dateTo} locationId={location} onClose={handleCloseReport} />;
       default:
         return null;
     }
