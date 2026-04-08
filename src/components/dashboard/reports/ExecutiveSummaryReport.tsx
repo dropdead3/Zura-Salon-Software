@@ -21,6 +21,7 @@ import { useReportLocationInfo } from '@/hooks/useReportLocationInfo';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { useFormatDate } from '@/hooks/useFormatDate';
 import { toast } from 'sonner';
+import { ReportDateSubtitle } from '@/components/dashboard/reports/ReportDateSubtitle';
 
 interface ExecutiveSummaryReportProps {
   dateFrom: string;

@@ -28,6 +28,7 @@ import { addReportHeader, addReportFooter, fetchLogoAsDataUrl, getReportAutoTabl
 import { useBusinessSettings } from '@/hooks/useBusinessSettings';
 import { useReportLocationInfo } from '@/hooks/useReportLocationInfo';
 import { toast } from 'sonner';
+import { ReportDateSubtitle } from '@/components/dashboard/reports/ReportDateSubtitle';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { CLV_TIERS } from '@/lib/clv-calculator';
 import { cn } from '@/lib/utils';

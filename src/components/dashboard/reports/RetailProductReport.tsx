@@ -10,6 +10,7 @@ import { Download, FileSpreadsheet, Loader2, ArrowLeft, ShoppingBag, TrendingUp,
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { toast } from 'sonner';
+import { ReportDateSubtitle } from '@/components/dashboard/reports/ReportDateSubtitle';
 import { cn } from '@/lib/utils';
 import { tokens } from '@/lib/design-tokens';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
