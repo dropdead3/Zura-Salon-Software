@@ -2,6 +2,8 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useSalesGoals } from './useSalesGoals';
 import { format, startOfYear, getDayOfYear, isLeapYear } from 'date-fns';
+import { fetchAllBatched } from '@/utils/fetchAllBatched';
+import { isAllLocations, parseLocationIds } from '@/lib/locationFilter';
 
 export interface YearlyGoalProgress {
   ytdRevenue: number;
@@ -29,24 +31,27 @@ export function useYearlyGoalProgress(locationId?: string) {
       const dayOfYear = getDayOfYear(today);
       const daysInYear = isLeapYear(today) ? 366 : 365;
 
-      // Query YTD revenue from appointments
-      let query = supabase
-        .from('phorest_appointments')
-        .select('total_price')
-        .gte('appointment_date', yearStart)
-        .lte('appointment_date', todayStr)
-        .not('status', 'in', '("cancelled","no_show")');
+      // Query YTD revenue from POS transaction items (source of truth)
+      const txnData = await fetchAllBatched<{
+        total_amount: number | null;
+        tax_amount: number | null;
+      }>((from, to) => {
+        let q = supabase
+          .from('phorest_transaction_items')
+          .select('total_amount, tax_amount')
+          .gte('transaction_date', `${yearStart}T00:00:00`)
+          .lte('transaction_date', `${todayStr}T23:59:59`)
+          .range(from, to);
+        if (!isAllLocations(locationId)) {
+          const ids = parseLocationIds(locationId);
+          if (ids.length === 1) q = q.eq('location_id', ids[0]);
+          else if (ids.length > 1) q = q.in('location_id', ids);
+        }
+        return q;
+      });
 
-      if (locationId && locationId !== 'all') {
-        query = query.eq('location_id', locationId);
-      }
-
-      const { data, error } = await query;
-      
-      if (error) throw error;
-
-      const ytdRevenue = data?.reduce((sum, apt) => 
-        sum + (Number(apt.total_price) || 0), 0) || 0;
+      const ytdRevenue = txnData.reduce((sum, row) =>
+        sum + (Number(row.total_amount) || 0) + (Number(row.tax_amount) || 0), 0);
 
       // Calculate metrics
       const expectedPercent = (dayOfYear / daysInYear) * 100;

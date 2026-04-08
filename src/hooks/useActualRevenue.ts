@@ -18,27 +18,7 @@ interface ActualRevenueData {
   hasActualData: boolean;
 }
 
-/** Fetch all rows in batches to bypass the 1,000-row default limit. */
-async function fetchAllBatched<T>(
-  buildQuery: (from: number, to: number) => any,
-  batchSize = 1000,
-): Promise<T[]> {
-  const allData: T[] = [];
-  let from = 0;
-  let hasMore = true;
-  while (hasMore) {
-    const { data, error } = await buildQuery(from, from + batchSize - 1);
-    if (error) throw error;
-    if (data && data.length > 0) {
-      allData.push(...data);
-      from += batchSize;
-      hasMore = data.length === batchSize;
-    } else {
-      hasMore = false;
-    }
-  }
-  return allData;
-}
+import { fetchAllBatched } from '@/utils/fetchAllBatched';
 
 /**
  * Canonical POS revenue hook for any date range.

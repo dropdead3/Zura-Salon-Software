@@ -266,27 +266,8 @@ function getAppointmentDurationHours(startTime: string, endTime: string): number
   return Math.max(0, (endMinutes - startMinutes) / 60);
 }
 
-/** Fetch all rows in batches to bypass the 1,000-row default limit. */
-async function fetchAllBatched<T>(
-  buildQuery: (from: number, to: number) => any,
-  batchSize = 1000,
-): Promise<T[]> {
-  const allData: T[] = [];
-  let from = 0;
-  let hasMore = true;
-  while (hasMore) {
-    const { data, error } = await buildQuery(from, from + batchSize - 1);
-    if (error) throw error;
-    if (data && data.length > 0) {
-      allData.push(...data);
-      from += batchSize;
-      hasMore = data.length === batchSize;
-    } else {
-      hasMore = false;
-    }
-  }
-  return allData;
-}
+// Using shared fetchAllBatched from @/utils/fetchAllBatched
+import { fetchAllBatched } from '@/utils/fetchAllBatched';
 
 // Get aggregated sales metrics for dashboard from appointments (since sales API is not available)
 export function useSalesMetrics(filters: SalesFilters = {}) {
@@ -405,7 +386,7 @@ export function useSalesMetrics(filters: SalesFilters = {}) {
       // Revenue from actual POS transactions (single source of truth per sales-analytics-data-integrity-standards)
       const totalRevenue = hasTransactionData
         ? txTotalRevenue
-        : data.reduce((sum, apt) => sum + (Number(apt.total_price) || 0), 0);
+        : data.reduce((sum, apt) => sum + ((Number(apt.total_price) || 0) - (Number(apt.tip_amount) || 0)), 0);
       const serviceRevenue = hasTransactionData
         ? txServiceRevenue
         : Math.max(0, totalRevenue - productRevenue);
@@ -596,8 +577,9 @@ export function useSalesByLocation(dateFrom?: string, dateTo?: string) {
       data.forEach(apt => {
         const key = apt.location_id;
         if (key && byLocation[key]) {
-          byLocation[key].totalRevenue += Number(apt.total_price) || 0;
-          byLocation[key].serviceRevenue += Number(apt.total_price) || 0;
+          const tipAdj = (Number(apt.total_price) || 0) - (Number((apt as any).tip_amount) || 0);
+          byLocation[key].totalRevenue += tipAdj;
+          byLocation[key].serviceRevenue += tipAdj;
           byLocation[key].totalServices += 1;
           if (!locationVisitSets[key]) locationVisitSets[key] = new Set();
           const clientKey = (apt as any).phorest_client_id;
@@ -629,7 +611,7 @@ export function useServiceMix(dateFrom?: string, dateTo?: string, locationId?: s
     queryFn: async (): Promise<ServiceMixItem[]> => {
       let query = supabase
         .from('phorest_appointments')
-        .select('service_category, total_price')
+        .select('service_category, total_price, tip_amount')
         .not('total_price', 'is', null)
         .in('status', ['completed']);
 
@@ -644,7 +626,7 @@ export function useServiceMix(dateFrom?: string, dateTo?: string, locationId?: s
       (data || []).forEach((row) => {
         const cat = (row as { service_category?: string | null }).service_category || 'Uncategorized';
         if (!byCategory[cat]) byCategory[cat] = { revenue: 0, count: 0 };
-        byCategory[cat].revenue += Number((row as { total_price?: number | null }).total_price) || 0;
+        byCategory[cat].revenue += (Number((row as any).total_price) || 0) - (Number((row as any).tip_amount) || 0);
         byCategory[cat].count += 1;
       });
 
@@ -669,7 +651,7 @@ export function useSalesTrend(dateFrom?: string, dateTo?: string, locationId?: s
     queryFn: async () => {
       let query = supabase
         .from('phorest_appointments')
-        .select('appointment_date, total_price, location_id')
+        .select('appointment_date, total_price, tip_amount, location_id')
         .not('total_price', 'is', null)
         .order('appointment_date', { ascending: true });
 
@@ -704,8 +686,9 @@ export function useSalesTrend(dateFrom?: string, dateTo?: string, locationId?: s
             transactions: 0,
           };
         }
-        byDate[dateKey].revenue += Number(apt.total_price) || 0;
-        byDate[dateKey].services += Number(apt.total_price) || 0;
+        const tipAdjRev = (Number(apt.total_price) || 0) - (Number((apt as any).tip_amount) || 0);
+        byDate[dateKey].revenue += tipAdjRev;
+        byDate[dateKey].services += tipAdjRev;
         byDate[dateKey].transactions += 1;
 
         // Per-location aggregation
@@ -716,7 +699,7 @@ export function useSalesTrend(dateFrom?: string, dateTo?: string, locationId?: s
           if (!byLocationDate[apt.location_id][dateKey]) {
             byLocationDate[apt.location_id][dateKey] = 0;
           }
-          byLocationDate[apt.location_id][dateKey] += Number(apt.total_price) || 0;
+          byLocationDate[apt.location_id][dateKey] += (Number(apt.total_price) || 0) - (Number((apt as any).tip_amount) || 0);
         }
       });
 

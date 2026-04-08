@@ -12,26 +12,7 @@ function addLocationFilter(query: any, locationId?: string) {
   return query.in('location_id', ids);
 }
 
-async function fetchAllBatched<T>(
-  buildQuery: (from: number, to: number) => any,
-  batchSize = 1000,
-): Promise<T[]> {
-  const all: T[] = [];
-  let from = 0;
-  let hasMore = true;
-  while (hasMore) {
-    const { data, error } = await buildQuery(from, from + batchSize - 1);
-    if (error) throw error;
-    if (data && data.length > 0) {
-      all.push(...data);
-      from += batchSize;
-      hasMore = data.length === batchSize;
-    } else {
-      hasMore = false;
-    }
-  }
-  return all;
-}
+import { fetchAllBatched } from '@/utils/fetchAllBatched';
 
 function matchesCategory(name: string | null, category: RetailCategory): boolean {
   switch (category) {

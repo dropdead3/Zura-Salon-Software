@@ -115,12 +115,7 @@ export function useStylistExperienceScore(
 
       // (Staff resolution moved after staffAppointments is built)
 
-      // Fetch performance metrics as fallback for retention rates
-      const { data: performanceMetrics } = await supabase
-        .from('phorest_performance_metrics')
-        .select('phorest_staff_id, retention_rate, week_start')
-        .gte('week_start', startDate)
-        .lte('week_start', endDate);
+      // (No longer fetching stale phorest_performance_metrics for retention)
 
       // Fetch transaction items for retail attachment
       const { data: transactionItems, error: transError } = await supabase
@@ -154,15 +149,6 @@ export function useStylistExperienceScore(
         }
       });
 
-      // Calculate avg retention by staff
-      const staffRetention = new Map<string, number[]>();
-      performanceMetrics?.forEach(metric => {
-        if (!metric.phorest_staff_id || metric.retention_rate === null) return;
-        if (!staffRetention.has(metric.phorest_staff_id)) {
-          staffRetention.set(metric.phorest_staff_id, []);
-        }
-        staffRetention.get(metric.phorest_staff_id)!.push(metric.retention_rate);
-      });
 
       // Fetch staff names and photos via centralized resolver
       const allStaffIds = [...staffAppointments.keys()];
@@ -224,13 +210,10 @@ export function useStylistExperienceScore(
         const returningCount = uniqueClients.size - newClientIds.size;
         const computedRetention = uniqueClients.size > 0 ? (returningCount / uniqueClients.size) * 100 : 0;
 
-        // Use computed retention, fall back to metrics if no client data
-        const retentionValues = staffRetention.get(staffId) || [];
+        // Use computed retention only; neutral default if no client data
         const retentionRate = uniqueClients.size > 0
           ? computedRetention
-          : (retentionValues.length > 0
-            ? retentionValues.reduce((sum, r) => sum + r, 0) / retentionValues.length
-            : 50);
+          : 50;
 
         // Calculate retail attachment rate
         const retailData = staffRetail.get(staffId);
