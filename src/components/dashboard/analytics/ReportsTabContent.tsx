@@ -284,7 +284,7 @@ export function ReportsTabContent({ filters, isStandalone }: ReportsTabContentPr
   );
 
   // Reports that manage their own back button
-  const selfContainedReports = ['individual-staff', 'payroll-summary', 'retail-products', 'retail-staff', 'end-of-month', 'service-profitability', 'chemical-cost', 'tip-analysis', 'category-mix', 'tax-summary', 'client-attrition', 'compensation-ratio', 'location-benchmark', 'demand-heatmap', 'discounts', 'future-appointments', 'top-clients', 'client-birthdays', 'client-source', 'duplicate-clients', 'staff-transaction-detail', 'deleted-appointments', 'no-show-enhanced', 'gift-cards', 'vouchers'];
+  const selfContainedReports = ['individual-staff', 'payroll-summary', 'retail-products', 'retail-staff', 'end-of-month', 'service-profitability', 'chemical-cost', 'tip-analysis', 'category-mix', 'tax-summary', 'client-attrition', 'compensation-ratio', 'location-benchmark', 'demand-heatmap', 'discounts', 'future-appointments', 'top-clients', 'client-birthdays', 'client-source', 'duplicate-clients', 'staff-transaction-detail', 'deleted-appointments', 'no-show-enhanced', 'gift-cards', 'vouchers', 'staff-milestones', 'permissions-audit', 'time-attendance'];
 
   const renderSelectedReport = () => {
     const location = filters.locationId === 'all' ? undefined : filters.locationId;
@@ -459,6 +459,12 @@ export function ReportsTabContent({ filters, isStandalone }: ReportsTabContentPr
         return <GiftCardsReport dateFrom={filters.dateFrom} dateTo={filters.dateTo} locationId={location} onClose={handleCloseReport} />;
       case 'vouchers':
         return <VouchersReport dateFrom={filters.dateFrom} dateTo={filters.dateTo} locationId={location} onClose={handleCloseReport} />;
+      case 'staff-milestones':
+        return <StaffMilestonesReport dateFrom={filters.dateFrom} dateTo={filters.dateTo} locationId={location} onClose={handleCloseReport} />;
+      case 'permissions-audit':
+        return <PermissionsAuditReport dateFrom={filters.dateFrom} dateTo={filters.dateTo} locationId={location} onClose={handleCloseReport} />;
+      case 'time-attendance':
+        return <TimeAttendanceReport dateFrom={filters.dateFrom} dateTo={filters.dateTo} locationId={location} onClose={handleCloseReport} />;
       default:
         return null;
     }
