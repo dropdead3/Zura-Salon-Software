@@ -108,6 +108,13 @@ export const TYPOGRAPHY_RULES = {
     styling: 'Blue ghost aesthetic — bg-blue-500/[0.04], border-blue-500/20, BookOpen icon',
     prohibited: ['Inline explainer content (use registry)', 'Skipping explainer on new pages'],
   },
+
+  DIALOG_CENTERING_RULES: {
+    rule: 'All Dialog and AlertDialog surfaces MUST use left: calc(50% + var(--sidebar-offset, 0px)) via inline style',
+    variable: '--sidebar-offset is set by DashboardLayout: 170px expanded, 48px collapsed, 0px hidden/mobile',
+    prohibited: ['left-[50%] in className on dialog content', 'Hardcoded left positioning ignoring sidebar'],
+    token: 'tokens.dialog.sidebarOffsetVar',
+  },
 } as const;
 
 export function isProhibitedFontWeight(className: string): boolean {

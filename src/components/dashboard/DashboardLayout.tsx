@@ -412,7 +412,7 @@ function DashboardLayoutInner({ children, hideFooter, hideTopBar, hideSidebar }:
   const { isLocked, unlock } = useDashboardLock();
 
   // Compute sidebar offset for dialog centering (half the sidebar's occupied width)
-  const sidebarOffset = hideSidebar ? '0px' : sidebarCollapsed ? '44px' : '170px';
+  const sidebarOffset = hideSidebar ? '0px' : sidebarCollapsed ? '48px' : '170px';
 
   return (
     <div
