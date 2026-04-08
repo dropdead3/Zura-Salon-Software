@@ -60,19 +60,29 @@ export function useStylistPeerAverages(
   const startStr = format(subDays(new Date(), fetchDays), 'yyyy-MM-dd');
   const evalStartStr = format(subDays(new Date(), evalDays), 'yyyy-MM-dd');
 
-  // Fetch sales data for all peers
+  // Fetch sales data for all peers from transaction items (POS-first)
   const { data: peerSales } = useQuery({
     queryKey: ['peer-sales', peerIds, startStr, endStr],
     queryFn: async () => {
       if (peerIds.length === 0) return [];
-      const { data, error } = await supabase
-        .from('phorest_daily_sales_summary')
-        .select('user_id, service_revenue, product_revenue, summary_date')
-        .in('user_id', peerIds)
-        .gte('summary_date', startStr)
-        .lte('summary_date', endStr);
-      if (error) throw error;
-      return data || [];
+      const pageSize = 1000;
+      let allData: any[] = [];
+      let page = 0;
+      let hasMore = true;
+      while (hasMore) {
+        const { data, error } = await supabase
+          .from('phorest_transaction_items')
+          .select('stylist_user_id, total_amount, tax_amount, item_type, transaction_date')
+          .in('stylist_user_id', peerIds)
+          .gte('transaction_date', startStr)
+          .lte('transaction_date', endStr)
+          .range(page * pageSize, (page + 1) * pageSize - 1);
+        if (error) throw error;
+        allData = allData.concat(data || []);
+        hasMore = (data?.length || 0) === pageSize;
+        page++;
+      }
+      return allData;
     },
     enabled: peerIds.length > 0,
   });
@@ -142,13 +152,17 @@ export function useStylistPeerAverages(
       });
     }
 
-    // Only use current eval window for sales
+    // Only use current eval window for sales (POS transaction items)
     for (const s of peerSales || []) {
-      if (s.summary_date < evalStartStr) continue;
-      const u = perUser.get(s.user_id);
+      if (s.transaction_date < evalStartStr) continue;
+      const u = perUser.get(s.stylist_user_id);
       if (u) {
-        u.serviceRev += Number(s.service_revenue) || 0;
-        u.productRev += Number(s.product_revenue) || 0;
+        const amount = (Number(s.total_amount) || 0) + (Number(s.tax_amount) || 0);
+        if (s.item_type === 'service') {
+          u.serviceRev += amount;
+        } else if (s.item_type === 'product') {
+          u.productRev += amount;
+        }
       }
     }
 
