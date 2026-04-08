@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { format, subDays, startOfDay } from 'date-fns';
+import { resolveStaffNames } from '@/utils/resolveStaffNames';
 
 export interface StylistExperienceScore {
   staffId: string;
@@ -112,20 +113,19 @@ export function useStylistExperienceScore(
       const { data: appointments, error: apptError } = await appointmentQuery;
       if (apptError) throw apptError;
 
-      // Fetch staff mappings for names and photos
-      const { data: staffMappings, error: staffError } = await supabase
-        .from('phorest_staff_mapping')
-        .select(`
-          phorest_staff_id,
-          user_id,
-          phorest_staff_name,
-          employee_profiles!phorest_staff_mapping_user_id_fkey (
-            display_name,
-            full_name,
-            photo_url
-          )
-        `);
-      if (staffError) throw staffError;
+      // Fetch staff names and photos via centralized resolver + profiles for photos
+      const allStaffIds = [...staffAppointments.keys()];
+      const staffNameData = await resolveStaffNames(allStaffIds);
+
+      // Also fetch photos from employee_profiles
+      const userIdsForPhotos = Object.values(staffNameData.phorestToUserId);
+      const { data: photoProfiles } = userIdsForPhotos.length > 0
+        ? await supabase
+            .from('employee_profiles')
+            .select('user_id, photo_url')
+            .in('user_id', userIdsForPhotos)
+        : { data: [] };
+      const photoMap = new Map((photoProfiles || []).map(p => [p.user_id, p.photo_url]));
 
       // Fetch performance metrics as fallback for retention rates
       const { data: performanceMetrics } = await supabase

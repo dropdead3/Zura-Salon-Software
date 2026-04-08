@@ -106,17 +106,8 @@ function useServiceStylistBreakdown(serviceName: string | null, dateFrom?: strin
       const staffIds = Object.keys(byStaff);
       if (staffIds.length === 0) return [];
 
-      const { data: mappings } = await supabase
-        .from('phorest_staff_mapping')
-        .select('phorest_staff_id, phorest_staff_name')
-        .in('phorest_staff_id', staffIds);
-
-      const nameMap: Record<string, string> = {};
-      mappings?.forEach(m => {
-        if (m.phorest_staff_id && m.phorest_staff_name) {
-          nameMap[m.phorest_staff_id] = m.phorest_staff_name;
-        }
-      });
+      const { resolveStaffNamesByPhorestIds } = await import('@/utils/resolveStaffNames');
+      const nameMap = await resolveStaffNamesByPhorestIds(staffIds);
 
       return Object.entries(byStaff)
         .map(([staffId, stats]) => ({
