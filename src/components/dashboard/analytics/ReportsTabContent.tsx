@@ -37,6 +37,7 @@ import {
   Ticket,
   Gift,
   Shield,
+  Star,
 } from 'lucide-react';
 import { useLocations } from '@/hooks/useLocations';
 import { getReportTier, filterReportsByTier } from '@/config/reportCatalog';
