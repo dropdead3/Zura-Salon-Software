@@ -90,6 +90,7 @@ const clientReports = [
   { id: 'lifetime-value', name: 'Client Lifetime Value', description: 'Top spenders and average LTV', icon: DollarSign },
   { id: 'new-vs-returning', name: 'New vs Returning', description: 'Acquisition funnel analysis', icon: TrendingUp },
   { id: 'visit-frequency', name: 'Visit Frequency', description: 'Visit patterns by segment', icon: CalendarDays },
+  { id: 'client-attrition', name: 'Client Attrition', description: 'At-risk, lapsed, and lost clients with revenue impact', icon: AlertTriangle },
 ];
 
 const operationsReports = [
