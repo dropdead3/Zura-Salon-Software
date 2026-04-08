@@ -32,7 +32,7 @@ export function useRebookingRate(dateFrom: string, dateTo: string, locationId?: 
       let hasMore = true;
       while (hasMore) {
         let q = supabase
-          .from('phorest_appointments')
+          .from('v_all_appointments')
           .select('rebooked_at_checkout, status')
           .gte('appointment_date', dateFrom)
           .lte('appointment_date', dateTo)

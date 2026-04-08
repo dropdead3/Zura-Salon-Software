@@ -18,39 +18,28 @@ export function useStaffKPIReport(dateFrom: string, dateTo: string, locationId?:
   return useQuery({
     queryKey: ['staff-kpi-report', dateFrom, dateTo, locationId],
     queryFn: async (): Promise<StaffKPI[]> => {
-      // Get staff mappings
-      const { data: mappings } = await supabase
-        .from('phorest_staff_mapping')
-        .select(`
-          phorest_staff_id,
-          user_id,
-          employee_profiles:user_id (
-            full_name,
-            display_name
-          )
-        `)
+      // Get all active staff from employee_profiles (no phorest_staff_mapping dependency)
+      const { data: profiles } = await supabase
+        .from('employee_profiles')
+        .select('user_id, full_name, display_name')
         .eq('is_active', true);
 
-      const mappingLookup: Record<string, { userId: string; name: string }> = {};
-      mappings?.forEach(m => {
-        const profile = m.employee_profiles as any;
-        mappingLookup[m.phorest_staff_id] = {
-          userId: m.user_id,
-          name: profile ? formatDisplayName(profile.full_name || '', profile.display_name) : 'Unknown',
-        };
+      const profileLookup: Record<string, string> = {};
+      (profiles || []).forEach(p => {
+        profileLookup[p.user_id] = formatDisplayName(p.full_name || '', p.display_name);
       });
 
-      // Fetch appointments for rebooking, retention, new clients
+      // Fetch appointments from union view — filter by stylist_user_id
       const appointments = await fetchAllBatched<{
-        phorest_staff_id: string | null;
+        stylist_user_id: string | null;
         phorest_client_id: string | null;
         rebooked_at_checkout: boolean | null;
         is_new_client: boolean | null;
         status: string | null;
       }>((from, to) => {
         let q = supabase
-          .from('phorest_appointments')
-          .select('phorest_staff_id, phorest_client_id, rebooked_at_checkout, is_new_client, status')
+          .from('v_all_appointments')
+          .select('stylist_user_id, phorest_client_id, rebooked_at_checkout, is_new_client, status')
           .gte('appointment_date', dateFrom)
           .lte('appointment_date', dateTo)
           .range(from, to);
@@ -58,17 +47,17 @@ export function useStaffKPIReport(dateFrom: string, dateTo: string, locationId?:
         return q;
       });
 
-      // Get transaction items for accurate POS revenue
+      // Fetch transaction items from union view — filter by staff_user_id
       const allItems = await fetchAllBatched<{
-        phorest_staff_id: string | null;
+        staff_user_id: string | null;
         total_amount: number | null;
         tax_amount: number | null;
-        phorest_client_id: string | null;
+        external_client_id: string | null;
         transaction_date: string | null;
       }>((from, to) => {
         let q = supabase
-          .from('phorest_transaction_items')
-          .select('phorest_staff_id, total_amount, tax_amount, phorest_client_id, transaction_date')
+          .from('v_all_transaction_items')
+          .select('staff_user_id, total_amount, tax_amount, external_client_id, transaction_date')
           .gte('transaction_date', dateFrom)
           .lte('transaction_date', dateTo)
           .range(from, to);
@@ -82,16 +71,16 @@ export function useStaffKPIReport(dateFrom: string, dateTo: string, locationId?:
 
       // Process transaction items for revenue
       allItems.forEach(item => {
-        const staffId = item.phorest_staff_id;
+        const staffId = item.staff_user_id ? String(item.staff_user_id) : null;
         if (!staffId) return;
 
-        const mapping = mappingLookup[staffId];
-        if (!mapping) return;
+        const staffName = profileLookup[staffId];
+        if (!staffName) return;
 
-        if (!staffData[mapping.userId]) {
-          staffData[mapping.userId] = {
-            staffId: mapping.userId,
-            staffName: mapping.name,
+        if (!staffData[staffId]) {
+          staffData[staffId] = {
+            staffId,
+            staffName,
             totalRevenue: 0,
             totalServices: 0,
             averageTicket: 0,
@@ -99,25 +88,25 @@ export function useStaffKPIReport(dateFrom: string, dateTo: string, locationId?:
             retentionRate: 0,
             newClients: 0,
           };
-          staffVisitSets[mapping.userId] = new Set();
+          staffVisitSets[staffId] = new Set();
         }
 
         const amount = (Number(item.total_amount) || 0) + (Number(item.tax_amount) || 0);
-        staffData[mapping.userId].totalRevenue += amount;
-        staffData[mapping.userId].totalServices += 1;
-        const visitKey = `${item.phorest_client_id}|${item.transaction_date}`;
-        staffVisitSets[mapping.userId].add(visitKey);
+        staffData[staffId].totalRevenue += amount;
+        staffData[staffId].totalServices += 1;
+        const visitKey = `${item.external_client_id}|${item.transaction_date}`;
+        staffVisitSets[staffId].add(visitKey);
       });
 
       // Process appointments for rebooking, retention, new clients per staff
       const staffAppts = new Map<string, typeof appointments>();
       appointments.forEach(apt => {
-        const sid = apt.phorest_staff_id;
+        const sid = apt.stylist_user_id ? String(apt.stylist_user_id) : null;
         if (!sid) return;
-        const mapping = mappingLookup[sid];
-        if (!mapping) return;
-        if (!staffAppts.has(mapping.userId)) staffAppts.set(mapping.userId, []);
-        staffAppts.get(mapping.userId)!.push(apt);
+        const staffName = profileLookup[sid];
+        if (!staffName) return;
+        if (!staffAppts.has(sid)) staffAppts.set(sid, []);
+        staffAppts.get(sid)!.push(apt);
       });
 
       staffAppts.forEach((apts, userId) => {

@@ -30,7 +30,7 @@ function useClientSourceReport(filters: { dateFrom?: string; dateTo?: string; lo
     queryKey: ['client-source-report', filters],
     queryFn: async () => {
       let q = supabase
-        .from('phorest_clients')
+        .from('v_all_clients')
         .select('lead_source, total_spend')
         .eq('is_archived', false);
       if (filters.locationId) q = q.eq('location_id', filters.locationId);

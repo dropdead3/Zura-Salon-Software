@@ -172,17 +172,7 @@ export function useIndividualStaffReport(staffUserId: string | null, dateFrom?: 
       const twoPriorFrom = format(subDays(from, span * 2), 'yyyy-MM-dd');
       const twoPriorTo = format(subDays(from, span + 1), 'yyyy-MM-dd');
 
-      // ── Get staff mapping (user_id -> phorest_staff_id) ──
-      const { data: mapping } = await supabase
-        .from('phorest_staff_mapping')
-        .select('phorest_staff_id')
-        .eq('user_id', staffUserId)
-        .eq('is_active', true)
-        .maybeSingle();
-
-      const phorestStaffId = (mapping as any)?.phorest_staff_id;
-
-      // ── Profile ──
+      // ── Profile (no phorest_staff_mapping needed) ──
       const { data: profileData } = await supabase
         .from('employee_profiles')
         .select('user_id, full_name, display_name, photo_url, email, hire_date, location_id')
@@ -216,37 +206,36 @@ export function useIndividualStaffReport(staffUserId: string | null, dateFrom?: 
         locationName,
       };
 
-      if (!phorestStaffId) {
-        // Staff has no Phorest mapping -- return empty data with profile
-        return buildEmptyResult(profile, (svc: number, prod: number) => resolveCommission(staffUserId!, svc, prod));
-      }
-
-      // ── Fetch appointments for current + prior + two-prior periods ──
+      // ── Fetch appointments from union view by stylist_user_id ──
       const [currentApts, priorApts, twoPriorApts] = await Promise.all([
         fetchAllBatched<any>((from, to) =>
-          supabase.from('phorest_appointments')
-            .select('appointment_date, total_price, tip_amount, status, phorest_client_id, rebooked_at_checkout, is_new_client')
-            .eq('phorest_staff_id', phorestStaffId)
+          supabase.from('v_all_appointments')
+            .select('appointment_date, total_price, tip_amount, status, phorest_client_id, rebooked_at_checkout, is_new_client, service_name, service_category, id')
+            .eq('stylist_user_id', staffUserId)
             .gte('appointment_date', dateFrom).lte('appointment_date', dateTo)
             .range(from, to)
         ),
         fetchAllBatched<any>((from, to) =>
-          supabase.from('phorest_appointments')
+          supabase.from('v_all_appointments')
             .select('total_price, tip_amount, phorest_client_id, rebooked_at_checkout, status, is_new_client')
-            .eq('phorest_staff_id', phorestStaffId)
+            .eq('stylist_user_id', staffUserId)
             .gte('appointment_date', priorFrom).lte('appointment_date', priorTo)
             .range(from, to)
         ),
         fetchAllBatched<any>((from, to) =>
-          supabase.from('phorest_appointments')
+          supabase.from('v_all_appointments')
             .select('total_price, tip_amount, phorest_client_id, rebooked_at_checkout, status, is_new_client')
-            .eq('phorest_staff_id', phorestStaffId)
+            .eq('stylist_user_id', staffUserId)
             .gte('appointment_date', twoPriorFrom).lte('appointment_date', twoPriorTo)
             .range(from, to)
         ),
       ]);
 
-      // ── Fetch transaction items for services/products (paginated) ──
+      if (currentApts.length === 0 && priorApts.length === 0) {
+        return buildEmptyResult(profile, (svc: number, prod: number) => resolveCommission(staffUserId!, svc, prod));
+      }
+
+      // ── Fetch transaction items from union view by staff_user_id ──
       const PAGE_SIZE = 1000;
       async function fetchTxnItems(fromDate: string, toDate: string) {
         const result: any[] = [];
@@ -254,9 +243,9 @@ export function useIndividualStaffReport(staffUserId: string | null, dateFrom?: 
         let hasMore = true;
         while (hasMore) {
           const { data, error } = await supabase
-            .from('phorest_transaction_items')
-            .select('item_name, item_type, item_category, quantity, total_amount, tax_amount, phorest_client_id, transaction_date')
-            .eq('phorest_staff_id', phorestStaffId)
+            .from('v_all_transaction_items')
+            .select('item_name, item_type, item_category, quantity, total_amount, tax_amount, external_client_id, transaction_date')
+            .eq('staff_user_id', staffUserId)
             .gte('transaction_date', `${fromDate}T00:00:00`).lte('transaction_date', `${toDate}T23:59:59`)
             .range(offset, offset + PAGE_SIZE - 1);
           if (error) throw error;
@@ -273,7 +262,7 @@ export function useIndividualStaffReport(staffUserId: string | null, dateFrom?: 
         fetchTxnItems(twoPriorFrom, twoPriorTo),
       ]);
 
-      // ── Compute rebooking/retention/newClients from appointments (live, no phorest_performance_metrics) ──
+      // ── Compute rebooking/retention/newClients from appointments ──
       function computeClientMetrics(apts: any[]) {
         const validApts = apts.filter((a: any) => {
           const s = (a.status || '').toLowerCase();
@@ -294,16 +283,16 @@ export function useIndividualStaffReport(staffUserId: string | null, dateFrom?: 
       const priorClientMetrics = computeClientMetrics(priorApts);
       const twoPriorClientMetrics = computeClientMetrics(twoPriorApts);
 
-      // ── Fetch all staff appointments for team averages (replaces phorest_performance_metrics) ──
+      // ── Fetch all staff appointments for team averages ──
       const allStaffAptsData = await fetchAllBatched<{
-        phorest_staff_id: string | null;
+        stylist_user_id: string | null;
         rebooked_at_checkout: boolean | null;
         is_new_client: boolean | null;
         status: string | null;
       }>((from, to) => {
         let q = supabase
-          .from('phorest_appointments')
-          .select('phorest_staff_id, rebooked_at_checkout, is_new_client, status')
+          .from('v_all_appointments')
+          .select('stylist_user_id, rebooked_at_checkout, is_new_client, status')
           .gte('appointment_date', dateFrom).lte('appointment_date', dateTo)
           .not('status', 'in', '("cancelled","no_show")')
           .eq('is_demo', false)
@@ -317,10 +306,10 @@ export function useIndividualStaffReport(staffUserId: string | null, dateFrom?: 
         let hasMore = true;
         while (hasMore) {
           const { data, error } = await supabase
-            .from('phorest_transaction_items')
-            .select('phorest_staff_id, item_type, total_amount, tax_amount, phorest_client_id, transaction_date')
+            .from('v_all_transaction_items')
+            .select('staff_user_id, item_type, total_amount, tax_amount, external_client_id, transaction_date')
             .gte('transaction_date', `${fromDate}T00:00:00`).lte('transaction_date', `${toDate}T23:59:59`)
-            .not('phorest_staff_id', 'is', null)
+            .not('staff_user_id', 'is', null)
             .range(offset, offset + PAGE_SIZE - 1);
           if (error) throw error;
           result.push(...(data || []));
@@ -333,7 +322,7 @@ export function useIndividualStaffReport(staffUserId: string | null, dateFrom?: 
       const allStaffTxnItems = await fetchAllTeamTxnItems(dateFrom, dateTo);
       const allStaffApts = allStaffAptsData || [];
 
-      // ── Compute individual metrics from appointments (counts, tips, status) ──
+      // ── Compute individual metrics from appointments ──
       let totalTips = 0;
       let completed = 0;
       let noShows = 0;
@@ -356,9 +345,9 @@ export function useIndividualStaffReport(staffUserId: string | null, dateFrom?: 
       const workingDays = Math.max(differenceInBusinessDays(to, from), 1);
       const avgPerDay = totalAppointments / workingDays;
 
-      // ── Revenue from transaction items (source of truth, matching POS) ──
+      // ── Revenue from transaction items ──
       function computeTxnRevenue(txnItems: any[]) {
-        let svcRev = 0, prodRev = 0, taxTotal = 0;
+        let svcRev = 0, prodRev = 0;
         const visitKeys = new Set<string>();
         txnItems.forEach((item: any) => {
           const amount = Number(item.total_amount) || 0;
@@ -367,10 +356,9 @@ export function useIndividualStaffReport(staffUserId: string | null, dateFrom?: 
           const isService = SERVICE_TYPES.includes(item.item_type);
           if (isService) svcRev += amount + tax;
           if (isProduct) prodRev += amount + tax;
-          // Track unique client visits for avg ticket
-          if (item.phorest_client_id && item.transaction_date) {
+          if (item.external_client_id && item.transaction_date) {
             const dateOnly = typeof item.transaction_date === 'string' ? item.transaction_date.substring(0, 10) : item.transaction_date;
-            visitKeys.add(`${item.phorest_client_id}|${dateOnly}`);
+            visitKeys.add(`${item.external_client_id}|${dateOnly}`);
           }
         });
         return { svcRev, prodRev, total: svcRev + prodRev, uniqueVisits: visitKeys.size };
@@ -383,7 +371,6 @@ export function useIndividualStaffReport(staffUserId: string | null, dateFrom?: 
       const totalRevenue = currentTxnRev.total;
       const avgTicket = currentTxnRev.uniqueVisits > 0 ? totalRevenue / currentTxnRev.uniqueVisits : 0;
 
-      // Prior period revenue (from transaction items)
       const priorTotalRevenue = priorTxnRev.total;
       const twoPriorTotalRevenue = twoPriorTxnRev.total;
 
@@ -398,7 +385,6 @@ export function useIndividualStaffReport(staffUserId: string | null, dateFrom?: 
         const dateOnly = typeof item.transaction_date === 'string' ? item.transaction_date.substring(0, 10) : item.transaction_date;
         const amount = Number(item.total_amount) || 0;
         const tax = Number(item.tax_amount) || 0;
-        const isProduct = PRODUCT_TYPES.includes(item.item_type);
         dailyRevMap.set(dateOnly, (dailyRevMap.get(dateOnly) || 0) + amount + tax);
       });
 
@@ -406,7 +392,7 @@ export function useIndividualStaffReport(staffUserId: string | null, dateFrom?: 
         .map(([date, revenue]) => ({ date, revenue }))
         .sort((a, b) => a.date.localeCompare(b.date));
 
-      // ── Service vs product revenue from transaction items ──
+      // ── Service vs product revenue ──
       let serviceRevenue = 0;
       let productRevenue = 0;
       let productUnits = 0;
@@ -418,8 +404,8 @@ export function useIndividualStaffReport(staffUserId: string | null, dateFrom?: 
         const isProduct = PRODUCT_TYPES.includes(item.item_type);
         const isService = SERVICE_TYPES.includes(item.item_type);
         const amount = (Number(item.total_amount) || 0) + (Number(item.tax_amount) || 0);
-        const visitKey = item.phorest_client_id && item.transaction_date
-          ? `${item.phorest_client_id}|${item.transaction_date}`
+        const visitKey = item.external_client_id && item.transaction_date
+          ? `${item.external_client_id}|${item.transaction_date}`
           : null;
         if (isProduct) {
           productRevenue += amount;
@@ -437,7 +423,7 @@ export function useIndividualStaffReport(staffUserId: string | null, dateFrom?: 
         }
       });
 
-      // Attachment rate for this stylist (client+date composite key matching)
+      // Attachment rate
       let attachedCount = 0;
       serviceVisitKeys.forEach(key => { if (productVisitKeys.has(key)) attachedCount++; });
       const attachmentRate = serviceVisitKeys.size > 0 ? Math.round((attachedCount / serviceVisitKeys.size) * 100) : 0;
@@ -447,7 +433,6 @@ export function useIndividualStaffReport(staffUserId: string | null, dateFrom?: 
       const avgRetention = currentClientMetrics.retentionRate;
       const totalNewClients = currentClientMetrics.newClients;
 
-      // Prior period metrics for multi-period trend
       const priorRebook = priorClientMetrics.rebookingRate;
       const priorRetention = priorClientMetrics.retentionRate;
       const twoPriorRebook = twoPriorClientMetrics.rebookingRate;
@@ -488,12 +473,12 @@ export function useIndividualStaffReport(staffUserId: string | null, dateFrom?: 
         if (a.appointment_date > c.lastVisit) c.lastVisit = a.appointment_date;
       });
 
-      // Fetch client names
+      // Fetch client names from union view
       const clientIds = Array.from(clientRevMap.keys());
       let clientNameMap = new Map<string, string>();
       if (clientIds.length > 0) {
         const { data: clients } = await supabase
-          .from('phorest_clients')
+          .from('v_all_clients')
           .select('phorest_client_id, first_name, last_name')
           .in('phorest_client_id', clientIds.slice(0, 50));
         (clients || []).forEach((c: any) => {
@@ -517,7 +502,7 @@ export function useIndividualStaffReport(staffUserId: string | null, dateFrom?: 
         .sort((a, b) => b.revenue - a.revenue)
         .slice(0, 10);
 
-      // ── Commission (resolved via 3-tier priority) ──
+      // ── Commission ──
       const resolved = resolveCommission(staffUserId, serviceRevenue, productRevenue);
       const commission: CommissionData = {
         serviceCommission: resolved.serviceCommission,
@@ -528,18 +513,18 @@ export function useIndividualStaffReport(staffUserId: string | null, dateFrom?: 
         sourceName: resolved.sourceName,
       };
 
-      // ── Team averages (from transaction items for revenue consistency) ──
+      // ── Team averages ──
       const teamStaffMap = new Map<string, { revenue: number; uniqueVisits: Set<string> }>();
       (allStaffTxnItems || []).forEach((item: any) => {
-        const sid = item.phorest_staff_id;
+        const sid = item.staff_user_id ? String(item.staff_user_id) : null;
         if (!sid) return;
         if (!teamStaffMap.has(sid)) teamStaffMap.set(sid, { revenue: 0, uniqueVisits: new Set() });
         const t = teamStaffMap.get(sid)!;
         const amount = (Number(item.total_amount) || 0) + (Number(item.tax_amount) || 0);
         t.revenue += amount;
-        if (item.phorest_client_id && item.transaction_date) {
+        if (item.external_client_id && item.transaction_date) {
           const dateOnly = typeof item.transaction_date === 'string' ? item.transaction_date.substring(0, 10) : item.transaction_date;
-          t.uniqueVisits.add(`${item.phorest_client_id}|${dateOnly}`);
+          t.uniqueVisits.add(`${item.external_client_id}|${dateOnly}`);
         }
       });
 
@@ -547,10 +532,10 @@ export function useIndividualStaffReport(staffUserId: string | null, dateFrom?: 
       const teamTotalRevenue = Array.from(teamStaffMap.values()).reduce((s, t) => s + t.revenue, 0);
       const teamTotalVisits = Array.from(teamStaffMap.values()).reduce((s, t) => s + t.uniqueVisits.size, 0);
 
-      // Team metrics from appointments (live data)
+      // Team metrics from appointments
       const teamAptsMap = new Map<string, { total: number; rebooked: number; newClients: number }>();
       allStaffApts.forEach((a: any) => {
-        const sid = a.phorest_staff_id;
+        const sid = a.stylist_user_id ? String(a.stylist_user_id) : null;
         if (!sid) return;
         if (!teamAptsMap.has(sid)) teamAptsMap.set(sid, { total: 0, rebooked: 0, newClients: 0 });
         const t = teamAptsMap.get(sid)!;
@@ -580,7 +565,7 @@ export function useIndividualStaffReport(staffUserId: string | null, dateFrom?: 
         complianceRate: 0,
       };
 
-      // ── Color Bar Compliance (color/chemical appointments vs mix_sessions) ──
+      // ── Color Bar Compliance ──
       const staffColorAppts = currentApts.filter((a: any) =>
         isColorOrChemicalService(a.service_name ?? null, a.service_category ?? null),
       );
@@ -589,8 +574,7 @@ export function useIndividualStaffReport(staffUserId: string | null, dateFrom?: 
       };
 
       if (staffColorAppts.length > 0) {
-        // Gather IDs from phorest_appointments (source of truth for this report)
-        const phorestColorIds = staffColorAppts.map((a: any) => a.id).filter(Boolean);
+        const colorIds = staffColorAppts.map((a: any) => a.id).filter(Boolean);
 
         // Also check local appointments table for mix_session cross-reference
         const { data: localColorAppts } = await supabase
@@ -601,9 +585,7 @@ export function useIndividualStaffReport(staffUserId: string | null, dateFrom?: 
           .not('status', 'in', '("cancelled","no_show")');
 
         const localColorIds = (localColorAppts ?? []).map((a: any) => a.id);
-
-        // Merge both ID sets — mix_sessions may reference either table's IDs
-        const allLookupIds = [...new Set([...phorestColorIds, ...localColorIds])];
+        const allLookupIds = [...new Set([...colorIds, ...localColorIds])];
 
         if (allLookupIds.length > 0) {
           const { data: mixSessions } = await supabase
@@ -624,7 +606,6 @@ export function useIndividualStaffReport(staffUserId: string | null, dateFrom?: 
             manualOverrides: 0,
           };
         } else {
-          // No IDs to cross-reference but we know color appointments exist
           brCompliance = {
             complianceRate: 0,
             totalColorAppointments: staffColorAppts.length,
@@ -636,7 +617,6 @@ export function useIndividualStaffReport(staffUserId: string | null, dateFrom?: 
         }
       }
 
-      // Update team avg compliance (approximate — would need all-staff computation for accuracy)
       teamAverages.complianceRate = brCompliance.complianceRate;
 
       // ── Multi-period trend ──
