@@ -188,9 +188,11 @@ export function useStylistPeerAverages(
       totalRevenue += monthlyRev;
       totalRetailPct += totalRev > 0 ? (u.productRev / totalRev) * 100 : 0;
       totalRebook += u.appts.length > 0 ? (u.rebooked / u.appts.length) * 100 : 0;
-      const avgTix = u.appts.length > 0
-        ? u.appts.reduce((s, a) => s + (Number(a.total_price) || 0), 0) / u.appts.length
-        : 0;
+      // Avg Ticket: sales-based revenue / unique client visits (matches POS methodology)
+      const uniqueVisits = new Set(
+        u.appts.filter((a: any) => a.client_id).map((a: any) => `${a.client_id}_${a.appointment_date}`)
+      ).size || u.appts.length;
+      const avgTix = uniqueVisits > 0 ? totalRev / uniqueVisits : 0;
       totalTicket += avgTix;
 
       // New clients (monthly normalized)
@@ -204,9 +206,9 @@ export function useStylistPeerAverages(
       }
 
       // Utilization — exclude time-off days
+      // Revenue per hour: sales-based revenue / booked hours (matches POS methodology)
       const totalMin = u.appts.reduce((s: number, a: any) => s + (Number(a.duration_minutes) || 60), 0);
-      const apptRev = u.appts.reduce((s: number, a: any) => s + (Number(a.total_price) || 0), 0);
-      totalRevHr += totalMin > 0 ? (apptRev / totalMin) * 60 : 0;
+      totalRevHr += totalMin > 0 ? (totalRev / totalMin) * 60 : 0;
       const activeDaysArr = [...new Set(u.appts.map((a: any) => a.appointment_date))];
       const activeDays = activeDaysArr.filter(d => !isUserOffOnDate(timeOffSet, uid, d)).length;
       totalUtil += activeDays > 0 ? Math.min(100, (totalMin / activeDays / 480) * 100) : 0;
