@@ -23,6 +23,11 @@ import {
   ShoppingBag,
   Wallet,
   ClipboardList,
+  Beaker,
+  Receipt,
+  PieChart,
+  AlertTriangle,
+  Coins,
 } from 'lucide-react';
 import { useLocations } from '@/hooks/useLocations';
 import { getReportTier, filterReportsByTier } from '@/config/reportCatalog';
