@@ -296,8 +296,6 @@ export function useIndividualStaffReport(staffUserId: string | null, dateFrom?: 
         .not('status', 'in', '("cancelled","no_show")')
         .eq('is_demo', false);
 
-      // ── TEAM AVERAGES: fetch all staff transaction items for the same period ──
-      const PAGE_SIZE = 1000;
       async function fetchAllTeamTxnItems(fromDate: string, toDate: string) {
         const result: any[] = [];
         let offset = 0;
@@ -530,6 +528,10 @@ export function useIndividualStaffReport(staffUserId: string | null, dateFrom?: 
           t.uniqueVisits.add(`${item.phorest_client_id}|${dateOnly}`);
         }
       });
+
+      const teamCount = Math.max(teamStaffMap.size, 1);
+      const teamTotalRevenue = Array.from(teamStaffMap.values()).reduce((s, t) => s + t.revenue, 0);
+      const teamTotalVisits = Array.from(teamStaffMap.values()).reduce((s, t) => s + t.uniqueVisits.size, 0);
 
       // Team metrics from appointments (live data)
       const teamAptsMap = new Map<string, { total: number; rebooked: number; newClients: number }>();
