@@ -71,7 +71,7 @@ async function fetchAppointments(
   dateFrom: string,
   dateTo: string,
   locationId?: string,
-  fields = 'phorest_staff_id, is_new_client, rebooked_at_checkout, total_price, service_name, status'
+  fields = 'phorest_staff_id, is_new_client, rebooked_at_checkout, total_price, tip_amount, service_name, status'
 ) {
   const PAGE_SIZE = 1000;
   let allData: any[] = [];
@@ -144,7 +144,7 @@ export function useClientEngagement(
       // Fetch current and prior data in ONE pass each (all fields combined)
       const [currentAppts, priorAppts] = await Promise.all([
         fetchAppointments(dateFrom, dateTo, locationId),
-        fetchAppointments(priorFromStr, priorToStr, locationId, 'phorest_staff_id, is_new_client, rebooked_at_checkout, total_price, status'),
+        fetchAppointments(priorFromStr, priorToStr, locationId, 'phorest_staff_id, is_new_client, rebooked_at_checkout, total_price, tip_amount, status'),
       ]);
 
       const resolveName = (staffId: string) => {
@@ -181,7 +181,7 @@ export function useClientEngagement(
         const e = staffMap[staffId];
         e.visits += 1;
         if (apt.is_new_client === true) e.newClients += 1;
-        const price = Number(apt.total_price) || 0;
+        const price = (Number(apt.total_price) || 0) - (Number(apt.tip_amount) || 0);
         e.revenue += price;
 
         if (apt.service_name) {
@@ -266,9 +266,9 @@ export function useClientEngagement(
         .sort((a, b) => b.rebookingRate - a.rebookingRate);
 
       // ── AVG TICKET ──
-      const totalRevenueCurrent = currentAppts.reduce((sum, a) => sum + (Number(a.total_price) || 0), 0);
+      const totalRevenueCurrent = currentAppts.reduce((sum, a) => sum + ((Number(a.total_price) || 0) - (Number(a.tip_amount) || 0)), 0);
       const avgTicketCurrent = totalVisits > 0 ? totalRevenueCurrent / totalVisits : 0;
-      const totalRevenuePrior = priorAppts.reduce((sum, a) => sum + (Number(a.total_price) || 0), 0);
+      const totalRevenuePrior = priorAppts.reduce((sum, a) => sum + ((Number(a.total_price) || 0) - (Number(a.tip_amount) || 0)), 0);
       const avgTicketPrior = priorTotalVisits > 0 ? totalRevenuePrior / priorTotalVisits : 0;
       const avgTicketPercentChange = avgTicketPrior > 0
         ? ((avgTicketCurrent - avgTicketPrior) / avgTicketPrior) * 100

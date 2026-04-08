@@ -44,15 +44,6 @@ export function useTodayActualRevenue(enabled: boolean) {
         {
           event: '*',
           schema: 'public',
-          table: 'phorest_daily_sales_summary',
-        },
-        invalidate
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
           table: 'phorest_transaction_items',
         },
         invalidate
