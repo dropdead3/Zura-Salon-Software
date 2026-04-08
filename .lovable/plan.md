@@ -1,91 +1,51 @@
 
 
-# Trend Intelligence — Pass 2 Audit (Post-Fix)
+# Trend Intelligence — Pass 3 Audit
 
-## Status of Prior Audit Items
-
-| # | Item | Status |
-|---|------|--------|
-| 1 | Auth check on AI coaching | Fixed ✓ |
-| 2 | Pagination in digest | Fixed ✓ |
-| 3 | pg_cron migration | Created ✓ |
-| 4 | Goal mode revenue calc | Fixed ✓ |
-| 5 | Top-level stylist visibility | Fixed ✓ |
-| 6 | AI coaching cache/cooldown | Fixed ✓ |
-| 7 | Missing KPIs in digest | Fixed ✓ |
-| 8 | Retention velocity | Fixed ✓ |
-| 9 | Metric-aware velocity threshold | Fixed ✓ |
-| 10 | Digest deep link | Fixed ✓ |
-
-All 10 prior items resolved. Below are newly identified issues.
+All 9 items from Pass 2 are resolved. Below are remaining low-severity issues.
 
 ---
 
 ## Bugs
 
-### Bug 1: `useAICoaching` cache key uses email, not user ID
-`getCacheKey` uses `stylistName` (which is `user?.email`) and `currentLevel`. Two problems:
-- Email can change; user ID is stable
-- If two stylists share the same browser (e.g., shared salon kiosk), coaching results from one stylist could be served to another
+### Bug 1: `ai-coaching-script` uses deprecated `getClaims` API
+Line 51 calls `supabase.auth.getClaims(token)` — this method doesn't exist on the standard Supabase JS client. It should use `supabase.auth.getUser()` instead, which validates the JWT and returns the authenticated user.
 
-**Fix:** Pass `userId` into `generateCoaching` and use it as the cache key instead of `stylistName`.
+**Fix:** Replace `getClaims` with `getUser()`.
 
-### Bug 2: `useAICoaching` cooldown resets on component remount
-`lastRequestTime` is stored in React state, not `useRef`. When `MyGraduation` remounts (navigation), the cooldown resets to 0, bypassing the 60s guard. Meanwhile the cache works, so this is low-severity, but still a gap.
+### Bug 2: `ai-coaching-script` creates client with anon key but user token
+Line 46 creates a Supabase client with `SUPABASE_ANON_KEY` + the user's auth header. This is fine for RLS-scoped queries, but this function doesn't query the DB — it only validates auth and calls AI. Using the service role key would be more appropriate, or simply use `getUser()` on the anon-key client (which does work for JWT validation).
 
-**Fix:** Use `useRef` for `lastRequestTime` instead of `useState`.
+**Status:** Low risk. The auth check itself may silently fail due to Bug 1, making this function effectively unprotected despite having auth code.
 
-### Bug 3: `TrendIntelligenceSection` renders IIFE in JSX
-Lines 430-464 use `{(() => { ... })()}` pattern to render the "All Metrics" section. This creates a new function every render. Minor perf issue but also poor readability.
+### Bug 3: `stylist-trend-digest` queries `appointments` table, not `phorest_appointments`
+Line 121 queries `appointments` table with fields like `staff_user_id`, `rebooked_at_checkout`, `is_new_client`. Other hooks in the codebase (e.g., `useRealizationRate`) use `phorest_appointments` with different column names (`appointment_date`, `total_price`, `tip_amount`). If `appointments` is a view or alias this is fine, but if it's a separate/empty table, the digest produces zero data for all stylists.
 
-**Fix:** Extract to a local variable above the return statement.
+**Fix:** Verify which table holds the canonical appointment data and align the digest query accordingly.
 
-### Bug 4: `useTrendProjection` velocity uses `priorCurrent` but never validates it
-Line 182: `(cp.current - cp.priorCurrent) / evalDays`. If `priorCurrent` is `undefined` or `NaN` (e.g., no prior data), velocity becomes `NaN`, which propagates to `daysToTarget` and daily targets.
+### Bug 4: `stylist-trend-digest` AI summary not sanitized
+Line 379 injects `aiSummary` directly into HTML email (`${aiSummary}`). While AI-generated content is unlikely to contain malicious HTML, this violates the project's sanitization doctrine (see `src/lib/sanitize.ts`). A prompt injection or unexpected AI output could produce broken email HTML.
 
-**Fix:** Default `priorCurrent` to `current` when undefined/NaN (resulting in 0 velocity = flat trajectory).
-
-### Bug 5: `stylist-trend-digest` retention calculation is skewed for prior window
-Lines 319-327: Prior-window retention looks at appointments *before* `startStr`, but `startStr` for the current window is `evalStartStr`, and for the prior window call it's `priorStartStr`. The function `computeWindowKpis` looks at `appts` where `appointment_date < startStr` for "prior clients," but when computing the prior window's retention, this would look at appointments before the prior window — a *third* window that was never fetched.
-
-**Fix:** Add a comment acknowledging this limitation and set prior retention to 0 (matching the client-side behavior), or skip retention from the digest velocity calculation.
+**Fix:** HTML-escape the `aiSummary` string before inserting into the email template.
 
 ---
 
 ## Gaps
 
-### Gap 1: No input validation on `ai-coaching-script` body
-The edge function destructures `req.json()` without validating shape. Malformed payloads could crash the function or produce garbage AI prompts.
+### Gap 1: `ai-coaching-script` tool_choice format may be incorrect
+Line 156: `tool_choice: { type: "function", function: { name: "generate_coaching_plan" } }`. The OpenAI-compatible format is `tool_choice: { type: "function", function: { name: "..." } }` — which is correct. However, some gateway providers use the simpler `tool_choice: "auto"` or `{ name: "..." }`. If the Lovable AI gateway follows strict OpenAI spec this is fine; if not, structured output may fail silently and fall through to the error on line 183.
 
-**Fix:** Add Zod validation for `stylistName` (string), `currentLevel` (string), `nextLevel` (string|null), `kpiSnapshot` (array of objects with required fields).
+**Status:** Verify via edge function logs. No change needed if working.
 
-### Gap 2: Goal mode doesn't invalidate coaching cache
-When a stylist sets a goal date, their daily targets change — but the AI coaching cache (keyed by name + level) still returns the old coaching plan that doesn't account for the goal timeline. The two features are disconnected.
+### Gap 2: No error boundary around `TrendIntelligenceSection`
+If `useTrendProjection` returns malformed data (e.g., a projection with `NaN` values despite the guard), the component could crash and take down the entire `MyGraduation` page. An error boundary would isolate the blast radius.
 
-**Fix:** Include `goalMode.isActive` and `daysRemaining` in the coaching request body and cache key so coaching reflects the goal timeline.
+**Fix:** Wrap `TrendIntelligenceSection` in an error boundary in `MyGraduation.tsx`.
 
-### Gap 3: `TrendIntelligenceSection` goal mode hidden for top-level stylists
-Line 260-303: Goal mode UI only renders when `goalMode` is provided, but top-level stylists have no next level. The goal mode hook still works (it's just localStorage + math), but conceptually there's nothing to "goal toward" for top-level. This is correct behavior but should be explicitly documented.
+### Gap 3: `useGoalMode` doesn't clear stale keys
+If a stylist changes levels (gets promoted), their old goal date persists in localStorage under the old key. Not harmful but accumulates dead storage.
 
-**Status:** Not a bug — just noting for clarity. No fix needed.
-
-### Gap 4: Digest email skips top-level stylists entirely
-Line 98: `if (!nextLevel) continue;` — Top-level stylists never receive digest emails, even if their metrics are declining. They should get a "maintenance digest" when metrics trend down.
-
-**Fix:** For top-level stylists, send a maintenance-focused digest when any metric is declining (similar to the UI maintenance view).
-
----
-
-## Enhancements
-
-### Enhancement 1: Coaching should show which goal timeline it was generated for
-When coaching is cached and goal mode is toggled, the panel should display "Generated without goal mode" or "Generated for 45-day goal" so stylists know the context.
-
-### Enhancement 2: Add "Refresh" button to coaching panel
-Currently the only way to get fresh coaching is to dismiss and re-request, which hits the 24h cache. Add a "Refresh" button that bypasses cache (with cooldown still enforced).
-
-### Enhancement 3: Digest email should respect notification preferences
-Currently sends to all stylists unconditionally. Should check if the stylist has opted out of digest emails (if a notification preferences system exists).
+**Status:** Very low priority. No fix needed.
 
 ---
 
@@ -93,27 +53,18 @@ Currently sends to all stylists unconditionally. Should check if the stylist has
 
 | # | Item | Type | Risk | Effort |
 |---|------|------|------|--------|
-| 1 | Bug 4: NaN velocity guard | Bug | Medium | Trivial |
-| 2 | Gap 1: Zod validation on edge function | Gap | Medium | Small |
-| 3 | Bug 1: Cache key uses email not userId | Bug | Low | Trivial |
-| 4 | Bug 2: Cooldown uses state not ref | Bug | Low | Trivial |
-| 5 | Gap 2: Goal mode + coaching cache alignment | Gap | Low | Small |
-| 6 | Gap 4: Digest for top-level stylists | Gap | Low | Small |
-| 7 | Bug 5: Prior retention in digest | Bug | Low | Small |
-| 8 | Bug 3: IIFE in JSX | Bug | Low | Trivial |
-| 9 | Enhancement 2: Coaching refresh button | Enhancement | Low | Trivial |
+| 1 | Bug 1: Replace `getClaims` with `getUser` | Bug | **High** (auth broken) | Trivial |
+| 2 | Bug 3: Verify appointments table name | Bug | Medium | Small |
+| 3 | Bug 4: HTML-escape AI summary in digest | Bug | Low | Trivial |
+| 4 | Gap 2: Error boundary on TrendIntelligence | Gap | Low | Small |
 
 ## Files Changed
 
 | File | Changes |
 |---|---|
-| `src/hooks/useTrendProjection.ts` | Guard against NaN `priorCurrent` |
-| `src/hooks/useAICoaching.ts` | Cache key by userId, `useRef` for cooldown, refresh support |
-| `src/pages/dashboard/MyGraduation.tsx` | Pass userId to coaching |
-| `src/components/dashboard/TrendIntelligenceSection.tsx` | Remove IIFE, add coaching context label |
-| `src/components/dashboard/AICoachingPanel.tsx` | Add refresh button |
-| `supabase/functions/ai-coaching-script/index.ts` | Add Zod input validation |
-| `supabase/functions/stylist-trend-digest/index.ts` | Handle top-level stylists, fix prior retention |
+| `supabase/functions/ai-coaching-script/index.ts` | Replace `getClaims` with `getUser()` |
+| `supabase/functions/stylist-trend-digest/index.ts` | Verify table name, HTML-escape AI summary |
+| `src/pages/dashboard/MyGraduation.tsx` | Add error boundary around TrendIntelligenceSection |
 
-7 files, all small changes. No database migrations needed.
+3 files, all small fixes. No database migrations needed.
 
