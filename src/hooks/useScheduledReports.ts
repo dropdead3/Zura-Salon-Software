@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useToast } from '@/hooks/use-toast';
 import type { Json } from '@/integrations/supabase/types';
 
@@ -38,12 +39,16 @@ export interface ScheduledReportRun {
 }
 
 export function useScheduledReports() {
+  const { effectiveOrganization } = useOrganizationContext();
+  const orgId = effectiveOrganization?.id;
+
   return useQuery({
-    queryKey: ['scheduled-reports'],
+    queryKey: ['scheduled-reports', orgId],
     queryFn: async (): Promise<ScheduledReport[]> => {
       const { data, error } = await supabase
         .from('scheduled_reports')
         .select('*')
+        .eq('organization_id', orgId!)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -54,6 +59,7 @@ export function useScheduledReports() {
         filters: (row.filters || {}) as Record<string, any>,
       }));
     },
+    enabled: !!orgId,
   });
 }
 
@@ -61,21 +67,17 @@ export function useScheduledReportRuns(reportId?: string) {
   return useQuery({
     queryKey: ['scheduled-report-runs', reportId],
     queryFn: async (): Promise<ScheduledReportRun[]> => {
-      let query = supabase
+      const { data, error } = await supabase
         .from('scheduled_report_runs')
         .select('*')
+        .eq('scheduled_report_id', reportId!)
         .order('started_at', { ascending: false })
         .limit(50);
 
-      if (reportId) {
-        query = query.eq('scheduled_report_id', reportId);
-      }
-
-      const { data, error } = await query;
       if (error) throw error;
       return data || [];
     },
-    enabled: true,
+    enabled: !!reportId,
   });
 }
 
@@ -97,14 +99,12 @@ export function useCreateScheduledReport() {
       const { data: user } = await supabase.auth.getUser();
       if (!user.user) throw new Error('Not authenticated');
 
-      // Get organization from employee profile
       const { data: profile } = await supabase
         .from('employee_profiles')
         .select('organization_id')
         .eq('user_id', user.user.id)
         .single();
 
-      // Calculate initial next_run_at
       const nextRunAt = calculateNextRunTime(report.schedule_type, report.schedule_config);
 
       const { data, error } = await supabase
@@ -173,7 +173,6 @@ export function useUpdateScheduledReport() {
       if (updates.filters !== undefined) updateData.filters = updates.filters as unknown as Json;
       if (updates.is_active !== undefined) updateData.is_active = updates.is_active;
 
-      // Recalculate next_run_at if schedule changed
       if (updates.schedule_type || updates.schedule_config) {
         updateData.next_run_at = calculateNextRunTime(
           updates.schedule_type || 'daily',
@@ -238,6 +237,83 @@ export function useDeleteScheduledReport() {
   });
 }
 
+/**
+ * Mutation to record a "Run Now" execution in scheduled_report_runs.
+ * Returns the run ID so the caller can update it on completion.
+ */
+export function useRunScheduledReportNow() {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: async (report: ScheduledReport) => {
+      const { data: run, error: runErr } = await supabase
+        .from('scheduled_report_runs')
+        .insert({
+          scheduled_report_id: report.id,
+          status: 'running',
+          started_at: new Date().toISOString(),
+          recipient_count: 0,
+        })
+        .select()
+        .single();
+
+      if (runErr) throw runErr;
+      return { runId: run.id, report };
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['scheduled-report-runs'] });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: 'Error starting report run',
+        description: error.message,
+        variant: 'destructive',
+      });
+    },
+  });
+}
+
+/**
+ * Call after a "Run Now" generation completes or fails to update the run record.
+ */
+export function useCompleteScheduledReportRun() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ runId, reportId, success, errorMessage }: {
+      runId: string;
+      reportId: string;
+      success: boolean;
+      errorMessage?: string;
+    }) => {
+      const now = new Date().toISOString();
+
+      const { error: runErr } = await supabase
+        .from('scheduled_report_runs')
+        .update({
+          status: success ? 'completed' : 'failed',
+          completed_at: now,
+          error_message: errorMessage || null,
+        })
+        .eq('id', runId);
+
+      if (runErr) throw runErr;
+
+      if (success) {
+        await supabase
+          .from('scheduled_reports')
+          .update({ last_run_at: now })
+          .eq('id', reportId);
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['scheduled-reports'] });
+      queryClient.invalidateQueries({ queryKey: ['scheduled-report-runs'] });
+    },
+  });
+}
+
 function calculateNextRunTime(
   scheduleType: string,
   config?: ScheduledReport['schedule_config']
@@ -249,14 +325,12 @@ function calculateNextRunTime(
     case 'daily':
       next.setDate(next.getDate() + 1);
       break;
-    case 'weekly':
-      next.setDate(next.getDate() + 7);
-      if (config?.dayOfWeek !== undefined) {
-        const currentDay = next.getDay();
-        const daysUntil = (config.dayOfWeek - currentDay + 7) % 7 || 7;
-        next.setDate(now.getDate() + daysUntil);
-      }
+    case 'weekly': {
+      const dayOfWeek = config?.dayOfWeek ?? 1;
+      const daysUntil = (dayOfWeek - now.getDay() + 7) % 7 || 7;
+      next.setDate(now.getDate() + daysUntil);
       break;
+    }
     case 'monthly':
     case 'first_of_month':
       next.setMonth(next.getMonth() + 1);
