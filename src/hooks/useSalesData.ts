@@ -104,42 +104,34 @@ export function useSalesTransactions(filters: SalesFilters = {}) {
   });
 }
 
-// Fetch daily sales summaries (aggregated from live POS transaction items)
+// Fetch daily sales summaries (aggregated from unified transaction items view)
 export function useDailySalesSummary(filters: SalesFilters = {}) {
   return useQuery({
     queryKey: ['daily-sales-summary', filters],
     queryFn: async () => {
-      const allData: any[] = [];
-      const pageSize = 1000;
-      let from = 0;
-      let hasMore = true;
-      while (hasMore) {
+      const allData = await fetchAllBatched<any>((from, to) => {
         let q = supabase
-          .from('phorest_transaction_items')
-          .select('stylist_user_id, total_amount, tax_amount, item_type, transaction_date, location_id')
-          .range(from, from + pageSize - 1);
+          .from('v_all_transaction_items')
+          .select('staff_user_id, total_amount, tax_amount, item_type, transaction_date, location_id')
+          .range(from, to);
 
         if (filters.dateFrom) q = q.gte('transaction_date', filters.dateFrom);
         if (filters.dateTo) q = q.lte('transaction_date', filters.dateTo);
-        if (filters.userId) q = q.eq('stylist_user_id', filters.userId);
+        if (filters.userId) q = q.eq('staff_user_id', filters.userId);
         if (filters.locationId) q = q.eq('location_id', filters.locationId);
 
-        const { data, error } = await q;
-        if (error) throw error;
-        allData.push(...(data || []));
-        hasMore = (data?.length || 0) === pageSize;
-        from += pageSize;
-      }
+        return q;
+      });
 
       // Aggregate by date + user to produce daily summary rows
       const byKey: Record<string, any> = {};
       for (const item of allData) {
         const date = (item.transaction_date || '').slice(0, 10);
-        const key = `${date}|${item.stylist_user_id || ''}`;
+        const key = `${date}|${item.staff_user_id || ''}`;
         if (!byKey[key]) {
           byKey[key] = {
             summary_date: date,
-            user_id: item.stylist_user_id,
+            user_id: item.staff_user_id,
             location_id: item.location_id,
             total_revenue: 0,
             service_revenue: 0,
