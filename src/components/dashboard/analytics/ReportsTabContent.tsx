@@ -74,6 +74,9 @@ import { DeletedAppointmentsReport } from '@/components/dashboard/reports/Delete
 import { NoShowEnhancedReport } from '@/components/dashboard/reports/NoShowEnhancedReport';
 import { GiftCardsReport } from '@/components/dashboard/reports/GiftCardsReport';
 import { VouchersReport } from '@/components/dashboard/reports/VouchersReport';
+import { StaffMilestonesReport } from '@/components/dashboard/reports/StaffMilestonesReport';
+import { PermissionsAuditReport } from '@/components/dashboard/reports/PermissionsAuditReport';
+import { TimeAttendanceReport } from '@/components/dashboard/reports/TimeAttendanceReport';
 import type { AnalyticsFilters } from '@/pages/dashboard/admin/AnalyticsHub';
 
 const reportCategories = [
