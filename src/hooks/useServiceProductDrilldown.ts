@@ -122,7 +122,7 @@ export function useServiceProductDrilldown({ dateFrom, dateTo, locationId }: Use
         const sid = appt.phorest_staff_id;
         if (!sid) return;
         if (!serviceMap[sid]) serviceMap[sid] = { serviceRevenue: 0, serviceCount: 0, tipTotal: 0 };
-        serviceMap[sid].serviceRevenue += Number(appt.total_price) || 0;
+        serviceMap[sid].serviceRevenue += (Number(appt.total_price) || 0) - (Number(appt.tip_amount) || 0);
         serviceMap[sid].serviceCount += 1;
         serviceMap[sid].tipTotal += Number(appt.tip_amount) || 0;
       });

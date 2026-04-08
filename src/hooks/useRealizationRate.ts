@@ -30,25 +30,28 @@ export function useRealizationRate(locationId?: string): RealizationRateResult {
       const fromDate = thirtyDaysAgo.toISOString().slice(0, 10);
       const toDate = now.toISOString().slice(0, 10);
 
-      // 1. Scheduled revenue by date from phorest_appointments
-      const apptBase = supabase
-        .from('phorest_appointments')
-        .select('appointment_date, total_price')
-        .gte('appointment_date', fromDate)
-        .lte('appointment_date', toDate)
-        .neq('status', 'cancelled');
-
-      const apptResult = locationId && locationId !== 'all'
-        ? await apptBase.eq('location_id', locationId)
-        : await apptBase;
-
-      if (apptResult.error) throw apptResult.error;
+      // 1. Scheduled revenue by date from phorest_appointments (tip-adjusted, paginated)
+      const apptData = await fetchAllBatched<{
+        appointment_date: string | null;
+        total_price: number | null;
+        tip_amount: number | null;
+      }>((from, to) => {
+        let q = supabase
+          .from('phorest_appointments')
+          .select('appointment_date, total_price, tip_amount')
+          .gte('appointment_date', fromDate)
+          .lte('appointment_date', toDate)
+          .neq('status', 'cancelled')
+          .range(from, to);
+        if (locationId && locationId !== 'all') q = q.eq('location_id', locationId);
+        return q;
+      });
 
       const scheduledByDate: Record<string, number> = {};
-      for (const row of apptResult.data || []) {
+      for (const row of apptData) {
         const d = row.appointment_date;
         if (!d) continue;
-        scheduledByDate[d] = (scheduledByDate[d] || 0) + (Number(row.total_price) || 0);
+        scheduledByDate[d] = (scheduledByDate[d] || 0) + ((Number(row.total_price) || 0) - (Number(row.tip_amount) || 0));
       }
 
       // 2. Actual revenue by date from phorest_transaction_items
