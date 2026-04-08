@@ -1,48 +1,96 @@
 
 
-# Enhanced Date Range Presets for ReportsHub + Disabled Date Styling
+# Build All Missing Reports — Priority Order with Gap Passes
 
-## Overview
-Replace the two inline preset buttons in ReportsHub with a full sidebar preset list (Shopify-style), and improve the Calendar component's disabled-date styling so non-selectable dates are visually distinct from selectable ones.
+This is a large body of work covering 10 new reports across 6 categories. Each report follows the established pattern: hook for data, report component with table + PDF/CSV export, registration in `ReportsTabContent.tsx` and `reportCatalog.ts`.
 
-## Changes
+## Priority Order and Batching
 
-### 1. `src/pages/dashboard/admin/ReportsHub.tsx`
+### Batch 1 — Governance and HR (High Priority)
 
-Rewrite the date picker popover content to include a **left sidebar** with preset buttons and the calendar on the right:
+**Report 1: Staff Milestones (Birthdays and Hire Anniversaries)**
+- Data source: `employee_profiles` — has `birthday` (date), `hire_date` (date)
+- Hook: `useStaffMilestonesReport.ts` — queries `employee_profiles` for active staff, computes days-until for both birthday and hire anniversary, accepts `daysAhead` and `milestoneType` filter (birthday/anniversary/both)
+- Component: `StaffMilestonesReport.tsx` — table with Name, Type (Birthday/Anniversary), Date, Days Until, Years (for anniversaries), Role, Location. PDF + CSV export
+- Category: Staff reports
 
-- **Preset list** (vertical stack, left side):
-  - Today, Yesterday, Last 7 Days, Last 30 Days, Last 90 Days, Week to Date, Month to Date, Last Month, Year to Date, Custom Range
-- **Behavior**:
-  - Clicking any preset (except Custom Range) computes the date range using `date-fns`, sets it immediately, updates `datePreset`, and closes the popover
-  - "Custom Range" activates the calendar for manual selection (calendar always visible but only interactive in custom mode, or simpler: always show calendar, highlight active preset)
-  - All presets cap `to` at today
-- **Layout**: `flex` row — preset sidebar `w-[160px] border-r` + calendar area
-- Import additional `date-fns` functions: `subDays, startOfWeek, startOfYear`
-- Use `dateRangeLabels.ts` types/labels for consistency
-- Add `open` / `onOpenChange` state to the Popover so presets can close it programmatically
+**Report 2: Permissions Audit**
+- Data source: `user_roles` (role assignments), `employee_profiles` (names, status, location), `dashboard_element_visibility` (UI visibility config)
+- Hook: `usePermissionsAuditReport.ts` — joins `user_roles` with `employee_profiles` to produce a matrix of who has what role, grouped by staff member
+- Component: `PermissionsAuditReport.tsx` — table with Staff Name, Roles (badges), Location, Status, Last Login. PDF + CSV export
+- Category: Staff reports
 
-### 2. `src/components/ui/calendar.tsx`
+**Report 3: Time and Attendance**
+- Data source: `time_entries` — has `clock_in`, `clock_out`, `duration_minutes`, `break_minutes`, `location_id`
+- Hook: `useTimeAttendanceReport.ts` — aggregates time entries by staff within date range: total hours, avg hours/day, overtime (>8h days), late clock-ins, total break time
+- Component: `TimeAttendanceReport.tsx` — table with Staff Name, Days Worked, Total Hours, Avg Hours/Day, Break Hours, Overtime Hours. PDF + CSV export
+- Category: Staff reports
 
-Enhance the `day_disabled` class to make non-selectable dates clearly distinct:
+### Batch 2 — HR / Culture
 
-**Current:** `"text-muted-foreground opacity-50"`
+**Report 4: PTO Balances**
+- Data source: `employee_pto_balances` + `pto_policies`
+- Hook: `usePTOBalancesReport.ts` — joins balances with policy names, staff profiles
+- Component: `PTOBalancesReport.tsx` — table with Staff Name, Policy, Current Balance, Accrued YTD, Used YTD, Carried Over
+- Category: Staff reports
 
-**Updated:** `"text-muted-foreground/40 opacity-30 cursor-not-allowed line-through"`
+**Report 5: Staff Strikes**
+- Data source: `staff_strikes` + `employee_profiles`
+- Hook: `useStaffStrikesReport.ts` — queries active/resolved strikes within date range, joins with staff names
+- Component: `StaffStrikesReport.tsx` — table with Staff Name, Strike Type, Severity, Title, Incident Date, Status (Active/Resolved), Resolution Notes
+- Category: Staff reports
 
-This adds:
-- Lower opacity (30% vs 50%) for stronger visual separation
-- `cursor-not-allowed` so hover communicates non-interactivity
-- `line-through` as a subtle strikethrough indicator (common pattern for unavailable dates)
+**Report 6: Training Completion**
+- Data source: `training_progress` + `training_videos` + `employee_profiles`
+- Hook: `useTrainingCompletionReport.ts` — joins progress with video metadata, calculates completion % per staff
+- Component: `TrainingCompletionReport.tsx` — table with Staff Name, Videos Completed, Total Required, Completion %, Last Completed Date
+- Category: Staff reports
 
-The `toDate` prop already prevents click interaction — this just makes it visually obvious.
+### Batch 3 — Client Intelligence
 
-### Files Modified
+**Report 7: Client Feedback / NPS**
+- Data source: `client_feedback_responses` + `nps_daily_snapshots`
+- Hook: `useClientFeedbackReport.ts` — aggregates NPS scores, ratings, and comments within date range
+- Component: `ClientFeedbackReport.tsx` — summary tiles (NPS Score, Avg Rating, Promoters/Passives/Detractors) + table of individual responses with Staff, Rating, NPS, Comments
+- Category: Clients reports
 
-| File | Change |
-|---|---|
-| `ReportsHub.tsx` | Replace 2-button preset strip with full sidebar preset list inside popover; add programmatic close on preset click; compute ranges with `date-fns` |
-| `calendar.tsx` | Update `day_disabled` classes for stronger visual distinction (lower opacity, cursor-not-allowed, line-through) |
+**Report 8: Churn Risk**
+- Data source: `churn_risk_scores`
+- Hook: `useChurnRiskReport.ts` — queries risk scores with factors and recommendations
+- Component: `ChurnRiskReport.tsx` — summary tiles (High/Medium/Low counts) + table with Risk Level, Score, Factors, Recommendations
+- Category: Clients reports
 
-2 file edits. No migrations.
+### Batch 4 — Operational / Financial
+
+**Report 9: Booth Renter Summary**
+- Data source: `booth_renter_profiles` + `employee_profiles`
+- Hook: `useBoothRenterReport.ts` — joins renter profiles with staff info: status, business name, insurance status, start/end dates
+- Component: `BoothRenterReport.tsx` — table with Staff Name, Business Name, Status, Start Date, Insurance Status, Insurance Expiry
+- Category: Financial reports
+
+**Report 10: Client Formula History**
+- Data source: `client_formula_history`
+- Hook: `useFormulaHistoryReport.ts` — aggregates formula usage: total formulas recorded, by type, by staff
+- Component: `FormulaHistoryReport.tsx` — summary tiles + table with Staff, Client, Service, Formula Type, Date
+- Category: Operations reports
+
+## Registration (applies to all reports)
+
+Each report requires updates to 3 files:
+1. **`src/config/reportCatalog.ts`** — add entry to `REPORT_CATALOG` array
+2. **`src/components/dashboard/analytics/ReportsTabContent.tsx`** — add to category array, import component, add switch case, add to `selfContainedReports`
+3. Each report component follows the exact same pattern as `ClientBirthdaysReport.tsx`: Card wrapper, loading skeleton, data table, PDF (jsPDF + autoTable with branded header/footer), CSV export, back button
+
+## File Summary
+
+| Batch | New Files | Modified Files |
+|-------|-----------|----------------|
+| 1 | 6 hooks + 3 components | `ReportsTabContent.tsx`, `reportCatalog.ts` |
+| 2 | 3 hooks + 3 components | `ReportsTabContent.tsx`, `reportCatalog.ts` |
+| 3 | 2 hooks + 2 components | `ReportsTabContent.tsx`, `reportCatalog.ts` |
+| 4 | 2 hooks + 2 components | `ReportsTabContent.tsx`, `reportCatalog.ts` |
+
+**Total: 13 new hooks, 10 new report components, 2 shared files updated incrementally per batch.**
+
+No migrations needed — all data tables already exist. Gap/bug passes will be run between each batch.
 
