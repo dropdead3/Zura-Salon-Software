@@ -272,7 +272,7 @@ export function ScheduleReportForm({ open, onOpenChange, editReport }: ScheduleR
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Locations</SelectItem>
-                  {locations.map(loc => (
+                  {locations?.map(loc => (
                     <SelectItem key={loc.id} value={loc.id}>{loc.name}</SelectItem>
                   ))}
                 </SelectContent>
