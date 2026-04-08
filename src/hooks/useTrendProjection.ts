@@ -178,12 +178,14 @@ export function useTrendProjection(
       if (cp.weight <= 0) continue; // Skip tenure etc.
 
       const isMet = cp.percent >= 100;
+      // Guard against undefined/NaN priorCurrent — default to current (0 velocity = flat)
+      const safePrior = (cp.priorCurrent != null && !Number.isNaN(cp.priorCurrent)) ? cp.priorCurrent : cp.current;
       // Velocity: change per day over the eval window
-      const velocityPerDay = evalDays > 0 ? (cp.current - cp.priorCurrent) / evalDays : 0;
+      const velocityPerDay = evalDays > 0 ? (cp.current - safePrior) / evalDays : 0;
 
       let trajectory: KpiProjection['trajectory'] = 'flat';
-      const changePct = cp.priorCurrent > 0
-        ? ((cp.current - cp.priorCurrent) / cp.priorCurrent) * 100
+      const changePct = safePrior > 0
+        ? ((cp.current - safePrior) / safePrior) * 100
         : (cp.current > 0 ? 100 : 0);
       if (changePct > 3) trajectory = 'improving';
       else if (changePct < -3) trajectory = 'declining';

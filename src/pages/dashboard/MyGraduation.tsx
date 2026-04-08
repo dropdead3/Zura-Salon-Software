@@ -49,15 +49,18 @@ export default function MyGraduation() {
   // AI Coaching
   const { coaching, isLoading: isCoachingLoading, generateCoaching, clearCoaching } = useAICoaching();
 
-  const handleRequestCoaching = useCallback(() => {
-    if (!trendProjection?.projections.length || !progress) return;
+  const handleRequestCoaching = useCallback((forceRefresh?: boolean) => {
+    if (!trendProjection?.projections.length || !progress || !effectiveUserId) return;
     generateCoaching(
+      effectiveUserId,
       user?.email || 'Stylist',
       progress.currentLevelLabel || '',
       progress.nextLevelLabel || null,
       trendProjection.projections,
+      goalMode.daysRemaining,
+      forceRefresh,
     );
-  }, [trendProjection, progress, user, generateCoaching]);
+  }, [trendProjection, progress, user, effectiveUserId, generateCoaching, goalMode.daysRemaining]);
 
   return (
     <DashboardLayout>

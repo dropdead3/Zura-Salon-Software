@@ -94,8 +94,7 @@ Deno.serve(async (req) => {
 
         const currentIdx = sortedLevels.indexOf(currentLevel);
         const nextLevel = currentIdx < sortedLevels.length - 1 ? sortedLevels[currentIdx + 1] : null;
-
-        if (!nextLevel) continue; // Top level — no progression digest needed
+        const isTopLevel = !nextLevel;
 
         // Fetch KPI data for this stylist (90-day window)
         const evalDays = 90;
@@ -133,8 +132,9 @@ Deno.serve(async (req) => {
         const kpis = computeWindowKpis(sales, appts, evalStartStr, endStr, evalDays);
         const priorKpis = computeWindowKpis(sales, appts, priorStartStr, evalStartStr, evalDays);
 
-        // Parse criteria from next level
-        const criteria = nextLevel.criteria as any;
+        // Parse criteria — use current level criteria for top-level (maintenance), next level for progression
+        const targetLevel = isTopLevel ? currentLevel : nextLevel!;
+        const criteria = targetLevel.criteria as any;
         if (!criteria) continue;
 
         // Build projection summary
@@ -160,19 +160,22 @@ Deno.serve(async (req) => {
           kpiMap.rev_per_hour = { current: kpis.revPerHour, prior: priorKpis.revPerHour, target: criteria.min_rev_per_hour, unit: "$/hr", label: "Rev/Hour" };
         }
         if (criteria.min_retention_pct) {
-          kpiMap.retention = { current: kpis.retentionRate, prior: priorKpis.retentionRate, target: criteria.min_retention_pct, unit: "%", label: "Retention" };
+          // Skip retention velocity — prior window retention is unreliable (see comment in computeWindowKpis)
+          kpiMap.retention = { current: kpis.retentionRate, prior: kpis.retentionRate, target: criteria.min_retention_pct, unit: "%", label: "Retention" };
         }
         if (criteria.min_new_clients) {
           kpiMap.new_clients = { current: kpis.newClientsPerMonth, prior: priorKpis.newClientsPerMonth, target: criteria.min_new_clients, unit: "/mo", label: "New Clients" };
         }
 
         let allMet = true;
+        let hasDeclining = false;
         for (const [key, kpi] of Object.entries(kpiMap)) {
           const velocity = (kpi.current - kpi.prior) / evalDays;
           const gap = kpi.target - kpi.current;
           const isMet = gap <= 0;
           if (!isMet) allMet = false;
           const trajectory = kpi.current > kpi.prior * 1.03 ? "improving" : kpi.current < kpi.prior * 0.97 ? "declining" : "flat";
+          if (trajectory === "declining") hasDeclining = true;
           const daysToTarget = velocity > 0 && gap > 0 ? Math.ceil(gap / velocity) : null;
 
           projectionLines.push(
@@ -180,9 +183,14 @@ Deno.serve(async (req) => {
           );
         }
 
-        if (allMet) {
+        // Skip digest: progression stylists who are fully qualified, or top-level with no declining metrics
+        if (!isTopLevel && allMet) {
           totalSkipped++;
-          continue; // Don't send digest if fully qualified
+          continue;
+        }
+        if (isTopLevel && !hasDeclining) {
+          totalSkipped++;
+          continue;
         }
 
         // Generate AI summary
@@ -204,7 +212,9 @@ Deno.serve(async (req) => {
                   },
                   {
                     role: "user",
-                    content: `${stylist.first_name} is at ${currentLevel.name}, working toward ${nextLevel.name}.\n\nKPIs:\n${projectionLines.join("\n")}\n\nWrite a 2-sentence weekly update.`,
+                    content: isTopLevel
+                      ? `${stylist.first_name} is at ${currentLevel.name} (top level, maintenance mode).\n\nKPIs:\n${projectionLines.join("\n")}\n\nWrite a 2-sentence maintenance update noting the declining metrics.`
+                      : `${stylist.first_name} is at ${currentLevel.name}, working toward ${nextLevel!.name}.\n\nKPIs:\n${projectionLines.join("\n")}\n\nWrite a 2-sentence weekly update.`,
                   },
                 ],
               }),
@@ -224,11 +234,15 @@ Deno.serve(async (req) => {
         // Build deep link
         const deepLink = orgSlug ? `https://getzura.com/org/${orgSlug}/dashboard/my-graduation` : "";
 
+        const levelLabel = isTopLevel
+          ? `${currentLevel.name} — Maintenance`
+          : `${currentLevel.name} → ${nextLevel!.name}`;
+
         // Build email HTML
         const html = buildDigestHtml(
           stylist.first_name || "Stylist",
           currentLevel.name,
-          nextLevel.name,
+          isTopLevel ? "Maintenance" : nextLevel!.name,
           projectionLines,
           aiSummary,
           deepLink,
@@ -236,7 +250,7 @@ Deno.serve(async (req) => {
 
         const result = await sendOrgEmail(supabase, org.id, {
           to: [stylist.email],
-          subject: `Your Weekly Progress — ${currentLevel.name} → ${nextLevel.name}`,
+          subject: `Your Weekly Progress — ${levelLabel}`,
           html,
           emailType: "transactional",
         });
@@ -312,10 +326,11 @@ function computeWindowKpis(
   const revPerHour = totalMin > 0 ? (totalRev / totalMin) * 60 : 0;
 
   // Retention: compare current window clients to prior window
-  // (We can only compute this for the current window; prior window retention
-  //  would need a third window which we don't fetch)
+  // Note: For the prior window computation, retention would need a third window
+  // of appointment data which we don't fetch. We only compute retention for the
+  // current (eval) window and set prior retention to 0, skipping retention velocity
+  // in digest emails.
   const windowClients = new Set(windowAppts.filter(a => a.client_id).map(a => a.client_id));
-  // For the eval window, we need prior-window clients
   const priorAppts = (appts || []).filter(
     (a) => a.appointment_date < startStr && a.status !== "no_show" && a.client_id
   );

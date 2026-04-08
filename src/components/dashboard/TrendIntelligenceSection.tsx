@@ -54,7 +54,7 @@ interface TrendIntelligenceSectionProps {
   /** AI coaching state */
   coaching?: CoachingResult | null;
   isCoachingLoading?: boolean;
-  onRequestCoaching?: () => void;
+  onRequestCoaching?: (forceRefresh?: boolean) => void;
   onDismissCoaching?: () => void;
 }
 
@@ -208,6 +208,10 @@ export function TrendIntelligenceSection({
   const unmetProjections = projection.projections.filter(p => !p.isMet);
   const allMet = unmetProjections.length === 0;
 
+  // Remaining metrics not shown in top actions
+  const topKeys = new Set(projection.topActions.map(a => a.key));
+  const remainingMetrics = projection.projections.filter(p => !topKeys.has(p.key) && p.weight > 0);
+
   // Build goal target lookup
   const goalTargetMap = new Map<string, { dailyLabel: string; feasibility: 'achievable' | 'aggressive' | 'extreme' }>();
   if (goalMode?.isActive && goalMode.goalTargets.length > 0) {
@@ -308,7 +312,7 @@ export function TrendIntelligenceSection({
                 variant="outline"
                 size="sm"
                 className="h-7 text-[10px] gap-1 px-2"
-                onClick={onRequestCoaching}
+                onClick={() => onRequestCoaching()}
                 disabled={isCoachingLoading}
               >
                 {isCoachingLoading ? (
@@ -377,7 +381,12 @@ export function TrendIntelligenceSection({
 
         {/* AI Coaching Panel */}
         {coaching && onDismissCoaching && (
-          <AICoachingPanel coaching={coaching} onClose={onDismissCoaching} />
+          <AICoachingPanel
+            coaching={coaching}
+            onClose={onDismissCoaching}
+            onRefresh={onRequestCoaching ? (force) => onRequestCoaching(force) : undefined}
+            isRefreshing={isCoachingLoading}
+          />
         )}
 
         {/* Retention Risk Nudge (soft) */}
@@ -427,41 +436,35 @@ export function TrendIntelligenceSection({
         )}
 
         {/* Full KPI Projection Grid (remaining KPIs not in top actions) */}
-        {(() => {
-          const topKeys = new Set(projection.topActions.map(a => a.key));
-          const remaining = projection.projections.filter(p => !topKeys.has(p.key) && p.weight > 0);
-          if (remaining.length === 0) return null;
-
-          return (
-            <div className="space-y-2 pt-1 border-t border-border/40">
-              <h4 className="font-display text-xs tracking-wide text-muted-foreground">
-                All Metrics
-              </h4>
-              <div className="space-y-1.5">
-                {remaining.map(p => (
-                  <div key={p.key} className="flex items-center gap-3 text-xs">
-                    <TrajectoryIcon trajectory={p.trajectory} />
-                    <span className="text-muted-foreground flex-1">{p.label}</span>
-                    {p.isMet ? (
-                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
-                    ) : (
-                      <>
-                        <Badge variant="secondary" className="text-[10px] h-4 px-1 tabular-nums">
-                          {goalTargetMap.get(p.key)?.dailyLabel || p.dailyTarget}
-                        </Badge>
-                        {p.daysToTarget !== null && (
-                          <span className="text-muted-foreground tabular-nums text-[10px]">
-                            ~{p.daysToTarget}d
-                          </span>
-                        )}
-                      </>
-                    )}
-                  </div>
-                ))}
-              </div>
+        {remainingMetrics.length > 0 && (
+          <div className="space-y-2 pt-1 border-t border-border/40">
+            <h4 className="font-display text-xs tracking-wide text-muted-foreground">
+              All Metrics
+            </h4>
+            <div className="space-y-1.5">
+              {remainingMetrics.map(p => (
+                <div key={p.key} className="flex items-center gap-3 text-xs">
+                  <TrajectoryIcon trajectory={p.trajectory} />
+                  <span className="text-muted-foreground flex-1">{p.label}</span>
+                  {p.isMet ? (
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
+                  ) : (
+                    <>
+                      <Badge variant="secondary" className="text-[10px] h-4 px-1 tabular-nums">
+                        {goalTargetMap.get(p.key)?.dailyLabel || p.dailyTarget}
+                      </Badge>
+                      {p.daysToTarget !== null && (
+                        <span className="text-muted-foreground tabular-nums text-[10px]">
+                          ~{p.daysToTarget}d
+                        </span>
+                      )}
+                    </>
+                  )}
+                </div>
+              ))}
             </div>
-          );
-        })()}
+          </div>
+        )}
 
         {/* Footer */}
         <div className="text-[10px] text-muted-foreground pt-2 border-t border-border/40">

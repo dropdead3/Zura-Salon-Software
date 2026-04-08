@@ -3,9 +3,10 @@
  * for a stylist based on their KPI gaps and trajectory.
  *
  * Includes localStorage caching with 24h TTL and cooldown protection.
+ * Cache key uses userId (stable) instead of email.
  */
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import type { KpiProjection } from './useTrendProjection';
@@ -21,6 +22,8 @@ export interface CoachingResult {
   summary: string;
   actions: CoachingAction[];
   strengths: string[];
+  /** Context label: which goal timeline was used (if any) */
+  generatedContext?: string;
 }
 
 const CACHE_PREFIX = 'zura_coaching_';
@@ -32,8 +35,9 @@ interface CachedCoaching {
   timestamp: number;
 }
 
-function getCacheKey(stylistName: string, currentLevel: string): string {
-  return `${CACHE_PREFIX}${stylistName}_${currentLevel}`;
+function getCacheKey(userId: string, currentLevel: string, goalDays: number | null): string {
+  const goalSuffix = goalDays ? `_goal${goalDays}` : '';
+  return `${CACHE_PREFIX}${userId}_${currentLevel}${goalSuffix}`;
 }
 
 function getCachedResult(key: string): CoachingResult | null {
@@ -54,31 +58,38 @@ function getCachedResult(key: string): CoachingResult | null {
 export function useAICoaching() {
   const [coaching, setCoaching] = useState<CoachingResult | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [lastRequestTime, setLastRequestTime] = useState(0);
+  const lastRequestTimeRef = useRef(0);
 
   const generateCoaching = useCallback(async (
+    userId: string,
     stylistName: string,
     currentLevel: string,
     nextLevel: string | null,
     projections: KpiProjection[],
+    goalDaysRemaining?: number | null,
+    forceRefresh?: boolean,
   ) => {
-    // Cooldown check
+    // Cooldown check (persists across renders via ref)
     const now = Date.now();
-    if (now - lastRequestTime < COOLDOWN_MS) {
+    if (now - lastRequestTimeRef.current < COOLDOWN_MS) {
       toast.info('Please wait a moment before requesting another coaching plan.');
       return;
     }
 
-    // Check cache first
-    const cacheKey = getCacheKey(stylistName, currentLevel);
-    const cached = getCachedResult(cacheKey);
-    if (cached) {
-      setCoaching(cached);
-      return;
+    const goalDays = goalDaysRemaining ?? null;
+
+    // Check cache first (unless force refresh)
+    const cacheKey = getCacheKey(userId, currentLevel, goalDays);
+    if (!forceRefresh) {
+      const cached = getCachedResult(cacheKey);
+      if (cached) {
+        setCoaching(cached);
+        return;
+      }
     }
 
     setIsLoading(true);
-    setLastRequestTime(now);
+    lastRequestTimeRef.current = now;
     try {
       const kpiSnapshot = projections.map(p => ({
         metric: p.label,
@@ -96,13 +107,17 @@ export function useAICoaching() {
           currentLevel,
           nextLevel,
           kpiSnapshot,
+          goalDaysRemaining: goalDays,
         },
       });
 
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
 
-      const result = data as CoachingResult;
+      const contextLabel = goalDays
+        ? `Generated for ${goalDays}-day goal`
+        : 'Generated without goal mode';
+      const result: CoachingResult = { ...data, generatedContext: contextLabel };
       setCoaching(result);
 
       // Cache the result
@@ -124,7 +139,7 @@ export function useAICoaching() {
     } finally {
       setIsLoading(false);
     }
-  }, [lastRequestTime]);
+  }, []);
 
   const clearCoaching = useCallback(() => {
     setCoaching(null);
