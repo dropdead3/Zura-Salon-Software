@@ -60,6 +60,15 @@ const REASON_CONFIG: Record<GapReason, {
   },
 };
 
+/** Status-specific overrides for not_concluded items */
+const STATUS_BADGE_CONFIG: Record<string, { label: string; badgeClass: string }> = {
+  booked: { label: 'Booked', badgeClass: 'bg-blue-500/10 text-blue-500 border-blue-500/20' },
+  confirmed: { label: 'Confirmed', badgeClass: 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' },
+  pending: { label: 'Unconfirmed', badgeClass: 'bg-amber-500/10 text-amber-500 border-amber-500/20' },
+  arrived: { label: 'Arrived', badgeClass: 'bg-teal-500/10 text-teal-500 border-teal-500/20' },
+  started: { label: 'In progress', badgeClass: 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' },
+};
+
 function GapItemRow({ item, showDates, formatCurrency }: {
   item: GapItem;
   showDates: boolean;
@@ -67,6 +76,12 @@ function GapItemRow({ item, showDates, formatCurrency }: {
 }) {
   const config = REASON_CONFIG[item.reason];
   const Icon = config.icon;
+  // For not_concluded items, use the actual appointment status for badge label/color
+  const statusOverride = item.reason === 'not_concluded' && item.status
+    ? STATUS_BADGE_CONFIG[item.status]
+    : null;
+  const badgeLabel = statusOverride?.label ?? config.label;
+  const badgeClass = statusOverride?.badgeClass ?? config.badgeClass;
   const showAmountShift = item.reason !== 'cancelled' && item.reason !== 'no_show' && item.actualAmount > 0;
 
   return (
@@ -76,10 +91,10 @@ function GapItemRow({ item, showDates, formatCurrency }: {
         <div className="flex items-center gap-2 min-w-0 flex-1">
           <span className={cn(
             "inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full border shrink-0",
-            config.badgeClass
+            badgeClass
           )}>
             <Icon className="w-3 h-3" />
-            {config.label}
+            {badgeLabel}
           </span>
           <span className="font-sans text-foreground font-medium truncate min-w-0">{item.clientName}</span>
         </div>

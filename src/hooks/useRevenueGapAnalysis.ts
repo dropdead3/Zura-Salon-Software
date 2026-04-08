@@ -57,6 +57,8 @@ export interface GapItem {
   actualAmount: number;
   variance: number;
   appointmentDate: string;
+  /** Original appointment status from Phorest */
+  status?: string;
   /** Only for pricing items: services found in POS */
   actualServices?: string[];
 }
@@ -132,10 +134,12 @@ export function useRevenueGapAnalysis(
           const chunk = clientIds.slice(i, i + 100);
           const { data: clientData } = await supabase
             .from('phorest_clients')
-            .select('phorest_client_id, name')
+            .select('phorest_client_id, name, first_name, last_name')
             .in('phorest_client_id', chunk);
           (clientData ?? []).forEach(c => {
-            if (c.phorest_client_id && c.name) clientNameMap.set(c.phorest_client_id, c.name);
+            if (!c.phorest_client_id) return;
+            const resolved = c.name || [c.first_name, c.last_name].filter(Boolean).join(' ').trim();
+            if (resolved) clientNameMap.set(c.phorest_client_id, resolved);
           });
         }
       }
@@ -167,6 +171,7 @@ export function useRevenueGapAnalysis(
           actualAmount: 0,
           variance: price,
           appointmentDate: a.appointment_date,
+          status: a.status,
         });
       });
 
@@ -183,6 +188,7 @@ export function useRevenueGapAnalysis(
           actualAmount: 0,
           variance: price,
           appointmentDate: a.appointment_date,
+          status: a.status,
         });
       });
 
@@ -200,6 +206,7 @@ export function useRevenueGapAnalysis(
           actualAmount: 0,
           variance: price,
           appointmentDate: a.appointment_date,
+          status: a.status,
         });
       });
 
