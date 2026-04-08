@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { format, subDays, startOfWeek, subWeeks } from 'date-fns';
+import { format, subWeeks, startOfWeek } from 'date-fns';
 
 export interface LocationRevenueData {
   locationId: string | null;
@@ -16,11 +16,11 @@ export interface LocationRevenueData {
 
 export interface LocationTrendData {
   weekLabel: string;
-  [locationKey: string]: string | number; // Dynamic location keys
+  [locationKey: string]: string | number;
 }
 
 /**
- * Fetches revenue breakdown by location for a specific stylist
+ * Fetches revenue breakdown by location for a specific stylist (from live POS transaction items)
  */
 export function useStylistLocationRevenue(userId: string | undefined, dateFrom?: string, dateTo?: string) {
   return useQuery({
@@ -28,57 +28,54 @@ export function useStylistLocationRevenue(userId: string | undefined, dateFrom?:
     queryFn: async () => {
       if (!userId) return [];
 
-      // First fetch locations to map IDs to names
       const { data: locations } = await supabase
         .from('locations')
         .select('id, name');
 
-      let query = supabase
-        .from('phorest_daily_sales_summary')
-        .select('location_id, branch_name, total_revenue, service_revenue, product_revenue, total_services, total_products, total_transactions')
-        .eq('user_id', userId);
-
-      if (dateFrom) {
-        query = query.gte('summary_date', dateFrom);
+      const allData: any[] = [];
+      const pageSize = 1000;
+      let from = 0;
+      let hasMore = true;
+      while (hasMore) {
+        let q: any = supabase
+          .from('phorest_transaction_items')
+          .select('location_id, total_amount, tax_amount, item_type')
+          .eq('stylist_user_id', userId);
+        if (dateFrom) q = q.gte('transaction_date', dateFrom);
+        if (dateTo) q = q.lte('transaction_date', dateTo);
+        const { data, error } = await q.range(from, from + pageSize - 1);
+        if (error) throw error;
+        allData.push(...(data || []));
+        hasMore = (data?.length || 0) === pageSize;
+        from += pageSize;
       }
-      if (dateTo) {
-        query = query.lte('summary_date', dateTo);
-      }
 
-      const { data, error } = await query;
-      if (error) throw error;
-
-      // Aggregate by location
       const byLocation: Record<string, LocationRevenueData> = {};
-      data?.forEach(row => {
-        const key = row.location_id || row.branch_name || 'Unknown';
+      for (const item of allData) {
+        const key = item.location_id || 'Unknown';
         if (!byLocation[key]) {
-          const loc = locations?.find(l => l.id === row.location_id);
+          const loc = locations?.find(l => l.id === item.location_id);
           byLocation[key] = {
-            locationId: row.location_id,
-            branchName: loc?.name || row.branch_name || 'Unknown',
-            totalRevenue: 0,
-            serviceRevenue: 0,
-            productRevenue: 0,
-            totalTransactions: 0,
-            totalServices: 0,
-            totalProducts: 0,
-            averageTicket: 0,
+            locationId: item.location_id,
+            branchName: loc?.name || 'Unknown',
+            totalRevenue: 0, serviceRevenue: 0, productRevenue: 0,
+            totalTransactions: 0, totalServices: 0, totalProducts: 0, averageTicket: 0,
           };
         }
-        byLocation[key].totalRevenue += Number(row.total_revenue) || 0;
-        byLocation[key].serviceRevenue += Number(row.service_revenue) || 0;
-        byLocation[key].productRevenue += Number(row.product_revenue) || 0;
-        byLocation[key].totalTransactions += row.total_transactions || 0;
-        byLocation[key].totalServices += row.total_services || 0;
-        byLocation[key].totalProducts += row.total_products || 0;
-      });
+        const amount = (Number(item.total_amount) || 0) + (Number(item.tax_amount) || 0);
+        byLocation[key].totalRevenue += amount;
+        if (item.item_type === 'service') {
+          byLocation[key].serviceRevenue += amount;
+          byLocation[key].totalServices += 1;
+        } else {
+          byLocation[key].productRevenue += amount;
+          byLocation[key].totalProducts += 1;
+        }
+        byLocation[key].totalTransactions += 1;
+      }
 
-      // Calculate average ticket
       Object.values(byLocation).forEach(loc => {
-        loc.averageTicket = loc.totalTransactions > 0 
-          ? loc.totalRevenue / loc.totalTransactions 
-          : 0;
+        loc.averageTicket = loc.totalTransactions > 0 ? loc.totalRevenue / loc.totalTransactions : 0;
       });
 
       return Object.values(byLocation).sort((a, b) => b.totalRevenue - a.totalRevenue);
@@ -88,7 +85,7 @@ export function useStylistLocationRevenue(userId: string | undefined, dateFrom?:
 }
 
 /**
- * Fetches weekly revenue trend by location for a specific stylist
+ * Fetches weekly revenue trend by location for a specific stylist (from live POS transaction items)
  */
 export function useStylistLocationTrend(userId: string | undefined, weeks: number = 8) {
   return useQuery({
@@ -111,53 +108,55 @@ export function useStylistLocationTrend(userId: string | undefined, weeks: numbe
         });
       }
 
-      // Fetch locations
       const { data: locations } = await supabase
         .from('locations')
         .select('id, name');
 
-      // Fetch all summaries in date range
-      const { data: summaries, error } = await supabase
-        .from('phorest_daily_sales_summary')
-        .select('summary_date, location_id, branch_name, total_revenue')
-        .eq('user_id', userId)
-        .gte('summary_date', weekRanges[0].start)
-        .lte('summary_date', weekRanges[weekRanges.length - 1].end)
-        .order('summary_date', { ascending: true });
+      const allData: any[] = [];
+      const pageSize = 1000;
+      let from = 0;
+      let hasMore = true;
+      while (hasMore) {
+        const { data, error } = await supabase
+          .from('phorest_transaction_items')
+          .select('transaction_date, location_id, total_amount, tax_amount')
+          .eq('stylist_user_id', userId)
+          .gte('transaction_date', weekRanges[0].start)
+          .lte('transaction_date', weekRanges[weekRanges.length - 1].end)
+          .range(from, from + pageSize - 1);
+        if (error) throw error;
+        allData.push(...(data || []));
+        hasMore = (data?.length || 0) === pageSize;
+        from += pageSize;
+      }
 
-      if (error) throw error;
-
-      // Get unique locations from the data
       const locationNames: Record<string, string> = {};
-      summaries?.forEach(s => {
-        const key = s.location_id || s.branch_name || 'Unknown';
+      for (const item of allData) {
+        const key = item.location_id || 'Unknown';
         if (!locationNames[key]) {
-          const loc = locations?.find(l => l.id === s.location_id);
-          locationNames[key] = loc?.name || s.branch_name || 'Unknown';
+          const loc = locations?.find(l => l.id === item.location_id);
+          locationNames[key] = loc?.name || 'Unknown';
         }
-      });
+      }
 
-      // Aggregate by week and location
       const weeklyData: LocationTrendData[] = weekRanges.map(range => {
-        const weekSummaries = (summaries || []).filter(s => 
-          s.summary_date >= range.start && s.summary_date <= range.end
-        );
+        const weekItems = allData.filter(item => {
+          const date = (item.transaction_date || '').slice(0, 10);
+          return date >= range.start && date <= range.end;
+        });
         
         const dataPoint: LocationTrendData = { weekLabel: range.label };
-        
-        // Initialize all locations to 0
-        Object.entries(locationNames).forEach(([key, name]) => {
+        Object.entries(locationNames).forEach(([, name]) => {
           dataPoint[name] = 0;
         });
 
-        // Sum up revenue by location
-        weekSummaries.forEach(s => {
-          const locKey = s.location_id || s.branch_name || 'Unknown';
+        for (const item of weekItems) {
+          const locKey = item.location_id || 'Unknown';
           const locName = locationNames[locKey];
           if (locName) {
-            dataPoint[locName] = (dataPoint[locName] as number || 0) + (Number(s.total_revenue) || 0);
+            dataPoint[locName] = (dataPoint[locName] as number || 0) + (Number(item.total_amount) || 0) + (Number(item.tax_amount) || 0);
           }
-        });
+        }
 
         return dataPoint;
       });
