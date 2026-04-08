@@ -12,6 +12,7 @@ interface RetailBreakdownData {
   extensionRevenue?: number;
   merchRevenue?: number;
   giftCardRevenue?: number;
+  feesRevenue?: number;
 }
 
 interface RevenueDonutChartProps {
