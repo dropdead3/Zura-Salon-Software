@@ -31,6 +31,8 @@ import {
   Percent,
   Building,
   Grid3X3,
+  Tag,
+  Cake,
 } from 'lucide-react';
 import { useLocations } from '@/hooks/useLocations';
 import { getReportTier, filterReportsByTier } from '@/config/reportCatalog';
