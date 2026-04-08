@@ -18,6 +18,8 @@ export interface ProductVelocityEntry {
 
 import { fetchAllBatched } from '@/utils/fetchAllBatched';
 
+const ANALYSIS_DAYS = 90;
+
 /**
  * Lightweight hook that queries last 180 days of POS transaction items
  * and returns a velocity map keyed by product name (lowercase),
