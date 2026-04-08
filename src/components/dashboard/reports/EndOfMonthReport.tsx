@@ -32,6 +32,7 @@ interface EndOfMonthReportProps {
   dateTo: string;
   locationId?: string;
   onClose: () => void;
+  dateRangeKey?: string;
 }
 
 export function EndOfMonthReport({ dateFrom, dateTo, locationId, onClose }: EndOfMonthReportProps) {

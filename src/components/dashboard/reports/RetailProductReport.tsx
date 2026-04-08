@@ -10,6 +10,7 @@ import { Download, FileSpreadsheet, Loader2, ArrowLeft, ShoppingBag, TrendingUp,
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { toast } from 'sonner';
+import { ReportDateSubtitle } from '@/components/dashboard/reports/ReportDateSubtitle';
 import { cn } from '@/lib/utils';
 import { tokens } from '@/lib/design-tokens';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
@@ -29,9 +30,10 @@ interface RetailProductReportProps {
   dateTo: string;
   locationId?: string;
   onClose: () => void;
+  dateRangeKey?: string;
 }
 
-export function RetailProductReport({ dateFrom, dateTo, locationId, onClose }: RetailProductReportProps) {
+export function RetailProductReport({ dateFrom, dateTo, locationId, onClose, dateRangeKey }: RetailProductReportProps) {
   const [isGenerating, setIsGenerating] = useState(false);
   const { formatCurrencyWhole } = useFormatCurrency();
   const { formatDate } = useFormatDate();
@@ -169,7 +171,7 @@ export function RetailProductReport({ dateFrom, dateTo, locationId, onClose }: R
             <CardTitle className="font-display text-base tracking-wide">ALL PRODUCTS</CardTitle>
             <MetricInfoTooltip description="All retail products sold in the selected period with trend comparison to prior period." />
           </div>
-          <CardDescription className="text-xs">{formatDate(new Date(dateFrom), 'MMM d, yyyy')} - {formatDate(new Date(dateTo), 'MMM d, yyyy')}</CardDescription>
+          <CardDescription className="text-xs"><ReportDateSubtitle dateFrom={dateFrom} dateTo={dateTo} dateRangeKey={dateRangeKey} /></CardDescription>
         </CardHeader>
         <CardContent>
           <Table>

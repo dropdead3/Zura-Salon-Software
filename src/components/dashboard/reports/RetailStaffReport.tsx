@@ -12,6 +12,7 @@ import { Download, FileSpreadsheet, Loader2, ArrowLeft, Users } from 'lucide-rea
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { toast } from 'sonner';
+import { ReportDateSubtitle } from '@/components/dashboard/reports/ReportDateSubtitle';
 import { cn } from '@/lib/utils';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { useFormatDate } from '@/hooks/useFormatDate';
@@ -30,12 +31,13 @@ interface RetailStaffReportProps {
   dateTo: string;
   locationId?: string;
   onClose: () => void;
+  dateRangeKey?: string;
 }
 
 const getInitials = (name: string) =>
   name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
 
-export function RetailStaffReport({ dateFrom, dateTo, locationId, onClose }: RetailStaffReportProps) {
+export function RetailStaffReport({ dateFrom, dateTo, locationId, onClose, dateRangeKey }: RetailStaffReportProps) {
   const [isGenerating, setIsGenerating] = useState(false);
   const { formatCurrencyWhole } = useFormatCurrency();
   const { formatDate } = useFormatDate();
@@ -155,7 +157,7 @@ export function RetailStaffReport({ dateFrom, dateTo, locationId, onClose }: Ret
             <CardTitle className="font-display text-base tracking-wide">RETAIL SALES BY STAFF</CardTitle>
             <MetricInfoTooltip description="Per-stylist retail sales metrics ranked by product revenue. Attachment rate is the percentage of each stylist's service transactions that included a product sale." />
           </div>
-          <CardDescription className="text-xs">{formatDate(new Date(dateFrom), 'MMM d, yyyy')} – {formatDate(new Date(dateTo), 'MMM d, yyyy')}</CardDescription>
+          <CardDescription className="text-xs"><ReportDateSubtitle dateFrom={dateFrom} dateTo={dateTo} dateRangeKey={dateRangeKey} /></CardDescription>
         </CardHeader>
         <CardContent>
           <Table>

@@ -30,6 +30,7 @@ import { useReportLocationInfo } from '@/hooks/useReportLocationInfo';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { useFormatDate } from '@/hooks/useFormatDate';
 import { toast } from 'sonner';
+import { ReportDateSubtitle } from '@/components/dashboard/reports/ReportDateSubtitle';
 import { EmptyDataBanner } from '@/components/ui/EmptyDataBanner';
 
 interface FinancialReportGeneratorProps {
@@ -38,6 +39,7 @@ interface FinancialReportGeneratorProps {
   dateTo: string;
   locationId?: string;
   onClose: () => void;
+  dateRangeKey?: string;
 }
 
 export function FinancialReportGenerator({
@@ -46,6 +48,7 @@ export function FinancialReportGenerator({
   dateTo,
   locationId,
   onClose,
+  dateRangeKey,
 }: FinancialReportGeneratorProps) {
   const [isGenerating, setIsGenerating] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
@@ -315,7 +318,7 @@ export function FinancialReportGenerator({
       <Card>
         <CardHeader className="pb-2">
           <CardTitle className="font-display text-base tracking-wide">{getReportTitle()}</CardTitle>
-          <CardDescription>{formatDate(new Date(dateFrom), 'MMM d, yyyy')} – {formatDate(new Date(dateTo), 'MMM d, yyyy')}</CardDescription>
+          <CardDescription><ReportDateSubtitle dateFrom={dateFrom} dateTo={dateTo} dateRangeKey={dateRangeKey} /></CardDescription>
         </CardHeader>
         <CardContent>
           <Skeleton className="h-64 w-full" />
@@ -523,7 +526,7 @@ export function FinancialReportGenerator({
             <div>
               <CardTitle className="font-display text-base tracking-wide">{getReportTitle()}</CardTitle>
               <CardDescription>
-                {formatDate(new Date(dateFrom), 'MMM d, yyyy')} – {formatDate(new Date(dateTo), 'MMM d, yyyy')}
+                <ReportDateSubtitle dateFrom={dateFrom} dateTo={dateTo} dateRangeKey={dateRangeKey} />
               </CardDescription>
             </div>
             <div className="flex gap-2">

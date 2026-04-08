@@ -17,7 +17,7 @@ import { addReportHeader, addReportFooter, fetchLogoAsDataUrl, getReportAutoTabl
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 
-interface Props { dateFrom: string; dateTo: string; locationId?: string; onClose: () => void; }
+interface Props { dateFrom: string; dateTo: string; locationId?: string; onClose: () => void; dateRangeKey?: string; }
 
 export function GiftCardsReport({ dateFrom, dateTo, onClose }: Props) {
   const [isGenerating, setIsGenerating] = useState(false);

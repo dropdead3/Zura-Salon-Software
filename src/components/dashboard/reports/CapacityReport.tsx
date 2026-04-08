@@ -26,19 +26,22 @@ import { addReportHeader, addReportFooter, fetchLogoAsDataUrl, getReportAutoTabl
 import { useBusinessSettings } from '@/hooks/useBusinessSettings';
 import { useReportLocationInfo } from '@/hooks/useReportLocationInfo';
 import { toast } from 'sonner';
+import { ReportDateSubtitle } from '@/components/dashboard/reports/ReportDateSubtitle';
 
 interface CapacityReportProps {
   dateFrom: string;
   dateTo: string;
   locationId?: string;
   onClose: () => void;
+  dateRangeKey?: string;
 }
 
 export function CapacityReport({ 
   dateFrom, 
   dateTo, 
   locationId,
-  onClose 
+  onClose,
+  dateRangeKey
 }: CapacityReportProps) {
   const [isGenerating, setIsGenerating] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
@@ -255,7 +258,7 @@ export function CapacityReport({
                 Capacity Utilization Report
               </CardTitle>
               <CardDescription>
-                {formatDate(new Date(dateFrom), 'MMM d, yyyy')} - {formatDate(new Date(dateTo), 'MMM d, yyyy')}
+                <ReportDateSubtitle dateFrom={dateFrom} dateTo={dateTo} dateRangeKey={dateRangeKey} />
               </CardDescription>
             </div>
             <div className="flex items-center gap-2">

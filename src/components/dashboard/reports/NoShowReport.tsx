@@ -26,6 +26,7 @@ import { addReportHeader, addReportFooter, fetchLogoAsDataUrl, getReportAutoTabl
 import { useBusinessSettings } from '@/hooks/useBusinessSettings';
 import { useReportLocationInfo } from '@/hooks/useReportLocationInfo';
 import { toast } from 'sonner';
+import { ReportDateSubtitle } from '@/components/dashboard/reports/ReportDateSubtitle';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { EmptyDataBanner } from '@/components/ui/EmptyDataBanner';
 
@@ -35,6 +36,7 @@ interface NoShowReportProps {
   dateTo: string;
   locationId?: string;
   onClose: () => void;
+  dateRangeKey?: string;
 }
 
 export function NoShowReport({ 
@@ -42,7 +44,8 @@ export function NoShowReport({
   dateFrom, 
   dateTo, 
   locationId,
-  onClose 
+  onClose,
+  dateRangeKey
 }: NoShowReportProps) {
   const [isGenerating, setIsGenerating] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
@@ -266,7 +269,7 @@ export function NoShowReport({
                 {getReportTitle()}
               </CardTitle>
               <CardDescription>
-                {formatDate(new Date(dateFrom), 'MMM d, yyyy')} - {formatDate(new Date(dateTo), 'MMM d, yyyy')}
+                <ReportDateSubtitle dateFrom={dateFrom} dateTo={dateTo} dateRangeKey={dateRangeKey} />
               </CardDescription>
             </div>
             <div className="flex items-center gap-2">

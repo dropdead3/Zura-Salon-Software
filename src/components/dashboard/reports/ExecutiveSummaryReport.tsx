@@ -21,15 +21,17 @@ import { useReportLocationInfo } from '@/hooks/useReportLocationInfo';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { useFormatDate } from '@/hooks/useFormatDate';
 import { toast } from 'sonner';
+import { ReportDateSubtitle } from '@/components/dashboard/reports/ReportDateSubtitle';
 
 interface ExecutiveSummaryReportProps {
   dateFrom: string;
   dateTo: string;
   locationId?: string;
   onClose: () => void;
+  dateRangeKey?: string;
 }
 
-export function ExecutiveSummaryReport({ dateFrom, dateTo, locationId, onClose }: ExecutiveSummaryReportProps) {
+export function ExecutiveSummaryReport({ dateFrom, dateTo, locationId, onClose, dateRangeKey }: ExecutiveSummaryReportProps) {
   const [isGenerating, setIsGenerating] = useState(false);
   const { formatCurrency } = useFormatCurrency();
   const { formatDate } = useFormatDate();
@@ -174,7 +176,7 @@ export function ExecutiveSummaryReport({ dateFrom, dateTo, locationId, onClose }
             <div>
               <CardTitle className="font-display text-base tracking-wide">Executive Summary</CardTitle>
               <CardDescription>
-                {formatDate(new Date(dateFrom), 'MMM d, yyyy')} – {formatDate(new Date(dateTo), 'MMM d, yyyy')}
+                <ReportDateSubtitle dateFrom={dateFrom} dateTo={dateTo} dateRangeKey={dateRangeKey} />
               </CardDescription>
             </div>
             <div className="flex gap-2">

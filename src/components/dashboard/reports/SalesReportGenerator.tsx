@@ -27,6 +27,7 @@ import { addReportHeader, addReportFooter, fetchLogoAsDataUrl, getReportAutoTabl
 import { useBusinessSettings } from '@/hooks/useBusinessSettings';
 import { useReportLocationInfo } from '@/hooks/useReportLocationInfo';
 import { toast } from 'sonner';
+import { ReportDateSubtitle } from '@/components/dashboard/reports/ReportDateSubtitle';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { BentoGrid } from '@/components/ui/bento-grid';
 import { tokens } from '@/lib/design-tokens';
@@ -39,6 +40,7 @@ interface SalesReportGeneratorProps {
   dateTo: string;
   locationId?: string;
   onClose: () => void;
+  dateRangeKey?: string;
 }
 
 export function SalesReportGenerator({ 
@@ -46,7 +48,8 @@ export function SalesReportGenerator({
   dateFrom, 
   dateTo, 
   locationId,
-  onClose 
+  onClose,
+  dateRangeKey
 }: SalesReportGeneratorProps) {
   const [isGenerating, setIsGenerating] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
@@ -305,7 +308,7 @@ export function SalesReportGenerator({
               {getReportTitle()}
             </CardTitle>
             <CardDescription>
-              {formatDate(new Date(dateFrom), 'MMM d, yyyy')} - {formatDate(new Date(dateTo), 'MMM d, yyyy')}
+              <ReportDateSubtitle dateFrom={dateFrom} dateTo={dateTo} dateRangeKey={dateRangeKey} />
             </CardDescription>
           </div>
           <div className="flex items-center gap-2">

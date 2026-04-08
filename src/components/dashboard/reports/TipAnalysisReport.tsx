@@ -17,7 +17,7 @@ import { useReportLocationInfo } from '@/hooks/useReportLocationInfo';
 import { addReportHeader, addReportFooter, fetchLogoAsDataUrl, getReportAutoTableBranding, buildReportFileName } from '@/lib/reportPdfLayout';
 import { toast } from 'sonner';
 
-interface Props { dateFrom: string; dateTo: string; locationId?: string; onClose: () => void; }
+interface Props { dateFrom: string; dateTo: string; locationId?: string; onClose: () => void; dateRangeKey?: string; }
 
 export function TipAnalysisReport({ dateFrom, dateTo, locationId, onClose }: Props) {
   const [isGenerating, setIsGenerating] = useState(false);
