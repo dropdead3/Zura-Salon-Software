@@ -166,28 +166,44 @@ export function createPhorestAdapter(organizationId: string): POSAdapter {
     },
 
     async getSalesSummary({ dateFrom, dateTo, locationId }) {
-      let query = supabase
-        .from('phorest_daily_sales_summary')
-        .select('*')
-        .gte('summary_date', dateFrom)
-        .lte('summary_date', dateTo);
-
-      if (locationId) {
-        query = query.eq('location_id', locationId);
+      const allData: any[] = [];
+      const pageSize = 1000;
+      let from = 0;
+      let hasMore = true;
+      while (hasMore) {
+        let q: any = supabase
+          .from('phorest_transaction_items')
+          .select('transaction_date, total_amount, tax_amount, item_type, location_id')
+          .gte('transaction_date', dateFrom)
+          .lte('transaction_date', dateTo);
+        if (locationId) q = q.eq('location_id', locationId);
+        const { data, error } = await q.range(from, from + pageSize - 1);
+        if (error) throw error;
+        allData.push(...(data || []));
+        hasMore = (data?.length || 0) === pageSize;
+        from += pageSize;
       }
 
-      const { data, error } = await query.order('summary_date', { ascending: true });
+      // Aggregate to daily summary rows
+      const byDate: Record<string, any> = {};
+      for (const item of allData) {
+        const date = (item.transaction_date || '').slice(0, 10);
+        if (!byDate[date]) byDate[date] = { date, location_id: item.location_id, total_revenue: 0, service_revenue: 0, product_revenue: 0, total_transactions: 0, total_services: 0 };
+        const amount = (Number(item.total_amount) || 0) + (Number(item.tax_amount) || 0);
+        byDate[date].total_revenue += amount;
+        if (item.item_type === 'service') { byDate[date].service_revenue += amount; byDate[date].total_services += 1; }
+        else byDate[date].product_revenue += amount;
+        byDate[date].total_transactions += 1;
+      }
 
-      if (error) throw error;
-
-      return (data || []).map((summary): POSSalesSummary => ({
-        date: summary.summary_date,
+      return Object.values(byDate).sort((a: any, b: any) => a.date.localeCompare(b.date)).map((summary: any): POSSalesSummary => ({
+        date: summary.date,
         locationId: summary.location_id || undefined,
-        totalRevenue: Number(summary.total_revenue || 0),
-        serviceRevenue: Number(summary.service_revenue || 0),
-        productRevenue: Number(summary.product_revenue || 0),
-        transactionCount: summary.total_transactions || 0,
-        appointmentCount: summary.total_services || 0,
+        totalRevenue: summary.total_revenue,
+        serviceRevenue: summary.service_revenue,
+        productRevenue: summary.product_revenue,
+        transactionCount: summary.total_transactions,
+        appointmentCount: summary.total_services,
         averageTicket: summary.total_transactions 
           ? Number(summary.total_revenue || 0) / summary.total_transactions 
           : undefined,

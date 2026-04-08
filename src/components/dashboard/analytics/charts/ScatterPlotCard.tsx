@@ -42,19 +42,30 @@ export function ScatterPlotCard({ pair, locationId, onClose }: ScatterPlotCardPr
     queryFn: async () => {
       const dateFrom = format(subDays(new Date(), 90), 'yyyy-MM-dd');
 
-      let query = supabase
-        .from('phorest_daily_sales_summary')
-        .select('summary_date, total_revenue, service_revenue, product_revenue, total_transactions')
-        .gte('summary_date', dateFrom)
-        .order('summary_date', { ascending: true });
+      let q: any = supabase
+        .from('phorest_transaction_items')
+        .select('transaction_date, total_amount, tax_amount, item_type, phorest_client_id')
+        .gte('transaction_date', dateFrom);
 
       if (locationId) {
-        query = query.eq('location_id', locationId);
+        q = q.eq('location_id', locationId);
       }
 
-      const { data } = await query;
+      const { data } = await q;
       
-      return (data || []).map(row => ({
+      // Aggregate to daily totals
+      const dailyMap: Record<string, any> = {};
+      for (const item of (data || [])) {
+        const date = (item.transaction_date || '').slice(0, 10);
+        if (!dailyMap[date]) dailyMap[date] = { summary_date: date, total_revenue: 0, service_revenue: 0, product_revenue: 0, total_transactions: 0 };
+        const amount = (Number(item.total_amount) || 0) + (Number(item.tax_amount) || 0);
+        dailyMap[date].total_revenue += amount;
+        if (item.item_type === 'service') dailyMap[date].service_revenue += amount;
+        else dailyMap[date].product_revenue += amount;
+        dailyMap[date].total_transactions += 1;
+      }
+      
+      return Object.values(dailyMap).sort((a: any, b: any) => a.summary_date.localeCompare(b.summary_date)).map((row: any) => ({
         x: Number(row[metricA as keyof typeof row]) || 0,
         y: Number(row[metricB as keyof typeof row]) || 0,
         date: row.summary_date,

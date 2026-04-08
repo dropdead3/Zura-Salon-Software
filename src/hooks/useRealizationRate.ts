@@ -51,24 +51,25 @@ export function useRealizationRate(locationId?: string): RealizationRateResult {
         scheduledByDate[d] = (scheduledByDate[d] || 0) + (Number(row.total_price) || 0);
       }
 
-      // 2. Actual revenue by date from phorest_daily_sales_summary
-      const salesBase = supabase
-        .from('phorest_daily_sales_summary')
-        .select('summary_date, total_revenue')
-        .gte('summary_date', fromDate)
-        .lte('summary_date', toDate);
+      // 2. Actual revenue by date from phorest_transaction_items
+      let txnQuery: any = supabase
+        .from('phorest_transaction_items')
+        .select('transaction_date, total_amount, tax_amount')
+        .gte('transaction_date', fromDate)
+        .lte('transaction_date', toDate);
 
-      const salesResult = locationId && locationId !== 'all'
-        ? await salesBase.eq('location_id', locationId)
-        : await salesBase;
+      if (locationId && locationId !== 'all') {
+        txnQuery = txnQuery.eq('location_id', locationId);
+      }
 
+      const salesResult = await txnQuery;
       if (salesResult.error) throw salesResult.error;
 
       const actualByDate: Record<string, number> = {};
       for (const row of salesResult.data || []) {
-        const d = row.summary_date;
+        const d = (row.transaction_date || '').slice(0, 10);
         if (!d) continue;
-        actualByDate[d] = (actualByDate[d] || 0) + (Number(row.total_revenue) || 0);
+        actualByDate[d] = (actualByDate[d] || 0) + (Number(row.total_amount) || 0) + (Number(row.tax_amount) || 0);
       }
 
       // 3. Compute daily ratios for dates where both exist and scheduled > 0
