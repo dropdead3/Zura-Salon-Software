@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useCreateScheduledReport, useUpdateScheduledReport, type ScheduledReport } from '@/hooks/useScheduledReports';
+import { REPORT_CATALOG, REPORT_CATEGORIES } from '@/config/reportCatalog';
 import { toast } from 'sonner';
 
 interface ScheduleReportFormProps {
@@ -33,31 +34,6 @@ interface StaffOption {
   name: string;
   email: string;
 }
-
-const REPORT_OPTIONS = [
-  { id: 'daily-sales', name: 'Daily Sales Summary', category: 'Sales' },
-  { id: 'stylist-sales', name: 'Sales by Stylist', category: 'Sales' },
-  { id: 'retail-products', name: 'Retail Product Report', category: 'Sales' },
-  { id: 'retail-staff', name: 'Retail Sales by Staff', category: 'Sales' },
-  { id: 'category-mix', name: 'Service Category Mix', category: 'Sales' },
-  { id: 'tax-summary', name: 'Tax Summary', category: 'Sales' },
-  { id: 'discounts', name: 'Discounts & Promotions', category: 'Sales' },
-  { id: 'staff-kpi', name: 'Staff KPI Report', category: 'Staff' },
-  { id: 'tip-analysis', name: 'Tip Analysis', category: 'Staff' },
-  { id: 'compensation-ratio', name: 'Compensation Ratio', category: 'Staff' },
-  { id: 'client-attrition', name: 'Client Attrition', category: 'Clients' },
-  { id: 'top-clients', name: 'Top Clients', category: 'Clients' },
-  { id: 'client-birthdays', name: 'Client Birthdays', category: 'Clients' },
-  { id: 'no-show-enhanced', name: 'No-Shows & Cancellations', category: 'Operations' },
-  { id: 'deleted-appointments', name: 'Deleted Appointments', category: 'Operations' },
-  { id: 'demand-heatmap', name: 'Demand Heatmap', category: 'Operations' },
-  { id: 'executive-summary', name: 'Executive Summary', category: 'Financial' },
-  { id: 'payroll-summary', name: 'Payroll Summary', category: 'Financial' },
-  { id: 'end-of-month', name: 'End-of-Month Summary', category: 'Financial' },
-  { id: 'service-profitability', name: 'Service Profitability', category: 'Financial' },
-  { id: 'gift-cards', name: 'Gift Cards', category: 'Gift Cards' },
-  { id: 'vouchers', name: 'Vouchers', category: 'Gift Cards' },
-];
 
 const FREQUENCIES = [
   { value: 'daily', label: 'Daily' },
@@ -151,7 +127,7 @@ export function ScheduleReportForm({ open, onOpenChange, editReport }: ScheduleR
     if (editReport) return;
     if (selectedReportIds.size === 0) { setName(''); return; }
     if (selectedReportIds.size === 1) {
-      const report = REPORT_OPTIONS.find(r => r.id === Array.from(selectedReportIds)[0]);
+      const report = REPORT_CATALOG.find(r => r.id === Array.from(selectedReportIds)[0]);
       setName(`${report?.name || 'Report'} — ${FREQUENCIES.find(f => f.value === frequency)?.label || frequency}`);
     } else {
       setName(`${selectedReportIds.size} Reports — ${FREQUENCIES.find(f => f.value === frequency)?.label || frequency}`);
@@ -184,8 +160,8 @@ export function ScheduleReportForm({ open, onOpenChange, editReport }: ScheduleR
   };
 
   const groupedReports = useMemo(() => {
-    const map = new Map<string, typeof REPORT_OPTIONS>();
-    for (const r of REPORT_OPTIONS) {
+    const map = new Map<string, typeof REPORT_CATALOG>();
+    for (const r of REPORT_CATALOG) {
       const list = map.get(r.category) || [];
       list.push(r);
       map.set(r.category, list);
