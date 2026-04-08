@@ -175,7 +175,7 @@ export function ScheduleReportForm({ open, onOpenChange, editReport }: ScheduleR
       map.set(r.category, list);
     }
     return map;
-  }, []);
+  }, [tier]);
 
   const isSaving = createReport.isPending || updateReport.isPending;
 
