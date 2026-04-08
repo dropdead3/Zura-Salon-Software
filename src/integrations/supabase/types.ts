@@ -24652,6 +24652,36 @@ export type Database = {
           },
         ]
       }
+      v_all_transaction_items: {
+        Row: {
+          appointment_id: string | null
+          branch_name: string | null
+          client_id: string | null
+          client_name: string | null
+          created_at: string | null
+          discount: number | null
+          external_client_id: string | null
+          id: string | null
+          item_category: string | null
+          item_name: string | null
+          item_type: string | null
+          location_id: string | null
+          payment_method: string | null
+          promotion_id: string | null
+          quantity: number | null
+          sale_classification: string | null
+          source: string | null
+          staff_name: string | null
+          staff_user_id: string | null
+          tax_amount: number | null
+          tip_amount: number | null
+          total_amount: number | null
+          transaction_date: string | null
+          transaction_id: string | null
+          unit_price: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       accept_price_recommendation: {
