@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { formatDisplayName } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { subDays, format } from 'date-fns';
+import { fetchAllBatched } from '@/utils/fetchAllBatched';
 
 export type ProductTimeRange = 'week' | 'month' | '90days' | '365days';
 
@@ -23,7 +24,7 @@ export interface StaffProductPerformance {
   productRevenue: number;
   productQuantity: number;
   serviceRevenue: number;
-  attachmentRate: number; // % of service transactions with product sales
+  attachmentRate: number;
 }
 
 function getDateRange(timeRange: ProductTimeRange): { startDate: string; endDate: string } {
@@ -57,20 +58,17 @@ export function useProductSalesAnalytics(timeRange: ProductTimeRange = 'month', 
     queryFn: async () => {
       const { startDate, endDate } = getDateRange(timeRange);
       
-      // Fetch from phorest_transaction_items table
-      let query = supabase
-        .from('phorest_transaction_items')
-        .select('*')
-        .gte('transaction_date', startDate)
-        .lte('transaction_date', endDate);
-      
-      if (locationId) {
-        query = query.eq('location_id', locationId);
-      }
-      
-      const { data: items, error } = await query;
-      
-      if (error) throw error;
+      // Fetch from phorest_transaction_items table with pagination
+      const items = await fetchAllBatched<any>((from, to) => {
+        let q = supabase
+          .from('phorest_transaction_items')
+          .select('*')
+          .gte('transaction_date', startDate)
+          .lte('transaction_date', endDate)
+          .range(from, to);
+        if (locationId) q = q.eq('location_id', locationId);
+        return q;
+      });
       
       // Aggregate by product/service name
       const productMap = new Map<string, ProductSalesData>();
@@ -82,7 +80,7 @@ export function useProductSalesAnalytics(timeRange: ProductTimeRange = 'month', 
         productTransactions: Set<string>;
       }>();
       
-      for (const item of items || []) {
+      for (const item of items) {
         const key = `${item.item_name}-${item.item_type}`;
         
         if (!productMap.has(key)) {
@@ -155,7 +153,6 @@ export function useProductSalesAnalytics(timeRange: ProductTimeRange = 'month', 
         const mapping = mappingMap.get(staffId);
         const profile = mapping?.user_id ? profileMap.get(mapping.user_id) : null;
         
-        // Calculate attachment rate: % of service transactions that also have products
         const serviceTransactionIds = data.serviceTransactions;
         let transactionsWithProducts = 0;
         for (const txId of serviceTransactionIds) {
@@ -215,6 +212,6 @@ export function useProductSalesAnalytics(timeRange: ProductTimeRange = 'month', 
         },
       };
     },
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 5 * 60 * 1000,
   });
 }

@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { fetchAllBatched } from '@/utils/fetchAllBatched';
 
 export interface ProductCategoryData {
   category: string;
@@ -38,21 +39,21 @@ export function useProductCategoryBreakdown(dateFrom?: string, dateTo?: string, 
   return useQuery({
     queryKey: ['product-category-breakdown', dateFrom, dateTo, locationId],
     queryFn: async () => {
-      let query = supabase
-        .from('phorest_sales_transactions')
-        .select('item_category, total_amount, quantity, unit_price')
-        .eq('item_type', 'product');
-
-      if (dateFrom) query = query.gte('transaction_date', dateFrom);
-      if (dateTo) query = query.lte('transaction_date', dateTo);
-      if (locationId) query = query.eq('location_id', locationId);
-
-      const { data, error } = await query;
-      if (error) throw error;
+      const data = await fetchAllBatched<any>((from, to) => {
+        let q = supabase
+          .from('phorest_sales_transactions')
+          .select('item_category, total_amount, quantity, unit_price')
+          .eq('item_type', 'product')
+          .range(from, to);
+        if (dateFrom) q = q.gte('transaction_date', dateFrom);
+        if (dateTo) q = q.lte('transaction_date', dateTo);
+        if (locationId) q = q.eq('location_id', locationId);
+        return q;
+      });
 
       // Aggregate by category
       const byCategory: Record<string, ProductCategoryData> = {};
-      data?.forEach(row => {
+      data.forEach(row => {
         const category = row.item_category || 'Uncategorized';
         if (!byCategory[category]) {
           byCategory[category] = {
@@ -84,18 +85,18 @@ export function useServicePopularity(dateFrom?: string, dateTo?: string, locatio
   return useQuery({
     queryKey: ['service-popularity', dateFrom, dateTo, locationId],
     queryFn: async () => {
-      let query = supabase
-        .from('phorest_appointments')
-        .select('service_name, total_price, tip_amount, location_id')
-        .not('service_name', 'is', null)
-        .not('total_price', 'is', null);
-
-      if (dateFrom) query = query.gte('appointment_date', dateFrom);
-      if (dateTo) query = query.lte('appointment_date', dateTo);
-      if (locationId) query = query.eq('location_id', locationId);
-
-      const { data, error } = await query;
-      if (error) throw error;
+      const data = await fetchAllBatched<any>((from, to) => {
+        let q = supabase
+          .from('phorest_appointments')
+          .select('service_name, total_price, tip_amount, location_id')
+          .not('service_name', 'is', null)
+          .not('total_price', 'is', null)
+          .range(from, to);
+        if (dateFrom) q = q.gte('appointment_date', dateFrom);
+        if (dateTo) q = q.lte('appointment_date', dateTo);
+        if (locationId) q = q.eq('location_id', locationId);
+        return q;
+      });
 
       // Fetch service→category mapping from phorest_services
       const { data: services } = await supabase
@@ -109,7 +110,7 @@ export function useServicePopularity(dateFrom?: string, dateTo?: string, locatio
 
       // Aggregate by service name
       const byService: Record<string, ServicePopularityData> = {};
-      data?.forEach(row => {
+      data.forEach(row => {
         const name = row.service_name;
         if (!name) return;
         if (!byService[name]) {
@@ -123,7 +124,7 @@ export function useServicePopularity(dateFrom?: string, dateTo?: string, locatio
         }
         byService[name].frequency += 1;
         // Use tip-adjusted price for accurate service revenue
-        byService[name].totalRevenue += (Number(row.total_price) || 0) - (Number((row as any).tip_amount) || 0);
+        byService[name].totalRevenue += (Number(row.total_price) || 0) - (Number(row.tip_amount) || 0);
       });
 
       // Calculate averages
@@ -142,26 +143,29 @@ export function useClientFunnel(dateFrom?: string, dateTo?: string, locationId?:
   return useQuery({
     queryKey: ['client-funnel', dateFrom, dateTo, locationId],
     queryFn: async () => {
-      let query = supabase
-        .from('phorest_sales_transactions')
-        .select('client_name, total_amount, phorest_transaction_id');
-
-      if (dateFrom) query = query.gte('transaction_date', dateFrom);
-      if (dateTo) query = query.lte('transaction_date', dateTo);
-      if (locationId) query = query.eq('location_id', locationId);
-
-      const { data, error } = await query;
-      if (error) throw error;
+      const data = await fetchAllBatched<any>((from, to) => {
+        let q = supabase
+          .from('phorest_sales_transactions')
+          .select('client_name, total_amount, phorest_transaction_id')
+          .range(from, to);
+        if (dateFrom) q = q.gte('transaction_date', dateFrom);
+        if (dateTo) q = q.lte('transaction_date', dateTo);
+        if (locationId) q = q.eq('location_id', locationId);
+        return q;
+      });
 
       // Get unique clients and their first transaction date
       const clientFirstDate: Record<string, string> = {};
-      const { data: allClients } = await supabase
-        .from('phorest_sales_transactions')
-        .select('client_name, transaction_date')
-        .not('client_name', 'is', null)
-        .order('transaction_date', { ascending: true });
+      const allClients = await fetchAllBatched<any>((from, to) =>
+        supabase
+          .from('phorest_sales_transactions')
+          .select('client_name, transaction_date')
+          .not('client_name', 'is', null)
+          .order('transaction_date', { ascending: true })
+          .range(from, to)
+      );
 
-      allClients?.forEach(row => {
+      allClients.forEach(row => {
         if (row.client_name && !clientFirstDate[row.client_name]) {
           clientFirstDate[row.client_name] = row.transaction_date;
         }
@@ -173,7 +177,7 @@ export function useClientFunnel(dateFrom?: string, dateTo?: string, locationId?:
       const newClients = new Set<string>();
       const returningClients = new Set<string>();
 
-      data?.forEach(row => {
+      data.forEach(row => {
         if (!row.client_name) return;
         
         const firstDate = clientFirstDate[row.client_name];
@@ -208,21 +212,21 @@ export function usePeakHoursAnalysis(dateFrom?: string, dateTo?: string, locatio
   return useQuery({
     queryKey: ['peak-hours', dateFrom, dateTo, locationId],
     queryFn: async () => {
-      let query = supabase
-        .from('phorest_sales_transactions')
-        .select('transaction_date, transaction_time, total_amount, phorest_transaction_id');
-
-      if (dateFrom) query = query.gte('transaction_date', dateFrom);
-      if (dateTo) query = query.lte('transaction_date', dateTo);
-      if (locationId) query = query.eq('location_id', locationId);
-
-      const { data, error } = await query;
-      if (error) throw error;
+      const data = await fetchAllBatched<any>((from, to) => {
+        let q = supabase
+          .from('phorest_sales_transactions')
+          .select('transaction_date, transaction_time, total_amount, phorest_transaction_id')
+          .range(from, to);
+        if (dateFrom) q = q.gte('transaction_date', dateFrom);
+        if (dateTo) q = q.lte('transaction_date', dateTo);
+        if (locationId) q = q.eq('location_id', locationId);
+        return q;
+      });
 
       // Aggregate by hour and day of week
       const heatmap: Record<string, PeakHoursData> = {};
       
-      data?.forEach(row => {
+      data.forEach(row => {
         if (!row.transaction_time || !row.transaction_date) return;
         
         const hour = parseInt(row.transaction_time.split(':')[0]);

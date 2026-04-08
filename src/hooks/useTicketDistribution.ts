@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { fetchAllBatched } from '@/utils/fetchAllBatched';
 
 export interface TicketBucket {
   label: string;
@@ -29,19 +30,19 @@ export function useTicketDistribution(dateFrom?: string, dateTo?: string, locati
   return useQuery({
     queryKey: ['ticket-distribution', dateFrom, dateTo, locationId],
     queryFn: async () => {
-      let query = supabase
-        .from('phorest_sales_transactions')
-        .select('total_amount, phorest_transaction_id')
-        .not('total_amount', 'is', null);
+      const data = await fetchAllBatched<any>((from, to) => {
+        let q = supabase
+          .from('phorest_sales_transactions')
+          .select('total_amount, phorest_transaction_id')
+          .not('total_amount', 'is', null)
+          .range(from, to);
+        if (dateFrom) q = q.gte('transaction_date', dateFrom);
+        if (dateTo) q = q.lte('transaction_date', dateTo);
+        if (locationId && locationId !== 'all') q = q.eq('location_id', locationId);
+        return q;
+      });
 
-      if (dateFrom) query = query.gte('transaction_date', dateFrom);
-      if (dateTo) query = query.lte('transaction_date', dateTo);
-      if (locationId && locationId !== 'all') query = query.eq('location_id', locationId);
-
-      const { data, error } = await query;
-      if (error) throw error;
-
-      const amounts = (data || [])
+      const amounts = data
         .map(r => Number(r.total_amount) || 0)
         .filter(a => a > 0)
         .sort((a, b) => a - b);
