@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { fetchAllBatched } from '@/utils/fetchAllBatched';
 import { format, addDays, differenceInMinutes, parseISO } from 'date-fns';
 import { useActiveLocations, isClosedOnDate, type HoursJson } from '@/hooks/useLocations';
 import { getServiceCategory } from '@/utils/serviceCategorization';

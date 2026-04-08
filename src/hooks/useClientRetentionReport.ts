@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { differenceInDays } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
+import { fetchAllBatched } from '@/utils/fetchAllBatched';
 import { calculateCLV, CLV_TIERS, type CLVTier } from '@/lib/clv-calculator';
 
 interface AtRiskClient {
