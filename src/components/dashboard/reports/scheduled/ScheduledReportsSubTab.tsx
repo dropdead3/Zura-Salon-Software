@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { tokens } from '@/lib/design-tokens';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -15,15 +15,22 @@ import {
   History,
   FileText,
   AlertCircle,
-  CheckCircle2
+  CheckCircle2,
+  Pencil,
+  Zap,
+  Loader2,
 } from 'lucide-react';
+import { format as fmtDate, startOfMonth, endOfMonth } from 'date-fns';
 import { formatDistanceToNow } from 'date-fns';
 import { useFormatDate } from '@/hooks/useFormatDate';
+import { toast } from 'sonner';
 import { 
   useScheduledReports, 
   useScheduledReportRuns,
   useUpdateScheduledReport,
   useDeleteScheduledReport,
+  useRunScheduledReportNow,
+  useCompleteScheduledReportRun,
   type ScheduledReport 
 } from '@/hooks/useScheduledReports';
 import {
@@ -38,6 +45,8 @@ import {
 } from '@/components/ui/alert-dialog';
 import { PremiumFloatingPanel } from '@/components/ui/premium-floating-panel';
 import { ScheduleReportForm } from './ScheduleReportForm';
+import { REPORT_CATALOG } from '@/config/reportCatalog';
+import { useBatchReportGenerator, type BatchReportConfig } from '../batch/useBatchReportGenerator';
 
 function ScheduleTypeLabel({ type }: { type: string }) {
   const labels: Record<string, string> = {
@@ -72,11 +81,15 @@ export function ScheduledReportsSubTab() {
   const { data: reports, isLoading } = useScheduledReports();
   const updateReport = useUpdateScheduledReport();
   const deleteReport = useDeleteScheduledReport();
+  const runNow = useRunScheduledReportNow();
+  const completeRun = useCompleteScheduledReportRun();
+  const batchGenerator = useBatchReportGenerator();
   
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [historyReportId, setHistoryReportId] = useState<string | null>(null);
   const [scheduleFormOpen, setScheduleFormOpen] = useState(false);
   const [editingReport, setEditingReport] = useState<ScheduledReport | null>(null);
+  const [runningId, setRunningId] = useState<string | null>(null);
   const { data: runHistory } = useScheduledReportRuns(historyReportId || undefined);
 
   const handleToggleActive = (report: ScheduledReport) => {
@@ -84,6 +97,48 @@ export function ScheduledReportsSubTab() {
       id: report.id,
       is_active: !report.is_active,
     });
+  };
+
+  const handleEdit = (report: ScheduledReport) => {
+    setEditingReport(report);
+    setScheduleFormOpen(true);
+  };
+
+  const handleRunNow = async (report: ScheduledReport) => {
+    const reportIds: string[] = report.filters?.report_ids || [];
+    if (reportIds.length === 0) {
+      toast.error('No reports configured in this schedule');
+      return;
+    }
+
+    setRunningId(report.id);
+    try {
+      const { runId } = await runNow.mutateAsync(report);
+
+      const configs: BatchReportConfig[] = reportIds
+        .map(id => {
+          const entry = REPORT_CATALOG.find(r => r.id === id);
+          return { reportId: id, reportName: entry?.name || id };
+        });
+
+      const now = new Date();
+      const dateFrom = fmtDate(startOfMonth(now), 'yyyy-MM-dd');
+      const dateTo = fmtDate(endOfMonth(now), 'yyyy-MM-dd');
+
+      await batchGenerator.generate({
+        configs,
+        dateFrom,
+        dateTo,
+        outputFormat: report.format === 'pdf-separate' ? 'zip' : 'merged',
+      });
+
+      await completeRun.mutateAsync({ runId, reportId: report.id, success: true });
+      toast.success('Report pack generated and downloaded');
+    } catch (err: any) {
+      toast.error('Run failed', { description: err.message });
+    } finally {
+      setRunningId(null);
+    }
   };
 
   const handleDelete = () => {
@@ -140,88 +195,117 @@ export function ScheduledReportsSubTab() {
       </div>
 
       <div className="space-y-4">
-        {reports.map((report) => (
-          <Card key={report.id} className="overflow-hidden">
-            <CardContent className="p-0">
-              <div className="p-4 flex items-start gap-4">
-                <div className="p-2 rounded-lg bg-primary/10">
-                  <FileText className="w-5 h-5 text-primary" />
-                </div>
-                
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
-                    <h4 className="font-medium truncate">{report.name}</h4>
-                    <StatusBadge isActive={report.is_active} />
+        {reports.map((report) => {
+          const isRunning = runningId === report.id;
+          return (
+            <Card key={report.id} className="overflow-hidden">
+              <CardContent className="p-0">
+                <div className="p-4 flex items-start gap-4">
+                  <div className="p-2 rounded-lg bg-primary/10">
+                    <FileText className="w-5 h-5 text-primary" />
                   </div>
                   
-                  <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground">
-                    <span className="flex items-center gap-1">
-                      <Clock className="w-3.5 h-3.5" />
-                      <ScheduleTypeLabel type={report.schedule_type} />
-                      {report.schedule_config?.timeUtc && ` at ${report.schedule_config.timeUtc} UTC`}
-                    </span>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <h4 className="font-medium truncate">{report.name}</h4>
+                      <StatusBadge isActive={report.is_active} />
+                    </div>
                     
-                    <span className="flex items-center gap-1">
-                      <Mail className="w-3.5 h-3.5" />
-                      {report.recipients?.length || 0} recipient{(report.recipients?.length || 0) !== 1 ? 's' : ''}
-                    </span>
+                    <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground">
+                      <span className="flex items-center gap-1">
+                        <Clock className="w-3.5 h-3.5" />
+                        <ScheduleTypeLabel type={report.schedule_type} />
+                        {report.schedule_config?.timeUtc && ` at ${report.schedule_config.timeUtc} UTC`}
+                      </span>
+                      
+                      <span className="flex items-center gap-1">
+                        <Mail className="w-3.5 h-3.5" />
+                        {report.recipients?.length || 0} recipient{(report.recipients?.length || 0) !== 1 ? 's' : ''}
+                      </span>
+                      
+                      {report.format && (
+                        <Badge variant="outline" className="text-xs">
+                          {report.format.toUpperCase()}
+                        </Badge>
+                      )}
+                    </div>
                     
-                    {report.format && (
-                      <Badge variant="outline" className="text-xs">
-                        {report.format.toUpperCase()}
-                      </Badge>
-                    )}
+                    <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
+                      {report.last_run_at && (
+                        <span>
+                          Last run: {formatDistanceToNow(new Date(report.last_run_at), { addSuffix: true })}
+                        </span>
+                      )}
+                      {report.next_run_at && report.is_active && (
+                        <span>
+                          Next: {formatDate(new Date(report.next_run_at), 'MMM d, yyyy h:mm a')}
+                        </span>
+                      )}
+                    </div>
                   </div>
                   
-                  <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
-                    {report.last_run_at && (
-                      <span>
-                        Last run: {formatDistanceToNow(new Date(report.last_run_at), { addSuffix: true })}
-                      </span>
-                    )}
-                    {report.next_run_at && report.is_active && (
-                      <span>
-                        Next: {formatDate(new Date(report.next_run_at), 'MMM d, yyyy h:mm a')}
-                      </span>
-                    )}
+                  <div className="flex items-center gap-1">
+                    <Button 
+                      variant="ghost" 
+                      size={tokens.button.inline}
+                      onClick={() => handleRunNow(report)}
+                      disabled={isRunning}
+                      title="Run Now"
+                    >
+                      {isRunning ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <Zap className="w-4 h-4" />
+                      )}
+                    </Button>
+
+                    <Button 
+                      variant="ghost" 
+                      size={tokens.button.inline}
+                      onClick={() => handleEdit(report)}
+                      title="Edit"
+                    >
+                      <Pencil className="w-4 h-4" />
+                    </Button>
+
+                    <Button 
+                      variant="ghost" 
+                      size={tokens.button.inline}
+                      onClick={() => setHistoryReportId(report.id)}
+                      title="History"
+                    >
+                      <History className="w-4 h-4" />
+                    </Button>
+                    
+                    <Button 
+                      variant="ghost" 
+                      size={tokens.button.inline}
+                      onClick={() => handleToggleActive(report)}
+                      disabled={updateReport.isPending}
+                      title={report.is_active ? 'Pause' : 'Resume'}
+                    >
+                      {report.is_active ? (
+                        <Pause className="w-4 h-4" />
+                      ) : (
+                        <Play className="w-4 h-4" />
+                      )}
+                    </Button>
+                    
+                    <Button 
+                      variant="ghost" 
+                      size={tokens.button.inline}
+                      onClick={() => setDeleteId(report.id)}
+                      className="text-destructive hover:text-destructive"
+                      title="Delete"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
                   </div>
                 </div>
-                
-                <div className="flex items-center gap-2">
-                  <Button 
-                    variant="ghost" 
-                    size={tokens.button.inline}
-                    onClick={() => setHistoryReportId(report.id)}
-                  >
-                    <History className="w-4 h-4" />
-                  </Button>
-                  
-                  <Button 
-                    variant="ghost" 
-                    size={tokens.button.inline}
-                    onClick={() => handleToggleActive(report)}
-                    disabled={updateReport.isPending}
-                  >
-                    {report.is_active ? (
-                      <Pause className="w-4 h-4" />
-                    ) : (
-                      <Play className="w-4 h-4" />
-                    )}
-                  </Button>
-                  
-                  <Button 
-                    variant="ghost" 
-                    size={tokens.button.inline}
-                    onClick={() => setDeleteId(report.id)}
-                    className="text-destructive hover:text-destructive"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+              </CardContent>
+            </Card>
+          );
+        })}
       </div>
 
       {/* Delete Confirmation */}

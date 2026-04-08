@@ -19,7 +19,7 @@ import {
   CreditCard,
 } from 'lucide-react';
 import { useLocations } from '@/hooks/useLocations';
-import { getReportTier, filterReportsByTier } from '@/config/reportCatalog';
+import { REPORT_CATALOG, REPORT_CATEGORIES, getReportTier, filterReportsByTier } from '@/config/reportCatalog';
 import { useBatchReportGenerator, type BatchReportConfig } from './useBatchReportGenerator';
 
 interface BatchReportDialogProps {
@@ -30,59 +30,14 @@ interface BatchReportDialogProps {
   locationId?: string;
 }
 
-interface ReportOption {
-  id: string;
-  name: string;
-  category: string;
-}
-
-const REPORT_CATEGORIES = [
-  { id: 'sales', label: 'Sales', icon: DollarSign },
-  { id: 'staff', label: 'Staff', icon: Users },
-  { id: 'clients', label: 'Clients', icon: UserCheck },
-  { id: 'operations', label: 'Operations', icon: Clock },
-  { id: 'financial', label: 'Financial', icon: TrendingUp },
-  { id: 'gift-cards', label: 'Gift Cards', icon: CreditCard },
-];
-
-const ALL_REPORTS: ReportOption[] = [
-  // Sales
-  { id: 'daily-sales', name: 'Daily Sales Summary', category: 'sales' },
-  { id: 'stylist-sales', name: 'Sales by Stylist', category: 'sales' },
-  { id: 'location-sales', name: 'Sales by Location', category: 'sales' },
-  { id: 'product-sales', name: 'Product Sales Report', category: 'sales' },
-  { id: 'retail-products', name: 'Retail Product Report', category: 'sales' },
-  { id: 'retail-staff', name: 'Retail Sales by Staff', category: 'sales' },
-  { id: 'category-mix', name: 'Service Category Mix', category: 'sales' },
-  { id: 'tax-summary', name: 'Tax Summary', category: 'sales' },
-  { id: 'discounts', name: 'Discounts & Promotions', category: 'sales' },
-  // Staff
-  { id: 'staff-kpi', name: 'Staff KPI Report', category: 'staff' },
-  { id: 'tip-analysis', name: 'Tip Analysis', category: 'staff' },
-  { id: 'staff-transaction-detail', name: 'Staff Transaction Detail', category: 'staff' },
-  { id: 'compensation-ratio', name: 'Compensation Ratio', category: 'staff' },
-  // Clients
-  { id: 'client-attrition', name: 'Client Attrition', category: 'clients' },
-  { id: 'top-clients', name: 'Top Clients', category: 'clients' },
-  { id: 'client-birthdays', name: 'Client Birthdays', category: 'clients' },
-  { id: 'client-source', name: 'Client Source', category: 'clients' },
-  { id: 'duplicate-clients', name: 'Duplicate Clients', category: 'clients' },
-  // Operations
-  { id: 'no-show-enhanced', name: 'No-Shows & Cancellations', category: 'operations' },
-  { id: 'deleted-appointments', name: 'Deleted Appointments', category: 'operations' },
-  { id: 'demand-heatmap', name: 'Demand Heatmap', category: 'operations' },
-  { id: 'future-appointments', name: 'Future Appointments Value', category: 'operations' },
-  // Financial
-  { id: 'executive-summary', name: 'Executive Summary', category: 'financial' },
-  { id: 'payroll-summary', name: 'Payroll Summary', category: 'financial' },
-  { id: 'end-of-month', name: 'End-of-Month Summary', category: 'financial' },
-  { id: 'service-profitability', name: 'Service Profitability', category: 'financial' },
-  { id: 'chemical-cost', name: 'Chemical Cost Report', category: 'financial' },
-  { id: 'location-benchmark', name: 'Location Benchmarking', category: 'financial' },
-  // Gift Cards
-  { id: 'gift-cards', name: 'Gift Cards', category: 'gift-cards' },
-  { id: 'vouchers', name: 'Vouchers', category: 'gift-cards' },
-];
+const CATEGORY_ICONS: Record<string, any> = {
+  sales: DollarSign,
+  staff: Users,
+  clients: UserCheck,
+  operations: Clock,
+  financial: TrendingUp,
+  'gift-cards': CreditCard,
+};
 
 export function BatchReportDialog({ open, onOpenChange, dateFrom, dateTo, locationId }: BatchReportDialogProps) {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -92,11 +47,11 @@ export function BatchReportDialog({ open, onOpenChange, dateFrom, dateTo, locati
   const reportTier = getReportTier(locationCount);
 
   const filteredReports = useMemo(() => {
-    return filterReportsByTier(ALL_REPORTS, reportTier);
+    return filterReportsByTier(REPORT_CATALOG, reportTier);
   }, [reportTier]);
 
   const groupedReports = useMemo(() => {
-    const map = new Map<string, ReportOption[]>();
+    const map = new Map<string, typeof REPORT_CATALOG>();
     for (const r of filteredReports) {
       const list = map.get(r.category) || [];
       list.push(r);
@@ -129,7 +84,7 @@ export function BatchReportDialog({ open, onOpenChange, dateFrom, dateTo, locati
 
   const configs: BatchReportConfig[] = useMemo(() => 
     Array.from(selectedIds).map(id => {
-      const report = ALL_REPORTS.find(r => r.id === id);
+      const report = REPORT_CATALOG.find(r => r.id === id);
       return { reportId: id, reportName: report?.name || id };
     }),
   [selectedIds]);
@@ -184,7 +139,7 @@ export function BatchReportDialog({ open, onOpenChange, dateFrom, dateTo, locati
                   if (!reports || reports.length === 0) return null;
                   const allSelected = reports.every(r => selectedIds.has(r.id));
                   const someSelected = reports.some(r => selectedIds.has(r.id));
-                  const Icon = cat.icon;
+                  const Icon = CATEGORY_ICONS[cat.id] || DollarSign;
 
                   return (
                     <div key={cat.id}>

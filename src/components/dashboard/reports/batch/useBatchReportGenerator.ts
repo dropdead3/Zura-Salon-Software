@@ -295,26 +295,25 @@ export function useBatchReportGenerator() {
       }
       const logoDataUrl = await fetchLogoAsDataUrl(logoUrl);
 
-      const pdfs: { name: string; buffer: ArrayBuffer }[] = [];
-
-      for (let i = 0; i < configs.length; i++) {
-        const config = configs[i];
-        setProgress(Math.round(((i) / configs.length) * 100));
-        setProgressLabel(`Generating ${i + 1} of ${configs.length}: ${config.reportName}`);
-
-        const buffer = await generateSingleReportPdf(
-          config, dateFrom, dateTo, locationId, orgName, logoDataUrl, locationInfo,
-        );
-        pdfs.push({
-          name: buildReportFileName({ orgName, reportSlug: config.reportId, dateFrom, dateTo }),
-          buffer,
-        });
-      }
-
-      setProgress(95);
-      setProgressLabel('Assembling download...');
-
       if (outputFormat === 'zip') {
+        // ZIP: generate individual PDFs
+        const pdfs: { name: string; buffer: ArrayBuffer }[] = [];
+        for (let i = 0; i < configs.length; i++) {
+          const config = configs[i];
+          setProgress(Math.round(((i) / configs.length) * 100));
+          setProgressLabel(`Generating ${i + 1} of ${configs.length}: ${config.reportName}`);
+
+          const buffer = await generateSingleReportPdf(
+            config, dateFrom, dateTo, locationId, orgName, logoDataUrl, locationInfo,
+          );
+          pdfs.push({
+            name: buildReportFileName({ orgName, reportSlug: config.reportId, dateFrom, dateTo }),
+            buffer,
+          });
+        }
+
+        setProgress(95);
+        setProgressLabel('Assembling ZIP...');
         const zip = new JSZip();
         for (const pdf of pdfs) {
           zip.file(pdf.name, pdf.buffer);
@@ -327,56 +326,50 @@ export function useBatchReportGenerator() {
         a.click();
         URL.revokeObjectURL(url);
       } else {
-        // Merge PDFs by creating a new doc and copying pages
-        // jsPDF doesn't support true PDF merging, so we concatenate with page breaks
-        if (pdfs.length === 1) {
-          const blob = new Blob([pdfs[0].buffer], { type: 'application/pdf' });
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.href = url;
-          a.download = pdfs[0].name;
-          a.click();
-          URL.revokeObjectURL(url);
-        } else {
-          // Re-generate all into a single doc
-          const mergedDoc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-          let isFirstReport = true;
+        // Merged: generate directly into a single doc (no double-fetch)
+        const mergedDoc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+        let isFirstReport = true;
 
-          for (const config of configs) {
-            if (!isFirstReport) mergedDoc.addPage();
-            isFirstReport = false;
+        for (let i = 0; i < configs.length; i++) {
+          const config = configs[i];
+          setProgress(Math.round(((i) / configs.length) * 100));
+          setProgressLabel(`Generating ${i + 1} of ${configs.length}: ${config.reportName}`);
 
-            const headerOpts: ReportHeaderOptions = {
-              orgName,
-              logoDataUrl,
-              reportTitle: config.reportName,
-              dateFrom,
-              dateTo,
-              locationInfo,
-            };
-            const branding = getReportAutoTableBranding(mergedDoc, headerOpts);
-            const y = addReportHeader(mergedDoc, headerOpts);
+          if (!isFirstReport) mergedDoc.addPage();
+          isFirstReport = false;
 
-            const data = await fetchReportData(config.reportId, dateFrom, dateTo, locationId);
-            if (data.rows.length === 0) {
-              mergedDoc.setFontSize(11);
-              mergedDoc.setTextColor(120, 120, 120);
-              mergedDoc.text('No data available for the selected date range.', 14, y + 10);
-            } else {
-              autoTable(mergedDoc, {
-                ...branding,
-                startY: y,
-                head: [data.columns],
-                body: data.rows,
-                styles: { fontSize: 8, cellPadding: 2 },
-                headStyles: { fillColor: [41, 41, 41], textColor: [255, 255, 255], fontSize: 8 },
-              });
-            }
+          const headerOpts: ReportHeaderOptions = {
+            orgName,
+            logoDataUrl,
+            reportTitle: config.reportName,
+            dateFrom,
+            dateTo,
+            locationInfo,
+          };
+          const branding = getReportAutoTableBranding(mergedDoc, headerOpts);
+          const y = addReportHeader(mergedDoc, headerOpts);
+
+          const data = await fetchReportData(config.reportId, dateFrom, dateTo, locationId);
+          if (data.rows.length === 0) {
+            mergedDoc.setFontSize(11);
+            mergedDoc.setTextColor(120, 120, 120);
+            mergedDoc.text('No data available for the selected date range.', 14, y + 10);
+          } else {
+            autoTable(mergedDoc, {
+              ...branding,
+              startY: y,
+              head: [data.columns],
+              body: data.rows,
+              styles: { fontSize: 8, cellPadding: 2 },
+              headStyles: { fillColor: [41, 41, 41], textColor: [255, 255, 255], fontSize: 8 },
+            });
           }
-
-          addReportFooter(mergedDoc, orgName);
-          mergedDoc.save(buildReportFileName({ orgName, reportSlug: 'report-pack', dateFrom, dateTo }));
         }
+
+        setProgress(95);
+        setProgressLabel('Assembling PDF...');
+        addReportFooter(mergedDoc, orgName);
+        mergedDoc.save(buildReportFileName({ orgName, reportSlug: 'report-pack', dateFrom, dateTo }));
       }
 
       setProgress(100);
