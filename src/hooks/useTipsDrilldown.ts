@@ -3,6 +3,7 @@ import { formatDisplayName } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { useMemo } from 'react';
 import { getServiceCategory } from '@/utils/serviceCategorization';
+import { fetchAllBatched } from '@/utils/fetchAllBatched';
 
 export interface StylistTipMetrics {
   stylistUserId: string;
@@ -66,20 +67,21 @@ export function useTipsDrilldown({ dateFrom, dateTo, locationId, minAppointments
   const { data: appointments, isLoading: aptsLoading, error: aptsError } = useQuery({
     queryKey: ['tips-drilldown-appointments', dateFrom, dateTo, locationId],
     queryFn: async () => {
-      let query = supabase
-        .from('phorest_appointments')
-        .select('stylist_user_id, tip_amount, total_price, service_name, service_category, location_id, phorest_client_id, appointment_date, phorest_staff_id, start_time')
-        .gte('appointment_date', dateFrom)
-        .lte('appointment_date', dateTo)
-        .not('status', 'in', '("cancelled","no_show")');
+      return fetchAllBatched<any>((from, to) => {
+        let q = supabase
+          .from('phorest_appointments')
+          .select('stylist_user_id, tip_amount, total_price, service_name, service_category, location_id, phorest_client_id, appointment_date, phorest_staff_id, start_time')
+          .gte('appointment_date', dateFrom)
+          .lte('appointment_date', dateTo)
+          .not('status', 'in', '("cancelled","no_show")')
+          .range(from, to);
 
-      if (locationId && locationId !== 'all') {
-        query = query.eq('location_id', locationId);
-      }
+        if (locationId && locationId !== 'all') {
+          q = q.eq('location_id', locationId);
+        }
 
-      const { data, error } = await query;
-      if (error) throw error;
-      return data;
+        return q;
+      });
     },
     staleTime: 1000 * 60 * 5,
   });
