@@ -175,10 +175,11 @@ async function fetchReportData(
     case 'client-birthdays':
     case 'duplicate-clients': {
       const data = await fetchAllBatched<any>((from, to) => {
-        let q = supabase.from('v_all_clients')
+        let q = (supabase.from('v_all_clients') as any)
           .select('name, first_name, last_name, email, phone, total_spend, visit_count, created_at, lead_source, birthday')
           .eq('is_archived', false)
           .range(from, to);
+        if (orgId) q = q.eq('organization_id', orgId);
         if (locationId) q = q.eq('location_id', locationId);
         return q;
       });
@@ -265,9 +266,9 @@ async function fetchReportData(
       const { data, error } = await q;
       if (error || !data) return { columns: ['Status'], rows: [['No data available']] };
       if (reportId === 'gift-cards') {
-        return { columns: ['Code', 'Balance', 'Status', 'Created'], rows: data.map((g: any) => [g.code || '', `$${(Number(g.balance) || 0).toFixed(2)}`, g.status || '', g.created_at?.split('T')[0] || '']) };
+        return { columns: ['Code', 'Balance', 'Status', 'Created'], rows: data.map((g: any) => [g.code || '', `$${(Number(g.current_balance) || 0).toFixed(2)}`, g.is_active ? 'Active' : 'Inactive', g.created_at?.split('T')[0] || '']) };
       }
-      return { columns: ['Code', 'Value', 'Status', 'Created'], rows: data.map((v: any) => [v.code || '', `$${(Number(v.value) || 0).toFixed(2)}`, v.status || '', v.created_at?.split('T')[0] || '']) };
+      return { columns: ['Code', 'Value', 'Status', 'Issued'], rows: data.map((v: any) => [v.code || '', `$${(Number(v.value) || 0).toFixed(2)}`, v.is_redeemed ? 'Redeemed' : v.is_active ? 'Active' : 'Inactive', v.valid_from?.split('T')[0] || '']) };
     }
     default:
       return { columns: ['Info'], rows: [['Report data not available for batch generation']] };

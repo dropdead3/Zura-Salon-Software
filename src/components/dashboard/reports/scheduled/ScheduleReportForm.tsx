@@ -21,7 +21,8 @@ import {
 import { supabase } from '@/integrations/supabase/client';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useCreateScheduledReport, useUpdateScheduledReport, type ScheduledReport } from '@/hooks/useScheduledReports';
-import { REPORT_CATALOG, REPORT_CATEGORIES } from '@/config/reportCatalog';
+import { REPORT_CATALOG, REPORT_CATEGORIES, filterReportsByTier, getReportTier } from '@/config/reportCatalog';
+import { useActiveLocations } from '@/hooks/useLocations';
 import { toast } from 'sonner';
 
 interface ScheduleReportFormProps {
@@ -68,6 +69,8 @@ const TIMEZONES = [
 export function ScheduleReportForm({ open, onOpenChange, editReport }: ScheduleReportFormProps) {
   const { effectiveOrganization } = useOrganizationContext();
   const orgId = effectiveOrganization?.id;
+  const { data: locations } = useActiveLocations();
+  const tier = useMemo(() => getReportTier(locations?.length || 1), [locations]);
   const createReport = useCreateScheduledReport();
   const updateReport = useUpdateScheduledReport();
 
@@ -164,8 +167,9 @@ export function ScheduleReportForm({ open, onOpenChange, editReport }: ScheduleR
   };
 
   const groupedReports = useMemo(() => {
+    const filtered = filterReportsByTier(REPORT_CATALOG, tier);
     const map = new Map<string, typeof REPORT_CATALOG>();
-    for (const r of REPORT_CATALOG) {
+    for (const r of filtered) {
       const list = map.get(r.category) || [];
       list.push(r);
       map.set(r.category, list);

@@ -124,8 +124,8 @@ export function ScheduledReportsSubTab() {
         });
 
       const now = new Date();
-      const dateFrom = fmtDate(startOfMonth(now), 'yyyy-MM-dd');
-      const dateTo = fmtDate(endOfMonth(now), 'yyyy-MM-dd');
+      const dateFrom = report.filters?.dateFrom || fmtDate(startOfMonth(now), 'yyyy-MM-dd');
+      const dateTo = report.filters?.dateTo || fmtDate(endOfMonth(now), 'yyyy-MM-dd');
 
       await batchGenerator.generate({
         configs,
