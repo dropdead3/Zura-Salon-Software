@@ -56,7 +56,7 @@ export function ChemicalCostReport({ dateFrom, dateTo, locationId, onClose }: Pr
         foot: [['Total', formatCurrencyWhole(totalRevenue), formatCurrencyWhole(totalProductCost), '', formatCurrencyWhole(totalWaste), totalRevenue > 0 ? `${(((totalRevenue - totalProductCost) / totalRevenue) * 100).toFixed(1)}%` : '-']],
       });
       addReportFooter(doc);
-      doc.save(buildReportFileName('chemical-cost', dateFrom, dateTo));
+      doc.save(buildReportFileName({ reportSlug: 'chemical-cost', dateFrom, dateTo }));
       toast.success('PDF downloaded');
     } catch { toast.error('Failed to generate PDF'); } finally { setIsGenerating(false); }
   };
@@ -64,7 +64,7 @@ export function ChemicalCostReport({ dateFrom, dateTo, locationId, onClose }: Pr
   const downloadCSV = () => {
     const csvRows = [['Service', 'Revenue', 'Chemical Cost', 'Avg Cost', 'Waste', 'Margin %'], ...rows.map(r => [r.name, r.revenue.toFixed(2), r.productCost.toFixed(2), r.avgCost.toFixed(2), r.wasteCost.toFixed(2), r.marginPct.toFixed(1)])];
     const blob = new Blob([csvRows.map(r => r.join(',')).join('\n')], { type: 'text/csv' });
-    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = buildReportFileName('chemical-cost', dateFrom, dateTo, 'csv'); a.click();
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = buildReportFileName({ reportSlug: 'chemical-cost', dateFrom, dateTo }).replace('.pdf', '.csv'); a.click();
     toast.success('CSV downloaded');
   };
 

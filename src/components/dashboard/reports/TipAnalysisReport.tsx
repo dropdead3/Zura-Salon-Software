@@ -36,7 +36,7 @@ export function TipAnalysisReport({ dateFrom, dateTo, locationId, onClose }: Pro
       let y = addReportHeader(doc, headerOpts);
       autoTable(doc, { ...branding, startY: y, head: [['Stylist', 'Total Tips', 'Appointments', 'Avg Tip', 'Tip %']], body: entries.map(e => [e.staffName, formatCurrencyWhole(e.totalTips), e.appointmentCount.toString(), formatCurrencyWhole(Math.round(e.avgTipPerVisit)), `${e.tipToRevenuePercent.toFixed(1)}%`]) });
       addReportFooter(doc);
-      doc.save(buildReportFileName('tip-analysis', dateFrom, dateTo));
+      doc.save(buildReportFileName({ reportSlug: 'tip-analysis', dateFrom, dateTo }));
       toast.success('PDF downloaded');
     } catch { toast.error('Failed to generate PDF'); } finally { setIsGenerating(false); }
   };
@@ -44,7 +44,7 @@ export function TipAnalysisReport({ dateFrom, dateTo, locationId, onClose }: Pro
   const downloadCSV = () => {
     const rows = [['Stylist', 'Total Tips', 'Appointments', 'Avg Tip', 'Tip %'], ...entries.map(e => [e.staffName, e.totalTips.toFixed(2), e.appointmentCount.toString(), e.avgTipPerVisit.toFixed(2), e.tipToRevenuePercent.toFixed(1)])];
     const blob = new Blob([rows.map(r => r.join(',')).join('\n')], { type: 'text/csv' });
-    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = buildReportFileName('tip-analysis', dateFrom, dateTo, 'csv'); a.click();
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = buildReportFileName({ reportSlug: 'tip-analysis', dateFrom, dateTo }).replace('.pdf', '.csv'); a.click();
     toast.success('CSV downloaded');
   };
 

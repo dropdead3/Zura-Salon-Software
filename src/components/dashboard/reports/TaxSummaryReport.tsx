@@ -48,7 +48,7 @@ export function TaxSummaryReport({ dateFrom, dateTo, locationId, onClose }: Prop
         autoTable(doc, { ...branding, startY: y, head: [['Location', 'Revenue', 'Tax']], body: data.byLocation.map(l => [l.locationName, formatCurrencyWhole(l.revenue), formatCurrencyWhole(l.tax)]) });
       }
       addReportFooter(doc);
-      doc.save(buildReportFileName('tax-summary', dateFrom, dateTo));
+      doc.save(buildReportFileName({ reportSlug: 'tax-summary', dateFrom, dateTo }));
       toast.success('PDF downloaded');
     } catch { toast.error('Failed to generate PDF'); } finally { setIsGenerating(false); }
   };
@@ -57,7 +57,7 @@ export function TaxSummaryReport({ dateFrom, dateTo, locationId, onClose }: Prop
     if (!data) return;
     const rows = [['Month', 'Revenue', 'Tax Collected'], ...data.byMonth.map(m => [m.month, m.revenue.toFixed(2), m.tax.toFixed(2)])];
     const blob = new Blob([rows.map(r => r.join(',')).join('\n')], { type: 'text/csv' });
-    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = buildReportFileName('tax-summary', dateFrom, dateTo, 'csv'); a.click();
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = buildReportFileName({ reportSlug: 'tax-summary', dateFrom, dateTo }).replace('.pdf', '.csv'); a.click();
     toast.success('CSV downloaded');
   };
 

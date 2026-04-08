@@ -40,7 +40,7 @@ export function ServiceProfitabilityReport({ dateFrom, dateTo, locationId, onClo
         body: rankings.map(r => [r.serviceName, r.appointmentCount.toString(), formatCurrencyWhole(r.totalRevenue), formatCurrencyWhole(Math.round(r.avgChemicalCost)), formatCurrencyWhole(Math.round(r.avgMargin)), `${r.avgMarginPct.toFixed(1)}%`]),
       });
       addReportFooter(doc);
-      doc.save(buildReportFileName('service-profitability', dateFrom, dateTo));
+      doc.save(buildReportFileName({ reportSlug: 'service-profitability', dateFrom, dateTo }));
       toast.success('PDF downloaded');
     } catch { toast.error('Failed to generate PDF'); } finally { setIsGenerating(false); }
   };
@@ -48,7 +48,7 @@ export function ServiceProfitabilityReport({ dateFrom, dateTo, locationId, onClo
   const downloadCSV = () => {
     const rows = [['Service', 'Appointments', 'Total Revenue', 'Avg Chemical Cost', 'Avg Margin', 'Margin %'], ...rankings.map(r => [r.serviceName, r.appointmentCount.toString(), r.totalRevenue.toFixed(2), r.avgChemicalCost.toFixed(2), r.avgMargin.toFixed(2), r.avgMarginPct.toFixed(1)])];
     const blob = new Blob([rows.map(r => r.join(',')).join('\n')], { type: 'text/csv' });
-    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = buildReportFileName('service-profitability', dateFrom, dateTo, 'csv'); a.click();
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = buildReportFileName({ reportSlug: 'service-profitability', dateFrom, dateTo }).replace('.pdf', '.csv'); a.click();
     toast.success('CSV downloaded');
   };
 

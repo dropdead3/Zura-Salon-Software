@@ -35,7 +35,7 @@ export function ServiceCategoryMixReport({ dateFrom, dateTo, locationId, onClose
       let y = addReportHeader(doc, headerOpts);
       autoTable(doc, { ...branding, startY: y, head: [['Category', 'Revenue', 'Transactions', 'Share %']], body: (entries ?? []).map(e => [e.category, formatCurrencyWhole(e.revenue), e.transactionCount.toString(), `${e.sharePercent.toFixed(1)}%`]) });
       addReportFooter(doc);
-      doc.save(buildReportFileName('service-category-mix', dateFrom, dateTo));
+      doc.save(buildReportFileName({ reportSlug: 'service-category-mix', dateFrom, dateTo }));
       toast.success('PDF downloaded');
     } catch { toast.error('Failed to generate PDF'); } finally { setIsGenerating(false); }
   };
@@ -43,7 +43,7 @@ export function ServiceCategoryMixReport({ dateFrom, dateTo, locationId, onClose
   const downloadCSV = () => {
     const rows = [['Category', 'Revenue', 'Transactions', 'Share %'], ...(entries ?? []).map(e => [e.category, e.revenue.toFixed(2), e.transactionCount.toString(), e.sharePercent.toFixed(1)])];
     const blob = new Blob([rows.map(r => r.join(',')).join('\n')], { type: 'text/csv' });
-    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = buildReportFileName('service-category-mix', dateFrom, dateTo, 'csv'); a.click();
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = buildReportFileName({ reportSlug: 'service-category-mix', dateFrom, dateTo }).replace('.pdf', '.csv'); a.click();
     toast.success('CSV downloaded');
   };
 

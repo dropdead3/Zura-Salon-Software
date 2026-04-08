@@ -48,7 +48,7 @@ export function ClientAttritionReport({ dateFrom, dateTo, locationId, onClose }:
       }
       autoTable(doc, { ...branding, startY: y, head: [['Client', 'Last Visit', 'Days', 'Total Spend', 'Avg Ticket', 'Risk', 'Stylist']], body: entries.slice(0, 100).map(e => [e.clientName, e.lastVisitDate, e.daysSinceVisit.toString(), formatCurrencyWhole(e.totalSpend), formatCurrencyWhole(Math.round(e.avgTicket)), e.riskTier, e.staffName || '-']) });
       addReportFooter(doc);
-      doc.save(buildReportFileName('client-attrition', dateFrom, dateTo));
+      doc.save(buildReportFileName({ reportSlug: 'client-attrition', dateFrom, dateTo }));
       toast.success('PDF downloaded');
     } catch { toast.error('Failed to generate PDF'); } finally { setIsGenerating(false); }
   };
@@ -56,7 +56,7 @@ export function ClientAttritionReport({ dateFrom, dateTo, locationId, onClose }:
   const downloadCSV = () => {
     const rows = [['Client', 'Last Visit', 'Days Since', 'Total Spend', 'Avg Ticket', 'Risk', 'Stylist'], ...entries.map(e => [e.clientName, e.lastVisitDate, e.daysSinceVisit.toString(), e.totalSpend.toFixed(2), e.avgTicket.toFixed(2), e.riskTier, e.staffName || ''])];
     const blob = new Blob([rows.map(r => r.join(',')).join('\n')], { type: 'text/csv' });
-    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = buildReportFileName('client-attrition', dateFrom, dateTo, 'csv'); a.click();
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = buildReportFileName({ reportSlug: 'client-attrition', dateFrom, dateTo }).replace('.pdf', '.csv'); a.click();
     toast.success('CSV downloaded');
   };
 
