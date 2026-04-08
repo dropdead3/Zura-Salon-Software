@@ -215,10 +215,11 @@ export function useStylistPeerAverages(
     let totalRetention = 0, totalNewClients = 0;
     let priorTotalRevenue = 0, priorTotalRetailPct = 0, priorTotalRebook = 0;
     let priorTotalTicket = 0, priorTotalUtil = 0, priorTotalRevHr = 0;
-    let priorTotalNewClients = 0;
+    let priorTotalNewClients = 0, priorTotalRetention = 0;
     let countWithData = 0;
     let countWithRetention = 0;
     let countWithPriorData = 0;
+    let countWithPriorRetention = 0;
 
     for (const [uid, u] of perUser) {
       if (u.appts.length === 0 && u.serviceRev === 0) continue;
@@ -288,11 +289,14 @@ export function useStylistPeerAverages(
       const cNew = totalNewClients / countWithData;
       const pNew = priorTotalNewClients / countWithPriorData;
 
+      const cRetention = countWithRetention > 0 ? totalRetention / countWithRetention : 0;
+      const pRetention = countWithPriorRetention > 0 ? priorTotalRetention / countWithPriorRetention : 0;
+
       velocity = {
         revenueVelocity: evalDays > 0 ? (cRev - pRev) / evalDays : 0,
         retailVelocity: evalDays > 0 ? (cRetail - pRetail) / evalDays : 0,
         rebookVelocity: evalDays > 0 ? (cRebook - pRebook) / evalDays : 0,
-        retentionVelocity: 0, // Retention velocity requires more complex calculation
+        retentionVelocity: (countWithRetention > 0 && countWithPriorRetention > 0 && evalDays > 0) ? (cRetention - pRetention) / evalDays : 0,
         ticketVelocity: evalDays > 0 ? (cTicket - pTicket) / evalDays : 0,
         utilizationVelocity: evalDays > 0 ? (cUtil - pUtil) / evalDays : 0,
         revPerHourVelocity: evalDays > 0 ? (cRevHr - pRevHr) / evalDays : 0,
