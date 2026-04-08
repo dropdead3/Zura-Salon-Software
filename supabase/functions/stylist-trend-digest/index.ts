@@ -94,8 +94,7 @@ Deno.serve(async (req) => {
 
         const currentIdx = sortedLevels.indexOf(currentLevel);
         const nextLevel = currentIdx < sortedLevels.length - 1 ? sortedLevels[currentIdx + 1] : null;
-
-        if (!nextLevel) continue; // Top level — no progression digest needed
+        const isTopLevel = !nextLevel;
 
         // Fetch KPI data for this stylist (90-day window)
         const evalDays = 90;
@@ -312,10 +311,11 @@ function computeWindowKpis(
   const revPerHour = totalMin > 0 ? (totalRev / totalMin) * 60 : 0;
 
   // Retention: compare current window clients to prior window
-  // (We can only compute this for the current window; prior window retention
-  //  would need a third window which we don't fetch)
+  // Note: For the prior window computation, retention would need a third window
+  // of appointment data which we don't fetch. We only compute retention for the
+  // current (eval) window and set prior retention to 0, skipping retention velocity
+  // in digest emails.
   const windowClients = new Set(windowAppts.filter(a => a.client_id).map(a => a.client_id));
-  // For the eval window, we need prior-window clients
   const priorAppts = (appts || []).filter(
     (a) => a.appointment_date < startStr && a.status !== "no_show" && a.client_id
   );
