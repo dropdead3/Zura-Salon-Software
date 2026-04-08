@@ -140,6 +140,37 @@ export function SalesReportGenerator({
         y = (doc as any).lastAutoTable.finalY + 15;
       }
 
+      // Daily breakdown table
+      if (reportType === 'daily-sales' && dailyRows.length > 0) {
+        doc.setFontSize(14);
+        doc.setFont('helvetica', 'bold');
+        doc.text('Daily Breakdown', 14, y);
+        y += 8;
+
+        autoTable(doc, {
+          ...branding,
+          startY: y,
+          head: [['Date', 'Total Revenue', 'Service Rev', 'Product Rev', 'Services', 'Products', 'Avg Ticket']],
+          body: dailyRows.map(r => {
+            const txns = r.totalServices + r.totalProducts;
+            return [
+              formatDate(new Date(r.date + 'T00:00:00'), 'MMM d, yyyy'),
+              formatCurrencyWhole(r.totalRevenue),
+              formatCurrencyWhole(r.serviceRevenue),
+              formatCurrencyWhole(r.productRevenue),
+              formatNumber(r.totalServices),
+              formatNumber(r.totalProducts),
+              txns > 0 ? formatCurrencyWhole(Math.round(r.totalRevenue / txns)) : '$0',
+            ];
+          }),
+          theme: 'striped',
+          headStyles: { fillColor: [51, 51, 51] },
+          margin: { ...branding.margin, left: 14, right: 14 },
+        });
+
+        y = (doc as any).lastAutoTable.finalY + 15;
+      }
+
       // Report-specific content
       if (reportType === 'stylist-sales' && stylistData) {
         doc.setFontSize(14);
@@ -217,7 +248,13 @@ export function SalesReportGenerator({
   const exportCSV = () => {
     let csvContent = '';
     
-    if (reportType === 'stylist-sales' && stylistData) {
+    if (reportType === 'daily-sales' && dailyRows.length > 0) {
+      csvContent = 'Date,Total Revenue,Service Revenue,Product Revenue,Services,Products,Avg Ticket\n';
+      dailyRows.forEach(r => {
+        const txns = r.totalServices + r.totalProducts;
+        csvContent += `${r.date},${r.totalRevenue.toFixed(2)},${r.serviceRevenue.toFixed(2)},${r.productRevenue.toFixed(2)},${r.totalServices},${r.totalProducts},${txns > 0 ? (r.totalRevenue / txns).toFixed(2) : '0'}\n`;
+      });
+    } else if (reportType === 'stylist-sales' && stylistData) {
       csvContent = 'Rank,Stylist,Total Revenue,Services,Avg Ticket\n';
       stylistData.forEach((s, idx) => {
         csvContent += `${idx + 1},"${s.name}",${s.totalRevenue},${s.totalServices},${Math.round(s.totalRevenue / s.totalServices || 0)}\n`;
@@ -317,6 +354,41 @@ export function SalesReportGenerator({
           </BentoGrid>
         )}
 
+        {/* Daily Sales Table */}
+        {reportType === 'daily-sales' && dailyRows.length > 0 && (
+          <div className="rounded-lg border">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Date</TableHead>
+                  <TableHead className="text-right">Total Revenue</TableHead>
+                  <TableHead className="text-right">Service Rev</TableHead>
+                  <TableHead className="text-right">Product Rev</TableHead>
+                  <TableHead className="text-right">Services</TableHead>
+                  <TableHead className="text-right">Products</TableHead>
+                  <TableHead className="text-right">Avg Ticket</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {dailyRows.map(r => {
+                  const txns = r.totalServices + r.totalProducts;
+                  return (
+                    <TableRow key={r.date}>
+                      <TableCell className="font-medium">{formatDate(new Date(r.date + 'T00:00:00'), 'MMM d, yyyy')}</TableCell>
+                      <TableCell className="text-right">{formatCurrencyWhole(r.totalRevenue)}</TableCell>
+                      <TableCell className="text-right">{formatCurrencyWhole(r.serviceRevenue)}</TableCell>
+                      <TableCell className="text-right">{formatCurrencyWhole(r.productRevenue)}</TableCell>
+                      <TableCell className="text-right">{formatNumber(r.totalServices)}</TableCell>
+                      <TableCell className="text-right">{formatNumber(r.totalProducts)}</TableCell>
+                      <TableCell className="text-right">{txns > 0 ? formatCurrencyWhole(Math.round(r.totalRevenue / txns)) : '—'}</TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </div>
+        )}
+
         {/* Data Table */}
         {reportType === 'stylist-sales' && stylistData && (
           <div className="rounded-lg border">
@@ -403,6 +475,39 @@ export function SalesReportGenerator({
               <p className="text-2xl font-medium">{formatCurrencyWhole(Math.round(metrics.averageTicket))}</p>
             </div>
           </BentoGrid>
+        )}
+        {reportType === 'daily-sales' && dailyRows.length > 0 && (
+          <div className="rounded-lg border">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Date</TableHead>
+                  <TableHead className="text-right">Total Revenue</TableHead>
+                  <TableHead className="text-right">Service Rev</TableHead>
+                  <TableHead className="text-right">Product Rev</TableHead>
+                  <TableHead className="text-right">Services</TableHead>
+                  <TableHead className="text-right">Products</TableHead>
+                  <TableHead className="text-right">Avg Ticket</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {dailyRows.map(r => {
+                  const txns = r.totalServices + r.totalProducts;
+                  return (
+                    <TableRow key={r.date}>
+                      <TableCell className="font-medium">{formatDate(new Date(r.date + 'T00:00:00'), 'MMM d, yyyy')}</TableCell>
+                      <TableCell className="text-right">{formatCurrencyWhole(r.totalRevenue)}</TableCell>
+                      <TableCell className="text-right">{formatCurrencyWhole(r.serviceRevenue)}</TableCell>
+                      <TableCell className="text-right">{formatCurrencyWhole(r.productRevenue)}</TableCell>
+                      <TableCell className="text-right">{formatNumber(r.totalServices)}</TableCell>
+                      <TableCell className="text-right">{formatNumber(r.totalProducts)}</TableCell>
+                      <TableCell className="text-right">{txns > 0 ? formatCurrencyWhole(Math.round(r.totalRevenue / txns)) : '—'}</TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </div>
         )}
         {reportType === 'stylist-sales' && stylistData && (
           <div className="rounded-lg border">
