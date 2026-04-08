@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { fetchAllBatched } from '@/utils/fetchAllBatched';
 import { formatDisplayName } from '@/lib/utils';
 import { differenceInDays, parseISO, subDays, format, differenceInBusinessDays } from 'date-fns';
 import { isExtensionProduct, isColorOrChemicalService } from '@/utils/serviceCategorization';
@@ -223,15 +224,15 @@ export function useIndividualStaffReport(staffUserId: string | null, dateFrom?: 
       // ── Fetch appointments for current + prior + two-prior periods ──
       const [currentAptsRes, priorAptsRes, twoPriorAptsRes] = await Promise.all([
         supabase.from('phorest_appointments')
-          .select('appointment_date, total_price, tip_amount, status, phorest_client_id, rebooked_at_checkout')
+          .select('appointment_date, total_price, tip_amount, status, phorest_client_id, rebooked_at_checkout, is_new_client')
           .eq('phorest_staff_id', phorestStaffId)
           .gte('appointment_date', dateFrom).lte('appointment_date', dateTo),
         supabase.from('phorest_appointments')
-          .select('total_price, tip_amount, phorest_client_id, rebooked_at_checkout, status')
+          .select('total_price, tip_amount, phorest_client_id, rebooked_at_checkout, status, is_new_client')
           .eq('phorest_staff_id', phorestStaffId)
           .gte('appointment_date', priorFrom).lte('appointment_date', priorTo),
         supabase.from('phorest_appointments')
-          .select('total_price, tip_amount, phorest_client_id, rebooked_at_checkout, status')
+          .select('total_price, tip_amount, phorest_client_id, rebooked_at_checkout, status, is_new_client')
           .eq('phorest_staff_id', phorestStaffId)
           .gte('appointment_date', twoPriorFrom).lte('appointment_date', twoPriorTo),
       ]);
@@ -289,12 +290,21 @@ export function useIndividualStaffReport(staffUserId: string | null, dateFrom?: 
       const twoPriorClientMetrics = computeClientMetrics(twoPriorApts);
 
       // ── Fetch all staff appointments for team averages (replaces phorest_performance_metrics) ──
-      const { data: allStaffAptsData } = await supabase
-        .from('phorest_appointments')
-        .select('phorest_staff_id, rebooked_at_checkout, is_new_client, status')
-        .gte('appointment_date', dateFrom).lte('appointment_date', dateTo)
-        .not('status', 'in', '("cancelled","no_show")')
-        .eq('is_demo', false);
+      const allStaffAptsData = await fetchAllBatched<{
+        phorest_staff_id: string | null;
+        rebooked_at_checkout: boolean | null;
+        is_new_client: boolean | null;
+        status: string | null;
+      }>((from, to) => {
+        let q = supabase
+          .from('phorest_appointments')
+          .select('phorest_staff_id, rebooked_at_checkout, is_new_client, status')
+          .gte('appointment_date', dateFrom).lte('appointment_date', dateTo)
+          .not('status', 'in', '("cancelled","no_show")')
+          .eq('is_demo', false)
+          .range(from, to);
+        return q;
+      });
 
       async function fetchAllTeamTxnItems(fromDate: string, toDate: string) {
         const result: any[] = [];

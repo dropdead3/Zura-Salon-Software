@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { fetchAllBatched } from '@/utils/fetchAllBatched';
 
 export interface ClientTypeSegment {
   label: string;
@@ -29,40 +30,40 @@ export function useClientTypeSplit({ dateFrom, dateTo, locationId, enabled = tru
     queryKey: ['client-type-split', dateFrom, dateTo, locationId || 'all'],
     queryFn: async (): Promise<ClientTypeSplitData> => {
       // Step 1: Get distinct POS client IDs (source of truth for transaction count)
-      let txQuery = supabase
-        .from('phorest_transaction_items')
-        .select('phorest_client_id')
-        .not('phorest_client_id', 'is', null)
-        .gte('transaction_date', dateFrom)
-        .lte('transaction_date', dateTo);
-
-      if (locationId && locationId !== 'all') {
-        txQuery = txQuery.eq('location_id', locationId);
-      }
-
-      const { data: txData, error: txError } = await txQuery;
-      if (txError) throw txError;
+      const txData = await fetchAllBatched<{ phorest_client_id: string | null }>((from, to) => {
+        let q = supabase
+          .from('phorest_transaction_items')
+          .select('phorest_client_id')
+          .not('phorest_client_id', 'is', null)
+          .gte('transaction_date', dateFrom)
+          .lte('transaction_date', dateTo)
+          .range(from, to);
+        if (locationId && locationId !== 'all') {
+          q = q.eq('location_id', locationId);
+        }
+        return q;
+      });
 
       const posClientIds = new Set<string>();
-      txData?.forEach(row => {
+      txData.forEach(row => {
         if (row.phorest_client_id) posClientIds.add(row.phorest_client_id);
       });
 
       // Step 2: Get appointment data for new/returning classification + revenue
-      let aptQuery = supabase
-        .from('phorest_appointments')
-        .select('phorest_client_id, is_new_client, total_price, tip_amount, rebooked_at_checkout, appointment_date')
-        .gte('appointment_date', dateFrom)
-        .lte('appointment_date', dateTo)
-        .not('status', 'in', '("cancelled","no_show")')
-        .eq('is_demo', false);
-
-      if (locationId && locationId !== 'all') {
-        aptQuery = aptQuery.eq('location_id', locationId);
-      }
-
-      const { data: appointments, error: aptError } = await aptQuery;
-      if (aptError) throw aptError;
+      const appointments = await fetchAllBatched<any>((from, to) => {
+        let q = supabase
+          .from('phorest_appointments')
+          .select('phorest_client_id, is_new_client, total_price, tip_amount, rebooked_at_checkout, appointment_date')
+          .gte('appointment_date', dateFrom)
+          .lte('appointment_date', dateTo)
+          .not('status', 'in', '("cancelled","no_show")')
+          .eq('is_demo', false)
+          .range(from, to);
+        if (locationId && locationId !== 'all') {
+          q = q.eq('location_id', locationId);
+        }
+        return q;
+      });
 
       // Group by unique client visit (phorest_client_id + appointment_date)
       // Only include clients present in POS data

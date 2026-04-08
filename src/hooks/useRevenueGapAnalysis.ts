@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { fetchAllBatched } from '@/utils/fetchAllBatched';
 
 /**
  * Sums total_price from ALL phorest_appointments in a date range
@@ -19,19 +20,19 @@ export function useScheduledRevenue(
   return useQuery<number>({
     queryKey: ['scheduled-revenue', dateFrom, dateTo, locationId],
     queryFn: async () => {
-      let query = supabase
-        .from('phorest_appointments')
-        .select('total_price, expected_price')
-        .gte('appointment_date', dateFrom)
-        .lte('appointment_date', dateTo)
-        .not('total_price', 'is', null);
-
-      if (locationId && locationId !== 'all') {
-        query = query.eq('location_id', locationId);
-      }
-
-      const { data, error } = await query;
-      if (error) throw error;
+      const data = await fetchAllBatched<{ total_price: number | null; expected_price: number | null }>((from, to) => {
+        let q = supabase
+          .from('phorest_appointments')
+          .select('total_price, expected_price')
+          .gte('appointment_date', dateFrom)
+          .lte('appointment_date', dateTo)
+          .not('total_price', 'is', null)
+          .range(from, to);
+        if (locationId && locationId !== 'all') {
+          q = q.eq('location_id', locationId);
+        }
+        return q;
+      });
       // Use expected_price (discount-adjusted) when available, fall back to total_price
       return data?.reduce((sum, r) => sum + (Number(r.expected_price) || Number(r.total_price) || 0), 0) ?? 0;
     },
@@ -102,20 +103,19 @@ export function useRevenueGapAnalysis(
       });
 
       // ── Fetch all gap-relevant appointments in one go ──
-      let apptQuery = supabase
-        .from('phorest_appointments')
-        .select('id, service_name, client_name, total_price, expected_price, discount_amount, discount_reason, appointment_date, start_time, phorest_staff_id, phorest_client_id, status')
-        .gte('appointment_date', dateFrom)
-        .lte('appointment_date', dateTo)
-        .in('status', ['cancelled', 'no_show', 'completed', 'confirmed', 'pending', 'arrived', 'started']);
-
-      if (locationId && locationId !== 'all') {
-        apptQuery = apptQuery.eq('location_id', locationId);
-      }
-
-      const { data: allAppts, error: apptError } = await apptQuery;
-
-      if (apptError) throw apptError;
+      const allAppts = await fetchAllBatched<any>((from, to) => {
+        let q = supabase
+          .from('phorest_appointments')
+          .select('id, service_name, client_name, total_price, expected_price, discount_amount, discount_reason, appointment_date, start_time, phorest_staff_id, phorest_client_id, status')
+          .gte('appointment_date', dateFrom)
+          .lte('appointment_date', dateTo)
+          .in('status', ['cancelled', 'no_show', 'completed', 'confirmed', 'pending', 'arrived', 'started'])
+          .range(from, to);
+        if (locationId && locationId !== 'all') {
+          q = q.eq('location_id', locationId);
+        }
+        return q;
+      });
 
       // ── Client name resolution from phorest_clients ──
       const clientIds = [...new Set(
@@ -217,21 +217,21 @@ export function useRevenueGapAnalysis(
       if (completedClientIds.length > 0) {
         for (let i = 0; i < completedClientIds.length; i += 100) {
           const chunk = completedClientIds.slice(i, i + 100);
-          let posQuery = supabase
-            .from('phorest_transaction_items')
-            .select('phorest_client_id, transaction_date, item_name, total_amount, tax_amount, discount, item_type')
-            .in('phorest_client_id', chunk)
-            .gte('transaction_date', dateFrom)
-            .lte('transaction_date', dateTo)
-            .in('item_type', ['service', 'sale_fee']);
-
-          if (locationId && locationId !== 'all') {
-            posQuery = posQuery.eq('location_id', locationId);
-          }
-
-          const { data: posData, error: posError } = await posQuery;
-          if (posError) throw posError;
-          posItems = posItems.concat(posData ?? []);
+          const chunkData = await fetchAllBatched<any>((from, to) => {
+            let q = supabase
+              .from('phorest_transaction_items')
+              .select('phorest_client_id, transaction_date, item_name, total_amount, tax_amount, discount, item_type')
+              .in('phorest_client_id', chunk)
+              .gte('transaction_date', dateFrom)
+              .lte('transaction_date', dateTo)
+              .in('item_type', ['service', 'sale_fee'])
+              .range(from, to);
+            if (locationId && locationId !== 'all') {
+              q = q.eq('location_id', locationId);
+            }
+            return q;
+          });
+          posItems = posItems.concat(chunkData);
         }
       }
 
