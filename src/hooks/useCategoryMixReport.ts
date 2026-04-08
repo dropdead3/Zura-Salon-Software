@@ -44,7 +44,7 @@ export function useCategoryMixReport(filters: CategoryMixFilters) {
       let totalRevenue = 0;
 
       for (const row of rows) {
-        const revenue = (Number(row.total_amount) || 0) + (Number(row.tax_amount) || 0);
+        const revenue = Number(row.total_amount) || 0;
         const category = getServiceCategory(row.item_name);
         totalRevenue += revenue;
 

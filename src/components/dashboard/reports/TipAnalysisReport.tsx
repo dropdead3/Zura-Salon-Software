@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { tokens } from '@/lib/design-tokens';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
+import { BlurredAmount } from '@/contexts/HideNumbersContext';
+import { buildCsvString } from '@/utils/csvExport';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -43,7 +45,7 @@ export function TipAnalysisReport({ dateFrom, dateTo, locationId, onClose }: Pro
 
   const downloadCSV = () => {
     const rows = [['Stylist', 'Total Tips', 'Appointments', 'Avg Tip', 'Tip %'], ...entries.map(e => [e.staffName, e.totalTips.toFixed(2), e.appointmentCount.toString(), e.avgTipPerVisit.toFixed(2), e.tipToRevenuePercent.toFixed(1)])];
-    const blob = new Blob([rows.map(r => r.join(',')).join('\n')], { type: 'text/csv' });
+    const blob = new Blob([buildCsvString(rows)], { type: 'text/csv' });
     const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = buildReportFileName({ reportSlug: 'tip-analysis', dateFrom, dateTo }).replace('.pdf', '.csv'); a.click();
     toast.success('CSV downloaded');
   };
@@ -51,44 +53,44 @@ export function TipAnalysisReport({ dateFrom, dateTo, locationId, onClose }: Pro
   if (isLoading) return <div className="space-y-3">{[1, 2, 3, 4, 5].map(i => <Skeleton key={i} className={tokens.loading.skeleton} />)}</div>;
 
   return (
-    <div className="space-y-4">
-      <Button variant="ghost" size="sm" className="-ml-2 text-muted-foreground hover:text-foreground" onClick={onClose}><ArrowLeft className="w-4 h-4 mr-1.5" />Back to Reports</Button>
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between pb-4">
+        <div className="flex items-center gap-3">
+          <Button variant="ghost" size="icon" onClick={onClose}><ArrowLeft className="w-4 h-4" /></Button>
           <div>
             <CardTitle className={tokens.card.title}>Tip Analysis</CardTitle>
-            {data && <p className="text-sm text-muted-foreground mt-1">Total: {formatCurrencyWhole(data.totalTips)} · Avg tip rate: {data.avgTipPercent.toFixed(1)}%</p>}
+            {data && <p className="text-sm text-muted-foreground mt-1">Total: <BlurredAmount>{formatCurrencyWhole(data.totalTips)}</BlurredAmount> · Avg tip rate: {data.avgTipPercent.toFixed(1)}%</p>}
           </div>
-          <div className="flex gap-2">
-            <Button variant="outline" size={tokens.button.inline} onClick={downloadCSV}><FileSpreadsheet className="w-4 h-4 mr-1.5" />CSV</Button>
-            <Button size={tokens.button.inline} onClick={generatePDF} disabled={isGenerating}>{isGenerating ? <Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> : <FileText className="w-4 h-4 mr-1.5" />}PDF</Button>
-          </div>
-        </CardHeader>
-        <CardContent>
-          {entries.length === 0 ? <p className={tokens.empty.description}>No tip data for this period.</p> : (
-            <Table>
-              <TableHeader><TableRow>
-                <TableHead className={tokens.table.columnHeader}>Stylist</TableHead>
-                <TableHead className={tokens.table.columnHeader}>Total Tips</TableHead>
-                <TableHead className={tokens.table.columnHeader}>Appointments</TableHead>
-                <TableHead className={tokens.table.columnHeader}>Avg Tip</TableHead>
-                <TableHead className={tokens.table.columnHeader}>Tip %</TableHead>
-              </TableRow></TableHeader>
-              <TableBody>
-                {entries.map((e, i) => (
-                  <TableRow key={i}>
-                    <TableCell className="font-medium">{e.staffName}</TableCell>
-                    <TableCell>{formatCurrencyWhole(e.totalTips)}</TableCell>
-                    <TableCell>{e.appointmentCount}</TableCell>
-                    <TableCell>{formatCurrencyWhole(Math.round(e.avgTipPerVisit))}</TableCell>
-                    <TableCell>{e.tipToRevenuePercent.toFixed(1)}%</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
-    </div>
+        </div>
+        <div className="flex gap-2">
+          <Button variant="outline" size={tokens.button.inline} onClick={downloadCSV}><FileSpreadsheet className="w-4 h-4 mr-1.5" />CSV</Button>
+          <Button size={tokens.button.inline} onClick={generatePDF} disabled={isGenerating}>{isGenerating ? <Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> : <FileText className="w-4 h-4 mr-1.5" />}PDF</Button>
+        </div>
+      </CardHeader>
+      <CardContent>
+        {entries.length === 0 ? <p className={tokens.empty.description}>No tip data for this period.</p> : (
+          <Table>
+            <TableHeader><TableRow>
+              <TableHead className={tokens.table.columnHeader}>Stylist</TableHead>
+              <TableHead className={tokens.table.columnHeader}>Total Tips</TableHead>
+              <TableHead className={tokens.table.columnHeader}>Appointments</TableHead>
+              <TableHead className={tokens.table.columnHeader}>Avg Tip</TableHead>
+              <TableHead className={tokens.table.columnHeader}>Tip %</TableHead>
+            </TableRow></TableHeader>
+            <TableBody>
+              {entries.map((e, i) => (
+                <TableRow key={i}>
+                  <TableCell className="font-medium">{e.staffName}</TableCell>
+                  <TableCell><BlurredAmount>{formatCurrencyWhole(e.totalTips)}</BlurredAmount></TableCell>
+                  <TableCell>{e.appointmentCount}</TableCell>
+                  <TableCell><BlurredAmount>{formatCurrencyWhole(Math.round(e.avgTipPerVisit))}</BlurredAmount></TableCell>
+                  <TableCell>{e.tipToRevenuePercent.toFixed(1)}%</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        )}
+      </CardContent>
+    </Card>
   );
 }

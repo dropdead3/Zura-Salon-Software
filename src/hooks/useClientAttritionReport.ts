@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { fetchAllBatched } from '@/utils/fetchAllBatched';
-import { differenceInDays } from 'date-fns';
+import { differenceInDays, subYears, format } from 'date-fns';
 
 export interface AttritionEntry {
   clientId: string;
@@ -39,6 +39,8 @@ export function useClientAttritionReport(filters: AttritionFilters) {
   return useQuery({
     queryKey: ['client-attrition-report', filters],
     queryFn: async (): Promise<AttritionSummary> => {
+      const lowerBound = format(subYears(new Date(filters.asOfDate), 2), 'yyyy-MM-dd');
+
       const rows = await fetchAllBatched<{
         phorest_client_id: string | null;
         client_name: string | null;
@@ -50,6 +52,7 @@ export function useClientAttritionReport(filters: AttritionFilters) {
           .from('phorest_appointments')
           .select('phorest_client_id, client_name, appointment_date, total_price, staff_name')
           .not('status', 'in', '("cancelled","no_show")')
+          .gte('appointment_date', lowerBound)
           .range(from, to);
 
         if (filters.locationId) {
