@@ -317,7 +317,7 @@ export function StylistScorecard({ userId, locationId, onTrendProjection }: Styl
             <div className={cn(
               'grid gap-x-3 px-2 text-[10px] text-muted-foreground border-b border-border/40 pb-1',
               hasNextLevel
-                ? (hasPeers ? 'grid-cols-[1fr_auto_auto_auto_auto_auto]' : 'grid-cols-[1fr_auto_auto_auto_auto]')
+                ? (hasPeers ? 'grid-cols-[1fr_auto_auto_auto_auto_auto_auto]' : 'grid-cols-[1fr_auto_auto_auto_auto_auto]')
                 : (hasPeers ? 'grid-cols-[1fr_auto_auto_auto]' : 'grid-cols-[1fr_auto_auto]')
             )}>
               <span>Metric</span>
@@ -326,11 +326,14 @@ export function StylistScorecard({ userId, locationId, onTrendProjection }: Styl
               {hasNextLevel && <span className="text-right w-16">Gap</span>}
               {hasPeers && <span className="text-right w-16">Avg</span>}
               <span className="w-4" />
+              {hasNextLevel && <span className="text-right w-14 text-[9px]">Pace</span>}
             </div>
 
             {progress.criteriaProgress.filter(cp => cp.weight > 0).map(cp => {
               const peerVal = getPeerValue(cp.key, peerAverages);
               const trend = getTrend(cp);
+              const isMet = cp.percent >= 100;
+              const proj = projectionMap.get(cp.key);
               const isMet = cp.percent >= 100;
 
               return (
@@ -341,7 +344,7 @@ export function StylistScorecard({ userId, locationId, onTrendProjection }: Styl
                   <div className={cn(
                     'grid gap-x-3 items-center px-2',
                     hasNextLevel
-                      ? (hasPeers ? 'grid-cols-[1fr_auto_auto_auto_auto_auto]' : 'grid-cols-[1fr_auto_auto_auto_auto]')
+                      ? (hasPeers ? 'grid-cols-[1fr_auto_auto_auto_auto_auto_auto]' : 'grid-cols-[1fr_auto_auto_auto_auto_auto]')
                       : (hasPeers ? 'grid-cols-[1fr_auto_auto_auto]' : 'grid-cols-[1fr_auto_auto]')
                   )}>
                     <span className="text-xs text-muted-foreground">{cp.label}</span>
