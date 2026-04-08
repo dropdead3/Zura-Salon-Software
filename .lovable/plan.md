@@ -1,74 +1,67 @@
 
 
-# Analytics Audit Pass 15: Remaining Gaps
+# Tax Visibility: What's Needed and Implementation Plan
 
-## Findings
+## Product Analysis
 
-### Bug 1 (HIGH) — `Transactions.tsx` and `AppointmentsHub.tsx` revenue excludes `tax_amount`
+You're right to flag this. In any SaaS handling financial data for operators, **tax collected is not revenue — it's a pass-through liability**. Right now, every revenue number in Zura includes tax, which means:
 
-Both pages calculate `totalRevenue` as `sum(total_amount)` only — missing `tax_amount`. Per data integrity standards, Revenue = `total_amount + tax_amount`. These are user-facing summary stats at the top of two high-traffic pages.
+1. **Operators overestimate earnings** — $80,932 in March was actually revenue; the $867 in tax they collected belongs to the state
+2. **No remittance visibility** — operators have no way to know how much sales tax to remit without going back to Phorest
+3. **Audit risk** — if an operator reports Zura's "revenue" figures to their accountant, the tax portion is double-counted
 
-- `Transactions.tsx` line 96: `sum + (Number(t.total_amount) || 0)`
-- `AppointmentsHub.tsx` line 93: `sum + (Number(t.total_amount) || 0)`
+### What serious SaaS platforms do (Square, Shopify, Toast, Boulevard):
 
-**Fix:** Add `+ (Number(t.tax_amount) || 0)` to both.
+- Show **Revenue (pre-tax)** as the primary metric
+- Show **Tax Collected** as a separate line item
+- Provide a **Tax Summary report** by period and location for remittance
+- Some show both "Net Revenue" and "Gross (tax-inclusive)" with clear labels
 
-### Bug 2 (MEDIUM) — 12 files still use case-sensitive `item_type === 'service'`
+### What's pragmatic for Zura right now:
 
-Pass 14 fixed the hooks listed in the plan but missed these files that still do direct case-sensitive comparisons:
+Refactoring all 42 files to change the revenue formula would be a massive, risky undertaking. Instead:
 
-- `useStylistPeerAverages.ts` (line 161)
-- `useAvgTicketByStylist.ts` (line 74)
-- `useSalesData.ts` (lines 154, 230)
-- `useMyPayData.ts` (line 173)
-- `usePayrollAnalytics.ts` (line 94)
-- `usePayrollCalculations.ts` (line 115)
-- `phorest-adapter.ts` (line 194)
-- `YearOverYearComparison.tsx` (line 63)
-- `Transactions.tsx` (line 97) — display-only, cosmetic risk
-- `AppointmentsHub.tsx` (line 94) — display-only, cosmetic risk
-- `TransactionList.tsx` (line 159) — display-only, cosmetic risk
+**Option A (Recommended):** Add a **Tax Summary card** to Sales Analytics that shows taxes collected by period/location, and add a small "incl. tax" label to revenue figures. This gives operators remittance data without touching the revenue calculation engine.
 
-The first 8 are analytics/revenue files where miscategorization affects numbers. The last 3 are display-only (icon/badge styling) — lower risk but should be consistent.
-
-**Fix:** Apply `.toLowerCase()` before comparison in all 12 files.
-
-### Bug 3 (LOW) — `useStylistIncomeForecast.ts` has no pagination (line 41)
-
-Queries `phorest_appointments` for a single stylist's week without pagination. Extremely unlikely to exceed 1000 for one stylist in one week, but for consistency should use `fetchAllBatched`.
-
-**Not fixing** — single-stylist, single-week scope makes truncation effectively impossible.
+**Option B (Future):** Eventually separate all revenue displays into "Revenue" (pre-tax) and "Tax" columns. This is a Phase 2 effort after the tax card proves valuable.
 
 ---
 
-## Implementation Plan
+## Implementation Plan (Option A)
 
-### Task 1 — Fix revenue tax gap in `Transactions.tsx` and `AppointmentsHub.tsx`
-Add `tax_amount` to the `totalRevenue` sum in both pages.
+### Task 1 — Create `useTaxSummary` hook
+New hook in `src/hooks/useTaxSummary.ts` that queries `phorest_transaction_items` for:
+- Total tax collected in date range
+- Tax by location
+- Tax by item type (will only show products since services are $0)
+- Tax by month (for multi-month ranges)
+Uses `fetchAllBatched`, proper location scoping, and the standard patterns.
 
-### Task 2 — Standardize case-insensitive `item_type` in remaining 8 analytics files
-Apply `.toLowerCase()` to `item_type` comparisons in:
-- `useStylistPeerAverages.ts`
-- `useAvgTicketByStylist.ts`
-- `useSalesData.ts`
-- `useMyPayData.ts`
-- `usePayrollAnalytics.ts`
-- `usePayrollCalculations.ts`
-- `phorest-adapter.ts`
-- `YearOverYearComparison.tsx`
+### Task 2 — Add Tax Summary card to Sales Analytics
+New component `src/components/dashboard/sales/TaxSummaryCard.tsx`:
+- Shows total tax collected for the selected period
+- Breakdown by location (if multi-location)
+- Monthly trend if range spans multiple months
+- Uses `PinnableCard`, design tokens, `BlurredAmount` for privacy
+- Follows canonical card header layout
 
-### Task 3 — Standardize case in 3 display files (cosmetic consistency)
-Apply `.toLowerCase()` in `Transactions.tsx`, `AppointmentsHub.tsx`, and `TransactionList.tsx` for icon/badge rendering.
+### Task 3 — Add "incl. tax" indicator to key revenue displays
+Add a small `text-muted-foreground` label "(incl. tax)" next to the primary revenue figure on:
+- Sales Overview card
+- Revenue KPI tiles
+This is a 1-line label addition per surface — no formula changes.
 
 ---
 
 ## Summary
 
-| Type | Severity | Count | Files |
-|---|---|---|---|
-| Wrong revenue (missing tax) | HIGH | 2 | `Transactions.tsx`, `AppointmentsHub.tsx` |
-| Case-sensitive item_type | MEDIUM | 8 | Analytics hooks + adapter |
-| Case-sensitive item_type | LOW | 3 | Display components |
+| What | Effort | Risk |
+|---|---|---|
+| `useTaxSummary` hook | New file | None — read-only |
+| Tax Summary card | New component | None — additive |
+| "incl. tax" labels | 2-3 lines each | None — cosmetic |
 
-3 tasks, 13 files changed. No database changes. These are the stragglers from Pass 14's case-standardization that were missed.
+3 tasks, 3-4 files created/modified. No database changes. No revenue formula changes.
+
+This gives operators the tax remittance data they need today, while preserving the option to separate pre-tax revenue in a future pass.
 
