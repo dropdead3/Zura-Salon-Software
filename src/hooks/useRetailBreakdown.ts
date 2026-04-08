@@ -13,21 +13,32 @@ function addLocationFilter(query: any, locationId?: string) {
 
 import { fetchAllBatched } from '@/utils/fetchAllBatched';
 
+/** Item types that count as service revenue — everything else lands here. */
+const SERVICE_ITEM_TYPES = new Set(['service', 'sale_fee', 'special_offer_item']);
+
+/** Item types representing financial pass-throughs (not retail products). */
+const FEE_ITEM_TYPES = new Set(['appointment_deposit', 'outstanding_balance_pmt']);
+
 export interface RetailBreakdownData {
   productRevenue: number;
   merchRevenue: number;
   extensionRevenue: number;
   giftCardRevenue: number;
+  feesRevenue: number;
   productCount: number;
   merchCount: number;
   extensionCount: number;
   giftCardCount: number;
+  feesCount: number;
   totalRetailRevenue: number;
 }
 
 /**
- * Fetches retail product revenue and categorises into Products, Merch, Extensions.
- * Priority: Extension > Merch > Product (standard retail).
+ * Fetches all non-service transaction items and categorises into
+ * Products, Merch, Extensions, Gift Cards, and Fees & Deposits.
+ *
+ * Uses a NOT-IN filter on service types so new item_type values
+ * are automatically included rather than silently dropped.
  */
 export function useRetailBreakdown(
   dateFrom: string,
@@ -42,27 +53,34 @@ export function useRetailBreakdown(
       const txDateTo = dateTo.includes('T') ? dateTo : `${dateTo}T23:59:59.999`;
 
       const items = await fetchAllBatched<{
+        item_type: string | null;
         item_name: string | null;
         total_amount: number | null;
         tax_amount: number | null;
       }>((from, to) => {
         let q = supabase
           .from('phorest_transaction_items')
-          .select('item_name, total_amount, tax_amount')
+          .select('item_type, item_name, total_amount, tax_amount')
           .gte('transaction_date', txDateFrom)
           .lte('transaction_date', txDateTo)
-          .in('item_type', ['product', 'Product', 'retail', 'Retail', 'PRODUCT', 'RETAIL'])
+          .not('item_type', 'in', '("service","Service","SERVICE","sale_fee","special_offer_item")')
           .range(from, to);
         q = addLocationFilter(q, locationId);
         return q;
       });
 
-      let productRevenue = 0, merchRevenue = 0, extensionRevenue = 0, giftCardRevenue = 0;
-      let productCount = 0, merchCount = 0, extensionCount = 0, giftCardCount = 0;
+      let productRevenue = 0, merchRevenue = 0, extensionRevenue = 0, giftCardRevenue = 0, feesRevenue = 0;
+      let productCount = 0, merchCount = 0, extensionCount = 0, giftCardCount = 0, feesCount = 0;
 
       for (const item of items) {
         const amount = (Number(item.total_amount) || 0) + (Number(item.tax_amount) || 0);
-        if (isExtensionProduct(item.item_name)) {
+        const itemType = (item.item_type || '').toLowerCase();
+
+        // Financial pass-throughs
+        if (FEE_ITEM_TYPES.has(itemType)) {
+          feesRevenue += amount;
+          feesCount += 1;
+        } else if (isExtensionProduct(item.item_name)) {
           extensionRevenue += amount;
           extensionCount += 1;
         } else if (isGiftCardProduct(item.item_name)) {
@@ -82,11 +100,13 @@ export function useRetailBreakdown(
         merchRevenue,
         extensionRevenue,
         giftCardRevenue,
+        feesRevenue,
         productCount,
         merchCount,
         extensionCount,
         giftCardCount,
-        totalRetailRevenue: productRevenue + merchRevenue + extensionRevenue + giftCardRevenue,
+        feesCount,
+        totalRetailRevenue: productRevenue + merchRevenue + extensionRevenue + giftCardRevenue + feesRevenue,
       };
     },
     enabled,
