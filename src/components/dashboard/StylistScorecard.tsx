@@ -121,13 +121,9 @@ export function StylistScorecard({ userId, locationId, onTrendProjection }: Styl
   const trendProjection = useTrendProjection(progress);
 
   // Expose trend projection to parent
-  const { useEffect } = require('react');
-  // NOTE: We use a ref-stable callback pattern instead
-  // Pass projection data to parent via callback
-  useMemo(() => {
+  useEffect(() => {
     if (onTrendProjection && trendProjection) {
-      // Defer to avoid setState-during-render
-      setTimeout(() => onTrendProjection(trendProjection), 0);
+      onTrendProjection(trendProjection);
     }
   }, [trendProjection, onTrendProjection]);
 
