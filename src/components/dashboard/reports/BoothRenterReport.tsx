@@ -32,7 +32,7 @@ export function BoothRenterReport({ dateFrom, dateTo, locationId, onClose }: Pro
       const doc = new jsPDF('l');
       const logoDataUrl = await fetchLogoAsDataUrl(businessSettings?.logo_light_url || effectiveOrganization?.logo_url || null);
       const today = format(new Date(), 'yyyy-MM-dd');
-      const headerOpts = { orgName: businessSettings?.business_name || effectiveOrganization?.name || 'Organization', logoDataUrl, reportTitle: 'Booth Renter Summary', dateFrom: today, dateTo: today, locationInfo } as const;
+      const headerOpts = { orgName: businessSettings?.business_name || effectiveOrganization?.name || 'Organization', logoDataUrl, reportTitle: 'Booth Renter Summary', dateFrom: 'Current Snapshot', dateTo: today, locationInfo } as const;
       const branding = getReportAutoTableBranding(doc, headerOpts);
       let y = addReportHeader(doc, headerOpts);
       autoTable(doc, { ...branding, startY: y, head: [['Staff', 'Business Name', 'Status', 'Start Date', 'Insurance', 'Insurance Expiry', 'Provider']], body: entries.map(e => [e.staffName, e.businessName || '—', e.status, e.startDate || '—', e.insuranceVerified ? 'Verified' : 'Unverified', e.insuranceExpiry || '—', e.insuranceProvider || '—']) });

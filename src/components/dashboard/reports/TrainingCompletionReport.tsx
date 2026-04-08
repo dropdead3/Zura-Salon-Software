@@ -32,7 +32,7 @@ export function TrainingCompletionReport({ dateFrom, dateTo, locationId, onClose
       const doc = new jsPDF();
       const logoDataUrl = await fetchLogoAsDataUrl(businessSettings?.logo_light_url || effectiveOrganization?.logo_url || null);
       const today = format(new Date(), 'yyyy-MM-dd');
-      const headerOpts = { orgName: businessSettings?.business_name || effectiveOrganization?.name || 'Organization', logoDataUrl, reportTitle: 'Training Completion Report', dateFrom: today, dateTo: today, locationInfo } as const;
+      const headerOpts = { orgName: businessSettings?.business_name || effectiveOrganization?.name || 'Organization', logoDataUrl, reportTitle: 'Training Completion Report', dateFrom: 'Current Snapshot', dateTo: today, locationInfo } as const;
       const branding = getReportAutoTableBranding(doc, headerOpts);
       let y = addReportHeader(doc, headerOpts);
       autoTable(doc, { ...branding, startY: y, head: [['Staff', 'Completed', 'Required', 'Completion %', 'Last Completed']], body: entries.map(e => [e.staffName, e.videosCompleted.toString(), e.totalRequired.toString(), `${e.completionPct}%`, e.lastCompletedDate || '—']) });

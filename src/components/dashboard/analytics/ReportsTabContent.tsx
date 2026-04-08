@@ -152,6 +152,7 @@ const operationsReports = [
   { id: 'lead-time', name: 'Appointment Lead Time', description: 'How far ahead clients book', icon: CalendarDays },
   { id: 'demand-heatmap', name: 'Demand Heatmap', description: 'Appointment volume by hour and day-of-week', icon: Grid3X3 },
   { id: 'formula-history', name: 'Client Formula History', description: 'Formula usage and tracking by staff and service', icon: Beaker },
+  { id: 'future-appointments', name: 'Future Appointments Value', description: 'Revenue pipeline from upcoming booked appointments', icon: CalendarDays },
 ];
 
 const financialReports = [
@@ -165,7 +166,6 @@ const financialReports = [
   { id: 'service-profitability', name: 'Service Profitability', description: 'Revenue vs chemical + labor cost per service', icon: TrendingUp },
   { id: 'chemical-cost', name: 'Chemical Cost Report', description: 'Chemical cost per service, waste %, and margin from Color Bar', icon: Beaker },
   { id: 'location-benchmark', name: 'Location Benchmarking', description: 'Side-by-side KPI comparison across all locations', icon: Building },
-  { id: 'future-appointments', name: 'Future Appointments Value', description: 'Revenue pipeline from upcoming booked appointments', icon: CalendarDays },
   { id: 'booth-renter', name: 'Booth Renter Summary', description: 'Booth renter profiles, insurance status, and business details', icon: Building },
 ];
 
