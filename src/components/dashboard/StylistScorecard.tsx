@@ -29,6 +29,7 @@ import { useStaffColorBarPerformance } from '@/hooks/color-bar/useStaffColorBarP
 import { useStylistPeerAverages } from '@/hooks/useStylistPeerAverages';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { useLevelUpliftEstimate } from '@/hooks/useLevelUpliftEstimate';
+import { useTrendProjection } from '@/hooks/useTrendProjection';
 import { format, subDays } from 'date-fns';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
 
