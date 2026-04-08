@@ -24652,6 +24652,59 @@ export type Database = {
           },
         ]
       }
+      v_all_appointments: {
+        Row: {
+          appointment_date: string | null
+          client_name: string | null
+          client_phone: string | null
+          deleted_at: string | null
+          deleted_by: string | null
+          end_time: string | null
+          expected_price: number | null
+          id: string | null
+          is_demo: boolean | null
+          is_new_client: boolean | null
+          location_id: string | null
+          phorest_client_id: string | null
+          phorest_staff_id: string | null
+          rebooked_at_checkout: boolean | null
+          service_category: string | null
+          service_name: string | null
+          source: string | null
+          start_time: string | null
+          status: string | null
+          stylist_user_id: string | null
+          tip_amount: number | null
+          total_price: number | null
+        }
+        Relationships: []
+      }
+      v_all_clients: {
+        Row: {
+          birthday: string | null
+          canonical_client_id: string | null
+          client_since: string | null
+          created_at: string | null
+          email: string | null
+          email_normalized: string | null
+          first_name: string | null
+          id: string | null
+          is_archived: boolean | null
+          is_duplicate: boolean | null
+          last_name: string | null
+          last_visit: string | null
+          lead_source: string | null
+          location_id: string | null
+          name: string | null
+          phone: string | null
+          phone_normalized: string | null
+          phorest_client_id: string | null
+          source: string | null
+          total_spend: number | null
+          visit_count: number | null
+        }
+        Relationships: []
+      }
       v_all_transaction_items: {
         Row: {
           appointment_id: string | null
