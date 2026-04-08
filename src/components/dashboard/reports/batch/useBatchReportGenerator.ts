@@ -93,8 +93,7 @@ async function fetchReportData(
   switch (reportId) {
     case 'daily-sales':
     case 'stylist-sales':
-    case 'product-sales':
-    case 'location-sales': {
+    case 'product-sales': {
       const data = await fetchAllBatched<any>((from, to) => {
         let q = supabase.from('v_all_transaction_items')
           .select('transaction_date, staff_name, item_name, item_type, quantity, total_amount, location_id')
