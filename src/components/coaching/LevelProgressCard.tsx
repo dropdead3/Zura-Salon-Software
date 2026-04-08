@@ -3,7 +3,7 @@ import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
-import { GraduationCap, CheckCircle2, ShieldCheck, AlertTriangle, DollarSign, Check } from 'lucide-react';
+import { GraduationCap, CheckCircle2, ShieldCheck, AlertTriangle, DollarSign, Check, TrendingUp, TrendingDown, Minus } from 'lucide-react';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { useLevelProgress } from '@/hooks/useLevelProgress';
 import { useResolveCommission } from '@/hooks/useResolveCommission';
@@ -14,6 +14,11 @@ import { BlurredAmount } from '@/contexts/HideNumbersContext';
 interface LevelProgressCardProps {
   userId: string | undefined;
   compact?: boolean;
+}
+
+/** Returns true if the unit represents a monetary value */
+function isMonetary(unit: string) {
+  return unit === '/mo' || unit === '$' || unit === '$/hr';
 }
 
 function formatValue(val: number, unit: string) {
@@ -32,15 +37,32 @@ function formatGap(gap: number, unit: string) {
   return `-${gap}`;
 }
 
-function CriterionRow({ label, current, target, percent, unit, gap }: {
+/** Trend arrow using 3% relative threshold */
+function TrendIndicator({ current, prior }: { current: number; prior: number }) {
+  if (prior === 0 && current === 0) return null;
+  const threshold = prior * 0.03;
+  const diff = current - prior;
+  if (diff > threshold) {
+    return <TrendingUp className="w-3 h-3 text-emerald-500 inline-block" />;
+  }
+  if (diff < -threshold) {
+    return <TrendingDown className="w-3 h-3 text-rose-500 inline-block" />;
+  }
+  return <Minus className="w-3 h-3 text-muted-foreground/50 inline-block" />;
+}
+
+function CriterionRow({ label, current, target, percent, unit, gap, priorCurrent, weight }: {
   label: string;
   current: number;
   target: number;
   percent: number;
   unit: string;
   gap: number;
+  priorCurrent: number;
+  weight: number;
 }) {
   const isMet = percent >= 100;
+  const monetary = isMonetary(unit);
 
   return (
     <div className={cn(
@@ -48,22 +70,40 @@ function CriterionRow({ label, current, target, percent, unit, gap }: {
       isMet && 'border-l-2 border-emerald-500/60'
     )}>
       <div className="grid grid-cols-[1fr_auto_auto_auto] gap-x-3 items-center text-xs">
-        <span className="text-muted-foreground">{label}</span>
+        <span className="text-muted-foreground flex items-center gap-1.5">
+          {label}
+          {weight > 0 && (
+            <span className="text-[9px] text-muted-foreground/50 tabular-nums">{weight}%</span>
+          )}
+        </span>
         <span className="text-muted-foreground tabular-nums text-right w-16">
-          {formatValue(target, unit)}
+          {monetary ? (
+            <BlurredAmount>{formatValue(target, unit)}</BlurredAmount>
+          ) : (
+            formatValue(target, unit)
+          )}
         </span>
         <span className={cn(
-          'tabular-nums text-right w-16',
+          'tabular-nums text-right w-16 flex items-center justify-end gap-1',
           isMet ? 'text-emerald-600 dark:text-emerald-400' : 'text-foreground'
         )}>
-          {formatValue(current, unit)}
+          {monetary ? (
+            <BlurredAmount>{formatValue(current, unit)}</BlurredAmount>
+          ) : (
+            formatValue(current, unit)
+          )}
+          <TrendIndicator current={current} prior={priorCurrent} />
         </span>
         <span className="w-16 text-right">
           {isMet ? (
             <Check className="w-3.5 h-3.5 text-emerald-500 inline-block" />
           ) : (
             <span className="text-xs tabular-nums text-amber-600 dark:text-amber-400">
-              {formatGap(gap, unit)}
+              {monetary ? (
+                <BlurredAmount>{formatGap(gap, unit)}</BlurredAmount>
+              ) : (
+                formatGap(gap, unit)
+              )}
             </span>
           )}
         </span>
@@ -99,9 +139,14 @@ export function LevelProgressCard({ userId, compact = false }: LevelProgressCard
     evaluationWindowDays: progress?.evaluationWindowDays || 30,
   });
 
-  if (!progress || (!progress.nextLevelLabel && !progress.retention?.isAtRisk)) {
-    return null;
-  }
+  if (!progress) return null;
+
+  const isTopLevel = !progress.nextLevelLabel;
+  const hasRetentionRisk = progress.retention?.isAtRisk;
+
+  // Top-level stylists with no retention risk: show condensed "Current Performance" view
+  // instead of returning null
+  const showTopLevelView = isTopLevel && !hasRetentionRisk;
 
   // Use price-aware uplift if available, otherwise fall back to simple rate-delta calculation
   const monthlyRevenue = progress.criteriaProgress.find(cp => cp.key === 'revenue')?.current || 0;
@@ -157,9 +202,11 @@ export function LevelProgressCard({ userId, compact = false }: LevelProgressCard
                 <MetricInfoTooltip description="Shows how close this stylist is to meeting the graduation criteria for their next level, based on rolling performance data." />
               </CardTitle>
               <CardDescription className="text-xs">
-                {progress.nextLevelLabel
-                  ? `${progress.currentLevelLabel} → ${progress.nextLevelLabel}`
-                  : `${progress.currentLevelLabel} — Retention Status`}
+                {showTopLevelView
+                  ? `${progress.currentLevelLabel} — Current Performance`
+                  : progress.nextLevelLabel
+                    ? `${progress.currentLevelLabel} → ${progress.nextLevelLabel}`
+                    : `${progress.currentLevelLabel} — Retention Status`}
               </CardDescription>
             </div>
           </div>
@@ -172,6 +219,11 @@ export function LevelProgressCard({ userId, compact = false }: LevelProgressCard
             ) : progress.nextLevelLabel ? (
               <Badge variant="secondary" className="text-xs tabular-nums">
                 {progress.compositeScore}%
+              </Badge>
+            ) : showTopLevelView ? (
+              <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-950/30 dark:text-emerald-400 dark:border-emerald-800">
+                <CheckCircle2 className="w-3 h-3 mr-1" />
+                On Track
               </Badge>
             ) : null}
           </div>
@@ -191,14 +243,39 @@ export function LevelProgressCard({ userId, compact = false }: LevelProgressCard
               <div key={f.key} className="flex items-center justify-between text-xs">
                 <span className="text-rose-600 dark:text-rose-400">{f.label}</span>
                 <span className="tabular-nums text-rose-700 dark:text-rose-300">
-                  {f.unit === '/mo' || f.unit === '$' ? `$${f.current.toLocaleString()}` : `${f.current}${f.unit}`}
-                  <span className="text-rose-400"> / min {f.unit === '/mo' || f.unit === '$' ? `$${f.minimum.toLocaleString()}` : `${f.minimum}${f.unit}`}</span>
+                  {isMonetary(f.unit) ? (
+                    <BlurredAmount>
+                      {f.unit === '/mo' || f.unit === '$' ? `$${f.current.toLocaleString()}` : `$${f.current}${f.unit}`}
+                    </BlurredAmount>
+                  ) : (
+                    <>{f.current}{f.unit}</>
+                  )}
+                  <span className="text-rose-400"> / min {isMonetary(f.unit) ? (
+                    <BlurredAmount>
+                      {f.unit === '/mo' || f.unit === '$' ? `$${f.minimum.toLocaleString()}` : `$${f.minimum}${f.unit}`}
+                    </BlurredAmount>
+                  ) : (
+                    <>{f.minimum}{f.unit}</>
+                  )}</span>
                 </span>
               </div>
             ))}
             {progress.retention.gracePeriodDays > 0 && (
               <p className="text-[10px] text-rose-500">{progress.retention.gracePeriodDays}-day grace period</p>
             )}
+          </div>
+        )}
+
+        {/* Top-level stylist: condensed performance health check */}
+        {showTopLevelView && progress.retention && (
+          <div className="p-3 rounded-lg border border-emerald-200/60 bg-emerald-50/30 dark:border-emerald-800/40 dark:bg-emerald-950/10">
+            <div className="flex items-center gap-2 text-xs text-emerald-700 dark:text-emerald-400 mb-2">
+              <ShieldCheck className="w-3.5 h-3.5" />
+              <span className="font-medium">All retention standards met</span>
+            </div>
+            <p className="text-[10px] text-muted-foreground">
+              Evaluated over a {progress.retention.evaluationWindowDays || 90}-day rolling window. Maintain current performance to stay at {progress.currentLevelLabel}.
+            </p>
           </div>
         )}
 
@@ -241,6 +318,8 @@ export function LevelProgressCard({ userId, compact = false }: LevelProgressCard
                   percent={cp.percent}
                   unit={cp.unit}
                   gap={cp.gap}
+                  priorCurrent={cp.priorCurrent}
+                  weight={cp.weight}
                 />
               ))}
             </div>

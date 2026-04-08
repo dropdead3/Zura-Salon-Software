@@ -244,9 +244,11 @@ export function useLevelProgress(userId: string | undefined) {
       const totalAppts = filteredAppts.length;
       const rebooked = filteredAppts.filter(a => a.rebooked_at_checkout).length;
       const rebookingPct = totalAppts > 0 ? (rebooked / totalAppts) * 100 : 0;
-      const avgTicket = totalAppts > 0
-        ? filteredAppts.reduce((sum, a) => sum + (Number(a.total_price) || 0), 0) / totalAppts
-        : 0;
+      // Avg Ticket: sales-based revenue / unique client visits (matches POS methodology)
+      const uniqueVisits = new Set(
+        filteredAppts.filter((a: any) => a.client_id).map((a: any) => `${a.client_id}_${a.appointment_date}`)
+      ).size || totalAppts; // fallback to appt count if no client_id data
+      const avgTicket = uniqueVisits > 0 ? totalRevenue / uniqueVisits : 0;
 
       // New clients (monthly normalized)
       const newClients = filteredAppts.filter((a: any) => a.is_new_client === true).length;
@@ -291,10 +293,9 @@ export function useLevelProgress(userId: string | undefined) {
         }
       }
 
-      // Revenue per hour
+      // Revenue per hour: sales-based revenue / booked hours (matches POS methodology)
       const totalBookedMinutes = filteredAppts.reduce((sum: number, a: any) => sum + (Number(a.duration_minutes) || 60), 0);
-      const totalApptRevenue = filteredAppts.reduce((s: number, a: any) => s + (Number(a.total_price) || 0), 0);
-      const revPerHour = totalBookedMinutes > 0 ? (totalApptRevenue / totalBookedMinutes) * 60 : 0;
+      const revPerHour = totalBookedMinutes > 0 ? (totalRevenue / totalBookedMinutes) * 60 : 0;
 
       return { monthlyRevenue, retailPct, rebookingPct, avgTicket, newClientsMonthly, retentionRate, utilization, revPerHour };
     };
@@ -405,9 +406,11 @@ export function useLevelProgress(userId: string | undefined) {
       const totalAppts = filteredAppts.length;
       const rebooked = filteredAppts.filter(a => a.rebooked_at_checkout).length;
       const rebookingPct = totalAppts > 0 ? (rebooked / totalAppts) * 100 : 0;
-      const avgTicket = totalAppts > 0
-        ? filteredAppts.reduce((sum, a) => sum + (Number(a.total_price) || 0), 0) / totalAppts
-        : 0;
+      // Avg Ticket: sales-based revenue / unique client visits (matches POS methodology)
+      const uniqueVisits = new Set(
+        filteredAppts.filter((a: any) => a.client_id).map((a: any) => `${a.client_id}_${a.appointment_date}`)
+      ).size || totalAppts;
+      const avgTicket = uniqueVisits > 0 ? totalRevenue / uniqueVisits : 0;
       const newClients = filteredAppts.filter((a: any) => a.is_new_client === true).length;
       const newClientsMonthly = evalDays > 0 ? (newClients / evalDays) * 30 : 0;
 
@@ -440,9 +443,9 @@ export function useLevelProgress(userId: string | undefined) {
         }
       }
 
+      // Revenue per hour: sales-based revenue / booked hours (matches POS methodology)
       const totalBookMin = filteredAppts.reduce((sum: number, a: any) => sum + (Number(a.duration_minutes) || 60), 0);
-      const totalApptRev = filteredAppts.reduce((s: number, a: any) => s + (Number(a.total_price) || 0), 0);
-      const revPerHour = totalBookMin > 0 ? (totalApptRev / totalBookMin) * 60 : 0;
+      const revPerHour = totalBookMin > 0 ? (totalRevenue / totalBookMin) * 60 : 0;
 
       return { monthlyRevenue, retailPct, rebookingPct, avgTicket, newClientsMonthly, retentionRate, utilization, revPerHour };
     };
