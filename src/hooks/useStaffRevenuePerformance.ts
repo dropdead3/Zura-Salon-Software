@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { subDays, startOfMonth, startOfDay, format } from 'date-fns';
 import { usePerformanceThreshold } from './usePerformanceThreshold';
+import { resolveStaffNames } from '@/utils/resolveStaffNames';
 
 export type RevenueTimeRange = 'today' | 'week' | 'month' | '90days' | '6months' | '365days';
 
@@ -93,27 +94,29 @@ export function useStaffRevenuePerformance(
       const { data: itemData, error: itemError } = await itemQuery;
       if (itemError) throw itemError;
       
-      // Get staff mappings to link phorest IDs to user profiles
+      // Get staff mappings
       const { data: mappings, error: mappingsError } = await supabase
         .from('phorest_staff_mapping')
         .select('user_id, phorest_staff_id, phorest_staff_name');
-      
       if (mappingsError) throw mappingsError;
-      
-      // Get employee profiles for photos and display names
-      const { data: profiles, error: profilesError } = await supabase
-        .from('employee_profiles')
-        .select('user_id, full_name, display_name, photo_url')
-        .eq('is_active', true);
-      
+
+      // Resolve names via centralized utility
+      const phorestIds = (mappings || []).map(m => m.phorest_staff_id);
+      const staffNameData = await resolveStaffNames(phorestIds);
+
+      // Fetch photos from employee_profiles
+      const userIds = (mappings || []).filter(m => m.user_id).map(m => m.user_id!);
+      const { data: profiles, error: profilesError } = userIds.length > 0
+        ? await supabase.from('employee_profiles').select('user_id, full_name, display_name, photo_url').eq('is_active', true).in('user_id', userIds)
+        : { data: [] as any[], error: null };
       if (profilesError) throw profilesError;
-      
+
       // Create lookup maps
       const mappingByPhorestId = new Map(
         (mappings || []).map(m => [m.phorest_staff_id, m])
       );
       const profileByUserId = new Map(
-        (profiles || []).map(p => [p.user_id, p])
+        (profiles || []).map((p: any) => [p.user_id, p])
       );
       
       // Aggregate transactions by phorest_staff_id
@@ -183,9 +186,9 @@ export function useStaffRevenuePerformance(
         staffList.push({
           userId: mapping?.user_id || null,
           phorestStaffId,
-          name: profile?.full_name || mapping?.phorest_staff_name || 'Unknown Staff',
+          name: staffNameData.byPhorestId[phorestStaffId] || mapping?.phorest_staff_name || 'Unknown Staff',
           displayName: profile?.display_name || null,
-          photoUrl: profile?.photo_url || null,
+          photoUrl: (profile as any)?.photo_url || null,
           totalRevenue: data.totalRevenue,
           serviceRevenue: data.serviceRevenue,
           productRevenue: data.productRevenue,

@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { formatDisplayName } from '@/lib/utils';
+import { resolveStaffNamesByPhorestIds } from '@/utils/resolveStaffNames';
 
 export interface ClientTransaction {
   transactionId: string;
@@ -60,25 +61,9 @@ export function useClientTransactionHistory(clientId: string | null) {
         };
       }
       
-      // Get staff names
+      // Get staff names via centralized resolver
       const staffIds = [...new Set(items.map(i => i.phorest_staff_id).filter(Boolean))];
-      const { data: mappings } = await supabase
-        .from('phorest_staff_mapping')
-        .select('phorest_staff_id, phorest_staff_name, user_id')
-        .in('phorest_staff_id', staffIds);
-      
-      const userIds = mappings?.map(m => m.user_id).filter(Boolean) || [];
-      const { data: profiles } = await supabase
-        .from('employee_profiles')
-        .select('user_id, full_name, display_name')
-        .in('user_id', userIds);
-      
-      const staffNameMap = new Map<string, string>();
-      for (const mapping of mappings || []) {
-        const profile = profiles?.find(p => p.user_id === mapping.user_id);
-        const name = profile ? formatDisplayName(profile.full_name || '', profile.display_name) : (mapping.phorest_staff_name ? formatDisplayName(mapping.phorest_staff_name) : 'Unknown');
-        staffNameMap.set(mapping.phorest_staff_id, name);
-      }
+      const staffNameMap = await resolveStaffNamesByPhorestIds(staffIds as string[]);
       
       // Build transactions list
       const transactions: ClientTransaction[] = items.map(item => ({
@@ -89,7 +74,7 @@ export function useClientTransactionHistory(clientId: string | null) {
         itemCategory: item.item_category,
         quantity: item.quantity || 1,
         totalAmount: Number(item.total_amount) || 0,
-        staffName: item.phorest_staff_id ? staffNameMap.get(item.phorest_staff_id) || null : null,
+        staffName: item.phorest_staff_id ? staffNameMap[item.phorest_staff_id] || null : null,
         staffId: item.phorest_staff_id,
         branchName: item.branch_name,
       }));
@@ -166,7 +151,7 @@ export function useClientTransactionHistory(clientId: string | null) {
         visitCount,
         averageTicket: visitCount > 0 ? totalSpend / visitCount : 0,
         preferredStaffId,
-        preferredStaffName: preferredStaffId ? staffNameMap.get(preferredStaffId) || null : null,
+        preferredStaffName: preferredStaffId ? staffNameMap[preferredStaffId] || null : null,
         firstVisit: sortedDates[0] || null,
         lastVisit: sortedDates[sortedDates.length - 1] || null,
       };

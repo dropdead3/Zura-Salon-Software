@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { formatDisplayName } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
+import { resolveStaffNames } from '@/utils/resolveStaffNames';
 
 // ── Types ──────────────────────────────────────────────────────
 
@@ -121,29 +122,22 @@ export function useClientEngagement(
       const priorFromStr = priorFrom.toISOString().split('T')[0];
       const priorToStr = priorTo.toISOString().split('T')[0];
 
-      // Fetch staff mappings
-      const { data: mappings } = await supabase
+      // Fetch all staff mappings for userId cross-ref
+      const { data: allMappings } = await supabase
         .from('phorest_staff_mapping')
-        .select(`
-          phorest_staff_id,
-          user_id,
-          phorest_staff_name,
-          employee_profiles!phorest_staff_mapping_user_id_fkey (
-            display_name,
-            full_name
-          )
-        `)
+        .select('phorest_staff_id, user_id');
 
+      const allPhorestIds = (allMappings || []).map(m => m.phorest_staff_id);
+      const staffNames = await resolveStaffNames(allPhorestIds);
 
       const mappingLookup: Record<string, { userId: string | null; name: string }> = {};
       let resolvedNameCount = 0;
-      mappings?.forEach(m => {
-        const profile = m.employee_profiles as any;
-        const name = profile ? formatDisplayName(profile.full_name || '', profile.display_name) : (m.phorest_staff_name || null);
+      (allMappings || []).forEach(m => {
+        const name = staffNames.byPhorestId[m.phorest_staff_id] || '';
         if (name) resolvedNameCount++;
         mappingLookup[m.phorest_staff_id] = {
           userId: m.user_id,
-          name: name || '',
+          name,
         };
       });
 

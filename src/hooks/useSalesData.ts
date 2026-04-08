@@ -445,34 +445,36 @@ export function useSalesByStylist(dateFrom?: string, dateTo?: string, locationId
   return useQuery({
     queryKey: ['sales-by-stylist-from-transactions', dateFrom, dateTo, locationId],
     queryFn: async () => {
-      // Get staff mappings to link phorest_staff_id to user_id
+      // Get staff mappings with photos
       const { data: mappings } = await supabase
         .from('phorest_staff_mapping')
-        .select(`
-          phorest_staff_id,
-          user_id,
-          phorest_staff_name,
-          employee_profiles:user_id (
-            full_name,
-            display_name,
-            photo_url
-          )
-        `)
+        .select('phorest_staff_id, user_id, phorest_staff_name')
         .eq('is_active', true);
+
+      // Resolve names via centralized utility
+      const phorestIds = (mappings || []).map(m => m.phorest_staff_id);
+      const { resolveStaffNames } = await import('@/utils/resolveStaffNames');
+      const staffNameData = await resolveStaffNames(phorestIds);
+
+      // Fetch photos from employee_profiles
+      const userIds = (mappings || []).filter(m => m.user_id).map(m => m.user_id!);
+      const { data: profiles } = userIds.length > 0
+        ? await supabase.from('employee_profiles').select('user_id, photo_url').in('user_id', userIds)
+        : { data: [] as any[] };
+      const photoMap = new Map((profiles || []).map((p: any) => [p.user_id, p.photo_url]));
 
       const mappingLookup: Record<string, { userId: string; name: string; photo?: string }> = {};
       const staffNameLookup: Record<string, string> = {};
-      mappings?.forEach(m => {
-        const profile = m.employee_profiles as any;
+      (mappings || []).forEach(m => {
         if (m.user_id) {
           mappingLookup[m.phorest_staff_id] = {
             userId: m.user_id,
-            name: profile ? formatFullDisplayName(profile.full_name || '', profile.display_name) : (m.phorest_staff_name || 'Unknown'),
-            photo: profile?.photo_url,
+            name: staffNameData.byPhorestId[m.phorest_staff_id] || m.phorest_staff_name || 'Unknown',
+            photo: photoMap.get(m.user_id) || undefined,
           };
         }
         if (m.phorest_staff_name) {
-          staffNameLookup[m.phorest_staff_id] = m.phorest_staff_name;
+          staffNameLookup[m.phorest_staff_id] = staffNameData.byPhorestId[m.phorest_staff_id] || m.phorest_staff_name;
         }
       });
 
@@ -739,21 +741,23 @@ export function useSalesByPhorestStaff(dateFrom?: string, dateTo?: string) {
   return useQuery({
     queryKey: ['sales-by-phorest-staff-from-appointments', dateFrom, dateTo],
     queryFn: async () => {
-      // Fetch staff mappings to know which are linked
+      // Fetch staff mappings
       const { data: mappings } = await supabase
         .from('phorest_staff_mapping')
-        .select(`
-          phorest_staff_id,
-          phorest_staff_name,
-          phorest_branch_name,
-          user_id,
-          employee_profiles:user_id (
-            full_name,
-            display_name,
-            photo_url
-          )
-        `)
+        .select('phorest_staff_id, phorest_staff_name, phorest_branch_name, user_id')
         .eq('is_active', true);
+
+      // Resolve names via centralized utility
+      const phorestIds = (mappings || []).map(m => m.phorest_staff_id);
+      const { resolveStaffNames } = await import('@/utils/resolveStaffNames');
+      const staffNameData = await resolveStaffNames(phorestIds);
+
+      // Fetch photos
+      const userIds = (mappings || []).filter(m => m.user_id).map(m => m.user_id!);
+      const { data: profiles } = userIds.length > 0
+        ? await supabase.from('employee_profiles').select('user_id, photo_url').in('user_id', userIds)
+        : { data: [] as any[] };
+      const photoMap = new Map((profiles || []).map((p: any) => [p.user_id, p.photo_url]));
 
       // Build mapping lookup
       const mappingLookup: Record<string, {
@@ -764,12 +768,11 @@ export function useSalesByPhorestStaff(dateFrom?: string, dateTo?: string) {
         branchName?: string;
       }> = {};
       
-      mappings?.forEach(m => {
-        const profile = m.employee_profiles as any;
+      (mappings || []).forEach(m => {
         mappingLookup[m.phorest_staff_id] = {
           userId: m.user_id,
-          userName: profile ? formatDisplayName(profile.full_name || '', profile.display_name) : 'Unknown',
-          userPhoto: profile?.photo_url,
+          userName: staffNameData.byPhorestId[m.phorest_staff_id] || 'Unknown',
+          userPhoto: m.user_id ? photoMap.get(m.user_id) || undefined : undefined,
           phorestName: m.phorest_staff_name || 'Unknown',
           branchName: m.phorest_branch_name || undefined,
         };
@@ -792,11 +795,11 @@ export function useSalesByPhorestStaff(dateFrom?: string, dateTo?: string) {
       const { data, error } = await query;
       if (error) throw error;
 
-      // Build staff name lookup from mappings (the staff names come from the mapping table)
+      // Build staff name lookup using centralized resolution
       const staffNameLookup: Record<string, string> = {};
-      mappings?.forEach(m => {
-        if (m.phorest_staff_id && m.phorest_staff_name) {
-          staffNameLookup[m.phorest_staff_id] = m.phorest_staff_name;
+      (mappings || []).forEach(m => {
+        if (m.phorest_staff_id) {
+          staffNameLookup[m.phorest_staff_id] = staffNameData.byPhorestId[m.phorest_staff_id] || m.phorest_staff_name || 'Unknown';
         }
       });
 

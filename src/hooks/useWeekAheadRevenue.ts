@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { format, addDays } from 'date-fns';
 import { getServiceCategory } from '@/utils/serviceCategorization';
+import { resolveStaffNamesByPhorestIds } from '@/utils/resolveStaffNames';
 
 export interface AppointmentSummary {
   id: string;
@@ -83,22 +84,7 @@ export function useWeekAheadRevenue(locationId?: string) {
 
       // Fetch staff names for the appointments
       const staffIds = [...new Set(appointments.map(a => a.phorest_staff_id).filter(Boolean))] as string[];
-      const staffMap: Record<string, string> = {};
-      
-      if (staffIds.length > 0) {
-        const { data: staffData } = await supabase
-          .from('phorest_staff_mapping')
-          .select('phorest_staff_id, phorest_staff_name')
-          .in('phorest_staff_id', staffIds);
-        
-        if (staffData) {
-          staffData.forEach((s: any) => {
-            if (s.phorest_staff_id) {
-              staffMap[s.phorest_staff_id] = s.phorest_staff_name || 'Unknown';
-            }
-          });
-        }
-      }
+      const staffMap = await resolveStaffNamesByPhorestIds(staffIds);
       
       // Group by date — use tip-adjusted price for forecast
       const byDate: Record<string, { revenue: number; confirmedRevenue: number; unconfirmedRevenue: number; count: number; appointments: AppointmentSummary[]; categoryBreakdown: Record<string, number> }> = {};

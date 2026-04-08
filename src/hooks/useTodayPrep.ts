@@ -4,6 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { format } from 'date-fns';
 import { calculateCLV, CLV_TIERS } from '@/lib/clv-calculator';
+import { resolveStaffNamesByPhorestIds } from '@/utils/resolveStaffNames';
 
 export interface PrepAppointment {
   id: string;
@@ -143,24 +144,7 @@ export function useTodayPrep() {
         
         // Get staff names for recent services
         const staffIds = [...new Set((txnItems || []).map(t => t.phorest_staff_id).filter(Boolean))];
-        const staffNameMap = new Map<string, string>();
-        if (staffIds.length > 0) {
-          const { data: mappings } = await supabase
-            .from('phorest_staff_mapping')
-            .select('phorest_staff_id, phorest_staff_name, user_id')
-            .in('phorest_staff_id', staffIds);
-          const userIds = (mappings || []).map(m => m.user_id).filter(Boolean);
-          if (userIds.length > 0) {
-            const { data: profiles } = await supabase
-              .from('employee_profiles')
-              .select('user_id, display_name, full_name')
-              .in('user_id', userIds);
-            for (const m of mappings || []) {
-              const p = (profiles || []).find(pr => pr.user_id === m.user_id);
-              staffNameMap.set(m.phorest_staff_id, p?.display_name || p?.full_name || m.phorest_staff_name || 'Unknown');
-            }
-          }
-        }
+        const staffNameMap = await resolveStaffNamesByPhorestIds(staffIds as string[]);
 
         for (const item of txnItems || []) {
           if (!item.phorest_client_id) continue;
@@ -181,7 +165,7 @@ export function useTodayPrep() {
               bucket.services.push({
                 date: item.transaction_date,
                 name: item.item_name,
-                staffName: item.phorest_staff_id ? staffNameMap.get(item.phorest_staff_id) || null : null,
+                staffName: item.phorest_staff_id ? staffNameMap[item.phorest_staff_id] || null : null,
               });
             }
           }

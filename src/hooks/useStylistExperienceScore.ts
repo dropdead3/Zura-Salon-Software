@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { format, subDays, startOfDay } from 'date-fns';
+import { resolveStaffNames } from '@/utils/resolveStaffNames';
 
 export interface StylistExperienceScore {
   staffId: string;
@@ -112,20 +113,7 @@ export function useStylistExperienceScore(
       const { data: appointments, error: apptError } = await appointmentQuery;
       if (apptError) throw apptError;
 
-      // Fetch staff mappings for names and photos
-      const { data: staffMappings, error: staffError } = await supabase
-        .from('phorest_staff_mapping')
-        .select(`
-          phorest_staff_id,
-          user_id,
-          phorest_staff_name,
-          employee_profiles!phorest_staff_mapping_user_id_fkey (
-            display_name,
-            full_name,
-            photo_url
-          )
-        `);
-      if (staffError) throw staffError;
+      // (Staff resolution moved after staffAppointments is built)
 
       // Fetch performance metrics as fallback for retention rates
       const { data: performanceMetrics } = await supabase
@@ -176,18 +164,32 @@ export function useStylistExperienceScore(
         staffRetention.get(metric.phorest_staff_id)!.push(metric.retention_rate);
       });
 
+      // Fetch staff names and photos via centralized resolver
+      const allStaffIds = [...staffAppointments.keys()];
+      const staffNameData = await resolveStaffNames(allStaffIds);
+
+      // Also fetch photos from employee_profiles
+      const userIdsForPhotos = Object.values(staffNameData.phorestToUserId);
+      const { data: photoProfiles } = userIdsForPhotos.length > 0
+        ? await supabase
+            .from('employee_profiles')
+            .select('user_id, photo_url')
+            .in('user_id', userIdsForPhotos)
+        : { data: [] };
+      const photoMap = new Map((photoProfiles || []).map(p => [p.user_id, p.photo_url]));
+
       // Build staff name/photo lookup + phorest→user_id mapping
       const staffInfo = new Map<string, { name: string; photoUrl: string | null }>();
       const phorestToUserId = new Map<string, string>();
-      staffMappings?.forEach(mapping => {
-        const profile = mapping.employee_profiles as any;
-        const name = profile?.display_name || profile?.full_name || mapping.phorest_staff_name || 'Unknown';
-        staffInfo.set(mapping.phorest_staff_id, {
+      allStaffIds.forEach(phorestId => {
+        const name = staffNameData.byPhorestId[phorestId] || 'Unknown';
+        const userId = staffNameData.phorestToUserId[phorestId];
+        staffInfo.set(phorestId, {
           name,
-          photoUrl: profile?.photo_url || null,
+          photoUrl: userId ? photoMap.get(userId) || null : null,
         });
-        if (mapping.user_id) {
-          phorestToUserId.set(mapping.phorest_staff_id, mapping.user_id);
+        if (userId) {
+          phorestToUserId.set(phorestId, userId);
         }
       });
 
