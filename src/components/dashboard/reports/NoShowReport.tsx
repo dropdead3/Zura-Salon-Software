@@ -43,7 +43,8 @@ export function NoShowReport({
   dateFrom, 
   dateTo, 
   locationId,
-  onClose 
+  onClose,
+  dateRangeKey
 }: NoShowReportProps) {
   const [isGenerating, setIsGenerating] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);

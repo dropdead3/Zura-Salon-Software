@@ -46,7 +46,8 @@ export function ClientRetentionReport({
   dateFrom, 
   dateTo, 
   locationId,
-  onClose 
+  onClose,
+  dateRangeKey
 }: ClientRetentionReportProps) {
   const [isGenerating, setIsGenerating] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
