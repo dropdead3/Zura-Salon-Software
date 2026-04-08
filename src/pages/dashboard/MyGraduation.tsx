@@ -17,6 +17,7 @@ import { PageExplainer } from '@/components/ui/PageExplainer';
 import { StylistScorecard } from '@/components/dashboard/StylistScorecard';
 import { LevelProgressionLadder } from '@/components/dashboard/LevelProgressionLadder';
 import { TrendIntelligenceSection } from '@/components/dashboard/TrendIntelligenceSection';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { useStylistLevels } from '@/hooks/useStylistLevels';
 import { useGoalMode } from '@/hooks/useGoalMode';
 import { useAICoaching } from '@/hooks/useAICoaching';
@@ -79,16 +80,18 @@ export default function MyGraduation() {
 
         {/* Trend Intelligence Section */}
         {trendProjection && (
-          <TrendIntelligenceSection
-            projection={trendProjection}
-            evaluationWindowDays={progress?.evaluationWindowDays || 90}
-            hasNextLevel={hasNextLevel}
-            goalMode={goalMode}
-            coaching={coaching}
-            isCoachingLoading={isCoachingLoading}
-            onRequestCoaching={handleRequestCoaching}
-            onDismissCoaching={clearCoaching}
-          />
+          <ErrorBoundary>
+            <TrendIntelligenceSection
+              projection={trendProjection}
+              evaluationWindowDays={progress?.evaluationWindowDays || 90}
+              hasNextLevel={hasNextLevel}
+              goalMode={goalMode}
+              coaching={coaching}
+              isCoachingLoading={isCoachingLoading}
+              onRequestCoaching={handleRequestCoaching}
+              onDismissCoaching={clearCoaching}
+            />
+          </ErrorBoundary>
         )}
 
         {/* Level Progression Ladder */}
