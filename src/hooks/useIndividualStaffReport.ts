@@ -267,27 +267,37 @@ export function useIndividualStaffReport(staffUserId: string | null, dateFrom?: 
         fetchTxnItems(twoPriorFrom, twoPriorTo),
       ]);
 
-      // ── Fetch performance metrics ──
-      const [currentMetricsRes, priorMetricsRes, twoPriorMetricsRes] = await Promise.all([
-        supabase.from('phorest_performance_metrics')
-          .select('rebooking_rate, retention_rate, new_clients, retail_sales')
-          .eq('phorest_staff_id', phorestStaffId)
-          .gte('week_start', dateFrom).lte('week_start', dateTo),
-        supabase.from('phorest_performance_metrics')
-          .select('rebooking_rate, retention_rate, new_clients')
-          .eq('phorest_staff_id', phorestStaffId)
-          .gte('week_start', priorFrom).lte('week_start', priorTo),
-        supabase.from('phorest_performance_metrics')
-          .select('rebooking_rate, retention_rate, new_clients')
-          .eq('phorest_staff_id', phorestStaffId)
-          .gte('week_start', twoPriorFrom).lte('week_start', twoPriorTo),
-      ]);
+      // ── Compute rebooking/retention/newClients from appointments (live, no phorest_performance_metrics) ──
+      function computeClientMetrics(apts: any[]) {
+        const validApts = apts.filter((a: any) => {
+          const s = (a.status || '').toLowerCase();
+          return s !== 'cancelled' && s !== 'canceled' && s !== 'no_show' && s !== 'noshow' && s !== 'no-show';
+        });
+        const total = validApts.length;
+        const rebooked = validApts.filter((a: any) => a.rebooked_at_checkout).length;
+        const newC = validApts.filter((a: any) => a.is_new_client === true).length;
+        const returning = total - newC;
+        return {
+          rebookingRate: total > 0 ? (rebooked / total) * 100 : 0,
+          retentionRate: total > 0 ? (returning / total) * 100 : 0,
+          newClients: newC,
+        };
+      }
 
-      const currentMetrics = currentMetricsRes.data || [];
-      const priorMetrics = priorMetricsRes.data || [];
-      const twoPriorMetrics = twoPriorMetricsRes.data || [];
+      const currentClientMetrics = computeClientMetrics(currentApts);
+      const priorClientMetrics = computeClientMetrics(priorApts);
+      const twoPriorClientMetrics = computeClientMetrics(twoPriorApts);
 
-      // ── TEAM AVERAGES: fetch all staff transaction items + metrics for the same period ──
+      // ── Fetch all staff appointments for team averages (replaces phorest_performance_metrics) ──
+      const { data: allStaffAptsData } = await supabase
+        .from('phorest_appointments')
+        .select('phorest_staff_id, rebooked_at_checkout, is_new_client, status')
+        .gte('appointment_date', dateFrom).lte('appointment_date', dateTo)
+        .not('status', 'in', '("cancelled","no_show")')
+        .eq('is_demo', false);
+
+      // ── TEAM AVERAGES: fetch all staff transaction items for the same period ──
+      const PAGE_SIZE = 1000;
       async function fetchAllTeamTxnItems(fromDate: string, toDate: string) {
         const result: any[] = [];
         let offset = 0;
@@ -307,15 +317,8 @@ export function useIndividualStaffReport(staffUserId: string | null, dateFrom?: 
         return result;
       }
 
-      const [allStaffTxnItems, allStaffMetricsRes] = await Promise.all([
-        fetchAllTeamTxnItems(dateFrom, dateTo),
-        supabase.from('phorest_performance_metrics')
-          .select('phorest_staff_id, rebooking_rate, retention_rate, new_clients')
-          .gte('week_start', dateFrom).lte('week_start', dateTo)
-          .not('phorest_staff_id', 'is', null),
-      ]);
-
-      const allStaffMetrics = allStaffMetricsRes.data;
+      const allStaffTxnItems = await fetchAllTeamTxnItems(dateFrom, dateTo);
+      const allStaffApts = allStaffAptsData || [];
 
       // ── Compute individual metrics from appointments (counts, tips, status) ──
       let totalTips = 0;
@@ -425,24 +428,16 @@ export function useIndividualStaffReport(staffUserId: string | null, dateFrom?: 
       serviceVisitKeys.forEach(key => { if (productVisitKeys.has(key)) attachedCount++; });
       const attachmentRate = serviceVisitKeys.size > 0 ? Math.round((attachedCount / serviceVisitKeys.size) * 100) : 0;
 
-      // ── Client metrics from performance_metrics ──
-      const avgRebook = currentMetrics.length > 0
-        ? currentMetrics.reduce((s: number, m: any) => s + (Number(m.rebooking_rate) || 0), 0) / currentMetrics.length
-        : (completed > 0 ? (rebookedCount / completed) * 100 : 0);
-      const avgRetention = currentMetrics.length > 0
-        ? currentMetrics.reduce((s: number, m: any) => s + (Number(m.retention_rate) || 0), 0) / currentMetrics.length
-        : 0;
-      const totalNewClients = currentMetrics.reduce((s: number, m: any) => s + (Number(m.new_clients) || 0), 0);
+      // ── Client metrics from live appointment data ──
+      const avgRebook = currentClientMetrics.rebookingRate;
+      const avgRetention = currentClientMetrics.retentionRate;
+      const totalNewClients = currentClientMetrics.newClients;
 
       // Prior period metrics for multi-period trend
-      const priorRebook = priorMetrics.length > 0
-        ? priorMetrics.reduce((s: number, m: any) => s + (Number(m.rebooking_rate) || 0), 0) / priorMetrics.length : 0;
-      const priorRetention = priorMetrics.length > 0
-        ? priorMetrics.reduce((s: number, m: any) => s + (Number(m.retention_rate) || 0), 0) / priorMetrics.length : 0;
-      const twoPriorRebook = twoPriorMetrics.length > 0
-        ? twoPriorMetrics.reduce((s: number, m: any) => s + (Number(m.rebooking_rate) || 0), 0) / twoPriorMetrics.length : 0;
-      const twoPriorRetention = twoPriorMetrics.length > 0
-        ? twoPriorMetrics.reduce((s: number, m: any) => s + (Number(m.retention_rate) || 0), 0) / twoPriorMetrics.length : 0;
+      const priorRebook = priorClientMetrics.rebookingRate;
+      const priorRetention = priorClientMetrics.retentionRate;
+      const twoPriorRebook = twoPriorClientMetrics.rebookingRate;
+      const twoPriorRetention = twoPriorClientMetrics.retentionRate;
 
       // ── Experience score ──
       const tipRate = totalRevenue > 0 ? (totalTips / totalRevenue) * 100 : 0;
@@ -536,33 +531,32 @@ export function useIndividualStaffReport(staffUserId: string | null, dateFrom?: 
         }
       });
 
-      const teamMetricsMap = new Map<string, { rebook: number; retention: number; newClients: number; count: number }>();
-      (allStaffMetrics || []).forEach((m: any) => {
-        const sid = m.phorest_staff_id;
+      // Team metrics from appointments (live data)
+      const teamAptsMap = new Map<string, { total: number; rebooked: number; newClients: number }>();
+      allStaffApts.forEach((a: any) => {
+        const sid = a.phorest_staff_id;
         if (!sid) return;
-        if (!teamMetricsMap.has(sid)) teamMetricsMap.set(sid, { rebook: 0, retention: 0, newClients: 0, count: 0 });
-        const t = teamMetricsMap.get(sid)!;
-        t.rebook += Number(m.rebooking_rate) || 0;
-        t.retention += Number(m.retention_rate) || 0;
-        t.newClients += Number(m.new_clients) || 0;
-        t.count++;
+        if (!teamAptsMap.has(sid)) teamAptsMap.set(sid, { total: 0, rebooked: 0, newClients: 0 });
+        const t = teamAptsMap.get(sid)!;
+        t.total++;
+        if (a.rebooked_at_checkout) t.rebooked++;
+        if (a.is_new_client) t.newClients++;
       });
-
-      const teamCount = Math.max(teamStaffMap.size, 1);
-      const teamTotalRevenue = Array.from(teamStaffMap.values()).reduce((s, t) => s + t.revenue, 0);
-      const teamTotalVisits = Array.from(teamStaffMap.values()).reduce((s, t) => s + t.uniqueVisits.size, 0);
 
       let teamAvgRebook = 0, teamAvgRetention = 0, teamAvgNewClients = 0;
-      teamMetricsMap.forEach(t => {
-        if (t.count > 0) { teamAvgRebook += t.rebook / t.count; teamAvgRetention += t.retention / t.count; }
+      teamAptsMap.forEach(t => {
+        if (t.total > 0) {
+          teamAvgRebook += (t.rebooked / t.total) * 100;
+          teamAvgRetention += ((t.total - t.newClients) / t.total) * 100;
+        }
         teamAvgNewClients += t.newClients;
       });
-      const metricsTeamCount = Math.max(teamMetricsMap.size, 1);
+      const metricsTeamCount = Math.max(teamAptsMap.size, 1);
 
       const teamAverages: TeamAverages = {
         revenue: teamTotalRevenue / teamCount,
         avgTicket: teamTotalVisits > 0 ? teamTotalRevenue / teamTotalVisits : 0,
-        appointments: 0, // Not used for revenue-based reporting
+        appointments: 0,
         rebookingRate: teamAvgRebook / metricsTeamCount,
         retentionRate: teamAvgRetention / metricsTeamCount,
         newClients: teamAvgNewClients / metricsTeamCount,

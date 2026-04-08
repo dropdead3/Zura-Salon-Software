@@ -211,19 +211,62 @@ export function useOrganizationAnalytics() {
     staleTime: 5 * 60 * 1000,
   });
 
-  // Fetch performance metrics (uses user_id, not location_id)
+  // Fetch performance metrics live from appointments (rebooking, new clients)
   const { data: performanceData, isLoading: performanceLoading } = useQuery({
     queryKey: ['platform-analytics-performance'],
     queryFn: async () => {
       const thirtyDaysAgo = new Date();
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-      
-      const { data, error } = await supabase
-        .from('phorest_performance_metrics')
-        .select('user_id, week_start, rebooking_rate, retention_rate, retail_sales, new_clients, total_revenue')
-        .gte('week_start', thirtyDaysAgo.toISOString().split('T')[0]);
-      if (error) throw error;
-      return data || [];
+      const startDate = thirtyDaysAgo.toISOString().split('T')[0];
+
+      // Fetch appointments with rebooking + new client flags
+      const allData: any[] = [];
+      const pageSize = 1000;
+      let from = 0;
+      let hasMore = true;
+      while (hasMore) {
+        const { data, error } = await supabase
+          .from('phorest_appointments')
+          .select('phorest_staff_id, rebooked_at_checkout, is_new_client, location_id')
+          .gte('appointment_date', startDate)
+          .not('status', 'in', '("cancelled","no_show")')
+          .eq('is_demo', false)
+          .range(from, from + pageSize - 1);
+        if (error) throw error;
+        allData.push(...(data || []));
+        hasMore = (data?.length || 0) === pageSize;
+        from += pageSize;
+      }
+
+      // Get staff → user_id mapping
+      const { data: mappings } = await supabase
+        .from('phorest_staff_mapping')
+        .select('phorest_staff_id, user_id');
+      const staffToUser: Record<string, string> = {};
+      (mappings || []).forEach((m: any) => {
+        if (m.phorest_staff_id && m.user_id) staffToUser[m.phorest_staff_id] = m.user_id;
+      });
+
+      // Aggregate per user_id
+      const byUser: Record<string, { total: number; rebooked: number; newClients: number }> = {};
+      for (const apt of allData) {
+        const userId = apt.phorest_staff_id ? staffToUser[apt.phorest_staff_id] : null;
+        if (!userId) continue;
+        if (!byUser[userId]) byUser[userId] = { total: 0, rebooked: 0, newClients: 0 };
+        byUser[userId].total++;
+        if (apt.rebooked_at_checkout) byUser[userId].rebooked++;
+        if (apt.is_new_client) byUser[userId].newClients++;
+      }
+
+      // Convert to array with user_id key
+      return Object.entries(byUser).map(([userId, d]) => ({
+        user_id: userId,
+        rebooking_rate: d.total > 0 ? (d.rebooked / d.total) * 100 : 0,
+        retention_rate: d.total > 0 ? ((d.total - d.newClients) / d.total) * 100 : 0,
+        new_clients: d.newClients,
+        total_revenue: 0, // Revenue comes from salesData
+        retail_sales: 0,
+      }));
     },
     staleTime: 5 * 60 * 1000,
   });
@@ -393,20 +436,18 @@ export function useOrganizationAnalytics() {
     });
 
     // Aggregate performance metrics per org (via user_id -> org mapping)
-    const orgPerformance = new Map<string, { rebooking: number[]; retention: number[]; retailSales: number; totalRevenue: number; newClients: number }>();
+    const orgPerformance = new Map<string, { rebooking: number[]; retention: number[]; newClients: number }>();
 
     performanceData?.forEach(perf => {
       if (perf.user_id) {
         const orgId = userOrgMap.get(perf.user_id);
         if (orgId) {
           if (!orgPerformance.has(orgId)) {
-            orgPerformance.set(orgId, { rebooking: [], retention: [], retailSales: 0, totalRevenue: 0, newClients: 0 });
+            orgPerformance.set(orgId, { rebooking: [], retention: [], newClients: 0 });
           }
           const p = orgPerformance.get(orgId)!;
           if (perf.rebooking_rate) p.rebooking.push(perf.rebooking_rate);
           if (perf.retention_rate) p.retention.push(perf.retention_rate);
-          p.retailSales += perf.retail_sales || 0;
-          p.totalRevenue += perf.total_revenue || 0;
           p.newClients += perf.new_clients || 0;
         }
       }
@@ -417,8 +458,8 @@ export function useOrganizationAnalytics() {
         const metrics = orgMetricsMap.get(orgId)!;
         metrics.avgRebookingRate = perf.rebooking.length > 0 ? perf.rebooking.reduce((a, b) => a + b, 0) / perf.rebooking.length : 0;
         metrics.avgRetentionRate = perf.retention.length > 0 ? perf.retention.reduce((a, b) => a + b, 0) / perf.retention.length : 0;
-        // Calculate retail attachment as retail_sales / total_revenue
-        metrics.avgRetailAttachment = perf.totalRevenue > 0 ? (perf.retailSales / perf.totalRevenue) * 100 : 0;
+        // Retail attachment calculated from salesData
+        metrics.avgRetailAttachment = metrics.totalRevenue > 0 ? (metrics.retailRevenue / metrics.totalRevenue) * 100 : 0;
         metrics.newClientsThisMonth = perf.newClients;
       }
     });
