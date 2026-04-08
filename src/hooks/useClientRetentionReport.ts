@@ -67,71 +67,37 @@ export function useClientRetentionReport(dateFrom: string, dateTo: string, locat
   return useQuery({
     queryKey: ['client-retention-report', dateFrom, dateTo, locationId],
     queryFn: async (): Promise<ClientRetentionData> => {
-      // Fetch from both sources and merge
+      // Fetch from union view (includes both Phorest + Zura-native clients, deduplicated)
       const allClients: NormalizedClient[] = [];
 
-      // 1. Zura-owned clients (primary)
-      {
-        let offset = 0;
-        const batchSize = 1000;
-        let hasMore = true;
-        while (hasMore) {
-          const { data, error } = await supabase
-            .from('clients')
-            .select('id, first_name, last_name, created_at, first_visit, last_visit_date, total_spend, visit_count, client_since, phorest_client_id')
-            .eq('status', 'active')
-            .eq('is_placeholder', false)
-            .range(offset, offset + batchSize - 1);
-          if (error) break;
-          (data || []).forEach((c: any) => {
-            allClients.push({
-              id: c.id,
-              name: `${c.first_name || ''} ${c.last_name || ''}`.trim() || 'Unknown',
-              created_at: c.created_at || '',
-              first_visit: c.first_visit || c.client_since,
-              last_visit: c.last_visit_date,
-              total_spend: Number(c.total_spend) || 0,
-              visit_count: c.visit_count || 0,
-              client_since: c.client_since,
-              phorest_client_id: c.phorest_client_id,
-            });
+      let offset = 0;
+      const batchSize = 1000;
+      let hasMore = true;
+      while (hasMore) {
+        let q = supabase
+          .from('v_all_clients')
+          .select('id, phorest_client_id, name, first_name, last_name, created_at, last_visit, total_spend, visit_count, client_since')
+          .eq('is_archived', false)
+          .eq('is_duplicate', false)
+          .range(offset, offset + batchSize - 1);
+        if (locationId) q = q.eq('location_id', locationId);
+        const { data, error } = await q;
+        if (error) break;
+        (data || []).forEach((c: any) => {
+          allClients.push({
+            id: c.id,
+            name: c.name || `${c.first_name || ''} ${c.last_name || ''}`.trim() || 'Unknown',
+            created_at: c.created_at || '',
+            first_visit: c.client_since || null,
+            last_visit: c.last_visit || null,
+            total_spend: Number(c.total_spend) || 0,
+            visit_count: c.visit_count || 0,
+            client_since: c.client_since,
+            phorest_client_id: c.phorest_client_id,
           });
-          hasMore = (data?.length || 0) === batchSize;
-          offset += batchSize;
-        }
-      }
-
-      // 2. Phorest clients (supplement — add those not already present)
-      const seenPhorestIds = new Set(allClients.map(c => c.phorest_client_id).filter(Boolean));
-      {
-        let offset = 0;
-        const batchSize = 1000;
-        let hasMore = true;
-        while (hasMore) {
-          const { data, error } = await supabase
-            .from('phorest_clients')
-            .select('id, name, created_at, first_visit, last_visit, total_spend, visit_count, client_since')
-            .eq('is_duplicate', false)
-            .range(offset, offset + batchSize - 1);
-          if (error) break;
-          (data || []).forEach((c: any) => {
-            if (!seenPhorestIds.has(c.id)) {
-              allClients.push({
-                id: c.id,
-                name: c.name || 'Unknown',
-                created_at: c.created_at || '',
-                first_visit: c.first_visit,
-                last_visit: c.last_visit,
-                total_spend: Number(c.total_spend) || 0,
-                visit_count: c.visit_count || 0,
-                client_since: c.client_since,
-                phorest_client_id: c.id,
-              });
-            }
-          });
-          hasMore = (data?.length || 0) === batchSize;
-          offset += batchSize;
-        }
+        });
+        hasMore = (data?.length || 0) === batchSize;
+        offset += batchSize;
       }
 
       if (allClients.length === 0) {
@@ -143,7 +109,7 @@ export function useClientRetentionReport(dateFrom: string, dateTo: string, locat
         };
       }
 
-      // Get appointments in date range (paginated)
+      // Get appointments in date range from union view
       const appointments = await fetchAllBatched<{
         phorest_client_id: string | null;
         appointment_date: string;
@@ -151,18 +117,17 @@ export function useClientRetentionReport(dateFrom: string, dateTo: string, locat
         tip_amount: number | null;
       }>((from, to) => {
         let q = supabase
-          .from('phorest_appointments')
+          .from('v_all_appointments')
           .select('phorest_client_id, appointment_date, total_price, tip_amount')
           .gte('appointment_date', dateFrom)
           .lte('appointment_date', dateTo)
           .not('status', 'in', '("cancelled","no_show")')
           .range(from, to);
-
         if (locationId) q = q.eq('location_id', locationId);
         return q;
       });
 
-      // Get all-time appointments for LTV (paginated)
+      // Get all-time appointments for LTV
       const allAppointments = await fetchAllBatched<{
         phorest_client_id: string | null;
         appointment_date: string;
@@ -170,7 +135,7 @@ export function useClientRetentionReport(dateFrom: string, dateTo: string, locat
         tip_amount: number | null;
       }>((from, to) =>
         supabase
-          .from('phorest_appointments')
+          .from('v_all_appointments')
           .select('phorest_client_id, appointment_date, total_price, tip_amount')
           .not('status', 'in', '("cancelled","no_show")')
           .range(from, to)
