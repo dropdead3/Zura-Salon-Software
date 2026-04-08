@@ -60,7 +60,7 @@ export function useWeekAheadRevenue(locationId?: string) {
     queryFn: async () => {
       let query = supabase
         .from('phorest_appointments')
-        .select('id, appointment_date, total_price, status, client_name, service_name, start_time, end_time, phorest_staff_id, service_category, location_id')
+        .select('id, appointment_date, total_price, tip_amount, status, client_name, service_name, start_time, end_time, phorest_staff_id, service_category, location_id')
         .gte('appointment_date', startDate)
         .lte('appointment_date', endDate)
         .not('status', 'in', '("cancelled","no_show")')
@@ -77,7 +77,6 @@ export function useWeekAheadRevenue(locationId?: string) {
       }
 
       const { data, error } = await query;
-
       if (error) throw error;
 
       const appointments = data || [];
@@ -87,21 +86,21 @@ export function useWeekAheadRevenue(locationId?: string) {
       const staffMap: Record<string, string> = {};
       
       if (staffIds.length > 0) {
-        const { data: staffData } = await (supabase as any)
-          .from('phorest_staff_mappings')
-          .select('phorest_staff_id, staff_first_name, staff_last_name')
+        const { data: staffData } = await supabase
+          .from('phorest_staff_mapping')
+          .select('phorest_staff_id, phorest_staff_name')
           .in('phorest_staff_id', staffIds);
         
         if (staffData) {
-          (staffData as any[]).forEach((s: any) => {
+          staffData.forEach((s: any) => {
             if (s.phorest_staff_id) {
-              staffMap[s.phorest_staff_id] = `${s.staff_first_name || ''} ${s.staff_last_name?.charAt(0) || ''}.`.trim();
+              staffMap[s.phorest_staff_id] = s.phorest_staff_name || 'Unknown';
             }
           });
         }
       }
       
-      // Group by date
+      // Group by date — use tip-adjusted price for forecast
       const byDate: Record<string, { revenue: number; confirmedRevenue: number; unconfirmedRevenue: number; count: number; appointments: AppointmentSummary[]; categoryBreakdown: Record<string, number> }> = {};
       dates.forEach(d => {
         byDate[d.date] = { revenue: 0, confirmedRevenue: 0, unconfirmedRevenue: 0, count: 0, appointments: [], categoryBreakdown: {} };
@@ -110,7 +109,7 @@ export function useWeekAheadRevenue(locationId?: string) {
       appointments.forEach(apt => {
         const dateKey = apt.appointment_date;
         if (byDate[dateKey]) {
-          const price = Number(apt.total_price) || 0;
+          const price = (Number(apt.total_price) || 0) - (Number(apt.tip_amount) || 0);
           const status = apt.status?.toLowerCase() || '';
           const isUnconfirmed = status === 'unconfirmed' || status === 'pending';
           
@@ -143,7 +142,7 @@ export function useWeekAheadRevenue(locationId?: string) {
       const byCategory: Record<string, CategoryBreakdown> = {};
       appointments.forEach(apt => {
         const category = (apt as any).service_category || getServiceCategory(apt.service_name);
-        const price = Number(apt.total_price) || 0;
+        const price = (Number(apt.total_price) || 0) - (Number(apt.tip_amount) || 0);
         if (!byCategory[category]) {
           byCategory[category] = { revenue: 0, count: 0 };
         }
