@@ -1118,6 +1118,7 @@ export function AggregateSalesCard({
                 { label: 'Merch', icon: Shirt, amount: rb?.merchRevenue ?? 0, count: rb?.merchCount ?? 0 },
                 { label: 'Gift Cards', icon: Gift, amount: rb?.giftCardRevenue ?? 0, count: rb?.giftCardCount ?? 0 },
                 { label: 'Extensions', icon: GemIcon, amount: rb?.extensionRevenue ?? 0, count: rb?.extensionCount ?? 0 },
+                { label: 'Fees & Deposits', icon: Receipt, amount: rb?.feesRevenue ?? 0, count: rb?.feesCount ?? 0 },
                ].sort((a, b) => b.amount - a.amount);
 
               return (
@@ -1528,6 +1529,7 @@ export function AggregateSalesCard({
               extensionRevenue: retailBreakdown.extensionRevenue,
               merchRevenue: retailBreakdown.merchRevenue,
               giftCardRevenue: retailBreakdown.giftCardRevenue,
+              feesRevenue: retailBreakdown.feesRevenue,
             } : undefined}
           />
 

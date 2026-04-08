@@ -48,16 +48,17 @@ export function useRetailCategoryItems(
       const txDateTo = dateTo.includes('T') ? dateTo : `${dateTo}T23:59:59.999`;
 
       const items = await fetchAllBatched<{
+        item_type: string | null;
         item_name: string | null;
         total_amount: number | null;
         tax_amount: number | null;
       }>((from, to) => {
         let q = supabase
           .from('phorest_transaction_items')
-          .select('item_name, total_amount, tax_amount')
+          .select('item_type, item_name, total_amount, tax_amount')
           .gte('transaction_date', txDateFrom)
           .lte('transaction_date', txDateTo)
-          .in('item_type', ['product', 'Product', 'retail', 'Retail', 'PRODUCT', 'RETAIL'])
+          .not('item_type', 'in', '("service","Service","SERVICE","sale_fee","special_offer_item")')
           .range(from, to);
         q = addLocationFilter(q, locationId);
         return q;
@@ -65,7 +66,7 @@ export function useRetailCategoryItems(
 
       const grouped = new Map<string, { quantity: number; revenue: number }>();
       for (const item of items) {
-        if (!matchesCategory(item.item_name, category)) continue;
+        if (!matchesCategory(item.item_name, item.item_type, category)) continue;
         const name = item.item_name?.trim() || 'Unknown Product';
         const amount = (Number(item.total_amount) || 0) + (Number(item.tax_amount) || 0);
         const existing = grouped.get(name);
