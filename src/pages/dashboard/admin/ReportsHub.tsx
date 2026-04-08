@@ -10,14 +10,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Calendar as CalendarIcon, Building2 } from 'lucide-react';
 import { useLocations } from '@/hooks/useLocations';
 import { ReportsTabContent } from '@/components/dashboard/analytics/ReportsTabContent';
-import type { AnalyticsFilters } from '@/pages/dashboard/admin/AnalyticsHub';
+import type { AnalyticsFilters, DateRangeType } from '@/pages/dashboard/admin/AnalyticsHub';
 
 export default function ReportsHub() {
   const [dateRange, setDateRange] = useState<{ from: Date; to: Date }>({
     from: startOfMonth(new Date()),
     to: endOfMonth(new Date()),
   });
-  const [datePreset, setDatePreset] = useState<string>('thisMonth');
+  const [datePreset, setDatePreset] = useState<DateRangeType>('thisMonth');
   const [locationId, setLocationId] = useState<string>('all');
   const { data: locations } = useLocations();
 
