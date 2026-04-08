@@ -8,6 +8,7 @@
  */
 
 import { supabase } from '@/integrations/supabase/client';
+import { fetchAllBatched } from '@/utils/fetchAllBatched';
 import { resolveFormula, type ResolvedFormula } from './formula-resolver';
 import { calculateReplenishment, REPLENISHMENT_DEFAULTS } from '@/lib/inventory/replenishment-engine';
 import type { FormulaLine } from '@/lib/color-bar/mix-calculations';
