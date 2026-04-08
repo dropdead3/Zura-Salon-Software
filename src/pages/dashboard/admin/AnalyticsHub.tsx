@@ -410,6 +410,7 @@ export default function AnalyticsHub() {
                 filters={filters}
                 subTab={subTab}
                 onSubTabChange={handleSubTabChange}
+                organizationId={effectiveOrganization?.id}
               />
             </TabsContent>
           </VisibilityGate>
