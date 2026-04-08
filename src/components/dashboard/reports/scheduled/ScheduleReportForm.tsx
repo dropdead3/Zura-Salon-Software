@@ -261,6 +261,24 @@ export function ScheduleReportForm({ open, onOpenChange, editReport }: ScheduleR
             </div>
           </div>
 
+          {/* Location Scope */}
+          {locations.length > 1 && (
+            <div className="space-y-2">
+              <Label className="text-xs font-medium flex items-center gap-2">
+                <MapPin className="w-3.5 h-3.5" /> Location
+              </Label>
+              <Select value={selectedLocationId} onValueChange={setSelectedLocationId}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Locations</SelectItem>
+                  {locations.map(loc => (
+                    <SelectItem key={loc.id} value={loc.id}>{loc.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
           <Separator />
 
           {/* Frequency */}
