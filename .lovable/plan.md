@@ -1,47 +1,52 @@
 
 
-# Fix Dialog Centering Relative to Sidebar — All Surfaces
+# Surface Date Range Label on Report Cards
 
 ## Problem
+Report cards show only the date span (e.g., "Mar 9, 2026 - Apr 7, 2026") but not which preset was selected (e.g., "Last 30 Days"). The user wants both, separated by a bullet: **"Last 30 Days · Mar 9, 2026 – Apr 7, 2026"**.
 
-Dialogs (`Dialog`, `AlertDialog`) render at `left: 50%` of the full viewport, ignoring the sidebar. This makes them appear off-center relative to the visible content area. `DialogContent` already has a `--sidebar-offset` CSS variable but `AlertDialogContent` does not, and the offset values need verification.
+## Approach
 
-## Root Cause
+### 1. Create `ReportDateSubtitle` component
+**New file:** `src/components/dashboard/reports/ReportDateSubtitle.tsx`
 
-1. **`AlertDialogContent`** uses hardcoded `left-[50%]` with no sidebar offset — used in ~98 files across the app.
-2. **`DialogContent`** correctly reads `--sidebar-offset` but the collapsed sidebar value (`44px`) doesn't match the actual sidebar margin (`lg:ml-24` = 96px / 2 = 48px).
-3. No design token exists to enforce this rule systematically.
+A tiny shared component that accepts `dateRangeKey`, `dateFrom`, `dateTo` and renders:
+- If a key is provided and maps to a label: `"Last 30 Days · Mar 9, 2026 – Apr 7, 2026"`
+- If no key or `custom`: just the date span (current behavior)
 
-## Fix
+Uses `DATE_RANGE_LABELS` from `@/lib/dateRangeLabels` and `useFormatDate` for consistent formatting.
 
-### File 1: `src/components/ui/alert-dialog.tsx`
-- Add `style={{ left: 'calc(50% + var(--sidebar-offset, 0px))' }}` to `AlertDialogPrimitive.Content`
-- Remove the `left-[50%]` from the className (since `left` is now set via inline style)
+### 2. Pass `dateRangeKey` from ReportsTabContent to all report components
+**Modified file:** `src/components/dashboard/analytics/ReportsTabContent.tsx`
 
-### File 2: `src/components/ui/dialog.tsx`
-- Already has the inline style — no change needed (already correct)
+Add `dateRangeKey={filters.dateRange}` prop to every report component in the switch statement (~35 cases). Currently only `IndividualStaffReport` receives it.
 
-### File 3: `src/components/dashboard/DashboardLayout.tsx`
-- Fix collapsed sidebar offset from `'44px'` to `'48px'` (half of 96px actual margin)
+### 3. Update report components to accept and use `dateRangeKey`
+**Modified files (~15 report components):** Every report that renders a `CardDescription` with the date span will:
+- Add `dateRangeKey?: string` to its props interface
+- Replace the inline `CardDescription` date formatting with `<ReportDateSubtitle>`
 
-### File 4: `src/lib/design-tokens.ts`
-- Add a `dialog` token group documenting the sidebar-offset centering rule:
-```ts
-dialog: {
-  sidebarOffsetVar: '--sidebar-offset',
-  centeringNote: 'All fixed-position dialogs use left: calc(50% + var(--sidebar-offset, 0px)) for sidebar-aware centering',
-}
-```
+Affected report files:
+- `SalesReportGenerator.tsx`
+- `StaffKPIReport.tsx` (if applicable)
+- `ClientRetentionReport.tsx`
+- `NoShowReport.tsx`
+- `CapacityReport.tsx`
+- `ExecutiveSummaryReport.tsx`
+- `FinancialReportGenerator.tsx`
+- `RetailProductReport.tsx`
+- `RetailStaffReport.tsx`
+- `EndOfMonthReport.tsx`
+- `PayrollSummaryReport.tsx`
+- Plus all Batch 1-4 reports that have `CardDescription` date spans
 
-This ensures the rule is discoverable and enforced through the token system.
+Point-in-time reports (Permissions Audit, PTO Balances, etc.) that show "Current Snapshot" will keep their existing label — no change needed for those.
 
-### Files Modified
+## Summary
 
-| File | Change |
-|---|---|
-| `src/components/ui/alert-dialog.tsx` | Add sidebar-offset inline style, remove hardcoded `left-[50%]` |
-| `src/components/dashboard/DashboardLayout.tsx` | Fix collapsed offset `44px` → `48px` |
-| `src/lib/design-tokens.ts` | Add `dialog` token group for centering rule |
-
-3 file edits. No migrations. Fixes all dialog centering across the entire app since both `Dialog` and `AlertDialog` are the only two dialog primitives used.
+| Type | Count |
+|------|-------|
+| New files | 1 (`ReportDateSubtitle.tsx`) |
+| Modified files | ~16 (ReportsTabContent + ~15 report components) |
+| Migrations | 0 |
 
