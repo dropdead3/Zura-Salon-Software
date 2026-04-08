@@ -13125,6 +13125,7 @@ export type Database = {
           is_demo: boolean
           is_new_client: boolean | null
           is_redo: boolean
+          is_walk_in: boolean
           location_id: string | null
           notes: string | null
           original_appointment_id: string | null
@@ -13179,6 +13180,7 @@ export type Database = {
           is_demo?: boolean
           is_new_client?: boolean | null
           is_redo?: boolean
+          is_walk_in?: boolean
           location_id?: string | null
           notes?: string | null
           original_appointment_id?: string | null
@@ -13233,6 +13235,7 @@ export type Database = {
           is_demo?: boolean
           is_new_client?: boolean | null
           is_redo?: boolean
+          is_walk_in?: boolean
           location_id?: string | null
           notes?: string | null
           original_appointment_id?: string | null
@@ -24760,6 +24763,7 @@ export type Database = {
           id: string | null
           is_demo: boolean | null
           is_new_client: boolean | null
+          is_walk_in: boolean | null
           location_id: string | null
           phorest_client_id: string | null
           phorest_staff_id: string | null
