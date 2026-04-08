@@ -1,114 +1,81 @@
 
 
-# Report Generator — Intelligence Audit & Gap Analysis
+# Reports System — Gap & Bug Audit
 
-## Current State
+## Bugs
 
-The Report Generator has **two rendering paths** that are out of sync:
+### Bug 1: Category Mix revenue calculation includes tax
+`useCategoryMixReport.ts` line 47: `const revenue = (Number(row.total_amount) || 0) + (Number(row.tax_amount) || 0)`. This **adds** tax to revenue, inflating the numbers. Revenue should exclude tax — it should be `total_amount` only (or `total_amount - tax_amount` if `total_amount` is gross-inclusive). Every other report in the system subtracts tips/tax from totals. This makes the Category Mix report show higher numbers than reality.
 
-1. **`ReportsTabContent.tsx`** (legacy, inside Analytics Hub) — 25 report IDs wired, includes Quick Actions, Custom Builder, Scheduled Reports, deep-linking
-2. **`ReportsHub.tsx`** (standalone page, new) — only 15 report IDs wired, missing 10 reports, no Custom Builder, no Scheduled Reports
+**Fix:** Change to `Number(row.total_amount) || 0` (drop the `+ tax_amount`).
+
+### Bug 2: Client Attrition fetches ALL historical appointments (no date bounds)
+`useClientAttritionReport.ts` has no `.gte('appointment_date', ...)` filter. It fetches **every appointment ever** to find each client's last visit. For a salon with years of history, this could be tens of thousands of rows fetched in batches. The `dateFrom` prop passed from the UI is ignored entirely (only `asOfDate` / `dateTo` is used for "days since" calculation).
+
+**Fix:** Add a reasonable lower bound (e.g., 2 years back from `asOfDate`) to limit the query, or document this intentional behavior. The current approach works but is expensive.
+
+### Bug 3: New reports missing `BlurredAmount` wrapper
+Per UI Canon, all monetary values must use `BlurredAmount` for the hide-numbers toggle. The following new report components display raw currency without wrapping:
+- `TipAnalysisReport.tsx` — all `formatCurrencyWhole()` calls
+- `ServiceProfitabilityReport.tsx` — all `formatCurrencyWhole()` calls  
+- `ChemicalCostReport.tsx` — all `formatCurrencyWhole()` calls
+- `ServiceCategoryMixReport.tsx` — all `formatCurrencyWhole()` calls
+- `TaxSummaryReport.tsx` — all `formatCurrencyWhole()` calls
+- `ClientAttritionReport.tsx` — all `formatCurrencyWhole()` calls
+- `StaffCompensationRatioReport.tsx` — KPI tiles and table cells
+- `LocationBenchmarkReport.tsx` — table cells
+- `DemandHeatmapReport.tsx` — N/A (no currency displayed) ✓
+
+**Fix:** Wrap all `formatCurrencyWhole()` outputs in `<BlurredAmount>` in 8 report components.
+
+### Bug 4: Inconsistent back-button pattern across new reports
+Some new reports (TipAnalysis, ServiceProfitability, ChemicalCost, CategoryMix, TaxSummary, ClientAttrition) render their own "Back to Reports" ghost button **outside** the Card. But they're also listed in `selfContainedReports` (line 249), which means `ReportsTabContent` renders them without its own back button — so functionally it works. However, the pattern differs from `StaffCompensationRatioReport` and `LocationBenchmarkReport` which put the back button **inside** the Card header. This is cosmetic but inconsistent.
+
+**Fix:** Standardize all new reports to use the inside-Card-header back button pattern (matching LocationBenchmark/StaffCompensation).
+
+### Bug 5: CSV export doesn't escape commas in field values
+All CSV downloads use `.join(',')` without escaping. Service names or stylist names containing commas will break CSV column alignment. E.g., "Smith, Jane" would split into two columns.
+
+**Fix:** Add a CSV escape helper that wraps fields containing commas/quotes in double-quotes.
 
 ---
 
-## Bug: ReportsHub Is Missing 10 Wired Reports
+## Gaps
 
-The standalone ReportsHub `renderSelectedReport` switch does NOT handle these reports that are fully functional in ReportsTabContent:
+### Gap 1: `ReportsHub.tsx` date range doesn't reflect actual selection in `filters.dateRange`
+Line 25: `dateRange: 'thisMonth'` is hardcoded regardless of what the user picks in the date picker. This key is passed to `IndividualStaffReport` as `dateRangeKey` and may affect comparison logic. If the user picks "Last Month", the key still says `thisMonth`.
 
-| Missing from ReportsHub | Component | Category |
-|---|---|---|
-| `individual-staff` | `IndividualStaffReport` | Staff |
-| `retail-products` | `RetailProductReport` | Sales |
-| `executive-summary` | `ExecutiveSummaryReport` | Financial |
-| `revenue-trend` | `FinancialReportGenerator` | Financial |
-| `commission` | `FinancialReportGenerator` | Financial |
-| `goals` | `FinancialReportGenerator` | Financial |
-| `yoy` | `FinancialReportGenerator` | Financial |
-| `payroll-summary` | `PayrollSummaryReport` | Financial |
-| `end-of-month` | `EndOfMonthReport` | Financial |
-| Custom Builder | `ReportBuilderPage` | Custom |
-| Scheduled Reports | `ScheduledReportsSubTab` | Scheduled |
+**Fix:** Track which preset was selected (or use `'custom'`) and pass the correct key.
 
-**Fix:** The standalone ReportsHub should import `ReportsTabContent` directly (passing its own filters) rather than duplicating the report catalog and switch statement. This eliminates the sync problem permanently.
+### Gap 2: No `ReportPreviewModal` integration on new reports
+The existing `ReportPreviewModal` component provides a branded preview overlay before downloading. None of the 8 new reports use it — they all go straight to PDF/CSV download without preview. The older reports (Financial, Executive Summary) also skip it, so this is consistent but represents a missed UX opportunity.
+
+**Status:** Low priority. Consistent with existing patterns.
 
 ---
 
-## Reports Elite Salons Need But Don't Exist
+## Implementation Priority
 
-### Tier 1 — High Impact, Data Already Available
+| # | Item | Risk | Effort |
+|---|------|------|--------|
+| 1 | Bug 3: Add `BlurredAmount` to 8 reports | **High** (privacy violation) | Medium (8 files) |
+| 2 | Bug 1: Fix category mix revenue calc | **Medium** (data accuracy) | Trivial |
+| 3 | Bug 5: CSV comma escaping | **Medium** (data corruption) | Small (shared helper) |
+| 4 | Bug 4: Standardize back-button pattern | Low | Small (6 files) |
+| 5 | Gap 1: Fix hardcoded dateRange key | Low | Trivial |
+| 6 | Bug 2: Add date bounds to attrition query | Low (perf only) | Small |
 
-| Report | Data Source | Why It Matters |
-|---|---|---|
-| **Service Profitability P&L** | `service_profitability_snapshots`, economics engine | Owners need to know which services make money vs lose money after labor + chemical costs. Data exists in Color Bar analytics but has no exportable report. |
-| **Chemical Cost / Color Bar Report** | `backroom_analytics_snapshots`, `mix_sessions` | Chemical cost per service, waste %, ghost loss — all computed by `analytics-engine.ts` but never surfaced as a downloadable report. |
-| **Tip Analysis** | `phorest_transaction_items.tip_amount` | Tip distribution by stylist, tip-to-revenue ratio, trends. Data is already fetched but never aggregated into a report. |
-| **Service Category Mix** | `phorest_transaction_items.item_name` + `getServiceCategory()` | Revenue share by category (Color, Cut, Extensions, etc.). The categorization logic exists in `serviceCategorization.ts`. |
-| **Tax Summary** | `phorest_transaction_items.tax_amount` | Tax collected by period/location for remittance. Data exists, RevenueDisplayContext uses it, but there's no export. |
+## Files Changed
 
-### Tier 2 — High Impact, Requires New Query Logic
-
-| Report | Data Needed | Why It Matters |
-|---|---|---|
-| **Client Attrition / Churn** | Clients with no visit in 60/90/120 days + their historical spend | "Revenue at Risk" — which clients are slipping away and how much they were worth. CLV tiers exist but no churn-specific report. |
-| **Staff Compensation Ratio** | Commission resolution + revenue per stylist | Labor cost as % of revenue per stylist. `useResolveCommission` exists but isn't combined into a ratio report. |
-| **Location Benchmarking** (multi-loc) | All KPIs aggregated by location | Beyond just sales comparison — includes retention, rebooking, avg ticket, utilization per location side-by-side. |
-| **Demand Heatmap** | Appointments by hour × day-of-week | Visual peak-hour analysis. `useCapacityReport` has the raw data but only renders a table. |
-
-### Tier 3 — Strategic, Phase 2+
-
-| Report | Notes |
+| File | Changes |
 |---|---|
-| **Marketing ROI** | Requires campaign attribution loop (Phase 2 Marketing OS) |
-| **Staff Progression / Graduation** | Level movement history over time — data exists in level progress but no historical tracking table |
-| **Inventory Valuation** | Color Bar inventory on-hand value — `ColorBarInventoryValuationCard` exists as a card but not as an exportable report |
+| 8 report components in `src/components/dashboard/reports/` | Add `BlurredAmount` wrapping |
+| `src/hooks/useCategoryMixReport.ts` | Remove `+ tax_amount` from revenue calc |
+| `src/utils/csvExport.ts` (new) | Shared CSV escape helper |
+| 8 report components | Use CSV escape helper in `downloadCSV` |
+| 6 report components | Move back button inside Card header |
+| `src/pages/dashboard/admin/ReportsHub.tsx` | Track date range preset key |
+| `src/hooks/useClientAttritionReport.ts` | Add 2-year lower bound on query |
 
----
-
-## Implementation Plan
-
-### Phase A: Fix Sync Issue (Prerequisite)
-Replace the duplicated report catalog and switch in `ReportsHub.tsx` with a direct render of `ReportsTabContent`, passing the page-level date range and location as filters. This immediately surfaces all 25 existing reports + Custom Builder + Scheduled in the standalone page.
-
-**Files:** `ReportsHub.tsx` (rewrite to use `ReportsTabContent`)
-
-### Phase B: Tier 1 Reports (5 new reports, data ready)
-
-1. **Service Profitability Report** — New component pulling from `useAppointmentProfitSummary` + economics engine. Table: Service name, revenue, chemical cost, labor cost, contribution margin, margin %. PDF + CSV.
-
-2. **Color Bar / Chemical Cost Report** — New component using `getLatestSnapshot` + `getStaffPerformance`. Table: Chemical cost per service, waste %, reweigh compliance, ghost loss. PDF + CSV.
-
-3. **Tip Analysis Report** — New hook querying `phorest_transaction_items` for `tip_amount` grouped by staff + date. Table: Stylist, total tips, avg tip per visit, tip-to-revenue %. PDF + CSV.
-
-4. **Service Category Mix Report** — New hook using existing `getServiceCategory()` to aggregate revenue by category. Pie chart data + table: Category, revenue, % share, transaction count. PDF + CSV.
-
-5. **Tax Summary Report** — New hook aggregating `tax_amount` from `phorest_transaction_items` by period/location. Table: Period, gross revenue, tax collected, net revenue. PDF + CSV.
-
-**New files:** 5 report components + 3 new hooks (tip, category mix, tax)
-**Edited files:** `ReportsTabContent.tsx` (add to catalogs + switch)
-
-### Phase C: Tier 2 Reports (4 new reports, new queries)
-
-6. **Client Attrition Report** — Query clients whose last visit exceeds configurable thresholds (60/90/120 days), ranked by CLV tier and revenue-at-risk.
-
-7. **Staff Compensation Ratio** — Combine `useResolveCommission` output with `useSalesByStylist` to show labor cost % per stylist.
-
-8. **Location Benchmarking** — Multi-location KPI matrix: revenue, avg ticket, retention %, rebooking %, utilization %, no-show % per location.
-
-9. **Demand Heatmap** — Visual hour × day grid using capacity data, exportable as image + CSV.
-
----
-
-## Summary
-
-| Category | Existing | Missing (sync bug) | New Tier 1 | New Tier 2 | Total |
-|---|---|---|---|---|---|
-| Sales | 6 | 1 (retail-products) | 2 (Category Mix, Tax) | 0 | 9 |
-| Staff | 5 | 1 (individual-staff) | 1 (Tip Analysis) | 1 (Comp Ratio) | 8 |
-| Clients | 4 | 0 | 0 | 1 (Attrition) | 5 |
-| Operations | 4 | 0 | 0 | 1 (Heatmap) | 5 |
-| Financial | 7 | 5 (exec, trend, comm, goals, yoy) | 2 (Service P&L, Chem Cost) | 1 (Loc Benchmark) | 10 |
-| Custom/Sched | 2 | 2 | 0 | 0 | 2 |
-| **Total** | **28** | **9** | **5** | **3** | **39** |
-
-Priority: Phase A first (fix sync bug), then Phase B (5 data-ready reports), then Phase C.
+~15 file touches, no database migrations.
 
