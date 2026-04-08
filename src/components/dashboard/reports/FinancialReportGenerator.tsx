@@ -526,7 +526,7 @@ export function FinancialReportGenerator({
             <div>
               <CardTitle className="font-display text-base tracking-wide">{getReportTitle()}</CardTitle>
               <CardDescription>
-                {formatDate(new Date(dateFrom), 'MMM d, yyyy')} – {formatDate(new Date(dateTo), 'MMM d, yyyy')}
+                <ReportDateSubtitle dateFrom={dateFrom} dateTo={dateTo} dateRangeKey={dateRangeKey} />
               </CardDescription>
             </div>
             <div className="flex gap-2">
