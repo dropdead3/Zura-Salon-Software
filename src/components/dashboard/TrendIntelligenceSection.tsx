@@ -381,7 +381,12 @@ export function TrendIntelligenceSection({
 
         {/* AI Coaching Panel */}
         {coaching && onDismissCoaching && (
-          <AICoachingPanel coaching={coaching} onClose={onDismissCoaching} />
+          <AICoachingPanel
+            coaching={coaching}
+            onClose={onDismissCoaching}
+            onRefresh={onRequestCoaching ? (force) => onRequestCoaching(force) : undefined}
+            isRefreshing={isCoachingLoading}
+          />
         )}
 
         {/* Retention Risk Nudge (soft) */}
