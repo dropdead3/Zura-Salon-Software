@@ -133,7 +133,7 @@ export function ScheduledReportsSubTab() {
             {reports.length} report{reports.length !== 1 ? 's' : ''} configured
           </p>
         </div>
-        <Button>
+        <Button onClick={() => { setEditingReport(null); setScheduleFormOpen(true); }}>
           <Plus className="w-4 h-4 mr-2" />
           New Schedule
         </Button>
@@ -284,6 +284,8 @@ export function ScheduledReportsSubTab() {
           )}
         </div>
       </PremiumFloatingPanel>
+
+      <ScheduleReportForm open={scheduleFormOpen} onOpenChange={setScheduleFormOpen} editReport={editingReport} />
     </div>
   );
 }
