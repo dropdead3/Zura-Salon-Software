@@ -271,6 +271,8 @@ export function usePhorestPerformanceMetrics(weekStart?: string) {
     staleTime: 1000 * 60 * 5,
   });
 }
+
+export function usePhorestAppointments(dateFrom?: string, dateTo?: string) {
   return useQuery({
     queryKey: ['phorest-appointments', dateFrom, dateTo],
     queryFn: async () => {
