@@ -36,6 +36,7 @@ import { BlurredAmount } from '@/contexts/HideNumbersContext';
 interface StylistScorecardProps {
   userId: string | undefined;
   locationId?: string | null;
+  onTrendProjection?: (projection: ReturnType<typeof useTrendProjection>) => void;
 }
 
 function TrendIcon({ direction }: { direction: 'up' | 'down' | 'flat' }) {
