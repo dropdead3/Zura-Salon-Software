@@ -28,6 +28,9 @@ import {
   PieChart,
   AlertTriangle,
   Coins,
+  Percent,
+  Building,
+  Grid3X3,
 } from 'lucide-react';
 import { useLocations } from '@/hooks/useLocations';
 import { getReportTier, filterReportsByTier } from '@/config/reportCatalog';
