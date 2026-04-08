@@ -194,8 +194,7 @@ export function useUserSalesSummary(userId: string | undefined, dateFrom?: strin
         while (hasMore) {
           let q = supabase
             .from('phorest_transaction_items')
-            .select('total_amount, tax_amount, item_type, transaction_date')
-            .range(from, from + pageSize - 1);
+            .select('total_amount, tax_amount, item_type, transaction_date') as any;
           if (filterValues.length === 1) {
             q = q.eq(filterField, filterValues[0]);
           } else {
@@ -203,7 +202,7 @@ export function useUserSalesSummary(userId: string | undefined, dateFrom?: strin
           }
           if (dateFrom) q = q.gte('transaction_date', dateFrom);
           if (dateTo) q = q.lte('transaction_date', dateTo);
-          const { data, error } = await q;
+          const { data, error } = await q.range(from, from + pageSize - 1);
           if (error) throw error;
           allData.push(...(data || []));
           hasMore = (data?.length || 0) === pageSize;

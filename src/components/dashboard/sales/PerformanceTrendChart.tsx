@@ -85,11 +85,10 @@ export function PerformanceTrendChart({ userId, weeks = 8 }: PerformanceTrendCha
             .from('phorest_transaction_items')
             .select('total_amount, tax_amount, item_type, transaction_date, location_id')
             .gte('transaction_date', weekRanges[0].start)
-            .lte('transaction_date', weekRanges[weekRanges.length - 1].end)
-            .range(from, from + pageSize - 1);
-          if (values.length === 1) q = q.eq(field, values[0]);
-          else q = q.in(field, values);
-          const { data, error: e } = await q;
+            .lte('transaction_date', weekRanges[weekRanges.length - 1].end);
+          if (values.length === 1) q = q.eq(field as any, values[0]);
+          else q = q.in(field as any, values);
+          const { data, error: e } = await q.range(from, from + pageSize - 1);
           if (e) throw e;
           allData.push(...(data || []));
           hasMore = (data?.length || 0) === pageSize;
