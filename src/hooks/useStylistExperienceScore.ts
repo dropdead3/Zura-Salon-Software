@@ -96,7 +96,9 @@ export function useStylistExperienceScore(
           stylist_user_id,
           total_price,
           tip_amount,
-          rebooked_at_checkout
+          rebooked_at_checkout,
+          phorest_client_id,
+          is_new_client
         `)
         .eq('status', 'completed')
         .gte('appointment_date', startDate)
@@ -125,13 +127,12 @@ export function useStylistExperienceScore(
         `);
       if (staffError) throw staffError;
 
-      // Fetch performance metrics for retention rates
-      const { data: performanceMetrics, error: perfError } = await supabase
+      // Fetch performance metrics as fallback for retention rates
+      const { data: performanceMetrics } = await supabase
         .from('phorest_performance_metrics')
         .select('phorest_staff_id, retention_rate, week_start')
         .gte('week_start', startDate)
         .lte('week_start', endDate);
-      if (perfError) throw perfError;
 
       // Fetch transaction items for retail attachment
       const { data: transactionItems, error: transError } = await supabase
@@ -214,11 +215,20 @@ export function useStylistExperienceScore(
           ? tipRates.reduce((sum, r) => sum + r, 0) / tipRates.length 
           : 0;
 
-        // Get retention rate (avg of weekly values)
+        // Compute retention from appointments: returning clients / total unique clients
+        const uniqueClients = new Set(apts.map((a: any) => a.phorest_client_id).filter(Boolean));
+        const newClients = apts.filter((a: any) => a.is_new_client === true);
+        const newClientIds = new Set(newClients.map((a: any) => a.phorest_client_id).filter(Boolean));
+        const returningCount = uniqueClients.size - newClientIds.size;
+        const computedRetention = uniqueClients.size > 0 ? (returningCount / uniqueClients.size) * 100 : 0;
+
+        // Use computed retention, fall back to metrics if no client data
         const retentionValues = staffRetention.get(staffId) || [];
-        const retentionRate = retentionValues.length > 0
-          ? retentionValues.reduce((sum, r) => sum + r, 0) / retentionValues.length
-          : 50; // Default to 50% if no data
+        const retentionRate = uniqueClients.size > 0
+          ? computedRetention
+          : (retentionValues.length > 0
+            ? retentionValues.reduce((sum, r) => sum + r, 0) / retentionValues.length
+            : 50);
 
         // Calculate retail attachment rate
         const retailData = staffRetail.get(staffId);
