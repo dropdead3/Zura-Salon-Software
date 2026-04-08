@@ -184,7 +184,10 @@ export function ScheduledReportsManager({ onScheduleNew }: ScheduledReportsManag
                         <History className="w-4 h-4 mr-2" />
                         View History
                       </DropdownMenuItem>
-                      <DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => {
+                        setEditingReport(report);
+                        setEditFormOpen(true);
+                      }}>
                         <Edit className="w-4 h-4 mr-2" />
                         Edit
                       </DropdownMenuItem>
