@@ -90,10 +90,10 @@ function GapItemRow({ item, showDates, formatCurrency }: {
         <div className="flex items-center gap-2 min-w-0 flex-1">
           <span className={cn(
             "inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full border shrink-0",
-            config.badgeClass
+            badgeClass
           )}>
             <Icon className="w-3 h-3" />
-            {config.label}
+            {badgeLabel}
           </span>
           <span className="font-sans text-foreground font-medium truncate min-w-0">{item.clientName}</span>
         </div>
