@@ -198,7 +198,12 @@ export function TrendIntelligenceSection({
 }: TrendIntelligenceSectionProps) {
   const [calendarOpen, setCalendarOpen] = useState(false);
 
-  if (!hasNextLevel || projection.projections.length === 0) return null;
+  if (projection.projections.length === 0) return null;
+
+  // Top-level stylists (no next level) — show maintenance view if any metrics declining
+  const isTopLevel = !hasNextLevel;
+  const decliningMetrics = projection.projections.filter(p => p.trajectory === 'declining');
+  if (isTopLevel && decliningMetrics.length === 0) return null; // All stable, no need to show
 
   const unmetProjections = projection.projections.filter(p => !p.isMet);
   const allMet = unmetProjections.length === 0;

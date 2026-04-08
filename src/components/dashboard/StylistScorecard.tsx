@@ -388,8 +388,11 @@ export function StylistScorecard({ userId, locationId, onTrendProjection }: Styl
                           const peerVel = getPeerVelocityForKey(cp.key, peerAverages);
                           if (peerVel === null) return null;
                           const diff = myVelocity - peerVel;
-                          // Threshold: meaningful difference
-                          if (Math.abs(diff) < 0.01) return null;
+                          // Metric-aware threshold: revenue uses $/day so needs higher threshold
+                          const threshold = (cp.key === 'revenue' || cp.key === 'avg_ticket' || cp.key === 'rev_per_hour')
+                            ? 1.0  // $1/day difference meaningful for monetary metrics
+                            : 0.05; // 0.05 pts/day for percentage metrics
+                          if (Math.abs(diff) < threshold) return null;
                           return diff > 0
                             ? <TrendingUp className="w-2.5 h-2.5 text-emerald-500 shrink-0" />
                             : <TrendingDown className="w-2.5 h-2.5 text-rose-400 shrink-0" />;
