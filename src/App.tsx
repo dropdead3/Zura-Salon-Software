@@ -181,6 +181,7 @@ const PTOManager = lazyWithRetry(() => import("./pages/dashboard/admin/PTOManage
 const IncidentReports = lazyWithRetry(() => import("./pages/dashboard/admin/IncidentReports"));
 const NewHireWizard = lazyWithRetry(() => import("./pages/dashboard/admin/NewHireWizard"));
 const RenterOnboardWizard = lazyWithRetry(() => import("./pages/dashboard/admin/RenterOnboardWizard"));
+const ReportsHub = lazyWithRetry(() => import("./pages/dashboard/admin/ReportsHub"));
 const RewardShop = lazyWithRetry(() => import("./pages/dashboard/RewardShop"));
 const PointsConfig = lazyWithRetry(() => import("./pages/dashboard/admin/PointsConfig"));
 const DailyHuddle = lazyWithRetry(() => import("./pages/dashboard/admin/DailyHuddle"));
