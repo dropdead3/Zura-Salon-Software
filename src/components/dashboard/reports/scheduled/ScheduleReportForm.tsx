@@ -69,6 +69,8 @@ const TIMEZONES = [
 export function ScheduleReportForm({ open, onOpenChange, editReport }: ScheduleReportFormProps) {
   const { effectiveOrganization } = useOrganizationContext();
   const orgId = effectiveOrganization?.id;
+  const { data: locations } = useActiveLocations();
+  const tier = useMemo(() => getReportTier(locations?.length || 1), [locations]);
   const createReport = useCreateScheduledReport();
   const updateReport = useUpdateScheduledReport();
 
@@ -165,8 +167,9 @@ export function ScheduleReportForm({ open, onOpenChange, editReport }: ScheduleR
   };
 
   const groupedReports = useMemo(() => {
+    const filtered = filterReportsByTier(REPORT_CATALOG, tier);
     const map = new Map<string, typeof REPORT_CATALOG>();
-    for (const r of REPORT_CATALOG) {
+    for (const r of filtered) {
       const list = map.get(r.category) || [];
       list.push(r);
       map.set(r.category, list);
