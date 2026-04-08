@@ -40,6 +40,11 @@ export default function ReportsHub() {
           backLabel="Back to Analytics Hub"
           actions={
             <div className="flex items-center gap-3">
+              <Button variant="outline" size={tokens.button.card} onClick={() => setBatchOpen(true)}>
+                <Package className="w-4 h-4 mr-2" />
+                Report Pack
+              </Button>
+
               <Popover>
                 <PopoverTrigger asChild>
                   <Button variant="outline" size={tokens.button.card} className="min-w-[200px] justify-start">
@@ -81,6 +86,14 @@ export default function ReportsHub() {
         />
 
         <ReportsTabContent filters={filters} isStandalone />
+
+        <BatchReportDialog
+          open={batchOpen}
+          onOpenChange={setBatchOpen}
+          dateFrom={filters.dateFrom}
+          dateTo={filters.dateTo}
+          locationId={filters.locationId === 'all' ? undefined : filters.locationId}
+        />
       </div>
     </DashboardLayout>
   );
