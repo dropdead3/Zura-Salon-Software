@@ -323,6 +323,7 @@ export function ReportsTabContent({ filters, isStandalone }: ReportsTabContentPr
             dateTo={filters.dateTo}
             locationId={location}
             onClose={handleCloseReport}
+            dateRangeKey={filters.dateRange}
           />
         );
       case 'retail-products':
@@ -332,6 +333,7 @@ export function ReportsTabContent({ filters, isStandalone }: ReportsTabContentPr
             dateTo={filters.dateTo}
             locationId={location}
             onClose={handleCloseReport}
+            dateRangeKey={filters.dateRange}
           />
         );
       case 'retail-staff':
@@ -341,6 +343,7 @@ export function ReportsTabContent({ filters, isStandalone }: ReportsTabContentPr
             dateTo={filters.dateTo}
             locationId={location}
             onClose={handleCloseReport}
+            dateRangeKey={filters.dateRange}
           />
         );
       case 'end-of-month':
@@ -350,6 +353,7 @@ export function ReportsTabContent({ filters, isStandalone }: ReportsTabContentPr
             dateTo={filters.dateTo}
             locationId={location}
             onClose={handleCloseReport}
+            dateRangeKey={filters.dateRange}
           />
         );
       case 'daily-sales':
@@ -363,6 +367,7 @@ export function ReportsTabContent({ filters, isStandalone }: ReportsTabContentPr
             dateTo={filters.dateTo}
             locationId={location}
             onClose={handleCloseReport}
+            dateRangeKey={filters.dateRange}
           />
         );
       case 'staff-kpi':
@@ -376,6 +381,7 @@ export function ReportsTabContent({ filters, isStandalone }: ReportsTabContentPr
             dateTo={filters.dateTo}
             locationId={location}
             onClose={handleCloseReport}
+            dateRangeKey={filters.dateRange}
           />
         );
       case 'retention':
@@ -389,6 +395,7 @@ export function ReportsTabContent({ filters, isStandalone }: ReportsTabContentPr
             dateTo={filters.dateTo}
             locationId={location}
             onClose={handleCloseReport}
+            dateRangeKey={filters.dateRange}
           />
         );
       case 'no-show':
@@ -401,6 +408,7 @@ export function ReportsTabContent({ filters, isStandalone }: ReportsTabContentPr
             dateTo={filters.dateTo}
             locationId={location}
             onClose={handleCloseReport}
+            dateRangeKey={filters.dateRange}
           />
         );
       case 'capacity':
@@ -410,6 +418,7 @@ export function ReportsTabContent({ filters, isStandalone }: ReportsTabContentPr
             dateTo={filters.dateTo}
             locationId={location}
             onClose={handleCloseReport}
+            dateRangeKey={filters.dateRange}
           />
         );
       case 'executive-summary':
@@ -419,6 +428,7 @@ export function ReportsTabContent({ filters, isStandalone }: ReportsTabContentPr
             dateTo={filters.dateTo}
             locationId={location}
             onClose={handleCloseReport}
+            dateRangeKey={filters.dateRange}
           />
         );
       case 'revenue-trend':
@@ -432,68 +442,69 @@ export function ReportsTabContent({ filters, isStandalone }: ReportsTabContentPr
             dateTo={filters.dateTo}
             locationId={location}
             onClose={handleCloseReport}
+            dateRangeKey={filters.dateRange}
           />
         );
       case 'service-profitability':
-        return <ServiceProfitabilityReport dateFrom={filters.dateFrom} dateTo={filters.dateTo} locationId={location} onClose={handleCloseReport} />;
+        return <ServiceProfitabilityReport dateFrom={filters.dateFrom} dateTo={filters.dateTo} locationId={location} onClose={handleCloseReport} dateRangeKey={filters.dateRange} />;
       case 'chemical-cost':
-        return <ChemicalCostReport dateFrom={filters.dateFrom} dateTo={filters.dateTo} locationId={location} onClose={handleCloseReport} />;
+        return <ChemicalCostReport dateFrom={filters.dateFrom} dateTo={filters.dateTo} locationId={location} onClose={handleCloseReport} dateRangeKey={filters.dateRange} />;
       case 'tip-analysis':
-        return <TipAnalysisReport dateFrom={filters.dateFrom} dateTo={filters.dateTo} locationId={location} onClose={handleCloseReport} />;
+        return <TipAnalysisReport dateFrom={filters.dateFrom} dateTo={filters.dateTo} locationId={location} onClose={handleCloseReport} dateRangeKey={filters.dateRange} />;
       case 'category-mix':
-        return <ServiceCategoryMixReport dateFrom={filters.dateFrom} dateTo={filters.dateTo} locationId={location} onClose={handleCloseReport} />;
+        return <ServiceCategoryMixReport dateFrom={filters.dateFrom} dateTo={filters.dateTo} locationId={location} onClose={handleCloseReport} dateRangeKey={filters.dateRange} />;
       case 'tax-summary':
-        return <TaxSummaryReport dateFrom={filters.dateFrom} dateTo={filters.dateTo} locationId={location} onClose={handleCloseReport} />;
+        return <TaxSummaryReport dateFrom={filters.dateFrom} dateTo={filters.dateTo} locationId={location} onClose={handleCloseReport} dateRangeKey={filters.dateRange} />;
       case 'client-attrition':
-        return <ClientAttritionReport dateFrom={filters.dateFrom} dateTo={filters.dateTo} locationId={location} onClose={handleCloseReport} />;
+        return <ClientAttritionReport dateFrom={filters.dateFrom} dateTo={filters.dateTo} locationId={location} onClose={handleCloseReport} dateRangeKey={filters.dateRange} />;
       case 'compensation-ratio':
-        return <StaffCompensationRatioReport dateFrom={filters.dateFrom} dateTo={filters.dateTo} locationId={location} onClose={handleCloseReport} />;
+        return <StaffCompensationRatioReport dateFrom={filters.dateFrom} dateTo={filters.dateTo} locationId={location} onClose={handleCloseReport} dateRangeKey={filters.dateRange} />;
       case 'location-benchmark':
-        return <LocationBenchmarkReport dateFrom={filters.dateFrom} dateTo={filters.dateTo} onClose={handleCloseReport} />;
+        return <LocationBenchmarkReport dateFrom={filters.dateFrom} dateTo={filters.dateTo} onClose={handleCloseReport} dateRangeKey={filters.dateRange} />;
       case 'demand-heatmap':
-        return <DemandHeatmapReport dateFrom={filters.dateFrom} dateTo={filters.dateTo} locationId={location} onClose={handleCloseReport} />;
+        return <DemandHeatmapReport dateFrom={filters.dateFrom} dateTo={filters.dateTo} locationId={location} onClose={handleCloseReport} dateRangeKey={filters.dateRange} />;
       case 'discounts':
-        return <DiscountsReport dateFrom={filters.dateFrom} dateTo={filters.dateTo} locationId={location} onClose={handleCloseReport} />;
+        return <DiscountsReport dateFrom={filters.dateFrom} dateTo={filters.dateTo} locationId={location} onClose={handleCloseReport} dateRangeKey={filters.dateRange} />;
       case 'future-appointments':
-        return <FutureAppointmentsReport dateFrom={filters.dateFrom} dateTo={filters.dateTo} locationId={location} onClose={handleCloseReport} />;
+        return <FutureAppointmentsReport dateFrom={filters.dateFrom} dateTo={filters.dateTo} locationId={location} onClose={handleCloseReport} dateRangeKey={filters.dateRange} />;
       case 'top-clients':
-        return <TopClientsReport dateFrom={filters.dateFrom} dateTo={filters.dateTo} locationId={location} onClose={handleCloseReport} />;
+        return <TopClientsReport dateFrom={filters.dateFrom} dateTo={filters.dateTo} locationId={location} onClose={handleCloseReport} dateRangeKey={filters.dateRange} />;
       case 'client-birthdays':
-        return <ClientBirthdaysReport dateFrom={filters.dateFrom} dateTo={filters.dateTo} locationId={location} onClose={handleCloseReport} />;
+        return <ClientBirthdaysReport dateFrom={filters.dateFrom} dateTo={filters.dateTo} locationId={location} onClose={handleCloseReport} dateRangeKey={filters.dateRange} />;
       case 'client-source':
-        return <ClientSourceReport dateFrom={filters.dateFrom} dateTo={filters.dateTo} locationId={location} onClose={handleCloseReport} />;
+        return <ClientSourceReport dateFrom={filters.dateFrom} dateTo={filters.dateTo} locationId={location} onClose={handleCloseReport} dateRangeKey={filters.dateRange} />;
       case 'duplicate-clients':
-        return <DuplicateClientsReport dateFrom={filters.dateFrom} dateTo={filters.dateTo} locationId={location} onClose={handleCloseReport} />;
+        return <DuplicateClientsReport dateFrom={filters.dateFrom} dateTo={filters.dateTo} locationId={location} onClose={handleCloseReport} dateRangeKey={filters.dateRange} />;
       case 'staff-transaction-detail':
-        return <StaffTransactionDetailReport dateFrom={filters.dateFrom} dateTo={filters.dateTo} locationId={location} onClose={handleCloseReport} />;
+        return <StaffTransactionDetailReport dateFrom={filters.dateFrom} dateTo={filters.dateTo} locationId={location} onClose={handleCloseReport} dateRangeKey={filters.dateRange} />;
       case 'deleted-appointments':
-        return <DeletedAppointmentsReport dateFrom={filters.dateFrom} dateTo={filters.dateTo} locationId={location} onClose={handleCloseReport} />;
+        return <DeletedAppointmentsReport dateFrom={filters.dateFrom} dateTo={filters.dateTo} locationId={location} onClose={handleCloseReport} dateRangeKey={filters.dateRange} />;
       case 'no-show-enhanced':
-        return <NoShowEnhancedReport dateFrom={filters.dateFrom} dateTo={filters.dateTo} locationId={location} onClose={handleCloseReport} />;
+        return <NoShowEnhancedReport dateFrom={filters.dateFrom} dateTo={filters.dateTo} locationId={location} onClose={handleCloseReport} dateRangeKey={filters.dateRange} />;
       case 'gift-cards':
-        return <GiftCardsReport dateFrom={filters.dateFrom} dateTo={filters.dateTo} locationId={location} onClose={handleCloseReport} />;
+        return <GiftCardsReport dateFrom={filters.dateFrom} dateTo={filters.dateTo} locationId={location} onClose={handleCloseReport} dateRangeKey={filters.dateRange} />;
       case 'vouchers':
-        return <VouchersReport dateFrom={filters.dateFrom} dateTo={filters.dateTo} locationId={location} onClose={handleCloseReport} />;
+        return <VouchersReport dateFrom={filters.dateFrom} dateTo={filters.dateTo} locationId={location} onClose={handleCloseReport} dateRangeKey={filters.dateRange} />;
       case 'staff-milestones':
-        return <StaffMilestonesReport dateFrom={filters.dateFrom} dateTo={filters.dateTo} locationId={location} onClose={handleCloseReport} />;
+        return <StaffMilestonesReport dateFrom={filters.dateFrom} dateTo={filters.dateTo} locationId={location} onClose={handleCloseReport} dateRangeKey={filters.dateRange} />;
       case 'permissions-audit':
         return <PermissionsAuditReport dateFrom={filters.dateFrom} dateTo={filters.dateTo} locationId={location} onClose={handleCloseReport} />;
       case 'time-attendance':
-        return <TimeAttendanceReport dateFrom={filters.dateFrom} dateTo={filters.dateTo} locationId={location} onClose={handleCloseReport} />;
+        return <TimeAttendanceReport dateFrom={filters.dateFrom} dateTo={filters.dateTo} locationId={location} onClose={handleCloseReport} dateRangeKey={filters.dateRange} />;
       case 'pto-balances':
         return <PTOBalancesReport dateFrom={filters.dateFrom} dateTo={filters.dateTo} locationId={location} onClose={handleCloseReport} />;
       case 'staff-strikes':
-        return <StaffStrikesReport dateFrom={filters.dateFrom} dateTo={filters.dateTo} locationId={location} onClose={handleCloseReport} />;
+        return <StaffStrikesReport dateFrom={filters.dateFrom} dateTo={filters.dateTo} locationId={location} onClose={handleCloseReport} dateRangeKey={filters.dateRange} />;
       case 'training-completion':
-        return <TrainingCompletionReport dateFrom={filters.dateFrom} dateTo={filters.dateTo} locationId={location} onClose={handleCloseReport} />;
+        return <TrainingCompletionReport dateFrom={filters.dateFrom} dateTo={filters.dateTo} locationId={location} onClose={handleCloseReport} dateRangeKey={filters.dateRange} />;
       case 'client-feedback':
-        return <ClientFeedbackReport dateFrom={filters.dateFrom} dateTo={filters.dateTo} locationId={location} onClose={handleCloseReport} />;
+        return <ClientFeedbackReport dateFrom={filters.dateFrom} dateTo={filters.dateTo} locationId={location} onClose={handleCloseReport} dateRangeKey={filters.dateRange} />;
       case 'churn-risk':
-        return <ChurnRiskReport dateFrom={filters.dateFrom} dateTo={filters.dateTo} locationId={location} onClose={handleCloseReport} />;
+        return <ChurnRiskReport dateFrom={filters.dateFrom} dateTo={filters.dateTo} locationId={location} onClose={handleCloseReport} dateRangeKey={filters.dateRange} />;
       case 'booth-renter':
-        return <BoothRenterReport dateFrom={filters.dateFrom} dateTo={filters.dateTo} locationId={location} onClose={handleCloseReport} />;
+        return <BoothRenterReport dateFrom={filters.dateFrom} dateTo={filters.dateTo} locationId={location} onClose={handleCloseReport} dateRangeKey={filters.dateRange} />;
       case 'formula-history':
-        return <FormulaHistoryReport dateFrom={filters.dateFrom} dateTo={filters.dateTo} locationId={location} onClose={handleCloseReport} />;
+        return <FormulaHistoryReport dateFrom={filters.dateFrom} dateTo={filters.dateTo} locationId={location} onClose={handleCloseReport} dateRangeKey={filters.dateRange} />;
       default:
         return null;
     }
