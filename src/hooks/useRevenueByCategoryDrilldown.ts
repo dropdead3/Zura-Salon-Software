@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { getServiceCategory } from '@/utils/serviceCategorization';
-import { formatDisplayName } from '@/lib/utils';
+import { resolveStaffNamesByPhorestIds } from '@/utils/resolveStaffNames';
 
 export interface CategoryStylistData {
   phorestStaffId: string;
@@ -92,21 +92,9 @@ export function useRevenueByCategoryDrilldown({
         }
       }
 
-      // Get staff name mappings
+      // Get staff name mappings via centralized resolver
       const staffIds = [...new Set(allItems.map(a => a.phorest_staff_id).filter(Boolean))];
-      const staffNameMap: Record<string, string> = {};
-
-      if (staffIds.length > 0) {
-        const { data: mappings } = await supabase
-          .from('phorest_staff_mapping')
-          .select('phorest_staff_id, phorest_staff_name, employee_profiles!phorest_staff_mapping_user_id_fkey(display_name, full_name)')
-          .in('phorest_staff_id', staffIds);
-
-        (mappings || []).forEach((m: any) => {
-          const name = m.employee_profiles ? formatDisplayName(m.employee_profiles.full_name || '', m.employee_profiles.display_name) : (m.phorest_staff_name ? formatDisplayName(m.phorest_staff_name) : 'Unknown');
-          staffNameMap[m.phorest_staff_id] = name;
-        });
-      }
+      const staffNameMap = await resolveStaffNamesByPhorestIds(staffIds);
 
       // Aggregate by category → stylist
       const categoryMap: Record<string, {
