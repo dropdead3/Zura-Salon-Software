@@ -134,16 +134,32 @@ export function useOrganizationAnalytics() {
     staleTime: 5 * 60 * 1000,
   });
 
-  // Fetch phorest clients count per location
+  // Fetch clients count per location (dual-source: Zura clients + phorest_clients)
   const { data: clients, isLoading: clientsLoading } = useQuery({
     queryKey: ['platform-analytics-clients'],
     queryFn: async () => {
-      const { data, error } = await supabase
+      // Try Zura-owned clients first
+      const { data: zuraClients, error: zuraError } = await supabase
+        .from('clients')
+        .select('id, location_id, phorest_client_id')
+        .eq('status', 'active')
+        .eq('is_placeholder', false);
+
+      // Also fetch phorest_clients
+      const { data: phorestClients } = await supabase
         .from('phorest_clients')
         .select('id, location_id')
         .eq('is_duplicate', false);
-      if (error) throw error;
-      return data || [];
+
+      // Merge: deduplicate by phorest_client_id
+      const seenPhorestIds = new Set(
+        (zuraClients || []).map((c: any) => c.phorest_client_id).filter(Boolean)
+      );
+      const merged = [
+        ...(zuraClients || []).map((c: any) => ({ id: c.id, location_id: c.location_id })),
+        ...(phorestClients || []).filter((c: any) => !seenPhorestIds.has(c.id)).map((c: any) => ({ id: c.id, location_id: c.location_id })),
+      ];
+      return merged;
     },
     staleTime: 5 * 60 * 1000,
   });

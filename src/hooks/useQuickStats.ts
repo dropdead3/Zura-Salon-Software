@@ -7,8 +7,7 @@ import { useRebookingRate } from './useRebookingRate';
 
 /**
  * Quick stats for dashboard home: today's clients, this week revenue, new clients, rebooking rate.
- * Uses effective org scope via RLS; pass locationId to scope to one location or omit for aggregate.
- * Pass accessibleLocationIds to scope "new clients" to the user's locations (recommended for multi-tenant).
+ * Uses dual-source client lookup: Zura-owned `clients` table first, falls back to `phorest_clients`.
  */
 export function useQuickStats(locationId?: string, accessibleLocationIds?: string[]) {
   const today = format(new Date(), 'yyyy-MM-dd');
@@ -26,20 +25,40 @@ export function useQuickStats(locationId?: string, accessibleLocationIds?: strin
   const newClientsQuery = useQuery({
     queryKey: ['quick-stats-new-clients', sevenDaysAgo, today, accessibleLocationIds],
     queryFn: async () => {
-      let query = supabase
+      // Try Zura-owned clients table first (uses first_visit or client_since)
+      let zuraQuery = supabase
+        .from('clients')
+        .select('*', { count: 'exact', head: true })
+        .eq('status', 'active')
+        .gte('first_visit', sevenDaysAgo)
+        .lte('first_visit', today);
+
+      if (accessibleLocationIds?.length) {
+        zuraQuery = zuraQuery.in('location_id', accessibleLocationIds);
+      } else if (locationId && locationId !== 'all') {
+        zuraQuery = zuraQuery.eq('location_id', locationId);
+      }
+
+      const { count: zuraCount, error: zuraError } = await zuraQuery;
+
+      // Also check phorest_clients for historical data
+      let phorestQuery = supabase
         .from('phorest_clients')
         .select('*', { count: 'exact', head: true })
         .eq('is_duplicate', false)
         .gte('first_visit', sevenDaysAgo)
         .lte('first_visit', today);
+
       if (accessibleLocationIds?.length) {
-        query = query.in('location_id', accessibleLocationIds);
+        phorestQuery = phorestQuery.in('location_id', accessibleLocationIds);
       } else if (locationId && locationId !== 'all') {
-        query = query.eq('location_id', locationId);
+        phorestQuery = phorestQuery.eq('location_id', locationId);
       }
-      const { count, error } = await query;
-      if (error) throw error;
-      return count ?? 0;
+
+      const { count: phorestCount } = await phorestQuery;
+
+      // Return whichever is higher (avoids double-counting during transition)
+      return Math.max(zuraCount ?? 0, phorestCount ?? 0);
     },
   });
 

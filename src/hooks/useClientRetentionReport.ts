@@ -41,7 +41,6 @@ interface ClientRetentionData {
   atRiskClients: number;
   averageLTV: number;
   atRiskClientsList: AtRiskClient[];
-  // CLV-specific data
   clvClients: CLVClientRow[];
   clvTierDistribution: CLVTierDistribution[];
   totalPortfolioValue: number;
@@ -51,32 +50,90 @@ interface ClientRetentionData {
   top50RevenueShare: number;
 }
 
+interface NormalizedClient {
+  id: string;
+  name: string;
+  created_at: string;
+  first_visit: string | null;
+  last_visit: string | null;
+  total_spend: number;
+  visit_count: number;
+  client_since: string | null;
+  phorest_client_id: string | null;
+}
+
 export function useClientRetentionReport(dateFrom: string, dateTo: string, locationId?: string) {
   return useQuery({
     queryKey: ['client-retention-report', dateFrom, dateTo, locationId],
     queryFn: async (): Promise<ClientRetentionData> => {
-      // Get all clients (batch to bypass 1,000 row limit)
-      const clients: { id: string; name: string | null; created_at: string; first_visit: string | null; last_visit: string | null; total_spend: number; visit_count: number; client_since: string | null }[] = [];
-      let from = 0;
-      const batchSize = 1000;
-      let hasMore = true;
-      while (hasMore) {
-        const { data, error } = await supabase
-          .from('phorest_clients')
-          .select('id, name, created_at, first_visit, last_visit, total_spend, visit_count, client_since')
-          .eq('is_duplicate', false)
-          .range(from, from + batchSize - 1);
-        if (error) throw error;
-        if (data && data.length > 0) {
-          clients.push(...data);
-          from += batchSize;
-          hasMore = data.length === batchSize;
-        } else {
-          hasMore = false;
+      // Fetch from both sources and merge
+      const allClients: NormalizedClient[] = [];
+
+      // 1. Zura-owned clients (primary)
+      {
+        let offset = 0;
+        const batchSize = 1000;
+        let hasMore = true;
+        while (hasMore) {
+          const { data, error } = await supabase
+            .from('clients')
+            .select('id, first_name, last_name, created_at, first_visit, last_visit_date, total_spend, visit_count, client_since, phorest_client_id')
+            .eq('status', 'active')
+            .eq('is_placeholder', false)
+            .range(offset, offset + batchSize - 1);
+          if (error) break;
+          (data || []).forEach((c: any) => {
+            allClients.push({
+              id: c.id,
+              name: `${c.first_name || ''} ${c.last_name || ''}`.trim() || 'Unknown',
+              created_at: c.created_at || '',
+              first_visit: c.first_visit || c.client_since,
+              last_visit: c.last_visit_date,
+              total_spend: Number(c.total_spend) || 0,
+              visit_count: c.visit_count || 0,
+              client_since: c.client_since,
+              phorest_client_id: c.phorest_client_id,
+            });
+          });
+          hasMore = (data?.length || 0) === batchSize;
+          offset += batchSize;
         }
       }
 
-      if (!clients || clients.length === 0) {
+      // 2. Phorest clients (supplement — add those not already present)
+      const seenPhorestIds = new Set(allClients.map(c => c.phorest_client_id).filter(Boolean));
+      {
+        let offset = 0;
+        const batchSize = 1000;
+        let hasMore = true;
+        while (hasMore) {
+          const { data, error } = await supabase
+            .from('phorest_clients')
+            .select('id, name, created_at, first_visit, last_visit, total_spend, visit_count, client_since')
+            .eq('is_duplicate', false)
+            .range(offset, offset + batchSize - 1);
+          if (error) break;
+          (data || []).forEach((c: any) => {
+            if (!seenPhorestIds.has(c.id)) {
+              allClients.push({
+                id: c.id,
+                name: c.name || 'Unknown',
+                created_at: c.created_at || '',
+                first_visit: c.first_visit,
+                last_visit: c.last_visit,
+                total_spend: Number(c.total_spend) || 0,
+                visit_count: c.visit_count || 0,
+                client_since: c.client_since,
+                phorest_client_id: c.id,
+              });
+            }
+          });
+          hasMore = (data?.length || 0) === batchSize;
+          offset += batchSize;
+        }
+      }
+
+      if (allClients.length === 0) {
         return {
           totalClients: 0, newClients: 0, returningClients: 0, retentionRate: 0,
           atRiskClients: 0, averageLTV: 0, atRiskClientsList: [],
@@ -85,8 +142,8 @@ export function useClientRetentionReport(dateFrom: string, dateTo: string, locat
         };
       }
 
-      // Get appointments in date range
-      let appointmentsQuery = supabase
+      // Get appointments in date range (both tables)
+      let phorestAptQuery = supabase
         .from('phorest_appointments')
         .select('phorest_client_id, appointment_date, total_price')
         .gte('appointment_date', dateFrom)
@@ -94,10 +151,10 @@ export function useClientRetentionReport(dateFrom: string, dateTo: string, locat
         .not('status', 'in', '("cancelled","no_show")');
 
       if (locationId) {
-        appointmentsQuery = appointmentsQuery.eq('location_id', locationId);
+        phorestAptQuery = phorestAptQuery.eq('location_id', locationId);
       }
 
-      const { data: appointments } = await appointmentsQuery;
+      const { data: appointments } = await phorestAptQuery;
 
       // Get all-time appointments for LTV
       const { data: allAppointments } = await supabase
@@ -107,12 +164,12 @@ export function useClientRetentionReport(dateFrom: string, dateTo: string, locat
 
       // Calculate metrics
       const clientsInPeriod = new Set(appointments?.map(a => a.phorest_client_id).filter(Boolean));
-      const newClientsInPeriod = clients.filter(c => {
+      const newClientsInPeriod = allClients.filter(c => {
         const createdDate = new Date(c.created_at);
         return createdDate >= new Date(dateFrom) && createdDate <= new Date(dateTo);
       });
 
-      // Calculate client LTV and last visit from appointments
+      // Calculate client LTV from appointments
       const clientStats: Record<string, { totalSpend: number; lastVisit: string; visitCount: number }> = {};
       
       allAppointments?.forEach(apt => {
@@ -128,21 +185,24 @@ export function useClientRetentionReport(dateFrom: string, dateTo: string, locat
         }
       });
 
-      // Find at-risk clients (60+ days since last visit, 2+ lifetime visits)
+      // Find at-risk clients
       const today = new Date();
       const atRiskClientsList: AtRiskClient[] = [];
 
-      clients.forEach(client => {
-        const stats = clientStats[client.id];
-        if (!stats || stats.visitCount < 2) return;
-        const daysSince = differenceInDays(today, new Date(stats.lastVisit));
+      allClients.forEach(client => {
+        const stats = clientStats[client.id] || clientStats[client.phorest_client_id || ''];
+        const visitCount = stats?.visitCount || client.visit_count;
+        if (visitCount < 2) return;
+        const lastVisit = stats?.lastVisit || client.last_visit;
+        if (!lastVisit) return;
+        const daysSince = differenceInDays(today, new Date(lastVisit));
         if (daysSince >= 60) {
           atRiskClientsList.push({
             id: client.id,
-            name: client.name || 'Unknown',
-            lastVisit: stats.lastVisit,
+            name: client.name,
+            lastVisit,
             daysSinceVisit: daysSince,
-            totalSpend: stats.totalSpend,
+            totalSpend: stats?.totalSpend || client.total_spend,
           });
         }
       });
@@ -157,14 +217,14 @@ export function useClientRetentionReport(dateFrom: string, dateTo: string, locat
 
       // Retention rate
       const returningClients = clientsInPeriod.size - newClientsInPeriod.length;
-      const retentionRate = clients.length > 0 
-        ? (returningClients / clients.length) * 100 
+      const retentionRate = allClients.length > 0 
+        ? (returningClients / allClients.length) * 100 
         : 0;
 
-      // ---- CLV computation ----
+      // CLV computation
       const clvClients: CLVClientRow[] = [];
       
-      clients.forEach(client => {
+      allClients.forEach(client => {
         const firstVisit = client.client_since || client.first_visit || null;
         const clv = calculateCLV(client.total_spend, client.visit_count, firstVisit, client.last_visit);
         if (!clv.isReliable) return;
@@ -177,7 +237,7 @@ export function useClientRetentionReport(dateFrom: string, dateTo: string, locat
 
         clvClients.push({
           id: client.id,
-          name: client.name || 'Unknown',
+          name: client.name,
           tier,
           lifetimeValue: clv.lifetimeValue,
           annualValue,
@@ -189,7 +249,6 @@ export function useClientRetentionReport(dateFrom: string, dateTo: string, locat
         });
       });
 
-      // Sort by annual value descending
       clvClients.sort((a, b) => b.annualValue - a.annualValue);
 
       // Tier distribution
@@ -207,7 +266,6 @@ export function useClientRetentionReport(dateFrom: string, dateTo: string, locat
         };
       });
 
-      // Portfolio metrics
       const totalPortfolioValue = clvClients.reduce((s, c) => s + c.lifetimeValue, 0);
       const annualValues = clvClients.map(c => c.annualValue).sort((a, b) => b - a);
       const averageCLV = annualValues.length > 0 ? totalAnnualAll / annualValues.length : 0;
@@ -222,7 +280,7 @@ export function useClientRetentionReport(dateFrom: string, dateTo: string, locat
       const top50RevenueShare = totalAnnualAll > 0 ? (top50Value / totalAnnualAll) * 100 : 0;
 
       return {
-        totalClients: clients.length,
+        totalClients: allClients.length,
         newClients: newClientsInPeriod.length,
         returningClients: Math.max(0, returningClients),
         retentionRate,
