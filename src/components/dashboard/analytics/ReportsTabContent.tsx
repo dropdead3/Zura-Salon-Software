@@ -72,6 +72,8 @@ const salesReports = [
   { id: 'product-sales', name: 'Product Sales Report', description: 'Top products and attachment rates', icon: DollarSign },
   { id: 'retail-products', name: 'Retail Product Report', description: 'Full product performance with red flags and categories', icon: ShoppingBag },
   { id: 'retail-staff', name: 'Retail Sales by Staff', description: 'Per-stylist retail revenue, units, and attachment rates', icon: Users },
+  { id: 'category-mix', name: 'Service Category Mix', description: 'Revenue share by service category (Color, Cut, Extensions, etc.)', icon: PieChart },
+  { id: 'tax-summary', name: 'Tax Summary', description: 'Tax collected by period and location for remittance', icon: Receipt },
 ];
 
 const staffReports = [
