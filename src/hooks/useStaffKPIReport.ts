@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { formatDisplayName } from '@/lib/utils';
+import { fetchAllBatched } from '@/utils/fetchAllBatched';
 
 interface StaffKPI {
   staffId: string;
@@ -39,37 +40,41 @@ export function useStaffKPIReport(dateFrom: string, dateTo: string, locationId?:
         };
       });
 
-      // Get performance metrics (for rebooking/retention KPIs)
-      const { data: metrics } = await supabase
-        .from('phorest_performance_metrics')
-        .select('phorest_staff_id, week_start, rebooking_rate, retention_rate, new_clients')
-        .gte('week_start', dateFrom)
-        .lte('week_start', dateTo);
+      // Fetch appointments for rebooking, retention, new clients
+      const appointments = await fetchAllBatched<{
+        phorest_staff_id: string | null;
+        phorest_client_id: string | null;
+        rebooked_at_checkout: boolean | null;
+        is_new_client: boolean | null;
+        status: string | null;
+      }>((from, to) => {
+        let q = supabase
+          .from('phorest_appointments')
+          .select('phorest_staff_id, phorest_client_id, rebooked_at_checkout, is_new_client, status')
+          .gte('appointment_date', dateFrom)
+          .lte('appointment_date', dateTo)
+          .range(from, to);
+        if (locationId) q = q.eq('location_id', locationId);
+        return q;
+      });
 
       // Get transaction items for accurate POS revenue
-      const allItems: any[] = [];
-      const PAGE_SIZE = 1000;
-      let offset = 0;
-      let hasMore = true;
-
-      while (hasMore) {
-        let query = supabase
+      const allItems = await fetchAllBatched<{
+        phorest_staff_id: string | null;
+        total_amount: number | null;
+        tax_amount: number | null;
+        phorest_client_id: string | null;
+        transaction_date: string | null;
+      }>((from, to) => {
+        let q = supabase
           .from('phorest_transaction_items')
           .select('phorest_staff_id, total_amount, tax_amount, phorest_client_id, transaction_date')
           .gte('transaction_date', dateFrom)
           .lte('transaction_date', dateTo)
-          .range(offset, offset + PAGE_SIZE - 1);
-
-        if (locationId) {
-          query = query.eq('location_id', locationId);
-        }
-
-        const { data, error } = await query;
-        if (error) throw error;
-        allItems.push(...(data || []));
-        hasMore = (data?.length || 0) === PAGE_SIZE;
-        offset += PAGE_SIZE;
-      }
+          .range(from, to);
+        if (locationId) q = q.eq('location_id', locationId);
+        return q;
+      });
 
       // Aggregate by staff
       const staffData: Record<string, StaffKPI> = {};
@@ -100,24 +105,37 @@ export function useStaffKPIReport(dateFrom: string, dateTo: string, locationId?:
         const amount = (Number(item.total_amount) || 0) + (Number(item.tax_amount) || 0);
         staffData[mapping.userId].totalRevenue += amount;
         staffData[mapping.userId].totalServices += 1;
-        // Track unique client visits
         const visitKey = `${item.phorest_client_id}|${item.transaction_date}`;
         staffVisitSets[mapping.userId].add(visitKey);
       });
 
-      // Process metrics for KPIs
-      metrics?.forEach(metric => {
-        const staffId = metric.phorest_staff_id;
-        if (!staffId) return;
-
-        const mapping = mappingLookup[staffId];
+      // Process appointments for rebooking, retention, new clients per staff
+      const staffAppts = new Map<string, typeof appointments>();
+      appointments.forEach(apt => {
+        const sid = apt.phorest_staff_id;
+        if (!sid) return;
+        const mapping = mappingLookup[sid];
         if (!mapping) return;
+        if (!staffAppts.has(mapping.userId)) staffAppts.set(mapping.userId, []);
+        staffAppts.get(mapping.userId)!.push(apt);
+      });
 
-        if (staffData[mapping.userId]) {
-          staffData[mapping.userId].rebookingRate = metric.rebooking_rate || 0;
-          staffData[mapping.userId].retentionRate = metric.retention_rate || 0;
-          staffData[mapping.userId].newClients += metric.new_clients || 0;
-        }
+      staffAppts.forEach((apts, userId) => {
+        if (!staffData[userId]) return;
+        const valid = apts.filter(a => !['cancelled', 'no_show'].includes((a.status || '').toLowerCase()));
+        // Rebooking
+        staffData[userId].rebookingRate = valid.length > 0
+          ? (valid.filter(a => a.rebooked_at_checkout).length / valid.length) * 100
+          : 0;
+        // New clients
+        staffData[userId].newClients = valid.filter(a => a.is_new_client).length;
+        // Retention: returning clients / total unique clients
+        const uniqueClients = new Set(valid.map(a => a.phorest_client_id).filter(Boolean));
+        const newClientIds = new Set(valid.filter(a => a.is_new_client).map(a => a.phorest_client_id).filter(Boolean));
+        const returningCount = uniqueClients.size - newClientIds.size;
+        staffData[userId].retentionRate = uniqueClients.size > 0
+          ? (returningCount / uniqueClients.size) * 100
+          : 0;
       });
 
       // Calculate averages using unique visits

@@ -35,26 +35,7 @@ export interface PricingEstimate {
   dataWindowDays: number;
 }
 
-const BATCH_SIZE = 1000;
-
-async function fetchAllBatched<T>(
-  buildQuery: (from: number, to: number) => any,
-  batchSize = BATCH_SIZE,
-): Promise<T[]> {
-  let all: T[] = [];
-  let from = 0;
-  let hasMore = true;
-  while (hasMore) {
-    const to = from + batchSize - 1;
-    const { data, error } = await buildQuery(from, to);
-    if (error) throw error;
-    if (!data || data.length === 0) break;
-    all = all.concat(data as T[]);
-    hasMore = data.length === batchSize;
-    from += batchSize;
-  }
-  return all;
-}
+import { fetchAllBatched } from '@/utils/fetchAllBatched';
 
 export function useColorBarPricingEstimate(stylistCountFallback = 2) {
   const orgId = useColorBarOrgId();
