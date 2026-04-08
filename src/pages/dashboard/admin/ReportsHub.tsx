@@ -93,7 +93,7 @@ export default function ReportsHub() {
           backTo="/dashboard/admin/analytics"
           backLabel="Back to Analytics Hub"
           actions={
-            <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-center gap-3">
               <Button variant="outline" size={tokens.button.card} onClick={() => setBatchOpen(true)}>
                 <Package className="w-4 h-4 mr-2" />
                 Report Pack
