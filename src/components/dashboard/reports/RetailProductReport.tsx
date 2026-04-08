@@ -29,6 +29,7 @@ interface RetailProductReportProps {
   dateTo: string;
   locationId?: string;
   onClose: () => void;
+  dateRangeKey?: string;
 }
 
 export function RetailProductReport({ dateFrom, dateTo, locationId, onClose }: RetailProductReportProps) {

@@ -34,6 +34,7 @@ interface PayrollSummaryReportProps {
   dateTo: string;
   locationId?: string;
   onClose: () => void;
+  dateRangeKey?: string;
 }
 
 export function PayrollSummaryReport({ dateFrom, dateTo, locationId, onClose }: PayrollSummaryReportProps) {

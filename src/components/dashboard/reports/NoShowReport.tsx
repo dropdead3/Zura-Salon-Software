@@ -35,6 +35,7 @@ interface NoShowReportProps {
   dateTo: string;
   locationId?: string;
   onClose: () => void;
+  dateRangeKey?: string;
 }
 
 export function NoShowReport({ 

@@ -39,6 +39,7 @@ interface SalesReportGeneratorProps {
   dateTo: string;
   locationId?: string;
   onClose: () => void;
+  dateRangeKey?: string;
 }
 
 export function SalesReportGenerator({ 

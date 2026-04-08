@@ -38,6 +38,7 @@ interface ClientRetentionReportProps {
   dateTo: string;
   locationId?: string;
   onClose: () => void;
+  dateRangeKey?: string;
 }
 
 export function ClientRetentionReport({ 

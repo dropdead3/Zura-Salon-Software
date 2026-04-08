@@ -30,6 +30,7 @@ interface RetailStaffReportProps {
   dateTo: string;
   locationId?: string;
   onClose: () => void;
+  dateRangeKey?: string;
 }
 
 const getInitials = (name: string) =>

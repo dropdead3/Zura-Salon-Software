@@ -32,6 +32,7 @@ interface CapacityReportProps {
   dateTo: string;
   locationId?: string;
   onClose: () => void;
+  dateRangeKey?: string;
 }
 
 export function CapacityReport({ 

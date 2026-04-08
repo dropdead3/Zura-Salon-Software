@@ -27,6 +27,7 @@ interface ExecutiveSummaryReportProps {
   dateTo: string;
   locationId?: string;
   onClose: () => void;
+  dateRangeKey?: string;
 }
 
 export function ExecutiveSummaryReport({ dateFrom, dateTo, locationId, onClose }: ExecutiveSummaryReportProps) {
