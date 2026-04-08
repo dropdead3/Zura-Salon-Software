@@ -152,17 +152,17 @@ export function useLocationHealthScores(orgId: string | undefined) {
     queryKey: ['health-engine-locations', orgId],
     queryFn: async (): Promise<LocationHealthScore[]> => {
       if (!orgId) return [];
-      const { data, error } = await supabase
-        .from('location_health_scores')
+      const { data, error } = await (supabase
+        .from('location_health_scores' as any)
         .select('*')
         .eq('organization_id', orgId)
-        .order('score_date', { ascending: false });
+        .order('score_date', { ascending: false }) as any);
 
       if (error) throw error;
 
       // Latest per location
       const byLoc = new Map<string, LocationHealthScore>();
-      for (const row of data || []) {
+      for (const row of (data || []) as any[]) {
         if (!byLoc.has(row.location_id)) {
           byLoc.set(row.location_id, {
             ...row,
