@@ -104,8 +104,8 @@ serve(async (req) => {
     let staffMap: Record<string, { userId: string; name: string }> = {};
     if (staffIds.length > 0) {
       const { data: staffData } = await supabase
-        .from("phorest_staff_mappings")
-        .select("phorest_staff_id, user_id, staff_first_name, staff_last_name")
+        .from("phorest_staff_mapping")
+        .select("phorest_staff_id, user_id, phorest_staff_name")
         .in("phorest_staff_id", staffIds);
 
       if (staffData) {
@@ -113,7 +113,7 @@ serve(async (req) => {
           if (s.phorest_staff_id && s.user_id) {
             staffMap[s.phorest_staff_id] = {
               userId: s.user_id,
-              name: `${s.staff_first_name || ''} ${s.staff_last_name || ''}`.trim()
+              name: s.phorest_staff_name || ''
             };
           }
         });

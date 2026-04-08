@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { format, startOfWeek, startOfMonth, startOfYear } from 'date-fns';
+import { fetchAllBatched } from '@/utils/fetchAllBatched';
 
 type GoalPeriod = 'weekly' | 'monthly' | 'yearly';
 
@@ -23,30 +24,21 @@ export function useGoalPeriodRevenue(period: GoalPeriod, locationId?: string) {
       const dateFrom = format(getPeriodStart(period), 'yyyy-MM-dd');
       const dateTo = format(new Date(), 'yyyy-MM-dd');
 
-      // Use phorest_transaction_items for accurate POS revenue
-      let allItems: { total_amount: number | null; tax_amount: number | null }[] = [];
-      const PAGE_SIZE = 1000;
-      let offset = 0;
-      let hasMore = true;
+      const allItems = await fetchAllBatched<{ total_amount: number | null; tax_amount: number | null }>(
+        (from, to) => {
+          let q = supabase
+            .from('phorest_transaction_items')
+            .select('total_amount, tax_amount')
+            .gte('transaction_date', dateFrom)
+            .lte('transaction_date', dateTo)
+            .range(from, to);
 
-      while (hasMore) {
-        let query = supabase
-          .from('phorest_transaction_items')
-          .select('total_amount, tax_amount')
-          .gte('transaction_date', dateFrom)
-          .lte('transaction_date', dateTo)
-          .range(offset, offset + PAGE_SIZE - 1);
-
-        if (locationId && locationId !== 'all') {
-          query = query.eq('location_id', locationId);
+          if (locationId && locationId !== 'all') {
+            q = q.eq('location_id', locationId);
+          }
+          return q;
         }
-
-        const { data, error } = await query;
-        if (error) throw error;
-        allItems.push(...(data || []));
-        hasMore = (data?.length || 0) === PAGE_SIZE;
-        offset += PAGE_SIZE;
-      }
+      );
 
       return allItems.reduce(
         (sum, row) => sum + (Number(row.total_amount) || 0) + (Number(row.tax_amount) || 0),
