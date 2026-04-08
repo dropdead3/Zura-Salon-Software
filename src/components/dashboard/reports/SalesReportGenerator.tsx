@@ -18,7 +18,7 @@ import {
 } from '@/components/ui/table';
 import { FileText, Download, Loader2, FileSpreadsheet, Eye } from 'lucide-react';
 import { ReportPreviewModal } from '@/components/dashboard/reports/ReportPreviewModal';
-import { useSalesMetrics, useSalesByStylist, useSalesByLocation } from '@/hooks/useSalesData';
+import { useSalesMetrics, useSalesByStylist, useSalesByLocation, useDailySalesSummary } from '@/hooks/useSalesData';
 import { useProductSalesAnalytics } from '@/hooks/useProductSalesAnalytics';
 import { useAuth } from '@/contexts/AuthContext';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
