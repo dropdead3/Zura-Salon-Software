@@ -1,122 +1,103 @@
 
 
-# Four Trend Intelligence Enhancements
+# Trend Intelligence — Gaps, Bugs & Enhancements Audit
 
-## Overview
+## Bugs
 
-Building on the existing `useTrendProjection` hook, `TrendIntelligenceSection` component, and `StylistScorecard`, we'll add: (1) weekly digest email with trend projections, (2) AI-powered personalized coaching scripts, (3) goal-setting mode with reverse-calculated targets, and (4) peer comparison trends.
+### Bug 1: `useGoalMode` revenue daily target ignores goal date
+In `useGoalMode.ts` line 129, revenue `dailyNeeded` is hardcoded to `p.gap / 30` regardless of `daysRemaining`. If someone sets a 14-day goal, they still see the 30-day figure. Should be `p.gap / daysRemaining` for consistency with the goal timeline (revenue gap is a monthly average gap, but if you want to close it faster, the daily intensity should reflect the compressed timeline).
 
----
+**Fix:** Change to `dailyNeeded = p.gap / daysRemaining` for revenue in goal mode, or at minimum `p.gap / Math.min(30, daysRemaining)`.
 
-## Enhancement 1: Weekly Digest Email
+### Bug 2: `useStylistPeerAverages` missing `priorTotalRetention` in velocity
+Line 295: `retentionVelocity` is hardcoded to `0` with a comment "requires more complex calculation." This means the peer velocity comparison indicator for retention will never show ▲/▼ — it's dead UI.
 
-Surface trend projections in the Weekly Intelligence Brief so stylists get updates without visiting the page.
+**Fix:** Compute prior-window retention the same way current-window retention is computed, and calculate the velocity.
 
-### Approach
+### Bug 3: `stylist-trend-digest` — no pagination on sales/appts queries
+Lines 81-95: Both queries fetch without pagination. With the 1000-row default limit, stylists with high transaction volumes over 180 days (2× 90-day window) will silently get truncated data, producing incorrect KPI calculations.
 
-Create a new edge function `stylist-trend-digest` that:
-- Queries each stylist's KPIs, computes velocity/projection server-side (mirroring `useTrendProjection` logic)
-- Calls Lovable AI to generate a short personalized paragraph summarizing their trajectory
-- Sends via `send-transactional-email` with a new `stylist-trend-digest` template
+**Fix:** Add the same pagination loop pattern used in `useStylistPeerAverages.ts`.
 
-A pg_cron job triggers it weekly (Monday 8 AM). The edge function iterates per-org, per-stylist — but sends one email per stylist (transactional, triggered by the weekly cron event).
+### Bug 4: `ai-coaching-script` — no auth check
+The edge function doesn't verify the caller is authenticated or authorized. Any anonymous request with valid KPI data can invoke AI credits.
 
-### Files
+**Fix:** Add `Authorization` header validation using Supabase `getUser()`.
 
-| Action | File |
-|--------|------|
-| Create | `supabase/functions/stylist-trend-digest/index.ts` |
-| Create | `supabase/functions/_shared/transactional-email-templates/stylist-trend-digest.tsx` |
-| Edit | `supabase/functions/_shared/transactional-email-templates/registry.ts` |
-| DB | pg_cron job for weekly trigger |
+### Bug 5: `TrendIntelligenceSection` hides entirely when `hasNextLevel` is false
+Line 201: `if (!hasNextLevel || projection.projections.length === 0) return null;` — Top-level stylists who need to maintain metrics get no trend intelligence at all. The retention risk nudge and maintenance coaching are invisible to them.
 
-**Prerequisite**: Transactional email infrastructure must be scaffolded. If not already present, we'll set it up first.
+**Fix:** Show a maintenance-focused view for top-level stylists when there are retention risks or declining metrics.
 
----
+## Gaps
 
-## Enhancement 2: AI-Powered Coaching Scripts
+### Gap 1: Weekly digest pg_cron job never created
+The plan calls for a pg_cron job to trigger `stylist-trend-digest` weekly. No migration was created. The edge function exists but has no automated trigger.
 
-Generate personalized coaching recommendations based on each stylist's specific gaps.
+**Fix:** Create a migration adding: `SELECT cron.schedule('weekly-trend-digest', '0 8 * * 1', $$SELECT net.http_post(...)$$);`
 
-### Approach
+### Gap 2: Digest email missing `avg_ticket`, `rev_per_hour`, `new_clients` KPIs
+`stylist-trend-digest` only computes 4 KPIs (revenue, retail%, rebooking, utilization) but the level criteria can include avg_ticket, rev_per_hour, retention_rate, and new_clients. These are silently omitted from the email.
 
-New edge function `ai-coaching-script` that accepts a stylist's KPI snapshot (current values, targets, gaps, trajectory) and returns a structured coaching script via Lovable AI (tool calling for structured output). The prompt includes their strong areas, weak areas, and generates:
-- A 2-3 sentence coaching summary
-- 3 specific action items with scripts (e.g., "Here's a script for requesting walk-in routing")
-- Priority ranking by impact
+**Fix:** Extend `computeWindowKpis` and the kpiMap builder to include all criteria fields.
 
-New client-side hook `useAICoaching` and a "Get Coaching Plan" button in `TrendIntelligenceSection`.
+### Gap 3: No loading/error state in `TrendIntelligenceSection`
+If `useTrendProjection` returns empty projections (e.g. data still loading upstream), the section renders nothing. No skeleton or feedback.
 
-### Files
+### Gap 4: AI coaching has no rate-limiting or caching
+Each click of "AI Coaching" fires a new edge function call. No debounce, no localStorage cache of the last result, no cooldown period. Users can burn through AI credits rapidly.
 
-| Action | File |
-|--------|------|
-| Create | `supabase/functions/ai-coaching-script/index.ts` |
-| Create | `src/hooks/useAICoaching.ts` |
-| Create | `src/components/dashboard/AICoachingPanel.tsx` |
-| Edit | `src/components/dashboard/TrendIntelligenceSection.tsx` (add coaching button + panel) |
+**Fix:** Cache coaching results in state/localStorage with a TTL (e.g., 24h). Add a cooldown button state.
 
----
+### Gap 5: Peer velocity threshold too low
+In `StylistScorecard.tsx` line 392, `Math.abs(diff) < 0.01` is the threshold. For revenue velocity (which is in $/day), 0.01 is essentially zero — every peer comparison will show an arrow. For percentage metrics, 0.01 per day is also very sensitive. Should be metric-aware.
 
-## Enhancement 3: Goal-Setting Mode
+## Enhancements
 
-Let stylists set a target date ("I want to level up by June") and reverse-calculate daily targets.
+### Enhancement 1: Add "share with manager" action on AI coaching
+Let stylists share their coaching plan with their manager via a simple in-app notification or email, fostering accountability.
 
-### Approach
+### Enhancement 2: Historical trend sparkline
+Add a tiny sparkline in the Pace column showing the last 4 data points of each KPI, giving visual momentum context beyond just "improving/declining/flat."
 
-Add a date picker to `TrendIntelligenceSection` that enters "goal mode." When a target date is set:
-- Calculate remaining calendar days
-- Reverse-compute per-KPI daily targets needed: `gap / remainingDays`
-- Show adjusted daily targets and feasibility indicator (green = achievable, amber = aggressive, red = extremely aggressive)
+### Enhancement 3: Goal mode should show a countdown + milestone markers
+When goal mode is active, show milestone markers (25%, 50%, 75%) on each KPI's progress bar relative to the goal date, so stylists can track interim progress.
 
-This is purely client-side math — no database or edge function needed. Store the target date in localStorage per user+level.
+### Enhancement 4: Digest email should include a deep link
+The email says "View your full scorecard" but has no link. Add a deep link to the My Level Progress page.
 
-### Files
+### Enhancement 5: Coaching panel should persist across page navigation
+Currently coaching is in React state — navigating away and back loses it. Store in a lightweight cache (React Query or localStorage).
 
-| Action | File |
-|--------|------|
-| Create | `src/hooks/useGoalMode.ts` (localStorage persistence + reverse calculations) |
-| Edit | `src/components/dashboard/TrendIntelligenceSection.tsx` (date picker + goal mode display) |
+## Implementation Priority
 
----
+| # | Item | Type | Risk | Effort |
+|---|------|------|------|--------|
+| 1 | Bug 4: Auth check on AI coaching edge function | Bug | **High** (security) | Small |
+| 2 | Bug 3: Pagination in digest queries | Bug | Medium | Small |
+| 3 | Gap 1: Create pg_cron migration | Gap | Medium | Small |
+| 4 | Bug 1: Goal mode revenue calc | Bug | Medium | Trivial |
+| 5 | Bug 5: Top-level stylist visibility | Bug | Medium | Small |
+| 6 | Gap 4: AI coaching rate-limit/cache | Gap | Medium | Small |
+| 7 | Gap 2: Missing KPIs in digest | Gap | Low | Small |
+| 8 | Bug 2: Retention velocity | Bug | Low | Medium |
+| 9 | Gap 5: Metric-aware velocity threshold | Gap | Low | Small |
+| 10 | Enhancement 4: Digest deep link | Enhancement | Low | Trivial |
+| 11 | Enhancement 5: Coaching persistence | Enhancement | Low | Small |
+| 12 | Enhancement 1-3 | Enhancement | Low | Medium |
 
-## Enhancement 4: Peer Comparison Trends
+**Recommendation:** Start with items 1-6 as a single pass — they're all small fixes that materially improve correctness and security. Items 7-12 can follow as a polish pass.
 
-Show not just current peer averages but whether peers are improving faster.
+## Files Changed
 
-### Approach
-
-Extend `useStylistPeerAverages` to also compute peer velocity (prior vs current window averages), then expose `peerVelocity` per KPI. In the scorecard, add a subtle indicator showing whether the stylist is improving faster or slower than peers.
-
-New interface fields: `priorAvgRevenue`, `priorAvgRetailPct`, etc. — computed from the `startStr → evalStartStr` window that's already fetched.
-
-In the scorecard's KPI table, add a small "vs peers" velocity comparison icon: ▲ if improving faster than peers, ▼ if slower.
-
-### Files
-
-| Action | File |
-|--------|------|
-| Edit | `src/hooks/useStylistPeerAverages.ts` (add prior-window averages + velocity) |
-| Edit | `src/components/dashboard/StylistScorecard.tsx` (velocity comparison indicator) |
-| Edit | `src/components/dashboard/TrendIntelligenceSection.tsx` (peer trend context in action cards) |
-
----
-
-## Implementation Order
-
-1. **Goal-setting mode** — client-only, lowest risk
-2. **Peer comparison trends** — extends existing hook, no new infra
-3. **AI coaching scripts** — new edge function + UI
-4. **Weekly digest email** — requires transactional email infrastructure check
-
-## Summary
-
-| Enhancement | New Files | Edited Files | Edge Functions | DB Changes |
-|---|---|---|---|---|
-| Weekly Digest | 2 | 1 | 1 + cron | pg_cron job |
-| AI Coaching | 3 | 1 | 1 | None |
-| Goal-Setting | 1 | 1 | 0 | None |
-| Peer Trends | 0 | 3 | 0 | None |
-
-6 new files, 4 edited files, 2 edge functions, 1 cron job.
+| File | Changes |
+|---|---|
+| `supabase/functions/ai-coaching-script/index.ts` | Add auth check |
+| `supabase/functions/stylist-trend-digest/index.ts` | Add pagination, missing KPIs, deep link |
+| `src/hooks/useGoalMode.ts` | Fix revenue daily calc |
+| `src/hooks/useStylistPeerAverages.ts` | Compute retention velocity |
+| `src/hooks/useAICoaching.ts` | Add localStorage cache + cooldown |
+| `src/components/dashboard/StylistScorecard.tsx` | Metric-aware velocity threshold |
+| `src/components/dashboard/TrendIntelligenceSection.tsx` | Show maintenance view for top-level stylists |
+| DB migration | pg_cron job for weekly digest |
 
