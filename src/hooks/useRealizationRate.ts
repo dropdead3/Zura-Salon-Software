@@ -56,21 +56,23 @@ export function useRealizationRate(locationId?: string): RealizationRateResult {
       }
 
       // 2. Actual revenue by date from phorest_transaction_items
-      let txnQuery: any = supabase
-        .from('phorest_transaction_items')
-        .select('transaction_date, total_amount, tax_amount')
-        .gte('transaction_date', fromDate)
-        .lte('transaction_date', toDate);
-
-      if (locationId && locationId !== 'all') {
-        txnQuery = txnQuery.eq('location_id', locationId);
-      }
-
-      const salesResult = await txnQuery;
-      if (salesResult.error) throw salesResult.error;
+      const salesData = await fetchAllBatched<{
+        transaction_date: string | null;
+        total_amount: number | null;
+        tax_amount: number | null;
+      }>((from, to) => {
+        let q = supabase
+          .from('phorest_transaction_items')
+          .select('transaction_date, total_amount, tax_amount')
+          .gte('transaction_date', fromDate)
+          .lte('transaction_date', toDate)
+          .range(from, to);
+        if (locationId && locationId !== 'all') q = q.eq('location_id', locationId);
+        return q;
+      });
 
       const actualByDate: Record<string, number> = {};
-      for (const row of salesResult.data || []) {
+      for (const row of salesData) {
         const d = (row.transaction_date || '').slice(0, 10);
         if (!d) continue;
         actualByDate[d] = (actualByDate[d] || 0) + (Number(row.total_amount) || 0) + (Number(row.tax_amount) || 0);

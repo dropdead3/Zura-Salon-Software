@@ -1,8 +1,9 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { subDays, startOfMonth, startOfDay, format } from 'date-fns';
+import { subDays, startOfMonth, format } from 'date-fns';
 import { usePerformanceThreshold } from './usePerformanceThreshold';
 import { resolveStaffNames } from '@/utils/resolveStaffNames';
+import { fetchAllBatched } from '@/utils/fetchAllBatched';
 
 export type RevenueTimeRange = 'today' | 'week' | 'month' | '90days' | '6months' | '365days';
 
@@ -65,34 +66,41 @@ export function useStaffRevenuePerformance(
       const { startDate, endDate } = getDateRange(timeRange);
       
       // Query raw transactions (POS-first integrity model)
-      let txQuery = supabase
-        .from('phorest_sales_transactions')
-        .select('phorest_staff_id, total_amount, tax_amount, transaction_date, location_id')
-        .gte('transaction_date', startDate)
-        .lte('transaction_date', endDate)
-        .not('phorest_staff_id', 'is', null);
-      
-      if (locationId) {
-        txQuery = txQuery.eq('location_id', locationId);
-      }
-      
-      const { data: txData, error: txError } = await txQuery;
-      if (txError) throw txError;
+      const txData = await fetchAllBatched<{
+        phorest_staff_id: string | null;
+        total_amount: number | null;
+        tax_amount: number | null;
+        transaction_date: string | null;
+        location_id: string | null;
+      }>((from, to) => {
+        let q = supabase
+          .from('phorest_sales_transactions')
+          .select('phorest_staff_id, total_amount, tax_amount, transaction_date, location_id')
+          .gte('transaction_date', startDate)
+          .lte('transaction_date', endDate)
+          .not('phorest_staff_id', 'is', null)
+          .range(from, to);
+        if (locationId) q = q.eq('location_id', locationId);
+        return q;
+      });
 
       // Also fetch transaction items for service/product breakdown
-      let itemQuery = supabase
-        .from('phorest_transaction_items')
-        .select('phorest_staff_id, item_type, total_amount, transaction_date')
-        .gte('transaction_date', startDate)
-        .lte('transaction_date', endDate)
-        .not('phorest_staff_id', 'is', null);
-      
-      if (locationId) {
-        itemQuery = itemQuery.eq('location_id', locationId);
-      }
-      
-      const { data: itemData, error: itemError } = await itemQuery;
-      if (itemError) throw itemError;
+      const itemData = await fetchAllBatched<{
+        phorest_staff_id: string | null;
+        item_type: string | null;
+        total_amount: number | null;
+        transaction_date: string | null;
+      }>((from, to) => {
+        let q = supabase
+          .from('phorest_transaction_items')
+          .select('phorest_staff_id, item_type, total_amount, transaction_date')
+          .gte('transaction_date', startDate)
+          .lte('transaction_date', endDate)
+          .not('phorest_staff_id', 'is', null)
+          .range(from, to);
+        if (locationId) q = q.eq('location_id', locationId);
+        return q;
+      });
       
       // Get staff mappings
       const { data: mappings, error: mappingsError } = await supabase
@@ -129,7 +137,7 @@ export function useStaffRevenuePerformance(
       }>();
       
       // Sum revenue from raw transactions (total_amount + tax_amount per POS-first standard)
-      for (const tx of txData || []) {
+      for (const tx of txData) {
         const staffId = tx.phorest_staff_id;
         if (!staffId) continue;
         
@@ -149,7 +157,7 @@ export function useStaffRevenuePerformance(
       }
 
       // Enrich with service/product breakdown from transaction items
-      for (const item of itemData || []) {
+      for (const item of itemData) {
         const staffId = item.phorest_staff_id;
         if (!staffId) continue;
         const existing = aggregatedData.get(staffId);

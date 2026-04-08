@@ -144,20 +144,17 @@ export function useTipsDrilldown({ dateFrom, dateTo, locationId, minAppointments
   const { data: transactionItems, isLoading: txLoading } = useQuery({
     queryKey: ['tips-drilldown-payment-methods', dateFrom, dateTo, locationId],
     queryFn: async () => {
-      let query = supabase
-        .from('phorest_transaction_items')
-        .select('payment_method, tip_amount, phorest_staff_id, phorest_client_id, transaction_date')
-        .gte('transaction_date', dateFrom)
-        .lte('transaction_date', dateTo)
-        .gt('tip_amount', 0);
-
-      if (locationId && locationId !== 'all') {
-        query = query.eq('location_id', locationId);
-      }
-
-      const { data, error } = await query;
-      if (error) throw error;
-      return data;
+      return fetchAllBatched<any>((from, to) => {
+        let q = supabase
+          .from('phorest_transaction_items')
+          .select('payment_method, tip_amount, phorest_staff_id, phorest_client_id, transaction_date')
+          .gte('transaction_date', dateFrom)
+          .lte('transaction_date', dateTo)
+          .gt('tip_amount', 0)
+          .range(from, to);
+        if (locationId && locationId !== 'all') q = q.eq('location_id', locationId);
+        return q;
+      });
     },
     staleTime: 1000 * 60 * 5,
   });
