@@ -188,26 +188,36 @@ serve(async (req) => {
       }
     }
 
-    // Pull all historical daily sales data
-    let query = supabase
-      .from("phorest_daily_sales_summary")
-      .select("summary_date, total_revenue, service_revenue, product_revenue, total_transactions, location_id")
-      .order("summary_date", { ascending: true });
+    // Pull all historical transaction items (POS-first)
+    const allItems: any[] = [];
+    let page = 0;
+    const pageSize = 1000;
+    while (true) {
+      let q = supabase
+        .from("phorest_transaction_items")
+        .select("transaction_date, total_amount, tax_amount, item_type, location_id")
+        .order("transaction_date", { ascending: true })
+        .range(page * pageSize, (page + 1) * pageSize - 1);
 
-    // We can't filter by org directly on this table, so we pull all and handle
-    if (locationId && locationId !== "all") {
-      query = query.eq("location_id", locationId);
+      if (locationId && locationId !== "all") {
+        q = q.eq("location_id", locationId);
+      }
+
+      const { data: batch, error: batchErr } = await q;
+      if (batchErr) {
+        console.error("Error fetching transaction items:", batchErr);
+        return new Response(JSON.stringify({ error: "Failed to fetch sales data" }), {
+          status: 500,
+          headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
+        });
+      }
+      if (!batch || batch.length === 0) break;
+      allItems.push(...batch);
+      if (batch.length < pageSize) break;
+      page++;
     }
 
-    const { data: dailyData, error: fetchError } = await query;
-
-    if (fetchError) {
-      console.error("Error fetching sales data:", fetchError);
-      return new Response(JSON.stringify({ error: "Failed to fetch sales data" }), {
-        status: 500,
-        headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
-      });
-    }
+    const dailyData = allItems;
 
     if (!dailyData || dailyData.length === 0) {
       return new Response(
@@ -228,24 +238,26 @@ serve(async (req) => {
       );
     }
 
-    // Aggregate into months
+    // Aggregate into months from transaction items
     const monthMap = new Map<string, MonthData>();
     dailyData.forEach((d: any) => {
-      const monthKey = d.summary_date.substring(0, 7); // "YYYY-MM"
+      const monthKey = d.transaction_date.substring(0, 7); // "YYYY-MM"
+      const rev = (Number(d.total_amount) || 0) + (Number(d.tax_amount) || 0);
+      const isService = d.item_type === "service";
       const existing = monthMap.get(monthKey);
       if (existing) {
-        existing.totalRevenue += Number(d.total_revenue) || 0;
-        existing.serviceRevenue += Number(d.service_revenue) || 0;
-        existing.productRevenue += Number(d.product_revenue) || 0;
-        existing.transactions += Number(d.total_transactions) || 0;
+        existing.totalRevenue += rev;
+        existing.serviceRevenue += isService ? rev : 0;
+        existing.productRevenue += isService ? 0 : rev;
+        existing.transactions += 1;
         existing.dayCount += 1;
       } else {
         monthMap.set(monthKey, {
           month: monthKey,
-          totalRevenue: Number(d.total_revenue) || 0,
-          serviceRevenue: Number(d.service_revenue) || 0,
-          productRevenue: Number(d.product_revenue) || 0,
-          transactions: Number(d.total_transactions) || 0,
+          totalRevenue: rev,
+          serviceRevenue: isService ? rev : 0,
+          productRevenue: isService ? 0 : rev,
+          transactions: 1,
           dayCount: 1,
         });
       }
@@ -677,15 +689,24 @@ Trend R²: ${regression.r2.toFixed(3)}`;
 
       if (pastForecasts && pastForecasts.length > 0) {
         for (const pf of pastForecasts) {
-          // Sum actuals for that period
-          const { data: periodActuals } = await supabase
-            .from("phorest_daily_sales_summary")
-            .select("total_revenue")
-            .gte("summary_date", pf.period_start)
-            .lte("summary_date", pf.period_end);
+          // Sum actuals for that period from transaction items
+          const periodItems: any[] = [];
+          let pg = 0;
+          while (true) {
+            const { data: batch } = await supabase
+              .from("phorest_transaction_items")
+              .select("total_amount, tax_amount")
+              .gte("transaction_date", pf.period_start)
+              .lte("transaction_date", pf.period_end)
+              .range(pg * 1000, (pg + 1) * 1000 - 1);
+            if (!batch || batch.length === 0) break;
+            periodItems.push(...batch);
+            if (batch.length < 1000) break;
+            pg++;
+          }
 
-          if (periodActuals && periodActuals.length > 0) {
-            const actualTotal = periodActuals.reduce((s: number, r: any) => s + (Number(r.total_revenue) || 0), 0);
+          if (periodItems.length > 0) {
+            const actualTotal = periodItems.reduce((s: number, r: any) => s + (Number(r.total_amount) || 0) + (Number(r.tax_amount) || 0), 0);
             const projected = Number(pf.projected_revenue) || 1;
             const errorPct = Math.abs(actualTotal - projected) / projected * 100;
             const accuracy = Math.max(0, 100 - errorPct);

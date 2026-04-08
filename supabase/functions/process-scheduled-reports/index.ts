@@ -216,24 +216,43 @@ async function generateReportData(
     const metrics = template.config.metrics || [];
     const dimensions = template.config.dimensions || [];
 
-    // Fetch sales summary data
-    let query = supabase
-      .from("phorest_daily_sales_summary")
-      .select("*")
-      .eq("organization_id", report.organization_id)
-      .gte("summary_date", dateFrom)
-      .lte("summary_date", dateTo);
-
-    // Apply location filter if present
-    if (report.filters?.locationId) {
-      query = query.eq("location_id", report.filters.locationId);
+    // Fetch transaction items and aggregate to daily shape
+    const txnItems: any[] = [];
+    let txnPg = 0;
+    while (true) {
+      let q = supabase
+        .from("phorest_transaction_items")
+        .select("transaction_date, total_amount, tax_amount, item_type, location_id")
+        .eq("organization_id", report.organization_id)
+        .gte("transaction_date", dateFrom)
+        .lte("transaction_date", dateTo)
+        .range(txnPg * 1000, (txnPg + 1) * 1000 - 1);
+      if (report.filters?.locationId) {
+        q = q.eq("location_id", report.filters.locationId);
+      }
+      const { data: batch, error: batchErr } = await q;
+      if (batchErr) throw batchErr;
+      if (!batch || batch.length === 0) break;
+      txnItems.push(...batch);
+      if (batch.length < 1000) break;
+      txnPg++;
     }
 
-    const { data, error } = await query;
-    if (error) throw error;
+    // Aggregate to daily summary shape for aggregateData compatibility
+    const dailyMap: Record<string, any> = {};
+    for (const item of txnItems) {
+      const d = item.transaction_date;
+      if (!dailyMap[d]) dailyMap[d] = { summary_date: d, total_revenue: 0, service_revenue: 0, product_revenue: 0, total_transactions: 0, location_id: item.location_id };
+      const rev = (Number(item.total_amount) || 0) + (Number(item.tax_amount) || 0);
+      dailyMap[d].total_revenue += rev;
+      if (item.item_type === "service") dailyMap[d].service_revenue += rev;
+      else dailyMap[d].product_revenue += rev;
+      dailyMap[d].total_transactions += 1;
+    }
+    const data = Object.values(dailyMap);
 
     // Aggregate based on metrics
-    const aggregated = aggregateData(data || [], metrics, dimensions);
+    const aggregated = aggregateData(data, metrics, dimensions);
     return {
       dateRange: { from: dateFrom, to: dateTo },
       template: template.name,
@@ -242,20 +261,39 @@ async function generateReportData(
     };
   }
 
-  // Fallback for built-in report types
-  const { data, error } = await supabase
-    .from("phorest_daily_sales_summary")
-    .select("*")
-    .eq("organization_id", report.organization_id)
-    .gte("summary_date", dateFrom)
-    .lte("summary_date", dateTo);
+  // Fallback for built-in report types — same transaction-items approach
+  const fallbackItems: any[] = [];
+  let fbPg = 0;
+  while (true) {
+    const { data: batch, error: batchErr } = await supabase
+      .from("phorest_transaction_items")
+      .select("transaction_date, total_amount, tax_amount, item_type, location_id")
+      .eq("organization_id", report.organization_id)
+      .gte("transaction_date", dateFrom)
+      .lte("transaction_date", dateTo)
+      .range(fbPg * 1000, (fbPg + 1) * 1000 - 1);
+    if (batchErr) throw batchErr;
+    if (!batch || batch.length === 0) break;
+    fallbackItems.push(...batch);
+    if (batch.length < 1000) break;
+    fbPg++;
+  }
 
-  if (error) throw error;
+  const fbDailyMap: Record<string, any> = {};
+  for (const item of fallbackItems) {
+    const d = item.transaction_date;
+    if (!fbDailyMap[d]) fbDailyMap[d] = { summary_date: d, total_revenue: 0, service_revenue: 0, product_revenue: 0, total_transactions: 0 };
+    const rev = (Number(item.total_amount) || 0) + (Number(item.tax_amount) || 0);
+    fbDailyMap[d].total_revenue += rev;
+    if (item.item_type === "service") fbDailyMap[d].service_revenue += rev;
+    else fbDailyMap[d].product_revenue += rev;
+    fbDailyMap[d].total_transactions += 1;
+  }
 
   return {
     dateRange: { from: dateFrom, to: dateTo },
     reportType: report.report_type,
-    data: data || [],
+    data: Object.values(fbDailyMap),
     generatedAt: new Date().toISOString(),
   };
 }

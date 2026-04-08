@@ -74,15 +74,22 @@ serve(async (req) => {
     // Gather data for AI context
     const contextData: Record<string, unknown> = {};
 
-    // 1. Yesterday's sales summary
-    const { data: salesSummary } = await supabase
-      .from("phorest_daily_sales_summary")
-      .select("*")
+    // 1. Yesterday's sales from transaction items
+    const { data: yesterdayTxnItems } = await supabase
+      .from("phorest_transaction_items")
+      .select("total_amount, tax_amount, item_type")
       .eq("organization_id", organizationId)
-      .eq("summary_date", yesterdayStr)
-      .maybeSingle();
+      .eq("transaction_date", yesterdayStr);
 
-    contextData.yesterdaySales = salesSummary || { total_revenue: 0, service_revenue: 0, product_revenue: 0 };
+    const yesterdaySales = { total_revenue: 0, service_revenue: 0, product_revenue: 0 };
+    (yesterdayTxnItems || []).forEach((item: any) => {
+      const rev = (Number(item.total_amount) || 0) + (Number(item.tax_amount) || 0);
+      yesterdaySales.total_revenue += rev;
+      if (item.item_type === "service") yesterdaySales.service_revenue += rev;
+      else yesterdaySales.product_revenue += rev;
+    });
+
+    contextData.yesterdaySales = yesterdaySales;
 
     // 2. Yesterday's appointments stats
     const { data: yesterdayAppts, count: totalAppts } = await supabase
