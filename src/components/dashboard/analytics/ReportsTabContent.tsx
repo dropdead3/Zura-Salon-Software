@@ -138,6 +138,7 @@ const financialReports = [
   { id: 'service-profitability', name: 'Service Profitability', description: 'Revenue vs chemical + labor cost per service', icon: TrendingUp },
   { id: 'chemical-cost', name: 'Chemical Cost Report', description: 'Chemical cost per service, waste %, and margin from Color Bar', icon: Beaker },
   { id: 'location-benchmark', name: 'Location Benchmarking', description: 'Side-by-side KPI comparison across all locations', icon: Building },
+  { id: 'future-appointments', name: 'Future Appointments Value', description: 'Revenue pipeline from upcoming booked appointments', icon: CalendarDays },
 ];
 
 interface ReportsTabContentProps {
@@ -265,7 +266,7 @@ export function ReportsTabContent({ filters, isStandalone }: ReportsTabContentPr
   );
 
   // Reports that manage their own back button
-  const selfContainedReports = ['individual-staff', 'payroll-summary', 'retail-products', 'retail-staff', 'end-of-month', 'service-profitability', 'chemical-cost', 'tip-analysis', 'category-mix', 'tax-summary', 'client-attrition', 'compensation-ratio', 'location-benchmark', 'demand-heatmap'];
+  const selfContainedReports = ['individual-staff', 'payroll-summary', 'retail-products', 'retail-staff', 'end-of-month', 'service-profitability', 'chemical-cost', 'tip-analysis', 'category-mix', 'tax-summary', 'client-attrition', 'compensation-ratio', 'location-benchmark', 'demand-heatmap', 'discounts', 'future-appointments', 'top-clients', 'client-birthdays', 'client-source', 'duplicate-clients', 'staff-transaction-detail', 'deleted-appointments', 'no-show-enhanced'];
 
   const renderSelectedReport = () => {
     const location = filters.locationId === 'all' ? undefined : filters.locationId;
@@ -418,6 +419,24 @@ export function ReportsTabContent({ filters, isStandalone }: ReportsTabContentPr
         return <LocationBenchmarkReport dateFrom={filters.dateFrom} dateTo={filters.dateTo} onClose={handleCloseReport} />;
       case 'demand-heatmap':
         return <DemandHeatmapReport dateFrom={filters.dateFrom} dateTo={filters.dateTo} locationId={location} onClose={handleCloseReport} />;
+      case 'discounts':
+        return <DiscountsReport dateFrom={filters.dateFrom} dateTo={filters.dateTo} locationId={location} onClose={handleCloseReport} />;
+      case 'future-appointments':
+        return <FutureAppointmentsReport dateFrom={filters.dateFrom} dateTo={filters.dateTo} locationId={location} onClose={handleCloseReport} />;
+      case 'top-clients':
+        return <TopClientsReport dateFrom={filters.dateFrom} dateTo={filters.dateTo} locationId={location} onClose={handleCloseReport} />;
+      case 'client-birthdays':
+        return <ClientBirthdaysReport dateFrom={filters.dateFrom} dateTo={filters.dateTo} locationId={location} onClose={handleCloseReport} />;
+      case 'client-source':
+        return <ClientSourceReport dateFrom={filters.dateFrom} dateTo={filters.dateTo} locationId={location} onClose={handleCloseReport} />;
+      case 'duplicate-clients':
+        return <DuplicateClientsReport dateFrom={filters.dateFrom} dateTo={filters.dateTo} locationId={location} onClose={handleCloseReport} />;
+      case 'staff-transaction-detail':
+        return <StaffTransactionDetailReport dateFrom={filters.dateFrom} dateTo={filters.dateTo} locationId={location} onClose={handleCloseReport} />;
+      case 'deleted-appointments':
+        return <DeletedAppointmentsReport dateFrom={filters.dateFrom} dateTo={filters.dateTo} locationId={location} onClose={handleCloseReport} />;
+      case 'no-show-enhanced':
+        return <NoShowEnhancedReport dateFrom={filters.dateFrom} dateTo={filters.dateTo} locationId={location} onClose={handleCloseReport} />;
       default:
         return null;
     }
