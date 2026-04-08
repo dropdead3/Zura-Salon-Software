@@ -104,6 +104,7 @@ export const REPORT_CATALOG: ReportCatalogEntry[] = [
   { id: 'deleted-appointments', name: 'Deleted Appointments', category: 'operations' },
   { id: 'demand-heatmap', name: 'Demand Heatmap', category: 'operations' },
   { id: 'future-appointments', name: 'Future Appointments Value', category: 'operations' },
+  { id: 'formula-history', name: 'Client Formula History', category: 'operations' },
   // Financial
   { id: 'executive-summary', name: 'Executive Summary', category: 'financial' },
   { id: 'payroll-summary', name: 'Payroll Summary', category: 'financial' },
@@ -111,6 +112,7 @@ export const REPORT_CATALOG: ReportCatalogEntry[] = [
   { id: 'service-profitability', name: 'Service Profitability', category: 'financial' },
   { id: 'chemical-cost', name: 'Chemical Cost Report', category: 'financial' },
   { id: 'location-benchmark', name: 'Location Benchmarking', category: 'financial' },
+  { id: 'booth-renter', name: 'Booth Renter Summary', category: 'financial' },
   // Gift Cards
   { id: 'gift-cards', name: 'Gift Cards', category: 'gift-cards' },
   { id: 'vouchers', name: 'Vouchers', category: 'gift-cards' },
