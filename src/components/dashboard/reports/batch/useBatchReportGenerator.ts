@@ -179,7 +179,7 @@ async function fetchReportData(
           .select('name, first_name, last_name, email, phone, total_spend, visit_count, created_at, lead_source, birthday')
           .eq('is_archived', false)
           .range(from, to);
-        if (orgId) q = q.eq('organization_id', orgId);
+        // RLS via security_invoker scopes data; v_all_clients has no organization_id column
         if (locationId) q = q.eq('location_id', locationId);
         return q;
       });
@@ -369,11 +369,11 @@ export function useBatchReportGenerator() {
               headStyles: { fillColor: [41, 41, 41], textColor: [255, 255, 255], fontSize: 8 },
             });
           }
+          addReportFooter(mergedDoc, orgName);
         }
 
         setProgress(95);
         setProgressLabel('Assembling PDF...');
-        addReportFooter(mergedDoc, orgName);
         mergedDoc.save(buildReportFileName({ orgName, reportSlug: 'report-pack', dateFrom, dateTo }));
       }
 
