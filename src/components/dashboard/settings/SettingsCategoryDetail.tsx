@@ -612,6 +612,7 @@ export function SettingsCategoryDetail({ activeCategory, categoryLabel, onBack }
                 </Card>
                 <SoundSettingsSection />
                 <CheckoutAlertsSection />
+                <RevenueDisplayModeCard />
                 <InfotainerToggleCard />
                 <SecuritySettingsCard />
                 <UserPinSettings />
