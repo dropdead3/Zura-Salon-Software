@@ -198,22 +198,41 @@ export function useTipsDrilldown({ dateFrom, dateTo, locationId, minAppointments
       count: number;
     }>();
 
-    // Deduplicate tips: Phorest duplicates the same tip on every service line item
+    // Build a corrected tip lookup from transaction items.
+    // Phorest duplicates the SAME tip_amount on every line item in a checkout,
+    // so we deduplicate by staff+client+date to get the true per-checkout tip.
+    const correctedTipMap = new Map<string, number>();
+    if (transactionItems) {
+      for (const ti of transactionItems) {
+        const tipAmt = ti.tip_amount ?? 0;
+        if (tipAmt <= 0) continue;
+        const key = `${ti.phorest_staff_id}|${ti.phorest_client_id}|${ti.transaction_date}`;
+        // All items in a checkout have the same tip — just keep one
+        if (!correctedTipMap.has(key)) {
+          correctedTipMap.set(key, tipAmt);
+        }
+      }
+    }
+
+    // Deduplicate appointment rows: multiple service rows per checkout
     const seenTipKeys = new Set<string>();
 
     for (const apt of appointments) {
-      const tipRaw = apt.tip_amount ?? 0;
       const revenue = apt.total_price ?? 0;
       const category = apt.service_category || getServiceCategory(apt.service_name);
 
-      // Check if this tip was already counted for the same staff+client+date+amount
-      let dedupedTip = tipRaw;
-      if (tipRaw > 0) {
-        const key = `${apt.phorest_staff_id}|${apt.phorest_client_id}|${apt.appointment_date}|${tipRaw}`;
-        if (seenTipKeys.has(key)) {
+      // Use corrected tip from transaction items when available
+      const tipLookupKey = `${apt.phorest_staff_id}|${apt.phorest_client_id}|${apt.appointment_date}`;
+      const correctedTip = correctedTipMap.get(tipLookupKey);
+      const tipForThisCheckout = correctedTip ?? (apt.tip_amount ?? 0);
+
+      // Deduplicate: only count tip once per staff+client+date
+      let dedupedTip = tipForThisCheckout;
+      if (tipForThisCheckout > 0) {
+        if (seenTipKeys.has(tipLookupKey)) {
           dedupedTip = 0; // Already counted
         } else {
-          seenTipKeys.add(key);
+          seenTipKeys.add(tipLookupKey);
         }
       }
 
@@ -225,7 +244,7 @@ export function useTipsDrilldown({ dateFrom, dateTo, locationId, minAppointments
         };
         existing.totalTips += dedupedTip;
         existing.totalRevenue += revenue;
-        existing.noTipCount += tipRaw === 0 ? 1 : 0;
+        existing.noTipCount += tipForThisCheckout === 0 ? 1 : 0;
         existing.count += 1;
         stylistMap.set(staffKey, existing);
       }
