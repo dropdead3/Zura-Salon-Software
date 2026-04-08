@@ -185,15 +185,15 @@ export function useHealthHistory(entityId: string | undefined, entityType: 'org'
       if (!entityId) return [];
       const startDate = new Date();
       startDate.setDate(startDate.getDate() - days);
-      const table = entityType === 'org' ? 'organization_health_scores' : 'location_health_scores';
+      const table = entityType === 'org' ? 'organization_health_scores' : 'location_health_scores' as any;
       const idCol = entityType === 'org' ? 'organization_id' : 'location_id';
 
-      const { data, error } = await supabase
+      const { data, error } = await (supabase
         .from(table)
         .select('score_date, score')
         .eq(idCol, entityId)
         .gte('score_date', startDate.toISOString().split('T')[0])
-        .order('score_date', { ascending: true });
+        .order('score_date', { ascending: true }) as any);
 
       if (error) throw error;
       return data || [];
