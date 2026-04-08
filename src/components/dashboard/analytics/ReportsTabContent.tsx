@@ -85,6 +85,8 @@ import { StaffStrikesReport } from '@/components/dashboard/reports/StaffStrikesR
 import { TrainingCompletionReport } from '@/components/dashboard/reports/TrainingCompletionReport';
 import { ClientFeedbackReport } from '@/components/dashboard/reports/ClientFeedbackReport';
 import { ChurnRiskReport } from '@/components/dashboard/reports/ChurnRiskReport';
+import { BoothRenterReport } from '@/components/dashboard/reports/BoothRenterReport';
+import { FormulaHistoryReport } from '@/components/dashboard/reports/FormulaHistoryReport';
 import type { AnalyticsFilters } from '@/pages/dashboard/admin/AnalyticsHub';
 
 const reportCategories = [
@@ -149,6 +151,7 @@ const operationsReports = [
   { id: 'service-duration', name: 'Service Duration', description: 'Actual vs expected times', icon: Clock },
   { id: 'lead-time', name: 'Appointment Lead Time', description: 'How far ahead clients book', icon: CalendarDays },
   { id: 'demand-heatmap', name: 'Demand Heatmap', description: 'Appointment volume by hour and day-of-week', icon: Grid3X3 },
+  { id: 'formula-history', name: 'Client Formula History', description: 'Formula usage and tracking by staff and service', icon: Beaker },
 ];
 
 const financialReports = [
@@ -163,6 +166,7 @@ const financialReports = [
   { id: 'chemical-cost', name: 'Chemical Cost Report', description: 'Chemical cost per service, waste %, and margin from Color Bar', icon: Beaker },
   { id: 'location-benchmark', name: 'Location Benchmarking', description: 'Side-by-side KPI comparison across all locations', icon: Building },
   { id: 'future-appointments', name: 'Future Appointments Value', description: 'Revenue pipeline from upcoming booked appointments', icon: CalendarDays },
+  { id: 'booth-renter', name: 'Booth Renter Summary', description: 'Booth renter profiles, insurance status, and business details', icon: Building },
 ];
 
 const giftCardReports = [
