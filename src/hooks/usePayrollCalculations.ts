@@ -85,24 +85,39 @@ export function usePayrollSalesData(
         return [];
       }
 
-      const { data, error } = await supabase
-        .from('phorest_daily_sales_summary')
-        .select('user_id, service_revenue, product_revenue, summary_date')
-        .gte('summary_date', payPeriodStart)
-        .lte('summary_date', payPeriodEnd)
-        .in('user_id', employeeIds);
+      // Fetch from live POS transaction items with pagination
+      const allData: any[] = [];
+      const pageSize = 1000;
+      let from = 0;
+      let hasMore = true;
+      while (hasMore) {
+        const { data, error } = await supabase
+          .from('phorest_transaction_items')
+          .select('stylist_user_id, total_amount, tax_amount, item_type, transaction_date')
+          .in('stylist_user_id', employeeIds)
+          .gte('transaction_date', payPeriodStart)
+          .lte('transaction_date', payPeriodEnd)
+          .range(from, from + pageSize - 1);
+        if (error) throw error;
+        allData.push(...(data || []));
+        hasMore = (data?.length || 0) === pageSize;
+        from += pageSize;
+      }
 
-      if (error) throw error;
-
-      const aggregated = (data || []).reduce((acc, row) => {
-        if (!row.user_id) return acc;
-        if (!acc[row.user_id]) {
-          acc[row.user_id] = { serviceRevenue: 0, productRevenue: 0 };
+      const aggregated: Record<string, { serviceRevenue: number; productRevenue: number }> = {};
+      for (const item of allData) {
+        const uid = item.stylist_user_id;
+        if (!uid) continue;
+        if (!aggregated[uid]) {
+          aggregated[uid] = { serviceRevenue: 0, productRevenue: 0 };
         }
-        acc[row.user_id].serviceRevenue += Number(row.service_revenue) || 0;
-        acc[row.user_id].productRevenue += Number(row.product_revenue) || 0;
-        return acc;
-      }, {} as Record<string, { serviceRevenue: number; productRevenue: number }>);
+        const amount = (Number(item.total_amount) || 0) + (Number(item.tax_amount) || 0);
+        if (item.item_type === 'service') {
+          aggregated[uid].serviceRevenue += amount;
+        } else {
+          aggregated[uid].productRevenue += amount;
+        }
+      }
 
       return Object.entries(aggregated).map(([employeeId, sales]) => ({
         employeeId,

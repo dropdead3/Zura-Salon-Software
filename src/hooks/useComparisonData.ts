@@ -98,37 +98,45 @@ export function useComparisonData(params: ComparisonParams) {
   return useQuery({
     queryKey: ['comparison-data', mode, periodA, periodB, locationIds],
     queryFn: async (): Promise<ComparisonResult> => {
-      // Fetch Period A data
-      let queryA = supabase
-        .from('phorest_daily_sales_summary')
-        .select('summary_date, total_revenue, service_revenue, product_revenue, total_transactions, location_id')
-        .gte('summary_date', periodA.dateFrom)
-        .lte('summary_date', periodA.dateTo)
-        .order('summary_date', { ascending: true });
+      // Helper to fetch period data from transaction items
+      const fetchPeriod = async (dateFrom: string, dateTo: string) => {
+        const allData: any[] = [];
+        const pageSize = 1000;
+        let from = 0;
+        let hasMore = true;
+        while (hasMore) {
+          let q: any = supabase
+            .from('phorest_transaction_items')
+            .select('transaction_date, total_amount, tax_amount, item_type, location_id, phorest_client_id')
+            .gte('transaction_date', dateFrom)
+            .lte('transaction_date', dateTo);
+          if (locationIds && locationIds.length > 0) q = q.in('location_id', locationIds);
+          const { data, error } = await q.range(from, from + pageSize - 1);
+          if (error) throw error;
+          allData.push(...(data || []));
+          hasMore = (data?.length || 0) === pageSize;
+          from += pageSize;
+        }
+        // Aggregate to daily summary-like rows
+        const byDate: Record<string, any> = {};
+        for (const item of allData) {
+          const date = (item.transaction_date || '').slice(0, 10);
+          if (!byDate[date]) byDate[date] = { summary_date: date, total_revenue: 0, service_revenue: 0, product_revenue: 0, total_transactions: 0, location_id: item.location_id };
+          const amount = (Number(item.total_amount) || 0) + (Number(item.tax_amount) || 0);
+          byDate[date].total_revenue += amount;
+          if (item.item_type === 'service') byDate[date].service_revenue += amount;
+          else byDate[date].product_revenue += amount;
+          byDate[date].total_transactions += 1;
+        }
+        return Object.values(byDate).sort((a: any, b: any) => a.summary_date.localeCompare(b.summary_date));
+      };
 
-      if (locationIds && locationIds.length > 0) {
-        queryA = queryA.in('location_id', locationIds);
-      }
-
-      const { data: dataA } = await queryA;
-
-      // Fetch Period B data
-      let queryB = supabase
-        .from('phorest_daily_sales_summary')
-        .select('summary_date, total_revenue, service_revenue, product_revenue, total_transactions, location_id')
-        .gte('summary_date', periodB.dateFrom)
-        .lte('summary_date', periodB.dateTo)
-        .order('summary_date', { ascending: true });
-
-      if (locationIds && locationIds.length > 0) {
-        queryB = queryB.in('location_id', locationIds);
-      }
-
-      const { data: dataB } = await queryB;
+      const dataA = await fetchPeriod(periodA.dateFrom, periodA.dateTo);
+      const dataB = await fetchPeriod(periodB.dateFrom, periodB.dateTo);
 
       // Aggregate totals
-      const aggregatedA = aggregateSales(dataA || []);
-      const aggregatedB = aggregateSales(dataB || []);
+      const aggregatedA = aggregateSales(dataA);
+      const aggregatedB = aggregateSales(dataB);
 
       const avgTicketA = aggregatedA.totalTransactions > 0
         ? aggregatedA.totalRevenue / aggregatedA.totalTransactions

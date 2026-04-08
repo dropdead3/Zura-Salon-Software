@@ -35,27 +35,47 @@ export function useCorrelationAnalysis(locationId?: string, days = 90) {
       const endDate = new Date();
       const startDate = subDays(endDate, days);
 
-      let query = supabase
-        .from('phorest_daily_sales_summary')
-        .select('summary_date, total_revenue, service_revenue, product_revenue, total_transactions, location_id')
-        .gte('summary_date', format(startDate, 'yyyy-MM-dd'))
-        .lte('summary_date', format(endDate, 'yyyy-MM-dd'))
-        .order('summary_date', { ascending: true });
-
-      if (locationId) {
-        query = query.eq('location_id', locationId);
+      // Fetch from live POS transaction items with pagination
+      const allItems: any[] = [];
+      const pageSize = 1000;
+      let from = 0;
+      let hasMore = true;
+      while (hasMore) {
+        let q: any = supabase
+          .from('phorest_transaction_items')
+          .select('transaction_date, total_amount, tax_amount, item_type, location_id, phorest_client_id')
+          .gte('transaction_date', format(startDate, 'yyyy-MM-dd'))
+          .lte('transaction_date', format(endDate, 'yyyy-MM-dd'));
+        if (locationId) q = q.eq('location_id', locationId);
+        const { data, error } = await q.range(from, from + pageSize - 1);
+        if (error) throw error;
+        allItems.push(...(data || []));
+        hasMore = (data?.length || 0) === pageSize;
+        from += pageSize;
       }
 
-      const { data, error } = await query;
-      if (error) throw error;
+      // Aggregate to daily totals for correlation
+      const dailyMap: Record<string, { total_revenue: number; service_revenue: number; product_revenue: number; total_transactions: number; clients: Set<string> }> = {};
+      for (const item of allItems) {
+        const date = (item.transaction_date || '').slice(0, 10);
+        if (!dailyMap[date]) {
+          dailyMap[date] = { total_revenue: 0, service_revenue: 0, product_revenue: 0, total_transactions: 0, clients: new Set() };
+        }
+        const amount = (Number(item.total_amount) || 0) + (Number(item.tax_amount) || 0);
+        dailyMap[date].total_revenue += amount;
+        if (item.item_type === 'service') dailyMap[date].service_revenue += amount;
+        else dailyMap[date].product_revenue += amount;
+        dailyMap[date].total_transactions += 1;
+        if (item.phorest_client_id) dailyMap[date].clients.add(item.phorest_client_id);
+      }
 
-      const dailyData = (data || []).map(d => ({
-        date: d.summary_date,
-        total_revenue: Number(d.total_revenue) || 0,
-        service_revenue: Number(d.service_revenue) || 0,
-        product_revenue: Number(d.product_revenue) || 0,
-        total_transactions: d.total_transactions || 0,
-      }));
+      const dailyData = Object.entries(dailyMap).map(([date, d]) => ({
+        date,
+        total_revenue: d.total_revenue,
+        service_revenue: d.service_revenue,
+        product_revenue: d.product_revenue,
+        total_transactions: d.total_transactions,
+      })).sort((a, b) => a.date.localeCompare(b.date));
 
       // Calculate correlations between all pairs
       const pairs: CorrelationPair[] = [];

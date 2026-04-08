@@ -90,67 +90,45 @@ export function useTodayActualRevenue(enabled: boolean) {
     refetchInterval: 5 * 60 * 1000,
   });
 
-  // Primary: POS daily sales summary
+  // Primary: POS transaction items (live data, single source of truth)
   const actualRevenueQuery = useQuery({
     queryKey: ['today-actual-revenue', today],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('phorest_daily_sales_summary')
-        .select('total_revenue, service_revenue, product_revenue, total_transactions')
-        .eq('summary_date', today);
+      const { data: txnData, error: txnError } = await supabase
+        .from('phorest_transaction_items')
+        .select('item_type, total_amount, tax_amount, phorest_client_id')
+        .gte('transaction_date', `${today}T00:00:00`)
+        .lte('transaction_date', `${today}T23:59:59`);
 
-      if (error) throw error;
+      if (txnError) throw txnError;
 
-      if (!data || data.length === 0) {
-        // Fallback: query raw transaction items
-        const { data: txnData, error: txnError } = await supabase
-          .from('phorest_transaction_items')
-          .select('item_type, total_amount, tax_amount, phorest_client_id')
-          .gte('transaction_date', `${today}T00:00:00`)
-          .lte('transaction_date', `${today}T23:59:59`);
-
-        if (txnError) throw txnError;
-
-        if (!txnData || txnData.length === 0) {
-          return { totalRevenue: 0, serviceRevenue: 0, productRevenue: 0, totalTransactions: 0, hasData: false, source: 'transactions' as const };
-        }
-
-        let serviceRevenue = 0;
-        let productRevenue = 0;
-        const clientIds = new Set<string>();
-
-        for (const row of txnData) {
-          const amount = (Number(row.total_amount) || 0) + (Number(row.tax_amount) || 0);
-          if (row.item_type === 'service') {
-            serviceRevenue += amount;
-          } else {
-            productRevenue += amount;
-          }
-          if (row.phorest_client_id) clientIds.add(row.phorest_client_id);
-        }
-
-        const totalRevenue = serviceRevenue + productRevenue;
-        return {
-          totalRevenue,
-          serviceRevenue,
-          productRevenue,
-          totalTransactions: clientIds.size,
-          hasData: totalRevenue > 0,
-          source: 'transactions' as const,
-        };
+      if (!txnData || txnData.length === 0) {
+        return { totalRevenue: 0, serviceRevenue: 0, productRevenue: 0, totalTransactions: 0, hasData: false, source: 'transactions' as const };
       }
 
-      const totals = data.reduce(
-        (acc, row) => ({
-          totalRevenue: acc.totalRevenue + (Number(row.total_revenue) || 0),
-          serviceRevenue: acc.serviceRevenue + (Number(row.service_revenue) || 0),
-          productRevenue: acc.productRevenue + (Number(row.product_revenue) || 0),
-          totalTransactions: acc.totalTransactions + (Number(row.total_transactions) || 0),
-        }),
-        { totalRevenue: 0, serviceRevenue: 0, productRevenue: 0, totalTransactions: 0 }
-      );
+      let serviceRevenue = 0;
+      let productRevenue = 0;
+      const clientIds = new Set<string>();
 
-      return { ...totals, hasData: totals.totalRevenue > 0, source: 'summary' as const };
+      for (const row of txnData) {
+        const amount = (Number(row.total_amount) || 0) + (Number(row.tax_amount) || 0);
+        if (row.item_type === 'service') {
+          serviceRevenue += amount;
+        } else {
+          productRevenue += amount;
+        }
+        if (row.phorest_client_id) clientIds.add(row.phorest_client_id);
+      }
+
+      const totalRevenue = serviceRevenue + productRevenue;
+      return {
+        totalRevenue,
+        serviceRevenue,
+        productRevenue,
+        totalTransactions: clientIds.size,
+        hasData: totalRevenue > 0,
+        source: 'transactions' as const,
+      };
     },
     enabled,
     refetchInterval: 5 * 60 * 1000,
@@ -176,7 +154,7 @@ export function useTodayActualRevenue(enabled: boolean) {
     enabled,
   });
 
-  // Per-location actual revenue
+  // Per-location actual revenue (from transaction items)
   const locationActualRevenueQuery = useQuery({
     queryKey: ['today-actual-revenue-by-location', today],
     queryFn: async () => {
@@ -197,60 +175,38 @@ export function useTodayActualRevenue(enabled: boolean) {
         return branchToAppId[key] || key;
       };
 
-      const { data, error } = await supabase
-        .from('phorest_daily_sales_summary')
-        .select('location_id, total_revenue, service_revenue, product_revenue, total_transactions')
-        .eq('summary_date', today);
+      const { data: txnData, error: txnError } = await supabase
+        .from('phorest_transaction_items')
+        .select('location_id, item_type, total_amount, tax_amount, phorest_client_id')
+        .gte('transaction_date', `${today}T00:00:00`)
+        .lte('transaction_date', `${today}T23:59:59`);
 
-      if (error) throw error;
-      if (!data || data.length === 0) {
-        // Fallback: query raw transaction items grouped by location
-        const { data: txnData, error: txnError } = await supabase
-          .from('phorest_transaction_items')
-          .select('location_id, item_type, total_amount, tax_amount, phorest_client_id')
-          .gte('transaction_date', `${today}T00:00:00`)
-          .lte('transaction_date', `${today}T23:59:59`);
-
-        if (txnError) throw txnError;
-        if (!txnData || txnData.length === 0) return {};
-
-        const byLocation: Record<string, { actualRevenue: number; actualServiceRevenue: number; actualProductRevenue: number; actualTransactions: number }> = {};
-        const clientsByLoc: Record<string, Set<string>> = {};
-
-        for (const row of txnData) {
-          const locId = resolveLocId(row.location_id);
-          if (!byLocation[locId]) {
-            byLocation[locId] = { actualRevenue: 0, actualServiceRevenue: 0, actualProductRevenue: 0, actualTransactions: 0 };
-            clientsByLoc[locId] = new Set();
-          }
-          const amount = (Number(row.total_amount) || 0) + (Number(row.tax_amount) || 0);
-          byLocation[locId].actualRevenue += amount;
-          if (row.item_type === 'service') {
-            byLocation[locId].actualServiceRevenue += amount;
-          } else {
-            byLocation[locId].actualProductRevenue += amount;
-          }
-          if (row.phorest_client_id) clientsByLoc[locId].add(row.phorest_client_id);
-        }
-
-        for (const locId of Object.keys(byLocation)) {
-          byLocation[locId].actualTransactions = clientsByLoc[locId]?.size ?? 0;
-        }
-
-        return byLocation;
-      }
+      if (txnError) throw txnError;
+      if (!txnData || txnData.length === 0) return {};
 
       const byLocation: Record<string, { actualRevenue: number; actualServiceRevenue: number; actualProductRevenue: number; actualTransactions: number }> = {};
-      for (const row of data) {
+      const clientsByLoc: Record<string, Set<string>> = {};
+
+      for (const row of txnData) {
         const locId = resolveLocId(row.location_id);
         if (!byLocation[locId]) {
           byLocation[locId] = { actualRevenue: 0, actualServiceRevenue: 0, actualProductRevenue: 0, actualTransactions: 0 };
+          clientsByLoc[locId] = new Set();
         }
-        byLocation[locId].actualRevenue += Number(row.total_revenue) || 0;
-        byLocation[locId].actualServiceRevenue += Number(row.service_revenue) || 0;
-        byLocation[locId].actualProductRevenue += Number(row.product_revenue) || 0;
-        byLocation[locId].actualTransactions += Number(row.total_transactions) || 0;
+        const amount = (Number(row.total_amount) || 0) + (Number(row.tax_amount) || 0);
+        byLocation[locId].actualRevenue += amount;
+        if (row.item_type === 'service') {
+          byLocation[locId].actualServiceRevenue += amount;
+        } else {
+          byLocation[locId].actualProductRevenue += amount;
+        }
+        if (row.phorest_client_id) clientsByLoc[locId].add(row.phorest_client_id);
       }
+
+      for (const locId of Object.keys(byLocation)) {
+        byLocation[locId].actualTransactions = clientsByLoc[locId]?.size ?? 0;
+      }
+
       return byLocation;
     },
     enabled,

@@ -112,20 +112,40 @@ export function usePayrollForecasting() {
   const periodStart = currentPeriod ? format(currentPeriod.periodStart, 'yyyy-MM-dd') : null;
   const periodEnd = currentPeriod ? format(currentPeriod.periodEnd, 'yyyy-MM-dd') : null;
 
-  // Fetch current period sales data
+  // Fetch current period sales data (from live POS transaction items)
   const { data: currentSalesData, isLoading: isLoadingSales } = useQuery({
     queryKey: ['payroll-forecast-sales', periodStart, periodEnd],
     queryFn: async () => {
       if (!periodStart || !periodEnd) return [];
 
-      const { data, error } = await supabase
-        .from('phorest_daily_sales_summary')
-        .select('user_id, service_revenue, product_revenue, summary_date')
-        .gte('summary_date', periodStart)
-        .lte('summary_date', periodEnd);
+      const allData: any[] = [];
+      const pageSize = 1000;
+      let from = 0;
+      let hasMore = true;
+      while (hasMore) {
+        const { data, error } = await supabase
+          .from('phorest_transaction_items')
+          .select('stylist_user_id, total_amount, tax_amount, item_type, transaction_date')
+          .gte('transaction_date', periodStart)
+          .lte('transaction_date', periodEnd)
+          .range(from, from + pageSize - 1);
+        if (error) throw error;
+        allData.push(...(data || []));
+        hasMore = (data?.length || 0) === pageSize;
+        from += pageSize;
+      }
 
-      if (error) throw error;
-      return data || [];
+      // Transform to expected format: { user_id, service_revenue, product_revenue }
+      const byUser: Record<string, { user_id: string; service_revenue: number; product_revenue: number }> = {};
+      for (const item of allData) {
+        const uid = item.stylist_user_id;
+        if (!uid) continue;
+        if (!byUser[uid]) byUser[uid] = { user_id: uid, service_revenue: 0, product_revenue: 0 };
+        const amount = (Number(item.total_amount) || 0) + (Number(item.tax_amount) || 0);
+        if (item.item_type === 'service') byUser[uid].service_revenue += amount;
+        else byUser[uid].product_revenue += amount;
+      }
+      return Object.values(byUser);
     },
     enabled: !!periodStart && !!periodEnd,
   });
@@ -141,14 +161,34 @@ export function usePayrollForecasting() {
     queryFn: async () => {
       if (!lastPeriodStart || !lastPeriodEnd) return [];
 
-      const { data, error } = await supabase
-        .from('phorest_daily_sales_summary')
-        .select('user_id, service_revenue, product_revenue')
-        .gte('summary_date', lastPeriodStart)
-        .lte('summary_date', lastPeriodEnd);
+      const allData: any[] = [];
+      const pageSize = 1000;
+      let from = 0;
+      let hasMore = true;
+      while (hasMore) {
+        const { data, error } = await supabase
+          .from('phorest_transaction_items')
+          .select('stylist_user_id, total_amount, tax_amount, item_type')
+          .gte('transaction_date', lastPeriodStart)
+          .lte('transaction_date', lastPeriodEnd)
+          .range(from, from + pageSize - 1);
+        if (error) throw error;
+        allData.push(...(data || []));
+        hasMore = (data?.length || 0) === pageSize;
+        from += pageSize;
+      }
 
-      if (error) throw error;
-      return data || [];
+      // Transform to expected format
+      const byUser: Record<string, { user_id: string; service_revenue: number; product_revenue: number }> = {};
+      for (const item of allData) {
+        const uid = item.stylist_user_id;
+        if (!uid) continue;
+        if (!byUser[uid]) byUser[uid] = { user_id: uid, service_revenue: 0, product_revenue: 0 };
+        const amount = (Number(item.total_amount) || 0) + (Number(item.tax_amount) || 0);
+        if (item.item_type === 'service') byUser[uid].service_revenue += amount;
+        else byUser[uid].product_revenue += amount;
+      }
+      return Object.values(byUser);
     },
     enabled: !!lastPeriodStart && !!lastPeriodEnd,
   });

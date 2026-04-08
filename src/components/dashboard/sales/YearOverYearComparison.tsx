@@ -35,33 +35,42 @@ export function YearOverYearComparison({ locationId, filterContext }: YearOverYe
   const { data, isLoading } = useQuery({
     queryKey: ['year-over-year', locationId],
     queryFn: async () => {
-      // Fetch current year data
-      let currentQuery = supabase
-        .from('phorest_daily_sales_summary')
-        .select('summary_date, total_revenue, service_revenue, product_revenue, total_transactions')
-        .gte('summary_date', `${currentYear}-01-01`)
-        .lte('summary_date', `${currentYear}-12-31`);
+      const fetchYear = async (year: number) => {
+        const allData: any[] = [];
+        const pageSize = 1000;
+        let from = 0;
+        let hasMore = true;
+        while (hasMore) {
+          let q: any = supabase
+            .from('phorest_transaction_items')
+            .select('transaction_date, total_amount, tax_amount, item_type')
+            .gte('transaction_date', `${year}-01-01`)
+            .lte('transaction_date', `${year}-12-31`);
+          if (locationId) q = q.eq('location_id', locationId);
+          const { data, error } = await q.range(from, from + pageSize - 1);
+          if (error) throw error;
+          allData.push(...(data || []));
+          hasMore = (data?.length || 0) === pageSize;
+          from += pageSize;
+        }
+        // Aggregate to daily summary rows
+        const byDate: Record<string, any> = {};
+        for (const item of allData) {
+          const date = (item.transaction_date || '').slice(0, 10);
+          if (!byDate[date]) byDate[date] = { summary_date: date, total_revenue: 0, service_revenue: 0, product_revenue: 0, total_transactions: 0 };
+          const amount = (Number(item.total_amount) || 0) + (Number(item.tax_amount) || 0);
+          byDate[date].total_revenue += amount;
+          if (item.item_type === 'service') byDate[date].service_revenue += amount;
+          else byDate[date].product_revenue += amount;
+          byDate[date].total_transactions += 1;
+        }
+        return Object.values(byDate);
+      };
 
-      if (locationId) {
-        currentQuery = currentQuery.eq('location_id', locationId);
-      }
-
-      const { data: currentData, error: currentError } = await currentQuery;
-      if (currentError) throw currentError;
-
-      // Fetch last year data
-      let lastQuery = supabase
-        .from('phorest_daily_sales_summary')
-        .select('summary_date, total_revenue, service_revenue, product_revenue, total_transactions')
-        .gte('summary_date', `${lastYear}-01-01`)
-        .lte('summary_date', `${lastYear}-12-31`);
-
-      if (locationId) {
-        lastQuery = lastQuery.eq('location_id', locationId);
-      }
-
-      const { data: lastData, error: lastError } = await lastQuery;
-      if (lastError) throw lastError;
+      const [currentData, lastData] = await Promise.all([
+        fetchYear(currentYear),
+        fetchYear(lastYear),
+      ]);
 
       return { currentYear: currentData, lastYear: lastData };
     },

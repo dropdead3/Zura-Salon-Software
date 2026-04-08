@@ -74,43 +74,60 @@ export function PerformanceTrendChart({ userId, weeks = 8 }: PerformanceTrendCha
         .from('locations')
         .select('id, name');
 
-      // Fetch all summaries in date range by user_id
-      const { data: summaries, error } = await supabase
-        .from('phorest_daily_sales_summary')
-        .select('*, location_id, branch_name')
-        .eq('user_id', userId)
-        .gte('summary_date', weekRanges[0].start)
-        .lte('summary_date', weekRanges[weekRanges.length - 1].end)
-        .order('summary_date', { ascending: true });
+      // Fetch live POS transaction items with pagination
+      const fetchTxnItems = async (field: string, values: string[]) => {
+        const allData: any[] = [];
+        const pageSize = 1000;
+        let from = 0;
+        let hasMore = true;
+        while (hasMore) {
+          let q: any = supabase
+            .from('phorest_transaction_items')
+            .select('total_amount, tax_amount, item_type, transaction_date, location_id')
+            .gte('transaction_date', weekRanges[0].start)
+            .lte('transaction_date', weekRanges[weekRanges.length - 1].end);
+          if (values.length === 1) q = q.eq(field, values[0]);
+          else q = q.in(field, values);
+          const { data, error: e } = await q.range(from, from + pageSize - 1);
+          if (e) throw e;
+          allData.push(...(data || []));
+          hasMore = (data?.length || 0) === pageSize;
+          from += pageSize;
+        }
+        return allData;
+      };
 
-      if (error) throw error;
-
-      // Fallback: if no data by user_id, try phorest_staff_id
-      let allSummaries = summaries || [];
-      if (allSummaries.length === 0 && phorestStaffIds.length > 0) {
-        const { data: fallbackData, error: fbError } = await supabase
-          .from('phorest_daily_sales_summary')
-          .select('*, location_id, branch_name')
-          .in('phorest_staff_id', phorestStaffIds)
-          .gte('summary_date', weekRanges[0].start)
-          .lte('summary_date', weekRanges[weekRanges.length - 1].end)
-          .order('summary_date', { ascending: true });
-        if (fbError) throw fbError;
-        allSummaries = fallbackData || [];
+      let txnItems = await fetchTxnItems('stylist_user_id', [userId]);
+      if (txnItems.length === 0 && phorestStaffIds.length > 0) {
+        txnItems = await fetchTxnItems('phorest_staff_id', phorestStaffIds);
       }
+
+      // Aggregate to daily summaries
+      const dailyMap: Record<string, any> = {};
+      for (const item of txnItems) {
+        const date = (item.transaction_date || '').slice(0, 10);
+        if (!dailyMap[date]) {
+          dailyMap[date] = { summary_date: date, location_id: item.location_id, total_revenue: 0, total_services: 0, total_products: 0 };
+        }
+        const amount = (Number(item.total_amount) || 0) + (Number(item.tax_amount) || 0);
+        dailyMap[date].total_revenue += amount;
+        if (item.item_type === 'service') dailyMap[date].total_services += 1;
+        else dailyMap[date].total_products += 1;
+      }
+      const allSummaries = Object.values(dailyMap);
 
       // Extract unique locations from the data
       const locationMap = new Map<string, LocationOption>();
-      allSummaries.forEach(s => {
-        const key = s.location_id || s.branch_name;
+      for (const item of txnItems) {
+        const key = item.location_id;
         if (key && !locationMap.has(key)) {
-          const loc = locations?.find(l => l.id === s.location_id);
+          const loc = locations?.find(l => l.id === key);
           locationMap.set(key, {
             id: key,
-            name: loc?.name || s.branch_name || 'Unknown',
+            name: loc?.name || 'Unknown',
           });
         }
-      });
+      }
 
       return {
         summaries: allSummaries,

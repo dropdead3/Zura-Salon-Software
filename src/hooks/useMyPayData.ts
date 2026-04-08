@@ -142,31 +142,42 @@ export function useMyPayData(): MyPayData {
     enabled: !!user?.id && !!organizationId,
   });
 
-  // Fetch current period sales data for commission calculation
+  // Fetch current period sales data for commission calculation (from live POS transaction items)
   const { data: salesData, isLoading: salesLoading } = useQuery({
     queryKey: ['my-sales-data', user?.id, currentPeriod.startDate, currentPeriod.endDate],
     queryFn: async () => {
       if (!user?.id) return { serviceRevenue: 0, productRevenue: 0 };
       
-      const { data, error } = await supabase
-        .from('phorest_daily_sales_summary')
-        .select('service_revenue, product_revenue')
-        .eq('user_id', user.id)
-        .gte('summary_date', currentPeriod.startDate)
-        .lte('summary_date', currentPeriod.endDate);
+      const allData: any[] = [];
+      const pageSize = 1000;
+      let from = 0;
+      let hasMore = true;
+      while (hasMore) {
+        const { data, error } = await supabase
+          .from('phorest_transaction_items')
+          .select('total_amount, tax_amount, item_type')
+          .eq('stylist_user_id', user.id)
+          .gte('transaction_date', currentPeriod.startDate)
+          .lte('transaction_date', currentPeriod.endDate)
+          .range(from, from + pageSize - 1);
+        if (error) throw error;
+        allData.push(...(data || []));
+        hasMore = (data?.length || 0) === pageSize;
+        from += pageSize;
+      }
       
-      if (error) throw error;
+      let serviceRevenue = 0;
+      let productRevenue = 0;
+      for (const item of allData) {
+        const amount = (Number(item.total_amount) || 0) + (Number(item.tax_amount) || 0);
+        if (item.item_type === 'service') {
+          serviceRevenue += amount;
+        } else {
+          productRevenue += amount;
+        }
+      }
       
-      // Aggregate sales
-      const totals = (data || []).reduce(
-        (acc, row) => ({
-          serviceRevenue: acc.serviceRevenue + (Number(row.service_revenue) || 0),
-          productRevenue: acc.productRevenue + (Number(row.product_revenue) || 0),
-        }),
-        { serviceRevenue: 0, productRevenue: 0 }
-      );
-      
-      return totals;
+      return { serviceRevenue, productRevenue };
     },
     enabled: !!user?.id,
   });

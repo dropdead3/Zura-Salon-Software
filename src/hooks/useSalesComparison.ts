@@ -26,11 +26,45 @@ interface ComparisonData {
   };
 }
 
+async function fetchPeriodRevenue(dateFrom: string, dateTo: string, locationId?: string) {
+  const allData: any[] = [];
+  const pageSize = 1000;
+  let from = 0;
+  let hasMore = true;
+  while (hasMore) {
+    let q: any = supabase
+      .from('phorest_transaction_items')
+      .select('total_amount, tax_amount, item_type, phorest_client_id, transaction_date')
+      .gte('transaction_date', dateFrom)
+      .lte('transaction_date', dateTo);
+    if (locationId) q = q.eq('location_id', locationId);
+    const { data, error } = await q.range(from, from + pageSize - 1);
+    if (error) throw error;
+    allData.push(...(data || []));
+    hasMore = (data?.length || 0) === pageSize;
+    from += pageSize;
+  }
+
+  let totalRevenue = 0, serviceRevenue = 0, productRevenue = 0;
+  const clientDates = new Set<string>();
+  for (const item of allData) {
+    const amount = (Number(item.total_amount) || 0) + (Number(item.tax_amount) || 0);
+    totalRevenue += amount;
+    if (item.item_type === 'service') serviceRevenue += amount;
+    else productRevenue += amount;
+    if (item.phorest_client_id) {
+      const date = (item.transaction_date || '').slice(0, 10);
+      clientDates.add(`${item.phorest_client_id}|${date}`);
+    }
+  }
+  const totalTransactions = clientDates.size || allData.length;
+  return { totalRevenue, serviceRevenue, productRevenue, totalTransactions };
+}
+
 export function useSalesComparison(dateFrom: string, dateTo: string, locationId?: string) {
   return useQuery({
     queryKey: ['sales-comparison', dateFrom, dateTo, locationId],
     queryFn: async (): Promise<ComparisonData> => {
-      // Calculate the previous period (same duration before dateFrom)
       const currentFrom = new Date(dateFrom);
       const currentTo = new Date(dateTo);
       const daysDiff = Math.ceil((currentTo.getTime() - currentFrom.getTime()) / (1000 * 60 * 60 * 24));
@@ -38,57 +72,16 @@ export function useSalesComparison(dateFrom: string, dateTo: string, locationId?
       const previousTo = subDays(currentFrom, 1);
       const previousFrom = subDays(previousTo, daysDiff);
 
-      // Fetch current period
-      let currentQuery = supabase
-        .from('phorest_daily_sales_summary')
-        .select('total_revenue, service_revenue, product_revenue, total_transactions')
-        .gte('summary_date', dateFrom)
-        .lte('summary_date', dateTo);
+      const [current, previous] = await Promise.all([
+        fetchPeriodRevenue(dateFrom, dateTo, locationId),
+        fetchPeriodRevenue(format(previousFrom, 'yyyy-MM-dd'), format(previousTo, 'yyyy-MM-dd'), locationId),
+      ]);
 
-      if (locationId) {
-        currentQuery = currentQuery.eq('location_id', locationId);
-      }
-
-      const { data: currentData } = await currentQuery;
-
-      // Fetch previous period
-      let previousQuery = supabase
-        .from('phorest_daily_sales_summary')
-        .select('total_revenue, service_revenue, product_revenue, total_transactions')
-        .gte('summary_date', format(previousFrom, 'yyyy-MM-dd'))
-        .lte('summary_date', format(previousTo, 'yyyy-MM-dd'));
-
-      if (locationId) {
-        previousQuery = previousQuery.eq('location_id', locationId);
-      }
-
-      const { data: previousData } = await previousQuery;
-
-      // Aggregate current
-      const current = (currentData || []).reduce((acc, d) => ({
-        totalRevenue: acc.totalRevenue + (Number(d.total_revenue) || 0),
-        serviceRevenue: acc.serviceRevenue + (Number(d.service_revenue) || 0),
-        productRevenue: acc.productRevenue + (Number(d.product_revenue) || 0),
-        totalTransactions: acc.totalTransactions + (d.total_transactions || 0),
-      }), { totalRevenue: 0, serviceRevenue: 0, productRevenue: 0, totalTransactions: 0 });
-
-      // Aggregate previous
-      const previous = (previousData || []).reduce((acc, d) => ({
-        totalRevenue: acc.totalRevenue + (Number(d.total_revenue) || 0),
-        serviceRevenue: acc.serviceRevenue + (Number(d.service_revenue) || 0),
-        productRevenue: acc.productRevenue + (Number(d.product_revenue) || 0),
-        totalTransactions: acc.totalTransactions + (d.total_transactions || 0),
-      }), { totalRevenue: 0, serviceRevenue: 0, productRevenue: 0, totalTransactions: 0 });
-
-      // Calculate averages
       const currentAvgTicket = current.totalTransactions > 0 
-        ? current.totalRevenue / current.totalTransactions 
-        : 0;
+        ? current.totalRevenue / current.totalTransactions : 0;
       const previousAvgTicket = previous.totalTransactions > 0 
-        ? previous.totalRevenue / previous.totalTransactions 
-        : 0;
+        ? previous.totalRevenue / previous.totalTransactions : 0;
 
-      // Calculate percent changes
       const calcChange = (curr: number, prev: number) => 
         prev === 0 ? (curr > 0 ? 100 : 0) : ((curr - prev) / prev) * 100;
 
