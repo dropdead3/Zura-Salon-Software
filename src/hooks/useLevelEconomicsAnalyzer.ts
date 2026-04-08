@@ -147,7 +147,7 @@ export function useLevelEconomicsAnalyzer(
         services: servicesRes.data || [],
         baselines: baselinesRes.data || [],
         products: productsRes.data || [],
-        appointments: appointmentsRes.data || [],
+        appointments: appointmentsRes || [],
         staff: staffRes.data || [],
       };
     },
