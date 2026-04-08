@@ -14,7 +14,7 @@ import {
   Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
 import {
-  Users, Bell, Shield, Loader2, Trash2, Cog, Palette, Sun, Moon, Monitor, Check,
+  Users, Bell, Shield, Loader2, Trash2, Cog, Palette, Sun, Moon, Monitor, Check, DollarSign as DollarSignIcon,
   GraduationCap, Keyboard, Sparkles, Settings2, Save,
 } from 'lucide-react';
 import { MessageSquareHeart } from 'lucide-react';
@@ -28,6 +28,7 @@ import { useStaffingAlertSettings, useUpdateStaffingAlertSettings } from '@/hook
 import { useServicesWithFlowsCount } from '@/hooks/useServiceCommunicationFlows';
 import { useInfotainerSettings } from '@/hooks/useInfotainers';
 import { useOrgSecuritySettings } from '@/hooks/useOrgSecuritySettings';
+import { useRevenueDisplay } from '@/contexts/RevenueDisplayContext';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { Slider } from '@/components/ui/slider';
