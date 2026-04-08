@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { getDay, format } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
+import { fetchAllBatched } from '@/utils/fetchAllBatched';
 
 interface DayOfWeekData {
   dayName: string;
@@ -25,21 +26,22 @@ export function useNoShowReport(dateFrom: string, dateTo: string, locationId?: s
   return useQuery({
     queryKey: ['no-show-report', dateFrom, dateTo, locationId],
     queryFn: async (): Promise<NoShowData> => {
-      let query = supabase
-        .from('phorest_appointments')
-        .select('id, appointment_date, status, total_price, tip_amount')
-        .gte('appointment_date', dateFrom)
-        .lte('appointment_date', dateTo);
+      const appointments = await fetchAllBatched<any>((from, to) => {
+        let q = supabase
+          .from('phorest_appointments')
+          .select('id, appointment_date, status, total_price, tip_amount')
+          .gte('appointment_date', dateFrom)
+          .lte('appointment_date', dateTo)
+          .range(from, to);
 
-      if (locationId) {
-        query = query.eq('location_id', locationId);
-      }
+        if (locationId) {
+          q = q.eq('location_id', locationId);
+        }
 
-      const { data: appointments, error } = await query;
-      
-      if (error) throw error;
+        return q;
+      });
 
-      if (!appointments || appointments.length === 0) {
+      if (appointments.length === 0) {
         return {
           totalAppointments: 0,
           noShows: 0,

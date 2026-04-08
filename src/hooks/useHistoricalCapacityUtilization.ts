@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { format, subDays, startOfWeek, startOfMonth, differenceInMinutes, parseISO, addDays } from 'date-fns';
 import { getServiceCategory } from '@/utils/serviceCategorization';
 import { isClosedOnDate } from '@/hooks/useLocations';
+import { fetchAllBatched } from '@/utils/fetchAllBatched';
 
 export interface DayCapacity {
   date: string;
@@ -136,21 +137,22 @@ export function useHistoricalCapacityUtilization(
   const appointmentsQuery = useQuery({
     queryKey: ['historical-capacity-appointments', locationId, startDateStr, endDateStr],
     queryFn: async () => {
-      let query = supabase
-        .from('phorest_appointments')
-        .select('appointment_date, start_time, end_time, total_price, tip_amount, service_name, location_id, status')
-        .gte('appointment_date', startDateStr)
-        .lte('appointment_date', endDateStr)
-        .not('status', 'in', '("cancelled","no_show")')
-        .eq('is_demo', false);
+      return fetchAllBatched<any>((from, to) => {
+        let q = supabase
+          .from('phorest_appointments')
+          .select('appointment_date, start_time, end_time, total_price, tip_amount, service_name, location_id, status')
+          .gte('appointment_date', startDateStr)
+          .lte('appointment_date', endDateStr)
+          .not('status', 'in', '("cancelled","no_show")')
+          .eq('is_demo', false)
+          .range(from, to);
 
-      if (locationId) {
-        query = query.eq('location_id', locationId);
-      }
+        if (locationId) {
+          q = q.eq('location_id', locationId);
+        }
 
-      const { data, error } = await query;
-      if (error) throw error;
-      return data || [];
+        return q;
+      });
     },
   });
 
