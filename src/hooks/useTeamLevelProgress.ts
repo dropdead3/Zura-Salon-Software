@@ -248,7 +248,8 @@ export function useTeamLevelProgress() {
         let totalProductRevenue = 0;
         for (const item of userSales) {
           const amount = (Number(item.total_amount) || 0) + (Number(item.tax_amount) || 0);
-          if (item.item_type === 'service') {
+          const itemType = (item.item_type || '').toLowerCase();
+          if (itemType === 'service') {
             totalServiceRevenue += amount;
           } else {
             totalProductRevenue += amount;

@@ -89,11 +89,12 @@ export function useStaffRevenuePerformance(
         phorest_staff_id: string | null;
         item_type: string | null;
         total_amount: number | null;
+        tax_amount: number | null;
         transaction_date: string | null;
       }>((from, to) => {
         let q = supabase
           .from('phorest_transaction_items')
-          .select('phorest_staff_id, item_type, total_amount, transaction_date')
+          .select('phorest_staff_id, item_type, total_amount, tax_amount, transaction_date')
           .gte('transaction_date', startDate)
           .lte('transaction_date', endDate)
           .not('phorest_staff_id', 'is', null)
@@ -163,10 +164,11 @@ export function useStaffRevenuePerformance(
         const existing = aggregatedData.get(staffId);
         if (!existing) continue;
 
-        const amount = Number(item.total_amount) || 0;
-        if (item.item_type === 'service') {
+        const amount = (Number(item.total_amount) || 0) + (Number(item.tax_amount) || 0);
+        const itemType = (item.item_type || '').toLowerCase();
+        if (itemType === 'service') {
           existing.serviceRevenue += amount;
-        } else if (item.item_type === 'product') {
+        } else if (itemType === 'product') {
           existing.productRevenue += amount;
         }
       }

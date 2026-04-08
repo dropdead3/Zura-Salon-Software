@@ -103,7 +103,8 @@ export function useTodayActualRevenue(enabled: boolean) {
 
       for (const row of txnData) {
         const amount = (Number(row.total_amount) || 0) + (Number(row.tax_amount) || 0);
-        if (row.item_type === 'service') {
+        const itemType = (row.item_type || '').toLowerCase();
+        if (itemType === 'service') {
           serviceRevenue += amount;
         } else {
           productRevenue += amount;
@@ -186,7 +187,8 @@ export function useTodayActualRevenue(enabled: boolean) {
         }
         const amount = (Number(row.total_amount) || 0) + (Number(row.tax_amount) || 0);
         byLocation[locId].actualRevenue += amount;
-        if (row.item_type === 'service') {
+        const itemType = (row.item_type || '').toLowerCase();
+        if (itemType === 'service') {
           byLocation[locId].actualServiceRevenue += amount;
         } else {
           byLocation[locId].actualProductRevenue += amount;

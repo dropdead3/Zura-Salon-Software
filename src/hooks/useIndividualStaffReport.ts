@@ -365,8 +365,8 @@ export function useIndividualStaffReport(staffUserId: string | null, dateFrom?: 
           const tax = Number(item.tax_amount) || 0;
           const isProduct = PRODUCT_TYPES.includes(item.item_type);
           const isService = SERVICE_TYPES.includes(item.item_type);
-          if (isService) svcRev += amount;
-          if (isProduct) { prodRev += amount + tax; taxTotal += tax; }
+          if (isService) svcRev += amount + tax;
+          if (isProduct) prodRev += amount + tax;
           // Track unique client visits for avg ticket
           if (item.phorest_client_id && item.transaction_date) {
             const dateOnly = typeof item.transaction_date === 'string' ? item.transaction_date.substring(0, 10) : item.transaction_date;
@@ -417,22 +417,23 @@ export function useIndividualStaffReport(staffUserId: string | null, dateFrom?: 
       items.forEach((item: any) => {
         const isProduct = PRODUCT_TYPES.includes(item.item_type);
         const isService = SERVICE_TYPES.includes(item.item_type);
+        const amount = (Number(item.total_amount) || 0) + (Number(item.tax_amount) || 0);
         const visitKey = item.phorest_client_id && item.transaction_date
           ? `${item.phorest_client_id}|${item.transaction_date}`
           : null;
         if (isProduct) {
-          productRevenue += Number(item.total_amount) || 0;
+          productRevenue += amount;
           productUnits += item.quantity || 1;
           if (visitKey && !isExtensionProduct(item.item_name)) productVisitKeys.add(visitKey);
         }
         if (isService) {
-          serviceRevenue += Number(item.total_amount) || 0;
+          serviceRevenue += amount;
           if (visitKey) serviceVisitKeys.add(visitKey);
           const sName = item.item_name || 'Unknown Service';
           if (!serviceMap.has(sName)) serviceMap.set(sName, { count: 0, revenue: 0 });
           const s = serviceMap.get(sName)!;
           s.count++;
-          s.revenue += Number(item.total_amount) || 0;
+          s.revenue += amount;
         }
       });
 
@@ -534,10 +535,8 @@ export function useIndividualStaffReport(staffUserId: string | null, dateFrom?: 
         if (!sid) return;
         if (!teamStaffMap.has(sid)) teamStaffMap.set(sid, { revenue: 0, uniqueVisits: new Set() });
         const t = teamStaffMap.get(sid)!;
-        const amount = Number(item.total_amount) || 0;
-        const tax = Number(item.tax_amount) || 0;
-        const isProduct = PRODUCT_TYPES.includes(item.item_type);
-        t.revenue += amount + (isProduct ? tax : 0);
+        const amount = (Number(item.total_amount) || 0) + (Number(item.tax_amount) || 0);
+        t.revenue += amount;
         if (item.phorest_client_id && item.transaction_date) {
           const dateOnly = typeof item.transaction_date === 'string' ? item.transaction_date.substring(0, 10) : item.transaction_date;
           t.uniqueVisits.add(`${item.phorest_client_id}|${dateOnly}`);

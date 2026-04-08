@@ -112,7 +112,8 @@ export function PerformanceTrendChart({ userId, weeks = 8 }: PerformanceTrendCha
         }
         const amount = (Number(item.total_amount) || 0) + (Number(item.tax_amount) || 0);
         dailyMap[date].total_revenue += amount;
-        if (item.item_type === 'service') dailyMap[date].total_services += 1;
+        const itemType = (item.item_type || '').toLowerCase();
+        if (itemType === 'service') dailyMap[date].total_services += 1;
         else dailyMap[date].total_products += 1;
       }
       const allSummaries = Object.values(dailyMap);
