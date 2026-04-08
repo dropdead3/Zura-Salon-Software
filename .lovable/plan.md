@@ -1,144 +1,69 @@
 
 
-# Batch Report Downloads + Scheduled Report Deliveries
+# Gap Analysis, Bug Fixes & "Run Now" Feature
 
-## Overview
+## Bugs Found
 
-Two connected features: (1) a "Report Pack" tool allowing owners to select multiple reports and download them as a single merged PDF or individual PDFs in a ZIP, and (2) a full Schedule Creator UI that wires into the existing `scheduled_reports` table, with automatic deactivation when staff recipients are archived/removed.
+### Bug 1: `useScheduledReports` query is not org-scoped
+The `useScheduledReports` hook fetches all `scheduled_reports` without filtering by `organization_id`. RLS may protect against cross-org leaks, but the query lacks the standard org-scoping pattern (`enabled: !!orgId`, org filter in query, org in cache key). This violates the data architecture doctrine.
+
+**Fix:** Import `useOrganizationContext`, filter by `organization_id`, add org to query key, and gate with `enabled: !!orgId`.
+
+### Bug 2: `useScheduledReportRuns` fires even when no reportId
+Line 78: `enabled: true` — this means the query runs even when `reportId` is undefined, fetching unfiltered runs. Should be `enabled: !!reportId`.
+
+### Bug 3: `ScheduledReportsSubTab` has no Edit button on report cards
+The `ScheduledReportsSubTab` renders a card for each scheduled report but provides no way to edit it. Only History, Pause/Resume, and Delete are available. The `editingReport` state exists but is never set to a non-null value. Users must delete and recreate to change anything.
+
+**Fix:** Add an Edit icon button to the card action buttons that sets `editingReport` and opens the form.
+
+### Bug 4: Duplicate report catalogs — `BatchReportDialog` and `ScheduleReportForm` maintain separate hardcoded lists
+`BatchReportDialog` has 29 reports (ALL_REPORTS), `ScheduleReportForm` has 21 reports (REPORT_OPTIONS). They're out of sync — Schedule is missing: `location-sales`, `product-sales`, `staff-transaction-detail`, `client-source`, `duplicate-clients`, `future-appointments`, `chemical-cost`, `location-benchmark`, `service-profitability`. This means users can batch-download reports they can't schedule.
+
+**Fix:** Extract a shared `REPORT_CATALOG` constant to a common file and import it in both components.
+
+### Bug 5: Merged PDF re-fetches all data
+In `useBatchReportGenerator`, the merged PDF path (line 345-375) calls `fetchReportData` a second time for every report after already generating individual PDFs. This doubles the query load. The individual buffers are already generated but aren't used for merging (because jsPDF can't merge ArrayBuffers).
+
+**Fix:** For merged output, skip the individual PDF generation loop entirely and go straight to the merged doc generation. Only generate individual PDFs when output is ZIP.
+
+### Bug 6: `calculateNextRunTime` weekly logic is incorrect
+When `schedule_type === 'weekly'`, line 257 first adds 7 days, then recalculates based on `dayOfWeek`. The `daysUntil` calculation uses `next.getDay()` (which is already 7 days ahead) but then adds `daysUntil` to `now.getDate()`. This can produce incorrect dates — the next run could be 2 weeks away instead of 1.
+
+**Fix:** Calculate `daysUntil` from `now` directly without the initial `+7`.
 
 ---
 
-## Feature 1: Batch Report Download
+## "Run Now" Feature
 
 ### What it does
-A modal/panel accessible from the Reports Hub header. The owner checks off reports from the full catalog, chooses a date range, picks "Single PDF" or "Separate PDFs (ZIP)", and clicks Generate. The system runs each report's data hook, renders each to PDF pages using the existing `jsPDF`/`autoTable` pattern, and either merges them into one PDF or bundles them as a ZIP download.
+Adds a "Run Now" button to each scheduled report card. When clicked, it triggers an immediate client-side generation of the selected reports (using the same `useBatchReportGenerator` logic) and downloads the result. A run record is inserted into `scheduled_report_runs` to maintain the audit trail. This is a local generation — no email delivery — since email delivery infrastructure (the cron-based dispatcher) is Phase 2.
 
 ### Implementation
 
-**New files:**
-- `src/components/dashboard/reports/batch/BatchReportDialog.tsx` — Dialog with report checklist grouped by category (Sales, Staff, Clients, etc.), date range picker, location filter, output format toggle (merged PDF / ZIP of PDFs), and Generate button
-- `src/components/dashboard/reports/batch/useBatchReportGenerator.ts` — Orchestrator hook that: fetches data for each selected report in sequence, calls each report's PDF generation function, merges via `jsPDF` page insertion or bundles via `JSZip`
-- `src/lib/reportPdfGenerators.ts` — Refactored: extract the PDF generation logic from individual report components into standalone functions that accept data + filters and return a `jsPDF` doc (currently each report builds PDF inline in its component — these need to be extractable)
+**Hook changes — `useScheduledReports.ts`:**
+- Add `useRunScheduledReportNow` mutation that:
+  1. Inserts a `scheduled_report_runs` row with `status: 'running'`
+  2. Returns the report config (report_ids from filters, format) for the caller to generate
+  3. On completion, updates the row to `status: 'completed'` and updates `last_run_at` on the parent schedule
 
-**Edited files:**
-- `ReportsHub.tsx` — Add "Generate Report Pack" button in header actions
-- `ReportsTabContent.tsx` — Add batch download button near category tabs
-
-**Dependencies:** `jszip` (for ZIP bundling option) — needs `npm install jszip`
-
-**Key design decisions:**
-- Reports are generated client-side using existing hooks (no new edge function needed for Phase 1)
-- Progress indicator shows which report is currently being generated (e.g., "Generating 3 of 7...")
-- Maximum of ~15 reports per batch to avoid browser memory issues
-- Each report PDF uses the existing branded `reportPdfLayout` header
+**UI changes — `ScheduledReportsSubTab.tsx`:**
+- Add a "Run Now" (`Play` or `Zap`) icon button next to History/Pause/Delete
+- On click, extract the report config from the schedule's `filters.report_ids`, invoke the batch generator with the current date range, and download the result
+- Show a loading spinner on the button while generating
 
 ---
 
-## Feature 2: Schedule Creator UI
+## Fix Plan
 
-### What it does
-The existing "Scheduled" tab has a list view and history but **no creation form**. The "New Schedule" and "Schedule a Report" buttons are dead — they don't open anything. This feature adds the full creation/edit form.
+| File | Change |
+|---|---|
+| New: `src/config/reportCatalog.ts` (extend) or `src/config/reportOptions.ts` | Shared `REPORT_CATALOG` constant with all 29 reports |
+| `src/hooks/useScheduledReports.ts` | Org-scope query, fix `enabled`, fix weekly calc, add `useRunScheduledReportNow` |
+| `src/components/dashboard/reports/scheduled/ScheduledReportsSubTab.tsx` | Add Edit + Run Now buttons |
+| `src/components/dashboard/reports/batch/BatchReportDialog.tsx` | Import shared catalog |
+| `src/components/dashboard/reports/scheduled/ScheduleReportForm.tsx` | Import shared catalog |
+| `src/components/dashboard/reports/batch/useBatchReportGenerator.ts` | Skip double-fetch for merged output |
 
-### Implementation
-
-**New files:**
-- `src/components/dashboard/reports/scheduled/ScheduleReportForm.tsx` — Full form inside a `PremiumFloatingPanel`:
-  - **Report selection**: Multi-select checklist (same catalog as batch download) — allows scheduling multiple reports in one delivery
-  - **Schedule**: Frequency (daily/weekly/monthly/1st of month/end of month), day-of-week (for weekly), time, timezone selector
-  - **Recipients**: Add by selecting from org admin/staff list (pulls from `employee_profiles` where `is_active = true`), or type an external email. Shows name + email for each recipient.
-  - **Format**: PDF (single merged) or PDF (separate per report)
-  - **Name**: Auto-generated from selections but editable
-
-**Edited files:**
-- `ScheduledReportsSubTab.tsx` — Wire "Schedule a Report" button to open the form
-- `ScheduledReportsManager.tsx` — Wire "Schedule Report" and "Edit" buttons to the form
-- `useScheduledReports.ts` — Add `report_ids` field to the `filters` JSONB (stores array of selected report IDs); no schema change needed since `filters` is already JSONB
-
----
-
-## Feature 3: Auto-Deactivation on Staff Archive/Removal
-
-### What it does
-When a staff member is archived (`is_active = false`) or removed from the organization, any `scheduled_reports` where they are a recipient must:
-1. Remove them from the `recipients` JSONB array
-2. If no recipients remain, set `is_active = false`
-3. Notify the report creator that a recipient was removed
-
-### Implementation
-
-**Database migration — 1 trigger function:**
-
-```sql
-CREATE OR REPLACE FUNCTION public.cleanup_scheduled_report_recipients()
-RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path TO 'public'
-AS $$
-DECLARE
-  v_report RECORD;
-  v_new_recipients JSONB;
-  v_user_email TEXT;
-BEGIN
-  -- Only fire when staff is deactivated or removed
-  IF (TG_OP = 'UPDATE' AND NEW.is_active = false AND OLD.is_active = true)
-     OR (TG_OP = 'DELETE') THEN
-    
-    v_user_email := COALESCE(
-      CASE WHEN TG_OP = 'DELETE' THEN OLD.email ELSE NEW.email END,
-      ''
-    );
-    
-    FOR v_report IN
-      SELECT id, recipients, created_by
-      FROM public.scheduled_reports
-      WHERE organization_id = (CASE WHEN TG_OP = 'DELETE' THEN OLD.organization_id ELSE NEW.organization_id END)
-        AND is_active = true
-    LOOP
-      -- Remove recipient matching userId or email
-      v_new_recipients := (
-        SELECT COALESCE(jsonb_agg(r), '[]'::jsonb)
-        FROM jsonb_array_elements(v_report.recipients) r
-        WHERE r->>'userId' IS DISTINCT FROM (CASE WHEN TG_OP = 'DELETE' THEN OLD.user_id ELSE NEW.user_id END)::text
-          AND (r->>'email' IS DISTINCT FROM v_user_email OR v_user_email = '')
-      );
-      
-      IF v_new_recipients IS DISTINCT FROM v_report.recipients THEN
-        UPDATE public.scheduled_reports
-        SET recipients = v_new_recipients,
-            is_active = CASE WHEN jsonb_array_length(v_new_recipients) = 0 THEN false ELSE is_active END
-        WHERE id = v_report.id;
-        
-        -- Notify creator
-        INSERT INTO public.platform_notifications (
-          recipient_id, type, severity, title, message, link
-        ) VALUES (
-          v_report.created_by, 'scheduled_report_recipient_removed', 'warning',
-          'Scheduled Report Updated',
-          'A recipient was removed from "' || (SELECT name FROM scheduled_reports WHERE id = v_report.id) || '" because they are no longer active.',
-          '/dashboard/admin/reports'
-        );
-      END IF;
-    END LOOP;
-  END IF;
-  
-  RETURN COALESCE(NEW, OLD);
-END;
-$$;
-
-CREATE TRIGGER trg_cleanup_scheduled_recipients
-AFTER UPDATE OF is_active OR DELETE ON public.employee_profiles
-FOR EACH ROW EXECUTE FUNCTION public.cleanup_scheduled_report_recipients();
-```
-
----
-
-## Summary
-
-| Category | Action | Files |
-|---|---|---|
-| Batch Download | Report Pack dialog + PDF merge/ZIP | 3 new + 2 edited |
-| Schedule Creator | Full form for creating/editing schedules | 1 new + 3 edited |
-| Auto-Deactivation | DB trigger on employee_profiles | 1 migration |
-| Dependencies | `jszip` package | package.json |
-| **Total** | | 4 new files, 5 edited, 1 migration |
-
-No breaking changes. All existing scheduled report data is preserved — `report_ids` is stored inside the existing `filters` JSONB column.
+6 bugs fixed + 1 new feature. No migrations needed.
 
