@@ -157,7 +157,7 @@ export function RetailStaffReport({ dateFrom, dateTo, locationId, onClose, dateR
             <CardTitle className="font-display text-base tracking-wide">RETAIL SALES BY STAFF</CardTitle>
             <MetricInfoTooltip description="Per-stylist retail sales metrics ranked by product revenue. Attachment rate is the percentage of each stylist's service transactions that included a product sale." />
           </div>
-          <CardDescription className="text-xs">{formatDate(new Date(dateFrom), 'MMM d, yyyy')} – {formatDate(new Date(dateTo), 'MMM d, yyyy')}</CardDescription>
+          <CardDescription className="text-xs"><ReportDateSubtitle dateFrom={dateFrom} dateTo={dateTo} dateRangeKey={dateRangeKey} /></CardDescription>
         </CardHeader>
         <CardContent>
           <Table>

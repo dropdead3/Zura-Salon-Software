@@ -318,7 +318,7 @@ export function FinancialReportGenerator({
       <Card>
         <CardHeader className="pb-2">
           <CardTitle className="font-display text-base tracking-wide">{getReportTitle()}</CardTitle>
-          <CardDescription>{formatDate(new Date(dateFrom), 'MMM d, yyyy')} – {formatDate(new Date(dateTo), 'MMM d, yyyy')}</CardDescription>
+          <CardDescription><ReportDateSubtitle dateFrom={dateFrom} dateTo={dateTo} dateRangeKey={dateRangeKey} /></CardDescription>
         </CardHeader>
         <CardContent>
           <Skeleton className="h-64 w-full" />

@@ -171,7 +171,7 @@ export function RetailProductReport({ dateFrom, dateTo, locationId, onClose, dat
             <CardTitle className="font-display text-base tracking-wide">ALL PRODUCTS</CardTitle>
             <MetricInfoTooltip description="All retail products sold in the selected period with trend comparison to prior period." />
           </div>
-          <CardDescription className="text-xs">{formatDate(new Date(dateFrom), 'MMM d, yyyy')} - {formatDate(new Date(dateTo), 'MMM d, yyyy')}</CardDescription>
+          <CardDescription className="text-xs"><ReportDateSubtitle dateFrom={dateFrom} dateTo={dateTo} dateRangeKey={dateRangeKey} /></CardDescription>
         </CardHeader>
         <CardContent>
           <Table>
