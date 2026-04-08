@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { subWeeks, format } from 'date-fns';
+import { fetchAllBatched } from '@/utils/fetchAllBatched';
 
 export interface DecliningService {
   serviceName: string;
@@ -41,19 +42,23 @@ export function useServiceMenuIntelligence(organizationId?: string, locationId?:
     queryKey: ['service-menu-intelligence', organizationId, locationId],
     queryFn: async (): Promise<ServiceMenuIntelligenceData> => {
       // Fetch transaction items for last 8 weeks
-      let query = supabase
-        .from('phorest_transaction_items')
-        .select('item_name, item_type, total_amount, transaction_date, transaction_id')
-        .eq('item_type', 'service')
-        .gte('transaction_date', priorStart)
-        .lte('transaction_date', recentEnd);
-
-      if (locationId) {
-        query = query.eq('location_id', locationId);
-      }
-
-      const { data: txItems, error } = await query;
-      if (error) throw error;
+      const txItems = await fetchAllBatched<{
+        item_name: string | null;
+        item_type: string | null;
+        total_amount: number | null;
+        transaction_date: string | null;
+        transaction_id: string | null;
+      }>((from, to) => {
+        let q = supabase
+          .from('phorest_transaction_items')
+          .select('item_name, item_type, total_amount, transaction_date, transaction_id')
+          .eq('item_type', 'service')
+          .gte('transaction_date', priorStart)
+          .lte('transaction_date', recentEnd)
+          .range(from, to);
+        if (locationId) q = q.eq('location_id', locationId);
+        return q;
+      });
 
       // Fetch services with price data (phorest_services has no cost column, use service_addons pattern)
       const { data: services, error: svcErr } = await supabase

@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { formatDisplayName } from '@/lib/utils';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useMemo } from 'react';
+import { fetchAllBatched } from '@/utils/fetchAllBatched';
 
 export interface AssistantActivitySummary {
   assistantUserId: string;
@@ -23,38 +24,47 @@ export function useAssistantActivity(dateFrom: string, dateTo: string) {
     queryFn: async () => {
       // Get all assistant assignments in period with appointment dates — server-side date filtering
       // First get appointment IDs in date range
-      const { data: apptIds, error: apptError } = await supabase
-        .from('phorest_appointments')
-        .select('id')
-        .gte('appointment_date', dateFrom)
-        .lte('appointment_date', dateTo)
-        .eq('is_demo', false);
+      const apptIds = await fetchAllBatched<{ id: string }>((from, to) =>
+        supabase
+          .from('phorest_appointments')
+          .select('id')
+          .gte('appointment_date', dateFrom)
+          .lte('appointment_date', dateTo)
+          .eq('is_demo', false)
+          .range(from, to)
+      );
 
-      if (apptError) throw apptError;
-      if (!apptIds || apptIds.length === 0) {
+      if (apptIds.length === 0) {
         return { summaries: [], totalAssignments: 0, uniqueAssistants: 0 };
       }
 
       const ids = apptIds.map(a => a.id);
-      const { data: assignments, error } = await supabase
-        .from('appointment_assistants')
-        .select(`
-          assistant_user_id,
-          assist_duration_minutes,
-          appointment:phorest_appointments!appointment_assistants_appointment_id_fkey(
-            appointment_date,
-            stylist_user_id,
-            start_time,
-            end_time,
-            total_price
-          )
-        `)
-        .eq('organization_id', orgId!)
-        .in('appointment_id', ids);
+      // Chunk the .in() call to avoid PostgREST URL length limits
+      const CHUNK_SIZE = 500;
+      const allAssignments: any[] = [];
+      for (let i = 0; i < ids.length; i += CHUNK_SIZE) {
+        const chunk = ids.slice(i, i + CHUNK_SIZE);
+        const { data: assignments, error } = await supabase
+          .from('appointment_assistants')
+          .select(`
+            assistant_user_id,
+            assist_duration_minutes,
+            appointment:phorest_appointments!appointment_assistants_appointment_id_fkey(
+              appointment_date,
+              stylist_user_id,
+              start_time,
+              end_time,
+              total_price,
+              tip_amount
+            )
+          `)
+          .eq('organization_id', orgId!)
+          .in('appointment_id', chunk);
+        if (error) throw error;
+        if (assignments) allAssignments.push(...assignments);
+      }
 
-      if (error) throw error;
-
-      const filtered = assignments || [];
+      const filtered = allAssignments;
 
       // Get unique user IDs (assistants + lead stylists)
       const assistantIds = [...new Set(filtered.map(a => a.assistant_user_id))];
@@ -97,7 +107,7 @@ export function useAssistantActivity(dateFrom: string, dateTo: string) {
 
         // Assisted revenue
         if (appt?.total_price) {
-          entry.assistedRevenue += Number(appt.total_price);
+          entry.assistedRevenue += (Number(appt.total_price) || 0) - (Number(appt.tip_amount) || 0);
         }
 
         // Duration

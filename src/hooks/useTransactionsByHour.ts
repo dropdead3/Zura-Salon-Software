@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { fetchAllBatched } from '@/utils/fetchAllBatched';
 
 export interface HourlyTransaction {
   hour: number;
@@ -11,25 +12,24 @@ export function useTransactionsByHour(dateFrom?: string, dateTo?: string, locati
     queryKey: ['transactions-by-hour', dateFrom, dateTo, locationId],
     queryFn: async () => {
       // Step 1: Get distinct POS client IDs for the date range
-      let txQuery = supabase
-        .from('phorest_transaction_items')
-        .select('phorest_client_id')
-        .not('phorest_client_id', 'is', null);
-
-      if (dateFrom) txQuery = txQuery.gte('transaction_date', dateFrom);
-      if (dateTo) txQuery = txQuery.lte('transaction_date', dateTo);
-      if (locationId && locationId !== 'all') txQuery = txQuery.eq('location_id', locationId);
-
-      const { data: txData, error: txError } = await txQuery;
-      if (txError) throw txError;
+      const txData = await fetchAllBatched<{ phorest_client_id: string | null }>((from, to) => {
+        let q = supabase
+          .from('phorest_transaction_items')
+          .select('phorest_client_id')
+          .not('phorest_client_id', 'is', null)
+          .range(from, to);
+        if (dateFrom) q = q.gte('transaction_date', dateFrom);
+        if (dateTo) q = q.lte('transaction_date', dateTo);
+        if (locationId && locationId !== 'all') q = q.eq('location_id', locationId);
+        return q;
+      });
 
       const posClientIds = new Set<string>();
-      txData?.forEach(row => {
+      txData.forEach(row => {
         if (row.phorest_client_id) posClientIds.add(row.phorest_client_id);
       });
 
       if (posClientIds.size === 0) {
-        // No POS data — return empty range
         const result: HourlyTransaction[] = [];
         for (let h = 8; h <= 20; h++) {
           result.push({ hour: h, count: 0 });
@@ -38,22 +38,22 @@ export function useTransactionsByHour(dateFrom?: string, dateTo?: string, locati
       }
 
       // Step 2: Get earliest appointment start_time per POS client (for hour assignment)
-      let aptQuery = supabase
-        .from('phorest_appointments')
-        .select('phorest_client_id, start_time')
-        .not('phorest_client_id', 'is', null)
-        .not('status', 'in', '("cancelled","no_show")');
-
-      if (dateFrom) aptQuery = aptQuery.gte('appointment_date', dateFrom);
-      if (dateTo) aptQuery = aptQuery.lte('appointment_date', dateTo);
-      if (locationId && locationId !== 'all') aptQuery = aptQuery.eq('location_id', locationId);
-
-      const { data: aptData, error: aptError } = await aptQuery;
-      if (aptError) throw aptError;
+      const aptData = await fetchAllBatched<{ phorest_client_id: string | null; start_time: string | null }>((from, to) => {
+        let q = supabase
+          .from('phorest_appointments')
+          .select('phorest_client_id, start_time')
+          .not('phorest_client_id', 'is', null)
+          .not('status', 'in', '("cancelled","no_show")')
+          .range(from, to);
+        if (dateFrom) q = q.gte('appointment_date', dateFrom);
+        if (dateTo) q = q.lte('appointment_date', dateTo);
+        if (locationId && locationId !== 'all') q = q.eq('location_id', locationId);
+        return q;
+      });
 
       // For each POS client, find earliest appointment start_time
       const clientEarliestHour = new Map<string, number>();
-      aptData?.forEach(row => {
+      aptData.forEach(row => {
         if (!row.phorest_client_id || !row.start_time || !posClientIds.has(row.phorest_client_id)) return;
         const hour = parseInt(row.start_time.split(':')[0]);
         const existing = clientEarliestHour.get(row.phorest_client_id);
