@@ -28,6 +28,9 @@ import {
   PieChart,
   AlertTriangle,
   Coins,
+  Percent,
+  Building,
+  Grid3X3,
 } from 'lucide-react';
 import { useLocations } from '@/hooks/useLocations';
 import { getReportTier, filterReportsByTier } from '@/config/reportCatalog';
@@ -53,6 +56,9 @@ import { TipAnalysisReport } from '@/components/dashboard/reports/TipAnalysisRep
 import { ServiceCategoryMixReport } from '@/components/dashboard/reports/ServiceCategoryMixReport';
 import { TaxSummaryReport } from '@/components/dashboard/reports/TaxSummaryReport';
 import { ClientAttritionReport } from '@/components/dashboard/reports/ClientAttritionReport';
+import { StaffCompensationRatioReport } from '@/components/dashboard/reports/StaffCompensationRatioReport';
+import { LocationBenchmarkReport } from '@/components/dashboard/reports/LocationBenchmarkReport';
+import { DemandHeatmapReport } from '@/components/dashboard/reports/DemandHeatmapReport';
 import type { AnalyticsFilters } from '@/pages/dashboard/admin/AnalyticsHub';
 
 const reportCategories = [
@@ -83,6 +89,7 @@ const staffReports = [
   { id: 'rebooking', name: 'Rebooking Analysis', description: 'Staff rebooking rates and trends', icon: UserCheck },
   { id: 'new-clients', name: 'New Client Acquisition', description: "Who's bringing in new clients", icon: UserCheck },
   { id: 'tip-analysis', name: 'Tip Analysis', description: 'Tip distribution, avg tip per visit, tip-to-revenue ratio by stylist', icon: Coins },
+  { id: 'compensation-ratio', name: 'Compensation Ratio', description: 'Labor cost as % of revenue per stylist with commission source', icon: Percent },
 ];
 
 const clientReports = [
@@ -98,6 +105,7 @@ const operationsReports = [
   { id: 'no-show', name: 'No-Show Report', description: 'No-show rates by staff, day, time', icon: Clock },
   { id: 'service-duration', name: 'Service Duration', description: 'Actual vs expected times', icon: Clock },
   { id: 'lead-time', name: 'Appointment Lead Time', description: 'How far ahead clients book', icon: CalendarDays },
+  { id: 'demand-heatmap', name: 'Demand Heatmap', description: 'Appointment volume by hour and day-of-week', icon: Grid3X3 },
 ];
 
 const financialReports = [
@@ -110,6 +118,7 @@ const financialReports = [
   { id: 'end-of-month', name: 'End-of-Month Summary', description: 'Comprehensive monthly business report', icon: ClipboardList },
   { id: 'service-profitability', name: 'Service Profitability', description: 'Revenue vs chemical + labor cost per service', icon: TrendingUp },
   { id: 'chemical-cost', name: 'Chemical Cost Report', description: 'Chemical cost per service, waste %, and margin from Color Bar', icon: Beaker },
+  { id: 'location-benchmark', name: 'Location Benchmarking', description: 'Side-by-side KPI comparison across all locations', icon: Building },
 ];
 
 interface ReportsTabContentProps {
@@ -237,7 +246,7 @@ export function ReportsTabContent({ filters, isStandalone }: ReportsTabContentPr
   );
 
   // Reports that manage their own back button
-  const selfContainedReports = ['individual-staff', 'payroll-summary', 'retail-products', 'retail-staff', 'end-of-month', 'service-profitability', 'chemical-cost', 'tip-analysis', 'category-mix', 'tax-summary', 'client-attrition'];
+  const selfContainedReports = ['individual-staff', 'payroll-summary', 'retail-products', 'retail-staff', 'end-of-month', 'service-profitability', 'chemical-cost', 'tip-analysis', 'category-mix', 'tax-summary', 'client-attrition', 'compensation-ratio', 'location-benchmark', 'demand-heatmap'];
 
   const renderSelectedReport = () => {
     const location = filters.locationId === 'all' ? undefined : filters.locationId;
@@ -384,6 +393,12 @@ export function ReportsTabContent({ filters, isStandalone }: ReportsTabContentPr
         return <TaxSummaryReport dateFrom={filters.dateFrom} dateTo={filters.dateTo} locationId={location} onClose={handleCloseReport} />;
       case 'client-attrition':
         return <ClientAttritionReport dateFrom={filters.dateFrom} dateTo={filters.dateTo} locationId={location} onClose={handleCloseReport} />;
+      case 'compensation-ratio':
+        return <StaffCompensationRatioReport dateFrom={filters.dateFrom} dateTo={filters.dateTo} locationId={location} onClose={handleCloseReport} />;
+      case 'location-benchmark':
+        return <LocationBenchmarkReport dateFrom={filters.dateFrom} dateTo={filters.dateTo} onClose={handleCloseReport} />;
+      case 'demand-heatmap':
+        return <DemandHeatmapReport dateFrom={filters.dateFrom} dateTo={filters.dateTo} locationId={location} onClose={handleCloseReport} />;
       default:
         return null;
     }
