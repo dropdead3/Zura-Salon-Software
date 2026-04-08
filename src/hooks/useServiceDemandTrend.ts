@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useMemo } from 'react';
 import { format, subWeeks, startOfWeek, endOfWeek } from 'date-fns';
+import { fetchAllBatched } from '@/utils/fetchAllBatched';
 
 export interface ServiceWeeklyTrend {
   serviceName: string;
@@ -18,20 +19,21 @@ export function useServiceDemandTrend(locationId?: string) {
   const query = useQuery({
     queryKey: ['service-demand-trend', locationId, dateFrom],
     queryFn: async () => {
-      let q = supabase
-        .from('phorest_appointments')
-        .select('service_name, appointment_date')
-        .neq('status', 'cancelled')
-        .gte('appointment_date', dateFrom)
-        .lte('appointment_date', dateTo);
+      return fetchAllBatched<any>((from, to) => {
+        let q = supabase
+          .from('phorest_appointments')
+          .select('service_name, appointment_date')
+          .neq('status', 'cancelled')
+          .gte('appointment_date', dateFrom)
+          .lte('appointment_date', dateTo)
+          .range(from, to);
 
-      if (locationId) {
-        q = q.eq('location_id', locationId);
-      }
+        if (locationId) {
+          q = q.eq('location_id', locationId);
+        }
 
-      const { data, error } = await q;
-      if (error) throw error;
-      return data || [];
+        return q;
+      });
     },
   });
 

@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { format, subDays, startOfDay } from 'date-fns';
 import { resolveStaffNames } from '@/utils/resolveStaffNames';
+import { fetchAllBatched } from '@/utils/fetchAllBatched';
 
 export interface StylistExperienceScore {
   staffId: string;
@@ -90,40 +91,44 @@ export function useStylistExperienceScore(
     queryKey: ['stylist-experience-score', locationId, startDate, endDate],
     queryFn: async () => {
       // Fetch completed appointments with tip amounts
-      let appointmentQuery = supabase
-        .from('phorest_appointments')
-        .select(`
-          phorest_staff_id,
-          stylist_user_id,
-          total_price,
-          tip_amount,
-          rebooked_at_checkout,
-          phorest_client_id,
-          is_new_client
-        `)
-        .eq('status', 'completed')
-        .gte('appointment_date', startDate)
-        .lte('appointment_date', endDate)
-        .not('phorest_staff_id', 'is', null);
+      const appointments = await fetchAllBatched<any>((from, to) => {
+        let q = supabase
+          .from('phorest_appointments')
+          .select(`
+            phorest_staff_id,
+            stylist_user_id,
+            total_price,
+            tip_amount,
+            rebooked_at_checkout,
+            phorest_client_id,
+            is_new_client
+          `)
+          .eq('status', 'completed')
+          .gte('appointment_date', startDate)
+          .lte('appointment_date', endDate)
+          .not('phorest_staff_id', 'is', null)
+          .range(from, to);
 
-      if (locationId) {
-        appointmentQuery = appointmentQuery.eq('location_id', locationId);
-      }
+        if (locationId) {
+          q = q.eq('location_id', locationId);
+        }
 
-      const { data: appointments, error: apptError } = await appointmentQuery;
-      if (apptError) throw apptError;
+        return q;
+      });
 
       // (Staff resolution moved after staffAppointments is built)
 
       // (No longer fetching stale phorest_performance_metrics for retention)
 
       // Fetch transaction items for retail attachment
-      const { data: transactionItems, error: transError } = await supabase
-        .from('phorest_transaction_items')
-        .select('phorest_staff_id, item_type, total_amount')
-        .gte('transaction_date', startDate)
-        .lte('transaction_date', endDate);
-      if (transError) throw transError;
+      const transactionItems = await fetchAllBatched<any>((from, to) =>
+        supabase
+          .from('phorest_transaction_items')
+          .select('phorest_staff_id, item_type, total_amount')
+          .gte('transaction_date', startDate)
+          .lte('transaction_date', endDate)
+          .range(from, to)
+      );
 
       // Group appointments by staff
       const staffAppointments = new Map<string, typeof appointments>();

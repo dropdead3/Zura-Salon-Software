@@ -175,10 +175,25 @@ export function usePhorestCalendar() {
         query = query.in('stylist_user_id', filters.stylistIds);
       }
 
-      const { data, error } = await query;
-      
-      if (error) throw error;
-      return data as PhorestAppointment[];
+      const allRows: any[] = [];
+      let from = 0;
+      const batchSize = 1000;
+      let hasMore = true;
+
+      while (hasMore) {
+        const to = from + batchSize - 1;
+        const { data, error } = await query.range(from, to);
+        if (error) throw error;
+        if (data && data.length > 0) {
+          allRows.push(...data);
+          hasMore = data.length === batchSize;
+          from += batchSize;
+        } else {
+          hasMore = false;
+        }
+      }
+
+      return allRows as PhorestAppointment[];
     },
   });
 

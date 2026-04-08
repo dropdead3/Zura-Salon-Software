@@ -7,6 +7,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { getServiceCategory } from '@/utils/serviceCategorization';
+import { fetchAllBatched } from '@/utils/fetchAllBatched';
 import type { EconomicsAssumptions } from './useCommissionEconomics';
 
 export type SourceType = 'data' | 'estimate';
@@ -66,14 +67,15 @@ export function useAutoDetectEconomics() {
       ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
       const dateStr = ninetyDaysAgo.toISOString().slice(0, 10);
 
-      const { data: appointments } = await supabase
-        .from('appointments')
-        .select('duration_minutes, total_price, service_name, service_category, staff_user_id, appointment_date')
-        .eq('organization_id', orgId!)
-        .gte('appointment_date', dateStr)
-        .in('status', ['completed', 'checked_out']);
-
-      const appts = appointments ?? [];
+      const appts = await fetchAllBatched<any>((from, to) =>
+        supabase
+          .from('appointments')
+          .select('duration_minutes, total_price, service_name, service_category, staff_user_id, appointment_date')
+          .eq('organization_id', orgId!)
+          .gte('appointment_date', dateStr)
+          .in('status', ['completed', 'checked_out'])
+          .range(from, to)
+      );
 
       // 3. Hours per month — use stylists who actually had appointments
       //    and calculate actual months from the data range, not hardcoded 3
