@@ -184,25 +184,25 @@ Deno.serve(async (req) => {
           20 // Base score for tasks (simplified)
         );
 
-        // 3. PERFORMANCE SCORE
-        const { data: salesCurrent } = await supabase
-          .from("phorest_daily_sales_summary")
-          .select("total_revenue")
+        // 3. PERFORMANCE SCORE (from transaction items)
+        const { data: salesCurrentItems } = await supabase
+          .from("phorest_transaction_items")
+          .select("total_amount, tax_amount")
           .eq("organization_id", org.id)
-          .gte("summary_date", sevenDaysAgo)
-          .lte("summary_date", today);
+          .gte("transaction_date", sevenDaysAgo)
+          .lte("transaction_date", today);
 
-        const { data: salesPrevious } = await supabase
-          .from("phorest_daily_sales_summary")
-          .select("total_revenue")
+        const { data: salesPreviousItems } = await supabase
+          .from("phorest_transaction_items")
+          .select("total_amount, tax_amount")
           .eq("organization_id", org.id)
-          .gte("summary_date", fourteenDaysAgo)
-          .lt("summary_date", sevenDaysAgo);
+          .gte("transaction_date", fourteenDaysAgo)
+          .lt("transaction_date", sevenDaysAgo);
 
         const currentRevenue =
-          salesCurrent?.reduce((sum, s) => sum + (s.total_revenue || 0), 0) || 0;
+          (salesCurrentItems || []).reduce((sum, s) => sum + (Number(s.total_amount) || 0) + (Number(s.tax_amount) || 0), 0);
         const previousRevenue =
-          salesPrevious?.reduce((sum, s) => sum + (s.total_revenue || 0), 0) || 1;
+          (salesPreviousItems || []).reduce((sum, s) => sum + (Number(s.total_amount) || 0) + (Number(s.tax_amount) || 0), 0) || 1;
         const revenueTrend = previousRevenue > 0 
           ? currentRevenue / previousRevenue 
           : 1;

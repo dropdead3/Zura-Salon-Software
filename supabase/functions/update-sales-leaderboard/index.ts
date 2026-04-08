@@ -39,35 +39,46 @@ Deno.serve(async (req) => {
     const weekStartStr = weekStart.toISOString().split('T')[0];
     const todayStr = now.toISOString().split('T')[0];
 
-    // Fetch this week's sales by stylist
-    const { data: salesData, error: salesError } = await supabase
-      .from('phorest_daily_sales_summary')
-      .select(`
-        user_id,
-        total_revenue,
-        employee_profiles:user_id (
-          full_name,
-          display_name
-        )
-      `)
-      .gte('summary_date', weekStartStr)
-      .lte('summary_date', todayStr)
-      .not('user_id', 'is', null);
+    // Fetch this week's sales by stylist from transaction items
+    const txnItems: any[] = [];
+    let pg = 0;
+    while (true) {
+      const { data: batch, error: batchErr } = await supabase
+        .from('phorest_transaction_items')
+        .select('stylist_user_id, total_amount, tax_amount')
+        .gte('transaction_date', weekStartStr)
+        .lte('transaction_date', todayStr)
+        .not('stylist_user_id', 'is', null)
+        .range(pg * 1000, (pg + 1) * 1000 - 1);
+      if (batchErr) throw batchErr;
+      if (!batch || batch.length === 0) break;
+      txnItems.push(...batch);
+      if (batch.length < 1000) break;
+      pg++;
+    }
 
-    if (salesError) throw salesError;
+    // Get employee names
+    const userIds = [...new Set(txnItems.map(r => r.stylist_user_id).filter(Boolean))];
+    const { data: profiles } = userIds.length > 0
+      ? await supabase.from('employee_profiles').select('user_id, full_name, display_name').in('user_id', userIds)
+      : { data: [] };
+    const profileMap: Record<string, any> = {};
+    (profiles || []).forEach((p: any) => { profileMap[p.user_id] = p; });
 
     // Aggregate by stylist
     const byUser: Record<string, StylistSales> = {};
-    salesData?.forEach((row: any) => {
-      if (!row.user_id) return;
-      if (!byUser[row.user_id]) {
-        byUser[row.user_id] = {
-          user_id: row.user_id,
-          name: row.employee_profiles?.display_name || row.employee_profiles?.full_name || 'Unknown',
+    txnItems.forEach((row: any) => {
+      if (!row.stylist_user_id) return;
+      const uid = row.stylist_user_id;
+      if (!byUser[uid]) {
+        const prof = profileMap[uid];
+        byUser[uid] = {
+          user_id: uid,
+          name: prof?.display_name || prof?.full_name || 'Unknown',
           totalRevenue: 0,
         };
       }
-      byUser[row.user_id].totalRevenue += Number(row.total_revenue) || 0;
+      byUser[uid].totalRevenue += (Number(row.total_amount) || 0) + (Number(row.tax_amount) || 0);
     });
 
     const rankings = Object.values(byUser)

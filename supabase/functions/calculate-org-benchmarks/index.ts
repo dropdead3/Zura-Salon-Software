@@ -69,13 +69,22 @@ Deno.serve(async (req) => {
       try {
         const metrics: Record<string, number> = {};
 
-        // 1. Revenue per location
-        const { data: salesData } = await supabase
-          .from("phorest_daily_sales_summary")
-          .select("total_revenue")
-          .eq("organization_id", org.id)
-          .gte("summary_date", periodStartStr)
-          .lte("summary_date", periodEndStr);
+        // 1. Revenue per location (from transaction items)
+        const txnItems: any[] = [];
+        let txnPg = 0;
+        while (true) {
+          const { data: batch } = await supabase
+            .from("phorest_transaction_items")
+            .select("total_amount, tax_amount")
+            .eq("organization_id", org.id)
+            .gte("transaction_date", periodStartStr)
+            .lte("transaction_date", periodEndStr)
+            .range(txnPg * 1000, (txnPg + 1) * 1000 - 1);
+          if (!batch || batch.length === 0) break;
+          txnItems.push(...batch);
+          if (batch.length < 1000) break;
+          txnPg++;
+        }
 
         const { count: locationCount } = await supabase
           .from("locations")
@@ -83,7 +92,7 @@ Deno.serve(async (req) => {
           .eq("organization_id", org.id)
           .eq("is_active", true);
 
-        const totalRevenue = salesData?.reduce((sum, s) => sum + (s.total_revenue || 0), 0) || 0;
+        const totalRevenue = txnItems.reduce((sum, s) => sum + (Number(s.total_amount) || 0) + (Number(s.tax_amount) || 0), 0);
         metrics.revenue_per_location = locationCount && locationCount > 0
           ? totalRevenue / locationCount
           : 0;

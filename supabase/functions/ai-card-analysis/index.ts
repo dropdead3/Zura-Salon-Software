@@ -131,16 +131,22 @@ async function fetchCardMetrics(
     // --- REVENUE TREND ---
     if (name.includes("revenue trend")) {
       let q = supabase
-        .from("phorest_daily_sales_summary")
-        .select("report_date, total_revenue")
-        .gte("report_date", from)
-        .lte("report_date", to)
-        .order("report_date", { ascending: true });
+        .from("phorest_transaction_items")
+        .select("transaction_date, total_amount, tax_amount")
+        .gte("transaction_date", from)
+        .lte("transaction_date", to)
+        .order("transaction_date", { ascending: true });
       if (locationId) q = q.eq("location_id", locationId);
       const { data: trend } = await q;
 
-      const total = trend?.reduce((s, d) => s + (d.total_revenue || 0), 0) || 0;
-      const days = trend?.length || 0;
+      const dailyTotals: Record<string, number> = {};
+      (trend || []).forEach((r: any) => {
+        const d = r.transaction_date;
+        if (!dailyTotals[d]) dailyTotals[d] = 0;
+        dailyTotals[d] += (Number(r.total_amount) || 0) + (Number(r.tax_amount) || 0);
+      });
+      const total = Object.values(dailyTotals).reduce((s, v) => s + v, 0);
+      const days = Object.keys(dailyTotals).length;
       const dailyAvg = days > 0 ? total / days : 0;
 
       return {
@@ -175,15 +181,15 @@ async function fetchCardMetrics(
     // --- LOCATION COMPARISON ---
     if (name.includes("location comparison") || name.includes("location")) {
       const { data: locData } = await supabase
-        .from("phorest_daily_sales_summary")
-        .select("location_id, total_revenue")
-        .gte("report_date", from)
-        .lte("report_date", to);
+        .from("phorest_transaction_items")
+        .select("location_id, total_amount, tax_amount")
+        .gte("transaction_date", from)
+        .lte("transaction_date", to);
 
       if (locData && locData.length > 0) {
         const byLoc: Record<string, number> = {};
         for (const r of locData) {
-          byLoc[r.location_id || "unknown"] = (byLoc[r.location_id || "unknown"] || 0) + (r.total_revenue || 0);
+          byLoc[r.location_id || "unknown"] = (byLoc[r.location_id || "unknown"] || 0) + (Number(r.total_amount) || 0) + (Number(r.tax_amount) || 0);
         }
         const { data: locs } = await supabase.from("locations").select("id, name");
         const locNames = Object.fromEntries((locs || []).map((l) => [l.id, l.name]));

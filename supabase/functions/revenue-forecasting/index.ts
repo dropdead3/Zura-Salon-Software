@@ -65,26 +65,48 @@ serve(async (req) => {
       );
     }
 
-    // Get historical sales data (last 90 days)
+    // Get historical sales data (last 90 days) from transaction items
     const ninetyDaysAgo = new Date();
     ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
-    
-    let salesQuery = supabase
-      .from("phorest_daily_sales_summary")
-      .select("*")
-      .gte("summary_date", ninetyDaysAgo.toISOString().split('T')[0])
-      .order("summary_date", { ascending: true });
+    const ninetyDaysAgoStr = ninetyDaysAgo.toISOString().split('T')[0];
 
-    if (locationId && locationId !== "all") {
-      salesQuery = salesQuery.eq("location_id", locationId);
+    const allTxnItems: any[] = [];
+    let txnPage = 0;
+    while (true) {
+      let q = supabase
+        .from("phorest_transaction_items")
+        .select("transaction_date, total_amount, tax_amount, item_type, location_id")
+        .gte("transaction_date", ninetyDaysAgoStr)
+        .order("transaction_date", { ascending: true })
+        .range(txnPage * 1000, (txnPage + 1) * 1000 - 1);
+
+      if (locationId && locationId !== "all") {
+        q = q.eq("location_id", locationId);
+      }
+
+      const { data: batch, error: batchErr } = await q;
+      if (batchErr) {
+        console.error("Error fetching transaction items:", batchErr);
+        throw new Error("Failed to fetch historical sales");
+      }
+      if (!batch || batch.length === 0) break;
+      allTxnItems.push(...batch);
+      if (batch.length < 1000) break;
+      txnPage++;
     }
 
-    const { data: historicalSales, error: salesError } = await salesQuery;
-
-    if (salesError) {
-      console.error("Error fetching sales:", salesError);
-      throw new Error("Failed to fetch historical sales");
+    // Aggregate transaction items into daily totals (same shape as old summary)
+    const dailyMap: Record<string, { summary_date: string; total_revenue: number; service_revenue: number; product_revenue: number; total_transactions: number }> = {};
+    for (const item of allTxnItems) {
+      const d = item.transaction_date;
+      if (!dailyMap[d]) dailyMap[d] = { summary_date: d, total_revenue: 0, service_revenue: 0, product_revenue: 0, total_transactions: 0 };
+      const rev = (Number(item.total_amount) || 0) + (Number(item.tax_amount) || 0);
+      dailyMap[d].total_revenue += rev;
+      if (item.item_type === "service") dailyMap[d].service_revenue += rev;
+      else dailyMap[d].product_revenue += rev;
+      dailyMap[d].total_transactions += 1;
     }
+    const historicalSales = Object.values(dailyMap).sort((a, b) => a.summary_date.localeCompare(b.summary_date));
 
     // ── 30-Day Gap Ratio Calculation ──
     const thirtyDaysAgo = new Date();
@@ -118,7 +140,7 @@ serve(async (req) => {
       scheduledByDate[d] += Number(apt.total_price) || 0;
     });
 
-    // Build actual totals by date from historical sales (already fetched, filter to 30-day window)
+    // Build actual totals by date from historical sales (filter to 30-day window)
     const actualByDate: Record<string, number> = {};
     (historicalSales || []).forEach(day => {
       if (day.summary_date >= thirtyDaysAgoStr && day.summary_date <= yesterdayStr) {

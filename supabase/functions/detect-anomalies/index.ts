@@ -115,16 +115,16 @@ async function checkRevenueAnomaly(
   locationId: string | undefined,
   today: string
 ): Promise<AnomalyResult | null> {
-  // Get today's revenue
+  // Get today's revenue from transaction items
   let todayQuery = supabase
-    .from("phorest_daily_sales_summary")
-    .select("total_revenue")
-    .eq("sales_date", today);
+    .from("phorest_transaction_items")
+    .select("total_amount, tax_amount")
+    .eq("transaction_date", today);
 
   if (locationId) todayQuery = todayQuery.eq("location_id", locationId);
 
-  const { data: todaySales } = await todayQuery.single();
-  const todayRevenue = Number(todaySales?.total_revenue) || 0;
+  const { data: todayItems } = await todayQuery;
+  const todayRevenue = (todayItems || []).reduce((s: number, r: any) => s + (Number(r.total_amount) || 0) + (Number(r.tax_amount) || 0), 0);
 
   // Get same day last week
   const lastWeek = new Date(today);
@@ -132,14 +132,14 @@ async function checkRevenueAnomaly(
   const lastWeekStr = lastWeek.toISOString().split('T')[0];
 
   let lastWeekQuery = supabase
-    .from("phorest_daily_sales_summary")
-    .select("total_revenue")
-    .eq("sales_date", lastWeekStr);
+    .from("phorest_transaction_items")
+    .select("total_amount, tax_amount")
+    .eq("transaction_date", lastWeekStr);
 
   if (locationId) lastWeekQuery = lastWeekQuery.eq("location_id", locationId);
 
-  const { data: lastWeekSales } = await lastWeekQuery.single();
-  const lastWeekRevenue = Number(lastWeekSales?.total_revenue) || 0;
+  const { data: lastWeekItems } = await lastWeekQuery;
+  const lastWeekRevenue = (lastWeekItems || []).reduce((s: number, r: any) => s + (Number(r.total_amount) || 0) + (Number(r.tax_amount) || 0), 0);
 
   if (lastWeekRevenue === 0) return null;
 

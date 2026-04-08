@@ -114,14 +114,14 @@ serve(async (req) => {
       // New: org info for multi-location
       orgInfoRes,
     ] = await Promise.all([
-      // Recent sales (last 14 days)
+      // Recent sales (last 14 days) from transaction items
       supabase
-        .from("phorest_daily_sales_summary")
-        .select("summary_date, total_revenue, total_transactions, service_revenue, product_revenue, average_ticket")
-        .gte("summary_date", twoWeeksAgo)
-        .lte("summary_date", today)
-        .order("summary_date", { ascending: false })
-        .limit(100),
+        .from("phorest_transaction_items")
+        .select("transaction_date, total_amount, tax_amount, item_type")
+        .gte("transaction_date", twoWeeksAgo)
+        .lte("transaction_date", today)
+        .order("transaction_date", { ascending: false })
+        .limit(1000),
 
       // Recent appointments (last 7 days + next 7 days)
       supabase
