@@ -30,6 +30,8 @@ import { toast } from 'sonner';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { BentoGrid } from '@/components/ui/bento-grid';
 import { tokens } from '@/lib/design-tokens';
+import { BlurredAmount } from '@/contexts/HideNumbersContext';
+import { cn } from '@/lib/utils';
 
 interface SalesReportGeneratorProps {
   reportType: string;
@@ -337,11 +339,11 @@ export function SalesReportGenerator({
           <BentoGrid maxPerRow={4} gap="gap-4">
             <div className="p-4 rounded-lg bg-muted">
               <p className="text-sm text-muted-foreground">Total Revenue</p>
-              <p className="text-2xl font-medium">{formatCurrencyWhole(metrics.totalRevenue)}</p>
+              <p className="text-2xl font-medium"><BlurredAmount>{formatCurrencyWhole(metrics.totalRevenue)}</BlurredAmount></p>
             </div>
             <div className="p-4 rounded-lg bg-muted">
               <p className="text-sm text-muted-foreground">Service Revenue</p>
-              <p className="text-2xl font-medium">{formatCurrencyWhole(metrics.serviceRevenue)}</p>
+              <p className="text-2xl font-medium"><BlurredAmount>{formatCurrencyWhole(metrics.serviceRevenue)}</BlurredAmount></p>
             </div>
             <div className="p-4 rounded-lg bg-muted">
               <p className="text-sm text-muted-foreground">Total Services</p>
@@ -349,7 +351,7 @@ export function SalesReportGenerator({
             </div>
             <div className="p-4 rounded-lg bg-muted">
               <p className="text-sm text-muted-foreground">Average Ticket</p>
-              <p className="text-2xl font-medium">{formatCurrencyWhole(Math.round(metrics.averageTicket))}</p>
+              <p className="text-2xl font-medium"><BlurredAmount>{formatCurrencyWhole(Math.round(metrics.averageTicket))}</BlurredAmount></p>
             </div>
           </BentoGrid>
         )}
@@ -360,13 +362,13 @@ export function SalesReportGenerator({
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Date</TableHead>
-                  <TableHead className="text-right">Total Revenue</TableHead>
-                  <TableHead className="text-right">Service Rev</TableHead>
-                  <TableHead className="text-right">Product Rev</TableHead>
-                  <TableHead className="text-right">Services</TableHead>
-                  <TableHead className="text-right">Products</TableHead>
-                  <TableHead className="text-right">Avg Ticket</TableHead>
+                  <TableHead className={tokens.table.columnHeader}>Date</TableHead>
+                  <TableHead className={cn(tokens.table.columnHeader, 'text-right')}>Total Revenue</TableHead>
+                  <TableHead className={cn(tokens.table.columnHeader, 'text-right')}>Service Rev</TableHead>
+                  <TableHead className={cn(tokens.table.columnHeader, 'text-right')}>Product Rev</TableHead>
+                  <TableHead className={cn(tokens.table.columnHeader, 'text-right')}>Services</TableHead>
+                  <TableHead className={cn(tokens.table.columnHeader, 'text-right')}>Products</TableHead>
+                  <TableHead className={cn(tokens.table.columnHeader, 'text-right')}>Avg Ticket</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -375,12 +377,12 @@ export function SalesReportGenerator({
                   return (
                     <TableRow key={r.date}>
                       <TableCell className="font-medium">{formatDate(new Date(r.date + 'T00:00:00'), 'MMM d, yyyy')}</TableCell>
-                      <TableCell className="text-right">{formatCurrencyWhole(r.totalRevenue)}</TableCell>
-                      <TableCell className="text-right">{formatCurrencyWhole(r.serviceRevenue)}</TableCell>
-                      <TableCell className="text-right">{formatCurrencyWhole(r.productRevenue)}</TableCell>
+                      <TableCell className="text-right"><BlurredAmount>{formatCurrencyWhole(r.totalRevenue)}</BlurredAmount></TableCell>
+                      <TableCell className="text-right"><BlurredAmount>{formatCurrencyWhole(r.serviceRevenue)}</BlurredAmount></TableCell>
+                      <TableCell className="text-right"><BlurredAmount>{formatCurrencyWhole(r.productRevenue)}</BlurredAmount></TableCell>
                       <TableCell className="text-right">{formatNumber(r.totalServices)}</TableCell>
                       <TableCell className="text-right">{formatNumber(r.totalProducts)}</TableCell>
-                      <TableCell className="text-right">{txns > 0 ? formatCurrencyWhole(Math.round(r.totalRevenue / txns)) : '—'}</TableCell>
+                      <TableCell className="text-right">{txns > 0 ? <BlurredAmount>{formatCurrencyWhole(Math.round(r.totalRevenue / txns))}</BlurredAmount> : '—'}</TableCell>
                     </TableRow>
                   );
                 })}
@@ -460,11 +462,11 @@ export function SalesReportGenerator({
           <BentoGrid maxPerRow={4} gap="gap-4">
             <div className="p-4 rounded-lg bg-muted">
               <p className="text-sm text-muted-foreground">Total Revenue</p>
-              <p className="text-2xl font-medium">{formatCurrencyWhole(metrics.totalRevenue)}</p>
+              <p className="text-2xl font-medium"><BlurredAmount>{formatCurrencyWhole(metrics.totalRevenue)}</BlurredAmount></p>
             </div>
             <div className="p-4 rounded-lg bg-muted">
               <p className="text-sm text-muted-foreground">Service Revenue</p>
-              <p className="text-2xl font-medium">{formatCurrencyWhole(metrics.serviceRevenue)}</p>
+              <p className="text-2xl font-medium"><BlurredAmount>{formatCurrencyWhole(metrics.serviceRevenue)}</BlurredAmount></p>
             </div>
             <div className="p-4 rounded-lg bg-muted">
               <p className="text-sm text-muted-foreground">Total Services</p>
@@ -472,7 +474,7 @@ export function SalesReportGenerator({
             </div>
             <div className="p-4 rounded-lg bg-muted">
               <p className="text-sm text-muted-foreground">Average Ticket</p>
-              <p className="text-2xl font-medium">{formatCurrencyWhole(Math.round(metrics.averageTicket))}</p>
+              <p className="text-2xl font-medium"><BlurredAmount>{formatCurrencyWhole(Math.round(metrics.averageTicket))}</BlurredAmount></p>
             </div>
           </BentoGrid>
         )}
@@ -481,13 +483,13 @@ export function SalesReportGenerator({
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Date</TableHead>
-                  <TableHead className="text-right">Total Revenue</TableHead>
-                  <TableHead className="text-right">Service Rev</TableHead>
-                  <TableHead className="text-right">Product Rev</TableHead>
-                  <TableHead className="text-right">Services</TableHead>
-                  <TableHead className="text-right">Products</TableHead>
-                  <TableHead className="text-right">Avg Ticket</TableHead>
+                  <TableHead className={tokens.table.columnHeader}>Date</TableHead>
+                  <TableHead className={cn(tokens.table.columnHeader, 'text-right')}>Total Revenue</TableHead>
+                  <TableHead className={cn(tokens.table.columnHeader, 'text-right')}>Service Rev</TableHead>
+                  <TableHead className={cn(tokens.table.columnHeader, 'text-right')}>Product Rev</TableHead>
+                  <TableHead className={cn(tokens.table.columnHeader, 'text-right')}>Services</TableHead>
+                  <TableHead className={cn(tokens.table.columnHeader, 'text-right')}>Products</TableHead>
+                  <TableHead className={cn(tokens.table.columnHeader, 'text-right')}>Avg Ticket</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -496,12 +498,12 @@ export function SalesReportGenerator({
                   return (
                     <TableRow key={r.date}>
                       <TableCell className="font-medium">{formatDate(new Date(r.date + 'T00:00:00'), 'MMM d, yyyy')}</TableCell>
-                      <TableCell className="text-right">{formatCurrencyWhole(r.totalRevenue)}</TableCell>
-                      <TableCell className="text-right">{formatCurrencyWhole(r.serviceRevenue)}</TableCell>
-                      <TableCell className="text-right">{formatCurrencyWhole(r.productRevenue)}</TableCell>
+                      <TableCell className="text-right"><BlurredAmount>{formatCurrencyWhole(r.totalRevenue)}</BlurredAmount></TableCell>
+                      <TableCell className="text-right"><BlurredAmount>{formatCurrencyWhole(r.serviceRevenue)}</BlurredAmount></TableCell>
+                      <TableCell className="text-right"><BlurredAmount>{formatCurrencyWhole(r.productRevenue)}</BlurredAmount></TableCell>
                       <TableCell className="text-right">{formatNumber(r.totalServices)}</TableCell>
                       <TableCell className="text-right">{formatNumber(r.totalProducts)}</TableCell>
-                      <TableCell className="text-right">{txns > 0 ? formatCurrencyWhole(Math.round(r.totalRevenue / txns)) : '—'}</TableCell>
+                      <TableCell className="text-right">{txns > 0 ? <BlurredAmount>{formatCurrencyWhole(Math.round(r.totalRevenue / txns))}</BlurredAmount> : '—'}</TableCell>
                     </TableRow>
                   );
                 })}

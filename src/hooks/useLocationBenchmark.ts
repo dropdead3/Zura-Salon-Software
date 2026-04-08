@@ -32,7 +32,7 @@ export function useLocationBenchmark(dateFrom: string, dateTo: string) {
         appointment_date: string;
       }>((from, to) =>
         supabase
-          .from('phorest_appointments')
+          .from('v_all_appointments')
           .select('location_id, total_price, tip_amount, status, phorest_client_id, appointment_date')
           .gte('appointment_date', dateFrom)
           .lte('appointment_date', dateTo)

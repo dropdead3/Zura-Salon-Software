@@ -104,9 +104,24 @@ async function fetchReportData(
         return q;
       });
       if (reportId === 'daily-sales') {
-        const byDate = new Map<string, number>();
-        for (const r of data) { byDate.set(r.transaction_date, (byDate.get(r.transaction_date) || 0) + (Number(r.total_amount) || 0)); }
-        return { columns: ['Date', 'Revenue'], rows: Array.from(byDate.entries()).sort().map(([d, v]) => [d, `$${v.toFixed(2)}`]) };
+        const byDate = new Map<string, { totalRev: number; serviceRev: number; productRev: number; services: number; products: number }>();
+        for (const r of data) {
+          const d = r.transaction_date;
+          if (!byDate.has(d)) byDate.set(d, { totalRev: 0, serviceRev: 0, productRev: 0, services: 0, products: 0 });
+          const entry = byDate.get(d)!;
+          const amt = Number(r.total_amount) || 0;
+          entry.totalRev += amt;
+          const itemType = (r.item_type || '').toLowerCase();
+          if (itemType === 'service') { entry.serviceRev += amt; entry.services += 1; }
+          else { entry.productRev += amt; entry.products += 1; }
+        }
+        return {
+          columns: ['Date', 'Total Revenue', 'Service Rev', 'Product Rev', 'Services', 'Products', 'Avg Ticket'],
+          rows: Array.from(byDate.entries()).sort().map(([d, v]) => {
+            const txns = v.services + v.products;
+            return [d, `$${v.totalRev.toFixed(2)}`, `$${v.serviceRev.toFixed(2)}`, `$${v.productRev.toFixed(2)}`, String(v.services), String(v.products), txns > 0 ? `$${(v.totalRev / txns).toFixed(2)}` : '—'];
+          }),
+        };
       }
       if (reportId === 'stylist-sales') {
         const byStaff = new Map<string, number>();
