@@ -247,11 +247,13 @@ function PrivateAppShell() {
       <DashboardThemeProvider>
         <ViewAsProvider>
           <HideNumbersProvider>
-            <SoundSettingsProvider>
-              {import.meta.env.DEV && <DevContextBridge />}
-              <CommandMenu />
-              <Outlet />
-            </SoundSettingsProvider>
+            <RevenueDisplayProvider>
+              <SoundSettingsProvider>
+                {import.meta.env.DEV && <DevContextBridge />}
+                <CommandMenu />
+                <Outlet />
+              </SoundSettingsProvider>
+            </RevenueDisplayProvider>
           </HideNumbersProvider>
         </ViewAsProvider>
       </DashboardThemeProvider>
