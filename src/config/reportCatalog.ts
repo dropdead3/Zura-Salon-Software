@@ -88,6 +88,9 @@ export const REPORT_CATALOG: ReportCatalogEntry[] = [
   { id: 'staff-milestones', name: 'Staff Milestones', category: 'staff' },
   { id: 'permissions-audit', name: 'Permissions Audit', category: 'staff' },
   { id: 'time-attendance', name: 'Time & Attendance', category: 'staff' },
+  { id: 'pto-balances', name: 'PTO Balances', category: 'staff' },
+  { id: 'staff-strikes', name: 'Staff Strikes', category: 'staff' },
+  { id: 'training-completion', name: 'Training Completion', category: 'staff' },
   // Clients
   { id: 'client-attrition', name: 'Client Attrition', category: 'clients' },
   { id: 'top-clients', name: 'Top Clients', category: 'clients' },
