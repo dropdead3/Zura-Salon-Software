@@ -63,7 +63,8 @@ export function useCorrelationAnalysis(locationId?: string, days = 90) {
         }
         const amount = (Number(item.total_amount) || 0) + (Number(item.tax_amount) || 0);
         dailyMap[date].total_revenue += amount;
-        if (item.item_type === 'service') dailyMap[date].service_revenue += amount;
+        const itemType = (item.item_type || '').toLowerCase();
+        if (itemType === 'service') dailyMap[date].service_revenue += amount;
         else dailyMap[date].product_revenue += amount;
         dailyMap[date].total_transactions += 1;
         if (item.phorest_client_id) dailyMap[date].clients.add(item.phorest_client_id);

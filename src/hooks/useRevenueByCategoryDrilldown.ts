@@ -112,9 +112,10 @@ export function useRevenueByCategoryDrilldown({
       let totalRevenue = 0;
 
       allItems.forEach(item => {
-        const category = item.item_type === 'service'
+        const itemType = (item.item_type || '').toLowerCase();
+        const category = itemType === 'service'
           ? getServiceCategory(item.item_name)
-          : (item.item_type === 'product' ? 'Retail' : 'Other');
+          : (itemType === 'product' ? 'Retail' : 'Other');
         const amount = (Number(item.total_amount) || 0) + (Number(item.tax_amount) || 0);
         const staffId = item.phorest_staff_id || 'unknown';
         const clientKey = item.phorest_client_id || 'walk-in';

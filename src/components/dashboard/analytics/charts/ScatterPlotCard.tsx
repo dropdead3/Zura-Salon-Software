@@ -61,7 +61,8 @@ export function ScatterPlotCard({ pair, locationId, onClose }: ScatterPlotCardPr
         if (!dailyMap[date]) dailyMap[date] = { summary_date: date, total_revenue: 0, service_revenue: 0, product_revenue: 0, total_transactions: 0 };
         const amount = (Number(item.total_amount) || 0) + (Number(item.tax_amount) || 0);
         dailyMap[date].total_revenue += amount;
-        if (item.item_type === 'service') dailyMap[date].service_revenue += amount;
+        const itemType = (item.item_type || '').toLowerCase();
+        if (itemType === 'service') dailyMap[date].service_revenue += amount;
         else dailyMap[date].product_revenue += amount;
         dailyMap[date].total_transactions += 1;
       }

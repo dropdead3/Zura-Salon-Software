@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { subDays, format } from 'date-fns';
+import { isAllLocations, parseLocationIds } from '@/lib/locationFilter';
 
 interface ComparisonData {
   current: {
@@ -37,7 +38,11 @@ async function fetchPeriodRevenue(dateFrom: string, dateTo: string, locationId?:
       .select('total_amount, tax_amount, item_type, phorest_client_id, transaction_date')
       .gte('transaction_date', dateFrom)
       .lte('transaction_date', dateTo);
-    if (locationId) q = q.eq('location_id', locationId);
+    if (!isAllLocations(locationId)) {
+      const ids = parseLocationIds(locationId);
+      if (ids.length === 1) q = q.eq('location_id', ids[0]);
+      else q = q.in('location_id', ids);
+    }
     const { data, error } = await q.range(from, from + pageSize - 1);
     if (error) throw error;
     allData.push(...(data || []));
@@ -50,7 +55,8 @@ async function fetchPeriodRevenue(dateFrom: string, dateTo: string, locationId?:
   for (const item of allData) {
     const amount = (Number(item.total_amount) || 0) + (Number(item.tax_amount) || 0);
     totalRevenue += amount;
-    if (item.item_type === 'service') serviceRevenue += amount;
+    const itemType = (item.item_type || '').toLowerCase();
+    if (itemType === 'service') serviceRevenue += amount;
     else productRevenue += amount;
     if (item.phorest_client_id) {
       const date = (item.transaction_date || '').slice(0, 10);

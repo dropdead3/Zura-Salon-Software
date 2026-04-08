@@ -198,7 +198,8 @@ export function useOrganizationAnalytics() {
         }
         const amount = (Number(item.total_amount) || 0) + (Number(item.tax_amount) || 0);
         byKey[key].total_revenue += amount;
-        if (item.item_type === 'service') byKey[key].service_revenue += amount;
+        const itemType = (item.item_type || '').toLowerCase();
+        if (itemType === 'service') byKey[key].service_revenue += amount;
         else byKey[key].product_revenue += amount;
         byKey[key]._count += 1;
       }

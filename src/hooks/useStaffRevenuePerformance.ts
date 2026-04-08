@@ -163,10 +163,11 @@ export function useStaffRevenuePerformance(
         const existing = aggregatedData.get(staffId);
         if (!existing) continue;
 
-        const amount = Number(item.total_amount) || 0;
-        if (item.item_type === 'service') {
+        const amount = (Number(item.total_amount) || 0) + (Number(item.tax_amount) || 0);
+        const itemType = (item.item_type || '').toLowerCase();
+        if (itemType === 'service') {
           existing.serviceRevenue += amount;
-        } else if (item.item_type === 'product') {
+        } else if (itemType === 'product') {
           existing.productRevenue += amount;
         }
       }

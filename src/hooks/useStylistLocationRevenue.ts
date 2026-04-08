@@ -64,7 +64,8 @@ export function useStylistLocationRevenue(userId: string | undefined, dateFrom?:
         }
         const amount = (Number(item.total_amount) || 0) + (Number(item.tax_amount) || 0);
         byLocation[key].totalRevenue += amount;
-        if (item.item_type === 'service') {
+        const itemType = (item.item_type || '').toLowerCase();
+        if (itemType === 'service') {
           byLocation[key].serviceRevenue += amount;
           byLocation[key].totalServices += 1;
         } else {
