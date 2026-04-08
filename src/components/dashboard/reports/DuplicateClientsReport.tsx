@@ -58,7 +58,7 @@ export function DuplicateClientsReport({ dateFrom, dateTo, locationId, onClose }
       }
     }
     const blob = new Blob([buildCsvString(csvRows)], { type: 'text/csv' });
-    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'duplicate-clients.csv'; a.click();
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = buildReportFileName({ reportSlug: 'duplicate-clients', dateFrom, dateTo }).replace('.pdf', '.csv'); a.click();
     toast.success('CSV downloaded');
   };
 

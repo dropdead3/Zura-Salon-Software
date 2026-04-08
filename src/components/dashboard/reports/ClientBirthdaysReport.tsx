@@ -47,7 +47,8 @@ export function ClientBirthdaysReport({ dateFrom, dateTo, locationId, onClose }:
   const downloadCSV = () => {
     const rows = [['Client', 'Birthday', 'Days Until', 'Email', 'Phone', 'Total Spend', 'Visits'], ...entries.map(e => [e.clientName, e.birthday, e.daysUntil.toString(), e.email || '', e.phone || '', e.totalSpend.toFixed(2), e.visitCount.toString()])];
     const blob = new Blob([buildCsvString(rows)], { type: 'text/csv' });
-    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'client-birthdays.csv'; a.click();
+    const today = format(new Date(), 'yyyy-MM-dd');
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = buildReportFileName({ reportSlug: 'client-birthdays', dateFrom: today, dateTo: today }).replace('.pdf', '.csv'); a.click();
     toast.success('CSV downloaded');
   };
 

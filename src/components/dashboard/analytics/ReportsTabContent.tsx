@@ -33,6 +33,8 @@ import {
   Grid3X3,
   Tag,
   Cake,
+  CreditCard,
+  Ticket,
 } from 'lucide-react';
 import { useLocations } from '@/hooks/useLocations';
 import { getReportTier, filterReportsByTier } from '@/config/reportCatalog';
@@ -70,6 +72,8 @@ import { DuplicateClientsReport } from '@/components/dashboard/reports/Duplicate
 import { StaffTransactionDetailReport } from '@/components/dashboard/reports/StaffTransactionDetailReport';
 import { DeletedAppointmentsReport } from '@/components/dashboard/reports/DeletedAppointmentsReport';
 import { NoShowEnhancedReport } from '@/components/dashboard/reports/NoShowEnhancedReport';
+import { GiftCardsReport } from '@/components/dashboard/reports/GiftCardsReport';
+import { VouchersReport } from '@/components/dashboard/reports/VouchersReport';
 import type { AnalyticsFilters } from '@/pages/dashboard/admin/AnalyticsHub';
 
 const reportCategories = [
@@ -78,6 +82,7 @@ const reportCategories = [
   { id: 'clients', label: 'Clients', icon: UserCheck },
   { id: 'operations', label: 'Operations', icon: Clock },
   { id: 'financial', label: 'Financial', icon: TrendingUp },
+  { id: 'gift-cards', label: 'Gift Cards', icon: CreditCard },
   { id: 'custom', label: 'Custom Builder', icon: Wand2 },
   { id: 'scheduled', label: 'Scheduled', icon: Calendar },
 ];
@@ -139,6 +144,11 @@ const financialReports = [
   { id: 'chemical-cost', name: 'Chemical Cost Report', description: 'Chemical cost per service, waste %, and margin from Color Bar', icon: Beaker },
   { id: 'location-benchmark', name: 'Location Benchmarking', description: 'Side-by-side KPI comparison across all locations', icon: Building },
   { id: 'future-appointments', name: 'Future Appointments Value', description: 'Revenue pipeline from upcoming booked appointments', icon: CalendarDays },
+];
+
+const giftCardReports = [
+  { id: 'gift-cards', name: 'Gift Cards', description: 'Cards sold, active balances, expired, and redemption overview', icon: CreditCard },
+  { id: 'vouchers', name: 'Vouchers', description: 'Vouchers issued, redeemed, outstanding value by type', icon: Ticket },
 ];
 
 interface ReportsTabContentProps {
@@ -266,7 +276,7 @@ export function ReportsTabContent({ filters, isStandalone }: ReportsTabContentPr
   );
 
   // Reports that manage their own back button
-  const selfContainedReports = ['individual-staff', 'payroll-summary', 'retail-products', 'retail-staff', 'end-of-month', 'service-profitability', 'chemical-cost', 'tip-analysis', 'category-mix', 'tax-summary', 'client-attrition', 'compensation-ratio', 'location-benchmark', 'demand-heatmap', 'discounts', 'future-appointments', 'top-clients', 'client-birthdays', 'client-source', 'duplicate-clients', 'staff-transaction-detail', 'deleted-appointments', 'no-show-enhanced'];
+  const selfContainedReports = ['individual-staff', 'payroll-summary', 'retail-products', 'retail-staff', 'end-of-month', 'service-profitability', 'chemical-cost', 'tip-analysis', 'category-mix', 'tax-summary', 'client-attrition', 'compensation-ratio', 'location-benchmark', 'demand-heatmap', 'discounts', 'future-appointments', 'top-clients', 'client-birthdays', 'client-source', 'duplicate-clients', 'staff-transaction-detail', 'deleted-appointments', 'no-show-enhanced', 'gift-cards', 'vouchers'];
 
   const renderSelectedReport = () => {
     const location = filters.locationId === 'all' ? undefined : filters.locationId;
@@ -437,6 +447,10 @@ export function ReportsTabContent({ filters, isStandalone }: ReportsTabContentPr
         return <DeletedAppointmentsReport dateFrom={filters.dateFrom} dateTo={filters.dateTo} locationId={location} onClose={handleCloseReport} />;
       case 'no-show-enhanced':
         return <NoShowEnhancedReport dateFrom={filters.dateFrom} dateTo={filters.dateTo} locationId={location} onClose={handleCloseReport} />;
+      case 'gift-cards':
+        return <GiftCardsReport dateFrom={filters.dateFrom} dateTo={filters.dateTo} locationId={location} onClose={handleCloseReport} />;
+      case 'vouchers':
+        return <VouchersReport dateFrom={filters.dateFrom} dateTo={filters.dateTo} locationId={location} onClose={handleCloseReport} />;
       default:
         return null;
     }
@@ -550,6 +564,10 @@ export function ReportsTabContent({ filters, isStandalone }: ReportsTabContentPr
             {renderReportCards(financialReports)}
           </TabsContent>
         )}
+
+        <TabsContent value="gift-cards" className="mt-6">
+          {renderReportCards(giftCardReports)}
+        </TabsContent>
 
         {/* Custom Report Builder */}
         <TabsContent value="custom" className="mt-6">
