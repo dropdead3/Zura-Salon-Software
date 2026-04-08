@@ -155,6 +155,7 @@ export function AggregateSalesCard({
   const [activeDrilldown, setActiveDrilldown] = useState<'revenue' | 'transactions' | 'avgTicket' | 'revPerHour' | 'goals' | 'expectedGap' | null>(null);
   const { hideNumbers } = useHideNumbers();
   const { formatCurrency, formatCurrencyWhole, currency } = useFormatCurrency();
+  const { taxLabel } = useRevenueDisplay();
   const [retailExpanded, setRetailExpanded] = useState(false);
   const [servicesExpanded, setServicesExpanded] = useState(false);
   const [retailCategoryDrilldown, setRetailCategoryDrilldown] = useState<'Products' | 'Merch' | 'Gift Cards' | 'Extensions' | null>(null);
