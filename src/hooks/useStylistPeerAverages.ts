@@ -153,14 +153,18 @@ export function useStylistPeerAverages(
 
     const perUser: Map<string, {
       serviceRev: number; productRev: number;
-      appts: any[]; rebooked: number; newClients: number;
+      priorServiceRev: number; priorProductRev: number;
+      appts: any[]; priorAppts: any[]; rebooked: number; priorRebooked: number;
+      newClients: number; priorNewClients: number;
       // For retention: prior-window and current-window client sets
       priorClients: Set<string>; currentClients: Set<string>;
     }> = new Map();
 
     for (const uid of peerIds) {
       perUser.set(uid, {
-        serviceRev: 0, productRev: 0, appts: [], rebooked: 0, newClients: 0,
+        serviceRev: 0, productRev: 0, priorServiceRev: 0, priorProductRev: 0,
+        appts: [], priorAppts: [], rebooked: 0, priorRebooked: 0,
+        newClients: 0, priorNewClients: 0,
         priorClients: new Set(), currentClients: new Set(),
       });
     }
