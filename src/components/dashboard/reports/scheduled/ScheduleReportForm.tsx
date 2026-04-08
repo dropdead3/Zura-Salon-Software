@@ -81,6 +81,7 @@ export function ScheduleReportForm({ open, onOpenChange, editReport }: ScheduleR
   const [timeUtc, setTimeUtc] = useState('09:00');
   const [timezone, setTimezone] = useState('America/New_York');
   const [format, setFormat] = useState('pdf');
+  const [selectedLocationId, setSelectedLocationId] = useState('all');
   const [recipients, setRecipients] = useState<{ email: string; userId?: string; name?: string }[]>([]);
   const [externalEmail, setExternalEmail] = useState('');
   const [staffOptions, setStaffOptions] = useState<StaffOption[]>([]);
@@ -115,6 +116,7 @@ export function ScheduleReportForm({ open, onOpenChange, editReport }: ScheduleR
       setTimeUtc(editReport.schedule_config?.timeUtc ?? '09:00');
       setTimezone(editReport.schedule_config?.timezone ?? 'America/New_York');
       setFormat(editReport.format || 'pdf');
+      setSelectedLocationId(editReport.filters?.locationId || 'all');
       setRecipients(editReport.recipients || []);
     } else {
       setName('');
@@ -124,6 +126,7 @@ export function ScheduleReportForm({ open, onOpenChange, editReport }: ScheduleR
       setTimeUtc('09:00');
       setTimezone('America/New_York');
       setFormat('pdf');
+      setSelectedLocationId('all');
       setRecipients([]);
     }
   }, [editReport, open]);
