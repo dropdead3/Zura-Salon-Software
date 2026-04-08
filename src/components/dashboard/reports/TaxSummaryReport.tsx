@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { tokens } from '@/lib/design-tokens';
-import { useFormatNumber } from '@/hooks/useFormatNumber';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -15,16 +15,11 @@ import { useReportLocationInfo } from '@/hooks/useReportLocationInfo';
 import { addReportHeader, addReportFooter, fetchLogoAsDataUrl, getReportAutoTableBranding, buildReportFileName } from '@/lib/reportPdfLayout';
 import { toast } from 'sonner';
 
-interface Props {
-  dateFrom: string;
-  dateTo: string;
-  locationId?: string;
-  onClose: () => void;
-}
+interface Props { dateFrom: string; dateTo: string; locationId?: string; onClose: () => void; }
 
 export function TaxSummaryReport({ dateFrom, dateTo, locationId, onClose }: Props) {
   const [isGenerating, setIsGenerating] = useState(false);
-  const { formatNumber } = useFormatNumber();
+  const { formatCurrencyWhole } = useFormatCurrency();
   const { effectiveOrganization } = useOrganizationContext();
   const { data: businessSettings } = useBusinessSettings();
   const locationInfo = useReportLocationInfo(locationId);
@@ -39,45 +34,19 @@ export function TaxSummaryReport({ dateFrom, dateTo, locationId, onClose }: Prop
       const branding = getReportAutoTableBranding(doc, headerOpts);
       let y = addReportHeader(doc, headerOpts);
 
-      // Summary row
       if (data) {
-        autoTable(doc, {
-          ...branding, startY: y,
-          head: [['Metric', 'Amount']],
-          body: [
-            ['Pre-Tax Revenue', formatNumber(data.totalPreTaxRevenue, 'currency')],
-            ['Tax Collected', formatNumber(data.totalTax, 'currency')],
-            ['Gross Revenue', formatNumber(data.totalGrossRevenue, 'currency')],
-          ],
-        });
+        autoTable(doc, { ...branding, startY: y, head: [['Metric', 'Amount']], body: [['Pre-Tax Revenue', formatCurrencyWhole(data.totalPreTaxRevenue)], ['Tax Collected', formatCurrencyWhole(data.totalTax)], ['Gross Revenue', formatCurrencyWhole(data.totalGrossRevenue)]] });
         y = (doc as any).lastAutoTable.finalY + 10;
       }
-
-      // By month
       if (data?.byMonth.length) {
-        doc.setFontSize(12);
-        doc.text('By Month', 14, y);
-        y += 6;
-        autoTable(doc, {
-          ...branding, startY: y,
-          head: [['Month', 'Revenue', 'Tax']],
-          body: data.byMonth.map(m => [m.month, formatNumber(m.revenue, 'currency'), formatNumber(m.tax, 'currency')]),
-        });
+        doc.setFontSize(12); doc.text('By Month', 14, y); y += 6;
+        autoTable(doc, { ...branding, startY: y, head: [['Month', 'Revenue', 'Tax']], body: data.byMonth.map(m => [m.month, formatCurrencyWhole(m.revenue), formatCurrencyWhole(m.tax)]) });
         y = (doc as any).lastAutoTable.finalY + 10;
       }
-
-      // By location
       if (data?.byLocation.length) {
-        doc.setFontSize(12);
-        doc.text('By Location', 14, y);
-        y += 6;
-        autoTable(doc, {
-          ...branding, startY: y,
-          head: [['Location', 'Revenue', 'Tax']],
-          body: data.byLocation.map(l => [l.locationName, formatNumber(l.revenue, 'currency'), formatNumber(l.tax, 'currency')]),
-        });
+        doc.setFontSize(12); doc.text('By Location', 14, y); y += 6;
+        autoTable(doc, { ...branding, startY: y, head: [['Location', 'Revenue', 'Tax']], body: data.byLocation.map(l => [l.locationName, formatCurrencyWhole(l.revenue), formatCurrencyWhole(l.tax)]) });
       }
-
       addReportFooter(doc);
       doc.save(buildReportFileName('tax-summary', dateFrom, dateTo));
       toast.success('PDF downloaded');
@@ -88,10 +57,7 @@ export function TaxSummaryReport({ dateFrom, dateTo, locationId, onClose }: Prop
     if (!data) return;
     const rows = [['Month', 'Revenue', 'Tax Collected'], ...data.byMonth.map(m => [m.month, m.revenue.toFixed(2), m.tax.toFixed(2)])];
     const blob = new Blob([rows.map(r => r.join(',')).join('\n')], { type: 'text/csv' });
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = buildReportFileName('tax-summary', dateFrom, dateTo, 'csv');
-    a.click();
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = buildReportFileName('tax-summary', dateFrom, dateTo, 'csv'); a.click();
     toast.success('CSV downloaded');
   };
 
@@ -99,68 +65,45 @@ export function TaxSummaryReport({ dateFrom, dateTo, locationId, onClose }: Prop
 
   return (
     <div className="space-y-4">
-      <Button variant="ghost" size="sm" className="-ml-2 text-muted-foreground hover:text-foreground" onClick={onClose}>
-        <ArrowLeft className="w-4 h-4 mr-1.5" />Back to Reports
-      </Button>
+      <Button variant="ghost" size="sm" className="-ml-2 text-muted-foreground hover:text-foreground" onClick={onClose}><ArrowLeft className="w-4 h-4 mr-1.5" />Back to Reports</Button>
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
             <CardTitle className={tokens.card.title}>Tax Summary</CardTitle>
-            {data && <p className="text-sm text-muted-foreground mt-1">Total tax: {formatNumber(data.totalTax, 'currency')} on {formatNumber(data.totalGrossRevenue, 'currency')} gross</p>}
+            {data && <p className="text-sm text-muted-foreground mt-1">Total tax: {formatCurrencyWhole(data.totalTax)} on {formatCurrencyWhole(data.totalGrossRevenue)} gross</p>}
           </div>
           <div className="flex gap-2">
             <Button variant="outline" size={tokens.button.inline} onClick={downloadCSV}><FileSpreadsheet className="w-4 h-4 mr-1.5" />CSV</Button>
-            <Button size={tokens.button.inline} onClick={generatePDF} disabled={isGenerating}>
-              {isGenerating ? <Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> : <FileText className="w-4 h-4 mr-1.5" />}PDF
-            </Button>
+            <Button size={tokens.button.inline} onClick={generatePDF} disabled={isGenerating}>{isGenerating ? <Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> : <FileText className="w-4 h-4 mr-1.5" />}PDF</Button>
           </div>
         </CardHeader>
         <CardContent className="space-y-6">
-          {/* By Month */}
           {data?.byMonth.length ? (
             <div>
               <h4 className="text-sm font-medium mb-2">By Month</h4>
               <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className={tokens.table.columnHeader}>Month</TableHead>
-                    <TableHead className={tokens.table.columnHeader}>Revenue</TableHead>
-                    <TableHead className={tokens.table.columnHeader}>Tax Collected</TableHead>
-                  </TableRow>
-                </TableHeader>
+                <TableHeader><TableRow>
+                  <TableHead className={tokens.table.columnHeader}>Month</TableHead>
+                  <TableHead className={tokens.table.columnHeader}>Revenue</TableHead>
+                  <TableHead className={tokens.table.columnHeader}>Tax Collected</TableHead>
+                </TableRow></TableHeader>
                 <TableBody>
-                  {data.byMonth.map((m, i) => (
-                    <TableRow key={i}>
-                      <TableCell className="font-medium">{m.month}</TableCell>
-                      <TableCell>{formatNumber(m.revenue, 'currency')}</TableCell>
-                      <TableCell>{formatNumber(m.tax, 'currency')}</TableCell>
-                    </TableRow>
-                  ))}
+                  {data.byMonth.map((m, i) => (<TableRow key={i}><TableCell className="font-medium">{m.month}</TableCell><TableCell>{formatCurrencyWhole(m.revenue)}</TableCell><TableCell>{formatCurrencyWhole(m.tax)}</TableCell></TableRow>))}
                 </TableBody>
               </Table>
             </div>
           ) : null}
-
-          {/* By Location */}
           {data?.byLocation && data.byLocation.length > 1 ? (
             <div>
               <h4 className="text-sm font-medium mb-2">By Location</h4>
               <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className={tokens.table.columnHeader}>Location</TableHead>
-                    <TableHead className={tokens.table.columnHeader}>Revenue</TableHead>
-                    <TableHead className={tokens.table.columnHeader}>Tax Collected</TableHead>
-                  </TableRow>
-                </TableHeader>
+                <TableHeader><TableRow>
+                  <TableHead className={tokens.table.columnHeader}>Location</TableHead>
+                  <TableHead className={tokens.table.columnHeader}>Revenue</TableHead>
+                  <TableHead className={tokens.table.columnHeader}>Tax Collected</TableHead>
+                </TableRow></TableHeader>
                 <TableBody>
-                  {data.byLocation.map((l, i) => (
-                    <TableRow key={i}>
-                      <TableCell className="font-medium">{l.locationName}</TableCell>
-                      <TableCell>{formatNumber(l.revenue, 'currency')}</TableCell>
-                      <TableCell>{formatNumber(l.tax, 'currency')}</TableCell>
-                    </TableRow>
-                  ))}
+                  {data.byLocation.map((l, i) => (<TableRow key={i}><TableCell className="font-medium">{l.locationName}</TableCell><TableCell>{formatCurrencyWhole(l.revenue)}</TableCell><TableCell>{formatCurrencyWhole(l.tax)}</TableCell></TableRow>))}
                 </TableBody>
               </Table>
             </div>

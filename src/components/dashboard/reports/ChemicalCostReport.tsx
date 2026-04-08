@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { tokens } from '@/lib/design-tokens';
-import { useFormatNumber } from '@/hooks/useFormatNumber';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -15,34 +15,21 @@ import { useServiceProfitabilitySnapshots } from '@/hooks/color-bar/useServicePr
 import { addReportHeader, addReportFooter, fetchLogoAsDataUrl, getReportAutoTableBranding, buildReportFileName } from '@/lib/reportPdfLayout';
 import { toast } from 'sonner';
 
-interface Props {
-  dateFrom: string;
-  dateTo: string;
-  locationId?: string;
-  onClose: () => void;
-}
+interface Props { dateFrom: string; dateTo: string; locationId?: string; onClose: () => void; }
 
 export function ChemicalCostReport({ dateFrom, dateTo, locationId, onClose }: Props) {
   const [isGenerating, setIsGenerating] = useState(false);
-  const { formatNumber } = useFormatNumber();
+  const { formatCurrencyWhole } = useFormatCurrency();
   const { effectiveOrganization } = useOrganizationContext();
   const { data: businessSettings } = useBusinessSettings();
   const locationInfo = useReportLocationInfo(locationId);
-
   const { data: snapshots, isLoading } = useServiceProfitabilitySnapshots(dateFrom, dateTo, locationId);
 
-  // Aggregate by service
-  const serviceMap = new Map<string, { revenue: number; productCost: number; wasteCost: number; overageRevenue: number; margin: number; count: number }>();
-
+  const serviceMap = new Map<string, { revenue: number; productCost: number; wasteCost: number; margin: number; count: number }>();
   (snapshots ?? []).forEach(s => {
     const key = s.service_name || 'Unknown';
-    const entry = serviceMap.get(key) || { revenue: 0, productCost: 0, wasteCost: 0, overageRevenue: 0, margin: 0, count: 0 };
-    entry.revenue += s.service_revenue;
-    entry.productCost += s.product_cost;
-    entry.wasteCost += s.waste_cost;
-    entry.overageRevenue += s.overage_revenue;
-    entry.margin += s.contribution_margin;
-    entry.count += 1;
+    const entry = serviceMap.get(key) || { revenue: 0, productCost: 0, wasteCost: 0, margin: 0, count: 0 };
+    entry.revenue += s.service_revenue; entry.productCost += s.product_cost; entry.wasteCost += s.waste_cost; entry.margin += s.contribution_margin; entry.count += 1;
     serviceMap.set(key, entry);
   });
 
@@ -62,14 +49,12 @@ export function ChemicalCostReport({ dateFrom, dateTo, locationId, onClose }: Pr
       const headerOpts = { orgName: businessSettings?.business_name || effectiveOrganization?.name || 'Organization', logoDataUrl, reportTitle: 'Chemical Cost Report', dateFrom, dateTo, locationInfo } as const;
       const branding = getReportAutoTableBranding(doc, headerOpts);
       let y = addReportHeader(doc, headerOpts);
-
       autoTable(doc, {
         ...branding, startY: y,
-        head: [['Service', 'Revenue', 'Chemical Cost', 'Avg Cost/Service', 'Waste Cost', 'Margin %']],
-        body: rows.map(r => [r.name, formatNumber(r.revenue, 'currency'), formatNumber(r.productCost, 'currency'), formatNumber(r.avgCost, 'currency'), formatNumber(r.wasteCost, 'currency'), `${r.marginPct.toFixed(1)}%`]),
-        foot: [['Total', formatNumber(totalRevenue, 'currency'), formatNumber(totalProductCost, 'currency'), '', formatNumber(totalWaste, 'currency'), totalRevenue > 0 ? `${(((totalRevenue - totalProductCost) / totalRevenue) * 100).toFixed(1)}%` : '-']],
+        head: [['Service', 'Revenue', 'Chemical Cost', 'Avg Cost', 'Waste', 'Margin %']],
+        body: rows.map(r => [r.name, formatCurrencyWhole(r.revenue), formatCurrencyWhole(r.productCost), formatCurrencyWhole(Math.round(r.avgCost)), formatCurrencyWhole(r.wasteCost), `${r.marginPct.toFixed(1)}%`]),
+        foot: [['Total', formatCurrencyWhole(totalRevenue), formatCurrencyWhole(totalProductCost), '', formatCurrencyWhole(totalWaste), totalRevenue > 0 ? `${(((totalRevenue - totalProductCost) / totalRevenue) * 100).toFixed(1)}%` : '-']],
       });
-
       addReportFooter(doc);
       doc.save(buildReportFileName('chemical-cost', dateFrom, dateTo));
       toast.success('PDF downloaded');
@@ -77,12 +62,9 @@ export function ChemicalCostReport({ dateFrom, dateTo, locationId, onClose }: Pr
   };
 
   const downloadCSV = () => {
-    const csvRows = [['Service', 'Revenue', 'Chemical Cost', 'Avg Cost/Service', 'Waste Cost', 'Margin %'], ...rows.map(r => [r.name, r.revenue.toFixed(2), r.productCost.toFixed(2), r.avgCost.toFixed(2), r.wasteCost.toFixed(2), r.marginPct.toFixed(1)])];
+    const csvRows = [['Service', 'Revenue', 'Chemical Cost', 'Avg Cost', 'Waste', 'Margin %'], ...rows.map(r => [r.name, r.revenue.toFixed(2), r.productCost.toFixed(2), r.avgCost.toFixed(2), r.wasteCost.toFixed(2), r.marginPct.toFixed(1)])];
     const blob = new Blob([csvRows.map(r => r.join(',')).join('\n')], { type: 'text/csv' });
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = buildReportFileName('chemical-cost', dateFrom, dateTo, 'csv');
-    a.click();
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = buildReportFileName('chemical-cost', dateFrom, dateTo, 'csv'); a.click();
     toast.success('CSV downloaded');
   };
 
@@ -90,48 +72,40 @@ export function ChemicalCostReport({ dateFrom, dateTo, locationId, onClose }: Pr
 
   return (
     <div className="space-y-4">
-      <Button variant="ghost" size="sm" className="-ml-2 text-muted-foreground hover:text-foreground" onClick={onClose}>
-        <ArrowLeft className="w-4 h-4 mr-1.5" />Back to Reports
-      </Button>
+      <Button variant="ghost" size="sm" className="-ml-2 text-muted-foreground hover:text-foreground" onClick={onClose}><ArrowLeft className="w-4 h-4 mr-1.5" />Back to Reports</Button>
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <div className="flex items-center gap-2">
             <Beaker className="w-5 h-5 text-muted-foreground" />
             <div>
               <CardTitle className={tokens.card.title}>Chemical Cost Report</CardTitle>
-              {totalProductCost > 0 && <p className="text-sm text-muted-foreground mt-1">Total chemical cost: {formatNumber(totalProductCost, 'currency')} · Waste: {formatNumber(totalWaste, 'currency')}</p>}
+              {totalProductCost > 0 && <p className="text-sm text-muted-foreground mt-1">Total: {formatCurrencyWhole(totalProductCost)} · Waste: {formatCurrencyWhole(totalWaste)}</p>}
             </div>
           </div>
           <div className="flex gap-2">
             <Button variant="outline" size={tokens.button.inline} onClick={downloadCSV}><FileSpreadsheet className="w-4 h-4 mr-1.5" />CSV</Button>
-            <Button size={tokens.button.inline} onClick={generatePDF} disabled={isGenerating}>
-              {isGenerating ? <Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> : <FileText className="w-4 h-4 mr-1.5" />}PDF
-            </Button>
+            <Button size={tokens.button.inline} onClick={generatePDF} disabled={isGenerating}>{isGenerating ? <Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> : <FileText className="w-4 h-4 mr-1.5" />}PDF</Button>
           </div>
         </CardHeader>
         <CardContent>
-          {rows.length === 0 ? (
-            <p className={tokens.empty.description}>No chemical cost data for this period. Ensure Color Bar is configured.</p>
-          ) : (
+          {rows.length === 0 ? <p className={tokens.empty.description}>No chemical cost data. Ensure Color Bar is configured.</p> : (
             <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className={tokens.table.columnHeader}>Service</TableHead>
-                  <TableHead className={tokens.table.columnHeader}>Revenue</TableHead>
-                  <TableHead className={tokens.table.columnHeader}>Chemical Cost</TableHead>
-                  <TableHead className={tokens.table.columnHeader}>Avg Cost</TableHead>
-                  <TableHead className={tokens.table.columnHeader}>Waste</TableHead>
-                  <TableHead className={tokens.table.columnHeader}>Margin %</TableHead>
-                </TableRow>
-              </TableHeader>
+              <TableHeader><TableRow>
+                <TableHead className={tokens.table.columnHeader}>Service</TableHead>
+                <TableHead className={tokens.table.columnHeader}>Revenue</TableHead>
+                <TableHead className={tokens.table.columnHeader}>Chemical Cost</TableHead>
+                <TableHead className={tokens.table.columnHeader}>Avg Cost</TableHead>
+                <TableHead className={tokens.table.columnHeader}>Waste</TableHead>
+                <TableHead className={tokens.table.columnHeader}>Margin %</TableHead>
+              </TableRow></TableHeader>
               <TableBody>
                 {rows.map((r, i) => (
                   <TableRow key={i}>
                     <TableCell className="font-medium">{r.name}</TableCell>
-                    <TableCell>{formatNumber(r.revenue, 'currency')}</TableCell>
-                    <TableCell>{formatNumber(r.productCost, 'currency')}</TableCell>
-                    <TableCell>{formatNumber(r.avgCost, 'currency')}</TableCell>
-                    <TableCell>{formatNumber(r.wasteCost, 'currency')}</TableCell>
+                    <TableCell>{formatCurrencyWhole(r.revenue)}</TableCell>
+                    <TableCell>{formatCurrencyWhole(r.productCost)}</TableCell>
+                    <TableCell>{formatCurrencyWhole(Math.round(r.avgCost))}</TableCell>
+                    <TableCell>{formatCurrencyWhole(r.wasteCost)}</TableCell>
                     <TableCell>{r.marginPct.toFixed(1)}%</TableCell>
                   </TableRow>
                 ))}
