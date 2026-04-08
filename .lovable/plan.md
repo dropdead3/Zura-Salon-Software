@@ -1,68 +1,68 @@
 
 
-# Analytics Audit Pass 12: Remaining Issues
+# Analytics Audit Pass 13: Remaining Issues
+
+## Positive Feedback on Your Prompting
+
+Your audit prompting has been excellent — iterative, systematic, and effective. After 12 passes, you've driven the elimination of 50+ pagination and revenue logic bugs. The pattern of "do another pass" is producing diminishing returns, which is actually the signal that the codebase is converging toward correctness.
+
+**What prompt would improve results further?** Instead of broad "find any issues" sweeps, try targeted prompts:
+- *"Audit all queries that touch `phorest_transaction_items` — verify each has pagination, correct revenue logic (total_amount + tax_amount), and proper location scoping."*
+- *"Verify that every revenue figure displayed in the Sales Analytics tab uses POS-first sourcing per our data integrity standards."*
+- *"Check all hooks used by the Individual Staff Report for correctness — this is a high-stakes surface."*
+
+Narrow scope + explicit correctness criteria = fewer false negatives per pass.
+
+---
 
 ## Findings
 
-### Bug 1 — `useSalesAnalytics.ts` `useProductCategoryBreakdown` has no pagination (line 50)
-Queries `phorest_sales_transactions` for product categories without pagination. A busy salon with 1000+ product sales in a date range will get truncated category data.
+### Bug 1 — `useIndividualStaffReport.ts` three appointment queries have no pagination (lines 225-238)
+The current, prior, and two-prior period appointment fetches use raw `supabase.from().select()` with no `.range()` or batching. These are filtered by a single `phorest_staff_id`, so truncation is unlikely for a single stylist in a 30-day range, but a 90-day or 365-day range for a very busy stylist could exceed 1000 rows. **Medium risk.**
 
-### Bug 2 — `useSalesAnalytics.ts` `useServicePopularity` has no pagination (line 97)
-Queries `phorest_appointments` for service popularity without pagination. Multi-location orgs can exceed 1000 rows, truncating service frequency rankings.
+### Bug 2 — `usePhorestCalendar.ts` assistant-detection query has no pagination (line 271)
+The query fetching appointment IDs to check for assistant assignments has no batching. A week view is unlikely to exceed 1000, but a month view for a multi-stylist salon could. The subsequent `.in('appointment_id', ids)` call also has no chunking for large arrays. **Medium risk.**
 
-### Bug 3 — `useSalesAnalytics.ts` `useClientFunnel` has no pagination (lines 153, 158)
-Two queries: (1) range-filtered transactions and (2) ALL client transactions ordered by date (no date filter at all — fetches entire history). Both lack pagination. The second query is especially dangerous — it fetches every transaction ever to determine first-visit dates.
+### Bug 3 — `ScatterPlotCard.tsx` has no pagination (line 45)
+Queries 90 days of `phorest_transaction_items` without pagination. A busy salon will easily exceed 1000 transaction items in 90 days, truncating the scatter plot data and producing misleading correlation visualizations. **High risk.**
 
-### Bug 4 — `useSalesAnalytics.ts` `usePeakHoursAnalysis` has no pagination (line 219)
-Queries all transactions in a date range without pagination. Truncates peak-hour heatmap data.
+### Bug 4 — `predictive-color-bar-service.ts` has no pagination (line 61)
+Queries `phorest_appointments` for a date range without pagination. If the predictive window spans many weeks and the org has many stylists, results could truncate, leading to incorrect color/chemical service predictions. **Medium risk.**
 
-### Bug 5 — `useTicketDistribution.ts` has no pagination (line 41)
-Queries `phorest_sales_transactions` for ticket amounts without pagination. Truncation will skew median/average ticket calculations and bucket distributions.
+### Bug 5 — `useTomorrowRevenue.ts` has no pagination (line 14)
+Queries all appointments for a single day. A single day is very unlikely to exceed 1000 appointments, but for enterprise multi-location orgs with hundreds of stylists, it's theoretically possible. **Low risk.**
 
-### Bug 6 — `useProductSalesAnalytics.ts` has no pagination (line 71)
-Queries `phorest_transaction_items` with `select('*')` without pagination. A month of transaction items will easily exceed 1000 rows, truncating product analytics.
-
-### Bug 7 — `useLocationStaffingBalance.ts` has no pagination (line 112)
-Queries all appointments in a date range without pagination. Multi-location orgs with 1000+ appointments in the range get truncated staffing balance calculations.
-
-### Bug 8 — `useHiringForecast.ts` two queries have no pagination (lines 71, 77)
-Both the recent (30-day) and prior (30-day) appointment queries lack pagination. Growth rate calculations will be wrong for high-volume orgs.
-
-### Bug 9 — `useComparisonData.ts` category comparison queries have no pagination (lines 253, 259)
-Both period A and period B category queries from `phorest_sales_transactions` lack pagination. Category-mode comparison data will truncate for busy salons.
-
-### Bug 10 — `ServiceMixChart.tsx` has no pagination (line 35)
-Queries `phorest_sales_transactions` for a single stylist's service mix without pagination. A busy stylist with 1000+ service transactions in 30 days will get truncated data (unlikely for single stylist but possible at 90-day ranges).
+### Bug 6 — `useAppointmentsHub.ts` hard `.limit(1000)` hides data (line 48)
+Both queries use `.limit(1000)` which silently drops rows beyond 1000. The `totalCount` uses `{ count: 'exact' }` so the count is correct, but the merged + sorted + paginated results will be wrong — the client-side pagination operates on at most 2000 merged rows, not the full dataset. If a salon has 1500+ appointments in the filtered range, page 3+ will show nothing despite the count saying more exist. **High risk — functional bug, not just truncation.**
 
 ---
 
 ## Implementation Plan
 
-### Task 1 — Add pagination to `useSalesAnalytics.ts` (4 queries)
-- `useProductCategoryBreakdown`: migrate to `fetchAllBatched`
-- `useServicePopularity`: migrate to `fetchAllBatched`
-- `useClientFunnel`: migrate both queries to `fetchAllBatched`
-- `usePeakHoursAnalysis`: migrate to `fetchAllBatched`
+### Task 1 — Fix `useIndividualStaffReport.ts` pagination (3 queries)
+Migrate the current/prior/two-prior appointment queries to `fetchAllBatched`.
 
-### Task 2 — Add pagination to `useTicketDistribution.ts` and `useProductSalesAnalytics.ts`
-- `useTicketDistribution`: migrate to `fetchAllBatched`
-- `useProductSalesAnalytics`: migrate to `fetchAllBatched`
+### Task 2 — Fix `ScatterPlotCard.tsx` pagination
+Migrate the 90-day transaction items query to `fetchAllBatched`.
 
-### Task 3 — Add pagination to `useLocationStaffingBalance.ts` and `useHiringForecast.ts`
-- `useLocationStaffingBalance`: migrate appointment query to `fetchAllBatched`
-- `useHiringForecast`: migrate both 30-day queries to `fetchAllBatched`
+### Task 3 — Fix `usePhorestCalendar.ts` assistant query pagination
+Migrate the appointment IDs query to `fetchAllBatched` and chunk the `.in()` call.
 
-### Task 4 — Add pagination to `useComparisonData.ts` and `ServiceMixChart.tsx`
-- `useComparisonData`: migrate both category queries to `fetchAllBatched`
-- `ServiceMixChart`: migrate to `fetchAllBatched`
+### Task 4 — Fix `predictive-color-bar-service.ts` pagination
+Migrate the phorest_appointments query to `fetchAllBatched`.
+
+### Task 5 — Fix `useAppointmentsHub.ts` server-side pagination
+Replace the `.limit(1000)` approach with proper server-side pagination using `.range()` based on the page/pageSize parameters, querying only the needed page from each table rather than fetching 1000 rows and paginating client-side.
 
 ---
 
 ## Summary
 
-| Type | Count | Files |
-|---|---|---|
-| Bug (truncation) | 10 | `useSalesAnalytics` (4), `useTicketDistribution`, `useProductSalesAnalytics`, `useLocationStaffingBalance`, `useHiringForecast` (2), `useComparisonData` (2), `ServiceMixChart` |
+| Type | Count | Risk | Files |
+|---|---|---|---|
+| Bug (functional) | 1 | High | `useAppointmentsHub` (client-side pagination on truncated data) |
+| Bug (truncation) | 5 | High/Med | `ScatterPlotCard`, `useIndividualStaffReport` (3), `usePhorestCalendar`, `predictive-color-bar-service` |
+| Bug (truncation) | 1 | Low | `useTomorrowRevenue` |
 
-4 tasks, 6 files changed, no database changes. No new tip/revenue logic bugs found — previous passes resolved those systematically.
+5 tasks, 5 files changed (excluding `useTomorrowRevenue` — low risk, single-day query). No database changes.
 
