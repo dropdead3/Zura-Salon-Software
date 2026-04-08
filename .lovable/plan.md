@@ -1,131 +1,72 @@
 
 
-# POS-First Migration: Fix All Stale Analytics
+# POS-First Migration: Edge Functions (Phase 2)
 
-## Problem
-The `phorest_daily_sales_summary` table stopped receiving data on Feb 21. Every hook and edge function querying it shows incorrect/missing revenue after that date. This affects graduation tracking, payroll, trends, comparisons, and forecasting across the platform.
+The original plan listed 5 edge functions, but the full audit found **10 edge functions** still querying `phorest_daily_sales_summary`. Two are sync/migration functions (write-path, leave as-is). The remaining **8** need to switch to `phorest_transaction_items`.
 
-## Approach
-Switch all client-side hooks from `phorest_daily_sales_summary` to `phorest_transaction_items` using the proven `fetchAllBatched` pattern. For `appointments.total_price` usage (includes tips), switch to transaction-item-based revenue. Edge functions get the same treatment.
+## Pattern (same as client-side)
 
-Revenue formula: `total_amount + tax_amount`, split by `item_type` ('service' vs other).
+All edge functions will:
+- Query `phorest_transaction_items` with `transaction_date` range filters
+- Sum `total_amount + tax_amount`, split by `item_type` ('service' vs other)
+- Use pagination (1000-row pages) for large date ranges
+- Scope by `location_id` where applicable
 
----
+## Files to Update
 
-## P0 — Critical (Graduation + Payroll)
+### 1. `supabase/functions/growth-forecasting/index.ts`
+**Two locations:**
+- **Line 192**: Main historical query — replace `phorest_daily_sales_summary` with `phorest_transaction_items`. Select `transaction_date, total_amount, tax_amount, item_type, location_id`. Paginate. Aggregate into same `monthMap` structure by computing `totalRevenue`, `serviceRevenue`, `productRevenue` from items.
+- **Line 681**: Accuracy backfill query — same switch for period actuals lookup.
 
-### File 1: `src/hooks/useTeamLevelProgress.ts`
-- **Lines 119-131**: Replace `phorest_daily_sales_summary` query with `phorest_transaction_items` query using `stylist_user_id` in `userIds`, selecting `stylist_user_id, total_amount, tax_amount, item_type, transaction_date`. Add pagination.
-- **Lines 240-250** (`computeMetrics`): Replace `service_revenue`/`product_revenue` aggregation with transaction-item-based sums. Filter by `stylist_user_id` instead of `user_id`. Classify `item_type === 'service'` vs product.
-- **Lines 256-258**: Fix Avg Ticket denominator — use unique `client_id + appointment_date` from appointments instead of raw count.
-- **Lines 307-309**: Fix Revenue Per Hour — use sales-based revenue (from transaction items) instead of `total_price`.
+### 2. `supabase/functions/revenue-forecasting/index.ts`
+- **Line 72**: Replace 90-day `phorest_daily_sales_summary` query with `phorest_transaction_items`. Aggregate to daily totals client-side for the forecasting model.
 
-### File 2: `src/hooks/usePayrollCalculations.ts`
-- **Lines 88-113** (`usePayrollSalesData`): Replace `phorest_daily_sales_summary` query with `phorest_transaction_items` using `stylist_user_id` in `employeeIds`. Add pagination. Aggregate by `stylist_user_id` splitting `total_amount + tax_amount` by `item_type`.
+### 3. `supabase/functions/detect-anomalies/index.ts`
+- **Lines 119-127**: Today's revenue — query `phorest_transaction_items` where `transaction_date = today`, sum `total_amount + tax_amount`.
+- **Lines 134-142**: Last week comparison — same query for `lastWeekStr`.
 
-### File 3: `src/hooks/useMyPayData.ts`
-- **Lines 151-169**: Replace `phorest_daily_sales_summary` query with `phorest_transaction_items` filtered by `stylist_user_id = user.id` and date range. Aggregate same way.
+### 4. `supabase/functions/calculate-org-benchmarks/index.ts`
+- **Line 73**: Replace period revenue query with `phorest_transaction_items` filtered by `organization_id` (via join or location scope) and date range.
 
----
+### 5. `supabase/functions/calculate-health-scores/index.ts`
+- **Lines 188-200**: Replace both current-week and previous-week revenue queries with `phorest_transaction_items`, aggregating `total_amount + tax_amount`.
 
-## P1 — Visible to Users
+### 6. `supabase/functions/update-sales-leaderboard/index.ts`
+- **Lines 43-55**: Replace weekly sales-by-stylist query with `phorest_transaction_items` using `stylist_user_id`. Join employee name from `employee_profiles` separately. Aggregate by `stylist_user_id`.
 
-### File 4: `src/hooks/useSalesData.ts`
-- **Lines 112-114** (`useDailySalesSummary`): Switch to `phorest_transaction_items`, aggregate by date to produce daily totals.
-- **Lines 164-187** (`useUserSalesSummary`): Replace summary query + fallback with `phorest_transaction_items` by `stylist_user_id`, with `phorest_staff_id` fallback. Add pagination.
+### 7. `supabase/functions/generate-daily-huddle/index.ts`
+- **Lines 78-83**: Replace yesterday's sales summary with `phorest_transaction_items` for `transaction_date = yesterdayStr`. Aggregate to produce `total_revenue`, `service_revenue`, `product_revenue`.
 
-### File 5: `src/components/dashboard/sales/PerformanceTrendChart.tsx`
-- **Lines 77-100**: Replace `phorest_daily_sales_summary` queries (primary + fallback) with `phorest_transaction_items` by `stylist_user_id` (primary) and `phorest_staff_id` (fallback). Group by week ranges client-side.
+### 8. `supabase/functions/ai-business-insights/index.ts`
+- **Lines 118-124**: Replace 14-day sales query with `phorest_transaction_items`. Aggregate daily totals for AI context.
 
-### File 6: `src/hooks/usePayrollAnalytics.ts`
-- **Lines 70-77**: Replace sales query with `phorest_transaction_items`. Add pagination.
-- **Lines 88-97**: Replace YTD revenue query similarly.
+### 9. `supabase/functions/ai-card-analysis/index.ts`
+- **Lines 133-140**: Revenue trend query — switch to `phorest_transaction_items`, aggregate by date.
+- **Lines 177-181**: Location comparison query — switch similarly, group by `location_id`.
 
-### File 7: `src/hooks/usePayrollForecasting.ts`
-- **Lines 121-128**: Replace current period sales query with `phorest_transaction_items`.
-- **Lines 144-151**: Replace last period sales query similarly.
+### 10. `supabase/functions/process-scheduled-reports/index.ts`
+- **Lines 220-232**: Template-based report query — switch to `phorest_transaction_items`.
+- **Lines 246-251**: Fallback report query — same switch.
 
----
+## Not Changed (intentionally)
+- `sync-phorest-data` — this is the function that *writes* to `phorest_daily_sales_summary`; it's the sync pipeline itself
+- `migrate-phorest-data` — one-time migration utility
 
-## P2 — Secondary Analytics
+## Summary
 
-### File 8: `src/hooks/useSalesComparison.ts`
-- Replace both current and previous period queries with `phorest_transaction_items`. Add location filter and pagination.
+| File | Change |
+|---|---|
+| `growth-forecasting/index.ts` | 2 queries (main historical + accuracy backfill) |
+| `revenue-forecasting/index.ts` | 1 query (90-day historical) |
+| `detect-anomalies/index.ts` | 2 queries (today + last week) |
+| `calculate-org-benchmarks/index.ts` | 1 query (period revenue) |
+| `calculate-health-scores/index.ts` | 2 queries (current + previous week) |
+| `update-sales-leaderboard/index.ts` | 1 query (weekly by stylist) |
+| `generate-daily-huddle/index.ts` | 1 query (yesterday's sales) |
+| `ai-business-insights/index.ts` | 1 query (14-day sales) |
+| `ai-card-analysis/index.ts` | 2 queries (trend + location) |
+| `process-scheduled-reports/index.ts` | 2 queries (template + fallback) |
 
-### File 9: `src/hooks/useTodayActualRevenue.tsx`
-- **Lines 97-153**: Flip logic — query `phorest_transaction_items` first (primary), remove summary-first approach. Keep realtime subscription on both tables.
-
-### File 10: `src/hooks/useStylistLocationRevenue.ts`
-- Replace both queries (aggregate + trend) with `phorest_transaction_items` by `stylist_user_id`, grouping by `location_id`.
-
-### File 11: `src/hooks/useOrganizationAnalytics.ts`
-- **Lines 159-164**: Replace 60-day sales summary query with `phorest_transaction_items`.
-
----
-
-## P3 — Modeling + Correlation
-
-### File 12: `src/hooks/useCommissionEconomics.ts`
-- **Lines 108-114**: Replace `appointments.total_price` with `phorest_transaction_items` for revenue-by-level calculation.
-
-### File 13: `src/hooks/useCorrelationAnalysis.ts`
-- Replace `phorest_daily_sales_summary` query with `phorest_transaction_items`, aggregate to daily totals client-side for correlation calculation.
-
-### File 14: `src/lib/reportMetrics.ts`
-- Update metric source definitions from `phorest_daily_sales_summary` to `phorest_transaction_items`.
-
----
-
-## P3 — Edge Functions
-
-### File 15: `supabase/functions/growth-forecasting/index.ts`
-- Lines 192-194, 681-683: Replace `phorest_daily_sales_summary` queries with `phorest_transaction_items`.
-
-### File 16: `supabase/functions/revenue-forecasting/index.ts`
-- Line 73: Same replacement.
-
-### File 17: `supabase/functions/detect-anomalies/index.ts`
-- Lines 120, 135: Replace daily lookups with transaction item queries for today/last-week.
-
-### File 18: `supabase/functions/calculate-org-benchmarks/index.ts`
-- Line 74: Replace revenue query.
-
-### File 19: `supabase/functions/process-scheduled-reports/index.ts`
-- Lines 221, 247: Replace report data queries.
-
----
-
-## Pattern (Applied Consistently)
-
-All hooks use:
-```text
-fetchAllBatched with pageSize=1000
-Revenue = total_amount + tax_amount
-Split by item_type === 'service' (service) vs other (product)
-Avg Ticket denominator = unique client_id + date
-Filter by stylist_user_id (primary), phorest_staff_id (fallback)
-Location scoping via location_id
-```
-
-## Files Changed
-
-| Priority | File | Change |
-|---|---|---|
-| P0 | `useTeamLevelProgress.ts` | Sales query + computeMetrics + avgTicket + revPerHour |
-| P0 | `usePayrollCalculations.ts` | `usePayrollSalesData` query |
-| P0 | `useMyPayData.ts` | Sales data query |
-| P1 | `useSalesData.ts` | `useDailySalesSummary` + `useUserSalesSummary` |
-| P1 | `PerformanceTrendChart.tsx` | Trend data query |
-| P1 | `usePayrollAnalytics.ts` | Period sales + YTD revenue |
-| P1 | `usePayrollForecasting.ts` | Current + last period sales |
-| P2 | `useSalesComparison.ts` | PoP comparison queries |
-| P2 | `useTodayActualRevenue.tsx` | Flip to transaction-first |
-| P2 | `useStylistLocationRevenue.ts` | Location breakdown queries |
-| P2 | `useOrganizationAnalytics.ts` | Platform analytics sales |
-| P3 | `useCommissionEconomics.ts` | Revenue-by-level from transactions |
-| P3 | `useCorrelationAnalysis.ts` | Correlation data source |
-| P3 | `reportMetrics.ts` | Metric source definitions |
-| P3 | 5 edge functions | Backend query updates |
-
-19 files, no database changes.
+10 edge functions, no database changes. All deployed automatically after edit.
 
