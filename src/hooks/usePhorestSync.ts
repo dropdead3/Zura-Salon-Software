@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { fetchAllBatched } from '@/utils/fetchAllBatched';
+import { format, addDays } from 'date-fns';
 
 export interface PhorestStaffMember {
   id: string;
@@ -136,29 +138,140 @@ export function useUserPhorestMapping(userId: string | undefined) {
 }
 
 export function usePhorestPerformanceMetrics(weekStart?: string) {
+  const weekEnd = weekStart ? format(addDays(new Date(weekStart), 6), 'yyyy-MM-dd') : undefined;
+
   return useQuery({
     queryKey: ['phorest-performance', weekStart],
     queryFn: async () => {
-      let query = supabase
-        .from('phorest_performance_metrics')
-        .select(`
-          *,
-          employee_profiles:user_id (
-            full_name,
-            display_name,
-            photo_url
-          )
-        `)
-        .order('total_revenue', { ascending: false });
+      if (!weekStart || !weekEnd) return [];
 
-      if (weekStart) {
-        query = query.eq('week_start', weekStart);
+      // Fetch staff mappings to link phorest_staff_id → user_id
+      const { data: mappings } = await supabase
+        .from('phorest_staff_mapping')
+        .select('phorest_staff_id, user_id, phorest_staff_name')
+        .eq('is_active', true);
+
+      const staffMap = new Map((mappings || []).map(m => [m.phorest_staff_id, m]));
+      const userIds = [...new Set((mappings || []).filter(m => m.user_id).map(m => m.user_id!))];
+
+      // Fetch employee profiles
+      let profileMap = new Map<string, { full_name: string; display_name: string | null; photo_url: string | null }>();
+      if (userIds.length > 0) {
+        const { data: profiles } = await supabase
+          .from('employee_profiles')
+          .select('user_id, full_name, display_name, photo_url')
+          .in('user_id', userIds);
+        profileMap = new Map((profiles || []).map(p => [p.user_id, p]));
       }
 
-      const { data, error } = await query;
-      if (error) throw error;
-      return data;
+      // Fetch appointments for the week (paginated)
+      const appointments = await fetchAllBatched<{
+        phorest_staff_id: string | null;
+        phorest_client_id: string | null;
+        total_price: number | null;
+        tip_amount: number | null;
+        status: string | null;
+        rebooked_at_checkout: boolean | null;
+        service_name: string | null;
+      }>((from, to) =>
+        supabase
+          .from('phorest_appointments')
+          .select('phorest_staff_id, phorest_client_id, total_price, tip_amount, status, rebooked_at_checkout, service_name')
+          .gte('appointment_date', weekStart)
+          .lte('appointment_date', weekEnd)
+          .range(from, to)
+      );
+
+      // Fetch transaction items for retail revenue
+      const txItems = await fetchAllBatched<{
+        phorest_staff_id: string | null;
+        total_amount: number | null;
+        tax_amount: number | null;
+        item_type: string | null;
+      }>((from, to) =>
+        supabase
+          .from('phorest_transaction_items')
+          .select('phorest_staff_id, total_amount, tax_amount, item_type')
+          .gte('transaction_date', weekStart)
+          .lte('transaction_date', weekEnd)
+          .range(from, to)
+      );
+
+      // Aggregate by staff
+      const byStaff = new Map<string, {
+        total_revenue: number;
+        retail_sales: number;
+        service_count: number;
+        new_clients: number;
+        retention_rate: number;
+        extension_clients: number;
+        completed: number;
+        rebooked: number;
+        clientSet: Set<string>;
+      }>();
+
+      // Process appointments
+      for (const apt of appointments) {
+        const sid = apt.phorest_staff_id;
+        if (!sid) continue;
+        if (!byStaff.has(sid)) {
+          byStaff.set(sid, {
+            total_revenue: 0, retail_sales: 0, service_count: 0,
+            new_clients: 0, retention_rate: 0, extension_clients: 0,
+            completed: 0, rebooked: 0, clientSet: new Set(),
+          });
+        }
+        const s = byStaff.get(sid)!;
+        if (apt.status === 'completed') {
+          s.total_revenue += (Number(apt.total_price) || 0) - (Number(apt.tip_amount) || 0);
+          s.service_count += 1;
+          s.completed += 1;
+          if (apt.rebooked_at_checkout) s.rebooked += 1;
+          if (apt.phorest_client_id) s.clientSet.add(apt.phorest_client_id);
+        }
+      }
+
+      // Process retail from transaction items
+      for (const tx of txItems) {
+        const sid = tx.phorest_staff_id;
+        if (!sid || tx.item_type !== 'product') continue;
+        if (!byStaff.has(sid)) continue;
+        byStaff.get(sid)!.retail_sales += (Number(tx.total_amount) || 0) + (Number(tx.tax_amount) || 0);
+      }
+
+      // Compute retention_rate as rebooking rate
+      for (const s of byStaff.values()) {
+        s.retention_rate = s.completed > 0 ? (s.rebooked / s.completed) * 100 : 0;
+      }
+
+      // Build results matching the old shape
+      const results = Array.from(byStaff.entries())
+        .map(([phorestId, s]) => {
+          const mapping = staffMap.get(phorestId);
+          const userId = mapping?.user_id || null;
+          const profile = userId ? profileMap.get(userId) : undefined;
+          const avgTicket = s.service_count > 0 ? s.total_revenue / s.service_count : 0;
+          return {
+            user_id: userId,
+            phorest_staff_id: phorestId,
+            week_start: weekStart,
+            total_revenue: s.total_revenue,
+            retail_sales: s.retail_sales,
+            service_count: s.service_count,
+            new_clients: s.new_clients,
+            retention_rate: s.retention_rate,
+            rebooking_rate: s.retention_rate, // alias for consumers expecting this field
+            average_ticket: avgTicket,
+            extension_clients: s.extension_clients,
+            employee_profiles: profile || { full_name: mapping?.phorest_staff_name || 'Unknown', display_name: null, photo_url: null },
+          };
+        })
+        .sort((a, b) => b.total_revenue - a.total_revenue);
+
+      return results;
     },
+    enabled: !!weekStart,
+    staleTime: 1000 * 60 * 5,
   });
 }
 

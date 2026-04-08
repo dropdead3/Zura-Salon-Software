@@ -766,22 +766,27 @@ export function useSalesByPhorestStaff(dateFrom?: string, dateTo?: string) {
         };
       });
 
-      // Fetch appointments with phorest_staff_id
-      let query = supabase
-        .from('phorest_appointments')
-        .select('phorest_staff_id, total_price, service_name, location_id, phorest_client_id, appointment_date')
-        .not('phorest_staff_id', 'is', null)
-        .not('total_price', 'is', null);
+      // Fetch appointments with phorest_staff_id (paginated)
+      const data = await fetchAllBatched<{
+        phorest_staff_id: string | null;
+        total_price: number | null;
+        tip_amount: number | null;
+        service_name: string | null;
+        location_id: string | null;
+        phorest_client_id: string | null;
+        appointment_date: string | null;
+      }>((from, to) => {
+        let q = supabase
+          .from('phorest_appointments')
+          .select('phorest_staff_id, total_price, tip_amount, service_name, location_id, phorest_client_id, appointment_date')
+          .not('phorest_staff_id', 'is', null)
+          .not('total_price', 'is', null)
+          .range(from, to);
 
-      if (dateFrom) {
-        query = query.gte('appointment_date', dateFrom);
-      }
-      if (dateTo) {
-        query = query.lte('appointment_date', dateTo);
-      }
-
-      const { data, error } = await query;
-      if (error) throw error;
+        if (dateFrom) q = q.gte('appointment_date', dateFrom);
+        if (dateTo) q = q.lte('appointment_date', dateTo);
+        return q;
+      });
 
       // Build staff name lookup using centralized resolution
       const staffNameLookup: Record<string, string> = {};
@@ -817,8 +822,9 @@ export function useSalesByPhorestStaff(dateFrom?: string, dateTo?: string) {
           };
         }
         
-        byStaff[phorestId].totalRevenue += Number(apt.total_price) || 0;
-        byStaff[phorestId].serviceRevenue += Number(apt.total_price) || 0;
+        const rev = (Number(apt.total_price) || 0) - (Number(apt.tip_amount) || 0);
+        byStaff[phorestId].totalRevenue += rev;
+        byStaff[phorestId].serviceRevenue += rev;
         byStaff[phorestId].totalServices += 1;
         // Track unique client visits per staff
         if (!staffVisitSets[phorestId]) staffVisitSets[phorestId] = new Set();
