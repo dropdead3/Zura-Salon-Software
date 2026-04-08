@@ -89,6 +89,7 @@ const staffReports = [
   { id: 'rebooking', name: 'Rebooking Analysis', description: 'Staff rebooking rates and trends', icon: UserCheck },
   { id: 'new-clients', name: 'New Client Acquisition', description: "Who's bringing in new clients", icon: UserCheck },
   { id: 'tip-analysis', name: 'Tip Analysis', description: 'Tip distribution, avg tip per visit, tip-to-revenue ratio by stylist', icon: Coins },
+  { id: 'compensation-ratio', name: 'Compensation Ratio', description: 'Labor cost as % of revenue per stylist with commission source', icon: Percent },
 ];
 
 const clientReports = [
