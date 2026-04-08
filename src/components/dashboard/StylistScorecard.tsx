@@ -510,6 +510,22 @@ function getPeerValue(key: string, peers: ReturnType<typeof useStylistPeerAverag
   }
 }
 
+/** Map criterion key to peer velocity value (change/day) */
+function getPeerVelocityForKey(key: string, peers: ReturnType<typeof useStylistPeerAverages>): number | null {
+  if (!peers?.velocity) return null;
+  switch (key) {
+    case 'revenue': return peers.velocity.revenueVelocity;
+    case 'retail': return peers.velocity.retailVelocity;
+    case 'rebooking': return peers.velocity.rebookVelocity;
+    case 'avg_ticket': return peers.velocity.ticketVelocity;
+    case 'retention_rate': return peers.velocity.retentionVelocity;
+    case 'utilization': return peers.velocity.utilizationVelocity;
+    case 'rev_per_hour': return peers.velocity.revPerHourVelocity;
+    case 'new_clients': return peers.velocity.newClientsVelocity;
+    default: return null;
+  }
+}
+
 /** Determine trend direction — real period-over-period comparison.
  *  Uses priorCurrent from the previous eval window vs current value.
  *  A 3% relative change threshold determines up/down vs flat. */
