@@ -37,6 +37,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { PremiumFloatingPanel } from '@/components/ui/premium-floating-panel';
+import { ScheduleReportForm } from './ScheduleReportForm';
 
 function ScheduleTypeLabel({ type }: { type: string }) {
   const labels: Record<string, string> = {
@@ -74,6 +75,8 @@ export function ScheduledReportsSubTab() {
   
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [historyReportId, setHistoryReportId] = useState<string | null>(null);
+  const [scheduleFormOpen, setScheduleFormOpen] = useState(false);
+  const [editingReport, setEditingReport] = useState<ScheduledReport | null>(null);
   const { data: runHistory } = useScheduledReportRuns(historyReportId || undefined);
 
   const handleToggleActive = (report: ScheduledReport) => {
