@@ -374,9 +374,16 @@ function buildDigestHtml(
     .map((line) => `<tr><td style="padding:6px 0;font-size:13px;color:#374151;border-bottom:1px solid #f3f4f6;">${line}</td></tr>`)
     .join("");
 
-  const summaryBlock = aiSummary
+  const escapedSummary = aiSummary
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+
+  const summaryBlock = escapedSummary
     ? `<div style="background:#f0fdf4;border-left:3px solid #22c55e;padding:12px 16px;border-radius:6px;margin:16px 0;">
-        <p style="margin:0;font-size:13px;color:#166534;line-height:1.6;">${aiSummary}</p>
+        <p style="margin:0;font-size:13px;color:#166534;line-height:1.6;">${escapedSummary}</p>
       </div>`
     : "";
 
