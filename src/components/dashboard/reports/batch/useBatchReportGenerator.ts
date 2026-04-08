@@ -237,9 +237,38 @@ async function fetchReportData(
       }
       return { columns: ['Client', 'Email', 'Spend', 'Visits'], rows: data.slice(0, 300).map((c: any) => [c.name || `${c.first_name || ''} ${c.last_name || ''}`.trim() || 'Unknown', c.email || '', `$${(Number(c.total_spend) || 0).toFixed(2)}`, String(c.visit_count || 0)]) };
     }
+    case 'demand-heatmap': {
+      const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+      const data = await fetchAllBatched<any>((from, to) => {
+        let q = supabase.from('v_all_appointments')
+          .select('appointment_date, start_time, status')
+          .gte('appointment_date', dateFrom)
+          .lte('appointment_date', dateTo)
+          .not('status', 'in', '("cancelled","no_show")')
+          .not('start_time', 'is', null)
+          .range(from, to);
+        if (locationId) q = q.eq('location_id', locationId);
+        return q;
+      });
+      const grid: Record<string, number> = {};
+      data.forEach((apt: any) => {
+        const day = new Date(apt.appointment_date).getDay();
+        const hour = parseInt(apt.start_time.split(':')[0]);
+        const key = `${day}:${hour}`;
+        grid[key] = (grid[key] || 0) + 1;
+      });
+      const rows: string[][] = [];
+      for (let h = 7; h <= 21; h++) {
+        const row = [`${h}:00`];
+        for (let d = 0; d < 7; d++) {
+          row.push(String(grid[`${d}:${h}`] || 0));
+        }
+        rows.push(row);
+      }
+      return { columns: ['Hour', ...DAY_NAMES], rows };
+    }
     case 'no-show-enhanced':
     case 'deleted-appointments':
-    case 'demand-heatmap':
     case 'future-appointments': {
       const data = await fetchAllBatched<any>((from, to) => {
         let q = supabase.from('v_all_appointments')
