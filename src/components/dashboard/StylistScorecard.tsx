@@ -334,7 +334,6 @@ export function StylistScorecard({ userId, locationId, onTrendProjection }: Styl
               const trend = getTrend(cp);
               const isMet = cp.percent >= 100;
               const proj = projectionMap.get(cp.key);
-              const isMet = cp.percent >= 100;
 
               return (
                 <div key={cp.key} className={cn(
