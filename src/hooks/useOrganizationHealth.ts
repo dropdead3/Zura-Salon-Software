@@ -2,7 +2,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
 export interface HealthBreakdown {
-  adoption: {
+  // Legacy fields (backward compat)
+  adoption?: {
     score: number;
     factors: {
       active_users: number;
@@ -11,7 +12,7 @@ export interface HealthBreakdown {
       features_used: number;
     };
   };
-  engagement: {
+  engagement?: {
     score: number;
     factors: {
       chat_messages_7d: number;
@@ -19,7 +20,7 @@ export interface HealthBreakdown {
       tasks_completed: number;
     };
   };
-  performance: {
+  performance?: {
     score: number;
     factors: {
       revenue_current: number;
@@ -29,7 +30,7 @@ export interface HealthBreakdown {
       avg_ticket: number;
     };
   };
-  data_quality: {
+  data_quality?: {
     score: number;
     factors: {
       sync_success_rate: number;
@@ -37,6 +38,16 @@ export interface HealthBreakdown {
       anomalies_unresolved: number;
     };
   };
+  // New Health Engine fields
+  revenue?: { score: number; available: boolean; metrics: any[]; topDrag: string; topStrength: string; leverRecommendation: string };
+  client?: { score: number; available: boolean; metrics: any[]; topDrag: string; topStrength: string; leverRecommendation: string };
+  retention?: { score: number; available: boolean; metrics: any[]; topDrag: string; topStrength: string; leverRecommendation: string };
+  utilization?: { score: number; available: boolean; metrics: any[]; topDrag: string; topStrength: string; leverRecommendation: string };
+  team_performance?: { score: number; available: boolean; metrics: any[]; topDrag: string; topStrength: string; leverRecommendation: string };
+  operational_consistency?: { score: number; available: boolean; metrics: any[]; topDrag: string; topStrength: string; leverRecommendation: string };
+  inventory_cost?: { score: number; available: boolean; metrics: any[]; topDrag: string; topStrength: string; leverRecommendation: string };
+  profitability?: { score: number; available: boolean; metrics: any[]; topDrag: string; topStrength: string; leverRecommendation: string };
+  [key: string]: any;
 }
 
 export interface HealthTrends {
