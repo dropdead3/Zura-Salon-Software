@@ -97,6 +97,8 @@ export const REPORT_CATALOG: ReportCatalogEntry[] = [
   { id: 'client-birthdays', name: 'Client Birthdays', category: 'clients' },
   { id: 'client-source', name: 'Client Source', category: 'clients' },
   { id: 'duplicate-clients', name: 'Duplicate Clients', category: 'clients' },
+  { id: 'client-feedback', name: 'Client Feedback & NPS', category: 'clients' },
+  { id: 'churn-risk', name: 'Churn Risk', category: 'clients' },
   // Operations
   { id: 'no-show-enhanced', name: 'No-Shows & Cancellations', category: 'operations' },
   { id: 'deleted-appointments', name: 'Deleted Appointments', category: 'operations' },
