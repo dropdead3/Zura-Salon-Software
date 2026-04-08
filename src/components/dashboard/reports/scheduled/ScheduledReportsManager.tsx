@@ -243,6 +243,8 @@ export function ScheduledReportsManager({ onScheduleNew }: ScheduledReportsManag
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <ScheduleReportForm open={editFormOpen} onOpenChange={setEditFormOpen} editReport={editingReport} />
     </div>
   );
 }
