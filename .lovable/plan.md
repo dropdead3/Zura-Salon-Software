@@ -1,66 +1,60 @@
 
 
-# Analytics Audit Pass 11: Remaining Issues
-
-After ten passes, the remaining gaps are narrower. This pass focuses on pagination risks in hooks not yet covered, plus one tip-adjustment gap and one logic issue.
+# Analytics Audit Pass 12: Remaining Issues
 
 ## Findings
 
-### Bug 1 — `useRealizationRate.ts` transaction items query has no pagination (line 59)
-The POS transaction items query (step 2) fetches 30 days of data without batching. The appointments query (step 1) was fixed in a prior pass, but the transaction items query was missed. A busy salon with 1000+ transaction items in 30 days will get truncated actual revenue, producing an artificially low realization rate.
+### Bug 1 — `useSalesAnalytics.ts` `useProductCategoryBreakdown` has no pagination (line 50)
+Queries `phorest_sales_transactions` for product categories without pagination. A busy salon with 1000+ product sales in a date range will get truncated category data.
 
-**Fix:** Use `fetchAllBatched` for the transaction items query.
+### Bug 2 — `useSalesAnalytics.ts` `useServicePopularity` has no pagination (line 97)
+Queries `phorest_appointments` for service popularity without pagination. Multi-location orgs can exceed 1000 rows, truncating service frequency rankings.
 
-### Bug 2 — `useTransactionsByHour.ts` both queries have no pagination (lines 14, 41)
-Step 1 (POS client IDs) and Step 2 (appointments for hour mapping) both fetch without pagination. A month of transaction items or appointments can exceed 1000 rows, truncating the hourly distribution data.
+### Bug 3 — `useSalesAnalytics.ts` `useClientFunnel` has no pagination (lines 153, 158)
+Two queries: (1) range-filtered transactions and (2) ALL client transactions ordered by date (no date filter at all — fetches entire history). Both lack pagination. The second query is especially dangerous — it fetches every transaction ever to determine first-visit dates.
 
-**Fix:** Use `fetchAllBatched` for both queries.
+### Bug 4 — `useSalesAnalytics.ts` `usePeakHoursAnalysis` has no pagination (line 219)
+Queries all transactions in a date range without pagination. Truncates peak-hour heatmap data.
 
-### Bug 3 — `useAssistantActivity.ts` appointment IDs query has no pagination (line 26)
-The initial query fetching all appointment IDs in a date range has no pagination. If a salon has 1000+ appointments in the range, some assistant assignments will be missed entirely. The subsequent `assignments` query using `.in('appointment_id', ids)` also risks hitting the PostgREST URL length limit for large ID arrays.
+### Bug 5 — `useTicketDistribution.ts` has no pagination (line 41)
+Queries `phorest_sales_transactions` for ticket amounts without pagination. Truncation will skew median/average ticket calculations and bucket distributions.
 
-**Fix:** Use `fetchAllBatched` for the appointment IDs query. Chunk the `.in()` call for the assignments query.
+### Bug 6 — `useProductSalesAnalytics.ts` has no pagination (line 71)
+Queries `phorest_transaction_items` with `select('*')` without pagination. A month of transaction items will easily exceed 1000 rows, truncating product analytics.
 
-### Bug 4 — `useStaffRevenuePerformance.ts` two queries have no pagination (lines 68, 83)
-Both the `phorest_sales_transactions` query and the `phorest_transaction_items` query fetch without batching. A 90-day or 365-day range across a multi-location org will easily exceed 1000 rows on both tables, silently truncating staff revenue and service/product breakdowns.
+### Bug 7 — `useLocationStaffingBalance.ts` has no pagination (line 112)
+Queries all appointments in a date range without pagination. Multi-location orgs with 1000+ appointments in the range get truncated staffing balance calculations.
 
-**Fix:** Use `fetchAllBatched` for both queries.
+### Bug 8 — `useHiringForecast.ts` two queries have no pagination (lines 71, 77)
+Both the recent (30-day) and prior (30-day) appointment queries lack pagination. Growth rate calculations will be wrong for high-volume orgs.
 
-### Bug 5 — `useServiceMenuIntelligence.ts` transaction items query has no pagination (line 44)
-Fetches 8 weeks of service transaction items without batching. A multi-location org with hundreds of services per week can exceed 1000 rows, truncating declining-service detection and bundle suggestions.
+### Bug 9 — `useComparisonData.ts` category comparison queries have no pagination (lines 253, 259)
+Both period A and period B category queries from `phorest_sales_transactions` lack pagination. Category-mode comparison data will truncate for busy salons.
 
-**Fix:** Use `fetchAllBatched`.
-
-### Bug 6 — `useTipsDrilldown.ts` payment method transaction items query has no pagination (line 147)
-The secondary query for payment method tip data fetches without batching. This is separate from the main appointments query (fixed in Pass 9). If many transactions have tips in the range, data will truncate, skewing the payment method breakdown.
-
-**Fix:** Use `fetchAllBatched`.
-
-### Bug 7 — `useAssistantActivity.ts` revenue uses raw `total_price` without tip subtraction (line 99-100)
-The `assistedRevenue` calculation sums raw `total_price` without subtracting `tip_amount`. The query (line 49) doesn't even select `tip_amount`.
-
-**Fix:** Add `tip_amount` to the appointment select and subtract it from the revenue calculation.
+### Bug 10 — `ServiceMixChart.tsx` has no pagination (line 35)
+Queries `phorest_sales_transactions` for a single stylist's service mix without pagination. A busy stylist with 1000+ service transactions in 30 days will get truncated data (unlikely for single stylist but possible at 90-day ranges).
 
 ---
 
 ## Implementation Plan
 
-### Task 1 — Fix `useRealizationRate.ts` pagination
-Migrate the transaction items query (line 59) to `fetchAllBatched`.
+### Task 1 — Add pagination to `useSalesAnalytics.ts` (4 queries)
+- `useProductCategoryBreakdown`: migrate to `fetchAllBatched`
+- `useServicePopularity`: migrate to `fetchAllBatched`
+- `useClientFunnel`: migrate both queries to `fetchAllBatched`
+- `usePeakHoursAnalysis`: migrate to `fetchAllBatched`
 
-### Task 2 — Fix `useTransactionsByHour.ts` pagination (2 queries)
-Migrate both the POS client IDs query and the appointments query to `fetchAllBatched`.
+### Task 2 — Add pagination to `useTicketDistribution.ts` and `useProductSalesAnalytics.ts`
+- `useTicketDistribution`: migrate to `fetchAllBatched`
+- `useProductSalesAnalytics`: migrate to `fetchAllBatched`
 
-### Task 3 — Fix `useAssistantActivity.ts` (pagination + tip adjustment)
-- Use `fetchAllBatched` for the appointment IDs query
-- Add `tip_amount` to appointment select, subtract from `assistedRevenue`
+### Task 3 — Add pagination to `useLocationStaffingBalance.ts` and `useHiringForecast.ts`
+- `useLocationStaffingBalance`: migrate appointment query to `fetchAllBatched`
+- `useHiringForecast`: migrate both 30-day queries to `fetchAllBatched`
 
-### Task 4 — Fix `useStaffRevenuePerformance.ts` pagination (2 queries)
-Migrate both the sales transactions and transaction items queries to `fetchAllBatched`.
-
-### Task 5 — Fix `useServiceMenuIntelligence.ts` and `useTipsDrilldown.ts` pagination
-- `useServiceMenuIntelligence`: migrate transaction items query to `fetchAllBatched`
-- `useTipsDrilldown`: migrate payment method query to `fetchAllBatched`
+### Task 4 — Add pagination to `useComparisonData.ts` and `ServiceMixChart.tsx`
+- `useComparisonData`: migrate both category queries to `fetchAllBatched`
+- `ServiceMixChart`: migrate to `fetchAllBatched`
 
 ---
 
@@ -68,8 +62,7 @@ Migrate both the sales transactions and transaction items queries to `fetchAllBa
 
 | Type | Count | Files |
 |---|---|---|
-| Bug (wrong data) | 1 | `useAssistantActivity` (tip-inclusive assisted revenue) |
-| Bug (truncation) | 8 | `useRealizationRate`, `useTransactionsByHour` (2), `useAssistantActivity`, `useStaffRevenuePerformance` (2), `useServiceMenuIntelligence`, `useTipsDrilldown` |
+| Bug (truncation) | 10 | `useSalesAnalytics` (4), `useTicketDistribution`, `useProductSalesAnalytics`, `useLocationStaffingBalance`, `useHiringForecast` (2), `useComparisonData` (2), `ServiceMixChart` |
 
-5 tasks, 6 files changed, no database changes.
+4 tasks, 6 files changed, no database changes. No new tip/revenue logic bugs found — previous passes resolved those systematically.
 
