@@ -18,10 +18,14 @@ import { StylistScorecard } from '@/components/dashboard/StylistScorecard';
 import { LevelProgressionLadder } from '@/components/dashboard/LevelProgressionLadder';
 import { TrendIntelligenceSection } from '@/components/dashboard/TrendIntelligenceSection';
 import { useStylistLevels } from '@/hooks/useStylistLevels';
+import { useGoalMode } from '@/hooks/useGoalMode';
+import { useAICoaching } from '@/hooks/useAICoaching';
 import type { TrendProjectionResult } from '@/hooks/useTrendProjection';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function MyGraduation() {
   const effectiveUserId = useEffectiveUserId();
+  const { user } = useAuth();
   const { formatDate } = useFormatDate();
   const { data: promotions = [] } = usePromotionHistory(effectiveUserId || undefined);
   const progress = useLevelProgress(effectiveUserId || undefined);
@@ -34,6 +38,26 @@ export default function MyGraduation() {
   }, []);
 
   const hasNextLevel = !!progress?.nextLevelLabel;
+
+  // Goal mode
+  const goalMode = useGoalMode(
+    effectiveUserId || undefined,
+    progress?.currentLevelSlug,
+    trendProjection?.projections || [],
+  );
+
+  // AI Coaching
+  const { coaching, isLoading: isCoachingLoading, generateCoaching, clearCoaching } = useAICoaching();
+
+  const handleRequestCoaching = useCallback(() => {
+    if (!trendProjection?.projections.length || !progress) return;
+    generateCoaching(
+      user?.email || 'Stylist',
+      progress.currentLevelLabel || '',
+      progress.nextLevelLabel || null,
+      trendProjection.projections,
+    );
+  }, [trendProjection, progress, user, generateCoaching]);
 
   return (
     <DashboardLayout>
@@ -56,6 +80,11 @@ export default function MyGraduation() {
             projection={trendProjection}
             evaluationWindowDays={progress?.evaluationWindowDays || 90}
             hasNextLevel={hasNextLevel}
+            goalMode={goalMode}
+            coaching={coaching}
+            isCoachingLoading={isCoachingLoading}
+            onRequestCoaching={handleRequestCoaching}
+            onDismissCoaching={clearCoaching}
           />
         )}
 
