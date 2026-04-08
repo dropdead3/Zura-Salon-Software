@@ -54,7 +54,7 @@ interface TrendIntelligenceSectionProps {
   /** AI coaching state */
   coaching?: CoachingResult | null;
   isCoachingLoading?: boolean;
-  onRequestCoaching?: () => void;
+  onRequestCoaching?: (forceRefresh?: boolean) => void;
   onDismissCoaching?: () => void;
 }
 

@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { z } from "https://esm.sh/zod@3.23.8";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -7,15 +8,23 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-interface KpiSnapshotItem {
-  metric: string;
-  current: number;
-  target: number;
-  gap: number;
-  unit: string;
-  trajectory: "improving" | "declining" | "flat";
-  daysToTarget: number | null;
-}
+const KpiSnapshotSchema = z.object({
+  metric: z.string(),
+  current: z.number(),
+  target: z.number(),
+  gap: z.number(),
+  unit: z.string(),
+  trajectory: z.enum(["improving", "declining", "flat"]),
+  daysToTarget: z.number().nullable(),
+});
+
+const BodySchema = z.object({
+  stylistName: z.string().min(1).max(255),
+  currentLevel: z.string().min(1).max(100),
+  nextLevel: z.string().max(100).nullable(),
+  kpiSnapshot: z.array(KpiSnapshotSchema).min(1).max(20),
+  goalDaysRemaining: z.number().int().positive().nullable().optional(),
+});
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -50,19 +59,17 @@ serve(async (req) => {
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
-    const { stylistName, currentLevel, nextLevel, kpiSnapshot } = await req.json() as {
-      stylistName: string;
-      currentLevel: string;
-      nextLevel: string | null;
-      kpiSnapshot: KpiSnapshotItem[];
-    };
-
-    if (!kpiSnapshot?.length) {
-      return new Response(JSON.stringify({ error: "No KPI data provided" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+    // Validate input
+    const rawBody = await req.json();
+    const parsed = BodySchema.safeParse(rawBody);
+    if (!parsed.success) {
+      return new Response(
+        JSON.stringify({ error: "Invalid input", details: parsed.error.flatten().fieldErrors }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
+
+    const { stylistName, currentLevel, nextLevel, kpiSnapshot, goalDaysRemaining } = parsed.data;
 
     // Identify strengths and weaknesses
     const met = kpiSnapshot.filter((k) => k.gap <= 0);
@@ -72,6 +79,10 @@ serve(async (req) => {
     const strengthsList = met.map((k) => k.metric).join(", ") || "None yet";
     const weakList = unmet.map((k) => `${k.metric} (gap: ${k.gap.toFixed(1)} ${k.unit}, ${k.trajectory})`).join("; ");
 
+    const goalContext = goalDaysRemaining
+      ? `\n- Goal timeline: ${goalDaysRemaining} days to level up`
+      : "";
+
     const systemPrompt = `You are a salon performance coach for a platform called Zura. Your tone is calm, structured, advisory, and protective — never shaming. You help stylists understand exactly what to do to level up.
 
 Context:
@@ -80,7 +91,7 @@ Context:
 - Next level: ${nextLevel || "Top level (maintenance)"}
 - Strengths (metrics already met): ${strengthsList}
 - Gaps: ${weakList || "None — all met"}
-- Declining metrics: ${declining.length > 0 ? declining.map((k) => k.metric).join(", ") : "None"}
+- Declining metrics: ${declining.length > 0 ? declining.map((k) => k.metric).join(", ") : "None"}${goalContext}
 
 Generate a structured coaching plan.`;
 
@@ -96,7 +107,7 @@ Generate a structured coaching plan.`;
           { role: "system", content: systemPrompt },
           {
             role: "user",
-            content: `Generate a coaching plan for this stylist. Focus on the top 3 highest-impact gaps.`,
+            content: `Generate a coaching plan for this stylist. Focus on the top 3 highest-impact gaps.${goalDaysRemaining ? ` The stylist has set a ${goalDaysRemaining}-day goal — tailor urgency and daily actions accordingly.` : ""}`,
           },
         ],
         tools: [

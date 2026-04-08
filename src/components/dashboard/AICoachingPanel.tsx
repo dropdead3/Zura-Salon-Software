@@ -1,10 +1,12 @@
 /**
  * AICoachingPanel — Displays AI-generated personalized coaching plan.
  * Shows summary, strengths, and prioritized action items with scripts.
+ * Includes refresh button with cooldown enforcement.
  */
 
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import {
   Sparkles,
@@ -12,6 +14,7 @@ import {
   Target,
   ChevronDown,
   ChevronRight,
+  RefreshCw,
 } from 'lucide-react';
 import { useState } from 'react';
 import type { CoachingResult } from '@/hooks/useAICoaching';
@@ -19,6 +22,8 @@ import type { CoachingResult } from '@/hooks/useAICoaching';
 interface AICoachingPanelProps {
   coaching: CoachingResult;
   onClose: () => void;
+  onRefresh?: (forceRefresh: boolean) => void;
+  isRefreshing?: boolean;
 }
 
 const priorityConfig = {
@@ -27,7 +32,7 @@ const priorityConfig = {
   low: { color: 'bg-muted text-muted-foreground border-border', label: 'Low' },
 };
 
-export function AICoachingPanel({ coaching, onClose }: AICoachingPanelProps) {
+export function AICoachingPanel({ coaching, onClose, onRefresh, isRefreshing }: AICoachingPanelProps) {
   const [expandedIdx, setExpandedIdx] = useState<number | null>(0);
 
   return (
@@ -39,13 +44,34 @@ export function AICoachingPanel({ coaching, onClose }: AICoachingPanelProps) {
             <Sparkles className="w-4 h-4 text-primary" />
             <span className="font-display text-xs tracking-wide text-foreground">AI Coaching Plan</span>
           </div>
-          <button
-            onClick={onClose}
-            className="text-xs text-muted-foreground hover:text-foreground transition-colors"
-          >
-            Dismiss
-          </button>
+          <div className="flex items-center gap-2">
+            {onRefresh && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-5 px-1.5 text-[10px] text-muted-foreground hover:text-foreground gap-1"
+                onClick={() => onRefresh(true)}
+                disabled={isRefreshing}
+              >
+                <RefreshCw className={cn('w-3 h-3', isRefreshing && 'animate-spin')} />
+                Refresh
+              </Button>
+            )}
+            <button
+              onClick={onClose}
+              className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+            >
+              Dismiss
+            </button>
+          </div>
         </div>
+
+        {/* Context label */}
+        {coaching.generatedContext && (
+          <p className="text-[10px] text-muted-foreground italic">
+            {coaching.generatedContext}
+          </p>
+        )}
 
         {/* Summary */}
         <p className="text-sm text-foreground leading-relaxed">
