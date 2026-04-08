@@ -175,7 +175,7 @@ async function fetchReportData(
     case 'client-birthdays':
     case 'duplicate-clients': {
       const data = await fetchAllBatched<any>((from, to) => {
-      let q = supabase.from('v_all_clients')
+        let q = (supabase.from('v_all_clients') as any)
           .select('name, first_name, last_name, email, phone, total_spend, visit_count, created_at, lead_source, birthday')
           .eq('is_archived', false)
           .range(from, to);
