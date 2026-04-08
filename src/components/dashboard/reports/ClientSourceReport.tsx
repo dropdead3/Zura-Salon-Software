@@ -25,7 +25,7 @@ interface ClientSourceEntry {
   avgSpend: number;
 }
 
-function useClientSourceReport(filters: { locationId?: string }) {
+function useClientSourceReport(filters: { dateFrom?: string; dateTo?: string; locationId?: string }) {
   return useQuery({
     queryKey: ['client-source-report', filters],
     queryFn: async () => {
@@ -34,6 +34,8 @@ function useClientSourceReport(filters: { locationId?: string }) {
         .select('lead_source, total_spend')
         .eq('is_archived', false);
       if (filters.locationId) q = q.eq('location_id', filters.locationId);
+      if (filters.dateFrom) q = q.gte('created_at', filters.dateFrom);
+      if (filters.dateTo) q = q.lte('created_at', filters.dateTo + 'T23:59:59');
 
       const { data, error } = await q.limit(5000);
       if (error) throw error;
@@ -71,7 +73,7 @@ export function ClientSourceReport({ dateFrom, dateTo, locationId, onClose }: Pr
   const { effectiveOrganization } = useOrganizationContext();
   const { data: businessSettings } = useBusinessSettings();
   const locationInfo = useReportLocationInfo(locationId);
-  const { data, isLoading } = useClientSourceReport({ locationId });
+  const { data, isLoading } = useClientSourceReport({ dateFrom, dateTo, locationId });
   const entries = data?.entries ?? [];
 
   const generatePDF = async () => {
@@ -92,7 +94,7 @@ export function ClientSourceReport({ dateFrom, dateTo, locationId, onClose }: Pr
   const downloadCSV = () => {
     const rows = [['Source', 'Clients', 'Total Spend', 'Avg Spend'], ...entries.map(e => [e.source, e.clientCount.toString(), e.totalSpend.toFixed(2), e.avgSpend.toFixed(2)])];
     const blob = new Blob([buildCsvString(rows)], { type: 'text/csv' });
-    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'client-source.csv'; a.click();
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = buildReportFileName({ reportSlug: 'client-source', dateFrom, dateTo }).replace('.pdf', '.csv'); a.click();
     toast.success('CSV downloaded');
   };
 

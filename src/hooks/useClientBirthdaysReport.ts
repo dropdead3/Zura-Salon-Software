@@ -56,7 +56,8 @@ export function useClientBirthdaysReport(filters: Filters) {
             visitCount: Number(c.visit_count) || 0,
           };
         })
-        .filter(Boolean) as ClientBirthdayEntry[];
+        .filter(Boolean)
+        .sort((a, b) => (a as ClientBirthdayEntry).daysUntil - (b as ClientBirthdayEntry).daysUntil) as ClientBirthdayEntry[];
     },
     staleTime: 5 * 60_000,
   });
