@@ -34,7 +34,7 @@ export function useStaffTransactionDetailReport(filters: Filters) {
     queryFn: async (): Promise<StaffTransactionSummary> => {
       const rows = await fetchAllBatched<{
         transaction_date: string;
-        stylist_name: string | null;
+        staff_name: string | null;
         client_name: string | null;
         item_name: string | null;
         item_type: string | null;
@@ -44,14 +44,14 @@ export function useStaffTransactionDetailReport(filters: Filters) {
         total_amount: number | null;
       }>((from, to) => {
         let q = supabase
-          .from('phorest_transaction_items')
-          .select('transaction_date, stylist_name, client_name, item_name, item_type, quantity, unit_price, discount, total_amount')
+          .from('v_all_transaction_items')
+          .select('transaction_date, staff_name, client_name, item_name, item_type, quantity, unit_price, discount, total_amount')
           .gte('transaction_date', filters.dateFrom)
           .lte('transaction_date', filters.dateTo)
           .order('transaction_date', { ascending: true })
           .range(from, to);
         if (filters.locationId) q = q.eq('location_id', filters.locationId);
-        if (filters.staffName) q = q.eq('stylist_name', filters.staffName);
+        if (filters.staffName) q = q.eq('staff_name', filters.staffName);
         return q;
       });
 
@@ -65,7 +65,7 @@ export function useStaffTransactionDetailReport(filters: Filters) {
         totalDiscount += disc;
         return {
           transactionDate: r.transaction_date,
-          stylistName: r.stylist_name || 'Unknown',
+          stylistName: r.staff_name || 'Unknown',
           clientName: r.client_name || 'Walk-in',
           itemName: r.item_name || 'Unknown',
           itemType: r.item_type || 'service',

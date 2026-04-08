@@ -28,14 +28,14 @@ export function useDiscountsReport(filters: Filters) {
     queryKey: ['discounts-report', filters],
     queryFn: async (): Promise<DiscountSummary> => {
       const rows = await fetchAllBatched<{
-        stylist_name: string | null;
+        staff_name: string | null;
         discount: number | null;
         total_amount: number | null;
         transaction_date: string;
       }>((from, to) => {
         let q = supabase
-          .from('phorest_transaction_items')
-          .select('stylist_name, discount, total_amount, transaction_date')
+          .from('v_all_transaction_items')
+          .select('staff_name, discount, total_amount, transaction_date')
           .gte('transaction_date', filters.dateFrom)
           .lte('transaction_date', filters.dateTo)
           .range(from, to);
@@ -46,7 +46,7 @@ export function useDiscountsReport(filters: Filters) {
       const staffMap = new Map<string, { discounts: number; count: number; revenue: number }>();
 
       for (const row of rows) {
-        const name = row.stylist_name || 'Unknown';
+        const name = row.staff_name || 'Unknown';
         const discount = Math.abs(Number(row.discount) || 0);
         const revenue = Number(row.total_amount) || 0;
         const entry = staffMap.get(name) || { discounts: 0, count: 0, revenue: 0 };
