@@ -312,7 +312,7 @@ export function TrendIntelligenceSection({
                 variant="outline"
                 size="sm"
                 className="h-7 text-[10px] gap-1 px-2"
-                onClick={onRequestCoaching}
+                onClick={() => onRequestCoaching()}
                 disabled={isCoachingLoading}
               >
                 {isCoachingLoading ? (
