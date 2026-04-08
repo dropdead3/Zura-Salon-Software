@@ -1,3 +1,4 @@
+import { useState, useCallback } from 'react';
 import { cn } from '@/lib/utils';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { DashboardPageHeader } from '@/components/dashboard/DashboardPageHeader';
@@ -15,7 +16,9 @@ import { useLevelProgress } from '@/hooks/useLevelProgress';
 import { PageExplainer } from '@/components/ui/PageExplainer';
 import { StylistScorecard } from '@/components/dashboard/StylistScorecard';
 import { LevelProgressionLadder } from '@/components/dashboard/LevelProgressionLadder';
+import { TrendIntelligenceSection } from '@/components/dashboard/TrendIntelligenceSection';
 import { useStylistLevels } from '@/hooks/useStylistLevels';
+import type { TrendProjectionResult } from '@/hooks/useTrendProjection';
 
 export default function MyGraduation() {
   const effectiveUserId = useEffectiveUserId();
@@ -24,6 +27,13 @@ export default function MyGraduation() {
   const progress = useLevelProgress(effectiveUserId || undefined);
   const { data: allLevels = [] } = useStylistLevels();
   const currentLevelId = progress?.currentLevelSlug ? allLevels.find(l => l.slug === progress.currentLevelSlug)?.id : undefined;
+
+  const [trendProjection, setTrendProjection] = useState<TrendProjectionResult | null>(null);
+  const handleTrendProjection = useCallback((projection: TrendProjectionResult) => {
+    setTrendProjection(projection);
+  }, []);
+
+  const hasNextLevel = !!progress?.nextLevelLabel;
 
   return (
     <DashboardLayout>
@@ -35,7 +45,19 @@ export default function MyGraduation() {
         <PageExplainer pageId="my-graduation" />
 
         {/* Unified Performance Scorecard */}
-        <StylistScorecard userId={effectiveUserId || undefined} />
+        <StylistScorecard
+          userId={effectiveUserId || undefined}
+          onTrendProjection={handleTrendProjection}
+        />
+
+        {/* Trend Intelligence Section */}
+        {trendProjection && (
+          <TrendIntelligenceSection
+            projection={trendProjection}
+            evaluationWindowDays={progress?.evaluationWindowDays || 90}
+            hasNextLevel={hasNextLevel}
+          />
+        )}
 
         {/* Level Progression Ladder */}
         <LevelProgressionLadder currentLevelId={currentLevelId} />

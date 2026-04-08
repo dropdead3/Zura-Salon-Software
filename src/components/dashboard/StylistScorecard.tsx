@@ -4,7 +4,7 @@
  * coaching signals, and commission uplift into a single motivating view.
  */
 
-import { useMemo } from 'react';
+import { useMemo, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
@@ -29,12 +29,14 @@ import { useStaffColorBarPerformance } from '@/hooks/color-bar/useStaffColorBarP
 import { useStylistPeerAverages } from '@/hooks/useStylistPeerAverages';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { useLevelUpliftEstimate } from '@/hooks/useLevelUpliftEstimate';
+import { useTrendProjection } from '@/hooks/useTrendProjection';
 import { format, subDays } from 'date-fns';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
 
 interface StylistScorecardProps {
   userId: string | undefined;
   locationId?: string | null;
+  onTrendProjection?: (projection: ReturnType<typeof useTrendProjection>) => void;
 }
 
 function TrendIcon({ direction }: { direction: 'up' | 'down' | 'flat' }) {
@@ -59,7 +61,7 @@ function formatGap(gap: number, unit: string) {
   return `-${gap}`;
 }
 
-export function StylistScorecard({ userId, locationId }: StylistScorecardProps) {
+export function StylistScorecard({ userId, locationId, onTrendProjection }: StylistScorecardProps) {
   const progress = useLevelProgress(userId);
   const { data: allLevels = [] } = useStylistLevels();
   const { formatCurrency } = useFormatCurrency();
@@ -115,7 +117,26 @@ export function StylistScorecard({ userId, locationId }: StylistScorecardProps) 
     evaluationWindowDays: progress?.evaluationWindowDays || 30,
   });
 
-  // Aggregate color bar metrics
+  // Trend projections
+  const trendProjection = useTrendProjection(progress);
+
+  // Expose trend projection to parent
+  useEffect(() => {
+    if (onTrendProjection && trendProjection) {
+      onTrendProjection(trendProjection);
+    }
+  }, [trendProjection, onTrendProjection]);
+
+  // Build a map for quick lookup: kpi key -> projection
+  const projectionMap = useMemo(() => {
+    const map = new Map<string, typeof trendProjection.projections[0]>();
+    for (const p of trendProjection.projections) {
+      map.set(p.key, p);
+    }
+    return map;
+  }, [trendProjection.projections]);
+
+
   const colorBarMetrics = useMemo(() => {
     if (!colorBarData?.length) return null;
     const totalSessions = colorBarData.reduce((s, d) => s + d.mix_session_count, 0);
@@ -296,7 +317,7 @@ export function StylistScorecard({ userId, locationId }: StylistScorecardProps) 
             <div className={cn(
               'grid gap-x-3 px-2 text-[10px] text-muted-foreground border-b border-border/40 pb-1',
               hasNextLevel
-                ? (hasPeers ? 'grid-cols-[1fr_auto_auto_auto_auto_auto]' : 'grid-cols-[1fr_auto_auto_auto_auto]')
+                ? (hasPeers ? 'grid-cols-[1fr_auto_auto_auto_auto_auto_auto]' : 'grid-cols-[1fr_auto_auto_auto_auto_auto]')
                 : (hasPeers ? 'grid-cols-[1fr_auto_auto_auto]' : 'grid-cols-[1fr_auto_auto]')
             )}>
               <span>Metric</span>
@@ -305,12 +326,14 @@ export function StylistScorecard({ userId, locationId }: StylistScorecardProps) 
               {hasNextLevel && <span className="text-right w-16">Gap</span>}
               {hasPeers && <span className="text-right w-16">Avg</span>}
               <span className="w-4" />
+              {hasNextLevel && <span className="text-right w-14 text-[9px]">Pace</span>}
             </div>
 
             {progress.criteriaProgress.filter(cp => cp.weight > 0).map(cp => {
               const peerVal = getPeerValue(cp.key, peerAverages);
               const trend = getTrend(cp);
               const isMet = cp.percent >= 100;
+              const proj = projectionMap.get(cp.key);
 
               return (
                 <div key={cp.key} className={cn(
@@ -320,7 +343,7 @@ export function StylistScorecard({ userId, locationId }: StylistScorecardProps) 
                   <div className={cn(
                     'grid gap-x-3 items-center px-2',
                     hasNextLevel
-                      ? (hasPeers ? 'grid-cols-[1fr_auto_auto_auto_auto_auto]' : 'grid-cols-[1fr_auto_auto_auto_auto]')
+                      ? (hasPeers ? 'grid-cols-[1fr_auto_auto_auto_auto_auto_auto]' : 'grid-cols-[1fr_auto_auto_auto_auto_auto]')
                       : (hasPeers ? 'grid-cols-[1fr_auto_auto_auto]' : 'grid-cols-[1fr_auto_auto]')
                   )}>
                     <span className="text-xs text-muted-foreground">{cp.label}</span>
@@ -365,6 +388,24 @@ export function StylistScorecard({ userId, locationId }: StylistScorecardProps) 
                     <div className="w-4 flex justify-center">
                       <TrendIcon direction={trend} />
                     </div>
+                    {hasNextLevel && (
+                      <span className="w-14 text-right">
+                        {isMet ? (
+                          <span className="text-[9px] text-emerald-600 dark:text-emerald-400">✓ Met</span>
+                        ) : proj?.daysToTarget !== null && proj?.daysToTarget !== undefined ? (
+                          <span className={cn(
+                            'text-[9px] tabular-nums',
+                            proj.trajectory === 'improving' ? 'text-emerald-600 dark:text-emerald-400'
+                              : proj.trajectory === 'declining' ? 'text-rose-600 dark:text-rose-400'
+                              : 'text-muted-foreground'
+                          )}>
+                            ~{proj.daysToTarget}d
+                          </span>
+                        ) : (
+                          <span className="text-[9px] text-muted-foreground">—</span>
+                        )}
+                      </span>
+                    )}
                   </div>
                   {hasNextLevel && (
                     <Progress
