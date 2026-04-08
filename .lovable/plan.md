@@ -1,75 +1,53 @@
 
 
-# Analytics Audit Pass 8: Remaining Issues
+# Analytics Audit Pass 10: Remaining Issues
+
+After nine passes fixing tip adjustments, pagination, and stale data across 30+ hooks, this pass surfaces the remaining gaps.
 
 ## Findings
 
-### Bug 1 — `useNewBookings.ts` revenue uses raw `total_price` (no tip subtraction)
-**File:** `src/hooks/useNewBookings.ts` (line 297)
-`bookedInRangeRevenue` sums raw `total_price` without subtracting `tip_amount`. The query (line 119) does not even select `tip_amount`.
+### Bug 1 — `useOperationalAnalytics.ts` rebook query has no pagination (line 281)
+The `rebookQuery` fetches all completed appointments in a date range with only `rebooked_at_checkout` selected — no `.range()` or batching. A busy salon over a 30-day range with 1000+ completed appointments will get a truncated rebook rate.
 
-**Fix:** Add `tip_amount` to the select string. Line 297: `sum + ((Number(apt.total_price) || 0) - (Number(apt.tip_amount) || 0))`.
+### Bug 2 — `useOperationalAnalytics.ts` `useAppointmentSummary` has no pagination (line 333)
+Queries all appointments in a date range by status without pagination. Multi-location orgs will hit 1000-row truncation, producing incorrect completion/no-show/cancellation rates.
 
-### Bug 2 — `useNewBookings.ts` prior-appointment check uses hard `limit(1000)`
-**File:** `src/hooks/useNewBookings.ts` (line 142)
-The query to detect whether clients have prior visits uses `.limit(1000)`. If more than 1000 unique clients had prior appointments, some will be missed — causing returning clients to be falsely classified as "new." This should use distinct client IDs or paginate properly.
+### Bug 3 — `useStylistExperienceScore.ts` — two queries have no pagination (lines 93, 121)
+The appointment query (line 93) and the transaction items query (line 121) both fetch unbounded result sets. A 30-day range across a multi-stylist salon can exceed 1000 rows on either query, truncating composite scores.
 
-**Fix:** Since the query only needs to know *which* clients have prior visits (not all their appointments), the `.limit(1000)` is risky but acceptable in practice because the query returns distinct `phorest_client_id` values from the `.in()` filter (max = `rangeClientIds.length`). However, if `rangeClientIds` is large, the `.in()` clause itself may need chunking. More importantly, the result set could exceed 1000 if many clients have multiple prior appointments. The fix is to either add a `DISTINCT` via an RPC or paginate.
+### Bug 4 — `useServiceDemandTrend.ts` has no pagination (line 21)
+Queries 12 weeks of appointments without pagination. A busy salon doing 100+ appointments/week will exceed 1000 rows, truncating the trend data and misclassifying service demand direction.
 
-**Pragmatic fix:** Since we only need unique client IDs from the result, paginate with `fetchAllBatched` to ensure all results are captured.
+### Bug 5 — `useAutoDetectEconomics.ts` queries `appointments` table without pagination (line 69)
+Fetches 90 days of appointment data without batching. High-volume orgs will get truncated results, leading to incorrect hours-per-month and color-ratio calculations for the economics model.
 
-### Bug 3 — `useNewBookings.ts` no pagination on main range query (line 116)
-The main range query fetching all bookings has no pagination. A busy multi-location salon creating hundreds of appointments per week can exceed 1000.
+### Bug 6 — `useClientHealthSegments.ts` future appointments query has no pagination (line 122)
+The query for future bookings has no pagination. If many clients have future appointments, the result will truncate and some clients will incorrectly appear in the "needs rebooking" segment.
 
-**Fix:** Use `fetchAllBatched`.
-
-### Bug 4 — `useNewBookings.ts` 30-day comparison queries have no pagination (lines 162-179)
-The `last30Res` and `prev30Res` queries fetch all appointment IDs in 30-day windows without pagination. Only the `.length` is used, but if count exceeds 1000, the comparison percentage is wrong.
-
-**Fix:** Use `fetchAllBatched` or switch to a `.select('id', { count: 'exact', head: true })` count-only query (more efficient).
-
-### Bug 5 — `useServiceClientAnalysis.ts` has no pagination (line 38)
-The query fetches all appointments in a date range without pagination. Truncation risk for busy salons.
-
-**Fix:** Use `fetchAllBatched`.
-
-### Bug 6 — `useRedoAnalytics.ts` has no pagination (line 54)
-The redo analytics query fetches all appointments in a 30-day window across all org locations without pagination. Multi-location orgs will hit the 1000-row limit.
-
-**Fix:** Use `fetchAllBatched`.
-
-### Bug 7 — `useForecastRevenue.ts` and `useWeekAheadRevenue.ts` have no pagination
-**Files:** `src/hooks/useForecastRevenue.ts` (line 115), `src/hooks/useWeekAheadRevenue.ts` (line 80)
-Both forecast hooks query all appointments in a multi-day range without pagination. A multi-location salon with 200+ appointments per day could exceed 1000 in a 7-day forecast window.
-
-**Fix:** Use `fetchAllBatched` for both.
-
-### Bug 8 — `useLevelEconomicsAnalyzer.ts` appointments query has no pagination (line 128)
-Queries the `appointments` table for 3+ months of data without pagination. High-volume orgs will get truncated results.
-
-**Fix:** Use `fetchAllBatched`.
+### Bug 7 — `usePhorestCalendar.ts` main appointment query has no pagination (line 131)
+The calendar view fetches `*` (all columns) for a date range without pagination. A multi-stylist salon viewing a week range could exceed 1000 appointments, silently dropping calendar entries.
 
 ---
 
 ## Implementation Plan
 
-### Task 1 — Fix `useNewBookings.ts` (tip adjustment + pagination on 4 queries)
-- Add `tip_amount` to select, subtract from revenue (line 297)
-- Use `fetchAllBatched` for main range query (line 116)
-- Use `fetchAllBatched` for prior-appointment check (line 136) 
-- Convert 30-day comparison queries to count-only (`head: true, count: 'exact'`) to avoid pagination entirely
+### Task 1 — Add pagination to `useOperationalAnalytics.ts` (2 queries)
+- Migrate `rebookQuery` (line 281) to `fetchAllBatched`
+- Migrate `useAppointmentSummary` query (line 333) to `fetchAllBatched`
 
-### Task 2 — Add pagination to `useServiceClientAnalysis.ts`
+### Task 2 — Add pagination to `useStylistExperienceScore.ts` (2 queries)
+- Migrate appointment query (line 93) to `fetchAllBatched`
+- Migrate transaction items query (line 121) to `fetchAllBatched`
+
+### Task 3 — Add pagination to `useServiceDemandTrend.ts`
 Replace single query with `fetchAllBatched`.
 
-### Task 3 — Add pagination to `useRedoAnalytics.ts`
-Replace single query with `fetchAllBatched`.
+### Task 4 — Add pagination to `useAutoDetectEconomics.ts`
+Replace `appointments` table query with `fetchAllBatched`.
 
-### Task 4 — Add pagination to `useForecastRevenue.ts` and `useWeekAheadRevenue.ts`
-Replace single queries with `fetchAllBatched` in both hooks.
-
-### Task 5 — Add pagination to `useLevelEconomicsAnalyzer.ts`
-Replace the `appointments` table query with `fetchAllBatched`.
+### Task 5 — Add pagination to `useClientHealthSegments.ts` and `usePhorestCalendar.ts`
+- Replace future appointments query in `useClientHealthSegments` with `fetchAllBatched`
+- Replace main calendar query in `usePhorestCalendar` with `fetchAllBatched`
 
 ---
 
@@ -77,8 +55,7 @@ Replace the `appointments` table query with `fetchAllBatched`.
 
 | Type | Count | Files |
 |---|---|---|
-| Bug (wrong data) | 1 | `useNewBookings` (tip-inclusive revenue) |
-| Bug (truncation) | 7 | `useNewBookings` (3 queries), `useServiceClientAnalysis`, `useRedoAnalytics`, `useForecastRevenue`, `useWeekAheadRevenue`, `useLevelEconomicsAnalyzer` |
+| Bug (truncation) | 7 | `useOperationalAnalytics` (2), `useStylistExperienceScore` (2), `useServiceDemandTrend`, `useAutoDetectEconomics`, `useClientHealthSegments`, `usePhorestCalendar` |
 
-5 tasks, 6 files changed, no database changes.
+5 tasks, 6 files changed, no database changes. No tip/revenue logic bugs found in this pass — previous passes have resolved those systematically.
 
