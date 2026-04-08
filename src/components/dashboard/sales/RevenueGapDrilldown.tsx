@@ -81,7 +81,7 @@ function GapItemRow({ item, showDates, formatCurrency }: {
     ? STATUS_BADGE_CONFIG[item.status]
     : null;
   const badgeLabel = statusOverride?.label ?? config.label;
-  const badgeClass = statusOverride?.badgeClass ?? config.badgeClass;
+  const showAmountShift = item.reason !== 'cancelled' && item.reason !== 'no_show' && item.actualAmount > 0;
 
   return (
     <div className="flex flex-col gap-2 text-xs py-3 px-3.5 rounded-lg bg-muted/40 border border-border/30 overflow-hidden">
