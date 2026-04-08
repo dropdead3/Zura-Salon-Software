@@ -112,10 +112,13 @@ export function ScheduledReportsSubTab() {
           <p className="text-muted-foreground mb-4">
             Create a scheduled report to automatically receive reports via email.
           </p>
-          <Button>
+          <Button onClick={() => { setEditingReport(null); setScheduleFormOpen(true); }}>
             <Plus className="w-4 h-4 mr-2" />
             Schedule a Report
           </Button>
+        </CardContent>
+      </Card>
+      <ScheduleReportForm open={scheduleFormOpen} onOpenChange={setScheduleFormOpen} editReport={editingReport} />
         </CardContent>
       </Card>
     );
