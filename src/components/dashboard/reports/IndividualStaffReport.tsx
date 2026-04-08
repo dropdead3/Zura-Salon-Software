@@ -107,6 +107,7 @@ export function IndividualStaffReport({ dateFrom, dateTo, locationId, onClose, i
   const { formatCurrencyWhole } = useFormatCurrency();
   const { formatDate } = useFormatDate();
   const [isGenerating, setIsGenerating] = useState(false);
+  const { taxLabel } = useRevenueDisplay();
 
   // Filter strikes: active + resolved within report period
   const reportStrikes = useMemo(() => {
