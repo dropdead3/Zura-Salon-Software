@@ -70,7 +70,7 @@ function useClientSourceReport(filters: { dateFrom?: string; dateTo?: string; lo
   });
 }
 
-interface Props { dateFrom: string; dateTo: string; locationId?: string; onClose: () => void; }
+interface Props { dateFrom: string; dateTo: string; locationId?: string; onClose: () => void; dateRangeKey?: string; }
 
 export function ClientSourceReport({ dateFrom, dateTo, locationId, onClose }: Props) {
   const [isGenerating, setIsGenerating] = useState(false);

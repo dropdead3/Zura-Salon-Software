@@ -75,7 +75,7 @@ function useDeletedAppointmentsReport(filters: { dateFrom: string; dateTo: strin
   });
 }
 
-interface Props { dateFrom: string; dateTo: string; locationId?: string; onClose: () => void; }
+interface Props { dateFrom: string; dateTo: string; locationId?: string; onClose: () => void; dateRangeKey?: string; }
 
 export function DeletedAppointmentsReport({ dateFrom, dateTo, locationId, onClose }: Props) {
   const [isGenerating, setIsGenerating] = useState(false);
