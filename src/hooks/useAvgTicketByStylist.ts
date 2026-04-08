@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { getServiceCategory } from '@/utils/serviceCategorization';
+import { resolveStaffNamesByPhorestIds } from '@/utils/resolveStaffNames';
 import { formatDisplayName } from '@/lib/utils';
 
 export interface StylistCategoryBreakdown {
@@ -55,20 +56,9 @@ export function useAvgTicketByStylist({ dateFrom, dateTo, locationId, enabled = 
         offset += PAGE_SIZE;
       }
 
-      // Staff name lookup
+      // Staff name lookup via centralized resolver
       const staffIds = [...new Set(allItems.map(a => a.phorest_staff_id).filter(Boolean))];
-      const staffNameMap: Record<string, string> = {};
-
-      if (staffIds.length > 0) {
-        const { data: mappings } = await supabase
-          .from('phorest_staff_mapping')
-          .select('phorest_staff_id, phorest_staff_name, employee_profiles!phorest_staff_mapping_user_id_fkey(display_name, full_name)')
-          .in('phorest_staff_id', staffIds);
-
-        (mappings || []).forEach((m: any) => {
-          staffNameMap[m.phorest_staff_id] = m.employee_profiles?.display_name || m.employee_profiles?.full_name || m.phorest_staff_name || 'Unknown';
-        });
-      }
+      const staffNameMap = await resolveStaffNamesByPhorestIds(staffIds);
 
       // Aggregate by stylist → category, using unique client visits for avg ticket
       const stylistMap: Record<string, {
