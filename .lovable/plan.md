@@ -1,46 +1,43 @@
 
 
-# Bug & Gap Analysis — Pass 7
+# Bug & Gap Analysis — Pass 8
 
 ## Bugs
 
-### Bug 1 (Medium): `ScheduleReportForm` — `locations.map` crashes when `locations` is undefined
-Line 275: `{locations.map(loc => ...)}` — the guard on line 266 uses `(locations?.length ?? 0) > 1`, which correctly prevents rendering the outer block when `locations` is undefined. However, if `locations` starts as `undefined` and then loads with length > 1, the render on line 275 accesses `locations.map` without optional chaining. Since the guard already passed, `locations` should be defined at that point — but there's a race where React may render with stale state. Safer to use `locations?.map`.
+### Bug 1 (Medium): `location-benchmark` queries `phorest_appointments` directly, bypassing dual-source pattern
+Line 346: The `location-benchmark` handler queries `phorest_appointments` instead of `v_all_appointments`. This violates the POS-First data integrity model (Zura Primary → Phorest Fallback) and will miss any Zura-native appointments entirely. Every other appointment-based batch report uses `v_all_appointments`.
 
-**Fix:** Change `locations.map` to `locations?.map` on line 275.
+**Fix:** Switch from `phorest_appointments` to `v_all_appointments`. Adjust column references accordingly (`total_price` stays the same, `phorest_client_id` → `phorest_client_id` which exists on both).
 
-### Bug 2 (Medium): `tax-summary` batch report has no tax data
-Lines 335-366: `tax-summary` falls through to the generic handler that groups by `item_type` and shows `[Category, Revenue]`. The `v_all_transaction_items` view **does** have a `tax_amount` column (confirmed in schema), but the select on line 341 doesn't include it. The interactive `useTaxSummary` hook queries `phorest_transaction_items` directly and computes tax breakdowns. The batch version shows zero tax information.
+### Bug 2 (Medium): `chemical-cost` is identical to `service-profitability` — no differentiation
+Lines 440-464 vs 414-438: Both handlers query `v_all_transaction_items` filtered to `item_type = 'service'`, group by `item_name`, and show revenue + quantity. The only difference is `chemical-cost` appends a static "Cost data requires backroom integration" note in every row. The interactive `ChemicalCostReport` component accesses chemical cost data from a different source. The batch version adds no value beyond what `service-profitability` already provides.
 
-**Fix:** Add a dedicated `tax-summary` case that selects `tax_amount` alongside `total_amount, item_type, location_id, branch_name, transaction_date` and produces a summary table with Total Tax, Pre-Tax Revenue, Gross Revenue, and a by-item-type breakdown showing tax per category.
+**Fix:** Differentiate by querying `unit_price` (available on the view) to show cost-per-unit alongside revenue, or at minimum add a summary note row at the top instead of repeating the limitation message on every row.
 
-### Bug 3 (Low): `service-profitability` and `chemical-cost` batch reports are generic category summaries
-Both fall through to the generic `[Category, Revenue]` handler. Neither provides profitability margins or chemical cost breakdowns. Users downloading these expect actionable financial data, not a two-column summary.
+### Bug 3 (Low): `staff-kpi` and `staff-transaction-detail` fall through to generic `[Stylist, Revenue]` handler
+Lines 145-164: `staff-kpi` and `staff-transaction-detail` share a case block. `tip-analysis` gets its own handler (lines 157-161), but `staff-kpi` and `staff-transaction-detail` both fall to the generic two-column output. `staff-kpi` should show multiple KPIs (revenue, tips, transaction count, avg ticket). `staff-transaction-detail` should show individual transaction lines, not aggregated staff totals.
 
-**Fix:** `service-profitability` — group services by name, show revenue, avg price, and quantity. `chemical-cost` — filter to services, show revenue and quantity (cost data isn't in the view, so note limitation in output).
+**Fix:** Add dedicated sub-handlers for `staff-kpi` (include revenue, tips, count, avg ticket per staff) and `staff-transaction-detail` (show individual lines: date, item, type, amount per staff).
 
-### Bug 4 (Low): `compensation-ratio` batch report is just a staff revenue list
-Lines 119-139: `compensation-ratio` falls through to the generic staff handler showing `[Stylist, Revenue]`. No compensation or ratio data is included. The report name implies payroll-to-revenue ratio analysis.
+### Bug 4 (Low): `client-attrition` batch includes clients with `last_visit = null` as "999 days"
+Line 255-256: Clients with no `last_visit` are included with `days = 999` and tier "Lost". These could be newly created clients who haven't had their first visit yet, not actually lost clients. The interactive `useClientAttritionReport` filters by appointment history over a 2-year window, which naturally excludes never-visited clients.
 
-**Fix:** Add a dedicated handler that shows revenue per staff member and includes tip amounts. Note in output that actual compensation data requires payroll integration.
+**Fix:** Filter out clients where `last_visit` is null, or add a separate tier label "Never Visited" to distinguish them from genuinely lost clients.
 
-### Bug 5 (Low): `deleted-appointments` query has no date filter
-Lines 277-278: When `reportId === 'deleted-appointments'`, the query filters only by `deleted_at IS NOT NULL` but doesn't apply date range filters. This fetches ALL deleted appointments ever, ignoring `dateFrom`/`dateTo`. Could return thousands of rows spanning years.
+### Bug 5 (Low): `BatchReportDialog` clears selection on generate but doesn't wait for completion
+Line 97-98: `setSelectedIds(new Set())` runs immediately after `generate()` resolves, then `setTimeout(() => onOpenChange(false), 600)` closes the dialog. But if generation takes longer than 600ms (it always does for multiple reports), the dialog closes while the user sees the progress bar. The progress bar state lives in `useBatchReportGenerator` which continues running, but the dialog is gone. Not a data bug, but UX is confusing — the dialog disappears mid-generation.
 
-**Fix:** Add `.gte('appointment_date', dateFrom).lte('appointment_date', dateTo)` for the deleted-appointments case.
-
-### Bug 6 (Low): `client-attrition` batch report is just a generic client list
-Line 238: Falls through to the generic `[Client, Email, Spend, Visits]` handler. No attrition analysis — no filtering by last visit date, no "days since last visit", no at-risk classification. The interactive `useClientRetentionReport` does real retention cohort analysis.
-
-**Fix:** Add a dedicated handler that filters clients whose `last_visit` is older than 90 days, sorts by last visit ascending, and includes a "Days Since Visit" column.
+**Fix:** Move `onOpenChange(false)` into the `generate` callback's finally block, or await the full generation before closing. The current code already awaits `generate`, so the issue is the `setTimeout` — it should close immediately after await completes, not on a timer.
 
 ## Gaps
 
-### Gap 1: `tax-summary`, `service-profitability`, `chemical-cost`, `compensation-ratio`, `client-attrition` still use generic handlers
-These 5 reports produce misleading output. Combined with the 4 already fixed in Pass 6, this was originally an 8-report gap. 4 remain.
+### Gap 1: Several interactive reports in `ReportsTabContent` have no batch handler
+Reports listed in the interactive UI but hitting the `default` case in `fetchReportData`: `individual-staff`, `productivity`, `rebooking`, `new-clients`, `retention`, `lifetime-value`, `new-vs-returning`, `visit-frequency`, `capacity`, `no-show`, `service-duration`, `lead-time`, `revenue-trend`, `commission`, `goals`, `yoy`. These all return "Report data not available for batch generation." when included in a Report Pack.
 
-### Gap 2: No batch report for `location-sales`
-The `location-sales` report ID in the catalog falls through to the generic transaction handler which shows `[Date, Item, Type, Qty, Total]` — no location grouping. For multi-location orgs this is a key report.
+These are not in `REPORT_CATALOG` so they can't be selected in `BatchReportDialog` or `ScheduleReportForm` — so this is informational, not a blocking gap. The catalog correctly limits batch-eligible reports.
+
+### Gap 2: No "Select All" / category toggle in `ScheduleReportForm`
+`BatchReportDialog` has `toggleCategory` for bulk report selection. `ScheduleReportForm` lacks this — each report must be individually checked. Minor UX inconsistency.
 
 ---
 
@@ -48,13 +45,11 @@ The `location-sales` report ID in the catalog falls through to the generic trans
 
 | File | Change |
 |---|---|
-| `ScheduleReportForm.tsx` | `locations.map` → `locations?.map` on line 275 |
-| `useBatchReportGenerator.ts` | Add dedicated `tax-summary` handler using `tax_amount` from `v_all_transaction_items` |
-| `useBatchReportGenerator.ts` | Add dedicated `service-profitability` handler (group services by name, show revenue/qty/avg) |
-| `useBatchReportGenerator.ts` | Add dedicated `compensation-ratio` handler (staff revenue + tips) |
-| `useBatchReportGenerator.ts` | Add dedicated `client-attrition` handler (filter by last_visit > 90 days, add "Days Since" column) |
-| `useBatchReportGenerator.ts` | Fix `deleted-appointments` to apply date range filter |
-| `useBatchReportGenerator.ts` | Add dedicated `location-sales` handler (group transactions by location) |
+| `useBatchReportGenerator.ts` | Switch `location-benchmark` from `phorest_appointments` to `v_all_appointments` |
+| `useBatchReportGenerator.ts` | Differentiate `chemical-cost` — add `unit_price` column, move limitation note to a summary row |
+| `useBatchReportGenerator.ts` | Split `staff-kpi` handler (revenue, tips, count, avg ticket per staff) and `staff-transaction-detail` (individual line items) |
+| `useBatchReportGenerator.ts` | Filter out `last_visit = null` clients from `client-attrition` or label them "Never Visited" |
+| `BatchReportDialog.tsx` | Remove `setTimeout` for dialog close — close immediately after `generate()` resolves |
 
-2 file edits. No migrations. Bug 2 (tax-summary showing no tax data) is the most user-visible issue.
+2 file edits. No migrations. Bug 1 is the most impactful — it silently excludes Zura-native appointment data from location benchmarking.
 
