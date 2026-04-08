@@ -147,7 +147,7 @@ async function fetchReportData(
     case 'staff-transaction-detail': {
       const data = await fetchAllBatched<any>((from, to) => {
         let q = supabase.from('v_all_transaction_items')
-          .select('staff_name, item_name, item_type, total_amount, transaction_date, tip_amount')
+          .select('staff_name, item_name, item_type, total_amount, transaction_date, tip_amount, quantity, unit_price')
           .gte('transaction_date', dateFrom)
           .lte('transaction_date', dateTo)
           .range(from, to);
@@ -159,9 +159,31 @@ async function fetchReportData(
         for (const r of data) { const n = r.staff_name || 'Unknown'; const e = byStaff.get(n) || { tips: 0, count: 0 }; e.tips += Number(r.tip_amount) || 0; e.count++; byStaff.set(n, e); }
         return { columns: ['Stylist', 'Total Tips', 'Avg Tip'], rows: Array.from(byStaff.entries()).map(([n, e]) => [n, `$${e.tips.toFixed(2)}`, `$${(e.tips / e.count).toFixed(2)}`]) };
       }
-      const byStaff = new Map<string, number>();
-      for (const r of data) { const n = r.staff_name || 'Unknown'; byStaff.set(n, (byStaff.get(n) || 0) + (Number(r.total_amount) || 0)); }
-      return { columns: ['Stylist', 'Revenue'], rows: Array.from(byStaff.entries()).sort((a, b) => b[1] - a[1]).map(([n, v]) => [n, `$${v.toFixed(2)}`]) };
+      if (reportId === 'staff-kpi') {
+        const byStaff = new Map<string, { rev: number; tips: number; count: number }>();
+        for (const r of data) {
+          const n = r.staff_name || 'Unknown';
+          const e = byStaff.get(n) || { rev: 0, tips: 0, count: 0 };
+          e.rev += Number(r.total_amount) || 0;
+          e.tips += Number(r.tip_amount) || 0;
+          e.count++;
+          byStaff.set(n, e);
+        }
+        return {
+          columns: ['Staff', 'Revenue', 'Tips', 'Transactions', 'Avg Ticket'],
+          rows: Array.from(byStaff.entries())
+            .sort((a, b) => b[1].rev - a[1].rev)
+            .map(([n, e]) => [n, `$${e.rev.toFixed(2)}`, `$${e.tips.toFixed(2)}`, String(e.count), `$${(e.count > 0 ? e.rev / e.count : 0).toFixed(2)}`]),
+        };
+      }
+      // staff-transaction-detail: individual line items
+      return {
+        columns: ['Date', 'Staff', 'Item', 'Type', 'Qty', 'Amount'],
+        rows: data
+          .sort((a: any, b: any) => a.transaction_date.localeCompare(b.transaction_date))
+          .slice(0, 500)
+          .map((r: any) => [r.transaction_date, r.staff_name || 'Unknown', r.item_name || '', r.item_type || '', String(r.quantity || 1), `$${(Number(r.total_amount) || 0).toFixed(2)}`]),
+      };
     }
     case 'executive-summary':
     case 'end-of-month':
@@ -252,7 +274,7 @@ async function fetchReportData(
       const today = new Date();
       const atRisk = attrData
         .filter((c: any) => {
-          if (!c.last_visit) return true;
+          if (!c.last_visit) return false;
           const days = Math.round((today.getTime() - new Date(c.last_visit).getTime()) / (1000 * 60 * 60 * 24));
           return days >= 60;
         })
@@ -343,7 +365,7 @@ async function fetchReportData(
     }
     case 'location-benchmark': {
       const appts = await fetchAllBatched<any>((from, to) => {
-        let q = supabase.from('phorest_appointments')
+        let q = supabase.from('v_all_appointments')
           .select('location_id, total_price, tip_amount, status, phorest_client_id')
           .gte('appointment_date', dateFrom)
           .lte('appointment_date', dateTo)
@@ -440,7 +462,7 @@ async function fetchReportData(
     case 'chemical-cost': {
       const ccData = await fetchAllBatched<any>((from, to) => {
         let q = supabase.from('v_all_transaction_items')
-          .select('item_name, item_type, total_amount, quantity')
+          .select('item_name, item_type, total_amount, quantity, unit_price')
           .eq('item_type', 'service')
           .gte('transaction_date', dateFrom)
           .lte('transaction_date', dateTo)
@@ -448,19 +470,24 @@ async function fetchReportData(
         if (locationId) q = q.eq('location_id', locationId);
         return q;
       });
-      const byService = new Map<string, { rev: number; qty: number }>();
+      const byService = new Map<string, { rev: number; qty: number; unitPriceSum: number }>();
       for (const r of ccData) {
         const n = r.item_name || 'Unknown';
-        const e = byService.get(n) || { rev: 0, qty: 0 };
+        const e = byService.get(n) || { rev: 0, qty: 0, unitPriceSum: 0 };
         e.rev += Number(r.total_amount) || 0;
         e.qty += Number(r.quantity) || 1;
+        e.unitPriceSum += Number(r.unit_price) || 0;
         byService.set(n, e);
       }
+      const serviceRows = Array.from(byService.entries())
+        .sort((a, b) => b[1].rev - a[1].rev)
+        .map(([n, e]) => [n, `$${e.rev.toFixed(2)}`, String(e.qty), `$${(e.qty > 0 ? e.unitPriceSum / e.qty : 0).toFixed(2)}`]);
       return {
-        columns: ['Service', 'Revenue', 'Quantity', 'Note'],
-        rows: Array.from(byService.entries())
-          .sort((a, b) => b[1].rev - a[1].rev)
-          .map(([n, e]) => [n, `$${e.rev.toFixed(2)}`, String(e.qty), 'Cost data requires backroom integration']),
+        columns: ['Service', 'Revenue', 'Quantity', 'Avg Unit Price'],
+        rows: [
+          ['Note: Actual chemical cost data requires backroom integration', '', '', ''],
+          ...serviceRows,
+        ],
       };
     }
     case 'location-sales': {
