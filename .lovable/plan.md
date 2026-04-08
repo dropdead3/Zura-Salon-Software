@@ -1,89 +1,64 @@
 
 
-# Analytics Audit Pass 14: Targeted Audit Results
-
-Great prompting — the three targeted audit vectors (phorest_transaction_items correctness, Sales Analytics POS-first sourcing, Individual Staff Report) found deeper logic bugs that broad sweeps missed. This is the value of narrow scope + explicit criteria.
-
-**Enhancement suggestion for next time:** You could also try: *"For every revenue number visible on screen at /org/.../sales, trace backwards to the hook and verify the formula matches the data integrity standard."* — UI-backwards auditing catches display-layer bugs that hook-level audits miss.
-
----
+# Analytics Audit Pass 15: Remaining Gaps
 
 ## Findings
 
-### Bug 1 (HIGH) — `useIndividualStaffReport.ts` inconsistent tax treatment in `computeTxnRevenue` (line 368-369)
+### Bug 1 (HIGH) — `Transactions.tsx` and `AppointmentsHub.tsx` revenue excludes `tax_amount`
 
-Service revenue uses `total_amount` only. Product revenue uses `total_amount + tax_amount`. This means:
-- **Total revenue** (line 376: `svcRev + prodRev`) double-counts product tax while excluding service tax
-- **Avg ticket** is computed on this inconsistent total
-- The same inconsistency repeats in the **daily trend** calculation (line 400-402) where `amount + tax` is added only for products
-- And again in the **team averages** calculation (line 537-540)
+Both pages calculate `totalRevenue` as `sum(total_amount)` only — missing `tax_amount`. Per data integrity standards, Revenue = `total_amount + tax_amount`. These are user-facing summary stats at the top of two high-traffic pages.
 
-Per data integrity standards, revenue = `total_amount + tax_amount` for ALL item types.
+- `Transactions.tsx` line 96: `sum + (Number(t.total_amount) || 0)`
+- `AppointmentsHub.tsx` line 93: `sum + (Number(t.total_amount) || 0)`
 
-**Fix:** In `computeTxnRevenue`, add tax to service revenue too: `svcRev += amount + tax`. Apply same fix to daily trend and team averages calculations.
+**Fix:** Add `+ (Number(t.tax_amount) || 0)` to both.
 
-### Bug 2 (HIGH) — `useIndividualStaffReport.ts` second revenue calculation block also excludes service tax (lines 424, 429)
+### Bug 2 (MEDIUM) — 12 files still use case-sensitive `item_type === 'service'`
 
-The service/product breakdown block (lines 410-437) independently sums revenue — services get `total_amount` only, products get `total_amount` only. Neither includes `tax_amount`. This means `serviceRevenue` and `productRevenue` at line 520 (passed to commission calculation) are tax-exclusive, creating a mismatch with the `computeTxnRevenue` total that partially includes tax.
+Pass 14 fixed the hooks listed in the plan but missed these files that still do direct case-sensitive comparisons:
 
-**Fix:** Add `tax_amount` to both service and product sums in this block for consistency with POS-first standard.
+- `useStylistPeerAverages.ts` (line 161)
+- `useAvgTicketByStylist.ts` (line 74)
+- `useSalesData.ts` (lines 154, 230)
+- `useMyPayData.ts` (line 173)
+- `usePayrollAnalytics.ts` (line 94)
+- `usePayrollCalculations.ts` (line 115)
+- `phorest-adapter.ts` (line 194)
+- `YearOverYearComparison.tsx` (line 63)
+- `Transactions.tsx` (line 97) — display-only, cosmetic risk
+- `AppointmentsHub.tsx` (line 94) — display-only, cosmetic risk
+- `TransactionList.tsx` (line 159) — display-only, cosmetic risk
 
-### Bug 3 (HIGH) — `useStaffRevenuePerformance.ts` service/product breakdown excludes tax (lines 166-171)
+The first 8 are analytics/revenue files where miscategorization affects numbers. The last 3 are display-only (icon/badge styling) — lower risk but should be consistent.
 
-The total revenue (line 152) correctly uses `total_amount + tax_amount`, but the service/product breakdown (lines 166-171) uses only `total_amount`. This means `serviceRevenue + productRevenue ≠ totalRevenue`, and the breakdown percentages are wrong.
+**Fix:** Apply `.toLowerCase()` before comparison in all 12 files.
 
-**Fix:** Add `tax_amount` to the breakdown amounts.
+### Bug 3 (LOW) — `useStylistIncomeForecast.ts` has no pagination (line 41)
 
-### Bug 4 (MEDIUM) — 24 files use case-sensitive `item_type === 'service'` instead of case-insensitive comparison
+Queries `phorest_appointments` for a single stylist's week without pagination. Extremely unlikely to exceed 1000 for one stylist in one week, but for consistency should use `fetchAllBatched`.
 
-Only 2 files (`useActualRevenue`, `useSalesData`) use `.toLowerCase()` before comparing. The remaining 24 files compare directly against lowercase `'service'` or `'product'`. If POS data ever contains `'Service'`, `'SERVICE'`, `'Product'`, or `'PRODUCT'`, these items are silently miscategorized — services counted as products, inflating product revenue and deflating service revenue.
-
-The `useIndividualStaffReport` already handles this with `SERVICE_TYPES` / `PRODUCT_TYPES` arrays for its own logic, but the 24 other files do not.
-
-**Fix:** Standardize all `item_type` comparisons to use `.toLowerCase()` across all hooks. This is a systematic fix but low-risk (additive safety).
-
-### Bug 5 (LOW) — `useSalesComparison.ts` location filter uses simple equality (line 40)
-
-`if (locationId) q = q.eq('location_id', locationId)` — does not handle multi-location IDs (comma-separated) or the `'all'` sentinel. Other hooks use `isAllLocations()` + `parseLocationIds()`. If a user selects multiple locations, this hook will return zero results.
-
-**Fix:** Use `isAllLocations` / `parseLocationIds` pattern.
-
-### Bug 6 (LOW) — `useServiceRetailAttachment.ts` and `useServiceCostsProfits.ts` don't use `fetchAllBatched`
-
-`useServiceRetailAttachment` has its own `fetchAllPages` helper (correct logic, but duplicated). `useServiceCostsProfits` has its own `fetchAllAppointments` (also correct). Not bugs, but unnecessary code duplication.
-
-**Not fixing** — cosmetic, no data impact.
+**Not fixing** — single-stylist, single-week scope makes truncation effectively impossible.
 
 ---
 
 ## Implementation Plan
 
-### Task 1 — Fix `useIndividualStaffReport.ts` revenue tax consistency (3 locations)
-- `computeTxnRevenue` (line 368): add tax to service revenue
-- Service/product breakdown block (lines 424, 429): add tax to both
-- Daily trend (line 400-402): add tax uniformly
-- Team averages (line 537-540): already partially correct, verify consistency
+### Task 1 — Fix revenue tax gap in `Transactions.tsx` and `AppointmentsHub.tsx`
+Add `tax_amount` to the `totalRevenue` sum in both pages.
 
-### Task 2 — Fix `useStaffRevenuePerformance.ts` breakdown tax gap
-- Lines 166-171: add `tax_amount` to service and product amounts
+### Task 2 — Standardize case-insensitive `item_type` in remaining 8 analytics files
+Apply `.toLowerCase()` to `item_type` comparisons in:
+- `useStylistPeerAverages.ts`
+- `useAvgTicketByStylist.ts`
+- `useSalesData.ts`
+- `useMyPayData.ts`
+- `usePayrollAnalytics.ts`
+- `usePayrollCalculations.ts`
+- `phorest-adapter.ts`
+- `YearOverYearComparison.tsx`
 
-### Task 3 — Standardize item_type case handling across high-risk hooks
-Apply `.toLowerCase()` to item_type comparisons in the highest-traffic hooks:
-- `useSalesComparison.ts`
-- `useCorrelationAnalysis.ts`
-- `useOrganizationAnalytics.ts`
-- `usePayrollForecasting.ts`
-- `useTodayActualRevenue.tsx`
-- `useStylistLocationRevenue.ts`
-- `useLevelProgress.ts`
-- `useTeamLevelProgress.ts`
-- `PerformanceTrendChart.tsx`
-- `ScatterPlotCard.tsx`
-- `useRevenueByCategoryDrilldown.ts`
-- `useStaffRevenuePerformance.ts` (already being edited)
-
-### Task 4 — Fix `useSalesComparison.ts` location filter
-Replace simple `eq` with `isAllLocations` / `parseLocationIds` pattern.
+### Task 3 — Standardize case in 3 display files (cosmetic consistency)
+Apply `.toLowerCase()` in `Transactions.tsx`, `AppointmentsHub.tsx`, and `TransactionList.tsx` for icon/badge rendering.
 
 ---
 
@@ -91,9 +66,9 @@ Replace simple `eq` with `isAllLocations` / `parseLocationIds` pattern.
 
 | Type | Severity | Count | Files |
 |---|---|---|---|
-| Wrong revenue (tax inconsistency) | HIGH | 2 | `useIndividualStaffReport` (3 spots), `useStaffRevenuePerformance` |
-| Case-sensitive item_type | MEDIUM | 12 | 12 hooks/components |
-| Location filter gap | LOW | 1 | `useSalesComparison` |
+| Wrong revenue (missing tax) | HIGH | 2 | `Transactions.tsx`, `AppointmentsHub.tsx` |
+| Case-sensitive item_type | MEDIUM | 8 | Analytics hooks + adapter |
+| Case-sensitive item_type | LOW | 3 | Display components |
 
-4 tasks, ~14 files changed. No database changes.
+3 tasks, 13 files changed. No database changes. These are the stragglers from Pass 14's case-standardization that were missed.
 
