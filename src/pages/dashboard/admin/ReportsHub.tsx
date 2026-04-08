@@ -17,12 +17,13 @@ export default function ReportsHub() {
     from: startOfMonth(new Date()),
     to: endOfMonth(new Date()),
   });
+  const [datePreset, setDatePreset] = useState<string>('thisMonth');
   const [locationId, setLocationId] = useState<string>('all');
   const { data: locations } = useLocations();
 
   const filters: AnalyticsFilters = {
     locationId,
-    dateRange: 'thisMonth',
+    dateRange: datePreset,
     dateFrom: format(dateRange.from, 'yyyy-MM-dd'),
     dateTo: format(dateRange.to, 'yyyy-MM-dd'),
   };
@@ -47,13 +48,13 @@ export default function ReportsHub() {
                 <PopoverContent className="w-auto p-0" align="end">
                   <div className="p-3 space-y-3">
                     <div className="flex gap-2">
-                      <Button variant="outline" size={tokens.button.inline} onClick={() => setDateRange({ from: startOfMonth(new Date()), to: endOfMonth(new Date()) })}>This Month</Button>
-                      <Button variant="outline" size={tokens.button.inline} onClick={() => setDateRange({ from: startOfMonth(subMonths(new Date(), 1)), to: endOfMonth(subMonths(new Date(), 1)) })}>Last Month</Button>
+                      <Button variant="outline" size={tokens.button.inline} onClick={() => { setDateRange({ from: startOfMonth(new Date()), to: endOfMonth(new Date()) }); setDatePreset('thisMonth'); }}>This Month</Button>
+                      <Button variant="outline" size={tokens.button.inline} onClick={() => { setDateRange({ from: startOfMonth(subMonths(new Date(), 1)), to: endOfMonth(subMonths(new Date(), 1)) }); setDatePreset('lastMonth'); }}>Last Month</Button>
                     </div>
                     <Calendar
                       mode="range"
                       selected={{ from: dateRange.from, to: dateRange.to }}
-                      onSelect={(range) => { if (range?.from && range?.to) setDateRange({ from: range.from, to: range.to }); }}
+                      onSelect={(range) => { if (range?.from && range?.to) { setDateRange({ from: range.from, to: range.to }); setDatePreset('custom'); } }}
                       numberOfMonths={2}
                       className="pointer-events-auto"
                     />
