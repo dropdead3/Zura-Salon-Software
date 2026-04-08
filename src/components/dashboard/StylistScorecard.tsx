@@ -376,13 +376,24 @@ export function StylistScorecard({ userId, locationId, onTrendProjection }: Styl
                       </span>
                     )}
                     {hasPeers && (
-                      <span className="text-xs text-muted-foreground/70 tabular-nums text-right w-16">
+                      <span className="text-xs text-muted-foreground/70 tabular-nums text-right w-16 flex items-center justify-end gap-0.5">
                         {peerVal !== null
                           ? (cp.unit === '/mo' || cp.unit === '$'
                             ? <BlurredAmount>{formatKpiValue(peerVal, cp.unit)}</BlurredAmount>
                             : formatKpiValue(peerVal, cp.unit))
                           : '—'
                         }
+                        {(() => {
+                          const myVelocity = proj?.velocityPerDay ?? 0;
+                          const peerVel = getPeerVelocityForKey(cp.key, peerAverages);
+                          if (peerVel === null) return null;
+                          const diff = myVelocity - peerVel;
+                          // Threshold: meaningful difference
+                          if (Math.abs(diff) < 0.01) return null;
+                          return diff > 0
+                            ? <TrendingUp className="w-2.5 h-2.5 text-emerald-500 shrink-0" title="Improving faster than peers" />
+                            : <TrendingDown className="w-2.5 h-2.5 text-rose-400 shrink-0" title="Peers improving faster" />;
+                        })()}
                       </span>
                     )}
                     <div className="w-4 flex justify-center">
