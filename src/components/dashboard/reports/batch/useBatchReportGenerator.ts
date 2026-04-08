@@ -308,7 +308,7 @@ export function useBatchReportGenerator() {
           setProgressLabel(`Generating ${i + 1} of ${configs.length}: ${config.reportName}`);
 
           const buffer = await generateSingleReportPdf(
-            config, dateFrom, dateTo, locationId, orgName, logoDataUrl, locationInfo,
+            config, dateFrom, dateTo, locationId, orgName, logoDataUrl, locationInfo, effectiveOrganization?.id,
           );
           pdfs.push({
             name: buildReportFileName({ orgName, reportSlug: config.reportId, dateFrom, dateTo }),
