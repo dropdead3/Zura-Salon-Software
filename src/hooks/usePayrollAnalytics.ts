@@ -91,7 +91,8 @@ export function usePayrollAnalytics(): PayrollAnalyticsData {
         if (!uid) continue;
         if (!byUser[uid]) byUser[uid] = { user_id: uid, service_revenue: 0, product_revenue: 0 };
         const amount = (Number(item.total_amount) || 0) + (Number(item.tax_amount) || 0);
-        if (item.item_type === 'service') byUser[uid].service_revenue += amount;
+        const itemType = (item.item_type || '').toLowerCase();
+        if (itemType === 'service') byUser[uid].service_revenue += amount;
         else byUser[uid].product_revenue += amount;
       }
       return Object.values(byUser);

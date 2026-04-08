@@ -170,7 +170,8 @@ export function useMyPayData(): MyPayData {
       let productRevenue = 0;
       for (const item of allData) {
         const amount = (Number(item.total_amount) || 0) + (Number(item.tax_amount) || 0);
-        if (item.item_type === 'service') {
+        const itemType = (item.item_type || '').toLowerCase();
+        if (itemType === 'service') {
           serviceRevenue += amount;
         } else {
           productRevenue += amount;

@@ -93,9 +93,9 @@ export default function Transactions() {
   };
 
   // Calculate summary stats
-  const totalRevenue = transactions.reduce((sum, t) => sum + (Number(t.total_amount) || 0), 0);
-  const serviceCount = transactions.filter(t => t.item_type === 'service').length;
-  const productCount = transactions.filter(t => t.item_type === 'product').length;
+  const totalRevenue = transactions.reduce((sum, t) => sum + (Number(t.total_amount) || 0) + (Number(t.tax_amount) || 0), 0);
+  const serviceCount = transactions.filter(t => (t.item_type || '').toLowerCase() === 'service').length;
+  const productCount = transactions.filter(t => (t.item_type || '').toLowerCase() === 'product').length;
   const refundedCount = transactions.filter(t => t.refund_status).length;
 
   return (

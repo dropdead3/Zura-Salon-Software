@@ -151,7 +151,8 @@ export function useDailySalesSummary(filters: SalesFilters = {}) {
         }
         const amount = (Number(item.total_amount) || 0) + (Number(item.tax_amount) || 0);
         byKey[key].total_revenue += amount;
-        if (item.item_type === 'service') {
+        const itemType = (item.item_type || '').toLowerCase();
+        if (itemType === 'service') {
           byKey[key].service_revenue += amount;
           byKey[key].total_services += 1;
         } else {
@@ -227,7 +228,8 @@ export function useUserSalesSummary(userId: string | undefined, dateFrom?: strin
       for (const item of items) {
         const amount = (Number(item.total_amount) || 0) + (Number(item.tax_amount) || 0);
         totalRevenue += amount;
-        if (item.item_type === 'service') {
+        const itemType = (item.item_type || '').toLowerCase();
+        if (itemType === 'service') {
           serviceRevenue += amount;
           totalServices += 1;
         } else {
