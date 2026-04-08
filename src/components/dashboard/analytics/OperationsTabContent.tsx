@@ -196,6 +196,12 @@ export function OperationsTabContent({ filters, subTab = 'overview', onSubTabCha
         <TabsContent value="assistant-coverage" className="mt-6">
           <AssistantUtilizationCard />
         </TabsContent>
+
+        {organizationId && (
+          <TabsContent value="health-engine" className="mt-6">
+            <HealthDashboard organizationId={organizationId} />
+          </TabsContent>
+        )}
         </Tabs>
       </div>
     </div>
