@@ -278,23 +278,25 @@ export function useOperationalAnalytics(locationId?: string, dateRange: Analytic
   const rebookQuery = useQuery({
     queryKey: ['operational-analytics-rebook', locationId, startDateStr, endDateStr],
     queryFn: async () => {
-      let query = supabase
-        .from('phorest_appointments')
-        .select('rebooked_at_checkout')
-        .eq('status', 'completed')
-        .gte('appointment_date', startDateStr)
-        .lte('appointment_date', endDateStr)
-        .eq('is_demo', false);
+      const data = await fetchAllBatched<any>((from, to) => {
+        let q = supabase
+          .from('phorest_appointments')
+          .select('rebooked_at_checkout')
+          .eq('status', 'completed')
+          .gte('appointment_date', startDateStr)
+          .lte('appointment_date', endDateStr)
+          .eq('is_demo', false)
+          .range(from, to);
 
-      if (locationId) {
-        query = query.eq('location_id', locationId);
-      }
+        if (locationId) {
+          q = q.eq('location_id', locationId);
+        }
 
-      const { data, error } = await query;
-      if (error) throw error;
+        return q;
+      });
 
-      const completed = data?.length || 0;
-      const rebooked = data?.filter(a => a.rebooked_at_checkout).length || 0;
+      const completed = data.length;
+      const rebooked = data.filter(a => a.rebooked_at_checkout).length;
       const rebookRate = completed > 0 ? (rebooked / completed) * 100 : 0;
 
       return { completedCount: completed, rebookedCount: rebooked, rebookRate };
@@ -330,19 +332,21 @@ export function useAppointmentSummary(dateFrom: string, dateTo: string, location
   return useQuery({
     queryKey: ['appointment-summary', dateFrom, dateTo, locationId],
     queryFn: async () => {
-      let query = supabase
-        .from('phorest_appointments')
-        .select('status, phorest_client_id, appointment_date')
-        .gte('appointment_date', dateFrom)
-        .lte('appointment_date', dateTo)
-        .eq('is_demo', false);
+      const data = await fetchAllBatched<any>((from, to) => {
+        let q = supabase
+          .from('phorest_appointments')
+          .select('status, phorest_client_id, appointment_date')
+          .gte('appointment_date', dateFrom)
+          .lte('appointment_date', dateTo)
+          .eq('is_demo', false)
+          .range(from, to);
 
-      if (locationId && locationId !== 'all') {
-        query = query.eq('location_id', locationId);
-      }
+        if (locationId && locationId !== 'all') {
+          q = q.eq('location_id', locationId);
+        }
 
-      const { data, error } = await query;
-      if (error) throw error;
+        return q;
+      });
 
       // Deduplicate by unique client visit (phorest_client_id + appointment_date)
       // Use first status encountered per visit; prioritize completed > no_show > cancelled > other

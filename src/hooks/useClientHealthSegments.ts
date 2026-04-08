@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { differenceInDays, format } from 'date-fns';
+import { fetchAllBatched } from '@/utils/fetchAllBatched';
 
 export interface HealthClient {
   id: string;
@@ -119,22 +120,28 @@ export function useClientHealthSegments() {
       if (mergedClients.length === 0) return emptyResult();
 
       // Fetch recent appointments to check for future bookings
-      const { data: futureAppts } = await supabase
-        .from('phorest_appointments')
-        .select('phorest_client_id')
-        .gte('appointment_date', todayStr)
-        .neq('status', 'cancelled');
+      const futureAppts = await fetchAllBatched<any>((from, to) =>
+        supabase
+          .from('phorest_appointments')
+          .select('phorest_client_id')
+          .gte('appointment_date', todayStr)
+          .neq('status', 'cancelled')
+          .range(from, to)
+      );
 
       // Also check Zura appointments
-      const { data: zuraFutureAppts } = await supabase
-        .from('appointments')
-        .select('client_id')
-        .gte('appointment_date', todayStr)
-        .neq('status', 'cancelled');
+      const zuraFutureAppts = await fetchAllBatched<any>((from, to) =>
+        supabase
+          .from('appointments')
+          .select('client_id')
+          .gte('appointment_date', todayStr)
+          .neq('status', 'cancelled')
+          .range(from, to)
+      );
 
       const clientsWithFutureBooking = new Set([
-        ...(futureAppts || []).map(a => a.phorest_client_id).filter(Boolean),
-        ...(zuraFutureAppts || []).map(a => a.client_id).filter(Boolean),
+        ...futureAppts.map(a => a.phorest_client_id).filter(Boolean),
+        ...zuraFutureAppts.map(a => a.client_id).filter(Boolean),
       ]);
 
       const enriched = mergedClients;
