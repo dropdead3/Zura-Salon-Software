@@ -17,7 +17,7 @@ import { cn } from '@/lib/utils';
 const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const HOURS = Array.from({ length: 15 }, (_, i) => i + 7); // 7-21
 
-interface Props { dateFrom: string; dateTo: string; locationId?: string; onClose: () => void; }
+interface Props { dateFrom: string; dateTo: string; locationId?: string; onClose: () => void; dateRangeKey?: string; }
 
 export function DemandHeatmapReport({ dateFrom, dateTo, locationId, onClose }: Props) {
   const [isGenerating, setIsGenerating] = useState(false);

@@ -16,7 +16,7 @@ import { useBusinessSettings } from '@/hooks/useBusinessSettings';
 import { addReportHeader, addReportFooter, fetchLogoAsDataUrl, getReportAutoTableBranding, buildReportFileName } from '@/lib/reportPdfLayout';
 import { toast } from 'sonner';
 
-interface Props { dateFrom: string; dateTo: string; onClose: () => void; }
+interface Props { dateFrom: string; dateTo: string; onClose: () => void; dateRangeKey?: string; }
 
 export function LocationBenchmarkReport({ dateFrom, dateTo, onClose }: Props) {
   const [isGenerating, setIsGenerating] = useState(false);

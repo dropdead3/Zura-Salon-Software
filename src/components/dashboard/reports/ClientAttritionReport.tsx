@@ -18,7 +18,7 @@ import { useReportLocationInfo } from '@/hooks/useReportLocationInfo';
 import { addReportHeader, addReportFooter, fetchLogoAsDataUrl, getReportAutoTableBranding, buildReportFileName } from '@/lib/reportPdfLayout';
 import { toast } from 'sonner';
 
-interface Props { dateFrom: string; dateTo: string; locationId?: string; onClose: () => void; }
+interface Props { dateFrom: string; dateTo: string; locationId?: string; onClose: () => void; dateRangeKey?: string; }
 
 const riskColors: Record<string, string> = {
   'at-risk': 'bg-status-warning/10 text-status-warning',
