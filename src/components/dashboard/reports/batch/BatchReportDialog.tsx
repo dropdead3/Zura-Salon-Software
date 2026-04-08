@@ -51,7 +51,7 @@ export function BatchReportDialog({ open, onOpenChange, dateFrom, dateTo, locati
   }, [reportTier]);
 
   const groupedReports = useMemo(() => {
-    const map = new Map<string, ReportOption[]>();
+    const map = new Map<string, typeof REPORT_CATALOG>();
     for (const r of filteredReports) {
       const list = map.get(r.category) || [];
       list.push(r);
@@ -139,7 +139,7 @@ export function BatchReportDialog({ open, onOpenChange, dateFrom, dateTo, locati
                   if (!reports || reports.length === 0) return null;
                   const allSelected = reports.every(r => selectedIds.has(r.id));
                   const someSelected = reports.some(r => selectedIds.has(r.id));
-                  const Icon = cat.icon;
+                  const Icon = CATEGORY_ICONS[cat.id] || DollarSign;
 
                   return (
                     <div key={cat.id}>
