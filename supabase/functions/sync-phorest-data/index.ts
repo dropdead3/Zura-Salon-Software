@@ -1254,10 +1254,17 @@ async function syncSalesTransactions(
           console.log(`Found ${tippedTransactions.length} transactions with tips to backfill`);
           
           // Group tips by date + staff + client
+          // IMPORTANT: Phorest duplicates the same tip_amount on every line item
+          // in a checkout, so we must take the per-item value (MAX/MIN), NOT the SUM.
           const tipMap = new Map<string, number>();
           for (const t of tippedTransactions) {
             const key = `${t.transaction_date}:${t.phorest_staff_id}:${t.phorest_client_id}`;
-            tipMap.set(key, (tipMap.get(key) || 0) + Number(t.tip_amount));
+            // Use Math.max to get the per-checkout tip (all items share the same value)
+            const existing = tipMap.get(key);
+            const tipVal = Number(t.tip_amount);
+            if (existing === undefined || tipVal > existing) {
+              tipMap.set(key, tipVal);
+            }
           }
 
           // Batch tip backfill: parallel updates in batches of 50
