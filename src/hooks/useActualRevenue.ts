@@ -60,11 +60,13 @@ export function useActualRevenue(dateFrom: string, dateTo: string, enabled: bool
       let productRevenue = 0;
       const clientIds = new Set<string>();
 
+      const SERVICE_TYPES = new Set(['service', 'sale_fee', 'special_offer_item']);
+
       for (const row of txnData) {
         const amount = (Number(row.total_amount) || 0) + (Number(row.tax_amount) || 0);
         const itemType = (row.item_type || '').toLowerCase();
 
-        if (itemType === 'service') {
+        if (SERVICE_TYPES.has(itemType)) {
           serviceRevenue += amount;
         } else {
           productRevenue += amount;
