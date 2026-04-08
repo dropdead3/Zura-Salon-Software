@@ -196,7 +196,10 @@ export function ScheduleReportForm({ open, onOpenChange, editReport }: ScheduleR
       },
       recipients,
       format,
-      filters: { report_ids: Array.from(selectedReportIds) },
+      filters: {
+        report_ids: Array.from(selectedReportIds),
+        ...(selectedLocationId !== 'all' ? { locationId: selectedLocationId } : {}),
+      },
     };
 
     if (editReport) {
