@@ -393,6 +393,12 @@ export function ReportsTabContent({ filters, isStandalone }: ReportsTabContentPr
         return <TaxSummaryReport dateFrom={filters.dateFrom} dateTo={filters.dateTo} locationId={location} onClose={handleCloseReport} />;
       case 'client-attrition':
         return <ClientAttritionReport dateFrom={filters.dateFrom} dateTo={filters.dateTo} locationId={location} onClose={handleCloseReport} />;
+      case 'compensation-ratio':
+        return <StaffCompensationRatioReport dateFrom={filters.dateFrom} dateTo={filters.dateTo} locationId={location} onClose={handleCloseReport} />;
+      case 'location-benchmark':
+        return <LocationBenchmarkReport dateFrom={filters.dateFrom} dateTo={filters.dateTo} onClose={handleCloseReport} />;
+      case 'demand-heatmap':
+        return <DemandHeatmapReport dateFrom={filters.dateFrom} dateTo={filters.dateTo} locationId={location} onClose={handleCloseReport} />;
       default:
         return null;
     }
