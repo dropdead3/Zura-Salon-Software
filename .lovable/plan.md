@@ -1,52 +1,54 @@
 
 
-# Wire Evaluation Window into Level Progress Card
+# Fix Level Progress Revenue: Switch from Stale Summary to Transaction Items
 
-## Problem
+## Root Cause
 
-The Level Progress card currently computes metrics using `computeMetrics(evalDays)`, which correctly uses the configured evaluation window (e.g., 90 days) and normalizes revenue to a monthly average. However, the card **never communicates this to the viewer**. The result:
+The `phorest_daily_sales_summary` table — used by both `useLevelProgress` and `useStylistPeerAverages` — stopped receiving data on **Feb 21**. It only contains 16 rows for the last 90 days for Gavin, totaling $4,674.50. The actual POS transaction data in `phorest_transaction_items` shows $10,677.50 for the same period.
 
-- A salon owner sees "Service Revenue: $1,558 / min $5,000" with no context on what time period produced that number
-- It looks like a month-to-date snapshot, so it always appears "wrong" compared to any single month in Phorest
-- The retention section shows no eval window at all — only the promotion footer mentions it
-- There's no explanation that "$1,558" means "monthly average over the last 90 days" (or whatever the configured window is)
+This means the 30-day monthly average shows ~$1,558 instead of the correct ~$3,559.
 
-The underlying calculation is actually correct — the issue is **transparency**.
+**Fix**: Replace `phorest_daily_sales_summary` queries with `phorest_transaction_items` (which has `stylist_user_id` populated directly — no join needed). This aligns with the POS-first standard already applied to the Individual Staff Report.
 
 ## Changes
 
-### File 1: `src/components/coaching/LevelProgressCard.tsx`
+### File 1: `src/hooks/useLevelProgress.ts`
 
-**Retention warning section** — Add evaluation window context:
-- Below the "Below minimum standards" header, add a line: `"Measured over a {N}-day rolling window (monthly avg)"`
-- This uses `progress.retention.evaluationWindowDays` which is already in the data
+Replace the sales query (lines 132-145):
+- **Current**: Queries `phorest_daily_sales_summary` by `user_id`, gets `service_revenue` and `product_revenue` per day
+- **New**: Query `phorest_transaction_items` by `stylist_user_id`, selecting `total_amount, tax_amount, item_type, transaction_date`
+- Paginate with `fetchAllBatched` pattern (1000-row pages) since transaction items can exceed 1000 rows
 
-**Promotion "What You Need" section** — Add eval window subtitle:
-- Below the "What You Need" heading, add: `"Rolling {N}-day average · Evaluated {startDate} – today"`
-- Computed from `progress.evaluationWindowDays`
+Update `computeMetrics()` (lines 234-250):
+- **Current**: Sums `service_revenue` and `product_revenue` from sales summary rows
+- **New**: Sum `total_amount` from transaction items, split by `item_type === 'service'` vs other
+- Revenue = service + product (excluding tips, matching Phorest "Performance Revenue")
 
-**Revenue labels** — Clarify averaging:
-- When `evalDays > 30`, append "(monthly avg)" qualifier to the revenue metric label in `CriterionRow` or via a subtitle, so "$1,558/mo" reads as a monthly average over the window, not a raw monthly total
-- Same for retention failure rows — add eval window context
+Update `computePriorMetrics()` with the same logic.
 
-**Footer** — Show both windows when they differ:
-- Currently only shows promotion eval window. When the retention eval window differs, show both: `"Promotion: {N}-day window · Retention: {M}-day window"`
+### File 2: `src/hooks/useStylistPeerAverages.ts`
 
-**MetricInfoTooltip update** — Update the card-level tooltip to explain: "Performance is evaluated as a rolling average over the configured evaluation window. Revenue figures represent the monthly average across that period."
+Replace peer sales query (lines 64-78):
+- **Current**: Queries `phorest_daily_sales_summary` for all peer `user_id`s
+- **New**: Query `phorest_transaction_items` for all peer `stylist_user_id`s with pagination
 
-### File 2: `src/hooks/useLevelProgress.ts`
+Update aggregation loop (lines 146-153):
+- **Current**: Iterates sales summary rows summing `service_revenue` / `product_revenue`
+- **New**: Iterate transaction items, classify by `item_type`, sum `total_amount`
 
-No logic changes needed — the hook already correctly:
-- Uses `retentionCriteria.evaluation_window_days` for retention metrics (line 315)
-- Uses `nextCriteria.evaluation_window_days` for promotion metrics (line 122)
-- Normalizes revenue to monthly: `(totalRevenue / evalDays) * 30` (line 242)
-- Exposes `evaluationWindowDays` on the result and `retention.evaluationWindowDays`
+## Expected Result
 
-## Summary
+Gavin's card will show:
+- Service Revenue: ~$3,338/mo (monthly avg) instead of $1,558
+- Retail Attachment and Avg Ticket will also use accurate transaction data
+- All peers will use the same live data source
+
+## Files Changed
 
 | File | Change |
 |---|---|
-| `LevelProgressCard.tsx` | Add eval window labels to retention and promotion sections; clarify revenue averaging; update tooltip |
+| `useLevelProgress.ts` | Switch sales query from `phorest_daily_sales_summary` to `phorest_transaction_items`; update `computeMetrics` aggregation |
+| `useStylistPeerAverages.ts` | Same switch for peer sales data |
 
-1 file, no database changes. Pure transparency/UX fix.
+2 files, no database changes.
 
