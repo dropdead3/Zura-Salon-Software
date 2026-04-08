@@ -186,9 +186,9 @@ export function useStaffRevenuePerformance(
         staffList.push({
           userId: mapping?.user_id || null,
           phorestStaffId,
-          name: profile?.full_name || mapping?.phorest_staff_name || 'Unknown Staff',
+          name: staffNameData.byPhorestId[phorestStaffId] || mapping?.phorest_staff_name || 'Unknown Staff',
           displayName: profile?.display_name || null,
-          photoUrl: profile?.photo_url || null,
+          photoUrl: (profile as any)?.photo_url || null,
           totalRevenue: data.totalRevenue,
           serviceRevenue: data.serviceRevenue,
           productRevenue: data.productRevenue,
