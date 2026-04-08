@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { tokens } from '@/lib/design-tokens';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
+import { BlurredAmount } from '@/contexts/HideNumbersContext';
+import { buildCsvString } from '@/utils/csvExport';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -47,7 +49,7 @@ export function StaffCompensationRatioReport({ dateFrom, dateTo, locationId, onC
 
   const downloadCSV = () => {
     const rows = [['Stylist', 'Revenue', 'Commission', 'Labor %', 'Source'], ...entries.map(e => [e.name, e.totalRevenue.toFixed(2), e.totalCommission.toFixed(2), e.laborCostPercent.toFixed(1), e.commissionSource])];
-    const blob = new Blob([rows.map(r => r.join(',')).join('\n')], { type: 'text/csv' });
+    const blob = new Blob([buildCsvString(rows)], { type: 'text/csv' });
     const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = buildReportFileName({ reportSlug: 'staff-compensation-ratio', dateFrom, dateTo }).replace('.pdf', '.csv'); a.click();
     toast.success('CSV downloaded');
   };
@@ -68,8 +70,8 @@ export function StaffCompensationRatioReport({ dateFrom, dateTo, locationId, onC
       </CardHeader>
       <CardContent>
         <div className="grid grid-cols-3 gap-4 mb-6">
-          <div className="rounded-lg border p-3"><p className="text-xs text-muted-foreground">Total Revenue</p><p className={tokens.kpi.value}>{formatCurrencyWhole(totals.totalRevenue)}</p></div>
-          <div className="rounded-lg border p-3"><p className="text-xs text-muted-foreground">Total Commission</p><p className={tokens.kpi.value}>{formatCurrencyWhole(totals.totalCommission)}</p></div>
+          <div className="rounded-lg border p-3"><p className="text-xs text-muted-foreground">Total Revenue</p><p className={tokens.kpi.value}><BlurredAmount>{formatCurrencyWhole(totals.totalRevenue)}</BlurredAmount></p></div>
+          <div className="rounded-lg border p-3"><p className="text-xs text-muted-foreground">Total Commission</p><p className={tokens.kpi.value}><BlurredAmount>{formatCurrencyWhole(totals.totalCommission)}</BlurredAmount></p></div>
           <div className="rounded-lg border p-3"><p className="text-xs text-muted-foreground">Avg Labor %</p><p className={tokens.kpi.value}>{totals.avgLaborPercent.toFixed(1)}%</p></div>
         </div>
         <Table>
@@ -84,8 +86,8 @@ export function StaffCompensationRatioReport({ dateFrom, dateTo, locationId, onC
             {entries.map(e => (
               <TableRow key={e.userId}>
                 <TableCell className="font-medium">{e.name}</TableCell>
-                <TableCell>{formatCurrencyWhole(e.totalRevenue)}</TableCell>
-                <TableCell>{formatCurrencyWhole(e.totalCommission)}</TableCell>
+                <TableCell><BlurredAmount>{formatCurrencyWhole(e.totalRevenue)}</BlurredAmount></TableCell>
+                <TableCell><BlurredAmount>{formatCurrencyWhole(e.totalCommission)}</BlurredAmount></TableCell>
                 <TableCell className={e.laborCostPercent > 50 ? 'text-destructive' : ''}>{e.laborCostPercent.toFixed(1)}%</TableCell>
                 <TableCell className="text-muted-foreground text-xs">{e.commissionSource}</TableCell>
               </TableRow>

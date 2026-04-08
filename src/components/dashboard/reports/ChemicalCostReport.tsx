@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { tokens } from '@/lib/design-tokens';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
+import { BlurredAmount } from '@/contexts/HideNumbersContext';
+import { buildCsvString } from '@/utils/csvExport';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -63,7 +65,7 @@ export function ChemicalCostReport({ dateFrom, dateTo, locationId, onClose }: Pr
 
   const downloadCSV = () => {
     const csvRows = [['Service', 'Revenue', 'Chemical Cost', 'Avg Cost', 'Waste', 'Margin %'], ...rows.map(r => [r.name, r.revenue.toFixed(2), r.productCost.toFixed(2), r.avgCost.toFixed(2), r.wasteCost.toFixed(2), r.marginPct.toFixed(1)])];
-    const blob = new Blob([csvRows.map(r => r.join(',')).join('\n')], { type: 'text/csv' });
+    const blob = new Blob([buildCsvString(csvRows)], { type: 'text/csv' });
     const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = buildReportFileName({ reportSlug: 'chemical-cost', dateFrom, dateTo }).replace('.pdf', '.csv'); a.click();
     toast.success('CSV downloaded');
   };
@@ -71,49 +73,49 @@ export function ChemicalCostReport({ dateFrom, dateTo, locationId, onClose }: Pr
   if (isLoading) return <div className="space-y-3">{[1, 2, 3, 4, 5].map(i => <Skeleton key={i} className={tokens.loading.skeleton} />)}</div>;
 
   return (
-    <div className="space-y-4">
-      <Button variant="ghost" size="sm" className="-ml-2 text-muted-foreground hover:text-foreground" onClick={onClose}><ArrowLeft className="w-4 h-4 mr-1.5" />Back to Reports</Button>
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between pb-4">
+        <div className="flex items-center gap-3">
+          <Button variant="ghost" size="icon" onClick={onClose}><ArrowLeft className="w-4 h-4" /></Button>
           <div className="flex items-center gap-2">
             <Beaker className="w-5 h-5 text-muted-foreground" />
             <div>
               <CardTitle className={tokens.card.title}>Chemical Cost Report</CardTitle>
-              {totalProductCost > 0 && <p className="text-sm text-muted-foreground mt-1">Total: {formatCurrencyWhole(totalProductCost)} · Waste: {formatCurrencyWhole(totalWaste)}</p>}
+              {totalProductCost > 0 && <p className="text-sm text-muted-foreground mt-1">Total: <BlurredAmount>{formatCurrencyWhole(totalProductCost)}</BlurredAmount> · Waste: <BlurredAmount>{formatCurrencyWhole(totalWaste)}</BlurredAmount></p>}
             </div>
           </div>
-          <div className="flex gap-2">
-            <Button variant="outline" size={tokens.button.inline} onClick={downloadCSV}><FileSpreadsheet className="w-4 h-4 mr-1.5" />CSV</Button>
-            <Button size={tokens.button.inline} onClick={generatePDF} disabled={isGenerating}>{isGenerating ? <Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> : <FileText className="w-4 h-4 mr-1.5" />}PDF</Button>
-          </div>
-        </CardHeader>
-        <CardContent>
-          {rows.length === 0 ? <p className={tokens.empty.description}>No chemical cost data. Ensure Color Bar is configured.</p> : (
-            <Table>
-              <TableHeader><TableRow>
-                <TableHead className={tokens.table.columnHeader}>Service</TableHead>
-                <TableHead className={tokens.table.columnHeader}>Revenue</TableHead>
-                <TableHead className={tokens.table.columnHeader}>Chemical Cost</TableHead>
-                <TableHead className={tokens.table.columnHeader}>Avg Cost</TableHead>
-                <TableHead className={tokens.table.columnHeader}>Waste</TableHead>
-                <TableHead className={tokens.table.columnHeader}>Margin %</TableHead>
-              </TableRow></TableHeader>
-              <TableBody>
-                {rows.map((r, i) => (
-                  <TableRow key={i}>
-                    <TableCell className="font-medium">{r.name}</TableCell>
-                    <TableCell>{formatCurrencyWhole(r.revenue)}</TableCell>
-                    <TableCell>{formatCurrencyWhole(r.productCost)}</TableCell>
-                    <TableCell>{formatCurrencyWhole(Math.round(r.avgCost))}</TableCell>
-                    <TableCell>{formatCurrencyWhole(r.wasteCost)}</TableCell>
-                    <TableCell>{r.marginPct.toFixed(1)}%</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
-    </div>
+        </div>
+        <div className="flex gap-2">
+          <Button variant="outline" size={tokens.button.inline} onClick={downloadCSV}><FileSpreadsheet className="w-4 h-4 mr-1.5" />CSV</Button>
+          <Button size={tokens.button.inline} onClick={generatePDF} disabled={isGenerating}>{isGenerating ? <Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> : <FileText className="w-4 h-4 mr-1.5" />}PDF</Button>
+        </div>
+      </CardHeader>
+      <CardContent>
+        {rows.length === 0 ? <p className={tokens.empty.description}>No chemical cost data. Ensure Color Bar is configured.</p> : (
+          <Table>
+            <TableHeader><TableRow>
+              <TableHead className={tokens.table.columnHeader}>Service</TableHead>
+              <TableHead className={tokens.table.columnHeader}>Revenue</TableHead>
+              <TableHead className={tokens.table.columnHeader}>Chemical Cost</TableHead>
+              <TableHead className={tokens.table.columnHeader}>Avg Cost</TableHead>
+              <TableHead className={tokens.table.columnHeader}>Waste</TableHead>
+              <TableHead className={tokens.table.columnHeader}>Margin %</TableHead>
+            </TableRow></TableHeader>
+            <TableBody>
+              {rows.map((r, i) => (
+                <TableRow key={i}>
+                  <TableCell className="font-medium">{r.name}</TableCell>
+                  <TableCell><BlurredAmount>{formatCurrencyWhole(r.revenue)}</BlurredAmount></TableCell>
+                  <TableCell><BlurredAmount>{formatCurrencyWhole(r.productCost)}</BlurredAmount></TableCell>
+                  <TableCell><BlurredAmount>{formatCurrencyWhole(Math.round(r.avgCost))}</BlurredAmount></TableCell>
+                  <TableCell><BlurredAmount>{formatCurrencyWhole(r.wasteCost)}</BlurredAmount></TableCell>
+                  <TableCell>{r.marginPct.toFixed(1)}%</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        )}
+      </CardContent>
+    </Card>
   );
 }

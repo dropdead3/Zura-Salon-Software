@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { tokens } from '@/lib/design-tokens';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
-import { format } from 'date-fns';
+import { BlurredAmount } from '@/contexts/HideNumbersContext';
+import { buildCsvString } from '@/utils/csvExport';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -55,7 +56,7 @@ export function ClientAttritionReport({ dateFrom, dateTo, locationId, onClose }:
 
   const downloadCSV = () => {
     const rows = [['Client', 'Last Visit', 'Days Since', 'Total Spend', 'Avg Ticket', 'Risk', 'Stylist'], ...entries.map(e => [e.clientName, e.lastVisitDate, e.daysSinceVisit.toString(), e.totalSpend.toFixed(2), e.avgTicket.toFixed(2), e.riskTier, e.staffName || ''])];
-    const blob = new Blob([rows.map(r => r.join(',')).join('\n')], { type: 'text/csv' });
+    const blob = new Blob([buildCsvString(rows)], { type: 'text/csv' });
     const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = buildReportFileName({ reportSlug: 'client-attrition', dateFrom, dateTo }).replace('.pdf', '.csv'); a.click();
     toast.success('CSV downloaded');
   };
@@ -64,18 +65,20 @@ export function ClientAttritionReport({ dateFrom, dateTo, locationId, onClose }:
 
   return (
     <div className="space-y-4">
-      <Button variant="ghost" size="sm" className="-ml-2 text-muted-foreground hover:text-foreground" onClick={onClose}><ArrowLeft className="w-4 h-4 mr-1.5" />Back to Reports</Button>
       {data && (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <Card><CardContent className="p-4 text-center"><p className="text-xs text-muted-foreground">At-Risk</p><p className="text-2xl font-display tracking-wide text-status-warning">{data.atRiskCount}</p></CardContent></Card>
           <Card><CardContent className="p-4 text-center"><p className="text-xs text-muted-foreground">Lapsed</p><p className="text-2xl font-display tracking-wide text-status-error">{data.lapsedCount}</p></CardContent></Card>
           <Card><CardContent className="p-4 text-center"><p className="text-xs text-muted-foreground">Lost</p><p className="text-2xl font-display tracking-wide text-destructive">{data.lostCount}</p></CardContent></Card>
-          <Card><CardContent className="p-4 text-center"><p className="text-xs text-muted-foreground">Revenue at Risk</p><p className="text-2xl font-display tracking-wide">{formatCurrencyWhole(data.totalRevenueAtRisk)}</p></CardContent></Card>
+          <Card><CardContent className="p-4 text-center"><p className="text-xs text-muted-foreground">Revenue at Risk</p><p className="text-2xl font-display tracking-wide"><BlurredAmount>{formatCurrencyWhole(data.totalRevenueAtRisk)}</BlurredAmount></p></CardContent></Card>
         </div>
       )}
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <div className="flex items-center gap-2"><AlertTriangle className="w-5 h-5 text-muted-foreground" /><CardTitle className={tokens.card.title}>Client Attrition</CardTitle></div>
+        <CardHeader className="flex flex-row items-center justify-between pb-4">
+          <div className="flex items-center gap-3">
+            <Button variant="ghost" size="icon" onClick={onClose}><ArrowLeft className="w-4 h-4" /></Button>
+            <div className="flex items-center gap-2"><AlertTriangle className="w-5 h-5 text-muted-foreground" /><CardTitle className={tokens.card.title}>Client Attrition</CardTitle></div>
+          </div>
           <div className="flex gap-2">
             <Button variant="outline" size={tokens.button.inline} onClick={downloadCSV}><FileSpreadsheet className="w-4 h-4 mr-1.5" />CSV</Button>
             <Button size={tokens.button.inline} onClick={generatePDF} disabled={isGenerating}>{isGenerating ? <Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> : <FileText className="w-4 h-4 mr-1.5" />}PDF</Button>
@@ -100,8 +103,8 @@ export function ClientAttritionReport({ dateFrom, dateTo, locationId, onClose }:
                       <TableCell className="font-medium">{e.clientName}</TableCell>
                       <TableCell>{e.lastVisitDate}</TableCell>
                       <TableCell>{e.daysSinceVisit}</TableCell>
-                      <TableCell>{formatCurrencyWhole(e.totalSpend)}</TableCell>
-                      <TableCell>{formatCurrencyWhole(Math.round(e.avgTicket))}</TableCell>
+                      <TableCell><BlurredAmount>{formatCurrencyWhole(e.totalSpend)}</BlurredAmount></TableCell>
+                      <TableCell><BlurredAmount>{formatCurrencyWhole(Math.round(e.avgTicket))}</BlurredAmount></TableCell>
                       <TableCell><Badge variant="outline" className={riskColors[e.riskTier] || ''}>{e.riskTier}</Badge></TableCell>
                       <TableCell>{e.staffName || '-'}</TableCell>
                     </TableRow>

@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { tokens } from '@/lib/design-tokens';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
+import { BlurredAmount } from '@/contexts/HideNumbersContext';
+import { buildCsvString } from '@/utils/csvExport';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -44,7 +46,7 @@ export function LocationBenchmarkReport({ dateFrom, dateTo, onClose }: Props) {
 
   const downloadCSV = () => {
     const rows = [['Location', 'Revenue', 'Appointments', 'Avg Ticket', 'Clients', 'No-Show %'], ...entries.map(e => [e.locationName, e.totalRevenue.toFixed(2), e.appointmentCount.toString(), e.avgTicket.toFixed(2), e.uniqueClients.toString(), e.noShowPercent.toFixed(1)])];
-    const blob = new Blob([rows.map(r => r.join(',')).join('\n')], { type: 'text/csv' });
+    const blob = new Blob([buildCsvString(rows)], { type: 'text/csv' });
     const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = buildReportFileName({ reportSlug: 'location-benchmark', dateFrom, dateTo }).replace('.pdf', '.csv'); a.click();
     toast.success('CSV downloaded');
   };
@@ -77,9 +79,9 @@ export function LocationBenchmarkReport({ dateFrom, dateTo, onClose }: Props) {
             {entries.map(e => (
               <TableRow key={e.locationId}>
                 <TableCell className="font-medium">{e.locationName}</TableCell>
-                <TableCell>{formatCurrencyWhole(e.totalRevenue)}</TableCell>
+                <TableCell><BlurredAmount>{formatCurrencyWhole(e.totalRevenue)}</BlurredAmount></TableCell>
                 <TableCell>{e.appointmentCount}</TableCell>
-                <TableCell>{formatCurrencyWhole(e.avgTicket)}</TableCell>
+                <TableCell><BlurredAmount>{formatCurrencyWhole(e.avgTicket)}</BlurredAmount></TableCell>
                 <TableCell>{e.uniqueClients}</TableCell>
                 <TableCell className={e.noShowPercent > 10 ? 'text-destructive' : ''}>{e.noShowPercent.toFixed(1)}%</TableCell>
               </TableRow>

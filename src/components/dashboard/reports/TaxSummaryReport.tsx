@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { tokens } from '@/lib/design-tokens';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
+import { BlurredAmount } from '@/contexts/HideNumbersContext';
+import { buildCsvString } from '@/utils/csvExport';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -56,7 +58,7 @@ export function TaxSummaryReport({ dateFrom, dateTo, locationId, onClose }: Prop
   const downloadCSV = () => {
     if (!data) return;
     const rows = [['Month', 'Revenue', 'Tax Collected'], ...data.byMonth.map(m => [m.month, m.revenue.toFixed(2), m.tax.toFixed(2)])];
-    const blob = new Blob([rows.map(r => r.join(',')).join('\n')], { type: 'text/csv' });
+    const blob = new Blob([buildCsvString(rows)], { type: 'text/csv' });
     const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = buildReportFileName({ reportSlug: 'tax-summary', dateFrom, dateTo }).replace('.pdf', '.csv'); a.click();
     toast.success('CSV downloaded');
   };
@@ -64,52 +66,52 @@ export function TaxSummaryReport({ dateFrom, dateTo, locationId, onClose }: Prop
   if (isLoading) return <div className="space-y-3">{[1, 2, 3, 4, 5].map(i => <Skeleton key={i} className={tokens.loading.skeleton} />)}</div>;
 
   return (
-    <div className="space-y-4">
-      <Button variant="ghost" size="sm" className="-ml-2 text-muted-foreground hover:text-foreground" onClick={onClose}><ArrowLeft className="w-4 h-4 mr-1.5" />Back to Reports</Button>
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between pb-4">
+        <div className="flex items-center gap-3">
+          <Button variant="ghost" size="icon" onClick={onClose}><ArrowLeft className="w-4 h-4" /></Button>
           <div>
             <CardTitle className={tokens.card.title}>Tax Summary</CardTitle>
-            {data && <p className="text-sm text-muted-foreground mt-1">Total tax: {formatCurrencyWhole(data.totalTax)} on {formatCurrencyWhole(data.totalGrossRevenue)} gross</p>}
+            {data && <p className="text-sm text-muted-foreground mt-1">Total tax: <BlurredAmount>{formatCurrencyWhole(data.totalTax)}</BlurredAmount> on <BlurredAmount>{formatCurrencyWhole(data.totalGrossRevenue)}</BlurredAmount> gross</p>}
           </div>
-          <div className="flex gap-2">
-            <Button variant="outline" size={tokens.button.inline} onClick={downloadCSV}><FileSpreadsheet className="w-4 h-4 mr-1.5" />CSV</Button>
-            <Button size={tokens.button.inline} onClick={generatePDF} disabled={isGenerating}>{isGenerating ? <Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> : <FileText className="w-4 h-4 mr-1.5" />}PDF</Button>
+        </div>
+        <div className="flex gap-2">
+          <Button variant="outline" size={tokens.button.inline} onClick={downloadCSV}><FileSpreadsheet className="w-4 h-4 mr-1.5" />CSV</Button>
+          <Button size={tokens.button.inline} onClick={generatePDF} disabled={isGenerating}>{isGenerating ? <Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> : <FileText className="w-4 h-4 mr-1.5" />}PDF</Button>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        {data?.byMonth.length ? (
+          <div>
+            <h4 className="text-sm font-medium mb-2">By Month</h4>
+            <Table>
+              <TableHeader><TableRow>
+                <TableHead className={tokens.table.columnHeader}>Month</TableHead>
+                <TableHead className={tokens.table.columnHeader}>Revenue</TableHead>
+                <TableHead className={tokens.table.columnHeader}>Tax Collected</TableHead>
+              </TableRow></TableHeader>
+              <TableBody>
+                {data.byMonth.map((m, i) => (<TableRow key={i}><TableCell className="font-medium">{m.month}</TableCell><TableCell><BlurredAmount>{formatCurrencyWhole(m.revenue)}</BlurredAmount></TableCell><TableCell><BlurredAmount>{formatCurrencyWhole(m.tax)}</BlurredAmount></TableCell></TableRow>))}
+              </TableBody>
+            </Table>
           </div>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          {data?.byMonth.length ? (
-            <div>
-              <h4 className="text-sm font-medium mb-2">By Month</h4>
-              <Table>
-                <TableHeader><TableRow>
-                  <TableHead className={tokens.table.columnHeader}>Month</TableHead>
-                  <TableHead className={tokens.table.columnHeader}>Revenue</TableHead>
-                  <TableHead className={tokens.table.columnHeader}>Tax Collected</TableHead>
-                </TableRow></TableHeader>
-                <TableBody>
-                  {data.byMonth.map((m, i) => (<TableRow key={i}><TableCell className="font-medium">{m.month}</TableCell><TableCell>{formatCurrencyWhole(m.revenue)}</TableCell><TableCell>{formatCurrencyWhole(m.tax)}</TableCell></TableRow>))}
-                </TableBody>
-              </Table>
-            </div>
-          ) : null}
-          {data?.byLocation && data.byLocation.length > 1 ? (
-            <div>
-              <h4 className="text-sm font-medium mb-2">By Location</h4>
-              <Table>
-                <TableHeader><TableRow>
-                  <TableHead className={tokens.table.columnHeader}>Location</TableHead>
-                  <TableHead className={tokens.table.columnHeader}>Revenue</TableHead>
-                  <TableHead className={tokens.table.columnHeader}>Tax Collected</TableHead>
-                </TableRow></TableHeader>
-                <TableBody>
-                  {data.byLocation.map((l, i) => (<TableRow key={i}><TableCell className="font-medium">{l.locationName}</TableCell><TableCell>{formatCurrencyWhole(l.revenue)}</TableCell><TableCell>{formatCurrencyWhole(l.tax)}</TableCell></TableRow>))}
-                </TableBody>
-              </Table>
-            </div>
-          ) : null}
-        </CardContent>
-      </Card>
-    </div>
+        ) : null}
+        {data?.byLocation && data.byLocation.length > 1 ? (
+          <div>
+            <h4 className="text-sm font-medium mb-2">By Location</h4>
+            <Table>
+              <TableHeader><TableRow>
+                <TableHead className={tokens.table.columnHeader}>Location</TableHead>
+                <TableHead className={tokens.table.columnHeader}>Revenue</TableHead>
+                <TableHead className={tokens.table.columnHeader}>Tax Collected</TableHead>
+              </TableRow></TableHeader>
+              <TableBody>
+                {data.byLocation.map((l, i) => (<TableRow key={i}><TableCell className="font-medium">{l.locationName}</TableCell><TableCell><BlurredAmount>{formatCurrencyWhole(l.revenue)}</BlurredAmount></TableCell><TableCell><BlurredAmount>{formatCurrencyWhole(l.tax)}</BlurredAmount></TableCell></TableRow>))}
+              </TableBody>
+            </Table>
+          </div>
+        ) : null}
+      </CardContent>
+    </Card>
   );
 }
