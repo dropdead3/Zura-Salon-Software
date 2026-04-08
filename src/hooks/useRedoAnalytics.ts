@@ -3,6 +3,7 @@ import { formatDisplayName } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { subDays, format } from 'date-fns';
+import { fetchAllBatched } from '@/utils/fetchAllBatched';
 
 export interface RedoByStylists {
   staffUserId: string;
@@ -51,16 +52,15 @@ export function useRedoAnalytics(days: number = 30) {
       }
 
       // Fetch all phorest_appointments in the period, filtered by org locations
-      const { data: appointments, error } = await supabase
-        .from('phorest_appointments')
-        .select('id, stylist_user_id, is_redo, redo_reason, original_appointment_id, total_price, original_price, phorest_client_id, appointment_date')
-        .in('location_id', locationIds)
-        .gte('appointment_date', dateFrom)
-        .not('status', 'in', '("cancelled")');
-
-      if (error || !appointments) {
-        return { totalRedos: 0, totalAppointments: 0, redoRate: 0, financialImpact: 0, commissionImpact: 0, byStylist: [], byReason: [], weeklyTrend: [], repeatRedoClients: 0 };
-      }
+      const appointments = await fetchAllBatched<any>((from, to) =>
+        supabase
+          .from('phorest_appointments')
+          .select('id, stylist_user_id, is_redo, redo_reason, original_appointment_id, total_price, original_price, phorest_client_id, appointment_date')
+          .in('location_id', locationIds)
+          .gte('appointment_date', dateFrom)
+          .not('status', 'in', '("cancelled")')
+          .range(from, to)
+      );
 
       // Resolve stylist names
       const stylistIds = [...new Set(appointments.map(a => a.stylist_user_id).filter(Boolean))] as string[];

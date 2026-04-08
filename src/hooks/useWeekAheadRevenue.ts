@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { format, addDays } from 'date-fns';
 import { getServiceCategory } from '@/utils/serviceCategorization';
 import { resolveStaffNamesByPhorestIds } from '@/utils/resolveStaffNames';
+import { fetchAllBatched } from '@/utils/fetchAllBatched';
 
 export interface AppointmentSummary {
   id: string;
@@ -59,28 +60,28 @@ export function useWeekAheadRevenue(locationId?: string) {
   return useQuery({
     queryKey: ['week-ahead-revenue', startDate, endDate, locationId],
     queryFn: async () => {
-      let query = supabase
-        .from('phorest_appointments')
-        .select('id, appointment_date, total_price, tip_amount, status, client_name, service_name, start_time, end_time, phorest_staff_id, service_category, location_id')
-        .gte('appointment_date', startDate)
-        .lte('appointment_date', endDate)
-        .not('status', 'in', '("cancelled","no_show")')
-        .order('start_time', { ascending: true });
+      const appointments = await fetchAllBatched<any>((from, to) => {
+        let q = supabase
+          .from('phorest_appointments')
+          .select('id, appointment_date, total_price, tip_amount, status, client_name, service_name, start_time, end_time, phorest_staff_id, service_category, location_id')
+          .gte('appointment_date', startDate)
+          .lte('appointment_date', endDate)
+          .not('status', 'in', '("cancelled","no_show")')
+          .order('start_time', { ascending: true })
+          .range(from, to);
 
-      // Filter by location(s) - supports comma-separated multi-select
-      if (locationId && locationId !== 'all') {
-        const ids = locationId.split(',').filter(Boolean);
-        if (ids.length === 1) {
-          query = query.eq('location_id', ids[0]);
-        } else if (ids.length > 1) {
-          query = query.in('location_id', ids);
+        // Filter by location(s) - supports comma-separated multi-select
+        if (locationId && locationId !== 'all') {
+          const ids = locationId.split(',').filter(Boolean);
+          if (ids.length === 1) {
+            q = q.eq('location_id', ids[0]);
+          } else if (ids.length > 1) {
+            q = q.in('location_id', ids);
+          }
         }
-      }
 
-      const { data, error } = await query;
-      if (error) throw error;
-
-      const appointments = data || [];
+        return q;
+      });
 
       // Fetch staff names for the appointments
       const staffIds = [...new Set(appointments.map(a => a.phorest_staff_id).filter(Boolean))] as string[];

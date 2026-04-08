@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { format, addDays, startOfWeek, endOfWeek, endOfMonth, differenceInDays } from 'date-fns';
 import { getServiceCategory } from '@/utils/serviceCategorization';
 import { resolveStaffNamesByPhorestIds } from '@/utils/resolveStaffNames';
+import { fetchAllBatched } from '@/utils/fetchAllBatched';
 
 export type ForecastPeriod = 'tomorrow' | '7days' | '30days' | '60days' | 'todayToEom';
 
@@ -99,24 +100,22 @@ export function useForecastRevenue(period: ForecastPeriod, locationId?: string) 
   return useQuery({
     queryKey: ['forecast-revenue', period, startDate, endDate, locationId],
     queryFn: async () => {
-      let query = supabase
-        .from('phorest_appointments')
-        .select('id, appointment_date, total_price, tip_amount, status, client_name, service_name, start_time, end_time, phorest_staff_id, service_category, location_id')
-        .gte('appointment_date', startDate)
-        .lte('appointment_date', endDate)
-        .not('status', 'in', '("cancelled","no_show")')
-        .order('start_time', { ascending: true });
+      const appointments = await fetchAllBatched<any>((from, to) => {
+        let q = supabase
+          .from('phorest_appointments')
+          .select('id, appointment_date, total_price, tip_amount, status, client_name, service_name, start_time, end_time, phorest_staff_id, service_category, location_id')
+          .gte('appointment_date', startDate)
+          .lte('appointment_date', endDate)
+          .not('status', 'in', '("cancelled","no_show")')
+          .order('start_time', { ascending: true })
+          .range(from, to);
 
-      // Filter by location if specified
-      if (locationId && locationId !== 'all') {
-        query = query.eq('location_id', locationId);
-      }
+        if (locationId && locationId !== 'all') {
+          q = q.eq('location_id', locationId);
+        }
 
-      const { data, error } = await query;
-
-      if (error) throw error;
-
-      const appointments = data || [];
+        return q;
+      });
 
       // Fetch staff names for the appointments
       const staffIds = [...new Set(appointments.map(a => a.phorest_staff_id).filter(Boolean))] as string[];
