@@ -104,39 +104,63 @@ export function useSalesTransactions(filters: SalesFilters = {}) {
   });
 }
 
-// Fetch daily sales summaries
+// Fetch daily sales summaries (aggregated from live POS transaction items)
 export function useDailySalesSummary(filters: SalesFilters = {}) {
   return useQuery({
     queryKey: ['daily-sales-summary', filters],
     queryFn: async () => {
-      let query = supabase
-        .from('phorest_daily_sales_summary')
-        .select(`
-          *,
-          employee_profiles:user_id (
-            full_name,
-            display_name,
-            photo_url
-          )
-        `)
-        .order('summary_date', { ascending: false });
+      const allData: any[] = [];
+      const pageSize = 1000;
+      let from = 0;
+      let hasMore = true;
+      while (hasMore) {
+        let q = supabase
+          .from('phorest_transaction_items')
+          .select('stylist_user_id, total_amount, tax_amount, item_type, transaction_date, location_id')
+          .range(from, from + pageSize - 1);
 
-      if (filters.dateFrom) {
-        query = query.gte('summary_date', filters.dateFrom);
-      }
-      if (filters.dateTo) {
-        query = query.lte('summary_date', filters.dateTo);
-      }
-      if (filters.userId) {
-        query = query.eq('user_id', filters.userId);
-      }
-      if (filters.locationId) {
-        query = query.eq('location_id', filters.locationId);
+        if (filters.dateFrom) q = q.gte('transaction_date', filters.dateFrom);
+        if (filters.dateTo) q = q.lte('transaction_date', filters.dateTo);
+        if (filters.userId) q = q.eq('stylist_user_id', filters.userId);
+        if (filters.locationId) q = q.eq('location_id', filters.locationId);
+
+        const { data, error } = await q;
+        if (error) throw error;
+        allData.push(...(data || []));
+        hasMore = (data?.length || 0) === pageSize;
+        from += pageSize;
       }
 
-      const { data, error } = await query;
-      if (error) throw error;
-      return data;
+      // Aggregate by date + user to produce daily summary rows
+      const byKey: Record<string, any> = {};
+      for (const item of allData) {
+        const date = (item.transaction_date || '').slice(0, 10);
+        const key = `${date}|${item.stylist_user_id || ''}`;
+        if (!byKey[key]) {
+          byKey[key] = {
+            summary_date: date,
+            user_id: item.stylist_user_id,
+            location_id: item.location_id,
+            total_revenue: 0,
+            service_revenue: 0,
+            product_revenue: 0,
+            total_services: 0,
+            total_products: 0,
+            total_transactions: 0,
+          };
+        }
+        const amount = (Number(item.total_amount) || 0) + (Number(item.tax_amount) || 0);
+        byKey[key].total_revenue += amount;
+        if (item.item_type === 'service') {
+          byKey[key].service_revenue += amount;
+          byKey[key].total_services += 1;
+        } else {
+          byKey[key].product_revenue += amount;
+          byKey[key].total_products += 1;
+        }
+      }
+
+      return Object.values(byKey).sort((a: any, b: any) => b.summary_date.localeCompare(a.summary_date));
     },
   });
 }
@@ -151,7 +175,7 @@ async function resolvePhorestStaffIds(userId: string): Promise<string[]> {
   return data?.map(m => m.phorest_staff_id) || [];
 }
 
-// Get sales summary for a specific user (for My Stats page)
+// Get sales summary for a specific user (for My Stats page) — from live POS transaction items
 export function useUserSalesSummary(userId: string | undefined, dateFrom?: string, dateTo?: string) {
   return useQuery({
     queryKey: ['user-sales-summary', userId, dateFrom, dateTo],
@@ -161,68 +185,73 @@ export function useUserSalesSummary(userId: string | undefined, dateFrom?: strin
       // Resolve phorest staff IDs for fallback querying
       const phorestStaffIds = await resolvePhorestStaffIds(userId);
 
-      // Query by user_id first
-      let query = supabase
-        .from('phorest_daily_sales_summary')
-        .select('*')
-        .eq('user_id', userId)
-        .order('summary_date', { ascending: false });
+      // Fetch by stylist_user_id first
+      const fetchItems = async (filterField: string, filterValues: string[]) => {
+        const allData: any[] = [];
+        const pageSize = 1000;
+        let from = 0;
+        let hasMore = true;
+        while (hasMore) {
+          let q = supabase
+            .from('phorest_transaction_items')
+            .select('total_amount, tax_amount, item_type, transaction_date')
+            .range(from, from + pageSize - 1);
+          if (filterValues.length === 1) {
+            q = q.eq(filterField, filterValues[0]);
+          } else {
+            q = q.in(filterField, filterValues);
+          }
+          if (dateFrom) q = q.gte('transaction_date', dateFrom);
+          if (dateTo) q = q.lte('transaction_date', dateTo);
+          const { data, error } = await q;
+          if (error) throw error;
+          allData.push(...(data || []));
+          hasMore = (data?.length || 0) === pageSize;
+          from += pageSize;
+        }
+        return allData;
+      };
 
-      if (dateFrom) {
-        query = query.gte('summary_date', dateFrom);
-      }
-      if (dateTo) {
-        query = query.lte('summary_date', dateTo);
-      }
-
-      const { data, error } = await query;
-      if (error) throw error;
-
-      // Fallback: if no data by user_id but we have phorest staff IDs, query by those
-      let allData = data || [];
-      if (allData.length === 0 && phorestStaffIds.length > 0) {
-        let fallbackQuery = supabase
-          .from('phorest_daily_sales_summary')
-          .select('*')
-          .in('phorest_staff_id', phorestStaffIds)
-          .order('summary_date', { ascending: false });
-
-        if (dateFrom) fallbackQuery = fallbackQuery.gte('summary_date', dateFrom);
-        if (dateTo) fallbackQuery = fallbackQuery.lte('summary_date', dateTo);
-
-        const { data: fallbackData, error: fbError } = await fallbackQuery;
-        if (fbError) throw fbError;
-        allData = fallbackData || [];
-      }
+      let items = await fetchItems('stylist_user_id', [userId]);
       
-      // Aggregate the data
-      if (allData.length === 0) return null;
+      // Fallback: if no data by stylist_user_id, try phorest_staff_id
+      if (items.length === 0 && phorestStaffIds.length > 0) {
+        items = await fetchItems('phorest_staff_id', phorestStaffIds);
+      }
 
-      const totals = allData.reduce((acc, day) => ({
-        totalRevenue: acc.totalRevenue + (Number(day.total_revenue) || 0),
-        serviceRevenue: acc.serviceRevenue + (Number(day.service_revenue) || 0),
-        productRevenue: acc.productRevenue + (Number(day.product_revenue) || 0),
-        totalServices: acc.totalServices + (day.total_services || 0),
-        totalProducts: acc.totalProducts + (day.total_products || 0),
-        totalTransactions: acc.totalTransactions + (day.total_transactions || 0),
-        totalDiscounts: acc.totalDiscounts + (Number(day.total_discounts) || 0),
-      }), {
-        totalRevenue: 0,
-        serviceRevenue: 0,
-        productRevenue: 0,
-        totalServices: 0,
-        totalProducts: 0,
-        totalTransactions: 0,
-        totalDiscounts: 0,
-      });
+      if (items.length === 0) return null;
+
+      let totalRevenue = 0, serviceRevenue = 0, productRevenue = 0;
+      let totalServices = 0, totalProducts = 0;
+      const daysSet = new Set<string>();
+
+      for (const item of items) {
+        const amount = (Number(item.total_amount) || 0) + (Number(item.tax_amount) || 0);
+        totalRevenue += amount;
+        if (item.item_type === 'service') {
+          serviceRevenue += amount;
+          totalServices += 1;
+        } else {
+          productRevenue += amount;
+          totalProducts += 1;
+        }
+        const date = (item.transaction_date || '').slice(0, 10);
+        if (date) daysSet.add(date);
+      }
+
+      const totalTransactions = totalServices + totalProducts;
 
       return {
-        ...totals,
-        averageTicket: totals.totalTransactions > 0 
-          ? totals.totalRevenue / totals.totalTransactions 
-          : 0,
-        daysWithData: allData.length,
-        dailyData: allData,
+        totalRevenue,
+        serviceRevenue,
+        productRevenue,
+        totalServices,
+        totalProducts,
+        totalTransactions,
+        totalDiscounts: 0,
+        averageTicket: totalTransactions > 0 ? totalRevenue / totalTransactions : 0,
+        daysWithData: daysSet.size,
+        dailyData: [], // No longer relevant for summary
       };
     },
     enabled: !!userId,

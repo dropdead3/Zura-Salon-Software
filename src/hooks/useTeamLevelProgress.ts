@@ -106,7 +106,7 @@ export function useTeamLevelProgress() {
 
   const userIds = useMemo(() => profiles.map(p => p.user_id), [profiles]);
 
-  // Batch fetch sales data for all team members
+  // Batch fetch sales data for all team members (from live POS transaction items)
   const { data: allSalesData = [], isLoading: loadingSales } = useQuery({
     queryKey: ['team-graduation-sales', orgId, startStr, endStr, userIds.length],
     queryFn: async () => {
@@ -117,11 +117,11 @@ export function useTeamLevelProgress() {
       let hasMore = true;
       while (hasMore) {
         const { data, error } = await supabase
-          .from('phorest_daily_sales_summary')
-          .select('user_id, service_revenue, product_revenue, summary_date')
-          .in('user_id', userIds)
-          .gte('summary_date', startStr)
-          .lte('summary_date', endStr)
+          .from('phorest_transaction_items')
+          .select('stylist_user_id, total_amount, tax_amount, item_type, transaction_date')
+          .in('stylist_user_id', userIds)
+          .gte('transaction_date', startStr)
+          .lte('transaction_date', endStr)
           .range(from, from + pageSize - 1);
         if (error) throw error;
         allData.push(...(data || []));
@@ -238,14 +238,22 @@ export function useTeamLevelProgress() {
       const computeMetrics = (evalDays: number) => {
         const evalStart = format(subDays(new Date(), evalDays), 'yyyy-MM-dd');
         const userSales = allSalesData.filter(
-          s => s.user_id === profile.user_id && s.summary_date >= evalStart
+          (s: any) => s.stylist_user_id === profile.user_id && s.transaction_date >= evalStart
         );
         const userAppts = allApptData.filter(
           a => a.staff_user_id === profile.user_id && a.appointment_date >= evalStart
         );
 
-        const totalServiceRevenue = userSales.reduce((s: number, r: any) => s + (Number(r.service_revenue) || 0), 0);
-        const totalProductRevenue = userSales.reduce((s: number, r: any) => s + (Number(r.product_revenue) || 0), 0);
+        let totalServiceRevenue = 0;
+        let totalProductRevenue = 0;
+        for (const item of userSales) {
+          const amount = (Number(item.total_amount) || 0) + (Number(item.tax_amount) || 0);
+          if (item.item_type === 'service') {
+            totalServiceRevenue += amount;
+          } else {
+            totalProductRevenue += amount;
+          }
+        }
         const totalRevenue = totalServiceRevenue + totalProductRevenue;
         const monthlyRevenue = evalDays > 0 ? (totalRevenue / evalDays) * 30 : 0;
         const retailPct = totalRevenue > 0 ? (totalProductRevenue / totalRevenue) * 100 : 0;
@@ -253,9 +261,11 @@ export function useTeamLevelProgress() {
         const totalApptCount = completedAppts.length;
         const rebooked = completedAppts.filter((a: any) => a.rebooked_at_checkout).length;
         const rebookingPct = totalApptCount > 0 ? (rebooked / totalApptCount) * 100 : 0;
-        const avgTicket = totalApptCount > 0
-          ? completedAppts.reduce((s: number, a: any) => s + (Number(a.total_price) || 0), 0) / totalApptCount
-          : 0;
+        // Avg Ticket: use unique client visits as denominator
+        const uniqueVisits = new Set(
+          completedAppts.filter((a: any) => a.client_id).map((a: any) => `${a.client_id}|${a.appointment_date}`)
+        ).size;
+        const avgTicket = uniqueVisits > 0 ? totalRevenue / uniqueVisits : 0;
         // New clients count (normalized to monthly)
         const newClients = completedAppts.filter((a: any) => a.is_new_client === true).length;
         const newClientsMonthly = evalDays > 0 ? (newClients / evalDays) * 30 : 0;
@@ -303,10 +313,9 @@ export function useTeamLevelProgress() {
             utilization = Math.min(100, (avgMinutesPerDay / 480) * 100); // 480 = 8h workday
           }
         }
-        // Revenue per hour calculation
+        // Revenue per hour calculation (using sales-based revenue, not total_price which includes tips)
         const totalBookedMinutes = completedAppts.reduce((sum: number, a: any) => sum + (Number(a.duration_minutes) || 60), 0);
-        const totalApptRevenue = completedAppts.reduce((s: number, a: any) => s + (Number(a.total_price) || 0), 0);
-        const revPerHour = totalBookedMinutes > 0 ? (totalApptRevenue / totalBookedMinutes) * 60 : 0;
+        const revPerHour = totalBookedMinutes > 0 ? (totalRevenue / totalBookedMinutes) * 60 : 0;
 
         return { monthlyRevenue, retailPct, rebookingPct, avgTicket, newClientsMonthly, retentionRate, utilization, revPerHour };
       };

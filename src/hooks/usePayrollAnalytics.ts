@@ -67,14 +67,34 @@ export function usePayrollAnalytics(): PayrollAnalyticsData {
     queryFn: async () => {
       if (!periodStart || !periodEnd) return null;
 
-      const { data, error } = await supabase
-        .from('phorest_daily_sales_summary')
-        .select('user_id, service_revenue, product_revenue, summary_date')
-        .gte('summary_date', periodStart)
-        .lte('summary_date', periodEnd);
+      const allData: any[] = [];
+      const pageSize = 1000;
+      let from = 0;
+      let hasMore = true;
+      while (hasMore) {
+        const { data, error } = await supabase
+          .from('phorest_transaction_items')
+          .select('stylist_user_id, total_amount, tax_amount, item_type, transaction_date')
+          .gte('transaction_date', periodStart)
+          .lte('transaction_date', periodEnd)
+          .range(from, from + pageSize - 1);
+        if (error) throw error;
+        allData.push(...(data || []));
+        hasMore = (data?.length || 0) === pageSize;
+        from += pageSize;
+      }
 
-      if (error) throw error;
-      return data;
+      // Transform to the format expected by calculateForecast: { user_id, service_revenue, product_revenue }
+      const byUser: Record<string, { user_id: string; service_revenue: number; product_revenue: number }> = {};
+      for (const item of allData) {
+        const uid = item.stylist_user_id;
+        if (!uid) continue;
+        if (!byUser[uid]) byUser[uid] = { user_id: uid, service_revenue: 0, product_revenue: 0 };
+        const amount = (Number(item.total_amount) || 0) + (Number(item.tax_amount) || 0);
+        if (item.item_type === 'service') byUser[uid].service_revenue += amount;
+        else byUser[uid].product_revenue += amount;
+      }
+      return Object.values(byUser);
     },
     enabled: !!periodStart && !!periodEnd,
   });
@@ -85,16 +105,25 @@ export function usePayrollAnalytics(): PayrollAnalyticsData {
       const yearStart = format(startOfYear(new Date()), 'yyyy-MM-dd');
       const today = format(new Date(), 'yyyy-MM-dd');
 
-      const { data, error } = await supabase
-        .from('phorest_daily_sales_summary')
-        .select('service_revenue, product_revenue')
-        .gte('summary_date', yearStart)
-        .lte('summary_date', today);
+      const allData: any[] = [];
+      const pageSize = 1000;
+      let from = 0;
+      let hasMore = true;
+      while (hasMore) {
+        const { data, error } = await supabase
+          .from('phorest_transaction_items')
+          .select('total_amount, tax_amount')
+          .gte('transaction_date', yearStart)
+          .lte('transaction_date', today)
+          .range(from, from + pageSize - 1);
+        if (error) throw error;
+        allData.push(...(data || []));
+        hasMore = (data?.length || 0) === pageSize;
+        from += pageSize;
+      }
 
-      if (error) throw error;
-      
-      return data?.reduce((sum, row) => 
-        sum + (Number(row.service_revenue) || 0) + (Number(row.product_revenue) || 0), 0) || 0;
+      return allData.reduce((sum, item) =>
+        sum + (Number(item.total_amount) || 0) + (Number(item.tax_amount) || 0), 0);
     },
     enabled: !!organizationId,
   });
