@@ -1,51 +1,64 @@
 
 
-# Phorest Staff Photo Sync
+# Fix Sales Overview Revenue Discrepancy
 
-## What This Does
-During staff sync, capture the photo URL from Phorest's API response and auto-populate `employee_profiles.photo_url` for mapped staff who don't already have a manually uploaded photo. Also store it on `phorest_staff_mapping` for reference.
+## Root Cause (Three Issues)
 
-## Changes
+### Issue 1: Tips included in "Scheduled Services Today"
+`originalExpected` sums `total_price` which includes `tip_amount` ($76 today). The card says "Excludes Tips" but the scheduled total doesn't exclude them. Should be $5,143, not $5,219.
 
-### 1. Database Migration
-Add `phorest_photo_url` column to `phorest_staff_mapping` to store the raw Phorest CDN URL separately from the employee profile photo (which may be manually overridden).
+### Issue 2: Completed-but-not-checked-out appointments treated as $0
+Phorest marks appointments "completed" when the service finishes, but POS checkout happens later. Today: 26 completed appointments, but only 2 clients have POS transactions ($257.31). The hook looks up POS data for completed clients — if no POS record exists yet, their revenue contribution is $0. This creates a $2,467 gap.
 
-```sql
-ALTER TABLE public.phorest_staff_mapping
-ADD COLUMN IF NOT EXISTS phorest_photo_url TEXT;
+### Issue 3: "Still expected to collect" only shows booked/pending
+`pendingExpectedRevenue` only counts appointments with status `booked/confirmed/arrived/started/pending/in_progress`. The 24 completed-without-checkout appointments fall through the cracks — they're "resolved" (so not pending) but have no POS data (so contribute ~$0 to actuals).
+
+## Fix Plan
+
+### File: `src/hooks/useAdjustedExpectedRevenue.ts`
+
+**Change 1: Subtract tips from originalExpected**
+Line 65: Change from summing `total_price` to summing `total_price - tip_amount`.
+
+**Change 2: Add a "completed but not checked out" category**
+After fetching POS data for completed appointments, compare each completed appointment's scheduled price against whether POS data was found for that client. If a completed appointment's client has no POS transactions, count its scheduled price as "awaiting checkout" revenue rather than $0.
+
+Add new fields to `AdjustedExpectedResult`:
+- `awaitingCheckoutCount: number`
+- `awaitingCheckoutRevenue: number`
+
+**Change 3: Include awaiting-checkout in adjusted expected**
+```
+adjustedExpected = completedActualRevenue + awaitingCheckoutRevenue + pendingExpectedRevenue
 ```
 
-### 2. Edge Function: `sync-phorest-data/index.ts`
+**Change 4: Subtract tips from pending/completed scheduled sums**
+All intermediate sums (`pendingScheduledRevenue`, `completedScheduledRevenue`) should use `total_price - tip_amount`.
 
-Modify `syncStaff()` (lines 147–215):
+### File: `src/components/dashboard/AggregateSalesCard.tsx`
 
-- Extract `photo` / `photoUrl` / `image` field from each staff object (Phorest uses varying field names — we'll check all candidates)
-- Upsert `phorest_photo_url` on `phorest_staff_mapping` for all staff (mapped and unmapped)
-- For mapped staff where `employee_profiles.photo_url` is null, auto-populate it with the Phorest photo URL
-- Log the full staff object shape on first sync to confirm exact field names
-
-**Key logic:**
-```ts
-const photoUrl = s.photo || s.photoUrl || s.imageUrl || s.image || null;
+**Change 5: Update "still expected to collect"**
+`remainingExpected` should include both pending appointments AND awaiting-checkout appointments:
+```
+remainingExpected = pendingExpectedRevenue + awaitingCheckoutRevenue
 ```
 
-After mapping resolution:
-- Update `phorest_staff_mapping.phorest_photo_url` for all entries
-- For entries with a `user_id`, check if `employee_profiles.photo_url` is null — if so, set it to the Phorest photo URL
+**Change 6: Update appointment completion fraction**
+Add awaiting-checkout context: e.g., "26 of 42 completed · 16 pending · 24 awaiting checkout"
 
-### 3. No UI Changes Needed
-The app already reads `employee_profiles.photo_url` everywhere (avatars, team stats, sales data, dock). Once the photo URL is populated, headshots will appear automatically across all surfaces.
+## Expected Result After Fix
 
-## Safeguards
-- **Manual override preserved**: Only populates `employee_profiles.photo_url` when it's currently null — never overwrites a manually uploaded photo
-- **Phorest URL stored separately**: `phorest_photo_url` on the mapping table preserves the original source, so a re-sync can refresh it without touching manual overrides
-- **CDN reliability**: Phase 1 uses Phorest CDN URLs directly. If URLs prove unstable, Phase 2 can re-host to Lovable Cloud storage
+| Metric | Before | After |
+|--------|--------|-------|
+| Scheduled Services Today | $5,219 (inc tips) | $5,143 (ex tips) |
+| Still expected to collect | $2,495 (pending only) | ~$4,886 (pending + awaiting checkout) |
+| Projected finish | $2,752 | $5,143 (realistic) |
 
 ## Summary
 
 | Type | Count |
 |------|-------|
-| Migration | 1 (add column to `phorest_staff_mapping`) |
-| Modified files | 1 (`sync-phorest-data/index.ts` — `syncStaff` function) |
-| New files | 0 |
+| Modified files | 2 |
+| New fields added | 2 (`awaitingCheckoutCount`, `awaitingCheckoutRevenue`) |
+| Root causes fixed | 3 (tips inclusion, checkout gap, pending-only scope) |
 
