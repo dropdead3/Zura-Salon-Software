@@ -29,6 +29,7 @@ import { GiftCardManager } from '@/components/dashboard/transactions/GiftCardMan
 import { cn } from '@/lib/utils';
 import { BentoGrid } from '@/components/ui/bento-grid';
 import { PageExplainer } from '@/components/ui/PageExplainer';
+import { useRevenueDisplay } from '@/contexts/RevenueDisplayContext';
 
 type DatePreset = 'today' | 'this_week' | 'this_month' | 'last_month' | 'all';
 
@@ -86,6 +87,7 @@ export default function Transactions() {
 
   const { data: transactions = [], isLoading, refetch } = useTransactions(filters);
   const { formatCurrency } = useFormatCurrency();
+  const { adjustRevenue, taxLabel } = useRevenueDisplay();
 
   const handleRefund = (transaction: any) => {
     setSelectedTransaction(transaction);
@@ -93,7 +95,9 @@ export default function Transactions() {
   };
 
   // Calculate summary stats
-  const totalRevenue = transactions.reduce((sum, t) => sum + (Number(t.total_amount) || 0) + (Number(t.tax_amount) || 0), 0);
+  const totalTax = transactions.reduce((sum, t) => sum + (Number(t.tax_amount) || 0), 0);
+  const totalRevenueGross = transactions.reduce((sum, t) => sum + (Number(t.total_amount) || 0) + (Number(t.tax_amount) || 0), 0);
+  const totalRevenue = adjustRevenue(totalRevenueGross, totalTax);
   const serviceCount = transactions.filter(t => (t.item_type || '').toLowerCase() === 'service').length;
   const productCount = transactions.filter(t => (t.item_type || '').toLowerCase() === 'product').length;
   const refundedCount = transactions.filter(t => t.refund_status).length;

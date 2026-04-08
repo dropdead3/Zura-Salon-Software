@@ -2,6 +2,7 @@ import { ArrowUpRight, ArrowDownRight, Minus, DollarSign } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
+import { useRevenueDisplay } from '@/contexts/RevenueDisplayContext';
 import type { ComparisonResult } from '@/hooks/useComparisonData';
 
 interface ComparisonResultsGridProps {
