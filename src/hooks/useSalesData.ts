@@ -542,11 +542,11 @@ export function useSalesByLocation(dateFrom?: string, dateTo?: string) {
 
       // Fetch appointments with batch fetching + status filter
       const data = await fetchAllBatched<{
-        location_id: string | null; total_price: number | null; phorest_client_id: string | null;
+        location_id: string | null; total_price: number | null; tip_amount: number | null; phorest_client_id: string | null;
       }>((from, to) => {
         let q = supabase
           .from('phorest_appointments')
-          .select('location_id, total_price, phorest_client_id')
+          .select('location_id, total_price, tip_amount, phorest_client_id')
           .not('total_price', 'is', null)
           .not('status', 'in', '("cancelled","no_show")')
           .range(from, to);

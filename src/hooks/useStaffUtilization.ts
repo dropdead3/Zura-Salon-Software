@@ -108,7 +108,7 @@ export function useStaffUtilization(locationId?: string, dateRange: StaffDateRan
       // Then get appointments with revenue data
       let aptQuery = supabase
         .from('phorest_appointments')
-        .select('stylist_user_id, status, total_price')
+        .select('stylist_user_id, status, total_price, tip_amount')
         .gte('appointment_date', startDateStr)
         .lte('appointment_date', endDateStr)
         .not('status', 'eq', 'cancelled');
@@ -146,7 +146,7 @@ export function useStaffUtilization(locationId?: string, dateRange: StaffDateRan
         };
 
         existing.appointmentCount++;
-        existing.totalRevenue += Number(apt.total_price) || 0;
+        existing.totalRevenue += (Number(apt.total_price) || 0) - (Number((apt as any).tip_amount) || 0);
         if (apt.status === 'completed') existing.completedCount++;
         if (apt.status === 'no_show') existing.noShowCount++;
 
