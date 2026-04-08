@@ -1,64 +1,52 @@
 
 
-# Level Progress Card — Gaps, Improvements & Enhancements
+# Wire Evaluation Window into Level Progress Card
 
-## Gaps Found
+## Problem
 
-### 1. Data Source Inconsistency (Critical)
-`useLevelProgress` and `useStylistPeerAverages` compute **Avg Ticket** and **Revenue Per Hour** from `appointments.total_price`, which includes tips and non-performance amounts. We just fixed `useIndividualStaffReport` to use `phorest_transaction_items` as the POS source of truth. These hooks are still on the old methodology, meaning:
-- Avg Ticket here ≠ Avg Ticket on the 1:1 report
-- Revenue Per Hour is inflated by tips
+The Level Progress card currently computes metrics using `computeMetrics(evalDays)`, which correctly uses the configured evaluation window (e.g., 90 days) and normalizes revenue to a monthly average. However, the card **never communicates this to the viewer**. The result:
 
-**Fix:** Switch `computeMetrics()` in `useLevelProgress` to derive Avg Ticket from `phorest_daily_sales_summary` (service + product revenue / unique client visits) instead of `appointments.total_price`. Same for Revenue Per Hour. Apply identical fix to `useStylistPeerAverages`.
+- A salon owner sees "Service Revenue: $1,558 / min $5,000" with no context on what time period produced that number
+- It looks like a month-to-date snapshot, so it always appears "wrong" compared to any single month in Phorest
+- The retention section shows no eval window at all — only the promotion footer mentions it
+- There's no explanation that "$1,558" means "monthly average over the last 90 days" (or whatever the configured window is)
 
-### 2. Avg Ticket Denominator Mismatch
-Both hooks divide by appointment count. The POS-first standard is **unique client visits** (distinct `client_id` + `date`). This inflates the denominator and deflates Avg Ticket when a client has multiple services in one visit.
+The underlying calculation is actually correct — the issue is **transparency**.
 
-**Fix:** Use distinct `client_id + appointment_date` from the appointments table as the denominator for Avg Ticket in both `useLevelProgress.computeMetrics()` and `useStylistPeerAverages`.
+## Changes
 
-### 3. Card Hidden for Top-Level Stylists Without Retention Risk (UX Gap)
-Line 102: `if (!progress.nextLevelLabel && !progress.retention?.isAtRisk) return null`. Top-level stylists in good standing see **nothing**. They lose visibility into their own performance metrics entirely.
+### File 1: `src/components/coaching/LevelProgressCard.tsx`
 
-**Fix:** Show a condensed "Current Performance" view for top-level stylists — display their KPI metrics against retention minimums as a health check, without the "What You Need" promotion framing.
+**Retention warning section** — Add evaluation window context:
+- Below the "Below minimum standards" header, add a line: `"Measured over a {N}-day rolling window (monthly avg)"`
+- This uses `progress.retention.evaluationWindowDays` which is already in the data
 
-### 4. No Period-over-Period Trends Displayed
-The hook already computes `priorCurrent` for every criterion (for PoP trend arrows), but the `LevelProgressCard` component **never renders them**. The `StylistScorecard` does show trends, but the standalone card used in 1:1 reports does not.
+**Promotion "What You Need" section** — Add eval window subtitle:
+- Below the "What You Need" heading, add: `"Rolling {N}-day average · Evaluated {startDate} – today"`
+- Computed from `progress.evaluationWindowDays`
 
-**Fix:** Add a small trend arrow (↑/↓/—) next to each criterion's "You" value in the card, using the same 3% relative threshold logic as the Scorecard.
+**Revenue labels** — Clarify averaging:
+- When `evalDays > 30`, append "(monthly avg)" qualifier to the revenue metric label in `CriterionRow` or via a subtitle, so "$1,558/mo" reads as a monthly average over the window, not a raw monthly total
+- Same for retention failure rows — add eval window context
 
-### 5. Missing Weight Visibility
-The composite score uses weighted criteria, but the card doesn't show which metrics carry more weight. A stylist can't tell if Revenue (at 40% weight) matters more than Retail (at 10% weight).
+**Footer** — Show both windows when they differ:
+- Currently only shows promotion eval window. When the retention eval window differs, show both: `"Promotion: {N}-day window · Retention: {M}-day window"`
 
-**Fix:** Add a subtle weight indicator (e.g., "40%" in muted text) next to each metric label, so stylists understand where to focus effort.
+**MetricInfoTooltip update** — Update the card-level tooltip to explain: "Performance is evaluated as a rolling average over the configured evaluation window. Revenue figures represent the monthly average across that period."
 
-### 6. Revenue Values Not Wrapped in BlurredAmount
-The criterion rows display raw dollar values (`$1,558`, `$8,000`) without `BlurredAmount` wrapping, violating the financial data privacy requirement. Only the Income Opportunity section uses it.
+### File 2: `src/hooks/useLevelProgress.ts`
 
-**Fix:** Wrap all monetary criterion values (revenue, avg ticket, rev/hr, and their gaps) in `BlurredAmount`.
+No logic changes needed — the hook already correctly:
+- Uses `retentionCriteria.evaluation_window_days` for retention metrics (line 315)
+- Uses `nextCriteria.evaluation_window_days` for promotion metrics (line 122)
+- Normalizes revenue to monthly: `(totalRevenue / evalDays) * 30` (line 242)
+- Exposes `evaluationWindowDays` on the result and `retention.evaluationWindowDays`
 
-## Implementation Plan
+## Summary
 
-### File 1: `src/hooks/useLevelProgress.ts`
-- In `computeMetrics()` and `computePriorMetrics()`: change Avg Ticket from `total_price / appointment_count` to `(serviceRevenue + productRevenue) / uniqueClientVisits` using sales summary data and distinct client+date from appointments
-- Same fix for Revenue Per Hour: use `(serviceRevenue + productRevenue) / totalBookedHours` instead of `total_price / totalBookedHours`
-
-### File 2: `src/hooks/useStylistPeerAverages.ts`
-- Same Avg Ticket denominator fix: unique client visits instead of appointment count
-- Same Revenue Per Hour fix: use sales-based revenue instead of `total_price`
-
-### File 3: `src/components/coaching/LevelProgressCard.tsx`
-- Add trend arrows to each CriterionRow (using `priorCurrent` already in the data)
-- Add subtle weight display per metric row
-- Wrap monetary values in `BlurredAmount`
-- Handle top-level stylists: show retention KPI status instead of returning null
-- Add `priorCurrent` and `weight` props to `CriterionRow`
-
-## Files Changed
 | File | Change |
 |---|---|
-| `useLevelProgress.ts` | Fix Avg Ticket denominator + Revenue Per Hour to use sales-based revenue |
-| `useStylistPeerAverages.ts` | Same Avg Ticket + Rev/Hr fixes for peer consistency |
-| `LevelProgressCard.tsx` | Add trend arrows, weight indicators, BlurredAmount, top-level view |
+| `LevelProgressCard.tsx` | Add eval window labels to retention and promotion sections; clarify revenue averaging; update tooltip |
 
-3 files, no database changes.
+1 file, no database changes. Pure transparency/UX fix.
 
