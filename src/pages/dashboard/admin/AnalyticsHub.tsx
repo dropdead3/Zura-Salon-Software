@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, Link } from 'react-router-dom';
 import { format, subDays, startOfWeek, endOfWeek, startOfMonth, endOfMonth, subMonths, startOfYear } from 'date-fns';
 import { getNextPayDay } from '@/hooks/usePaySchedule';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
@@ -35,7 +35,7 @@ import { MarketingTabContent } from '@/components/dashboard/analytics/MarketingT
 import { ProgramTabContent } from '@/components/dashboard/analytics/ProgramTabContent';
 import { RentRevenueTab } from '@/components/dashboard/analytics/RentRevenueTab';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
-import { ReportsTabContent } from '@/components/dashboard/analytics/ReportsTabContent';
+
 import { CampaignsTabContent } from '@/components/dashboard/analytics/CampaignsTabContent';
 import { PinnableCard } from '@/components/dashboard/PinnableCard';
 import { LeadershipTabContent } from '@/components/dashboard/analytics/LeadershipTabContent';
@@ -50,7 +50,6 @@ const baseCategories = [
   { id: 'marketing', label: 'Marketing', icon: TrendingUp },
   { id: 'campaigns', label: 'Campaigns', icon: Target },
   { id: 'program', label: 'Program', icon: Target },
-  { id: 'reports', label: 'Reports', icon: FileText },
 ];
 
 const rentCategory = { id: 'rent', label: 'Rent', icon: Home };
@@ -347,6 +346,13 @@ export default function AnalyticsHub() {
                   </PopoverContent>
                 </Popover>
               )}
+
+              <Button variant="outline" size={tokens.button.card} asChild className="gap-2">
+                <Link to="/dashboard/admin/reports">
+                  <FileText className="w-4 h-4" />
+                  <span className="hidden lg:inline">Reports</span>
+                </Link>
+              </Button>
             </div>
           ) : undefined}
         />
@@ -425,11 +431,6 @@ export default function AnalyticsHub() {
             </TabsContent>
           </VisibilityGate>
 
-          <VisibilityGate elementKey="analytics_reports_tab">
-            <TabsContent value="reports" className="mt-6">
-              <ReportsTabContent filters={filters} />
-            </TabsContent>
-          </VisibilityGate>
 
           {isSuperAdmin && hasRenters && effectiveOrganization?.id && (
             <VisibilityGate elementKey="analytics_rent_tab">
