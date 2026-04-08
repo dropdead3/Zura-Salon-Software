@@ -250,6 +250,7 @@ export function usePhorestPerformanceMetrics(weekStart?: string) {
           const mapping = staffMap.get(phorestId);
           const userId = mapping?.user_id || null;
           const profile = userId ? profileMap.get(userId) : undefined;
+          const avgTicket = s.service_count > 0 ? s.total_revenue / s.service_count : 0;
           return {
             user_id: userId,
             phorest_staff_id: phorestId,
@@ -257,8 +258,10 @@ export function usePhorestPerformanceMetrics(weekStart?: string) {
             total_revenue: s.total_revenue,
             retail_sales: s.retail_sales,
             service_count: s.service_count,
-            new_clients: s.new_clients, // Would need historical client data to compute accurately
+            new_clients: s.new_clients,
             retention_rate: s.retention_rate,
+            rebooking_rate: s.retention_rate, // alias for consumers expecting this field
+            average_ticket: avgTicket,
             extension_clients: s.extension_clients,
             employee_profiles: profile || { full_name: mapping?.phorest_staff_name || 'Unknown', display_name: null, photo_url: null },
           };
