@@ -89,8 +89,9 @@ const aggregateSales = (data: any[]): Omit<PeriodData, 'averageTicket'> => {
       serviceRevenue: acc.serviceRevenue + (Number(d.service_revenue) || 0),
       productRevenue: acc.productRevenue + (Number(d.product_revenue) || 0),
       totalTransactions: acc.totalTransactions + (d.total_transactions || 0),
+      totalTax: acc.totalTax + (Number(d.total_tax) || 0),
     }),
-    { totalRevenue: 0, serviceRevenue: 0, productRevenue: 0, totalTransactions: 0 }
+    { totalRevenue: 0, serviceRevenue: 0, productRevenue: 0, totalTransactions: 0, totalTax: 0 }
   );
 };
 
