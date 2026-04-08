@@ -44,38 +44,75 @@ export function useAppointmentsHub(filters: HubFilters) {
         'staff_user_id'
       );
 
-      const [phorestResult, localResult] = await Promise.all([
-        phorestQuery.order('appointment_date', { ascending: false }).order('start_time', { ascending: false }).limit(1000),
-        localQuery.order('appointment_date', { ascending: false }).order('start_time', { ascending: false }).limit(1000),
+      // Get exact counts first
+      const [phorestCountRes, localCountRes] = await Promise.all([
+        buildFilters(
+          supabase.from('phorest_appointments').select('*', { count: 'exact', head: true }).is('deleted_at', null),
+          'stylist_user_id'
+        ),
+        buildFilters(
+          supabase.from('appointments').select('*', { count: 'exact', head: true }).is('deleted_at', null),
+          'staff_user_id'
+        ),
       ]);
 
-      if (phorestResult.error) throw phorestResult.error;
-      if (localResult.error) throw localResult.error;
+      const phorestCount = phorestCountRes.count || 0;
+      const localCount = localCountRes.count || 0;
+      const totalCount = phorestCount + localCount;
 
-      // Normalize local appointments to match phorest shape
-      const normalizedLocal = (localResult.data || []).map((a: any) => ({
+      // Server-side pagination: fetch only the page we need from each source
+      // Strategy: prioritize phorest rows (sorted desc), then local rows
+      const rangeFrom = page * pageSize;
+      const rangeTo = rangeFrom + pageSize - 1;
+
+      let phorestData: any[] = [];
+      let localData: any[] = [];
+
+      if (rangeFrom < phorestCount) {
+        // Some or all rows come from phorest
+        const phorestEnd = Math.min(rangeTo, phorestCount - 1);
+        const { data, error } = await phorestQuery
+          .order('appointment_date', { ascending: false })
+          .order('start_time', { ascending: false })
+          .range(rangeFrom, phorestEnd);
+        if (error) throw error;
+        phorestData = data || [];
+
+        // If we need more rows from local to fill the page
+        const remaining = pageSize - phorestData.length;
+        if (remaining > 0) {
+          const { data: ld, error: le } = await localQuery
+            .order('appointment_date', { ascending: false })
+            .order('start_time', { ascending: false })
+            .range(0, remaining - 1);
+          if (le) throw le;
+          localData = ld || [];
+        }
+      } else {
+        // All rows come from local
+        const localFrom = rangeFrom - phorestCount;
+        const localTo = localFrom + pageSize - 1;
+        const { data, error } = await localQuery
+          .order('appointment_date', { ascending: false })
+          .order('start_time', { ascending: false })
+          .range(localFrom, localTo);
+        if (error) throw error;
+        localData = data || [];
+      }
+
+      // Normalize
+      const normalizedLocal = localData.map((a: any) => ({
         ...a,
         stylist_user_id: a.staff_user_id,
         _source: 'local' as const,
       }));
 
-      const normalizedPhorest = (phorestResult.data || []).map((a: any) => ({
+      const normalizedPhorest = phorestData.map((a: any) => ({
         ...a,
         _source: 'phorest' as const,
       }));
 
-      // Merge and sort
-      const all = [...normalizedPhorest, ...normalizedLocal].sort((a, b) => {
-        const dateCompare = (b.appointment_date || '').localeCompare(a.appointment_date || '');
-        if (dateCompare !== 0) return dateCompare;
-        return (b.start_time || '').localeCompare(a.start_time || '');
-      });
-
-      const totalCount = (phorestResult.count || 0) + (localResult.count || 0);
-
-      // Paginate merged results
-      const from = page * pageSize;
-      const paged = all.slice(from, from + pageSize);
+      const paged = [...normalizedPhorest, ...normalizedLocal];
 
       // ── Resolve client info (name, email, phone) from phorest_clients ──
       const missingClientIds = [

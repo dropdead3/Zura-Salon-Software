@@ -7,6 +7,7 @@ import { ScatterChart, Scatter, XAxis, YAxis, CartesianGrid, Tooltip, Responsive
 import type { CorrelationPair } from '@/hooks/useCorrelationAnalysis';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { fetchAllBatched } from '@/utils/fetchAllBatched';
 import { subDays, format } from 'date-fns';
 import { formatCurrency as formatCurrencyUtil, formatCurrencyWhole as formatCurrencyWholeUtil } from '@/lib/formatCurrency';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
@@ -42,16 +43,16 @@ export function ScatterPlotCard({ pair, locationId, onClose }: ScatterPlotCardPr
     queryFn: async () => {
       const dateFrom = format(subDays(new Date(), 90), 'yyyy-MM-dd');
 
-      let q: any = supabase
-        .from('phorest_transaction_items')
-        .select('transaction_date, total_amount, tax_amount, item_type, phorest_client_id')
-        .gte('transaction_date', dateFrom);
-
-      if (locationId) {
-        q = q.eq('location_id', locationId);
-      }
-
-      const { data } = await q;
+      const data = await fetchAllBatched<any>((from, to) => {
+        let q = supabase
+          .from('phorest_transaction_items')
+          .select('transaction_date, total_amount, tax_amount, item_type, phorest_client_id')
+          .gte('transaction_date', dateFrom);
+        if (locationId) {
+          q = q.eq('location_id', locationId);
+        }
+        return q.range(from, to);
+      });
       
       // Aggregate to daily totals
       const dailyMap: Record<string, any> = {};

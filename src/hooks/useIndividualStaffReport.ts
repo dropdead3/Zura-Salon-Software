@@ -222,24 +222,29 @@ export function useIndividualStaffReport(staffUserId: string | null, dateFrom?: 
       }
 
       // ── Fetch appointments for current + prior + two-prior periods ──
-      const [currentAptsRes, priorAptsRes, twoPriorAptsRes] = await Promise.all([
-        supabase.from('phorest_appointments')
-          .select('appointment_date, total_price, tip_amount, status, phorest_client_id, rebooked_at_checkout, is_new_client')
-          .eq('phorest_staff_id', phorestStaffId)
-          .gte('appointment_date', dateFrom).lte('appointment_date', dateTo),
-        supabase.from('phorest_appointments')
-          .select('total_price, tip_amount, phorest_client_id, rebooked_at_checkout, status, is_new_client')
-          .eq('phorest_staff_id', phorestStaffId)
-          .gte('appointment_date', priorFrom).lte('appointment_date', priorTo),
-        supabase.from('phorest_appointments')
-          .select('total_price, tip_amount, phorest_client_id, rebooked_at_checkout, status, is_new_client')
-          .eq('phorest_staff_id', phorestStaffId)
-          .gte('appointment_date', twoPriorFrom).lte('appointment_date', twoPriorTo),
+      const [currentApts, priorApts, twoPriorApts] = await Promise.all([
+        fetchAllBatched<any>((from, to) =>
+          supabase.from('phorest_appointments')
+            .select('appointment_date, total_price, tip_amount, status, phorest_client_id, rebooked_at_checkout, is_new_client')
+            .eq('phorest_staff_id', phorestStaffId)
+            .gte('appointment_date', dateFrom).lte('appointment_date', dateTo)
+            .range(from, to)
+        ),
+        fetchAllBatched<any>((from, to) =>
+          supabase.from('phorest_appointments')
+            .select('total_price, tip_amount, phorest_client_id, rebooked_at_checkout, status, is_new_client')
+            .eq('phorest_staff_id', phorestStaffId)
+            .gte('appointment_date', priorFrom).lte('appointment_date', priorTo)
+            .range(from, to)
+        ),
+        fetchAllBatched<any>((from, to) =>
+          supabase.from('phorest_appointments')
+            .select('total_price, tip_amount, phorest_client_id, rebooked_at_checkout, status, is_new_client')
+            .eq('phorest_staff_id', phorestStaffId)
+            .gte('appointment_date', twoPriorFrom).lte('appointment_date', twoPriorTo)
+            .range(from, to)
+        ),
       ]);
-
-      const currentApts = currentAptsRes.data || [];
-      const priorApts = priorAptsRes.data || [];
-      const twoPriorApts = twoPriorAptsRes.data || [];
 
       // ── Fetch transaction items for services/products (paginated) ──
       const PAGE_SIZE = 1000;

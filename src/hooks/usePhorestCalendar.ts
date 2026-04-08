@@ -1,6 +1,7 @@
 import { useState, useMemo, useCallback, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { fetchAllBatched } from '@/utils/fetchAllBatched';
 import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth, addDays } from 'date-fns';
 import { useAuth } from '@/contexts/AuthContext';
 import { useEffectiveUserId } from './useEffectiveUser';
@@ -267,23 +268,33 @@ export function usePhorestCalendar() {
     queryKey: ['appointments-with-assistants', dateRange, canViewAll || canViewTeam],
     queryFn: async () => {
       if (!canViewAll && !canViewTeam) return new Set<string>();
-      // Get appointment IDs in date range that have assistants
-      const { data: apptIds } = await supabase
-        .from('phorest_appointments')
-        .select('id')
-        .gte('appointment_date', dateRange.start)
-        .lte('appointment_date', dateRange.end)
-        .eq('is_demo', false);
+      // Get appointment IDs in date range that have assistants (paginated)
+      const apptIds = await fetchAllBatched<any>((from, to) =>
+        supabase
+          .from('phorest_appointments')
+          .select('id')
+          .gte('appointment_date', dateRange.start)
+          .lte('appointment_date', dateRange.end)
+          .eq('is_demo', false)
+          .range(from, to)
+      );
 
-      if (!apptIds || apptIds.length === 0) return new Set<string>();
+      if (apptIds.length === 0) return new Set<string>();
 
       const ids = apptIds.map(a => a.id);
-      const { data } = await supabase
-        .from('appointment_assistants')
-        .select('appointment_id')
-        .in('appointment_id', ids);
+      // Chunk .in() calls to avoid query-string limits
+      const CHUNK = 500;
+      const allAssistants: any[] = [];
+      for (let i = 0; i < ids.length; i += CHUNK) {
+        const chunk = ids.slice(i, i + CHUNK);
+        const { data } = await supabase
+          .from('appointment_assistants')
+          .select('appointment_id')
+          .in('appointment_id', chunk);
+        if (data) allAssistants.push(...data);
+      }
 
-      return new Set((data || []).map(a => a.appointment_id));
+      return new Set(allAssistants.map(a => a.appointment_id));
     },
     enabled: canViewAll || canViewTeam,
   });
