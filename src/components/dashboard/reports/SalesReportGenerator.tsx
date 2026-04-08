@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useFormatDate } from '@/hooks/useFormatDate';
 import { useFormatNumber } from '@/hooks/useFormatNumber';
 import jsPDF from 'jspdf';
@@ -18,7 +18,7 @@ import {
 } from '@/components/ui/table';
 import { FileText, Download, Loader2, FileSpreadsheet, Eye } from 'lucide-react';
 import { ReportPreviewModal } from '@/components/dashboard/reports/ReportPreviewModal';
-import { useSalesMetrics, useSalesByStylist, useSalesByLocation } from '@/hooks/useSalesData';
+import { useSalesMetrics, useSalesByStylist, useSalesByLocation, useDailySalesSummary } from '@/hooks/useSalesData';
 import { useProductSalesAnalytics } from '@/hooks/useProductSalesAnalytics';
 import { useAuth } from '@/contexts/AuthContext';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
@@ -65,8 +65,27 @@ export function SalesReportGenerator({
   const { data: stylistData, isLoading: stylistLoading } = useSalesByStylist(dateFrom, dateTo);
   const { data: locationData, isLoading: locationLoading } = useSalesByLocation(dateFrom, dateTo);
   const { data: productData, isLoading: productLoading } = useProductSalesAnalytics('month', locationId);
+  const { data: dailyRawData, isLoading: dailyLoading } = useDailySalesSummary({ dateFrom, dateTo, locationId });
 
-  const isLoading = metricsLoading || stylistLoading || locationLoading || productLoading;
+  // Aggregate daily rows (per-staff) into per-date rows
+  const dailyRows = useMemo(() => {
+    if (!dailyRawData) return [];
+    const byDate: Record<string, { date: string; totalRevenue: number; serviceRevenue: number; productRevenue: number; totalServices: number; totalProducts: number }> = {};
+    for (const row of dailyRawData) {
+      const d = row.summary_date;
+      if (!byDate[d]) {
+        byDate[d] = { date: d, totalRevenue: 0, serviceRevenue: 0, productRevenue: 0, totalServices: 0, totalProducts: 0 };
+      }
+      byDate[d].totalRevenue += row.total_revenue;
+      byDate[d].serviceRevenue += row.service_revenue;
+      byDate[d].productRevenue += row.product_revenue;
+      byDate[d].totalServices += row.total_services;
+      byDate[d].totalProducts += row.total_products;
+    }
+    return Object.values(byDate).sort((a, b) => a.date.localeCompare(b.date));
+  }, [dailyRawData]);
+
+  const isLoading = metricsLoading || stylistLoading || locationLoading || productLoading || dailyLoading;
 
   const getReportTitle = () => {
     switch (reportType) {
@@ -113,6 +132,37 @@ export function SalesReportGenerator({
             ['Total Products', formatNumber(metrics.totalProducts)],
             ['Average Ticket', formatCurrencyWhole(Math.round(metrics.averageTicket))],
           ],
+          theme: 'striped',
+          headStyles: { fillColor: [51, 51, 51] },
+          margin: { ...branding.margin, left: 14, right: 14 },
+        });
+
+        y = (doc as any).lastAutoTable.finalY + 15;
+      }
+
+      // Daily breakdown table
+      if (reportType === 'daily-sales' && dailyRows.length > 0) {
+        doc.setFontSize(14);
+        doc.setFont('helvetica', 'bold');
+        doc.text('Daily Breakdown', 14, y);
+        y += 8;
+
+        autoTable(doc, {
+          ...branding,
+          startY: y,
+          head: [['Date', 'Total Revenue', 'Service Rev', 'Product Rev', 'Services', 'Products', 'Avg Ticket']],
+          body: dailyRows.map(r => {
+            const txns = r.totalServices + r.totalProducts;
+            return [
+              formatDate(new Date(r.date + 'T00:00:00'), 'MMM d, yyyy'),
+              formatCurrencyWhole(r.totalRevenue),
+              formatCurrencyWhole(r.serviceRevenue),
+              formatCurrencyWhole(r.productRevenue),
+              formatNumber(r.totalServices),
+              formatNumber(r.totalProducts),
+              txns > 0 ? formatCurrencyWhole(Math.round(r.totalRevenue / txns)) : '$0',
+            ];
+          }),
           theme: 'striped',
           headStyles: { fillColor: [51, 51, 51] },
           margin: { ...branding.margin, left: 14, right: 14 },
@@ -198,7 +248,13 @@ export function SalesReportGenerator({
   const exportCSV = () => {
     let csvContent = '';
     
-    if (reportType === 'stylist-sales' && stylistData) {
+    if (reportType === 'daily-sales' && dailyRows.length > 0) {
+      csvContent = 'Date,Total Revenue,Service Revenue,Product Revenue,Services,Products,Avg Ticket\n';
+      dailyRows.forEach(r => {
+        const txns = r.totalServices + r.totalProducts;
+        csvContent += `${r.date},${r.totalRevenue.toFixed(2)},${r.serviceRevenue.toFixed(2)},${r.productRevenue.toFixed(2)},${r.totalServices},${r.totalProducts},${txns > 0 ? (r.totalRevenue / txns).toFixed(2) : '0'}\n`;
+      });
+    } else if (reportType === 'stylist-sales' && stylistData) {
       csvContent = 'Rank,Stylist,Total Revenue,Services,Avg Ticket\n';
       stylistData.forEach((s, idx) => {
         csvContent += `${idx + 1},"${s.name}",${s.totalRevenue},${s.totalServices},${Math.round(s.totalRevenue / s.totalServices || 0)}\n`;
@@ -298,6 +354,41 @@ export function SalesReportGenerator({
           </BentoGrid>
         )}
 
+        {/* Daily Sales Table */}
+        {reportType === 'daily-sales' && dailyRows.length > 0 && (
+          <div className="rounded-lg border">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Date</TableHead>
+                  <TableHead className="text-right">Total Revenue</TableHead>
+                  <TableHead className="text-right">Service Rev</TableHead>
+                  <TableHead className="text-right">Product Rev</TableHead>
+                  <TableHead className="text-right">Services</TableHead>
+                  <TableHead className="text-right">Products</TableHead>
+                  <TableHead className="text-right">Avg Ticket</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {dailyRows.map(r => {
+                  const txns = r.totalServices + r.totalProducts;
+                  return (
+                    <TableRow key={r.date}>
+                      <TableCell className="font-medium">{formatDate(new Date(r.date + 'T00:00:00'), 'MMM d, yyyy')}</TableCell>
+                      <TableCell className="text-right">{formatCurrencyWhole(r.totalRevenue)}</TableCell>
+                      <TableCell className="text-right">{formatCurrencyWhole(r.serviceRevenue)}</TableCell>
+                      <TableCell className="text-right">{formatCurrencyWhole(r.productRevenue)}</TableCell>
+                      <TableCell className="text-right">{formatNumber(r.totalServices)}</TableCell>
+                      <TableCell className="text-right">{formatNumber(r.totalProducts)}</TableCell>
+                      <TableCell className="text-right">{txns > 0 ? formatCurrencyWhole(Math.round(r.totalRevenue / txns)) : '—'}</TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </div>
+        )}
+
         {/* Data Table */}
         {reportType === 'stylist-sales' && stylistData && (
           <div className="rounded-lg border">
@@ -384,6 +475,39 @@ export function SalesReportGenerator({
               <p className="text-2xl font-medium">{formatCurrencyWhole(Math.round(metrics.averageTicket))}</p>
             </div>
           </BentoGrid>
+        )}
+        {reportType === 'daily-sales' && dailyRows.length > 0 && (
+          <div className="rounded-lg border">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Date</TableHead>
+                  <TableHead className="text-right">Total Revenue</TableHead>
+                  <TableHead className="text-right">Service Rev</TableHead>
+                  <TableHead className="text-right">Product Rev</TableHead>
+                  <TableHead className="text-right">Services</TableHead>
+                  <TableHead className="text-right">Products</TableHead>
+                  <TableHead className="text-right">Avg Ticket</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {dailyRows.map(r => {
+                  const txns = r.totalServices + r.totalProducts;
+                  return (
+                    <TableRow key={r.date}>
+                      <TableCell className="font-medium">{formatDate(new Date(r.date + 'T00:00:00'), 'MMM d, yyyy')}</TableCell>
+                      <TableCell className="text-right">{formatCurrencyWhole(r.totalRevenue)}</TableCell>
+                      <TableCell className="text-right">{formatCurrencyWhole(r.serviceRevenue)}</TableCell>
+                      <TableCell className="text-right">{formatCurrencyWhole(r.productRevenue)}</TableCell>
+                      <TableCell className="text-right">{formatNumber(r.totalServices)}</TableCell>
+                      <TableCell className="text-right">{formatNumber(r.totalProducts)}</TableCell>
+                      <TableCell className="text-right">{txns > 0 ? formatCurrencyWhole(Math.round(r.totalRevenue / txns)) : '—'}</TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </div>
         )}
         {reportType === 'stylist-sales' && stylistData && (
           <div className="rounded-lg border">
