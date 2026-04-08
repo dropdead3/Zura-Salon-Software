@@ -293,14 +293,49 @@ async function fetchReportData(
       }
       return { columns: ['Date', 'Time', 'Client', 'Staff', 'Price'], rows: data.slice(0, 500).map((a: any) => [a.appointment_date, a.start_time || '', a.client_name || '', a.staff_name || '', `$${(Number(a.total_price) || 0).toFixed(2)}`]) };
     }
+    case 'location-benchmark': {
+      const appts = await fetchAllBatched<any>((from, to) => {
+        let q = supabase.from('phorest_appointments')
+          .select('location_id, total_price, tip_amount, status, phorest_client_id')
+          .gte('appointment_date', dateFrom)
+          .lte('appointment_date', dateTo)
+          .not('location_id', 'is', null)
+          .range(from, to);
+        return q;
+      });
+      const locQuery = await supabase.from('locations').select('id, name');
+      const locMap = new Map((locQuery.data || []).map((l: any) => [l.id, l.name]));
+      const byLoc: Record<string, { rev: number; count: number; noShow: number; allCount: number; clients: Set<string> }> = {};
+      appts.forEach((apt: any) => {
+        const lid = apt.location_id;
+        if (!byLoc[lid]) byLoc[lid] = { rev: 0, count: 0, noShow: 0, allCount: 0, clients: new Set() };
+        const b = byLoc[lid];
+        b.allCount++;
+        if (apt.status === 'no_show') { b.noShow++; return; }
+        if (apt.status === 'cancelled') return;
+        b.rev += (Number(apt.total_price) || 0) - (Number(apt.tip_amount) || 0);
+        b.count++;
+        if (apt.phorest_client_id) b.clients.add(apt.phorest_client_id);
+      });
+      const rows = Object.entries(byLoc)
+        .map(([lid, b]) => [
+          locMap.get(lid) || 'Unknown',
+          `$${b.rev.toFixed(2)}`,
+          String(b.count),
+          b.count > 0 ? `$${(b.rev / b.count).toFixed(2)}` : '$0.00',
+          String(b.clients.size),
+          b.allCount > 0 ? `${((b.noShow / b.allCount) * 100).toFixed(1)}%` : '0.0%',
+        ])
+        .sort((a, b) => parseFloat(b[1].replace('$', '')) - parseFloat(a[1].replace('$', '')));
+      return { columns: ['Location', 'Revenue', 'Appointments', 'Avg Ticket', 'Clients', 'No-Show %'], rows };
+    }
     case 'retail-products':
     case 'retail-staff':
     case 'category-mix':
     case 'tax-summary':
     case 'discounts':
     case 'service-profitability':
-    case 'chemical-cost':
-    case 'location-benchmark': {
+    case 'chemical-cost': {
       const data = await fetchAllBatched<any>((from, to) => {
         let q = supabase.from('v_all_transaction_items')
           .select('item_name, item_type, total_amount, quantity, staff_name, transaction_date, discount')
