@@ -169,17 +169,60 @@ async function fetchReportData(
         ],
       };
     }
+    case 'client-birthdays': {
+      const data = await fetchAllBatched<any>((from, to) => {
+        let q = (supabase.from('v_all_clients') as any)
+          .select('name, first_name, last_name, email, phone, total_spend, visit_count, birthday')
+          .eq('is_archived', false)
+          .not('birthday', 'is', null)
+          .range(from, to);
+        if (locationId) q = q.eq('location_id', locationId);
+        return q;
+      });
+      const today = new Date();
+      const currentYear = today.getFullYear();
+      const entries = data
+        .map((c: any) => {
+          if (!c.birthday) return null;
+          const bday = new Date(c.birthday);
+          let thisYear = new Date(currentYear, bday.getMonth(), bday.getDate());
+          if (thisYear < today) thisYear = new Date(currentYear + 1, bday.getMonth(), bday.getDate());
+          const days = Math.round((thisYear.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+          const name = c.name || `${c.first_name || ''} ${c.last_name || ''}`.trim() || 'Unknown';
+          const bdayStr = `${String(bday.getMonth() + 1).padStart(2, '0')}/${String(bday.getDate()).padStart(2, '0')}`;
+          return [name, bdayStr, String(days), c.email || '', c.phone || '', `$${(Number(c.total_spend) || 0).toFixed(2)}`];
+        })
+        .filter(Boolean)
+        .sort((a: any, b: any) => Number(a[2]) - Number(b[2]));
+      return { columns: ['Client', 'Birthday', 'Days Until', 'Email', 'Phone', 'Spend'], rows: entries.slice(0, 500) };
+    }
+    case 'duplicate-clients': {
+      const data = await fetchAllBatched<any>((from, to) => {
+        let q = (supabase.from('v_all_clients') as any)
+          .select('name, first_name, last_name, email, phone')
+          .eq('is_archived', false)
+          .eq('is_duplicate', true)
+          .range(from, to);
+        if (locationId) q = q.eq('location_id', locationId);
+        return q;
+      });
+      return {
+        columns: ['Client', 'Email', 'Phone'],
+        rows: data.slice(0, 500).map((c: any) => [
+          c.name || `${c.first_name || ''} ${c.last_name || ''}`.trim() || 'Unknown',
+          c.email || '',
+          c.phone || '',
+        ]),
+      };
+    }
     case 'client-attrition':
     case 'top-clients':
-    case 'client-source':
-    case 'client-birthdays':
-    case 'duplicate-clients': {
+    case 'client-source': {
       const data = await fetchAllBatched<any>((from, to) => {
         let q = (supabase.from('v_all_clients') as any)
           .select('name, first_name, last_name, email, phone, total_spend, visit_count, created_at, lead_source, birthday')
           .eq('is_archived', false)
           .range(from, to);
-        // RLS via security_invoker scopes data; v_all_clients has no organization_id column
         if (locationId) q = q.eq('location_id', locationId);
         return q;
       });
