@@ -17,6 +17,7 @@ import {
   FileText,
   Users,
   X,
+  MapPin,
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
