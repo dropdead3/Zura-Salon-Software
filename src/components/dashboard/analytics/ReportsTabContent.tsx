@@ -108,6 +108,8 @@ const financialReports = [
   { id: 'yoy', name: 'Year-over-Year', description: 'Historical performance comparison', icon: TrendingUp, visibilityKey: 'report_yoy' },
   { id: 'payroll-summary', name: 'Payroll Summary', description: 'Commission + rent for pay period processing', icon: Wallet },
   { id: 'end-of-month', name: 'End-of-Month Summary', description: 'Comprehensive monthly business report', icon: ClipboardList },
+  { id: 'service-profitability', name: 'Service Profitability', description: 'Revenue vs chemical + labor cost per service', icon: TrendingUp },
+  { id: 'chemical-cost', name: 'Chemical Cost Report', description: 'Chemical cost per service, waste %, and margin from Color Bar', icon: Beaker },
 ];
 
 interface ReportsTabContentProps {
@@ -235,7 +237,7 @@ export function ReportsTabContent({ filters, isStandalone }: ReportsTabContentPr
   );
 
   // Reports that manage their own back button
-  const selfContainedReports = ['individual-staff', 'payroll-summary', 'retail-products', 'retail-staff', 'end-of-month'];
+  const selfContainedReports = ['individual-staff', 'payroll-summary', 'retail-products', 'retail-staff', 'end-of-month', 'service-profitability', 'chemical-cost', 'tip-analysis', 'category-mix', 'tax-summary', 'client-attrition'];
 
   const renderSelectedReport = () => {
     const location = filters.locationId === 'all' ? undefined : filters.locationId;
@@ -370,6 +372,18 @@ export function ReportsTabContent({ filters, isStandalone }: ReportsTabContentPr
             onClose={handleCloseReport}
           />
         );
+      case 'service-profitability':
+        return <ServiceProfitabilityReport dateFrom={filters.dateFrom} dateTo={filters.dateTo} locationId={location} onClose={handleCloseReport} />;
+      case 'chemical-cost':
+        return <ChemicalCostReport dateFrom={filters.dateFrom} dateTo={filters.dateTo} locationId={location} onClose={handleCloseReport} />;
+      case 'tip-analysis':
+        return <TipAnalysisReport dateFrom={filters.dateFrom} dateTo={filters.dateTo} locationId={location} onClose={handleCloseReport} />;
+      case 'category-mix':
+        return <ServiceCategoryMixReport dateFrom={filters.dateFrom} dateTo={filters.dateTo} locationId={location} onClose={handleCloseReport} />;
+      case 'tax-summary':
+        return <TaxSummaryReport dateFrom={filters.dateFrom} dateTo={filters.dateTo} locationId={location} onClose={handleCloseReport} />;
+      case 'client-attrition':
+        return <ClientAttritionReport dateFrom={filters.dateFrom} dateTo={filters.dateTo} locationId={location} onClose={handleCloseReport} />;
       default:
         return null;
     }
