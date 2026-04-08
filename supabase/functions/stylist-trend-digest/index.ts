@@ -132,8 +132,9 @@ Deno.serve(async (req) => {
         const kpis = computeWindowKpis(sales, appts, evalStartStr, endStr, evalDays);
         const priorKpis = computeWindowKpis(sales, appts, priorStartStr, evalStartStr, evalDays);
 
-        // Parse criteria from next level
-        const criteria = nextLevel.criteria as any;
+        // Parse criteria — use current level criteria for top-level (maintenance), next level for progression
+        const targetLevel = isTopLevel ? currentLevel : nextLevel!;
+        const criteria = targetLevel.criteria as any;
         if (!criteria) continue;
 
         // Build projection summary
@@ -159,19 +160,22 @@ Deno.serve(async (req) => {
           kpiMap.rev_per_hour = { current: kpis.revPerHour, prior: priorKpis.revPerHour, target: criteria.min_rev_per_hour, unit: "$/hr", label: "Rev/Hour" };
         }
         if (criteria.min_retention_pct) {
-          kpiMap.retention = { current: kpis.retentionRate, prior: priorKpis.retentionRate, target: criteria.min_retention_pct, unit: "%", label: "Retention" };
+          // Skip retention velocity — prior window retention is unreliable (see comment in computeWindowKpis)
+          kpiMap.retention = { current: kpis.retentionRate, prior: kpis.retentionRate, target: criteria.min_retention_pct, unit: "%", label: "Retention" };
         }
         if (criteria.min_new_clients) {
           kpiMap.new_clients = { current: kpis.newClientsPerMonth, prior: priorKpis.newClientsPerMonth, target: criteria.min_new_clients, unit: "/mo", label: "New Clients" };
         }
 
         let allMet = true;
+        let hasDeclining = false;
         for (const [key, kpi] of Object.entries(kpiMap)) {
           const velocity = (kpi.current - kpi.prior) / evalDays;
           const gap = kpi.target - kpi.current;
           const isMet = gap <= 0;
           if (!isMet) allMet = false;
           const trajectory = kpi.current > kpi.prior * 1.03 ? "improving" : kpi.current < kpi.prior * 0.97 ? "declining" : "flat";
+          if (trajectory === "declining") hasDeclining = true;
           const daysToTarget = velocity > 0 && gap > 0 ? Math.ceil(gap / velocity) : null;
 
           projectionLines.push(
@@ -179,9 +183,14 @@ Deno.serve(async (req) => {
           );
         }
 
-        if (allMet) {
+        // Skip digest: progression stylists who are fully qualified, or top-level with no declining metrics
+        if (!isTopLevel && allMet) {
           totalSkipped++;
-          continue; // Don't send digest if fully qualified
+          continue;
+        }
+        if (isTopLevel && !hasDeclining) {
+          totalSkipped++;
+          continue;
         }
 
         // Generate AI summary
