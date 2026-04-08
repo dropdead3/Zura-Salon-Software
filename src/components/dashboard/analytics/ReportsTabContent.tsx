@@ -89,6 +89,7 @@ const salesReports = [
   { id: 'retail-staff', name: 'Retail Sales by Staff', description: 'Per-stylist retail revenue, units, and attachment rates', icon: Users },
   { id: 'category-mix', name: 'Service Category Mix', description: 'Revenue share by service category (Color, Cut, Extensions, etc.)', icon: PieChart },
   { id: 'tax-summary', name: 'Tax Summary', description: 'Tax collected by period and location for remittance', icon: Receipt },
+  { id: 'discounts', name: 'Discounts & Promotions', description: 'Discount amounts by staff, promotion usage, and discount-to-revenue ratio', icon: Tag },
 ];
 
 const staffReports = [
@@ -98,6 +99,7 @@ const staffReports = [
   { id: 'rebooking', name: 'Rebooking Analysis', description: 'Staff rebooking rates and trends', icon: UserCheck },
   { id: 'new-clients', name: 'New Client Acquisition', description: "Who's bringing in new clients", icon: UserCheck },
   { id: 'tip-analysis', name: 'Tip Analysis', description: 'Tip distribution, avg tip per visit, tip-to-revenue ratio by stylist', icon: Coins },
+  { id: 'staff-transaction-detail', name: 'Staff Transaction Detail', description: 'Line-item detail per stylist per day', icon: FileText },
   { id: 'compensation-ratio', name: 'Compensation Ratio', description: 'Labor cost as % of revenue per stylist with commission source', icon: Percent },
 ];
 
@@ -107,11 +109,17 @@ const clientReports = [
   { id: 'new-vs-returning', name: 'New vs Returning', description: 'Acquisition funnel analysis', icon: TrendingUp },
   { id: 'visit-frequency', name: 'Visit Frequency', description: 'Visit patterns by segment', icon: CalendarDays },
   { id: 'client-attrition', name: 'Client Attrition', description: 'At-risk, lapsed, and lost clients with revenue impact', icon: AlertTriangle },
+  { id: 'top-clients', name: 'Top Clients', description: 'Ranked by spend with visit frequency, avg ticket, and top service', icon: DollarSign },
+  { id: 'client-birthdays', name: 'Client Birthdays', description: 'Upcoming birthdays for marketing outreach', icon: CalendarDays },
+  { id: 'client-source', name: 'Client Source', description: 'Where clients came from (referral, online, walk-in)', icon: UserCheck },
+  { id: 'duplicate-clients', name: 'Duplicate Clients', description: 'Potential duplicate client records by email/phone match', icon: AlertTriangle },
 ];
 
 const operationsReports = [
   { id: 'capacity', name: 'Capacity Utilization', description: 'Booking density and peak hours', icon: BarChart3 },
   { id: 'no-show', name: 'No-Show Report', description: 'No-show rates by staff, day, time', icon: Clock },
+  { id: 'no-show-enhanced', name: 'No-Shows & Cancellations', description: 'Combined report with revenue impact and repeat offenders', icon: AlertTriangle },
+  { id: 'deleted-appointments', name: 'Deleted Appointments', description: 'Audit trail of removed appointments with lost revenue', icon: Clock },
   { id: 'service-duration', name: 'Service Duration', description: 'Actual vs expected times', icon: Clock },
   { id: 'lead-time', name: 'Appointment Lead Time', description: 'How far ahead clients book', icon: CalendarDays },
   { id: 'demand-heatmap', name: 'Demand Heatmap', description: 'Appointment volume by hour and day-of-week', icon: Grid3X3 },
