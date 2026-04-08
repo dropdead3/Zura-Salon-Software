@@ -83,6 +83,7 @@ import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { AnalyticsFilterBadge, type FilterContext } from '@/components/dashboard/AnalyticsFilterBadge';
 import { Progress } from '@/components/ui/progress';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
+import { useRevenueDisplay } from '@/contexts/RevenueDisplayContext';
 import { useTranslation } from 'react-i18next';
 
 export type DateRange = 'today' | 'yesterday' | '7d' | '30d' | 'thisWeek' | 'mtd' | 'todayToEom' | 'lastMonth' | 'ytd' | 'lastYear' | 'last365';
@@ -816,7 +817,7 @@ export function AggregateSalesCard({
                     : "Combined net revenue from services and retail product sales for the selected period. Tips and gratuities are tracked separately and not included in this total."
                   } />
                 </div>
-                <p className="text-xs text-muted-foreground/50">Excludes Tips · Incl. Tax</p>
+                <p className="text-xs text-muted-foreground/50">Excludes Tips · {taxLabel}</p>
               </div>
 
               {/* Expected Service Revenue — stacked info block (today only) */}
