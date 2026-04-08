@@ -89,6 +89,7 @@ export function useStaffRevenuePerformance(
         phorest_staff_id: string | null;
         item_type: string | null;
         total_amount: number | null;
+        tax_amount: number | null;
         transaction_date: string | null;
       }>((from, to) => {
         let q = supabase
