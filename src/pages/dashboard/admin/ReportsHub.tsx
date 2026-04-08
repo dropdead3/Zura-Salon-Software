@@ -7,9 +7,10 @@ import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Calendar as CalendarIcon, Building2 } from 'lucide-react';
+import { Calendar as CalendarIcon, Building2, Package } from 'lucide-react';
 import { useLocations } from '@/hooks/useLocations';
 import { ReportsTabContent } from '@/components/dashboard/analytics/ReportsTabContent';
+import { BatchReportDialog } from '@/components/dashboard/reports/batch/BatchReportDialog';
 import type { AnalyticsFilters, DateRangeType } from '@/pages/dashboard/admin/AnalyticsHub';
 
 export default function ReportsHub() {
@@ -19,6 +20,7 @@ export default function ReportsHub() {
   });
   const [datePreset, setDatePreset] = useState<DateRangeType>('thisMonth');
   const [locationId, setLocationId] = useState<string>('all');
+  const [batchOpen, setBatchOpen] = useState(false);
   const { data: locations } = useLocations();
 
   const filters: AnalyticsFilters = {
@@ -38,6 +40,11 @@ export default function ReportsHub() {
           backLabel="Back to Analytics Hub"
           actions={
             <div className="flex items-center gap-3">
+              <Button variant="outline" size={tokens.button.card} onClick={() => setBatchOpen(true)}>
+                <Package className="w-4 h-4 mr-2" />
+                Report Pack
+              </Button>
+
               <Popover>
                 <PopoverTrigger asChild>
                   <Button variant="outline" size={tokens.button.card} className="min-w-[200px] justify-start">
@@ -79,6 +86,14 @@ export default function ReportsHub() {
         />
 
         <ReportsTabContent filters={filters} isStandalone />
+
+        <BatchReportDialog
+          open={batchOpen}
+          onOpenChange={setBatchOpen}
+          dateFrom={filters.dateFrom}
+          dateTo={filters.dateTo}
+          locationId={filters.locationId === 'all' ? undefined : filters.locationId}
+        />
       </div>
     </DashboardLayout>
   );

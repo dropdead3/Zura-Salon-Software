@@ -37,6 +37,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { PremiumFloatingPanel } from '@/components/ui/premium-floating-panel';
+import { ScheduleReportForm } from './ScheduleReportForm';
 
 function ScheduleTypeLabel({ type }: { type: string }) {
   const labels: Record<string, string> = {
@@ -74,6 +75,8 @@ export function ScheduledReportsSubTab() {
   
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [historyReportId, setHistoryReportId] = useState<string | null>(null);
+  const [scheduleFormOpen, setScheduleFormOpen] = useState(false);
+  const [editingReport, setEditingReport] = useState<ScheduledReport | null>(null);
   const { data: runHistory } = useScheduledReportRuns(historyReportId || undefined);
 
   const handleToggleActive = (report: ScheduledReport) => {
@@ -102,19 +105,22 @@ export function ScheduledReportsSubTab() {
 
   if (!reports || reports.length === 0) {
     return (
-      <Card>
-        <CardContent className="py-12 text-center">
-          <Calendar className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-          <h3 className="font-medium text-lg mb-2">No Scheduled Reports</h3>
-          <p className="text-muted-foreground mb-4">
-            Create a scheduled report to automatically receive reports via email.
-          </p>
-          <Button>
-            <Plus className="w-4 h-4 mr-2" />
-            Schedule a Report
-          </Button>
-        </CardContent>
-      </Card>
+      <>
+        <Card>
+          <CardContent className="py-12 text-center">
+            <Calendar className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
+            <h3 className="font-medium text-lg mb-2">No Scheduled Reports</h3>
+            <p className="text-muted-foreground mb-4">
+              Create a scheduled report to automatically receive reports via email.
+            </p>
+            <Button onClick={() => { setEditingReport(null); setScheduleFormOpen(true); }}>
+              <Plus className="w-4 h-4 mr-2" />
+              Schedule a Report
+            </Button>
+          </CardContent>
+        </Card>
+        <ScheduleReportForm open={scheduleFormOpen} onOpenChange={setScheduleFormOpen} editReport={editingReport} />
+      </>
     );
   }
 
@@ -127,7 +133,7 @@ export function ScheduledReportsSubTab() {
             {reports.length} report{reports.length !== 1 ? 's' : ''} configured
           </p>
         </div>
-        <Button>
+        <Button onClick={() => { setEditingReport(null); setScheduleFormOpen(true); }}>
           <Plus className="w-4 h-4 mr-2" />
           New Schedule
         </Button>
@@ -278,6 +284,8 @@ export function ScheduledReportsSubTab() {
           )}
         </div>
       </PremiumFloatingPanel>
+
+      <ScheduleReportForm open={scheduleFormOpen} onOpenChange={setScheduleFormOpen} editReport={editingReport} />
     </div>
   );
 }
