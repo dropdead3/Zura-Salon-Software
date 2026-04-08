@@ -105,22 +105,22 @@ export function ScheduledReportsSubTab() {
 
   if (!reports || reports.length === 0) {
     return (
-      <Card>
-        <CardContent className="py-12 text-center">
-          <Calendar className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-          <h3 className="font-medium text-lg mb-2">No Scheduled Reports</h3>
-          <p className="text-muted-foreground mb-4">
-            Create a scheduled report to automatically receive reports via email.
-          </p>
-          <Button onClick={() => { setEditingReport(null); setScheduleFormOpen(true); }}>
-            <Plus className="w-4 h-4 mr-2" />
-            Schedule a Report
-          </Button>
-        </CardContent>
-      </Card>
-      <ScheduleReportForm open={scheduleFormOpen} onOpenChange={setScheduleFormOpen} editReport={editingReport} />
-        </CardContent>
-      </Card>
+      <>
+        <Card>
+          <CardContent className="py-12 text-center">
+            <Calendar className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
+            <h3 className="font-medium text-lg mb-2">No Scheduled Reports</h3>
+            <p className="text-muted-foreground mb-4">
+              Create a scheduled report to automatically receive reports via email.
+            </p>
+            <Button onClick={() => { setEditingReport(null); setScheduleFormOpen(true); }}>
+              <Plus className="w-4 h-4 mr-2" />
+              Schedule a Report
+            </Button>
+          </CardContent>
+        </Card>
+        <ScheduleReportForm open={scheduleFormOpen} onOpenChange={setScheduleFormOpen} editReport={editingReport} />
+      </>
     );
   }
 
