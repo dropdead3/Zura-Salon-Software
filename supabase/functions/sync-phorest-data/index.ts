@@ -556,7 +556,65 @@ async function syncAppointments(
     
     console.log(`Synced ${synced} of ${upsertBatch.length} appointments (${allAppointments.length} fetched from API)`);
 
-    return { total: allAppointments.length, synced };
+    // ── Post-sync: Backfill client names from phorest_clients ──
+    try {
+      // Find appointments missing client_name but having a phorest_client_id
+      const { data: missingNames } = await supabase
+        .from('phorest_appointments')
+        .select('id, phorest_client_id')
+        .is('client_name', null)
+        .not('phorest_client_id', 'is', null)
+        .limit(1000);
+
+      if (missingNames && missingNames.length > 0) {
+        const clientIds = [...new Set(missingNames.map(a => a.phorest_client_id).filter(Boolean))];
+        const clientNameMap = new Map<string, string>();
+
+        // Batch-fetch client names
+        for (let i = 0; i < clientIds.length; i += 100) {
+          const chunk = clientIds.slice(i, i + 100);
+          const { data: clients } = await supabase
+            .from('phorest_clients')
+            .select('phorest_client_id, name, first_name, last_name')
+            .in('phorest_client_id', chunk);
+
+          (clients ?? []).forEach(c => {
+            const resolvedName = c.name || [c.first_name, c.last_name].filter(Boolean).join(' ').trim();
+            if (resolvedName) {
+              clientNameMap.set(c.phorest_client_id, resolvedName);
+            }
+          });
+        }
+
+        // Bulk-update appointments with resolved names
+        let backfilled = 0;
+        for (const apt of missingNames) {
+          const name = clientNameMap.get(apt.phorest_client_id!);
+          if (name) {
+            await supabase
+              .from('phorest_appointments')
+              .update({ client_name: name })
+              .eq('id', apt.id);
+            backfilled++;
+          }
+        }
+        console.log(`Backfilled ${backfilled} client names from phorest_clients (${missingNames.length} had missing names)`);
+      }
+
+      // Mark true walk-ins (no client ID at all)
+      const { count: walkInCount } = await supabase
+        .from('phorest_appointments')
+        .update({ is_walk_in: true })
+        .is('phorest_client_id', null)
+        .eq('is_walk_in', false)
+        .select('id', { count: 'exact', head: true });
+
+      if (walkInCount && walkInCount > 0) {
+        console.log(`Marked ${walkInCount} appointments as walk-ins (no client ID)`);
+      }
+    } catch (backfillError) {
+      console.error('Client name backfill error (non-fatal):', backfillError);
+    }
 
     return { total: allAppointments.length, synced };
   } catch (error) {
