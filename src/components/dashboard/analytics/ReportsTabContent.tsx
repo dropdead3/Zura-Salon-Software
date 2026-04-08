@@ -82,6 +82,7 @@ const staffReports = [
   { id: 'productivity', name: 'Productivity Report', description: 'Hours worked vs revenue generated', icon: Clock },
   { id: 'rebooking', name: 'Rebooking Analysis', description: 'Staff rebooking rates and trends', icon: UserCheck },
   { id: 'new-clients', name: 'New Client Acquisition', description: "Who's bringing in new clients", icon: UserCheck },
+  { id: 'tip-analysis', name: 'Tip Analysis', description: 'Tip distribution, avg tip per visit, tip-to-revenue ratio by stylist', icon: Coins },
 ];
 
 const clientReports = [
