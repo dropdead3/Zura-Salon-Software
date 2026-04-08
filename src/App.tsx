@@ -12,6 +12,7 @@ import ScrollToTop from "./components/ScrollToTop";
 import { AuthProvider } from "./contexts/AuthContext";
 import { ViewAsProvider } from "./contexts/ViewAsContext";
 import { HideNumbersProvider } from "./contexts/HideNumbersContext";
+import { RevenueDisplayProvider } from "./contexts/RevenueDisplayContext";
 import { DashboardThemeProvider } from "./contexts/DashboardThemeContext";
 import { OrganizationProvider } from "./contexts/OrganizationContext";
 import { SoundSettingsProvider } from "./contexts/SoundSettingsContext";
@@ -246,11 +247,13 @@ function PrivateAppShell() {
       <DashboardThemeProvider>
         <ViewAsProvider>
           <HideNumbersProvider>
-            <SoundSettingsProvider>
-              {import.meta.env.DEV && <DevContextBridge />}
-              <CommandMenu />
-              <Outlet />
-            </SoundSettingsProvider>
+            <RevenueDisplayProvider>
+              <SoundSettingsProvider>
+                {import.meta.env.DEV && <DevContextBridge />}
+                <CommandMenu />
+                <Outlet />
+              </SoundSettingsProvider>
+            </RevenueDisplayProvider>
           </HideNumbersProvider>
         </ViewAsProvider>
       </DashboardThemeProvider>

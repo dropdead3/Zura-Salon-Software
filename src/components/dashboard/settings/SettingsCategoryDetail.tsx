@@ -14,7 +14,7 @@ import {
   Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
 import {
-  Users, Bell, Shield, Loader2, Trash2, Cog, Palette, Sun, Moon, Monitor, Check,
+  Users, Bell, Shield, Loader2, Trash2, Cog, Palette, Sun, Moon, Monitor, Check, DollarSign as DollarSignIcon,
   GraduationCap, Keyboard, Sparkles, Settings2, Save,
 } from 'lucide-react';
 import { MessageSquareHeart } from 'lucide-react';
@@ -28,6 +28,7 @@ import { useStaffingAlertSettings, useUpdateStaffingAlertSettings } from '@/hook
 import { useServicesWithFlowsCount } from '@/hooks/useServiceCommunicationFlows';
 import { useInfotainerSettings } from '@/hooks/useInfotainers';
 import { useOrgSecuritySettings } from '@/hooks/useOrgSecuritySettings';
+import { useRevenueDisplay } from '@/contexts/RevenueDisplayContext';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { Slider } from '@/components/ui/slider';
@@ -85,6 +86,36 @@ interface SettingsCategoryDetailProps {
 }
 
 // ---- Inline sub-components ----
+
+function RevenueDisplayModeCard() {
+  const { revenueMode, setRevenueMode, isLoading } = useRevenueDisplay();
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex items-center gap-2">
+          <DollarSignIcon className="w-5 h-5 text-primary" />
+          <CardTitle className="font-display text-lg">REVENUE DISPLAY</CardTitle>
+        </div>
+        <CardDescription>Choose how revenue figures are displayed across the dashboard.</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="font-sans font-medium text-sm">Show revenue pre-tax</p>
+            <p className="text-xs text-muted-foreground">
+              When enabled, revenue figures exclude collected sales tax. Tax totals remain visible in the Tax Summary card.
+            </p>
+          </div>
+          <Switch
+            checked={revenueMode === 'exclusive'}
+            onCheckedChange={(checked) => setRevenueMode(checked ? 'exclusive' : 'inclusive')}
+            disabled={isLoading}
+          />
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
 
 function InfotainerToggleCard() {
   const { showInfotainers, toggleInfotainers, isToggling } = useInfotainerSettings();
@@ -612,6 +643,7 @@ export function SettingsCategoryDetail({ activeCategory, categoryLabel, onBack }
                 </Card>
                 <SoundSettingsSection />
                 <CheckoutAlertsSection />
+                <RevenueDisplayModeCard />
                 <InfotainerToggleCard />
                 <SecuritySettingsCard />
                 <UserPinSettings />

@@ -11,6 +11,7 @@ export interface PeriodData {
   productRevenue: number;
   totalTransactions: number;
   averageTicket: number;
+  totalTax: number;
 }
 
 export interface PercentChanges {
@@ -88,8 +89,9 @@ const aggregateSales = (data: any[]): Omit<PeriodData, 'averageTicket'> => {
       serviceRevenue: acc.serviceRevenue + (Number(d.service_revenue) || 0),
       productRevenue: acc.productRevenue + (Number(d.product_revenue) || 0),
       totalTransactions: acc.totalTransactions + (d.total_transactions || 0),
+      totalTax: acc.totalTax + (Number(d.total_tax) || 0),
     }),
-    { totalRevenue: 0, serviceRevenue: 0, productRevenue: 0, totalTransactions: 0 }
+    { totalRevenue: 0, serviceRevenue: 0, productRevenue: 0, totalTransactions: 0, totalTax: 0 }
   );
 };
 
@@ -122,9 +124,11 @@ export function useComparisonData(params: ComparisonParams) {
         const byDate: Record<string, any> = {};
         for (const item of allData) {
           const date = (item.transaction_date || '').slice(0, 10);
-          if (!byDate[date]) byDate[date] = { summary_date: date, total_revenue: 0, service_revenue: 0, product_revenue: 0, total_transactions: 0, location_id: item.location_id };
-          const amount = (Number(item.total_amount) || 0) + (Number(item.tax_amount) || 0);
+          if (!byDate[date]) byDate[date] = { summary_date: date, total_revenue: 0, service_revenue: 0, product_revenue: 0, total_transactions: 0, total_tax: 0, location_id: item.location_id };
+          const tax = Number(item.tax_amount) || 0;
+          const amount = (Number(item.total_amount) || 0) + tax;
           byDate[date].total_revenue += amount;
+          byDate[date].total_tax += tax;
           const itemType = (item.item_type || '').toLowerCase();
           if (itemType === 'service') byDate[date].service_revenue += amount;
           else byDate[date].product_revenue += amount;

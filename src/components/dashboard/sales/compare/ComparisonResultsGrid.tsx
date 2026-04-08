@@ -2,6 +2,7 @@ import { ArrowUpRight, ArrowDownRight, Minus, DollarSign } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
+import { useRevenueDisplay } from '@/contexts/RevenueDisplayContext';
 import type { ComparisonResult } from '@/hooks/useComparisonData';
 
 interface ComparisonResultsGridProps {
@@ -13,6 +14,7 @@ interface ComparisonResultsGridProps {
 
 export function ComparisonResultsGrid({ data, isLoading, periodALabel = 'Period A', periodBLabel = 'Period B' }: ComparisonResultsGridProps) {
   const { formatCurrencyWhole } = useFormatCurrency();
+  const { adjustRevenue, taxLabel } = useRevenueDisplay();
 
   if (isLoading) {
     return (
@@ -36,8 +38,10 @@ export function ComparisonResultsGrid({ data, isLoading, periodALabel = 'Period 
     );
   }
 
-  const changePct = data.changes.totalRevenue;
-  const diffVal = data.difference.revenue;
+  const periodARevenue = adjustRevenue(data.periodA.totalRevenue, data.periodA.totalTax);
+  const periodBRevenue = adjustRevenue(data.periodB.totalRevenue, data.periodB.totalTax);
+  const diffVal = periodARevenue - periodBRevenue;
+  const changePct = periodBRevenue === 0 ? (periodARevenue > 0 ? 100 : 0) : ((periodARevenue - periodBRevenue) / periodBRevenue) * 100;
   const isPositive = changePct > 0;
   const isNeutral = changePct === 0;
 
@@ -51,7 +55,7 @@ export function ComparisonResultsGrid({ data, isLoading, periodALabel = 'Period 
             {periodALabel}
           </p>
           <p className="text-2xl font-display tabular-nums">
-            <BlurredAmount>{formatCurrencyWhole(data.periodA.totalRevenue)}</BlurredAmount>
+            <BlurredAmount>{formatCurrencyWhole(periodARevenue)}</BlurredAmount>
           </p>
           <div className="flex gap-3 mt-2 pt-2 border-t border-border/40 text-[11px] text-muted-foreground">
             <span>Services: {formatCurrencyWhole(data.periodA.serviceRevenue)}</span>
@@ -65,7 +69,7 @@ export function ComparisonResultsGrid({ data, isLoading, periodALabel = 'Period 
             {periodBLabel}
           </p>
           <p className="text-2xl font-display tabular-nums text-muted-foreground">
-            <BlurredAmount>{formatCurrencyWhole(data.periodB.totalRevenue)}</BlurredAmount>
+            <BlurredAmount>{formatCurrencyWhole(periodBRevenue)}</BlurredAmount>
           </p>
           <div className="flex gap-3 mt-2 pt-2 border-t border-border/40 text-[11px] text-muted-foreground/60">
             <span>Services: {formatCurrencyWhole(data.periodB.serviceRevenue)}</span>
