@@ -1,28 +1,40 @@
 
 
-# Auto-Lock Dashboard After 2 Minutes of Inactivity
+# Zura Health Engine — Implemented
 
-## Problem
-The dashboard has no auto-lock. Users who walk away from the app remain logged in indefinitely, which is a security concern — especially in shared salon environments.
+## What Was Built
 
-## Approach
+### Edge Function (`calculate-health-scores/index.ts`)
+Full rewrite from platform-adoption metrics to business health scoring:
+- 7 category calculators: Revenue, Client, Retention, Utilization, Team Performance, Operational Consistency, Inventory/Cost
+- Data profile detection (POS, Payroll, Inventory, Accounting)
+- Dynamic weight normalization — missing categories redistribute proportionally
+- Per-location scoring with org rollup
+- Deterministic formulas with benchmark comparisons
 
-### 1. Create `useAutoLock` hook
-**New file:** `src/hooks/useAutoLock.ts`
+### Database
+- `location_health_scores` table (per-location scoring)
+- `health_score_weights` table (configurable category weights)
+- `data_profile` JSONB column added to `organization_health_scores`
 
-A window-level idle timer that listens for `pointerdown`, `pointermove`, `keydown`, and `touchstart` on `window` (not a container ref like the Dock version). After 2 minutes (120,000ms) of inactivity, calls `lock()` from `DashboardLockContext`.
+### Client Hooks (`useHealthEngine.ts`)
+- `useOrgHealthScore` / `useLocationHealthScores` / `useHealthHistory`
+- `useDataProfile` / `useRecalculateHealth`
+- Risk tier utilities and constants
 
-- Disabled when already locked (`isLocked === true`)
-- Disabled when no user is authenticated
-- Resets on any interaction event
+### UI Components (`health-engine/`)
+- `HealthScoreDial` — SVG ring gauge, color-coded by tier
+- `HealthCategoryCard` — Expandable with metrics, diagnostics, recommendations
+- `DataCompletenessIndicator` — Shows connected data sources
+- `LocationHealthDrilldown` — Per-location comparison
+- `HealthDashboard` — Main container orchestrating all components
 
-### 2. Wire into `DashboardLayout.tsx`
-Call `useAutoLock()` inside the inner layout component (where `useDashboardLock` is already consumed). One line addition — the hook is self-contained.
+### Integration
+- Operations tab → Health Engine subtab in Analytics Hub
+- Passed `organizationId` through OperationsTabContent
 
-### Summary
-
-| Type | Count |
-|------|-------|
-| New files | 1 (`useAutoLock.ts`) |
-| Modified files | 1 (`DashboardLayout.tsx` — add import + one hook call) |
-
+## Phase 2+ (Future)
+- Profitability category (requires accounting integration)
+- AI-powered insight generation layer
+- Command Center pinnable health dial
+- Scheduled automatic recalculation
