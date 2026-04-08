@@ -1,70 +1,59 @@
 
 
-# Trend Intelligence — Pass 3 Audit
+# Separate Report Generator from Analytics Hub
 
-All 9 items from Pass 2 are resolved. Below are remaining low-severity issues.
+## Why This Is Right
 
----
+Analytics and Reports serve fundamentally different operator intents:
 
-## Bugs
+| | Analytics Hub | Report Generator |
+|---|---|---|
+| **Purpose** | Observe trends, detect drift, surface levers | Generate structured exports for stakeholders |
+| **Interaction** | Browse, drill down, pin to Command Center | Configure, generate, download, schedule |
+| **Output** | Visual dashboards, KPI cards | PDFs, CSVs, scheduled emails |
+| **Audience** | Owner in daily workflow | Accountants, partners, lenders, team leads |
 
-### Bug 1: `ai-coaching-script` uses deprecated `getClaims` API
-Line 51 calls `supabase.auth.getClaims(token)` — this method doesn't exist on the standard Supabase JS client. It should use `supabase.auth.getUser()` instead, which validates the JWT and returns the authenticated user.
-
-**Fix:** Replace `getClaims` with `getUser()`.
-
-### Bug 2: `ai-coaching-script` creates client with anon key but user token
-Line 46 creates a Supabase client with `SUPABASE_ANON_KEY` + the user's auth header. This is fine for RLS-scoped queries, but this function doesn't query the DB — it only validates auth and calls AI. Using the service role key would be more appropriate, or simply use `getUser()` on the anon-key client (which does work for JWT validation).
-
-**Status:** Low risk. The auth check itself may silently fail due to Bug 1, making this function effectively unprotected despite having auth code.
-
-### Bug 3: `stylist-trend-digest` queries `appointments` table, not `phorest_appointments`
-Line 121 queries `appointments` table with fields like `staff_user_id`, `rebooked_at_checkout`, `is_new_client`. Other hooks in the codebase (e.g., `useRealizationRate`) use `phorest_appointments` with different column names (`appointment_date`, `total_price`, `tip_amount`). If `appointments` is a view or alias this is fine, but if it's a separate/empty table, the digest produces zero data for all stylists.
-
-**Fix:** Verify which table holds the canonical appointment data and align the digest query accordingly.
-
-### Bug 4: `stylist-trend-digest` AI summary not sanitized
-Line 379 injects `aiSummary` directly into HTML email (`${aiSummary}`). While AI-generated content is unlikely to contain malicious HTML, this violates the project's sanitization doctrine (see `src/lib/sanitize.ts`). A prompt injection or unexpected AI output could produce broken email HTML.
-
-**Fix:** HTML-escape the `aiSummary` string before inserting into the email template.
+Keeping Reports as tab #7 inside Analytics buries it. Operators looking to "run a report" shouldn't need to navigate through a visual intelligence hub.
 
 ---
 
-## Gaps
+## What Changes
 
-### Gap 1: `ai-coaching-script` tool_choice format may be incorrect
-Line 156: `tool_choice: { type: "function", function: { name: "generate_coaching_plan" } }`. The OpenAI-compatible format is `tool_choice: { type: "function", function: { name: "..." } }` — which is correct. However, some gateway providers use the simpler `tool_choice: "auto"` or `{ name: "..." }`. If the Lovable AI gateway follows strict OpenAI spec this is fine; if not, structured output may fail silently and fall through to the error on line 183.
+### 1. Promote Report Generator to sidebar nav item
+- Add "Report Generator" as a new sidebar item under the **Manage** section, directly below "Analytics Hub"
+- Icon: `FileText`
+- Route: `/admin/reports`
 
-**Status:** Verify via edge function logs. No change needed if working.
+### 2. Create dedicated Report Generator page
+- Repurpose the existing `ReportsHub.tsx` (currently 329 lines, mostly unused since it redirects)
+- Move the full `ReportsTabContent` logic into this standalone page
+- Add `DashboardPageHeader` with title "Report Generator" and description "Generate, schedule, and export business reports"
+- Include location filter and date range controls (already exist in ReportsTabContent)
+- Retain all sub-tabs: Sales, Staff, Clients, Operations, Financial, Custom Builder, Scheduled
 
-### Gap 2: No error boundary around `TrendIntelligenceSection`
-If `useTrendProjection` returns malformed data (e.g., a projection with `NaN` values despite the guard), the component could crash and take down the entire `MyGraduation` page. An error boundary would isolate the blast radius.
+### 3. Remove Reports tab from Analytics Hub
+- Remove `{ id: 'reports', label: 'Reports', icon: FileText }` from `baseCategories` in `AnalyticsHub.tsx`
+- Remove the `ReportsTabContent` import and its `TabsContent`
+- Update the redirect route (`admin/reports`) to point to the new standalone page instead of `analytics?tab=reports`
 
-**Fix:** Wrap `TrendIntelligenceSection` in an error boundary in `MyGraduation.tsx`.
+### 4. Add cross-navigation hints
+- In Analytics Hub, add a subtle "Generate Reports →" link in the page header actions area
+- In Report Generator, add a "← Back to Analytics" breadcrumb link
 
-### Gap 3: `useGoalMode` doesn't clear stale keys
-If a stylist changes levels (gets promoted), their old goal date persists in localStorage under the old key. Not harmful but accumulates dead storage.
-
-**Status:** Very low priority. No fix needed.
+### 5. Sidebar layout editor update
+- Add the new `/dashboard/admin/reports` entry to the `SidebarLayoutEditor` label map
 
 ---
-
-## Implementation Priority
-
-| # | Item | Type | Risk | Effort |
-|---|------|------|------|--------|
-| 1 | Bug 1: Replace `getClaims` with `getUser` | Bug | **High** (auth broken) | Trivial |
-| 2 | Bug 3: Verify appointments table name | Bug | Medium | Small |
-| 3 | Bug 4: HTML-escape AI summary in digest | Bug | Low | Trivial |
-| 4 | Gap 2: Error boundary on TrendIntelligence | Gap | Low | Small |
 
 ## Files Changed
 
-| File | Changes |
+| File | Change |
 |---|---|
-| `supabase/functions/ai-coaching-script/index.ts` | Replace `getClaims` with `getUser()` |
-| `supabase/functions/stylist-trend-digest/index.ts` | Verify table name, HTML-escape AI summary |
-| `src/pages/dashboard/MyGraduation.tsx` | Add error boundary around TrendIntelligenceSection |
+| `src/pages/dashboard/admin/ReportsHub.tsx` | Rewrite as standalone Report Generator page (absorb ReportsTabContent logic) |
+| `src/pages/dashboard/admin/AnalyticsHub.tsx` | Remove Reports from `baseCategories`, remove tab content |
+| `src/App.tsx` | Update `admin/reports` route from redirect → standalone page |
+| `src/components/dashboard/settings/SidebarLayoutEditor.tsx` | Add Report Generator to label map |
+| Sidebar nav config (wherever nav items are defined) | Add "Report Generator" item under Manage section |
 
-3 files, all small fixes. No database migrations needed.
+5 files, no database changes. The `ReportsTabContent.tsx` component can be preserved as-is and imported into the new standalone page, minimizing risk.
 
