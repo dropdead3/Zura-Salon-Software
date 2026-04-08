@@ -8,6 +8,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useEconomicsAssumptions, type EconomicsAssumptions } from '@/hooks/useCommissionEconomics';
 import type { StylistLevel } from '@/hooks/useStylistLevels';
+import { fetchAllBatched } from '@/utils/fetchAllBatched';
 
 // ─── Output Types ───
 
@@ -125,12 +126,15 @@ export function useLevelEconomicsAnalyzer(
           .from('products')
           .select('id, cost_per_gram, cost_price')
           .eq('organization_id', orgId!),
-        supabase
-          .from('appointments')
-          .select('staff_user_id, service_id, service_name, total_price, appointment_date')
-          .eq('organization_id', orgId!)
-          .gte('appointment_date', dateStr)
-          .in('status', ['completed', 'checked_out']),
+        fetchAllBatched<any>((from, to) =>
+          supabase
+            .from('appointments')
+            .select('staff_user_id, service_id, service_name, total_price, appointment_date')
+            .eq('organization_id', orgId!)
+            .gte('appointment_date', dateStr)
+            .in('status', ['completed', 'checked_out'])
+            .range(from, to)
+        ),
         supabase
           .from('employee_profiles')
           .select('user_id, full_name, stylist_level')

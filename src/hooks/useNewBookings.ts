@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { formatDisplayName } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { startOfWeek, startOfMonth, endOfMonth, subMonths, subDays } from 'date-fns';
+import { fetchAllBatched } from '@/utils/fetchAllBatched';
 import type { DateRangeType } from '@/components/dashboard/PinnedAnalyticsCard';
 
 export interface LocationBreakdown {
@@ -112,16 +113,20 @@ export function useNewBookings(locationId?: string, dateRange?: DateRangeType) {
         return q;
       };
 
-      // Fetch appointments in the selected range (by appointment_date)
-      const { data: rangeBookings, error: rangeError } = await applyLocFilter(
-        supabase
+      // Fetch appointments in the selected range (by created_at)
+      const rangeBookings = await fetchAllBatched<any>((from, to) => {
+        let q = supabase
           .from('phorest_appointments')
-          .select('id, total_price, appointment_date, phorest_client_id, phorest_staff_id, location_id')
+          .select('id, total_price, tip_amount, appointment_date, phorest_client_id, phorest_staff_id, location_id')
           .gte('created_at', startDate)
           .lte('created_at', endDate)
           .not('status', 'eq', 'cancelled')
-      );
-      if (rangeError) throw rangeError;
+          .range(from, to);
+        if (locationId && locationId !== 'all') {
+          q = q.eq('location_id', locationId);
+        }
+        return q;
+      });
 
       // Determine truly new clients: clients whose first-ever appointment falls within the range
       const rangeClientIdSet = new Set<string>();
@@ -133,16 +138,18 @@ export function useNewBookings(locationId?: string, dateRange?: DateRangeType) {
       const newClientPhorestIds = new Set<string>();
       if (rangeClientIds.length > 0) {
         // Batch check: for each client, see if they have any appointment before startDate
-        const { data: priorAppts } = await supabase
-          .from('phorest_appointments')
-          .select('phorest_client_id')
-          .in('phorest_client_id', rangeClientIds as readonly string[])
-          .lt('appointment_date', startDate)
-          .not('status', 'eq', 'cancelled')
-          .limit(1000);
+        const priorAppts = await fetchAllBatched<{ phorest_client_id: string | null }>((from, to) =>
+          supabase
+            .from('phorest_appointments')
+            .select('phorest_client_id')
+            .in('phorest_client_id', rangeClientIds as readonly string[])
+            .lt('appointment_date', startDate)
+            .not('status', 'eq', 'cancelled')
+            .range(from, to)
+        );
 
         const clientsWithPriorVisit = new Set(
-          (priorAppts || []).map(a => a.phorest_client_id as string)
+          priorAppts.map(a => a.phorest_client_id as string)
         );
 
         for (const cid of rangeClientIds) {
@@ -159,11 +166,12 @@ export function useNewBookings(locationId?: string, dateRange?: DateRangeType) {
       const sixtyDaysAgoStart = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 59, 0, 0, 0).toISOString();
       const thirtyOneDaysAgoEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 30, 23, 59, 59, 999).toISOString();
 
+      // Use count-only queries for 30-day comparisons (avoids pagination entirely)
       const [last30Res, prev30Res] = await Promise.all([
         applyLocFilter(
           supabase
             .from('phorest_appointments')
-            .select('id')
+            .select('id', { count: 'exact', head: true })
             .gte('created_at', thirtyDaysAgoStart)
             .lte('created_at', todayEnd)
             .not('status', 'eq', 'cancelled')
@@ -171,7 +179,7 @@ export function useNewBookings(locationId?: string, dateRange?: DateRangeType) {
         applyLocFilter(
           supabase
             .from('phorest_appointments')
-            .select('id')
+            .select('id', { count: 'exact', head: true })
             .gte('created_at', sixtyDaysAgoStart)
             .lte('created_at', thirtyOneDaysAgoEnd)
             .not('status', 'eq', 'cancelled')
@@ -214,7 +222,7 @@ export function useNewBookings(locationId?: string, dateRange?: DateRangeType) {
         ? Math.round((rebookedAtCheckoutInRange / returningServicedInRange) * 100)
         : null;
 
-      const booked = rangeBookings || [];
+      const booked = rangeBookings;
       const newClientCount = booked.filter(apt => apt.phorest_client_id && newClientPhorestIds.has(apt.phorest_client_id)).length;
       const returningClientCount = booked.length - newClientCount;
 
@@ -232,9 +240,9 @@ export function useNewBookings(locationId?: string, dateRange?: DateRangeType) {
         .map(([id, data]) => ({ locationId: id, ...data }))
         .sort((a, b) => b.count - a.count);
 
-      // 30-day comparison
-      const last30Count = last30Res.data?.length || 0;
-      const prev30Count = prev30Res.data?.length || 0;
+      // 30-day comparison (count-only queries)
+      const last30Count = last30Res.count || 0;
+      const prev30Count = prev30Res.count || 0;
       const percentChange = prev30Count > 0
         ? Math.round(((last30Count - prev30Count) / prev30Count) * 100)
         : 0;
@@ -294,7 +302,7 @@ export function useNewBookings(locationId?: string, dateRange?: DateRangeType) {
 
       return {
         bookedInRange: booked.length,
-        bookedInRangeRevenue: booked.reduce((sum, apt) => sum + (Number(apt.total_price) || 0), 0),
+        bookedInRangeRevenue: booked.reduce((sum, apt) => sum + ((Number(apt.total_price) || 0) - (Number(apt.tip_amount) || 0)), 0),
         newClientCount,
         returningClientCount,
         last30Days: last30Count,

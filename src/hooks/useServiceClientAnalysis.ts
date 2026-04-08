@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useMemo } from 'react';
+import { fetchAllBatched } from '@/utils/fetchAllBatched';
 
 export interface ServiceClientRow {
   serviceName: string;
@@ -24,20 +25,21 @@ export function useServiceClientAnalysis(
   const query = useQuery({
     queryKey: ['service-client-analysis', dateFrom, dateTo, locationId],
     queryFn: async () => {
-      let q = supabase
-        .from('phorest_appointments')
-        .select('service_name, is_new_client, rebooked_at_checkout, tip_amount, total_price, phorest_staff_id')
-        .neq('status', 'cancelled')
-        .gte('appointment_date', dateFrom)
-        .lte('appointment_date', dateTo);
+      return fetchAllBatched<any>((from, to) => {
+        let q = supabase
+          .from('phorest_appointments')
+          .select('service_name, is_new_client, rebooked_at_checkout, tip_amount, total_price, phorest_staff_id')
+          .neq('status', 'cancelled')
+          .gte('appointment_date', dateFrom)
+          .lte('appointment_date', dateTo)
+          .range(from, to);
 
-      if (locationId) {
-        q = q.eq('location_id', locationId);
-      }
+        if (locationId) {
+          q = q.eq('location_id', locationId);
+        }
 
-      const { data, error } = await q;
-      if (error) throw error;
-      return data || [];
+        return q;
+      });
     },
   });
 
