@@ -11,6 +11,7 @@ export interface PeriodData {
   productRevenue: number;
   totalTransactions: number;
   averageTicket: number;
+  totalTax: number;
 }
 
 export interface PercentChanges {
