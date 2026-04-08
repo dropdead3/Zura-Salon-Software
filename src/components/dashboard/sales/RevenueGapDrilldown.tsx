@@ -60,6 +60,15 @@ const REASON_CONFIG: Record<GapReason, {
   },
 };
 
+/** Status-specific overrides for not_concluded items */
+const STATUS_BADGE_CONFIG: Record<string, { label: string; badgeClass: string }> = {
+  booked: { label: 'Booked', badgeClass: 'bg-blue-500/10 text-blue-500 border-blue-500/20' },
+  confirmed: { label: 'Confirmed', badgeClass: 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' },
+  pending: { label: 'Unconfirmed', badgeClass: 'bg-amber-500/10 text-amber-500 border-amber-500/20' },
+  arrived: { label: 'Arrived', badgeClass: 'bg-teal-500/10 text-teal-500 border-teal-500/20' },
+  started: { label: 'In progress', badgeClass: 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' },
+};
+
 function GapItemRow({ item, showDates, formatCurrency }: {
   item: GapItem;
   showDates: boolean;
