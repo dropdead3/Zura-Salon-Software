@@ -81,6 +81,7 @@ function GapItemRow({ item, showDates, formatCurrency }: {
     ? STATUS_BADGE_CONFIG[item.status]
     : null;
   const badgeLabel = statusOverride?.label ?? config.label;
+  const badgeClass = statusOverride?.badgeClass ?? config.badgeClass;
   const showAmountShift = item.reason !== 'cancelled' && item.reason !== 'no_show' && item.actualAmount > 0;
 
   return (
