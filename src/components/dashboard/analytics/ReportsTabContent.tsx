@@ -105,6 +105,7 @@ const operationsReports = [
   { id: 'no-show', name: 'No-Show Report', description: 'No-show rates by staff, day, time', icon: Clock },
   { id: 'service-duration', name: 'Service Duration', description: 'Actual vs expected times', icon: Clock },
   { id: 'lead-time', name: 'Appointment Lead Time', description: 'How far ahead clients book', icon: CalendarDays },
+  { id: 'demand-heatmap', name: 'Demand Heatmap', description: 'Appointment volume by hour and day-of-week', icon: Grid3X3 },
 ];
 
 const financialReports = [
