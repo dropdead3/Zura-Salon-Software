@@ -212,7 +212,9 @@ Deno.serve(async (req) => {
                   },
                   {
                     role: "user",
-                    content: `${stylist.first_name} is at ${currentLevel.name}, working toward ${nextLevel.name}.\n\nKPIs:\n${projectionLines.join("\n")}\n\nWrite a 2-sentence weekly update.`,
+                    content: isTopLevel
+                      ? `${stylist.first_name} is at ${currentLevel.name} (top level, maintenance mode).\n\nKPIs:\n${projectionLines.join("\n")}\n\nWrite a 2-sentence maintenance update noting the declining metrics.`
+                      : `${stylist.first_name} is at ${currentLevel.name}, working toward ${nextLevel!.name}.\n\nKPIs:\n${projectionLines.join("\n")}\n\nWrite a 2-sentence weekly update.`,
                   },
                 ],
               }),
@@ -232,11 +234,15 @@ Deno.serve(async (req) => {
         // Build deep link
         const deepLink = orgSlug ? `https://getzura.com/org/${orgSlug}/dashboard/my-graduation` : "";
 
+        const levelLabel = isTopLevel
+          ? `${currentLevel.name} — Maintenance`
+          : `${currentLevel.name} → ${nextLevel!.name}`;
+
         // Build email HTML
         const html = buildDigestHtml(
           stylist.first_name || "Stylist",
           currentLevel.name,
-          nextLevel.name,
+          isTopLevel ? "Maintenance" : nextLevel!.name,
           projectionLines,
           aiSummary,
           deepLink,
@@ -244,7 +250,7 @@ Deno.serve(async (req) => {
 
         const result = await sendOrgEmail(supabase, org.id, {
           to: [stylist.email],
-          subject: `Your Weekly Progress — ${currentLevel.name} → ${nextLevel.name}`,
+          subject: `Your Weekly Progress — ${levelLabel}`,
           html,
           emailType: "transactional",
         });
