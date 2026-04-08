@@ -198,7 +198,12 @@ export function TrendIntelligenceSection({
 }: TrendIntelligenceSectionProps) {
   const [calendarOpen, setCalendarOpen] = useState(false);
 
-  if (!hasNextLevel || projection.projections.length === 0) return null;
+  if (projection.projections.length === 0) return null;
+
+  // Top-level stylists (no next level) — show maintenance view if any metrics declining
+  const isTopLevel = !hasNextLevel;
+  const decliningMetrics = projection.projections.filter(p => p.trajectory === 'declining');
+  if (isTopLevel && decliningMetrics.length === 0) return null; // All stable, no need to show
 
   const unmetProjections = projection.projections.filter(p => !p.isMet);
   const allMet = unmetProjections.length === 0;
@@ -344,20 +349,29 @@ export function TrendIntelligenceSection({
         {!goalMode?.isActive && (
           <div className={cn(
             'rounded-lg border p-3 flex items-center gap-3',
-            bannerConfig.bg
+            isTopLevel
+              ? 'bg-amber-50/50 dark:bg-amber-950/10 border-amber-200/60 dark:border-amber-800/40'
+              : bannerConfig.bg
           )}>
-            {bannerConfig.icon}
+            {isTopLevel ? <AlertTriangle className="w-4 h-4 text-amber-600 dark:text-amber-400" /> : bannerConfig.icon}
             <div className="flex-1">
-              <p className={cn('text-sm', bannerConfig.textColor)}>
-                {projection.summaryLabel}
+              <p className={cn('text-sm', isTopLevel ? 'text-amber-700 dark:text-amber-400' : bannerConfig.textColor)}>
+                {isTopLevel
+                  ? `${decliningMetrics.length} metric${decliningMetrics.length > 1 ? 's' : ''} trending down — review recommended`
+                  : projection.summaryLabel}
               </p>
-              {allMet && (
+              {isTopLevel && (
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Maintaining your current level requires steady performance across all metrics.
+                </p>
+              )}
+              {!isTopLevel && allMet && (
                 <p className="text-xs text-muted-foreground mt-0.5">
                   Maintain your current performance to stay qualified for promotion.
                 </p>
               )}
             </div>
-            {allMet && <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0" />}
+            {!isTopLevel && allMet && <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0" />}
           </div>
         )}
 

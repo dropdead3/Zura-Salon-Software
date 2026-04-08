@@ -10,6 +10,27 @@ import { sendOrgEmail, formatEmailCurrency } from "../_shared/email-sender.ts";
  * and sends a branded email.
  */
 
+const PAGE_SIZE = 1000;
+
+async function fetchAllRows(supabase: any, queryBuilder: (from: number, to: number) => any): Promise<any[]> {
+  const all: any[] = [];
+  let from = 0;
+  let hasMore = true;
+  while (hasMore) {
+    const to = from + PAGE_SIZE - 1;
+    const { data, error } = await queryBuilder(from, to);
+    if (error) throw error;
+    if (data && data.length > 0) {
+      all.push(...data);
+      hasMore = data.length === PAGE_SIZE;
+      from += PAGE_SIZE;
+    } else {
+      hasMore = false;
+    }
+  }
+  return all;
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -52,6 +73,14 @@ Deno.serve(async (req) => {
 
       if (!stylists?.length) continue;
 
+      // Get org slug for deep link
+      const { data: orgData } = await supabase
+        .from("organizations")
+        .select("slug")
+        .eq("id", org.id)
+        .single();
+      const orgSlug = orgData?.slug || "";
+
       const sortedLevels = [...levels].sort((a, b) => a.display_order - b.display_order);
 
       for (const stylist of stylists) {
@@ -77,26 +106,32 @@ Deno.serve(async (req) => {
         const priorStart = new Date(now.getTime() - evalDays * 2 * 86400000);
         const priorStartStr = priorStart.toISOString().slice(0, 10);
 
-        // Get transaction data
-        const { data: sales } = await supabase
-          .from("phorest_transaction_items")
-          .select("total_amount, tax_amount, item_type, transaction_date")
-          .eq("stylist_user_id", stylist.user_id)
-          .gte("transaction_date", priorStartStr)
-          .lte("transaction_date", endStr);
+        // Get transaction data with pagination
+        const sales = await fetchAllRows(supabase, (from, to) =>
+          supabase
+            .from("phorest_transaction_items")
+            .select("total_amount, tax_amount, item_type, transaction_date")
+            .eq("stylist_user_id", stylist.user_id)
+            .gte("transaction_date", priorStartStr)
+            .lte("transaction_date", endStr)
+            .range(from, to)
+        );
 
-        // Get appointment data
-        const { data: appts } = await supabase
-          .from("appointments")
-          .select("total_price, rebooked_at_checkout, appointment_date, status, is_new_client, duration_minutes, client_id")
-          .eq("staff_user_id", stylist.user_id)
-          .gte("appointment_date", priorStartStr)
-          .lte("appointment_date", endStr)
-          .neq("status", "cancelled");
+        // Get appointment data with pagination
+        const appts = await fetchAllRows(supabase, (from, to) =>
+          supabase
+            .from("appointments")
+            .select("total_price, rebooked_at_checkout, appointment_date, status, is_new_client, duration_minutes, client_id")
+            .eq("staff_user_id", stylist.user_id)
+            .gte("appointment_date", priorStartStr)
+            .lte("appointment_date", endStr)
+            .neq("status", "cancelled")
+            .range(from, to)
+        );
 
         // Compute KPIs for current and prior windows
-        const kpis = computeWindowKpis(sales || [], appts || [], evalStartStr, endStr, evalDays);
-        const priorKpis = computeWindowKpis(sales || [], appts || [], priorStartStr, evalStartStr, evalDays);
+        const kpis = computeWindowKpis(sales, appts, evalStartStr, endStr, evalDays);
+        const priorKpis = computeWindowKpis(sales, appts, priorStartStr, evalStartStr, evalDays);
 
         // Parse criteria from next level
         const criteria = nextLevel.criteria as any;
@@ -117,6 +152,18 @@ Deno.serve(async (req) => {
         }
         if (criteria.min_utilization_pct) {
           kpiMap.utilization = { current: kpis.utilization, prior: priorKpis.utilization, target: criteria.min_utilization_pct, unit: "%", label: "Utilization" };
+        }
+        if (criteria.min_avg_ticket) {
+          kpiMap.avg_ticket = { current: kpis.avgTicket, prior: priorKpis.avgTicket, target: criteria.min_avg_ticket, unit: "$", label: "Avg Ticket" };
+        }
+        if (criteria.min_rev_per_hour) {
+          kpiMap.rev_per_hour = { current: kpis.revPerHour, prior: priorKpis.revPerHour, target: criteria.min_rev_per_hour, unit: "$/hr", label: "Rev/Hour" };
+        }
+        if (criteria.min_retention_pct) {
+          kpiMap.retention = { current: kpis.retentionRate, prior: priorKpis.retentionRate, target: criteria.min_retention_pct, unit: "%", label: "Retention" };
+        }
+        if (criteria.min_new_clients) {
+          kpiMap.new_clients = { current: kpis.newClientsPerMonth, prior: priorKpis.newClientsPerMonth, target: criteria.min_new_clients, unit: "/mo", label: "New Clients" };
         }
 
         let allMet = true;
@@ -174,6 +221,9 @@ Deno.serve(async (req) => {
           }
         }
 
+        // Build deep link
+        const deepLink = orgSlug ? `https://getzura.com/org/${orgSlug}/dashboard/my-graduation` : "";
+
         // Build email HTML
         const html = buildDigestHtml(
           stylist.first_name || "Stylist",
@@ -181,6 +231,7 @@ Deno.serve(async (req) => {
           nextLevel.name,
           projectionLines,
           aiSummary,
+          deepLink,
         );
 
         const result = await sendOrgEmail(supabase, org.id, {
@@ -218,6 +269,10 @@ interface WindowKpis {
   retailPct: number;
   rebookPct: number;
   utilization: number;
+  avgTicket: number;
+  revPerHour: number;
+  retentionRate: number;
+  newClientsPerMonth: number;
 }
 
 function computeWindowKpis(
@@ -245,18 +300,49 @@ function computeWindowKpis(
   const rebooked = windowAppts.filter((a) => a.rebooked_at_checkout).length;
   const totalMin = windowAppts.reduce((s, a) => s + (Number(a.duration_minutes) || 60), 0);
   const activeDays = new Set(windowAppts.map((a) => a.appointment_date)).size;
-
   const totalRev = serviceRev + productRev;
+
+  // Avg ticket
+  const uniqueVisits = new Set(
+    windowAppts.filter(a => a.client_id).map(a => `${a.client_id}_${a.appointment_date}`)
+  ).size || windowAppts.length;
+  const avgTicket = uniqueVisits > 0 ? totalRev / uniqueVisits : 0;
+
+  // Rev per hour
+  const revPerHour = totalMin > 0 ? (totalRev / totalMin) * 60 : 0;
+
+  // Retention: compare current window clients to prior window
+  // (We can only compute this for the current window; prior window retention
+  //  would need a third window which we don't fetch)
+  const windowClients = new Set(windowAppts.filter(a => a.client_id).map(a => a.client_id));
+  // For the eval window, we need prior-window clients
+  const priorAppts = (appts || []).filter(
+    (a) => a.appointment_date < startStr && a.status !== "no_show" && a.client_id
+  );
+  const priorClients = new Set(priorAppts.map(a => a.client_id));
+  let retentionRate = 0;
+  if (priorClients.size > 0) {
+    const returning = [...windowClients].filter(id => priorClients.has(id)).length;
+    retentionRate = (returning / priorClients.size) * 100;
+  }
+
+  // New clients
+  const newClients = windowAppts.filter(a => a.is_new_client).length;
+
   return {
     monthlyRevenue: evalDays > 0 ? (totalRev / evalDays) * 30 : 0,
     retailPct: totalRev > 0 ? (productRev / totalRev) * 100 : 0,
     rebookPct: windowAppts.length > 0 ? (rebooked / windowAppts.length) * 100 : 0,
     utilization: activeDays > 0 ? Math.min(100, (totalMin / activeDays / 480) * 100) : 0,
+    avgTicket,
+    revPerHour,
+    retentionRate,
+    newClientsPerMonth: evalDays > 0 ? (newClients / evalDays) * 30 : 0,
   };
 }
 
 function formatKpiVal(value: number, unit: string): string {
-  if (unit === "/mo" || unit === "$") return formatEmailCurrency(value);
+  if (unit === "/mo" || unit === "$" || unit === "$/hr") return formatEmailCurrency(value);
   if (unit === "%") return `${value.toFixed(1)}%`;
   return String(Math.round(value));
 }
@@ -267,6 +353,7 @@ function buildDigestHtml(
   nextLevel: string,
   projectionLines: string[],
   aiSummary: string,
+  deepLink: string,
 ): string {
   const kpiRows = projectionLines
     .map((line) => `<tr><td style="padding:6px 0;font-size:13px;color:#374151;border-bottom:1px solid #f3f4f6;">${line}</td></tr>`)
@@ -277,6 +364,10 @@ function buildDigestHtml(
         <p style="margin:0;font-size:13px;color:#166534;line-height:1.6;">${aiSummary}</p>
       </div>`
     : "";
+
+  const ctaBlock = deepLink
+    ? `<a href="${deepLink}" style="display:inline-block;margin:16px 0 0;padding:10px 20px;background:#111827;color:#ffffff;font-size:13px;text-decoration:none;border-radius:6px;">View Full Scorecard</a>`
+    : `<p style="font-size:12px;color:#9ca3af;margin:16px 0 0;">View your full scorecard and daily targets in your Level Progress page.</p>`;
 
   return `
     <h2 style="margin:0 0 4px;font-size:18px;color:#111827;">Weekly Progress Update</h2>
@@ -297,8 +388,6 @@ function buildDigestHtml(
       </tbody>
     </table>
 
-    <p style="font-size:12px;color:#9ca3af;margin:16px 0 0;">
-      View your full scorecard and daily targets in your Level Progress page.
-    </p>
+    ${ctaBlock}
   `;
 }

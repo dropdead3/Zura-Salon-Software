@@ -120,13 +120,11 @@ export function useGoalMode(
     return projections
       .filter(p => !p.isMet && p.gap > 0)
       .map(p => {
-        // For revenue, gap is monthly; convert to daily
+        // Reverse-calculate daily effort needed to close gap by target date
+        // For revenue: gap is monthly shortfall — divide by min(daysRemaining, 30) to get daily intensity
         let dailyNeeded: number;
         if (p.key === 'revenue') {
-          // Total revenue gap to close = gap (monthly) — but we need the total shortfall over the period
-          // The gap represents the monthly shortfall. Over daysRemaining, they need to raise their monthly average by `gap`.
-          // Simplified: dailyNeeded = gap / 30 (they need this much extra per day on average)
-          dailyNeeded = p.gap / 30;
+          dailyNeeded = p.gap / Math.min(30, daysRemaining);
         } else {
           dailyNeeded = p.gap / daysRemaining;
         }
