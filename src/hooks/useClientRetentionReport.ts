@@ -142,28 +142,41 @@ export function useClientRetentionReport(dateFrom: string, dateTo: string, locat
         };
       }
 
-      // Get appointments in date range (both tables)
-      let phorestAptQuery = supabase
-        .from('phorest_appointments')
-        .select('phorest_client_id, appointment_date, total_price')
-        .gte('appointment_date', dateFrom)
-        .lte('appointment_date', dateTo)
-        .not('status', 'in', '("cancelled","no_show")');
+      // Get appointments in date range (paginated)
+      const appointments = await fetchAllBatched<{
+        phorest_client_id: string | null;
+        appointment_date: string;
+        total_price: number | null;
+        tip_amount: number | null;
+      }>((from, to) => {
+        let q = supabase
+          .from('phorest_appointments')
+          .select('phorest_client_id, appointment_date, total_price, tip_amount')
+          .gte('appointment_date', dateFrom)
+          .lte('appointment_date', dateTo)
+          .not('status', 'in', '("cancelled","no_show")')
+          .range(from, to);
 
-      if (locationId) {
-        phorestAptQuery = phorestAptQuery.eq('location_id', locationId);
-      }
+        if (locationId) q = q.eq('location_id', locationId);
+        return q;
+      });
 
-      const { data: appointments } = await phorestAptQuery;
-
-      // Get all-time appointments for LTV
-      const { data: allAppointments } = await supabase
-        .from('phorest_appointments')
-        .select('phorest_client_id, appointment_date, total_price')
-        .not('status', 'in', '("cancelled","no_show")');
+      // Get all-time appointments for LTV (paginated)
+      const allAppointments = await fetchAllBatched<{
+        phorest_client_id: string | null;
+        appointment_date: string;
+        total_price: number | null;
+        tip_amount: number | null;
+      }>((from, to) =>
+        supabase
+          .from('phorest_appointments')
+          .select('phorest_client_id, appointment_date, total_price, tip_amount')
+          .not('status', 'in', '("cancelled","no_show")')
+          .range(from, to)
+      );
 
       // Calculate metrics
-      const clientsInPeriod = new Set(appointments?.map(a => a.phorest_client_id).filter(Boolean));
+      const clientsInPeriod = new Set(appointments.map(a => a.phorest_client_id).filter(Boolean));
       const newClientsInPeriod = allClients.filter(c => {
         const createdDate = new Date(c.created_at);
         return createdDate >= new Date(dateFrom) && createdDate <= new Date(dateTo);
@@ -172,13 +185,13 @@ export function useClientRetentionReport(dateFrom: string, dateTo: string, locat
       // Calculate client LTV from appointments
       const clientStats: Record<string, { totalSpend: number; lastVisit: string; visitCount: number }> = {};
       
-      allAppointments?.forEach(apt => {
+      allAppointments.forEach(apt => {
         const clientId = apt.phorest_client_id;
         if (!clientId) return;
         if (!clientStats[clientId]) {
           clientStats[clientId] = { totalSpend: 0, lastVisit: apt.appointment_date, visitCount: 0 };
         }
-        clientStats[clientId].totalSpend += Number(apt.total_price) || 0;
+        clientStats[clientId].totalSpend += (Number(apt.total_price) || 0) - (Number(apt.tip_amount) || 0);
         clientStats[clientId].visitCount += 1;
         if (apt.appointment_date > clientStats[clientId].lastVisit) {
           clientStats[clientId].lastVisit = apt.appointment_date;

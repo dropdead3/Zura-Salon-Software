@@ -179,20 +179,30 @@ export function useCapacityUtilization(period: CapacityPeriod, locationId?: stri
         }
       }
 
-      // Fetch appointments
-      let query = supabase
-        .from('phorest_appointments')
-        .select('id, appointment_date, total_price, tip_amount, status, service_name, start_time, end_time')
-        .gte('appointment_date', startDate)
-        .lte('appointment_date', endDate)
-        .not('status', 'in', '("cancelled","no_show")');
+      // Fetch appointments (paginated)
+      const appointments = await fetchAllBatched<{
+        id: string;
+        appointment_date: string;
+        total_price: number | null;
+        tip_amount: number | null;
+        status: string | null;
+        service_name: string | null;
+        start_time: string | null;
+        end_time: string | null;
+      }>((from, to) => {
+        let q = supabase
+          .from('phorest_appointments')
+          .select('id, appointment_date, total_price, tip_amount, status, service_name, start_time, end_time')
+          .gte('appointment_date', startDate)
+          .lte('appointment_date', endDate)
+          .not('status', 'in', '("cancelled","no_show")')
+          .range(from, to);
 
-      if (locationId && locationId !== 'all') {
-        query = query.eq('location_id', locationId);
-      }
-
-      const { data: appointments, error } = await query;
-      if (error) throw error;
+        if (locationId && locationId !== 'all') {
+          q = q.eq('location_id', locationId);
+        }
+        return q;
+      });
 
       // Calculate capacity for each date
       const byDate: Record<string, {

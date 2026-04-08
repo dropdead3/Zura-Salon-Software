@@ -105,25 +105,28 @@ export function useStaffUtilization(locationId?: string, dateRange: StaffDateRan
 
       if (staffError) throw staffError;
 
-      // Then get appointments with revenue data
-      let aptQuery = supabase
-        .from('phorest_appointments')
-        .select('stylist_user_id, status, total_price, tip_amount')
-        .gte('appointment_date', startDateStr)
-        .lte('appointment_date', endDateStr)
-        .not('status', 'eq', 'cancelled');
+      // Then get appointments with revenue data (paginated)
+      const appointments = await fetchAllBatched<{
+        stylist_user_id: string | null;
+        status: string | null;
+        total_price: number | null;
+        tip_amount: number | null;
+      }>((from, to) => {
+        let q = supabase
+          .from('phorest_appointments')
+          .select('stylist_user_id, status, total_price, tip_amount')
+          .gte('appointment_date', startDateStr)
+          .lte('appointment_date', endDateStr)
+          .not('status', 'eq', 'cancelled')
+          .range(from, to);
 
-      if (locationId && locationId !== 'all') {
-        const ids = locationId.split(',').filter(Boolean);
-        if (ids.length === 1) {
-          aptQuery = aptQuery.eq('location_id', ids[0]);
-        } else if (ids.length > 1) {
-          aptQuery = aptQuery.in('location_id', ids);
+        if (locationId && locationId !== 'all') {
+          const ids = locationId.split(',').filter(Boolean);
+          if (ids.length === 1) q = q.eq('location_id', ids[0]);
+          else if (ids.length > 1) q = q.in('location_id', ids);
         }
-      }
-
-      const { data: appointments, error: aptError } = await aptQuery;
-      if (aptError) throw aptError;
+        return q;
+      });
 
       // Aggregate by staff
       const staffStats = new Map<string, {
