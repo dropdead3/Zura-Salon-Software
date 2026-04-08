@@ -7920,6 +7920,39 @@ export type Database = {
         }
         Relationships: []
       }
+      health_score_weights: {
+        Row: {
+          base_weight: number
+          category: string
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          requires_data_source: string | null
+          updated_at: string
+        }
+        Insert: {
+          base_weight?: number
+          category: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          requires_data_source?: string | null
+          updated_at?: string
+        }
+        Update: {
+          base_weight?: number
+          category?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          requires_data_source?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       huddle_acknowledgments: {
         Row: {
           acknowledged_at: string | null
@@ -10026,6 +10059,63 @@ export type Database = {
           },
         ]
       }
+      location_health_scores: {
+        Row: {
+          calculated_at: string
+          data_profile: Json
+          id: string
+          location_id: string
+          organization_id: string
+          recommendations: string[]
+          risk_level: string
+          score: number
+          score_breakdown: Json
+          score_date: string
+          trends: Json
+        }
+        Insert: {
+          calculated_at?: string
+          data_profile?: Json
+          id?: string
+          location_id: string
+          organization_id: string
+          recommendations?: string[]
+          risk_level?: string
+          score?: number
+          score_breakdown?: Json
+          score_date?: string
+          trends?: Json
+        }
+        Update: {
+          calculated_at?: string
+          data_profile?: Json
+          id?: string
+          location_id?: string
+          organization_id?: string
+          recommendations?: string[]
+          risk_level?: string
+          score?: number
+          score_breakdown?: Json
+          score_date?: string
+          trends?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "location_health_scores_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "location_health_scores_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       location_inventory_leads: {
         Row: {
           assigned_at: string
@@ -12024,6 +12114,7 @@ export type Database = {
       organization_health_scores: {
         Row: {
           calculated_at: string
+          data_profile: Json | null
           id: string
           organization_id: string
           recommendations: Json | null
@@ -12035,6 +12126,7 @@ export type Database = {
         }
         Insert: {
           calculated_at?: string
+          data_profile?: Json | null
           id?: string
           organization_id: string
           recommendations?: Json | null
@@ -12046,6 +12138,7 @@ export type Database = {
         }
         Update: {
           calculated_at?: string
+          data_profile?: Json | null
           id?: string
           organization_id?: string
           recommendations?: Json | null
