@@ -1,67 +1,84 @@
 
 
-# Tax Visibility: What's Needed and Implementation Plan
+# Pre-Tax / Tax-Inclusive Revenue Toggle
 
-## Product Analysis
+## Approach
 
-You're right to flag this. In any SaaS handling financial data for operators, **tax collected is not revenue — it's a pass-through liability**. Right now, every revenue number in Zura includes tax, which means:
+Rather than refactoring 40+ files to change their revenue formulas, we'll create a **Revenue Display Context** that wraps all revenue values at the display layer — similar to how `HideNumbersContext` wraps values for privacy. Revenue hooks continue computing tax-inclusive totals (the POS source of truth), and the context subtracts tax when pre-tax mode is active.
 
-1. **Operators overestimate earnings** — $80,932 in March was actually revenue; the $867 in tax they collected belongs to the state
-2. **No remittance visibility** — operators have no way to know how much sales tax to remit without going back to Phorest
-3. **Audit risk** — if an operator reports Zura's "revenue" figures to their accountant, the tax portion is double-counted
+## Architecture
 
-### What serious SaaS platforms do (Square, Shopify, Toast, Boulevard):
+```text
+┌──────────────────────────────────────────┐
+│  site_settings: 'revenue_display_mode'   │
+│  { mode: 'inclusive' | 'exclusive' }     │
+└──────────────┬───────────────────────────┘
+               │
+┌──────────────▼───────────────────────────┐
+│  RevenueDisplayContext (React Context)   │
+│  - revenueMode: 'inclusive' | 'exclusive'│
+│  - toggleRevenueMode()                   │
+│  - adjustRevenue(gross, tax) → display   │
+└──────────────┬───────────────────────────┘
+               │
+   Used by AggregateSalesCard, KPI tiles,
+   Staff Reports, Comparison cards, etc.
+```
 
-- Show **Revenue (pre-tax)** as the primary metric
-- Show **Tax Collected** as a separate line item
-- Provide a **Tax Summary report** by period and location for remittance
-- Some show both "Net Revenue" and "Gross (tax-inclusive)" with clear labels
+## Implementation Plan
 
-### What's pragmatic for Zura right now:
+### Task 1 — Create `RevenueDisplayContext`
+New file `src/contexts/RevenueDisplayContext.tsx`:
+- Reads org setting from `site_settings` key `revenue_display_mode` via `useSiteSettings`
+- Exposes `revenueMode`, `toggleRevenueMode()`, and `adjustRevenue(grossAmount, taxAmount)` helper
+- `adjustRevenue` returns `grossAmount - taxAmount` when mode is `'exclusive'`, otherwise returns `grossAmount`
+- Persists toggle via `useUpdateSiteSetting`
+- Provider wraps the dashboard (add to existing provider tree)
 
-Refactoring all 42 files to change the revenue formula would be a massive, risky undertaking. Instead:
+### Task 2 — Add toggle to Settings UI
+Add a "Revenue Display" toggle in the organization settings area:
+- Simple switch: "Show revenue as tax-inclusive" / "Show revenue pre-tax (excludes sales tax)"
+- Uses `toggleRevenueMode()` from context
 
-**Option A (Recommended):** Add a **Tax Summary card** to Sales Analytics that shows taxes collected by period/location, and add a small "incl. tax" label to revenue figures. This gives operators remittance data without touching the revenue calculation engine.
+### Task 3 — Update `useTaxSummary` to export tax amounts alongside revenue hooks
+Ensure the tax summary hook's data is accessible where needed. Most revenue hooks already query `tax_amount` — we just need to ensure the display components have both `gross` and `tax` values available to pass to `adjustRevenue()`.
 
-**Option B (Future):** Eventually separate all revenue displays into "Revenue" (pre-tax) and "Tax" columns. This is a Phase 2 effort after the tax card proves valuable.
+### Task 4 — Update key revenue display surfaces
+Apply `adjustRevenue()` in the highest-impact surfaces:
+- **AggregateSalesCard** — hero revenue display, service/product breakdowns
+- **Sales KPI tiles** — total revenue, service revenue, product revenue
+- **Individual Staff Report** — revenue KPIs
+- **Comparison cards** — period A/B revenue
+- **Transactions page** — summary stat
 
----
+Each surface already has both `total_amount` and `tax_amount` available in their hooks. The change is wrapping the displayed value: `adjustRevenue(totalRevenue, totalTax)`.
 
-## Implementation Plan (Option A)
+### Task 5 — Update label dynamically
+Change the "Excludes Tips · Incl. Tax" label in AggregateSalesCard to reflect the current mode:
+- Inclusive: "Excludes Tips · Incl. Tax"
+- Exclusive: "Excludes Tips · Excl. Tax"
 
-### Task 1 — Create `useTaxSummary` hook
-New hook in `src/hooks/useTaxSummary.ts` that queries `phorest_transaction_items` for:
-- Total tax collected in date range
-- Tax by location
-- Tax by item type (will only show products since services are $0)
-- Tax by month (for multi-month ranges)
-Uses `fetchAllBatched`, proper location scoping, and the standard patterns.
+Similarly update MetricInfoTooltip descriptions.
 
-### Task 2 — Add Tax Summary card to Sales Analytics
-New component `src/components/dashboard/sales/TaxSummaryCard.tsx`:
-- Shows total tax collected for the selected period
-- Breakdown by location (if multi-location)
-- Monthly trend if range spans multiple months
-- Uses `PinnableCard`, design tokens, `BlurredAmount` for privacy
-- Follows canonical card header layout
+## Key Design Decisions
 
-### Task 3 — Add "incl. tax" indicator to key revenue displays
-Add a small `text-muted-foreground` label "(incl. tax)" next to the primary revenue figure on:
-- Sales Overview card
-- Revenue KPI tiles
-This is a 1-line label addition per surface — no formula changes.
+- **No formula changes in hooks** — hooks continue computing tax-inclusive totals (POS truth). The context adjusts at display time only.
+- **Org-level persistence** — stored in `site_settings`, same pattern as other org preferences.
+- **Gradual rollout** — start with the 5 highest-impact surfaces. Lower-traffic surfaces can be updated incrementally.
+- **Default: inclusive** — matches current behavior. No breaking change for existing orgs.
 
----
+## Files
 
-## Summary
+| Action | File |
+|--------|------|
+| Create | `src/contexts/RevenueDisplayContext.tsx` |
+| Create | `src/hooks/useRevenueDisplayMode.ts` (thin hook wrapping context) |
+| Edit | `src/components/dashboard/AggregateSalesCard.tsx` (hero + label) |
+| Edit | `src/components/dashboard/reports/IndividualStaffReport.tsx` (KPIs) |
+| Edit | `src/components/dashboard/sales/compare/ComparisonResultsGrid.tsx` |
+| Edit | `src/pages/dashboard/Transactions.tsx` (summary stat) |
+| Edit | Settings UI (add toggle — exact file TBD based on settings layout) |
+| Edit | Provider tree (wrap dashboard with `RevenueDisplayProvider`) |
 
-| What | Effort | Risk |
-|---|---|---|
-| `useTaxSummary` hook | New file | None — read-only |
-| Tax Summary card | New component | None — additive |
-| "incl. tax" labels | 2-3 lines each | None — cosmetic |
-
-3 tasks, 3-4 files created/modified. No database changes. No revenue formula changes.
-
-This gives operators the tax remittance data they need today, while preserving the option to separate pre-tax revenue in a future pass.
+No database changes — uses existing `site_settings` table.
 
