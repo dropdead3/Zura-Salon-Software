@@ -58,13 +58,15 @@ async function fetchUpcomingServices(
   locationId?: string | null,
 ): Promise<UpcomingService[]> {
   // Query phorest_appointments (primary source)
-  const { data: rawPhorest } = await (supabase
-    .from('phorest_appointments' as any)
-    .select('id, service_name, phorest_client_id, stylist_user_id, appointment_date')
-    .eq('organization_id', orgId)
-    .gte('appointment_date', startDate)
-    .lte('appointment_date', endDate) as any);
-  const phorestData = (rawPhorest ?? []) as any[];
+  const phorestData = await fetchAllBatched<any>((from, to) =>
+    (supabase
+      .from('phorest_appointments' as any)
+      .select('id, service_name, phorest_client_id, stylist_user_id, appointment_date')
+      .eq('organization_id', orgId)
+      .gte('appointment_date', startDate)
+      .lte('appointment_date', endDate) as any)
+      .range(from, to)
+  );
 
   // Filter out cancelled/no-show client-side (avoids deep type chain)
   const filteredPhorest = locationId
@@ -72,15 +74,18 @@ async function fetchUpcomingServices(
     : phorestData;
 
   // Query local appointments as fallback
-  const { data: rawLocal } = await (supabase
-    .from('appointments')
-    .select('id, service_name, client_id, staff_user_id, appointment_date')
-    .eq('organization_id', orgId)
-    .gte('appointment_date', startDate)
-    .lte('appointment_date', endDate) as any);
+  const rawLocal = await fetchAllBatched<any>((from, to) =>
+    (supabase
+      .from('appointments')
+      .select('id, service_name, client_id, staff_user_id, appointment_date')
+      .eq('organization_id', orgId)
+      .gte('appointment_date', startDate)
+      .lte('appointment_date', endDate) as any)
+      .range(from, to)
+  );
   const localFiltered = locationId
-    ? ((rawLocal ?? []) as any[]).filter((a: any) => a.location_id === locationId)
-    : ((rawLocal ?? []) as any[]);
+    ? rawLocal.filter((a: any) => a.location_id === locationId)
+    : rawLocal;
 
   const services: UpcomingService[] = [];
 
