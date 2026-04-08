@@ -65,8 +65,27 @@ export function SalesReportGenerator({
   const { data: stylistData, isLoading: stylistLoading } = useSalesByStylist(dateFrom, dateTo);
   const { data: locationData, isLoading: locationLoading } = useSalesByLocation(dateFrom, dateTo);
   const { data: productData, isLoading: productLoading } = useProductSalesAnalytics('month', locationId);
+  const { data: dailyRawData, isLoading: dailyLoading } = useDailySalesSummary({ dateFrom, dateTo, locationId });
 
-  const isLoading = metricsLoading || stylistLoading || locationLoading || productLoading;
+  // Aggregate daily rows (per-staff) into per-date rows
+  const dailyRows = useMemo(() => {
+    if (!dailyRawData) return [];
+    const byDate: Record<string, { date: string; totalRevenue: number; serviceRevenue: number; productRevenue: number; totalServices: number; totalProducts: number }> = {};
+    for (const row of dailyRawData) {
+      const d = row.summary_date;
+      if (!byDate[d]) {
+        byDate[d] = { date: d, totalRevenue: 0, serviceRevenue: 0, productRevenue: 0, totalServices: 0, totalProducts: 0 };
+      }
+      byDate[d].totalRevenue += row.total_revenue;
+      byDate[d].serviceRevenue += row.service_revenue;
+      byDate[d].productRevenue += row.product_revenue;
+      byDate[d].totalServices += row.total_services;
+      byDate[d].totalProducts += row.total_products;
+    }
+    return Object.values(byDate).sort((a, b) => a.date.localeCompare(b.date));
+  }, [dailyRawData]);
+
+  const isLoading = metricsLoading || stylistLoading || locationLoading || productLoading || dailyLoading;
 
   const getReportTitle = () => {
     switch (reportType) {
