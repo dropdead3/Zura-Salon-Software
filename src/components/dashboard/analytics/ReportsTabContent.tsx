@@ -56,6 +56,9 @@ import { TipAnalysisReport } from '@/components/dashboard/reports/TipAnalysisRep
 import { ServiceCategoryMixReport } from '@/components/dashboard/reports/ServiceCategoryMixReport';
 import { TaxSummaryReport } from '@/components/dashboard/reports/TaxSummaryReport';
 import { ClientAttritionReport } from '@/components/dashboard/reports/ClientAttritionReport';
+import { StaffCompensationRatioReport } from '@/components/dashboard/reports/StaffCompensationRatioReport';
+import { LocationBenchmarkReport } from '@/components/dashboard/reports/LocationBenchmarkReport';
+import { DemandHeatmapReport } from '@/components/dashboard/reports/DemandHeatmapReport';
 import type { AnalyticsFilters } from '@/pages/dashboard/admin/AnalyticsHub';
 
 const reportCategories = [
