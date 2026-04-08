@@ -38,14 +38,14 @@ function useDeletedAppointmentsReport(filters: { dateFrom: string; dateTo: strin
         appointment_date: string;
         client_name: string | null;
         service_name: string | null;
-        phorest_staff_id: string | null;
+        staff_name: string | null;
         total_price: number | null;
         deleted_at: string | null;
         deleted_by: string | null;
       }>((from, to) => {
         let q = supabase
           .from('v_all_appointments')
-          .select('appointment_date, client_name, service_name, phorest_staff_id, total_price, deleted_at, deleted_by')
+          .select('appointment_date, client_name, service_name, staff_name, total_price, deleted_at, deleted_by')
           .not('deleted_at', 'is', null)
           .gte('appointment_date', filters.dateFrom)
           .lte('appointment_date', filters.dateTo)
@@ -62,7 +62,7 @@ function useDeletedAppointmentsReport(filters: { dateFrom: string; dateTo: strin
           date: r.appointment_date,
           clientName: r.client_name || 'Unknown',
           serviceName: r.service_name || 'Unknown',
-          staffId: r.phorest_staff_id || 'Unknown',
+          staffId: r.staff_name || 'Unknown',
           totalPrice: price,
           deletedAt: r.deleted_at || '',
           deletedBy: r.deleted_by,

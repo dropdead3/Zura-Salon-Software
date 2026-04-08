@@ -23,14 +23,30 @@ export function useDuplicateClientsReport(filters: Filters) {
   return useQuery({
     queryKey: ['duplicate-clients-report', filters],
     queryFn: async (): Promise<DuplicateGroup[]> => {
-      let q = supabase
-        .from('v_all_clients')
-        .select('id, phorest_client_id, name, first_name, last_name, email, email_normalized, phone, phone_normalized, total_spend, visit_count, last_visit, is_duplicate, canonical_client_id')
-        .eq('is_archived', false);
-      if (filters.locationId) q = q.eq('location_id', filters.locationId);
-
-      const { data, error } = await q.limit(5000);
-      if (error) throw error;
+      const data = await fetchAllBatched<{
+        id: string;
+        phorest_client_id: string | null;
+        name: string | null;
+        first_name: string | null;
+        last_name: string | null;
+        email: string | null;
+        email_normalized: string | null;
+        phone: string | null;
+        phone_normalized: string | null;
+        total_spend: number | null;
+        visit_count: number | null;
+        last_visit: string | null;
+        is_duplicate: boolean | null;
+        canonical_client_id: string | null;
+      }>((from, to) => {
+        let q = supabase
+          .from('v_all_clients')
+          .select('id, phorest_client_id, name, first_name, last_name, email, email_normalized, phone, phone_normalized, total_spend, visit_count, last_visit, is_duplicate, canonical_client_id')
+          .eq('is_archived', false)
+          .range(from, to);
+        if (filters.locationId) q = q.eq('location_id', filters.locationId);
+        return q;
+      });
 
       // Group by normalized email
       const emailGroups = new Map<string, typeof data>();
