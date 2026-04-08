@@ -816,7 +816,7 @@ export function AggregateSalesCard({
                     : "Combined net revenue from services and retail product sales for the selected period. Tips and gratuities are tracked separately and not included in this total."
                   } />
                 </div>
-                <p className="text-xs text-muted-foreground/50">Excludes Tips</p>
+                <p className="text-xs text-muted-foreground/50">Excludes Tips · Incl. Tax</p>
               </div>
 
               {/* Expected Service Revenue — stacked info block (today only) */}

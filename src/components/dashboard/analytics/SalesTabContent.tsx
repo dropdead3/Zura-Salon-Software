@@ -75,6 +75,7 @@ import { RetailAnalyticsContent } from '@/components/dashboard/analytics/RetailA
 import { ServicesContent } from '@/components/dashboard/analytics/ServicesContent';
 import { PricingAnalyticsContent } from '@/components/dashboard/analytics/PricingAnalyticsContent';
 import { SubtabFavoriteStar } from '@/components/dashboard/analytics/SubtabFavoriteStar';
+import { TaxSummaryCard } from '@/components/dashboard/sales/TaxSummaryCard';
 import type { AnalyticsFilters } from '@/pages/dashboard/admin/AnalyticsHub';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 
@@ -386,6 +387,16 @@ export function SalesTabContent({
           <PinnableCard elementKey="product_category_chart" elementName="Product Categories" category="Analytics Hub - Sales" dateRange={filters.dateRange} locationName={selectedLocationName}>
             <ProductCategoryChart dateFrom={filters.dateFrom} dateTo={filters.dateTo} filterContext={filterContext} />
           </PinnableCard>
+          {/* Tax Summary */}
+          <PinnableCard elementKey="tax_summary" elementName="Tax Collected" category="Analytics Hub - Sales" dateRange={filters.dateRange} locationName={selectedLocationName}>
+            <TaxSummaryCard
+              dateFrom={filters.dateFrom}
+              dateTo={filters.dateTo}
+              locationId={locationFilter}
+              dateRange={filters.dateRange as any}
+            />
+          </PinnableCard>
+
           {/* Compact Top Services summary — full analysis in Services tab */}
           <Card className="cursor-pointer hover:bg-muted/30 transition-colors" onClick={() => onSubTabChange('services')}>
             <CardContent className="p-4 flex items-center justify-between">
