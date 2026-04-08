@@ -117,7 +117,30 @@ export function StylistScorecard({ userId, locationId, onTrendProjection }: Styl
     evaluationWindowDays: progress?.evaluationWindowDays || 30,
   });
 
-  // Aggregate color bar metrics
+  // Trend projections
+  const trendProjection = useTrendProjection(progress);
+
+  // Expose trend projection to parent
+  const { useEffect } = require('react');
+  // NOTE: We use a ref-stable callback pattern instead
+  // Pass projection data to parent via callback
+  useMemo(() => {
+    if (onTrendProjection && trendProjection) {
+      // Defer to avoid setState-during-render
+      setTimeout(() => onTrendProjection(trendProjection), 0);
+    }
+  }, [trendProjection, onTrendProjection]);
+
+  // Build a map for quick lookup: kpi key -> projection
+  const projectionMap = useMemo(() => {
+    const map = new Map<string, typeof trendProjection.projections[0]>();
+    for (const p of trendProjection.projections) {
+      map.set(p.key, p);
+    }
+    return map;
+  }, [trendProjection.projections]);
+
+
   const colorBarMetrics = useMemo(() => {
     if (!colorBarData?.length) return null;
     const totalSessions = colorBarData.reduce((s, d) => s + d.mix_session_count, 0);
