@@ -119,6 +119,9 @@ const staffReports = [
   { id: 'staff-milestones', name: 'Staff Milestones', description: 'Upcoming birthdays and hire anniversaries', icon: Gift },
   { id: 'permissions-audit', name: 'Permissions Audit', description: 'Role assignments and access matrix for all staff', icon: Shield },
   { id: 'time-attendance', name: 'Time & Attendance', description: 'Hours worked, overtime, and break tracking by staff', icon: Clock },
+  { id: 'pto-balances', name: 'PTO Balances', description: 'Current PTO balances, accrued, used, and carried over', icon: CalendarDays },
+  { id: 'staff-strikes', name: 'Staff Strikes', description: 'Active and resolved strikes with severity and resolution', icon: AlertTriangle },
+  { id: 'training-completion', name: 'Training Completion', description: 'Video training progress and completion rates by staff', icon: ClipboardList },
 ];
 
 const clientReports = [
@@ -287,7 +290,7 @@ export function ReportsTabContent({ filters, isStandalone }: ReportsTabContentPr
   );
 
   // Reports that manage their own back button
-  const selfContainedReports = ['individual-staff', 'payroll-summary', 'retail-products', 'retail-staff', 'end-of-month', 'service-profitability', 'chemical-cost', 'tip-analysis', 'category-mix', 'tax-summary', 'client-attrition', 'compensation-ratio', 'location-benchmark', 'demand-heatmap', 'discounts', 'future-appointments', 'top-clients', 'client-birthdays', 'client-source', 'duplicate-clients', 'staff-transaction-detail', 'deleted-appointments', 'no-show-enhanced', 'gift-cards', 'vouchers', 'staff-milestones', 'permissions-audit', 'time-attendance'];
+  const selfContainedReports = ['individual-staff', 'payroll-summary', 'retail-products', 'retail-staff', 'end-of-month', 'service-profitability', 'chemical-cost', 'tip-analysis', 'category-mix', 'tax-summary', 'client-attrition', 'compensation-ratio', 'location-benchmark', 'demand-heatmap', 'discounts', 'future-appointments', 'top-clients', 'client-birthdays', 'client-source', 'duplicate-clients', 'staff-transaction-detail', 'deleted-appointments', 'no-show-enhanced', 'gift-cards', 'vouchers', 'staff-milestones', 'permissions-audit', 'time-attendance', 'pto-balances', 'staff-strikes', 'training-completion'];
 
   const renderSelectedReport = () => {
     const location = filters.locationId === 'all' ? undefined : filters.locationId;
@@ -468,6 +471,12 @@ export function ReportsTabContent({ filters, isStandalone }: ReportsTabContentPr
         return <PermissionsAuditReport dateFrom={filters.dateFrom} dateTo={filters.dateTo} locationId={location} onClose={handleCloseReport} />;
       case 'time-attendance':
         return <TimeAttendanceReport dateFrom={filters.dateFrom} dateTo={filters.dateTo} locationId={location} onClose={handleCloseReport} />;
+      case 'pto-balances':
+        return <PTOBalancesReport dateFrom={filters.dateFrom} dateTo={filters.dateTo} locationId={location} onClose={handleCloseReport} />;
+      case 'staff-strikes':
+        return <StaffStrikesReport dateFrom={filters.dateFrom} dateTo={filters.dateTo} locationId={location} onClose={handleCloseReport} />;
+      case 'training-completion':
+        return <TrainingCompletionReport dateFrom={filters.dateFrom} dateTo={filters.dateTo} locationId={location} onClose={handleCloseReport} />;
       default:
         return null;
     }
