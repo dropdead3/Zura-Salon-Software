@@ -45,7 +45,7 @@ export function DashboardPageHeader({
         </div>
       </div>
 
-      {actions && <div className="flex shrink-0">{actions}</div>}
+      {actions && <div className="flex flex-wrap items-center gap-3 shrink-0">{actions}</div>}
     </div>
   );
 }
