@@ -165,7 +165,7 @@ export function useTodayPrep() {
               bucket.services.push({
                 date: item.transaction_date,
                 name: item.item_name,
-                staffName: item.phorest_staff_id ? staffNameMap.get(item.phorest_staff_id) || null : null,
+                staffName: item.phorest_staff_id ? staffNameMap[item.phorest_staff_id] || null : null,
               });
             }
           }
