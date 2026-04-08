@@ -354,7 +354,7 @@ function DashboardRoutes() {
       <Route path="admin/staff-utilization" element={<Navigate to="admin/analytics?tab=operations&subtab=staff-utilization" replace />} />
       <Route path="admin/marketing" element={<Navigate to="admin/analytics?tab=marketing" replace />} />
       <Route path="admin/program-analytics" element={<Navigate to="admin/analytics?tab=program" replace />} />
-      <Route path="admin/reports" element={<Navigate to="admin/analytics?tab=reports" replace />} />
+      <Route path="admin/reports" element={<ProtectedRoute requiredPermission="view_team_overview"><ReportsHub /></ProtectedRoute>} />
       <Route path="admin/leads" element={<ProtectedRoute requiredPermission="view_team_overview"><LeadManagement /></ProtectedRoute>} />
       <Route path="admin/feature-flags" element={<Navigate to="/platform/feature-flags" replace />} />
 

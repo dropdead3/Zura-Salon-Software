@@ -35,7 +35,7 @@ import { MarketingTabContent } from '@/components/dashboard/analytics/MarketingT
 import { ProgramTabContent } from '@/components/dashboard/analytics/ProgramTabContent';
 import { RentRevenueTab } from '@/components/dashboard/analytics/RentRevenueTab';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
-import { ReportsTabContent } from '@/components/dashboard/analytics/ReportsTabContent';
+
 import { CampaignsTabContent } from '@/components/dashboard/analytics/CampaignsTabContent';
 import { PinnableCard } from '@/components/dashboard/PinnableCard';
 import { LeadershipTabContent } from '@/components/dashboard/analytics/LeadershipTabContent';
@@ -50,7 +50,6 @@ const baseCategories = [
   { id: 'marketing', label: 'Marketing', icon: TrendingUp },
   { id: 'campaigns', label: 'Campaigns', icon: Target },
   { id: 'program', label: 'Program', icon: Target },
-  { id: 'reports', label: 'Reports', icon: FileText },
 ];
 
 const rentCategory = { id: 'rent', label: 'Rent', icon: Home };
@@ -425,11 +424,6 @@ export default function AnalyticsHub() {
             </TabsContent>
           </VisibilityGate>
 
-          <VisibilityGate elementKey="analytics_reports_tab">
-            <TabsContent value="reports" className="mt-6">
-              <ReportsTabContent filters={filters} />
-            </TabsContent>
-          </VisibilityGate>
 
           {isSuperAdmin && hasRenters && effectiveOrganization?.id && (
             <VisibilityGate elementKey="analytics_rent_tab">
