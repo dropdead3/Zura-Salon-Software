@@ -56,7 +56,7 @@ async function generateSingleReportPdf(
   const y = addReportHeader(doc, headerOpts);
 
   // Fetch data based on report type and render table
-  const data = await fetchReportData(config.reportId, dateFrom, dateTo, locationId);
+  const data = await fetchReportData(config.reportId, dateFrom, dateTo, locationId, undefined);
 
   if (data.rows.length === 0) {
     doc.setFontSize(11);
@@ -87,6 +87,7 @@ async function fetchReportData(
   dateFrom: string,
   dateTo: string,
   locationId?: string,
+  orgId?: string,
 ): Promise<ReportTableData> {
   switch (reportId) {
     case 'daily-sales':
@@ -95,7 +96,7 @@ async function fetchReportData(
     case 'location-sales': {
       const data = await fetchAllBatched<any>((from, to) => {
         let q = supabase.from('v_all_transaction_items')
-          .select('transaction_date, staff_name, item_name, item_type, quantity, line_total, location_id')
+          .select('transaction_date, staff_name, item_name, item_type, quantity, total_amount, location_id')
           .gte('transaction_date', dateFrom)
           .lte('transaction_date', dateTo)
           .range(from, to);
@@ -104,15 +105,15 @@ async function fetchReportData(
       });
       if (reportId === 'daily-sales') {
         const byDate = new Map<string, number>();
-        for (const r of data) { byDate.set(r.transaction_date, (byDate.get(r.transaction_date) || 0) + (Number(r.line_total) || 0)); }
+        for (const r of data) { byDate.set(r.transaction_date, (byDate.get(r.transaction_date) || 0) + (Number(r.total_amount) || 0)); }
         return { columns: ['Date', 'Revenue'], rows: Array.from(byDate.entries()).sort().map(([d, v]) => [d, `$${v.toFixed(2)}`]) };
       }
       if (reportId === 'stylist-sales') {
         const byStaff = new Map<string, number>();
-        for (const r of data) { const name = r.staff_name || 'Unknown'; byStaff.set(name, (byStaff.get(name) || 0) + (Number(r.line_total) || 0)); }
+        for (const r of data) { const name = r.staff_name || 'Unknown'; byStaff.set(name, (byStaff.get(name) || 0) + (Number(r.total_amount) || 0)); }
         return { columns: ['Stylist', 'Revenue'], rows: Array.from(byStaff.entries()).sort((a, b) => b[1] - a[1]).map(([n, v]) => [n, `$${v.toFixed(2)}`]) };
       }
-      return { columns: ['Date', 'Item', 'Type', 'Qty', 'Total'], rows: data.slice(0, 500).map(r => [r.transaction_date, r.item_name || '', r.item_type || '', String(r.quantity || 1), `$${(Number(r.line_total) || 0).toFixed(2)}`]) };
+      return { columns: ['Date', 'Item', 'Type', 'Qty', 'Total'], rows: data.slice(0, 500).map(r => [r.transaction_date, r.item_name || '', r.item_type || '', String(r.quantity || 1), `$${(Number(r.total_amount) || 0).toFixed(2)}`]) };
     }
     case 'staff-kpi':
     case 'tip-analysis':
@@ -120,7 +121,7 @@ async function fetchReportData(
     case 'staff-transaction-detail': {
       const data = await fetchAllBatched<any>((from, to) => {
         let q = supabase.from('v_all_transaction_items')
-          .select('staff_name, item_name, item_type, line_total, transaction_date, tip_amount')
+          .select('staff_name, item_name, item_type, total_amount, transaction_date, tip_amount')
           .gte('transaction_date', dateFrom)
           .lte('transaction_date', dateTo)
           .range(from, to);
@@ -133,7 +134,7 @@ async function fetchReportData(
         return { columns: ['Stylist', 'Total Tips', 'Avg Tip'], rows: Array.from(byStaff.entries()).map(([n, e]) => [n, `$${e.tips.toFixed(2)}`, `$${(e.tips / e.count).toFixed(2)}`]) };
       }
       const byStaff = new Map<string, number>();
-      for (const r of data) { const n = r.staff_name || 'Unknown'; byStaff.set(n, (byStaff.get(n) || 0) + (Number(r.line_total) || 0)); }
+      for (const r of data) { const n = r.staff_name || 'Unknown'; byStaff.set(n, (byStaff.get(n) || 0) + (Number(r.total_amount) || 0)); }
       return { columns: ['Stylist', 'Revenue'], rows: Array.from(byStaff.entries()).sort((a, b) => b[1] - a[1]).map(([n, v]) => [n, `$${v.toFixed(2)}`]) };
     }
     case 'executive-summary':
@@ -141,7 +142,7 @@ async function fetchReportData(
     case 'payroll-summary': {
       const data = await fetchAllBatched<any>((from, to) => {
         let q = supabase.from('v_all_transaction_items')
-          .select('transaction_date, item_type, line_total, tip_amount')
+          .select('transaction_date, item_type, total_amount, tip_amount')
           .gte('transaction_date', dateFrom)
           .lte('transaction_date', dateTo)
           .range(from, to);
@@ -150,7 +151,7 @@ async function fetchReportData(
       });
       let totalRevenue = 0, serviceRev = 0, productRev = 0, totalTips = 0;
       for (const r of data) {
-        const amt = Number(r.line_total) || 0;
+        const amt = Number(r.total_amount) || 0;
         totalRevenue += amt;
         if (r.item_type === 'service') serviceRev += amt;
         else productRev += amt;
@@ -174,7 +175,7 @@ async function fetchReportData(
     case 'duplicate-clients': {
       const data = await fetchAllBatched<any>((from, to) => {
         let q = supabase.from('v_all_clients')
-          .select('name, first_name, last_name, email, phone, total_spend, visit_count, created_at, source, birthday')
+          .select('name, first_name, last_name, email, phone, total_spend, visit_count, created_at, lead_source, birthday')
           .eq('is_archived', false)
           .range(from, to);
         if (locationId) q = q.eq('location_id', locationId);
@@ -186,7 +187,7 @@ async function fetchReportData(
       }
       if (reportId === 'client-source') {
         const bySource = new Map<string, number>();
-        for (const c of data) { const src = c.source || 'Unknown'; bySource.set(src, (bySource.get(src) || 0) + 1); }
+        for (const c of data) { const src = c.lead_source || 'Unknown'; bySource.set(src, (bySource.get(src) || 0) + 1); }
         return { columns: ['Source', 'Clients'], rows: Array.from(bySource.entries()).sort((a, b) => b[1] - a[1]).map(([s, c]) => [s, String(c)]) };
       }
       return { columns: ['Client', 'Email', 'Spend', 'Visits'], rows: data.slice(0, 300).map((c: any) => [c.name || `${c.first_name || ''} ${c.last_name || ''}`.trim() || 'Unknown', c.email || '', `$${(Number(c.total_spend) || 0).toFixed(2)}`, String(c.visit_count || 0)]) };
@@ -228,7 +229,7 @@ async function fetchReportData(
     case 'location-benchmark': {
       const data = await fetchAllBatched<any>((from, to) => {
         let q = supabase.from('v_all_transaction_items')
-          .select('item_name, item_type, line_total, quantity, staff_name, transaction_date, discount_amount')
+          .select('item_name, item_type, total_amount, quantity, staff_name, transaction_date, discount')
           .gte('transaction_date', dateFrom)
           .lte('transaction_date', dateTo)
           .range(from, to);
@@ -239,26 +240,28 @@ async function fetchReportData(
         const products = data.filter((r: any) => r.item_type === 'product');
         if (reportId === 'retail-staff') {
           const byStaff = new Map<string, { rev: number; qty: number }>();
-          for (const r of products) { const n = r.staff_name || 'Unknown'; const e = byStaff.get(n) || { rev: 0, qty: 0 }; e.rev += Number(r.line_total) || 0; e.qty += Number(r.quantity) || 0; byStaff.set(n, e); }
+          for (const r of products) { const n = r.staff_name || 'Unknown'; const e = byStaff.get(n) || { rev: 0, qty: 0 }; e.rev += Number(r.total_amount) || 0; e.qty += Number(r.quantity) || 0; byStaff.set(n, e); }
           return { columns: ['Staff', 'Retail Revenue', 'Units Sold'], rows: Array.from(byStaff.entries()).sort((a, b) => b[1].rev - a[1].rev).map(([n, e]) => [n, `$${e.rev.toFixed(2)}`, String(e.qty)]) };
         }
         const byProduct = new Map<string, { rev: number; qty: number }>();
-        for (const r of products) { const n = r.item_name || 'Unknown'; const e = byProduct.get(n) || { rev: 0, qty: 0 }; e.rev += Number(r.line_total) || 0; e.qty += Number(r.quantity) || 0; byProduct.set(n, e); }
+        for (const r of products) { const n = r.item_name || 'Unknown'; const e = byProduct.get(n) || { rev: 0, qty: 0 }; e.rev += Number(r.total_amount) || 0; e.qty += Number(r.quantity) || 0; byProduct.set(n, e); }
         return { columns: ['Product', 'Revenue', 'Units'], rows: Array.from(byProduct.entries()).sort((a, b) => b[1].rev - a[1].rev).map(([n, e]) => [n, `$${e.rev.toFixed(2)}`, String(e.qty)]) };
       }
       if (reportId === 'discounts') {
-        const withDiscount = data.filter((r: any) => Number(r.discount_amount) > 0);
-        return { columns: ['Date', 'Item', 'Staff', 'Discount'], rows: withDiscount.slice(0, 500).map((r: any) => [r.transaction_date, r.item_name || '', r.staff_name || '', `$${(Number(r.discount_amount) || 0).toFixed(2)}`]) };
+        const withDiscount = data.filter((r: any) => Number(r.discount) > 0);
+        return { columns: ['Date', 'Item', 'Staff', 'Discount'], rows: withDiscount.slice(0, 500).map((r: any) => [r.transaction_date, r.item_name || '', r.staff_name || '', `$${(Number(r.discount) || 0).toFixed(2)}`]) };
       }
       // Generic summary
       const byType = new Map<string, number>();
-      for (const r of data) { const t = r.item_type || 'other'; byType.set(t, (byType.get(t) || 0) + (Number(r.line_total) || 0)); }
+      for (const r of data) { const t = r.item_type || 'other'; byType.set(t, (byType.get(t) || 0) + (Number(r.total_amount) || 0)); }
       return { columns: ['Category', 'Revenue'], rows: Array.from(byType.entries()).map(([t, v]) => [t, `$${v.toFixed(2)}`]) };
     }
     case 'gift-cards':
     case 'vouchers': {
       const table = reportId === 'gift-cards' ? 'gift_cards' : 'vouchers';
-      const { data, error } = await supabase.from(table).select('*').limit(500);
+      let q = supabase.from(table).select('*').limit(500);
+      if (orgId) q = q.eq('organization_id', orgId);
+      const { data, error } = await q;
       if (error || !data) return { columns: ['Status'], rows: [['No data available']] };
       if (reportId === 'gift-cards') {
         return { columns: ['Code', 'Balance', 'Status', 'Created'], rows: data.map((g: any) => [g.code || '', `$${(Number(g.balance) || 0).toFixed(2)}`, g.status || '', g.created_at?.split('T')[0] || '']) };
@@ -349,7 +352,7 @@ export function useBatchReportGenerator() {
           const branding = getReportAutoTableBranding(mergedDoc, headerOpts);
           const y = addReportHeader(mergedDoc, headerOpts);
 
-          const data = await fetchReportData(config.reportId, dateFrom, dateTo, locationId);
+          const data = await fetchReportData(config.reportId, dateFrom, dateTo, locationId, effectiveOrganization?.id);
           if (data.rows.length === 0) {
             mergedDoc.setFontSize(11);
             mergedDoc.setTextColor(120, 120, 120);
