@@ -7,9 +7,10 @@ import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Calendar as CalendarIcon, Building2 } from 'lucide-react';
+import { Calendar as CalendarIcon, Building2, Package } from 'lucide-react';
 import { useLocations } from '@/hooks/useLocations';
 import { ReportsTabContent } from '@/components/dashboard/analytics/ReportsTabContent';
+import { BatchReportDialog } from '@/components/dashboard/reports/batch/BatchReportDialog';
 import type { AnalyticsFilters, DateRangeType } from '@/pages/dashboard/admin/AnalyticsHub';
 
 export default function ReportsHub() {
@@ -19,6 +20,7 @@ export default function ReportsHub() {
   });
   const [datePreset, setDatePreset] = useState<DateRangeType>('thisMonth');
   const [locationId, setLocationId] = useState<string>('all');
+  const [batchOpen, setBatchOpen] = useState(false);
   const { data: locations } = useLocations();
 
   const filters: AnalyticsFilters = {
