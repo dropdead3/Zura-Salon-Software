@@ -1,38 +1,48 @@
 
 
-# Fix: Restrict Future Date Selection for Historical Reports
+# Enhanced Date Range Presets for ReportsHub + Disabled Date Styling
 
-## Problem
-The ReportsHub global date picker allows selecting future dates for all reports. This is incorrect for historical/actuals-based reports (e.g. Daily Sales Summary, Tax Summary) since no sales data can exist in the future. However, some reports like "Future Appointments Value" explicitly need future dates.
+## Overview
+Replace the two inline preset buttons in ReportsHub with a full sidebar preset list (Shopify-style), and improve the Calendar component's disabled-date styling so non-selectable dates are visually distinct from selectable ones.
 
-The same issue exists in the AnalyticsHub date picker — no `disabled` constraint prevents future date selection.
+## Changes
 
-## Report Classification
+### 1. `src/pages/dashboard/admin/ReportsHub.tsx`
 
-**Historical-only (must NOT allow future dates):**
-All reports except the ones listed below. These include: `daily-sales`, `stylist-sales`, `location-sales`, `product-sales`, `retail-products`, `retail-staff`, `category-mix`, `tax-summary`, `discounts`, `staff-kpi`, `tip-analysis`, `staff-transaction-detail`, `compensation-ratio`, `client-attrition`, `top-clients`, `client-source`, `duplicate-clients`, `no-show-enhanced`, `deleted-appointments`, `demand-heatmap`, `executive-summary`, `payroll-summary`, `end-of-month`, `service-profitability`, `chemical-cost`, `location-benchmark`, `gift-cards`, `vouchers`.
+Rewrite the date picker popover content to include a **left sidebar** with preset buttons and the calendar on the right:
 
-**Future-aware (CAN allow future dates):**
-- `future-appointments` — entire purpose is forward-looking
-- `client-birthdays` — birthday lookups can span future months
+- **Preset list** (vertical stack, left side):
+  - Today, Yesterday, Last 7 Days, Last 30 Days, Last 90 Days, Week to Date, Month to Date, Last Month, Year to Date, Custom Range
+- **Behavior**:
+  - Clicking any preset (except Custom Range) computes the date range using `date-fns`, sets it immediately, updates `datePreset`, and closes the popover
+  - "Custom Range" activates the calendar for manual selection (calendar always visible but only interactive in custom mode, or simpler: always show calendar, highlight active preset)
+  - All presets cap `to` at today
+- **Layout**: `flex` row — preset sidebar `w-[160px] border-r` + calendar area
+- Import additional `date-fns` functions: `subDays, startOfWeek, startOfYear`
+- Use `dateRangeLabels.ts` types/labels for consistency
+- Add `open` / `onOpenChange` state to the Popover so presets can close it programmatically
 
-## Approach
+### 2. `src/components/ui/calendar.tsx`
 
-Rather than restricting the global date picker (which would break future-aware reports), the fix should:
+Enhance the `day_disabled` class to make non-selectable dates clearly distinct:
 
-1. **Cap the global calendar at today by default** — add `toDate={new Date()}` to the `<Calendar>` in `ReportsHub.tsx`, which disables all future days visually
-2. **Also cap "This Month" preset** — when clicking "This Month", set `to` as `min(endOfMonth, today)` instead of always `endOfMonth` (which goes into the future)
-3. **Override for future-aware reports** — when a user opens `future-appointments` or `client-birthdays`, the individual report components already handle their own date logic (e.g. `useFutureAppointmentsReport` uses `today` as the start and ignores `dateFrom`). No change needed for those.
-4. **Same fix for AnalyticsHub** — cap the calendar picker at today and adjust "This Month" / "Today → End of Month" presets appropriately. Note: `todayToEom` is explicitly a future-looking preset used by Operations analytics, so that preset should remain but be scoped correctly.
+**Current:** `"text-muted-foreground opacity-50"`
 
-## Fix Plan
+**Updated:** `"text-muted-foreground/40 opacity-30 cursor-not-allowed line-through"`
+
+This adds:
+- Lower opacity (30% vs 50%) for stronger visual separation
+- `cursor-not-allowed` so hover communicates non-interactivity
+- `line-through` as a subtle strikethrough indicator (common pattern for unavailable dates)
+
+The `toDate` prop already prevents click interaction — this just makes it visually obvious.
+
+### Files Modified
 
 | File | Change |
 |---|---|
-| `ReportsHub.tsx` | Add `toDate={new Date()}` to `<Calendar>` to disable future dates. Cap "This Month" preset `to` at `min(endOfMonth, today)`. Cap initial state `to` at today. |
-| `AnalyticsHub.tsx` | Add `toDate={new Date()}` to the calendar picker. Adjust "This Month" preset to cap at today. Keep `todayToEom` preset functional (it's used for operations forecasting). |
-| `FutureAppointmentsReport.tsx` | No change — already uses its own date logic starting from today. |
-| `ClientBirthdaysReport.tsx` | No change — birthday lookups are date-agnostic (month/day matching). |
+| `ReportsHub.tsx` | Replace 2-button preset strip with full sidebar preset list inside popover; add programmatic close on preset click; compute ranges with `date-fns` |
+| `calendar.tsx` | Update `day_disabled` classes for stronger visual distinction (lower opacity, cursor-not-allowed, line-through) |
 
-2 file edits. No migrations. The `toDate` prop on `react-day-picker` is the standard way to disable dates after a given date — it greys them out and prevents selection.
+2 file edits. No migrations.
 
