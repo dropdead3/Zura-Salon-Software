@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { format, subDays } from 'date-fns';
+import { resolveStaffNamesByPhorestIds } from '@/utils/resolveStaffNames';
 
 export interface StaffRebookRow {
   staffId: string;
@@ -82,21 +83,9 @@ export function useStaffRebookDrilldown(date: string, locationId?: string) {
       // Actually include all from today
       const staffIds = Array.from(allIds).filter((id) => id !== 'unknown');
 
-      // Fetch staff names
-      let nameMap = new Map<string, string>();
-      if (staffIds.length > 0) {
-        const { data: staffData } = await (supabase as any)
-          .from('phorest_staff_mappings')
-          .select('phorest_staff_id, staff_first_name, staff_last_name')
-          .in('phorest_staff_id', staffIds);
-
-        if (staffData) {
-          for (const s of staffData) {
-            const name = [s.staff_first_name, s.staff_last_name].filter(Boolean).join(' ') || 'Unknown';
-            nameMap.set(s.phorest_staff_id, name);
-          }
-        }
-      }
+      // Fetch staff names via centralized resolution
+      const resolvedNames = await resolveStaffNamesByPhorestIds(staffIds);
+      const nameMap = new Map<string, string>(Object.entries(resolvedNames));
 
       // Build result
       const result: StaffRebookRow[] = [];

@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { format, addDays, startOfWeek, endOfWeek, endOfMonth, differenceInDays } from 'date-fns';
 import { getServiceCategory } from '@/utils/serviceCategorization';
+import { resolveStaffNamesByPhorestIds } from '@/utils/resolveStaffNames';
 
 export type ForecastPeriod = 'tomorrow' | '7days' | '30days' | '60days' | 'todayToEom';
 
@@ -100,7 +101,7 @@ export function useForecastRevenue(period: ForecastPeriod, locationId?: string) 
     queryFn: async () => {
       let query = supabase
         .from('phorest_appointments')
-        .select('id, appointment_date, total_price, status, client_name, service_name, start_time, end_time, phorest_staff_id, service_category, location_id')
+        .select('id, appointment_date, total_price, tip_amount, status, client_name, service_name, start_time, end_time, phorest_staff_id, service_category, location_id')
         .gte('appointment_date', startDate)
         .lte('appointment_date', endDate)
         .not('status', 'in', '("cancelled","no_show")')
@@ -119,22 +120,7 @@ export function useForecastRevenue(period: ForecastPeriod, locationId?: string) 
 
       // Fetch staff names for the appointments
       const staffIds = [...new Set(appointments.map(a => a.phorest_staff_id).filter(Boolean))] as string[];
-      const staffMap: Record<string, string> = {};
-      
-      if (staffIds.length > 0) {
-        const { data: staffData } = await (supabase as any)
-          .from('phorest_staff_mappings')
-          .select('phorest_staff_id, staff_first_name, staff_last_name')
-          .in('phorest_staff_id', staffIds);
-        
-        if (staffData) {
-          (staffData as any[]).forEach((s: any) => {
-            if (s.phorest_staff_id) {
-              staffMap[s.phorest_staff_id] = `${s.staff_first_name || ''} ${s.staff_last_name?.charAt(0) || ''}.`.trim();
-            }
-          });
-        }
-      }
+      const staffMap = await resolveStaffNamesByPhorestIds(staffIds);
       
       // Group by date
       const byDate: Record<string, { revenue: number; confirmedRevenue: number; unconfirmedRevenue: number; count: number; appointments: AppointmentSummary[]; categoryBreakdown: Record<string, number> }> = {};
@@ -145,7 +131,7 @@ export function useForecastRevenue(period: ForecastPeriod, locationId?: string) 
       appointments.forEach(apt => {
         const dateKey = apt.appointment_date;
         if (byDate[dateKey]) {
-          const price = Number(apt.total_price) || 0;
+          const price = (Number(apt.total_price) || 0) - (Number(apt.tip_amount) || 0);
           const status = apt.status?.toLowerCase() || '';
           const isUnconfirmed = status === 'unconfirmed' || status === 'pending';
           
@@ -178,7 +164,7 @@ export function useForecastRevenue(period: ForecastPeriod, locationId?: string) 
       const byCategory: Record<string, CategoryBreakdown> = {};
       appointments.forEach(apt => {
         const category = (apt as any).service_category || getServiceCategory(apt.service_name);
-        const price = Number(apt.total_price) || 0;
+        const price = (Number(apt.total_price) || 0) - (Number(apt.tip_amount) || 0);
         if (!byCategory[category]) {
           byCategory[category] = { revenue: 0, count: 0 };
         }
@@ -204,7 +190,7 @@ export function useForecastRevenue(period: ForecastPeriod, locationId?: string) 
       appointments.forEach((apt: any) => {
         const locId = apt.location_id;
         const key = locId ? (locationMap[locId] || locId) : 'No Location';
-        const price = Number(apt.total_price) || 0;
+        const price = (Number(apt.total_price) || 0) - (Number(apt.tip_amount) || 0);
         if (!byLocation[key]) {
           byLocation[key] = { revenue: 0, count: 0 };
         }
@@ -217,7 +203,7 @@ export function useForecastRevenue(period: ForecastPeriod, locationId?: string) 
       appointments.forEach((apt: any) => {
         const staffId = apt.phorest_staff_id;
         const key = staffId ? (staffMap[staffId] || `Staff ${staffId}`) : 'Unassigned';
-        const price = Number(apt.total_price) || 0;
+        const price = (Number(apt.total_price) || 0) - (Number(apt.tip_amount) || 0);
         if (!byStylist[key]) {
           byStylist[key] = { revenue: 0, count: 0 };
         }
