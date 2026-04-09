@@ -42,7 +42,7 @@ export function useCommandDataQuery({ hint, dateFrom, dateTo }: UseCommandDataQu
       const { data: rows, error: fetchError } = await query;
       if (fetchError) throw fetchError;
 
-      const items = (rows || []) as { total_amount: number; tax_amount: number; tip_amount: number; item_type: string; quantity: number }[];
+      const items = (rows || []) as unknown as { total_amount: number; tax_amount: number; tip_amount: number; item_type: string; quantity: number }[];
 
       const totalRevenue = items.reduce((sum, r) => sum + (Number(r.total_amount) || 0), 0);
       const totalTax = items.reduce((sum, r) => sum + (Number(r.tax_amount) || 0), 0);
