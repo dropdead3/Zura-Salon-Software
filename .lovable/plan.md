@@ -1,62 +1,50 @@
 
 
-# Interactive Navigation Links in AI Answer Cards
+# Fix Dashboard Bento Grid Responsiveness
 
 ## Problem
-When Zura AI answers a "how do I find X" question, the response is rendered as plain markdown text (screenshot shows: "Go to the **Roles & Controls Hub** in the **System** section..."). The user reads the directions but then has to manually navigate there. The grounding system already knows the exact destination path and tabs — this data just isn't surfaced as clickable UI.
+Line 756 in `DashboardHome.tsx` hardcodes `lg:grid-cols-4` for the compact/simple analytics grid. With 9 cards, this produces a 4-4-1 layout with dead space on the last row. A 3×3 grid would be the correct bento layout.
 
-## Solution
-Pass the matched `verifiedDestinations` from the grounding result into the `CommandAIAnswerCard`, and render interactive breadcrumb-style navigation chips + a "Go there" button below the AI response. Clicking any segment navigates directly and closes the command surface.
+Additionally, the `BentoGrid` component itself only handles a naive 2-row split (`ceil(count/2)` top, rest bottom), which produces lopsided layouts for counts like 7 (4+3), 9 (5+4), or 11 (6+5) instead of even multi-row distribution.
 
-## What the user sees
+## Fix
 
-Below the AI text response, a new section appears:
+### 1. `DashboardHome.tsx` — Dynamic column count for compact grid (line 756)
+Compute the optimal column count based on card count:
+- 1-3 cards → match card count (1/2/3 cols)
+- 4 cards → 4 cols (single row)
+- 5-6 cards → 3 cols (2×3 or 3+2 adjusted)
+- 7-9 cards → 3 cols (3×3 perfect for 9)
+- 10-12 cards → 4 cols
+- 13+ cards → 4 cols
 
-```text
-┌─────────────────────────────────────────────────┐
-│  📍 Roles & Controls Hub                        │
-│  System  ›  Roles & Controls Hub  ›  Permissions │
-│                                    [Open →]      │
-└─────────────────────────────────────────────────┘
+The key insight: choose a column count where the last row is either full or has at most 1 empty cell. Replace the hardcoded class with a computed one.
+
+```tsx
+const colCount = pinnedCardIds.length <= 3 ? pinnedCardIds.length
+  : pinnedCardIds.length <= 4 ? 4
+  : pinnedCardIds.length <= 9 ? 3
+  : 4;
+
+<div className={cn(
+  "grid grid-cols-1 sm:grid-cols-2 gap-4",
+  colCount === 3 && "lg:grid-cols-3",
+  colCount === 4 && "lg:grid-cols-4",
+)}>
 ```
 
-- **Breadcrumb path**: `Section › Hub › Tab` — each segment is clickable
-- **"Open" button**: navigates directly to the destination path (with tab query params if matched)
-- Multiple destinations render as separate breadcrumb rows (e.g., if a query matches 2 pages)
+### 2. `bento-grid.tsx` — Proper multi-row distribution
+Replace the 2-row split with a true multi-row algorithm:
+- Compute `rowCount = Math.ceil(count / maxPerRow)`
+- For even distribution, compute optimal items per row so all rows are balanced (e.g., 9 items / 3 max = 3 rows of 3; 7 items / 4 max = rows of 4+3)
+- Render each row as a flex row
 
-## Changes
+This fixes every consumer of `BentoGrid` across the app (13 files), not just the dashboard.
 
-### 1. `CommandAIAnswerCard.tsx` — Add navigation links section
-- Accept new prop: `destinations: NavDestination[]` and `onNavigate: (path: string) => void`
-- After the markdown response, render a "Quick Links" section when `destinations.length > 0`
-- Each destination renders as:
-  - A breadcrumb trail: `Section › Label › Tab` (if a tab is matched by the query)
-  - Each breadcrumb segment styled as a subtle link chip
-  - An "Open" button that calls `onNavigate(dest.path + tabQuery)`
-- Breadcrumb segments for parent hubs are also clickable if they have known paths
-
-### 2. `ZuraCommandSurface.tsx` — Pass destinations + navigate handler
-- Pass `groundingResult.verifiedDestinations` to `CommandAIAnswerCard`
-- Pass a `onNavigate` callback that calls `handleSelect({ path, title, type: 'navigation' })` then closes the surface
-- Only pass destinations when `groundingResult.isNavigation && groundingResult.verifiedDestinations.length > 0`
-
-### 3. `navGrounding.ts` — Expose `verifiedDestinations` (already done)
-- The `GroundedContext` interface already includes `verifiedDestinations: NavDestination[]`
-- The `groundingResult` memoized in `ZuraCommandSurface` already contains this array
-- No changes needed here
-
-## Files Changed
+### Files Changed
 
 | File | Change |
 |------|--------|
-| `src/components/command-surface/CommandAIAnswerCard.tsx` | Add `destinations` + `onNavigate` props, render breadcrumb links below AI response |
-| `src/components/command-surface/ZuraCommandSurface.tsx` | Pass destinations and navigate handler to `CommandAIAnswerCard` |
-
-## Design Details
-- Breadcrumb uses `font-sans text-xs` (Aeonik Pro), with `›` separators
-- Active destination label uses `text-primary` for emphasis
-- "Open" button uses `tokens.button.inline` style (small, pill)
-- Entire section has a subtle top border separator from the AI text
-- When multiple destinations match, each gets its own breadcrumb row
-- Tab segments are only shown if the query keywords matched a specific tab in the destination
+| `src/pages/dashboard/DashboardHome.tsx` | Dynamic `lg:grid-cols-N` based on card count |
+| `src/components/ui/bento-grid.tsx` | Multi-row distribution algorithm |
 
