@@ -1,5 +1,5 @@
 import React from 'react';
-import { Clock, ArrowRight, Search, Zap, AlertTriangle, ChevronRight } from 'lucide-react';
+import { Clock, ArrowRight, Search, Zap, AlertTriangle, ChevronRight, Calendar, CheckSquare, TrendingUp, Package } from 'lucide-react';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import {
@@ -111,7 +111,7 @@ export function CommandProactiveState({
 
       {/* ── Quick Paths ───────────────────────────────────────────── */}
       {hasQuickPaths && (
-        <div>
+          <div className="mx-4 border-t border-border/30 my-1" />
           {hasContinue && <div className="mx-4 border-t border-border/30 my-1" />}
           <div className="px-4 pt-2 pb-1">
             <span className={tokens.heading.subsection}>Quick Paths</span>
