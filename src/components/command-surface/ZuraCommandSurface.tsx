@@ -418,29 +418,12 @@ export function ZuraCommandSurface({ open, onOpenChange, filterNavItems }: ZuraC
                             onSwitchToAI={() => setAiMode(true)}
                           />
                         ) : (
-                          <div className="py-10 px-6 text-center">
-                            <Search className="w-6 h-6 mx-auto mb-3 text-muted-foreground/15" />
-                            <p className="font-sans text-sm text-muted-foreground mb-1">
-                              No results for "<span className="text-foreground font-medium">{query}</span>"
-                            </p>
-                            <p className="font-sans text-xs text-muted-foreground mb-4">
-                              Try a different search, or continue with AI
-                            </p>
-                            <button
-                              type="button"
-                              onClick={handleAIFallback}
-                              className={cn(
-                                'inline-flex items-center gap-1.5 font-sans text-xs font-medium',
-                                'text-primary border border-primary/20 rounded-full px-4 py-2',
-                                'bg-card-inner/60 hover:bg-primary/5',
-                                'transition-colors duration-150'
-                              )}
-                              tabIndex={-1}
-                            >
-                              <Sparkles className="w-3.5 h-3.5" />
-                              Continue with Zura AI
-                            </button>
-                          </div>
+                          <CommandNoResultsState
+                            query={query}
+                            chainedQuery={chainedQuery}
+                            onAskZura={handleAIFallback}
+                            isFocused={selectedIndex === 0}
+                          />
                         )
                       )
                     )
