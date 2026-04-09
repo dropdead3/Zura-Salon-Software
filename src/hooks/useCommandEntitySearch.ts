@@ -123,9 +123,9 @@ export function useAppointmentSearchCandidates(enabled: boolean): SearchCandidat
         .eq('organization_id', orgId!)
         .eq('appointment_date', today)
         .order('start_time')
-        .limit(50);
+        .limit(50) as { data: ApptRow[] | null; error: any };
       if (error) throw error;
-      return (data as unknown as ApptRow[]).filter(a => a.status !== 'cancelled');
+      return (data || []).filter(a => a.status !== 'cancelled');
     },
     enabled: enabled && !!orgId,
     staleTime: 60_000,
