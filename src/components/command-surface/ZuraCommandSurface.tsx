@@ -227,35 +227,3 @@ export function ZuraCommandSurface({ open, onOpenChange, filterNavItems }: ZuraC
     </Dialog>
   );
 }
-                />
-              )
-            )
-          ) : (
-            <CommandRecentSection
-              recentSearches={recents}
-              recentPages={recentPages}
-              onSearchSelect={handleRecentSearchSelect}
-              onPageSelect={handleRecentPageSelect}
-              onClearRecents={clearRecents}
-            />
-          )}
-        </div>
-
-        <div className="border-t border-border/30 px-4 py-2 flex items-center gap-3 text-[10px] text-muted-foreground font-sans shrink-0">
-          <span className="flex items-center gap-1">
-            <kbd className="rounded border border-border bg-muted/50 px-1 py-0.5 font-mono">↑↓</kbd>
-            navigate
-          </span>
-          <span className="flex items-center gap-1">
-            <kbd className="rounded border border-border bg-muted/50 px-1 py-0.5 font-mono">↵</kbd>
-            open
-          </span>
-          <span className="flex items-center gap-1">
-            <kbd className="rounded border border-border bg-muted/50 px-1 py-0.5 font-mono">Tab</kbd>
-            AI mode
-          </span>
-        </div>
-      </DialogContent>
-    </Dialog>
-  );
-}
