@@ -1,121 +1,156 @@
 
-Your instinct was good: you correctly identified that the assistant was hallucinating navigation. The better architectural prompt, though, is not “improve the system prompt,” but “make navigation answers deterministic and let AI explain only after routing is known.”
 
-## What I found
-1. The prompt was improved, but this is still a prompt-only fix, so the model can still paraphrase or invent labels.
-2. The command surface still falls back to AI when ranking is weak, and the search/synonym layer does not strongly map queries like “role permissions,” “access control,” or “invite staff” to the real destination.
-3. The FAB AI tab still calls `sendMessage(...)` without organization ID or user role, so that surface is missing important grounding.
-4. The command surface has one fallback path that omits `userRole`.
-5. `primaryRole` is taken from `effectiveRoles[0]`, which is not guaranteed to be the highest-priority role.
-6. Naming is inconsistent across the app: `Roles & Controls Hub`, `Roles Hub`, `Roles & Permissions`, and legacy `Management Hub` references all still exist.
+# Grounded Navigation Intelligence System
 
-## Implementation plan
+## Root Cause
 
-### 1) Verify the active answer path
-First confirm whether the inaccurate answer is coming from:
-- the command surface,
-- the FAB AI modal,
-- or a stale/alternate deployed assistant path.
+The AI assistant receives a static system prompt listing sidebar labels and "forbidden" terms, but the LLM still generates freeform step-by-step instructions from inference. The prompt says "never fabricate" but the model has no structured data to ground against -- it only has prose. The architecture lets the AI answer navigation questions in the same freeform mode as conceptual questions, with no retrieval step.
 
-The screenshot wording does not fully match the current grounded prompt, so this verification should happen before changing logic.
+The second problem: when a user types a question like "how do I change user roles and permissions?" in the command surface, and the search ranking finds a strong nav match (Roles & Controls Hub scores high via synonyms), the AI answer card **still fires independently** (line 252: auto-AI triggers after 1200ms if `isQuestionQuery` and score < 0.5). The AI answer and the nav result compete, and the AI answer often contains hallucinated steps.
 
-### 2) Make navigation routing deterministic before AI answers
-Use the existing search/ranking system as the first source of truth for navigation questions.
+## Architecture Change
 
-Changes:
-- Expand aliases/synonyms so these map directly to the access hub:
-  - role permissions
-  - permissions
-  - access control
-  - user roles
-  - invite staff / invite team member
-  - roles hub / roles and controls
-- Add tab-level routing candidates for the real access hub tabs:
-  - `?tab=permissions`
-  - `?tab=user-roles`
-  - `?tab=role-access`
-  - `?tab=invitations`
-  - plus modules/chat/pins/role-config as needed
-- For strong navigation matches, show the direct route first instead of sending the question straight to AI.
+Build a **Navigation Knowledge Base** as structured data, then inject matched routes into the AI request body so the model grounds its answer on verified destinations instead of inferring them.
 
-Example target behavior:
-- “How do I check role permissions?” → `Roles & Controls Hub` → `Permissions` tab
-- “How do I invite someone?” → `Roles & Controls Hub` → `Invitations` tab
+```text
+User question
+    │
+    ▼
+┌──────────────────────┐
+│ Query Classification │  (already exists: isQuestionQuery + parseQuery)
+└──────────┬───────────┘
+           │
+           ▼
+┌──────────────────────┐
+│ Route Retrieval       │  NEW: match question against NavKnowledgeBase
+│ (deterministic)       │  Returns: matched routes, tabs, workflows, roles
+└──────────┬───────────┘
+           │
+           ▼
+┌──────────────────────────────────┐
+│ AI Answer Generation             │
+│ System prompt + retrieved routes │  AI explains ONLY from retrieved data
+│ If no routes matched → say so    │
+└──────────────────────────────────┘
+```
 
-### 3) Pass correct org + role context from every AI entry point
-Wire consistent context into all assistant calls:
-- `src/components/dashboard/help-fab/AIHelpTab.tsx`
-- `src/components/command-surface/ZuraCommandSurface.tsx`
+## Implementation Plan
 
-Changes:
-- Always pass `organizationId`
-- Always pass a normalized primary role
-- Fix the command-surface fallback that currently omits `userRole`
+### 1. Create Navigation Knowledge Base (`src/lib/navKnowledgeBase.ts`)
 
-### 4) Normalize role priority instead of trusting array order
-Create an explicit role-priority resolver and use that everywhere AI context is derived.
+A structured, queryable registry derived from `dashboardNav.ts` + access-hub tabs + hub children. Each entry:
 
-Suggested priority:
-`super_admin > admin > manager > receptionist > stylist > stylist_assistant > assistant ...`
+```typescript
+interface NavDestination {
+  id: string;
+  label: string;              // exact sidebar/page label
+  path: string;               // route path
+  section: string;            // Main | My Tools | Manage | System
+  parent?: string;            // parent hub label if nested
+  tabs?: { id: string; label: string; purpose: string }[];
+  purpose: string;            // what you do here (1 sentence)
+  keywords: string[];         // search terms that should match
+  roles: string[];            // which roles can access
+  workflows?: { task: string; steps: string[] }[];  // verified multi-step flows
+}
+```
 
-That prevents users with multiple roles from getting guidance for the wrong surface.
+Populate from existing `dashboardNav.ts` arrays + hardcoded tab/workflow data for key hubs (Roles & Controls Hub, Analytics Hub, Operations Hub, Settings). ~50 entries total.
 
-### 5) Tighten the assistant backend for navigation-specific replies
-Update `supabase/functions/ai-assistant/index.ts` so navigation questions are answered in a constrained format.
+Export a `findMatchingDestinations(query: string, userRole: string): NavDestination[]` function that uses keyword matching + synonym resolution to return ranked matches.
 
-Add:
-- exact route + exact sidebar label + exact tab mapping
-- explicit “do not use these labels” rules for:
-  - Management Hub
-  - Roles Hub
-  - Roles & Permissions
-  - Operations card/section
-- role-aware response behavior:
-  - if the user does not have access, say that directly
-  - then point them to the closest page they can use, or say leadership access is required
+### 2. Create Grounding Pipeline (`src/lib/navGrounding.ts`)
 
-Optional stronger version:
-- include the top ranked navigation candidate(s) in the request body so the AI reasons from real app candidates instead of free-form memory
+```typescript
+function classifyAndGround(query: string, userRole: string): GroundedContext {
+  // 1. Classify: navigation vs conceptual
+  const isNavQuestion = detectNavigationIntent(query);
+  
+  // 2. If navigation, retrieve from knowledge base
+  const matches = isNavQuestion ? findMatchingDestinations(query, userRole) : [];
+  
+  // 3. Build grounding context for AI
+  return {
+    isNavigation: isNavQuestion,
+    verifiedDestinations: matches,
+    confidence: matches.length > 0 ? 'high' : 'low',
+    // Serialized for injection into AI request
+    groundingPrompt: buildGroundingPrompt(matches, userRole),
+  };
+}
+```
 
-### 6) Unify user-facing naming
-Standardize all user-facing references on:
-- `Roles & Controls Hub`
+Navigation intent detection: looks for patterns like "how do I", "where is", "where can I", "how to", "find", "go to", "navigate to", "open", "access", combined with product terms.
 
-Clean up conflicting labels in config/copy where appropriate:
-- `src/config/pageExplainers.ts` (`Roles & Permissions`)
-- `hubLinksConfig` / any shortened `Roles Hub` label
-- any legacy `Management Hub` wording that overlaps with current operations/access language
+### 3. Wire Grounding Into AI Request
 
-## Files likely involved
-- `src/lib/synonymRegistry.ts`
-- `src/hooks/useSearchRanking.ts`
-- `src/components/command-surface/ZuraCommandSurface.tsx`
-- `src/components/dashboard/help-fab/AIHelpTab.tsx`
-- `src/hooks/useAIAssistant.ts`
-- `supabase/functions/ai-assistant/index.ts`
-- `src/config/pageExplainers.ts`
-- possibly `src/config/dashboardNav.ts` helper labels/candidates
+**In `useAIAssistant.ts`**: Add optional `groundingContext` parameter to `sendMessage`. Include it in the request body.
 
-## Validation checklist
-Test all of these after implementation:
-- “how do I check role permissions?”
-- “how do I invite someone?”
-- “where do I change settings?”
-- “where can I see my stats?”
-- “how do I manage team schedules?”
-- “how do I see who has what role?”
+**In `ZuraCommandSurface.tsx`**: Before calling `sendMessage`, run the grounding pipeline. Pass results to the edge function.
 
-Validate as:
-- owner/super admin
-- admin
-- manager
-- stylist
-- receptionist
-- View As mode
+**In `AIHelpTab.tsx`**: Same -- run grounding before sending.
 
-## Prompt coaching for next time
-Your original prompt was directionally strong. To get an even better result, I’d phrase it like this:
+### 4. Update Edge Function (`supabase/functions/ai-assistant/index.ts`)
 
-“Do not solve this with prompt copy alone. Audit every assistant entry point, every fallback to AI, every search synonym, every real route label, and every role-context payload. Then make navigation deterministic first, and AI explanatory second.”
+Accept `groundingContext` in the request body. When present:
 
-That framing reduces hallucinations because it constrains the architecture, not just the wording.
+- If `isNavigation` and verified destinations exist: prepend a structured block to the system prompt:
+  ```
+  VERIFIED NAVIGATION CONTEXT (you MUST use these exact names and paths):
+  - Destination: Roles & Controls Hub (sidebar: System section)
+  - Path: /dashboard/admin/access-hub
+  - Tabs: Permissions, User Roles, Invitations, ...
+  - The user's role (admin) has access to this page.
+  
+  Answer using ONLY the verified destinations above. Do not add steps not listed here.
+  ```
+
+- If `isNavigation` but no verified destinations: instruct the AI:
+  ```
+  I could not verify the exact destination for this question. 
+  Tell the user you're not certain and suggest pressing Cmd/Ctrl+K to search, 
+  or list the closest likely sections without fabricating specific steps.
+  ```
+
+- If not a navigation question: use current behavior (freeform with base prompt).
+
+### 5. Suppress AI Auto-Trigger When Nav Match Is Strong
+
+In `ZuraCommandSurface.tsx` (line 250): raise the auto-AI threshold from `score >= 0.5` to `score >= 0.35`, so that when synonyms resolve "permissions" to "Roles & Controls Hub" with a decent score, the AI card does NOT auto-fire. The user sees the nav result first and can manually switch to AI mode if needed.
+
+### 6. Add Confidence Display to AI Answer Card
+
+When the grounding context indicates low confidence for a navigation question, display a subtle banner at the top of the AI answer:
+"I couldn't fully verify these steps in the current build. Use Cmd/Ctrl+K to search for the exact page."
+
+### 7. Clean Up Naming Inconsistency
+
+In `hubLinksConfig` (dashboardNav.ts line 195): change `'Roles Hub'` to `'Roles & Controls Hub'`.
+
+## Files Changed
+
+| File | Change |
+|------|--------|
+| `src/lib/navKnowledgeBase.ts` | NEW -- structured navigation registry + query matcher |
+| `src/lib/navGrounding.ts` | NEW -- classification + grounding pipeline |
+| `src/hooks/useAIAssistant.ts` | Accept + pass `groundingContext` |
+| `src/components/command-surface/ZuraCommandSurface.tsx` | Run grounding before AI calls; raise auto-AI threshold |
+| `src/components/dashboard/help-fab/AIHelpTab.tsx` | Run grounding before AI calls |
+| `src/components/command-surface/CommandAIAnswerCard.tsx` | Show confidence banner for low-confidence nav answers |
+| `supabase/functions/ai-assistant/index.ts` | Accept `groundingContext`, inject verified routes into prompt |
+| `src/config/dashboardNav.ts` | Fix "Roles Hub" label |
+
+## What This Fixes
+
+- "How do I change user roles and permissions?" -- grounding finds Roles & Controls Hub, AI answers from verified destination only
+- "Where do I invite someone?" -- grounding finds Invitations tab, AI gives exact steps
+- "How do I see analytics?" -- grounding finds Analytics Hub, no fabricated sub-pages
+- If the user asks about something not in the knowledge base, AI says so instead of guessing
+- Role-aware: if a stylist asks about permissions, the answer explains they don't have access
+
+## What This Does NOT Change
+
+- Conceptual questions ("what does utilization mean?") still use freeform AI
+- Search ranking, synonym registry, and query parser remain unchanged
+- No database changes needed
+
