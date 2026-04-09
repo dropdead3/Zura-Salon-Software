@@ -1,5 +1,5 @@
-import React, { useState, useCallback, useEffect, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useCallback, useEffect, useMemo, useRef } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
 import { tokens } from '@/lib/design-tokens';
@@ -15,7 +15,8 @@ import { CommandSuggestionPanel } from './CommandSuggestionRow';
 import { useActionExecution } from '@/hooks/useActionExecution';
 import { usePermission } from '@/hooks/usePermission';
 import { CommandActionPanel } from './CommandActionPanel';
-import { getFrequencyMap } from '@/lib/searchRanker';
+import { useSearchLearning } from '@/hooks/useSearchLearning';
+import { useEffectiveRoles } from '@/hooks/useEffectiveUser';
 import {
   mainNavItems,
   myToolsNavItems,
@@ -58,34 +59,43 @@ export function ZuraCommandSurface({ open, onOpenChange, filterNavItems }: ZuraC
   const [aiMode, setAiMode] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const navigate = useNavigate();
+  const location = useLocation();
   const { permissions } = usePermission();
+  const effectiveRoles = useEffectiveRoles();
+  const lastQueryBeforeCloseRef = useRef('');
 
   const { response: aiResponse, isLoading: aiLoading, error: aiError, sendMessage, reset: resetAI } = useAIAssistant();
   const { recents, addRecent, clearRecents } = useRecentSearches();
   const actionExecution = useActionExecution();
+
+  // Search Learning
+  const learning = useSearchLearning(open, effectiveRoles as string[], location.pathname);
+  const decayedFreqMap = useMemo(() => learning.getDecayedFrequencyMap(), [open]);
 
   // Use the unified ranking hook
   const {
     groups,
     suggestions,
     parsedQuery,
+    rankedResults,
     trackNavigation,
   } = useSearchRanking(query, {
     filterNavItems: filterNavItems as any,
     permissions,
+    learningBoostFn: learning.getLearningBoosts,
+    decayedFrequencyMap: decayedFreqMap,
   });
 
-  // Derive recent pages from frequency map
+  // Derive recent pages from decayed frequency map
   const recentPages = useMemo(() => {
-    const freqMap = getFrequencyMap();
-    return Object.entries(freqMap)
+    return Object.entries(decayedFreqMap)
       .sort(([, a], [, b]) => b - a)
       .slice(0, 5)
       .map(([path]) => ({
         label: NAV_LABEL_MAP.get(path) || path.split('/').pop() || path,
         path,
       }));
-  }, []);
+  }, [decayedFreqMap]);
 
   const showAICard = aiMode || (query.trim() && isQuestionQuery(query));
   const flatResults = useMemo(() => groups.flatMap(g => g.results), [groups]);
@@ -104,8 +114,25 @@ export function ZuraCommandSurface({ open, onOpenChange, filterNavItems }: ZuraC
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [parsedQuery, aiMode, permissions, hasQuery]);
 
+  // Track query for abandonment detection on close
+  useEffect(() => {
+    if (open) {
+      lastQueryBeforeCloseRef.current = '';
+    }
+  }, [open]);
+
+  useEffect(() => {
+    lastQueryBeforeCloseRef.current = query;
+  }, [query]);
+
   useEffect(() => {
     if (!open) {
+      // Log abandonment if user had a query but didn't select
+      const lastQ = lastQueryBeforeCloseRef.current;
+      if (lastQ.trim()) {
+        const topScore = rankedResults.length > 0 ? rankedResults[0]?.score ?? null : null;
+        learning.logAbandonment(lastQ, rankedResults.length, topScore);
+      }
       setQuery('');
       setAiMode(false);
       setSelectedIndex(0);
@@ -122,14 +149,31 @@ export function ZuraCommandSurface({ open, onOpenChange, filterNavItems }: ZuraC
     onOpenChange(false);
   }, [onOpenChange]);
 
-  const handleSelect = useCallback((result: { path?: string; title?: string }) => {
+  const handleSelect = useCallback((result: { path?: string; title?: string }, index?: number) => {
     if (result.path) {
       if (query.trim()) addRecent(query.trim());
       trackNavigation(result.path);
+
+      // Log selection for learning
+      const rank = index ?? flatResults.findIndex(r => r.path === result.path);
+      const topScore = rankedResults.length > 0 ? rankedResults[0]?.score ?? 0 : 0;
+      const selectedResult = flatResults.find(r => r.path === result.path);
+      learning.logSelection(
+        query,
+        result.path,
+        rank >= 0 ? rank : 0,
+        (selectedResult?.type as any) ?? 'navigation',
+        flatResults.length,
+        topScore,
+      );
+
+      // Clear the query ref so close effect doesn't log abandonment
+      lastQueryBeforeCloseRef.current = '';
+
       navigate(result.path);
       close();
     }
-  }, [navigate, close, query, addRecent, trackNavigation]);
+  }, [navigate, close, query, addRecent, trackNavigation, flatResults, rankedResults, learning]);
 
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
     if (e.key === 'Escape') {
