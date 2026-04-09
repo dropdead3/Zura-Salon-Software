@@ -403,7 +403,15 @@ export function ZuraCommandSurface({ open, onOpenChange, filterNavItems, anchorR
               aiMode={aiMode}
               onAiModeToggle={() => { setAiMode(m => !m); resetAI(); }}
               onKeyDown={handleKeyDown}
+              completion={completion}
             />
+
+            {hasQuery && !aiMode && (
+              <CommandSearchFilters
+                activeScope={activeScope}
+                onScopeChange={setActiveScope}
+              />
+            )}
 
             {chainedQuery && (
               <CommandChainBar
