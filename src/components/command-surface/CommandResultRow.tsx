@@ -27,12 +27,16 @@ function highlightMatch(text: string, query: string) {
 
 const TYPE_LABELS: Record<string, string> = {
   navigation: 'Page',
-  team: 'Team',
+  team: 'Person',
   client: 'Client',
   help: 'Help',
   action: 'Action',
   report: 'Report',
   utility: 'Utility',
+  inventory: 'Inventory',
+  task: 'Task',
+  appointment: 'Appointment',
+  insight: 'Insight',
 };
 
 export const CommandResultRow = React.forwardRef<HTMLButtonElement, CommandResultRowProps>(

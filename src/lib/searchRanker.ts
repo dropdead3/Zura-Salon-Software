@@ -16,7 +16,11 @@ export type RankedResultType =
   | 'help'
   | 'action'
   | 'report'
-  | 'utility';
+  | 'utility'
+  | 'inventory'
+  | 'task'
+  | 'appointment'
+  | 'insight';
 
 export interface RelevanceSignals {
   textMatch: number;
@@ -100,9 +104,9 @@ import { scoreMatch } from '@/lib/textMatch';
 // ─── Intent ↔ ResultType Alignment ──────────────────────────
 
 const INTENT_TYPE_MAP: Record<IntentType, RankedResultType[]> = {
-  entity_lookup: ['team', 'client'],
+  entity_lookup: ['team', 'client', 'inventory', 'appointment', 'task'],
   navigation: ['navigation', 'utility', 'report'],
-  analytics_query: ['report', 'navigation'],
+  analytics_query: ['report', 'navigation', 'insight'],
   action_request: ['action'],
   help_query: ['help'],
   ambiguous: [],
@@ -302,13 +306,17 @@ export function rankResults(
 }
 
 const TYPE_PRIORITY: Record<RankedResultType, number> = {
-  navigation: 1,
-  team: 2,
-  client: 3,
-  report: 4,
-  utility: 5,
-  help: 6,
-  action: 7,
+  action: 1,
+  navigation: 2,
+  team: 3,
+  client: 4,
+  appointment: 5,
+  inventory: 6,
+  task: 7,
+  report: 8,
+  utility: 9,
+  help: 10,
+  insight: 11,
 };
 
 // ─── Grouping ───────────────────────────────────────────────
@@ -318,13 +326,17 @@ const GROUP_CONFIG: Record<
   { label: string; priority: number; maxItems?: number }
 > = {
   best: { label: 'Top Results', priority: 0, maxItems: 3 },
-  team: { label: 'Team', priority: 1 },
-  client: { label: 'Clients', priority: 2 },
-  navigation: { label: 'Pages & Features', priority: 3 },
-  report: { label: 'Reports', priority: 4 },
-  utility: { label: 'Utilities', priority: 5 },
-  help: { label: 'Help & Resources', priority: 6 },
-  action: { label: 'Suggested Actions', priority: 7 },
+  action: { label: 'Actions', priority: 1 },
+  navigation: { label: 'Pages & Features', priority: 2 },
+  team: { label: 'People', priority: 3 },
+  client: { label: 'Clients', priority: 4 },
+  appointment: { label: 'Appointments', priority: 5 },
+  inventory: { label: 'Inventory', priority: 6 },
+  task: { label: 'Tasks', priority: 7 },
+  report: { label: 'Reports', priority: 8 },
+  utility: { label: 'Utilities', priority: 9 },
+  help: { label: 'Help & Resources', priority: 10 },
+  insight: { label: 'Insights', priority: 11 },
 };
 
 const TOP_RESULT_THRESHOLD = 0.4;

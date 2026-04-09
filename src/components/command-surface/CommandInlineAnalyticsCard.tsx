@@ -4,13 +4,18 @@ import { cn } from '@/lib/utils';
 import { AnimatedBlurredAmount } from '@/components/ui/AnimatedBlurredAmount';
 import { TrendSparkline } from '@/components/dashboard/TrendSparkline';
 
-export type AnalyticsHintType = 'retail' | 'revenue' | 'rebooking' | null;
+export type AnalyticsHintType = 'retail' | 'revenue' | 'rebooking' | 'utilization' | 'waste' | 'retention' | 'payroll' | 'inventory_alert' | null;
 
 // Pattern matching: keywords → analytics hint type
 const ANALYTICS_PATTERNS: { keywords: string[]; type: AnalyticsHintType }[] = [
   { keywords: ['retail', 'product sales', 'product revenue'], type: 'retail' },
-  { keywords: ['revenue', 'sales', 'income', 'earnings'], type: 'revenue' },
-  { keywords: ['rebooking', 'rebook', 'retention', 'return rate'], type: 'rebooking' },
+  { keywords: ['revenue', 'sales', 'income', 'earnings', 'how much'], type: 'revenue' },
+  { keywords: ['rebooking', 'rebook', 'retention', 'return rate', 'client retention'], type: 'rebooking' },
+  { keywords: ['utilization', 'underbooked', 'underbooking', 'capacity', 'gaps', 'open slots'], type: 'utilization' },
+  { keywords: ['waste', 'color waste', 'chemical waste', 'backroom waste', 'ghost loss'], type: 'waste' },
+  { keywords: ['churn', 'lost clients', 'inactive clients', 'client loss', 'haven\'t been in'], type: 'retention' },
+  { keywords: ['payroll', 'commission', 'labor cost', 'pay rate'], type: 'payroll' },
+  { keywords: ['low stock', 'reorder', 'out of stock', 'inventory alert', 'low inventory'], type: 'inventory_alert' },
 ];
 
 export function detectAnalyticsHint(query: string): AnalyticsHintType {
@@ -34,17 +39,42 @@ const CARD_CONFIG: Record<string, AnalyticsCardConfig> = {
   retail: {
     icon: <ShoppingBag className="w-4 h-4 text-primary/70" />,
     label: 'Retail Performance',
-    path: '/dashboard/analytics',
+    path: '/dashboard/admin/analytics',
   },
   revenue: {
     icon: <TrendingUp className="w-4 h-4 text-primary/70" />,
     label: 'Revenue Overview',
-    path: '/dashboard/analytics',
+    path: '/dashboard/admin/analytics',
   },
   rebooking: {
     icon: <RotateCcw className="w-4 h-4 text-primary/70" />,
     label: 'Rebooking Rate',
-    path: '/dashboard/analytics',
+    path: '/dashboard/admin/analytics',
+  },
+  utilization: {
+    icon: <TrendingUp className="w-4 h-4 text-primary/70" />,
+    label: 'Staff Utilization',
+    path: '/dashboard/admin/analytics/operational',
+  },
+  waste: {
+    icon: <ShoppingBag className="w-4 h-4 text-primary/70" />,
+    label: 'Color & Chemical Waste',
+    path: '/dashboard/admin/backroom',
+  },
+  retention: {
+    icon: <RotateCcw className="w-4 h-4 text-primary/70" />,
+    label: 'Client Retention',
+    path: '/dashboard/admin/analytics',
+  },
+  payroll: {
+    icon: <TrendingUp className="w-4 h-4 text-primary/70" />,
+    label: 'Payroll & Commission',
+    path: '/dashboard/admin/my-pay',
+  },
+  inventory_alert: {
+    icon: <ShoppingBag className="w-4 h-4 text-primary/70" />,
+    label: 'Inventory Alerts',
+    path: '/dashboard/admin/inventory',
   },
 };
 
