@@ -68,6 +68,15 @@ export const ALIAS_GROUPS: AliasGroup[] = [
   { canonical: 'settings', aliases: ['preferences', 'config', 'configuration', 'setup'] },
   { canonical: 'help center', aliases: ['help', 'support', 'faq', 'documentation'] },
 
+  // Roles & Controls Hub — permissions, access, invitations
+  { canonical: 'roles & controls hub', aliases: [
+    'permissions', 'role permissions', 'access control', 'user roles', 'roles',
+    'invite staff', 'invite team member', 'invitations', 'manage roles',
+    'roles hub', 'roles and controls', 'roles & permissions', 'access hub',
+    'role management', 'team permissions', 'who has access', 'change permissions',
+    'add team member', 'manage access',
+  ]},
+
   // Entities
   { canonical: 'client', aliases: ['guest', 'customer', 'patron'] },
   { canonical: 'stylist', aliases: ['staff', 'employee', 'team member', 'provider', 'technician', 'barber'] },
@@ -171,8 +180,9 @@ export const CONCEPT_CLUSTERS: ConceptCluster[] = [
   {
     id: 'admin',
     terms: ['settings', 'permissions', 'roles', 'access', 'feature flags', 'configuration',
-      'preferences', 'security', 'audit', 'setup'],
-    relatedPaths: ['/dashboard/admin/settings'],
+      'preferences', 'security', 'audit', 'setup', 'invitations', 'role permissions',
+      'access control', 'user roles', 'manage roles', 'invite staff'],
+    relatedPaths: ['/dashboard/admin/settings', '/dashboard/admin/access-hub'],
     boost: 0.15,
   },
   {

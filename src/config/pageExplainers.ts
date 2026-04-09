@@ -163,7 +163,7 @@ export const PAGE_EXPLAINERS: Record<string, PageExplainerEntry> = {
     icon: Megaphone,
   },
   'access-hub': {
-    title: 'Roles & Permissions',
+    title: 'Roles & Controls Hub',
     description: 'Control what each role can see and do. Manage invitations, module visibility, team PINs, and feature access across your organization.',
     icon: Shield,
   },

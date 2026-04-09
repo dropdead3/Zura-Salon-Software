@@ -18,7 +18,7 @@ INTERNAL ROUTE REFERENCE — ONLY use these exact routes for markdown links. NEV
 - Team Overview: /dashboard/admin/team
 - Schedule: /dashboard/schedule
 - Inventory: /dashboard/inventory
-- Management Hub: /dashboard/admin/management
+- Operations Hub: /dashboard/admin/management
 - Settings: /dashboard/admin/settings
 - Phorest Connection: /dashboard/admin/phorest
 - Day Rates: /dashboard/admin/day-rate-settings

@@ -86,7 +86,13 @@ export function ZuraCommandSurface({ open, onOpenChange, filterNavItems, anchorR
   const isMobile = useIsMobile();
   const { isImpersonating, effectiveOrganization } = useOrganizationContext();
   const orgId = effectiveOrganization?.id;
-  const primaryRole = effectiveRoles[0] ?? undefined;
+  const primaryRole = useMemo(() => {
+    const ROLE_PRIORITY: string[] = ['super_admin', 'admin', 'manager', 'receptionist', 'stylist', 'stylist_assistant', 'operations_assistant', 'admin_assistant', 'bookkeeper', 'inventory_manager', 'booth_renter'];
+    for (const r of ROLE_PRIORITY) {
+      if (effectiveRoles.includes(r as any)) return r;
+    }
+    return effectiveRoles[0] ?? undefined;
+  }, [effectiveRoles]);
 
   const { response: aiResponse, isLoading: aiLoading, error: aiError, sendMessage, reset: resetAI } = useAIAssistant();
   const { recents, recentEntries, addRecent, clearRecents } = useRecentSearches(orgId);
@@ -351,9 +357,9 @@ export function ZuraCommandSurface({ open, onOpenChange, filterNavItems, anchorR
   const handleAIFallback = useCallback(() => {
     setAiMode(true);
     if (query.trim()) {
-      sendMessage(query, [], orgId);
+      sendMessage(query, [], orgId, primaryRole);
     }
-  }, [query, sendMessage]);
+  }, [query, sendMessage, orgId, primaryRole]);
 
   // God Mode bar offset
   const godModeOffset = isImpersonating ? 44 : 0;
