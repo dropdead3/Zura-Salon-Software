@@ -1,66 +1,30 @@
 
 
-# Fix AI Answer: Auth + Tenant Isolation + UI Upgrade
+# Fix Build Errors + Replace Sparkles with ZuraZ Icon for AI Surfaces
 
-## Problems Found
+## Two Issues
 
-### 1. Auth Failure (causes "Invalid or expired token")
-`useAIAssistant.ts` sends the **anon key** (`VITE_SUPABASE_PUBLISHABLE_KEY`) as the Authorization header. The `ai-assistant` edge function calls `requireAuth()` which expects the **user's session JWT**. It also never sends `organizationId`, so `requireOrgMember` fails.
+### 1. Build Errors in `searchLearning.ts`
+The key functions `EVENTS_KEY`, `FREQ_KEY`, `GC_INTERVAL_KEY` are being passed as function references instead of being called. Every usage needs `()` appended — e.g., `EVENTS_KEY()` not `EVENTS_KEY`. Looking at the code, lines 85/93/119/137/147/155 already have `()` — so the build errors suggest the previous edit may have left some calls without parentheses elsewhere in the file. Will audit all usages and fix.
 
-### 2. Cross-Pollination Risk: Search History
-`useRecentSearches.ts` uses a global localStorage key `zura-recent-searches` — no org scoping. If a platform admin switches between orgs via God Mode, search history from Org A leaks into Org B.
+### 2. Replace Sparkles with ZuraZIcon in AI-context surfaces
 
-### 3. Cross-Pollination Risk: Search Learning
-`searchLearning.ts` uses global keys `zura-search-events` and `zura-nav-frequency-v2` — same problem. Navigation frequency boosts and selection logs from one org bleed into another.
+The Sparkles icon is overused and does not represent the Zura AI identity. Every place where Sparkles indicates "AI mode" or "Zura" in the command surface should use the `ZuraZIcon` instead. Non-AI uses of Sparkles (e.g., service add-ons, service flows, decorative badges) remain unchanged.
 
-### 4. AI Answer Card UI
-Plain box, generic "AI Answer" label, raw error text, basic skeleton. Does not match Zura brand standards.
+**Files to update (command surface only — AI-indicator contexts):**
 
-## Changes
+| File | What changes |
+|------|-------------|
+| `src/components/command-surface/CommandAIAnswerCard.tsx` | Replace `Sparkles` import with `ZuraZIcon`; use in header |
+| `src/components/command-surface/CommandInput.tsx` | Replace `Sparkles` with `ZuraZIcon` in AI mode indicator (line 46) and AI toggle button (line 88) |
+| `src/components/command-surface/CommandNoResultsState.tsx` | Replace `Sparkles` with `ZuraZIcon` in the "Ask Zura" fallback row |
+| `src/components/command-surface/CommandSuggestionRow.tsx` | Replace `Sparkles` with `ZuraZIcon` for topic-type icon and "Ask Zura" button |
+| `src/lib/searchLearning.ts` | Fix all function-reference vs function-call mismatches causing build errors |
 
-### File 1: `src/hooks/useAIAssistant.ts`
-- Import `supabase` client
-- Before fetch, call `supabase.auth.getSession()` to get user's real JWT
-- Accept `organizationId` parameter in `sendMessage`
-- Include `organizationId` in request body
-- Surface friendly error messages for 401/429/402
+### Not changing
+- `ZuraCommandSurface.tsx` — imports Sparkles but grep shows no JSX usage of it there (only passed through). Will verify and remove unused import if confirmed.
+- Non-AI Sparkles usages across the platform (service flows, add-ons, widgets, etc.) — these stay as-is.
 
-### File 2: `src/components/command-surface/ZuraCommandSurface.tsx`
-- Pass `effectiveOrganization?.id` to all three `sendMessage` call sites (auto-trigger at line 246, and any Enter/manual triggers)
-
-### File 3: `src/components/command-surface/useRecentSearches.ts`
-- Accept `orgId` parameter (optional, for backwards compat)
-- Scope localStorage key: `zura-recent-searches:${orgId}` when orgId is provided
-- Falls back to global key when no org context (login screen, etc.)
-
-### File 4: `src/lib/searchLearning.ts`
-- Accept optional `orgId` in storage key functions
-- Scope all three localStorage keys with org suffix: `zura-search-events:${orgId}`, `zura-nav-frequency-v2:${orgId}`, `zura-search-gc-last:${orgId}`
-
-### File 5: `src/hooks/useSearchLearning.ts`
-- Thread `orgId` through to the `searchLearning.ts` functions
-
-### File 6: `src/components/command-surface/CommandAIAnswerCard.tsx`
-- Header: Sparkle icon + "Zura" label (not generic "AI Answer"), subtle pulse animation while streaming
-- Loading: DotsLoader component with "Zura is thinking..." text instead of skeleton bars
-- Error: Friendly muted message ("I couldn't answer that right now") instead of raw destructive red text
-- Response: Cleaner prose styling, smooth opacity transition on content arrival
-- Show more/less: Styled as subtle pill button
-- Container: Softer border, slightly more breathing room, brand-aligned gradient tint
-
-## Tenant Isolation Summary
-
-| Surface | Current | After |
-|---------|---------|-------|
-| AI requests | No auth, no org ID | Session JWT + org ID, server-verified |
-| Recent searches | Global localStorage | Org-scoped localStorage |
-| Search learning events | Global localStorage | Org-scoped localStorage |
-| Nav frequency | Global localStorage | Org-scoped localStorage |
-| Edge function | Already has `requireOrgMember` | No change needed |
-
-## Technical Notes
-- The `ZuraCommandSurface` already imports `useOrganizationContext` and has `effectiveOrganization` available — just needs to pass `effectiveOrganization?.id` downstream
-- `useRecentSearches` is called from `ZuraCommandSurface` which has org context — pass it in
-- Search learning already receives `open` and `effectiveRoles` — adding `orgId` follows the same pattern
-- No database changes required — all client-side fixes
+## Technical Note
+`ZuraZIcon` uses `fill="currentColor"` and accepts `className`, so it's a drop-in replacement for sizing/color via Tailwind classes like `w-4 h-4 text-primary`. No wrapper needed.
 
