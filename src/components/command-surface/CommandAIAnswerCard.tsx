@@ -9,9 +9,11 @@ interface CommandAIAnswerCardProps {
   response: string;
   isLoading: boolean;
   error: string | null;
+  isNavQuestion?: boolean;
+  navConfidence?: 'high' | 'low' | 'none';
 }
 
-export function CommandAIAnswerCard({ response, isLoading, error }: CommandAIAnswerCardProps) {
+export function CommandAIAnswerCard({ response, isLoading, error, isNavQuestion, navConfidence }: CommandAIAnswerCardProps) {
   const [expanded, setExpanded] = useState(false);
 
   if (!isLoading && !response && !error) return null;
@@ -36,6 +38,15 @@ export function CommandAIAnswerCard({ response, isLoading, error }: CommandAIAns
           <span className="font-sans text-xs text-muted-foreground">
             {AI_ASSISTANT_NAME_DEFAULT} is thinking…
           </span>
+        </div>
+      )}
+
+      {/* Low-confidence navigation warning */}
+      {isNavQuestion && navConfidence === 'low' && !isLoading && response && (
+        <div className="mb-2 px-3 py-1.5 rounded-lg bg-muted/60 border border-border/40">
+          <p className="font-sans text-[11px] text-muted-foreground">
+            I couldn't fully verify these steps in the current build. Use <kbd className="rounded border border-border/50 bg-muted/70 px-1 py-0.5 font-mono text-[10px]">⌘K</kbd> to search for the exact page.
+          </p>
         </div>
       )}
 

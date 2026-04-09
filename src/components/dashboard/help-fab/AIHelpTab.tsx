@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useAIAssistant } from '@/hooks/useAIAssistant';
+import { classifyAndGround } from '@/lib/navGrounding';
 import { DotsLoader } from '@/components/ui/loaders/DotsLoader';
 import ReactMarkdown from 'react-markdown';
 import { cn } from '@/lib/utils';
@@ -96,7 +97,8 @@ export function AIHelpTab() {
     const userMessage: Message = { role: 'user', content: messageText };
     setMessages(prev => [...prev, userMessage]);
     setInputValue('');
-    await sendMessage(messageText, messages, orgId, primaryRole);
+    const grounding = classifyAndGround(messageText, primaryRole);
+    await sendMessage(messageText, messages, orgId, primaryRole, grounding.isNavigation ? { isNavigation: grounding.isNavigation, confidence: grounding.confidence, groundingPrompt: grounding.groundingPrompt } : undefined);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
