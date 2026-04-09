@@ -106,7 +106,7 @@ export function AIHelpTab() {
                     className={cn(
                       'max-w-[85%] px-4 py-2.5 text-sm',
                       msg.role === 'user'
-                        ? 'ml-auto bg-primary text-primary-foreground rounded-2xl rounded-br-md'
+                        ? 'ml-auto bg-primary text-primary-foreground rounded-2xl rounded-br-md shadow-sm'
                         : 'mr-auto rounded-2xl rounded-bl-md bg-card/80 backdrop-blur-sm border border-border/40'
                     )}
                   >
@@ -162,8 +162,10 @@ export function AIHelpTab() {
         </div>
       </ScrollArea>
       
-      <div className="border-t border-border/30 p-3">
+      <div className="p-3">
+        <div className="h-px bg-gradient-to-r from-primary/20 via-primary/40 to-primary/20 mb-3" />
         <div className="relative">
+          <ZuraZIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground/40 pointer-events-none" />
           <Input
             ref={inputRef}
             value={inputValue}
@@ -171,14 +173,14 @@ export function AIHelpTab() {
             onKeyDown={handleKeyDown}
             placeholder="Ask a question..."
             disabled={isLoading}
-            className="rounded-full bg-muted/50 border-border/40 pl-4 pr-12 h-10"
+            className="rounded-full bg-muted/50 border-border/40 pl-9 pr-12 h-10"
             autoCapitalize="off"
           />
           <Button
             size="icon"
             onClick={() => handleSend()}
             disabled={!inputValue.trim() || isLoading}
-            className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full hover:scale-110 transition-transform duration-200"
+            className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full bg-primary/90 hover:bg-primary text-primary-foreground hover:scale-110 transition-all duration-200"
           >
             <Send className="h-3.5 w-3.5" />
           </Button>
