@@ -14,6 +14,11 @@ const AssistantSchema = z.object({
   organizationId: z.string().uuid().optional(),
   organization_id: z.string().uuid().optional(),
   userRole: z.string().max(50).optional(),
+  groundingContext: z.object({
+    isNavigation: z.boolean(),
+    confidence: z.enum(["high", "low", "none"]),
+    groundingPrompt: z.string(),
+  }).optional(),
 });
 
 const BASE_SYSTEM_PROMPT = `You are ${AI_ASSISTANT_NAME}, the AI assistant for ${PLATFORM_NAME}. Users may call you "${AI_ASSISTANT_NAME}" or "Hey ${AI_ASSISTANT_NAME}". You help users navigate the dashboard, understand features, and answer questions about salon operations.
@@ -107,7 +112,7 @@ serve(async (req) => {
     const { user, supabaseAdmin } = authResult;
 
     const body = await validateBody(req, AssistantSchema, getCorsHeaders(req));
-    const { messages, organizationId, userRole } = body;
+    const { messages, organizationId, userRole, groundingContext } = body;
     // Verify org access
     try {
       await requireOrgMember(supabaseAdmin, user.id, body.organizationId || body.organization_id);
@@ -125,6 +130,14 @@ serve(async (req) => {
 
     // Load dynamic Zura config if org is available
     let systemPrompt = BASE_SYSTEM_PROMPT;
+
+    // Inject grounding context for navigation questions
+    if (groundingContext?.isNavigation && groundingContext.groundingPrompt) {
+      systemPrompt += `\n\n## ${groundingContext.groundingPrompt}`;
+      if (groundingContext.confidence === 'low') {
+        systemPrompt += `\n\nIMPORTANT: Navigation confidence is LOW. Do NOT fabricate step-by-step instructions. Tell the user you're not certain of the exact location and suggest using Cmd/Ctrl+K to search.`;
+      }
+    }
     
     if (organizationId && SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY) {
       try {

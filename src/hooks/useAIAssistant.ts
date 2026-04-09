@@ -3,11 +3,17 @@ import { supabase } from '@/integrations/supabase/client';
 
 type Message = { role: 'user' | 'assistant'; content: string };
 
+export interface GroundingContextPayload {
+  isNavigation: boolean;
+  confidence: 'high' | 'low' | 'none';
+  groundingPrompt: string;
+}
+
 interface UseAIAssistantReturn {
   response: string;
   isLoading: boolean;
   error: string | null;
-  sendMessage: (query: string, conversationHistory?: Message[], organizationId?: string, userRole?: string) => Promise<void>;
+  sendMessage: (query: string, conversationHistory?: Message[], organizationId?: string, userRole?: string, groundingContext?: GroundingContextPayload) => Promise<void>;
   reset: () => void;
 }
 
@@ -32,7 +38,7 @@ export function useAIAssistant(): UseAIAssistantReturn {
     setIsLoading(false);
   }, []);
 
-  const sendMessage = useCallback(async (query: string, conversationHistory: Message[] = [], organizationId?: string, userRole?: string) => {
+  const sendMessage = useCallback(async (query: string, conversationHistory: Message[] = [], organizationId?: string, userRole?: string, groundingContext?: GroundingContextPayload) => {
     setIsLoading(true);
     setError(null);
     setResponse('');
@@ -56,7 +62,7 @@ export function useAIAssistant(): UseAIAssistantReturn {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${accessToken}`,
         },
-        body: JSON.stringify({ messages, organizationId, userRole }),
+        body: JSON.stringify({ messages, organizationId, userRole, groundingContext }),
       });
 
       if (!resp.ok) {
