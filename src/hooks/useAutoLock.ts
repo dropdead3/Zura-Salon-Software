@@ -41,5 +41,5 @@ export function useAutoLock() {
         window.removeEventListener(evt, handler);
       }
     };
-  }, [isLocked, resetTimer]);
+  }, [isLocked, isImpersonating, resetTimer]);
 }
