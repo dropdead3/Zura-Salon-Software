@@ -1,97 +1,95 @@
 
 
-# Command Surface Origin-Anchored Expansion Redesign
+# Empty-State, No-Results, and AI Fallback Polish
 
-## Audit Summary
+## Audit Findings
 
-**Current architecture**: `TopBarSearch` is a `<button>` in the top bar (rounded-full pill, `bg-muted/60`). Clicking it calls `onSearchClick` → `setCommandOpen(true)` in `DashboardLayout`. `ZuraCommandSurface` renders as a Radix `Dialog` with `DialogContent` portal — a centered modal at `top-[35%]` with `zoom-in-95` + `fade-in` animation. The search bar and modal are completely disconnected components with no visual continuity. The dialog overlay is `bg-black/80` (very aggressive). The close animation is `zoom-out-95` + `fade-out` — generic modal behavior.
+**Pre-type state** (`CommandProactiveState`): Already strong — has Continue, Quick Paths, Attention, and Suggested sections. The absolute fallback (no data at all) shows a bare "Search or ask Zura..." with a ghosted icon, which is fine but could be slightly warmer.
 
-**Core problem**: The dialog opens from center-screen with a scale-up animation. No visual link to the search pill. Feels like a detached popup, not an expansion of the search bar. The overlay is too opaque. The input in the modal is a completely separate `CommandInput` component — no continuity with the pill.
+**No-direct-results state** (lines 420-442 in `ZuraCommandSurface`): Currently an inline block with centered Search icon, "No results for..." text, generic "Try a different search, or continue with AI" copy, and a standalone `Continue with Zura AI` pill button. Issues: centered layout feels like an error state, the copy is generic, the button uses `tabIndex={-1}` (not keyboard-reachable), and there's no partial interpretation shown.
 
-## Strategy Decision: Top-Anchored Dropdown, Not Centered Modal
+**With suggestions** (`CommandSuggestionPanel`): Shows "No results for..." header + suggestion rows. The AI continuation is buried inside suggestions as a `topic` type row. No standalone AI CTA if suggestions exist.
 
-After auditing the header geometry (search pill sits in left zone of top bar, `max-w-[280px]` to `max-w-xl`), the strongest approach is:
+**`CommandEmptyState`**: Exists as a component but is never imported or used in `ZuraCommandSurface`. Dead code — uses "Ask AI instead" copy.
 
-**Replace the Radix Dialog with a custom portal-based dropdown panel that expands from the search bar's position.** The panel anchors to the top of the viewport (below the top bar) and grows downward. This preserves the spatial origin and makes the search feel like a deeper state of the same control.
+**AI Answer Card**: Good pattern — `bg-card-inner/80 backdrop-blur-sm border-primary/10`. This material language should be reused for the AI fallback card.
 
-The centered modal approach fails the continuity test — even with origin-tracking animation, the spatial jump from top-left to center creates a disconnect.
+**Key problems to fix:**
+1. No-results state feels like failure — needs reframing
+2. AI continuation button not keyboard-accessible (`tabIndex={-1}`)
+3. `CommandEmptyState` is dead code — should be removed or consolidated
+4. `CommandSuggestionPanel` duplicates the "No results" header but has no AI CTA when suggestions exist
+5. Partial interpretation from `chainedQuery` not shown in no-results state
+6. Copy is generic, not Zura-native
 
-## Architecture
+## Plan
 
-### Approach: Replace Dialog with AnimatePresence Portal
+### Files to Edit (3)
 
-Remove Radix Dialog entirely from `ZuraCommandSurface`. Replace with:
-1. A `createPortal` + `AnimatePresence` (framer-motion) combination — same pattern already used by `PremiumFloatingPanel`
-2. The panel renders as a fixed-position overlay anchored top-center (offset by sidebar), dropping down from beneath the top bar region
-3. A separate backdrop layer (much softer: `bg-black/20 backdrop-blur-sm` matching `PremiumFloatingPanel`)
+**`src/components/command-surface/CommandSuggestionRow.tsx`** — Refine `CommandSuggestionPanel` to include an AI continuation row at the bottom when suggestions exist, and improve copy from "No results for..." to softer framing.
 
-### Animation Model
+**`src/components/command-surface/ZuraCommandSurface.tsx`** — Replace the inline no-results block (lines 420-442) with a new `CommandNoResultsState` component. Pass `chainedQuery` for partial interpretation display. Make AI fallback row keyboard-navigable (remove `tabIndex={-1}`, integrate into arrow key navigation). Wire Enter on AI fallback row to trigger `handleAIFallback`.
 
-**Open**: Panel enters with `y: -12, opacity: 0 → y: 0, opacity: 1` using a tight spring (`damping: 28, stiffness: 320, mass: 0.7`). This creates a subtle downward slide from the header region. Duration feels ~180ms.
+**`src/components/command-surface/CommandNoResultsState.tsx`** — New component. Clean, left-aligned layout (not centered). Three sections:
+1. **Partial interpretation row** (conditional): If `chainedQuery` has `slotCount >= 1`, show a subtle line like "Zura understood: [chips]" using the same `ChainSegment` chip style, establishing trust that the query was parsed even though no direct match exists
+2. **AI continuation card**: Primary action — `bg-card-inner/60 border border-primary/10 rounded-lg` matching `CommandAIAnswerCard` material. Sparkles icon + "Ask Zura" label + the user's query shown as context. Full keyboard focus support. Hover: `bg-primary/5`. Copy: "No direct match for [query]. Zura AI can help interpret, answer, or route this."
+3. **Secondary suggestions**: If any exist, render beneath the card using existing `CommandSuggestionRow` pattern
 
-**Close**: Reverse — `y: 0 → y: -12, opacity: 0` with faster exit (~120ms). The panel retracts upward toward the header.
+**`src/components/command-surface/CommandEmptyState.tsx`** — Delete (dead code, never imported).
 
-No scale transform (scale feels like a popup; translate-Y feels like expansion/retraction from origin).
+### Copy Decisions
 
-### Geometry
+| State | Current | Proposed |
+|-------|---------|----------|
+| No-results header | "No results for '...'" | "No direct match" (smaller, calmer — not an error) |
+| No-results subtext | "Try a different search, or continue with AI" | Removed — the AI card itself communicates the next step |
+| AI CTA button | "Continue with Zura AI" | "Ask Zura" (shorter, native, action-first) |
+| AI CTA supporting text | None | "Zura AI can help answer or route this" (one line beneath, xs, muted) |
+| Suggestion panel header | "No results for '...'" | "No direct match. Try these instead:" |
 
-- Panel: `fixed`, `top` positioned just below the top bar (~72px from viewport top, or `top-[72px]`; adjusts for God Mode bar offset)
-- Horizontally: `left: calc(50% + var(--sidebar-offset, 0px))`, `transform: translateX(-50%)` — same centering as current dialog but anchored to top
-- Width: same as current (`max-w-[720px]`, expanding to `max-w-[1080px]` with preview)
-- Max height: `max-h-[min(560px, calc(100vh - 100px))]`
-- Border radius: `rounded-xl` matching drawer tokens
-- Material: `bg-card/80 backdrop-blur-xl border-border shadow-2xl` (reuse `tokens.drawer.content`)
+### AI Continuation Card Design
 
-### TopBarSearch Visual Continuity
+```
+┌─────────────────────────────────────────────┐
+│  ✦  Ask Zura                          ↵     │
+│     Zura AI can help answer or route this   │
+└─────────────────────────────────────────────┘
+```
 
-When `open` is true, the `TopBarSearch` pill should:
-- Remain visible but visually elevated — add a subtle ring/glow (`ring-1 ring-foreground/10`) to show it's the "source"
-- Or alternatively: hide the pill entirely and let the expanded panel's input serve as the replacement (cleaner)
+- Material: `bg-card-inner/60 border border-primary/10 rounded-lg mx-3 p-3`
+- Icon: Sparkles `w-4 h-4 text-primary`
+- Title: `font-sans text-sm text-foreground font-medium` — "Ask Zura"
+- Subtitle: `font-sans text-xs text-muted-foreground` — "Zura AI can help answer or route this"
+- Right affordance: subtle Enter key hint (`kbd` style matching footer)
+- States: idle → hover (`bg-primary/5`) → focused (ring-1 ring-primary/20) → pressed (scale-[0.995]) → loading (Sparkles animate-pulse, card transitions into AI answer)
 
-**Decision**: Hide the pill when open. The expanded panel's `CommandInput` sits at the same vertical level as the header, creating the illusion of replacement. The pill fades out with `opacity-0 pointer-events-none` transition.
+### Keyboard Behavior
 
-### Input Continuity
+- In no-results state with no suggestions: AI continuation card is auto-focused (selectedIndex = 0 maps to it). Enter triggers `handleAIFallback`.
+- In no-results state with suggestions: AI card is the first item, suggestions follow. Arrow keys navigate all. Enter on AI card triggers AI mode; Enter on suggestion navigates/corrects.
+- Integration: Add a `noResultsActionCount` (1 for AI card + suggestion count) to the keyboard handler so ArrowDown/Up can reach the AI card and suggestions.
 
-The `CommandInput` inside the panel is already the active input. Since we're anchoring the panel to the header region, the input at the top of the panel aligns spatially with where the search pill was. No need for FLIP animation — the spatial proximity is close enough that the transition reads as "the pill expanded into this."
+### Partial Interpretation Display
 
-### Empty State & No-Results AI Fallback
-
-Current empty state (no query) shows `CommandProactiveState` — already good. 
-
-**No-results state** (query typed, zero matches, no suggestions): Currently shows a bare `<p>No results for "..."</p>`. This needs improvement:
-
-Add a refined AI fallback prompt below the no-results message:
-- Sparkles icon + "Ask Zura AI" button styled as a calm inline card
-- Phrasing: "No direct matches. Ask Zura AI for help →"
-- Clicking switches to AI mode and auto-sends the query
-- Styled with `bg-card-inner/60 border border-primary/10 rounded-lg` — same language as `CommandAIAnswerCard`
+When `chainedQuery.slotCount >= 1` and no results exist, show a muted line above the AI card:
+```
+Understood: [📊 Retail] [🕐 Last 30 Days]  — no direct match
+```
+Uses existing `ChainSegment` chips at reduced opacity. This builds trust — the user sees Zura parsed their intent even without a deterministic result.
 
 ### Responsive
 
-- Desktop (≥1024px): Top-anchored dropdown panel as described
-- Tablet (768–1023px): Same but wider relative to viewport
-- Mobile (<768px): Full-screen sheet sliding down from top (`inset-0`, `rounded-none`), same as current mobile behavior but with slide-down instead of center-zoom
+- Desktop: AI card with padding, partial interpretation visible
+- Mobile (<768px): AI card full-width, no partial interpretation (keep it simple)
 
-## Files to Edit
+### Files Summary
 
-| File | Action | What |
-|------|--------|------|
-| `ZuraCommandSurface.tsx` | **Major edit** | Replace `Dialog`/`DialogContent` with `createPortal` + `motion.div` + `AnimatePresence`. Reposition as top-anchored panel. Add backdrop. Improve no-results empty state with AI fallback. |
-| `TopBarSearch.tsx` | **Edit** | Accept `isOpen` prop; when true, apply `opacity-0 pointer-events-none` transition to hide pill |
-| `SuperAdminTopBar.tsx` | **Edit** | Pass `isSearchOpen` prop to `TopBarSearch` |
-| `DashboardLayout.tsx` | **Edit** | Pass `commandOpen` state to `SuperAdminTopBar` as `isSearchOpen` |
-| `dialog.tsx` | No change | |
+| File | Action |
+|------|--------|
+| `src/components/command-surface/CommandNoResultsState.tsx` | Create — unified no-results + AI fallback |
+| `src/components/command-surface/ZuraCommandSurface.tsx` | Edit — replace inline no-results block with new component, wire keyboard |
+| `src/components/command-surface/CommandSuggestionRow.tsx` | Edit — add AI CTA row at bottom of suggestion panel, refine copy |
+| `src/components/command-surface/CommandEmptyState.tsx` | Delete — dead code |
 
-## No-Results AI Fallback (inline in ZuraCommandSurface)
-
-Replace the bare `<p>No results...</p>` block (lines 374-378) with a styled card:
-```
-[Search icon] No results for "query"
-[Sparkles] Continue with Zura AI →
-```
-Clicking triggers `setAiMode(true); sendMessage(query);`
-
-## Summary of Changes
-
-4 files edited. No new files. No database changes. Core change is replacing Radix Dialog with a portal+motion panel anchored to the top bar region, adding a pill hide transition, and improving the no-results fallback.
+No database changes. No new design tokens.
 
