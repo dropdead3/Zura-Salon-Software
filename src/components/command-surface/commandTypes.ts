@@ -1,7 +1,7 @@
 import type React from 'react';
 
 // ─── Result Types ────────────────────────────────────────────
-export type ResultType = 'navigation' | 'team' | 'client' | 'help' | 'action';
+export type ResultType = 'navigation' | 'team' | 'client' | 'help' | 'action' | 'inventory' | 'task' | 'appointment' | 'insight';
 
 export interface CommandResult {
   id: string;
@@ -35,11 +35,15 @@ export function isQuestionQuery(query: string): boolean {
 
 // ─── Group Config ────────────────────────────────────────────
 export const GROUP_ORDER: Record<ResultType, { label: string; priority: number }> = {
-  navigation: { label: 'Pages & Features', priority: 1 },
-  team: { label: 'Team', priority: 2 },
-  client: { label: 'Clients', priority: 3 },
-  help: { label: 'Help & Resources', priority: 4 },
-  action: { label: 'Suggested Actions', priority: 5 },
+  action: { label: 'Actions', priority: 1 },
+  navigation: { label: 'Pages & Features', priority: 2 },
+  team: { label: 'People', priority: 3 },
+  client: { label: 'Clients', priority: 4 },
+  appointment: { label: 'Appointments', priority: 5 },
+  inventory: { label: 'Inventory', priority: 6 },
+  task: { label: 'Tasks', priority: 7 },
+  help: { label: 'Help & Resources', priority: 8 },
+  insight: { label: 'Insights', priority: 9 },
 };
 
 export function groupResults(results: CommandResult[]): ResultGroup[] {

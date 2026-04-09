@@ -12,6 +12,10 @@ import {
   BookOpen,
   Sparkles,
   UserCircle,
+  Package,
+  CheckSquare,
+  Calendar,
+  Zap,
 } from 'lucide-react';
 
 import { parseQuery } from '@/lib/queryParser';
@@ -37,6 +41,7 @@ import {
 } from '@/config/dashboardNav';
 import type { DashboardNavItem } from '@/config/dashboardNav';
 import { useTeamDirectory } from '@/hooks/useEmployeeProfile';
+import { useTasks } from '@/hooks/useTasks';
 import { useActiveLocations } from '@/hooks/useLocations';
 import { useRecentSearches } from '@/components/command-surface/useRecentSearches';
 import { expandQuery, logSynonymTelemetry } from '@/lib/synonymRegistry';
@@ -174,8 +179,33 @@ export function useSearchRanking(
         metadata: (member as any).location_name || undefined,
       }));
 
-    return [...navCandidates, ...helpCands, ...teamCandidates];
-  }, [options.filterNavItems, teamMembers]);
+    // Task candidates from user's tasks
+    const taskCandidates: SearchCandidate[] = (taskItems || [])
+      .slice(0, 50)
+      .map((task) => ({
+        id: `task-${task.id}`,
+        type: 'task' as const,
+        title: task.title,
+        subtitle: task.is_completed ? 'Completed' : task.priority === 'high' ? 'High priority' : task.due_date ? `Due ${task.due_date}` : 'Open',
+        path: '/dashboard/tasks',
+        icon: React.createElement(CheckSquare, { className: 'w-4 h-4' }),
+        metadata: task.priority,
+      }));
+
+    // Action candidates from the registry
+    const actionCandidates: SearchCandidate[] = getAllActions()
+      .filter((a) => a.id !== 'navigate_page')
+      .map((action) => ({
+        id: `action-${action.id}`,
+        type: 'action' as const,
+        title: action.label,
+        subtitle: action.description,
+        icon: React.createElement(Zap, { className: 'w-4 h-4' }),
+        permissions: action.permissions[0] ? action.permissions[0] : undefined,
+      }));
+
+    return [...navCandidates, ...helpCands, ...teamCandidates, ...taskCandidates, ...actionCandidates];
+  }, [options.filterNavItems, teamMembers, taskItems]);
 
   // Compute recent paths from search history
   const recentPaths = useMemo((): string[] => {

@@ -2,7 +2,7 @@ import React from 'react';
 import { cn } from '@/lib/utils';
 import type { ResultType } from './commandTypes';
 
-export type SearchScope = 'all' | 'navigation' | 'team' | 'action';
+export type SearchScope = 'all' | 'navigation' | 'team' | 'action' | 'client' | 'inventory' | 'task';
 
 interface CommandSearchFiltersProps {
   activeScope: SearchScope;
@@ -12,8 +12,11 @@ interface CommandSearchFiltersProps {
 const SCOPES: { value: SearchScope; label: string }[] = [
   { value: 'all', label: 'All' },
   { value: 'navigation', label: 'Pages' },
-  { value: 'team', label: 'Team' },
+  { value: 'team', label: 'People' },
   { value: 'action', label: 'Actions' },
+  { value: 'client', label: 'Clients' },
+  { value: 'inventory', label: 'Inventory' },
+  { value: 'task', label: 'Tasks' },
 ];
 
 export function CommandSearchFilters({ activeScope, onScopeChange }: CommandSearchFiltersProps) {
