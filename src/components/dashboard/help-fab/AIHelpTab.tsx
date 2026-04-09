@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { Send, Loader2 } from 'lucide-react';
-import { ZuraAvatar } from '@/components/ui/ZuraAvatar';
+import { ZuraZIcon } from '@/components/icons/ZuraZIcon';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -74,7 +74,7 @@ export function AIHelpTab() {
         <div className="py-4 space-y-4">
           {isEmpty ? (
             <div className="flex flex-col items-center justify-center h-[280px] text-center">
-              <ZuraAvatar size="lg" className="mb-4" />
+              <ZuraZIcon className="w-12 h-12 text-primary mb-4" />
               <h3 className="font-medium text-lg mb-2">{AI_ASSISTANT_NAME_DEFAULT}</h3>
               <p className="text-sm text-muted-foreground mb-6 max-w-[280px]">
                 I'm {AI_ASSISTANT_NAME_DEFAULT}, your AI assistant. Ask me anything about using {PLATFORM_NAME}.
