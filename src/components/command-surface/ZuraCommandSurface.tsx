@@ -578,6 +578,8 @@ export function ZuraCommandSurface({ open, onOpenChange, filterNavItems, anchorR
                           <CommandInlineAnalyticsCard
                             hint={analyticsHint}
                             onNavigate={handleInlineAnalyticsNav}
+                            timeLabel={timeLabel}
+                            data={commandData}
                           />
                         )}
                         <CommandResultPanel
