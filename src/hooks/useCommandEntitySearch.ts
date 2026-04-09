@@ -111,7 +111,7 @@ export function useAppointmentSearchCandidates(enabled: boolean): SearchCandidat
     queryFn: async () => {
       const { data, error } = await supabase
         .from('phorest_appointments')
-        .select('id, client_name, service_name, staff_name, start_time, status')
+        .select('id, client_name, service_name, start_time, status')
         .eq('organization_id', orgId!)
         .eq('appointment_date', today)
         .neq('status', 'cancelled')
@@ -128,7 +128,7 @@ export function useAppointmentSearchCandidates(enabled: boolean): SearchCandidat
     if (!data) return [];
     return data.map((a) => {
       const timePart = a.start_time?.slice(0, 5) || '';
-      const subtitleParts = [timePart, a.service_name, a.staff_name].filter(Boolean);
+      const subtitleParts = [timePart, a.service_name].filter(Boolean);
 
       return {
         id: `appt-${a.id}`,
