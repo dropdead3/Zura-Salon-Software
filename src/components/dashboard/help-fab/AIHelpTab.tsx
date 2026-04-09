@@ -52,7 +52,7 @@ export function AIHelpTab() {
   const prompts = useMemo(() => {
     if (roles.some(r => r === 'super_admin' || r === 'admin')) return ROLE_PROMPTS.leadership;
     if (roles.includes('manager')) return ROLE_PROMPTS.manager;
-    if (roles.includes('front_desk')) return ROLE_PROMPTS.front_desk;
+    if (roles.includes('receptionist')) return ROLE_PROMPTS.front_desk;
     if (roles.includes('stylist')) return ROLE_PROMPTS.stylist;
     return ROLE_PROMPTS.default;
   }, [roles]);
@@ -119,7 +119,7 @@ export function AIHelpTab() {
                 Your AI assistant. Ask me anything about using this platform, or your business.
               </p>
               <div className="w-full space-y-1.5">
-                {EXAMPLE_PROMPTS.map((prompt) => (
+                {prompts.map((prompt) => (
                   <button
                     key={prompt}
                     onClick={() => handlePromptClick(prompt)}
