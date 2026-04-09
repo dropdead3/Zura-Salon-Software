@@ -219,8 +219,11 @@ export function useSearchRanking(
         permission: action.permissions[0] || undefined,
       }));
 
-    return [...navCandidates, ...helpCands, ...teamCandidates, ...taskCandidates, ...actionCandidates];
-  }, [options.filterNavItems, teamMembers, taskItems]);
+    return [
+      ...navCandidates, ...helpCands, ...teamCandidates, ...taskCandidates, ...actionCandidates,
+      ...clientCandidates, ...productCandidates, ...appointmentCandidates,
+    ];
+  }, [options.filterNavItems, teamMembers, taskItems, clientCandidates, productCandidates, appointmentCandidates]);
 
   // Compute recent paths from search history
   const recentPaths = useMemo((): string[] => {
