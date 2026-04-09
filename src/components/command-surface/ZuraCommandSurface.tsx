@@ -227,6 +227,34 @@ export function ZuraCommandSurface({ open, onOpenChange, filterNavItems, anchorR
     }
   }, [open, resetAI, actionExecution.reset, clearPreview]);
 
+  // Auto-trigger AI mode for question queries with no strong nav match
+  const autoAiTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    // Clear any existing timer on every query/state change
+    if (autoAiTimerRef.current) {
+      clearTimeout(autoAiTimerRef.current);
+      autoAiTimerRef.current = null;
+    }
+
+    // Guard conditions
+    if (!open || aiMode || aiLoading || !hasQuery || query.trim().length < 8) return;
+    if (!isQuestionQuery(query)) return;
+    if (hasResults && rankedResults[0]?.score >= 0.5) return;
+
+    autoAiTimerRef.current = setTimeout(() => {
+      setAiMode(true);
+      sendMessage(query);
+      addRecent({ query, resultType: 'help' });
+    }, 1200);
+
+    return () => {
+      if (autoAiTimerRef.current) {
+        clearTimeout(autoAiTimerRef.current);
+        autoAiTimerRef.current = null;
+      }
+    };
+  }, [query, open, aiMode, aiLoading, hasQuery, hasResults, rankedResults, sendMessage, addRecent]);
+
   useEffect(() => {
     setSelectedIndex(0);
   }, [query]);
