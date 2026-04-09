@@ -19,6 +19,7 @@ const AssistantSchema = z.object({
     confidence: z.enum(["high", "medium", "low", "none"]),
     groundingPrompt: z.string(),
   }).optional(),
+  dataContext: z.string().max(2000).optional(),
 });
 
 const BASE_SYSTEM_PROMPT = `You are ${AI_ASSISTANT_NAME}, the AI assistant for ${PLATFORM_NAME}. Users may call you "${AI_ASSISTANT_NAME}" or "Hey ${AI_ASSISTANT_NAME}". You help users navigate the dashboard, understand features, and answer questions about salon operations.
