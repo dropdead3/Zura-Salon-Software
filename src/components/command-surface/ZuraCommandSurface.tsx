@@ -517,12 +517,18 @@ export function ZuraCommandSurface({ open, onOpenChange, filterNavItems, anchorR
                 hasPreview && 'lg:max-w-[calc(100%-340px)]'
               )}>
                 {hasQuery && showAICard && (
-                  <CommandAIAnswerCard
+                <CommandAIAnswerCard
                     response={aiResponse}
                     isLoading={aiLoading}
                     error={aiError}
                     isNavQuestion={isQuestionQuery(query) && groundingResult.isNavigation}
                     navConfidence={groundingResult.confidence}
+                    destinations={groundingResult.isNavigation ? groundingResult.verifiedDestinations : []}
+                    onNavigate={(path) => {
+                      const resolvedPath = resolveOrgPath(path);
+                      navigate(resolvedPath);
+                      close();
+                    }}
                   />
                 )}
 
