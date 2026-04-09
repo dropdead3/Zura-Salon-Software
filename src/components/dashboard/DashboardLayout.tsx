@@ -551,6 +551,7 @@ function DashboardLayoutInner({ children, hideFooter, hideTopBar, hideSidebar }:
             HideNumbersToggle={HideNumbersToggle}
             roleBadges={roleBadges}
             onSearchClick={() => setCommandOpen(true)}
+            isSearchOpen={commandOpen}
             isAdmin={isAdmin}
             isPlatformUser={isPlatformUser}
             isStylistRole={roles.includes('stylist')}
