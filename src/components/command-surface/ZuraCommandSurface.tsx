@@ -86,17 +86,16 @@ export function ZuraCommandSurface({ open, onOpenChange, filterNavItems }: ZuraC
     decayedFrequencyMap: decayedFreqMap,
   });
 
-  // Derive recent pages from frequency map
+  // Derive recent pages from decayed frequency map
   const recentPages = useMemo(() => {
-    const freqMap = getFrequencyMap();
-    return Object.entries(freqMap)
+    return Object.entries(decayedFreqMap)
       .sort(([, a], [, b]) => b - a)
       .slice(0, 5)
       .map(([path]) => ({
         label: NAV_LABEL_MAP.get(path) || path.split('/').pop() || path,
         path,
       }));
-  }, []);
+  }, [decayedFreqMap]);
 
   const showAICard = aiMode || (query.trim() && isQuestionQuery(query));
   const flatResults = useMemo(() => groups.flatMap(g => g.results), [groups]);
