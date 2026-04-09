@@ -381,12 +381,17 @@ export function ZuraCommandSurface({ open, onOpenChange, filterNavItems }: ZuraC
                 )
               )
             ) : (
-              <CommandRecentSection
+              <CommandProactiveState
                 recentSearches={recents}
                 recentPages={recentPages}
                 onSearchSelect={handleRecentSearchSelect}
                 onPageSelect={handleRecentPageSelect}
                 onClearRecents={clearRecents}
+                onNavigate={(path) => {
+                  const resolvedPath = resolveOrgPath(path);
+                  navigate(resolvedPath);
+                  close();
+                }}
               />
             )}
           </div>
