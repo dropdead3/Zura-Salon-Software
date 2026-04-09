@@ -16,7 +16,7 @@ const AssistantSchema = z.object({
   userRole: z.string().max(50).optional(),
   groundingContext: z.object({
     isNavigation: z.boolean(),
-    confidence: z.enum(["high", "low", "none"]),
+    confidence: z.enum(["high", "medium", "low", "none"]),
     groundingPrompt: z.string(),
   }).optional(),
 });
@@ -136,6 +136,10 @@ serve(async (req) => {
       systemPrompt += `\n\n## ${groundingContext.groundingPrompt}`;
       if (groundingContext.confidence === 'low') {
         systemPrompt += `\n\nIMPORTANT: Navigation confidence is LOW. Do NOT fabricate step-by-step instructions. Tell the user you're not certain of the exact location and suggest using Cmd/Ctrl+K to search.`;
+      } else if (groundingContext.confidence === 'medium') {
+        systemPrompt += `\n\nIMPORTANT: Navigation confidence is MEDIUM. You found the destination but may not have a fully verified workflow. Provide the destination and its purpose. If a VERIFIED WORKFLOW is listed above, you may use it. Otherwise, do NOT invent steps — just provide the destination.`;
+      } else if (groundingContext.confidence === 'high') {
+        systemPrompt += `\n\nNavigation confidence is HIGH. Use the VERIFIED WORKFLOW steps exactly as listed. Do not add, remove, or rename any steps.`;
       }
     }
     

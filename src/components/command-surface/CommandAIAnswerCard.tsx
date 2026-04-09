@@ -10,7 +10,7 @@ interface CommandAIAnswerCardProps {
   isLoading: boolean;
   error: string | null;
   isNavQuestion?: boolean;
-  navConfidence?: 'high' | 'low' | 'none';
+  navConfidence?: 'high' | 'medium' | 'low' | 'none';
 }
 
 export function CommandAIAnswerCard({ response, isLoading, error, isNavQuestion, navConfidence }: CommandAIAnswerCardProps) {
@@ -38,6 +38,15 @@ export function CommandAIAnswerCard({ response, isLoading, error, isNavQuestion,
           <span className="font-sans text-xs text-muted-foreground">
             {AI_ASSISTANT_NAME_DEFAULT} is thinking…
           </span>
+        </div>
+      )}
+
+      {/* Medium-confidence navigation note */}
+      {isNavQuestion && navConfidence === 'medium' && !isLoading && response && (
+        <div className="mb-2 px-3 py-1.5 rounded-lg bg-muted/40 border border-border/30">
+          <p className="font-sans text-[11px] text-muted-foreground">
+            I found the destination, but the exact in-page steps may vary. Use <kbd className="rounded border border-border/50 bg-muted/70 px-1 py-0.5 font-mono text-[10px]">⌘K</kbd> to navigate directly.
+          </p>
         </div>
       )}
 

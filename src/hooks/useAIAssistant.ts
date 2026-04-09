@@ -5,7 +5,7 @@ type Message = { role: 'user' | 'assistant'; content: string };
 
 export interface GroundingContextPayload {
   isNavigation: boolean;
-  confidence: 'high' | 'low' | 'none';
+  confidence: 'high' | 'medium' | 'low' | 'none';
   groundingPrompt: string;
 }
 
