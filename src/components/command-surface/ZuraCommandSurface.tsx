@@ -76,6 +76,7 @@ export function ZuraCommandSurface({ open, onOpenChange, filterNavItems, anchorR
   const [query, setQuery] = useState('');
   const [aiMode, setAiMode] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(0);
+  const [activeScope, setActiveScope] = useState<SearchScope>('all');
   const navigate = useNavigate();
   const location = useLocation();
   const { permissions } = usePermission();
@@ -86,7 +87,7 @@ export function ZuraCommandSurface({ open, onOpenChange, filterNavItems, anchorR
   const { isImpersonating } = useOrganizationContext();
 
   const { response: aiResponse, isLoading: aiLoading, error: aiError, sendMessage, reset: resetAI } = useAIAssistant();
-  const { recents, addRecent, clearRecents } = useRecentSearches();
+  const { recents, recentEntries, addRecent, clearRecents } = useRecentSearches();
   const actionExecution = useActionExecution();
 
   // Preview system
