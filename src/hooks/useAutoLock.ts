@@ -22,6 +22,12 @@ export function useAutoLock() {
       return;
     }
 
+    // Skip auto-lock entirely in God Mode
+    if (isImpersonating) {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+      return;
+    }
+
     resetTimer();
 
     const handler = () => resetTimer();
