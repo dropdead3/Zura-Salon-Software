@@ -71,7 +71,7 @@ export function AIHelpTab() {
       <ScrollArea className="flex-1 px-4" ref={scrollRef}>
         <div className="py-4 space-y-4">
           {isEmpty ? (
-            <div className="flex flex-col items-center justify-center h-[320px] text-center pt-8">
+            <div className="flex flex-col items-center justify-center h-[340px] text-center pt-8">
               {/* Glow behind icon */}
               <div className="relative mb-5">
                 <div className="absolute inset-0 -m-6 rounded-full bg-primary/15 blur-2xl animate-pulse" />
@@ -164,7 +164,7 @@ export function AIHelpTab() {
         </div>
       </ScrollArea>
       
-      <div className="p-3">
+      <div className="px-3 pb-3 pt-1">
         <div className="h-px bg-gradient-to-r from-primary/20 via-primary/40 to-primary/20 mb-3" />
         <div className="relative">
           <ZuraZIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground/40 pointer-events-none" />
