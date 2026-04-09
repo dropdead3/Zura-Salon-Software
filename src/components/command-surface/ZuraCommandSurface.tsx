@@ -30,6 +30,7 @@ import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 import { useCommandPreview } from '@/hooks/useCommandPreview';
 import { CommandPreviewPanel } from './CommandPreviewPanel';
 import { CommandInlineAnalyticsCard, detectAnalyticsHint } from './CommandInlineAnalyticsCard';
+import { useCommandDataQuery } from '@/hooks/useCommandDataQuery';
 import { CommandChainBar } from './CommandChainBar';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useTypeahead } from '@/hooks/useTypeahead';
