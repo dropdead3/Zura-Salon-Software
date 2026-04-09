@@ -13,6 +13,7 @@ import {
   trackFrequencyTimestamp,
   runGarbageCollection,
   normalizeQuery,
+  charOverlap,
 } from '@/lib/searchLearning';
 import type { LearningBoost } from '@/lib/searchLearning';
 
@@ -64,7 +65,7 @@ export function useSearchLearning(
       const isReformulation =
         prevNorm &&
         prevNorm !== norm &&
-        charOverlapQuick(prevNorm, norm) >= 0.6;
+        charOverlap(prevNorm, norm) >= 0.6;
 
       logSearchEvent({
         timestamp: Date.now(),
@@ -130,15 +131,4 @@ export function useSearchLearning(
     getLearningBoosts,
     getDecayedFrequencyMap,
   };
-}
-
-// Quick char overlap without importing from searchLearning to avoid circular
-function charOverlapQuick(a: string, b: string): number {
-  const shorter = a.length < b.length ? a : b;
-  const longer = a.length < b.length ? b : a;
-  let matches = 0;
-  for (const char of shorter) {
-    if (longer.includes(char)) matches++;
-  }
-  return shorter.length > 0 ? matches / shorter.length : 0;
 }
