@@ -206,7 +206,6 @@ export function useSearchRanking(
       }));
 
     // Action candidates from the registry
-    // Action candidates from the registry
     const actionCandidates: SearchCandidate[] = getAllActions()
       .filter((a) => a.id !== 'navigate_page')
       .map((action) => ({
