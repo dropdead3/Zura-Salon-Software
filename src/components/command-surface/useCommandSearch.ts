@@ -144,7 +144,7 @@ export function useCommandSearch(query: string, options: UseCommandSearchOptions
           subtitle: member.roles?.[0] || 'Team Member',
           path: `/dashboard/directory?search=${encodeURIComponent(name)}`,
           icon: React.createElement(Users, { className: 'w-4 h-4' }),
-          metadata: member.location_name || undefined,
+          metadata: (member as any).location_name || undefined,
           score: score * 0.85,
         });
       }
