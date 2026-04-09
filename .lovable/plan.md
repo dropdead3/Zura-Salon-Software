@@ -1,153 +1,137 @@
 
 
-# Hover Previews and Inline Analytics Cards — Command Surface
+# Command Chaining UI — Interpreted Query Visualization
 
-## Architecture Decision
+## What Already Exists
 
-**Right-side panel approach** — the dialog container expands from `max-w-[720px]` to `max-w-[1080px]` when a preview is active, with the results list taking ~55% and the preview panel taking ~45%. On screens below 1024px or mobile, previews render inline beneath the selected row instead. This avoids portal complexity and keeps the preview visually connected to the result.
+The entire data pipeline is built and working:
+- `queryParser.ts` produces `ParsedQuery` with tokens, intents, time context, action intent, filters
+- `queryChainEngine.ts` produces `ChainedQuery` with typed slots: subject, topic, timeRange, locationScope, rankingModifier, negativeFilter, actionVerb, subjectType, destinationHint, confidence, slotCount
+- `useSearchRanking` already computes `chainedQuery` and returns it (line 337) — but `ZuraCommandSurface` never consumes it
+- `Badge` component has a `glass` variant with backdrop-blur that matches the overlay aesthetic
+- `AnalyticsFilterBadge` is the existing chip/badge pattern used across analytics cards
 
-## Files to Create
+The UI layer is the only missing piece.
 
-### 1. `src/components/command-surface/CommandPreviewPanel.tsx`
-The right-side preview container. Receives the selected `RankedResult` and renders the appropriate entity preview card based on `result.type`.
+## Architecture
 
-- Fixed width `w-[340px]`, full height of the scroll area
-- Border-left separator `border-l border-border/20`
-- `bg-card-inner/50 backdrop-blur-sm`
-- Smooth `animate-in fade-in-0 slide-in-from-right-2 duration-150`
-- Contains a switch on `result.type` → renders the correct preview component
-- Skeleton fallback while data loads
-- Empty state: shows result title + subtitle + "Open to view details" — never blank
+### New Files (2)
 
-### 2. `src/components/command-surface/previews/ClientPreview.tsx`
-Uses a **new lightweight hook** `useClientPreviewData(clientId)` that fetches from `clients` table with a single `.select()` — name, last_visit_date, total_spend, visit_count, is_vip, notes. Also fetches next upcoming appointment from `phorest_appointments` (1 row, future date, limit 1).
+**`src/components/command-surface/CommandChainBar.tsx`** — The interpreted query visualization strip. Renders between `CommandInput` and the results area. Consumes a `ChainedQuery` and renders a horizontal row of typed chips.
 
-Layout:
-- Name (font-display, text-base)
-- VIP badge if applicable
-- 4 KPI mini-tiles: Last Visit, Total Spend (BlurredAmount), Visits, Upcoming Appt
-- Notes snippet (2 lines max, truncated)
-- "Open Client Profile →" link at bottom
+**`src/components/command-surface/ChainSegment.tsx`** — Individual interpreted segment chip. Handles segment type differentiation (icon, label, style), click-to-edit popover for time/location segments, and disambiguation display.
 
-### 3. `src/components/command-surface/previews/TeamPreview.tsx`
-Uses `useIndividualStaffReport(staffUserId)` — already exists and returns revenue, service count, etc. Cherry-pick the summary fields only.
+### Edited Files (2)
 
-Layout:
-- Name + avatar placeholder
-- 3 KPI tiles: Revenue (BlurredAmount), Utilization %, Rebooking Rate
-- TrendSparkline for revenue (reuse existing component, width=200, height=32)
-- "Open Stylist Profile →" link
+**`src/components/command-surface/ZuraCommandSurface.tsx`** — Destructure `chainedQuery` from `useSearchRanking`. Render `CommandChainBar` between input and results when visibility conditions are met. Pass `onQueryChange` for editable refinement.
 
-### 4. `src/components/command-surface/previews/NavigationPreview.tsx`
-For pages/features — no data fetch needed. Uses static metadata from nav config.
+**`src/hooks/useSearchRanking.ts`** — No changes needed. `chainedQuery` is already returned.
 
-Layout:
-- Page title
-- 1-line description (from nav item subtitle or a static description map)
-- "What you'll find here" — 2-3 bullet points (static, from a lookup)
-- Keyboard shortcut if available
+## Visibility Rules
 
-### 5. `src/components/command-surface/previews/ReportPreview.tsx`
-For report-type results. Uses existing hooks based on report type (e.g., `useRetailAnalytics` summary, `useSalesMetrics`). Only fetches the headline metric + one sparkline.
+The chain bar appears only when ALL of:
+1. Query has 2+ characters
+2. `chainedQuery.slotCount >= 2` (single-slot queries don't benefit)
+3. `chainedQuery.confidence >= 0.4` (low-confidence = don't show fake structure)
+4. Not in AI mode (AI mode handles its own context)
+5. No active action panel (action panel already shows interpreted intent)
 
-Layout:
-- Report name
-- Headline metric (e.g., "$48,200 this month")
-- TrendSparkline (reuse)
-- "Open Report →"
+This means simple searches like "Ashley" or "settings" show nothing. Structured queries like "Brooklyn retail last 30 days" show the full chain bar.
 
-### 6. `src/hooks/useClientPreviewData.ts`
-Lightweight single-client fetch. Returns `{ client, nextAppointment, isLoading }`. Uses `staleTime: 60_000` to avoid refetching on rapid row changes. Query key includes client ID.
+## Chain Bar Design
 
-### 7. `src/hooks/useCommandPreview.ts`
-Manages preview state: selected result, hover delay timer (120ms), and data resolution.
+A single horizontal row rendered as a `div` with `flex items-center gap-1.5 px-5 py-2 border-b border-border/20`. Sits directly below the input area, above results. Contains:
 
-- `hoveredResult` state with 120ms debounce before committing to `activePreview`
-- When `activePreview` changes, the preview panel re-renders
-- Keyboard navigation (arrow keys) also updates `activePreview` immediately (no delay)
-- Only one preview at a time
-- Clears on query change
+- A faint "Zura understands:" kicker label (font-sans, text-[10px], text-muted-foreground/50, uppercase, tracking-wider) — or just render chips with no label to keep it minimal
+- A sequence of `ChainSegment` chips representing filled slots
 
-## Files to Edit
+Each chip uses `Badge` variant="outline" base with refinements per segment type:
+- **Location**: MapPin icon (w-3 h-3), text shows location name
+- **Topic/Metric**: BarChart3 icon, text shows topic label (capitalized)
+- **Time Range**: Clock icon, text shows human label from `timeRange.label`
+- **Ranking**: ArrowUpDown icon, text shows "Top" / "Lowest" etc.
+- **Negative Filter**: Filter icon, text shows human-readable filter ("No bookings, 60 days")
+- **Subject**: User icon, text shows subject value
+- **Action**: Zap icon, text shows action type
 
-### 8. `src/components/command-surface/ZuraCommandSurface.tsx`
-- Import `CommandPreviewPanel` and `useCommandPreview`
-- Change the scroll area from single column to a `flex` row when preview is active (desktop only)
-- Widen container: `max-w-[720px]` → `max-w-[720px] has-[.preview-panel]:max-w-[1080px]` (CSS-driven, or conditional class)
-- Pass `onHover` callback to `CommandResultPanel` which propagates to rows
-- Pass `selectedResult` to preview panel
-- Add `transition-[max-width] duration-200 ease-out` for smooth width change
-- Mobile: preview renders inline, no width change
+All chips: `h-6 px-2 rounded-md text-[11px] font-sans bg-muted/40 border border-border/30 text-foreground/80`. No heavy colors — monochrome with subtle icon tinting via `text-muted-foreground/60` on the icon.
 
-### 9. `src/components/command-surface/CommandResultRow.tsx`
-- Add `onMouseEnter` prop → calls `onHover(result)`
-- Add `onFocus` prop → calls `onHover(result)` (keyboard a11y)
-- No visual changes — hover/focus states already polished
+## Editable Refinement (Phase 1 — Time & Location only)
 
-### 10. `src/components/command-surface/CommandResultPanel.tsx`
-- Accept and forward `onHover` callback to each `CommandResultRow`
+Time and location chips are clickable. Clicking opens a tiny inline popover (using existing `Popover` component) with predefined options:
 
-## Inline Analytics Cards
+- **Time**: Today, This Week, Last 7 Days, Last 30 Days, This Month, Last Month, This Quarter
+- **Location**: List from `activeLocations` already available in `useSearchRanking`
 
-### 11. `src/components/command-surface/CommandInlineAnalyticsCard.tsx`
-Injected into result groups when the query matches a high-confidence analytics pattern (e.g., "retail", "revenue", "rebooking"). Rendered above the first result group.
+Selecting an option reconstructs the query string by replacing the matched time/location tokens. This is achieved by:
+1. Identifying which tokens in the original query correspond to the slot (using token positions from `ParsedQuery`)
+2. Replacing those tokens with the new value
+3. Calling `onQueryChange(newQuery)` which triggers the full re-parse pipeline
 
-- Max 1 card per query
-- Uses existing hooks: `useSalesMetrics`, `useRetailAnalytics`, `useRebookingRate`
-- Layout: compact card (h-20), icon left, metric center (BlurredAmount), trend right (TrendSparkline), CTA "View Report →"
-- Matches `bg-card-inner/60 border border-border/30 rounded-lg mx-4 my-2`
-- Pattern matching: map of query keywords → { hook, metric field, label, path }
+Other chip types (subject, topic, filter) are not editable in phase 1 — they display as read-only.
 
-### 12. `src/hooks/useSearchRanking.ts`
-- Add `inlineAnalyticsHint` to ranking output — a simple `{ type: 'retail' | 'revenue' | 'rebooking' | null }` derived from parsed query intent + filter keywords
-- Only emits when confidence is high (exact keyword match, not fuzzy)
+## Ambiguity Handling
 
-## Trigger & Delay Logic
+When `chainedQuery.subject` exists but `chainedQuery.subjectType` is null or confidence is low (< 0.6), the subject chip shows a subtle `?` indicator and a tooltip: "Could be a client or stylist." No modal disambiguation in phase 1 — the results already show both interpretations via the ranking engine. The chip just acknowledges the ambiguity.
 
-- **Mouse hover**: 120ms delay via `setTimeout`, cleared on mouse leave or new hover
-- **Keyboard navigation**: Immediate (0ms) — user is actively browsing
-- **Query change**: Clear active preview, reset timer
-- **Mobile tap**: No preview panel; instead, selected row expands inline with a compact version
+## Keyboard Behavior (Phase 1)
 
-## Performance Strategy
+Phase 1: Chain bar is not keyboard-focusable. Arrow keys continue to navigate results. The bar is purely visual + mouse-interactive for time/location editing.
 
-- `staleTime: 60_000` on all preview queries — data doesn't need to be real-time
-- Preview queries use `enabled: !!activePreviewId` — no fetch until needed
-- Top 3 results prefetch their preview data after 300ms idle (background, low priority)
-- Inline analytics card uses the same cached query as the dashboard — no duplicate fetches
-- TrendSparkline is already `isAnimationActive={false}` — no render cost
+Phase 2 (future): Tab from input focuses first editable chip. Left/Right navigates chips. Enter opens popover. Escape returns to input.
 
-## Permission Safety
+## Destination Hint Integration
 
-- Client preview: respects `clients` table RLS (org-scoped)
-- Team preview: `useIndividualStaffReport` already scoped to org
-- Financial values: wrapped in `BlurredAmount` — honors hide-numbers toggle
-- Inline analytics: same hooks as dashboard — RLS enforced
+When `chainedQuery.destinationHint` exists and confidence >= 0.7, the chain bar appends a subtle right-aligned CTA: "→ {destinationHint.label}" as a clickable link that navigates directly. This replaces the need to scan results for the "right" page. Styled as `text-primary/70 text-[11px] font-sans` with hover brightening.
+
+## Performance
+
+- `chainedQuery` is already memoized in `useSearchRanking`
+- Chain bar renders pure props — no hooks, no fetches
+- Popover options are static lists — no async loading
+- Query reconstruction is synchronous string manipulation
+- No debounce needed on the bar itself (it reads already-debounced chain output)
 
 ## Responsive Behavior
 
-| Viewport | Preview Behavior |
-|----------|-----------------|
-| ≥1024px | Right-side panel, dialog widens |
-| 768–1023px | Inline expansion below selected row |
-| <768px | No preview (mobile full-screen search stays focused) |
+- Desktop (≥1024px): Full chip row with all segments visible
+- Tablet (768–1023px): Same layout, chips may wrap to second line
+- Mobile (<768px): Hidden entirely (`hidden sm:flex`) — mobile full-screen search stays focused on results
+
+## Example Renderings
+
+**"Brooklyn retail last 30 days"**
+```
+[📍 Brooklyn] [📊 Retail] [🕐 Last 30 Days]  → Retail Analytics · Brooklyn · Last 30 Days
+```
+
+**"top clients no bookings 60 days"**
+```
+[↕ Top] [👤 Clients] [⊘ No bookings, 60 days]
+```
+
+**"refunds this week Gilbert"**
+```
+[📊 Refunds] [🕐 This Week] [📍 Gilbert]  → Appointments — Refunds · Gilbert · This Week
+```
+
+**"Ashley appointments last month"**
+```
+[👤 Ashley ?] [📊 Appointments] [🕐 Last Month]
+```
+(Ashley chip shows `?` because subject type is ambiguous)
+
+**"settings"** — No chain bar shown (slotCount < 2)
+
+**"add client"** — No chain bar shown (action panel handles this)
 
 ## Files Summary
 
 | File | Action |
 |------|--------|
-| `src/hooks/useCommandPreview.ts` | Create — hover delay, active preview state |
-| `src/hooks/useClientPreviewData.ts` | Create — lightweight client fetch |
-| `src/components/command-surface/CommandPreviewPanel.tsx` | Create — preview container + routing |
-| `src/components/command-surface/previews/ClientPreview.tsx` | Create — client entity preview |
-| `src/components/command-surface/previews/TeamPreview.tsx` | Create — stylist entity preview |
-| `src/components/command-surface/previews/NavigationPreview.tsx` | Create — page description preview |
-| `src/components/command-surface/previews/ReportPreview.tsx` | Create — metric + sparkline preview |
-| `src/components/command-surface/CommandInlineAnalyticsCard.tsx` | Create — inline analytics card |
-| `src/components/command-surface/ZuraCommandSurface.tsx` | Edit — integrate preview panel, widen container |
-| `src/components/command-surface/CommandResultRow.tsx` | Edit — add onHover prop |
-| `src/components/command-surface/CommandResultPanel.tsx` | Edit — forward onHover |
-| `src/hooks/useSearchRanking.ts` | Edit — add inlineAnalyticsHint |
+| `src/components/command-surface/ChainSegment.tsx` | Create — individual chip with type-specific icon + optional popover |
+| `src/components/command-surface/CommandChainBar.tsx` | Create — horizontal strip consuming ChainedQuery, visibility logic, destination CTA |
+| `src/components/command-surface/ZuraCommandSurface.tsx` | Edit — destructure `chainedQuery`, render `CommandChainBar` between input and results |
 
-No database changes. No new design tokens.
+No database changes. No new design tokens. No parser or ranker changes.
 
