@@ -83,8 +83,11 @@ export function TopBarSearch({ filterNavItems }: TopBarSearchProps) {
   const [query, setQuery] = useState('');
   const [aiMode, setAiMode] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(0);
+  const [dropdownPos, setDropdownPos] = useState<{ top: number; left: number; width: number } | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   
   const { response: aiResponse, isLoading: aiLoading, error: aiError, sendMessage, reset: resetAI } = useAIAssistant();
@@ -163,10 +166,30 @@ export function TopBarSearch({ filterNavItems }: TopBarSearchProps) {
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, []);
 
+  // Calculate dropdown position when open
+  useEffect(() => {
+    if (!isOpen || !triggerRef.current) return;
+    const updatePos = () => {
+      const rect = triggerRef.current!.getBoundingClientRect();
+      setDropdownPos({ top: rect.bottom + 8, left: rect.left, width: rect.width });
+    };
+    updatePos();
+    window.addEventListener('resize', updatePos);
+    window.addEventListener('scroll', updatePos, true);
+    return () => {
+      window.removeEventListener('resize', updatePos);
+      window.removeEventListener('scroll', updatePos, true);
+    };
+  }, [isOpen]);
+
   // Click outside to close
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+      const target = e.target as Node;
+      if (
+        containerRef.current && !containerRef.current.contains(target) &&
+        dropdownRef.current && !dropdownRef.current.contains(target)
+      ) {
         setIsOpen(false);
       }
     };
@@ -225,6 +248,7 @@ export function TopBarSearch({ filterNavItems }: TopBarSearchProps) {
     <div ref={containerRef} className="relative w-full max-w-2xl">
       {/* Search Trigger */}
       <button
+        ref={triggerRef}
         onClick={() => {
           setIsOpen(true);
           setTimeout(() => inputRef.current?.focus(), 50);
@@ -244,9 +268,13 @@ export function TopBarSearch({ filterNavItems }: TopBarSearchProps) {
         </kbd>
       </button>
 
-      {/* Search Modal */}
-      {isOpen && (
-        <div className="absolute top-full left-0 right-0 mt-2 bg-popover border border-border rounded-lg shadow-lg overflow-hidden z-50">
+      {/* Search Modal - Fixed position to escape overflow-hidden parent */}
+      {isOpen && dropdownPos && (
+        <div
+          ref={dropdownRef}
+          style={{ top: dropdownPos.top, left: dropdownPos.left, width: Math.max(dropdownPos.width, 480) }}
+          className="fixed bg-popover border border-border rounded-lg shadow-lg overflow-hidden z-[200]"
+        >
           {/* Search Input */}
           <div className="flex items-center gap-2 p-3 border-b border-border">
             {aiMode ? (
