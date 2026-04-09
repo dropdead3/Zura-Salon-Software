@@ -135,11 +135,45 @@ export function ZuraCommandSurface({ open, onOpenChange, filterNavItems, anchorR
       }));
   }, [decayedFreqMap]);
 
-  const flatResults = useMemo(() => groups.flatMap(g => g.results), [groups]);
+  // Scope-aware filtering
+  const scopePrefix = useMemo(() => detectScopePrefix(query), [query]);
+  const effectiveScope = scopePrefix?.scope ?? activeScope;
+  const effectiveQuery = scopePrefix?.cleanQuery ?? query;
+
+  const allFlatResults = useMemo(() => groups.flatMap(g => g.results), [groups]);
+  const flatResults = useMemo(() => {
+    if (effectiveScope === 'all') return allFlatResults;
+    const scopeTypeMap: Record<string, string[]> = {
+      navigation: ['navigation', 'help'],
+      team: ['team'],
+      action: ['action'],
+    };
+    const allowed = scopeTypeMap[effectiveScope] || [];
+    return allFlatResults.filter(r => allowed.includes(r.type));
+  }, [allFlatResults, effectiveScope]);
+
   const hasResults = flatResults.length > 0;
   const hasQuery = query.trim().length > 0;
   const hasActiveAction = actionExecution.actionState !== 'idle';
   const hasSuggestions = suggestions.length > 0;
+
+  // Typeahead vocabulary
+  const typeaheadVocab = useMemo(() => {
+    const labels: string[] = [];
+    allFlatResults.forEach(r => labels.push(r.title));
+    // Add nav labels from config
+    [...mainNavItems, ...myToolsNavItems, ...manageNavItems, ...systemNavItems].forEach((item: any) => {
+      if (item.label && !labels.includes(item.label)) labels.push(item.label);
+    });
+    hubChildrenItems.forEach((item: any) => {
+      if (item.label && !labels.includes(item.label)) labels.push(item.label);
+    });
+    // Add recent queries
+    recents.forEach(q => { if (!labels.includes(q)) labels.push(q); });
+    return labels;
+  }, [allFlatResults, recents]);
+
+  const completion = useTypeahead(query, typeaheadVocab);
 
   // AI card: only show when explicitly in AI mode, OR question with no strong navigation match
   const showAICard = aiMode || (
