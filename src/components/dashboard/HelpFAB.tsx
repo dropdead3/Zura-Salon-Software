@@ -2,7 +2,8 @@ import { useState, useCallback, useEffect } from 'react';
 import { AI_ASSISTANT_NAME_DEFAULT } from '@/lib/brand';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLocation } from 'react-router-dom';
-import { CalendarClock, MessageCircleQuestion, X } from 'lucide-react';
+import { CalendarClock, X } from 'lucide-react';
+import { ZuraZIcon } from '@/components/icons/ZuraZIcon';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
@@ -109,7 +110,7 @@ export function HelpFAB() {
                   exit={{ rotate: -90, opacity: 0 }}
                   transition={{ duration: 0.15 }}
                 >
-                  <MessageCircleQuestion className="h-6 w-6" />
+                  <ZuraZIcon className="h-6 w-6" />
                 </motion.div>
               )}
             </AnimatePresence>

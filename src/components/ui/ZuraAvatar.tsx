@@ -1,9 +1,16 @@
 import { cn } from '@/lib/utils';
+import { ZuraZIcon } from '@/components/icons/ZuraZIcon';
 
 const sizeStyles = {
-  sm: 'h-6 w-6 text-[10px]',
-  md: 'h-10 w-10 text-base',
-  lg: 'h-12 w-12 text-lg',
+  sm: 'h-6 w-6',
+  md: 'h-10 w-10',
+  lg: 'h-12 w-12',
+};
+
+const iconSizeStyles = {
+  sm: 'w-3 h-3',
+  md: 'w-5 h-5',
+  lg: 'w-6 h-6',
 };
 
 interface ZuraAvatarProps {
@@ -20,7 +27,7 @@ export function ZuraAvatar({ size = 'md', className }: ZuraAvatarProps) {
         className
       )}
     >
-      <span className="font-medium text-primary leading-none">Z</span>
+      <ZuraZIcon className={cn('text-primary', iconSizeStyles[size])} />
     </div>
   );
 }
