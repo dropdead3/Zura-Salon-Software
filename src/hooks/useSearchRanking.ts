@@ -247,6 +247,22 @@ export function useSearchRanking(
       });
     }
 
+    // Inject chained destination hint as a virtual high-priority candidate
+    if (chained?.destinationHint && chained.confidence >= 0.4) {
+      const hint = chained.destinationHint;
+      candidatesForRanking = [
+        {
+          id: `chain-dest-${hint.path}`,
+          type: 'navigation' as const,
+          title: hint.label,
+          subtitle: Object.entries(hint.params).map(([k, v]) => `${k}: ${v}`).join(' · '),
+          path: hint.path,
+          icon: React.createElement(LayoutDashboard, { className: 'w-4 h-4' }),
+        },
+        ...candidatesForRanking,
+      ];
+    }
+
     let ranked = rankResults(candidatesForRanking, {
       query: trimmedQuery,
       parsed,
