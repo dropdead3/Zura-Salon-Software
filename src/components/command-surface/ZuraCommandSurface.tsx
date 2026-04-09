@@ -30,6 +30,7 @@ import { CommandPreviewPanel } from './CommandPreviewPanel';
 import { CommandInlineAnalyticsCard, detectAnalyticsHint } from './CommandInlineAnalyticsCard';
 import { CommandChainBar } from './CommandChainBar';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
+import { useTypeahead } from '@/hooks/useTypeahead';
 import {
   mainNavItems,
   myToolsNavItems,
