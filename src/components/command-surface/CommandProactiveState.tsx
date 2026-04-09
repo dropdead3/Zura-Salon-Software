@@ -111,8 +111,8 @@ export function CommandProactiveState({
 
       {/* ── Quick Paths ───────────────────────────────────────────── */}
       {hasQuickPaths && (
+        <div>
           <div className="mx-4 border-t border-border/30 my-1" />
-          {hasContinue && <div className="mx-4 border-t border-border/30 my-1" />}
           <div className="px-4 pt-2 pb-1">
             <span className={tokens.heading.subsection}>Quick Paths</span>
           </div>
