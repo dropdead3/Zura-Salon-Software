@@ -17,7 +17,7 @@ function PartialInterpretation({ chain }: { chain: ChainedQuery }) {
   if (chain.topic) slots.push({ type: 'topic', label: chain.topic.value });
   if (chain.subject) slots.push({ type: 'subject', label: chain.subject.value });
   if (chain.timeRange) {
-    const label = chain.timeRange.label || `${chain.timeRange.days}d`;
+    const label = chain.timeRange.label || chain.timeRange.value;
     slots.push({ type: 'time', label });
   }
   if (chain.locationScope) slots.push({ type: 'location', label: chain.locationScope.value });
