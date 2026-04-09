@@ -117,14 +117,14 @@ export function useAppointmentSearchCandidates(enabled: boolean): SearchCandidat
   const { data } = useQuery({
     queryKey: ['command-appointments', orgId, today],
     queryFn: async () => {
-      // Use explicit cast to avoid TS2589 deep instantiation on wide table
-      const result = await (supabase
+      const base = supabase
         .from('phorest_appointments')
-        .select('id, client_name, service_name, start_time, status')
+        .select('id, client_name, service_name, start_time, status') as any;
+      const result = await base
         .eq('organization_id', orgId!)
         .eq('appointment_date', today)
         .order('start_time')
-        .limit(50) as any);
+        .limit(50);
       if (result.error) throw result.error;
       return ((result.data || []) as ApptRow[]).filter(a => a.status !== 'cancelled');
     },
