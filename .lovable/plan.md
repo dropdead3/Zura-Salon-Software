@@ -1,50 +1,51 @@
 
 
-# Fix Dashboard Bento Grid Responsiveness
+# Capacity Utilization Card — Replace Bar Chart with Progress Fill Bars
 
 ## Problem
-Line 756 in `DashboardHome.tsx` hardcodes `lg:grid-cols-4` for the compact/simple analytics grid. With 9 cards, this produces a 4-4-1 layout with dead space on the last row. A 3×3 grid would be the correct bento layout.
+The daily utilization chart uses a vertical bar chart (Recharts `BarChart`) that looks too similar to the forecasting card. Since each day's utilization is already a 0–100% value, horizontal progress fill bars are a natural, visually distinct representation.
 
-Additionally, the `BentoGrid` component itself only handles a naive 2-row split (`ceil(count/2)` top, rest bottom), which produces lopsided layouts for counts like 7 (4+3), 9 (5+4), or 11 (6+5) instead of even multi-row distribution.
+## Solution
+Replace the Recharts `BarChart` section (lines 328–448) with a stacked list of daily progress bars. Each row shows the day name, date, utilization percentage, and a horizontal `Progress` fill bar colored by threshold. Closed days render with a moon icon and "Closed" label instead of a bar.
 
-## Fix
+## Visual Structure
 
-### 1. `DashboardHome.tsx` — Dynamic column count for compact grid (line 756)
-Compute the optimal column count based on card count:
-- 1-3 cards → match card count (1/2/3 cols)
-- 4 cards → 4 cols (single row)
-- 5-6 cards → 3 cols (2×3 or 3+2 adjusted)
-- 7-9 cards → 3 cols (3×3 perfect for 9)
-- 10-12 cards → 4 cols
-- 13+ cards → 4 cols
-
-The key insight: choose a column count where the last row is either full or has at most 1 empty cell. Replace the hardcoded class with a computed one.
-
-```tsx
-const colCount = pinnedCardIds.length <= 3 ? pinnedCardIds.length
-  : pinnedCardIds.length <= 4 ? 4
-  : pinnedCardIds.length <= 9 ? 3
-  : 4;
-
-<div className={cn(
-  "grid grid-cols-1 sm:grid-cols-2 gap-4",
-  colCount === 3 && "lg:grid-cols-3",
-  colCount === 4 && "lg:grid-cols-4",
-)}>
+```text
+┌─────────────────────────────────────────────────┐
+│  Fri   Apr 10   ████████████████░░░░░  42%      │
+│                                    77.8h open    │
+│  Sat   Apr 11   ████████████████████░  51%      │
+│                                    66.7h open    │
+│  Sun   Apr 12   🌙 Closed                       │
+│  Mon   Apr 13   🌙 Closed                       │
+│  Tue   Apr 14   ██████████████████░░░  45%      │
+│                                    74.7h open    │
+│  Wed   Apr 15   ███████████░░░░░░░░░░  29%      │
+│                                    95.3h open    │
+│  Thu   Apr 16   ██████░░░░░░░░░░░░░░░  18%      │
+│                                   111.3h open    │
+└─────────────────────────────────────────────────┘
 ```
 
-### 2. `bento-grid.tsx` — Proper multi-row distribution
-Replace the 2-row split with a true multi-row algorithm:
-- Compute `rowCount = Math.ceil(count / maxPerRow)`
-- For even distribution, compute optimal items per row so all rows are balanced (e.g., 9 items / 3 max = 3 rows of 3; 7 items / 4 max = rows of 4+3)
-- Render each row as a flex row
+- Average utilization dashed reference line replaced by a subtle "Avg: X%" label above the list
+- Progress bar color: green (≥70%), amber (50–69%), muted (< 50%) — same thresholds as existing
+- Uses existing `Progress` component with `indicatorClassName` for color theming
+- Removes all Recharts imports (`BarChart`, `Bar`, `XAxis`, `YAxis`, `Tooltip`, `ResponsiveContainer`, `Cell`, `Customized`)
 
-This fixes every consumer of `BentoGrid` across the app (13 files), not just the dashboard.
+## Changes
+
+### `src/components/dashboard/sales/CapacityUtilizationCard.tsx`
+1. Remove Recharts imports and all chart-related helper components (`UtilizationBarLabel`, `DayXAxisTick`, moon icon `Customized`, average line `Customized`)
+2. Replace the `{showChart && chartData.length > 0 && ...}` block (lines 328–448) with a new daily progress bar list:
+   - Each open day: row with day name + date on left, progress bar in center, percentage + gap hours on right
+   - Each closed day: row with day name + date on left, moon icon + "Closed" label
+   - Above the list: "Avg: X%" pill (matching existing amber style) aligned left
+3. Keep the existing `FALLBACK_COLOR` constant removal since it's only used by the chart
+4. Keep all other sections unchanged (header, summary stats, tomorrow view, opportunity callout)
 
 ### Files Changed
 
 | File | Change |
-|------|--------|
-| `src/pages/dashboard/DashboardHome.tsx` | Dynamic `lg:grid-cols-N` based on card count |
-| `src/components/ui/bento-grid.tsx` | Multi-row distribution algorithm |
+|------|-------|
+| `src/components/dashboard/sales/CapacityUtilizationCard.tsx` | Replace bar chart with progress bar rows |
 
