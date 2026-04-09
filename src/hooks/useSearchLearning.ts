@@ -14,6 +14,7 @@ import {
   runGarbageCollection,
   normalizeQuery,
   charOverlap,
+  setOrgScope,
 } from '@/lib/searchLearning';
 import type { LearningBoost } from '@/lib/searchLearning';
 
@@ -25,11 +26,17 @@ export function useSearchLearning(
   open: boolean,
   effectiveRoles: string[] = [],
   currentPath: string = '',
+  orgId?: string,
 ) {
   const sessionIdRef = useRef<string>(generateSessionId());
   const lastQueryRef = useRef<string>('');
   const lastEventIdRef = useRef<string | null>(null);
   const gcRanRef = useRef(false);
+
+  // Set org scope whenever it changes
+  useEffect(() => {
+    setOrgScope(orgId);
+  }, [orgId]);
 
   // Generate new session ID when surface opens
   useEffect(() => {
