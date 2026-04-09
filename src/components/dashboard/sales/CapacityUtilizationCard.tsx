@@ -1,12 +1,11 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Progress } from '@/components/ui/progress';
 import { AnimatedBlurredAmount } from '@/components/ui/AnimatedBlurredAmount';
-import { useCapacityUtilization, CapacityPeriod, DayCapacity } from '@/hooks/useCapacityUtilization';
+import { useCapacityUtilization, CapacityPeriod } from '@/hooks/useCapacityUtilization';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { useFormatDate } from '@/hooks/useFormatDate';
 import { LocationSelect } from '@/components/ui/location-select';
@@ -15,20 +14,10 @@ import { CapacityBreakdown } from '@/components/dashboard/analytics/CapacityBrea
 import { Tabs, FilterTabsList, FilterTabsTrigger } from '@/components/ui/tabs';
 import { Gauge, Clock, DollarSign, TrendingDown, Calendar, Info, Moon } from 'lucide-react';
 import { Tooltip as UITooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-
+import { ClosedBadge } from '@/components/dashboard/ClosedBadge';
 import { cn } from '@/lib/utils';
 import { analyticsHubUrl } from '@/config/dashboardNav';
 import { useServiceCategoryColorsMap } from '@/hooks/useServiceCategoryColors';
-import { 
-  BarChart, 
-  Bar, 
-  XAxis, 
-  YAxis, 
-  Tooltip, 
-  ResponsiveContainer, 
-  Cell,
-  Customized,
-} from 'recharts';
 
 const PERIOD_LABELS: Record<CapacityPeriod, string> = {
   'tomorrow': 'Tomorrow',
@@ -49,77 +38,12 @@ function getUtilizationPillClasses(percent: number): string {
   return 'bg-destructive/10 text-destructive';
 }
 
-// Custom bar label
-function UtilizationBarLabel({ x, y, width, value, index, days }: any) {
-  if (value === undefined || value === null) return null;
-  // Suppress label for closed days
-  if (days && days[index]?.isClosed) return null;
-  
-  return (
-    <text
-      x={x + width / 2}
-      y={y - 6}
-      textAnchor="middle"
-      className="fill-foreground text-[10px] font-medium tabular-nums"
-    >
-      {value}%
-    </text>
-  );
+// Progress bar indicator class by threshold
+function getProgressIndicatorClass(percent: number): string {
+  if (percent >= 70) return 'bg-chart-2';
+  if (percent >= 50) return 'bg-amber-500/80';
+  return 'bg-muted-foreground/60';
 }
-
-// Custom X-axis tick
-function DayXAxisTick({ x, y, payload, days }: any) {
-  const { formatDate } = useFormatDate();
-  const day = days.find((d: DayCapacity) => d.dayName === payload.value);
-  if (!day) return null;
-  const dateLabel = formatDate(day.date, 'MMM d');
-
-  if (day.isClosed) {
-    return (
-      <g transform={`translate(${x},${y})`}>
-        <text 
-          x={0} y={0} dy={12} 
-          textAnchor="middle" 
-          className="fill-foreground text-[11px]"
-          style={{ fontWeight: 500 }}
-        >
-          {day.dayName}
-        </text>
-        <text x={0} y={0} dy={25} textAnchor="middle" className="fill-muted-foreground text-[10px]">
-          {dateLabel}
-        </text>
-        <text x={0} y={0} dy={38} textAnchor="middle" className="fill-foreground text-[11px]" style={{ fontWeight: 500 }}>
-          Closed
-        </text>
-      </g>
-    );
-  }
-  
-  return (
-    <g transform={`translate(${x},${y})`}>
-      <text 
-        x={0} y={0} dy={12} 
-        textAnchor="middle" 
-        className="fill-foreground text-[11px]"
-        style={{ fontWeight: 500 }}
-      >
-        {day.dayName}
-      </text>
-      <text x={0} y={0} dy={25} textAnchor="middle" className="fill-muted-foreground text-[10px]">
-        {dateLabel}
-      </text>
-      <text 
-        x={0} y={0} dy={38} 
-        textAnchor="middle" 
-        className="fill-foreground text-[11px]" style={{ fontWeight: 500 }}
-      >
-        {day.gapHours > 0 ? `${day.gapHours}h open` : 'Full'}
-      </text>
-    </g>
-  );
-}
-
-const FALLBACK_COLOR = '#888888';
 
 export function CapacityUtilizationCard() {
   const navigate = useNavigate();
@@ -179,19 +103,13 @@ export function CapacityUtilizationCard() {
     breakdown,
   } = data;
 
-  // Chart data
-  const chartData = days.map(day => ({
-    name: day.dayName,
-    utilization: day.utilizationPercent,
-    gapHours: day.gapHours,
-    bookedHours: day.bookedHours,
-  }));
-
-  // Dynamic Y-axis max: peak + 20% buffer, rounded to nearest 10, clamped [20, 100]
-  const peakUtil = Math.max(...chartData.map(d => d.utilization), 0);
-  const yMax = Math.min(100, Math.max(20, Math.ceil((peakUtil * 1.2) / 10) * 10));
-
   const showChart = period !== 'tomorrow' && days.length > 1;
+
+  // Compute average utilization for open days
+  const openDays = days.filter(d => !d.isClosed);
+  const avgUtil = openDays.length > 0
+    ? Math.round(openDays.reduce((sum, d) => sum + d.utilizationPercent, 0) / openDays.length)
+    : 0;
 
   return (
     <Card>
@@ -324,127 +242,54 @@ export function CapacityUtilizationCard() {
           </div>
         </div>
 
-        {/* Daily Utilization Chart */}
-        {showChart && chartData.length > 0 && (
-          <div className="h-[300px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={chartData} margin={{ top: 20, right: 5, bottom: 35, left: 5 }}>
-                <XAxis 
-                  dataKey="name" 
-                  tick={<DayXAxisTick days={days} />}
-                  tickLine={false}
-                  axisLine={{ stroke: 'hsl(var(--foreground) / 0.15)', strokeWidth: 1 }}
-                  interval={0}
-                  height={40}
-                />
-                <YAxis hide domain={[0, yMax]} />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: 'hsl(var(--background))',
-                    border: '1px solid hsl(var(--border))',
-                    borderRadius: '8px',
-                    fontSize: '12px',
-                  }}
-                  formatter={(value: number, name: string) => {
-                    if (name === 'utilization') return [`${value}%`, 'Utilization'];
-                    if (name === 'gapHours') return [`${value}h`, 'Open Hours'];
-                    return [value, name];
-                  }}
-                  labelFormatter={(label) => {
-                    const day = days.find(d => d.dayName === label);
-                    return day ? formatDate(day.date, 'EEEE, MMM d') : label;
-                  }}
-                />
-                <defs>
-                  <linearGradient id="capacity-glass-sales" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="hsl(var(--muted-foreground))" stopOpacity={0.45} />
-                    <stop offset="100%" stopColor="hsl(var(--muted-foreground))" stopOpacity={0.18} />
-                  </linearGradient>
-                </defs>
-                <Bar 
-                  dataKey="utilization" 
-                  radius={[6, 6, 0, 0]}
-                  fill="url(#capacity-glass-sales)"
-                  stroke="hsl(var(--foreground) / 0.12)"
-                  strokeWidth={1}
-                  label={<UtilizationBarLabel days={days} />}
-                >
-                  {chartData.map((entry, index) => (
-                    <Cell 
-                      key={`cell-${index}`} 
-                      fill={days[index]?.isClosed ? 'transparent' : 'url(#capacity-glass-sales)'}
-                      stroke={days[index]?.isClosed ? 'none' : 'hsl(var(--foreground) / 0.12)'}
-                    />
-                  ))}
-                </Bar>
-                {/* Moon icons for closed days */}
-                <Customized component={(props: any) => {
-                  const { xAxisMap, yAxisMap } = props;
-                  if (!xAxisMap?.[0] || !yAxisMap?.[0]) return null;
-                  const xAxis = xAxisMap[0];
-                  const yAxis = yAxisMap[0];
-                  const bottomY = yAxis.y + yAxis.height;
-                  return (
-                    <g>
-                      {chartData.map((entry, index) => {
-                        if (!days[index]?.isClosed) return null;
-                        const bandWidth = xAxis.width / chartData.length;
-                        const cx = xAxis.x + bandWidth * index + bandWidth / 2;
-                        const cy = bottomY - 40;
-                        return (
-                          <g
-                            key={`moon-${index}`}
-                            transform={`translate(${cx - 8}, ${cy - 8}) scale(0.67)`}
-                          >
-                            <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" 
-                                  fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-                                  className="stroke-muted-foreground" style={{ opacity: 0.5 }} />
-                          </g>
-                        );
-                      })}
-                    </g>
-                  );
-                }} />
-                {/* Average utilization reference line */}
-                {(() => {
-                  const openDays = days.filter(d => !d.isClosed);
-                  if (openDays.length === 0) return null;
-                  const avgUtil = Math.round(openDays.reduce((sum, d) => sum + d.utilizationPercent, 0) / openDays.length);
-                  if (avgUtil <= 0) return null;
-                  return (
-                    <Customized component={(props: any) => {
-                      const { yAxisMap, xAxisMap } = props;
-                      if (!yAxisMap?.[0]?.scale || !xAxisMap?.[0]) return null;
-                      const yPos = yAxisMap[0].scale(avgUtil);
-                      const chartLeft = xAxisMap[0].x;
-                      const chartRight = chartLeft + xAxisMap[0].width;
-                      if (typeof yPos !== 'number' || isNaN(yPos)) return null;
-                      return (
-                        <g>
-                          <line x1={chartLeft} y1={yPos} x2={chartRight} y2={yPos} stroke="rgb(202 138 4)" strokeOpacity={0.5} strokeDasharray="4 4" strokeWidth={1} />
-                          <foreignObject x={chartLeft} y={yPos - 12} width={120} height={24} style={{ overflow: 'visible' }}>
-                            <div style={{
-                              fontSize: 11, fontWeight: 500,
-                              color: 'rgb(254 240 138)',
-                              backdropFilter: 'blur(6px)',
-                              WebkitBackdropFilter: 'blur(6px)',
-                              background: 'linear-gradient(to right, rgb(133 77 14 / 0.5), rgb(180 83 9 / 0.3), rgb(133 77 14 / 0.5))',
-                              border: '1px solid rgb(202 138 4 / 0.6)',
-                              borderRadius: 9999,
-                              padding: '2px 8px',
-                              whiteSpace: 'nowrap' as const,
-                              width: 'fit-content',
-                            }}>
-                              Avg: {avgUtil}%
-                            </div>
-                          </foreignObject>
-                        </g>
-                      );
-                    }} />
-                  );
-                })()}
-              </BarChart>
-            </ResponsiveContainer>
+        {/* Daily Utilization — Progress Bars */}
+        {showChart && days.length > 0 && (
+          <div className="space-y-1">
+            {/* Average label */}
+            {avgUtil > 0 && (
+              <div className="flex items-center gap-2 mb-2">
+                <span className={cn(
+                  'inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium',
+                  getUtilizationPillClasses(avgUtil)
+                )}>
+                  Avg: {avgUtil}%
+                </span>
+              </div>
+            )}
+
+            {days.map((day, i) => (
+              <div key={i} className="py-1.5">
+                {day.isClosed ? (
+                  <div className="flex items-center gap-3">
+                    <div className="w-[4.5rem] shrink-0">
+                      <span className="text-xs font-medium text-foreground">{day.dayName}</span>
+                      <span className="text-[10px] text-muted-foreground ml-1">{formatDate(day.date, 'MMM d')}</span>
+                    </div>
+                    <ClosedBadge reason={(day as any).closedReason} />
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-3">
+                    <div className="w-[4.5rem] shrink-0">
+                      <span className="text-xs font-medium text-foreground">{day.dayName}</span>
+                      <div className="text-[10px] text-muted-foreground">{formatDate(day.date, 'MMM d')}</div>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <Progress
+                        value={day.utilizationPercent}
+                        className="h-3 bg-muted/40"
+                        indicatorClassName={cn('transition-all rounded-full', getProgressIndicatorClass(day.utilizationPercent))}
+                      />
+                    </div>
+                    <div className="w-16 shrink-0 text-right">
+                      <span className="text-xs font-medium tabular-nums text-foreground">{day.utilizationPercent}%</span>
+                      <div className="text-[10px] text-muted-foreground tabular-nums">
+                        {day.gapHours > 0 ? `${day.gapHours}h open` : 'Full'}
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))}
           </div>
         )}
 
