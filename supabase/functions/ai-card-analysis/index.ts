@@ -25,7 +25,7 @@ INTERNAL ROUTE REFERENCE — ONLY use these exact routes. NEVER invent or guess 
 - Payroll Hub: /dashboard/admin/payroll
 - Team Overview: /dashboard/admin/team
 - Schedule: /dashboard/schedule
-- Management Hub: /dashboard/admin/management
+- Operations Hub: /dashboard/admin/management
 - Phorest Connection: /dashboard/admin/phorest
 - Day Rates: /dashboard/admin/day-rate-settings
 - Settings: /dashboard/admin/settings
