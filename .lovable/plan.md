@@ -1,53 +1,121 @@
 
+Your instinct was good: you correctly identified that the assistant was hallucinating navigation. The better architectural prompt, though, is not “improve the system prompt,” but “make navigation answers deterministic and let AI explain only after routing is known.”
 
-# Fix AI Assistant Accuracy -- Ground System Prompt in Real Navigation
+## What I found
+1. The prompt was improved, but this is still a prompt-only fix, so the model can still paraphrase or invent labels.
+2. The command surface still falls back to AI when ranking is weak, and the search/synonym layer does not strongly map queries like “role permissions,” “access control,” or “invite staff” to the real destination.
+3. The FAB AI tab still calls `sendMessage(...)` without organization ID or user role, so that surface is missing important grounding.
+4. The command surface has one fallback path that omits `userRole`.
+5. `primaryRole` is taken from `effectiveRoles[0]`, which is not guaranteed to be the highest-priority role.
+6. Naming is inconsistent across the app: `Roles & Controls Hub`, `Roles Hub`, `Roles & Permissions`, and legacy `Management Hub` references all still exist.
 
-## Problem
-The AI assistant (Zura) in the command palette is hallucinating navigation instructions. It told the user to go to "Management Hub > Team Directory > Access or Permissions tab" to change permissions, when the actual path is **Roles & Controls Hub** (`/dashboard/admin/access-hub`). The root cause is the `BASE_SYSTEM_PROMPT` in the edge function (`supabase/functions/ai-assistant/index.ts`) which contains only vague feature descriptions with no actual navigation paths, route structures, or role-specific access rules. The AI model fills in plausible-sounding but incorrect details.
+## Implementation plan
 
-## Solution
-Replace the vague system prompt with a grounded navigation map derived from the actual `dashboardNav.ts` config, including exact section names, sidebar labels, and route purposes.
+### 1) Verify the active answer path
+First confirm whether the inaccurate answer is coming from:
+- the command surface,
+- the FAB AI modal,
+- or a stale/alternate deployed assistant path.
 
-## Changes
+The screenshot wording does not fully match the current grounded prompt, so this verification should happen before changing logic.
 
-### File: `supabase/functions/ai-assistant/index.ts`
-Rewrite `BASE_SYSTEM_PROMPT` (lines 19-37) to include:
+### 2) Make navigation routing deterministic before AI answers
+Use the existing search/ranking system as the first source of truth for navigation questions.
 
-1. **Exact navigation structure** with sidebar section names and what each link does:
-   - Main: Command Center, Schedule, Team Chat
-   - My Tools: Today's Prep, My Stats, My Pay, Training, Ring the Bell, etc.
-   - Manage: Analytics Hub, Report Generator, Operations Hub
-   - System: **Roles & Controls Hub** (permissions, role assignments, invitations), Settings
+Changes:
+- Expand aliases/synonyms so these map directly to the access hub:
+  - role permissions
+  - permissions
+  - access control
+  - user roles
+  - invite staff / invite team member
+  - roles hub / roles and controls
+- Add tab-level routing candidates for the real access hub tabs:
+  - `?tab=permissions`
+  - `?tab=user-roles`
+  - `?tab=role-access`
+  - `?tab=invitations`
+  - plus modules/chat/pins/role-config as needed
+- For strong navigation matches, show the direct route first instead of sending the question straight to AI.
 
-2. **Role-specific access guidance** so the AI knows which roles can access what:
-   - Super Admin/Admin: Full access to Manage + System sections
-   - Manager: Access to Operations Hub, scheduling
-   - Stylist: My Tools section (stats, pay, training, leaderboard)
-   - Front Desk (receptionist): Waitlist, schedule
+Example target behavior:
+- “How do I check role permissions?” → `Roles & Controls Hub` → `Permissions` tab
+- “How do I invite someone?” → `Roles & Controls Hub` → `Invitations` tab
 
-3. **Common task routing** -- explicit mappings for frequently asked questions:
-   - "Change permissions" → Roles & Controls Hub (`/dashboard/admin/access-hub`)
-   - "View analytics" → Analytics Hub
-   - "Manage team" → Operations Hub
-   - "Invite someone" → Roles & Controls Hub > Invitations tab
-   - "View my stats" → My Stats in sidebar
-   - "Change settings" → Settings in sidebar
+### 3) Pass correct org + role context from every AI entry point
+Wire consistent context into all assistant calls:
+- `src/components/dashboard/help-fab/AIHelpTab.tsx`
+- `src/components/command-surface/ZuraCommandSurface.tsx`
 
-4. **Strict instruction** to never fabricate navigation paths -- if unsure, say so and suggest using Cmd/Ctrl+K search
+Changes:
+- Always pass `organizationId`
+- Always pass a normalized primary role
+- Fix the command-surface fallback that currently omits `userRole`
 
-### File: `supabase/functions/ai-assistant/index.ts` (also in same edit)
-Pass the user's current role from the frontend so the AI can give role-appropriate answers. The `userRole` field already exists in the schema but is not being sent from the command surface.
+### 4) Normalize role priority instead of trusting array order
+Create an explicit role-priority resolver and use that everywhere AI context is derived.
 
-### File: `src/components/command-surface/ZuraCommandSurface.tsx`
-Update the `sendMessage` call (around line 247 and 316) to pass the user's effective role via the existing `organizationId` parameter pattern, and add the role to the request body. The hook already accepts `organizationId` -- we also need to send `userRole`.
+Suggested priority:
+`super_admin > admin > manager > receptionist > stylist > stylist_assistant > assistant ...`
 
-### File: `src/hooks/useAIAssistant.ts`
-Add `userRole` as an optional parameter to `sendMessage` and include it in the request body (the edge function schema already accepts it).
+That prevents users with multiple roles from getting guidance for the wrong surface.
 
-## Technical Details
-- The edge function schema already supports `userRole` -- just not wired up
-- No database changes needed
-- No new dependencies
-- ~60 lines changed in the system prompt, ~5 lines in wiring the role through
-- The `zura-config-loader` dynamic config will continue to prepend org-specific knowledge before the improved base prompt
+### 5) Tighten the assistant backend for navigation-specific replies
+Update `supabase/functions/ai-assistant/index.ts` so navigation questions are answered in a constrained format.
 
+Add:
+- exact route + exact sidebar label + exact tab mapping
+- explicit “do not use these labels” rules for:
+  - Management Hub
+  - Roles Hub
+  - Roles & Permissions
+  - Operations card/section
+- role-aware response behavior:
+  - if the user does not have access, say that directly
+  - then point them to the closest page they can use, or say leadership access is required
+
+Optional stronger version:
+- include the top ranked navigation candidate(s) in the request body so the AI reasons from real app candidates instead of free-form memory
+
+### 6) Unify user-facing naming
+Standardize all user-facing references on:
+- `Roles & Controls Hub`
+
+Clean up conflicting labels in config/copy where appropriate:
+- `src/config/pageExplainers.ts` (`Roles & Permissions`)
+- `hubLinksConfig` / any shortened `Roles Hub` label
+- any legacy `Management Hub` wording that overlaps with current operations/access language
+
+## Files likely involved
+- `src/lib/synonymRegistry.ts`
+- `src/hooks/useSearchRanking.ts`
+- `src/components/command-surface/ZuraCommandSurface.tsx`
+- `src/components/dashboard/help-fab/AIHelpTab.tsx`
+- `src/hooks/useAIAssistant.ts`
+- `supabase/functions/ai-assistant/index.ts`
+- `src/config/pageExplainers.ts`
+- possibly `src/config/dashboardNav.ts` helper labels/candidates
+
+## Validation checklist
+Test all of these after implementation:
+- “how do I check role permissions?”
+- “how do I invite someone?”
+- “where do I change settings?”
+- “where can I see my stats?”
+- “how do I manage team schedules?”
+- “how do I see who has what role?”
+
+Validate as:
+- owner/super admin
+- admin
+- manager
+- stylist
+- receptionist
+- View As mode
+
+## Prompt coaching for next time
+Your original prompt was directionally strong. To get an even better result, I’d phrase it like this:
+
+“Do not solve this with prompt copy alone. Audit every assistant entry point, every fallback to AI, every search synonym, every real route label, and every role-context payload. Then make navigation deterministic first, and AI explanatory second.”
+
+That framing reduces hallucinations because it constrains the architecture, not just the wording.
