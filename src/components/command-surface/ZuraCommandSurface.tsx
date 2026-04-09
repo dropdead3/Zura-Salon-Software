@@ -4,6 +4,7 @@ import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
 import { tokens } from '@/lib/design-tokens';
 import { useAIAssistant } from '@/hooks/useAIAssistant';
+import { useActiveLocations } from '@/hooks/useLocations';
 import { useSearchRanking } from '@/hooks/useSearchRanking';
 import { useRecentSearches } from './useRecentSearches';
 import { isQuestionQuery } from './commandTypes';
@@ -21,6 +22,7 @@ import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 import { useCommandPreview } from '@/hooks/useCommandPreview';
 import { CommandPreviewPanel } from './CommandPreviewPanel';
 import { CommandInlineAnalyticsCard, detectAnalyticsHint } from './CommandInlineAnalyticsCard';
+import { CommandChainBar } from './CommandChainBar';
 import {
   mainNavItems,
   myToolsNavItems,
@@ -80,6 +82,13 @@ export function ZuraCommandSurface({ open, onOpenChange, filterNavItems }: ZuraC
   // Inline analytics hint
   const analyticsHint = useMemo(() => detectAnalyticsHint(query), [query]);
 
+  // Location names for chain bar editable chips
+  const { data: activeLocations } = useActiveLocations();
+  const locationNames = useMemo(
+    () => (activeLocations || []).map((l) => l.name),
+    [activeLocations],
+  );
+
   // Search Learning
   const learning = useSearchLearning(open, effectiveRoles as string[], location.pathname);
   const decayedFreqMap = useMemo(() => learning.getDecayedFrequencyMap(), [open]);
@@ -90,6 +99,7 @@ export function ZuraCommandSurface({ open, onOpenChange, filterNavItems }: ZuraC
     suggestions,
     parsedQuery,
     rankedResults,
+    chainedQuery,
     trackNavigation,
   } = useSearchRanking(query, {
     filterNavItems: filterNavItems as any,
@@ -284,6 +294,22 @@ export function ZuraCommandSurface({ open, onOpenChange, filterNavItems }: ZuraC
           onAiModeToggle={() => { setAiMode(m => !m); resetAI(); }}
           onKeyDown={handleKeyDown}
         />
+
+        {chainedQuery && (
+          <CommandChainBar
+            chain={chainedQuery}
+            query={query}
+            aiMode={aiMode}
+            hasActiveAction={hasActiveAction}
+            locationNames={locationNames}
+            onQueryChange={setQuery}
+            onNavigate={(path) => {
+              const resolvedPath = resolveOrgPath(path);
+              navigate(resolvedPath);
+              close();
+            }}
+          />
+        )}
 
         <div className="flex-1 min-h-0 flex">
           {/* Results column */}
