@@ -84,7 +84,7 @@ export function AIHelpTab() {
                   <button
                     key={prompt}
                     onClick={() => handlePromptClick(prompt)}
-                    className="text-xs px-3 py-1.5 rounded-full bg-muted hover:bg-muted/80 transition-colors text-left"
+                    className="text-xs px-3 py-1.5 rounded-full bg-card hover:bg-card/80 border border-border/60 transition-colors text-left"
                   >
                     {prompt}
                   </button>
@@ -100,7 +100,7 @@ export function AIHelpTab() {
                     'max-w-[85%] rounded-2xl px-4 py-2.5 text-sm',
                     msg.role === 'user'
                       ? 'ml-auto bg-primary text-primary-foreground'
-                      : 'mr-auto bg-muted'
+                      : 'mr-auto bg-card border border-border/60'
                   )}
                 >
                   {msg.role === 'assistant' ? (
@@ -115,7 +115,7 @@ export function AIHelpTab() {
               
               {/* Streaming response */}
               {isLoading && response && (
-                <div className="mr-auto max-w-[85%] rounded-2xl px-4 py-2.5 text-sm bg-muted">
+                <div className="mr-auto max-w-[85%] rounded-2xl px-4 py-2.5 text-sm bg-card border border-border/60">
                   <div className="prose prose-sm dark:prose-invert max-w-none [&>p]:my-1 [&>ul]:my-1 [&>ol]:my-1">
                     <ReactMarkdown>{response}</ReactMarkdown>
                   </div>
@@ -141,7 +141,7 @@ export function AIHelpTab() {
         </div>
       </ScrollArea>
       
-      <div className="border-t p-3">
+      <div className="border-t border-border/60 p-3">
         <div className="flex gap-2">
           <Input
             ref={inputRef}
@@ -150,7 +150,7 @@ export function AIHelpTab() {
             onKeyDown={handleKeyDown}
             placeholder="Ask a question..."
             disabled={isLoading}
-            className="flex-1"
+            className="flex-1 bg-card border-border/60"
             autoCapitalize="off"
           />
           <Button
