@@ -122,7 +122,7 @@ export function HelpFAB() {
         side="top"
         align="end"
         sideOffset={16}
-        className="w-[380px] h-[480px] p-0 overflow-hidden"
+        className="w-[380px] h-[480px] p-0 overflow-hidden bg-[hsl(var(--muted))] border-border/60"
       >
         <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
           <div className="border-b bg-muted/30 px-4 pt-3 pb-2">
