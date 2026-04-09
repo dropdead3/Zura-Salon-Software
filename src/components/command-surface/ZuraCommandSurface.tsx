@@ -220,6 +220,7 @@ export function ZuraCommandSurface({ open, onOpenChange, filterNavItems, anchorR
       setQuery('');
       setAiMode(false);
       setSelectedIndex(0);
+      setActiveScope('all');
       resetAI();
       actionExecution.reset();
       clearPreview();
