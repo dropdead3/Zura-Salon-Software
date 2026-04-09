@@ -1,10 +1,17 @@
 import { useEffect, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 
 export function useCommandMenu() {
   const [open, setOpen] = useState(false);
+  const location = useLocation();
+
+  // Suppress CommandMenu on dashboard routes — TopBarSearch owns Cmd+K there
+  const isDashboard = location.pathname.includes('/dashboard');
 
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
+      if (isDashboard) return;
+
       const target = e.target as HTMLElement | null;
       if (
         target &&
@@ -26,8 +33,7 @@ export function useCommandMenu() {
 
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, []);
+  }, [isDashboard]);
 
   return { open, setOpen };
 }
-
