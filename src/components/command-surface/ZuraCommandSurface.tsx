@@ -108,23 +108,6 @@ export function ZuraCommandSurface({ open, onOpenChange, filterNavItems, anchorR
   // Inline analytics hint
   const analyticsHint = useMemo(() => detectAnalyticsHint(query), [query]);
 
-  // Extract time context from parsed query for data fetching
-  const timeContext = parsedQuery?.timeContext ?? null;
-  const timeLabel = timeContext?.label ?? 'Today';
-  const dateFrom = timeContext?.startDate ?? new Date().toISOString().slice(0, 10);
-  const dateTo = timeContext?.endDate ?? new Date().toISOString().slice(0, 10);
-
-  // Fetch real data for the analytics hint
-  const commandData = useCommandDataQuery({ hint: analyticsHint, dateFrom, dateTo });
-
-  // Build dataContext string for the AI
-  const dataContextStr = useMemo(() => {
-    if (!commandData.value || commandData.isLoading) return undefined;
-    const parts = [`${commandData.label}: $${commandData.value.toLocaleString('en-US', { minimumFractionDigits: 2 })}`];
-    parts.push(`Period: ${timeLabel}`);
-    commandData.breakdown.forEach(b => parts.push(`${b.label}: ${b.value}`));
-    return parts.join('\n');
-  }, [commandData.value, commandData.isLoading, commandData.label, commandData.breakdown, timeLabel]);
 
   // Memoize classifyAndGround to avoid redundant calls in JSX (Fix #1)
   const groundingResult = useMemo(() => {
