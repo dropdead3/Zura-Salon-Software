@@ -48,6 +48,14 @@ const ROLE_PROMPTS: Record<string, string[]> = {
 };
 
 export function AIHelpTab() {
+  const roles = useEffectiveRoles();
+  const prompts = useMemo(() => {
+    if (roles.some(r => r === 'super_admin' || r === 'admin')) return ROLE_PROMPTS.leadership;
+    if (roles.includes('manager')) return ROLE_PROMPTS.manager;
+    if (roles.includes('front_desk')) return ROLE_PROMPTS.front_desk;
+    if (roles.includes('stylist')) return ROLE_PROMPTS.stylist;
+    return ROLE_PROMPTS.default;
+  }, [roles]);
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState('');
   const { response, isLoading, error, sendMessage, reset } = useAIAssistant();
