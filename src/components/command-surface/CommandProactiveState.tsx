@@ -122,7 +122,7 @@ export const CommandProactiveState = React.forwardRef<HTMLDivElement, CommandPro
             <button
               key={i}
               type="button"
-              onClick={() => onNavigate(a.destination || '/dashboard')}
+              onClick={() => onNavigate('/dashboard')}
               className={cn(ROW_BASE, 'cursor-pointer')}
               tabIndex={-1}
             >

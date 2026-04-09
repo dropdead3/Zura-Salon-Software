@@ -67,6 +67,8 @@ export interface SearchCandidate {
   path?: string;
   icon?: React.ReactNode;
   metadata?: string;
+  /** Combined searchable text — if provided, used instead of title+subtitle for text matching */
+  searchText?: string;
   /** Permission required — if user lacks it, candidate is filtered out pre-ranking. */
   permission?: string;
   /** Roles that can see this item. */
@@ -256,7 +258,8 @@ export function rankResults(
   const permitted = filterByPermissions(candidates, ctx.userPermissions, ctx.userRoles);
 
   const results: RankedResult[] = permitted.map((candidate) => {
-    const textMatch = scoreMatch(candidate.title + ' ' + (candidate.subtitle || ''), q) / 100;
+    const searchableText = candidate.searchText || (candidate.title + ' ' + (candidate.subtitle || ''));
+    const textMatch = scoreMatch(searchableText, q) / 100;
     const intentAlignment = computeIntentAlignment(candidate.type, ctx.parsed.intents);
     const entityConfidence = computeEntityConfidence(
       candidate.id,
