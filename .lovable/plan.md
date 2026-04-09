@@ -1,137 +1,120 @@
 
 
-# Command Chaining UI — Interpreted Query Visualization
+# Proactive Search Intelligence — Command Layer Default State
 
-## What Already Exists
+## Audit Summary
 
-The entire data pipeline is built and working:
-- `queryParser.ts` produces `ParsedQuery` with tokens, intents, time context, action intent, filters
-- `queryChainEngine.ts` produces `ChainedQuery` with typed slots: subject, topic, timeRange, locationScope, rankingModifier, negativeFilter, actionVerb, subjectType, destinationHint, confidence, slotCount
-- `useSearchRanking` already computes `chainedQuery` and returns it (line 337) — but `ZuraCommandSurface` never consumes it
-- `Badge` component has a `glass` variant with backdrop-blur that matches the overlay aesthetic
-- `AnalyticsFilterBadge` is the existing chip/badge pattern used across analytics cards
+**Current empty state** (`CommandRecentSection.tsx`): Shows recent searches (localStorage) and recently viewed pages (decayed frequency map). Falls back to a bare "Search or ask Zura..." message with a ghosted icon. No role awareness, no operational signals, no recommended actions.
 
-The UI layer is the only missing piece.
+**Available data sources already in codebase:**
+- `useAIInsights()` — cached AI business insights with `InsightItem[]` (severity, category, priorityScore, impactEstimateNumeric), `ActionItem[]`, and `SuggestedTask[]`. Already used in dashboard cards/drawers. 2hr staleTime, org-scoped.
+- `useEffectiveRoles()` — returns current role array respecting view-as mode
+- `usePermission()` — `can()`, `canAny()` for permission gating
+- `dashboardNav.ts` — full nav registry with `roles[]` and `permission` per item
+- `useSearchLearning` — decayed frequency map already drives "Recently Viewed"
+- `useEmployeeProfile()` — profile with `is_super_admin`, `location_id`, `location_ids`
+- `useViewAs()` — impersonation context
+- `PinnableCard` — pinning system exists but pins are per-card visibility, not user favorites
+
+**No existing systems for:** pinned favorites, saved commands, or user-bookmarked destinations. Will not invent one — architect for it cleanly via a future `usePinnedCommands` hook slot.
 
 ## Architecture
 
 ### New Files (2)
 
-**`src/components/command-surface/CommandChainBar.tsx`** — The interpreted query visualization strip. Renders between `CommandInput` and the results area. Consumes a `ChainedQuery` and renders a horizontal row of typed chips.
+**`src/hooks/useProactiveIntelligence.ts`**
+A single hook that composes existing data sources into a prioritized proactive state. Returns:
+- `continueItems` — recent searches + recent pages (already computed, repackaged)
+- `quickPaths` — role-filtered nav shortcuts from `dashboardNav.ts` registry
+- `attentionItems` — top 2-3 AI insights filtered by severity ≥ warning and priorityScore
+- `recommendedActions` — top 2-3 action items from AI insights
+- `isLoading` — composite loading state
 
-**`src/components/command-surface/ChainSegment.tsx`** — Individual interpreted segment chip. Handles segment type differentiation (icon, label, style), click-to-edit popover for time/location segments, and disambiguation display.
+**Logic:**
+- Uses `useEffectiveRoles()` to filter nav items by role
+- Uses `usePermission().can()` to gate each quick path
+- Uses `useAIInsights()` to pull cached insights (no new fetch — reads from TanStack cache with 2hr stale)
+- Attention items: filter `insights` where `severity !== 'info'`, sort by `priorityScore` desc, take top 3
+- Recommended actions: take top 3 `actionItems` by priority (high > medium > low)
+- Quick paths: static role→paths map selecting 4-6 most likely destinations per role archetype
+- All data is already org-scoped via existing hooks — no new tenant isolation needed
 
-### Edited Files (2)
+**Role→Quick Path mapping (static, permission-gated):**
+- `receptionist` / `assistant`: Schedule, Client Directory, Waitlist, Appointments & Transactions
+- `stylist` / `stylist_assistant`: My Stats, Schedule, Today's Prep, My Pay
+- `manager`: Analytics Hub, Operations Hub, Staff Utilization, Schedule
+- `admin` / `super_admin`: Analytics Hub, Operations Hub, Roles Hub, Settings, Reports
+- Platform roles: handled separately (already have platform nav)
 
-**`src/components/command-surface/ZuraCommandSurface.tsx`** — Destructure `chainedQuery` from `useSearchRanking`. Render `CommandChainBar` between input and results when visibility conditions are met. Pass `onQueryChange` for editable refinement.
+**`src/components/command-surface/CommandProactiveState.tsx`**
+Replaces `CommandRecentSection` as the empty-query content. Renders 3-4 compact sections:
 
-**`src/hooks/useSearchRanking.ts`** — No changes needed. `chainedQuery` is already returned.
+1. **Continue** — Recent searches + recently viewed (reuses existing data, same row style as current `CommandRecentSection`)
+2. **Quick Paths** — 4-6 role-appropriate nav shortcuts as compact icon+label rows
+3. **Attention** — 0-3 operational signals from AI insights, rendered as compact alert rows with severity dot + title + CTA arrow
+4. **Suggested** — 0-3 recommended actions as compact action rows
 
-## Visibility Rules
+**Visibility rules:**
+- Each section only renders if it has items
+- Attention section hidden when no warning/critical insights exist (silence is meaningful)
+- Suggested section hidden when no action items exist
+- If nothing proactive is available, falls back to Continue + Quick Paths only
+- If even those are empty, shows the existing "Search or ask Zura..." empty state
 
-The chain bar appears only when ALL of:
-1. Query has 2+ characters
-2. `chainedQuery.slotCount >= 2` (single-slot queries don't benefit)
-3. `chainedQuery.confidence >= 0.4` (low-confidence = don't show fake structure)
-4. Not in AI mode (AI mode handles its own context)
-5. No active action panel (action panel already shows interpreted intent)
+### Edited Files (1)
 
-This means simple searches like "Ashley" or "settings" show nothing. Structured queries like "Brooklyn retail last 30 days" show the full chain bar.
+**`src/components/command-surface/ZuraCommandSurface.tsx`**
+- Replace `<CommandRecentSection>` with `<CommandProactiveState>` in the `!hasQuery` branch
+- Pass through: `recents`, `recentPages`, `onSearchSelect`, `onPageSelect`, `onClearRecents`, `onNavigate` (for quick paths + attention CTAs)
 
-## Chain Bar Design
+## Visual Design
 
-A single horizontal row rendered as a `div` with `flex items-center gap-1.5 px-5 py-2 border-b border-border/20`. Sits directly below the input area, above results. Contains:
+Each section uses the same row style as existing `CommandRecentSection` — `h-10`, `px-4`, `hover:bg-muted/60`, `transition-colors duration-150`. Section headers use `tokens.heading.subsection`.
 
-- A faint "Zura understands:" kicker label (font-sans, text-[10px], text-muted-foreground/50, uppercase, tracking-wider) — or just render chips with no label to keep it minimal
-- A sequence of `ChainSegment` chips representing filled slots
+**Attention rows** get a subtle severity indicator:
+- Warning: `bg-yellow-500/60` dot (w-1.5 h-1.5 rounded-full)
+- Critical: `bg-red-500/60` dot
+- No colored backgrounds, no alert banners — just a dot + text
 
-Each chip uses `Badge` variant="outline" base with refinements per segment type:
-- **Location**: MapPin icon (w-3 h-3), text shows location name
-- **Topic/Metric**: BarChart3 icon, text shows topic label (capitalized)
-- **Time Range**: Clock icon, text shows human label from `timeRange.label`
-- **Ranking**: ArrowUpDown icon, text shows "Top" / "Lowest" etc.
-- **Negative Filter**: Filter icon, text shows human-readable filter ("No bookings, 60 days")
-- **Subject**: User icon, text shows subject value
-- **Action**: Zap icon, text shows action type
+**Quick Path rows** use the nav item's icon (`w-4 h-4 text-muted-foreground/40`) matching existing result row patterns.
 
-All chips: `h-6 px-2 rounded-md text-[11px] font-sans bg-muted/40 border border-border/30 text-foreground/80`. No heavy colors — monochrome with subtle icon tinting via `text-muted-foreground/60` on the icon.
+**Suggested action rows** use a `Zap` icon prefix to distinguish from navigation.
 
-## Editable Refinement (Phase 1 — Time & Location only)
+All rows are clickable: quick paths and attention items navigate, suggested actions navigate to relevant report/destination.
 
-Time and location chips are clickable. Clicking opens a tiny inline popover (using existing `Popover` component) with predefined options:
+## Transition Behavior
 
-- **Time**: Today, This Week, Last 7 Days, Last 30 Days, This Month, Last Month, This Quarter
-- **Location**: List from `activeLocations` already available in `useSearchRanking`
-
-Selecting an option reconstructs the query string by replacing the matched time/location tokens. This is achieved by:
-1. Identifying which tokens in the original query correspond to the slot (using token positions from `ParsedQuery`)
-2. Replacing those tokens with the new value
-3. Calling `onQueryChange(newQuery)` which triggers the full re-parse pipeline
-
-Other chip types (subject, topic, filter) are not editable in phase 1 — they display as read-only.
-
-## Ambiguity Handling
-
-When `chainedQuery.subject` exists but `chainedQuery.subjectType` is null or confidence is low (< 0.6), the subject chip shows a subtle `?` indicator and a tooltip: "Could be a client or stylist." No modal disambiguation in phase 1 — the results already show both interpretations via the ranking engine. The chip just acknowledges the ambiguity.
-
-## Keyboard Behavior (Phase 1)
-
-Phase 1: Chain bar is not keyboard-focusable. Arrow keys continue to navigate results. The bar is purely visual + mouse-interactive for time/location editing.
-
-Phase 2 (future): Tab from input focuses first editable chip. Left/Right navigates chips. Enter opens popover. Escape returns to input.
-
-## Destination Hint Integration
-
-When `chainedQuery.destinationHint` exists and confidence >= 0.7, the chain bar appends a subtle right-aligned CTA: "→ {destinationHint.label}" as a clickable link that navigates directly. This replaces the need to scan results for the "right" page. Styled as `text-primary/70 text-[11px] font-sans` with hover brightening.
+When user types first character → `hasQuery` becomes true → proactive state unmounts, search results render. Instant swap, no animation needed (same as current behavior). When user clears query → proactive state remounts with cached data (no loading flash due to TanStack staleTime).
 
 ## Performance
 
-- `chainedQuery` is already memoized in `useSearchRanking`
-- Chain bar renders pure props — no hooks, no fetches
-- Popover options are static lists — no async loading
-- Query reconstruction is synchronous string manipulation
-- No debounce needed on the bar itself (it reads already-debounced chain output)
+- `useAIInsights()` reads from TanStack cache (2hr stale) — no new fetch on command open
+- Quick paths are static computation from role + permissions — zero async
+- Recent data is already computed in parent — passed as props
+- Total new renders: 1 lightweight component with pure props + 1 cached query read
 
-## Responsive Behavior
+## Responsive
 
-- Desktop (≥1024px): Full chip row with all segments visible
-- Tablet (768–1023px): Same layout, chips may wrap to second line
-- Mobile (<768px): Hidden entirely (`hidden sm:flex`) — mobile full-screen search stays focused on results
+- Desktop: full proactive state with all sections
+- Mobile (<768px): show Continue + Quick Paths only (attention/suggested hidden to keep mobile search focused)
 
-## Example Renderings
+## Scope Awareness
 
-**"Brooklyn retail last 30 days"**
-```
-[📍 Brooklyn] [📊 Retail] [🕐 Last 30 Days]  → Retail Analytics · Brooklyn · Last 30 Days
-```
+- `useAIInsights()` is already org-scoped via `organization_id`
+- Nav items already filtered by `useEffectiveRoles()` and `usePermission()`
+- View-as mode: `useEffectiveRoles()` already returns impersonated roles, so quick paths adjust automatically
 
-**"top clients no bookings 60 days"**
-```
-[↕ Top] [👤 Clients] [⊘ No bookings, 60 days]
-```
+## Fallback Behavior
 
-**"refunds this week Gilbert"**
-```
-[📊 Refunds] [🕐 This Week] [📍 Gilbert]  → Appointments — Refunds · Gilbert · This Week
-```
-
-**"Ashley appointments last month"**
-```
-[👤 Ashley ?] [📊 Appointments] [🕐 Last Month]
-```
-(Ashley chip shows `?` because subject type is ambiguous)
-
-**"settings"** — No chain bar shown (slotCount < 2)
-
-**"add client"** — No chain bar shown (action panel handles this)
+If AI insights are loading or unavailable: show Continue + Quick Paths only. No skeleton for attention/suggested — they simply don't appear. Never show thin or low-confidence content.
 
 ## Files Summary
 
 | File | Action |
 |------|--------|
-| `src/components/command-surface/ChainSegment.tsx` | Create — individual chip with type-specific icon + optional popover |
-| `src/components/command-surface/CommandChainBar.tsx` | Create — horizontal strip consuming ChainedQuery, visibility logic, destination CTA |
-| `src/components/command-surface/ZuraCommandSurface.tsx` | Edit — destructure `chainedQuery`, render `CommandChainBar` between input and results |
+| `src/hooks/useProactiveIntelligence.ts` | Create — compose role-aware quick paths + attention + actions from existing hooks |
+| `src/components/command-surface/CommandProactiveState.tsx` | Create — render proactive default state sections |
+| `src/components/command-surface/ZuraCommandSurface.tsx` | Edit — swap `CommandRecentSection` → `CommandProactiveState` in empty-query branch |
 
-No database changes. No new design tokens. No parser or ranker changes.
+No database changes. No new design tokens. No new data fetches.
 
