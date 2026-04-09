@@ -2,10 +2,10 @@ import React from 'react';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { ChevronRight } from 'lucide-react';
-import type { CommandResult } from './commandTypes';
+import type { RankedResult } from '@/lib/searchRanker';
 
 interface CommandResultRowProps {
-  result: CommandResult;
+  result: RankedResult;
   isSelected: boolean;
   onClick: () => void;
   query: string;
@@ -30,6 +30,8 @@ const TYPE_LABELS: Record<string, string> = {
   client: 'Client',
   help: 'Help',
   action: 'Action',
+  report: 'Report',
+  utility: 'Utility',
 };
 
 export const CommandResultRow = React.forwardRef<HTMLButtonElement, CommandResultRowProps>(

@@ -1,21 +1,28 @@
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
 import { tokens } from '@/lib/design-tokens';
 import { useAIAssistant } from '@/hooks/useAIAssistant';
-import { useCommandSearch } from './useCommandSearch';
+import { useSearchRanking } from '@/hooks/useSearchRanking';
 import { useRecentSearches } from './useRecentSearches';
-import { isQuestionQuery, groupResults } from './commandTypes';
+import { isQuestionQuery } from './commandTypes';
 import { CommandInput } from './CommandInput';
 import { CommandResultPanel } from './CommandResultPanel';
 import { CommandAIAnswerCard } from './CommandAIAnswerCard';
-import { CommandEmptyState } from './CommandEmptyState';
 import { CommandRecentSection } from './CommandRecentSection';
+import { CommandSuggestionPanel } from './CommandSuggestionRow';
 import { useActionExecution } from '@/hooks/useActionExecution';
 import { usePermission } from '@/hooks/usePermission';
-import { parseQuery } from '@/lib/queryParser';
 import { CommandActionPanel } from './CommandActionPanel';
+import { getFrequencyMap } from '@/lib/searchRanker';
+import {
+  mainNavItems,
+  myToolsNavItems,
+  manageNavItems,
+  systemNavItems,
+  hubChildrenItems,
+} from '@/config/dashboardNav';
 
 interface NavItem {
   href: string;
@@ -32,46 +39,70 @@ interface ZuraCommandSurfaceProps {
   filterNavItems?: (items: NavItem[]) => NavItem[];
 }
 
+// Build a label lookup from all nav sources for frequency-based recent pages
+const NAV_LABEL_MAP = (() => {
+  const map = new Map<string, string>();
+  const add = (items: { href: string; label: string }[]) => {
+    items.forEach((i) => { if (!map.has(i.href)) map.set(i.href, i.label); });
+  };
+  add(mainNavItems as any[]);
+  add(myToolsNavItems as any[]);
+  add(manageNavItems as any[]);
+  add(systemNavItems as any[]);
+  add(hubChildrenItems);
+  return map;
+})();
+
 export function ZuraCommandSurface({ open, onOpenChange, filterNavItems }: ZuraCommandSurfaceProps) {
   const [query, setQuery] = useState('');
   const [aiMode, setAiMode] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const navigate = useNavigate();
-  const location = useLocation();
   const { permissions } = usePermission();
 
   const { response: aiResponse, isLoading: aiLoading, error: aiError, sendMessage, reset: resetAI } = useAIAssistant();
-  const { results } = useCommandSearch(query, { filterNavItems });
   const { recents, addRecent, clearRecents } = useRecentSearches();
   const actionExecution = useActionExecution();
 
+  // Use the unified ranking hook
+  const {
+    groups,
+    suggestions,
+    parsedQuery,
+    trackNavigation,
+  } = useSearchRanking(query, {
+    filterNavItems: filterNavItems as any,
+    permissions,
+  });
+
+  // Derive recent pages from frequency map
   const recentPages = useMemo(() => {
-    return [];
+    const freqMap = getFrequencyMap();
+    return Object.entries(freqMap)
+      .sort(([, a], [, b]) => b - a)
+      .slice(0, 5)
+      .map(([path]) => ({
+        label: NAV_LABEL_MAP.get(path) || path.split('/').pop() || path,
+        path,
+      }));
   }, []);
 
   const showAICard = aiMode || (query.trim() && isQuestionQuery(query));
-  const hasResults = results.length > 0;
+  const flatResults = useMemo(() => groups.flatMap(g => g.results), [groups]);
+  const hasResults = flatResults.length > 0;
   const hasQuery = query.trim().length > 0;
   const hasActiveAction = actionExecution.actionState !== 'idle';
+  const hasSuggestions = suggestions.length > 0;
 
-  const flatResults = useMemo(() => {
-    return groupResults(results).flatMap(g => g.results);
-  }, [results]);
-
-  // Detect actions from parsed query
+  // Detect actions from parsed query (uses ranking pipeline output — no double-parse)
   useEffect(() => {
-    if (hasQuery && !aiMode) {
-      const parsed = parseQuery(query);
-      if (parsed.actionIntent) {
-        actionExecution.detectAndPrepare(parsed, permissions);
-      } else {
-        actionExecution.reset();
-      }
-    } else {
+    if (hasQuery && !aiMode && parsedQuery?.actionIntent) {
+      actionExecution.detectAndPrepare(parsedQuery, permissions);
+    } else if (!hasQuery || aiMode) {
       actionExecution.reset();
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [query, aiMode, permissions]);
+  }, [parsedQuery, aiMode, permissions, hasQuery]);
 
   useEffect(() => {
     if (!open) {
@@ -94,10 +125,11 @@ export function ZuraCommandSurface({ open, onOpenChange, filterNavItems }: ZuraC
   const handleSelect = useCallback((result: { path?: string; title?: string }) => {
     if (result.path) {
       if (query.trim()) addRecent(query.trim());
+      trackNavigation(result.path);
       navigate(result.path);
       close();
     }
-  }, [navigate, close, query, addRecent]);
+  }, [navigate, close, query, addRecent, trackNavigation]);
 
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
     if (e.key === 'Escape') {
@@ -127,9 +159,10 @@ export function ZuraCommandSurface({ open, onOpenChange, filterNavItems }: ZuraC
   }, []);
 
   const handleRecentPageSelect = useCallback((path: string) => {
+    trackNavigation(path);
     navigate(path);
     close();
-  }, [navigate, close]);
+  }, [navigate, close, trackNavigation]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -185,17 +218,28 @@ export function ZuraCommandSurface({ open, onOpenChange, filterNavItems }: ZuraC
           {hasQuery ? (
             hasResults ? (
               <CommandResultPanel
-                results={results}
+                groups={groups}
                 selectedIndex={selectedIndex}
                 query={query}
                 onSelect={handleSelect}
               />
             ) : (
               !aiMode && !hasActiveAction && (
-                <CommandEmptyState
-                  query={query}
-                  onSwitchToAI={() => { setAiMode(true); }}
-                />
+                hasSuggestions ? (
+                  <CommandSuggestionPanel
+                    query={query}
+                    suggestions={suggestions}
+                    onNavigate={(path) => { trackNavigation(path); navigate(path); close(); }}
+                    onQueryChange={setQuery}
+                    onSwitchToAI={() => setAiMode(true)}
+                  />
+                ) : (
+                  <div className="py-10 px-6 text-center">
+                    <p className="font-sans text-sm text-muted-foreground">
+                      No results for "<span className="text-foreground font-medium">{query}</span>"
+                    </p>
+                  </div>
+                )
               )
             )
           ) : (

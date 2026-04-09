@@ -150,6 +150,36 @@ export const housekeepingNavItems: DashboardNavItem[] = [
 export const footerNavItems: DashboardNavItem[] = [];
 export const websiteNavItems: DashboardNavItem[] = [];
 
+// ─── Hub children for deep-link search candidates ───────────────────────────
+
+export const hubChildrenItems: { href: string; label: string }[] = [
+  { href: '/dashboard/directory', label: 'Team Directory' },
+  { href: '/dashboard/admin/performance-reviews', label: 'Performance Reviews' },
+  { href: '/dashboard/admin/pto', label: 'PTO Balances' },
+  { href: '/dashboard/admin/announcements', label: 'Announcements' },
+  { href: '/dashboard/admin/recruiting', label: 'Recruiting Pipeline' },
+  { href: '/dashboard/admin/graduation-tracker', label: 'Graduation Tracker' },
+  { href: '/dashboard/admin/stylist-levels', label: 'Stylist Levels' },
+  { href: '/dashboard/admin/headshots', label: 'Headshot Requests' },
+  { href: '/dashboard/admin/business-cards', label: 'Business Card Requests' },
+  { href: '/dashboard/schedule-meeting', label: 'Schedule 1:1' },
+  { href: '/dashboard/admin/training-hub', label: 'Training Hub' },
+  { href: '/dashboard/clients', label: 'Client Directory' },
+  { href: '/dashboard/admin/client-health', label: 'Client Health' },
+  { href: '/dashboard/admin/reengagement', label: 'Re-engagement' },
+  { href: '/dashboard/admin/feedback', label: 'Client Feedback' },
+  { href: '/dashboard/campaigns', label: 'Campaigns' },
+  { href: '/dashboard/admin/seo-workshop', label: 'SEO Workshop' },
+  { href: '/dashboard/admin/leads', label: 'Lead Management' },
+  { href: '/dashboard/appointments-hub', label: 'Appointments & Transactions' },
+  { href: '/dashboard/admin/sales', label: 'Sales Analytics' },
+  { href: '/dashboard/admin/operational-analytics', label: 'Operational Analytics' },
+  { href: '/dashboard/admin/staff-utilization', label: 'Staff Utilization' },
+  { href: '/dashboard/admin/reports', label: 'Reports' },
+  { href: '/dashboard/admin/day-rate-settings', label: 'Day Rate Settings' },
+  { href: '/dashboard/admin/day-rate-calendar', label: 'Day Rate Calendar' },
+];
+
 // --- Hub quick links (Command Center surface) ---
 export interface HubLinkConfig {
   href: string;
