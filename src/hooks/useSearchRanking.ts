@@ -1,6 +1,6 @@
 /**
  * Zura Search Ranking Hook
- * Orchestrates: parseQuery → useQueryEntityResolver → rankResults → groupRankedResults
+ * Orchestrates: parseQuery → synonymExpansion → useQueryEntityResolver → rankResults → groupRankedResults
  * Single consumption point for the command surface.
  */
 import { useMemo, useCallback } from 'react';
@@ -40,6 +40,9 @@ import {
 import type { DashboardNavItem } from '@/config/dashboardNav';
 import { useTeamDirectory } from '@/hooks/useEmployeeProfile';
 import { useRecentSearches } from '@/components/command-surface/useRecentSearches';
+import { expandQuery, logSynonymTelemetry } from '@/lib/synonymRegistry';
+import type { QueryExpansion } from '@/lib/synonymRegistry';
+import { scoreMatchWithSynonyms } from '@/lib/textMatch';
 
 // ─── Help items ─────────────────────────────────────────────
 
