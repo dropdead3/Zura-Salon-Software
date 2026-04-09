@@ -80,7 +80,7 @@ export function HelpFAB() {
     <Popover open={isOpen} onOpenChange={setIsOpen}>
       <PopoverTrigger asChild>
         <motion.div
-          className="fixed bottom-6 right-6 z-50"
+          className="fixed bottom-6 right-6 max-sm:bottom-4 max-sm:right-4 z-50"
           initial={{ scale: 0, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           transition={{ type: 'spring', stiffness: 260, damping: 20, delay: 0.5 }}
@@ -122,7 +122,7 @@ export function HelpFAB() {
         side="top"
         align="end"
         sideOffset={16}
-        className="w-[400px] h-[520px] p-0 overflow-hidden rounded-2xl bg-card/95 backdrop-blur-xl border border-border/40 shadow-[0_16px_64px_rgba(0,0,0,0.4)]"
+        className="w-[400px] h-[620px] max-h-[calc(100vh-120px)] max-[430px]:w-[calc(100vw-32px)] p-0 overflow-hidden rounded-2xl bg-card/95 backdrop-blur-xl border border-border/40 shadow-[0_16px_64px_rgba(0,0,0,0.4)]"
       >
         {/* Inner gradient overlay for depth */}
         <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-primary/[0.04] to-transparent pointer-events-none z-0 rounded-t-2xl" />
