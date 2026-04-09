@@ -75,9 +75,9 @@ export function AIHelpTab() {
           {isEmpty ? (
             <div className="flex flex-col items-center justify-center h-[280px] text-center pt-6">
               <ZuraZIcon className="w-8 h-8 text-primary mb-4" />
-              <h3 className="font-medium text-lg mb-2">{AI_ASSISTANT_NAME_DEFAULT}</h3>
+              <h3 className="font-display text-lg tracking-wide uppercase mb-2">{AI_ASSISTANT_NAME_DEFAULT}</h3>
               <p className="text-sm text-muted-foreground mb-6 max-w-[280px]">
-                I'm {AI_ASSISTANT_NAME_DEFAULT}, your AI assistant. Ask me anything about using {PLATFORM_NAME}.
+                I'm {AI_ASSISTANT_NAME_DEFAULT}, your AI assistant. Ask me anything about using this platform, or your business.
               </p>
               <div className="flex flex-wrap gap-2 justify-center">
                 {EXAMPLE_PROMPTS.map((prompt) => (
