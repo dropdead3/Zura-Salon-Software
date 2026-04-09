@@ -1,47 +1,36 @@
 
 
-# Fix Gap Analysis: Walk-in Labels and Status Display
+# Fix Search Bar Dropdown Clipping
 
-## Two Bugs
+## Problem
 
-### Bug 1: All non-terminal appointments show "In progress"
-The hook groups booked/confirmed/pending/arrived/started into one `not_concluded` reason. The UI maps that to a single "In progress" badge. The actual appointment status is never passed to `GapItem`.
+The top bar container (line 169 of `SuperAdminTopBar.tsx`) uses `rounded-full overflow-x-hidden`, which clips the search dropdown. The `TopBarSearch` component renders its dropdown as `absolute top-full` (line 249), meaning the dropdown tries to appear below the search input but **inside** the bar's overflow-hidden boundary — so it gets cut off.
 
-### Bug 2: Client name resolution missing first_name/last_name fallback
-The `phorest_clients` lookup (line 135) only fetches `name`, not `first_name`/`last_name`. For 5 client IDs today that exist in appointments but not in `phorest_clients`, names can't resolve. The backfill migration fixed most (~40 of 42 today), but the hook's inline resolution should also use `first_name || last_name` as fallback.
+## Fix
 
-## Plan
+### File: `src/components/dashboard/TopBarSearch.tsx`
 
-### 1. Add `status` field to `GapItem` interface
-**File**: `src/hooks/useRevenueGapAnalysis.ts`
-- Add `status?: string` to the `GapItem` interface
-- Pass `a.status` when building gap items for `notConcluded` (line 193-203), cancelled, no-show, and completed entries
+Change the dropdown from a positioned-inside-container approach to a **fixed-position portal-style overlay** that escapes the overflow clip.
 
-### 2. Expand `phorest_clients` lookup to include first/last name
-**File**: `src/hooks/useRevenueGapAnalysis.ts` (line 135)
-- Change `.select('phorest_client_id, name')` → `.select('phorest_client_id, name, first_name, last_name')`
-- Update the map builder (line 137-139) to use `c.name || (c.first_name + ' ' + c.last_name).trim()` as resolved name
+1. **Replace `absolute top-full left-0 right-0 mt-2`** (line 249) with a dynamically positioned panel that uses `fixed` positioning calculated from the search trigger's bounding rect
+2. Use a `useEffect` + `getBoundingClientRect()` on the container ref to position the dropdown below the search button, matching its width
+3. This ensures the dropdown renders outside the `overflow-x-hidden` parent
 
-### 3. Display actual appointment status in the drilldown UI
-**File**: `src/components/dashboard/sales/RevenueGapDrilldown.tsx`
-- Replace the single `not_concluded` config with a status-aware badge renderer
-- Map actual statuses to appropriate labels:
-  - `booked` → "Booked" (blue badge)
-  - `confirmed` → "Confirmed" (emerald badge)
-  - `pending` → "Unconfirmed" (amber badge)
-  - `arrived` → "Arrived" (teal badge)
-  - `started` → "In progress" (emerald badge, current style)
-- Keep `not_concluded` as fallback for unknown statuses
-- The badge reads from `item.status` when available, falls back to `REASON_CONFIG[item.reason].label`
+Specific changes:
+- Add state for dropdown position (`top`, `left`, `width`)
+- On open, calculate position from `containerRef.current.getBoundingClientRect()`
+- Change the dropdown div from `absolute top-full left-0 right-0 mt-2` to `fixed` with computed `top`, `left`, `width` styles
+- Add a resize/scroll listener to reposition if needed
 
-### 4. No database changes needed
-The backfill migration already resolved most client names. The view already joins `phorest_clients`. These are purely client-side rendering fixes.
+### No other files change
+
+The container in `SuperAdminTopBar.tsx` keeps `overflow-x-hidden` (needed for the pill shape). The fix is entirely within `TopBarSearch.tsx`.
 
 ## Summary
 
-| Type | Detail |
+| Item | Detail |
 |------|--------|
-| Files modified | 2 (`useRevenueGapAnalysis.ts`, `RevenueGapDrilldown.tsx`) |
-| Bugs fixed | 2 (status display, name fallback) |
-| Database changes | None |
+| Root cause | Dropdown inside `overflow-x-hidden` parent gets clipped |
+| Fix | Use `fixed` positioning with computed coordinates |
+| Files modified | 1 (`TopBarSearch.tsx`) |
 
