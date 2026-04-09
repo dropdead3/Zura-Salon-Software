@@ -1,94 +1,117 @@
 
 
-# Zura Command Surface — Audit Round 2
+# Zura Command Surface — Audit Round 3
 
 ## Bugs
 
-### 1. Console Error: `CommandProactiveState` cannot receive refs (Active Bug)
-**File**: `ZuraCommandSurface.tsx` line 552, `CommandProactiveState.tsx`
-The console shows: "Function components cannot be given refs. Check the render method of ZuraCommandSurface." This is caused by `AnimatePresence` or a parent trying to pass a ref down. `CommandProactiveState` is a plain function component — it needs to be wrapped in `React.forwardRef` (even if it ignores the ref) to suppress the warning.
-
-### 2. Scope filter desync: groups vs flatResults (Functional Bug)
-**File**: `ZuraCommandSurface.tsx` lines 159-171 vs line 521
-When a scope filter is active (e.g. "Clients"), `flatResults` is correctly filtered. But `CommandResultPanel` on line 521 receives the **unfiltered** `groups` prop — so the visual results show ALL types while keyboard navigation operates on the filtered subset. This causes:
-- Arrow keys skip visible rows
-- Selected highlight appears on wrong items
-- Enter opens wrong result
-
-**Fix**: Pass scope-filtered groups to `CommandResultPanel`, not the raw `groups`.
-
-### 3. `selectedIndex` can exceed `flatResults.length` on scope change (Index Bug)
-**File**: `ZuraCommandSurface.tsx` lines 324-329
-When switching scope filters, `selectedIndex` isn't reset to 0. If you had index=8 in "All" and switch to "Clients" with 3 results, arrow navigation breaks silently.
-
-**Fix**: Reset `selectedIndex` to 0 when `effectiveScope` changes (add a `useEffect`).
-
-### 4. `useTasks()` fetches unconditionally (Performance)
-**File**: `useSearchRanking.ts` line 146
-`useTasks()` runs every time the hook is active, fetching all user tasks regardless of whether the command surface is open or a query is typed. Unlike entity hooks which use `enabled`, tasks always fetch.
-
-**Fix**: Not blocking — note for future optimization. The hook should accept an `enabled` parameter.
-
-### 5. `decayedFreqMap` memoized on `open` identity, not value (Stale Data)
-**File**: `ZuraCommandSurface.tsx` line 124
-```typescript
-const decayedFreqMap = useMemo(() => learning.getDecayedFrequencyMap(), [open]);
+### 1. `CommandPreviewPanel` receives potentially null `activePreview` (Type Safety)
+**File**: `ZuraCommandSurface.tsx` line 605
+```tsx
+<CommandPreviewPanel result={activePreview} />
 ```
-`open` is a boolean that toggles. This means the map only refreshes when the surface opens/closes, but the dependency `open` is referentially unstable (alternates true/false). It works by accident — but the intent should be clearer. Use `// eslint-disable-next-line` or extract to a ref.
+`activePreview` is typed `RankedResult | null`, but `CommandPreviewPanel` expects `result: RankedResult` (non-nullable). The runtime guard `hasPreview && ...` prevents crashes, but TypeScript should flag this. Add a non-null assertion or narrow with `activePreview &&`.
 
-### 6. `handleHoverImmediate` dependency creates unnecessary re-renders (Performance)
-**File**: `ZuraCommandSurface.tsx` lines 204-208
-```typescript
-useEffect(() => {
-  if (flatResults[selectedIndex]) {
-    handleHoverImmediate(flatResults[selectedIndex]);
-  }
-}, [selectedIndex, flatResults, handleHoverImmediate]);
+**Fix**: `result={activePreview!}` or restructure the conditional.
+
+### 2. `useActionExecution` — `submitInputs` and `confirm` use stale `state` (Closure Bug)
+**File**: `useActionExecution.ts` lines 196-225
+Both `submitInputs` and `confirm` read from the `state` variable captured in their `useCallback` closure:
+```ts
+const submitInputs = useCallback(() => {
+  const { activeAction, collectedInputs } = state;
+  // ...
+}, [state, executeAction]);
 ```
-`flatResults` is a new array reference on every render (from `useMemo` with many deps), causing this effect to fire excessively and trigger preview panel re-renders on every keystroke.
+Because `state` is the entire state object, these callbacks are recreated on every state change — which is correct for freshness but means `state` in `[state, executeAction]` causes cascading re-renders. The real issue is that `actionExecution.reset` in `ZuraCommandSurface.tsx` depends on `useCallback(() => setState(INITIAL_STATE), [])` which IS stable — so the prior fix using `actionResetRef` is now redundant but harmless.
 
-### 7. `actionExecution.reset` in cleanup deps causes re-renders (React Warning Risk)
-**File**: `ZuraCommandSurface.tsx` line 246
-```typescript
-}, [open, resetAI, actionExecution.reset, clearPreview]);
+**Status**: Not a bug, but `submitInputs`/`confirm` could use functional `setState` pattern to avoid the `state` dependency. Low priority.
+
+### 3. Preview panel missing for `inventory`, `appointment`, and `task` types (Gap)
+**File**: `CommandPreviewPanel.tsx` lines 14-28
+The preview switch only handles `client`, `team`, `report`, and a default `NavigationPreview`. New entity types (`inventory`, `appointment`, `task`) all fall through to the generic `NavigationPreview` — which shows a title and path but no contextual data (stock level, appointment time, task status).
+
+**Fix**: Add `InventoryPreview`, `AppointmentPreview`, and `TaskPreview` components, or enrich the default `NavigationPreview` to render subtitle/metadata when present.
+
+### 4. Proactive state "Actions" section items are not clickable/actionable (UX Bug)
+**File**: `CommandProactiveState.tsx` lines 121-132
+The recommended actions render with `cursor-default` and no `onClick`:
+```tsx
+<div key={i} className={cn(ROW_BASE, 'cursor-default')}>
 ```
-`actionExecution.reset` is a new function reference each render (from `useCallback` without stable deps in `useActionExecution`). This causes the cleanup effect to re-run on every render, potentially resetting state mid-session.
+These should either trigger the action execution flow or navigate to the relevant page. Currently they're display-only, which breaks the "execution first" promise.
 
-## Gaps
+**Fix**: Add `onClick={() => onNavigate(action.path || '/dashboard')}` or wire into the action execution system.
 
-### 8. No `appointment` scope in filter chips
-**File**: `CommandSearchFilters.tsx` lines 12-20
-The `SCOPES` array has: All, Pages, People, Actions, Clients, Inventory, Tasks — but no "Appointments" chip. Users who see appointment results in "All" can't filter to just appointments.
+### 5. `today` variable in `useAppointmentSearchCandidates` is computed at module-eval time (Stale Date)
+**File**: `useCommandEntitySearch.ts` line 107
+```ts
+const today = new Date().toISOString().split('T')[0];
+```
+This is inside the component body but outside `useMemo`/`useQuery`. It re-evaluates on every render, which is fine — but the query key includes `today`, so if the user leaves a tab open overnight and opens the command surface the next day, `today` changes and triggers a refetch. This is actually correct behavior. **No fix needed** — noting for completeness.
 
-### 9. No "report" or "insight" scope chips
-Same file. The `RankedResultType` includes `report`, `utility`, and `insight` but none have filter chips. This is acceptable for now but means these types are only reachable through "All".
+### 6. `handleKeyDown` missing `hasQuery`/`hasResults` in dependency array (Potential Stale Closure)
+**File**: `ZuraCommandSurface.tsx` line 376
+`handleKeyDown` references `hasActiveAction` but the `useCallback` deps don't include `hasQuery` or `hasResults`, which are used in the Enter branch (line 372-373). These are derived from `query` and `flatResults` which ARE in deps, so the values are fresh. **No fix needed**.
 
-### 10. `CommandResultPanel` passes unfiltered `groups` — no scope awareness
-Already described in Bug #2. The panel renders all groups regardless of active scope filter.
+### 7. Entity search candidates don't include search keywords for fuzzy matching (Ranking Gap)
+**File**: `useCommandEntitySearch.ts`
+Client candidates only have `title = fullName`. The ranker scores via `scoreMatch(candidate.title + ' ' + (candidate.subtitle || ''), q)`. Phone numbers and emails are in subtitle, so searching "555-1234" would match. But searching by last name only may underperform because `scoreMatch` does substring matching, not word-boundary matching.
 
-### 11. Missing keyboard shortcut: `⌘↵` for action execution
-**File**: `ZuraCommandSurface.tsx` line 330
-The footer shows `⌘↵ → run action` but there's no `handleKeyDown` case for `Meta+Enter` or `Ctrl+Enter`. The shortcut is advertised but not implemented.
+**Fix**: Add `keywords` or `searchText` field to `SearchCandidate` that concatenates all searchable fields. This requires a minor schema addition to `SearchCandidate` and a one-line change in the ranker.
 
----
+### 8. No keyboard navigation in proactive state (Interaction Gap)
+**File**: `CommandProactiveState.tsx`
+When no query is typed, the proactive state shows Actions, Today, Recent, Navigate sections — but arrow keys and Enter don't work on these items. The keyboard handler in `ZuraCommandSurface` only operates on `flatResults`, which is empty when there's no query.
+
+**Fix**: Build a `proactiveItems` array for keyboard navigation in the default state, or add `tabIndex={0}` with focus management. This is a medium-effort enhancement.
+
+### 9. Duplicate comment in `useSearchRanking.ts` (Cosmetic)
+**File**: `useSearchRanking.ts` lines 209-210
+```ts
+// Action candidates from the registry
+// Action candidates from the registry
+```
 
 ## Fix Plan
 
-| # | Fix | File |
-|---|-----|------|
-| 1 | Wrap `CommandProactiveState` in `React.forwardRef` | `CommandProactiveState.tsx` |
-| 2 | Build scope-filtered groups and pass to `CommandResultPanel` | `ZuraCommandSurface.tsx` |
-| 3 | Reset `selectedIndex` on `effectiveScope` change | `ZuraCommandSurface.tsx` |
-| 4 | Add `appointment` to scope filter chips + `scopeTypeMap` | `CommandSearchFilters.tsx` + `ZuraCommandSurface.tsx` |
-| 5 | Implement `⌘↵` / `Ctrl+Enter` keyboard shortcut for action execution | `ZuraCommandSurface.tsx` |
-| 6 | Stabilize `flatResults` reference to reduce preview churn | `ZuraCommandSurface.tsx` |
-| 7 | Stabilize `actionExecution.reset` in cleanup effect deps | `ZuraCommandSurface.tsx` |
+| # | Fix | Priority | File |
+|---|-----|----------|------|
+| 1 | Null-guard `activePreview` in JSX | Quick | `ZuraCommandSurface.tsx` |
+| 2 | Skip (low priority, no user impact) | — | — |
+| 3 | Add entity preview components for inventory, appointment, task | Medium | `CommandPreviewPanel.tsx` + new preview files |
+| 4 | Make proactive "Actions" items clickable | High | `CommandProactiveState.tsx` |
+| 5 | No fix needed | — | — |
+| 6 | No fix needed | — | — |
+| 7 | Add `searchText` to `SearchCandidate` for richer fuzzy matching | Medium | `searchRanker.ts` + `useCommandEntitySearch.ts` + `useSearchRanking.ts` |
+| 8 | Add keyboard nav to proactive state | Medium | `ZuraCommandSurface.tsx` + `CommandProactiveState.tsx` |
+| 9 | Remove duplicate comment | Quick | `useSearchRanking.ts` |
+
+### Implementation Details
+
+**Fix #3 — Entity Previews**: Create three lightweight preview components:
+- `InventoryPreview`: Show product name, brand, SKU, category, quantity on hand, and a "View in Inventory" link
+- `AppointmentPreview`: Show client name, service, time, status, and a "View Schedule" link
+- `TaskPreview`: Show task title, priority, due date, completion status
+
+Each reads from the `result.subtitle` and `result.metadata` fields already populated by the entity hooks.
+
+**Fix #4 — Clickable Actions**: The `recommendedActions` from `useProactiveIntelligence` need a `path` or `actionId` field. If the hook already provides a destination, wire it. If not, map action labels to known routes from the action registry.
+
+**Fix #7 — SearchText**: Add optional `searchText?: string` to `SearchCandidate`. In the ranker, score against `candidate.searchText || (candidate.title + ' ' + (candidate.subtitle || ''))`. In entity hooks, set `searchText` to concatenate all searchable fields (name + phone + email for clients, name + SKU + brand for products).
+
+**Fix #8 — Keyboard in Proactive State**: Flatten proactive items into an ordered array, pass to `ZuraCommandSurface` as a `proactiveItems` ref. When `!hasQuery`, arrow keys navigate this array and Enter triggers the item's action. This mirrors the existing `flatResults` pattern.
 
 ### Files Changed
 
 | File | Fixes |
 |------|-------|
-| `src/components/command-surface/CommandProactiveState.tsx` | #1 — forwardRef wrapper |
-| `src/components/command-surface/ZuraCommandSurface.tsx` | #2, #3, #4 (scopeTypeMap), #5, #6, #7 |
-| `src/components/command-surface/CommandSearchFilters.tsx` | #4 — add Appointments chip |
+| `src/components/command-surface/ZuraCommandSurface.tsx` | #1, #8 (keyboard nav wiring) |
+| `src/components/command-surface/CommandProactiveState.tsx` | #4, #8 (expose items for keyboard) |
+| `src/components/command-surface/CommandPreviewPanel.tsx` | #3 (switch cases) |
+| `src/components/command-surface/previews/InventoryPreview.tsx` | #3 (new file) |
+| `src/components/command-surface/previews/AppointmentPreview.tsx` | #3 (new file) |
+| `src/components/command-surface/previews/TaskPreview.tsx` | #3 (new file) |
+| `src/lib/searchRanker.ts` | #7 (searchText support) |
+| `src/hooks/useCommandEntitySearch.ts` | #7 (add searchText) |
+| `src/hooks/useSearchRanking.ts` | #9 (remove dupe comment) |
 
