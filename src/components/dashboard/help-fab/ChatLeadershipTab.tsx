@@ -57,8 +57,8 @@ function MemberItem({ member, isOnline, onSelect, isLoading }: MemberItemProps) 
       onClick={() => onSelect(member.user_id)}
       disabled={isLoading}
       className={cn(
-        'w-full flex items-center gap-3 p-3 rounded-lg',
-        'hover:bg-accent/50 transition-colors text-left',
+        'w-full flex items-center gap-3 p-3 rounded-xl',
+        'hover:bg-muted/60 transition-all duration-200 text-left',
         'disabled:opacity-50 disabled:cursor-wait'
       )}
     >
@@ -154,9 +154,9 @@ export function ChatLeadershipTab() {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="px-4 py-3 border-b bg-muted/30">
+      <div className="px-4 py-3 border-b border-border/30">
         <h3 className="font-medium text-sm">Chat with Leadership</h3>
-        <p className="text-xs text-muted-foreground mt-0.5">
+        <p className="text-xs text-muted-foreground/70 mt-0.5">
           Select someone to start a conversation
         </p>
       </div>
