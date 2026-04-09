@@ -7,7 +7,7 @@ interface UseAIAssistantReturn {
   response: string;
   isLoading: boolean;
   error: string | null;
-  sendMessage: (query: string, conversationHistory?: Message[], organizationId?: string) => Promise<void>;
+  sendMessage: (query: string, conversationHistory?: Message[], organizationId?: string, userRole?: string) => Promise<void>;
   reset: () => void;
 }
 
