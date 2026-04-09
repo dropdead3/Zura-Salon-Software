@@ -1,5 +1,5 @@
-import React, { useState, useCallback, useEffect, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useCallback, useEffect, useMemo, useRef } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
 import { tokens } from '@/lib/design-tokens';
@@ -15,7 +15,8 @@ import { CommandSuggestionPanel } from './CommandSuggestionRow';
 import { useActionExecution } from '@/hooks/useActionExecution';
 import { usePermission } from '@/hooks/usePermission';
 import { CommandActionPanel } from './CommandActionPanel';
-import { getFrequencyMap } from '@/lib/searchRanker';
+import { useSearchLearning } from '@/hooks/useSearchLearning';
+import { useEffectiveRoles } from '@/hooks/useEffectiveUser';
 import {
   mainNavItems,
   myToolsNavItems,
@@ -58,21 +59,31 @@ export function ZuraCommandSurface({ open, onOpenChange, filterNavItems }: ZuraC
   const [aiMode, setAiMode] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const navigate = useNavigate();
+  const location = useLocation();
   const { permissions } = usePermission();
+  const effectiveRoles = useEffectiveRoles();
+  const lastQueryBeforeCloseRef = useRef('');
 
   const { response: aiResponse, isLoading: aiLoading, error: aiError, sendMessage, reset: resetAI } = useAIAssistant();
   const { recents, addRecent, clearRecents } = useRecentSearches();
   const actionExecution = useActionExecution();
+
+  // Search Learning
+  const learning = useSearchLearning(open, effectiveRoles as string[], location.pathname);
+  const decayedFreqMap = useMemo(() => learning.getDecayedFrequencyMap(), [open]);
 
   // Use the unified ranking hook
   const {
     groups,
     suggestions,
     parsedQuery,
+    rankedResults,
     trackNavigation,
   } = useSearchRanking(query, {
     filterNavItems: filterNavItems as any,
     permissions,
+    learningBoostFn: learning.getLearningBoosts,
+    decayedFrequencyMap: decayedFreqMap,
   });
 
   // Derive recent pages from frequency map
