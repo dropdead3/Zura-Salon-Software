@@ -413,7 +413,7 @@ export function TopBarSearch({ filterNavItems }: TopBarSearchProps) {
               </>
             )}
           </div>
-        </div>
+        </div>, document.body)
       )}
     </div>
   );
