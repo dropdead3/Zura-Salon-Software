@@ -131,7 +131,14 @@ export function useSearchRanking(
   const location = useLocation();
   const currentPath = location.pathname;
   const { data: teamMembers } = useTeamDirectory();
+  const { data: activeLocations } = useActiveLocations();
   const { recents } = useRecentSearches();
+
+  // Location names for chain engine
+  const locationNames = useMemo(
+    () => (activeLocations || []).map(l => l.name),
+    [activeLocations],
+  );
 
   // Parse query
   const parsed = useMemo((): ParsedQuery | null => {
@@ -142,6 +149,12 @@ export function useSearchRanking(
 
   // Resolve entities
   const resolved = useQueryEntityResolver(parsed);
+
+  // Chain assembly (post-parser structured interpretation)
+  const chained = useMemo((): ChainedQuery | null => {
+    if (!parsed) return null;
+    return assembleChain(parsed, locationNames);
+  }, [parsed, locationNames]);
 
   // Build candidate pool (memoized)
   const candidates = useMemo((): SearchCandidate[] => {
