@@ -80,9 +80,9 @@ export function CommandProactiveState({
             const subtitle = entry.selectedTitle ? entry.query : undefined;
             return (
               <button
-                key={typeof entry === 'string' ? entry : entry.query}
+                key={entry.query}
                 type="button"
-                onClick={() => onSearchSelect(typeof entry === 'string' ? entry : entry.query)}
+                onClick={() => onSearchSelect(entry.query)}
                 className={ROW_BASE}
                 tabIndex={-1}
               >
