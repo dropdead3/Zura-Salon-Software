@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { tokens } from '@/lib/design-tokens';
 import { useNavigate } from 'react-router-dom';
 import { Search, X, Loader2, Command, Sparkles, Users, BookOpen, UserCircle } from 'lucide-react';
@@ -270,6 +271,7 @@ export function TopBarSearch({ filterNavItems }: TopBarSearchProps) {
 
       {/* Search Modal - Fixed position to escape overflow-hidden parent */}
       {isOpen && dropdownPos && (
+        createPortal(
         <div
           ref={dropdownRef}
           style={{ top: dropdownPos.top, left: dropdownPos.left, width: Math.max(dropdownPos.width, 480) }}
@@ -411,7 +413,7 @@ export function TopBarSearch({ filterNavItems }: TopBarSearchProps) {
               </>
             )}
           </div>
-        </div>
+        </div>, document.body)
       )}
     </div>
   );
