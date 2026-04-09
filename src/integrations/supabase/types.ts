@@ -18649,6 +18649,53 @@ export type Database = {
           },
         ]
       }
+      search_promotions: {
+        Row: {
+          boost_amount: number
+          created_at: string
+          created_by: string | null
+          demoted: boolean
+          expires_at: string | null
+          id: string
+          organization_id: string
+          promoted_path: string
+          query_pattern: string
+          updated_at: string
+        }
+        Insert: {
+          boost_amount?: number
+          created_at?: string
+          created_by?: string | null
+          demoted?: boolean
+          expires_at?: string | null
+          id?: string
+          organization_id: string
+          promoted_path: string
+          query_pattern: string
+          updated_at?: string
+        }
+        Update: {
+          boost_amount?: number
+          created_at?: string
+          created_by?: string | null
+          demoted?: boolean
+          expires_at?: string | null
+          id?: string
+          organization_id?: string
+          promoted_path?: string
+          query_pattern?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "search_promotions_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       service_addon_assignments: {
         Row: {
           addon_id: string
