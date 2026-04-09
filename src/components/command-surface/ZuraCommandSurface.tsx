@@ -12,6 +12,8 @@ import { useSearchRanking } from '@/hooks/useSearchRanking';
 import { useRecentSearches } from './useRecentSearches';
 import { isQuestionQuery } from './commandTypes';
 import { CommandInput } from './CommandInput';
+import { CommandSearchFilters, detectScopePrefix } from './CommandSearchFilters';
+import type { SearchScope } from './CommandSearchFilters';
 import { CommandResultPanel } from './CommandResultPanel';
 import { CommandAIAnswerCard } from './CommandAIAnswerCard';
 import { CommandProactiveState } from './CommandProactiveState';
