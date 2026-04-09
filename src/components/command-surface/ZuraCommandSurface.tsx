@@ -38,10 +38,12 @@ export function ZuraCommandSurface({ open, onOpenChange, filterNavItems }: ZuraC
   const [selectedIndex, setSelectedIndex] = useState(0);
   const navigate = useNavigate();
   const location = useLocation();
+  const { permissions } = usePermission();
 
   const { response: aiResponse, isLoading: aiLoading, error: aiError, sendMessage, reset: resetAI } = useAIAssistant();
   const { results } = useCommandSearch(query, { filterNavItems });
   const { recents, addRecent, clearRecents } = useRecentSearches();
+  const actionExecution = useActionExecution();
 
   const recentPages = useMemo(() => {
     return [];
@@ -50,10 +52,26 @@ export function ZuraCommandSurface({ open, onOpenChange, filterNavItems }: ZuraC
   const showAICard = aiMode || (query.trim() && isQuestionQuery(query));
   const hasResults = results.length > 0;
   const hasQuery = query.trim().length > 0;
+  const hasActiveAction = actionExecution.actionState !== 'idle';
 
   const flatResults = useMemo(() => {
     return groupResults(results).flatMap(g => g.results);
   }, [results]);
+
+  // Detect actions from parsed query
+  useEffect(() => {
+    if (hasQuery && !aiMode) {
+      const parsed = parseQuery(query);
+      if (parsed.actionIntent) {
+        actionExecution.detectAndPrepare(parsed, permissions);
+      } else {
+        actionExecution.reset();
+      }
+    } else {
+      actionExecution.reset();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [query, aiMode, permissions]);
 
   useEffect(() => {
     if (!open) {
@@ -61,8 +79,9 @@ export function ZuraCommandSurface({ open, onOpenChange, filterNavItems }: ZuraC
       setAiMode(false);
       setSelectedIndex(0);
       resetAI();
+      actionExecution.reset();
     }
-  }, [open, resetAI]);
+  }, [open, resetAI, actionExecution.reset]);
 
   useEffect(() => {
     setSelectedIndex(0);
