@@ -1,99 +1,94 @@
 
 
-# Command Surface UX Overhaul — From Menu to Command Center
+# Zura Command Surface — Audit Round 2
 
-## Summary
+## Bugs
 
-The architecture is strong. The issue is **presentation and framing**. The engine has 5 search layers, action execution, grounded AI, and keyboard-first flow — but the UI presents it like a passive suggestion panel. This overhaul reframes the visual hierarchy, section naming, result differentiation, and default state to feel like an operating system command layer.
+### 1. Console Error: `CommandProactiveState` cannot receive refs (Active Bug)
+**File**: `ZuraCommandSurface.tsx` line 552, `CommandProactiveState.tsx`
+The console shows: "Function components cannot be given refs. Check the render method of ZuraCommandSurface." This is caused by `AnimatePresence` or a parent trying to pass a ref down. `CommandProactiveState` is a plain function component — it needs to be wrapped in `React.forwardRef` (even if it ignores the ref) to suppress the warning.
 
-## Changes
+### 2. Scope filter desync: groups vs flatResults (Functional Bug)
+**File**: `ZuraCommandSurface.tsx` lines 159-171 vs line 521
+When a scope filter is active (e.g. "Clients"), `flatResults` is correctly filtered. But `CommandResultPanel` on line 521 receives the **unfiltered** `groups` prop — so the visual results show ALL types while keyboard navigation operates on the filtered subset. This causes:
+- Arrow keys skip visible rows
+- Selected highlight appears on wrong items
+- Enter opens wrong result
 
-### 1. Rename Sections (CommandProactiveState.tsx)
+**Fix**: Pass scope-filtered groups to `CommandResultPanel`, not the raw `groups`.
 
-| Current | New |
-|---------|-----|
-| Continue | Recent |
-| Quick Paths | Navigate |
-| Suggested | Actions |
+### 3. `selectedIndex` can exceed `flatResults.length` on scope change (Index Bug)
+**File**: `ZuraCommandSurface.tsx` lines 324-329
+When switching scope filters, `selectedIndex` isn't reset to 0. If you had index=8 in "All" and switch to "Clients" with 3 results, arrow navigation breaks silently.
 
-### 2. Reorder Default State (CommandProactiveState.tsx)
+**Fix**: Reset `selectedIndex` to 0 when `effectiveScope` changes (add a `useEffect`).
 
-Current order: Today → Continue → Quick Paths → Attention → Suggested
+### 4. `useTasks()` fetches unconditionally (Performance)
+**File**: `useSearchRanking.ts` line 146
+`useTasks()` runs every time the hook is active, fetching all user tasks regardless of whether the command surface is open or a query is typed. Unlike entity hooks which use `enabled`, tasks always fetch.
 
-New order:
-1. **Actions** (recommended actions — moved to top, these are execution, not suggestions)
-2. **Today** (today's schedule, tasks, revenue)
-3. **Recent** (previous searches/pages)
-4. **Navigate** (quick paths)
-5. **Needs Attention** (alerts)
+**Fix**: Not blocking — note for future optimization. The hook should accept an `enabled` parameter.
 
-This puts execution first.
+### 5. `decayedFreqMap` memoized on `open` identity, not value (Stale Data)
+**File**: `ZuraCommandSurface.tsx` line 124
+```typescript
+const decayedFreqMap = useMemo(() => learning.getDecayedFrequencyMap(), [open]);
+```
+`open` is a boolean that toggles. This means the map only refreshes when the surface opens/closes, but the dependency `open` is referentially unstable (alternates true/false). It works by accident — but the intent should be clearer. Use `// eslint-disable-next-line` or extract to a ref.
 
-### 3. Top Result Visual Treatment (CommandResultPanel.tsx + CommandResultRow.tsx)
+### 6. `handleHoverImmediate` dependency creates unnecessary re-renders (Performance)
+**File**: `ZuraCommandSurface.tsx` lines 204-208
+```typescript
+useEffect(() => {
+  if (flatResults[selectedIndex]) {
+    handleHoverImmediate(flatResults[selectedIndex]);
+  }
+}, [selectedIndex, flatResults, handleHoverImmediate]);
+```
+`flatResults` is a new array reference on every render (from `useMemo` with many deps), causing this effect to fire excessively and trigger preview panel re-renders on every keystroke.
 
-The "Top Results" group already exists (`best` group in `groupRankedResults`). The issue is that Top Results rows look identical to every other row.
+### 7. `actionExecution.reset` in cleanup deps causes re-renders (React Warning Risk)
+**File**: `ZuraCommandSurface.tsx` line 246
+```typescript
+}, [open, resetAI, actionExecution.reset, clearPreview]);
+```
+`actionExecution.reset` is a new function reference each render (from `useCallback` without stable deps in `useActionExecution`). This causes the cleanup effect to re-run on every render, potentially resetting state mid-session.
 
-Changes to `CommandResultRow.tsx`:
-- Accept an `isTopResult` prop
-- When true: increase row height to `h-14`, make title `text-foreground` instead of muted, add subtle left accent bar (`border-l-2 border-primary/40`), and show subtitle inline instead of hidden
-- This creates immediate visual anchoring without redesigning the whole row
+## Gaps
 
-Changes to `CommandResultPanel.tsx`:
-- Pass `isTopResult={group.id === 'best'}` to rows in the "best" group
+### 8. No `appointment` scope in filter chips
+**File**: `CommandSearchFilters.tsx` lines 12-20
+The `SCOPES` array has: All, Pages, People, Actions, Clients, Inventory, Tasks — but no "Appointments" chip. Users who see appointment results in "All" can't filter to just appointments.
 
-### 4. AI Mode → Adaptive (ZuraCommandSurface.tsx)
+### 9. No "report" or "insight" scope chips
+Same file. The `RankedResultType` includes `report`, `utility`, and `insight` but none have filter chips. This is acceptable for now but means these types are only reachable through "All".
 
-Remove the explicit AI toggle requirement for question queries. The auto-AI trigger already exists (line 250-274) but fires after a 1200ms delay and only when score < 0.35.
+### 10. `CommandResultPanel` passes unfiltered `groups` — no scope awareness
+Already described in Bug #2. The panel renders all groups regardless of active scope filter.
 
-Changes:
-- Keep the Tab toggle for manual override, but change the footer label from "AI mode" to "ask Zura"
-- When `isQuestionQuery(query)` is true and results exist, show a subtle "Ask Zura" row at the bottom of results (not a mode switch) — this makes AI feel integrated, not bolted on
-- Reduce auto-AI delay from 1200ms to 800ms for questions with no results
+### 11. Missing keyboard shortcut: `⌘↵` for action execution
+**File**: `ZuraCommandSurface.tsx` line 330
+The footer shows `⌘↵ → run action` but there's no `handleKeyDown` case for `Meta+Enter` or `Ctrl+Enter`. The shortcut is advertised but not implemented.
 
-### 5. Inline Action Chips on Top Results (CommandResultRow.tsx)
+---
 
-For top results where `type === 'navigation'` or `type === 'action'`, show small action chips on hover/selection:
-- Navigation results: `[Open]` chip (already implicit via Enter, but making it visible)
-- Action results: `[Run]` chip
-- These are purely visual affordances — clicking the row already works
+## Fix Plan
 
-Implementation: Add a small `<span>` chip that appears on hover/selected state, right-aligned before the chevron.
+| # | Fix | File |
+|---|-----|------|
+| 1 | Wrap `CommandProactiveState` in `React.forwardRef` | `CommandProactiveState.tsx` |
+| 2 | Build scope-filtered groups and pass to `CommandResultPanel` | `ZuraCommandSurface.tsx` |
+| 3 | Reset `selectedIndex` on `effectiveScope` change | `ZuraCommandSurface.tsx` |
+| 4 | Add `appointment` to scope filter chips + `scopeTypeMap` | `CommandSearchFilters.tsx` + `ZuraCommandSurface.tsx` |
+| 5 | Implement `⌘↵` / `Ctrl+Enter` keyboard shortcut for action execution | `ZuraCommandSurface.tsx` |
+| 6 | Stabilize `flatResults` reference to reduce preview churn | `ZuraCommandSurface.tsx` |
+| 7 | Stabilize `actionExecution.reset` in cleanup effect deps | `ZuraCommandSurface.tsx` |
 
-### 6. Smarter Empty/Default State (CommandProactiveState.tsx)
+### Files Changed
 
-When there are no recents AND no quick paths AND no attention items:
-- Instead of "Search or ask Zura...", show:
-  - Today's Schedule (always)
-  - "Create Appointment" action
-  - "Add Client" action  
-  - "Run Report" action
-- This makes the empty state feel alive and actionable
-
-### 7. Group Label for Help Results (CommandResultPanel.tsx)
-
-The `GROUP_CONFIG` already labels help as "Help & Resources". But when `isQuestionQuery` is true and results include both navigation and help types, the help results should be labeled "Learn" instead. This is a minor label override in `CommandResultPanel` when the query is a question.
-
-### 8. Footer Bar Update (ZuraCommandSurface.tsx)
-
-Change:
-- `Tab → AI mode` → `Tab → ask Zura`
-- Add `⌘↵ → run action` hint when an action is detected
-
-## Files Changed
-
-| File | Changes |
-|------|---------|
-| `src/components/command-surface/CommandProactiveState.tsx` | Rename sections, reorder to Actions → Today → Recent → Navigate → Attention |
-| `src/components/command-surface/CommandResultRow.tsx` | Add `isTopResult` prop with enhanced visual treatment, add hover action chip |
-| `src/components/command-surface/CommandResultPanel.tsx` | Pass `isTopResult` to best-group rows |
-| `src/components/command-surface/ZuraCommandSurface.tsx` | Update footer labels, reduce auto-AI delay |
-
-## What This Does NOT Change
-
-- Search ranking engine (already correct)
-- Grounding system (already retrieval-first)
-- Action execution flow (already working)
-- Keyboard navigation (already complete)
-- Entity search (just added in prior round)
-- Visual positioning/anchoring (already correct)
+| File | Fixes |
+|------|-------|
+| `src/components/command-surface/CommandProactiveState.tsx` | #1 — forwardRef wrapper |
+| `src/components/command-surface/ZuraCommandSurface.tsx` | #2, #3, #4 (scopeTypeMap), #5, #6, #7 |
+| `src/components/command-surface/CommandSearchFilters.tsx` | #4 — add Appointments chip |
 
