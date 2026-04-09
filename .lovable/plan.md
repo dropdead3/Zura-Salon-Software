@@ -1,108 +1,99 @@
 
 
-# Zura Command Surface — Entity Search Layer + Remaining Gaps
+# Command Surface UX Overhaul — From Menu to Command Center
 
-## Status Summary
+## Summary
 
-The command surface architecture is already very strong after 4 prior build rounds:
-- Navigation search with 50+ verified destinations and grounded AI
-- Action registry with 13 actions and inline execution
-- Task and team member search candidates
-- Keyboard-first flow, typeahead, preview panel, chain queries
-- Today shortcuts, proactive intelligence, learning system
-- Permission-aware filtering and role-based ranking
-
-The **single largest remaining gap** is entity-level search — clients, inventory/products, and appointments are not indexed as search candidates. The database tables exist (`clients`, `phorest_clients`, `products`, `appointments`, `phorest_appointments`) and hooks exist to query them, but none feed into the search candidate pool.
+The architecture is strong. The issue is **presentation and framing**. The engine has 5 search layers, action execution, grounded AI, and keyboard-first flow — but the UI presents it like a passive suggestion panel. This overhaul reframes the visual hierarchy, section naming, result differentiation, and default state to feel like an operating system command layer.
 
 ## Changes
 
-### 1. Add Client Search Candidates (`src/hooks/useSearchRanking.ts`)
+### 1. Rename Sections (CommandProactiveState.tsx)
 
-Create a lightweight client search hook that queries the `clients` table (limited to 200 most recent active clients) when the command surface is open:
-- Search fields: `first_name`, `last_name`, `email`, `phone`
-- Result type: `client`
-- Path: `/dashboard/clients?search={name}`
-- Icon: `UserCircle`
-- Subtitle: phone or email, VIP badge if applicable
-- Lazy-loaded via `enabled` parameter
+| Current | New |
+|---------|-----|
+| Continue | Recent |
+| Quick Paths | Navigate |
+| Suggested | Actions |
 
-### 2. Add Inventory/Product Search Candidates (`src/hooks/useSearchRanking.ts`)
+### 2. Reorder Default State (CommandProactiveState.tsx)
 
-Create a lightweight product search hook querying the `products` table (active products, limit 200):
-- Search fields: `name`, `sku`, `brand`, `category`
-- Result type: `inventory`
-- Path: `/dashboard/admin/inventory?search={name}`
-- Icon: `Package`
-- Subtitle: brand, SKU, or quantity on hand
-- Lazy-loaded
+Current order: Today → Continue → Quick Paths → Attention → Suggested
 
-### 3. Add Appointment Search Candidates (`src/hooks/useSearchRanking.ts`)
+New order:
+1. **Actions** (recommended actions — moved to top, these are execution, not suggestions)
+2. **Today** (today's schedule, tasks, revenue)
+3. **Recent** (previous searches/pages)
+4. **Navigate** (quick paths)
+5. **Needs Attention** (alerts)
 
-Query today's appointments from `phorest_appointments` (limit 50, today only):
-- Search fields: client name, service name, staff name
-- Result type: `appointment`
-- Path: `/dashboard/schedule`
-- Icon: `Calendar`
-- Subtitle: time + service + stylist
-- Lazy-loaded
+This puts execution first.
 
-### 4. Create Entity Data Hooks (`src/hooks/useCommandEntitySearch.ts`)
+### 3. Top Result Visual Treatment (CommandResultPanel.tsx + CommandResultRow.tsx)
 
-New file with three lightweight hooks:
-- `useClientSearchCandidates(enabled)` — fetches from `clients` table
-- `useProductSearchCandidates(enabled)` — fetches from `products` table
-- `useAppointmentSearchCandidates(enabled)` — fetches today's from `phorest_appointments`
+The "Top Results" group already exists (`best` group in `groupRankedResults`). The issue is that Top Results rows look identical to every other row.
 
-Each returns data shaped as `SearchCandidate[]` ready for the ranking pool. All org-scoped via `useOrganizationContext`.
+Changes to `CommandResultRow.tsx`:
+- Accept an `isTopResult` prop
+- When true: increase row height to `h-14`, make title `text-foreground` instead of muted, add subtle left accent bar (`border-l-2 border-primary/40`), and show subtitle inline instead of hidden
+- This creates immediate visual anchoring without redesigning the whole row
 
-### 5. Wire Into `useSearchRanking.ts`
+Changes to `CommandResultPanel.tsx`:
+- Pass `isTopResult={group.id === 'best'}` to rows in the "best" group
 
-Import the three new hooks, pass `enabled: !!query` to avoid unnecessary fetches, and spread their results into the candidate pool alongside existing nav/team/task/action candidates.
+### 4. AI Mode → Adaptive (ZuraCommandSurface.tsx)
 
-### 6. Update Group Ordering (`commandTypes.ts` + `searchRanker.ts`)
+Remove the explicit AI toggle requirement for question queries. The auto-AI trigger already exists (line 250-274) but fires after a 1200ms delay and only when score < 0.35.
 
-Verify `GROUP_ORDER` priorities reflect:
-1. Best Match
-2. Actions
-3. Navigation
-4. People
-5. Clients
-6. Appointments
-7. Inventory
-8. Tasks
-9. Help
-10. Insights
+Changes:
+- Keep the Tab toggle for manual override, but change the footer label from "AI mode" to "ask Zura"
+- When `isQuestionQuery(query)` is true and results exist, show a subtle "Ask Zura" row at the bottom of results (not a mode switch) — this makes AI feel integrated, not bolted on
+- Reduce auto-AI delay from 1200ms to 800ms for questions with no results
 
-### 7. Add Type Icons and Labels (`CommandResultRow.tsx`)
+### 5. Inline Action Chips on Top Results (CommandResultRow.tsx)
 
-Add missing type icon mappings:
-- `client` → `UserCircle` + "Client" label
-- `inventory` → `Package` + "Product" label  
-- `appointment` → `Calendar` + "Appointment" label
+For top results where `type === 'navigation'` or `type === 'action'`, show small action chips on hover/selection:
+- Navigation results: `[Open]` chip (already implicit via Enter, but making it visible)
+- Action results: `[Run]` chip
+- These are purely visual affordances — clicking the row already works
+
+Implementation: Add a small `<span>` chip that appears on hover/selected state, right-aligned before the chevron.
+
+### 6. Smarter Empty/Default State (CommandProactiveState.tsx)
+
+When there are no recents AND no quick paths AND no attention items:
+- Instead of "Search or ask Zura...", show:
+  - Today's Schedule (always)
+  - "Create Appointment" action
+  - "Add Client" action  
+  - "Run Report" action
+- This makes the empty state feel alive and actionable
+
+### 7. Group Label for Help Results (CommandResultPanel.tsx)
+
+The `GROUP_CONFIG` already labels help as "Help & Resources". But when `isQuestionQuery` is true and results include both navigation and help types, the help results should be labeled "Learn" instead. This is a minor label override in `CommandResultPanel` when the query is a question.
+
+### 8. Footer Bar Update (ZuraCommandSurface.tsx)
+
+Change:
+- `Tab → AI mode` → `Tab → ask Zura`
+- Add `⌘↵ → run action` hint when an action is detected
 
 ## Files Changed
 
-| File | Change |
-|------|--------|
-| `src/hooks/useCommandEntitySearch.ts` | New file — 3 lightweight entity hooks |
-| `src/hooks/useSearchRanking.ts` | Import + wire entity candidates into pool |
-| `src/components/command-surface/CommandResultRow.tsx` | Add client/inventory/appointment type icons + labels |
-| `src/components/command-surface/commandTypes.ts` | Verify GROUP_ORDER has all entity types |
-| `src/lib/searchRanker.ts` | Verify type priority includes new entity types |
+| File | Changes |
+|------|---------|
+| `src/components/command-surface/CommandProactiveState.tsx` | Rename sections, reorder to Actions → Today → Recent → Navigate → Attention |
+| `src/components/command-surface/CommandResultRow.tsx` | Add `isTopResult` prop with enhanced visual treatment, add hover action chip |
+| `src/components/command-surface/CommandResultPanel.tsx` | Pass `isTopResult` to best-group rows |
+| `src/components/command-surface/ZuraCommandSurface.tsx` | Update footer labels, reduce auto-AI delay |
 
-## What This Enables
+## What This Does NOT Change
 
-- Typing "Sarah" matches team members AND clients
-- Typing "8N" or a product name shows inventory with stock level
-- Typing "today" shows today's appointments as entity results
-- Scope filter chips for Clients, Inventory now return real results
-- The command surface becomes a true cross-module search layer
-
-## Technical Notes
-
-- All entity hooks are org-scoped via `useOrganizationContext`
-- Queries use `enabled` flag to avoid firing when surface is closed
-- Client search supports fuzzy matching on name, phone, and email via existing `scoreMatch`
-- Product search matches on name, SKU, and brand
-- No database changes needed — all tables already exist with RLS
+- Search ranking engine (already correct)
+- Grounding system (already retrieval-first)
+- Action execution flow (already working)
+- Keyboard navigation (already complete)
+- Entity search (just added in prior round)
+- Visual positioning/anchoring (already correct)
 
