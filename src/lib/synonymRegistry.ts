@@ -322,7 +322,9 @@ export function expandQuery(
   query: string,
   topIntent: IntentType | null,
 ): QueryExpansion {
-  const tokens = query.toLowerCase().trim().split(/\s+/);
+  const trimmed = query.toLowerCase().trim();
+  if (!trimmed) return { expandedTerms: [], aliasMatches: [], conceptMatches: [] };
+  const tokens = trimmed.split(/\s+/);
   const expandedTerms: string[] = [];
   const aliasMatches: AliasMatch[] = [];
   const conceptMatches: ConceptMatch[] = [];
