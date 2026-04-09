@@ -18,7 +18,6 @@ import {
 
 // Hub children: deep pages inside hubs that should be searchable
 const hubChildrenItems: Array<{ href: string; label: string; icon: React.ComponentType<{ className?: string }> }> = [
-  // Operations Hub children
   { href: '/dashboard/directory', label: 'Team Directory', icon: Users },
   { href: '/dashboard/admin/performance-reviews', label: 'Performance Reviews', icon: Users },
   { href: '/dashboard/admin/pto', label: 'PTO Balances', icon: Users },
@@ -30,22 +29,18 @@ const hubChildrenItems: Array<{ href: string; label: string; icon: React.Compone
   { href: '/dashboard/admin/business-cards', label: 'Business Card Requests', icon: Users },
   { href: '/dashboard/schedule-meeting', label: 'Schedule 1:1', icon: Users },
   { href: '/dashboard/admin/training-hub', label: 'Training Hub', icon: Users },
-  // Client Hub children
   { href: '/dashboard/clients', label: 'Client Directory', icon: Users },
   { href: '/dashboard/admin/client-health', label: 'Client Health', icon: Users },
   { href: '/dashboard/admin/reengagement', label: 'Re-engagement', icon: Users },
   { href: '/dashboard/admin/feedback', label: 'Client Feedback', icon: Users },
-  // Growth Hub children
   { href: '/dashboard/campaigns', label: 'Campaigns', icon: Users },
   { href: '/dashboard/admin/seo-workshop', label: 'SEO Workshop', icon: Users },
   { href: '/dashboard/admin/leads', label: 'Lead Management', icon: Users },
-  // Analytics Hub children
   { href: '/dashboard/appointments-hub', label: 'Appointments & Transactions', icon: Users },
   { href: '/dashboard/admin/sales', label: 'Sales Analytics', icon: Users },
   { href: '/dashboard/admin/operational-analytics', label: 'Operational Analytics', icon: Users },
   { href: '/dashboard/admin/staff-utilization', label: 'Staff Utilization', icon: Users },
   { href: '/dashboard/admin/reports', label: 'Reports', icon: Users },
-  // Payroll Hub children
   { href: '/dashboard/admin/day-rate-settings', label: 'Day Rate Settings', icon: Users },
   { href: '/dashboard/admin/day-rate-calendar', label: 'Day Rate Calendar', icon: Users },
 ];
@@ -80,19 +75,21 @@ function dedupeByPath(items: NavItem[]): NavItem[] {
 }
 
 export function TopBarSearch({ filterNavItems }: TopBarSearchProps) {
-  const [isOpen, setIsOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [aiMode, setAiMode] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(0);
+  const [isFocused, setIsFocused] = useState(false);
   const [dropdownPos, setDropdownPos] = useState<{ top: number; left: number; width: number } | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const triggerRef = useRef<HTMLButtonElement>(null);
+  const wrapperRef = useRef<HTMLDivElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   
   const { response: aiResponse, isLoading: aiLoading, error: aiError, sendMessage, reset: resetAI } = useAIAssistant();
   const { data: teamMembers } = useTeamDirectory();
+
+  // Whether the results panel should be visible
+  const showDropdown = isFocused && (query.trim().length > 0 || aiMode);
 
   const navigationResults = React.useMemo((): SearchResult[] => {
     const derived = dedupeByPath([
@@ -112,7 +109,6 @@ export function TopBarSearch({ filterNavItems }: TopBarSearchProps) {
       icon: <item.icon className="w-4 h-4" />,
     }));
 
-    // Always-searchable essentials (not in the sidebar registry)
     results.push(
       { type: 'navigation', title: 'Profile', path: '/dashboard/profile', icon: <UserCircle className="w-4 h-4" /> },
       { type: 'help', title: 'Help Center', path: '/dashboard/help', icon: <BookOpen className="w-4 h-4" /> },
@@ -123,20 +119,17 @@ export function TopBarSearch({ filterNavItems }: TopBarSearchProps) {
     return results;
   }, [filterNavItems]);
 
-  // Filter results based on query
   const filteredResults = React.useMemo(() => {
     if (!query.trim() || aiMode) return [];
     
     const lowerQuery = query.toLowerCase();
     const results: SearchResult[] = [];
     
-    // Filter navigation items
     navigationResults.forEach(item => {
       const haystack = `${item.title} ${item.subtitle ?? ''}`.toLowerCase();
       if (haystack.includes(lowerQuery)) results.push(item);
     });
     
-    // Filter team members
     teamMembers?.slice(0, 5).forEach(member => {
       const name = member.full_name || member.display_name || '';
       if (name.toLowerCase().includes(lowerQuery)) {
@@ -153,26 +146,27 @@ export function TopBarSearch({ filterNavItems }: TopBarSearchProps) {
     return results.slice(0, 8);
   }, [query, aiMode, teamMembers, navigationResults]);
 
-  // Keyboard shortcut to open search
+  // Cmd+K focuses the inline input
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
         e.preventDefault();
-        setIsOpen(true);
-        setTimeout(() => inputRef.current?.focus(), 50);
+        inputRef.current?.focus();
       }
     };
-    
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, []);
 
-  // Calculate dropdown position when open
+  // Position the dropdown below the input wrapper
   useEffect(() => {
-    if (!isOpen || !triggerRef.current) return;
+    if (!showDropdown || !wrapperRef.current) {
+      setDropdownPos(null);
+      return;
+    }
     const updatePos = () => {
-      const rect = triggerRef.current!.getBoundingClientRect();
-      setDropdownPos({ top: rect.bottom + 8, left: rect.left, width: rect.width });
+      const rect = wrapperRef.current!.getBoundingClientRect();
+      setDropdownPos({ top: rect.bottom + 8, left: rect.left, width: Math.max(rect.width, 480) });
     };
     updatePos();
     window.addEventListener('resize', updatePos);
@@ -181,32 +175,35 @@ export function TopBarSearch({ filterNavItems }: TopBarSearchProps) {
       window.removeEventListener('resize', updatePos);
       window.removeEventListener('scroll', updatePos, true);
     };
-  }, [isOpen]);
+  }, [showDropdown]);
 
   // Click outside to close
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       const target = e.target as Node;
       if (
-        containerRef.current && !containerRef.current.contains(target) &&
-        dropdownRef.current && !dropdownRef.current.contains(target)
+        wrapperRef.current && !wrapperRef.current.contains(target) &&
+        (!dropdownRef.current || !dropdownRef.current.contains(target))
       ) {
-        setIsOpen(false);
+        setIsFocused(false);
       }
     };
-    
-    if (isOpen) {
+    if (isFocused) {
       document.addEventListener('mousedown', handleClickOutside);
     }
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [isOpen]);
+  }, [isFocused]);
 
-  // Handle keyboard navigation
+  const closeAndReset = useCallback(() => {
+    setIsFocused(false);
+    setQuery('');
+    resetAI();
+    inputRef.current?.blur();
+  }, [resetAI]);
+
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
     if (e.key === 'Escape') {
-      setIsOpen(false);
-      setQuery('');
-      resetAI();
+      closeAndReset();
     } else if (e.key === 'Tab' && !e.shiftKey && query === '') {
       e.preventDefault();
       setAiMode(!aiMode);
@@ -224,18 +221,16 @@ export function TopBarSearch({ filterNavItems }: TopBarSearchProps) {
         const result = filteredResults[selectedIndex];
         if (result.path) {
           navigate(result.path);
-          setIsOpen(false);
-          setQuery('');
+          closeAndReset();
         }
       }
     }
-  }, [aiMode, query, filteredResults, selectedIndex, navigate, resetAI, sendMessage]);
+  }, [aiMode, query, filteredResults, selectedIndex, navigate, closeAndReset, resetAI, sendMessage]);
 
   const handleResultClick = (result: SearchResult) => {
     if (result.path) {
       navigate(result.path);
-      setIsOpen(false);
-      setQuery('');
+      closeAndReset();
     }
   };
 
@@ -246,84 +241,73 @@ export function TopBarSearch({ filterNavItems }: TopBarSearchProps) {
   };
 
   return (
-    <div ref={containerRef} className="relative w-full max-w-2xl">
-      {/* Search Trigger */}
-      <button
-        ref={triggerRef}
-        onClick={() => {
-          setIsOpen(true);
-          setTimeout(() => inputRef.current?.focus(), 50);
-        }}
-        className={cn(
-          "flex items-center gap-2 px-3 py-1.5 rounded-full border border-border",
-          "bg-muted/50 hover:bg-muted transition-colors text-muted-foreground",
-          "text-sm w-full justify-between"
+    <div ref={wrapperRef} className="relative w-full max-w-2xl">
+      {/* Real inline search input */}
+      <div className={cn(
+        "flex items-center gap-2 px-3 py-1.5 rounded-full border transition-colors",
+        isFocused
+          ? "border-foreground/30 bg-background"
+          : "border-border bg-muted/50 hover:bg-muted"
+      )}>
+        {aiMode && isFocused ? (
+          <Sparkles className="w-4 h-4 shrink-0 text-primary" />
+        ) : (
+          <Search className="w-4 h-4 shrink-0 text-muted-foreground" />
         )}
-      >
-        <div className="flex items-center gap-2">
-          <Search className="w-4 h-4" />
-          <span>Search...</span>
-        </div>
-        <kbd className="hidden sm:inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground">
-          <Command className="w-3 h-3" />K
-        </kbd>
-      </button>
+        <input
+          ref={inputRef}
+          type="text"
+          placeholder={aiMode ? "Ask AI anything..." : "Search..."}
+          value={query}
+          onChange={(e) => {
+            setQuery(e.target.value);
+            setSelectedIndex(0);
+          }}
+          onFocus={() => setIsFocused(true)}
+          onKeyDown={handleKeyDown}
+          className="flex-1 min-w-0 bg-transparent border-none outline-none text-sm placeholder:text-muted-foreground"
+          autoCapitalize="off"
+          autoComplete="off"
+        />
+        {isFocused && (
+          <Button
+            variant={aiMode ? "default" : "ghost"}
+            size={tokens.button.inline}
+            className="h-6 px-2 gap-1 shrink-0"
+            onClick={() => {
+              setAiMode(!aiMode);
+              resetAI();
+              inputRef.current?.focus();
+            }}
+            tabIndex={-1}
+          >
+            <Sparkles className="w-3 h-3" />
+            <span className="text-xs">AI</span>
+          </Button>
+        )}
+        {query && (
+          <button
+            onClick={closeAndReset}
+            className="shrink-0 text-muted-foreground hover:text-foreground"
+            tabIndex={-1}
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
+        )}
+        {!isFocused && (
+          <kbd className="hidden sm:inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] text-muted-foreground shrink-0">
+            <Command className="w-3 h-3" />K
+          </kbd>
+        )}
+      </div>
 
-      {/* Search Modal - Fixed position to escape overflow-hidden parent */}
-      {isOpen && dropdownPos && (
-        createPortal(
+      {/* Results-only dropdown via portal */}
+      {showDropdown && dropdownPos && createPortal(
         <div
           ref={dropdownRef}
-          style={{ top: dropdownPos.top, left: dropdownPos.left, width: Math.max(dropdownPos.width, 480) }}
+          style={{ top: dropdownPos.top, left: dropdownPos.left, width: dropdownPos.width }}
           className="fixed bg-popover border border-border rounded-lg shadow-lg overflow-hidden z-[200]"
         >
-          {/* Search Input */}
-          <div className="flex items-center gap-2 p-3 border-b border-border">
-            {aiMode ? (
-              <Sparkles className="w-4 h-4 text-primary" />
-            ) : (
-              <Search className="w-4 h-4 text-muted-foreground" />
-            )}
-            <input
-              ref={inputRef}
-              type="text"
-              placeholder={aiMode ? "Ask me anything..." : "Search navigation, team..."}
-              value={query}
-              onChange={(e) => {
-                setQuery(e.target.value);
-                setSelectedIndex(0);
-              }}
-              onKeyDown={handleKeyDown}
-              className="flex-1 bg-transparent border-none outline-none text-sm placeholder:text-muted-foreground"
-              autoCapitalize="off"
-            />
-            <Button
-              variant={aiMode ? "default" : "ghost"}
-              size={tokens.button.inline}
-              className="h-7 px-2 gap-1"
-              onClick={() => {
-                setAiMode(!aiMode);
-                resetAI();
-              }}
-            >
-              <Sparkles className="w-3.5 h-3.5" />
-              <span className="text-xs">AI</span>
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-7 w-7"
-              onClick={() => {
-                setIsOpen(false);
-                setQuery('');
-                resetAI();
-              }}
-            >
-              <X className="w-4 h-4" />
-            </Button>
-          </div>
-
-          {/* Results / AI Response */}
           <div className="max-h-[400px] overflow-y-auto">
             {aiMode ? (
               <div className="p-4">
@@ -346,8 +330,7 @@ export function TopBarSearch({ filterNavItems }: TopBarSearchProps) {
                 {!aiLoading && !aiResponse && !aiError && (
                   <div className="text-sm text-muted-foreground text-center py-4">
                     <Sparkles className="w-8 h-8 mx-auto mb-2 text-primary/50" />
-                    <p>Ask me anything about the dashboard!</p>
-                    <p className="text-xs mt-1">Press Enter to send your question</p>
+                    <p>Type your question and press Enter</p>
                   </div>
                 )}
                 {query.trim() && !aiLoading && (
@@ -355,6 +338,7 @@ export function TopBarSearch({ filterNavItems }: TopBarSearchProps) {
                     onClick={handleSubmitAI} 
                     className="mt-3 w-full"
                     size={tokens.button.card}
+                    tabIndex={-1}
                   >
                     <Sparkles className="w-4 h-4 mr-2" />
                     Ask AI
@@ -369,6 +353,7 @@ export function TopBarSearch({ filterNavItems }: TopBarSearchProps) {
                       <button
                         key={`${result.type}-${result.title}-${index}`}
                         onClick={() => handleResultClick(result)}
+                        tabIndex={-1}
                         className={cn(
                           "w-full flex items-center gap-3 px-4 py-2 text-left transition-colors",
                           selectedIndex === index 
@@ -378,7 +363,7 @@ export function TopBarSearch({ filterNavItems }: TopBarSearchProps) {
                       >
                         <span className="text-muted-foreground">{result.icon}</span>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium truncate">{result.title}</p>
+                          <p className="text-sm truncate">{result.title}</p>
                           {result.subtitle && (
                             <p className="text-xs text-muted-foreground truncate">{result.subtitle}</p>
                           )}
@@ -389,31 +374,26 @@ export function TopBarSearch({ filterNavItems }: TopBarSearchProps) {
                       </button>
                     ))}
                   </div>
-                ) : query.trim() ? (
+                ) : (
                   <div className="p-4 text-center text-sm text-muted-foreground">
                     <p>No results found</p>
                     <Button 
                       variant="link" 
                       size={tokens.button.inline} 
                       className="mt-1"
-                      onClick={() => setAiMode(true)}
+                      onClick={() => { setAiMode(true); inputRef.current?.focus(); }}
+                      tabIndex={-1}
                     >
                       <Sparkles className="w-3 h-3 mr-1" />
                       Try asking AI instead
                     </Button>
                   </div>
-                ) : (
-                  <div className="p-4 text-center text-sm text-muted-foreground">
-                    <p>Start typing to search...</p>
-                    <p className="text-xs mt-1">
-                      Press <kbd className="px-1 py-0.5 bg-muted rounded text-xs">Tab</kbd> to toggle AI mode
-                    </p>
-                  </div>
                 )}
               </>
             )}
           </div>
-        </div>, document.body)
+        </div>,
+        document.body
       )}
     </div>
   );
