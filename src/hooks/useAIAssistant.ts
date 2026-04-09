@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 
 type Message = { role: 'user' | 'assistant'; content: string };
 
@@ -6,11 +7,19 @@ interface UseAIAssistantReturn {
   response: string;
   isLoading: boolean;
   error: string | null;
-  sendMessage: (query: string, conversationHistory?: Message[]) => Promise<void>;
+  sendMessage: (query: string, conversationHistory?: Message[], organizationId?: string) => Promise<void>;
   reset: () => void;
 }
 
 const AI_ASSISTANT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-assistant`;
+
+function friendlyError(status: number, fallback: string): string {
+  if (status === 401) return 'Your session has expired. Please refresh and try again.';
+  if (status === 403) return 'You do not have access to this feature for the current organization.';
+  if (status === 429) return 'Too many requests — please wait a moment and try again.';
+  if (status === 402) return 'This feature requires an active subscription.';
+  return fallback;
+}
 
 export function useAIAssistant(): UseAIAssistantReturn {
   const [response, setResponse] = useState('');
@@ -23,12 +32,19 @@ export function useAIAssistant(): UseAIAssistantReturn {
     setIsLoading(false);
   }, []);
 
-  const sendMessage = useCallback(async (query: string, conversationHistory: Message[] = []) => {
+  const sendMessage = useCallback(async (query: string, conversationHistory: Message[] = [], organizationId?: string) => {
     setIsLoading(true);
     setError(null);
     setResponse('');
 
     try {
+      // Get the user's real session JWT
+      const { data: sessionData } = await supabase.auth.getSession();
+      const accessToken = sessionData?.session?.access_token;
+      if (!accessToken) {
+        throw new Error('Please sign in to use the AI assistant.');
+      }
+
       const messages: Message[] = [
         ...conversationHistory,
         { role: 'user', content: query }
@@ -38,14 +54,14 @@ export function useAIAssistant(): UseAIAssistantReturn {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          Authorization: `Bearer ${accessToken}`,
         },
-        body: JSON.stringify({ messages }),
+        body: JSON.stringify({ messages, organizationId }),
       });
 
       if (!resp.ok) {
         const errorData = await resp.json().catch(() => ({ error: 'Request failed' }));
-        throw new Error(errorData.error || `Request failed with status ${resp.status}`);
+        throw new Error(friendlyError(resp.status, errorData.error || `Request failed with status ${resp.status}`));
       }
 
       if (!resp.body) {
@@ -83,7 +99,6 @@ export function useAIAssistant(): UseAIAssistantReturn {
               setResponse(fullResponse);
             }
           } catch {
-            // Incomplete JSON, put it back
             textBuffer = line + '\n' + textBuffer;
             break;
           }
@@ -110,7 +125,7 @@ export function useAIAssistant(): UseAIAssistantReturn {
         }
       }
     } catch (e) {
-      const errorMessage = e instanceof Error ? e.message : 'An error occurred';
+      const errorMessage = e instanceof Error ? e.message : 'Something went wrong. Please try again.';
       setError(errorMessage);
       console.error('AI Assistant error:', e);
     } finally {

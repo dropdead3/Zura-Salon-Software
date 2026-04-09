@@ -33,8 +33,9 @@ export interface LearningBoost {
 
 // ─── Constants ──────────────────────────────────────────────
 
-const EVENTS_KEY = 'zura-search-events';
-const FREQ_KEY = 'zura-nav-frequency-v2';
+const EVENTS_KEY_BASE = 'zura-search-events';
+const FREQ_KEY_BASE = 'zura-nav-frequency-v2';
+const GC_INTERVAL_KEY_BASE = 'zura-search-gc-last';
 const MAX_EVENTS = 500;
 const EVENT_TTL_DAYS = 90;
 const FREQ_TTL_DAYS = 60;
@@ -45,8 +46,23 @@ const ABANDONMENT_MIN_OCCURRENCES = 5;
 const ABANDONMENT_HIGH_THRESHOLD = 0.6;
 const QPA_MAX_BOOST = 0.15;
 const FREQ_NORMALIZE_CEILING = 15;
-const GC_INTERVAL_KEY = 'zura-search-gc-last';
 const GC_INTERVAL_MS = 60 * 60 * 1000; // 1 hour
+
+// ─── Org-Scoped Keys ───────────────────────────────────────
+
+let _orgId: string | undefined;
+
+export function setOrgScope(orgId?: string): void {
+  _orgId = orgId;
+}
+
+function scopedKey(base: string): string {
+  return _orgId ? `${base}:${_orgId}` : base;
+}
+
+function EVENTS_KEY() { return scopedKey(EVENTS_KEY_BASE); }
+function FREQ_KEY() { return scopedKey(FREQ_KEY_BASE); }
+function GC_INTERVAL_KEY() { return scopedKey(GC_INTERVAL_KEY_BASE); }
 
 // ─── Helpers ────────────────────────────────────────────────
 
@@ -66,7 +82,7 @@ function daysSince(timestamp: number): number {
 
 function readEvents(): SearchEvent[] {
   try {
-    return JSON.parse(localStorage.getItem(EVENTS_KEY) || '[]');
+    return JSON.parse(localStorage.getItem(EVENTS_KEY()) || '[]');
   } catch {
     return [];
   }
@@ -74,7 +90,7 @@ function readEvents(): SearchEvent[] {
 
 function writeEvents(events: SearchEvent[]): void {
   try {
-    localStorage.setItem(EVENTS_KEY, JSON.stringify(events));
+    localStorage.setItem(EVENTS_KEY(), JSON.stringify(events));
   } catch {
     // localStorage full or unavailable
   }
@@ -100,7 +116,7 @@ export function logSearchEvent(
 
 export function runGarbageCollection(): void {
   try {
-    const lastGC = parseInt(localStorage.getItem(GC_INTERVAL_KEY) || '0', 10);
+    const lastGC = parseInt(localStorage.getItem(GC_INTERVAL_KEY()) || '0', 10);
     if (Date.now() - lastGC < GC_INTERVAL_MS) return;
 
     // Prune old events
@@ -118,7 +134,7 @@ export function runGarbageCollection(): void {
     }
     writeFrequencyTimestamps(pruned);
 
-    localStorage.setItem(GC_INTERVAL_KEY, String(Date.now()));
+    localStorage.setItem(GC_INTERVAL_KEY(), String(Date.now()));
   } catch {
     // Silent failure
   }
@@ -128,7 +144,7 @@ export function runGarbageCollection(): void {
 
 function readFrequencyTimestamps(): Record<string, number[]> {
   try {
-    return JSON.parse(localStorage.getItem(FREQ_KEY) || '{}');
+    return JSON.parse(localStorage.getItem(FREQ_KEY()) || '{}');
   } catch {
     return {};
   }
@@ -136,7 +152,7 @@ function readFrequencyTimestamps(): Record<string, number[]> {
 
 function writeFrequencyTimestamps(map: Record<string, number[]>): void {
   try {
-    localStorage.setItem(FREQ_KEY, JSON.stringify(map));
+    localStorage.setItem(FREQ_KEY(), JSON.stringify(map));
   } catch {
     // localStorage unavailable
   }
