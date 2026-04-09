@@ -1,8 +1,11 @@
 import React, { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { createPortal } from 'react-dom';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Sparkles, Search } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { tokens } from '@/lib/design-tokens';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { useAIAssistant } from '@/hooks/useAIAssistant';
 import { useActiveLocations } from '@/hooks/useLocations';
 import { useSearchRanking } from '@/hooks/useSearchRanking';
@@ -23,6 +26,7 @@ import { useCommandPreview } from '@/hooks/useCommandPreview';
 import { CommandPreviewPanel } from './CommandPreviewPanel';
 import { CommandInlineAnalyticsCard, detectAnalyticsHint } from './CommandInlineAnalyticsCard';
 import { CommandChainBar } from './CommandChainBar';
+import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import {
   mainNavItems,
   myToolsNavItems,
@@ -60,6 +64,9 @@ const NAV_LABEL_MAP = (() => {
   return map;
 })();
 
+const SPRING_OPEN = { type: 'spring' as const, damping: 28, stiffness: 320, mass: 0.7 };
+const SPRING_CLOSE = { type: 'spring' as const, damping: 32, stiffness: 400, mass: 0.6 };
+
 export function ZuraCommandSurface({ open, onOpenChange, filterNavItems }: ZuraCommandSurfaceProps) {
   const [query, setQuery] = useState('');
   const [aiMode, setAiMode] = useState(false);
@@ -70,6 +77,8 @@ export function ZuraCommandSurface({ open, onOpenChange, filterNavItems }: ZuraC
   const effectiveRoles = useEffectiveRoles();
   const { dashPath } = useOrgDashboardPath();
   const lastQueryBeforeCloseRef = useRef('');
+  const isMobile = useIsMobile();
+  const { isImpersonating } = useOrganizationContext();
 
   const { response: aiResponse, isLoading: aiLoading, error: aiError, sendMessage, reset: resetAI } = useAIAssistant();
   const { recents, addRecent, clearRecents } = useRecentSearches();
@@ -265,128 +274,81 @@ export function ZuraCommandSurface({ open, onOpenChange, filterNavItems }: ZuraC
     close();
   }, [navigate, close, resolveOrgPath]);
 
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent
-        hideClose
-        className={cn(
-          'p-0 gap-0 border-border',
-          tokens.drawer.content,
-          'rounded-xl w-[calc(100vw-2rem)]',
-          'max-h-[min(600px,80vh)]',
-          'flex flex-col',
-          'top-[35%] translate-y-[-35%]',
-          'shadow-[0_24px_64px_-16px_hsl(var(--foreground)/0.15)]',
-          'transition-[max-width] duration-200 ease-out',
-          hasPreview ? 'max-w-[1080px]' : 'max-w-[720px]',
-          'max-sm:max-w-none max-sm:w-screen max-sm:h-screen max-sm:max-h-screen max-sm:rounded-none max-sm:border-0 max-sm:top-[50%] max-sm:translate-y-[-50%]'
-        )}
-        overlayClassName={tokens.drawer.overlay}
-        style={{ left: 'calc(50% + var(--sidebar-offset, 0px))' }}
-        onOpenAutoFocus={e => e.preventDefault()}
-      >
-        <span className="sr-only">Search</span>
+  const handleAIFallback = useCallback(() => {
+    setAiMode(true);
+    if (query.trim()) {
+      sendMessage(query);
+    }
+  }, [query, sendMessage]);
 
-        <CommandInput
-          query={query}
-          onQueryChange={setQuery}
-          aiMode={aiMode}
-          onAiModeToggle={() => { setAiMode(m => !m); resetAI(); }}
-          onKeyDown={handleKeyDown}
-        />
+  // God Mode bar offset
+  const godModeOffset = isImpersonating ? 44 : 0;
+  // Top bar height + padding (~72px desktop)
+  const panelTop = isMobile ? godModeOffset : godModeOffset + 72;
 
-        {chainedQuery && (
-          <CommandChainBar
-            chain={chainedQuery}
-            query={query}
-            aiMode={aiMode}
-            hasActiveAction={hasActiveAction}
-            locationNames={locationNames}
-            onQueryChange={setQuery}
-            onNavigate={(path) => {
-              const resolvedPath = resolveOrgPath(path);
-              navigate(resolvedPath);
-              close();
-            }}
+  return createPortal(
+    <AnimatePresence>
+      {open && (
+        <>
+          {/* Backdrop */}
+          <motion.div
+            key="cmd-backdrop"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.15 }}
+            className="fixed inset-0 bg-black/20 backdrop-blur-sm"
+            style={{ zIndex: 190, top: godModeOffset > 0 ? `${godModeOffset}px` : undefined }}
+            onClick={close}
           />
-        )}
 
-        <div className="flex-1 min-h-0 flex">
-          {/* Results column */}
-          <div className={cn(
-            'flex-1 min-w-0 overflow-y-auto',
-            hasPreview && 'lg:max-w-[calc(100%-340px)]'
-          )}>
-            {hasQuery && showAICard && (
-              <CommandAIAnswerCard
-                response={aiResponse}
-                isLoading={aiLoading}
-                error={aiError}
-              />
+          {/* Command Surface Panel */}
+          <motion.div
+            key="cmd-panel"
+            initial={{ opacity: 0, y: -12 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -12 }}
+            transition={SPRING_OPEN}
+            className={cn(
+              'fixed flex flex-col border border-border rounded-xl overflow-hidden',
+              tokens.drawer.content,
+              'shadow-[0_24px_64px_-16px_hsl(var(--foreground)/0.15)]',
+              'transition-[max-width] duration-200 ease-out',
+              hasPreview ? 'max-w-[1080px]' : 'max-w-[720px]',
+              // Mobile: full-screen sheet
+              isMobile && 'inset-0 max-w-none rounded-none border-0 max-h-none',
             )}
+            style={{
+              zIndex: 200,
+              ...(!isMobile ? {
+                top: `${panelTop}px`,
+                left: 'calc(50% + var(--sidebar-offset, 0px))',
+                transform: 'translateX(-50%)',
+                width: 'calc(100vw - 2rem)',
+                maxHeight: `min(560px, calc(100vh - ${panelTop + 40}px))`,
+              } : {
+                top: `${panelTop}px`,
+              }),
+            }}
+          >
+            <span className="sr-only">Search</span>
 
-            {hasActiveAction && actionExecution.activeAction && (
-              <CommandActionPanel
-                action={actionExecution.activeAction}
-                actionState={actionExecution.actionState}
-                missingInputs={actionExecution.missingInputs}
-                collectedInputs={actionExecution.collectedInputs}
-                result={actionExecution.result}
-                onProvideInput={actionExecution.provideInput}
-                onSubmitInputs={actionExecution.submitInputs}
-                onConfirm={() => {
-                  actionExecution.confirm();
-                  close();
-                }}
-                onCancel={actionExecution.cancel}
-              />
-            )}
+            <CommandInput
+              query={query}
+              onQueryChange={setQuery}
+              aiMode={aiMode}
+              onAiModeToggle={() => { setAiMode(m => !m); resetAI(); }}
+              onKeyDown={handleKeyDown}
+            />
 
-            {hasQuery ? (
-              hasActiveAction ? null : (
-                hasResults ? (
-                  <>
-                    {analyticsHint && (
-                      <CommandInlineAnalyticsCard
-                        hint={analyticsHint}
-                        onNavigate={handleInlineAnalyticsNav}
-                      />
-                    )}
-                    <CommandResultPanel
-                      groups={groups}
-                      selectedIndex={selectedIndex}
-                      query={query}
-                      onSelect={handleSelect}
-                      onHover={handleHover}
-                    />
-                  </>
-                ) : (
-                  !aiMode && (
-                    hasSuggestions ? (
-                      <CommandSuggestionPanel
-                        query={query}
-                        suggestions={suggestions}
-                        onNavigate={handleSuggestionNavigate}
-                        onQueryChange={setQuery}
-                        onSwitchToAI={() => setAiMode(true)}
-                      />
-                    ) : (
-                      <div className="py-10 px-6 text-center">
-                        <p className="font-sans text-sm text-muted-foreground">
-                          No results for "<span className="text-foreground font-medium">{query}</span>"
-                        </p>
-                      </div>
-                    )
-                  )
-                )
-              )
-            ) : (
-              <CommandProactiveState
-                recentSearches={recents}
-                recentPages={recentPages}
-                onSearchSelect={handleRecentSearchSelect}
-                onPageSelect={handleRecentPageSelect}
-                onClearRecents={clearRecents}
+            {chainedQuery && (
+              <CommandChainBar
+                chain={chainedQuery}
+                query={query}
+                aiMode={aiMode}
+                hasActiveAction={hasActiveAction}
+                locationNames={locationNames}
+                onQueryChange={setQuery}
                 onNavigate={(path) => {
                   const resolvedPath = resolveOrgPath(path);
                   navigate(resolvedPath);
@@ -394,29 +356,134 @@ export function ZuraCommandSurface({ open, onOpenChange, filterNavItems }: ZuraC
                 }}
               />
             )}
-          </div>
 
-          {/* Preview panel — desktop only */}
-          {hasPreview && hasQuery && hasResults && (
-            <CommandPreviewPanel result={activePreview} />
-          )}
-        </div>
+            <div className="flex-1 min-h-0 flex">
+              {/* Results column */}
+              <div className={cn(
+                'flex-1 min-w-0 overflow-y-auto',
+                hasPreview && 'lg:max-w-[calc(100%-340px)]'
+              )}>
+                {hasQuery && showAICard && (
+                  <CommandAIAnswerCard
+                    response={aiResponse}
+                    isLoading={aiLoading}
+                    error={aiError}
+                  />
+                )}
 
-        <div className="border-t border-border/30 px-4 py-2 flex items-center gap-3 text-[10px] text-muted-foreground font-sans shrink-0">
-          <span className="flex items-center gap-1">
-            <kbd className="rounded border border-border/50 bg-muted/70 px-1 py-0.5 font-mono text-[11px]">↑↓</kbd>
-            navigate
-          </span>
-          <span className="flex items-center gap-1">
-            <kbd className="rounded border border-border/50 bg-muted/70 px-1 py-0.5 font-mono text-[11px]">↵</kbd>
-            open
-          </span>
-          <span className="flex items-center gap-1">
-            <kbd className="rounded border border-border/50 bg-muted/70 px-1 py-0.5 font-mono text-[11px]">Tab</kbd>
-            AI mode
-          </span>
-        </div>
-      </DialogContent>
-    </Dialog>
+                {hasActiveAction && actionExecution.activeAction && (
+                  <CommandActionPanel
+                    action={actionExecution.activeAction}
+                    actionState={actionExecution.actionState}
+                    missingInputs={actionExecution.missingInputs}
+                    collectedInputs={actionExecution.collectedInputs}
+                    result={actionExecution.result}
+                    onProvideInput={actionExecution.provideInput}
+                    onSubmitInputs={actionExecution.submitInputs}
+                    onConfirm={() => {
+                      actionExecution.confirm();
+                      close();
+                    }}
+                    onCancel={actionExecution.cancel}
+                  />
+                )}
+
+                {hasQuery ? (
+                  hasActiveAction ? null : (
+                    hasResults ? (
+                      <>
+                        {analyticsHint && (
+                          <CommandInlineAnalyticsCard
+                            hint={analyticsHint}
+                            onNavigate={handleInlineAnalyticsNav}
+                          />
+                        )}
+                        <CommandResultPanel
+                          groups={groups}
+                          selectedIndex={selectedIndex}
+                          query={query}
+                          onSelect={handleSelect}
+                          onHover={handleHover}
+                        />
+                      </>
+                    ) : (
+                      !aiMode && (
+                        hasSuggestions ? (
+                          <CommandSuggestionPanel
+                            query={query}
+                            suggestions={suggestions}
+                            onNavigate={handleSuggestionNavigate}
+                            onQueryChange={setQuery}
+                            onSwitchToAI={() => setAiMode(true)}
+                          />
+                        ) : (
+                          <div className="py-10 px-6 text-center">
+                            <Search className="w-6 h-6 mx-auto mb-3 text-muted-foreground/15" />
+                            <p className="font-sans text-sm text-muted-foreground mb-1">
+                              No results for "<span className="text-foreground font-medium">{query}</span>"
+                            </p>
+                            <p className="font-sans text-xs text-muted-foreground mb-4">
+                              Try a different search, or continue with AI
+                            </p>
+                            <button
+                              type="button"
+                              onClick={handleAIFallback}
+                              className={cn(
+                                'inline-flex items-center gap-1.5 font-sans text-xs font-medium',
+                                'text-primary border border-primary/20 rounded-full px-4 py-2',
+                                'bg-card-inner/60 hover:bg-primary/5',
+                                'transition-colors duration-150'
+                              )}
+                              tabIndex={-1}
+                            >
+                              <Sparkles className="w-3.5 h-3.5" />
+                              Continue with Zura AI
+                            </button>
+                          </div>
+                        )
+                      )
+                    )
+                  )
+                ) : (
+                  <CommandProactiveState
+                    recentSearches={recents}
+                    recentPages={recentPages}
+                    onSearchSelect={handleRecentSearchSelect}
+                    onPageSelect={handleRecentPageSelect}
+                    onClearRecents={clearRecents}
+                    onNavigate={(path) => {
+                      const resolvedPath = resolveOrgPath(path);
+                      navigate(resolvedPath);
+                      close();
+                    }}
+                  />
+                )}
+              </div>
+
+              {/* Preview panel — desktop only */}
+              {hasPreview && hasQuery && hasResults && (
+                <CommandPreviewPanel result={activePreview} />
+              )}
+            </div>
+
+            <div className="border-t border-border/30 px-4 py-2 flex items-center gap-3 text-[10px] text-muted-foreground font-sans shrink-0">
+              <span className="flex items-center gap-1">
+                <kbd className="rounded border border-border/50 bg-muted/70 px-1 py-0.5 font-mono text-[11px]">↑↓</kbd>
+                navigate
+              </span>
+              <span className="flex items-center gap-1">
+                <kbd className="rounded border border-border/50 bg-muted/70 px-1 py-0.5 font-mono text-[11px]">↵</kbd>
+                open
+              </span>
+              <span className="flex items-center gap-1">
+                <kbd className="rounded border border-border/50 bg-muted/70 px-1 py-0.5 font-mono text-[11px]">Tab</kbd>
+                AI mode
+              </span>
+            </div>
+          </motion.div>
+        </>
+      )}
+    </AnimatePresence>,
+    document.body,
   );
 }

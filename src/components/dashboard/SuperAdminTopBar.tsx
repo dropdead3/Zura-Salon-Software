@@ -67,6 +67,7 @@ interface SuperAdminTopBarProps {
   HideNumbersToggle: React.ComponentType;
   roleBadges: RoleBadgeConfig[];
   onSearchClick: () => void;
+  isSearchOpen?: boolean;
   // State
   isAdmin: boolean;
   isPlatformUser: boolean;
@@ -124,6 +125,7 @@ export function SuperAdminTopBar({
   HideNumbersToggle,
   roleBadges,
   onSearchClick,
+  isSearchOpen,
   isAdmin,
   isPlatformUser,
   isStylistRole,
@@ -177,7 +179,7 @@ export function SuperAdminTopBar({
             <OrganizationSwitcher compact />
           )}
           <div className="min-w-0 w-full max-w-[280px] lg:max-w-md xl:max-w-lg 2xl:max-w-xl">
-            <TopBarSearch onClick={onSearchClick} />
+            <TopBarSearch onClick={onSearchClick} isOpen={isSearchOpen} />
           </div>
         </div>
 
