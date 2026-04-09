@@ -1,95 +1,67 @@
 
 
-# Empty-State, No-Results, and AI Fallback Polish
+# Fix: Anchor Command Surface to Search Bar Position
 
-## Audit Findings
+## Root Cause
 
-**Pre-type state** (`CommandProactiveState`): Already strong — has Continue, Quick Paths, Attention, and Suggested sections. The absolute fallback (no data at all) shows a bare "Search or ask Zura..." with a ghosted icon, which is fine but could be slightly warmer.
-
-**No-direct-results state** (lines 420-442 in `ZuraCommandSurface`): Currently an inline block with centered Search icon, "No results for..." text, generic "Try a different search, or continue with AI" copy, and a standalone `Continue with Zura AI` pill button. Issues: centered layout feels like an error state, the copy is generic, the button uses `tabIndex={-1}` (not keyboard-reachable), and there's no partial interpretation shown.
-
-**With suggestions** (`CommandSuggestionPanel`): Shows "No results for..." header + suggestion rows. The AI continuation is buried inside suggestions as a `topic` type row. No standalone AI CTA if suggestions exist.
-
-**`CommandEmptyState`**: Exists as a component but is never imported or used in `ZuraCommandSurface`. Dead code — uses "Ask AI instead" copy.
-
-**AI Answer Card**: Good pattern — `bg-card-inner/80 backdrop-blur-sm border-primary/10`. This material language should be reused for the AI fallback card.
-
-**Key problems to fix:**
-1. No-results state feels like failure — needs reframing
-2. AI continuation button not keyboard-accessible (`tabIndex={-1}`)
-3. `CommandEmptyState` is dead code — should be removed or consolidated
-4. `CommandSuggestionPanel` duplicates the "No results" header but has no AI CTA when suggestions exist
-5. Partial interpretation from `chainedQuery` not shown in no-results state
-6. Copy is generic, not Zura-native
-
-## Plan
-
-### Files to Edit (3)
-
-**`src/components/command-surface/CommandSuggestionRow.tsx`** — Refine `CommandSuggestionPanel` to include an AI continuation row at the bottom when suggestions exist, and improve copy from "No results for..." to softer framing.
-
-**`src/components/command-surface/ZuraCommandSurface.tsx`** — Replace the inline no-results block (lines 420-442) with a new `CommandNoResultsState` component. Pass `chainedQuery` for partial interpretation display. Make AI fallback row keyboard-navigable (remove `tabIndex={-1}`, integrate into arrow key navigation). Wire Enter on AI fallback row to trigger `handleAIFallback`.
-
-**`src/components/command-surface/CommandNoResultsState.tsx`** — New component. Clean, left-aligned layout (not centered). Three sections:
-1. **Partial interpretation row** (conditional): If `chainedQuery` has `slotCount >= 1`, show a subtle line like "Zura understood: [chips]" using the same `ChainSegment` chip style, establishing trust that the query was parsed even though no direct match exists
-2. **AI continuation card**: Primary action — `bg-card-inner/60 border border-primary/10 rounded-lg` matching `CommandAIAnswerCard` material. Sparkles icon + "Ask Zura" label + the user's query shown as context. Full keyboard focus support. Hover: `bg-primary/5`. Copy: "No direct match for [query]. Zura AI can help interpret, answer, or route this."
-3. **Secondary suggestions**: If any exist, render beneath the card using existing `CommandSuggestionRow` pattern
-
-**`src/components/command-surface/CommandEmptyState.tsx`** — Delete (dead code, never imported).
-
-### Copy Decisions
-
-| State | Current | Proposed |
-|-------|---------|----------|
-| No-results header | "No results for '...'" | "No direct match" (smaller, calmer — not an error) |
-| No-results subtext | "Try a different search, or continue with AI" | Removed — the AI card itself communicates the next step |
-| AI CTA button | "Continue with Zura AI" | "Ask Zura" (shorter, native, action-first) |
-| AI CTA supporting text | None | "Zura AI can help answer or route this" (one line beneath, xs, muted) |
-| Suggestion panel header | "No results for '...'" | "No direct match. Try these instead:" |
-
-### AI Continuation Card Design
-
+The command surface panel (lines 325-336 of `ZuraCommandSurface.tsx`) uses viewport-centered positioning:
 ```
-┌─────────────────────────────────────────────┐
-│  ✦  Ask Zura                          ↵     │
-│     Zura AI can help answer or route this   │
-└─────────────────────────────────────────────┘
+left: 'calc(50% + var(--sidebar-offset, 0px))',
+transform: 'translateX(-50%)',
 ```
+This places it in the center of the content area regardless of where the search bar actually sits. The search bar lives in the LEFT zone of the top bar (line 176-183 of `SuperAdminTopBar.tsx`), so the panel appears disconnected — centered on screen instead of growing from the pill.
 
-- Material: `bg-card-inner/60 border border-primary/10 rounded-lg mx-3 p-3`
-- Icon: Sparkles `w-4 h-4 text-primary`
-- Title: `font-sans text-sm text-foreground font-medium` — "Ask Zura"
-- Subtitle: `font-sans text-xs text-muted-foreground` — "Zura AI can help answer or route this"
-- Right affordance: subtle Enter key hint (`kbd` style matching footer)
-- States: idle → hover (`bg-primary/5`) → focused (ring-1 ring-primary/20) → pressed (scale-[0.995]) → loading (Sparkles animate-pulse, card transitions into AI answer)
+## Solution: Ref-Based Anchor Measurement
 
-### Keyboard Behavior
+1. Add a `ref` to `TopBarSearch` and forward it up to `DashboardLayout`
+2. Pass the ref into `ZuraCommandSurface`
+3. On open, measure `ref.getBoundingClientRect()` to get the pill's exact screen position
+4. Position the panel's top-left corner at the pill's top-left corner (with the pill's Y as `top`, pill's X as `left`)
+5. The panel grows downward and rightward from that anchor — no centering, no `translateX(-50%)`
 
-- In no-results state with no suggestions: AI continuation card is auto-focused (selectedIndex = 0 maps to it). Enter triggers `handleAIFallback`.
-- In no-results state with suggestions: AI card is the first item, suggestions follow. Arrow keys navigate all. Enter on AI card triggers AI mode; Enter on suggestion navigates/corrects.
-- Integration: Add a `noResultsActionCount` (1 for AI card + suggestion count) to the keyboard handler so ArrowDown/Up can reach the AI card and suggestions.
+## Files to Edit (4)
 
-### Partial Interpretation Display
+### `TopBarSearch.tsx` — Add forwardRef
+- Convert to `forwardRef` so the button element's DOM rect can be measured from parent
+- Forward ref to the root `<button>`
 
-When `chainedQuery.slotCount >= 1` and no results exist, show a muted line above the AI card:
-```
-Understood: [📊 Retail] [🕐 Last 30 Days]  — no direct match
-```
-Uses existing `ChainSegment` chips at reduced opacity. This builds trust — the user sees Zura parsed their intent even without a deterministic result.
+### `SuperAdminTopBar.tsx` — Accept and forward searchBarRef
+- Add `searchBarRef?: React.RefObject<HTMLButtonElement>` to props
+- Pass to `TopBarSearch` via `ref={searchBarRef}`
 
-### Responsive
+### `DashboardLayout.tsx` — Create ref, pass to both top bar and command surface
+- Create `searchBarRef = useRef<HTMLButtonElement>(null)`
+- Pass to `SuperAdminTopBar` as `searchBarRef`
+- Pass to `ZuraCommandSurface` as `anchorRef`
 
-- Desktop: AI card with padding, partial interpretation visible
-- Mobile (<768px): AI card full-width, no partial interpretation (keep it simple)
+### `ZuraCommandSurface.tsx` — Replace centering with anchor-based positioning
+- Accept `anchorRef?: React.RefObject<HTMLElement>`
+- On open (inside effect or useMemo), call `anchorRef.current?.getBoundingClientRect()` to get `{ top, left, width, height }`
+- Position panel: `top: rect.top`, `left: rect.left` (no centering transform)
+- Width stays `max-w-[720px]` / `max-w-[1080px]` but grows rightward from anchor
+- Add `max-w` guard so it doesn't overflow viewport right edge: `maxWidth: min(720, viewportWidth - rect.left - 16)`
+- Set `transformOrigin: 'top left'` on the motion.div
+- Keep existing spring animation but change initial from `y: -12` to `scale: 0.97, opacity: 0` with `transformOrigin: 'top left'` for a subtle grow-from-pill effect
+- Mobile: keep existing full-screen sheet behavior (unchanged)
+- Recalculate position on resize via a simple state + resize listener
 
-### Files Summary
+## Animation Refinement
 
-| File | Action |
-|------|--------|
-| `src/components/command-surface/CommandNoResultsState.tsx` | Create — unified no-results + AI fallback |
-| `src/components/command-surface/ZuraCommandSurface.tsx` | Edit — replace inline no-results block with new component, wire keyboard |
-| `src/components/command-surface/CommandSuggestionRow.tsx` | Edit — add AI CTA row at bottom of suggestion panel, refine copy |
-| `src/components/command-surface/CommandEmptyState.tsx` | Delete — dead code |
+Open: `scale: 0.97, opacity: 0 → scale: 1, opacity: 1` with `transformOrigin: 'top left'` using existing `SPRING_OPEN`. This makes it feel like the pill expands into the panel.
 
-No database changes. No new design tokens.
+Close: reverse — `scale: 1 → scale: 0.97, opacity: 0` with `SPRING_CLOSE`, collapsing back toward the pill origin.
+
+The `y: -12` translate is removed — scale-from-origin replaces it since the panel now actually originates from the pill's position.
+
+## Geometry on Desktop
+
+- Panel top = search pill top (typically ~top of the h-14 bar)
+- Panel left = search pill left
+- Panel grows down + right from there
+- Max height unchanged: `min(560px, calc(100vh - top - 40px))`
+- Right-edge overflow guard ensures panel stays within viewport
+
+## No Other Changes
+
+All internal content (proactive state, results, AI fallback, chain bar, preview panel, footer) remains untouched. Only the outer container positioning and animation origin change.
 
