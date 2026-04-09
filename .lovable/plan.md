@@ -1,154 +1,153 @@
 
 
-# Command Overlay UI — Premium Polish & Refinement
+# Hover Previews and Inline Analytics Cards — Command Surface
 
-## Audit Summary
+## Architecture Decision
 
-The overlay already exists as `ZuraCommandSurface.tsx` with full functionality: search input, result panels, AI answers, actions, keyboard navigation, and recent sections. The foundation is solid. What follows is a targeted polish pass to elevate it from "functional search modal" to "premium command layer."
+**Right-side panel approach** — the dialog container expands from `max-w-[720px]` to `max-w-[1080px]` when a preview is active, with the results list taking ~55% and the preview panel taking ~45%. On screens below 1024px or mobile, previews render inline beneath the selected row instead. This avoids portal complexity and keeps the preview visually connected to the result.
 
-### What Already Works Well
-- Glass aesthetic via `tokens.drawer.content` (`bg-card/80 backdrop-blur-xl`)
-- Sidebar-aware centering via `--sidebar-offset`
-- Full keyboard navigation (↑↓, Enter, Esc, Tab)
-- Mobile full-screen (`max-sm:w-screen max-sm:h-screen`)
-- Grouped results, AI card, action panel, recent section
-- Footer with keyboard hints
+## Files to Create
 
-### Gaps Identified
+### 1. `src/components/command-surface/CommandPreviewPanel.tsx`
+The right-side preview container. Receives the selected `RankedResult` and renders the appropriate entity preview card based on `result.type`.
 
-1. **Close button visible** — Dialog's default `X` button renders in top-right, competing with the search input controls
-2. **Overlay position** — centered vertically (`top-[50%]`); command surfaces feel better top-weighted (~30-35% from top)
-3. **Container radius mismatch** — Dialog defaults to `rounded-2xl`, ZuraCommandSurface overrides to `rounded-xl`. Should be consistent
-4. **Input area lacks premium feel** — plain `border-b border-border/50` divider, search icon is standard weight, placeholder is generic
-5. **Result rows lack depth** — no selected-row elevation, hover is plain `bg-muted`, no type-specific icon coloring
-6. **Recent section feels thin** — icons are small/faint, no hover feedback beyond color, empty state is basic
-7. **AI Answer card** — `bg-card-inner` blends into container; needs slight lift to feel like a distinct answer surface
-8. **Footer hints** — functional but could feel more integrated with the glass aesthetic
-9. **Empty state** — plain text, no visual weight, no personality
-10. **Entry animation** — default dialog zoom-in-95 is fine but could use top-weighted slide origin
-11. **Suggestion panel** — functional but visually disconnected from the result panel style
+- Fixed width `w-[340px]`, full height of the scroll area
+- Border-left separator `border-l border-border/20`
+- `bg-card-inner/50 backdrop-blur-sm`
+- Smooth `animate-in fade-in-0 slide-in-from-right-2 duration-150`
+- Contains a switch on `result.type` → renders the correct preview component
+- Skeleton fallback while data loads
+- Empty state: shows result title + subtitle + "Open to view details" — never blank
 
-## Changes
+### 2. `src/components/command-surface/previews/ClientPreview.tsx`
+Uses a **new lightweight hook** `useClientPreviewData(clientId)` that fetches from `clients` table with a single `.select()` — name, last_visit_date, total_spend, visit_count, is_vip, notes. Also fetches next upcoming appointment from `phorest_appointments` (1 row, future date, limit 1).
 
-### File 1: `src/components/command-surface/ZuraCommandSurface.tsx`
+Layout:
+- Name (font-display, text-base)
+- VIP badge if applicable
+- 4 KPI mini-tiles: Last Visit, Total Spend (BlurredAmount), Visits, Upcoming Appt
+- Notes snippet (2 lines max, truncated)
+- "Open Client Profile →" link at bottom
 
-**Container refinements:**
-- Override `top-[50%]` → `top-[35%]` (top-weighted positioning, feels like command layer not modal)
-- Add `translate-y-[-35%]` to match
-- Hide the default Dialog close button via `hideClose` or by adding a `[&>button:last-child]:hidden` override
-- Max-width bump: `max-w-2xl` → `max-w-[720px]` (slightly wider for result breathing room)
-- Add subtle top shadow: `shadow-[0_24px_64px_-16px_hsl(var(--foreground)/0.15)]` for depth without glow
+### 3. `src/components/command-surface/previews/TeamPreview.tsx`
+Uses `useIndividualStaffReport(staffUserId)` — already exists and returns revenue, service count, etc. Cherry-pick the summary fields only.
 
-**Footer polish:**
-- Slightly refine the kbd styling to match the TopBarSearch ⌘K badge treatment (consistent border/bg)
-- Add `font-display` to the shortcut labels for consistency with Zura typography
+Layout:
+- Name + avatar placeholder
+- 3 KPI tiles: Revenue (BlurredAmount), Utilization %, Rebooking Rate
+- TrendSparkline for revenue (reuse existing component, width=200, height=32)
+- "Open Stylist Profile →" link
 
-### File 2: `src/components/command-surface/CommandInput.tsx`
+### 4. `src/components/command-surface/previews/NavigationPreview.tsx`
+For pages/features — no data fetch needed. Uses static metadata from nav config.
 
-**Input area refinements:**
-- Increase padding: `px-4 py-3` → `px-5 py-3.5` (more breathing room)
-- Search icon: add `strokeWidth={1.5}` to match TopBarSearch (thinner, premium)
-- Placeholder: "Search pages, people, or ask a question..." → "Search or ask Zura..." (matches the search bar, shorter, branded)
-- AI toggle pill: add `rounded-full` instead of `rounded-md` (pill shape, more intentional)
-- Esc kbd badge: match updated TopBarSearch badge styling (`bg-muted/70 border-border/50 text-[11px]`)
-- Add inner highlight to input area: `shadow-[inset_0_1px_0_0_hsl(var(--foreground)/0.03)]` on the container div
+Layout:
+- Page title
+- 1-line description (from nav item subtitle or a static description map)
+- "What you'll find here" — 2-3 bullet points (static, from a lookup)
+- Keyboard shortcut if available
 
-### File 3: `src/components/command-surface/CommandResultRow.tsx`
+### 5. `src/components/command-surface/previews/ReportPreview.tsx`
+For report-type results. Uses existing hooks based on report type (e.g., `useRetailAnalytics` summary, `useSalesMetrics`). Only fetches the headline metric + one sparkline.
 
-**Row refinements:**
-- Height: `h-11` → `h-12` (slightly more vertical space for scannability)
-- Selected state: add `shadow-[inset_0_1px_0_0_hsl(var(--foreground)/0.05)]` for subtle depth on active row
-- Hover: `hover:bg-muted` → `hover:bg-muted/60` (softer hover, less aggressive)
-- Icon container: wrap icon in a `w-7 h-7 rounded-md bg-muted/40 flex items-center justify-center` box when selected, plain otherwise
-- Type badge: refine to use `bg-muted/40` instead of `variant="outline"` for a softer, more integrated appearance
-- ChevronRight: only show on hover/selected (add `opacity-0 group-hover/row:opacity-100` with `group/row` on the button)
-- Add `group/row` class to the button element
+Layout:
+- Report name
+- Headline metric (e.g., "$48,200 this month")
+- TrendSparkline (reuse)
+- "Open Report →"
 
-### File 4: `src/components/command-surface/CommandResultPanel.tsx`
+### 6. `src/hooks/useClientPreviewData.ts`
+Lightweight single-client fetch. Returns `{ client, nextAppointment, isLoading }`. Uses `staleTime: 60_000` to avoid refetching on rapid row changes. Query key includes client ID.
 
-**Panel refinements:**
-- Group dividers: `border-t border-border/30` → `border-t border-border/20` (even softer separation)
-- Group labels: already using `tokens.heading.subsection` — no change needed
-- Add max visible results hint: if a group has >5 results, show count badge after label
+### 7. `src/hooks/useCommandPreview.ts`
+Manages preview state: selected result, hover delay timer (120ms), and data resolution.
 
-### File 5: `src/components/command-surface/CommandRecentSection.tsx`
+- `hoveredResult` state with 120ms debounce before committing to `activePreview`
+- When `activePreview` changes, the preview panel re-renders
+- Keyboard navigation (arrow keys) also updates `activePreview` immediately (no delay)
+- Only one preview at a time
+- Clears on query change
 
-**Recent section refinements:**
-- Row height: `h-9` → `h-10` (match result row proportions)
-- Icons: `w-3.5 h-3.5` → `w-4 h-4` (slightly larger for visual weight)
-- Icon opacity: `text-muted-foreground/50` → `text-muted-foreground/40` (softer at rest)
-- Add hover icon brightening: `group/recent` on button, `group-hover/recent:text-muted-foreground` on icon
-- Empty state: replace plain text with slightly richer layout — use `Search` icon at `w-6 h-6` with `text-muted-foreground/15`, tighter spacing, branded copy "Search or ask Zura..."
-- Add `transition-colors duration-150` to row buttons
+## Files to Edit
 
-### File 6: `src/components/command-surface/CommandAIAnswerCard.tsx`
+### 8. `src/components/command-surface/ZuraCommandSurface.tsx`
+- Import `CommandPreviewPanel` and `useCommandPreview`
+- Change the scroll area from single column to a `flex` row when preview is active (desktop only)
+- Widen container: `max-w-[720px]` → `max-w-[720px] has-[.preview-panel]:max-w-[1080px]` (CSS-driven, or conditional class)
+- Pass `onHover` callback to `CommandResultPanel` which propagates to rows
+- Pass `selectedResult` to preview panel
+- Add `transition-[max-width] duration-200 ease-out` for smooth width change
+- Mobile: preview renders inline, no width change
 
-**AI card refinements:**
-- Border: `border-border/50` → `border-primary/10` (very subtle brand tint on AI surfaces)
-- Background: `bg-card-inner` → `bg-card-inner/80` with a `backdrop-blur-sm` (slight glass lift from results)
-- Sparkles icon: `w-3 h-3` → `w-3.5 h-3.5` (slightly more presence)
-- "AI Answer" label: already uses correct tiny uppercase token pattern — no change
-- Show more/less button: add `transition-colors duration-150`
+### 9. `src/components/command-surface/CommandResultRow.tsx`
+- Add `onMouseEnter` prop → calls `onHover(result)`
+- Add `onFocus` prop → calls `onHover(result)` (keyboard a11y)
+- No visual changes — hover/focus states already polished
 
-### File 7: `src/components/command-surface/CommandEmptyState.tsx`
+### 10. `src/components/command-surface/CommandResultPanel.tsx`
+- Accept and forward `onHover` callback to each `CommandResultRow`
 
-**Empty state refinements:**
-- Reduce vertical padding: `py-10` → `py-8`
-- Icon: `w-8 h-8` → `w-6 h-6`, `text-muted-foreground/30` → `text-muted-foreground/15` (more ghosted)
-- Add a subtle "Try:" suggestion line with 2-3 example queries as clickable pills
-- "Ask AI instead" link: wrap in a subtle border pill instead of plain text link
+## Inline Analytics Cards
 
-### File 8: `src/components/command-surface/CommandSuggestionRow.tsx`
+### 11. `src/components/command-surface/CommandInlineAnalyticsCard.tsx`
+Injected into result groups when the query matches a high-confidence analytics pattern (e.g., "retail", "revenue", "rebooking"). Rendered above the first result group.
 
-**Suggestion panel refinements:**
-- Row height: match `h-10` for consistency
-- Icons: `w-3.5 h-3.5` → `w-4 h-4` for consistency
-- Add `transition-colors duration-150` to rows
-- "No results" header: reduce icon size from `w-6 h-6` to `w-5 h-5`, tighten spacing
+- Max 1 card per query
+- Uses existing hooks: `useSalesMetrics`, `useRetailAnalytics`, `useRebookingRate`
+- Layout: compact card (h-20), icon left, metric center (BlurredAmount), trend right (TrendSparkline), CTA "View Report →"
+- Matches `bg-card-inner/60 border border-border/30 rounded-lg mx-4 my-2`
+- Pattern matching: map of query keywords → { hook, metric field, label, path }
 
-### File 9: `src/components/ui/dialog.tsx`
+### 12. `src/hooks/useSearchRanking.ts`
+- Add `inlineAnalyticsHint` to ranking output — a simple `{ type: 'retail' | 'revenue' | 'rebooking' | null }` derived from parsed query intent + filter keywords
+- Only emits when confidence is high (exact keyword match, not fuzzy)
 
-**Dialog base refinements:**
-- Add support for `hideClose` prop on `DialogContent` to suppress the X button when used as a command surface
-- Top-weight option: allow `className` to override `top-[50%]` positioning (already works since it's in `cn()`)
+## Trigger & Delay Logic
 
-## Entry Transition
+- **Mouse hover**: 120ms delay via `setTimeout`, cleared on mouse leave or new hover
+- **Keyboard navigation**: Immediate (0ms) — user is actively browsing
+- **Query change**: Clear active preview, reset timer
+- **Mobile tap**: No preview panel; instead, selected row expands inline with a compact version
 
-The dialog already uses `animate-in`/`animate-out` with `zoom-in-95`/`fade-in-0`. The top-weighted positioning (`top-[35%]`) naturally shifts the zoom origin upward, making it feel like it emerges from the search bar area. The existing `duration-200` is correct — fast and fluid. No custom animation keyframes needed.
+## Performance Strategy
+
+- `staleTime: 60_000` on all preview queries — data doesn't need to be real-time
+- Preview queries use `enabled: !!activePreviewId` — no fetch until needed
+- Top 3 results prefetch their preview data after 300ms idle (background, low priority)
+- Inline analytics card uses the same cached query as the dashboard — no duplicate fetches
+- TrendSparkline is already `isAnimationActive={false}` — no render cost
+
+## Permission Safety
+
+- Client preview: respects `clients` table RLS (org-scoped)
+- Team preview: `useIndividualStaffReport` already scoped to org
+- Financial values: wrapped in `BlurredAmount` — honors hide-numbers toggle
+- Inline analytics: same hooks as dashboard — RLS enforced
 
 ## Responsive Behavior
 
-Already handled well:
-- Desktop: centered overlay with sidebar offset
-- Mobile: `max-sm:w-screen max-sm:h-screen max-sm:rounded-none`
-- One refinement: on mobile, the top-weighted positioning needs to reset to standard centering — add `max-sm:top-[50%] max-sm:translate-y-[-50%]`
-
-## Performance
-
-All changes are CSS-only refinements. No DOM structure changes, no new components, no layout shifts. Sub-frame rendering guaranteed.
-
-## Self-Audit
-
-- **Visual hierarchy**: Top-weighted positioning + refined input area establishes clear command layer feel
-- **Speed**: No additional renders, no new state, no new hooks
-- **Cohesion**: All styling uses existing tokens and HSL variables — nothing new introduced
-- **Restraint**: No glow effects, no bright colors, no size increases beyond 1-2px breathing room
-- **Integration**: Glass aesthetic, border treatments, and typography all match existing Zura patterns
-- **Keyboard**: No keyboard behavior changes — already first-class
+| Viewport | Preview Behavior |
+|----------|-----------------|
+| ≥1024px | Right-side panel, dialog widens |
+| 768–1023px | Inline expansion below selected row |
+| <768px | No preview (mobile full-screen search stays focused) |
 
 ## Files Summary
 
 | File | Action |
 |------|--------|
-| `src/components/command-surface/ZuraCommandSurface.tsx` | Edit — top-weight positioning, hide close button, width, shadow |
-| `src/components/command-surface/CommandInput.tsx` | Edit — padding, icon weight, placeholder, pill shape, badge polish |
-| `src/components/command-surface/CommandResultRow.tsx` | Edit — row height, hover/selected states, icon boxing, chevron reveal |
-| `src/components/command-surface/CommandResultPanel.tsx` | Edit — softer dividers, group count badges |
-| `src/components/command-surface/CommandRecentSection.tsx` | Edit — row sizing, icon polish, hover feedback, empty state |
-| `src/components/command-surface/CommandAIAnswerCard.tsx` | Edit — border tint, glass lift, icon sizing |
-| `src/components/command-surface/CommandEmptyState.tsx` | Edit — tighter spacing, example query pills, AI fallback pill |
-| `src/components/command-surface/CommandSuggestionRow.tsx` | Edit — row consistency, icon sizing, transitions |
-| `src/components/ui/dialog.tsx` | Edit — add `hideClose` prop support |
+| `src/hooks/useCommandPreview.ts` | Create — hover delay, active preview state |
+| `src/hooks/useClientPreviewData.ts` | Create — lightweight client fetch |
+| `src/components/command-surface/CommandPreviewPanel.tsx` | Create — preview container + routing |
+| `src/components/command-surface/previews/ClientPreview.tsx` | Create — client entity preview |
+| `src/components/command-surface/previews/TeamPreview.tsx` | Create — stylist entity preview |
+| `src/components/command-surface/previews/NavigationPreview.tsx` | Create — page description preview |
+| `src/components/command-surface/previews/ReportPreview.tsx` | Create — metric + sparkline preview |
+| `src/components/command-surface/CommandInlineAnalyticsCard.tsx` | Create — inline analytics card |
+| `src/components/command-surface/ZuraCommandSurface.tsx` | Edit — integrate preview panel, widen container |
+| `src/components/command-surface/CommandResultRow.tsx` | Edit — add onHover prop |
+| `src/components/command-surface/CommandResultPanel.tsx` | Edit — forward onHover |
+| `src/hooks/useSearchRanking.ts` | Edit — add inlineAnalyticsHint |
 
-No new files. No new design tokens. No database changes.
+No database changes. No new design tokens.
 
