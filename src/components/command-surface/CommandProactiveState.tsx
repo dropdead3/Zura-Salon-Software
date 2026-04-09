@@ -32,7 +32,7 @@ const FALLBACK_ACTIONS = [
   { label: 'Run Report', icon: BarChart3, path: '/dashboard/admin/analytics' },
 ];
 
-export function CommandProactiveState({
+export const CommandProactiveState = React.forwardRef<HTMLDivElement, CommandProactiveStateProps>(function CommandProactiveState({
   recentSearches,
   recentEntries,
   recentPages,
@@ -40,7 +40,7 @@ export function CommandProactiveState({
   onPageSelect,
   onClearRecents,
   onNavigate,
-}: CommandProactiveStateProps) {
+}, ref) {
   const { quickPaths, attentionItems, recommendedActions } = useProactiveIntelligence();
   const isMobile = useIsMobile();
 
