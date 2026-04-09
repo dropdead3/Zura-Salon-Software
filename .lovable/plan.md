@@ -1,36 +1,65 @@
 
+Your direction is clear and correct: the real UX problem is no longer clipping, it is the fake trigger + second input pattern.
 
-# Fix Search Bar Dropdown Clipping
+## Fix plan
 
-## Problem
+### 1. Turn the top-bar “search bar” into the actual input
+**File:** `src/components/dashboard/TopBarSearch.tsx`
 
-The top bar container (line 169 of `SuperAdminTopBar.tsx`) uses `rounded-full overflow-x-hidden`, which clips the search dropdown. The `TopBarSearch` component renders its dropdown as `absolute top-full` (line 249), meaning the dropdown tries to appear below the search input but **inside** the bar's overflow-hidden boundary — so it gets cut off.
+- Replace the current trigger `<button>` with a real inline search `<input>` in the bar
+- Bind `query` directly to that visible field
+- Keep the search icon, clear action, AI toggle, and shortcut hint as inline adornments inside the same bar
+- This removes the “click fake bar, then type into another bar” interaction completely
 
-## Fix
+### 2. Make the popup results-only
+**File:** `src/components/dashboard/TopBarSearch.tsx`
 
-### File: `src/components/dashboard/TopBarSearch.tsx`
+- Keep the portal/fixed overlay so it still escapes the rounded top bar
+- Remove the duplicate search header/input from the popup entirely
+- The popup should only render:
+  - navigation/team results
+  - AI response state
+  - no-results state
+- Do **not** open a big empty panel on bare click; only show it when:
+  - the user has typed, or
+  - AI mode is active
 
-Change the dropdown from a positioned-inside-container approach to a **fixed-position portal-style overlay** that escapes the overflow clip.
+### 3. Unify keyboard behavior
+**Files:** `src/components/dashboard/TopBarSearch.tsx` and either `src/App.tsx` or `src/hooks/useCommandMenu.ts`
 
-1. **Replace `absolute top-full left-0 right-0 mt-2`** (line 249) with a dynamically positioned panel that uses `fixed` positioning calculated from the search trigger's bounding rect
-2. Use a `useEffect` + `getBoundingClientRect()` on the container ref to position the dropdown below the search button, matching its width
-3. This ensures the dropdown renders outside the `overflow-x-hidden` parent
+- On dashboard routes, `Cmd/Ctrl + K` should focus the real top-bar input
+- Prevent the separate global `CommandMenu` from also opening on dashboard pages
+- This gives the dashboard one search pattern instead of two competing ones
 
-Specific changes:
-- Add state for dropdown position (`top`, `left`, `width`)
-- On open, calculate position from `containerRef.current.getBoundingClientRect()`
-- Change the dropdown div from `absolute top-full left-0 right-0 mt-2` to `fixed` with computed `top`, `left`, `width` styles
-- Add a resize/scroll listener to reposition if needed
+### 4. Keep the good part of the last fix
+**File:** `src/components/dashboard/TopBarSearch.tsx`
 
-### No other files change
+- Keep the anchored portal/fixed positioning for the results panel
+- Re-anchor it to the actual input wrapper instead of the old trigger button
+- Preserve:
+  - arrow-key navigation
+  - Enter to open result / send AI
+  - Escape to close
+  - click-outside dismissal
 
-The container in `SuperAdminTopBar.tsx` keeps `overflow-x-hidden` (needed for the pill shape). The fix is entirely within `TopBarSearch.tsx`.
+## Expected result
 
-## Summary
+```text
+Top bar
+[ Search icon | real input field ................ | AI | ⌘K ]
 
-| Item | Detail |
-|------|--------|
-| Root cause | Dropdown inside `overflow-x-hidden` parent gets clipped |
-| Fix | Use `fixed` positioning with computed coordinates |
-| Files modified | 1 (`TopBarSearch.tsx`) |
+Below it, only when needed:
+[ results panel / AI output ]
+```
 
+## Files likely changed
+
+- `src/components/dashboard/TopBarSearch.tsx`
+- `src/App.tsx` or `src/hooks/useCommandMenu.ts`
+- `src/components/dashboard/SuperAdminTopBar.tsx` only if minor width/adornment spacing needs adjustment
+
+## Technical notes
+
+- No backend or database changes
+- This is a UI interaction refactor, not a search logic rewrite
+- Success state: one real search field in the bar, one optional results panel below it, zero duplicate search bars
