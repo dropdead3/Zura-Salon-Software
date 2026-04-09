@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { tokens } from '@/lib/design-tokens';
 import { useNavigate } from 'react-router-dom';
 import { Search, X, Loader2, Command, Sparkles, Users, BookOpen, UserCircle } from 'lucide-react';
