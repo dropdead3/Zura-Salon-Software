@@ -387,7 +387,7 @@ export function ZuraCommandSurface({ open, onOpenChange, filterNavItems, anchorR
     } else if (e.key === 'Enter') {
       if ((aiMode || isQuestionQuery(query)) && query.trim()) {
         addRecent({ query: query.trim(), resultType: 'help' });
-        sendMessage(query, [], orgId, primaryRole, groundingResult.isNavigation ? { isNavigation: groundingResult.isNavigation, confidence: groundingResult.confidence, groundingPrompt: groundingResult.groundingPrompt } : undefined);
+        sendMessage(query, [], orgId, primaryRole, groundingResult.isNavigation ? { isNavigation: groundingResult.isNavigation, confidence: groundingResult.confidence, groundingPrompt: groundingResult.groundingPrompt } : undefined, dataContextStr);
       } else if (flatResults[selectedIndex]) {
         handleSelect(flatResults[selectedIndex]);
       } else if (hasQuery && !hasResults && selectedIndex === 0) {
@@ -423,9 +423,9 @@ export function ZuraCommandSurface({ open, onOpenChange, filterNavItems, anchorR
   const handleAIFallback = useCallback(() => {
     setAiMode(true);
     if (query.trim()) {
-      sendMessage(query, [], orgId, primaryRole, groundingResult.isNavigation ? { isNavigation: groundingResult.isNavigation, confidence: groundingResult.confidence, groundingPrompt: groundingResult.groundingPrompt } : undefined);
+      sendMessage(query, [], orgId, primaryRole, groundingResult.isNavigation ? { isNavigation: groundingResult.isNavigation, confidence: groundingResult.confidence, groundingPrompt: groundingResult.groundingPrompt } : undefined, dataContextStr);
     }
-  }, [query, sendMessage, orgId, primaryRole, groundingResult]);
+  }, [query, sendMessage, orgId, primaryRole, groundingResult, dataContextStr]);
 
   // God Mode bar offset
   const godModeOffset = isImpersonating ? 44 : 0;
