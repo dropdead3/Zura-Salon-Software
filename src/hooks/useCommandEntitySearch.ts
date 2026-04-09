@@ -109,12 +109,15 @@ export function useAppointmentSearchCandidates(enabled: boolean): SearchCandidat
   const { data } = useQuery({
     queryKey: ['command-appointments', orgId, today],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from('phorest_appointments')
         .select('id, client_name, service_name, start_time, status')
         .eq('organization_id', orgId!)
-        .eq('appointment_date', today)
-        .neq('status', 'cancelled')
+        .eq('appointment_date', today);
+      
+      query = query.neq('status', 'cancelled');
+      
+      const { data, error } = await query
         .order('start_time')
         .limit(50);
       if (error) throw error;
