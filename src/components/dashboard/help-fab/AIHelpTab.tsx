@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import { Send, ChevronRight } from 'lucide-react';
 import { ZuraZIcon } from '@/components/icons/ZuraZIcon';
 import { Button } from '@/components/ui/button';
@@ -10,15 +10,42 @@ import ReactMarkdown from 'react-markdown';
 import { cn } from '@/lib/utils';
 import { AI_ASSISTANT_NAME_DEFAULT } from '@/lib/brand';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useEffectiveRoles } from '@/hooks/useEffectiveUser';
 
 type Message = { role: 'user' | 'assistant'; content: string };
 
-const EXAMPLE_PROMPTS = [
-  'How do I request an assistant?',
-  'Where can I find my stats?',
-  'How do I update my profile?',
-  'What is the Ring the Bell feature?',
-];
+const ROLE_PROMPTS: Record<string, string[]> = {
+  leadership: [
+    'How is my business performing this week?',
+    'Show me team utilization insights',
+    'How do I set up commission structures?',
+    'What reports are available for revenue?',
+  ],
+  manager: [
+    'Who has open slots today?',
+    'How do I manage team schedules?',
+    'Where can I see daily performance?',
+    'How do I handle a client complaint?',
+  ],
+  stylist: [
+    'Where can I find my stats?',
+    'How do I update my profile?',
+    'How does the 3-Second Rebook work?',
+    'What is the Ring the Bell feature?',
+  ],
+  front_desk: [
+    'How do I book an appointment?',
+    'How do I check a client in?',
+    'Where can I find client contact info?',
+    'How do I process a checkout?',
+  ],
+  default: [
+    'How do I request an assistant?',
+    'Where can I find my stats?',
+    'How do I update my profile?',
+    'What is the Ring the Bell feature?',
+  ],
+};
 
 export function AIHelpTab() {
   const [messages, setMessages] = useState<Message[]>([]);
