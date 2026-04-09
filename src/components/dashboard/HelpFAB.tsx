@@ -122,15 +122,16 @@ export function HelpFAB() {
         side="top"
         align="end"
         sideOffset={16}
-        className="w-[380px] h-[480px] p-0 overflow-hidden bg-[hsl(var(--muted))] border-border/60"
+        className="w-[400px] h-[520px] p-0 overflow-hidden rounded-2xl bg-card/95 backdrop-blur-xl border border-border/40 shadow-[0_16px_64px_rgba(0,0,0,0.4)]"
       >
         <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
-          <div className="border-b border-border/60 bg-card/50 px-4 pt-3 pb-2">
-            <TabsList>
-              <TabsTrigger value="ai-help" className="flex-1">{AI_ASSISTANT_NAME_DEFAULT}</TabsTrigger>
-              <TabsTrigger value="support" className="flex-1">Chat</TabsTrigger>
+          <div className="px-4 pt-3 pb-0">
+            <TabsList className="w-full">
+              <TabsTrigger value="ai-help" className="flex-1 font-display text-xs tracking-wider uppercase">{AI_ASSISTANT_NAME_DEFAULT}</TabsTrigger>
+              <TabsTrigger value="support" className="flex-1 font-display text-xs tracking-wider uppercase">Chat</TabsTrigger>
             </TabsList>
           </div>
+          <div className="h-px bg-gradient-to-r from-primary/20 via-primary/40 to-primary/20" />
           
           <TabsContent value="ai-help" className="flex-1 m-0 overflow-hidden">
             <AIHelpTab />
