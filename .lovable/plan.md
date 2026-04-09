@@ -1,30 +1,21 @@
 
 
-# Fix Build Errors + Replace Sparkles with ZuraZ Icon for AI Surfaces
+# Fix: Lock Screen Still Appearing in God Mode
 
-## Two Issues
+## Root Cause
 
-### 1. Build Errors in `searchLearning.ts`
-The key functions `EVENTS_KEY`, `FREQ_KEY`, `GC_INTERVAL_KEY` are being passed as function references instead of being called. Every usage needs `()` appended — e.g., `EVENTS_KEY()` not `EVENTS_KEY`. Looking at the code, lines 85/93/119/137/147/155 already have `()` — so the build errors suggest the previous edit may have left some calls without parentheses elsewhere in the file. Will audit all usages and fix.
+Two bugs work together:
 
-### 2. Replace Sparkles with ZuraZIcon in AI-context surfaces
+1. **Missing dependency in `useAutoLock`**: The `useEffect` deps array (line 44) includes `[isLocked, resetTimer]` but **not** `isImpersonating`. When God Mode activates after mount, the effect doesn't re-run — the existing 2-minute timer keeps ticking and fires `lock()`.
 
-The Sparkles icon is overused and does not represent the Zura AI identity. Every place where Sparkles indicates "AI mode" or "Zura" in the command surface should use the `ZuraZIcon` instead. Non-AI uses of Sparkles (e.g., service add-ons, service flows, decorative badges) remain unchanged.
+2. **No God Mode guard on the lock screen render**: In `DashboardLayout.tsx` line 584, `{isLocked && <DashboardLockScreen />}` renders unconditionally. Even if the timer somehow fires (race condition, manual lock button press), the lock screen should never appear in God Mode.
 
-**Files to update (command surface only — AI-indicator contexts):**
+## Changes
 
-| File | What changes |
-|------|-------------|
-| `src/components/command-surface/CommandAIAnswerCard.tsx` | Replace `Sparkles` import with `ZuraZIcon`; use in header |
-| `src/components/command-surface/CommandInput.tsx` | Replace `Sparkles` with `ZuraZIcon` in AI mode indicator (line 46) and AI toggle button (line 88) |
-| `src/components/command-surface/CommandNoResultsState.tsx` | Replace `Sparkles` with `ZuraZIcon` in the "Ask Zura" fallback row |
-| `src/components/command-surface/CommandSuggestionRow.tsx` | Replace `Sparkles` with `ZuraZIcon` for topic-type icon and "Ask Zura" button |
-| `src/lib/searchLearning.ts` | Fix all function-reference vs function-call mismatches causing build errors |
+| File | What |
+|------|------|
+| `src/hooks/useAutoLock.ts` | Add `isImpersonating` to the `useEffect` dependency array so the guard re-evaluates when God Mode toggles |
+| `src/components/dashboard/DashboardLayout.tsx` | Change line 584 from `{isLocked && <DashboardLockScreen .../>}` to `{isLocked && !isImpersonating && <DashboardLockScreen .../>}` — `isImpersonating` is already available in scope |
 
-### Not changing
-- `ZuraCommandSurface.tsx` — imports Sparkles but grep shows no JSX usage of it there (only passed through). Will verify and remove unused import if confirmed.
-- Non-AI Sparkles usages across the platform (service flows, add-ons, widgets, etc.) — these stay as-is.
-
-## Technical Note
-`ZuraZIcon` uses `fill="currentColor"` and accepts `className`, so it's a drop-in replacement for sizing/color via Tailwind classes like `w-4 h-4 text-primary`. No wrapper needed.
+Two lines changed, two files.
 
