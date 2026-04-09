@@ -82,6 +82,13 @@ export function ZuraCommandSurface({ open, onOpenChange, filterNavItems }: ZuraC
   // Inline analytics hint
   const analyticsHint = useMemo(() => detectAnalyticsHint(query), [query]);
 
+  // Location names for chain bar editable chips
+  const { data: activeLocations } = useActiveLocations();
+  const locationNames = useMemo(
+    () => (activeLocations || []).map((l) => l.name),
+    [activeLocations],
+  );
+
   // Search Learning
   const learning = useSearchLearning(open, effectiveRoles as string[], location.pathname);
   const decayedFreqMap = useMemo(() => learning.getDecayedFrequencyMap(), [open]);
