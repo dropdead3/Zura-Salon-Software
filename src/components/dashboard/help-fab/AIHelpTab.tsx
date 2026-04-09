@@ -71,7 +71,7 @@ export function AIHelpTab() {
       <ScrollArea className="flex-1 px-4" ref={scrollRef}>
         <div className="py-4 space-y-4">
           {isEmpty ? (
-            <div className="flex flex-col items-center justify-center h-[340px] text-center pt-8">
+            <div className="flex flex-col items-center justify-center h-[420px] text-center pt-8">
               {/* Glow behind icon */}
               <div className="relative mb-5">
                 <div className="absolute inset-0 -m-6 rounded-full bg-primary/15 blur-2xl animate-pulse" />
