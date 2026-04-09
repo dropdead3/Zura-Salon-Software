@@ -8,6 +8,7 @@ import { tokens } from '@/lib/design-tokens';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useAIAssistant } from '@/hooks/useAIAssistant';
 import { classifyAndGround } from '@/lib/navGrounding';
+import type { NavDestination } from '@/lib/navKnowledgeBase';
 import { useActiveLocations } from '@/hooks/useLocations';
 import { useSearchRanking } from '@/hooks/useSearchRanking';
 import { useRecentSearches } from './useRecentSearches';
