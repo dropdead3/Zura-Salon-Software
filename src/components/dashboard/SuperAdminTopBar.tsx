@@ -68,6 +68,7 @@ interface SuperAdminTopBarProps {
   roleBadges: RoleBadgeConfig[];
   onSearchClick: () => void;
   isSearchOpen?: boolean;
+  searchBarRef?: React.RefObject<HTMLButtonElement>;
   // State
   isAdmin: boolean;
   isPlatformUser: boolean;
