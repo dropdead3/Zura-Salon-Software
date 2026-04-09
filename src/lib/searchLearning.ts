@@ -82,7 +82,7 @@ function daysSince(timestamp: number): number {
 
 function readEvents(): SearchEvent[] {
   try {
-    return JSON.parse(localStorage.getItem(EVENTS_KEY) || '[]');
+    return JSON.parse(localStorage.getItem(EVENTS_KEY()) || '[]');
   } catch {
     return [];
   }
@@ -90,7 +90,7 @@ function readEvents(): SearchEvent[] {
 
 function writeEvents(events: SearchEvent[]): void {
   try {
-    localStorage.setItem(EVENTS_KEY, JSON.stringify(events));
+    localStorage.setItem(EVENTS_KEY(), JSON.stringify(events));
   } catch {
     // localStorage full or unavailable
   }
@@ -116,7 +116,7 @@ export function logSearchEvent(
 
 export function runGarbageCollection(): void {
   try {
-    const lastGC = parseInt(localStorage.getItem(GC_INTERVAL_KEY) || '0', 10);
+    const lastGC = parseInt(localStorage.getItem(GC_INTERVAL_KEY()) || '0', 10);
     if (Date.now() - lastGC < GC_INTERVAL_MS) return;
 
     // Prune old events
@@ -134,7 +134,7 @@ export function runGarbageCollection(): void {
     }
     writeFrequencyTimestamps(pruned);
 
-    localStorage.setItem(GC_INTERVAL_KEY, String(Date.now()));
+    localStorage.setItem(GC_INTERVAL_KEY(), String(Date.now()));
   } catch {
     // Silent failure
   }
@@ -144,7 +144,7 @@ export function runGarbageCollection(): void {
 
 function readFrequencyTimestamps(): Record<string, number[]> {
   try {
-    return JSON.parse(localStorage.getItem(FREQ_KEY) || '{}');
+    return JSON.parse(localStorage.getItem(FREQ_KEY()) || '{}');
   } catch {
     return {};
   }
@@ -152,7 +152,7 @@ function readFrequencyTimestamps(): Record<string, number[]> {
 
 function writeFrequencyTimestamps(map: Record<string, number[]>): void {
   try {
-    localStorage.setItem(FREQ_KEY, JSON.stringify(map));
+    localStorage.setItem(FREQ_KEY(), JSON.stringify(map));
   } catch {
     // localStorage unavailable
   }
