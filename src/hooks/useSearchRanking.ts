@@ -45,6 +45,11 @@ import { useTasks } from '@/hooks/useTasks';
 import { getAllActions } from '@/lib/actionRegistry';
 import { useActiveLocations } from '@/hooks/useLocations';
 import { useRecentSearches } from '@/components/command-surface/useRecentSearches';
+import {
+  useClientSearchCandidates,
+  useProductSearchCandidates,
+  useAppointmentSearchCandidates,
+} from '@/hooks/useCommandEntitySearch';
 import { expandQuery, logSynonymTelemetry } from '@/lib/synonymRegistry';
 import type { QueryExpansion } from '@/lib/synonymRegistry';
 import { scoreMatchWithSynonyms } from '@/lib/textMatch';
