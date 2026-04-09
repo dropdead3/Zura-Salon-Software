@@ -271,6 +271,7 @@ export function TopBarSearch({ filterNavItems }: TopBarSearchProps) {
 
       {/* Search Modal - Fixed position to escape overflow-hidden parent */}
       {isOpen && dropdownPos && (
+        createPortal(
         <div
           ref={dropdownRef}
           style={{ top: dropdownPos.top, left: dropdownPos.left, width: Math.max(dropdownPos.width, 480) }}
