@@ -91,6 +91,7 @@ export function ZuraCommandSurface({ open, onOpenChange, filterNavItems }: ZuraC
     suggestions,
     parsedQuery,
     rankedResults,
+    chainedQuery,
     trackNavigation,
   } = useSearchRanking(query, {
     filterNavItems: filterNavItems as any,
