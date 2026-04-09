@@ -574,7 +574,7 @@ function DashboardLayoutInner({ children, hideFooter, hideTopBar, hideSidebar }:
         <IncidentBanner />
         <CustomLandingPageBanner sidebarCollapsed={sidebarCollapsed} />
         
-        <div className="flex-1 p-4 lg:p-8">
+        <div className="flex-1 p-4 lg:px-8 lg:pb-8 lg:pt-4">
           {children}
         </div>
       </main>
