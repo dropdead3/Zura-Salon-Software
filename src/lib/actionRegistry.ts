@@ -91,14 +91,14 @@ const ACTION_REGISTRY: ActionDefinition[] = [
   {
     id: 'send_message',
     label: 'Send Message',
-    description: 'Send a message to a team member',
+    description: 'Send a message or start a chat with a team member',
     requiredInputs: [
       { key: 'recipient', label: 'Recipient', type: 'text', extractFromTarget: true },
     ],
     optionalInputs: [
       { key: 'message', label: 'Message', type: 'text' },
     ],
-    permissions: ['team_chat.send'],
+    permissions: [],
     riskLevel: 'low',
     confidenceThreshold: 0.75,
     routeTemplate: '/dashboard/team-chat?to={recipient}',
@@ -116,32 +116,8 @@ const ACTION_REGISTRY: ActionDefinition[] = [
     confidenceThreshold: 0.75,
     routeTemplate: '/dashboard/schedule?action=checkin&client={client_name}',
   },
-  {
-    id: 'create_appointment',
-    label: 'Create Appointment',
-    description: 'Schedule a new appointment for a client',
-    requiredInputs: [
-      { key: 'client_name', label: 'Client Name', type: 'text', extractFromTarget: true },
-    ],
-    optionalInputs: [],
-    permissions: ['create_appointments'],
-    riskLevel: 'low',
-    confidenceThreshold: 0.75,
-    routeTemplate: '/dashboard/schedule?action=new&client={client_name}',
-  },
-  {
-    id: 'start_chat',
-    label: 'Start Chat',
-    description: 'Open a chat conversation with a team member',
-    requiredInputs: [
-      { key: 'recipient', label: 'Team Member', type: 'text', extractFromTarget: true },
-    ],
-    optionalInputs: [],
-    permissions: [],
-    riskLevel: 'low',
-    confidenceThreshold: 0.7,
-    routeTemplate: '/dashboard/team-chat?to={recipient}',
-  },
+  // Note: 'create_appointment' removed — duplicate of 'book_appointment'
+  // Note: 'start_chat' removed — duplicate of 'send_message'
   {
     id: 'adjust_inventory',
     label: 'Adjust Inventory',
@@ -364,6 +340,43 @@ export function getNextActions(actionId: string): ActionExecutionResult['nextAct
         { label: 'Open Chat', path: '/dashboard/team-chat' },
       ];
     case 'check_in':
+      return [
+        { label: 'View Schedule', path: '/dashboard/schedule' },
+      ];
+    case 'adjust_inventory':
+      return [
+        { label: 'View Inventory', path: '/dashboard/admin/inventory' },
+        { label: 'Reorder Stock', actionId: 'reorder_inventory' },
+      ];
+    case 'open_checkout':
+      return [
+        { label: 'View Schedule', path: '/dashboard/schedule' },
+      ];
+    case 'create_formula':
+      return [
+        { label: 'View Backroom', path: '/dashboard/admin/backroom' },
+      ];
+    case 'assign_task':
+      return [
+        { label: 'View Tasks', path: '/dashboard/tasks' },
+      ];
+    case 'view_no_shows':
+      return [
+        { label: 'View Schedule', path: '/dashboard/schedule' },
+      ];
+    case 'reorder_inventory':
+      return [
+        { label: 'View Inventory', path: '/dashboard/admin/inventory' },
+      ];
+    case 'schedule_meeting':
+      return [
+        { label: 'View Operations', path: '/dashboard/admin/operations' },
+      ];
+    case 'process_refund':
+      return [
+        { label: 'View Sales', path: '/dashboard/admin/sales' },
+      ];
+    case 'cancel_appointment':
       return [
         { label: 'View Schedule', path: '/dashboard/schedule' },
       ];
