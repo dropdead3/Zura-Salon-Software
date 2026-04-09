@@ -150,6 +150,8 @@ import { NextClientIndicator } from '@/components/dashboard/NextClientIndicator'
 import { TopBarSearch } from '@/components/dashboard/TopBarSearch';
 import { SuperAdminTopBar } from '@/components/dashboard/SuperAdminTopBar';
 import { ViewAsPopover } from '@/components/dashboard/ViewAsPopover';
+import { ZuraCommandSurface } from '@/components/command-surface/ZuraCommandSurface';
+import { useCommandMenu } from '@/hooks/useCommandMenu';
 
 import { ChaChingHistoryProvider } from '@/hooks/useChaChingHistory';
 import { useChaChingDetector } from '@/hooks/useChaChingDetector';
@@ -244,6 +246,7 @@ function DashboardLayoutInner({ children, hideFooter, hideTopBar, hideSidebar }:
     return false;
   });
   const [userSearch, setUserSearch] = useState('');
+  const { open: commandOpen, setOpen: setCommandOpen } = useCommandMenu();
   const zuraCtx = useZuraNavigationSafe();
   
   useEffect(() => {
@@ -547,6 +550,7 @@ function DashboardLayoutInner({ children, hideFooter, hideTopBar, hideSidebar }:
             ViewAsToggle={ViewAsToggle}
             HideNumbersToggle={HideNumbersToggle}
             roleBadges={roleBadges}
+            onSearchClick={() => setCommandOpen(true)}
             isAdmin={isAdmin}
             isPlatformUser={isPlatformUser}
             isStylistRole={roles.includes('stylist')}
@@ -555,6 +559,12 @@ function DashboardLayoutInner({ children, hideFooter, hideTopBar, hideSidebar }:
             viewAsUser={viewAsUser}
           />
         )}
+
+        <ZuraCommandSurface
+          open={commandOpen}
+          onOpenChange={setCommandOpen}
+          filterNavItems={filterNavItems}
+        />
 
         {/* Banners */}
         <IncidentBanner />

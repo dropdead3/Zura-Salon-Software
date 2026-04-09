@@ -66,6 +66,7 @@ interface SuperAdminTopBarProps {
   ViewAsToggle: React.ComponentType<{ asMenuItem?: boolean }>;
   HideNumbersToggle: React.ComponentType;
   roleBadges: RoleBadgeConfig[];
+  onSearchClick: () => void;
   // State
   isAdmin: boolean;
   isPlatformUser: boolean;
@@ -122,6 +123,7 @@ export function SuperAdminTopBar({
   ViewAsToggle,
   HideNumbersToggle,
   roleBadges,
+  onSearchClick,
   isAdmin,
   isPlatformUser,
   isStylistRole,
@@ -175,7 +177,7 @@ export function SuperAdminTopBar({
             <OrganizationSwitcher compact />
           )}
           <div className="min-w-0 w-full max-w-[280px] lg:max-w-md xl:max-w-lg 2xl:max-w-xl">
-            <TopBarSearch filterNavItems={filterNavItems} />
+            <TopBarSearch onClick={onSearchClick} />
           </div>
         </div>
 
