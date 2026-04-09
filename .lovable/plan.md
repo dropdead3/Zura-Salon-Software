@@ -1,41 +1,30 @@
 
 
-# Auto-Trigger AI for Question Queries
+# Fix: Reduce Top-of-Page Spacing
 
-## What Changes
+## Problem
 
-When a user types a question starting with "how", "what", "why", etc. and there are no strong navigation matches (score < 0.5), the command surface will automatically activate AI mode and send the query after a brief typing pause — no need to click "Ask Zura" or press Enter.
+The content area sits too far below the top bar. Two sources of vertical gap stack:
+1. `SuperAdminTopBar` outer wrapper: `pb-3` (12px bottom padding)
+2. Main content wrapper in `DashboardLayout` line 577: `p-4 lg:p-8` (32px top padding on desktop)
 
-## How It Works
+Combined = 44px gap between the bottom of the top bar and the start of content. This creates the "sits too low" feeling.
 
-A debounced effect in `ZuraCommandSurface.tsx` watches for the combination of:
-1. `isQuestionQuery(query)` is true
-2. No strong results (`!hasResults || rankedResults[0]?.score < 0.5`)
-3. `aiMode` is not already active
-4. Query length ≥ 8 characters (avoids triggering on just "how do")
-5. User has stopped typing for ~1.2 seconds
+## Fix
 
-When all conditions are met, it auto-sets `aiMode(true)` and calls `sendMessage(query)`. The AI answer streams in-place in the command surface — exactly as if the user had clicked "Ask Zura."
+**`src/components/dashboard/DashboardLayout.tsx`** (line 577) — Change the content wrapper from uniform `p-4 lg:p-8` to directional padding that reduces the top:
 
-If the user keeps typing before the debounce fires, the timer resets. If the user selects a result or presses Escape before the timer fires, the timer is cancelled.
+```
+p-4 lg:px-8 lg:pb-8 lg:pt-4
+```
 
-## File Changes (1 file)
+This keeps the 32px horizontal and bottom padding (matching the UI canon for page container spacing) but reduces the top padding to 16px on desktop. Combined with the top bar's 12px bottom padding, the visual gap becomes 28px — tight enough to feel connected without crowding.
 
-**`src/components/command-surface/ZuraCommandSurface.tsx`** — Add a `useEffect` with a `setTimeout` (~1200ms debounce). Dependencies: `query`, `aiMode`, `hasResults`, top result score. On cleanup, clear the timeout. When it fires, call `setAiMode(true)` and `sendMessage(query)`. Also add `addRecent(query)` so the question is saved to history.
+## One file, one line change
 
-No other files change. The `isQuestionQuery` detection already exists in `commandTypes.ts` and handles "how", "what", "why", "where", "when", "who", "which", "can i", "tell me", "explain", "help me", "show me", plus any query ending with `?`.
+| File | Change |
+|------|--------|
+| `src/components/dashboard/DashboardLayout.tsx` | Line 577: `p-4 lg:p-8` → `p-4 lg:px-8 lg:pb-8 lg:pt-4` |
 
-## User Experience
-
-- Type "how do i refund" → results show "No direct match" + AI card → after 1.2s pause, AI mode auto-activates and Zura starts answering
-- Type "schedule" → strong nav match exists → AI never auto-triggers
-- Type "how" → too short (< 8 chars) → waits for more input
-- Type "how do i refund" then immediately press Enter → manual trigger fires first (existing behavior), debounce is cancelled
-
-## Technical Detail
-
-- Debounce timer stored in a `useRef<ReturnType<typeof setTimeout>>` 
-- Cleared on unmount, on query change, and on close
-- Guard: if `aiMode` is already true or `isLoading` is true, skip
-- The 1.2s delay feels natural — long enough to confirm the user stopped typing, short enough to feel responsive
+No other files affected. The top bar padding stays as-is — it needs its 12px for the rounded-full pill to breathe.
 
