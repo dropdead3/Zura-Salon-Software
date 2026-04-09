@@ -134,7 +134,7 @@ export function CommandChainBar({
     if (chain.actionVerb) {
       segs.push({
         type: 'action',
-        label: chain.actionVerb.action,
+        label: chain.actionVerb.type,
         key: 'action',
       });
     }
