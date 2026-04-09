@@ -1,11 +1,13 @@
 import { useEffect, useRef, useCallback } from 'react';
 import { useDashboardLock } from '@/contexts/DashboardLockContext';
+import { useOrganizationContext } from '@/contexts/OrganizationContext';
 
 const IDLE_TIMEOUT = 120_000; // 2 minutes
 const ACTIVITY_EVENTS = ['pointerdown', 'pointermove', 'keydown', 'touchstart'] as const;
 
 export function useAutoLock() {
   const { isLocked, lock } = useDashboardLock();
+  const { isImpersonating } = useOrganizationContext();
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const resetTimer = useCallback(() => {
@@ -16,6 +18,12 @@ export function useAutoLock() {
 
   useEffect(() => {
     if (isLocked) {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+      return;
+    }
+
+    // Skip auto-lock entirely in God Mode
+    if (isImpersonating) {
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
       return;
     }
