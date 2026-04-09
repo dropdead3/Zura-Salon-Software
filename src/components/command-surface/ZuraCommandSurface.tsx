@@ -86,6 +86,7 @@ export function ZuraCommandSurface({ open, onOpenChange, filterNavItems, anchorR
   const isMobile = useIsMobile();
   const { isImpersonating, effectiveOrganization } = useOrganizationContext();
   const orgId = effectiveOrganization?.id;
+  const primaryRole = effectiveRoles[0] ?? undefined;
 
   const { response: aiResponse, isLoading: aiLoading, error: aiError, sendMessage, reset: resetAI } = useAIAssistant();
   const { recents, recentEntries, addRecent, clearRecents } = useRecentSearches(orgId);
