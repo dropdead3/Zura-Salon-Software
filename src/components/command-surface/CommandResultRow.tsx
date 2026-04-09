@@ -9,6 +9,7 @@ interface CommandResultRowProps {
   isSelected: boolean;
   onClick: () => void;
   query: string;
+  onHover?: (result: RankedResult) => void;
 }
 
 function highlightMatch(text: string, query: string) {
@@ -35,12 +36,14 @@ const TYPE_LABELS: Record<string, string> = {
 };
 
 export const CommandResultRow = React.forwardRef<HTMLButtonElement, CommandResultRowProps>(
-  ({ result, isSelected, onClick, query }, ref) => {
+  ({ result, isSelected, onClick, query, onHover }, ref) => {
     return (
       <button
         ref={ref}
         type="button"
         onClick={onClick}
+        onMouseEnter={() => onHover?.(result)}
+        onFocus={() => onHover?.(result)}
         tabIndex={-1}
         className={cn(
           'group/row w-full flex items-center gap-3 px-4 h-12 text-left transition-colors duration-150',

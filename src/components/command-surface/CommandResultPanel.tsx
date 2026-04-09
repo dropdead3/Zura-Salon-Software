@@ -8,9 +8,10 @@ interface CommandResultPanelProps {
   selectedIndex: number;
   query: string;
   onSelect: (result: RankedResult) => void;
+  onHover?: (result: RankedResult) => void;
 }
 
-export function CommandResultPanel({ groups, selectedIndex, query, onSelect }: CommandResultPanelProps) {
+export function CommandResultPanel({ groups, selectedIndex, query, onSelect, onHover }: CommandResultPanelProps) {
   const rowRefs = useRef<Map<number, HTMLButtonElement>>(new Map());
 
   useEffect(() => {
@@ -41,6 +42,7 @@ export function CommandResultPanel({ groups, selectedIndex, query, onSelect }: C
                 isSelected={selectedIndex === idx}
                 query={query}
                 onClick={() => onSelect(result)}
+                onHover={onHover}
               />
             );
           })}
