@@ -502,6 +502,7 @@ export function ZuraCommandSurface({ open, onOpenChange, filterNavItems, anchorR
                 ) : (
                   <CommandProactiveState
                     recentSearches={recents}
+                    recentEntries={recentEntries}
                     recentPages={recentPages}
                     onSearchSelect={handleRecentSearchSelect}
                     onPageSelect={handleRecentPageSelect}
