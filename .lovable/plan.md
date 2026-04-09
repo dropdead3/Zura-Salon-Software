@@ -1,250 +1,215 @@
 
 
-# Zura Search Ranking Engine
+# Zura Search Action Execution Framework
 
-## What Exists Today
+## What Exists
 
-The current `useCommandSearch.ts` uses a simple `scoreMatch()` (substring/starts-with scoring) directly against labels, then sorts by raw text score. There is no intent alignment, no frequency/recency signals, no role relevance, and no context boosting. The `commandTypes.ts` already has `groupResults()` that pulls top-2 into "Best Match" and groups the rest by type. The `parseQuery()` engine produces structured intents, entities, filters, time context, and confidence scores. The `useQueryEntityResolver` resolves entity candidates against live data.
+- **Query Parser** (`src/lib/queryParser.ts`): Produces `actionIntent: { type, target?, confidence }` with canonical types like `create_client`, `book_appointment`, `send_message`, `process_refund`, `check_in`, `cancel`, etc.
+- **Ranking Engine** (`src/lib/searchRanker.ts`): Scores and groups results including `action` type results.
+- **Permissions**: `usePermission()` hook with `can()`, `canAny()`, `canAll()` checks.
+- **Toast system**: `useToast()` for feedback.
+- **Command Surface** (`ZuraCommandSurface.tsx`): Currently only navigates on result selection — no action execution.
+- **Autonomy doctrine**: "Recommend → Simulate → Request Approval → Execute" for semi-autonomous actions. Destructive actions (deletions, refunds, financial changes) are never autonomous.
 
 ## Architecture
 
-Two new files. No modifications to the parser, resolver, or existing UI components.
-
 ```text
-src/lib/searchRanker.ts          ← Pure scoring + grouping engine
-src/hooks/useSearchRanking.ts    ← React hook that wires parser → resolver → ranker
+src/lib/actionRegistry.ts           ← Pure: action definitions + validation
+src/hooks/useActionExecution.ts     ← React hook: orchestrates detection → validation → confirmation → execution → feedback
 ```
 
-The existing `useCommandSearch` and `commandTypes.groupResults` remain untouched. The new hook replaces the consumption point in `ZuraCommandSurface.tsx` — one import swap.
+No new UI components — action states (input completion, confirmation, feedback) render inline within the existing `ZuraCommandSurface` panel via state-driven conditional rendering in a small update to `ZuraCommandSurface.tsx`.
 
-## File 1: `src/lib/searchRanker.ts`
+## File 1: `src/lib/actionRegistry.ts`
 
 ### Types
 
 ```typescript
-export interface RankedResult {
-  id: string;
-  type: 'navigation' | 'team' | 'client' | 'help' | 'action' | 'report' | 'utility';
-  title: string;
-  subtitle?: string;
-  path?: string;
-  icon?: React.ReactNode;
-  metadata?: string;
-  score: number;
-  signals: RelevanceSignals;
+export type RiskLevel = 'low' | 'medium' | 'high';
+
+export interface ActionDefinition {
+  id: string;                          // canonical type from parser (e.g. "create_client")
+  label: string;                       // human-readable ("Add New Client")
+  requiredInputs: InputField[];        // what's needed to execute
+  optionalInputs?: InputField[];       // nice-to-have fields
+  permissions: string[];               // required permissions (empty = anyone)
+  riskLevel: RiskLevel;                // drives confirmation behavior
+  confirmationMessage?: string;        // custom confirm text for high-risk
+  confidenceThreshold: number;         // minimum actionIntent.confidence to trigger
 }
 
-export interface RelevanceSignals {
-  textMatch: number;       // 0-1, from scoreMatch normalized
-  intentAlignment: number; // 0-1, how well result type matches top intent
-  entityConfidence: number;// 0-1, from resolved entity confidence
-  recency: number;         // 0-1, recent search/view boost
-  frequency: number;       // 0-1, access frequency boost
-  roleRelevance: number;   // 0-1, permission/role alignment
-  contextBoost: number;    // 0-1, current route proximity
-}
-
-export interface RankedResultGroup {
-  id: string;
+export interface InputField {
+  key: string;
   label: string;
-  results: RankedResult[];
+  type: 'text' | 'email' | 'phone' | 'select';
+  extractFromTarget?: boolean;         // auto-fill from parsed target token
 }
 
-export interface SuggestionFallback {
-  type: 'topic' | 'navigation' | 'query_correction';
-  label: string;
-  path?: string;
-  query?: string;
+export interface ActionExecutionRequest {
+  actionId: string;
+  inputs: Record<string, string>;
+  confirmed: boolean;
 }
-```
 
-### Scoring Formula
-
-```typescript
-const WEIGHTS = {
-  textMatch:       0.25,
-  intentAlignment: 0.25,
-  entityConfidence: 0.15,
-  recency:         0.10,
-  frequency:       0.10,
-  roleRelevance:   0.10,
-  contextBoost:    0.05,
-};
-
-function computeScore(signals: RelevanceSignals): number {
-  return Object.entries(WEIGHTS).reduce(
-    (sum, [key, weight]) => sum + (signals[key] ?? 0) * weight, 0
-  );
+export interface ActionExecutionResult {
+  success: boolean;
+  message: string;
+  nextActions?: { label: string; actionId?: string; path?: string }[];
+  error?: string;
 }
 ```
 
-**Weight justification:**
-- `textMatch` (0.25): Direct relevance — exact match must dominate
-- `intentAlignment` (0.25): A "team" result should rank higher when intent is `entity_lookup` vs `navigation`
-- `entityConfidence` (0.15): Resolved entities (confirmed stylist match) get meaningful lift
-- `recency` (0.10): Recently searched/viewed items surface faster on repeat access
-- `frequency` (0.10): Frequently accessed pages earn a steady boost
-- `roleRelevance` (0.10): Admins see admin pages higher; stylists see their tools higher
-- `contextBoost` (0.05): If user is already on `/dashboard/admin/sales`, related analytics pages get a small nudge
+### Registry
 
-### Signal Computation
+Initial actions (Phase 1 scope — navigation and lightweight mutations only):
 
-**textMatch**: Reuse `scoreMatch()` pattern, normalize to 0-1 by dividing by 100.
+| Action ID | Label | Required Inputs | Risk | Permissions |
+|-----------|-------|----------------|------|-------------|
+| `navigate_page` | Go to Page | `[path]` | low | `[]` |
+| `create_client` | Add New Client | `[name]` + optional `[phone, email]` | low | `['clients.manage']` |
+| `book_appointment` | Book Appointment | `[client_name]` | medium | `['create_appointments']` |
+| `send_message` | Send Message | `[recipient, message]` | low | `['team_chat.send']` |
+| `check_in` | Check In Client | `[client_name]` | low | `['appointments.manage']` |
+| `process_refund` | Process Refund | `[transaction_id]` | **high** | `['transactions.refund']` |
+| `cancel_appointment` | Cancel Appointment | `[appointment_id]` | **high** | `['appointments.manage']` |
 
-**intentAlignment**: Map result types to intent types. If the top parsed intent is `entity_lookup` and the result type is `team`, score = top intent confidence. If misaligned (e.g., intent is `navigation` but result is `team`), score = 0.1.
+### Validation Functions
 
 ```typescript
-const INTENT_TYPE_MAP: Record<IntentType, ResultType[]> = {
-  entity_lookup:   ['team', 'client'],
-  navigation:      ['navigation', 'utility', 'report'],
-  analytics_query: ['report', 'navigation'],
-  action_request:  ['action'],
-  help_query:      ['help'],
-  ambiguous:       [], // no boost
-};
+function getAction(actionId: string): ActionDefinition | null
+function validateInputs(action: ActionDefinition, inputs: Record<string, string>): { valid: boolean; missing: InputField[] }
+function requiresConfirmation(action: ActionDefinition): boolean  // true if riskLevel === 'high'
+function checkPermissions(action: ActionDefinition, userPermissions: string[]): boolean
 ```
 
-**entityConfidence**: If result corresponds to a resolved entity (matched by `resolvedId`), use that entity's confidence. Otherwise 0.
+### Safety Rules (Hardcoded)
 
-**recency**: Check result path against `recentSearches` list (from `useRecentSearches`). Position-weighted: first recent = 1.0, second = 0.8, etc., decaying by 0.2.
+- `process_refund`, `cancel_appointment`, `delete_*` → always `riskLevel: 'high'`, always require confirmation
+- No action executes if `confidence < confidenceThreshold` (default 0.75)
+- No action executes without permission check passing
+- No silent failures — every execution path returns an `ActionExecutionResult`
 
-**frequency**: Check result path against a frequency map stored in localStorage (incremented on each navigation). Normalize: `min(count / 20, 1)`.
+## File 2: `src/hooks/useActionExecution.ts`
 
-**roleRelevance**: If the result's `permission` or `roles` field intersects with the user's effective permissions/roles, score = 1.0. If no permission is required, score = 0.5 (neutral). If permission exists but user doesn't have it — result is filtered out entirely (pre-ranking).
-
-**contextBoost**: Compare current `location.pathname` prefix with result path. Shared prefix segments = boost: 1 segment = 0.3, 2+ segments = 0.6, exact match = 0.
-
-### Hard Rules
-
-1. **Exact match override**: If `textMatch === 1.0` (exact title match), force score to 1.0 regardless of other signals.
-2. **Permission filtering before ranking**: Results requiring permissions the user lacks are excluded before scoring begins.
-3. **No AI in scoring**: All signal computation is arithmetic over pre-computed values.
-4. **Deterministic ordering**: Ties broken by alphabetical title, then by result type priority.
-
-### Result Grouping
+React hook that manages the full action lifecycle:
 
 ```typescript
-const GROUP_CONFIG = {
-  best:       { label: 'Top Results', priority: 0, maxItems: 3 },
-  team:       { label: 'Team', priority: 1 },
-  client:     { label: 'Clients', priority: 2 },
-  navigation: { label: 'Pages & Features', priority: 3 },
-  report:     { label: 'Reports', priority: 4 },
-  utility:    { label: 'Utilities', priority: 5 },
-  help:       { label: 'Help & Resources', priority: 6 },
-  action:     { label: 'Suggested Actions', priority: 7 },
-};
-```
+export function useActionExecution() → {
+  // State
+  activeAction: ActionDefinition | null;
+  actionState: 'idle' | 'input_needed' | 'confirming' | 'executing' | 'success' | 'error';
+  missingInputs: InputField[];
+  collectedInputs: Record<string, string>;
+  result: ActionExecutionResult | null;
 
-- Top Results: highest 2-3 scores across all groups (only if score > 0.4 threshold)
-- Remaining results grouped by type, sorted by score within each group
-- Groups with 0 results omitted
-- Cap total results at 15
-
-### Ambiguity Handling
-
-If the parser's `intentClarity` is below 0.2 (multiple strong intents), surface results from all matching intent categories rather than collapsing. The "Top Results" group may contain mixed types — this is intentional for ambiguous queries like "Ashley" (could be team, client, or page).
-
-### Suggestion Generation
-
-When no results score above 0.3 or result count is 0:
-
-```typescript
-function generateSuggestions(parsed: ParsedQuery, currentPath: string): SuggestionFallback[]
-```
-
-- If `help_query` intent is present: suggest "Browse Help Center" and "Ask AI"
-- If `navigation` intent: suggest 3 closest nav label matches by edit distance
-- If `entity_lookup`: suggest "Search Team Directory" and "Search Clients"
-- Always include: nearby pages based on current route context
-
-## File 2: `src/hooks/useSearchRanking.ts`
-
-React hook that orchestrates the full pipeline:
-
-```typescript
-export function useSearchRanking(
-  query: string,
-  options: {
-    filterNavItems?: (items: NavItem[]) => NavItem[];
-    permissions?: string[];
-    roles?: string[];
-    currentPath?: string;
-  }
-): {
-  rankedResults: RankedResult[];
-  groups: RankedResultGroup[];
-  suggestions: SuggestionFallback[];
-  parsedQuery: ParsedQuery | null;
-  isAmbiguous: boolean;
+  // Methods
+  detectAndPrepare(parsedQuery: ParsedQuery, permissions: string[]): void;
+  provideInput(key: string, value: string): void;
+  confirm(): void;
+  cancel(): void;
+  reset(): void;
 }
 ```
 
-Pipeline:
-1. `parseQuery(query)` — from `queryParser.ts`
-2. `useQueryEntityResolver(parsed)` — resolve entities
-3. Generate candidate results from nav items + team + help (reuse existing data sources from `useCommandSearch`)
-4. Filter by permissions
-5. Score each candidate via `rankResults()`
-6. Group via `groupRankedResults()`
-7. Generate suggestions if needed
+### Execution Flow
 
-### Frequency Tracking
-
-A helper within the hook manages `localStorage` frequency counts:
-- Key: `zura-nav-frequency`
-- Value: `Record<string, number>` (path → access count)
-- Incremented when `handleSelect` is called (via exposed `trackNavigation` callback)
-- Read during scoring
-
-## Integration Point
-
-In `ZuraCommandSurface.tsx`, replace:
-```typescript
-const { results } = useCommandSearch(query, { filterNavItems });
+```text
+parsedQuery.actionIntent
+        │
+        ▼
+  confidence > threshold?  ──no──→ return (no action state)
+        │ yes
+        ▼
+  permission check  ──fail──→ actionState = 'error', message = "Permission denied"
+        │ pass
+        ▼
+  extract inputs from target token
+        │
+        ▼
+  missing required inputs?  ──yes──→ actionState = 'input_needed'
+        │ no                              │
+        ▼                           user provides inputs
+  riskLevel === 'high'?                   │
+        │ yes                             ▼
+        ▼                           re-check → continue
+  actionState = 'confirming'
+        │
+  user confirms ──no──→ cancel()
+        │ yes
+        ▼
+  actionState = 'executing'
+        │
+        ▼
+  call execution handler
+        │
+    ┌───┴───┐
+  success  error
+    │        │
+    ▼        ▼
+  show result + next actions    show error + fallback
 ```
-with:
-```typescript
-const { groups, suggestions, parsedQuery, isAmbiguous } = useSearchRanking(query, {
-  filterNavItems, permissions, roles, currentPath: location.pathname,
-});
-```
 
-This is a single import swap. The `CommandResultPanel` already accepts grouped results — it will consume the new `groups` format with minimal adaptation (type alignment).
+### Execution Handlers
 
-## Ranking Examples
+The hook does NOT contain business logic. It delegates to existing hooks/functions:
 
-**"Ashley"** (ambiguous — name could be team or client):
-- Top Results: Ashley (Team, score 0.82), Ashley (Client, score 0.78)
-- Team group: Ashley's full profile link
-- Ambiguity preserved — both paths visible
+- `create_client` → navigates to `/dashboard/clients?action=new&name={name}` (reuse existing client creation flow)
+- `book_appointment` → navigates to `/dashboard/schedule?action=book&client={name}`
+- `send_message` → navigates to `/dashboard/team-chat?to={recipient}`
+- `navigate_page` → `navigate(path)`
+- `check_in` → navigates to appointment detail with check-in pre-selected
+- `process_refund` / `cancel_appointment` → navigates to relevant detail page with action pre-selected (does NOT execute directly from search — routes to the existing UI with confirmation)
 
-**"sales report last month"** (analytics intent):
-- Top Results: Sales Analytics (navigation, score 0.91 — strong text + intent alignment)
-- Reports group: Reports page (score 0.65)
-- Intent alignment boosts navigation results matching `analytics_query`
+This approach means: **no business logic duplication**. High-risk actions route to their existing UIs where the full confirmation and execution flow already exists. Low-risk actions either navigate or perform lightweight mutations through existing hooks.
 
-**"settings"** (exact navigation match):
-- Top Results: Settings (score 1.0 — exact match override)
+## ZuraCommandSurface Integration
 
-**No match — "xyzabc"**:
-- Suggestions: "Browse Help Center", "View All Pages", "Ask AI"
+Small update to `ZuraCommandSurface.tsx` to render action states inline:
 
-## Performance
+- **`input_needed`**: Show a compact inline form below the search input with the missing fields + submit button
+- **`confirming`**: Show a confirmation card: "{action label}? This cannot be undone." + Confirm/Cancel buttons
+- **`executing`**: Show a spinner with action label
+- **`success`**: Show success message + next action links (e.g., "View Client", "Book Another")
+- **`error`**: Show error message + "Try Again" or fallback navigation link
 
-- `parseQuery()` is ~0.5ms (pure string ops)
-- Scoring loop is O(n) over candidates (typically <100 items)
-- `useMemo` dependencies: `[query, teamMembers, permissions, currentPath]`
-- No network calls in the ranking path
-- Total ranking time target: <5ms
+All states render inside the existing result panel area — no new dialogs or overlays.
+
+## Example Flows
+
+**"Add client Sarah"**
+1. Parser: `actionIntent = { type: 'create_client', target: 'Sarah', confidence: 0.9 }`
+2. Registry lookup → `create_client`, required: `[name]`, name extracted from target = "Sarah"
+3. Optional inputs missing (phone, email) → `actionState = 'input_needed'`
+4. User can skip optionals → executes: navigates to `/dashboard/clients?action=new&name=Sarah`
+5. Success: "Opening client creation for Sarah" + next action: "Book Appointment"
+
+**"Refund last transaction"**
+1. Parser: `actionIntent = { type: 'process_refund', target: 'last transaction', confidence: 0.9 }`
+2. Registry: `riskLevel: 'high'`, permission check passes
+3. `actionState = 'confirming'`: "Process a refund? You'll be taken to the transaction detail to complete this."
+4. User confirms → navigates to transactions page with refund context
+5. Actual refund happens in existing transaction UI (not from search)
+
+**"Schedule meeting"** (no matching action)
+1. Parser: `actionIntent = { type: 'schedule', confidence: 0.6 }` — below threshold
+2. No action triggered, falls through to normal search results
+
+## Safety Self-Audit
+
+- **No destructive actions execute from search** — high-risk actions route to existing UIs
+- **Permission check before any state transition** — denied users see error, not the action flow
+- **Confidence gating** — low-confidence intents never trigger action mode
+- **No silent failures** — every path produces visible feedback
+- **No business logic duplication** — handlers delegate to existing routes/hooks
+- **Autonomy doctrine compliance** — search actions are "Recommend → Approve → Navigate", never auto-execute
 
 ## Files Summary
 
 | File | Purpose |
-|------|--------|
-| `src/lib/searchRanker.ts` | Pure scoring engine + grouping + suggestions |
-| `src/hooks/useSearchRanking.ts` | React hook orchestrating parser → resolver → ranker |
-| `src/components/command-surface/ZuraCommandSurface.tsx` | Minor: swap `useCommandSearch` for `useSearchRanking` |
+|------|---------|
+| `src/lib/actionRegistry.ts` | Action definitions, validation, permission checks |
+| `src/hooks/useActionExecution.ts` | Lifecycle hook: detect → input → confirm → execute → feedback |
+| `src/components/command-surface/ZuraCommandSurface.tsx` | Minor update: render action states inline in result panel |
 
-No database changes. No edge functions. No parser modifications.
+No database changes. No edge functions. No modifications to parser or ranker.
 
