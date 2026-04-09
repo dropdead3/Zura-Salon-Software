@@ -1,6 +1,6 @@
 /**
  * Zura Search Ranking Hook
- * Orchestrates: parseQuery → useQueryEntityResolver → rankResults → groupRankedResults
+ * Orchestrates: parseQuery → synonymExpansion → useQueryEntityResolver → rankResults → groupRankedResults
  * Single consumption point for the command surface.
  */
 import { useMemo, useCallback } from 'react';
@@ -40,6 +40,9 @@ import {
 import type { DashboardNavItem } from '@/config/dashboardNav';
 import { useTeamDirectory } from '@/hooks/useEmployeeProfile';
 import { useRecentSearches } from '@/components/command-surface/useRecentSearches';
+import { expandQuery, logSynonymTelemetry } from '@/lib/synonymRegistry';
+import type { QueryExpansion } from '@/lib/synonymRegistry';
+import { scoreMatchWithSynonyms } from '@/lib/textMatch';
 
 // ─── Help items ─────────────────────────────────────────────
 
@@ -161,6 +164,23 @@ export function useSearchRanking(
     return recents;
   }, [recents]);
 
+  // Synonym expansion
+  const expansion = useMemo((): QueryExpansion | null => {
+    if (!parsed) return null;
+    const topIntent = parsed.intents[0]?.type ?? null;
+    return expandQuery(query.trim(), topIntent);
+  }, [parsed, query]);
+
+  // Inject synonym-boosted virtual candidates
+  const enrichedCandidates = useMemo((): SearchCandidate[] => {
+    if (!expansion || expansion.expandedTerms.length === 0) return candidates;
+
+    // For each expanded term, check if any existing candidate title matches.
+    // If a strong alias exists but no candidate matches it, we don't create new candidates
+    // (we rely on synonym-aware scoring instead). This keeps candidate pool clean.
+    return candidates;
+  }, [candidates, expansion]);
+
   // Rank
   const { rankedResults, groups, suggestions, isAmbiguous } = useMemo(() => {
     if (!parsed) {
@@ -173,9 +193,42 @@ export function useSearchRanking(
     }
 
     const frequencyMap = getFrequencyMap();
+    const trimmedQuery = query.trim();
 
-    const ranked = rankResults(candidates, {
-      query: query.trim(),
+    // If we have synonym expansion, boost candidates that match expanded terms
+    let candidatesForRanking = enrichedCandidates;
+
+    // Pre-score candidates with synonym awareness to inject textMatch boosts
+    if (expansion && expansion.expandedTerms.length > 0) {
+      const bestAliasConfidence = expansion.aliasMatches.length > 0
+        ? Math.max(...expansion.aliasMatches.map((a) => a.confidence))
+        : 0.9;
+
+      // Add subtitle hints for candidates that match via synonyms
+      // This lets the ranker's textMatch pick them up via subtitle matching
+      candidatesForRanking = enrichedCandidates.map((c) => {
+        const synResult = scoreMatchWithSynonyms(
+          c.title + ' ' + (c.subtitle || ''),
+          trimmedQuery,
+          expansion.expandedTerms,
+          bestAliasConfidence,
+        );
+
+        if (synResult.matchedVia === 'alias' && synResult.matchedTerm && synResult.score > 0) {
+          // Inject the matched synonym into subtitle so ranker's textMatch finds it
+          const existingSub = c.subtitle || '';
+          const synonymHint = synResult.matchedTerm;
+          if (!existingSub.toLowerCase().includes(synonymHint) &&
+              !c.title.toLowerCase().includes(synonymHint)) {
+            return { ...c, subtitle: existingSub ? `${existingSub} · ${synonymHint}` : synonymHint };
+          }
+        }
+        return c;
+      });
+    }
+
+    const ranked = rankResults(candidatesForRanking, {
+      query: trimmedQuery,
       parsed,
       resolved,
       recentPaths,
@@ -192,13 +245,24 @@ export function useSearchRanking(
 
     const ambiguous = parsed.confidence.intentClarity < 0.2;
 
+    // Log synonym telemetry
+    if (expansion && (expansion.aliasMatches.length > 0 || expansion.conceptMatches.length > 0)) {
+      logSynonymTelemetry({
+        query: trimmedQuery,
+        aliasesUsed: expansion.aliasMatches,
+        conceptsActivated: expansion.conceptMatches.map((c) => c.clusterId),
+        hadResults: ranked.length > 0 && ranked[0]?.score >= 0.3,
+        timestamp: Date.now(),
+      });
+    }
+
     return {
       rankedResults: ranked,
       groups: grouped,
       suggestions: suggs,
       isAmbiguous: ambiguous,
     };
-  }, [parsed, resolved, candidates, recentPaths, options.permissions, options.roles, currentPath, query]);
+  }, [parsed, resolved, enrichedCandidates, recentPaths, options.permissions, options.roles, currentPath, query, expansion]);
 
   // Navigation tracking callback
   const trackNavigation = useCallback((path: string) => {
