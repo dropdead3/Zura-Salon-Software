@@ -1,120 +1,97 @@
 
 
-# Proactive Search Intelligence — Command Layer Default State
+# Command Surface Origin-Anchored Expansion Redesign
 
 ## Audit Summary
 
-**Current empty state** (`CommandRecentSection.tsx`): Shows recent searches (localStorage) and recently viewed pages (decayed frequency map). Falls back to a bare "Search or ask Zura..." message with a ghosted icon. No role awareness, no operational signals, no recommended actions.
+**Current architecture**: `TopBarSearch` is a `<button>` in the top bar (rounded-full pill, `bg-muted/60`). Clicking it calls `onSearchClick` → `setCommandOpen(true)` in `DashboardLayout`. `ZuraCommandSurface` renders as a Radix `Dialog` with `DialogContent` portal — a centered modal at `top-[35%]` with `zoom-in-95` + `fade-in` animation. The search bar and modal are completely disconnected components with no visual continuity. The dialog overlay is `bg-black/80` (very aggressive). The close animation is `zoom-out-95` + `fade-out` — generic modal behavior.
 
-**Available data sources already in codebase:**
-- `useAIInsights()` — cached AI business insights with `InsightItem[]` (severity, category, priorityScore, impactEstimateNumeric), `ActionItem[]`, and `SuggestedTask[]`. Already used in dashboard cards/drawers. 2hr staleTime, org-scoped.
-- `useEffectiveRoles()` — returns current role array respecting view-as mode
-- `usePermission()` — `can()`, `canAny()` for permission gating
-- `dashboardNav.ts` — full nav registry with `roles[]` and `permission` per item
-- `useSearchLearning` — decayed frequency map already drives "Recently Viewed"
-- `useEmployeeProfile()` — profile with `is_super_admin`, `location_id`, `location_ids`
-- `useViewAs()` — impersonation context
-- `PinnableCard` — pinning system exists but pins are per-card visibility, not user favorites
+**Core problem**: The dialog opens from center-screen with a scale-up animation. No visual link to the search pill. Feels like a detached popup, not an expansion of the search bar. The overlay is too opaque. The input in the modal is a completely separate `CommandInput` component — no continuity with the pill.
 
-**No existing systems for:** pinned favorites, saved commands, or user-bookmarked destinations. Will not invent one — architect for it cleanly via a future `usePinnedCommands` hook slot.
+## Strategy Decision: Top-Anchored Dropdown, Not Centered Modal
+
+After auditing the header geometry (search pill sits in left zone of top bar, `max-w-[280px]` to `max-w-xl`), the strongest approach is:
+
+**Replace the Radix Dialog with a custom portal-based dropdown panel that expands from the search bar's position.** The panel anchors to the top of the viewport (below the top bar) and grows downward. This preserves the spatial origin and makes the search feel like a deeper state of the same control.
+
+The centered modal approach fails the continuity test — even with origin-tracking animation, the spatial jump from top-left to center creates a disconnect.
 
 ## Architecture
 
-### New Files (2)
+### Approach: Replace Dialog with AnimatePresence Portal
 
-**`src/hooks/useProactiveIntelligence.ts`**
-A single hook that composes existing data sources into a prioritized proactive state. Returns:
-- `continueItems` — recent searches + recent pages (already computed, repackaged)
-- `quickPaths` — role-filtered nav shortcuts from `dashboardNav.ts` registry
-- `attentionItems` — top 2-3 AI insights filtered by severity ≥ warning and priorityScore
-- `recommendedActions` — top 2-3 action items from AI insights
-- `isLoading` — composite loading state
+Remove Radix Dialog entirely from `ZuraCommandSurface`. Replace with:
+1. A `createPortal` + `AnimatePresence` (framer-motion) combination — same pattern already used by `PremiumFloatingPanel`
+2. The panel renders as a fixed-position overlay anchored top-center (offset by sidebar), dropping down from beneath the top bar region
+3. A separate backdrop layer (much softer: `bg-black/20 backdrop-blur-sm` matching `PremiumFloatingPanel`)
 
-**Logic:**
-- Uses `useEffectiveRoles()` to filter nav items by role
-- Uses `usePermission().can()` to gate each quick path
-- Uses `useAIInsights()` to pull cached insights (no new fetch — reads from TanStack cache with 2hr stale)
-- Attention items: filter `insights` where `severity !== 'info'`, sort by `priorityScore` desc, take top 3
-- Recommended actions: take top 3 `actionItems` by priority (high > medium > low)
-- Quick paths: static role→paths map selecting 4-6 most likely destinations per role archetype
-- All data is already org-scoped via existing hooks — no new tenant isolation needed
+### Animation Model
 
-**Role→Quick Path mapping (static, permission-gated):**
-- `receptionist` / `assistant`: Schedule, Client Directory, Waitlist, Appointments & Transactions
-- `stylist` / `stylist_assistant`: My Stats, Schedule, Today's Prep, My Pay
-- `manager`: Analytics Hub, Operations Hub, Staff Utilization, Schedule
-- `admin` / `super_admin`: Analytics Hub, Operations Hub, Roles Hub, Settings, Reports
-- Platform roles: handled separately (already have platform nav)
+**Open**: Panel enters with `y: -12, opacity: 0 → y: 0, opacity: 1` using a tight spring (`damping: 28, stiffness: 320, mass: 0.7`). This creates a subtle downward slide from the header region. Duration feels ~180ms.
 
-**`src/components/command-surface/CommandProactiveState.tsx`**
-Replaces `CommandRecentSection` as the empty-query content. Renders 3-4 compact sections:
+**Close**: Reverse — `y: 0 → y: -12, opacity: 0` with faster exit (~120ms). The panel retracts upward toward the header.
 
-1. **Continue** — Recent searches + recently viewed (reuses existing data, same row style as current `CommandRecentSection`)
-2. **Quick Paths** — 4-6 role-appropriate nav shortcuts as compact icon+label rows
-3. **Attention** — 0-3 operational signals from AI insights, rendered as compact alert rows with severity dot + title + CTA arrow
-4. **Suggested** — 0-3 recommended actions as compact action rows
+No scale transform (scale feels like a popup; translate-Y feels like expansion/retraction from origin).
 
-**Visibility rules:**
-- Each section only renders if it has items
-- Attention section hidden when no warning/critical insights exist (silence is meaningful)
-- Suggested section hidden when no action items exist
-- If nothing proactive is available, falls back to Continue + Quick Paths only
-- If even those are empty, shows the existing "Search or ask Zura..." empty state
+### Geometry
 
-### Edited Files (1)
+- Panel: `fixed`, `top` positioned just below the top bar (~72px from viewport top, or `top-[72px]`; adjusts for God Mode bar offset)
+- Horizontally: `left: calc(50% + var(--sidebar-offset, 0px))`, `transform: translateX(-50%)` — same centering as current dialog but anchored to top
+- Width: same as current (`max-w-[720px]`, expanding to `max-w-[1080px]` with preview)
+- Max height: `max-h-[min(560px, calc(100vh - 100px))]`
+- Border radius: `rounded-xl` matching drawer tokens
+- Material: `bg-card/80 backdrop-blur-xl border-border shadow-2xl` (reuse `tokens.drawer.content`)
 
-**`src/components/command-surface/ZuraCommandSurface.tsx`**
-- Replace `<CommandRecentSection>` with `<CommandProactiveState>` in the `!hasQuery` branch
-- Pass through: `recents`, `recentPages`, `onSearchSelect`, `onPageSelect`, `onClearRecents`, `onNavigate` (for quick paths + attention CTAs)
+### TopBarSearch Visual Continuity
 
-## Visual Design
+When `open` is true, the `TopBarSearch` pill should:
+- Remain visible but visually elevated — add a subtle ring/glow (`ring-1 ring-foreground/10`) to show it's the "source"
+- Or alternatively: hide the pill entirely and let the expanded panel's input serve as the replacement (cleaner)
 
-Each section uses the same row style as existing `CommandRecentSection` — `h-10`, `px-4`, `hover:bg-muted/60`, `transition-colors duration-150`. Section headers use `tokens.heading.subsection`.
+**Decision**: Hide the pill when open. The expanded panel's `CommandInput` sits at the same vertical level as the header, creating the illusion of replacement. The pill fades out with `opacity-0 pointer-events-none` transition.
 
-**Attention rows** get a subtle severity indicator:
-- Warning: `bg-yellow-500/60` dot (w-1.5 h-1.5 rounded-full)
-- Critical: `bg-red-500/60` dot
-- No colored backgrounds, no alert banners — just a dot + text
+### Input Continuity
 
-**Quick Path rows** use the nav item's icon (`w-4 h-4 text-muted-foreground/40`) matching existing result row patterns.
+The `CommandInput` inside the panel is already the active input. Since we're anchoring the panel to the header region, the input at the top of the panel aligns spatially with where the search pill was. No need for FLIP animation — the spatial proximity is close enough that the transition reads as "the pill expanded into this."
 
-**Suggested action rows** use a `Zap` icon prefix to distinguish from navigation.
+### Empty State & No-Results AI Fallback
 
-All rows are clickable: quick paths and attention items navigate, suggested actions navigate to relevant report/destination.
+Current empty state (no query) shows `CommandProactiveState` — already good. 
 
-## Transition Behavior
+**No-results state** (query typed, zero matches, no suggestions): Currently shows a bare `<p>No results for "..."</p>`. This needs improvement:
 
-When user types first character → `hasQuery` becomes true → proactive state unmounts, search results render. Instant swap, no animation needed (same as current behavior). When user clears query → proactive state remounts with cached data (no loading flash due to TanStack staleTime).
+Add a refined AI fallback prompt below the no-results message:
+- Sparkles icon + "Ask Zura AI" button styled as a calm inline card
+- Phrasing: "No direct matches. Ask Zura AI for help →"
+- Clicking switches to AI mode and auto-sends the query
+- Styled with `bg-card-inner/60 border border-primary/10 rounded-lg` — same language as `CommandAIAnswerCard`
 
-## Performance
+### Responsive
 
-- `useAIInsights()` reads from TanStack cache (2hr stale) — no new fetch on command open
-- Quick paths are static computation from role + permissions — zero async
-- Recent data is already computed in parent — passed as props
-- Total new renders: 1 lightweight component with pure props + 1 cached query read
+- Desktop (≥1024px): Top-anchored dropdown panel as described
+- Tablet (768–1023px): Same but wider relative to viewport
+- Mobile (<768px): Full-screen sheet sliding down from top (`inset-0`, `rounded-none`), same as current mobile behavior but with slide-down instead of center-zoom
 
-## Responsive
+## Files to Edit
 
-- Desktop: full proactive state with all sections
-- Mobile (<768px): show Continue + Quick Paths only (attention/suggested hidden to keep mobile search focused)
+| File | Action | What |
+|------|--------|------|
+| `ZuraCommandSurface.tsx` | **Major edit** | Replace `Dialog`/`DialogContent` with `createPortal` + `motion.div` + `AnimatePresence`. Reposition as top-anchored panel. Add backdrop. Improve no-results empty state with AI fallback. |
+| `TopBarSearch.tsx` | **Edit** | Accept `isOpen` prop; when true, apply `opacity-0 pointer-events-none` transition to hide pill |
+| `SuperAdminTopBar.tsx` | **Edit** | Pass `isSearchOpen` prop to `TopBarSearch` |
+| `DashboardLayout.tsx` | **Edit** | Pass `commandOpen` state to `SuperAdminTopBar` as `isSearchOpen` |
+| `dialog.tsx` | No change | |
 
-## Scope Awareness
+## No-Results AI Fallback (inline in ZuraCommandSurface)
 
-- `useAIInsights()` is already org-scoped via `organization_id`
-- Nav items already filtered by `useEffectiveRoles()` and `usePermission()`
-- View-as mode: `useEffectiveRoles()` already returns impersonated roles, so quick paths adjust automatically
+Replace the bare `<p>No results...</p>` block (lines 374-378) with a styled card:
+```
+[Search icon] No results for "query"
+[Sparkles] Continue with Zura AI →
+```
+Clicking triggers `setAiMode(true); sendMessage(query);`
 
-## Fallback Behavior
+## Summary of Changes
 
-If AI insights are loading or unavailable: show Continue + Quick Paths only. No skeleton for attention/suggested — they simply don't appear. Never show thin or low-confidence content.
-
-## Files Summary
-
-| File | Action |
-|------|--------|
-| `src/hooks/useProactiveIntelligence.ts` | Create — compose role-aware quick paths + attention + actions from existing hooks |
-| `src/components/command-surface/CommandProactiveState.tsx` | Create — render proactive default state sections |
-| `src/components/command-surface/ZuraCommandSurface.tsx` | Edit — swap `CommandRecentSection` → `CommandProactiveState` in empty-query branch |
-
-No database changes. No new design tokens. No new data fetches.
+4 files edited. No new files. No database changes. Core change is replacing Radix Dialog with a portal+motion panel anchored to the top bar region, adding a pill hide transition, and improving the no-results fallback.
 
