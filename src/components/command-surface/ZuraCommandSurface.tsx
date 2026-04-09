@@ -247,6 +247,9 @@ export function ZuraCommandSurface({ open, onOpenChange, filterNavItems }: ZuraC
         sendMessage(query);
       } else if (flatResults[selectedIndex]) {
         handleSelect(flatResults[selectedIndex]);
+      } else if (hasQuery && !hasResults && selectedIndex === 0) {
+        // No results — Enter triggers AI fallback from the focused card
+        handleAIFallback();
       }
     }
   }, [query, aiMode, flatResults, selectedIndex, handleSelect, close, resetAI, sendMessage, addRecent]);
