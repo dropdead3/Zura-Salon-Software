@@ -73,8 +73,8 @@ export function AIHelpTab() {
       <ScrollArea className="flex-1 px-4" ref={scrollRef}>
         <div className="py-4 space-y-4">
           {isEmpty ? (
-            <div className="flex flex-col items-center justify-center h-[280px] text-center">
-              <ZuraZIcon className="w-12 h-12 text-primary mb-4" />
+            <div className="flex flex-col items-center justify-center h-[280px] text-center pt-6">
+              <ZuraZIcon className="w-8 h-8 text-primary mb-4" />
               <h3 className="font-medium text-lg mb-2">{AI_ASSISTANT_NAME_DEFAULT}</h3>
               <p className="text-sm text-muted-foreground mb-6 max-w-[280px]">
                 I'm {AI_ASSISTANT_NAME_DEFAULT}, your AI assistant. Ask me anything about using {PLATFORM_NAME}.
