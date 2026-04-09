@@ -11,6 +11,7 @@ import { cn } from '@/lib/utils';
 import { AI_ASSISTANT_NAME_DEFAULT } from '@/lib/brand';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useEffectiveRoles } from '@/hooks/useEffectiveUser';
+import { useOrganizationContext } from '@/contexts/OrganizationContext';
 
 type Message = { role: 'user' | 'assistant'; content: string };
 
@@ -47,8 +48,18 @@ const ROLE_PROMPTS: Record<string, string[]> = {
   ],
 };
 
+const ROLE_PRIORITY: string[] = ['super_admin', 'admin', 'manager', 'receptionist', 'stylist', 'stylist_assistant', 'operations_assistant', 'admin_assistant', 'bookkeeper', 'inventory_manager', 'booth_renter'];
+
 export function AIHelpTab() {
   const roles = useEffectiveRoles();
+  const { effectiveOrganization } = useOrganizationContext();
+  const orgId = effectiveOrganization?.id;
+  const primaryRole = useMemo(() => {
+    for (const r of ROLE_PRIORITY) {
+      if (roles.includes(r as any)) return r;
+    }
+    return roles[0] ?? undefined;
+  }, [roles]);
   const prompts = useMemo(() => {
     if (roles.some(r => r === 'super_admin' || r === 'admin')) return ROLE_PROMPTS.leadership;
     if (roles.includes('manager')) return ROLE_PROMPTS.manager;
@@ -85,7 +96,7 @@ export function AIHelpTab() {
     const userMessage: Message = { role: 'user', content: messageText };
     setMessages(prev => [...prev, userMessage]);
     setInputValue('');
-    await sendMessage(messageText, messages);
+    await sendMessage(messageText, messages, orgId, primaryRole);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
