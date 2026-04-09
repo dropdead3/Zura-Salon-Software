@@ -7,6 +7,7 @@ import type { RankedResult } from '@/lib/searchRanker';
 interface CommandResultRowProps {
   result: RankedResult;
   isSelected: boolean;
+  isTopResult?: boolean;
   onClick: () => void;
   query: string;
   onHover?: (result: RankedResult) => void;
@@ -40,7 +41,9 @@ const TYPE_LABELS: Record<string, string> = {
 };
 
 export const CommandResultRow = React.forwardRef<HTMLButtonElement, CommandResultRowProps>(
-  ({ result, isSelected, onClick, query, onHover }, ref) => {
+  ({ result, isSelected, isTopResult, onClick, query, onHover }, ref) => {
+    const actionChipLabel = result.type === 'action' ? 'Run' : result.type === 'navigation' ? 'Open' : null;
+
     return (
       <button
         ref={ref}
@@ -50,7 +53,8 @@ export const CommandResultRow = React.forwardRef<HTMLButtonElement, CommandResul
         onFocus={() => onHover?.(result)}
         tabIndex={-1}
         className={cn(
-          'group/row w-full flex items-center gap-3 px-4 h-12 text-left transition-colors duration-150',
+          'group/row w-full flex items-center gap-3 px-4 text-left transition-colors duration-150',
+          isTopResult ? 'h-14 border-l-2 border-primary/40' : 'h-12',
           isSelected
             ? 'bg-accent text-accent-foreground shadow-[inset_0_1px_0_0_hsl(var(--foreground)/0.05)]'
             : 'hover:bg-muted/60'
@@ -66,11 +70,17 @@ export const CommandResultRow = React.forwardRef<HTMLButtonElement, CommandResul
         </span>
 
         <div className="flex-1 min-w-0 flex items-center gap-2">
-          <span className="font-sans text-sm truncate">
+          <span className={cn(
+            'font-sans text-sm truncate',
+            isTopResult && 'text-foreground'
+          )}>
             {highlightMatch(result.title, query)}
           </span>
           {result.subtitle && (
-            <span className="font-sans text-xs text-muted-foreground truncate hidden sm:inline">
+            <span className={cn(
+              'font-sans text-xs text-muted-foreground truncate',
+              isTopResult ? 'inline' : 'hidden sm:inline'
+            )}>
               {result.subtitle}
             </span>
           )}
@@ -79,6 +89,17 @@ export const CommandResultRow = React.forwardRef<HTMLButtonElement, CommandResul
         {result.metadata && (
           <span className="font-sans text-[10px] text-muted-foreground hidden lg:inline">
             {result.metadata}
+          </span>
+        )}
+
+        {/* Inline action chip on hover/selected for top results */}
+        {isTopResult && actionChipLabel && (isSelected || true) && (
+          <span className={cn(
+            'font-sans text-[10px] px-2 py-0.5 rounded-full shrink-0 transition-opacity duration-150',
+            'bg-primary/10 text-primary border border-primary/20',
+            isSelected ? 'opacity-100' : 'opacity-0 group-hover/row:opacity-100'
+          )}>
+            {actionChipLabel}
           </span>
         )}
 
