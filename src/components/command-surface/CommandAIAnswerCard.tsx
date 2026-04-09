@@ -4,6 +4,8 @@ import { DotsLoader } from '@/components/ui/loaders/DotsLoader';
 import ReactMarkdown from 'react-markdown';
 import { cn } from '@/lib/utils';
 import { AI_ASSISTANT_NAME_DEFAULT } from '@/lib/brand';
+import { ArrowRight, MapPin } from 'lucide-react';
+import type { NavDestination } from '@/lib/navKnowledgeBase';
 
 interface CommandAIAnswerCardProps {
   response: string;
@@ -11,10 +13,68 @@ interface CommandAIAnswerCardProps {
   error: string | null;
   isNavQuestion?: boolean;
   navConfidence?: 'high' | 'medium' | 'low' | 'none';
+  destinations?: NavDestination[];
+  onNavigate?: (path: string) => void;
 }
 
-export function CommandAIAnswerCard({ response, isLoading, error, isNavQuestion, navConfidence }: CommandAIAnswerCardProps) {
+function DestinationLink({ dest, query, onNavigate }: { dest: NavDestination; query?: string; onNavigate: (path: string) => void }) {
+  // Find matched tab based on query keywords
+  const matchedTab = dest.tabs?.find(tab => {
+    const q = (query || '').toLowerCase();
+    return q.includes(tab.label.toLowerCase()) || tab.purpose.toLowerCase().split(' ').some(w => w.length > 3 && q.includes(w));
+  });
+
+  const targetPath = matchedTab ? `${dest.path}?tab=${matchedTab.id}` : dest.path;
+
+  return (
+    <div className="flex items-center justify-between gap-3 px-3 py-2.5 rounded-lg bg-muted/30 border border-border/30 group hover:border-primary/20 hover:bg-muted/50 transition-colors duration-150">
+      <div className="flex items-center gap-2 min-w-0">
+        <MapPin className="w-3.5 h-3.5 text-primary/60 shrink-0" />
+        <nav className="flex items-center gap-1 font-sans text-xs text-muted-foreground min-w-0 flex-wrap">
+          <button
+            type="button"
+            onClick={() => onNavigate(dest.path)}
+            className="hover:text-foreground transition-colors cursor-pointer"
+          >
+            {dest.section}
+          </button>
+          <span className="text-muted-foreground/40">›</span>
+          <button
+            type="button"
+            onClick={() => onNavigate(dest.path)}
+            className="text-foreground font-medium hover:text-primary transition-colors cursor-pointer truncate"
+          >
+            {dest.label}
+          </button>
+          {matchedTab && (
+            <>
+              <span className="text-muted-foreground/40">›</span>
+              <button
+                type="button"
+                onClick={() => onNavigate(targetPath)}
+                className="text-primary hover:text-primary/80 transition-colors cursor-pointer truncate"
+              >
+                {matchedTab.label}
+              </button>
+            </>
+          )}
+        </nav>
+      </div>
+      <button
+        type="button"
+        onClick={() => onNavigate(targetPath)}
+        className="shrink-0 inline-flex items-center gap-1 font-sans text-xs font-medium text-primary hover:text-primary/80 px-2.5 py-1 rounded-full bg-primary/10 hover:bg-primary/15 transition-colors duration-150 cursor-pointer"
+      >
+        Open
+        <ArrowRight className="w-3 h-3" />
+      </button>
+    </div>
+  );
+}
+
+export function CommandAIAnswerCard({ response, isLoading, error, isNavQuestion, navConfidence, destinations = [], onNavigate }: CommandAIAnswerCardProps) {
   const [expanded, setExpanded] = useState(false);
+  const hasDestinations = destinations.length > 0 && onNavigate;
 
   if (!isLoading && !response && !error) return null;
 
@@ -86,6 +146,18 @@ export function CommandAIAnswerCard({ response, isLoading, error, isNavQuestion,
             </button>
           )}
         </>
+      )}
+
+      {/* Navigation Quick Links */}
+      {hasDestinations && !isLoading && response && (
+        <div className="mt-3 pt-3 border-t border-border/20 space-y-2">
+          <span className="font-sans text-[10px] text-muted-foreground/70 uppercase tracking-wider">
+            Quick links
+          </span>
+          {destinations.map((dest) => (
+            <DestinationLink key={dest.id} dest={dest} onNavigate={onNavigate!} />
+          ))}
+        </div>
       )}
     </div>
   );

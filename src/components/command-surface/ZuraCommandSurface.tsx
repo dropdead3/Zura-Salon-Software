@@ -8,6 +8,7 @@ import { tokens } from '@/lib/design-tokens';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useAIAssistant } from '@/hooks/useAIAssistant';
 import { classifyAndGround } from '@/lib/navGrounding';
+import type { NavDestination } from '@/lib/navKnowledgeBase';
 import { useActiveLocations } from '@/hooks/useLocations';
 import { useSearchRanking } from '@/hooks/useSearchRanking';
 import { useRecentSearches } from './useRecentSearches';
@@ -108,7 +109,7 @@ export function ZuraCommandSurface({ open, onOpenChange, filterNavItems, anchorR
 
   // Memoize classifyAndGround to avoid redundant calls in JSX (Fix #1)
   const groundingResult = useMemo(() => {
-    if (!query.trim()) return { isNavigation: false, confidence: 'none' as const, groundingPrompt: '' };
+    if (!query.trim()) return { isNavigation: false, verifiedDestinations: [] as NavDestination[], confidence: 'none' as const, groundingPrompt: '' };
     return classifyAndGround(query, primaryRole);
   }, [query, primaryRole]);
 
@@ -517,12 +518,18 @@ export function ZuraCommandSurface({ open, onOpenChange, filterNavItems, anchorR
                 hasPreview && 'lg:max-w-[calc(100%-340px)]'
               )}>
                 {hasQuery && showAICard && (
-                  <CommandAIAnswerCard
+                <CommandAIAnswerCard
                     response={aiResponse}
                     isLoading={aiLoading}
                     error={aiError}
                     isNavQuestion={isQuestionQuery(query) && groundingResult.isNavigation}
                     navConfidence={groundingResult.confidence}
+                    destinations={groundingResult.isNavigation ? groundingResult.verifiedDestinations : []}
+                    onNavigate={(path) => {
+                      const resolvedPath = resolveOrgPath(path);
+                      navigate(resolvedPath);
+                      close();
+                    }}
                   />
                 )}
 
