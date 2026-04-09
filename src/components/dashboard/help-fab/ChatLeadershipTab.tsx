@@ -154,9 +154,9 @@ export function ChatLeadershipTab() {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="px-4 py-3 border-b border-border/30">
-        <h3 className="font-medium text-sm">Chat with Leadership</h3>
-        <p className="text-xs text-muted-foreground/70 mt-0.5">
+      <div className="px-4 py-3 border-b border-border/30 bg-muted/20">
+        <h3 className="font-display text-sm tracking-wide uppercase">Chat with Leadership</h3>
+        <p className="text-xs text-muted-foreground/70 mt-0.5 font-sans">
           Select someone to start a conversation
         </p>
       </div>

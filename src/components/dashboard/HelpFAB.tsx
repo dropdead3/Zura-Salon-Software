@@ -124,11 +124,13 @@ export function HelpFAB() {
         sideOffset={16}
         className="w-[400px] h-[520px] p-0 overflow-hidden rounded-2xl bg-card/95 backdrop-blur-xl border border-border/40 shadow-[0_16px_64px_rgba(0,0,0,0.4)]"
       >
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
+        {/* Inner gradient overlay for depth */}
+        <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-primary/[0.04] to-transparent pointer-events-none z-0 rounded-t-2xl" />
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col relative z-[1]">
           <div className="px-4 pt-3 pb-0">
-            <TabsList className="w-full">
-              <TabsTrigger value="ai-help" className="flex-1 font-display text-xs tracking-wider uppercase">{AI_ASSISTANT_NAME_DEFAULT}</TabsTrigger>
-              <TabsTrigger value="support" className="flex-1 font-display text-xs tracking-wider uppercase">Chat</TabsTrigger>
+            <TabsList className="w-full rounded-full bg-card/60">
+              <TabsTrigger value="ai-help" className="flex-1 font-display text-xs tracking-wider uppercase rounded-full data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">{AI_ASSISTANT_NAME_DEFAULT}</TabsTrigger>
+              <TabsTrigger value="support" className="flex-1 font-display text-xs tracking-wider uppercase rounded-full data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Chat</TabsTrigger>
             </TabsList>
           </div>
           <div className="h-px bg-gradient-to-r from-primary/20 via-primary/40 to-primary/20" />
