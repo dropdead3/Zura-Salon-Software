@@ -116,7 +116,7 @@ serve(async (req) => {
     const { user, supabaseAdmin } = authResult;
 
     const body = await validateBody(req, AssistantSchema, getCorsHeaders(req));
-    const { messages, organizationId, userRole, groundingContext } = body;
+    const { messages, organizationId, userRole, groundingContext, dataContext } = body;
     // Verify org access
     try {
       await requireOrgMember(supabaseAdmin, user.id, body.organizationId || body.organization_id);
