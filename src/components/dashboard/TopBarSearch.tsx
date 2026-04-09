@@ -4,9 +4,10 @@ import { cn } from '@/lib/utils';
 
 interface TopBarSearchProps {
   onClick: () => void;
+  isOpen?: boolean;
 }
 
-export function TopBarSearch({ onClick }: TopBarSearchProps) {
+export function TopBarSearch({ onClick, isOpen }: TopBarSearchProps) {
   return (
     <button
       type="button"
@@ -19,7 +20,8 @@ export function TopBarSearch({ onClick }: TopBarSearchProps) {
         'active:scale-[0.995]',
         'focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-foreground/10',
         'transition-all duration-200 ease-out cursor-pointer',
-        'text-left'
+        'text-left',
+        isOpen && 'opacity-0 pointer-events-none'
       )}
     >
       <Search className="w-4 h-4 shrink-0 text-muted-foreground/70" strokeWidth={1.5} />
