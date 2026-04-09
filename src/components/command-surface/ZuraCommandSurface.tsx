@@ -49,6 +49,7 @@ interface ZuraCommandSurfaceProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   filterNavItems?: (items: NavItem[]) => NavItem[];
+  anchorRef?: React.RefObject<HTMLElement>;
 }
 
 // Build a label lookup from all nav sources for frequency-based recent pages
@@ -68,7 +69,7 @@ const NAV_LABEL_MAP = (() => {
 const SPRING_OPEN = { type: 'spring' as const, damping: 28, stiffness: 320, mass: 0.7 };
 const SPRING_CLOSE = { type: 'spring' as const, damping: 32, stiffness: 400, mass: 0.6 };
 
-export function ZuraCommandSurface({ open, onOpenChange, filterNavItems }: ZuraCommandSurfaceProps) {
+export function ZuraCommandSurface({ open, onOpenChange, filterNavItems, anchorRef }: ZuraCommandSurfaceProps) {
   const [query, setQuery] = useState('');
   const [aiMode, setAiMode] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(0);
@@ -287,8 +288,28 @@ export function ZuraCommandSurface({ open, onOpenChange, filterNavItems }: ZuraC
 
   // God Mode bar offset
   const godModeOffset = isImpersonating ? 44 : 0;
-  // Top bar height + padding (~72px desktop)
-  const panelTop = isMobile ? godModeOffset : godModeOffset + 72;
+
+  // Anchor measurement — position panel from search bar's DOM rect
+  const [anchorRect, setAnchorRect] = useState<{ top: number; left: number; width: number } | null>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const measure = () => {
+      const el = anchorRef?.current;
+      if (el) {
+        const r = el.getBoundingClientRect();
+        setAnchorRect({ top: r.top, left: r.left, width: r.width });
+      }
+    };
+    measure();
+    window.addEventListener('resize', measure);
+    return () => window.removeEventListener('resize', measure);
+  }, [open, anchorRef]);
+
+  // Fallback positioning if no anchor available
+  const panelTop = isMobile ? godModeOffset : (anchorRect?.top ?? godModeOffset + 72);
+  const panelLeft = anchorRect?.left ?? 0;
+  const maxPanelWidth = anchorRect ? Math.min(hasPreview ? 1080 : 720, window.innerWidth - panelLeft - 16) : undefined;
 
   return createPortal(
     <AnimatePresence>
@@ -309,9 +330,9 @@ export function ZuraCommandSurface({ open, onOpenChange, filterNavItems }: ZuraC
           {/* Command Surface Panel */}
           <motion.div
             key="cmd-panel"
-            initial={{ opacity: 0, y: -12 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -12 }}
+            initial={{ opacity: 0, scale: 0.97 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.97 }}
             transition={SPRING_OPEN}
             className={cn(
               'fixed flex flex-col border border-border rounded-xl overflow-hidden',
@@ -324,14 +345,14 @@ export function ZuraCommandSurface({ open, onOpenChange, filterNavItems }: ZuraC
             )}
             style={{
               zIndex: 200,
+              transformOrigin: 'top left',
               ...(!isMobile ? {
                 top: `${panelTop}px`,
-                left: 'calc(50% + var(--sidebar-offset, 0px))',
-                transform: 'translateX(-50%)',
-                width: 'calc(100vw - 2rem)',
+                left: `${panelLeft}px`,
+                width: maxPanelWidth ? `${maxPanelWidth}px` : 'calc(100vw - 2rem)',
                 maxHeight: `min(560px, calc(100vh - ${panelTop + 40}px))`,
               } : {
-                top: `${panelTop}px`,
+                top: `${godModeOffset}px`,
               }),
             }}
           >
