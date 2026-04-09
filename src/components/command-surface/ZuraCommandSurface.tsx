@@ -4,6 +4,7 @@ import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
 import { tokens } from '@/lib/design-tokens';
 import { useAIAssistant } from '@/hooks/useAIAssistant';
+import { useActiveLocations } from '@/hooks/useLocations';
 import { useSearchRanking } from '@/hooks/useSearchRanking';
 import { useRecentSearches } from './useRecentSearches';
 import { isQuestionQuery } from './commandTypes';
