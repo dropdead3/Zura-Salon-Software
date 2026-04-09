@@ -146,6 +146,11 @@ serve(async (req) => {
         systemPrompt += `\n\nNavigation confidence is HIGH. Use the VERIFIED WORKFLOW steps exactly as listed. Do not add, remove, or rename any steps.`;
       }
     }
+
+    // Inject live data context when available
+    if (dataContext) {
+      systemPrompt += `\n\n## LIVE DATA CONTEXT\nThe following real data was fetched from the organization's POS system for the user's query:\n${dataContext}\n\nIMPORTANT: Reference these exact numbers in your response. Do NOT say "I don't have access to your data" or "I can't see your numbers." The data above is accurate and current. Present insights and analysis based on these real figures.`;
+    }
     
     if (organizationId && SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY) {
       try {
