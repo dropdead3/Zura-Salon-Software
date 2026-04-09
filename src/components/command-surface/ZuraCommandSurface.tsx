@@ -244,9 +244,9 @@ export function ZuraCommandSurface({ open, onOpenChange, filterNavItems, anchorR
     return rawPath;
   }, [dashPath]);
 
-  const handleSelect = useCallback((result: { path?: string; title?: string }, index?: number) => {
+  const handleSelect = useCallback((result: { path?: string; title?: string; type?: string }, index?: number) => {
     if (result.path) {
-      if (query.trim()) addRecent(query.trim());
+      if (query.trim()) addRecent({ query: query.trim(), selectedPath: result.path, selectedTitle: result.title, resultType: (result.type as any) ?? 'navigation' });
       const resolvedPath = resolveOrgPath(result.path);
       trackNavigation(result.path);
 
