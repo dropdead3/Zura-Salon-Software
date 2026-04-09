@@ -127,6 +127,7 @@ export function SuperAdminTopBar({
   roleBadges,
   onSearchClick,
   isSearchOpen,
+  searchBarRef,
   isAdmin,
   isPlatformUser,
   isStylistRole,
@@ -180,7 +181,7 @@ export function SuperAdminTopBar({
             <OrganizationSwitcher compact />
           )}
           <div className="min-w-0 w-full max-w-[280px] lg:max-w-md xl:max-w-lg 2xl:max-w-xl">
-            <TopBarSearch onClick={onSearchClick} isOpen={isSearchOpen} />
+            <TopBarSearch ref={searchBarRef} onClick={onSearchClick} isOpen={isSearchOpen} />
           </div>
         </div>
 

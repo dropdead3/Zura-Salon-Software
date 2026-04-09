@@ -552,6 +552,7 @@ function DashboardLayoutInner({ children, hideFooter, hideTopBar, hideSidebar }:
             roleBadges={roleBadges}
             onSearchClick={() => setCommandOpen(true)}
             isSearchOpen={commandOpen}
+            searchBarRef={searchBarRef}
             isAdmin={isAdmin}
             isPlatformUser={isPlatformUser}
             isStylistRole={roles.includes('stylist')}
@@ -565,6 +566,7 @@ function DashboardLayoutInner({ children, hideFooter, hideTopBar, hideSidebar }:
           open={commandOpen}
           onOpenChange={setCommandOpen}
           filterNavItems={filterNavItems}
+          anchorRef={searchBarRef}
         />
 
         {/* Banners */}
