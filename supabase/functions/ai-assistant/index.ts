@@ -16,7 +16,7 @@ const AssistantSchema = z.object({
   userRole: z.string().max(50).optional(),
   groundingContext: z.object({
     isNavigation: z.boolean(),
-    confidence: z.enum(["high", "low", "none"]),
+    confidence: z.enum(["high", "medium", "low", "none"]),
     groundingPrompt: z.string(),
   }).optional(),
 });
@@ -93,6 +93,9 @@ These names do NOT exist in the app. Never reference them:
    Example: "Go to **Roles & Controls Hub** in the **System** section of the sidebar, then click the **Invitations** tab."
 4. If the user's role does not have access to the requested page, say that directly and explain what role is needed.
 5. Do NOT paraphrase or shorten page names. Use the exact bold label from the navigation list above.
+6. If a workflow is not listed in VERIFIED NAVIGATION CONTEXT, respond with the destination and its purpose ONLY. Do not invent steps, tabs to click, or buttons to press.
+7. If the query is role-dependent, state the required role explicitly.
+8. If no verified match exists, say "I couldn't verify the exact location for that feature" and list the closest known hubs.
 
 Keep responses concise, friendly, and actionable.`;
 
@@ -136,6 +139,10 @@ serve(async (req) => {
       systemPrompt += `\n\n## ${groundingContext.groundingPrompt}`;
       if (groundingContext.confidence === 'low') {
         systemPrompt += `\n\nIMPORTANT: Navigation confidence is LOW. Do NOT fabricate step-by-step instructions. Tell the user you're not certain of the exact location and suggest using Cmd/Ctrl+K to search.`;
+      } else if (groundingContext.confidence === 'medium') {
+        systemPrompt += `\n\nIMPORTANT: Navigation confidence is MEDIUM. You found the destination but may not have a fully verified workflow. Provide the destination and its purpose. If a VERIFIED WORKFLOW is listed above, you may use it. Otherwise, do NOT invent steps — just provide the destination.`;
+      } else if (groundingContext.confidence === 'high') {
+        systemPrompt += `\n\nNavigation confidence is HIGH. Use the VERIFIED WORKFLOW steps exactly as listed. Do not add, remove, or rename any steps.`;
       }
     }
     
