@@ -1,26 +1,28 @@
 
 
-# Fix FAB Chat Modal Toggle & Padding
+# Increase FAB Chat Modal Height with Mobile Responsiveness
 
-## Issues Identified
-1. **Tab toggle not rendering as pill**: The `TabsList` component has `style={{ borderRadius: 9 }}` and `TabsTrigger` has `style={{ borderRadius: 6 }}` as inline styles, which override the `rounded-full` Tailwind classes applied in HelpFAB. The base `bg-muted/70` also clashes with the custom `bg-card/60`.
-2. **Active tab blending in**: The base TabsTrigger styles (`data-[state=active]:bg-black/[0.07]`, ring, shadow) conflict with the custom `data-[state=active]:bg-primary` — specificity war causes the active state to look washed out.
-3. **Padding issues**: The tab header area (`px-4 pt-3 pb-0`) is tight, and the gradient divider sits too close to the tabs.
+## Current State
+The modal is fixed at `w-[400px] h-[520px]` with no responsive sizing. On smaller screens this could overflow or feel cramped.
 
 ## Changes
 
 ### File: `src/components/dashboard/HelpFAB.tsx`
-- Override the inline `borderRadius` on `TabsList` by adding `style={{ borderRadius: '9999px' }}` directly
-- Add `!rounded-full` or use style prop on `TabsTrigger` to force pill shape
-- Increase header padding: `px-4 pt-4 pb-2` for breathing room
-- Reset conflicting base styles on TabsTrigger: add `data-[state=active]:shadow-none data-[state=active]:ring-0` to eliminate base component interference
-- Add `py-1.5` to TabsList for taller pill container
+- Change the PopoverContent sizing from fixed `h-[520px]` to a responsive approach:
+  - Desktop: `h-[620px]` (increase by 100px for more conversation space)
+  - Mobile: Use `max-h-[calc(100vh-120px)]` to prevent overflow on small screens
+  - Width: Add `max-sm:w-[calc(100vw-32px)]` so on mobile it fills width with 16px margins
+  - Final classes: `w-[400px] h-[620px] max-h-[calc(100vh-120px)] max-[430px]:w-[calc(100vw-32px)]`
 
 ### File: `src/components/dashboard/help-fab/AIHelpTab.tsx`
-- Adjust empty state container height from `h-[320px]` to `h-[340px]` to account for increased header padding
-- Tighten input area: reduce bottom padding slightly from `p-3` to `px-3 pb-3 pt-1` since the gradient line provides separation
+- Update the empty state container height from `h-[340px]` to `h-[420px]` to fill the taller modal
+- This gives more breathing room between the icon, description, and prompt list
+
+### File: `src/components/dashboard/HelpFAB.tsx` (FAB position)
+- Adjust the fixed FAB position for mobile: add `max-sm:bottom-4 max-sm:right-4` to tighten on small screens (currently `bottom-6 right-6`)
 
 ## Technical Details
-- The root cause is inline `style` on the shared Tabs components overriding Tailwind border-radius — we fix this with inline `style` props on the HelpFAB instances rather than modifying the shared component
-- No new dependencies, ~10 lines changed across 2 files
+- Uses Tailwind responsive modifiers and `max-h` with viewport units for safe mobile sizing
+- No new dependencies
+- ~5 lines changed across 2 files
 
