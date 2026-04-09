@@ -267,4 +267,5 @@ export const CommandProactiveState = React.forwardRef<HTMLDivElement, CommandPro
       )}
     </div>
   );
-}
+});
+CommandProactiveState.displayName = 'CommandProactiveState';
