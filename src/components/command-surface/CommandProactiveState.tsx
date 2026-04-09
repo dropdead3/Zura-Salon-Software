@@ -9,9 +9,11 @@ import {
   type RecommendedAction,
 } from '@/hooks/useProactiveIntelligence';
 import { useIsMobile } from '@/hooks/use-mobile';
+import type { RecentSearch } from './useRecentSearches';
 
 interface CommandProactiveStateProps {
   recentSearches: string[];
+  recentEntries?: RecentSearch[];
   recentPages: Array<{ label: string; path: string }>;
   onSearchSelect: (query: string) => void;
   onPageSelect: (path: string) => void;
@@ -26,6 +28,7 @@ const ICON_BASE = 'w-4 h-4 text-muted-foreground/40 group-hover/row:text-muted-f
 
 export function CommandProactiveState({
   recentSearches,
+  recentEntries,
   recentPages,
   onSearchSelect,
   onPageSelect,
@@ -72,18 +75,25 @@ export function CommandProactiveState({
               </button>
             )}
           </div>
-          {recentSearches.map((q) => (
-            <button
-              key={q}
-              type="button"
-              onClick={() => onSearchSelect(q)}
-              className={ROW_BASE}
-              tabIndex={-1}
-            >
-              <Clock className={ICON_BASE} />
-              <span className="font-sans text-sm text-muted-foreground">{q}</span>
-            </button>
-          ))}
+          {(recentEntries ?? recentSearches.map(q => ({ query: q, timestamp: Date.now() } as RecentSearch))).map((entry) => {
+            const label = entry.selectedTitle || entry.query;
+            const subtitle = entry.selectedTitle ? entry.query : undefined;
+            return (
+              <button
+                key={entry.query}
+                type="button"
+                onClick={() => onSearchSelect(entry.query)}
+                className={ROW_BASE}
+                tabIndex={-1}
+              >
+                <Clock className={ICON_BASE} />
+                <span className="font-sans text-sm text-muted-foreground truncate">{label}</span>
+                {subtitle && (
+                  <span className="font-sans text-xs text-muted-foreground/40 truncate ml-auto">{subtitle}</span>
+                )}
+              </button>
+            );
+          })}
           {recentPages.map((page) => (
             <button
               key={page.path}

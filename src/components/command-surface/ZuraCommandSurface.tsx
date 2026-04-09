@@ -12,6 +12,8 @@ import { useSearchRanking } from '@/hooks/useSearchRanking';
 import { useRecentSearches } from './useRecentSearches';
 import { isQuestionQuery } from './commandTypes';
 import { CommandInput } from './CommandInput';
+import { CommandSearchFilters, detectScopePrefix } from './CommandSearchFilters';
+import type { SearchScope } from './CommandSearchFilters';
 import { CommandResultPanel } from './CommandResultPanel';
 import { CommandAIAnswerCard } from './CommandAIAnswerCard';
 import { CommandProactiveState } from './CommandProactiveState';
@@ -28,6 +30,7 @@ import { CommandPreviewPanel } from './CommandPreviewPanel';
 import { CommandInlineAnalyticsCard, detectAnalyticsHint } from './CommandInlineAnalyticsCard';
 import { CommandChainBar } from './CommandChainBar';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
+import { useTypeahead } from '@/hooks/useTypeahead';
 import {
   mainNavItems,
   myToolsNavItems,
@@ -73,6 +76,7 @@ export function ZuraCommandSurface({ open, onOpenChange, filterNavItems, anchorR
   const [query, setQuery] = useState('');
   const [aiMode, setAiMode] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(0);
+  const [activeScope, setActiveScope] = useState<SearchScope>('all');
   const navigate = useNavigate();
   const location = useLocation();
   const { permissions } = usePermission();
@@ -83,7 +87,7 @@ export function ZuraCommandSurface({ open, onOpenChange, filterNavItems, anchorR
   const { isImpersonating } = useOrganizationContext();
 
   const { response: aiResponse, isLoading: aiLoading, error: aiError, sendMessage, reset: resetAI } = useAIAssistant();
-  const { recents, addRecent, clearRecents } = useRecentSearches();
+  const { recents, recentEntries, addRecent, clearRecents } = useRecentSearches();
   const actionExecution = useActionExecution();
 
   // Preview system
@@ -131,11 +135,45 @@ export function ZuraCommandSurface({ open, onOpenChange, filterNavItems, anchorR
       }));
   }, [decayedFreqMap]);
 
-  const flatResults = useMemo(() => groups.flatMap(g => g.results), [groups]);
+  // Scope-aware filtering
+  const scopePrefix = useMemo(() => detectScopePrefix(query), [query]);
+  const effectiveScope = scopePrefix?.scope ?? activeScope;
+  const effectiveQuery = scopePrefix?.cleanQuery ?? query;
+
+  const allFlatResults = useMemo(() => groups.flatMap(g => g.results), [groups]);
+  const flatResults = useMemo(() => {
+    if (effectiveScope === 'all') return allFlatResults;
+    const scopeTypeMap: Record<string, string[]> = {
+      navigation: ['navigation', 'help'],
+      team: ['team'],
+      action: ['action'],
+    };
+    const allowed = scopeTypeMap[effectiveScope] || [];
+    return allFlatResults.filter(r => allowed.includes(r.type));
+  }, [allFlatResults, effectiveScope]);
+
   const hasResults = flatResults.length > 0;
   const hasQuery = query.trim().length > 0;
   const hasActiveAction = actionExecution.actionState !== 'idle';
   const hasSuggestions = suggestions.length > 0;
+
+  // Typeahead vocabulary
+  const typeaheadVocab = useMemo(() => {
+    const labels: string[] = [];
+    allFlatResults.forEach(r => labels.push(r.title));
+    // Add nav labels from config
+    [...mainNavItems, ...myToolsNavItems, ...manageNavItems, ...systemNavItems].forEach((item: any) => {
+      if (item.label && !labels.includes(item.label)) labels.push(item.label);
+    });
+    hubChildrenItems.forEach((item: any) => {
+      if (item.label && !labels.includes(item.label)) labels.push(item.label);
+    });
+    // Add recent queries
+    recents.forEach(q => { if (!labels.includes(q)) labels.push(q); });
+    return labels;
+  }, [allFlatResults, recents]);
+
+  const completion = useTypeahead(query, typeaheadVocab);
 
   // AI card: only show when explicitly in AI mode, OR question with no strong navigation match
   const showAICard = aiMode || (
@@ -182,6 +220,7 @@ export function ZuraCommandSurface({ open, onOpenChange, filterNavItems, anchorR
       setQuery('');
       setAiMode(false);
       setSelectedIndex(0);
+      setActiveScope('all');
       resetAI();
       actionExecution.reset();
       clearPreview();
@@ -205,9 +244,9 @@ export function ZuraCommandSurface({ open, onOpenChange, filterNavItems, anchorR
     return rawPath;
   }, [dashPath]);
 
-  const handleSelect = useCallback((result: { path?: string; title?: string }, index?: number) => {
+  const handleSelect = useCallback((result: { path?: string; title?: string; type?: string }, index?: number) => {
     if (result.path) {
-      if (query.trim()) addRecent(query.trim());
+      if (query.trim()) addRecent({ query: query.trim(), selectedPath: result.path, selectedTitle: result.title, resultType: (result.type as any) ?? 'navigation' });
       const resolvedPath = resolveOrgPath(result.path);
       trackNavigation(result.path);
 
@@ -364,7 +403,15 @@ export function ZuraCommandSurface({ open, onOpenChange, filterNavItems, anchorR
               aiMode={aiMode}
               onAiModeToggle={() => { setAiMode(m => !m); resetAI(); }}
               onKeyDown={handleKeyDown}
+              completion={completion}
             />
+
+            {hasQuery && !aiMode && (
+              <CommandSearchFilters
+                activeScope={activeScope}
+                onScopeChange={setActiveScope}
+              />
+            )}
 
             {chainedQuery && (
               <CommandChainBar
@@ -455,6 +502,7 @@ export function ZuraCommandSurface({ open, onOpenChange, filterNavItems, anchorR
                 ) : (
                   <CommandProactiveState
                     recentSearches={recents}
+                    recentEntries={recentEntries}
                     recentPages={recentPages}
                     onSearchSelect={handleRecentSearchSelect}
                     onPageSelect={handleRecentPageSelect}
