@@ -19,16 +19,7 @@ import { Tooltip as UITooltip, TooltipContent, TooltipTrigger } from '@/componen
 import { cn } from '@/lib/utils';
 import { analyticsHubUrl } from '@/config/dashboardNav';
 import { useServiceCategoryColorsMap } from '@/hooks/useServiceCategoryColors';
-import { 
-  BarChart, 
-  Bar, 
-  XAxis, 
-  YAxis, 
-  Tooltip, 
-  ResponsiveContainer, 
-  Cell,
-  Customized,
-} from 'recharts';
+import { ClosedBadge } from '@/components/dashboard/ClosedBadge';
 
 const PERIOD_LABELS: Record<CapacityPeriod, string> = {
   'tomorrow': 'Tomorrow',
