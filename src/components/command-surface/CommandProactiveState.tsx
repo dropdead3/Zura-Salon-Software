@@ -75,9 +75,9 @@ export function CommandProactiveState({
               </button>
             )}
           </div>
-          {(recentEntries || recentSearches.map(q => ({ query: q, timestamp: Date.now() }))).map((entry) => {
-            const label = typeof entry === 'string' ? entry : (entry.selectedTitle ? `${entry.selectedTitle}` : entry.query);
-            const subtitle = typeof entry !== 'string' && entry.selectedTitle ? entry.query : undefined;
+          {(recentEntries ?? recentSearches.map(q => ({ query: q, timestamp: Date.now() } as RecentSearch))).map((entry) => {
+            const label = entry.selectedTitle || entry.query;
+            const subtitle = entry.selectedTitle ? entry.query : undefined;
             return (
               <button
                 key={typeof entry === 'string' ? entry : entry.query}
