@@ -18,24 +18,23 @@ export function CommandInput({
 
   useEffect(() => {
     if (autoFocus) {
-      // Slight delay for dialog animation
       const t = setTimeout(() => inputRef.current?.focus(), 50);
       return () => clearTimeout(t);
     }
   }, [autoFocus]);
 
   return (
-    <div className="flex items-center gap-3 px-4 py-3 border-b border-border/50">
+    <div className="flex items-center gap-3 px-5 py-3.5 border-b border-border/50 shadow-[inset_0_1px_0_0_hsl(var(--foreground)/0.03)]">
       {aiMode ? (
         <Sparkles className="w-4 h-4 shrink-0 text-primary" />
       ) : (
-        <Search className="w-4 h-4 shrink-0 text-muted-foreground" />
+        <Search className="w-4 h-4 shrink-0 text-muted-foreground/70" strokeWidth={1.5} />
       )}
 
       <input
         ref={inputRef}
         type="text"
-        placeholder={aiMode ? 'Ask a question...' : 'Search pages, people, or ask a question...'}
+        placeholder={aiMode ? 'Ask a question...' : 'Search or ask Zura...'}
         value={query}
         onChange={e => onQueryChange(e.target.value)}
         onKeyDown={onKeyDown}
@@ -50,7 +49,7 @@ export function CommandInput({
           type="button"
           onClick={onAiModeToggle}
           className={cn(
-            'flex items-center gap-1 h-6 px-2 rounded-md text-xs font-sans font-medium transition-colors',
+            'flex items-center gap-1 h-6 px-2 rounded-full text-xs font-sans font-medium transition-colors duration-150',
             aiMode
               ? 'bg-primary text-primary-foreground'
               : 'text-muted-foreground hover:text-foreground hover:bg-muted'
@@ -72,7 +71,7 @@ export function CommandInput({
           </button>
         )}
 
-        <kbd className="hidden sm:inline-flex h-5 items-center rounded border border-border bg-muted/50 px-1.5 font-mono text-[10px] text-muted-foreground">
+        <kbd className="hidden sm:inline-flex h-5 items-center rounded border border-border/50 bg-muted/70 px-1.5 font-mono text-[11px] text-muted-foreground">
           Esc
         </kbd>
       </div>

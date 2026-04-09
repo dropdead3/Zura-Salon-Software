@@ -239,13 +239,16 @@ export function ZuraCommandSurface({ open, onOpenChange, filterNavItems }: ZuraC
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
+        hideClose
         className={cn(
           'p-0 gap-0 border-border',
           tokens.drawer.content,
-          'rounded-xl max-w-2xl w-[calc(100vw-2rem)]',
+          'rounded-xl max-w-[720px] w-[calc(100vw-2rem)]',
           'max-h-[min(600px,80vh)]',
           'flex flex-col',
-          'sm:max-w-2xl max-sm:max-w-none max-sm:w-screen max-sm:h-screen max-sm:max-h-screen max-sm:rounded-none max-sm:border-0'
+          'top-[35%] translate-y-[-35%]',
+          'shadow-[0_24px_64px_-16px_hsl(var(--foreground)/0.15)]',
+          'max-sm:max-w-none max-sm:w-screen max-sm:h-screen max-sm:max-h-screen max-sm:rounded-none max-sm:border-0 max-sm:top-[50%] max-sm:translate-y-[-50%]'
         )}
         overlayClassName={tokens.drawer.overlay}
         style={{ left: 'calc(50% + var(--sidebar-offset, 0px))' }}
@@ -330,15 +333,15 @@ export function ZuraCommandSurface({ open, onOpenChange, filterNavItems }: ZuraC
 
         <div className="border-t border-border/30 px-4 py-2 flex items-center gap-3 text-[10px] text-muted-foreground font-sans shrink-0">
           <span className="flex items-center gap-1">
-            <kbd className="rounded border border-border bg-muted/50 px-1 py-0.5 font-mono">↑↓</kbd>
+            <kbd className="rounded border border-border/50 bg-muted/70 px-1 py-0.5 font-mono text-[11px]">↑↓</kbd>
             navigate
           </span>
           <span className="flex items-center gap-1">
-            <kbd className="rounded border border-border bg-muted/50 px-1 py-0.5 font-mono">↵</kbd>
+            <kbd className="rounded border border-border/50 bg-muted/70 px-1 py-0.5 font-mono text-[11px]">↵</kbd>
             open
           </span>
           <span className="flex items-center gap-1">
-            <kbd className="rounded border border-border bg-muted/50 px-1 py-0.5 font-mono">Tab</kbd>
+            <kbd className="rounded border border-border/50 bg-muted/70 px-1 py-0.5 font-mono text-[11px]">Tab</kbd>
             AI mode
           </span>
         </div>
