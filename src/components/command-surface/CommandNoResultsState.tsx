@@ -1,5 +1,6 @@
 import React from 'react';
-import { Sparkles, CornerDownLeft } from 'lucide-react';
+import { CornerDownLeft } from 'lucide-react';
+import { ZuraZIcon } from '@/components/icons/ZuraZIcon';
 import { cn } from '@/lib/utils';
 import { ChainSegment, type SegmentType } from './ChainSegment';
 import type { ChainedQuery } from '@/lib/queryChainEngine';
@@ -66,7 +67,7 @@ export function CommandNoResultsState({
           )}
         >
           <div className="flex items-center justify-center w-8 h-8 rounded-md bg-primary/10 shrink-0">
-            <Sparkles className={cn('w-4 h-4 text-primary', isFocused && 'animate-pulse')} />
+            <ZuraZIcon className={cn('w-4 h-4 text-primary', isFocused && 'animate-pulse')} />
           </div>
           <div className="flex-1 min-w-0">
             <span className="font-sans text-sm text-foreground font-medium">Ask Zura</span>

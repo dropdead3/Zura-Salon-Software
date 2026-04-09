@@ -1,5 +1,6 @@
 import React from 'react';
-import { ArrowRight, Search, Sparkles } from 'lucide-react';
+import { ArrowRight, Search } from 'lucide-react';
+import { ZuraZIcon } from '@/components/icons/ZuraZIcon';
 import type { SuggestionFallback } from '@/lib/searchRanker';
 
 interface CommandSuggestionRowProps {
@@ -14,7 +15,7 @@ function SuggestionIcon({ type }: { type: SuggestionFallback['type'] }) {
     case 'query_correction':
       return <Search className="w-4 h-4 text-muted-foreground/50" />;
     case 'topic':
-      return <Sparkles className="w-4 h-4 text-primary/60" />;
+      return <ZuraZIcon className="w-4 h-4 text-primary/60" />;
     default:
       return <ArrowRight className="w-4 h-4 text-muted-foreground/50" />;
   }
@@ -80,7 +81,7 @@ export function CommandSuggestionPanel({
         onClick={onSwitchToAI}
         className="w-full flex items-center gap-3 px-4 h-10 text-left hover:bg-primary/5 transition-colors duration-150 mt-1 border-t border-border/20 pt-2"
       >
-        <Sparkles className="w-4 h-4 text-primary/60" />
+        <ZuraZIcon className="w-4 h-4 text-primary/60" />
         <span className="font-sans text-sm text-muted-foreground">
           Ask Zura about "<span className="text-foreground font-medium">{query}</span>"
         </span>

@@ -60,9 +60,9 @@ function scopedKey(base: string): string {
   return _orgId ? `${base}:${_orgId}` : base;
 }
 
-function EVENTS_KEY() { return scopedKey(EVENTS_KEY_BASE); }
-function FREQ_KEY() { return scopedKey(FREQ_KEY_BASE); }
-function GC_INTERVAL_KEY() { return scopedKey(GC_INTERVAL_KEY_BASE); }
+const EVENTS_KEY = (): string => scopedKey(EVENTS_KEY_BASE);
+const FREQ_KEY = (): string => scopedKey(FREQ_KEY_BASE);
+const GC_INTERVAL_KEY = (): string => scopedKey(GC_INTERVAL_KEY_BASE);
 
 // ─── Helpers ────────────────────────────────────────────────
 
