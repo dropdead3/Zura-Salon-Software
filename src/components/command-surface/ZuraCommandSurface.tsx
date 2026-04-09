@@ -263,7 +263,7 @@ export function ZuraCommandSurface({ open, onOpenChange, filterNavItems, anchorR
       setAiMode(true);
       sendMessage(query, [], orgId, primaryRole, groundingResult.isNavigation ? { isNavigation: groundingResult.isNavigation, confidence: groundingResult.confidence, groundingPrompt: groundingResult.groundingPrompt } : undefined);
       addRecent({ query, resultType: 'help' });
-    }, 1200);
+    }, 800);
 
     return () => {
       if (autoAiTimerRef.current) {
@@ -522,6 +522,7 @@ export function ZuraCommandSurface({ open, onOpenChange, filterNavItems, anchorR
                           groups={groups}
                           selectedIndex={selectedIndex}
                           query={query}
+                          isQuestion={isQuestionQuery(query)}
                           onSelect={handleSelect}
                           onHover={handleHover}
                         />
@@ -581,8 +582,14 @@ export function ZuraCommandSurface({ open, onOpenChange, filterNavItems, anchorR
               </span>
               <span className="flex items-center gap-1">
                 <kbd className="rounded border border-border/50 bg-muted/70 px-1 py-0.5 font-mono text-[11px]">Tab</kbd>
-                AI mode
+                ask Zura
               </span>
+              {hasActiveAction && (
+                <span className="flex items-center gap-1 ml-auto">
+                  <kbd className="rounded border border-border/50 bg-muted/70 px-1 py-0.5 font-mono text-[11px]">⌘↵</kbd>
+                  run action
+                </span>
+              )}
             </div>
           </motion.div>
         </>
