@@ -45,6 +45,11 @@ import { useTasks } from '@/hooks/useTasks';
 import { getAllActions } from '@/lib/actionRegistry';
 import { useActiveLocations } from '@/hooks/useLocations';
 import { useRecentSearches } from '@/components/command-surface/useRecentSearches';
+import {
+  useClientSearchCandidates,
+  useProductSearchCandidates,
+  useAppointmentSearchCandidates,
+} from '@/hooks/useCommandEntitySearch';
 import { expandQuery, logSynonymTelemetry } from '@/lib/synonymRegistry';
 import type { QueryExpansion } from '@/lib/synonymRegistry';
 import { scoreMatchWithSynonyms } from '@/lib/textMatch';
@@ -141,6 +146,12 @@ export function useSearchRanking(
   const { tasks: taskItems } = useTasks();
   const { recents } = useRecentSearches();
 
+  // Entity search candidates (lazy-loaded when query is active)
+  const entityEnabled = query.trim().length >= 2;
+  const clientCandidates = useClientSearchCandidates(entityEnabled);
+  const productCandidates = useProductSearchCandidates(entityEnabled);
+  const appointmentCandidates = useAppointmentSearchCandidates(entityEnabled);
+
   // Location names for chain engine
   const locationNames = useMemo(
     () => (activeLocations || []).map(l => l.name),
@@ -208,8 +219,11 @@ export function useSearchRanking(
         permission: action.permissions[0] || undefined,
       }));
 
-    return [...navCandidates, ...helpCands, ...teamCandidates, ...taskCandidates, ...actionCandidates];
-  }, [options.filterNavItems, teamMembers, taskItems]);
+    return [
+      ...navCandidates, ...helpCands, ...teamCandidates, ...taskCandidates, ...actionCandidates,
+      ...clientCandidates, ...productCandidates, ...appointmentCandidates,
+    ];
+  }, [options.filterNavItems, teamMembers, taskItems, clientCandidates, productCandidates, appointmentCandidates]);
 
   // Compute recent paths from search history
   const recentPaths = useMemo((): string[] => {
