@@ -106,22 +106,26 @@ export function useAppointmentSearchCandidates(enabled: boolean): SearchCandidat
 
   const today = new Date().toISOString().split('T')[0];
 
+  interface ApptRow {
+    id: string;
+    client_name: string | null;
+    service_name: string | null;
+    start_time: string;
+    status: string;
+  }
+
   const { data } = useQuery({
     queryKey: ['command-appointments', orgId, today],
     queryFn: async () => {
-      let query = supabase
+      const { data, error } = await supabase
         .from('phorest_appointments')
         .select('id, client_name, service_name, start_time, status')
         .eq('organization_id', orgId!)
-        .eq('appointment_date', today);
-      
-      query = query.neq('status', 'cancelled');
-      
-      const { data, error } = await query
+        .eq('appointment_date', today)
         .order('start_time')
         .limit(50);
       if (error) throw error;
-      return data;
+      return (data as unknown as ApptRow[]).filter(a => a.status !== 'cancelled');
     },
     enabled: enabled && !!orgId,
     staleTime: 60_000,
