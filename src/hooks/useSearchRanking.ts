@@ -21,7 +21,6 @@ import {
   rankResults,
   groupRankedResults,
   generateSuggestions,
-  getFrequencyMap,
   trackNavFrequency,
 } from '@/lib/searchRanker';
 import type {
@@ -114,6 +113,10 @@ export interface UseSearchRankingOptions {
   filterNavItems?: (items: NavItemLike[]) => NavItemLike[];
   permissions?: string[];
   roles?: string[];
+  /** Learning hook instance — if provided, enables learned ranking boosts */
+  learningBoostFn?: (query: string, candidatePath: string) => { queryPathBoost: number; decayedFrequency: number };
+  /** Decayed frequency map — replaces raw getFrequencyMap() */
+  decayedFrequencyMap?: Record<string, number>;
 }
 
 // ─── Hook ───────────────────────────────────────────────────
@@ -192,7 +195,8 @@ export function useSearchRanking(
       };
     }
 
-    const frequencyMap = getFrequencyMap();
+    // Use decayed frequency map if provided, else fall back to raw ranker frequency
+    const frequencyMap = options.decayedFrequencyMap || {};
     const trimmedQuery = query.trim();
 
     // If we have synonym expansion, boost candidates that match expanded terms
@@ -227,7 +231,7 @@ export function useSearchRanking(
       });
     }
 
-    const ranked = rankResults(candidatesForRanking, {
+    let ranked = rankResults(candidatesForRanking, {
       query: trimmedQuery,
       parsed,
       resolved,
@@ -237,6 +241,21 @@ export function useSearchRanking(
       userRoles: options.roles || [],
       currentPath,
     });
+
+    // Apply learning boosts (secondary, bounded, never overrides exact match)
+    if (options.learningBoostFn) {
+      const boostFn = options.learningBoostFn;
+      ranked = ranked.map((r) => {
+        if (!r.path || r.score >= 1.0) return r; // exact match — never touch
+        const boost = boostFn(trimmedQuery, r.path);
+        const learningAdd = Math.min(boost.queryPathBoost, 0.15);
+        const newScore = Math.min(r.score + learningAdd, 0.99);
+        return newScore > r.score ? { ...r, score: newScore } : r;
+      }).sort((a, b) => {
+        if (b.score !== a.score) return b.score - a.score;
+        return a.title.localeCompare(b.title);
+      });
+    }
 
     const grouped = groupRankedResults(ranked);
 
