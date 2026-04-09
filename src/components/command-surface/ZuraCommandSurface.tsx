@@ -84,10 +84,11 @@ export function ZuraCommandSurface({ open, onOpenChange, filterNavItems, anchorR
   const { dashPath } = useOrgDashboardPath();
   const lastQueryBeforeCloseRef = useRef('');
   const isMobile = useIsMobile();
-  const { isImpersonating } = useOrganizationContext();
+  const { isImpersonating, effectiveOrganization } = useOrganizationContext();
+  const orgId = effectiveOrganization?.id;
 
   const { response: aiResponse, isLoading: aiLoading, error: aiError, sendMessage, reset: resetAI } = useAIAssistant();
-  const { recents, recentEntries, addRecent, clearRecents } = useRecentSearches();
+  const { recents, recentEntries, addRecent, clearRecents } = useRecentSearches(orgId);
   const actionExecution = useActionExecution();
 
   // Preview system
@@ -105,7 +106,7 @@ export function ZuraCommandSurface({ open, onOpenChange, filterNavItems, anchorR
   );
 
   // Search Learning
-  const learning = useSearchLearning(open, effectiveRoles as string[], location.pathname);
+  const learning = useSearchLearning(open, effectiveRoles as string[], location.pathname, orgId);
   const decayedFreqMap = useMemo(() => learning.getDecayedFrequencyMap(), [open]);
 
   // Use the unified ranking hook
@@ -243,7 +244,7 @@ export function ZuraCommandSurface({ open, onOpenChange, filterNavItems, anchorR
 
     autoAiTimerRef.current = setTimeout(() => {
       setAiMode(true);
-      sendMessage(query);
+      sendMessage(query, [], orgId);
       addRecent({ query, resultType: 'help' });
     }, 1200);
 
