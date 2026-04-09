@@ -52,13 +52,10 @@ export function CommandSuggestionPanel({
   if (suggestions.length === 0) return null;
 
   return (
-    <div className="py-4 px-2">
-      <div className="text-center mb-3">
-        <Search className="w-5 h-5 mx-auto mb-2 text-muted-foreground/30" />
-        <p className="font-sans text-sm text-muted-foreground">
-          No results for "<span className="text-foreground font-medium">{query}</span>"
-        </p>
-      </div>
+    <div className="py-3 px-2">
+      <p className="font-sans text-xs text-muted-foreground px-2 mb-2">
+        No direct match. Try these instead:
+      </p>
       <div className="py-1">
         {suggestions.map((suggestion) => (
           <CommandSuggestionRow
@@ -76,6 +73,18 @@ export function CommandSuggestionPanel({
           />
         ))}
       </div>
+
+      {/* AI continuation row at bottom */}
+      <button
+        type="button"
+        onClick={onSwitchToAI}
+        className="w-full flex items-center gap-3 px-4 h-10 text-left hover:bg-primary/5 transition-colors duration-150 mt-1 border-t border-border/20 pt-2"
+      >
+        <Sparkles className="w-4 h-4 text-primary/60" />
+        <span className="font-sans text-sm text-muted-foreground">
+          Ask Zura about "<span className="text-foreground font-medium">{query}</span>"
+        </span>
+      </button>
     </div>
   );
 }
