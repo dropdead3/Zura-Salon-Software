@@ -21,6 +21,7 @@ import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 import { useCommandPreview } from '@/hooks/useCommandPreview';
 import { CommandPreviewPanel } from './CommandPreviewPanel';
 import { CommandInlineAnalyticsCard, detectAnalyticsHint } from './CommandInlineAnalyticsCard';
+import { CommandChainBar } from './CommandChainBar';
 import {
   mainNavItems,
   myToolsNavItems,
