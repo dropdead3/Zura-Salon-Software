@@ -1,41 +1,26 @@
 
 
-# Continue Improving FAB Chat Modal UI
+# Fix FAB Chat Modal Toggle & Padding
 
-## Current Issues (from screenshot)
-The modal is functional but still has room for refinement: the empty state feels vertically cramped, prompt pills lack visual depth, the tab area needs more polish, the input area could be more inviting, and the overall spacing/hierarchy can be tightened.
+## Issues Identified
+1. **Tab toggle not rendering as pill**: The `TabsList` component has `style={{ borderRadius: 9 }}` and `TabsTrigger` has `style={{ borderRadius: 6 }}` as inline styles, which override the `rounded-full` Tailwind classes applied in HelpFAB. The base `bg-muted/70` also clashes with the custom `bg-card/60`.
+2. **Active tab blending in**: The base TabsTrigger styles (`data-[state=active]:bg-black/[0.07]`, ring, shadow) conflict with the custom `data-[state=active]:bg-primary` — specificity war causes the active state to look washed out.
+3. **Padding issues**: The tab header area (`px-4 pt-3 pb-0`) is tight, and the gradient divider sits too close to the tabs.
 
 ## Changes
 
-### File 1: `src/components/dashboard/HelpFAB.tsx`
-- Add a subtle inner gradient overlay at the top of the popover for depth (pseudo-element via a div)
-- Refine TabsList with explicit `bg-card/60` background and `rounded-full` pill shape for the tab bar itself
-- Style active TabsTrigger with `data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:rounded-full` for a clear selected state
-- Add `rounded-2xl` to the outer popover for smoother corners
+### File: `src/components/dashboard/HelpFAB.tsx`
+- Override the inline `borderRadius` on `TabsList` by adding `style={{ borderRadius: '9999px' }}` directly
+- Add `!rounded-full` or use style prop on `TabsTrigger` to force pill shape
+- Increase header padding: `px-4 pt-4 pb-2` for breathing room
+- Reset conflicting base styles on TabsTrigger: add `data-[state=active]:shadow-none data-[state=active]:ring-0` to eliminate base component interference
+- Add `py-1.5` to TabsList for taller pill container
 
-### File 2: `src/components/dashboard/help-fab/AIHelpTab.tsx`
-**Empty State:**
-- Increase the glow effect behind ZuraZIcon — larger blur radius and slightly stronger opacity
-- Add a subtle ring/circle behind the icon for a contained feel: `w-14 h-14 rounded-full bg-primary/5 border border-primary/10 flex items-center justify-center`
-- Add more vertical spacing between the description and prompt list (`mb-10`)
-- Prompt pills: add a subtle left border accent (`border-l-2 border-l-primary/30`) and slightly increase padding for a more premium touch
-
-**Chat Bubbles:**
-- User bubbles: add a subtle shadow `shadow-sm` for lift
-- Assistant bubbles: tighten the icon+text alignment
-
-**Input Area:**
-- Add a subtle gradient border-top instead of flat border: reuse the primary gradient line
-- Make the send button more visible: `bg-primary/90 hover:bg-primary` with `text-primary-foreground`
-- Add a subtle placeholder icon (sparkle or ZuraZ) inside the input on the left side
-
-### File 3: `src/components/dashboard/help-fab/ChatLeadershipTab.tsx`
-- Update the header to use `font-display` for the title and align with Zura tab styling
-- Add a subtle background tint to the header area for separation
+### File: `src/components/dashboard/help-fab/AIHelpTab.tsx`
+- Adjust empty state container height from `h-[320px]` to `h-[340px]` to account for increased header padding
+- Tighten input area: reduce bottom padding slightly from `p-3` to `px-3 pb-3 pt-1` since the gradient line provides separation
 
 ## Technical Details
-- No new dependencies
-- All styling via Tailwind utility classes
-- Maintains existing functionality unchanged
-- ~20 lines changed across 3 files
+- The root cause is inline `style` on the shared Tabs components overriding Tailwind border-radius — we fix this with inline `style` props on the HelpFAB instances rather than modifying the shared component
+- No new dependencies, ~10 lines changed across 2 files
 
