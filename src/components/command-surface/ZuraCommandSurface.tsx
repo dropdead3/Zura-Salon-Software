@@ -108,7 +108,7 @@ export function ZuraCommandSurface({ open, onOpenChange, filterNavItems, anchorR
 
   // Memoize classifyAndGround to avoid redundant calls in JSX (Fix #1)
   const groundingResult = useMemo(() => {
-    if (!query.trim()) return { isNavigation: false, confidence: 'none' as const, groundingPrompt: '' };
+    if (!query.trim()) return { isNavigation: false, verifiedDestinations: [] as NavDestination[], confidence: 'none' as const, groundingPrompt: '' };
     return classifyAndGround(query, primaryRole);
   }, [query, primaryRole]);
 
