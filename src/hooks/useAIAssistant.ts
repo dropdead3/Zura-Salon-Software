@@ -32,7 +32,7 @@ export function useAIAssistant(): UseAIAssistantReturn {
     setIsLoading(false);
   }, []);
 
-  const sendMessage = useCallback(async (query: string, conversationHistory: Message[] = [], organizationId?: string) => {
+  const sendMessage = useCallback(async (query: string, conversationHistory: Message[] = [], organizationId?: string, userRole?: string) => {
     setIsLoading(true);
     setError(null);
     setResponse('');
