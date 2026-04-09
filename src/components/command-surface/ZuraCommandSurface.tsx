@@ -302,7 +302,7 @@ export function ZuraCommandSurface({ open, onOpenChange, filterNavItems, anchorR
 
     autoAiTimerRef.current = setTimeout(() => {
       setAiMode(true);
-      sendMessage(query, [], orgId, primaryRole, groundingResult.isNavigation ? { isNavigation: groundingResult.isNavigation, confidence: groundingResult.confidence, groundingPrompt: groundingResult.groundingPrompt } : undefined);
+      sendMessage(query, [], orgId, primaryRole, groundingResult.isNavigation ? { isNavigation: groundingResult.isNavigation, confidence: groundingResult.confidence, groundingPrompt: groundingResult.groundingPrompt } : undefined, dataContextStr);
       addRecent({ query, resultType: 'help' });
     }, 800);
 
