@@ -11,7 +11,7 @@ import { isQuestionQuery } from './commandTypes';
 import { CommandInput } from './CommandInput';
 import { CommandResultPanel } from './CommandResultPanel';
 import { CommandAIAnswerCard } from './CommandAIAnswerCard';
-import { CommandRecentSection } from './CommandRecentSection';
+import { CommandProactiveState } from './CommandProactiveState';
 import { CommandSuggestionPanel } from './CommandSuggestionRow';
 import { useActionExecution } from '@/hooks/useActionExecution';
 import { usePermission } from '@/hooks/usePermission';
@@ -381,12 +381,17 @@ export function ZuraCommandSurface({ open, onOpenChange, filterNavItems }: ZuraC
                 )
               )
             ) : (
-              <CommandRecentSection
+              <CommandProactiveState
                 recentSearches={recents}
                 recentPages={recentPages}
                 onSearchSelect={handleRecentSearchSelect}
                 onPageSelect={handleRecentPageSelect}
                 onClearRecents={clearRecents}
+                onNavigate={(path) => {
+                  const resolvedPath = resolveOrgPath(path);
+                  navigate(resolvedPath);
+                  close();
+                }}
               />
             )}
           </div>
