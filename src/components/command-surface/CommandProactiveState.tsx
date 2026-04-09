@@ -1,5 +1,5 @@
 import React from 'react';
-import { Clock, ArrowRight, Search, Zap, AlertTriangle, ChevronRight, Calendar, CheckSquare, TrendingUp, Package } from 'lucide-react';
+import { Clock, ArrowRight, Search, Zap, AlertTriangle, ChevronRight, Calendar, CheckSquare, TrendingUp, Package, Plus, UserPlus, BarChart3 } from 'lucide-react';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import {
@@ -26,6 +26,12 @@ const ROW_BASE =
 
 const ICON_BASE = 'w-4 h-4 text-muted-foreground/40 group-hover/row:text-muted-foreground transition-colors duration-150';
 
+const FALLBACK_ACTIONS = [
+  { label: 'Create Appointment', icon: Plus, path: '/dashboard/schedule' },
+  { label: 'Add Client', icon: UserPlus, path: '/dashboard/clients' },
+  { label: 'Run Report', icon: BarChart3, path: '/dashboard/admin/analytics' },
+];
+
 export function CommandProactiveState({
   recentSearches,
   recentEntries,
@@ -45,28 +51,90 @@ export function CommandProactiveState({
   const hasAttention = !isMobile && attentionItems.length > 0;
   const hasActions = !isMobile && recommendedActions.length > 0;
 
-  // Absolute fallback
-  if (!hasContinue && !hasQuickPaths && !hasAttention && !hasActions) {
-    return (
-      <div className="py-10 px-6 text-center">
-        <Search className="w-6 h-6 mx-auto mb-3 text-muted-foreground/15" />
-        <p className="font-sans text-sm text-muted-foreground">
-          Search or ask Zura...
-        </p>
-      </div>
-    );
-  }
-
   const todayShortcuts = [
     { label: "Today's Schedule", icon: Calendar, path: '/dashboard/schedule' },
     { label: "Today's Tasks", icon: CheckSquare, path: '/dashboard/tasks' },
     { label: "Today's Revenue", icon: TrendingUp, path: '/dashboard/admin/analytics' },
   ];
 
+  // Absolute fallback — show actionable defaults instead of empty
+  if (!hasContinue && !hasQuickPaths && !hasAttention && !hasActions) {
+    return (
+      <div className="py-1">
+        {/* Actions */}
+        <div>
+          <div className="px-4 pt-2 pb-1">
+            <span className={tokens.heading.subsection}>Actions</span>
+          </div>
+          {FALLBACK_ACTIONS.map((item) => {
+            const Icon = item.icon;
+            return (
+              <button
+                key={item.path}
+                type="button"
+                onClick={() => onNavigate(item.path)}
+                className={ROW_BASE}
+                tabIndex={-1}
+              >
+                <Icon className={ICON_BASE} />
+                <span className="font-sans text-sm text-muted-foreground">{item.label}</span>
+                <ChevronRight className="w-3.5 h-3.5 text-muted-foreground/30 group-hover/row:text-muted-foreground/60 transition-colors duration-150 shrink-0 ml-auto" />
+              </button>
+            );
+          })}
+        </div>
+        {/* Today */}
+        <div className="mx-4 border-t border-border/30 my-1" />
+        <div>
+          <div className="px-4 pt-2 pb-1">
+            <span className={tokens.heading.subsection}>Today</span>
+          </div>
+          {todayShortcuts.map((item) => {
+            const Icon = item.icon;
+            return (
+              <button
+                key={item.path}
+                type="button"
+                onClick={() => onNavigate(item.path)}
+                className={ROW_BASE}
+                tabIndex={-1}
+              >
+                <Icon className={ICON_BASE} />
+                <span className="font-sans text-sm text-muted-foreground">{item.label}</span>
+                <ChevronRight className="w-3.5 h-3.5 text-muted-foreground/30 group-hover/row:text-muted-foreground/60 transition-colors duration-150 shrink-0 ml-auto" />
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="py-1">
-      {/* ── Today ──────────────────────────────────────────────────── */}
+      {/* ── 1. Actions (execution first) ──────────────────────────── */}
+      {hasActions && (
+        <div>
+          <div className="px-4 pt-2 pb-1">
+            <span className={tokens.heading.subsection}>Actions</span>
+          </div>
+          {recommendedActions.map((a, i) => (
+            <div
+              key={i}
+              className={cn(ROW_BASE, 'cursor-default')}
+            >
+              <Zap className={cn(ICON_BASE, 'w-3.5 h-3.5')} />
+              <span className="font-sans text-sm text-muted-foreground flex-1 truncate">
+                {a.action}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* ── 2. Today ──────────────────────────────────────────────── */}
       <div>
+        {hasActions && <div className="mx-4 border-t border-border/30 my-1" />}
         <div className="px-4 pt-2 pb-1">
           <span className={tokens.heading.subsection}>Today</span>
         </div>
@@ -87,11 +155,13 @@ export function CommandProactiveState({
           );
         })}
       </div>
-      {/* ── Continue ───────────────────────────────────────────────── */}
+
+      {/* ── 3. Recent ─────────────────────────────────────────────── */}
       {hasContinue && (
         <div>
+          <div className="mx-4 border-t border-border/30 my-1" />
           <div className="px-4 pt-2 pb-1 flex items-center justify-between">
-            <span className={tokens.heading.subsection}>Continue</span>
+            <span className={tokens.heading.subsection}>Recent</span>
             {hasRecents && (
               <button
                 type="button"
@@ -137,12 +207,12 @@ export function CommandProactiveState({
         </div>
       )}
 
-      {/* ── Quick Paths ───────────────────────────────────────────── */}
+      {/* ── 4. Navigate ───────────────────────────────────────────── */}
       {hasQuickPaths && (
         <div>
           <div className="mx-4 border-t border-border/30 my-1" />
           <div className="px-4 pt-2 pb-1">
-            <span className={tokens.heading.subsection}>Quick Paths</span>
+            <span className={tokens.heading.subsection}>Navigate</span>
           </div>
           {quickPaths.map((qp) => {
             const Icon = qp.icon;
@@ -162,7 +232,7 @@ export function CommandProactiveState({
         </div>
       )}
 
-      {/* ── Attention ─────────────────────────────────────────────── */}
+      {/* ── 5. Needs Attention ────────────────────────────────────── */}
       {hasAttention && (
         <div>
           <div className="mx-4 border-t border-border/30 my-1" />
@@ -192,30 +262,6 @@ export function CommandProactiveState({
                 <ChevronRight className="w-3.5 h-3.5 text-muted-foreground/30 group-hover/row:text-muted-foreground/60 transition-colors duration-150 shrink-0" />
               )}
             </button>
-          ))}
-        </div>
-      )}
-
-      {/* ── Suggested ─────────────────────────────────────────────── */}
-      {hasActions && (
-        <div>
-          {!hasAttention && (hasContinue || hasQuickPaths) && (
-            <div className="mx-4 border-t border-border/30 my-1" />
-          )}
-          {hasAttention ? null : null}
-          <div className="px-4 pt-2 pb-1">
-            <span className={tokens.heading.subsection}>Suggested</span>
-          </div>
-          {recommendedActions.map((a, i) => (
-            <div
-              key={i}
-              className={cn(ROW_BASE, 'cursor-default')}
-            >
-              <Zap className={cn(ICON_BASE, 'w-3.5 h-3.5')} />
-              <span className="font-sans text-sm text-muted-foreground flex-1 truncate">
-                {a.action}
-              </span>
-            </div>
           ))}
         </div>
       )}
