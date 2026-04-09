@@ -69,7 +69,7 @@ const NAV_LABEL_MAP = (() => {
 const SPRING_OPEN = { type: 'spring' as const, damping: 28, stiffness: 320, mass: 0.7 };
 const SPRING_CLOSE = { type: 'spring' as const, damping: 32, stiffness: 400, mass: 0.6 };
 
-export function ZuraCommandSurface({ open, onOpenChange, filterNavItems }: ZuraCommandSurfaceProps) {
+export function ZuraCommandSurface({ open, onOpenChange, filterNavItems, anchorRef }: ZuraCommandSurfaceProps) {
   const [query, setQuery] = useState('');
   const [aiMode, setAiMode] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(0);
