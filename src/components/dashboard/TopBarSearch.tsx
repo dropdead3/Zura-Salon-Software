@@ -248,6 +248,7 @@ export function TopBarSearch({ filterNavItems }: TopBarSearchProps) {
     <div ref={containerRef} className="relative w-full max-w-2xl">
       {/* Search Trigger */}
       <button
+        ref={triggerRef}
         onClick={() => {
           setIsOpen(true);
           setTimeout(() => inputRef.current?.focus(), 50);
@@ -267,9 +268,13 @@ export function TopBarSearch({ filterNavItems }: TopBarSearchProps) {
         </kbd>
       </button>
 
-      {/* Search Modal */}
-      {isOpen && (
-        <div className="absolute top-full left-0 right-0 mt-2 bg-popover border border-border rounded-lg shadow-lg overflow-hidden z-50">
+      {/* Search Modal - Fixed position to escape overflow-hidden parent */}
+      {isOpen && dropdownPos && (
+        <div
+          ref={dropdownRef}
+          style={{ top: dropdownPos.top, left: dropdownPos.left, width: Math.max(dropdownPos.width, 480) }}
+          className="fixed bg-popover border border-border rounded-lg shadow-lg overflow-hidden z-[200]"
+        >
           {/* Search Input */}
           <div className="flex items-center gap-2 p-3 border-b border-border">
             {aiMode ? (
