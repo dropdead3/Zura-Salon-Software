@@ -313,7 +313,7 @@ export function useSearchRanking(
       suggestions: suggs,
       isAmbiguous: ambiguous,
     };
-  }, [parsed, resolved, enrichedCandidates, recentPaths, options.permissions, options.roles, currentPath, query, expansion]);
+  }, [parsed, resolved, enrichedCandidates, recentPaths, options.permissions, options.roles, currentPath, query, expansion, chained]);
 
   // Navigation tracking callback
   const trackNavigation = useCallback((path: string) => {
