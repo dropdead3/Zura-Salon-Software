@@ -146,6 +146,12 @@ export function useSearchRanking(
   const { tasks: taskItems } = useTasks();
   const { recents } = useRecentSearches();
 
+  // Entity search candidates (lazy-loaded when query is active)
+  const entityEnabled = query.trim().length >= 2;
+  const clientCandidates = useClientSearchCandidates(entityEnabled);
+  const productCandidates = useProductSearchCandidates(entityEnabled);
+  const appointmentCandidates = useAppointmentSearchCandidates(entityEnabled);
+
   // Location names for chain engine
   const locationNames = useMemo(
     () => (activeLocations || []).map(l => l.name),
