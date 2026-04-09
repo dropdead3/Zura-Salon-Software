@@ -18,6 +18,9 @@ import { CommandActionPanel } from './CommandActionPanel';
 import { useSearchLearning } from '@/hooks/useSearchLearning';
 import { useEffectiveRoles } from '@/hooks/useEffectiveUser';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
+import { useCommandPreview } from '@/hooks/useCommandPreview';
+import { CommandPreviewPanel } from './CommandPreviewPanel';
+import { CommandInlineAnalyticsCard, detectAnalyticsHint } from './CommandInlineAnalyticsCard';
 import {
   mainNavItems,
   myToolsNavItems,
@@ -70,11 +73,18 @@ export function ZuraCommandSurface({ open, onOpenChange, filterNavItems }: ZuraC
   const { recents, addRecent, clearRecents } = useRecentSearches();
   const actionExecution = useActionExecution();
 
+  // Preview system
+  const { activePreview, handleHover, handleHoverImmediate, clearPreview } = useCommandPreview(query);
+  const hasPreview = !!activePreview;
+
+  // Inline analytics hint
+  const analyticsHint = useMemo(() => detectAnalyticsHint(query), [query]);
+
   // Search Learning
   const learning = useSearchLearning(open, effectiveRoles as string[], location.pathname);
   const decayedFreqMap = useMemo(() => learning.getDecayedFrequencyMap(), [open]);
 
-  // Use the unified ranking hook — pass effectiveRoles for permission filtering
+  // Use the unified ranking hook
   const {
     groups,
     suggestions,
@@ -113,7 +123,14 @@ export function ZuraCommandSurface({ open, onOpenChange, filterNavItems }: ZuraC
     (!hasResults || rankedResults[0]?.score < 0.5)
   );
 
-  // Detect actions from parsed query (uses ranking pipeline output — no double-parse)
+  // Update preview on keyboard navigation
+  useEffect(() => {
+    if (flatResults[selectedIndex]) {
+      handleHoverImmediate(flatResults[selectedIndex]);
+    }
+  }, [selectedIndex, flatResults, handleHoverImmediate]);
+
+  // Detect actions from parsed query
   useEffect(() => {
     if (hasQuery && !aiMode && parsedQuery?.actionIntent) {
       actionExecution.detectAndPrepare(parsedQuery, permissions);
@@ -136,7 +153,6 @@ export function ZuraCommandSurface({ open, onOpenChange, filterNavItems }: ZuraC
 
   useEffect(() => {
     if (!open) {
-      // Log abandonment if user had a query but didn't select
       const lastQ = lastQueryBeforeCloseRef.current;
       if (lastQ.trim()) {
         const topScore = rankedResults.length > 0 ? rankedResults[0]?.score ?? null : null;
@@ -147,8 +163,9 @@ export function ZuraCommandSurface({ open, onOpenChange, filterNavItems }: ZuraC
       setSelectedIndex(0);
       resetAI();
       actionExecution.reset();
+      clearPreview();
     }
-  }, [open, resetAI, actionExecution.reset]);
+  }, [open, resetAI, actionExecution.reset, clearPreview]);
 
   useEffect(() => {
     setSelectedIndex(0);
@@ -160,9 +177,8 @@ export function ZuraCommandSurface({ open, onOpenChange, filterNavItems }: ZuraC
 
   /** Resolve a candidate path through org-scoped dashPath */
   const resolveOrgPath = useCallback((rawPath: string): string => {
-    // If path starts with /dashboard, resolve through dashPath
     if (rawPath.startsWith('/dashboard')) {
-      const subpath = rawPath.slice('/dashboard'.length); // e.g., '/admin/analytics' or '?search=...'
+      const subpath = rawPath.slice('/dashboard'.length);
       return dashPath(subpath || '/');
     }
     return rawPath;
@@ -172,9 +188,8 @@ export function ZuraCommandSurface({ open, onOpenChange, filterNavItems }: ZuraC
     if (result.path) {
       if (query.trim()) addRecent(query.trim());
       const resolvedPath = resolveOrgPath(result.path);
-      trackNavigation(result.path); // Track with canonical path for consistency
+      trackNavigation(result.path);
 
-      // Log selection for learning
       const rank = index ?? flatResults.findIndex(r => r.path === result.path);
       const topScore = rankedResults.length > 0 ? rankedResults[0]?.score ?? 0 : 0;
       const selectedResult = flatResults.find(r => r.path === result.path);
@@ -187,9 +202,7 @@ export function ZuraCommandSurface({ open, onOpenChange, filterNavItems }: ZuraC
         topScore,
       );
 
-      // Clear the query ref so close effect doesn't log abandonment
       lastQueryBeforeCloseRef.current = '';
-
       navigate(resolvedPath);
       close();
     }
@@ -236,6 +249,12 @@ export function ZuraCommandSurface({ open, onOpenChange, filterNavItems }: ZuraC
     close();
   }, [navigate, close, trackNavigation, resolveOrgPath]);
 
+  const handleInlineAnalyticsNav = useCallback((path: string) => {
+    const resolvedPath = resolveOrgPath(path);
+    navigate(resolvedPath);
+    close();
+  }, [navigate, close, resolveOrgPath]);
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
@@ -243,11 +262,13 @@ export function ZuraCommandSurface({ open, onOpenChange, filterNavItems }: ZuraC
         className={cn(
           'p-0 gap-0 border-border',
           tokens.drawer.content,
-          'rounded-xl max-w-[720px] w-[calc(100vw-2rem)]',
+          'rounded-xl w-[calc(100vw-2rem)]',
           'max-h-[min(600px,80vh)]',
           'flex flex-col',
           'top-[35%] translate-y-[-35%]',
           'shadow-[0_24px_64px_-16px_hsl(var(--foreground)/0.15)]',
+          'transition-[max-width] duration-200 ease-out',
+          hasPreview ? 'max-w-[1080px]' : 'max-w-[720px]',
           'max-sm:max-w-none max-sm:w-screen max-sm:h-screen max-sm:max-h-screen max-sm:rounded-none max-sm:border-0 max-sm:top-[50%] max-sm:translate-y-[-50%]'
         )}
         overlayClassName={tokens.drawer.overlay}
@@ -264,70 +285,89 @@ export function ZuraCommandSurface({ open, onOpenChange, filterNavItems }: ZuraC
           onKeyDown={handleKeyDown}
         />
 
-        <div className="flex-1 min-h-0 overflow-y-auto">
-          {hasQuery && showAICard && (
-            <CommandAIAnswerCard
-              response={aiResponse}
-              isLoading={aiLoading}
-              error={aiError}
-            />
-          )}
+        <div className="flex-1 min-h-0 flex">
+          {/* Results column */}
+          <div className={cn(
+            'flex-1 min-w-0 overflow-y-auto',
+            hasPreview && 'lg:max-w-[calc(100%-340px)]'
+          )}>
+            {hasQuery && showAICard && (
+              <CommandAIAnswerCard
+                response={aiResponse}
+                isLoading={aiLoading}
+                error={aiError}
+              />
+            )}
 
-          {hasActiveAction && actionExecution.activeAction && (
-            <CommandActionPanel
-              action={actionExecution.activeAction}
-              actionState={actionExecution.actionState}
-              missingInputs={actionExecution.missingInputs}
-              collectedInputs={actionExecution.collectedInputs}
-              result={actionExecution.result}
-              onProvideInput={actionExecution.provideInput}
-              onSubmitInputs={actionExecution.submitInputs}
-              onConfirm={() => {
-                actionExecution.confirm();
-                close();
-              }}
-              onCancel={actionExecution.cancel}
-            />
-          )}
+            {hasActiveAction && actionExecution.activeAction && (
+              <CommandActionPanel
+                action={actionExecution.activeAction}
+                actionState={actionExecution.actionState}
+                missingInputs={actionExecution.missingInputs}
+                collectedInputs={actionExecution.collectedInputs}
+                result={actionExecution.result}
+                onProvideInput={actionExecution.provideInput}
+                onSubmitInputs={actionExecution.submitInputs}
+                onConfirm={() => {
+                  actionExecution.confirm();
+                  close();
+                }}
+                onCancel={actionExecution.cancel}
+              />
+            )}
 
-          {hasQuery ? (
-            // When action panel is active, suppress results to avoid visual confusion
-            hasActiveAction ? null : (
-              hasResults ? (
-                <CommandResultPanel
-                  groups={groups}
-                  selectedIndex={selectedIndex}
-                  query={query}
-                  onSelect={handleSelect}
-                />
-              ) : (
-                !aiMode && (
-                  hasSuggestions ? (
-                    <CommandSuggestionPanel
+            {hasQuery ? (
+              hasActiveAction ? null : (
+                hasResults ? (
+                  <>
+                    {analyticsHint && (
+                      <CommandInlineAnalyticsCard
+                        hint={analyticsHint}
+                        onNavigate={handleInlineAnalyticsNav}
+                      />
+                    )}
+                    <CommandResultPanel
+                      groups={groups}
+                      selectedIndex={selectedIndex}
                       query={query}
-                      suggestions={suggestions}
-                      onNavigate={handleSuggestionNavigate}
-                      onQueryChange={setQuery}
-                      onSwitchToAI={() => setAiMode(true)}
+                      onSelect={handleSelect}
+                      onHover={handleHover}
                     />
-                  ) : (
-                    <div className="py-10 px-6 text-center">
-                      <p className="font-sans text-sm text-muted-foreground">
-                        No results for "<span className="text-foreground font-medium">{query}</span>"
-                      </p>
-                    </div>
+                  </>
+                ) : (
+                  !aiMode && (
+                    hasSuggestions ? (
+                      <CommandSuggestionPanel
+                        query={query}
+                        suggestions={suggestions}
+                        onNavigate={handleSuggestionNavigate}
+                        onQueryChange={setQuery}
+                        onSwitchToAI={() => setAiMode(true)}
+                      />
+                    ) : (
+                      <div className="py-10 px-6 text-center">
+                        <p className="font-sans text-sm text-muted-foreground">
+                          No results for "<span className="text-foreground font-medium">{query}</span>"
+                        </p>
+                      </div>
+                    )
                   )
                 )
               )
-            )
-          ) : (
-            <CommandRecentSection
-              recentSearches={recents}
-              recentPages={recentPages}
-              onSearchSelect={handleRecentSearchSelect}
-              onPageSelect={handleRecentPageSelect}
-              onClearRecents={clearRecents}
-            />
+            ) : (
+              <CommandRecentSection
+                recentSearches={recents}
+                recentPages={recentPages}
+                onSearchSelect={handleRecentSearchSelect}
+                onPageSelect={handleRecentPageSelect}
+                onClearRecents={clearRecents}
+              />
+            )}
+          </div>
+
+          {/* Preview panel — desktop only */}
+          {hasPreview && hasQuery && hasResults && (
+            <CommandPreviewPanel result={activePreview} />
           )}
         </div>
 
