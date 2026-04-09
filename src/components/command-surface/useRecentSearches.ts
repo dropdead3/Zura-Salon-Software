@@ -1,8 +1,12 @@
 import { useState, useCallback, useMemo } from 'react';
 import type { ResultType } from './commandTypes';
 
-const STORAGE_KEY = 'zura-recent-searches';
+const STORAGE_KEY_BASE = 'zura-recent-searches';
 const MAX_RECENTS = 5;
+
+function storageKey(orgId?: string): string {
+  return orgId ? `${STORAGE_KEY_BASE}:${orgId}` : STORAGE_KEY_BASE;
+}
 
 export interface RecentSearch {
   query: string;
@@ -26,10 +30,12 @@ function migrateRecents(raw: unknown): RecentSearch[] {
   }).filter(Boolean) as RecentSearch[];
 }
 
-export function useRecentSearches() {
+export function useRecentSearches(orgId?: string) {
+  const key = storageKey(orgId);
+
   const [recentEntries, setRecentEntries] = useState<RecentSearch[]>(() => {
     try {
-      return migrateRecents(JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'));
+      return migrateRecents(JSON.parse(localStorage.getItem(key) || '[]'));
     } catch {
       return [];
     }
@@ -46,15 +52,15 @@ export function useRecentSearches() {
 
     setRecentEntries(prev => {
       const next = [entry, ...prev.filter(e => e.query !== entry.query)].slice(0, MAX_RECENTS);
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+      localStorage.setItem(key, JSON.stringify(next));
       return next;
     });
-  }, []);
+  }, [key]);
 
   const clearRecents = useCallback(() => {
-    localStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem(key);
     setRecentEntries([]);
-  }, []);
+  }, [key]);
 
   /** Backward-compat: raw query strings for consumers that only need strings */
   const recents = useMemo(() => recentEntries.map(e => e.query), [recentEntries]);
