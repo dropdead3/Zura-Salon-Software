@@ -57,8 +57,36 @@ export function CommandProactiveState({
     );
   }
 
+  const todayShortcuts = [
+    { label: "Today's Schedule", icon: Calendar, path: '/dashboard/schedule' },
+    { label: "Today's Tasks", icon: CheckSquare, path: '/dashboard/tasks' },
+    { label: "Today's Revenue", icon: TrendingUp, path: '/dashboard/admin/analytics' },
+  ];
+
   return (
     <div className="py-1">
+      {/* ── Today ──────────────────────────────────────────────────── */}
+      <div>
+        <div className="px-4 pt-2 pb-1">
+          <span className={tokens.heading.subsection}>Today</span>
+        </div>
+        {todayShortcuts.map((item) => {
+          const Icon = item.icon;
+          return (
+            <button
+              key={item.path}
+              type="button"
+              onClick={() => onNavigate(item.path)}
+              className={ROW_BASE}
+              tabIndex={-1}
+            >
+              <Icon className={ICON_BASE} />
+              <span className="font-sans text-sm text-muted-foreground">{item.label}</span>
+              <ChevronRight className="w-3.5 h-3.5 text-muted-foreground/30 group-hover/row:text-muted-foreground/60 transition-colors duration-150 shrink-0 ml-auto" />
+            </button>
+          );
+        })}
+      </div>
       {/* ── Continue ───────────────────────────────────────────────── */}
       {hasContinue && (
         <div>

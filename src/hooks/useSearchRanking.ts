@@ -195,6 +195,7 @@ export function useSearchRanking(
       }));
 
     // Action candidates from the registry
+    // Action candidates from the registry
     const actionCandidates: SearchCandidate[] = getAllActions()
       .filter((a) => a.id !== 'navigate_page')
       .map((action) => ({
@@ -202,8 +203,9 @@ export function useSearchRanking(
         type: 'action' as const,
         title: action.label,
         subtitle: action.description,
+        path: action.routeTemplate.split('?')[0] || action.routeTemplate,
         icon: React.createElement(Zap, { className: 'w-4 h-4' }),
-        permissions: action.permissions[0] ? action.permissions[0] : undefined,
+        permission: action.permissions[0] || undefined,
       }));
 
     return [...navCandidates, ...helpCands, ...teamCandidates, ...taskCandidates, ...actionCandidates];
