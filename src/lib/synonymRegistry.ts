@@ -5,6 +5,7 @@
  */
 import type { IntentType } from '@/lib/queryParser';
 import { levenshtein } from '@/lib/textMatch';
+export { levenshtein } from '@/lib/textMatch';
 
 // ─── Types ───────────────────────────────────────────────────
 
