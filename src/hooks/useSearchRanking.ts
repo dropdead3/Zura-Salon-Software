@@ -42,6 +42,7 @@ import {
 import type { DashboardNavItem } from '@/config/dashboardNav';
 import { useTeamDirectory } from '@/hooks/useEmployeeProfile';
 import { useTasks } from '@/hooks/useTasks';
+import { getAllActions } from '@/lib/actionRegistry';
 import { useActiveLocations } from '@/hooks/useLocations';
 import { useRecentSearches } from '@/components/command-surface/useRecentSearches';
 import { expandQuery, logSynonymTelemetry } from '@/lib/synonymRegistry';
@@ -137,6 +138,7 @@ export function useSearchRanking(
   const currentPath = location.pathname;
   const { data: teamMembers } = useTeamDirectory();
   const { data: activeLocations } = useActiveLocations();
+  const { tasks: taskItems } = useTasks();
   const { recents } = useRecentSearches();
 
   // Location names for chain engine
