@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Sparkles } from 'lucide-react';
+import { ZuraZIcon } from '@/components/icons/ZuraZIcon';
 import { DotsLoader } from '@/components/ui/loaders/DotsLoader';
 import ReactMarkdown from 'react-markdown';
 import { cn } from '@/lib/utils';
@@ -20,7 +20,7 @@ export function CommandAIAnswerCard({ response, isLoading, error }: CommandAIAns
     <div className="mx-3 mt-2 mb-1 rounded-xl border border-primary/10 bg-gradient-to-br from-card to-card/60 backdrop-blur-sm p-4">
       {/* Header */}
       <div className="flex items-center gap-1.5 mb-2.5">
-        <Sparkles className={cn(
+        <ZuraZIcon className={cn(
           'w-3.5 h-3.5 text-primary',
           isLoading && 'animate-pulse'
         )} />

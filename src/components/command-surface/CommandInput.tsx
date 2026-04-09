@@ -1,5 +1,6 @@
 import React, { useRef, useEffect } from 'react';
-import { Search, Sparkles, X } from 'lucide-react';
+import { Search, X } from 'lucide-react';
+import { ZuraZIcon } from '@/components/icons/ZuraZIcon';
 import { cn } from '@/lib/utils';
 
 interface CommandInputProps {
@@ -43,7 +44,7 @@ export function CommandInput({
   return (
     <div className="flex items-center gap-3 px-5 py-3.5 border-b border-border/50 shadow-[inset_0_1px_0_0_hsl(var(--foreground)/0.03)]">
       {aiMode ? (
-        <Sparkles className="w-4 h-4 shrink-0 text-primary" />
+        <ZuraZIcon className="w-4 h-4 shrink-0 text-primary" />
       ) : (
         <Search className="w-4 h-4 shrink-0 text-muted-foreground/70" strokeWidth={1.5} />
       )}
@@ -85,7 +86,7 @@ export function CommandInput({
           )}
           tabIndex={-1}
         >
-          <Sparkles className="w-3 h-3" />
+          <ZuraZIcon className="w-3 h-3" />
           AI
         </button>
 
