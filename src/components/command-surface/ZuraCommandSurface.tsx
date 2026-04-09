@@ -352,6 +352,17 @@ export function ZuraCommandSurface({ open, onOpenChange, filterNavItems, anchorR
     } else if (e.key === 'ArrowUp') {
       e.preventDefault();
       setSelectedIndex(i => Math.max(i - 1, 0));
+    } else if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+      // ⌘↵ / Ctrl+Enter — run action if one is active (Fix #11)
+      if (hasActiveAction && actionExecution.activeAction) {
+        e.preventDefault();
+        if (actionExecution.actionState === 'confirming') {
+          actionExecution.confirm();
+          close();
+        } else if (actionExecution.actionState === 'input_needed') {
+          actionExecution.submitInputs();
+        }
+      }
     } else if (e.key === 'Enter') {
       if ((aiMode || isQuestionQuery(query)) && query.trim()) {
         addRecent({ query: query.trim(), resultType: 'help' });
@@ -359,11 +370,10 @@ export function ZuraCommandSurface({ open, onOpenChange, filterNavItems, anchorR
       } else if (flatResults[selectedIndex]) {
         handleSelect(flatResults[selectedIndex]);
       } else if (hasQuery && !hasResults && selectedIndex === 0) {
-        // No results — Enter triggers AI fallback from the focused card
         handleAIFallback();
       }
     }
-  }, [query, aiMode, flatResults, selectedIndex, handleSelect, close, resetAI, sendMessage, addRecent, primaryRole, orgId, groundingResult]);
+  }, [query, aiMode, flatResults, selectedIndex, handleSelect, close, resetAI, sendMessage, addRecent, primaryRole, orgId, groundingResult, hasActiveAction, actionExecution]);
 
   const handleRecentSearchSelect = useCallback((q: string) => {
     setQuery(q);
@@ -544,7 +554,7 @@ export function ZuraCommandSurface({ open, onOpenChange, filterNavItems, anchorR
                           />
                         )}
                         <CommandResultPanel
-                          groups={groups}
+                          groups={filteredGroups}
                           selectedIndex={selectedIndex}
                           query={query}
                           isQuestion={isQuestionQuery(query)}
