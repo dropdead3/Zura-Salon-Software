@@ -121,6 +121,7 @@ export function ZuraCommandSurface({ open, onOpenChange, filterNavItems, anchorR
 
   // Search Learning
   const learning = useSearchLearning(open, effectiveRoles as string[], location.pathname, orgId);
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- intentionally refresh only when surface opens
   const decayedFreqMap = useMemo(() => learning.getDecayedFrequencyMap(), [open]);
 
   // Use the unified ranking hook
@@ -156,19 +157,31 @@ export function ZuraCommandSurface({ open, onOpenChange, filterNavItems, anchorR
   const effectiveQuery = scopePrefix?.cleanQuery ?? query;
 
   const allFlatResults = useMemo(() => groups.flatMap(g => g.results), [groups]);
+
+  const scopeTypeMap: Record<string, string[]> = useMemo(() => ({
+    navigation: ['navigation', 'help'],
+    team: ['team'],
+    action: ['action'],
+    client: ['client'],
+    inventory: ['inventory'],
+    task: ['task'],
+    appointment: ['appointment'],
+  }), []);
+
   const flatResults = useMemo(() => {
     if (effectiveScope === 'all') return allFlatResults;
-    const scopeTypeMap: Record<string, string[]> = {
-      navigation: ['navigation', 'help'],
-      team: ['team'],
-      action: ['action'],
-      client: ['client'],
-      inventory: ['inventory'],
-      task: ['task'],
-    };
     const allowed = scopeTypeMap[effectiveScope] || [];
     return allFlatResults.filter(r => allowed.includes(r.type));
-  }, [allFlatResults, effectiveScope]);
+  }, [allFlatResults, effectiveScope, scopeTypeMap]);
+
+  // Build scope-filtered groups for the result panel (Fix #2 — keeps visual in sync with keyboard nav)
+  const filteredGroups = useMemo(() => {
+    if (effectiveScope === 'all') return groups;
+    const allowed = scopeTypeMap[effectiveScope] || [];
+    return groups
+      .map(g => ({ ...g, results: g.results.filter(r => allowed.includes(r.type)) }))
+      .filter(g => g.results.length > 0);
+  }, [groups, effectiveScope, scopeTypeMap]);
 
   const hasResults = flatResults.length > 0;
   const hasQuery = query.trim().length > 0;
@@ -200,10 +213,13 @@ export function ZuraCommandSurface({ open, onOpenChange, filterNavItems, anchorR
     (!hasResults || rankedResults[0]?.score < 0.5)
   );
 
-  // Update preview on keyboard navigation
+  // Update preview on keyboard navigation (stabilized — only react to index changes)
+  const prevSelectedRef = useRef<string | null>(null);
   useEffect(() => {
-    if (flatResults[selectedIndex]) {
-      handleHoverImmediate(flatResults[selectedIndex]);
+    const current = flatResults[selectedIndex];
+    if (current && current.id !== prevSelectedRef.current) {
+      prevSelectedRef.current = current.id;
+      handleHoverImmediate(current);
     }
   }, [selectedIndex, flatResults, handleHoverImmediate]);
 
@@ -228,6 +244,10 @@ export function ZuraCommandSurface({ open, onOpenChange, filterNavItems, anchorR
     lastQueryBeforeCloseRef.current = query;
   }, [query]);
 
+  // Stabilize reset refs to avoid re-running cleanup on every render (Fix #7)
+  const actionResetRef = useRef(actionExecution.reset);
+  actionResetRef.current = actionExecution.reset;
+
   useEffect(() => {
     if (!open) {
       const lastQ = lastQueryBeforeCloseRef.current;
@@ -240,10 +260,10 @@ export function ZuraCommandSurface({ open, onOpenChange, filterNavItems, anchorR
       setSelectedIndex(0);
       setActiveScope('all');
       resetAI();
-      actionExecution.reset();
+      actionResetRef.current();
       clearPreview();
     }
-  }, [open, resetAI, actionExecution.reset, clearPreview]);
+  }, [open, resetAI, clearPreview]);
 
   // Auto-trigger AI mode for question queries with no strong nav match
   const autoAiTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -276,6 +296,11 @@ export function ZuraCommandSurface({ open, onOpenChange, filterNavItems, anchorR
   useEffect(() => {
     setSelectedIndex(0);
   }, [query]);
+
+  // Reset selectedIndex on scope change (Fix #3)
+  useEffect(() => {
+    setSelectedIndex(0);
+  }, [effectiveScope]);
 
   const close = useCallback(() => {
     onOpenChange(false);
