@@ -12,6 +12,10 @@ import { CommandResultPanel } from './CommandResultPanel';
 import { CommandAIAnswerCard } from './CommandAIAnswerCard';
 import { CommandEmptyState } from './CommandEmptyState';
 import { CommandRecentSection } from './CommandRecentSection';
+import { useActionExecution } from '@/hooks/useActionExecution';
+import { usePermission } from '@/hooks/usePermission';
+import { parseQuery } from '@/lib/queryParser';
+import { CommandActionPanel } from './CommandActionPanel';
 
 interface NavItem {
   href: string;
