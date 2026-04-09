@@ -15,7 +15,7 @@ const AI_ASSISTANT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-a
 
 function friendlyError(status: number, fallback: string): string {
   if (status === 401) return 'Your session has expired. Please refresh and try again.';
-  if (status === 403) return 'You don't have access to this feature for the current organization.';
+  if (status === 403) return 'You do not have access to this feature for the current organization.';
   if (status === 429) return 'Too many requests — please wait a moment and try again.';
   if (status === 402) return 'This feature requires an active subscription.';
   return fallback;
