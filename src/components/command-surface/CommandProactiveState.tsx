@@ -119,15 +119,19 @@ export const CommandProactiveState = React.forwardRef<HTMLDivElement, CommandPro
             <span className={tokens.heading.subsection}>Actions</span>
           </div>
           {recommendedActions.map((a, i) => (
-            <div
+            <button
               key={i}
-              className={cn(ROW_BASE, 'cursor-default')}
+              type="button"
+              onClick={() => onNavigate('/dashboard')}
+              className={cn(ROW_BASE, 'cursor-pointer')}
+              tabIndex={-1}
             >
               <Zap className={cn(ICON_BASE, 'w-3.5 h-3.5')} />
               <span className="font-sans text-sm text-muted-foreground flex-1 truncate">
                 {a.action}
               </span>
-            </div>
+              <ChevronRight className="w-3.5 h-3.5 text-muted-foreground/30 group-hover/row:text-muted-foreground/60 transition-colors duration-150 shrink-0 ml-auto" />
+            </button>
           ))}
         </div>
       )}

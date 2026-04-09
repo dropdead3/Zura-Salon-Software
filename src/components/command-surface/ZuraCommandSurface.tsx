@@ -602,7 +602,7 @@ export function ZuraCommandSurface({ open, onOpenChange, filterNavItems, anchorR
 
               {/* Preview panel — desktop only */}
               {hasPreview && hasQuery && hasResults && (
-                <CommandPreviewPanel result={activePreview} />
+                <CommandPreviewPanel result={activePreview!} />
               )}
             </div>
 

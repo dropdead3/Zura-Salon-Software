@@ -47,6 +47,7 @@ export function useClientSearchCandidates(enabled: boolean): SearchCandidate[] {
         type: 'client' as const,
         title: fullName,
         subtitle: subtitleParts.join(' · ') || undefined,
+        searchText: [fullName, c.phone, c.email].filter(Boolean).join(' '),
         path: `/dashboard/clients?search=${encodeURIComponent(fullName)}`,
         icon: React.createElement(UserCircle, { className: 'w-4 h-4' }),
       };
@@ -90,6 +91,7 @@ export function useProductSearchCandidates(enabled: boolean): SearchCandidate[] 
         type: 'inventory' as const,
         title: p.name,
         subtitle: subtitleParts.join(' · ') || p.category || undefined,
+        searchText: [p.name, p.sku, p.brand, p.category].filter(Boolean).join(' '),
         path: `/dashboard/admin/inventory?search=${encodeURIComponent(p.name)}`,
         icon: React.createElement(Package, { className: 'w-4 h-4' }),
         metadata: p.category || undefined,

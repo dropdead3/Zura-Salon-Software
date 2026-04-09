@@ -206,7 +206,6 @@ export function useSearchRanking(
       }));
 
     // Action candidates from the registry
-    // Action candidates from the registry
     const actionCandidates: SearchCandidate[] = getAllActions()
       .filter((a) => a.id !== 'navigate_page')
       .map((action) => ({
@@ -282,7 +281,7 @@ export function useSearchRanking(
 
       candidatesForRanking = candidates.map((c) => {
         const synResult = scoreMatchWithSynonyms(
-          c.title + ' ' + (c.subtitle || ''),
+          c.searchText || (c.title + ' ' + (c.subtitle || '')),
           trimmedQuery,
           expansion.expandedTerms,
           bestAliasConfidence,

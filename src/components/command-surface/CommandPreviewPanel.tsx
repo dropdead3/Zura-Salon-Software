@@ -5,6 +5,9 @@ import { ClientPreview } from './previews/ClientPreview';
 import { TeamPreview } from './previews/TeamPreview';
 import { NavigationPreview } from './previews/NavigationPreview';
 import { ReportPreview } from './previews/ReportPreview';
+import { InventoryPreview } from './previews/InventoryPreview';
+import { AppointmentPreview } from './previews/AppointmentPreview';
+import { TaskPreview } from './previews/TaskPreview';
 
 interface CommandPreviewPanelProps {
   result: RankedResult;
@@ -19,6 +22,12 @@ export function CommandPreviewPanel({ result }: CommandPreviewPanelProps) {
         return <TeamPreview result={result} />;
       case 'report':
         return <ReportPreview result={result} />;
+      case 'inventory':
+        return <InventoryPreview result={result} />;
+      case 'appointment':
+        return <AppointmentPreview result={result} />;
+      case 'task':
+        return <TaskPreview result={result} />;
       case 'navigation':
       case 'help':
       case 'utility':
