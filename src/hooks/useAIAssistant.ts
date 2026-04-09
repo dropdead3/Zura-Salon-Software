@@ -56,7 +56,7 @@ export function useAIAssistant(): UseAIAssistantReturn {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${accessToken}`,
         },
-        body: JSON.stringify({ messages, organizationId }),
+        body: JSON.stringify({ messages, organizationId, userRole }),
       });
 
       if (!resp.ok) {
