@@ -1,21 +1,24 @@
 
 
-# Fix: Lock Screen Still Appearing in God Mode
+# Replace FAB & AI Help Tab Icons with ZuraZIcon
 
-## Root Cause
+## What's Changing
 
-Two bugs work together:
-
-1. **Missing dependency in `useAutoLock`**: The `useEffect` deps array (line 44) includes `[isLocked, resetTimer]` but **not** `isImpersonating`. When God Mode activates after mount, the effect doesn't re-run — the existing 2-minute timer keeps ticking and fires `lock()`.
-
-2. **No God Mode guard on the lock screen render**: In `DashboardLayout.tsx` line 584, `{isLocked && <DashboardLockScreen />}` renders unconditionally. Even if the timer somehow fires (race condition, manual lock button press), the lock screen should never appear in God Mode.
+The HelpFAB button currently uses `MessageCircleQuestion` (lucide) as its icon, and the AIHelpTab uses `ZuraAvatar` (a plain "Z" letter in a circle). Both should use the branded `ZuraZIcon` for consistent AI identity.
 
 ## Changes
 
-| File | What |
-|------|------|
-| `src/hooks/useAutoLock.ts` | Add `isImpersonating` to the `useEffect` dependency array so the guard re-evaluates when God Mode toggles |
-| `src/components/dashboard/DashboardLayout.tsx` | Change line 584 from `{isLocked && <DashboardLockScreen .../>}` to `{isLocked && !isImpersonating && <DashboardLockScreen .../>}` — `isImpersonating` is already available in scope |
+### File 1: `src/components/dashboard/HelpFAB.tsx`
+- Replace `MessageCircleQuestion` import with `ZuraZIcon` import
+- FAB button (non-schedule, non-open state): replace `<MessageCircleQuestion>` with `<ZuraZIcon className="h-6 w-6" />`
+- Keep the `X` icon for the open/close state — that's functional, not branding
 
-Two lines changed, two files.
+### File 2: `src/components/dashboard/help-fab/AIHelpTab.tsx`
+- Replace `ZuraAvatar` import with `ZuraZIcon` import
+- In the empty state, replace `<ZuraAvatar size="lg" className="mb-4" />` with `<ZuraZIcon className="w-12 h-12 text-primary mb-4" />`
+
+### File 3: `src/components/ui/ZuraAvatar.tsx`
+- Replace the plain text "Z" with the `ZuraZIcon` SVG component inside the circle, so any other consumers also get the branded icon
+
+Two files changed, ~4 lines each. No logic changes.
 
