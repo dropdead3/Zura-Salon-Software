@@ -192,7 +192,7 @@ export interface HubLinkConfig {
 export const hubLinksConfig: HubLinkConfig[] = [
   { href: '/dashboard/admin/analytics', icon: TrendingUp, label: 'Analytics Hub', colorClass: 'bg-primary/5 text-primary hover:bg-primary/10', permission: 'view_team_overview' },
   { href: '/dashboard/admin/team-hub', icon: Users, label: 'Operations Hub', colorClass: 'bg-primary/5 text-primary hover:bg-primary/10', permission: 'view_team_overview' },
-  { href: '/dashboard/admin/access-hub', icon: Shield, label: 'Roles Hub', colorClass: 'bg-primary/5 text-primary hover:bg-primary/10', permission: 'manage_settings' },
+  { href: '/dashboard/admin/access-hub', icon: Shield, label: 'Roles & Controls Hub', colorClass: 'bg-primary/5 text-primary hover:bg-primary/10', permission: 'manage_settings' },
 ];
 
 /** Canonical Analytics Hub base path. Use with ?tab= and &subtab= for drill-downs. */
