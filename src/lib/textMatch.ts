@@ -3,6 +3,35 @@
  * Single canonical location for substring/word-boundary scoring.
  */
 
+// ─── Levenshtein distance ───────────────────────────────────
+
+/** Compute Levenshtein edit distance between two strings. */
+export function levenshtein(a: string, b: string): number {
+  const m = a.length;
+  const n = b.length;
+  if (m === 0) return n;
+  if (n === 0) return m;
+  if (Math.abs(m - n) > 2) return 3; // early exit
+
+  const prev = new Array(n + 1);
+  const curr = new Array(n + 1);
+
+  for (let j = 0; j <= n; j++) prev[j] = j;
+
+  for (let i = 1; i <= m; i++) {
+    curr[0] = i;
+    for (let j = 1; j <= n; j++) {
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+      curr[j] = Math.min(curr[j - 1] + 1, prev[j] + 1, prev[j - 1] + cost);
+    }
+    for (let j = 0; j <= n; j++) prev[j] = curr[j];
+  }
+
+  return prev[n];
+}
+
+// ─── Core scoring ───────────────────────────────────────────
+
 /** Score how well `query` matches `haystack`. Returns 0–100. */
 export function scoreMatch(haystack: string, query: string): number {
   const lower = haystack.toLowerCase();
@@ -13,6 +42,27 @@ export function scoreMatch(haystack: string, query: string): number {
   if (idx >= 0) return 60 - idx * 0.5;
   const words = lower.split(/\s+/);
   if (words.some((w) => w.startsWith(q))) return 50;
+
+  // Fuzzy fallback: check if any word in haystack is within edit distance
+  if (q.length >= 3) {
+    const maxDist = q.length <= 8 ? 1 : 2;
+    for (const word of words) {
+      if (Math.abs(word.length - q.length) > maxDist) continue;
+      const dist = levenshtein(q, word);
+      if (dist <= maxDist) {
+        // Score 35 for dist=1, 25 for dist=2
+        return dist === 1 ? 35 : 25;
+      }
+    }
+    // Also check against full haystack for multi-word queries
+    if (q.includes(' ') && Math.abs(lower.length - q.length) <= maxDist) {
+      const dist = levenshtein(q, lower);
+      if (dist <= maxDist) {
+        return dist === 1 ? 35 : 25;
+      }
+    }
+  }
+
   return 0;
 }
 
