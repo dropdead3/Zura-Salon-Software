@@ -38,7 +38,7 @@ export function useAIAssistant(): UseAIAssistantReturn {
     setIsLoading(false);
   }, []);
 
-  const sendMessage = useCallback(async (query: string, conversationHistory: Message[] = [], organizationId?: string, userRole?: string, groundingContext?: GroundingContextPayload) => {
+  const sendMessage = useCallback(async (query: string, conversationHistory: Message[] = [], organizationId?: string, userRole?: string, groundingContext?: GroundingContextPayload, dataContext?: string) => {
     setIsLoading(true);
     setError(null);
     setResponse('');
