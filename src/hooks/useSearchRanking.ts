@@ -325,6 +325,7 @@ export function useSearchRanking(
     groups,
     suggestions,
     parsedQuery: parsed,
+    chainedQuery: chained,
     isAmbiguous,
     trackNavigation,
   };
