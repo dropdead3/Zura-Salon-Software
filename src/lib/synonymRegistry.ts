@@ -4,6 +4,7 @@
  * Pure data + logic — no React, no side effects except telemetry logging.
  */
 import type { IntentType } from '@/lib/queryParser';
+import { levenshtein } from '@/lib/textMatch';
 
 // ─── Types ───────────────────────────────────────────────────
 
@@ -265,31 +266,7 @@ export function findConceptClusters(term: string): ConceptMatch[] {
 
 // ─── Typo Tolerance ─────────────────────────────────────────
 
-function levenshtein(a: string, b: string): number {
-  const m = a.length;
-  const n = b.length;
-  if (m === 0) return n;
-  if (n === 0) return m;
-
-  // Optimization: if length difference > 2, can't be within distance 2
-  if (Math.abs(m - n) > 2) return 3;
-
-  const prev = new Array(n + 1);
-  const curr = new Array(n + 1);
-
-  for (let j = 0; j <= n; j++) prev[j] = j;
-
-  for (let i = 1; i <= m; i++) {
-    curr[0] = i;
-    for (let j = 1; j <= n; j++) {
-      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
-      curr[j] = Math.min(curr[j - 1] + 1, prev[j] + 1, prev[j - 1] + cost);
-    }
-    for (let j = 0; j <= n; j++) prev[j] = curr[j];
-  }
-
-  return prev[n];
-}
+// levenshtein is now imported from @/lib/textMatch
 
 /**
  * Find nearest vocabulary match within Levenshtein distance ≤ 2.
