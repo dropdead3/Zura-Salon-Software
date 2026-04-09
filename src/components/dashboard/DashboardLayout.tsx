@@ -247,6 +247,7 @@ function DashboardLayoutInner({ children, hideFooter, hideTopBar, hideSidebar }:
   });
   const [userSearch, setUserSearch] = useState('');
   const { open: commandOpen, setOpen: setCommandOpen } = useCommandMenu();
+  const searchBarRef = useRef<HTMLButtonElement>(null);
   const zuraCtx = useZuraNavigationSafe();
   
   useEffect(() => {

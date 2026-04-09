@@ -49,6 +49,7 @@ interface ZuraCommandSurfaceProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   filterNavItems?: (items: NavItem[]) => NavItem[];
+  anchorRef?: React.RefObject<HTMLElement>;
 }
 
 // Build a label lookup from all nav sources for frequency-based recent pages
