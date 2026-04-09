@@ -38,10 +38,13 @@ import {
 } from '@/config/dashboardNav';
 import type { DashboardNavItem } from '@/config/dashboardNav';
 import { useTeamDirectory } from '@/hooks/useEmployeeProfile';
+import { useActiveLocations } from '@/hooks/useLocations';
 import { useRecentSearches } from '@/components/command-surface/useRecentSearches';
 import { expandQuery, logSynonymTelemetry } from '@/lib/synonymRegistry';
 import type { QueryExpansion } from '@/lib/synonymRegistry';
 import { scoreMatchWithSynonyms } from '@/lib/textMatch';
+import { assembleChain } from '@/lib/queryChainEngine';
+import type { ChainedQuery } from '@/lib/queryChainEngine';
 
 // ─── Help items ─────────────────────────────────────────────
 
