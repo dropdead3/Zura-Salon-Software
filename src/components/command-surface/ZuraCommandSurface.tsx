@@ -86,6 +86,7 @@ export function ZuraCommandSurface({ open, onOpenChange, filterNavItems, anchorR
   const isMobile = useIsMobile();
   const { isImpersonating, effectiveOrganization } = useOrganizationContext();
   const orgId = effectiveOrganization?.id;
+  const primaryRole = effectiveRoles[0] ?? undefined;
 
   const { response: aiResponse, isLoading: aiLoading, error: aiError, sendMessage, reset: resetAI } = useAIAssistant();
   const { recents, recentEntries, addRecent, clearRecents } = useRecentSearches(orgId);
@@ -244,7 +245,7 @@ export function ZuraCommandSurface({ open, onOpenChange, filterNavItems, anchorR
 
     autoAiTimerRef.current = setTimeout(() => {
       setAiMode(true);
-      sendMessage(query, [], orgId);
+      sendMessage(query, [], orgId, primaryRole);
       addRecent({ query, resultType: 'help' });
     }, 1200);
 
@@ -313,7 +314,7 @@ export function ZuraCommandSurface({ open, onOpenChange, filterNavItems, anchorR
     } else if (e.key === 'Enter') {
       if ((aiMode || isQuestionQuery(query)) && query.trim()) {
         addRecent(query.trim());
-        sendMessage(query, [], orgId);
+        sendMessage(query, [], orgId, primaryRole);
       } else if (flatResults[selectedIndex]) {
         handleSelect(flatResults[selectedIndex]);
       } else if (hasQuery && !hasResults && selectedIndex === 0) {

@@ -7,7 +7,7 @@ interface UseAIAssistantReturn {
   response: string;
   isLoading: boolean;
   error: string | null;
-  sendMessage: (query: string, conversationHistory?: Message[], organizationId?: string) => Promise<void>;
+  sendMessage: (query: string, conversationHistory?: Message[], organizationId?: string, userRole?: string) => Promise<void>;
   reset: () => void;
 }
 
@@ -32,7 +32,7 @@ export function useAIAssistant(): UseAIAssistantReturn {
     setIsLoading(false);
   }, []);
 
-  const sendMessage = useCallback(async (query: string, conversationHistory: Message[] = [], organizationId?: string) => {
+  const sendMessage = useCallback(async (query: string, conversationHistory: Message[] = [], organizationId?: string, userRole?: string) => {
     setIsLoading(true);
     setError(null);
     setResponse('');
@@ -56,7 +56,7 @@ export function useAIAssistant(): UseAIAssistantReturn {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${accessToken}`,
         },
-        body: JSON.stringify({ messages, organizationId }),
+        body: JSON.stringify({ messages, organizationId, userRole }),
       });
 
       if (!resp.ok) {
