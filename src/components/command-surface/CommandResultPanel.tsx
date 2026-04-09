@@ -1,21 +1,17 @@
 import React, { useRef, useEffect } from 'react';
 import { tokens } from '@/lib/design-tokens';
-import { groupResults, type CommandResult } from './commandTypes';
+import type { RankedResultGroup, RankedResult } from '@/lib/searchRanker';
 import { CommandResultRow } from './CommandResultRow';
 
 interface CommandResultPanelProps {
-  results: CommandResult[];
+  groups: RankedResultGroup[];
   selectedIndex: number;
   query: string;
-  onSelect: (result: CommandResult) => void;
+  onSelect: (result: RankedResult) => void;
 }
 
-export function CommandResultPanel({ results, selectedIndex, query, onSelect }: CommandResultPanelProps) {
-  const groups = groupResults(results);
+export function CommandResultPanel({ groups, selectedIndex, query, onSelect }: CommandResultPanelProps) {
   const rowRefs = useRef<Map<number, HTMLButtonElement>>(new Map());
-
-  // Flatten results for index mapping
-  const flatResults = groups.flatMap(g => g.results);
 
   // Auto-scroll selected into view
   useEffect(() => {
