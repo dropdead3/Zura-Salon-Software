@@ -1,8 +1,7 @@
-import { useMemo } from 'react';
 import { TrendingUp, ShoppingBag, RotateCcw, ArrowRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { AnimatedBlurredAmount } from '@/components/ui/AnimatedBlurredAmount';
-import { TrendSparkline } from '@/components/dashboard/TrendSparkline';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export type AnalyticsHintType = 'retail' | 'revenue' | 'rebooking' | 'utilization' | 'waste' | 'retention' | 'payroll' | 'inventory_alert' | null;
 
@@ -78,16 +77,28 @@ const CARD_CONFIG: Record<string, AnalyticsCardConfig> = {
   },
 };
 
+export interface CommandDataProps {
+  value: number;
+  label: string;
+  breakdown: { label: string; value: string }[];
+  isLoading: boolean;
+}
+
 interface CommandInlineAnalyticsCardProps {
   hint: AnalyticsHintType;
   onNavigate: (path: string) => void;
+  timeLabel?: string;
+  data?: CommandDataProps;
 }
 
-export function CommandInlineAnalyticsCard({ hint, onNavigate }: CommandInlineAnalyticsCardProps) {
+export function CommandInlineAnalyticsCard({ hint, onNavigate, timeLabel, data }: CommandInlineAnalyticsCardProps) {
   if (!hint) return null;
 
   const config = CARD_CONFIG[hint];
   if (!config) return null;
+
+  const hasData = data && !data.isLoading && data.value > 0;
+  const isLoading = data?.isLoading;
 
   return (
     <button
@@ -105,8 +116,32 @@ export function CommandInlineAnalyticsCard({ hint, onNavigate }: CommandInlineAn
       </div>
 
       <div className="flex-1 min-w-0">
-        <span className="font-sans text-xs text-muted-foreground/70">{config.label}</span>
-        <p className="font-sans text-sm text-foreground">View detailed analytics</p>
+        <span className="font-sans text-xs text-muted-foreground/70">
+          {config.label}
+          {timeLabel && <span className="ml-1.5 text-muted-foreground/50">· {timeLabel}</span>}
+        </span>
+
+        {isLoading ? (
+          <div className="flex items-center gap-2 mt-1">
+            <Skeleton className="h-5 w-24" />
+            <Skeleton className="h-3 w-16" />
+          </div>
+        ) : hasData ? (
+          <div className="flex items-center gap-2 mt-0.5">
+            <AnimatedBlurredAmount
+              value={data.value}
+              currency="USD"
+              className="font-display text-base text-foreground tracking-wide"
+            />
+            {data.breakdown.length > 0 && (
+              <span className="font-sans text-xs text-muted-foreground/60">
+                · {data.breakdown.map(b => `${b.value} ${b.label.toLowerCase()}`).join(' · ')}
+              </span>
+            )}
+          </div>
+        ) : (
+          <p className="font-sans text-sm text-foreground">View detailed analytics</p>
+        )}
       </div>
 
       <div className="flex items-center gap-1 text-xs font-sans text-primary/60 group-hover:text-primary/80 transition-colors shrink-0">

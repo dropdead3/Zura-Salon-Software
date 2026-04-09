@@ -30,6 +30,7 @@ import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 import { useCommandPreview } from '@/hooks/useCommandPreview';
 import { CommandPreviewPanel } from './CommandPreviewPanel';
 import { CommandInlineAnalyticsCard, detectAnalyticsHint } from './CommandInlineAnalyticsCard';
+import { useCommandDataQuery } from '@/hooks/useCommandDataQuery';
 import { CommandChainBar } from './CommandChainBar';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useTypeahead } from '@/hooks/useTypeahead';
@@ -107,6 +108,7 @@ export function ZuraCommandSurface({ open, onOpenChange, filterNavItems, anchorR
   // Inline analytics hint
   const analyticsHint = useMemo(() => detectAnalyticsHint(query), [query]);
 
+
   // Memoize classifyAndGround to avoid redundant calls in JSX (Fix #1)
   const groundingResult = useMemo(() => {
     if (!query.trim()) return { isNavigation: false, verifiedDestinations: [] as NavDestination[], confidence: 'none' as const, groundingPrompt: '' };
@@ -141,7 +143,25 @@ export function ZuraCommandSurface({ open, onOpenChange, filterNavItems, anchorR
     decayedFrequencyMap: decayedFreqMap,
   });
 
-  // Derive recent pages from decayed frequency map
+  // Extract time context from parsed query for data fetching
+  const timeContext = parsedQuery?.timeContext ?? null;
+  const timeLabel = timeContext?.label ?? 'Today';
+  const dateFrom = timeContext?.startDate ?? new Date().toISOString().slice(0, 10);
+  const dateTo = timeContext?.endDate ?? new Date().toISOString().slice(0, 10);
+
+  // Fetch real data for the analytics hint
+  const commandData = useCommandDataQuery({ hint: analyticsHint, dateFrom, dateTo });
+
+  // Build dataContext string for the AI
+  const dataContextStr = useMemo(() => {
+    if (!commandData.value || commandData.isLoading) return undefined;
+    const parts = [`${commandData.label}: $${commandData.value.toLocaleString('en-US', { minimumFractionDigits: 2 })}`];
+    parts.push(`Period: ${timeLabel}`);
+    commandData.breakdown.forEach(b => parts.push(`${b.label}: ${b.value}`));
+    return parts.join('\n');
+  }, [commandData.value, commandData.isLoading, commandData.label, commandData.breakdown, timeLabel]);
+
+
   const recentPages = useMemo(() => {
     return Object.entries(decayedFreqMap)
       .sort(([, a], [, b]) => b - a)
@@ -282,7 +302,7 @@ export function ZuraCommandSurface({ open, onOpenChange, filterNavItems, anchorR
 
     autoAiTimerRef.current = setTimeout(() => {
       setAiMode(true);
-      sendMessage(query, [], orgId, primaryRole, groundingResult.isNavigation ? { isNavigation: groundingResult.isNavigation, confidence: groundingResult.confidence, groundingPrompt: groundingResult.groundingPrompt } : undefined);
+      sendMessage(query, [], orgId, primaryRole, groundingResult.isNavigation ? { isNavigation: groundingResult.isNavigation, confidence: groundingResult.confidence, groundingPrompt: groundingResult.groundingPrompt } : undefined, dataContextStr);
       addRecent({ query, resultType: 'help' });
     }, 800);
 
@@ -367,7 +387,7 @@ export function ZuraCommandSurface({ open, onOpenChange, filterNavItems, anchorR
     } else if (e.key === 'Enter') {
       if ((aiMode || isQuestionQuery(query)) && query.trim()) {
         addRecent({ query: query.trim(), resultType: 'help' });
-        sendMessage(query, [], orgId, primaryRole, groundingResult.isNavigation ? { isNavigation: groundingResult.isNavigation, confidence: groundingResult.confidence, groundingPrompt: groundingResult.groundingPrompt } : undefined);
+        sendMessage(query, [], orgId, primaryRole, groundingResult.isNavigation ? { isNavigation: groundingResult.isNavigation, confidence: groundingResult.confidence, groundingPrompt: groundingResult.groundingPrompt } : undefined, dataContextStr);
       } else if (flatResults[selectedIndex]) {
         handleSelect(flatResults[selectedIndex]);
       } else if (hasQuery && !hasResults && selectedIndex === 0) {
@@ -403,9 +423,9 @@ export function ZuraCommandSurface({ open, onOpenChange, filterNavItems, anchorR
   const handleAIFallback = useCallback(() => {
     setAiMode(true);
     if (query.trim()) {
-      sendMessage(query, [], orgId, primaryRole, groundingResult.isNavigation ? { isNavigation: groundingResult.isNavigation, confidence: groundingResult.confidence, groundingPrompt: groundingResult.groundingPrompt } : undefined);
+      sendMessage(query, [], orgId, primaryRole, groundingResult.isNavigation ? { isNavigation: groundingResult.isNavigation, confidence: groundingResult.confidence, groundingPrompt: groundingResult.groundingPrompt } : undefined, dataContextStr);
     }
-  }, [query, sendMessage, orgId, primaryRole, groundingResult]);
+  }, [query, sendMessage, orgId, primaryRole, groundingResult, dataContextStr]);
 
   // God Mode bar offset
   const godModeOffset = isImpersonating ? 44 : 0;
@@ -558,6 +578,8 @@ export function ZuraCommandSurface({ open, onOpenChange, filterNavItems, anchorR
                           <CommandInlineAnalyticsCard
                             hint={analyticsHint}
                             onNavigate={handleInlineAnalyticsNav}
+                            timeLabel={timeLabel}
+                            data={commandData}
                           />
                         )}
                         <CommandResultPanel
