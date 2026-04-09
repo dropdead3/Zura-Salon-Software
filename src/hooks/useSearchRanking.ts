@@ -38,10 +38,13 @@ import {
 } from '@/config/dashboardNav';
 import type { DashboardNavItem } from '@/config/dashboardNav';
 import { useTeamDirectory } from '@/hooks/useEmployeeProfile';
+import { useActiveLocations } from '@/hooks/useLocations';
 import { useRecentSearches } from '@/components/command-surface/useRecentSearches';
 import { expandQuery, logSynonymTelemetry } from '@/lib/synonymRegistry';
 import type { QueryExpansion } from '@/lib/synonymRegistry';
 import { scoreMatchWithSynonyms } from '@/lib/textMatch';
+import { assembleChain } from '@/lib/queryChainEngine';
+import type { ChainedQuery } from '@/lib/queryChainEngine';
 
 // ─── Help items ─────────────────────────────────────────────
 
@@ -128,7 +131,14 @@ export function useSearchRanking(
   const location = useLocation();
   const currentPath = location.pathname;
   const { data: teamMembers } = useTeamDirectory();
+  const { data: activeLocations } = useActiveLocations();
   const { recents } = useRecentSearches();
+
+  // Location names for chain engine
+  const locationNames = useMemo(
+    () => (activeLocations || []).map(l => l.name),
+    [activeLocations],
+  );
 
   // Parse query
   const parsed = useMemo((): ParsedQuery | null => {
@@ -139,6 +149,12 @@ export function useSearchRanking(
 
   // Resolve entities
   const resolved = useQueryEntityResolver(parsed);
+
+  // Chain assembly (post-parser structured interpretation)
+  const chained = useMemo((): ChainedQuery | null => {
+    if (!parsed) return null;
+    return assembleChain(parsed, locationNames);
+  }, [parsed, locationNames]);
 
   // Build candidate pool (memoized)
   const candidates = useMemo((): SearchCandidate[] => {
@@ -231,6 +247,22 @@ export function useSearchRanking(
       });
     }
 
+    // Inject chained destination hint as a virtual high-priority candidate
+    if (chained?.destinationHint && chained.confidence >= 0.4) {
+      const hint = chained.destinationHint;
+      candidatesForRanking = [
+        {
+          id: `chain-dest-${hint.path}`,
+          type: 'navigation' as const,
+          title: hint.label,
+          subtitle: Object.entries(hint.params).map(([k, v]) => `${k}: ${v}`).join(' · '),
+          path: hint.path,
+          icon: React.createElement(LayoutDashboard, { className: 'w-4 h-4' }),
+        },
+        ...candidatesForRanking,
+      ];
+    }
+
     let ranked = rankResults(candidatesForRanking, {
       query: trimmedQuery,
       parsed,
@@ -281,7 +313,7 @@ export function useSearchRanking(
       suggestions: suggs,
       isAmbiguous: ambiguous,
     };
-  }, [parsed, resolved, enrichedCandidates, recentPaths, options.permissions, options.roles, currentPath, query, expansion]);
+  }, [parsed, resolved, enrichedCandidates, recentPaths, options.permissions, options.roles, currentPath, query, expansion, chained]);
 
   // Navigation tracking callback
   const trackNavigation = useCallback((path: string) => {
@@ -293,6 +325,7 @@ export function useSearchRanking(
     groups,
     suggestions,
     parsedQuery: parsed,
+    chainedQuery: chained,
     isAmbiguous,
     trackNavigation,
   };
