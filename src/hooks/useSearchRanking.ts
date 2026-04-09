@@ -281,7 +281,7 @@ export function useSearchRanking(
 
       candidatesForRanking = candidates.map((c) => {
         const synResult = scoreMatchWithSynonyms(
-          c.title + ' ' + (c.subtitle || ''),
+          c.searchText || (c.title + ' ' + (c.subtitle || '')),
           trimmedQuery,
           expansion.expandedTerms,
           bestAliasConfidence,
