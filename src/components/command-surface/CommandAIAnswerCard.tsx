@@ -16,9 +16,9 @@ export function CommandAIAnswerCard({ response, isLoading, error }: CommandAIAns
   if (!isLoading && !response && !error) return null;
 
   return (
-    <div className="mx-3 mt-2 mb-1 rounded-lg border border-border/50 bg-card-inner p-3">
+    <div className="mx-3 mt-2 mb-1 rounded-lg border border-primary/10 bg-card-inner/80 backdrop-blur-sm p-3">
       <div className="flex items-center gap-1.5 mb-2">
-        <Sparkles className="w-3 h-3 text-primary" />
+        <Sparkles className="w-3.5 h-3.5 text-primary" />
         <span className="font-sans text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
           AI Answer
         </span>
@@ -48,7 +48,7 @@ export function CommandAIAnswerCard({ response, isLoading, error }: CommandAIAns
             <button
               type="button"
               onClick={() => setExpanded(!expanded)}
-              className="mt-1 font-sans text-xs text-primary hover:underline"
+              className="mt-1 font-sans text-xs text-primary hover:underline transition-colors duration-150"
               tabIndex={-1}
             >
               {expanded ? 'Show less' : 'Show more'}

@@ -13,7 +13,6 @@ interface CommandResultPanelProps {
 export function CommandResultPanel({ groups, selectedIndex, query, onSelect }: CommandResultPanelProps) {
   const rowRefs = useRef<Map<number, HTMLButtonElement>>(new Map());
 
-  // Auto-scroll selected into view
   useEffect(() => {
     const el = rowRefs.current.get(selectedIndex);
     el?.scrollIntoView({ block: 'nearest' });
@@ -25,9 +24,12 @@ export function CommandResultPanel({ groups, selectedIndex, query, onSelect }: C
     <div className="py-1">
       {groups.map((group, gi) => (
         <div key={group.id}>
-          {gi > 0 && <div className="mx-4 border-t border-border/30 my-1" />}
-          <div className="px-4 pt-2 pb-1">
+          {gi > 0 && <div className="mx-4 border-t border-border/20 my-1" />}
+          <div className="px-4 pt-2 pb-1 flex items-center gap-2">
             <span className={tokens.heading.subsection}>{group.label}</span>
+            {group.results.length > 5 && (
+              <span className="font-sans text-[10px] text-muted-foreground/50">{group.results.length}</span>
+            )}
           </div>
           {group.results.map(result => {
             const idx = globalIdx++;

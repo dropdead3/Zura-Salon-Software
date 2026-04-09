@@ -43,15 +43,17 @@ export const CommandResultRow = React.forwardRef<HTMLButtonElement, CommandResul
         onClick={onClick}
         tabIndex={-1}
         className={cn(
-          'w-full flex items-center gap-3 px-4 h-11 text-left transition-colors',
+          'group/row w-full flex items-center gap-3 px-4 h-12 text-left transition-colors duration-150',
           isSelected
-            ? 'bg-accent text-accent-foreground'
-            : 'hover:bg-muted'
+            ? 'bg-accent text-accent-foreground shadow-[inset_0_1px_0_0_hsl(var(--foreground)/0.05)]'
+            : 'hover:bg-muted/60'
         )}
       >
         <span className={cn(
-          'shrink-0',
-          isSelected ? 'text-accent-foreground' : 'text-muted-foreground'
+          'shrink-0 flex items-center justify-center',
+          isSelected
+            ? 'w-7 h-7 rounded-md bg-muted/40 text-accent-foreground'
+            : 'text-muted-foreground'
         )}>
           {result.icon}
         </span>
@@ -75,14 +77,16 @@ export const CommandResultRow = React.forwardRef<HTMLButtonElement, CommandResul
 
         <Badge
           variant="outline"
-          className="font-sans text-[10px] px-1.5 py-0 h-5 shrink-0 capitalize border-border/50"
+          className="font-sans text-[10px] px-1.5 py-0 h-5 shrink-0 capitalize border-border/50 bg-muted/40"
         >
           {TYPE_LABELS[result.type] ?? result.type}
         </Badge>
 
         <ChevronRight className={cn(
-          'w-3 h-3 shrink-0',
-          isSelected ? 'text-accent-foreground/60' : 'text-muted-foreground/40'
+          'w-3 h-3 shrink-0 transition-opacity duration-150',
+          isSelected
+            ? 'text-accent-foreground/60 opacity-100'
+            : 'text-muted-foreground/40 opacity-0 group-hover/row:opacity-100'
         )} />
       </button>
     );
