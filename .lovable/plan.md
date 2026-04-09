@@ -1,156 +1,86 @@
 
 
-# Grounded Navigation Intelligence System
+# Expand Navigation Knowledge Base + Harden Grounding Rules
 
-## Root Cause
+## Current State
+The grounding system (navKnowledgeBase.ts + navGrounding.ts + edge function) is already wired and deployed. However:
+1. **Missing destinations**: ~20 hub-children pages from `dashboardNav.ts` are not in the knowledge base (Performance Reviews, PTO, Announcements, Recruiting, Client Health, Re-engagement, Campaigns, SEO Workshop, Lead Management, etc.)
+2. **No task-to-destination registry**: Common admin intents like "run payroll," "merge clients," "edit cancellation policy," "manage PTO" have no verified workflow mappings
+3. **Grounding rules not strict enough**: The edge function appends grounding context but doesn't enforce the 6 rules you outlined (no unverified steps, destination-only fallback, role-dependent flagging, etc.)
+4. **Platform nav not covered**: The knowledge base only covers org-dashboard routes, not `/platform/*` routes
 
-The AI assistant receives a static system prompt listing sidebar labels and "forbidden" terms, but the LLM still generates freeform step-by-step instructions from inference. The prompt says "never fabricate" but the model has no structured data to ground against -- it only has prose. The architecture lets the AI answer navigation questions in the same freeform mode as conceptual questions, with no retrieval step.
+## Changes
 
-The second problem: when a user types a question like "how do I change user roles and permissions?" in the command surface, and the search ranking finds a strong nav match (Roles & Controls Hub scores high via synonyms), the AI answer card **still fires independently** (line 252: auto-AI triggers after 1200ms if `isQuestionQuery` and score < 0.5). The AI answer and the nav result compete, and the AI answer often contains hallucinated steps.
+### 1. Expand `src/lib/navKnowledgeBase.ts` (~40 new entries)
 
-## Architecture Change
+Add all hub-children destinations from `dashboardNav.ts`:
+- Operations Hub children: Performance Reviews, PTO Balances, Announcements, Recruiting Pipeline, Graduation Tracker, Stylist Levels, Headshot Requests, Business Card Requests, Schedule 1:1, Training Hub
+- Client-facing: Client Directory, Client Health, Re-engagement, Client Feedback
+- Marketing: Campaigns, SEO Workshop, Lead Management
+- Analytics children: Sales Analytics, Operational Analytics, Staff Utilization, Day Rate Settings, Day Rate Calendar
 
-Build a **Navigation Knowledge Base** as structured data, then inject matched routes into the AI request body so the model grounds its answer on verified destinations instead of inferring them.
+Each entry gets: id, label, path, section (Sub-page), parent hub, purpose, keywords, roles, and workflows where applicable.
 
-```text
-User question
-    │
-    ▼
-┌──────────────────────┐
-│ Query Classification │  (already exists: isQuestionQuery + parseQuery)
-└──────────┬───────────┘
-           │
-           ▼
-┌──────────────────────┐
-│ Route Retrieval       │  NEW: match question against NavKnowledgeBase
-│ (deterministic)       │  Returns: matched routes, tabs, workflows, roles
-└──────────┬───────────┘
-           │
-           ▼
-┌──────────────────────────────────┐
-│ AI Answer Generation             │
-│ System prompt + retrieved routes │  AI explains ONLY from retrieved data
-│ If no routes matched → say so    │
-└──────────────────────────────────┘
-```
+### 2. Add Task-to-Destination Registry (new section in navKnowledgeBase.ts)
 
-## Implementation Plan
+Create a `TASK_REGISTRY` mapping common admin intents to verified workflows:
 
-### 1. Create Navigation Knowledge Base (`src/lib/navKnowledgeBase.ts`)
+| Task Intent | Destination | Workflow |
+|---|---|---|
+| "run payroll" / "process payroll" | My Pay / Settings (commission) | Verified steps or destination-only |
+| "merge clients" | Client Directory | Navigate to client, merge action |
+| "edit cancellation policy" | Settings | Settings → Policies section |
+| "manage PTO" | Operations Hub → PTO Balances | Verified steps |
+| "create announcement" | Operations Hub → Announcements | Already exists, expand |
+| "schedule a 1:1" | Operations Hub → Schedule 1:1 | Navigate + create |
+| "set up commission" | Settings | Settings → Commission section |
+| "manage recruiting" | Operations Hub → Recruiting | Navigate + pipeline view |
+| "view client health" | Client Health (sub-page) | Navigate from Operations Hub |
+| "manage campaigns" | Campaigns | Navigate from marketing |
 
-A structured, queryable registry derived from `dashboardNav.ts` + access-hub tabs + hub children. Each entry:
+Update `findMatchingDestinations` to also search the task registry for intent matches.
 
-```typescript
-interface NavDestination {
-  id: string;
-  label: string;              // exact sidebar/page label
-  path: string;               // route path
-  section: string;            // Main | My Tools | Manage | System
-  parent?: string;            // parent hub label if nested
-  tabs?: { id: string; label: string; purpose: string }[];
-  purpose: string;            // what you do here (1 sentence)
-  keywords: string[];         // search terms that should match
-  roles: string[];            // which roles can access
-  workflows?: { task: string; steps: string[] }[];  // verified multi-step flows
-}
-```
+### 3. Harden grounding rules in `src/lib/navGrounding.ts`
 
-Populate from existing `dashboardNav.ts` arrays + hardcoded tab/workflow data for key hubs (Roles & Controls Hub, Analytics Hub, Operations Hub, Settings). ~50 entries total.
+Update `buildGroundingPrompt` to enforce the 6 rules explicitly:
 
-Export a `findMatchingDestinations(query: string, userRole: string): NavDestination[]` function that uses keyword matching + synonym resolution to return ranked matches.
+- **Rule 1**: Classification already handles this. Add stronger patterns: "where can I edit", "how do I get to".
+- **Rule 2**: Add to grounding prompt: "Never mention a page, tab, or setting label unless it appears in the VERIFIED NAVIGATION CONTEXT above."
+- **Rule 3**: Add: "Never output numbered steps unless the workflow is explicitly listed above."
+- **Rule 4**: When only destination is matched but no workflow exists, format the grounding prompt as destination-only: label + purpose + path. No fake detail.
+- **Rule 5**: Already present (role check). Make it more prominent.
+- **Rule 6**: Already present (low confidence fallback). Strengthen wording.
 
-### 2. Create Grounding Pipeline (`src/lib/navGrounding.ts`)
+### 4. Update edge function `supabase/functions/ai-assistant/index.ts`
 
-```typescript
-function classifyAndGround(query: string, userRole: string): GroundedContext {
-  // 1. Classify: navigation vs conceptual
-  const isNavQuestion = detectNavigationIntent(query);
-  
-  // 2. If navigation, retrieve from knowledge base
-  const matches = isNavQuestion ? findMatchingDestinations(query, userRole) : [];
-  
-  // 3. Build grounding context for AI
-  return {
-    isNavigation: isNavQuestion,
-    verifiedDestinations: matches,
-    confidence: matches.length > 0 ? 'high' : 'low',
-    // Serialized for injection into AI request
-    groundingPrompt: buildGroundingPrompt(matches, userRole),
-  };
-}
-```
+Tighten the system prompt's CRITICAL RULES section to embed the 6 rules as hard constraints:
+- Add explicit instruction: "If a workflow is not listed in VERIFIED NAVIGATION CONTEXT, respond with the destination and its purpose ONLY. Do not invent steps."
+- Add: "If the query is role-dependent, state the required role explicitly."
+- Add: "If no verified match exists, say 'I couldn't verify the exact location for that feature' and list the closest known hubs."
 
-Navigation intent detection: looks for patterns like "how do I", "where is", "where can I", "how to", "find", "go to", "navigate to", "open", "access", combined with product terms.
+### 5. Improve confidence scoring in `navKnowledgeBase.ts`
 
-### 3. Wire Grounding Into AI Request
+Add a `confidence` field to the grounding result based on match quality:
+- `high`: exact keyword or label match (score >= 8)
+- `medium`: partial keyword match with workflow (score >= 4)
+- `low`: weak partial match only
 
-**In `useAIAssistant.ts`**: Add optional `groundingContext` parameter to `sendMessage`. Include it in the request body.
-
-**In `ZuraCommandSurface.tsx`**: Before calling `sendMessage`, run the grounding pipeline. Pass results to the edge function.
-
-**In `AIHelpTab.tsx`**: Same -- run grounding before sending.
-
-### 4. Update Edge Function (`supabase/functions/ai-assistant/index.ts`)
-
-Accept `groundingContext` in the request body. When present:
-
-- If `isNavigation` and verified destinations exist: prepend a structured block to the system prompt:
-  ```
-  VERIFIED NAVIGATION CONTEXT (you MUST use these exact names and paths):
-  - Destination: Roles & Controls Hub (sidebar: System section)
-  - Path: /dashboard/admin/access-hub
-  - Tabs: Permissions, User Roles, Invitations, ...
-  - The user's role (admin) has access to this page.
-  
-  Answer using ONLY the verified destinations above. Do not add steps not listed here.
-  ```
-
-- If `isNavigation` but no verified destinations: instruct the AI:
-  ```
-  I could not verify the exact destination for this question. 
-  Tell the user you're not certain and suggest pressing Cmd/Ctrl+K to search, 
-  or list the closest likely sections without fabricating specific steps.
-  ```
-
-- If not a navigation question: use current behavior (freeform with base prompt).
-
-### 5. Suppress AI Auto-Trigger When Nav Match Is Strong
-
-In `ZuraCommandSurface.tsx` (line 250): raise the auto-AI threshold from `score >= 0.5` to `score >= 0.35`, so that when synonyms resolve "permissions" to "Roles & Controls Hub" with a decent score, the AI card does NOT auto-fire. The user sees the nav result first and can manually switch to AI mode if needed.
-
-### 6. Add Confidence Display to AI Answer Card
-
-When the grounding context indicates low confidence for a navigation question, display a subtle banner at the top of the AI answer:
-"I couldn't fully verify these steps in the current build. Use Cmd/Ctrl+K to search for the exact page."
-
-### 7. Clean Up Naming Inconsistency
-
-In `hubLinksConfig` (dashboardNav.ts line 195): change `'Roles Hub'` to `'Roles & Controls Hub'`.
+Pass this to the edge function so it can calibrate response format:
+- High: full workflow steps allowed
+- Medium: destination + purpose + "exact steps may vary"
+- Low: "I couldn't verify" + closest hubs
 
 ## Files Changed
 
 | File | Change |
-|------|--------|
-| `src/lib/navKnowledgeBase.ts` | NEW -- structured navigation registry + query matcher |
-| `src/lib/navGrounding.ts` | NEW -- classification + grounding pipeline |
-| `src/hooks/useAIAssistant.ts` | Accept + pass `groundingContext` |
-| `src/components/command-surface/ZuraCommandSurface.tsx` | Run grounding before AI calls; raise auto-AI threshold |
-| `src/components/dashboard/help-fab/AIHelpTab.tsx` | Run grounding before AI calls |
-| `src/components/command-surface/CommandAIAnswerCard.tsx` | Show confidence banner for low-confidence nav answers |
-| `supabase/functions/ai-assistant/index.ts` | Accept `groundingContext`, inject verified routes into prompt |
-| `src/config/dashboardNav.ts` | Fix "Roles Hub" label |
+|---|---|
+| `src/lib/navKnowledgeBase.ts` | Add ~40 hub-children destinations + task registry + confidence scoring |
+| `src/lib/navGrounding.ts` | Embed 6 rules in grounding prompt, add medium confidence tier |
+| `supabase/functions/ai-assistant/index.ts` | Harden CRITICAL RULES with the 6 constraints |
+| `src/components/command-surface/CommandAIAnswerCard.tsx` | Show "medium" confidence banner (softer than low) |
 
 ## What This Fixes
-
-- "How do I change user roles and permissions?" -- grounding finds Roles & Controls Hub, AI answers from verified destination only
-- "Where do I invite someone?" -- grounding finds Invitations tab, AI gives exact steps
-- "How do I see analytics?" -- grounding finds Analytics Hub, no fabricated sub-pages
-- If the user asks about something not in the knowledge base, AI says so instead of guessing
-- Role-aware: if a stylist asks about permissions, the answer explains they don't have access
-
-## What This Does NOT Change
-
-- Conceptual questions ("what does utilization mean?") still use freeform AI
-- Search ranking, synonym registry, and query parser remain unchanged
-- No database changes needed
-
+- "How do I manage PTO?" → verified destination with exact path
+- "Where do I edit cancellation policy?" → Settings, destination-only (no fake sub-steps)
+- "How do I merge clients?" → Client Directory, with honest "exact steps may vary" if workflow isn't fully mapped
+- All 6 rules enforced at both the grounding layer and the AI prompt layer
