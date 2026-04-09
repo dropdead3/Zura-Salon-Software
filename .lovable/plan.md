@@ -1,261 +1,191 @@
 
 
-# Zura Search Learning System
+# Multi-Query Chaining Engine
 
-## Existing Infrastructure Audit
+## What Exists Today
 
-**Already tracking (localStorage):**
-- `zura-nav-frequency` — path click counts (unbounded counter, no timestamps)
-- `zura-recent-searches` — last 5 query strings (no click association)
-- `zura-synonym-telemetry` — last 100 synonym expansions with `hadResults` flag
+The parser already extracts **individual** dimensions well — time context, action intent, filters (no_show, top, new_clients), metric words, and entity candidates — but treats them as flat, independent outputs. There is no structured relationship model between parts. For "Brooklyn retail last 30 days," the parser produces:
+- `timeContext: { value: '30d' }` 
+- Token "retail" → type `metric`
+- Token "Brooklyn" → type `unknown` → becomes `entity_candidate`
+- No `locationScope`, no `subjectType`, no structured chain linking retail-metric-to-Brooklyn-entity
 
-**Gaps:**
-- No query→click pairing (which query led to which result selection)
-- No abandonment detection (user typed, got results, closed without clicking)
-- No zero-result logging beyond synonym telemetry
-- No reformulation chain detection (user types, backspaces, retypes)
-- No role/context tagging on any event
-- No org-level aggregation — everything is per-browser localStorage
-- Frequency map has no decay — a path visited 50 times 6 months ago still dominates
-- No mechanism for admin-guided promotions/demotions
+The ranker receives these flat signals and does text matching against candidate titles. It cannot construct a parameterized destination like `/dashboard/admin/sales?location=brooklyn&category=retail&period=30d`.
 
 ## Architecture
 
+One new file — a **post-parser chain assembler** that consumes `ParsedQuery` output and produces a structured `ChainedQuery` with explicitly typed slots. This does not modify the parser. It layers on top.
+
 ```text
-src/lib/searchLearning.ts          ← Pure: event logging, signal computation, decay, thresholds
-src/hooks/useSearchLearning.ts     ← React hook: tracks session events, feeds into ranking
-src/hooks/useSearchRanking.ts      ← Edit: consume learning signals as a secondary scoring layer
+src/lib/queryChainEngine.ts   ← Chain assembly, slot extraction, destination generation
+src/hooks/useSearchRanking.ts ← Edit: consume ChainedQuery for destination-aware ranking
 ```
 
-Two learning levels, stored differently:
-
-| Level | Storage | Scope | Examples |
-|-------|---------|-------|---------|
-| **User-local** | localStorage | Single browser | Click patterns, recent queries, personal frequency, reformulation chains |
-| **Org-wide** | Supabase table | All users in org | Promoted results, admin corrections, aggregate zero-result patterns |
-
-System-wide learnings (cross-org) are explicitly **not built** — they require product team curation and would violate tenant isolation.
-
-## File 1: `src/lib/searchLearning.ts`
-
-### Event Types
+## ChainedQuery Schema
 
 ```typescript
-interface SearchEvent {
-  id: string;
-  timestamp: number;
-  query: string;
-  normalizedQuery: string;
-  resultCount: number;
-  selectedPath: string | null;      // null = abandonment
-  selectedRank: number | null;       // position in results (0-indexed)
-  selectedType: RankedResultType | null;
-  topScore: number | null;
-  roleContext: string[];             // effective roles at time of search
-  currentPath: string;               // page user was on
-  reformulationOf: string | null;    // previous query ID if this is a refinement
-  sessionId: string;                 // groups events within one command surface open
+interface ChainedQuery {
+  raw: string;
+  
+  // Structured slots (all optional)
+  subject: ChainSlot | null;        // "Brooklyn", "Ashley", "color clients"
+  topic: ChainSlot | null;          // "retail", "refunds", "appointments" 
+  timeRange: TimeContext | null;     // reused from parser
+  locationScope: ChainSlot | null;  // "Gilbert", "Brooklyn" (when resolved as location)
+  rankingModifier: RankingModifier | null;  // "top", "lowest", "newest"
+  negativeFilter: NegativeFilter | null;    // "no bookings", "no rebook", "no visit"
+  actionVerb: ActionIntent | null;   // reused from parser
+  limit: number | null;              // "top 10" → 10
+  
+  // Resolution
+  subjectType: 'stylist' | 'client' | 'location' | 'service' | 'unknown' | null;
+  destinationHint: DestinationHint | null;
+  confidence: number;
+}
+
+interface ChainSlot {
+  value: string;
+  source: 'token' | 'alias' | 'inferred';
+  confidence: number;
+}
+
+interface NegativeFilter {
+  type: 'no_bookings' | 'no_rebook' | 'no_visit' | 'no_show' | 'no_retail';
+  daysThreshold?: number;  // "no bookings 60 days" → 60
+}
+
+interface RankingModifier {
+  direction: 'top' | 'bottom' | 'newest' | 'oldest' | 'highest' | 'lowest';
+}
+
+interface DestinationHint {
+  path: string;
+  params: Record<string, string>;
+  label: string;
+  confidence: number;
 }
 ```
 
-### Storage: `zura-search-events`
+## Chain Assembly Logic
 
-Ring buffer of last **500 events** in localStorage. Each event is ~200 bytes → ~100KB max.
+`assembleChain(parsed: ParsedQuery, locationNames: string[]): ChainedQuery`
 
-### Computed Signals
+Steps (executed in order on the parser's token array):
 
-**1. Query→Path Affinity (QPA)**
-For a given query, which paths are most frequently selected?
+1. **Negative filter extraction** — Scan for "no" + noun patterns not already caught by FILTER_PHRASES. New patterns: `no bookings`, `no rebook`, `no visit`, `no retail`, `no color`. Optional trailing number+days: "no bookings 60 days".
 
-```typescript
-function getQueryPathAffinity(query: string): Map<string, number>
-// Returns path → selection count for queries that normalize to the same form
-// Normalization: lowercase, trim, collapse whitespace
-```
+2. **Ranking modifier extraction** — Beyond existing `top`/`bottom` filters, recognize: `highest`, `lowest`, `newest`, `oldest`, `best`, `worst`, `underperforming`.
 
-Threshold: Only surfaces if a query→path pair has ≥3 selections. Below that, signal is suppressed.
+3. **Location scope resolution** — Check remaining unknown tokens against the provided `locationNames` array (from `useActiveLocations`). If a token matches a location name (case-insensitive, substring for multi-word locations), classify it as `locationScope` rather than entity. This resolves the Brooklyn/Gilbert ambiguity.
 
-**2. Abandonment Rate**
-For queries that produced results but user closed without selecting — tracks per normalized query.
+4. **Topic classification** — Metric tokens plus synonym-expanded terms get classified into topic families: `retail`, `service_revenue`, `appointments`, `refunds`, `cancellations`, `utilization`, `retention`, `commission`, `color`. These map to specific analytics routes.
 
-```typescript
-function getAbandonmentRate(query: string): number  // 0-1
-```
+5. **Subject type inference** — If a remaining entity candidate is NOT a location and NOT a topic keyword, infer subject type from context:
+   - Adjacent to "clients" token → `subjectType = 'client'`
+   - Adjacent to metric/topic → `subjectType = 'stylist'` (name + metric = staff analytics)
+   - Capitalized unknown with no other context → `subjectType = 'stylist'` (default for proper nouns)
+   - "clients" token present with filters → `subjectType = 'client'` (aggregate)
 
-High abandonment (>0.6 over ≥5 occurrences) flags a query as "poorly served" for observability.
+6. **Destination hint generation** — Map the assembled chain to a parameterized route:
 
-**3. Reformulation Chain Detection**
-If user types "payrol", backspaces, types "payroll" within the same session, these are linked. Reformulation chains where the final query succeeds suggest the intermediate queries need better synonym/typo coverage.
+| Pattern | Destination |
+|---------|-------------|
+| topic=retail + time | `/dashboard/admin/sales?tab=retail&period={time}` |
+| topic=refunds + time | `/dashboard/appointments-hub?tab=refunds&period={time}` |
+| subject(stylist) + topic | `/dashboard/admin/staff-utilization?search={name}` |
+| negativeFilter=no_rebook + subjectType=client | `/dashboard/admin/reengagement?filter=no_rebook` |
+| rankingModifier=top + subjectType=client | `/dashboard/clients?sort=spend&dir=desc` |
+| topic=utilization + rankingModifier=underperforming | `/dashboard/admin/staff-utilization?filter=low` |
+| locationScope + topic | Route with `?location={id}` appended |
 
-Detection: Two queries in the same sessionId where the second starts within 10 seconds of the first and shares ≥60% character overlap.
+## Precedence Rules (Ambiguity Resolution)
 
-**4. Zero-Result Queries**
-Queries that returned 0 results or all results scored <0.3. Logged separately for observability.
+1. **Location over entity** — If a token matches a known location name, it is always classified as `locationScope`, never as a person name. Reason: location names are finite and known; person lookup is always available as a secondary result.
 
-```typescript
-function getZeroResultQueries(): { query: string; count: number; lastSeen: number }[]
-```
+2. **Metric over navigation** — If a query has both metric tokens AND time context, treat as `analytics_query` chain even if a nav word is present. "Sales last 30 days" → analytics, not nav to Sales page.
 
-**5. Time-Decayed Frequency**
-Replace the existing unbounded counter with a decayed model:
+3. **Negative filter consumes adjacent tokens** — "no bookings 60 days" consumes 4 tokens as one unit. The "60" and "days" are not treated as separate time context.
 
-```typescript
-function getDecayedFrequency(path: string): number
-// Each visit decays by 0.95^(days since visit)
-// Recent visits matter more than ancient ones
-```
+4. **Action verb takes highest priority** — If an action verb is detected, the chain is action-first. Other slots become action parameters, not standalone dimensions.
 
-Storage change: `zura-nav-frequency` switches from `{path: count}` to `{path: timestamp[]}` (last 30 timestamps per path, ~50 paths max).
+5. **Single-token queries skip chaining** — Queries with ≤1 remaining token after time/filter extraction use existing simple matching. Chaining only activates for multi-dimensional queries (2+ classified slots).
 
-### Ranking Boost Computation
+## Integration into Ranking
+
+In `useSearchRanking.ts`:
 
 ```typescript
-interface LearningBoost {
-  queryPathBoost: number;    // 0-0.15 based on QPA
-  decayedFrequency: number;  // replaces existing frequency signal
-}
-
-function computeLearningBoosts(
-  query: string,
-  candidatePath: string,
-  events: SearchEvent[],
-): LearningBoost
+const chained = useMemo(() => {
+  if (!parsed) return null;
+  return assembleChain(parsed, locationNames);
+}, [parsed, locationNames]);
 ```
 
-**Boost caps (hard limits):**
-- `queryPathBoost`: max 0.15 — never exceeds intent alignment or text match weight
-- Learning boosts combined never exceed 0.20 of total score
-- Exact match override (score = 1.0) is never affected by learning
+The `destinationHint` from chaining becomes a **virtual candidate** injected into the candidate pool with type `'navigation'` and high intent alignment. This ensures multi-part queries surface a direct "Go to X filtered by Y" result at rank #1.
 
-### Decay & Garbage Collection
+Additionally, the chain's `subjectType` disambiguates entity resolution — if chaining determines the unknown token is a location, the entity resolver skips stylist matching for that token.
 
-- Events older than 90 days are pruned on read
-- Frequency timestamps older than 60 days are pruned
-- GC runs on first hook mount per session, max once per hour
+## Phase 1 Scope
 
-## File 2: `src/hooks/useSearchLearning.ts`
+Supported:
+- Entity + metric + time ("Brooklyn retail last 30 days")
+- Ranking modifier + entity type + filter ("top clients no bookings 60 days")  
+- Topic + time + location ("refunds this week Gilbert")
+- Service/topic + entity type + negative filter ("color clients with no rebook")
+- Ranking modifier + entity type + time ("underperforming stylists this month")
 
-React hook that:
-1. Generates a `sessionId` when command surface opens
-2. Tracks each keystroke debounced (captures the final query, not intermediates)
-3. On result selection → logs SearchEvent with selected path/rank
-4. On surface close without selection → logs abandonment event
-5. Detects reformulation chains within the session
-6. Exposes `learningBoosts` for the ranking hook to consume
+Deferred (Phase 2+):
+- Multi-entity chains ("Ashley vs Jordan retention")
+- Compound actions ("book and charge Sarah")
+- Cross-module joins ("clients who bought retail but didn't rebook")
+- Natural language math ("revenue minus refunds this month")
+
+## Negative Filter Vocabulary
 
 ```typescript
-export function useSearchLearning(open: boolean) → {
-  sessionId: string;
-  logSelection(query: string, path: string, rank: number, type: RankedResultType, resultCount: number, topScore: number): void;
-  logAbandonment(query: string, resultCount: number): void;
-  getLearningBoosts(query: string, candidatePath: string): LearningBoost;
-  getDecayedFrequencyMap(): Record<string, number>;
-}
+const NEGATIVE_FILTERS: { phrases: string[]; type: NegativeFilter['type'] }[] = [
+  { phrases: ['no bookings', 'no booking', 'no appointments', 'not booked'], type: 'no_bookings' },
+  { phrases: ['no rebook', 'no rebooking', 'didn\'t rebook', 'not rebooked'], type: 'no_rebook' },
+  { phrases: ['no visit', 'no visits', 'haven\'t visited', 'not visited'], type: 'no_visit' },
+  { phrases: ['no show', 'no shows', 'no-show'], type: 'no_show' },
+  { phrases: ['no retail', 'no product', 'no products'], type: 'no_retail' },
+];
 ```
 
-## File 3: `src/hooks/useSearchRanking.ts` — Integration
+## Failure Fallback
 
-Minimal change: replace `getFrequencyMap()` call with `getDecayedFrequencyMap()` from learning hook. Add `queryPathBoost` as an additive term after `computeScore()`.
+If chain assembly produces `confidence < 0.4` or no `destinationHint`, the system falls back to standard flat ranking (existing behavior). Chaining never degrades existing search — it only adds structured results when confident.
 
-```typescript
-// In ranking memo:
-const learningBoost = learning.getLearningBoosts(query, candidate.path);
-const baseScore = computeScore(signals);
-const finalScore = isExact ? 1.0 : Math.min(baseScore + learningBoost.queryPathBoost, 0.99);
-```
+## Tests
 
-The 0.99 cap ensures learned boosts never equal an exact match.
+New file `src/lib/__tests__/queryChainEngine.test.ts`:
+- "Brooklyn retail last 30 days" → locationScope=Brooklyn, topic=retail, time=30d, destination hint to sales
+- "top clients no bookings 60 days" → rankingModifier=top, subjectType=client, negativeFilter=no_bookings(60), no time context consumed by negative filter
+- "refunds this week Gilbert" → topic=refunds, time=thisWeek, locationScope=Gilbert
+- "color clients with no rebook" → topic=color, subjectType=client, negativeFilter=no_rebook
+- "underperforming stylists this month" → rankingModifier=underperforming, subjectType=stylist, time=thisMonth
+- Single-word "revenue" → no chaining, falls through to standard ranking
+- Unknown gibberish "xyzabc foo bar" → low confidence, no destination hint, fallback
 
-## File 4: `src/components/command-surface/ZuraCommandSurface.tsx` — Integration
+## Self-Audit
 
-Wire learning hook:
-- On `handleSelect` → call `logSelection()`
-- On surface close with query but no selection → call `logAbandonment()`
-- Pass `getDecayedFrequencyMap` to ranking hook
+**Reliability**: Chain assembly is deterministic — same ordered slot extraction every time. No ML, no probabilistic interpretation.
 
-## Database: Org-Wide Promotions Table
+**Debuggability**: `ChainedQuery` is a plain object with named slots. Every decision (why Brooklyn = location, not entity) is traceable through the slot extraction order.
 
-Migration for admin-guided corrections (architecture now, admin UI later):
+**Ambiguity handling**: Location-first precedence rule handles the most common ambiguity (proper noun = person vs place). Remaining ambiguity produces both a chained destination AND standard entity results — user picks.
 
-```sql
-CREATE TABLE public.search_promotions (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  organization_id UUID NOT NULL REFERENCES public.organizations(id) ON DELETE CASCADE,
-  query_pattern TEXT NOT NULL,         -- normalized query or wildcard
-  promoted_path TEXT NOT NULL,         -- path to boost
-  boost_amount NUMERIC DEFAULT 0.10,  -- 0.05 to 0.20
-  demoted BOOLEAN DEFAULT FALSE,      -- if true, penalize instead
-  created_by UUID REFERENCES auth.users(id),
-  created_at TIMESTAMPTZ DEFAULT now(),
-  expires_at TIMESTAMPTZ,             -- optional TTL
-  UNIQUE (organization_id, query_pattern, promoted_path)
-);
+**Scope control**: Phase 1 covers 5 common pattern classes. Single-token queries bypass chaining entirely. Confidence threshold prevents low-quality chain results from polluting search.
 
-ALTER TABLE public.search_promotions ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY "Org admins manage promotions"
-  ON public.search_promotions FOR ALL
-  USING (public.is_org_admin(auth.uid(), organization_id))
-  WITH CHECK (public.is_org_admin(auth.uid(), organization_id));
-
-CREATE POLICY "Org members read promotions"
-  ON public.search_promotions FOR SELECT
-  USING (public.is_org_member(auth.uid(), organization_id));
-```
-
-The ranking hook will query this table (cached, 5min staleTime) and apply boosts/demotions before final sort.
-
-## Observability
-
-New export in `searchLearning.ts`:
-
-```typescript
-function getSearchHealthReport(): {
-  totalEvents: number;
-  uniqueQueries: number;
-  zeroResultQueries: { query: string; count: number }[];
-  highAbandonmentQueries: { query: string; rate: number; count: number }[];
-  topQueryPathPairs: { query: string; path: string; count: number }[];
-  reformulationChains: { original: string; final: string; count: number }[];
-}
-```
-
-Accessible via browser console: `window.__zuraSearchHealth()` in dev mode. No UI yet.
-
-## Safety & Boundaries
-
-| Risk | Mitigation |
-|------|-----------|
-| Learning overrides exact match | Hard rule: exact match = 1.0, never modified |
-| Runaway boost accumulation | All learning boosts capped at 0.15 per signal, 0.20 combined |
-| Stale learning from old behavior | 90-day event expiry, 60-day frequency decay |
-| Cross-org data leakage | User-local in localStorage (browser-bound), org promotions scoped by org_id with RLS |
-| Permission bypass via learning | Permission pre-filter runs BEFORE any scoring — learning cannot surface unpermitted results |
-| Noisy reactions to sparse data | Minimum 3 occurrences before QPA activates, 5 occurrences before abandonment flags |
-| Inconsistent UX across users | Learning only provides secondary boosts; primary ranking logic is deterministic and shared |
-| Irreversible drift | All learning is derived from purgeable event logs; clearing localStorage resets user-local learning completely |
-
-## Examples
-
-**Search improves over time:**
-1. User searches "schedule" 8 times, always clicks Schedule page → QPA boost pushes Schedule to definitive #1 even when other results score close
-2. User searches "money" 5 times, never clicks anything → flagged as high-abandonment → observability report surfaces this → product team adds better concept cluster mapping
-3. Admin promotes "/dashboard/admin/sales" for query "numbers" → all org users see Sales Analytics boosted for that query
-
-**Learning does NOT destabilize:**
-- New user with no history → zero learning boosts → pure deterministic ranking
-- User who clears browser data → learning resets → deterministic baseline
-- Admin removes a promotion → boost disappears immediately on next query
+**Performance**: Chain assembly is O(tokens × locations) — locations are typically <20, tokens <10. Sub-millisecond.
 
 ## Files Summary
 
 | File | Action |
 |------|--------|
-| `src/lib/searchLearning.ts` | Create — event logging, signal computation, decay, health report |
-| `src/hooks/useSearchLearning.ts` | Create — React lifecycle hook for tracking + boost computation |
-| `src/hooks/useSearchRanking.ts` | Edit — consume learning boosts, replace raw frequency with decayed |
-| `src/components/command-surface/ZuraCommandSurface.tsx` | Edit — wire selection/abandonment logging |
-| Migration: `search_promotions` table | Create — org-level admin corrections |
+| `src/lib/queryChainEngine.ts` | Create — chain assembly, slot extraction, destination hints |
+| `src/hooks/useSearchRanking.ts` | Edit — consume chained query, inject destination candidates |
+| `src/lib/__tests__/queryChainEngine.test.ts` | Create — comprehensive tests |
 
-No parser modifications. No ranker logic changes. No synonym system modifications.
+No database changes. No parser modifications. No ranker modifications.
 
