@@ -21,7 +21,7 @@ import { ThemeInitializer } from "./components/ThemeInitializer";
 import { I18nLocaleSync } from "./components/I18nLocaleSync";
 import { DevContextBridge } from "./dev/DevContextBridge";
 import { ErrorBoundary } from "./components/ErrorBoundary";
-import { CommandMenu } from "./components/command/CommandMenu";
+// CommandMenu removed — replaced by ZuraCommandSurface in DashboardLayout
 import { OrgDashboardRoute, LegacyDashboardRedirect } from "./components/OrgDashboardRoute";
 
 // Platform pages
@@ -251,7 +251,7 @@ function PrivateAppShell() {
             <RevenueDisplayProvider>
               <SoundSettingsProvider>
                 {import.meta.env.DEV && <DevContextBridge />}
-                <CommandMenu />
+                {/* CommandMenu removed — search is now in DashboardLayout */}
                 <Outlet />
               </SoundSettingsProvider>
             </RevenueDisplayProvider>
