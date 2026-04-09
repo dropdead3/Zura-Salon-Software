@@ -7,6 +7,7 @@ const ACTIVITY_EVENTS = ['pointerdown', 'pointermove', 'keydown', 'touchstart'] 
 
 export function useAutoLock() {
   const { isLocked, lock } = useDashboardLock();
+  const { isImpersonating } = useOrganizationContext();
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const resetTimer = useCallback(() => {
