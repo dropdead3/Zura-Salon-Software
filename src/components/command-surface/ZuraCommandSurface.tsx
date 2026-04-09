@@ -295,6 +295,22 @@ export function ZuraCommandSurface({ open, onOpenChange, filterNavItems }: ZuraC
           onKeyDown={handleKeyDown}
         />
 
+        {chainedQuery && (
+          <CommandChainBar
+            chain={chainedQuery}
+            query={query}
+            aiMode={aiMode}
+            hasActiveAction={hasActiveAction}
+            locationNames={locationNames}
+            onQueryChange={setQuery}
+            onNavigate={(path) => {
+              const resolvedPath = resolveOrgPath(path);
+              navigate(resolvedPath);
+              close();
+            }}
+          />
+        )}
+
         <div className="flex-1 min-h-0 flex">
           {/* Results column */}
           <div className={cn(
