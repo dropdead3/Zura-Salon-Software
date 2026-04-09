@@ -265,7 +265,7 @@ export function CapacityUtilizationCard() {
                       <span className="text-xs font-medium text-foreground">{day.dayName}</span>
                       <span className="text-[10px] text-muted-foreground ml-1">{formatDate(day.date, 'MMM d')}</span>
                     </div>
-                    <ClosedBadge reason={day.closedReason} />
+                    <ClosedBadge reason={(day as any).closedReason} />
                   </div>
                 ) : (
                   <div className="flex items-center gap-3">
