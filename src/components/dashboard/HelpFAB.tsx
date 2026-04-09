@@ -125,7 +125,7 @@ export function HelpFAB() {
         className="w-[380px] h-[480px] p-0 overflow-hidden bg-[hsl(var(--muted))] border-border/60"
       >
         <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
-          <div className="border-b bg-muted/30 px-4 pt-3 pb-2">
+          <div className="border-b border-border/60 bg-card/50 px-4 pt-3 pb-2">
             <TabsList>
               <TabsTrigger value="ai-help" className="flex-1">{AI_ASSISTANT_NAME_DEFAULT}</TabsTrigger>
               <TabsTrigger value="support" className="flex-1">Chat</TabsTrigger>
