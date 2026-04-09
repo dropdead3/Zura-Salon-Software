@@ -12,6 +12,9 @@ export function BentoGrid({ children, maxPerRow = 3, gap = 'gap-3', className }:
   const items = React.Children.toArray(children);
   const count = items.length;
 
+  if (count === 0) return null;
+
+  // Single row if fits
   if (count <= maxPerRow) {
     return (
       <div className={cn('flex flex-col sm:flex-row', gap, className)}>
@@ -22,22 +25,29 @@ export function BentoGrid({ children, maxPerRow = 3, gap = 'gap-3', className }:
     );
   }
 
-  const topCount = Math.ceil(count / 2);
-  const topRow = items.slice(0, topCount);
-  const bottomRow = items.slice(topCount);
+  // Multi-row: distribute items evenly across rows
+  const rowCount = Math.ceil(count / maxPerRow);
+  const basePerRow = Math.floor(count / rowCount);
+  const extraRows = count % rowCount;
+
+  // Build rows: first `extraRows` rows get basePerRow+1, rest get basePerRow
+  const rows: React.ReactNode[][] = [];
+  let cursor = 0;
+  for (let r = 0; r < rowCount; r++) {
+    const rowSize = r < extraRows ? basePerRow + 1 : basePerRow;
+    rows.push(items.slice(cursor, cursor + rowSize));
+    cursor += rowSize;
+  }
 
   return (
     <div className={cn('flex flex-col', gap, className)}>
-      <div className={cn('flex flex-col sm:flex-row', gap)}>
-        {topRow.map((child, i) => (
-          <div key={i} className="flex-1 min-w-0">{child}</div>
-        ))}
-      </div>
-      <div className={cn('flex flex-col sm:flex-row', gap)}>
-        {bottomRow.map((child, i) => (
-          <div key={i} className="flex-1 min-w-0">{child}</div>
-        ))}
-      </div>
+      {rows.map((row, ri) => (
+        <div key={ri} className={cn('flex flex-col sm:flex-row', gap)}>
+          {row.map((child, ci) => (
+            <div key={ci} className="flex-1 min-w-0">{child}</div>
+          ))}
+        </div>
+      ))}
     </div>
   );
 }
