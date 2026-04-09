@@ -74,11 +74,13 @@ export function AIHelpTab() {
             <div className="flex flex-col items-center justify-center h-[320px] text-center pt-8">
               {/* Glow behind icon */}
               <div className="relative mb-5">
-                <div className="absolute inset-0 -m-4 rounded-full bg-primary/10 blur-xl animate-pulse" />
-                <ZuraZIcon className="relative w-8 h-8 text-primary" />
+                <div className="absolute inset-0 -m-6 rounded-full bg-primary/15 blur-2xl animate-pulse" />
+                <div className="relative w-14 h-14 rounded-full bg-primary/5 border border-primary/10 flex items-center justify-center">
+                  <ZuraZIcon className="w-7 h-7 text-primary" />
+                </div>
               </div>
               <h3 className="font-display text-lg tracking-wide uppercase mb-2">{AI_ASSISTANT_NAME_DEFAULT}</h3>
-              <p className="text-sm text-muted-foreground/70 mb-8 max-w-[260px]">
+              <p className="text-sm text-muted-foreground/70 mb-10 max-w-[260px]">
                 Your AI assistant. Ask me anything about using this platform, or your business.
               </p>
               <div className="w-full space-y-1.5">
@@ -86,7 +88,7 @@ export function AIHelpTab() {
                   <button
                     key={prompt}
                     onClick={() => handlePromptClick(prompt)}
-                    className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl bg-muted/40 hover:bg-muted/70 border border-border/30 hover:border-border/50 transition-all duration-200 text-left group"
+                    className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl bg-muted/40 hover:bg-muted/70 border border-border/30 border-l-2 border-l-primary/30 hover:border-border/50 transition-all duration-200 text-left group"
                   >
                     <ChevronRight className="h-3.5 w-3.5 text-primary/60 group-hover:text-primary group-hover:translate-x-0.5 transition-all duration-200 shrink-0" />
                     <span className="text-sm text-muted-foreground group-hover:text-foreground transition-colors duration-200">{prompt}</span>
