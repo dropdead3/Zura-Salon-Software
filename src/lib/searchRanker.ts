@@ -154,24 +154,14 @@ function computeRecency(
 
 // ─── Frequency Signal ───────────────────────────────────────
 
-const FREQUENCY_STORAGE_KEY = 'zura-nav-frequency';
 const FREQUENCY_NORMALIZE_CEILING = 20;
 
+/** @deprecated Use getDecayedFrequencyMap from searchLearning.ts instead */
 export function getFrequencyMap(): Record<string, number> {
   try {
-    return JSON.parse(localStorage.getItem(FREQUENCY_STORAGE_KEY) || '{}');
+    return JSON.parse(localStorage.getItem('zura-nav-frequency') || '{}');
   } catch {
     return {};
-  }
-}
-
-export function trackNavFrequency(path: string): void {
-  try {
-    const map = getFrequencyMap();
-    map[path] = (map[path] || 0) + 1;
-    localStorage.setItem(FREQUENCY_STORAGE_KEY, JSON.stringify(map));
-  } catch {
-    // localStorage unavailable
   }
 }
 

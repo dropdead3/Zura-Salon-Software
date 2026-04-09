@@ -335,7 +335,6 @@ function generateDestinationHint(chain: ChainedQuery): DestinationHint | null {
 
   // Route selection based on chain composition
   if (chain.negativeFilter) {
-    // Negative filter chains → specific module routes
     switch (chain.negativeFilter.type) {
       case 'no_rebook':
       case 'no_visit':
@@ -345,7 +344,7 @@ function generateDestinationHint(chain: ChainedQuery): DestinationHint | null {
         if (chain.negativeFilter.daysThreshold) {
           params.days = String(chain.negativeFilter.daysThreshold);
         }
-        label = `Re-engagement — ${chain.negativeFilter.type.replace('no_', 'No ').replace('_', ' ')}`;
+        label = `Re-engagement — ${formatNegFilter(chain.negativeFilter)}`;
         confidence = 0.8;
         break;
       case 'no_show':
@@ -362,12 +361,11 @@ function generateDestinationHint(chain: ChainedQuery): DestinationHint | null {
         break;
     }
   } else if (chain.topic) {
-    // Topic-driven routing
     const family = Object.values(TOPIC_FAMILIES).find(f => f.topic === chain.topic!.value);
     if (family) {
       path = family.route;
       if (family.tab) params.tab = family.tab;
-      label = `${chain.topic.value.charAt(0).toUpperCase() + chain.topic.value.slice(1)} Analytics`;
+      label = capitalize(chain.topic.value) + ' Analytics';
       confidence = 0.75;
     }
   } else if (chain.rankingModifier && chain.subjectType === 'client') {
@@ -375,16 +373,19 @@ function generateDestinationHint(chain: ChainedQuery): DestinationHint | null {
     params.sort = 'spend';
     params.dir = chain.rankingModifier.direction === 'top' || chain.rankingModifier.direction === 'highest'
       ? 'desc' : 'asc';
-    label = `${chain.rankingModifier.direction.charAt(0).toUpperCase() + chain.rankingModifier.direction.slice(1)} Clients`;
+    label = `${capitalize(chain.rankingModifier.direction)} Clients`;
     confidence = 0.7;
   } else if (chain.rankingModifier && chain.subjectType === 'stylist') {
     path = '/dashboard/admin/staff-utilization';
     if (chain.rankingModifier.direction === 'lowest' || chain.rankingModifier.direction === 'bottom') {
       params.filter = 'low';
     }
-    label = `${chain.rankingModifier.direction.charAt(0).toUpperCase() + chain.rankingModifier.direction.slice(1)} Stylists`;
+    label = `${capitalize(chain.rankingModifier.direction)} Stylists`;
     confidence = 0.7;
   }
+
+  // Build rich composite label from all chain slots
+  label = buildRichLabel(chain, label);
 
   // Subject as search param for stylist entity + topic
   if (chain.subject && chain.subjectType === 'stylist' && path) {
@@ -404,4 +405,53 @@ function generateDestinationHint(chain: ChainedQuery): DestinationHint | null {
     label,
     confidence,
   };
+}
+
+// ─── Label Helpers ───────────────────────────────────────────
+
+function capitalize(s: string): string {
+  return s.charAt(0).toUpperCase() + s.slice(1);
+}
+
+function formatNegFilter(nf: NegativeFilter): string {
+  const base = nf.type.replace('no_', 'No ').replace('_', ' ');
+  if (nf.daysThreshold) return `${base} (${nf.daysThreshold} days)`;
+  return base;
+}
+
+function buildRichLabel(chain: ChainedQuery, baseLabel: string): string {
+  const parts = [baseLabel];
+
+  if (chain.locationScope) {
+    parts.push(chain.locationScope.value);
+  }
+  if (chain.subject && chain.subjectType === 'stylist') {
+    parts.push(chain.subject.value);
+  }
+  if (chain.timeRange) {
+    const timeLabel = formatTimeValue(chain.timeRange.value);
+    if (timeLabel) parts.push(timeLabel);
+  }
+  if (chain.rankingModifier && !baseLabel.toLowerCase().includes(chain.rankingModifier.direction)) {
+    parts.push(capitalize(chain.rankingModifier.direction));
+  }
+
+  return parts.filter(Boolean).join(' · ');
+}
+
+function formatTimeValue(value: string): string {
+  const map: Record<string, string> = {
+    today: 'Today',
+    yesterday: 'Yesterday',
+    thisWeek: 'This Week',
+    lastWeek: 'Last Week',
+    thisMonth: 'This Month',
+    lastMonth: 'Last Month',
+    thisQuarter: 'This Quarter',
+    thisYear: 'This Year',
+  };
+  if (map[value]) return map[value];
+  const dMatch = value.match(/^(\d+)d$/);
+  if (dMatch) return `Last ${dMatch[1]} Days`;
+  return '';
 }

@@ -3,7 +3,7 @@
  * Orchestrates: parseQuery → synonymExpansion → useQueryEntityResolver → rankResults → groupRankedResults
  * Single consumption point for the command surface.
  */
-import { useMemo, useCallback } from 'react';
+import { useMemo, useCallback, useEffect, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 import React from 'react';
 import {
@@ -21,7 +21,6 @@ import {
   rankResults,
   groupRankedResults,
   generateSuggestions,
-  trackNavFrequency,
 } from '@/lib/searchRanker';
 import type {
   RankedResult,
@@ -45,6 +44,7 @@ import type { QueryExpansion } from '@/lib/synonymRegistry';
 import { scoreMatchWithSynonyms } from '@/lib/textMatch';
 import { assembleChain } from '@/lib/queryChainEngine';
 import type { ChainedQuery } from '@/lib/queryChainEngine';
+import { trackFrequencyTimestamp } from '@/lib/searchLearning';
 
 // ─── Help items ─────────────────────────────────────────────
 
@@ -179,7 +179,6 @@ export function useSearchRanking(
 
   // Compute recent paths from search history
   const recentPaths = useMemo((): string[] => {
-    // Recent searches don't directly map to paths — use frequency map keys sorted by count
     return recents;
   }, [recents]);
 
@@ -190,15 +189,24 @@ export function useSearchRanking(
     return expandQuery(query.trim(), topIntent);
   }, [parsed, query]);
 
-  // Inject synonym-boosted virtual candidates
-  const enrichedCandidates = useMemo((): SearchCandidate[] => {
-    if (!expansion || expansion.expandedTerms.length === 0) return candidates;
+  // Track synonym telemetry as a side effect (not inside useMemo)
+  const telemetryRef = useRef<{ query: string; logged: boolean }>({ query: '', logged: false });
+  useEffect(() => {
+    const trimmedQuery = query.trim();
+    if (!expansion || trimmedQuery === telemetryRef.current.query) return;
+    telemetryRef.current = { query: trimmedQuery, logged: false };
 
-    // For each expanded term, check if any existing candidate title matches.
-    // If a strong alias exists but no candidate matches it, we don't create new candidates
-    // (we rely on synonym-aware scoring instead). This keeps candidate pool clean.
-    return candidates;
-  }, [candidates, expansion]);
+    if (expansion.aliasMatches.length > 0 || expansion.conceptMatches.length > 0) {
+      logSynonymTelemetry({
+        query: trimmedQuery,
+        aliasesUsed: expansion.aliasMatches,
+        conceptsActivated: expansion.conceptMatches.map((c) => c.clusterId),
+        hadResults: false, // will be updated post-ranking — acceptable approximation
+        timestamp: Date.now(),
+      });
+      telemetryRef.current.logged = true;
+    }
+  }, [expansion, query]);
 
   // Rank
   const { rankedResults, groups, suggestions, isAmbiguous } = useMemo(() => {
@@ -211,12 +219,12 @@ export function useSearchRanking(
       };
     }
 
-    // Use decayed frequency map if provided, else fall back to raw ranker frequency
+    // Use decayed frequency map if provided, else empty
     const frequencyMap = options.decayedFrequencyMap || {};
     const trimmedQuery = query.trim();
 
-    // If we have synonym expansion, boost candidates that match expanded terms
-    let candidatesForRanking = enrichedCandidates;
+    // Start from candidates directly (removed dead enrichedCandidates no-op)
+    let candidatesForRanking = candidates;
 
     // Pre-score candidates with synonym awareness to inject textMatch boosts
     if (expansion && expansion.expandedTerms.length > 0) {
@@ -224,9 +232,7 @@ export function useSearchRanking(
         ? Math.max(...expansion.aliasMatches.map((a) => a.confidence))
         : 0.9;
 
-      // Add subtitle hints for candidates that match via synonyms
-      // This lets the ranker's textMatch pick them up via subtitle matching
-      candidatesForRanking = enrichedCandidates.map((c) => {
+      candidatesForRanking = candidates.map((c) => {
         const synResult = scoreMatchWithSynonyms(
           c.title + ' ' + (c.subtitle || ''),
           trimmedQuery,
@@ -235,7 +241,6 @@ export function useSearchRanking(
         );
 
         if (synResult.matchedVia === 'alias' && synResult.matchedTerm && synResult.score > 0) {
-          // Inject the matched synonym into subtitle so ranker's textMatch finds it
           const existingSub = c.subtitle || '';
           const synonymHint = synResult.matchedTerm;
           if (!existingSub.toLowerCase().includes(synonymHint) &&
@@ -248,19 +253,34 @@ export function useSearchRanking(
     }
 
     // Inject chained destination hint as a virtual high-priority candidate
+    // Deduplicate: if an existing candidate shares the same base path, boost it instead
     if (chained?.destinationHint && chained.confidence >= 0.4) {
       const hint = chained.destinationHint;
-      candidatesForRanking = [
-        {
-          id: `chain-dest-${hint.path}`,
-          type: 'navigation' as const,
-          title: hint.label,
-          subtitle: Object.entries(hint.params).map(([k, v]) => `${k}: ${v}`).join(' · '),
-          path: hint.path,
-          icon: React.createElement(LayoutDashboard, { className: 'w-4 h-4' }),
-        },
-        ...candidatesForRanking,
-      ];
+      const hintBasePath = hint.path.split('?')[0];
+      const existingMatch = candidatesForRanking.find(c =>
+        c.path && c.path.split('?')[0] === hintBasePath,
+      );
+
+      if (existingMatch) {
+        // Boost existing candidate with chain context subtitle
+        candidatesForRanking = candidatesForRanking.map(c =>
+          c === existingMatch
+            ? { ...c, subtitle: hint.label + (c.subtitle ? ` · ${c.subtitle}` : '') }
+            : c,
+        );
+      } else {
+        candidatesForRanking = [
+          {
+            id: `chain-dest-${hint.path}`,
+            type: 'navigation' as const,
+            title: hint.label,
+            subtitle: Object.entries(hint.params).map(([k, v]) => `${k}: ${v}`).join(' · '),
+            path: hint.path,
+            icon: React.createElement(LayoutDashboard, { className: 'w-4 h-4' }),
+          },
+          ...candidatesForRanking,
+        ];
+      }
     }
 
     let ranked = rankResults(candidatesForRanking, {
@@ -296,28 +316,17 @@ export function useSearchRanking(
 
     const ambiguous = parsed.confidence.intentClarity < 0.2;
 
-    // Log synonym telemetry
-    if (expansion && (expansion.aliasMatches.length > 0 || expansion.conceptMatches.length > 0)) {
-      logSynonymTelemetry({
-        query: trimmedQuery,
-        aliasesUsed: expansion.aliasMatches,
-        conceptsActivated: expansion.conceptMatches.map((c) => c.clusterId),
-        hadResults: ranked.length > 0 && ranked[0]?.score >= 0.3,
-        timestamp: Date.now(),
-      });
-    }
-
     return {
       rankedResults: ranked,
       groups: grouped,
       suggestions: suggs,
       isAmbiguous: ambiguous,
     };
-  }, [parsed, resolved, enrichedCandidates, recentPaths, options.permissions, options.roles, currentPath, query, expansion, chained]);
+  }, [parsed, resolved, candidates, recentPaths, options.permissions, options.roles, currentPath, query, expansion, chained, options.decayedFrequencyMap, options.learningBoostFn]);
 
-  // Navigation tracking callback
+  // Navigation tracking callback — uses decayed frequency system only
   const trackNavigation = useCallback((path: string) => {
-    trackNavFrequency(path);
+    trackFrequencyTimestamp(path);
   }, []);
 
   return {

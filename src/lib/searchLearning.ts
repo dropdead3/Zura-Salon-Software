@@ -255,7 +255,7 @@ export function getZeroResultQueries(): { query: string; count: number; lastSeen
 
 // ─── Reformulation Chains ───────────────────────────────────
 
-function charOverlap(a: string, b: string): number {
+export function charOverlap(a: string, b: string): number {
   const shorter = a.length < b.length ? a : b;
   const longer = a.length < b.length ? b : a;
   let matches = 0;
