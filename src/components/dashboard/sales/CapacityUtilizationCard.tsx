@@ -110,9 +110,12 @@ function DayXAxisTick({ x, y, payload, days }: any) {
   );
 }
 
-const FALLBACK_COLOR = '#888888';
-
-export function CapacityUtilizationCard() {
+// Progress bar indicator class by threshold
+function getProgressIndicatorClass(percent: number): string {
+  if (percent >= 70) return 'bg-chart-2';
+  if (percent >= 50) return 'bg-amber-500/80';
+  return 'bg-muted-foreground/60';
+}
   const navigate = useNavigate();
   const [period, setPeriod] = useState<CapacityPeriod>('7days');
   const [selectedLocation, setSelectedLocation] = useState<string>('all');
