@@ -114,8 +114,25 @@ export function ZuraCommandSurface({ open, onOpenChange, filterNavItems }: ZuraC
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [parsedQuery, aiMode, permissions, hasQuery]);
 
+  // Track query for abandonment detection on close
+  useEffect(() => {
+    if (open) {
+      lastQueryBeforeCloseRef.current = '';
+    }
+  }, [open]);
+
+  useEffect(() => {
+    lastQueryBeforeCloseRef.current = query;
+  }, [query]);
+
   useEffect(() => {
     if (!open) {
+      // Log abandonment if user had a query but didn't select
+      const lastQ = lastQueryBeforeCloseRef.current;
+      if (lastQ.trim()) {
+        const topScore = rankedResults.length > 0 ? rankedResults[0]?.score ?? null : null;
+        learning.logAbandonment(lastQ, rankedResults.length, topScore);
+      }
       setQuery('');
       setAiMode(false);
       setSelectedIndex(0);
@@ -132,14 +149,31 @@ export function ZuraCommandSurface({ open, onOpenChange, filterNavItems }: ZuraC
     onOpenChange(false);
   }, [onOpenChange]);
 
-  const handleSelect = useCallback((result: { path?: string; title?: string }) => {
+  const handleSelect = useCallback((result: { path?: string; title?: string }, index?: number) => {
     if (result.path) {
       if (query.trim()) addRecent(query.trim());
       trackNavigation(result.path);
+
+      // Log selection for learning
+      const rank = index ?? flatResults.findIndex(r => r.path === result.path);
+      const topScore = rankedResults.length > 0 ? rankedResults[0]?.score ?? 0 : 0;
+      const selectedResult = flatResults.find(r => r.path === result.path);
+      learning.logSelection(
+        query,
+        result.path,
+        rank >= 0 ? rank : 0,
+        (selectedResult?.type as any) ?? 'navigation',
+        flatResults.length,
+        topScore,
+      );
+
+      // Clear the query ref so close effect doesn't log abandonment
+      lastQueryBeforeCloseRef.current = '';
+
       navigate(result.path);
       close();
     }
-  }, [navigate, close, query, addRecent, trackNavigation]);
+  }, [navigate, close, query, addRecent, trackNavigation, flatResults, rankedResults, learning]);
 
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
     if (e.key === 'Escape') {
