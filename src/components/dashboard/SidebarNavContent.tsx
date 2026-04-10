@@ -485,15 +485,25 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
           const sectionHiddenLinks = hiddenLinks[sectionId] || [];
           const hasConfiguratorOverrides = anyRoleHasOverrides(sidebarLayout, roles);
           
+          // Always enforce role-based filtering first (security layer)
+          const roleFilteredItems = orderedItems.filter(item => {
+            if (!item.roles || item.roles.length === 0) return true;
+            return item.roles.some(r => roles.includes(r));
+          });
+
           // If configurator has overrides for this role, use it as the source of truth
           // Otherwise fall back to permission filtering only
-          let visibleItems: typeof permissionFilteredItems;
+          let visibleItems: typeof roleFilteredItems;
           if (hasConfiguratorOverrides) {
-            // Configurator controls visibility - filter from ordered items, not permission-filtered
-            visibleItems = orderedItems.filter(item => !sectionHiddenLinks.includes(item.href));
+            // Configurator controls visibility within role-appropriate items
+            visibleItems = roleFilteredItems.filter(item => !sectionHiddenLinks.includes(item.href));
           } else {
-            // No configurator overrides - use permission filtering, then apply global hidden links
-            visibleItems = permissionFilteredItems.filter(item => !sectionHiddenLinks.includes(item.href));
+            // No configurator overrides - use permission filtering + role filtering, then apply hidden links
+            const permFiltered = permissionFilteredItems.filter(item => {
+              if (!item.roles || item.roles.length === 0) return true;
+              return item.roles.some(r => roles.includes(r));
+            });
+            visibleItems = permFiltered.filter(item => !sectionHiddenLinks.includes(item.href));
           }
           
           let filteredItems = visibleItems;
