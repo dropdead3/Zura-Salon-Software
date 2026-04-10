@@ -467,25 +467,11 @@ export default function TeamHub() {
             {...favProps('/admin/performance-reviews', 'Performance Reviews', StarIcon)}
           />
           <ManagementCard
-            href={dashPath('/admin/strikes')}
-            icon={AlertTriangle}
-            title="Staff Strikes"
-            description="Track disciplinary actions and warnings"
-            {...favProps('/admin/strikes', 'Staff Strikes', AlertTriangle)}
-          />
-          <ManagementCard
-            href={dashPath('/admin/documents')}
-            icon={FileText}
-            title="Document Tracker"
-            description="Licenses, certifications, and compliance docs"
-            {...favProps('/admin/documents', 'Document Tracker', FileText)}
-          />
-          <ManagementCard
             href={dashPath('/admin/incidents')}
             icon={ShieldAlert}
-            title="Incident Reports"
-            description="Workplace safety and incident documentation"
-            {...favProps('/admin/incidents', 'Incident Reports', ShieldAlert)}
+            title="Incidents & Accountability"
+            description="Incident reports, strikes, and safety documentation"
+            {...favProps('/admin/incidents', 'Incidents & Accountability', ShieldAlert)}
           />
           <ManagementCard
             href={dashPath('/admin/handbooks')}

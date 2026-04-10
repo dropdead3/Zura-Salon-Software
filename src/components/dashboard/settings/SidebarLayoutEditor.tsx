@@ -165,7 +165,7 @@ const LINK_CONFIG: Record<string, { label: string; icon: React.ComponentType<{ c
   '/dashboard/admin/recruiting': { label: 'Recruiting Pipeline', icon: Briefcase },
   '/dashboard/admin/graduation-tracker': { label: 'Graduation Tracker', icon: GraduationCap },
   '/dashboard/admin/assistant-requests': { label: 'Assistant Requests', icon: HandHelping },
-  '/dashboard/admin/strikes': { label: 'Staff Strikes', icon: AlertTriangle },
+  '/dashboard/admin/incidents': { label: 'Incidents & Accountability', icon: AlertTriangle },
   '/dashboard/admin/business-cards': { label: 'Business Cards', icon: CreditCard },
   '/dashboard/admin/headshots': { label: 'Headshots', icon: Camera },
   '/dashboard/admin/announcements': { label: 'Create Announcement', icon: Bell },

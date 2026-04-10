@@ -316,7 +316,7 @@ function DashboardRoutes() {
 
       {/* Admin routes */}
       <Route path="admin/team" element={<ProtectedRoute requiredPermission="view_team_overview"><TeamOverview /></ProtectedRoute>} />
-      <Route path="admin/strikes" element={<ProtectedRoute requiredPermission="manage_user_roles"><StaffStrikes /></ProtectedRoute>} />
+      <Route path="admin/strikes" element={<Navigate to="../admin/incidents?tab=strikes" replace />} />
       <Route path="admin/birthdays" element={<ProtectedRoute requiredPermission="view_team_overview"><TeamBirthdays /></ProtectedRoute>} />
       <Route path="admin/onboarding-tracker" element={<ProtectedRoute requiredPermission="view_team_overview"><OnboardingTracker /></ProtectedRoute>} />
       <Route path="admin/account-management" element={<Navigate to="admin/onboarding-tracker?tab=invitations" replace />} />

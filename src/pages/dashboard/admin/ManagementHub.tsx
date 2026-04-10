@@ -244,15 +244,6 @@ export default function ManagementHub() {
         {/* Performance & Compliance */}
         <CategorySection title="Performance & Compliance">
           <ManagementCard
-            href={dashPath('/admin/strikes')}
-            icon={AlertTriangle}
-            title="Staff Strikes"
-            description="Track disciplinary actions and warnings"
-            stat={null}
-            statLabel="active"
-            colorClass="bg-red-500/10 text-red-600 dark:text-red-400"
-          />
-          <ManagementCard
             href={dashPath('/admin/performance-reviews')}
             icon={Star}
             title="Performance Reviews"
