@@ -10,9 +10,10 @@ interface CommandResultPanelProps {
   isQuestion?: boolean;
   onSelect: (result: RankedResult) => void;
   onHover?: (result: RankedResult) => void;
+  onClose?: () => void;
 }
 
-export function CommandResultPanel({ groups, selectedIndex, query, isQuestion, onSelect, onHover }: CommandResultPanelProps) {
+export function CommandResultPanel({ groups, selectedIndex, query, isQuestion, onSelect, onHover, onClose }: CommandResultPanelProps) {
   const rowRefs = useRef<Map<number, HTMLButtonElement>>(new Map());
 
   useEffect(() => {
@@ -57,6 +58,7 @@ export function CommandResultPanel({ groups, selectedIndex, query, isQuestion, o
                   query={query}
                   onClick={() => onSelect(result)}
                   onHover={onHover}
+                  onClose={onClose}
                 />
               );
             })}

@@ -234,7 +234,8 @@ export function ZuraCommandSurface({ open, onOpenChange, filterNavItems, anchorR
   const showAICard = aiMode || (
     hasQuery &&
     isQuestionQuery(query) &&
-    (!hasResults || rankedResults[0]?.score < 0.5)
+    !groundingResult.isNavigation &&
+    (!hasResults || rankedResults[0]?.score < 0.35)
   );
 
   // Update preview on keyboard navigation (stabilized — only react to index changes)
@@ -301,6 +302,7 @@ export function ZuraCommandSurface({ open, onOpenChange, filterNavItems, anchorR
     // Guard conditions
     if (!open || aiMode || aiLoading || !hasQuery || query.trim().length < 8) return;
     if (!isQuestionQuery(query)) return;
+    if (groundingResult.isNavigation && groundingResult.confidence !== 'none') return;
     if (hasResults && rankedResults[0]?.score >= 0.35) return;
 
     autoAiTimerRef.current = setTimeout(() => {
@@ -388,11 +390,12 @@ export function ZuraCommandSurface({ open, onOpenChange, filterNavItems, anchorR
         }
       }
     } else if (e.key === 'Enter') {
-      if ((aiMode || isQuestionQuery(query)) && query.trim()) {
+      // Navigation/action results take priority over AI
+      if (flatResults[selectedIndex]?.path) {
+        handleSelect(flatResults[selectedIndex]);
+      } else if ((aiMode || isQuestionQuery(query)) && query.trim()) {
         addRecent({ query: query.trim(), resultType: 'help' });
         sendMessage(query, [], orgId, primaryRole, groundingResult.isNavigation ? { isNavigation: groundingResult.isNavigation, confidence: groundingResult.confidence, groundingPrompt: groundingResult.groundingPrompt } : undefined, dataContextStr);
-      } else if (flatResults[selectedIndex]) {
-        handleSelect(flatResults[selectedIndex]);
       } else if (hasQuery && !hasResults && selectedIndex === 0) {
         handleAIFallback();
       }
@@ -595,6 +598,7 @@ export function ZuraCommandSurface({ open, onOpenChange, filterNavItems, anchorR
                           isQuestion={isQuestionQuery(query)}
                           onSelect={handleSelect}
                           onHover={handleHover}
+                          onClose={close}
                         />
                       </>
                     ) : (

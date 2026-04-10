@@ -32,6 +32,11 @@ export interface RelevanceSignals {
   contextBoost: number;
 }
 
+export interface QuickAction {
+  label: string;
+  path: string;
+}
+
 export interface RankedResult {
   id: string;
   type: RankedResultType;
@@ -42,6 +47,7 @@ export interface RankedResult {
   metadata?: string;
   score: number;
   signals: RelevanceSignals;
+  quickActions?: QuickAction[];
 }
 
 export interface RankedResultGroup {
@@ -73,6 +79,8 @@ export interface SearchCandidate {
   permission?: string;
   /** Roles that can see this item. */
   roles?: string[];
+  /** Contextual quick actions (e.g. tab navigation) */
+  quickActions?: QuickAction[];
 }
 
 // ─── Scoring Weights ─────────────────────────────────────────
@@ -294,6 +302,7 @@ export function rankResults(
       metadata: candidate.metadata,
       score,
       signals,
+      quickActions: candidate.quickActions,
     };
   });
 
