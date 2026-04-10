@@ -73,8 +73,7 @@ export interface DashboardNavItem {
 export const mainNavItems: DashboardNavItem[] = [
   { href: '/dashboard', label: 'Command Center', labelKey: 'command_center', icon: LayoutDashboard, permission: 'view_command_center' },
   { href: '/dashboard/schedule', label: 'Schedule', labelKey: 'schedule', icon: CalendarDays, permission: 'view_booking_calendar', roles: ['super_admin', 'admin', 'manager', 'stylist', 'stylist_assistant', 'receptionist', 'assistant', 'admin_assistant', 'operations_assistant', 'booth_renter', 'bookkeeper'] },
-  { href: '/dashboard/transactions', label: 'Transactions', labelKey: 'transactions', icon: Receipt, permission: 'view_transactions' },
-  { href: '/dashboard/appointments-hub', label: 'Appointments', labelKey: 'appointments', icon: CalendarClock, permission: 'view_booking_calendar' },
+  { href: '/dashboard/appointments-hub', label: 'Appointments & Transactions', labelKey: 'appointments_transactions', icon: CalendarClock, permission: 'view_transactions' },
 ];
 
 // ─── SECTION: myTools (staff-facing, replaces growth + stats) ────────────────
@@ -172,8 +171,7 @@ export const hubChildrenItems: { href: string; label: string }[] = [
   { href: '/dashboard/campaigns', label: 'Campaigns' },
   { href: '/dashboard/admin/seo-workshop', label: 'SEO Workshop' },
   { href: '/dashboard/admin/leads', label: 'Lead Management' },
-  { href: '/dashboard/appointments-hub', label: 'Appointments' },
-  { href: '/dashboard/transactions', label: 'Transactions' },
+  { href: '/dashboard/appointments-hub', label: 'Appointments & Transactions' },
   { href: '/dashboard/admin/sales', label: 'Sales Analytics' },
   { href: '/dashboard/admin/operational-analytics', label: 'Operational Analytics' },
   { href: '/dashboard/admin/staff-utilization', label: 'Staff Utilization' },

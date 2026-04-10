@@ -164,7 +164,7 @@ const Payroll = lazyWithRetry(() => import("./pages/dashboard/admin/Payroll"));
 const PayrollCallback = lazyWithRetry(() => import("./pages/dashboard/admin/PayrollCallback"));
 const HelpCenter = lazyWithRetry(() => import("./pages/dashboard/HelpCenter"));
 const MyPay = lazyWithRetry(() => import("./pages/dashboard/MyPay"));
-const Transactions = lazyWithRetry(() => import("./pages/dashboard/Transactions"));
+// Transactions merged into AppointmentsHub
 const AppointmentsHub = lazyWithRetry(() => import("./pages/dashboard/AppointmentsHub"));
 const Inventory = lazyWithRetry(() => import("./pages/dashboard/Inventory"));
 const Register = lazyWithRetry(() => import("./pages/dashboard/Register"));
@@ -371,7 +371,7 @@ function DashboardRoutes() {
       <Route path="admin/import" element={<ProtectedRoute requiredPermission="manage_settings"><DataImport /></ProtectedRoute>} />
       <Route path="admin/payroll" element={<ProtectedRoute requiredPermission="manage_payroll"><Payroll /></ProtectedRoute>} />
       <Route path="admin/payroll/callback" element={<ProtectedRoute requiredPermission="manage_payroll"><PayrollCallback /></ProtectedRoute>} />
-      <Route path="transactions" element={<ProtectedRoute requiredPermission="view_transactions"><Transactions /></ProtectedRoute>} />
+      <Route path="transactions" element={<Navigate to="appointments-hub?tab=transactions" replace />} />
       <Route path="appointments-hub" element={<ProtectedRoute requiredPermission="view_transactions"><AppointmentsHub /></ProtectedRoute>} />
       <Route path="inventory" element={<ProtectedRoute requiredPermission="manage_inventory"><Inventory /></ProtectedRoute>} />
       <Route path="register" element={<ProtectedRoute requiredPermission="process_retail_sales"><Register /></ProtectedRoute>} />

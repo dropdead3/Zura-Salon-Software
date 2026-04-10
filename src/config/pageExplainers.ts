@@ -237,14 +237,9 @@ export const PAGE_EXPLAINERS: Record<string, PageExplainerEntry> = {
     icon: Package,
   },
   'appointments-hub': {
-    title: 'Appointments Overview',
-    description: 'Comprehensive view of all appointments across staff and locations. Filter, search, and manage booking data in bulk.',
-    icon: Calendar,
-  },
-  'transactions': {
-    title: 'Sales & Transactions',
-    description: 'Daily transaction management — view till balance, process refunds, issue credits, and manage gift cards. Revenue KPIs exclude tips to match POS reporting.',
-    icon: Receipt,
+    title: 'Appointments & Transactions',
+    description: 'Unified hub for appointment records and daily transaction management. View bookings across staff and locations, manage till balance, process refunds, issue credits, and handle gift cards.',
+    icon: CalendarClock,
   },
   'chair-assignments': {
     title: 'Chair Assignments',
