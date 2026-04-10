@@ -268,7 +268,7 @@ export default function TeamHub() {
     const IconComp = ICON_MAP[fav.icon] || Users;
     return (
       <Link key={fav.href} to={fav.href}>
-        <Card className={cn(tokens.card.wrapper, "group hover:shadow-lg hover:-translate-y-1 transition-all cursor-pointer h-full border-primary/20 bg-primary/5 relative")}>
+        <Card className={cn(tokens.card.wrapper, "group hover:shadow-lg hover:-translate-y-1 transition-all cursor-pointer h-full border-amber-500/30 bg-amber-500/[0.06] dark:bg-amber-500/[0.08] relative")}>
           <button
             onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleFavorite(fav.href, fav.label, fav.icon); }}
             className="absolute top-2 right-2 z-10 p-1 rounded-md text-amber-500 opacity-100 transition-all"
@@ -277,8 +277,8 @@ export default function TeamHub() {
           </button>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className={cn(tokens.card.iconBox, "shrink-0")}>
-                <IconComp className={tokens.card.icon} />
+              <div className={cn(tokens.card.iconBox, "shrink-0 bg-amber-500/15 text-amber-500")}>
+                <IconComp className="w-5 h-5" />
               </div>
               <h3 className={tokens.card.title}>{fav.label}</h3>
               <ChevronRight className="w-4 h-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity ml-auto shrink-0" />
