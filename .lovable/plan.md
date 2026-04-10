@@ -1,25 +1,26 @@
 
 
-# Hide Favorited Cards from Their Original Sections
+# Differentiate Favorite Cards with Amber/Gold Styling
 
 ## Summary
-When a card is marked as a favorite, hide it from its original category section to eliminate redundancy. The card only appears in the Favorites section at the top.
+Update the favorite cards in the Favorites section to use a warm amber/gold accent — matching the star icon color — so they visually stand apart from the neutral cards below.
 
 ## Changes
 
 ### `src/pages/dashboard/admin/TeamHub.tsx`
 
-1. **Wrap every card** in the category sections (Hubs, Daily Operations, Scheduling & Time Off, etc.) with a conditional check: if `isFavorited(dashPath('/admin/...'))` is true, don't render that card.
+Update the `renderFavoriteCard` function (line 271):
 
-2. **Hide empty sections** — update `CategorySection` to return `null` if all its children are falsy/null (i.e., every card in a section is favorited). This prevents orphaned section headers with no cards beneath them.
+**Current:** `border-primary/20 bg-primary/5` — subtle, blends in with dark background
 
-3. Implementation approach: wrap each `<ManagementCard>` and `<HubGatewayCard>` in the JSX with `{!isFavorited(dashPath('/admin/xyz')) && (<Card ... />)}` — roughly 25 cards need this guard.
+**New styling:**
+- `border-amber-500/30` — warm gold border matching the star
+- `bg-amber-500/[0.06]` — faint amber wash
+- `dark:bg-amber-500/[0.08]` — slightly stronger in dark mode
+- Icon box gets `bg-amber-500/15` background and `text-amber-500` icon color instead of default muted
 
-4. Update `CategorySection` to filter out falsy children before rendering, and return `null` if none remain.
+This creates a cohesive amber "glow" card that ties to the filled star icon, making favorites unmistakably distinct from regular cards without being garish.
 
 ## Result
-- Favorited cards appear only in the Favorites section
-- Their original slot disappears, keeping the grid clean
-- If an entire section is emptied by favorites, the section header hides too
-- Unfavoriting restores the card to its original section immediately
+Favorite cards get a warm amber border and subtle amber background tint, clearly differentiating them from the neutral cards in the sections below.
 
