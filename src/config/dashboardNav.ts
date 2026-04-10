@@ -93,12 +93,24 @@ export const myToolsNavItems: DashboardNavItem[] = [
   { href: '/dashboard/my-graduation', label: 'My Level Progress', labelKey: 'my_graduation', icon: GraduationCap, permission: 'view_my_graduation', roles: ['stylist', 'stylist_assistant'] },
 ];
 
-// ─── SECTION: manage (admin hub-only links) ──────────────────────────────────
+// ─── SECTION: ops (operations hub) ───────────────────────────────────────────
 
-export const manageNavItems: DashboardNavItem[] = [
+export const opsNavItems: DashboardNavItem[] = [
+  { href: '/dashboard/admin/team-hub', label: 'Operations Hub', labelKey: 'team_hub', icon: Users, permission: 'view_team_overview' },
+];
+
+// ─── SECTION: data (analytics & reports) ─────────────────────────────────────
+
+export const dataNavItems: DashboardNavItem[] = [
   { href: '/dashboard/admin/analytics', label: 'Analytics Hub', labelKey: 'analytics_hub', icon: TrendingUp, permission: 'view_team_overview' },
   { href: '/dashboard/admin/reports', label: 'Report Generator', labelKey: 'report_generator', icon: FileText, permission: 'view_team_overview' },
-  { href: '/dashboard/admin/team-hub', label: 'Operations Hub', labelKey: 'team_hub', icon: Users, permission: 'view_team_overview' },
+];
+
+// ─── SECTION: manage (legacy — maps to ops + data) ──────────────────────────
+
+export const manageNavItems: DashboardNavItem[] = [
+  ...opsNavItems,
+  ...dataNavItems,
 ];
 
 // ─── SECTION: apps (org-activated add-ons) ───────────────────────────────────
