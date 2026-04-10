@@ -661,6 +661,36 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
                         <p className="px-3 py-1.5 text-xs font-medium text-muted-foreground uppercase tracking-wider font-display">
                           {sectionLabel}
                         </p>
+                        {filteredItems.map((item) => {
+                          const Icon = item.icon;
+                          const resolvedItemHref = dashPath(item.href.replace(/^\/dashboard/, ''));
+                          const isExactRoot = resolvedItemHref === dashPath('') || resolvedItemHref === dashPath('/');
+                          const isActive = isExactRoot
+                            ? location.pathname === resolvedItemHref
+                            : location.pathname === resolvedItemHref || location.pathname.startsWith(resolvedItemHref + '/');
+                          const label = getNavLabel(item);
+                          return (
+                            <a
+                              key={item.href}
+                              href={resolvedItemHref}
+                              onClick={(e) => {
+                                e.preventDefault();
+                                navigate(resolvedItemHref, { state: { navTimestamp: Date.now() } });
+                                onNavClick();
+                              }}
+                              className={cn(
+                                "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-sans",
+                                "transition-all duration-300 cursor-pointer",
+                                isActive
+                                  ? "bg-muted/80 text-foreground ring-1 ring-border/40 shadow-sm backdrop-blur-sm"
+                                  : "text-muted-foreground hover:text-foreground hover:bg-foreground/10"
+                              )}
+                            >
+                              <Icon className="w-4 h-4 shrink-0" />
+                              <span>{label}</span>
+                            </a>
+                          );
+                        })}
                         {/* Ops Hub favorites in collapsed popover */}
                         {sectionId === 'ops' && opsHubFavorites.length > 0 && (
                           <>
