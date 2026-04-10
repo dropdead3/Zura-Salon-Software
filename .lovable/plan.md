@@ -1,48 +1,48 @@
 
 
-# Restructure Operations Hub Categories
+# Operations Hub Favorites + Sidebar Sub-Links
 
 ## Summary
 
-Reorganize the Operations Hub from 5 vague sections into 6 domain-specific sections, remove 3 redundant/misplaced cards, and reorder by task frequency.
+Add a "Favorites" section at the top of the Operations Hub page where users can star individual cards for quick access. Favorited cards also appear as sub-links under "Operations Hub" in the sidebar navigation.
 
-## Changes
+## Data Layer
 
-### 1. `src/pages/dashboard/admin/TeamHub.tsx`
+**No new tables needed.** Store favorites in the existing `user_preferences.dashboard_layout` JSON field under a new key `opsHubFavorites` — an array of objects: `{ href: string, label: string, icon: string }`.
 
-**Remove cards:**
-- **Website Hub** from Hubs section — belongs in Settings/sidebar, not team operations
-- **Manage Invitations** — redundant deep-link to Onboarding Hub tab
-- **Program Team Overview** — overlaps with Client Engine Tracker
+### New hook: `src/hooks/useOpsHubFavorites.ts`
+- Read/write `dashboard_layout.opsHubFavorites` from `user_preferences` (same pattern as `useAnalyticsSubtabFavorites` and `useAnalyticsCardOrder`)
+- Expose: `favorites`, `isFavorited(href)`, `toggleFavorite(href, label, iconName)`, `isAtLimit` (cap at 8)
+- Optimistic updates with rollback on error
 
-**Rename and reorder sections:**
-- "Hubs" → stays, remove Website Hub
-- "People & Development" → **"Team & Development"** (remove redundant cards)
-- "Scheduling & Requests" → **"Scheduling & Time Off"** (move Daily Huddle out, move PTO Balances in)
-- "Performance & Compliance" → **"Compliance & Documentation"** (remove PTO Balances, add Handbooks)
-- "Team Operations & Communications" → split into **"Daily Operations"** and **"Team Services"**
+## Operations Hub UI Changes
 
-**New section order:**
-1. Hubs (5 cards)
-2. Daily Operations (4): Daily Huddle, Chair Assignments, Assistant Scheduling, Announcements
-3. Scheduling & Time Off (5): Schedule Requests, Shift Swap Approvals, Assistant Requests, Meetings & Accountability, PTO Balances
-4. Team & Development (4): Team Directory, Graduation Tracker, Client Engine Tracker, Team Challenges
-5. Compliance & Documentation (5): Performance Reviews, Staff Strikes, Document Tracker, Incident Reports, Handbooks
-6. Team Services (3): Business Cards, Headshots, Birthdays & Anniversaries
+### `src/pages/dashboard/admin/TeamHub.tsx`
 
-**Cleanup:**
-- Remove unused imports (`ClipboardCheck` icon, `canInvite` / `usePendingInvitations` if no longer needed, `Globe` icon)
-- Remove `pendingInvitationCount` stat logic
+1. **Star icon on every card** — Add a favorite toggle (star icon) to `ManagementCard` and `HubGatewayCard`. On hover, a star appears in the top-right corner. Filled star = favorited.
 
-### 2. No other files affected
-This is purely a presentation change within TeamHub.tsx. Routes, hub pages, and Settings remain intact.
+2. **Favorites section at top** — When any cards are favorited, render a "Favorites" `CategorySection` above "Hubs" showing only the favorited cards as quick-access links (same card style, slightly compact). If no favorites, the section is hidden.
 
-## Technical details
+3. **Card components** receive new optional props: `isFavorited`, `onToggleFavorite`, and the star is rendered conditionally.
 
-- Website Hub remains accessible via its route and Settings — only the Operations Hub card is removed
-- Onboarding Hub already has the invitations tab — no functionality lost
-- Program Team Overview route stays alive for bookmarks
+## Sidebar Sub-Links
 
-## Result
-26 cards across 6 focused sections. Each section has a clear operational domain. High-frequency daily tools surface near the top.
+### `src/components/dashboard/SidebarNavContent.tsx`
+
+When rendering the `ops` section:
+- After the "Operations Hub" main link, if the user has `opsHubFavorites`, render them as indented sub-links (smaller text, left-padded, with a dot or small icon)
+- Use the same pattern as regular nav links but with `pl-8` indent and `text-xs` sizing
+- Sub-links resolve through `dashPath()` like all other nav items
+- In collapsed mode, sub-links appear in the hover popover alongside "Operations Hub"
+
+## Icon Mapping
+
+Since we persist to JSON, store icon names as strings (e.g., `"Users"`, `"CalendarClock"`) and resolve them via a lookup map in the hook or a shared utility. The Operations Hub already imports all needed icons.
+
+## Technical Details
+
+- **Files created**: `src/hooks/useOpsHubFavorites.ts`
+- **Files modified**: `src/pages/dashboard/admin/TeamHub.tsx`, `src/components/dashboard/SidebarNavContent.tsx`
+- **No migrations needed** — uses existing `dashboard_layout` JSON column
+- **No new permissions** — favorites are personal preferences, not org-scoped data
 
