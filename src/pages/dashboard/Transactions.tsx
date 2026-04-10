@@ -55,10 +55,7 @@ export default function Transactions() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTxn, setSelectedTxn] = useState<GroupedTransaction | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
-  const [voidTxn, setVoidTxn] = useState<GroupedTransaction | null>(null);
-  const [voidOpen, setVoidOpen] = useState(false);
-  const [refundTxn, setRefundTxn] = useState<TransactionItem | null>(null);
-  const [refundOpen, setRefundOpen] = useState(false);
+  
   const [isCreditsOpen, setIsCreditsOpen] = useState(false);
 
   const { data: locations = [] } = useLocations();
@@ -78,34 +75,6 @@ export default function Transactions() {
     setDetailOpen(true);
   };
 
-  const handleRefund = (txn: GroupedTransaction) => {
-    if (txn.items.length === 0) return;
-    setRefundTxn({
-      id: txn.items[0].id,
-      transaction_id: txn.transactionId,
-      transaction_date: txn.transactionDate,
-      phorest_client_id: txn.phorestClientId,
-      client_name: txn.clientName,
-      item_type: txn.items[0].itemType,
-      item_name: buildItemSummary(txn),
-      item_category: txn.items[0].itemCategory,
-      quantity: 1,
-      unit_price: txn.totalAmount,
-      total_amount: txn.totalAmount,
-      tax_amount: txn.taxAmount,
-      discount: txn.discountAmount,
-      phorest_staff_id: null,
-      location_id: txn.locationId,
-      branch_name: txn.branchName,
-      promotion_id: null,
-    });
-    setRefundOpen(true);
-  };
-
-  const handleVoid = (txn: GroupedTransaction) => {
-    setVoidTxn(txn);
-    setVoidOpen(true);
-  };
 
   // Use parseISO to avoid timezone boundary shifts
   const goToPreviousDay = () => setSelectedDate(format(subDays(parseISO(selectedDate), 1), 'yyyy-MM-dd'));
@@ -290,8 +259,6 @@ export default function Transactions() {
               transactions={transactions}
               isLoading={isLoading}
               onSelectTransaction={handleSelectTransaction}
-              onRefund={handleRefund}
-              onVoid={handleVoid}
             />
 
             {/* Till balance summary */}
@@ -318,25 +285,14 @@ export default function Transactions() {
         </Tabs>
       </div>
 
-      {/* Detail Sheet */}
+      {/* Detail Sheet (contains Void + Refund dialogs) */}
       <TransactionDetailSheet
         transaction={selectedTxn}
         open={detailOpen}
-        onOpenChange={setDetailOpen}
-      />
-
-      {/* Void Dialog */}
-      <VoidConfirmDialog
-        transaction={voidTxn}
-        open={voidOpen}
-        onOpenChange={setVoidOpen}
-      />
-
-      {/* Refund Dialog */}
-      <RefundDialog
-        transaction={refundTxn}
-        open={refundOpen}
-        onOpenChange={setRefundOpen}
+        onOpenChange={(isOpen) => {
+          setDetailOpen(isOpen);
+          if (!isOpen) setSelectedTxn(null);
+        }}
       />
 
       {/* Issue Credits Dialog */}
