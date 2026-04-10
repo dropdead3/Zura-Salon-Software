@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { TeamChatContainer } from '@/components/team-chat';
 import { PlatformPresenceProvider } from '@/contexts/PlatformPresenceContext';
-import { useAuth } from '@/contexts/AuthContext';
+
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useOrganizations } from '@/hooks/useOrganizations';
 import { useConnectEntitlement } from '@/hooks/connect/useConnectEntitlement';
