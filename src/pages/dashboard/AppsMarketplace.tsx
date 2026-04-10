@@ -205,10 +205,9 @@ function SubscribedAppCard({
           </div>
           <div>
             <h3 className={cn(tokens.heading.card)}>{app.name}</h3>
-              <p className="font-sans text-[11px] text-muted-foreground/60 tracking-wide mt-0.5">
-                {app.tagline}
-              </p>
-            </div>
+            <p className="font-sans text-[11px] text-muted-foreground/60 tracking-wide mt-0.5">
+              {app.tagline}
+            </p>
           </div>
         </div>
 
