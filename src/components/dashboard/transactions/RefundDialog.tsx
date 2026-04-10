@@ -8,6 +8,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { DRILLDOWN_DIALOG_CONTENT_CLASS } from '@/components/dashboard/drilldownDialogStyles';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -16,6 +17,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { CreditCard, Gift, Wallet, AlertCircle, Loader2 } from 'lucide-react';
+import { BlurredAmount } from '@/contexts/HideNumbersContext';
+import { tokens } from '@/lib/design-tokens';
 import { TransactionItem } from '@/hooks/useTransactions';
 import { useProcessRefund } from '@/hooks/useRefunds';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
@@ -89,7 +92,10 @@ export function RefundDialog({ transaction, open, onOpenChange }: RefundDialogPr
 
   return (
     <Dialog open={open} onOpenChange={handleOpen}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent
+        className={DRILLDOWN_DIALOG_CONTENT_CLASS}
+        style={{ left: 'calc(50% + var(--sidebar-offset, 0px))' }}
+      >
         <DialogHeader>
           <DialogTitle>Process Refund</DialogTitle>
           <DialogDescription>
@@ -106,7 +112,7 @@ export function RefundDialog({ transaction, open, onOpenChange }: RefundDialogPr
               <span className="text-sm text-muted-foreground">
                 {transaction.client_name || 'Walk-in'} • {formatDate(new Date(transaction.transaction_date), 'MMM d, yyyy')}
               </span>
-              <span className="font-medium">{formatCurrency(maxAmount)}</span>
+              <span className="font-medium"><BlurredAmount>{formatCurrency(maxAmount)}</BlurredAmount></span>
             </div>
           </div>
 

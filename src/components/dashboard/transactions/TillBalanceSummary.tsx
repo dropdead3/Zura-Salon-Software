@@ -14,9 +14,12 @@ export function TillBalanceSummary({ transactions }: TillBalanceSummaryProps) {
 
   const totals = transactions.reduce(
     (acc, txn) => {
+      // Exclude voided and fully refunded transactions
       if (txn.isVoided) return acc;
-      const key = txn.paymentMethod?.toLowerCase() || '';
+      if (txn.refundStatus === 'completed') return acc;
+
       const amount = txn.totalAmount;
+      const key = txn.paymentMethod?.toLowerCase() || '';
       if (key.includes('cash')) {
         acc.cash += amount;
       } else if (key.includes(';') || key.includes(',')) {

@@ -1,19 +1,15 @@
-import { useFormatCurrency } from '@/hooks/useFormatCurrency';
-import { useFormatDate } from '@/hooks/useFormatDate';
 import type { GroupedTransaction } from '@/hooks/useGroupedTransactions';
-
-interface ReceiptPrintViewProps {
-  transaction: GroupedTransaction;
-  orgName?: string;
-}
 
 export function printReceipt(transaction: GroupedTransaction, formatCurrency: (n: number) => string, orgName = 'Salon') {
   const win = window.open('', '_blank', 'width=400,height=600');
   if (!win) return;
 
-  const date = new Date(transaction.transactionDate);
-  const dateStr = date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
-  const timeStr = date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+  // transaction_date is DATE only — no time component available
+  const dateStr = new Date(transaction.transactionDate + 'T12:00:00').toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  });
 
   const itemsHtml = transaction.items
     .map(
@@ -52,7 +48,7 @@ export function printReceipt(transaction: GroupedTransaction, formatCurrency: (n
 <body>
   <div class="header">
     <h1>${orgName}</h1>
-    <p>${dateStr} at ${timeStr}</p>
+    <p>${dateStr}</p>
   </div>
   <div class="meta">
     <div><strong>Client:</strong> ${transaction.clientName || 'Walk-in'}</div>

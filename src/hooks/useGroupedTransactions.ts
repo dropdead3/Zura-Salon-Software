@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
+import { fetchAllBatched } from '@/utils/fetchAllBatched';
 
 export interface TransactionLineItem {
   id: string;
@@ -55,26 +56,30 @@ export function useGroupedTransactions(filters: GroupedTransactionFilters) {
   return useQuery({
     queryKey: ['grouped-transactions', filters, orgId],
     queryFn: async () => {
-      // Fetch all items for the selected date
-      let query = supabase
-        .from('phorest_transaction_items')
-        .select('*')
-        .gte('transaction_date', `${filters.date}T00:00:00`)
-        .lte('transaction_date', `${filters.date}T23:59:59`)
-        .order('transaction_date', { ascending: false });
+      // Use fetchAllBatched to avoid 1000-row silent truncation
+      const items = await fetchAllBatched<any>(
+        (from, to) => {
+          let query = supabase
+            .from('phorest_transaction_items')
+            .select('*')
+            .eq('transaction_date', filters.date)
+            .order('transaction_date', { ascending: false })
+            .range(from, to);
 
-      if (filters.locationId) {
-        query = query.eq('location_id', filters.locationId);
-      }
-      if (filters.paymentMethod && filters.paymentMethod !== 'all') {
-        query = query.ilike('payment_method', `%${filters.paymentMethod}%`);
-      }
-      if (filters.clientSearch) {
-        query = query.ilike('client_name', `%${filters.clientSearch}%`);
-      }
+          if (filters.locationId) {
+            query = query.eq('location_id', filters.locationId);
+          }
+          if (filters.paymentMethod && filters.paymentMethod !== 'all') {
+            query = query.ilike('payment_method', `%${filters.paymentMethod}%`);
+          }
+          if (filters.clientSearch) {
+            query = query.ilike('client_name', `%${filters.clientSearch}%`);
+          }
+          return query;
+        },
+        1000
+      );
 
-      const { data: items, error } = await query;
-      if (error) throw error;
       if (!items || items.length === 0) return [] as GroupedTransaction[];
 
       // Fetch refund records
@@ -160,8 +165,8 @@ export function useGroupedTransactions(filters: GroupedTransactionFilters) {
         });
       });
 
-      // Sort by date descending
-      result.sort((a, b) => new Date(b.transactionDate).getTime() - new Date(a.transactionDate).getTime());
+      // Sort by client name as fallback since date is the same for all
+      result.sort((a, b) => (a.clientName || '').localeCompare(b.clientName || ''));
       return result;
     },
     enabled: !!orgId,
