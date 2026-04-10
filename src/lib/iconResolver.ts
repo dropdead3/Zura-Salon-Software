@@ -37,6 +37,14 @@ import {
   Tag,
   Folder,
   FileText,
+  Globe,
+  Search,
+  Brain,
+  MessageSquarePlus,
+  UserCheck,
+  GitMerge,
+  UserPlus,
+  Coins,
   type LucideIcon 
 } from 'lucide-react';
 import BoothRentIcon from '@/components/icons/BoothRentIcon';
@@ -97,6 +105,14 @@ const ICON_MAP: Record<string, LucideIcon> = {
   Tag,
   Folder,
   FileText,
+  Globe,
+  Search,
+  Brain,
+  MessageSquarePlus,
+  UserCheck,
+  GitMerge,
+  UserPlus,
+  Coins,
   BoothRent: BoothRentIcon as unknown as LucideIcon,
 };
 

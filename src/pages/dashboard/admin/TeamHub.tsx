@@ -44,6 +44,13 @@ import {
   Store,
   Armchair,
   BookOpen,
+  Globe,
+  Search,
+  Brain,
+  MessageSquarePlus,
+  UserCheck,
+  GitMerge,
+  UserPlus,
 } from 'lucide-react';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 
@@ -52,7 +59,8 @@ const ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
   HeartPulse, DollarSign, Store, ClipboardList, Video, MessageSquare,
   Armchair, CalendarDays, Bell, CalendarClock, ArrowLeftRight, HandHelping,
   Users, GraduationCap, Target, Trophy, StarIcon, AlertTriangle, FileText,
-  ShieldAlert, BookOpen, CreditCard, Camera, Cake,
+  ShieldAlert, BookOpen, CreditCard, Camera, Cake, Globe, Search, Brain,
+  MessageSquarePlus, UserCheck, GitMerge, UserPlus, Briefcase, Coins,
 };
 
 function getIconName(icon: React.ComponentType<{ className?: string }>): string {
@@ -471,7 +479,47 @@ export default function TeamHub() {
           )}
         </CategorySection>
 
-        {/* 4. Client & Business */}
+        {/* 4. Recruiting & Hiring */}
+        <CategorySection title="Recruiting & Hiring">
+          {!isFavorited(dashPath('/admin/leads')) && (
+            <ManagementCard
+              href={dashPath('/admin/leads')}
+              icon={UserPlus}
+              title="Lead Management"
+              description="Track prospective hires and inbound leads"
+              {...favProps('/admin/leads', 'Lead Management', UserPlus)}
+            />
+          )}
+          {!isFavorited(dashPath('/admin/recruiting')) && (
+            <ManagementCard
+              href={dashPath('/admin/recruiting')}
+              icon={Briefcase}
+              title="Recruiting Pipeline"
+              description="Manage open positions and candidate stages"
+              {...favProps('/admin/recruiting', 'Recruiting Pipeline', Briefcase)}
+            />
+          )}
+          {isPayrollEntitled && !isFavorited(dashPath('/admin/payroll?tab=hire')) && (
+            <ManagementCard
+              href={dashPath('/admin/payroll?tab=hire')}
+              icon={UserCheck}
+              title="New Hire Wizard"
+              description="Guided new hire setup with payroll integration"
+              {...favProps('/admin/payroll?tab=hire', 'New Hire Wizard', UserCheck)}
+            />
+          )}
+          {!isFavorited(dashPath('/admin/booth-renters?tab=onboarding')) && (
+            <ManagementCard
+              href={dashPath('/admin/booth-renters?tab=onboarding')}
+              icon={Store}
+              title="Renter Onboard Wizard"
+              description="Guided onboarding for new booth renters"
+              {...favProps('/admin/booth-renters?tab=onboarding', 'Renter Onboard Wizard', Store)}
+            />
+          )}
+        </CategorySection>
+
+        {/* 5. Client & Business */}
         <CategorySection title="Client & Business">
           {!isFavorited(dashPath('/admin/client-hub')) && (
             <ManagementCard
@@ -491,9 +539,67 @@ export default function TeamHub() {
               {...favProps('/admin/booth-renters', 'Renter Hub', Store)}
             />
           )}
+          {!isFavorited(dashPath('/admin/client-health')) && (
+            <ManagementCard
+              href={dashPath('/admin/client-health')}
+              icon={Brain}
+              title="Client Health Hub"
+              description="Identify at-risk clients and retention opportunities"
+              {...favProps('/admin/client-health', 'Client Health Hub', Brain)}
+            />
+          )}
+          {!isFavorited(dashPath('/admin/feedback')) && (
+            <ManagementCard
+              href={dashPath('/admin/feedback')}
+              icon={MessageSquarePlus}
+              title="Feedback Hub"
+              description="Client feedback collection and response tracking"
+              {...favProps('/admin/feedback', 'Feedback Hub', MessageSquarePlus)}
+            />
+          )}
+          {!isFavorited(dashPath('/admin/reengagement')) && (
+            <ManagementCard
+              href={dashPath('/admin/reengagement')}
+              icon={UserCheck}
+              title="Re-engagement"
+              description="Win back lapsed clients with targeted outreach"
+              {...favProps('/admin/reengagement', 'Re-engagement', UserCheck)}
+            />
+          )}
+          {!isFavorited(dashPath('/admin/merge-clients')) && (
+            <ManagementCard
+              href={dashPath('/admin/merge-clients')}
+              icon={GitMerge}
+              title="Merge Clients"
+              description="Deduplicate and merge client records"
+              {...favProps('/admin/merge-clients', 'Merge Clients', GitMerge)}
+            />
+          )}
         </CategorySection>
 
-        {/* 5. Compliance & Documentation */}
+        {/* 6. Marketing & Visibility */}
+        <CategorySection title="Marketing & Visibility">
+          {!isFavorited(dashPath('/admin/website-sections')) && (
+            <ManagementCard
+              href={dashPath('/admin/website-sections')}
+              icon={Globe}
+              title="Website Editor"
+              description="Manage website sections, themes, and content"
+              {...favProps('/admin/website-sections', 'Website Editor', Globe)}
+            />
+          )}
+          {!isFavorited(dashPath('/admin/seo-workshop')) && (
+            <ManagementCard
+              href={dashPath('/admin/seo-workshop')}
+              icon={Search}
+              title="SEO Workshop"
+              description="Tasks and guides to improve local visibility"
+              {...favProps('/admin/seo-workshop', 'SEO Workshop', Search)}
+            />
+          )}
+        </CategorySection>
+
+        {/* 7. Compliance & Documentation */}
         <CategorySection title="Compliance & Documentation">
           {!isFavorited(dashPath('/admin/performance-reviews')) && (
             <ManagementCard
@@ -520,6 +626,15 @@ export default function TeamHub() {
               title="Handbooks"
               description="Create and manage team handbooks and policy documents"
               {...favProps('/admin/handbooks', 'Handbooks', BookOpen)}
+            />
+          )}
+          {!isFavorited(dashPath('/admin/documents')) && (
+            <ManagementCard
+              href={dashPath('/admin/documents')}
+              icon={FileText}
+              title="Document Tracker"
+              description="Track document completion and compliance status"
+              {...favProps('/admin/documents', 'Document Tracker', FileText)}
             />
           )}
         </CategorySection>
@@ -557,6 +672,28 @@ export default function TeamHub() {
               stat={stats?.birthdaysThisWeek || null}
               statLabel="this week"
               {...favProps('/admin/birthdays', 'Birthdays & Anniversaries', Cake)}
+            />
+          )}
+        </CategorySection>
+
+        {/* 10. Configuration & Rewards */}
+        <CategorySection title="Configuration & Rewards">
+          {!isFavorited(dashPath('/admin/zura-config')) && (
+            <ManagementCard
+              href={dashPath('/admin/zura-config')}
+              icon={Brain}
+              title="Zura Configuration"
+              description="AI assistant settings and behavior customization"
+              {...favProps('/admin/zura-config', 'Zura Configuration', Brain)}
+            />
+          )}
+          {!isFavorited(dashPath('/admin/points-config')) && (
+            <ManagementCard
+              href={dashPath('/admin/points-config')}
+              icon={Coins}
+              title="Points & Rewards"
+              description="Configure point rules and reward redemptions"
+              {...favProps('/admin/points-config', 'Points & Rewards', Coins)}
             />
           )}
         </CategorySection>
