@@ -23554,6 +23554,44 @@ export type Database = {
           },
         ]
       }
+      voided_transactions: {
+        Row: {
+          created_at: string
+          id: string
+          organization_id: string
+          transaction_id: string
+          void_reason: string | null
+          voided_at: string
+          voided_by: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          organization_id: string
+          transaction_id: string
+          void_reason?: string | null
+          voided_at?: string
+          voided_by: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          organization_id?: string
+          transaction_id?: string
+          void_reason?: string | null
+          voided_at?: string
+          voided_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "voided_transactions_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       vouchers: {
         Row: {
           code: string
