@@ -73,6 +73,7 @@ export interface DashboardNavItem {
 export const mainNavItems: DashboardNavItem[] = [
   { href: '/dashboard', label: 'Command Center', labelKey: 'command_center', icon: LayoutDashboard, permission: 'view_command_center' },
   { href: '/dashboard/schedule', label: 'Schedule', labelKey: 'schedule', icon: CalendarDays, permission: 'view_booking_calendar', roles: ['super_admin', 'admin', 'manager', 'stylist', 'stylist_assistant', 'receptionist', 'assistant', 'admin_assistant', 'operations_assistant', 'booth_renter', 'bookkeeper'] },
+  { href: '/dashboard/appointments-hub?tab=transactions', label: 'Transactions', labelKey: 'transactions', icon: Receipt, permission: 'view_transactions' },
   { href: '/dashboard/team-chat', label: 'Team Chat', labelKey: 'team_chat', icon: MessageSquare },
 ];
 
@@ -98,7 +99,6 @@ export const myToolsNavItems: DashboardNavItem[] = [
 export const manageNavItems: DashboardNavItem[] = [
   { href: '/dashboard/admin/analytics', label: 'Analytics Hub', labelKey: 'analytics_hub', icon: TrendingUp, permission: 'view_team_overview' },
   { href: '/dashboard/admin/reports', label: 'Report Generator', labelKey: 'report_generator', icon: FileText, permission: 'view_team_overview' },
-  { href: '/dashboard/appointments-hub?tab=transactions', label: 'Transactions', labelKey: 'transactions', icon: Receipt, permission: 'view_transactions' },
   { href: '/dashboard/admin/team-hub', label: 'Operations Hub', labelKey: 'team_hub', icon: Users, permission: 'view_team_overview' },
 ];
 
