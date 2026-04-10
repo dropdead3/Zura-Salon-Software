@@ -29,14 +29,7 @@ const roleIcons: Record<string, typeof Crown> = {
 
 interface MemberItemProps {
   member: LeadershipMember;
-  isOnline: boolean;
-  onSelect: (userId: string) => void;
-  isLoading: boolean;
-}
-
-interface MemberItemProps {
-  member: LeadershipMember;
-  isOnline: boolean | null; // null means presence data unavailable
+  isOnline: boolean | null;
   onSelect: (userId: string) => void;
   isLoading: boolean;
 }
