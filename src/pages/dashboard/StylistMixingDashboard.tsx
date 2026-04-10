@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { Navigate } from 'react-router-dom';
 import { Beaker, Loader2, FlaskConical, TrendingUp, AlertTriangle, BarChart3, Users } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -10,6 +11,8 @@ import { cn } from '@/lib/utils';
 import { formatCurrency, formatDateShort, formatRelativeTime } from '@/lib/format';
 import { useAuth } from '@/contexts/AuthContext';
 import { useStylistMixingDashboard } from '@/hooks/color-bar/useStylistMixingDashboard';
+import { useColorBarEntitlement } from '@/hooks/color-bar/useColorBarEntitlement';
+import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 
 // ─── Status badge helper ────────────────────────────────────────────────────
@@ -30,7 +33,22 @@ const CHARGE_STATUS_MAP: Record<string, { label: string; variant: 'default' | 's
 export default function StylistMixingDashboard() {
   const { user } = useAuth();
   const userId = user?.id;
+  const { dashPath } = useOrgDashboardPath();
+  const { isEntitled, isLoading: entitlementLoading } = useColorBarEntitlement();
   const { todaySessions, performance, productTrends, topFormulas, overageHistory, isLoading } = useStylistMixingDashboard(userId);
+
+  // Gate: redirect if org doesn't have Color Bar enabled
+  if (!entitlementLoading && !isEntitled) {
+    return <Navigate to={dashPath('/')} replace />;
+  }
+
+  if (entitlementLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className={tokens.loading.spinner} />
+      </div>
+    );
+  }
 
   // Derive performance stats
   const perfData = performance.data?.[0];
