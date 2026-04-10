@@ -22,7 +22,7 @@ export const tokens = {
     /** Card title: Termina, base, tracked */
     card: 'font-display text-base font-medium tracking-wide',
     /** Small subsection label: uppercase, tiny, muted */
-    subsection: 'text-xs font-medium text-muted-foreground uppercase tracking-[0.15em]',
+    subsection: 'font-display text-xs font-medium text-muted-foreground uppercase tracking-[0.15em]',
   },
 
   body: {
