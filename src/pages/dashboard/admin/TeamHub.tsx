@@ -311,56 +311,7 @@ export default function TeamHub() {
           </CategorySection>
         )}
 
-        {/* 1. Hubs */}
-        <CategorySection title="Hubs">
-          {!isFavorited(dashPath('/admin/client-hub')) && (
-            <HubGatewayCard
-              href={dashPath('/admin/client-hub')}
-              icon={HeartPulse}
-              title="Client Hub"
-              description="Client management, retention, and engagement"
-              {...favProps('/admin/client-hub', 'Client Hub', HeartPulse)}
-            />
-          )}
-          {isPayrollEntitled && !isFavorited(dashPath('/admin/payroll')) && (
-            <HubGatewayCard
-              href={dashPath('/admin/payroll')}
-              icon={DollarSign}
-              title="Hiring & Payroll Hub"
-              description="Compensation, commissions, and hiring pipeline"
-              {...favProps('/admin/payroll', 'Hiring & Payroll Hub', DollarSign)}
-            />
-          )}
-          {!isFavorited(dashPath('/admin/booth-renters')) && (
-            <HubGatewayCard
-              href={dashPath('/admin/booth-renters')}
-              icon={Store}
-              title="Renter Hub"
-              description="Booth renter contracts, billing, and compliance"
-              {...favProps('/admin/booth-renters', 'Renter Hub', Store)}
-            />
-          )}
-          {!isFavorited(dashPath('/admin/onboarding-tracker')) && (
-            <HubGatewayCard
-              href={dashPath('/admin/onboarding-tracker')}
-              icon={ClipboardList}
-              title="Onboarding Hub"
-              description="New hire progress, invitations, and checklist completion"
-              {...favProps('/admin/onboarding-tracker', 'Onboarding Hub', ClipboardList)}
-            />
-          )}
-          {!isFavorited(dashPath('/admin/training-hub')) && (
-            <HubGatewayCard
-              href={dashPath('/admin/training-hub')}
-              icon={Video}
-              title="Training Hub"
-              description="Manage training library and track completions"
-              {...favProps('/admin/training-hub', 'Training Hub', Video)}
-            />
-          )}
-        </CategorySection>
-
-        {/* 2. Daily Operations */}
+        {/* 1. Daily Operations */}
         <CategorySection title="Daily Operations">
           {!isFavorited(dashPath('/admin/daily-huddle')) && (
             <ManagementCard
@@ -400,7 +351,7 @@ export default function TeamHub() {
           )}
         </CategorySection>
 
-        {/* 3. Scheduling & Time Off */}
+        {/* 2. Scheduling & Time Off */}
         <CategorySection title="Scheduling & Time Off">
           {!isFavorited(dashPath('/admin/schedule-requests')) && (
             <ManagementCard
@@ -451,8 +402,8 @@ export default function TeamHub() {
           )}
         </CategorySection>
 
-        {/* 4. Team & Development */}
-        <CategorySection title="Team & Development">
+        {/* 3. People & Development */}
+        <CategorySection title="People & Development">
           {!isFavorited(dashPath('/directory')) && (
             <ManagementCard
               href={dashPath('/directory')}
@@ -489,6 +440,55 @@ export default function TeamHub() {
               title="Team Challenges"
               description="Create and manage team competitions"
               {...favProps('/admin/challenges', 'Team Challenges', Trophy)}
+            />
+          )}
+          {!isFavorited(dashPath('/admin/onboarding-tracker')) && (
+            <ManagementCard
+              href={dashPath('/admin/onboarding-tracker')}
+              icon={ClipboardList}
+              title="Onboarding Hub"
+              description="New hire progress, invitations, and checklist completion"
+              {...favProps('/admin/onboarding-tracker', 'Onboarding Hub', ClipboardList)}
+            />
+          )}
+          {!isFavorited(dashPath('/admin/training-hub')) && (
+            <ManagementCard
+              href={dashPath('/admin/training-hub')}
+              icon={Video}
+              title="Training Hub"
+              description="Manage training library and track completions"
+              {...favProps('/admin/training-hub', 'Training Hub', Video)}
+            />
+          )}
+          {isPayrollEntitled && !isFavorited(dashPath('/admin/payroll')) && (
+            <ManagementCard
+              href={dashPath('/admin/payroll')}
+              icon={DollarSign}
+              title="Hiring & Payroll Hub"
+              description="Compensation, commissions, and hiring pipeline"
+              {...favProps('/admin/payroll', 'Hiring & Payroll Hub', DollarSign)}
+            />
+          )}
+        </CategorySection>
+
+        {/* 4. Client & Business */}
+        <CategorySection title="Client & Business">
+          {!isFavorited(dashPath('/admin/client-hub')) && (
+            <ManagementCard
+              href={dashPath('/admin/client-hub')}
+              icon={HeartPulse}
+              title="Client Hub"
+              description="Client management, retention, and engagement"
+              {...favProps('/admin/client-hub', 'Client Hub', HeartPulse)}
+            />
+          )}
+          {!isFavorited(dashPath('/admin/booth-renters')) && (
+            <ManagementCard
+              href={dashPath('/admin/booth-renters')}
+              icon={Store}
+              title="Renter Hub"
+              description="Booth renter contracts, billing, and compliance"
+              {...favProps('/admin/booth-renters', 'Renter Hub', Store)}
             />
           )}
         </CategorySection>
