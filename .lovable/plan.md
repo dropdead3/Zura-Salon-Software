@@ -1,14 +1,20 @@
 
 
-# Audit Pass — Remaining Fixes
+# Audit Pass — Cleanup & Keyboard Shortcut Fix
 
 ## Issues Found
 
-### 1. SalesDashboard still has hardcoded legacy `window.location.href` (Bug — missed in last pass)
-Line 830 still uses `window.location.href = '/dashboard/admin/phorest-settings'` — a hardcoded legacy path causing a full page reload and losing org-slug context. The file already imports `useNavigate` and `useOrgDashboardPath`, so the fix is simply changing the onClick handler.
+### 1. Keyboard shortcuts use hardcoded `/dashboard/...` paths (Bug)
+`useKeyboardShortcuts.ts` navigates to legacy paths like `/dashboard/schedule`, `/dashboard/team-chat`, etc. These hit `LegacyDashboardRedirect`, causing a full page reload and redirect hop. The hook should use `useOrgDashboardPath` to build org-scoped paths.
 
-### 2. ColorBarSubscription uses `window.location.href` with `dashPath` (Bug — partial fix)
-Line 114 was updated to use `dashPath()` for the correct path, but still uses `window.location.href =` which triggers a full page reload instead of a client-side navigation. Should use `navigate(dashPath(...))` like the other fixes. The file already imports `useNavigate`.
+### 2. `useOrganizationApps` hook is dead code (Cleanup)
+`src/hooks/useOrganizationApps.ts` has zero consumers after previous refactors. It makes a query to `organization_apps` that nothing uses. Should be deleted.
+
+### 3. `OrgAccessDenied` receives hardcoded `/dashboard` path (Minor)
+In `OrgDashboardRoute.tsx` line 70, `myDashboardPath="/dashboard"` is hardcoded. This is acceptable since the user is being denied access to the current org and needs to go back to their own org — `LegacyDashboardRedirect` handles the resolution. No change needed.
+
+### 4. `UnifiedLogin` navigates to `/dashboard` after signup (Acceptable)
+Line 391 uses `navigate('/dashboard', { replace: true })`. This is intentional — after login, the user doesn't yet have org context in the URL, so `LegacyDashboardRedirect` resolves it. No change needed.
 
 ---
 
@@ -16,8 +22,18 @@ Line 114 was updated to use `dashPath()` for the correct path, but still uses `w
 
 | File | Change |
 |------|--------|
-| `src/pages/dashboard/admin/SalesDashboard.tsx` | Replace `window.location.href = '/dashboard/admin/phorest-settings'` with `navigate(dashPath('/admin/phorest-settings'))` |
-| `src/pages/dashboard/admin/ColorBarSubscription.tsx` | Replace `window.location.href = dashPath(...)` with `navigate(dashPath('/admin/color-bar-settings'))` |
+| `src/hooks/useKeyboardShortcuts.ts` | Import `useOrgDashboardPath`; replace all hardcoded `/dashboard/...` paths with `dashPath(...)` |
+| `src/hooks/useOrganizationApps.ts` | Delete file (zero consumers) |
 
-Both files already have `useNavigate` and `useOrgDashboardPath` imported — these are one-line fixes each.
+### Detail: Keyboard shortcuts
+Import `useOrgDashboardPath` and call `const { dashPath } = useOrgDashboardPath()`. Replace each handler:
+- `navigate('/dashboard')` → `navigate(dashPath('/'))`
+- `navigate('/dashboard/schedule')` → `navigate(dashPath('/schedule'))`
+- `navigate('/dashboard/team-chat')` → `navigate(dashPath('/team-chat'))`
+- `navigate('/dashboard/analytics')` → `navigate(dashPath('/analytics'))`
+- `navigate('/dashboard/team')` → `navigate(dashPath('/team'))`
+- `navigate('/dashboard/profile')` → `navigate(dashPath('/profile'))`
+
+### Detail: Dead code removal
+`useOrganizationApps.ts` queries `organization_apps` but has no importers. Safe to delete.
 
