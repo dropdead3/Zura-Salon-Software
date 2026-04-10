@@ -27,6 +27,7 @@ import { SidebarFeedbackButtons } from './SidebarFeedbackButtons';
 import { useBusinessSettings } from '@/hooks/useBusinessSettings';
 import { useSidebarLayout, SECTION_LABELS, SECTION_ICONS, DEFAULT_SECTION_ORDER, DEFAULT_LINK_ORDER, isBuiltInSection, getEffectiveHiddenSections, getEffectiveHiddenLinks, anyRoleHasOverrides } from '@/hooks/useSidebarLayout';
 import { useAnalyticsSubtabFavorites } from '@/hooks/useAnalyticsSubtabFavorites';
+import { useOpsHubFavorites } from '@/hooks/useOpsHubFavorites';
 
 import { useConnectEntitlement } from '@/hooks/connect/useConnectEntitlement';
 import { usePayrollEntitlement } from '@/hooks/payroll/usePayrollEntitlement';
@@ -116,6 +117,7 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
   const internalRef = useRef<HTMLElement>(null);
   const { data: businessSettings } = useBusinessSettings();
   const { data: sidebarLayout } = useSidebarLayout();
+  const { favorites: opsHubFavorites } = useOpsHubFavorites();
   const { groupedFavorites, toggleFavorite: toggleSubtabFavorite } = useAnalyticsSubtabFavorites();
   
   const { isEntitled: isConnectEntitled } = useConnectEntitlement();
@@ -688,6 +690,39 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
                             </a>
                           );
                         })}
+                        {/* Ops Hub favorites in collapsed popover */}
+                        {sectionId === 'ops' && opsHubFavorites.length > 0 && (
+                          <>
+                            <div className="mx-3 my-1.5 h-px bg-border/40" />
+                            <p className="px-3 py-1 text-[10px] font-medium text-muted-foreground uppercase tracking-wider font-display">
+                              Favorites
+                            </p>
+                            {opsHubFavorites.map((fav) => {
+                              const isActive = location.pathname === fav.href || location.pathname.startsWith(fav.href + '/');
+                              return (
+                                <a
+                                  key={fav.href}
+                                  href={fav.href}
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    navigate(fav.href, { state: { navTimestamp: Date.now() } });
+                                    onNavClick();
+                                  }}
+                                  className={cn(
+                                    "flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-sans",
+                                    "transition-all duration-300 cursor-pointer",
+                                    isActive
+                                      ? "bg-muted/80 text-foreground"
+                                      : "text-muted-foreground hover:text-foreground hover:bg-foreground/10"
+                                  )}
+                                >
+                                  <span className="w-1 h-1 rounded-full bg-current opacity-40 shrink-0" />
+                                  <span>{fav.label}</span>
+                                </a>
+                              );
+                            })}
+                          </>
+                        )}
                       </SidebarPopoverContent>
                     </HoverPopover>
                   );
@@ -703,6 +738,36 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
                       badgeCount={getBadgeCount(item.href)}
                     />
                   ))}
+                  {/* Ops Hub favorites sub-links */}
+                  {sectionId === 'ops' && opsHubFavorites.length > 0 && !isCollapsed && (
+                    <div className="space-y-0.5 mt-1">
+                      {opsHubFavorites.map((fav) => {
+                        const resolvedHref = fav.href;
+                        const isActive = location.pathname === resolvedHref || location.pathname.startsWith(resolvedHref + '/');
+                        return (
+                          <a
+                            key={fav.href}
+                            href={resolvedHref}
+                            onClick={(e) => {
+                              e.preventDefault();
+                              navigate(resolvedHref, { state: { navTimestamp: Date.now() } });
+                              onNavClick();
+                            }}
+                            className={cn(
+                              "flex items-center gap-2 pl-8 pr-3 py-1.5 mx-3 text-xs font-sans rounded-md",
+                              "transition-all duration-200 cursor-pointer",
+                              isActive
+                                ? "text-foreground bg-muted/60"
+                                : "text-muted-foreground hover:text-foreground hover:bg-foreground/5"
+                            )}
+                          >
+                            <span className="w-1 h-1 rounded-full bg-current opacity-40 shrink-0" />
+                            <span className="truncate">{fav.label}</span>
+                          </a>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
               )}
             </div>
