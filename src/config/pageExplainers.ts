@@ -491,11 +491,6 @@ export const PAGE_EXPLAINERS: Record<string, PageExplainerEntry> = {
     description: 'Visual calendar for day rate availability and bookings. See occupancy at a glance and manage reservations.',
     icon: Calendar,
   },
-  'transactions': {
-    title: 'Daily Sales & Till Management',
-    description: 'View grouped transactions by day — click any sale to see itemized breakdown, payment method, and actions like refund, void, or print receipt. Use daily navigation to review past days.',
-    icon: Receipt,
-  },
   'register': {
     title: 'Register',
     description: 'Point-of-sale register for walk-in sales, retail purchases, and quick checkouts outside of appointment flow.',
