@@ -572,7 +572,7 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
               )}
               
               {/* Section header */}
-              {!isCollapsed && sectionId !== 'main' && (
+              {!isCollapsed && sectionId !== 'main' && sectionId !== 'system' && (
                 <div className="px-4 mb-2">
                   {sectionId === 'apps' ? (
                     <Link
