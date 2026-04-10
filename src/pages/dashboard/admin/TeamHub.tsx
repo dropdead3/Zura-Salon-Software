@@ -425,26 +425,10 @@ export default function TeamHub() {
             description="Send team-wide communications"
           />
           <ManagementCard
-            href={dashPath('/admin/points-config')}
-            icon={Coins}
-            title="Points & Rewards Config"
-            description="Configure point rules and manage reward catalog"
-          />
-          <ManagementCard
             href={dashPath('/admin/handbooks')}
             icon={BookOpen}
             title="Handbooks"
             description="Create and manage team handbooks and policy documents"
-          />
-        </CategorySection>
-
-        {/* AI & Automation */}
-        <CategorySection title="AI & Automation">
-          <ManagementCard
-            href={dashPath('/admin/zura-config')}
-            icon={Brain}
-            title={`${PLATFORM_NAME} Configuration`}
-            description="Customize AI personality, knowledge base, and guardrails"
           />
         </CategorySection>
       </div>

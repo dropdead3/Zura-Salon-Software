@@ -74,12 +74,13 @@ const categoriesMap: Record<string, { id: string; label: string; description: st
   'forms': { id: 'forms', label: 'Forms', description: 'Create and manage client-facing agreements, consultation forms, waivers, and intake documents.', icon: FileCheck },
   'loyalty': { id: 'loyalty', label: 'Client Rewards', description: 'Configure loyalty point earning rules, reward tiers, gift card settings, and client incentive programs.', icon: Gift },
   'feedback': { id: 'feedback', label: 'Feedback Settings', description: 'Set review request thresholds, configure platform review links, and manage client feedback collection.', icon: MessageSquareHeart },
-  'team-rewards': { id: 'team-rewards', label: 'Team Rewards', description: 'Manage the staff points economy, define reward catalog items, and set earning rules for team incentives.', icon: Gift },
+  'team-rewards': { id: 'team-rewards', label: 'Staff Rewards', description: 'Manage the internal staff points economy, define reward catalog items, and set earning rules for team incentives.', icon: Gift },
   'kiosk': { id: 'kiosk', label: 'Kiosks', description: 'Set up check-in kiosks, self-service booking terminals, and configure device-specific display settings.', icon: TabletSmartphone },
   'services': { id: 'services', label: 'Services', description: 'Manage service categories, individual services, durations, and pricing across all locations.', icon: Scissors },
   'retail-products': { id: 'retail-products', label: 'Retail Products', description: 'Manage product brands, categories, inventory levels, pricing, and retail display configurations.', icon: ShoppingBag },
   'account-billing': { id: 'account-billing', label: 'Account & Billing', description: 'View and manage your subscription plan, payment methods, invoices, and billing history.', icon: Wallet },
   'data-import': { id: 'data-import', label: 'Data Import', description: 'Migrate data from other salon software or import from CSV files.', icon: Upload },
+  'zura-config': { id: 'zura-config', label: 'Zura Configuration', description: 'Customize AI personality, knowledge base, role rules, and behavioral guardrails.', icon: Sparkles },
 };
 
 export default function Settings() {
@@ -122,6 +123,7 @@ export default function Settings() {
     else if (id === 'business') setBusinessDialogOpen(true);
     else if (id === 'access-hub') navigate(dashPath('/admin/access-hub'));
     else if (id === 'data-import') navigate(dashPath('/admin/data-import'));
+    else if (id === 'zura-config') navigate(dashPath('/admin/zura-config'));
     else setActiveCategory(id as SettingsCategory);
   };
 
