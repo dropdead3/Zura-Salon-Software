@@ -11,50 +11,40 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { DashboardPageHeader } from '@/components/dashboard/DashboardPageHeader';
 
-import { usePendingInvitations } from '@/hooks/useStaffInvitations';
-import { useInvitableRoles } from '@/hooks/useInvitableRoles';
-import {
+import { usePayrollEntitlement } from '@/hooks/payroll/usePayrollEntitlement';
 
+import { PageExplainer } from '@/components/ui/PageExplainer';
+
+import {
   ClipboardList,
   GraduationCap,
   Target,
   HandHelping,
   CalendarClock,
   AlertTriangle,
-  UserPlus,
   Briefcase,
   Cake,
   CreditCard,
   Camera,
   Bell,
-  Sparkles,
   ChevronRight,
   Video,
   Trophy,
   ArrowLeftRight,
   MessageSquare,
   Coins,
-  UserCheck,
-  ClipboardCheck,
   FileText,
   Star,
   ShieldAlert,
   CalendarDays,
-  Brain,
   Users,
   HeartPulse,
-  
   DollarSign,
   Store,
   Armchair,
-  Globe,
-  
   BookOpen,
 } from 'lucide-react';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
-import { usePayrollEntitlement } from '@/hooks/payroll/usePayrollEntitlement';
-
-import { PageExplainer } from '@/components/ui/PageExplainer';
 
 interface ManagementCardProps {
   href: string;
@@ -149,11 +139,7 @@ function CategorySection({ title, children, columns = 3 }: CategorySectionProps)
 
 export default function TeamHub() {
   const { dashPath } = useOrgDashboardPath();
-  const { canInvite } = useInvitableRoles();
   const { isEntitled: isPayrollEntitled } = usePayrollEntitlement();
-  
-  const { data: pendingInvitations } = usePendingInvitations();
-  const pendingInvitationCount = pendingInvitations?.length || 0;
 
   const { data: stats } = useQuery({
     queryKey: ['team-hub-stats'],
@@ -216,7 +202,7 @@ export default function TeamHub() {
         />
         <PageExplainer pageId="team-hub" />
 
-        {/* Hub Gateway */}
+        {/* 1. Hubs */}
         <CategorySection title="Hubs">
           <HubGatewayCard
             href={dashPath('/admin/client-hub')}
@@ -224,8 +210,6 @@ export default function TeamHub() {
             title="Client Hub"
             description="Client management, retention, and engagement"
           />
-
-
           {isPayrollEntitled && (
             <HubGatewayCard
               href={dashPath('/admin/payroll')}
@@ -252,18 +236,74 @@ export default function TeamHub() {
             title="Training Hub"
             description="Manage training library and track completions"
           />
-          <HubGatewayCard
-            href={dashPath('/admin/website-hub')}
-            icon={Globe}
-            title="Website Hub"
-            description="Website themes, editor, settings, and content management"
-          />
-
-
         </CategorySection>
 
-        {/* People & Development */}
-        <CategorySection title="People & Development">
+        {/* 2. Daily Operations */}
+        <CategorySection title="Daily Operations">
+          <ManagementCard
+            href={dashPath('/admin/daily-huddle')}
+            icon={MessageSquare}
+            title="Daily Huddle"
+            description="Create pre-shift notes and daily goals"
+          />
+          <ManagementCard
+            href={dashPath('/admin/chair-assignments')}
+            icon={Armchair}
+            title="Chair Assignments"
+            description="Station assignments and floor layout management"
+          />
+          <ManagementCard
+            href={dashPath('/assistant-schedule')}
+            icon={CalendarDays}
+            title="Assistant Scheduling"
+            description="Manage assistant assignments and coverage"
+          />
+          <ManagementCard
+            href={dashPath('/admin/announcements')}
+            icon={Bell}
+            title="Announcements"
+            description="Send team-wide communications"
+          />
+        </CategorySection>
+
+        {/* 3. Scheduling & Time Off */}
+        <CategorySection title="Scheduling & Time Off">
+          <ManagementCard
+            href={dashPath('/admin/schedule-requests')}
+            icon={CalendarClock}
+            title="Schedule Requests"
+            description="Time-off and schedule change approvals"
+          />
+          <ManagementCard
+            href={dashPath('/admin/shift-swaps')}
+            icon={ArrowLeftRight}
+            title="Shift Swap Approvals"
+            description="Review and approve shift swap requests"
+          />
+          <ManagementCard
+            href={dashPath('/admin/assistant-requests')}
+            icon={HandHelping}
+            title="Assistant Requests"
+            description="Manage help requests from stylists"
+            stat={stats?.pendingAssistantRequests || null}
+            statLabel="pending"
+          />
+          <ManagementCard
+            href={dashPath('/schedule-meeting')}
+            icon={CalendarClock}
+            title="Meetings & Accountability"
+            description="Schedule 1:1s and track commitments"
+          />
+          <ManagementCard
+            href={dashPath('/admin/pto')}
+            icon={CalendarDays}
+            title="PTO Balances"
+            description="Manage PTO policies and employee balances"
+          />
+        </CategorySection>
+
+        {/* 4. Team & Development */}
+        <CategorySection title="Team & Development">
           <ManagementCard
             href={dashPath('/directory')}
             icon={Users}
@@ -290,68 +330,10 @@ export default function TeamHub() {
             title="Team Challenges"
             description="Create and manage team competitions"
           />
-          <ManagementCard
-            href={dashPath('/admin/team')}
-            icon={Target}
-            title="Program Team Overview"
-            description="Track stylist program progress across the team"
-          />
-          {canInvite && (
-            <ManagementCard
-              href={dashPath('/admin/onboarding-tracker?tab=invitations')}
-              icon={ClipboardCheck}
-              title="Manage Invitations"
-              description="View and manage all pending invitations"
-              stat={pendingInvitationCount > 0 ? pendingInvitationCount : null}
-              statLabel="pending"
-            />
-          )}
         </CategorySection>
 
-        {/* Scheduling & Requests */}
-        <CategorySection title="Scheduling & Requests">
-          <ManagementCard
-            href={dashPath('/schedule-meeting')}
-            icon={CalendarClock}
-            title="Meetings & Accountability"
-            description="Schedule 1:1s and track commitments"
-          />
-          <ManagementCard
-            href={dashPath('/admin/assistant-requests')}
-            icon={HandHelping}
-            title="Assistant Requests"
-            description="Manage help requests from stylists"
-            stat={stats?.pendingAssistantRequests || null}
-            statLabel="pending"
-          />
-          <ManagementCard
-            href={dashPath('/admin/schedule-requests')}
-            icon={CalendarClock}
-            title="Schedule Requests"
-            description="Time-off and schedule change approvals"
-          />
-          <ManagementCard
-            href={dashPath('/admin/shift-swaps')}
-            icon={ArrowLeftRight}
-            title="Shift Swap Approvals"
-            description="Review and approve shift swap requests"
-          />
-          <ManagementCard
-            href={dashPath('/assistant-schedule')}
-            icon={CalendarDays}
-            title="Assistant Scheduling"
-            description="Manage assistant assignments and coverage"
-          />
-          <ManagementCard
-            href={dashPath('/admin/daily-huddle')}
-            icon={MessageSquare}
-            title="Daily Huddle"
-            description="Create pre-shift notes and daily goals"
-          />
-        </CategorySection>
-
-        {/* Performance & Compliance */}
-        <CategorySection title="Performance & Compliance">
+        {/* 5. Compliance & Documentation */}
+        <CategorySection title="Compliance & Documentation">
           <ManagementCard
             href={dashPath('/admin/performance-reviews')}
             icon={Star}
@@ -377,29 +359,15 @@ export default function TeamHub() {
             description="Workplace safety and incident documentation"
           />
           <ManagementCard
-            href={dashPath('/admin/pto')}
-            icon={CalendarDays}
-            title="PTO Balances"
-            description="Manage PTO policies and employee balances"
+            href={dashPath('/admin/handbooks')}
+            icon={BookOpen}
+            title="Handbooks"
+            description="Create and manage team handbooks and policy documents"
           />
         </CategorySection>
 
-        {/* Team Operations & Communications */}
-        <CategorySection title="Team Operations & Communications">
-          <ManagementCard
-            href={dashPath('/admin/chair-assignments')}
-            icon={Armchair}
-            title="Chair Assignments"
-            description="Station assignments and floor layout management"
-          />
-          <ManagementCard
-            href={dashPath('/admin/birthdays')}
-            icon={Cake}
-            title="Birthdays & Anniversaries"
-            description="Upcoming team celebrations and milestones"
-            stat={stats?.birthdaysThisWeek || null}
-            statLabel="this week"
-          />
+        {/* 6. Team Services */}
+        <CategorySection title="Team Services">
           <ManagementCard
             href={dashPath('/admin/business-cards')}
             icon={CreditCard}
@@ -417,16 +385,12 @@ export default function TeamHub() {
             statLabel="pending"
           />
           <ManagementCard
-            href={dashPath('/admin/announcements')}
-            icon={Bell}
-            title="Announcements"
-            description="Send team-wide communications"
-          />
-          <ManagementCard
-            href={dashPath('/admin/handbooks')}
-            icon={BookOpen}
-            title="Handbooks"
-            description="Create and manage team handbooks and policy documents"
+            href={dashPath('/admin/birthdays')}
+            icon={Cake}
+            title="Birthdays & Anniversaries"
+            description="Upcoming team celebrations and milestones"
+            stat={stats?.birthdaysThisWeek || null}
+            statLabel="this week"
           />
         </CategorySection>
       </div>
