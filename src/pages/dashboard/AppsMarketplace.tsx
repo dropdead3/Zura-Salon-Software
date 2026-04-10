@@ -283,12 +283,24 @@ function SubscribedAppCard({
   );
 }
 
-function ExploreAppCard({ app }: { app: AppDef }) {
+function ExploreAppCard({ app, available }: { app: AppDef; available?: boolean }) {
   const Icon = app.icon;
   return (
     <Card className={cn('relative border-t-2', app.accentColor)}>
-      <Badge variant="outline" className="absolute top-4 right-4 text-[10px] px-2">
-        <Lock className="w-3 h-3 mr-1" /> Coming Soon
+      <Badge
+        variant="outline"
+        className={cn(
+          "absolute top-4 right-4 text-[10px] px-2",
+          available
+            ? "bg-blue-500/15 text-blue-400 border-blue-500/30"
+            : undefined
+        )}
+      >
+        {available ? (
+          'Available'
+        ) : (
+          <><Lock className="w-3 h-3 mr-1" /> Coming Soon</>
+        )}
       </Badge>
       <CardContent className="p-8 flex flex-col gap-6">
         {/* Header */}
@@ -325,16 +337,24 @@ function ExploreAppCard({ app }: { app: AppDef }) {
         <div className="border-t border-border/40" />
 
         {/* Features */}
-        <FeatureList features={app.features} muted />
+        <FeatureList features={app.features} muted={!available} />
 
         {/* CTA */}
         <div className="flex items-center gap-3 pt-2">
-          <Button variant="outline" size="default" className="font-sans gap-2">
-            <Bell className="w-4 h-4" /> Notify Me
-          </Button>
-          <Button variant="ghost" size="default" className="font-sans text-muted-foreground gap-1">
-            Learn More <ArrowRight className="w-4 h-4" />
-          </Button>
+          {available ? (
+            <Button variant="outline" size="default" className="font-sans gap-2">
+              Contact Sales
+            </Button>
+          ) : (
+            <>
+              <Button variant="outline" size="default" className="font-sans gap-2">
+                <Bell className="w-4 h-4" /> Notify Me
+              </Button>
+              <Button variant="ghost" size="default" className="font-sans text-muted-foreground gap-1">
+                Learn More <ArrowRight className="w-4 h-4" />
+              </Button>
+            </>
+          )}
         </div>
       </CardContent>
     </Card>
@@ -360,6 +380,9 @@ export default function AppsMarketplace() {
     return false;
   };
 
+  const activeApps = SUBSCRIBED_APPS.filter(app => getActiveStatus(app.key));
+  const inactiveApps = SUBSCRIBED_APPS.filter(app => !getActiveStatus(app.key));
+
   return (
     <DashboardLayout>
       <div className={tokens.layout.pageContainer}>
@@ -371,18 +394,30 @@ export default function AppsMarketplace() {
         {/* Your Apps */}
         <section className="space-y-4">
           <h2 className={tokens.heading.section}>Your Apps</h2>
-          <div className="grid gap-6 sm:grid-cols-2">
-            {isLoading
-              ? [1, 2].map((i) => <AppCardSkeleton key={i} />)
-              : SUBSCRIBED_APPS.map((app) => (
-                  <SubscribedAppCard
-                    key={app.key}
-                    app={app}
-                    isActive={getActiveStatus(app.key)}
-                    dashPath={dashPath}
-                  />
-                ))}
-          </div>
+          {isLoading ? (
+            <div className="grid gap-6 sm:grid-cols-2">
+              {[1, 2].map((i) => <AppCardSkeleton key={i} />)}
+            </div>
+          ) : activeApps.length > 0 ? (
+            <div className="grid gap-6 sm:grid-cols-2">
+              {activeApps.map((app) => (
+                <SubscribedAppCard
+                  key={app.key}
+                  app={app}
+                  isActive={true}
+                  dashPath={dashPath}
+                />
+              ))}
+            </div>
+          ) : (
+            <Card>
+              <CardContent className="p-8 text-center">
+                <p className="font-sans text-sm text-muted-foreground">
+                  No apps activated yet. Explore below to get started.
+                </p>
+              </CardContent>
+            </Card>
+          )}
         </section>
 
         {/* Explore */}
@@ -394,6 +429,9 @@ export default function AppsMarketplace() {
             </p>
           </div>
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-2">
+            {inactiveApps.map((app) => (
+              <ExploreAppCard key={app.key} app={app} available />
+            ))}
             {EXPLORE_APPS.map((app) => (
               <ExploreAppCard key={app.key} app={app} />
             ))}
