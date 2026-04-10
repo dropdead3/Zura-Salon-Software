@@ -179,39 +179,35 @@ function SubscribedAppCard({
 }) {
   const Icon = app.icon;
   return (
-    <Card interactive className={cn(isActive && `border-t-2 ${app.accentColor}`)}>
+    <Card interactive className={cn('relative', isActive && `border-t-2 ${app.accentColor}`)}>
+      <Badge
+        variant={isActive ? 'default' : 'secondary'}
+        className="absolute top-4 right-4 text-[10px] px-2"
+      >
+        {isActive ? (
+          <span className="flex items-center gap-1">
+            <CheckCircle2 className="w-3 h-3" /> Active
+          </span>
+        ) : (
+          'Inactive'
+        )}
+      </Badge>
       <CardContent className="p-8 flex flex-col gap-6">
         {/* Header */}
-        <div className="flex items-start justify-between gap-4">
-          <div className="flex items-start gap-4">
-            <div
-              className={cn(
-                'w-14 h-14 rounded-2xl bg-gradient-to-br flex items-center justify-center shrink-0',
-                app.gradient
-              )}
-            >
-              <Icon className="w-7 h-7 text-primary" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2.5">
-                <h3 className={cn(tokens.heading.card)}>{app.name}</h3>
-                <Badge
-                  variant={isActive ? 'default' : 'secondary'}
-                  className="text-[10px] px-2"
-                >
-                  {isActive ? (
-                    <span className="flex items-center gap-1">
-                      <CheckCircle2 className="w-3 h-3" /> Active
-                    </span>
-                  ) : (
-                    'Inactive'
-                  )}
-                </Badge>
-              </div>
-              <p className="font-sans text-[11px] text-muted-foreground/60 tracking-wide mt-0.5">
-                {app.tagline}
-              </p>
-            </div>
+        <div className="flex items-start gap-4">
+          <div
+            className={cn(
+              'w-14 h-14 rounded-2xl bg-gradient-to-br flex items-center justify-center shrink-0',
+              app.gradient
+            )}
+          >
+            <Icon className="w-7 h-7 text-primary" />
+          </div>
+          <div>
+            <h3 className={cn(tokens.heading.card)}>{app.name}</h3>
+            <p className="font-sans text-[11px] text-muted-foreground/60 tracking-wide mt-0.5">
+              {app.tagline}
+            </p>
           </div>
         </div>
 
@@ -248,7 +244,10 @@ function SubscribedAppCard({
 function ExploreAppCard({ app }: { app: AppDef }) {
   const Icon = app.icon;
   return (
-    <Card className={cn('border-t-2', app.accentColor)}>
+    <Card className={cn('relative border-t-2', app.accentColor)}>
+      <Badge variant="outline" className="absolute top-4 right-4 text-[10px] px-2">
+        <Lock className="w-3 h-3 mr-1" /> Coming Soon
+      </Badge>
       <CardContent className="p-8 flex flex-col gap-6">
         {/* Header */}
         <div className="flex items-start gap-4">
@@ -261,12 +260,7 @@ function ExploreAppCard({ app }: { app: AppDef }) {
             <Icon className="w-7 h-7 text-primary" />
           </div>
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2.5">
-              <h3 className={cn(tokens.heading.card)}>{app.name}</h3>
-              <Badge variant="outline" className="text-[10px] px-2">
-                <Lock className="w-3 h-3 mr-1" /> Coming Soon
-              </Badge>
-            </div>
+            <h3 className={cn(tokens.heading.card)}>{app.name}</h3>
             <p className="font-sans text-[11px] text-muted-foreground/60 tracking-wide mt-0.5">
               {app.tagline}
             </p>
