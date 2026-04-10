@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { tokens } from '@/lib/design-tokens';
 import { PLATFORM_NAME } from '@/lib/brand';
 import { QRCodeCanvas } from 'qrcode.react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -114,6 +114,8 @@ const SOCIAL_FIELDS = [
 function GeneralTab() {
   const { effectiveOrganization } = useOrganizationContext();
   const { toast } = useToast();
+  const navigate = useNavigate();
+  const { dashPath } = useOrgDashboardPath();
 
   // Announcement bar
   const { data: announcementSettings, isLoading: annLoading } = useAnnouncementBarSettings();
@@ -397,7 +399,7 @@ function GeneralTab() {
           <Button
             variant="outline"
             className="gap-2"
-            onClick={() => window.location.href = '/dashboard/admin/website-hub'}
+            onClick={() => navigate(dashPath('/admin/website-hub'))}
           >
             <ExternalLink className="w-4 h-4" />
             Open Footer Editor

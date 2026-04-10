@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 import { tokens } from '@/lib/design-tokens';
 import { format, startOfMonth, endOfMonth, subMonths, subDays, startOfWeek, startOfYear, min } from 'date-fns';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
@@ -58,6 +59,7 @@ function computeRange(key: DateRangeType): { from: Date; to: Date } {
 }
 
 export default function ReportsHub() {
+  const { dashPath } = useOrgDashboardPath();
   const today = new Date();
   const [dateRange, setDateRange] = useState<{ from: Date; to: Date }>({
     from: startOfMonth(today),
@@ -90,7 +92,7 @@ export default function ReportsHub() {
         <DashboardPageHeader
           title="Report Generator"
           description="Generate, schedule, and export business reports"
-          backTo="/dashboard/admin/analytics"
+          backTo={dashPath('/admin/analytics')}
           backLabel="Back to Analytics Hub"
           actions={
             <div className="flex flex-wrap items-center gap-3">

@@ -1,5 +1,6 @@
 import { useState, lazy, Suspense } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useDashboardTheme } from '@/contexts/DashboardThemeContext';
@@ -32,7 +33,6 @@ import { useRevenueDisplay } from '@/contexts/RevenueDisplayContext';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { Slider } from '@/components/ui/slider';
-import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 import { PageExplainer } from '@/components/ui/PageExplainer';
 import { useEffect } from 'react';
 
@@ -657,7 +657,7 @@ export function SettingsCategoryDetail({ activeCategory, categoryLabel, onBack }
               <div className="flex flex-col items-center justify-center py-12 text-center">
                 <GraduationCap className="w-12 h-12 text-muted-foreground mb-4" />
                 <p className="text-muted-foreground mb-4">The Program Editor is a complex configuration tool.</p>
-                <Button onClick={() => window.location.href = '/dashboard/admin/program-editor'}>Open Program Editor</Button>
+                <Button onClick={() => navigate(dashPath('/admin/program-editor'))}>Open Program Editor</Button>
               </div>
             </Card>
           )}

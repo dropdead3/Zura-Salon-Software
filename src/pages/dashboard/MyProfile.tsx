@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -66,6 +66,7 @@ const formatSocialHandle = (value: string) => {
 
 export default function MyProfile() {
   const { dashPath } = useOrgDashboardPath();
+  const navigate = useNavigate();
   const { user, refreshRoles } = useAuth();
   const roles = useEffectiveRoles();
   const { isImpersonating, impersonatedUser } = useEffectiveUserContext();
@@ -604,7 +605,7 @@ export default function MyProfile() {
                         variant="outline" 
                         size="sm" 
                         className="shrink-0"
-                        onClick={() => window.location.href = '/dashboard/onboarding'}
+                        onClick={() => navigate(dashPath('/onboarding'))}
                       >
                         <Calendar className="w-4 h-4 mr-2" />
                         Schedule Headshot

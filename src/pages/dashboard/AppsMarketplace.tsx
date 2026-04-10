@@ -20,7 +20,7 @@ import { Button } from '@/components/ui/button';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
-import { useOrganizationApps } from '@/hooks/useOrganizationApps';
+
 import { useConnectEntitlement } from '@/hooks/connect/useConnectEntitlement';
 import { usePayrollEntitlement } from '@/hooks/payroll/usePayrollEntitlement';
 import { useColorBarEntitlement } from '@/hooks/color-bar/useColorBarEntitlement';
@@ -347,12 +347,11 @@ function ExploreAppCard({ app }: { app: AppDef }) {
 
 export default function AppsMarketplace() {
   const { dashPath } = useOrgDashboardPath();
-  const { isLoading: appsLoading } = useOrganizationApps();
   const { isEntitled: connectActive, isLoading: connectLoading } = useConnectEntitlement();
   const { isEntitled: payrollActive, isLoading: payrollLoading } = usePayrollEntitlement();
   const { isEntitled: colorBarActive, isLoading: colorBarLoading } = useColorBarEntitlement();
 
-  const isLoading = appsLoading || connectLoading || payrollLoading || colorBarLoading;
+  const isLoading = connectLoading || payrollLoading || colorBarLoading;
 
   const getActiveStatus = (key: string) => {
     if (key === 'connect') return connectActive;

@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
+import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 import { format, subDays, startOfWeek, endOfWeek, startOfMonth, endOfMonth, subMonths, startOfYear, min } from 'date-fns';
 import { getNextPayDay } from '@/hooks/usePaySchedule';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
@@ -64,6 +65,7 @@ export interface AnalyticsFilters {
 }
 
 export default function AnalyticsHub() {
+  const { dashPath } = useOrgDashboardPath();
   const [searchParams, setSearchParams] = useSearchParams();
   const tabFromUrl = searchParams.get('tab');
   const subTab = searchParams.get('subtab') || undefined;
@@ -349,7 +351,7 @@ export default function AnalyticsHub() {
               )}
 
               <Button variant="outline" size={tokens.button.card} asChild className="gap-2">
-                <Link to="/dashboard/admin/reports">
+                <Link to={dashPath('/admin/reports')}>
                   <FileText className="w-4 h-4" />
                   <span className="hidden lg:inline">Reports</span>
                 </Link>
