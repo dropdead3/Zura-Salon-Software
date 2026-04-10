@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -46,6 +47,7 @@ export function TodaysQueueSection({
   showLocationFilter = true,
 }: TodaysQueueSectionProps) {
   const { dashPath } = useOrgDashboardPath();
+  const { effectiveOrganization } = useOrganizationContext();
   const [internalLocationId, setInternalLocationId] = useState<string>('all');
   const [checkoutAppointment, setCheckoutAppointment] = useState<QueueAppointment | null>(null);
   const [checkoutOpen, setCheckoutOpen] = useState(false);
@@ -341,6 +343,7 @@ export function TodaysQueueSection({
           locationName={selectedLocation?.name || ''}
           locationAddress={(selectedLocation as any)?.address}
           locationPhone={(selectedLocation as any)?.phone}
+          organizationId={effectiveOrganization?.id}
         />
       )}
 

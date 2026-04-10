@@ -61,12 +61,20 @@ export function useCalculateOverageCharge() {
       if (!resolvedServiceId) return null;
 
       // ─── Duplicate charge guard (idempotency) ────────────────
-      const { data: existingCharge } = await supabase
+      let existingChargeQuery = supabase
         .from('checkout_usage_charges')
         .select('id')
         .eq('mix_session_id', sessionId)
-        .eq('appointment_id', appointmentId)
-        .eq('service_name', serviceName ?? '')
+        .eq('appointment_id', appointmentId);
+
+      // Handle null vs empty string: use .is() for null, .eq() for actual values
+      if (serviceName) {
+        existingChargeQuery = existingChargeQuery.eq('service_name', serviceName);
+      } else {
+        existingChargeQuery = existingChargeQuery.is('service_name', null);
+      }
+
+      const { data: existingCharge } = await existingChargeQuery
         .limit(1)
         .maybeSingle();
 

@@ -504,7 +504,23 @@ export default function Schedule() {
       setCheckoutOpen(true);
     }
   };
-  const handleCheckoutConfirm = (tipAmount: number, rebooked: boolean, promoResult?: any, declineReason?: string) => {
+  const handleCheckoutConfirm = async (tipAmount: number, rebooked: boolean, promoResult?: any, declineReason?: string) => {
+    // Persist applied promo if present
+    if (promoResult?.valid && promoResult?.promotion && selectedAppointment) {
+      try {
+        await supabase.from('applied_promotions' as any).insert({
+          organization_id: orgId,
+          appointment_id: selectedAppointment.id,
+          promotion_id: promoResult.promotion.id,
+          promo_code: promoResult.promotion.promo_code,
+          discount_amount: promoResult.calculated_discount ?? 0,
+          discount_type: promoResult.promotion.promotion_type,
+        });
+      } catch (e) {
+        console.error('Failed to persist promo result:', e);
+      }
+    }
+
     handleStatusChange('completed', { 
       rebooked_at_checkout: rebooked, 
       tip_amount: tipAmount,
@@ -838,6 +854,7 @@ export default function Schedule() {
         locationName={selectedLocationData?.name || ''}
         locationAddress={selectedLocationData?.address}
         locationPhone={selectedLocationData?.phone}
+        organizationId={orgId}
         onScheduleNext={handleCheckoutScheduleNext}
         rebookCompleted={checkoutRebookCompleted}
       />
