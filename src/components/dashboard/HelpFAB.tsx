@@ -11,7 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { AIHelpTab } from './help-fab/AIHelpTab';
 import { ChatLeadershipTab } from './help-fab/ChatLeadershipTab';
 import { useConnectEntitlement } from '@/hooks/connect/useConnectEntitlement';
-import { useAuth } from '@/contexts/AuthContext';
+
 
 export function HelpFAB() {
   const [isOpen, setIsOpen] = useState(false);
@@ -19,9 +19,8 @@ export function HelpFAB() {
   const [bookingOpen, setBookingOpen] = useState(false);
   const location = useLocation();
   const { isEntitled: hasConnect } = useConnectEntitlement();
-  const { isPlatformUser } = useAuth();
   
-  const showChatTab = hasConnect || isPlatformUser;
+  const showChatTab = hasConnect;
   const isSchedulePage = location.pathname.includes('/dashboard/schedule');
 
   // Listen for booking popover open/close to hide FAB
