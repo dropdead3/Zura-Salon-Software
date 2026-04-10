@@ -1,18 +1,25 @@
 import { useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams, Navigate } from 'react-router-dom';
 import { Loader2, CheckCircle, XCircle } from 'lucide-react';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { usePayrollConnection, PayrollProvider } from '@/hooks/usePayrollConnection';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
+import { usePayrollEntitlement } from '@/hooks/payroll/usePayrollEntitlement';
 
 
 export default function PayrollCallback() {
   const { dashPath } = useOrgDashboardPath();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const { isEntitled, isLoading: entitlementLoading } = usePayrollEntitlement();
   const { handleCallback, isHandlingCallback, connection } = usePayrollConnection();
+
+  // Gate: redirect if org doesn't have payroll enabled
+  if (!entitlementLoading && !isEntitled) {
+    return <Navigate to={dashPath('/')} replace />;
+  }
 
   const code = searchParams.get('code');
   const state = searchParams.get('state');

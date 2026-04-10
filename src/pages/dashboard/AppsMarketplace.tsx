@@ -23,6 +23,7 @@ import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 import { useOrganizationApps } from '@/hooks/useOrganizationApps';
 import { useConnectEntitlement } from '@/hooks/connect/useConnectEntitlement';
 import { usePayrollEntitlement } from '@/hooks/payroll/usePayrollEntitlement';
+import { useColorBarEntitlement } from '@/hooks/color-bar/useColorBarEntitlement';
 import { Skeleton } from '@/components/ui/skeleton';
 
 /* ------------------------------------------------------------------ */
@@ -346,16 +347,18 @@ function ExploreAppCard({ app }: { app: AppDef }) {
 
 export default function AppsMarketplace() {
   const { dashPath } = useOrgDashboardPath();
-  const { hasApp, isLoading: appsLoading } = useOrganizationApps();
+  const { isLoading: appsLoading } = useOrganizationApps();
   const { isEntitled: connectActive, isLoading: connectLoading } = useConnectEntitlement();
   const { isEntitled: payrollActive, isLoading: payrollLoading } = usePayrollEntitlement();
+  const { isEntitled: colorBarActive, isLoading: colorBarLoading } = useColorBarEntitlement();
 
-  const isLoading = appsLoading || connectLoading || payrollLoading;
+  const isLoading = appsLoading || connectLoading || payrollLoading || colorBarLoading;
 
   const getActiveStatus = (key: string) => {
     if (key === 'connect') return connectActive;
     if (key === 'payroll') return payrollActive;
-    return hasApp(key);
+    if (key === 'backroom') return colorBarActive;
+    return false;
   };
 
   return (

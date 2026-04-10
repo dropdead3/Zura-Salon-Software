@@ -30,6 +30,7 @@ import { useAnalyticsSubtabFavorites } from '@/hooks/useAnalyticsSubtabFavorites
 import { useOrganizationApps } from '@/hooks/useOrganizationApps';
 import { useConnectEntitlement } from '@/hooks/connect/useConnectEntitlement';
 import { usePayrollEntitlement } from '@/hooks/payroll/usePayrollEntitlement';
+import { useColorBarEntitlement } from '@/hooks/color-bar/useColorBarEntitlement';
 import { AccountOwnerOrgSwitcher } from './AccountOwnerOrgSwitcher';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 
@@ -119,6 +120,7 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
   const { apps: activatedApps } = useOrganizationApps();
   const { isEntitled: isConnectEntitled } = useConnectEntitlement();
   const { isEntitled: isPayrollEntitled } = usePayrollEntitlement();
+  const { isEntitled: isColorBarEntitled } = useColorBarEntitlement();
   const { user } = useAuth();
   const { effectiveOrganization } = useOrganizationContext();
   const organizationId = effectiveOrganization?.id;
@@ -567,32 +569,24 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
             }
           }
           
-          // Apps section: only show when org has activated apps
-          // Filter individual app items by their app_key mapping
-          if (sectionId === 'apps') {
-            const APP_KEY_MAP: Record<string, string> = {
-              '/dashboard/admin/color-bar-settings': 'backroom',
-            };
-            filteredItems = filteredItems.filter(item => {
-              // Check organization_apps table for gated apps
-              const appKey = APP_KEY_MAP[item.href];
-              return appKey ? activatedApps.includes(appKey) : true;
-            });
-            shouldShow = filteredItems.length > 0;
-          }
-
           // Unified entitlement-based filtering for gated features
           // Maps href suffixes to their entitlement checks
           const ENTITLEMENT_GATES: Array<{ hrefSuffix: string; entitled: boolean }> = [
             { hrefSuffix: '/my-pay', entitled: isPayrollEntitled && hasPayrollEnrollment },
             { hrefSuffix: '/admin/payroll', entitled: isPayrollEntitled },
             { hrefSuffix: '/admin/connect', entitled: isConnectEntitled },
+            { hrefSuffix: '/admin/color-bar-settings', entitled: isColorBarEntitled },
           ];
 
           filteredItems = filteredItems.filter(item => {
             const gate = ENTITLEMENT_GATES.find(g => item.href.endsWith(g.hrefSuffix));
             return gate ? gate.entitled : true;
           });
+
+          // Apps section: hide if no items remain after entitlement filtering
+          if (sectionId === 'apps') {
+            shouldShow = filteredItems.length > 0;
+          }
           if (filteredItems.length === 0) shouldShow = false;
 
           // Platform section should NEVER show in org dashboard
