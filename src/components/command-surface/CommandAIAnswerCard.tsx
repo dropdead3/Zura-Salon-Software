@@ -74,7 +74,7 @@ function DestinationLink({ dest, query, onNavigate }: { dest: NavDestination; qu
 }
 
 export function CommandAIAnswerCard({ response, isLoading, error, isNavQuestion, navConfidence, destinations = [], onNavigate, onDismiss }: CommandAIAnswerCardProps) {
-  const [expanded, setExpanded] = useState(false);
+  
   const hasDestinations = destinations.length > 0 && onNavigate;
 
   if (!isLoading && !response && !error) return null;
@@ -140,24 +140,9 @@ export function CommandAIAnswerCard({ response, isLoading, error, isNavQuestion,
 
       {/* Response (streaming or complete) */}
       {response && (
-        <>
-          <div className={cn(
-            'prose prose-sm dark:prose-invert max-w-none font-sans transition-opacity duration-200',
-            !expanded && 'line-clamp-4'
-          )}>
-            <ReactMarkdown>{response}</ReactMarkdown>
-          </div>
-          {response.length > 200 && (
-            <button
-              type="button"
-              onClick={() => setExpanded(!expanded)}
-              className="mt-2 font-sans text-xs px-3 py-1 rounded-full bg-muted hover:bg-muted/80 text-muted-foreground transition-colors duration-150"
-              tabIndex={-1}
-            >
-              {expanded ? 'Show less' : 'Show more'}
-            </button>
-          )}
-        </>
+        <div className="prose prose-sm dark:prose-invert max-w-none font-sans transition-opacity duration-200">
+          <ReactMarkdown>{response}</ReactMarkdown>
+        </div>
       )}
 
       {/* Navigation Quick Links */}

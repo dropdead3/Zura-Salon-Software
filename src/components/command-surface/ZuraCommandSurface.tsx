@@ -496,7 +496,7 @@ export function ZuraCommandSurface({ open, onOpenChange, filterNavItems, anchorR
                 top: `${panelTop}px`,
                 left: `${panelLeft}px`,
                 width: maxPanelWidth ? `${maxPanelWidth}px` : 'calc(100vw - 2rem)',
-                maxHeight: `min(560px, calc(100vh - ${panelTop + 40}px))`,
+                maxHeight: `min(720px, calc(100vh - ${panelTop + 40}px))`,
               } : {
                 top: `${godModeOffset}px`,
               }),
