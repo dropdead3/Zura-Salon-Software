@@ -5,7 +5,7 @@
  * See .cursor/rules/navigation-agent.mdc for drill-down and back-to-source contracts.
  *
  * Section architecture (post-consolidation):
- *   main       – Locked top 3 (Command Center, Schedule, Team Chat)
+ *   main       – Locked top items (Command Center, Schedule, Transactions, Appointments)
  *   myTools    – Staff-facing daily tools (stats, pay, training, swaps, rewards)
  *   manage     – Admin hub entry points only (Analytics, Team, Client, Growth, Payroll, Renter)
  *   system     – Admin config (Roles Hub, Settings)
