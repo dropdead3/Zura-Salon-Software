@@ -143,6 +143,7 @@ const AllNotifications = lazyWithRetry(() => import("./pages/dashboard/AllNotifi
 const Changelog = lazyWithRetry(() => import("./pages/dashboard/Changelog"));
 const StylistMixingDashboard = lazyWithRetry(() => import("./pages/dashboard/StylistMixingDashboard"));
 const MetricsGlossary = lazyWithRetry(() => import("./pages/dashboard/MetricsGlossary"));
+const AppsMarketplace = lazyWithRetry(() => import("./pages/dashboard/AppsMarketplace"));
 const PublicBooking = lazyWithRetry(() => import("./pages/PublicBooking"));
 const DayRateBooking = lazyWithRetry(() => import("./pages/DayRateBooking"));
 const ProductDemo = lazyWithRetry(() => import("./pages/ProductDemo"));
@@ -303,6 +304,7 @@ function DashboardRoutes() {
       <Route path="waitlist" element={<ProtectedRoute requiredPermission="view_booking_calendar"><Waitlist /></ProtectedRoute>} />
       <Route path="mixing" element={<ProtectedRoute><StylistMixingDashboard /></ProtectedRoute>} />
       <Route path="team-chat" element={<ProtectedRoute><TeamChat /></ProtectedRoute>} />
+      <Route path="apps" element={<ProtectedRoute><AppsMarketplace /></ProtectedRoute>} />
       <Route path="changelog" element={<ProtectedRoute><Changelog /></ProtectedRoute>} />
       <Route path="campaigns" element={<ProtectedRoute requiredPermission="view_team_overview"><Campaigns /></ProtectedRoute>} />
       <Route path="campaigns/:id" element={<ProtectedRoute requiredPermission="view_team_overview"><CampaignDetail /></ProtectedRoute>} />
