@@ -118,6 +118,7 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
   const internalRef = useRef<HTMLElement>(null);
   const { data: businessSettings } = useBusinessSettings();
   const { data: sidebarLayout } = useSidebarLayout();
+  const { favorites: opsHubFavorites } = useOpsHubFavorites();
   const { groupedFavorites, toggleFavorite: toggleSubtabFavorite } = useAnalyticsSubtabFavorites();
   
   const { isEntitled: isConnectEntitled } = useConnectEntitlement();
