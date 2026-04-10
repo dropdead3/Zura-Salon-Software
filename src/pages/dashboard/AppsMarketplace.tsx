@@ -22,7 +22,7 @@ import { cn } from '@/lib/utils';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 
 import { useConnectEntitlement } from '@/hooks/connect/useConnectEntitlement';
-import { usePayrollEntitlement } from '@/hooks/payroll/usePayrollEntitlement';
+
 import { useColorBarEntitlement } from '@/hooks/color-bar/useColorBarEntitlement';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -77,6 +77,9 @@ const SUBSCRIBED_APPS: AppDef[] = [
     accentColor: 'border-blue-500/40',
     settingsPath: '/team-chat',
   },
+];
+
+const EXPLORE_APPS: AppDef[] = [
   {
     key: 'payroll',
     name: 'Zura Payroll',
@@ -90,12 +93,10 @@ const SUBSCRIBED_APPS: AppDef[] = [
     ],
     icon: DollarSign,
     gradient: 'from-emerald-500/30 to-green-500/30',
-    accentColor: 'border-emerald-500/40',
-    settingsPath: '/admin/payroll',
+    accentColor: 'border-emerald-500/30',
+    comingSoon: true,
+    missedOpportunity: 'Manual payroll costs operators 5+ hours per cycle. Automate it.',
   },
-];
-
-const EXPLORE_APPS: AppDef[] = [
   {
     key: 'marketer',
     name: 'Zura Marketer',
@@ -368,14 +369,12 @@ function ExploreAppCard({ app, available }: { app: AppDef; available?: boolean }
 export default function AppsMarketplace() {
   const { dashPath } = useOrgDashboardPath();
   const { isEntitled: connectActive, isLoading: connectLoading } = useConnectEntitlement();
-  const { isEntitled: payrollActive, isLoading: payrollLoading } = usePayrollEntitlement();
   const { isEntitled: colorBarActive, isLoading: colorBarLoading } = useColorBarEntitlement();
 
-  const isLoading = connectLoading || payrollLoading || colorBarLoading;
+  const isLoading = connectLoading || colorBarLoading;
 
   const getActiveStatus = (key: string) => {
     if (key === 'connect') return connectActive;
-    if (key === 'payroll') return payrollActive;
     if (key === 'backroom') return colorBarActive;
     return false;
   };
