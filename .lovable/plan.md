@@ -1,89 +1,108 @@
 
 
-# Transactions Page Audit — Round 4
+# Dock-to-Checkout Pipeline Audit
 
-## Critical Bug
+## Critical Bugs
 
-### 1. Refund will crash for any non-walk-in transaction — UUID vs text type mismatch
+### 1. Add-ons fetched but never included in checkout totals
 
-`refund_records.client_id` column is type `uuid`. But `phorest_transaction_items.phorest_client_id` stores text strings like `EtPBfY8e6OZJnll38KdapQ` (not UUIDs). The refund adapter in `TransactionDetailSheet` passes `transaction.phorestClientId` (text) directly to `useProcessRefund`, which inserts it into the `uuid` column. Postgres will reject this with a type error on every refund for a client-linked transaction.
+`CheckoutSummarySheet` lines 147-155: `addonTotal` is computed from `booking_addon_events`, but it is **never added** to `discountedSubtotal`, `taxableBase`, `checkoutTotal`, or `grandTotal`. The add-on section renders visually (lines 496-534) with an "Add-On Subtotal" label, but the actual payment summary ignores it entirely. Clients with add-ons are undercharged.
 
-**Fix:** Change `refund_records.client_id` column from `uuid` to `text` via migration. Alternatively, resolve the phorest client ID to a real UUID from a clients/profiles table before inserting — but since the entire transaction system uses phorest IDs as text, changing the column type is simpler and consistent.
+**Fix:** Include `addonTotal` in the checkout math:
+```
+const checkoutTotal = discountedSubtotal + addonTotal + allUsageChargeTotal + tax;
+```
+And update `taxableBase` to include add-ons if they're taxable.
+
+### 2. `organizationId` not passed to `CheckoutSummarySheet` from Schedule page
+
+`Schedule.tsx` line 827-843: The `CheckoutSummarySheet` component accepts an `organizationId` prop (used for promo code validation and billing settings lookup), but the Schedule page **does not pass it**. This means:
+- `PromoCodeInput` never renders (gated behind `organizationId && (...)` on line 574)
+- `useColorBarBillingSettings(undefined)` returns nothing — billing label and tax settings fall back to defaults
+- `useCheckoutUsageCharges(appointmentId)` still works (no org filter), but billing config is broken
+
+**Fix:** Pass `organizationId={effectiveOrganization?.id}` to the `CheckoutSummarySheet` in `Schedule.tsx`.
+
+### 3. Same missing `organizationId` in `TodaysQueueSection`
+
+`TodaysQueueSection.tsx` line 304-344: Same issue — `CheckoutSummarySheet` rendered without `organizationId`. Promo codes and billing settings are broken here too.
+
+**Fix:** Pass `organizationId` prop.
 
 ## Medium Bugs
 
-### 2. `IssueCreditsDialog.handleSubmit` has no try/catch — unhandled rejection on failure
+### 4. Receipt PDF hardcodes `$` — ignores `useFormatCurrency`
 
-Line 75: `await issueCredit.mutateAsync(...)` with no try/catch. If the mutation fails, the promise rejects unhandled and `onOpenChange(false)` on line 83 never fires, but no error feedback appears in-dialog either (toast fires from the hook but may be behind the overlay).
+The checkout UI correctly uses `formatCurrency()` for all monetary displays. But `generateReceiptPDF` (lines 219-398) hardcodes `$${amount.toFixed(2)}` throughout (~10 occurrences). Multi-currency organizations get `$` on receipts regardless of their configured currency.
 
-**Fix:** Wrap in try/catch like `RefundDialog` already does.
+**Fix:** Use `formatCurrency()` (already available in scope) for all receipt PDF monetary values instead of `$${...toFixed(2)}`.
 
-### 3. `GiftCardManager.handleCreate` has no try/catch — same issue
+### 5. Receipt PDF omits add-ons entirely
 
-Line 69: `await createGiftCard.mutateAsync(...)` with no try/catch. On failure, `setIsCreateOpen(false)` and state resets on lines 76-79 never execute, but no inline error is shown.
+The receipt PDF renders Service, Product Charges, Overage Charges, Subtotal, Tax, and Total — but add-on events are never printed. Even if bug #1 is fixed (add-ons included in total), the receipt won't show the individual add-on line items.
 
-**Fix:** Wrap in try/catch; only close dialog and reset state on success.
+**Fix:** Add an "Add-Ons" section to the receipt PDF between Service and Product Charges.
 
-### 4. GiftCard table headers missing `tokens.table.columnHeader`
+### 6. Receipt PDF omits discount/promo line
 
-`GiftCardManager` lines 200-207: raw `<TableHead>Code</TableHead>` etc. without the `tokens.table.columnHeader` class. Per canon, all table column headers must use this token (Aeonik Pro, Title Case, never uppercase).
+If a promo code is applied (`appliedPromo` is set), the discount is included in the total math but never printed on the receipt. The client sees a lower total with no explanation.
 
-**Fix:** Apply `className={tokens.table.columnHeader}` to all `<TableHead>` elements.
+**Fix:** Add a "Discount" line to the receipt when `discount > 0`.
 
-### 5. GiftCard stats cards missing `BlurredAmount` on "Outstanding Balance"
+### 7. Overage charges not taxed correctly in checkout math
 
-Line 109: `{formatCurrency(totalValue)}` is not wrapped in `BlurredAmount`. All monetary values must respect the hide-numbers toggle.
+Line 152: `taxableBase = discountedSubtotal + (productChargeTaxable ? allUsageChargeTotal : 0)`. The `productChargeTaxable` flag controls whether **all** usage charges (both product_cost AND overage) are taxed. But overage charges (allowance-mode surcharges) may have different tax treatment than product cost charges. Currently they're lumped together under one flag.
 
-**Fix:** Wrap in `<BlurredAmount>`.
+**Fix:** Either rename the flag to clarify it covers both charge types, or add a separate `overage_charge_taxable` setting. For now, document the behavior clearly.
 
-### 6. `Appointment Deposit` payment type classified as "card" by default
+### 8. Idempotency guard uses `service_name` equality — empty string vs null mismatch
 
-`classifySegment` in `PaymentMethodBadge` falls through to `return 'card'` for "appointment deposit" since it doesn't match cash, card, credit, debit, voucher, or gift. This misclassifies deposit-type payments. A transaction with `Credit;Appointment Deposit` is correctly classified as "split," but `Appointment Deposit` alone would show as "card" which is wrong.
+`useCalculateOverageCharge` line 69: `.eq('service_name', serviceName ?? '')`. If a charge was inserted with `service_name: null` (line 177: `serviceName ?? null`), the guard checks `.eq('service_name', '')` which won't match `null` in Postgres (`null != ''`). This allows duplicate charges when `serviceName` is undefined.
 
-**Fix:** Add `deposit` classification: `if (s.includes('deposit')) return 'deposit'`. Add corresponding icon and style entries.
+**Fix:** Use `.is('service_name', null)` when `serviceName` is falsy, or standardize to always store empty string instead of null.
 
-### 7. Refund button visible to non-leadership users
+### 9. `handleCheckoutConfirm` doesn't persist promo result
 
-The Void button is correctly gated behind `isLeadership` (line 292-302 of `TransactionDetailSheet`). But the Refund button (line 283-291) is shown to ALL authenticated users. Refunds should also be leadership-gated, or at minimum have a separate permission check.
+`Schedule.tsx` line 507-516: `handleCheckoutConfirm` receives `promoResult` but only passes `tip_amount`, `rebooked_at_checkout`, and `rebook_declined_reason` to `handleStatusChange`. The applied promo code and discount amount are **never persisted** to the database. After checkout, there's no record of which promo was used or how much was discounted.
 
-**Fix:** Gate the Refund button behind `isLeadership` as well (or a dedicated `canRefund` check).
+**Fix:** Either pass promo data through `handleStatusChange` options to the update mutation, or insert a separate `applied_promotions` record.
 
 ## Low Severity
 
-### 8. Receipt XSS vulnerability — client/item names injected as raw HTML
+### 10. `TodaysQueueSection` checkout missing `onScheduleNext` and `rebookCompleted`
 
-`ReceiptPrintView` interpolates `transaction.clientName`, `transaction.stylistName`, and `item.itemName` directly into HTML strings without escaping. A client named `<script>alert('xss')</script>` would execute in the print popup.
+The rebooking gate (next visit recommendation) works on the Schedule page but is completely absent from the Today's Queue checkout path — `onScheduleNext` and `rebookCompleted` are not passed. Clients checked out from the dashboard skip the rebooking capture.
 
-**Fix:** Create a simple `escapeHtml` utility and use it on all interpolated values.
+**Fix:** Wire up `onScheduleNext` and `rebookCompleted` in `TodaysQueueSection`, or document that rebooking is Schedule-only.
 
-### 9. `GiftCardManager` search not debounced
+### 11. Receipt preview popup-blocked silently
 
-`searchCode` state filters the gift cards list on every keystroke. With a small dataset this is fine, but it's inconsistent with the debounced search on the main transactions tab.
+Line 393: `window.open(url, '_blank')` with no null check. If blocked, no feedback.
 
-**Fix:** Apply `useDebounce` for consistency (low priority since filtering is client-side).
+**Fix:** Add toast fallback (same pattern as the Transactions receipt fix from Round 3).
 
 ## Summary
 
 | # | Severity | Issue | Fix |
 |---|----------|-------|-----|
-| 1 | **Critical** | `refund_records.client_id` is uuid but receives text phorest IDs | Migrate column to `text` |
-| 2 | **Medium** | IssueCreditsDialog no try/catch on mutateAsync | Add try/catch |
-| 3 | **Medium** | GiftCardManager.handleCreate no try/catch | Add try/catch |
-| 4 | **Medium** | GiftCard table headers missing column header tokens | Apply `tokens.table.columnHeader` |
-| 5 | **Medium** | Outstanding Balance not wrapped in BlurredAmount | Add BlurredAmount wrapper |
-| 6 | **Low** | "Appointment Deposit" misclassified as "card" | Add deposit classification |
-| 7 | **Medium** | Refund button not permission-gated | Gate behind isLeadership |
-| 8 | **Low** | Receipt HTML injection vulnerability | Escape interpolated values |
-| 9 | **Low** | GiftCard search not debounced | Apply useDebounce |
+| 1 | **Critical** | Add-ons not included in checkout total | Add `addonTotal` to checkout math |
+| 2 | **Critical** | `organizationId` missing from Schedule→Checkout | Pass prop |
+| 3 | **Critical** | `organizationId` missing from TodaysQueue→Checkout | Pass prop |
+| 4 | **Medium** | Receipt PDF hardcodes `$` | Use `formatCurrency()` |
+| 5 | **Medium** | Receipt PDF omits add-on line items | Add add-ons section |
+| 6 | **Medium** | Receipt PDF omits discount/promo line | Add discount line |
+| 7 | **Medium** | Overage + product charges share one tax flag | Clarify or split |
+| 8 | **Medium** | Idempotency guard null vs empty string | Fix null handling |
+| 9 | **Medium** | Applied promo never persisted to DB | Store promo record |
+| 10 | **Low** | TodaysQueue checkout skips rebooking gate | Wire props or document |
+| 11 | **Low** | Receipt preview popup-blocked silently | Add toast fallback |
 
 ### Files to edit
 
 | File | Changes |
 |------|---------|
-| **Migration SQL** | `ALTER TABLE refund_records ALTER COLUMN client_id TYPE text` |
-| `IssueCreditsDialog.tsx` | Add try/catch around mutateAsync |
-| `GiftCardManager.tsx` | Add try/catch; apply `tokens.table.columnHeader`; wrap balance in `BlurredAmount` |
-| `PaymentMethodBadge.tsx` | Add deposit classification + icon/style |
-| `TransactionDetailSheet.tsx` | Gate Refund button behind `isLeadership` |
-| `ReceiptPrintView.tsx` | Add `escapeHtml` utility and escape all interpolated values |
+| `CheckoutSummarySheet.tsx` | Fix add-on math; fix receipt PDF (currency, add-ons, discount, popup); clarify tax logic |
+| `Schedule.tsx` | Pass `organizationId` to CheckoutSummarySheet; persist promo result |
+| `TodaysQueueSection.tsx` | Pass `organizationId`; optionally wire rebooking props |
+| `useCalculateOverageCharge.ts` | Fix idempotency guard null/empty mismatch |
 
