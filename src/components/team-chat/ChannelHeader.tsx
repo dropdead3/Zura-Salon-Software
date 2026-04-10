@@ -35,7 +35,7 @@ export function ChannelHeader() {
         <Button variant="ghost" size="icon" className="lg:hidden mr-2" onClick={toggleSidebar}>
           <Menu className="h-5 w-5" />
         </Button>
-        <span className="text-muted-foreground">Select a channel</span>
+        <span className="text-muted-foreground">Select a conversation</span>
       </div>
     );
   }

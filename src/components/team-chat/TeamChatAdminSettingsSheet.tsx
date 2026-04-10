@@ -30,10 +30,10 @@ export function TeamChatAdminSettingsSheet({ open, onOpenChange }: TeamChatAdmin
       <div className="p-5 pb-3 border-b border-border/40">
         <h2 className="font-display text-sm tracking-wide uppercase flex items-center gap-2">
           <Settings className="h-5 w-5" />
-          Team Chat Settings
+          Connect Settings
         </h2>
         <p className="text-sm text-muted-foreground mt-1">
-          Configure permissions, sections, display options, and auto-join rules
+          Configure permissions, sections, display options, and auto-join rules for Zura Connect
         </p>
       </div>
 
@@ -88,7 +88,7 @@ export function TeamChatSettingsTrigger({ onClick }: { onClick: () => void }) {
       size="icon"
       className="h-8 w-8"
       onClick={onClick}
-      title="Team Chat Settings"
+      title="Connect Settings"
     >
       <Settings className="h-4 w-4" />
     </Button>
