@@ -29,7 +29,7 @@ export const DEFAULT_ICON_COLORS: Record<string, string> = {
   kiosk: '#8B5CF6',
   services: '#14B8A6',
   'retail-products': '#F97316',
-  
+  'zura-config': '#A855F7',
 };
 
 // Section groups for organized layout
@@ -57,7 +57,7 @@ export const SECTION_GROUPS = [
   {
     id: 'platform',
     label: 'Platform',
-    categories: ['system', 'integrations', 'data-import'],
+    categories: ['system', 'integrations', 'data-import', 'zura-config'],
   },
   {
     id: 'communications',
