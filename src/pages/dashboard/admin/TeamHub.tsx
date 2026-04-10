@@ -150,6 +150,8 @@ function CategorySection({ title, children, columns = 3 }: CategorySectionProps)
 export default function TeamHub() {
   const { dashPath } = useOrgDashboardPath();
   const { canInvite } = useInvitableRoles();
+  const { isEntitled: isPayrollEntitled } = usePayrollEntitlement();
+  const { isEntitled: isColorBarEntitled } = useColorBarEntitlement();
   const { data: pendingInvitations } = usePendingInvitations();
   const pendingInvitationCount = pendingInvitations?.length || 0;
 
