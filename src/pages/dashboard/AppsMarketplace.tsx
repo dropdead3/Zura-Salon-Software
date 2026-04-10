@@ -347,12 +347,11 @@ function ExploreAppCard({ app }: { app: AppDef }) {
 
 export default function AppsMarketplace() {
   const { dashPath } = useOrgDashboardPath();
-  const { isLoading: appsLoading } = useOrganizationApps();
   const { isEntitled: connectActive, isLoading: connectLoading } = useConnectEntitlement();
   const { isEntitled: payrollActive, isLoading: payrollLoading } = usePayrollEntitlement();
   const { isEntitled: colorBarActive, isLoading: colorBarLoading } = useColorBarEntitlement();
 
-  const isLoading = appsLoading || connectLoading || payrollLoading || colorBarLoading;
+  const isLoading = connectLoading || payrollLoading || colorBarLoading;
 
   const getActiveStatus = (key: string) => {
     if (key === 'connect') return connectActive;

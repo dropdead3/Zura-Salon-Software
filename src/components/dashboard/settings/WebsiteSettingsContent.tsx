@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { tokens } from '@/lib/design-tokens';
 import { PLATFORM_NAME } from '@/lib/brand';
 import { QRCodeCanvas } from 'qrcode.react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
