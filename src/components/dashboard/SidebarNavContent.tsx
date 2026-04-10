@@ -712,15 +712,6 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
                       {opsHubFavorites.map((fav) => {
                         const resolvedHref = fav.href;
                         const isActive = location.pathname === resolvedHref || location.pathname.startsWith(resolvedHref + '/');
-                        // Map icon names - use a simple lookup from lucide
-                        const SIDEBAR_ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
-                          HeartPulse, DollarSign, Store, ClipboardList: LayoutGrid, Video, MessageSquare: Briefcase,
-                          Armchair: LayoutGrid, CalendarDays: LayoutGrid, Bell: LayoutGrid, CalendarClock: LayoutGrid,
-                          ArrowLeftRight, HandHelping: Users, Users, GraduationCap: TrendingUp, Target: TrendingUp,
-                          Trophy: TrendingUp, StarIcon: TrendingUp, AlertTriangle: Shield, FileText: LayoutGrid,
-                          ShieldAlert: Shield, BookOpen: LayoutGrid, CreditCard: LayoutGrid, Camera: LayoutGrid, Cake: LayoutGrid,
-                        };
-                        const FavIcon = SIDEBAR_ICON_MAP[fav.icon] || LayoutGrid;
                         return (
                           <a
                             key={fav.href}
