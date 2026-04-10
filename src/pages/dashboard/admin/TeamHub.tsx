@@ -675,6 +675,28 @@ export default function TeamHub() {
             />
           )}
         </CategorySection>
+
+        {/* 10. Configuration & Rewards */}
+        <CategorySection title="Configuration & Rewards">
+          {!isFavorited(dashPath('/admin/zura-config')) && (
+            <ManagementCard
+              href={dashPath('/admin/zura-config')}
+              icon={Brain}
+              title="Zura Configuration"
+              description="AI assistant settings and behavior customization"
+              {...favProps('/admin/zura-config', 'Zura Configuration', Brain)}
+            />
+          )}
+          {!isFavorited(dashPath('/admin/points-config')) && (
+            <ManagementCard
+              href={dashPath('/admin/points-config')}
+              icon={Coins}
+              title="Points & Rewards"
+              description="Configure point rules and reward redemptions"
+              {...favProps('/admin/points-config', 'Points & Rewards', Coins)}
+            />
+          )}
+        </CategorySection>
       </div>
     </DashboardLayout>
   );
