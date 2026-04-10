@@ -70,7 +70,11 @@ export function useGroupedTransactions(filters: GroupedTransactionFilters) {
             query = query.eq('location_id', filters.locationId);
           }
           if (filters.paymentMethod && filters.paymentMethod !== 'all') {
-            query = query.ilike('payment_method', `%${filters.paymentMethod}%`);
+            // Map UI filter values to actual database values
+            const dbPattern = filters.paymentMethod === 'card' ? '%Credit%'
+              : filters.paymentMethod === 'cash' ? '%Cash%'
+              : `%${filters.paymentMethod}%`;
+            query = query.ilike('payment_method', dbPattern);
           }
           if (filters.clientSearch) {
             query = query.ilike('client_name', `%${filters.clientSearch}%`);

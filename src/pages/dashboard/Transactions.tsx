@@ -36,6 +36,8 @@ import { BentoGrid } from '@/components/ui/bento-grid';
 import { PageExplainer } from '@/components/ui/PageExplainer';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
+import { useDebounce } from '@/hooks/use-debounce';
 
 
 export default function Transactions() {
@@ -43,6 +45,7 @@ export default function Transactions() {
   const [locationId, setLocationId] = useState<string>('all');
   const [paymentFilter, setPaymentFilter] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const debouncedSearch = useDebounce(searchQuery, 350);
   const [selectedTxn, setSelectedTxn] = useState<GroupedTransaction | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
   
@@ -54,7 +57,7 @@ export default function Transactions() {
     date: selectedDate,
     locationId: locationId !== 'all' ? locationId : undefined,
     paymentMethod: paymentFilter !== 'all' ? paymentFilter : undefined,
-    clientSearch: searchQuery || undefined,
+    clientSearch: debouncedSearch || undefined,
   };
 
   const { data: transactions = [], isLoading, refetch } = useGroupedTransactions(filters);
@@ -210,6 +213,7 @@ export default function Transactions() {
                   <DollarSign className={tokens.card.icon} />
                 </div>
                 <span className={tokens.kpi.label}>Total Revenue</span>
+                <MetricInfoTooltip description="Sum of subtotal + tax for all non-voided transactions on the selected day. Excludes tips." className={tokens.kpi.infoIcon} />
                 <span className={tokens.kpi.value}>
                   <BlurredAmount>{formatCurrency(totalRevenue)}</BlurredAmount>
                 </span>

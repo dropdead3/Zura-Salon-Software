@@ -70,19 +70,22 @@ export function RefundDialog({ transaction, open, onOpenChange }: RefundDialogPr
       return;
     }
 
-    await processRefund.mutateAsync({
-      organizationId: effectiveOrganization.id,
-      clientId: transaction.phorest_client_id || null,
-      transactionId: transaction.transaction_id,
-      transactionDate: transaction.transaction_date,
-      itemName: transaction.item_name,
-      refundAmount: amount,
-      refundType,
-      reason: reason || undefined,
-      notes: notes || undefined,
-    });
-
-    onOpenChange(false);
+    try {
+      await processRefund.mutateAsync({
+        organizationId: effectiveOrganization.id,
+        clientId: transaction.phorest_client_id || null,
+        transactionId: transaction.transaction_id,
+        transactionDate: transaction.transaction_date,
+        itemName: transaction.item_name,
+        refundAmount: amount,
+        refundType,
+        reason: reason || undefined,
+        notes: notes || undefined,
+      });
+      onOpenChange(false);
+    } catch {
+      // Dialog stays open; toast from mutation hook provides error feedback
+    }
   };
 
   const amount = parseFloat(refundAmount) || 0;

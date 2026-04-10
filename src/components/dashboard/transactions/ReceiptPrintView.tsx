@@ -1,8 +1,12 @@
+import { toast } from 'sonner';
 import type { GroupedTransaction } from '@/hooks/useGroupedTransactions';
 
 export function printReceipt(transaction: GroupedTransaction, formatCurrency: (n: number) => string, orgName = 'Salon') {
   const win = window.open('', '_blank', 'width=400,height=600');
-  if (!win) return;
+  if (!win) {
+    toast.error('Popup blocked — please allow popups for this site to print receipts.');
+    return;
+  }
 
   // transaction_date is DATE only — no time component available
   const dateStr = new Date(transaction.transactionDate + 'T12:00:00').toLocaleDateString('en-US', {

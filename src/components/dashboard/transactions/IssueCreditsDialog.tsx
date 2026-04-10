@@ -19,6 +19,7 @@ import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useClientsData } from '@/hooks/useClientsData';
 import { cn } from '@/lib/utils';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
+import { DRILLDOWN_DIALOG_CONTENT_CLASS } from '@/components/dashboard/drilldownDialogStyles';
 
 interface IssueCreditsDialogProps {
   open: boolean;
@@ -87,7 +88,7 @@ export function IssueCreditsDialog({ open, onOpenChange, preselectedClientId }: 
 
   return (
     <Dialog open={open} onOpenChange={handleOpen}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className={DRILLDOWN_DIALOG_CONTENT_CLASS} style={{ left: 'calc(50% + var(--sidebar-offset, 0px))' }}>
         <DialogHeader>
           <DialogTitle>Issue Credits</DialogTitle>
           <DialogDescription>
