@@ -44,7 +44,7 @@ export const SECTION_LABELS: Record<string, string> = {
   main: 'Main',
   myTools: 'My Tools',
   manage: 'Manage',
-  apps: 'Apps',
+  apps: 'Zura Apps',
   system: 'System',
   platform: 'Platform Admin',
   housekeeping: 'Resources',

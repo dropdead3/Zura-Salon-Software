@@ -105,7 +105,7 @@ export const manageNavItems: DashboardNavItem[] = [
 // ─── SECTION: apps (org-activated add-ons) ───────────────────────────────────
 
 export const appsNavItems: DashboardNavItem[] = [
-  { href: '/dashboard/admin/color-bar-settings', label: 'Zura Color Bar', icon: Package, permission: 'manage_settings' },
+  { href: '/dashboard/admin/color-bar-settings', label: 'Color Bar', icon: Package, permission: 'manage_settings' },
   { href: '/dashboard/team-chat', label: 'Zura Connect', labelKey: 'connect', icon: MessageSquare, permission: 'manage_settings' },
 ];
 
