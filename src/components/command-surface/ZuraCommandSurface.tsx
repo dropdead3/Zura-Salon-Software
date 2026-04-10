@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { createPortal } from 'react-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { Search } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { tokens } from '@/lib/design-tokens';
@@ -72,8 +72,9 @@ const NAV_LABEL_MAP = (() => {
   return map;
 })();
 
-const SPRING_OPEN = { type: 'spring' as const, damping: 28, stiffness: 320, mass: 0.7 };
-const SPRING_CLOSE = { type: 'spring' as const, damping: 32, stiffness: 400, mass: 0.6 };
+const SPRING_OPEN_DEFAULT = { type: 'spring' as const, damping: 28, stiffness: 320, mass: 0.7 };
+const SPRING_CLOSE_DEFAULT = { type: 'spring' as const, damping: 32, stiffness: 400, mass: 0.6 };
+const INSTANT = { duration: 0.01 };
 
 export function ZuraCommandSurface({ open, onOpenChange, filterNavItems, anchorRef }: ZuraCommandSurfaceProps) {
   const [query, setQuery] = useState('');
@@ -87,6 +88,8 @@ export function ZuraCommandSurface({ open, onOpenChange, filterNavItems, anchorR
   const { dashPath } = useOrgDashboardPath();
   const lastQueryBeforeCloseRef = useRef('');
   const isMobile = useIsMobile();
+  const prefersReducedMotion = useReducedMotion();
+  const SPRING_OPEN = prefersReducedMotion ? INSTANT : SPRING_OPEN_DEFAULT;
   const { isImpersonating, effectiveOrganization } = useOrganizationContext();
   const orgId = effectiveOrganization?.id;
   const primaryRole = useMemo(() => {
