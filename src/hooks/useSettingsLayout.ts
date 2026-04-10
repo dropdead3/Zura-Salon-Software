@@ -57,7 +57,7 @@ export const SECTION_GROUPS = [
   {
     id: 'platform',
     label: 'Platform',
-    categories: ['system', 'integrations'],
+    categories: ['system', 'integrations', 'data-import'],
   },
   {
     id: 'communications',
