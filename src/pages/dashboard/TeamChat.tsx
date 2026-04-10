@@ -31,7 +31,7 @@ export default function TeamChat() {
     );
   }
 
-  if (!isPlatformUser && !isEntitled) {
+  if (!isEntitled) {
     return (
       <DashboardLayout hideFooter>
         <ConnectSubscriptionGate />
