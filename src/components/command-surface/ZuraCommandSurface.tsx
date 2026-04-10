@@ -474,6 +474,8 @@ export function ZuraCommandSurface({ open, onOpenChange, filterNavItems, anchorR
           {/* Command Surface Panel */}
           <motion.div
             key="cmd-panel"
+            role="dialog"
+            aria-label="Zura Search"
             initial={{ opacity: 0, scale: 0.97 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.97 }}
