@@ -32,8 +32,11 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Info } from 'lucide-react';
 import { PageExplainer } from '@/components/ui/PageExplainer';
+import { usePayrollEntitlement } from '@/hooks/payroll/usePayrollEntitlement';
+import { PayrollSubscriptionGate } from '@/components/payroll/PayrollSubscriptionGate';
 
 export default function Payroll() {
+  const { isEntitled, isLoading: entitlementLoading } = usePayrollEntitlement();
   const { connection, isLoading, isConnected } = usePayrollConnection();
   const [searchParams, setSearchParams] = useSearchParams();
   const activeTab = searchParams.get('tab') || 'overview';
@@ -43,7 +46,7 @@ export default function Payroll() {
     setSearchParams({ tab: value });
   };
 
-  if (isLoading) {
+  if (entitlementLoading || isLoading) {
     return (
       <DashboardLayout>
         <PlatformPageContainer>
@@ -52,6 +55,14 @@ export default function Payroll() {
             <Skeleton className="h-[400px] w-full" />
           </div>
         </PlatformPageContainer>
+      </DashboardLayout>
+    );
+  }
+
+  if (!isEntitled) {
+    return (
+      <DashboardLayout>
+        <PayrollSubscriptionGate />
       </DashboardLayout>
     );
   }

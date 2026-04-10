@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import {
   Package,
   MessageSquare,
+  DollarSign,
   Megaphone,
   Star,
   Phone,
@@ -21,6 +22,7 @@ import { cn } from '@/lib/utils';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 import { useOrganizationApps } from '@/hooks/useOrganizationApps';
 import { useConnectEntitlement } from '@/hooks/connect/useConnectEntitlement';
+import { usePayrollEntitlement } from '@/hooks/payroll/usePayrollEntitlement';
 import { Skeleton } from '@/components/ui/skeleton';
 
 /* ------------------------------------------------------------------ */
@@ -73,6 +75,22 @@ const SUBSCRIBED_APPS: AppDef[] = [
     gradient: 'from-blue-500/30 to-cyan-500/30',
     accentColor: 'border-blue-500/40',
     settingsPath: '/team-chat',
+  },
+  {
+    key: 'payroll',
+    name: 'Zura Payroll',
+    tagline: 'Compensation Intelligence',
+    valueStatement: 'Full-service payroll powered by Gusto — automated taxes, direct deposit, and commission integration.',
+    features: [
+      'Gusto-powered payroll processing',
+      'Automated tax compliance',
+      'Direct deposit & W-2s',
+      'Commission payout integration',
+    ],
+    icon: DollarSign,
+    gradient: 'from-emerald-500/30 to-green-500/30',
+    accentColor: 'border-emerald-500/40',
+    settingsPath: '/admin/payroll',
   },
 ];
 
@@ -330,11 +348,13 @@ export default function AppsMarketplace() {
   const { dashPath } = useOrgDashboardPath();
   const { hasApp, isLoading: appsLoading } = useOrganizationApps();
   const { isEntitled: connectActive, isLoading: connectLoading } = useConnectEntitlement();
+  const { isEntitled: payrollActive, isLoading: payrollLoading } = usePayrollEntitlement();
 
-  const isLoading = appsLoading || connectLoading;
+  const isLoading = appsLoading || connectLoading || payrollLoading;
 
   const getActiveStatus = (key: string) => {
     if (key === 'connect') return connectActive;
+    if (key === 'payroll') return payrollActive;
     return hasApp(key);
   };
 

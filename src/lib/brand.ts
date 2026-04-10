@@ -48,3 +48,10 @@ export const CONNECT_APP_NAME = 'Zura Connect';
 
 /** Short descriptor for the communications add-on. */
 export const CONNECT_DESCRIPTOR = 'Team & Client Communications';
+
+// ── Zura Payroll (Compensation Intelligence) ──────────────────────────────────
+/** Payroll add-on app name. */
+export const PAYROLL_APP_NAME = 'Zura Payroll';
+
+/** Short descriptor for the payroll add-on. */
+export const PAYROLL_DESCRIPTOR = 'Compensation Intelligence';

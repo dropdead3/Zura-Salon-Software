@@ -29,6 +29,7 @@ import { useSidebarLayout, SECTION_LABELS, SECTION_ICONS, DEFAULT_SECTION_ORDER,
 import { useAnalyticsSubtabFavorites } from '@/hooks/useAnalyticsSubtabFavorites';
 import { useOrganizationApps } from '@/hooks/useOrganizationApps';
 import { useConnectEntitlement } from '@/hooks/connect/useConnectEntitlement';
+import { usePayrollEntitlement } from '@/hooks/payroll/usePayrollEntitlement';
 import { AccountOwnerOrgSwitcher } from './AccountOwnerOrgSwitcher';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 
@@ -117,6 +118,7 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
   const { groupedFavorites, toggleFavorite: toggleSubtabFavorite } = useAnalyticsSubtabFavorites();
   const { apps: activatedApps } = useOrganizationApps();
   const { isEntitled: isConnectEntitled } = useConnectEntitlement();
+  const { isEntitled: isPayrollEntitled } = usePayrollEntitlement();
   const { user } = useAuth();
   const { effectiveOrganization } = useOrganizationContext();
   const organizationId = effectiveOrganization?.id;
@@ -583,6 +585,14 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
           if (!hasPayrollEnrollment) {
             filteredItems = filteredItems.filter(item => 
               !item.href.endsWith('/my-pay')
+            );
+            if (filteredItems.length === 0) shouldShow = false;
+          }
+
+          // Hide Payroll admin link if org is not entitled to payroll
+          if (!isPayrollEntitled) {
+            filteredItems = filteredItems.filter(item => 
+              !item.href.endsWith('/admin/payroll')
             );
             if (filteredItems.length === 0) shouldShow = false;
           }
