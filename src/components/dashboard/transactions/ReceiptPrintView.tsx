@@ -1,6 +1,15 @@
 import { toast } from 'sonner';
 import type { GroupedTransaction } from '@/hooks/useGroupedTransactions';
 
+function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 export function printReceipt(transaction: GroupedTransaction, formatCurrency: (n: number) => string, orgName = 'Salon') {
   const win = window.open('', '_blank', 'width=400,height=600');
   if (!win) {
@@ -19,7 +28,7 @@ export function printReceipt(transaction: GroupedTransaction, formatCurrency: (n
     .map(
       (item) => `
       <tr>
-        <td style="padding: 4px 0; font-size: 13px;">${item.itemName}</td>
+        <td style="padding: 4px 0; font-size: 13px;">${escapeHtml(item.itemName)}</td>
         <td style="padding: 4px 0; font-size: 13px; text-align: center;">${item.quantity}</td>
         <td style="padding: 4px 0; font-size: 13px; text-align: right;">${formatCurrency(item.totalAmount)}</td>
       </tr>`
@@ -51,14 +60,14 @@ export function printReceipt(transaction: GroupedTransaction, formatCurrency: (n
 </head>
 <body>
   <div class="header">
-    <h1>${orgName}</h1>
+    <h1>${escapeHtml(orgName)}</h1>
     <p>${dateStr}</p>
   </div>
   <div class="meta">
-    <div><strong>Client:</strong> ${transaction.clientName || 'Walk-in'}</div>
-    ${transaction.stylistName ? `<div><strong>Stylist:</strong> ${transaction.stylistName}</div>` : ''}
-    ${transaction.paymentMethod ? `<div><strong>Payment:</strong> ${transaction.paymentMethod}</div>` : ''}
-    <div><strong>Transaction:</strong> ${transaction.transactionId.slice(0, 12)}…</div>
+    <div><strong>Client:</strong> ${escapeHtml(transaction.clientName || 'Walk-in')}</div>
+    ${transaction.stylistName ? `<div><strong>Stylist:</strong> ${escapeHtml(transaction.stylistName)}</div>` : ''}
+    ${transaction.paymentMethod ? `<div><strong>Payment:</strong> ${escapeHtml(transaction.paymentMethod)}</div>` : ''}
+    <div><strong>Transaction:</strong> ${escapeHtml(transaction.transactionId.slice(0, 12))}…</div>
   </div>
   <table>
     <thead><tr><th>Item</th><th>Qty</th><th>Amount</th></tr></thead>

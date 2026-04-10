@@ -278,17 +278,19 @@ export function TransactionDetailSheet({ transaction, open, onOpenChange }: Tran
 
           {/* Footer actions */}
           <div className={cn(tokens.drawer.footer, 'flex items-center gap-2 flex-wrap')}>
-            {!transaction.isVoided && transaction.refundStatus !== 'completed' && (
+          {!transaction.isVoided && transaction.refundStatus !== 'completed' && (
               <>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="rounded-full gap-1.5"
-                  onClick={() => setRefundOpen(true)}
-                >
-                  <RotateCcw className="w-3.5 h-3.5" />
-                  Refund
-                </Button>
+                {isLeadership && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="rounded-full gap-1.5"
+                    onClick={() => setRefundOpen(true)}
+                  >
+                    <RotateCcw className="w-3.5 h-3.5" />
+                    Refund
+                  </Button>
+                )}
                 {isLeadership && (
                   <Button
                     variant="outline"
