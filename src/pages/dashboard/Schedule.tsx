@@ -838,6 +838,7 @@ export default function Schedule() {
         locationName={selectedLocationData?.name || ''}
         locationAddress={selectedLocationData?.address}
         locationPhone={selectedLocationData?.phone}
+        organizationId={orgId}
         onScheduleNext={handleCheckoutScheduleNext}
         rebookCompleted={checkoutRebookCompleted}
       />
