@@ -792,7 +792,7 @@ function TeamMemberCard({ member, locations, isSuperAdmin, canViewStrikes, strik
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      navigate(`/dashboard/admin/staff-strikes?userId=${member.user_id}`);
+                      navigate(`/dashboard/admin/incidents?tab=strikes&userId=${member.user_id}`);
                     }}
                     className={cn(
                       "p-1.5 rounded-md shadow-sm transition-all hover:scale-110",

@@ -30,7 +30,27 @@ export function useOpsHubFavorites() {
       }
 
       const layout = data?.dashboard_layout as Record<string, unknown> | null;
-      return (layout?.opsHubFavorites as OpsHubFavorite[]) || [];
+      const rawFavorites = (layout?.opsHubFavorites as OpsHubFavorite[]) || [];
+      
+      // Migrate stale /admin/strikes favorites to consolidated route
+      const migrated = rawFavorites.map(fav => {
+        if (fav.href.includes('/admin/strikes')) {
+          return { ...fav, href: fav.href.replace('/admin/strikes', '/admin/incidents?tab=strikes'), label: 'Incidents & Accountability' };
+        }
+        return fav;
+      });
+      
+      // Persist migration if any favorites changed
+      if (migrated.some((f, i) => f.href !== rawFavorites[i]?.href)) {
+        const currentLayout = (data?.dashboard_layout as Record<string, unknown>) || {};
+        const updatedLayout = { ...currentLayout, opsHubFavorites: migrated };
+        await supabase
+          .from('user_preferences')
+          .update({ dashboard_layout: updatedLayout as any })
+          .eq('user_id', user!.id);
+      }
+      
+      return migrated;
     },
     enabled: !!user?.id,
     staleTime: 2 * 60 * 1000,
