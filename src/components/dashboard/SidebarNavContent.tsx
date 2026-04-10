@@ -1,4 +1,8 @@
 import { forwardRef, useEffect, useRef, useImperativeHandle, useMemo, useCallback } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
+import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useTranslation } from 'react-i18next';
 
 import { Link, useLocation, useNavigate } from 'react-router-dom';
@@ -113,7 +117,24 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
   const { groupedFavorites, toggleFavorite: toggleSubtabFavorite } = useAnalyticsSubtabFavorites();
   const { apps: activatedApps } = useOrganizationApps();
   const { isEntitled: isConnectEntitled } = useConnectEntitlement();
-  
+  const { user } = useAuth();
+  const { effectiveOrganization } = useOrganizationContext();
+  const organizationId = effectiveOrganization?.id;
+
+  const { data: hasPayrollEnrollment } = useQuery({
+    queryKey: ['my-payroll-enrollment', user?.id, organizationId],
+    queryFn: async () => {
+      const { count } = await supabase
+        .from('employee_payroll_settings')
+        .select('id', { count: 'exact', head: true })
+        .eq('employee_id', user!.id)
+        .eq('organization_id', organizationId!);
+      return (count ?? 0) > 0;
+    },
+    enabled: !!user?.id && !!organizationId,
+    staleTime: 5 * 60 * 1000,
+  });
+
   // Map section IDs to nav items (for built-in sections)
   // New consolidated sections: myTools (replaces growth+stats), manage (replaces manager), system (replaces adminOnly)
   // Legacy IDs still mapped for backward compat with stored layouts
@@ -389,7 +410,6 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
       {/* Announcements Widget - at the very top (hide when collapsed) */}
       {!isCollapsed && <SidebarAnnouncementsWidget onNavClick={onNavClick} />}
 
-
       {/* Phorest Sync Status Widget moved to header popout */}
 
       {/* Navigation */}
@@ -557,6 +577,14 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
               return appKey ? activatedApps.includes(appKey) : true;
             });
             shouldShow = filteredItems.length > 0;
+          }
+
+          // Hide My Pay if user is not enrolled in payroll
+          if (!hasPayrollEnrollment) {
+            filteredItems = filteredItems.filter(item => 
+              !item.href.endsWith('/my-pay')
+            );
+            if (filteredItems.length === 0) shouldShow = false;
           }
 
           // Platform section should NEVER show in org dashboard
