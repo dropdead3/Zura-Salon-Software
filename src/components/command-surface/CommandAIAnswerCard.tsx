@@ -74,7 +74,7 @@ function DestinationLink({ dest, query, onNavigate }: { dest: NavDestination; qu
 }
 
 export function CommandAIAnswerCard({ response, isLoading, error, isNavQuestion, navConfidence, destinations = [], onNavigate, onDismiss }: CommandAIAnswerCardProps) {
-  const [expanded, setExpanded] = useState(false);
+  
   const hasDestinations = destinations.length > 0 && onNavigate;
 
   if (!isLoading && !response && !error) return null;
