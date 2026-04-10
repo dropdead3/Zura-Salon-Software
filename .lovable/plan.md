@@ -1,87 +1,89 @@
 
 
-# Transactions Page Audit — Round 3
+# Transactions Page Audit — Round 4
 
-## Bugs Found
+## Critical Bug
 
-### 1. Refund/Void buttons hidden when `refundStatus === 'pending'` (Medium)
+### 1. Refund will crash for any non-walk-in transaction — UUID vs text type mismatch
 
-`TransactionDetailSheet.tsx` line 281: the condition `!transaction.isVoided && !transaction.refundStatus` hides **both** Refund and Void buttons when `refundStatus` is any truthy value — including `'pending'`. A pending refund should still allow voiding (leadership) and shouldn't block all actions. The condition should be `refundStatus !== 'completed'` instead of `!refundStatus`.
+`refund_records.client_id` column is type `uuid`. But `phorest_transaction_items.phorest_client_id` stores text strings like `EtPBfY8e6OZJnll38KdapQ` (not UUIDs). The refund adapter in `TransactionDetailSheet` passes `transaction.phorestClientId` (text) directly to `useProcessRefund`, which inserts it into the `uuid` column. Postgres will reject this with a type error on every refund for a client-linked transaction.
 
-**Fix:** Change guard to `!transaction.isVoided && transaction.refundStatus !== 'completed'`.
+**Fix:** Change `refund_records.client_id` column from `uuid` to `text` via migration. Alternatively, resolve the phorest client ID to a real UUID from a clients/profiles table before inserting — but since the entire transaction system uses phorest IDs as text, changing the column type is simpler and consistent.
 
-### 2. `IssueCreditsDialog` missing `DRILLDOWN_DIALOG_CONTENT_CLASS` (Low)
+## Medium Bugs
 
-Uses bare `<DialogContent className="sm:max-w-md">` while `RefundDialog` correctly uses `DRILLDOWN_DIALOG_CONTENT_CLASS`. Same for `GiftCardManager`'s create dialog (line 130: bare `<DialogContent>`). Both should use the shared drilldown class for animation consistency and sidebar offset.
+### 2. `IssueCreditsDialog.handleSubmit` has no try/catch — unhandled rejection on failure
 
-**Fix:** Apply `DRILLDOWN_DIALOG_CONTENT_CLASS` + `style={{ left: 'calc(50% + var(--sidebar-offset, 0px))' }}` to both.
+Line 75: `await issueCredit.mutateAsync(...)` with no try/catch. If the mutation fails, the promise rejects unhandled and `onOpenChange(false)` on line 83 never fires, but no error feedback appears in-dialog either (toast fires from the hook but may be behind the overlay).
 
-### 3. `RefundDialog` doesn't close on mutation error — user left in limbo (Medium)
+**Fix:** Wrap in try/catch like `RefundDialog` already does.
 
-`handleSubmit` calls `processRefund.mutateAsync()` without try/catch. If the mutation throws, the dialog stays open but `isPending` flips back to false with no error feedback visible in the dialog itself (toast may appear behind the overlay). The user sees an enabled "Process Refund" button but doesn't know what failed.
+### 3. `GiftCardManager.handleCreate` has no try/catch — same issue
 
-**Fix:** Wrap in try/catch. On error, keep dialog open and show inline error message (or rely on toast but confirm it appears above the dialog z-index).
+Line 69: `await createGiftCard.mutateAsync(...)` with no try/catch. On failure, `setIsCreateOpen(false)` and state resets on lines 76-79 never execute, but no inline error is shown.
 
-### 4. Payment filter uses `ilike` on raw string — "card" matches "Gift Card" (Medium)
+**Fix:** Wrap in try/catch; only close dialog and reset state on success.
 
-`useGroupedTransactions` line 73: `query.ilike('payment_method', '%card%')` when `paymentFilter === 'card'`. This matches `Credit`, `Cash`, `Appointment Deposit`, and any `Gift Card` entries too since they all contain substrings loosely. Actually checking the data, payment values are `Credit`, `Cash`, `Credit;Credit`, `Credit;Cash`, `Credit;Appointment Deposit`. Filtering for `card` would match nothing (none contain "card" literally). Filtering for `cash` correctly matches `Cash` and `Credit;Cash`.
+### 4. GiftCard table headers missing `tokens.table.columnHeader`
 
-The filter dropdown offers "Card" but the actual data uses "Credit" — so selecting "Card" returns zero results.
+`GiftCardManager` lines 200-207: raw `<TableHead>Code</TableHead>` etc. without the `tokens.table.columnHeader` class. Per canon, all table column headers must use this token (Aeonik Pro, Title Case, never uppercase).
 
-**Fix:** Map the UI filter value to the actual data value. "Card" → `ilike '%Credit%'`, "Cash" → `ilike '%Cash%'`. Or better: derive unique payment methods from data and use those as filter options.
+**Fix:** Apply `className={tokens.table.columnHeader}` to all `<TableHead>` elements.
 
-### 5. `TillBalanceSummary` tip not included in total display (Low)
+### 5. GiftCard stats cards missing `BlurredAmount` on "Outstanding Balance"
 
-`TillBalanceSummary` uses `txn.totalAmount` (which is `subtotal + tax`) but doesn't add `tipAmount`. The detail sheet and receipt both show `totalAmount + tipAmount` as the grand total. The till balance should be consistent — it currently understates by the tip amount.
+Line 109: `{formatCurrency(totalValue)}` is not wrapped in `BlurredAmount`. All monetary values must respect the hide-numbers toggle.
 
-Whether tips belong in "till balance" is a business decision, but the inconsistency between the detail sheet total and the summary total is confusing.
+**Fix:** Wrap in `<BlurredAmount>`.
 
-**Fix:** Either add tipAmount to the till balance total (matching the receipt), or explicitly label the till balance as excluding tips and show tips as a separate line.
+### 6. `Appointment Deposit` payment type classified as "card" by default
 
-### 6. `GiftCardManager` uses `font-medium` on table cells (Low — Canon)
+`classifySegment` in `PaymentMethodBadge` falls through to `return 'card'` for "appointment deposit" since it doesn't match cash, card, credit, debit, voucher, or gift. This misclassifies deposit-type payments. A transaction with `Credit;Appointment Deposit` is correctly classified as "split," but `Appointment Deposit` alone would show as "card" which is wrong.
 
-Line 245, 249: `<TableCell className="font-medium">` for amounts. Per canon, `font-medium` is max allowed weight, so this is technically fine, but these should use `tokens.body.emphasis` for consistency rather than raw `font-medium`.
+**Fix:** Add `deposit` classification: `if (s.includes('deposit')) return 'deposit'`. Add corresponding icon and style entries.
 
-### 7. Search input causes a query on every keystroke (Low)
+### 7. Refund button visible to non-leadership users
 
-`searchQuery` state drives `useGroupedTransactions` filters directly. Every character typed fires a new Supabase query. Should debounce the search input (300-500ms) to reduce unnecessary requests.
+The Void button is correctly gated behind `isLeadership` (line 292-302 of `TransactionDetailSheet`). But the Refund button (line 283-291) is shown to ALL authenticated users. Refunds should also be leadership-gated, or at minimum have a separate permission check.
 
-**Fix:** Add a `useDeferredValue` or `useDebounce` wrapper around `searchQuery` before passing to `filters.clientSearch`.
+**Fix:** Gate the Refund button behind `isLeadership` as well (or a dedicated `canRefund` check).
 
-### 8. `printReceipt` popup-blocked fallback missing (Carried from Round 2)
+## Low Severity
 
-Still no fallback when `window.open` returns `null`. The function silently fails with `if (!win) return;`. Should show a toast: "Popup blocked — please allow popups for this site."
+### 8. Receipt XSS vulnerability — client/item names injected as raw HTML
 
-**Fix:** Add `toast.error(...)` in the `!win` branch.
+`ReceiptPrintView` interpolates `transaction.clientName`, `transaction.stylistName`, and `item.itemName` directly into HTML strings without escaping. A client named `<script>alert('xss')</script>` would execute in the print popup.
 
-### 9. KPI "Total Revenue" doesn't include tip — inconsistent with detail sheet (Observation)
+**Fix:** Create a simple `escapeHtml` utility and use it on all interpolated values.
 
-KPIs compute `totalRevenue = activeTxns.reduce((sum, t) => sum + t.totalAmount, 0)` where `totalAmount = subtotal + tax`. The detail sheet and receipt show `totalAmount + tipAmount` as the grand total. This means the KPI "Total Revenue" excludes tips, which is arguably correct for revenue reporting, but the label doesn't clarify this. A tooltip like "Excludes tips" would prevent confusion.
+### 9. `GiftCardManager` search not debounced
+
+`searchCode` state filters the gift cards list on every keystroke. With a small dataset this is fine, but it's inconsistent with the debounced search on the main transactions tab.
+
+**Fix:** Apply `useDebounce` for consistency (low priority since filtering is client-side).
 
 ## Summary
 
 | # | Severity | Issue | Fix |
 |---|----------|-------|-----|
-| 1 | **Medium** | Actions hidden for pending refunds | Change guard from `!refundStatus` to `refundStatus !== 'completed'` |
-| 2 | **Low** | IssueCreditsDialog + GiftCard create dialog missing drilldown class | Apply `DRILLDOWN_DIALOG_CONTENT_CLASS` |
-| 3 | **Medium** | RefundDialog no error handling on mutateAsync | Add try/catch |
-| 4 | **Medium** | Payment "Card" filter matches nothing (data uses "Credit") | Map filter values to actual data values |
-| 5 | **Low** | Till balance excludes tips; detail sheet includes them | Add tip line or tooltip clarification |
-| 6 | **Low** | GiftCardManager raw `font-medium` instead of token | Use `tokens.body.emphasis` |
-| 7 | **Low** | Search fires query on every keystroke | Debounce input |
-| 8 | **Low** | printReceipt fails silently when popup blocked | Add toast fallback |
-| 9 | **Low** | KPI "Total Revenue" excludes tips without labeling | Add MetricInfoTooltip |
+| 1 | **Critical** | `refund_records.client_id` is uuid but receives text phorest IDs | Migrate column to `text` |
+| 2 | **Medium** | IssueCreditsDialog no try/catch on mutateAsync | Add try/catch |
+| 3 | **Medium** | GiftCardManager.handleCreate no try/catch | Add try/catch |
+| 4 | **Medium** | GiftCard table headers missing column header tokens | Apply `tokens.table.columnHeader` |
+| 5 | **Medium** | Outstanding Balance not wrapped in BlurredAmount | Add BlurredAmount wrapper |
+| 6 | **Low** | "Appointment Deposit" misclassified as "card" | Add deposit classification |
+| 7 | **Medium** | Refund button not permission-gated | Gate behind isLeadership |
+| 8 | **Low** | Receipt HTML injection vulnerability | Escape interpolated values |
+| 9 | **Low** | GiftCard search not debounced | Apply useDebounce |
 
 ### Files to edit
 
 | File | Changes |
 |------|---------|
-| `TransactionDetailSheet.tsx` | Fix action guard for pending refunds |
-| `IssueCreditsDialog.tsx` | Apply drilldown dialog class |
-| `GiftCardManager.tsx` | Apply drilldown dialog class + use tokens for font-medium |
-| `RefundDialog.tsx` | Add try/catch around mutateAsync |
-| `useGroupedTransactions.ts` | Fix payment method filter mapping (card → Credit) |
-| `Transactions.tsx` | Debounce search input; add tooltip to KPI; update payment filter options |
-| `TillBalanceSummary.tsx` | Include tip in total or label as excluding tips |
-| `ReceiptPrintView.tsx` | Add toast on popup blocked |
+| **Migration SQL** | `ALTER TABLE refund_records ALTER COLUMN client_id TYPE text` |
+| `IssueCreditsDialog.tsx` | Add try/catch around mutateAsync |
+| `GiftCardManager.tsx` | Add try/catch; apply `tokens.table.columnHeader`; wrap balance in `BlurredAmount` |
+| `PaymentMethodBadge.tsx` | Add deposit classification + icon/style |
+| `TransactionDetailSheet.tsx` | Gate Refund button behind `isLeadership` |
+| `ReceiptPrintView.tsx` | Add `escapeHtml` utility and escape all interpolated values |
 
