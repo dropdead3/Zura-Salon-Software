@@ -581,21 +581,19 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
             shouldShow = filteredItems.length > 0;
           }
 
-          // Hide My Pay if user is not enrolled in payroll
-          if (!hasPayrollEnrollment) {
-            filteredItems = filteredItems.filter(item => 
-              !item.href.endsWith('/my-pay')
-            );
-            if (filteredItems.length === 0) shouldShow = false;
-          }
+          // Unified entitlement-based filtering for gated features
+          // Maps href suffixes to their entitlement checks
+          const ENTITLEMENT_GATES: Array<{ hrefSuffix: string; entitled: boolean }> = [
+            { hrefSuffix: '/my-pay', entitled: isPayrollEntitled && hasPayrollEnrollment },
+            { hrefSuffix: '/admin/payroll', entitled: isPayrollEntitled },
+            { hrefSuffix: '/admin/connect', entitled: isConnectEntitled },
+          ];
 
-          // Hide Payroll admin link if org is not entitled to payroll
-          if (!isPayrollEntitled) {
-            filteredItems = filteredItems.filter(item => 
-              !item.href.endsWith('/admin/payroll')
-            );
-            if (filteredItems.length === 0) shouldShow = false;
-          }
+          filteredItems = filteredItems.filter(item => {
+            const gate = ENTITLEMENT_GATES.find(g => item.href.endsWith(g.hrefSuffix));
+            return gate ? gate.entitled : true;
+          });
+          if (filteredItems.length === 0) shouldShow = false;
 
           // Platform section should NEVER show in org dashboard
           if (sectionId === 'platform') {

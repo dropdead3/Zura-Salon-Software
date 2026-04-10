@@ -7,6 +7,7 @@ import { parseISO } from 'date-fns';
 import { Banknote } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
+import { usePayrollEntitlement } from '@/hooks/payroll/usePayrollEntitlement';
 
 
 function formatCurrency(amount: number): string {
@@ -20,10 +21,11 @@ function formatCurrency(amount: number): string {
 
 export function PaydayCountdownBanner() {
   const { dashPath } = useOrgDashboardPath();
+  const { isEntitled, isLoading: entitlementLoading } = usePayrollEntitlement();
   const { settings, currentPeriod, estimatedCompensation, isLoading } = useMyPayData();
 
-  // Self-gating: only render if user has payroll settings
-  if (isLoading || !settings) return null;
+  // Self-gating: only render if org has payroll enabled AND user has payroll settings
+  if (isLoading || entitlementLoading || !isEntitled || !settings) return null;
 
   const checkDate = parseISO(currentPeriod.checkDate);
   const now = new Date();

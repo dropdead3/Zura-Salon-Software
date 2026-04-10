@@ -8,11 +8,21 @@ import { EarningsBreakdownCard } from '@/components/dashboard/mypay/EarningsBrea
 import { MyPayStubHistory } from '@/components/dashboard/mypay/MyPayStubHistory';
 import { Loader2, Wallet } from 'lucide-react';
 import { PageExplainer } from '@/components/ui/PageExplainer';
+import { usePayrollEntitlement } from '@/hooks/payroll/usePayrollEntitlement';
+import { Navigate } from 'react-router-dom';
+import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 
 export default function MyPay() {
+  const { dashPath } = useOrgDashboardPath();
+  const { isEntitled, isLoading: entitlementLoading } = usePayrollEntitlement();
   const { isLoading, settings, currentPeriod, salesData, estimatedCompensation, payStubs, error } = useMyPayData();
 
-  if (isLoading) {
+  // Redirect if org doesn't have payroll enabled
+  if (!entitlementLoading && !isEntitled) {
+    return <Navigate to={dashPath('/')} replace />;
+  }
+
+  if (isLoading || entitlementLoading) {
     return (
       <DashboardLayout>
         <div className="px-8 py-8 max-w-[1600px] mx-auto">
