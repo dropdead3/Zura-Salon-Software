@@ -59,7 +59,8 @@ const ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
   HeartPulse, DollarSign, Store, ClipboardList, Video, MessageSquare,
   Armchair, CalendarDays, Bell, CalendarClock, ArrowLeftRight, HandHelping,
   Users, GraduationCap, Target, Trophy, StarIcon, AlertTriangle, FileText,
-  ShieldAlert, BookOpen, CreditCard, Camera, Cake,
+  ShieldAlert, BookOpen, CreditCard, Camera, Cake, Globe, Search, Brain,
+  MessageSquarePlus, UserCheck, GitMerge, UserPlus, Briefcase, Coins,
 };
 
 function getIconName(icon: React.ComponentType<{ className?: string }>): string {
