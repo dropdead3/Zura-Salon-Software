@@ -72,15 +72,18 @@ export function IssueCreditsDialog({ open, onOpenChange, preselectedClientId }: 
     const amountNum = parseFloat(amount);
     if (isNaN(amountNum) || amountNum <= 0) return;
 
-    await issueCredit.mutateAsync({
-      organizationId: effectiveOrganization.id,
-      clientId: selectedClientId,
-      amount: amountNum,
-      balanceType,
-      notes: notes || undefined,
-    });
-
-    onOpenChange(false);
+    try {
+      await issueCredit.mutateAsync({
+        organizationId: effectiveOrganization.id,
+        clientId: selectedClientId,
+        amount: amountNum,
+        balanceType,
+        notes: notes || undefined,
+      });
+      onOpenChange(false);
+    } catch {
+      // Toast is fired by the hook; dialog stays open so user can retry
+    }
   };
 
   const amountNum = parseFloat(amount) || 0;

@@ -1,5 +1,5 @@
 import { Badge } from '@/components/ui/badge';
-import { CreditCard, Banknote, ArrowLeftRight, Ticket } from 'lucide-react';
+import { CreditCard, Banknote, ArrowLeftRight, Ticket, Landmark } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface PaymentMethodBadgeProps {
@@ -15,6 +15,7 @@ const PAYMENT_ICONS: Record<string, React.ElementType> = {
   split: ArrowLeftRight,
   voucher: Ticket,
   gift: Ticket,
+  deposit: Landmark,
 };
 
 const PAYMENT_STYLES: Record<string, string> = {
@@ -24,11 +25,13 @@ const PAYMENT_STYLES: Record<string, string> = {
   split: 'border-purple-300 text-purple-700 bg-purple-50 dark:bg-purple-950 dark:text-purple-400 dark:border-purple-700',
   voucher: 'border-amber-300 text-amber-700 bg-amber-50 dark:bg-amber-950 dark:text-amber-400 dark:border-amber-700',
   gift: 'border-amber-300 text-amber-700 bg-amber-50 dark:bg-amber-950 dark:text-amber-400 dark:border-amber-700',
+  deposit: 'border-indigo-300 text-indigo-700 bg-indigo-50 dark:bg-indigo-950 dark:text-indigo-400 dark:border-indigo-700',
 };
 
 /** Classify a single payment string segment into a base type */
 function classifySegment(segment: string): string {
   const s = segment.trim().toLowerCase();
+  if (s.includes('deposit')) return 'deposit';
   if (s.includes('cash')) return 'cash';
   if (s.includes('card') || s.includes('credit') || s.includes('debit')) return 'card';
   if (s.includes('voucher') || s.includes('gift')) return 'voucher';

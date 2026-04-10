@@ -1,4 +1,6 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
+import { useDebounce } from '@/hooks/use-debounce';
+import { AnimatedBlurredAmount } from '@/components/ui/AnimatedBlurredAmount';
 import { useFormatDate } from '@/hooks/useFormatDate';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -43,6 +45,7 @@ import { DRILLDOWN_DIALOG_CONTENT_CLASS } from '@/components/dashboard/drilldown
 export function GiftCardManager() {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [searchCode, setSearchCode] = useState('');
+  const debouncedSearch = useDebounce(searchCode, 300);
   const [newAmount, setNewAmount] = useState('');
   const [purchaserName, setPurchaserName] = useState('');
   const [recipientName, setRecipientName] = useState('');
@@ -54,11 +57,11 @@ export function GiftCardManager() {
   const createGiftCard = useCreateGiftCard();
   const { formatCurrency, currency } = useFormatCurrency();
 
-  const filteredCards = searchCode
+  const filteredCards = useMemo(() => debouncedSearch
     ? giftCards.filter(gc => 
-        gc.code.toLowerCase().includes(searchCode.toLowerCase().replace(/[^a-z0-9]/gi, ''))
+        gc.code.toLowerCase().includes(debouncedSearch.toLowerCase().replace(/[^a-z0-9]/gi, ''))
       )
-    : giftCards;
+    : giftCards, [debouncedSearch, giftCards]);
 
   const handleCreate = async () => {
     if (!effectiveOrganization) return;
@@ -66,17 +69,20 @@ export function GiftCardManager() {
     const amount = parseFloat(newAmount);
     if (isNaN(amount) || amount <= 0) return;
 
-    const result = await createGiftCard.mutateAsync({
-      organizationId: effectiveOrganization.id,
-      amount,
-      purchaserName: purchaserName || undefined,
-      recipientName: recipientName || undefined,
-    });
-
-    setIsCreateOpen(false);
-    setNewAmount('');
-    setPurchaserName('');
-    setRecipientName('');
+    try {
+      await createGiftCard.mutateAsync({
+        organizationId: effectiveOrganization.id,
+        amount,
+        purchaserName: purchaserName || undefined,
+        recipientName: recipientName || undefined,
+      });
+      setIsCreateOpen(false);
+      setNewAmount('');
+      setPurchaserName('');
+      setRecipientName('');
+    } catch {
+      // Toast is fired by the hook; dialog stays open so user can retry
+    }
   };
 
   const copyCode = (code: string) => {
@@ -106,7 +112,7 @@ export function GiftCardManager() {
         </Card>
         <Card className="p-4">
           <p className="text-sm text-muted-foreground">Outstanding Balance</p>
-          <p className="text-2xl font-display font-medium">{formatCurrency(totalValue)}</p>
+          <AnimatedBlurredAmount value={totalValue} currency={currency} className="text-2xl font-display font-medium" />
         </Card>
       </div>
 
@@ -197,13 +203,13 @@ export function GiftCardManager() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Code</TableHead>
-              <TableHead>Initial</TableHead>
-              <TableHead>Balance</TableHead>
-              <TableHead>Purchaser</TableHead>
-              <TableHead>Recipient</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Created</TableHead>
+              <TableHead className={tokens.table.columnHeader}>Code</TableHead>
+              <TableHead className={tokens.table.columnHeader}>Initial</TableHead>
+              <TableHead className={tokens.table.columnHeader}>Balance</TableHead>
+              <TableHead className={tokens.table.columnHeader}>Purchaser</TableHead>
+              <TableHead className={tokens.table.columnHeader}>Recipient</TableHead>
+              <TableHead className={tokens.table.columnHeader}>Status</TableHead>
+              <TableHead className={tokens.table.columnHeader}>Created</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
