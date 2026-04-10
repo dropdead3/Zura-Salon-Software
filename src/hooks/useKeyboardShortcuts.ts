@@ -1,5 +1,6 @@
 import { useEffect, useCallback, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 
 type ShortcutHandler = () => void;
 
@@ -14,6 +15,7 @@ const SEQUENCE_TIMEOUT = 1000; // 1 second to complete sequence
 
 export function useKeyboardShortcuts() {
   const navigate = useNavigate();
+  const { dashPath } = useOrgDashboardPath();
   const [keySequence, setKeySequence] = useState<string[]>([]);
   const [isHelpOpen, setIsHelpOpen] = useState(false);
 
@@ -23,37 +25,37 @@ export function useKeyboardShortcuts() {
       key: 'g h',
       description: 'Go to Home/Dashboard',
       category: 'Navigation',
-      handler: () => navigate('/dashboard'),
+      handler: () => navigate(dashPath('/')),
     },
     {
       key: 'g s',
       description: 'Go to Schedule',
       category: 'Navigation',
-      handler: () => navigate('/dashboard/schedule'),
+      handler: () => navigate(dashPath('/schedule')),
     },
     {
       key: 'g c',
       description: 'Go to Team Chat',
       category: 'Navigation',
-      handler: () => navigate('/dashboard/team-chat'),
+      handler: () => navigate(dashPath('/team-chat')),
     },
     {
       key: 'g a',
       description: 'Go to Analytics',
       category: 'Navigation',
-      handler: () => navigate('/dashboard/analytics'),
+      handler: () => navigate(dashPath('/analytics')),
     },
     {
       key: 'g t',
       description: 'Go to Team',
       category: 'Navigation',
-      handler: () => navigate('/dashboard/team'),
+      handler: () => navigate(dashPath('/team')),
     },
     {
       key: 'g p',
       description: 'Go to Profile',
       category: 'Navigation',
-      handler: () => navigate('/dashboard/profile'),
+      handler: () => navigate(dashPath('/profile')),
     },
     // Help
     {
