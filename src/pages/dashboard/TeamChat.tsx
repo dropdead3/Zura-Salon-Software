@@ -5,19 +5,41 @@ import { PlatformPresenceProvider } from '@/contexts/PlatformPresenceContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useOrganizations } from '@/hooks/useOrganizations';
+import { useConnectEntitlement } from '@/hooks/connect/useConnectEntitlement';
+import { ConnectSubscriptionGate } from '@/components/connect/ConnectSubscriptionGate';
+import { Loader2 } from 'lucide-react';
 
 export default function TeamChat() {
   const { isPlatformUser } = useAuth();
   const { effectiveOrganization, setSelectedOrganization } = useOrganizationContext();
   const { data: organizations } = useOrganizations();
+  const { isEntitled, isLoading: entitlementLoading } = useConnectEntitlement();
 
   // Auto-select first organization for platform users if none selected
   useEffect(() => {
     if (isPlatformUser && !effectiveOrganization && organizations?.length > 0) {
-      // Use first available organization instead of hardcoded default
       setSelectedOrganization(organizations[0]);
     }
   }, [isPlatformUser, effectiveOrganization, organizations, setSelectedOrganization]);
+
+  // Platform users bypass entitlement gate
+  if (!isPlatformUser && entitlementLoading) {
+    return (
+      <DashboardLayout hideFooter>
+        <div className="flex-1 flex items-center justify-center">
+          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  if (!isPlatformUser && !isEntitled) {
+    return (
+      <DashboardLayout hideFooter>
+        <ConnectSubscriptionGate />
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout hideFooter>

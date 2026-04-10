@@ -45,8 +45,8 @@ export const PAGE_EXPLAINERS: Record<string, PageExplainerEntry> = {
     icon: Calendar,
   },
   'team-chat': {
-    title: 'Team Communication',
-    description: `Real-time messaging for your team. Create channels by topic or location, share updates, and keep conversations organized — all inside ${PLATFORM_NAME}.`,
+    title: 'Zura Connect',
+    description: `Team & client communications hub. Create channels by topic or location, share updates, message clients, and keep every conversation organized — all inside ${PLATFORM_NAME}.`,
     icon: MessageSquare,
   },
 

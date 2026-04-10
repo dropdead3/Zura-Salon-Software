@@ -41,3 +41,10 @@ export const SIMULATION_ENGINE_NAME = 'Zura Simulation Engine';
 
 /** Guardrailed automation layer. */
 export const AUTOMATION_LAYER_NAME = 'Zura Automation';
+
+// ── Zura Connect (Team & Client Communications) ───────────────────────────────
+/** Communications add-on app name. */
+export const CONNECT_APP_NAME = 'Zura Connect';
+
+/** Short descriptor for the communications add-on. */
+export const CONNECT_DESCRIPTOR = 'Team & Client Communications';
