@@ -1,27 +1,31 @@
 
 
-# Move Badges to Top-Right Corner of Cards
+# Add Zura Hiring to Apps Marketplace
 
-## Problem
+## What
 
-The Active/Inactive/Coming Soon badges are currently inline next to the app name in the header row. The user wants them positioned at the absolute top-right corner of each card.
+Add **Zura Hiring** as a new "Explore" app card in the marketplace with compelling copy, feature bullets, and urgency-driven missed-opportunity line.
+
+## App Definition
+
+| Field | Value |
+|-------|-------|
+| key | `hiring` |
+| name | Zura Hiring |
+| tagline | Recruiting + Talent Pipeline |
+| valueStatement | "Stop guessing on hires. Build a talent pipeline that predicts success." |
+| features | Application pipelines and candidate CRM · Interview scoring and trial shift tracking · Auto follow-ups across the funnel · AI success prediction based on comparable hires |
+| missedOpportunity | "The average salon spends 45 days filling a chair. A structured pipeline cuts that in half." |
+| icon | `Users` (from lucide-react) |
+| gradient | `from-indigo-500/30 to-blue-600/30` |
+| accentColor | `border-indigo-500/30` |
+| comingSoon | true |
 
 ## Changes
 
-### `src/pages/dashboard/AppsMarketplace.tsx`
-
-**SubscribedAppCard (lines 182-245)**
-- Add `relative` to the Card or CardContent wrapper
-- Remove the `Badge` from inside the header's `flex items-center gap-2.5` row (lines 198-209)
-- Place the Badge as an absolutely positioned element: `absolute top-4 right-4`
-
-**ExploreAppCard (lines 248-305)**
-- Same pattern: add `relative` to the wrapper
-- Move the "Coming Soon" Badge (lines 266-268) out of the header row and position it `absolute top-4 right-4`
-
-No data model or structural changes — purely repositioning three badge instances within their card containers.
-
 | File | Change |
 |------|--------|
-| `src/pages/dashboard/AppsMarketplace.tsx` | Move badges from inline-with-title to `absolute top-4 right-4` in both card components |
+| `src/pages/dashboard/AppsMarketplace.tsx` | Import `Users` icon; add Zura Hiring entry to `EXPLORE_APPS` array |
+
+Single array entry addition — no structural or layout changes needed. The existing `ExploreAppCard` component and 3-column grid handle the new card automatically.
 
