@@ -47,6 +47,7 @@ export function TodaysQueueSection({
   showLocationFilter = true,
 }: TodaysQueueSectionProps) {
   const { dashPath } = useOrgDashboardPath();
+  const { effectiveOrganization } = useOrganizationContext();
   const [internalLocationId, setInternalLocationId] = useState<string>('all');
   const [checkoutAppointment, setCheckoutAppointment] = useState<QueueAppointment | null>(null);
   const [checkoutOpen, setCheckoutOpen] = useState(false);
@@ -342,6 +343,7 @@ export function TodaysQueueSection({
           locationName={selectedLocation?.name || ''}
           locationAddress={(selectedLocation as any)?.address}
           locationPhone={(selectedLocation as any)?.phone}
+          organizationId={effectiveOrganization?.id}
         />
       )}
 
