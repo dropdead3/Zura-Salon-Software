@@ -348,11 +348,13 @@ export default function AppsMarketplace() {
   const { dashPath } = useOrgDashboardPath();
   const { hasApp, isLoading: appsLoading } = useOrganizationApps();
   const { isEntitled: connectActive, isLoading: connectLoading } = useConnectEntitlement();
+  const { isEntitled: payrollActive, isLoading: payrollLoading } = usePayrollEntitlement();
 
-  const isLoading = appsLoading || connectLoading;
+  const isLoading = appsLoading || connectLoading || payrollLoading;
 
   const getActiveStatus = (key: string) => {
     if (key === 'connect') return connectActive;
+    if (key === 'payroll') return payrollActive;
     return hasApp(key);
   };
 

@@ -1,4 +1,4 @@
-import { Package, Play, MessageSquare } from 'lucide-react';
+import { Package, Play, MessageSquare, DollarSign } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Switch } from '@/components/ui/switch';
 import {
@@ -63,6 +63,9 @@ export function AccountAppsCard({ organizationId }: AccountAppsCardProps) {
 
   const connectFlag = flags?.find((f) => f.flag_key === 'connect_enabled');
   const isConnectEnabled = connectFlag?.org_enabled ?? false;
+
+  const payrollFlag = flags?.find((f) => f.flag_key === 'payroll_enabled');
+  const isPayrollEnabled = payrollFlag?.org_enabled ?? false;
 
   return (
     <PlatformCard variant="glass">
