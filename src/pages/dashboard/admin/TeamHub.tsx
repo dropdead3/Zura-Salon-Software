@@ -170,6 +170,8 @@ interface CategorySectionProps {
 }
 
 function CategorySection({ title, children, columns = 3 }: CategorySectionProps) {
+  const validChildren = React.Children.toArray(children).filter(Boolean);
+  if (validChildren.length === 0) return null;
   return (
     <div className="space-y-3">
       <h2 className="font-display text-sm tracking-wide text-muted-foreground uppercase">{title}</h2>
@@ -177,7 +179,7 @@ function CategorySection({ title, children, columns = 3 }: CategorySectionProps)
         "grid gap-3 items-stretch",
         columns === 2 ? "sm:grid-cols-2" : "sm:grid-cols-2 lg:grid-cols-3"
       )}>
-        {children}
+        {validChildren}
       </div>
     </div>
   );
