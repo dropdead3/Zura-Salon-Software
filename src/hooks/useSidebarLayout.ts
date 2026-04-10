@@ -254,6 +254,7 @@ export function getEffectiveHiddenLinks(
  */
 function migrateLegacySections(stored: SidebarLayoutConfig): SidebarLayoutConfig {
   const migratedSectionOrder = stored.sectionOrder
+    .filter(id => !DEPRECATED_SECTIONS.has(id))
     .map(id => LEGACY_SECTION_MAP[id] || id)
     // Deduplicate (e.g. both 'growth' and 'stats' map to 'myTools')
     .filter((id, index, arr) => arr.indexOf(id) === index);
