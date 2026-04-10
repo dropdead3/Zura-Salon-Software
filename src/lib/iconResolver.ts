@@ -37,6 +37,14 @@ import {
   Tag,
   Folder,
   FileText,
+  Globe,
+  Search,
+  Brain,
+  MessageSquarePlus,
+  UserCheck,
+  GitMerge,
+  UserPlus,
+  Coins,
   type LucideIcon 
 } from 'lucide-react';
 import BoothRentIcon from '@/components/icons/BoothRentIcon';
