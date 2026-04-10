@@ -49,6 +49,7 @@ import {
   Armchair,
   Globe,
   Beaker,
+  BookOpen,
 } from 'lucide-react';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 import { PageExplainer } from '@/components/ui/PageExplainer';
@@ -428,6 +429,12 @@ export default function TeamHub() {
             icon={Coins}
             title="Points & Rewards Config"
             description="Configure point rules and manage reward catalog"
+          />
+          <ManagementCard
+            href={dashPath('/admin/handbooks')}
+            icon={BookOpen}
+            title="Handbooks"
+            description="Create and manage team handbooks and policy documents"
           />
         </CategorySection>
 
