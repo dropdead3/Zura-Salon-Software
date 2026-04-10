@@ -134,7 +134,7 @@ export function ScheduleActionBar({
       <Tooltip>
         <TooltipTrigger asChild>
           <Link
-            to={dashPath('/transactions')}
+            to={dashPath('/appointments-hub?tab=transactions')}
             className="shrink-0 h-8 w-8 flex items-center justify-center rounded-full hover:bg-muted transition-colors"
           >
             <Receipt className="h-4 w-4 text-muted-foreground" />

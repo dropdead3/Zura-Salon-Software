@@ -468,24 +468,17 @@ export const NAV_DESTINATIONS: NavDestination[] = [
 
   // ─── Sub-pages (Analytics Hub children) ───
   {
-    id: 'appointments-hub',
-    label: 'Appointments',
+    id: 'appointments-transactions',
+    label: 'Appointments & Transactions',
     path: '/dashboard/appointments-hub',
-    section: 'Sub-page',
-    parent: 'Analytics Hub',
-    purpose: 'View and manage appointment records.',
-    keywords: ['appointments', 'history', 'appointment history', 'bookings'],
-    roles: LEADERSHIP_PLUS_MANAGER,
-  },
-  {
-    id: 'transactions-page',
-    label: 'Transactions',
-    path: '/dashboard/transactions',
     section: 'Main',
-    parent: null,
-    purpose: 'Daily transaction management, till balance, gift cards, and refunds.',
-    keywords: ['transactions', 'sales', 'till', 'refunds', 'gift cards', 'revenue'],
+    purpose: 'Manage appointment records, daily transactions, till balance, gift cards, and refunds.',
+    keywords: ['appointments', 'transactions', 'history', 'appointment history', 'bookings', 'sales', 'till', 'refunds', 'gift cards', 'revenue'],
     roles: LEADERSHIP_PLUS_MANAGER,
+    tabs: [
+      { id: 'appointments', label: 'Appointments', purpose: 'View and manage appointment records.' },
+      { id: 'transactions', label: 'Transactions', purpose: 'Daily transaction management, till balance, gift cards, and refunds.' },
+    ],
   },
   {
     id: 'sales-analytics',
