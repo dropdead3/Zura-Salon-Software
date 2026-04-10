@@ -224,12 +224,8 @@ export default function TeamHub() {
             title="Client Hub"
             description="Client management, retention, and engagement"
           />
-          <HubGatewayCard
-            href={dashPath('/admin/growth-hub')}
-            icon={Rocket}
-            title="Growth Hub"
-            description="Marketing, campaigns, and growth initiatives"
-          />
+
+
           {isPayrollEntitled && (
             <HubGatewayCard
               href={dashPath('/admin/payroll')}
@@ -262,14 +258,8 @@ export default function TeamHub() {
             title="Website Hub"
             description="Website themes, editor, settings, and content management"
           />
-          {isColorBarEntitled && (
-            <HubGatewayCard
-              href={dashPath('/admin/color-bar-settings')}
-              icon={Beaker}
-              title="Zura Color Bar Hub"
-              description="Color Bar color & supply management, formulas, and station tracking"
-            />
-          )}
+
+
         </CategorySection>
 
         {/* People & Development */}
