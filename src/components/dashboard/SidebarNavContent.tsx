@@ -541,14 +541,8 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
             const APP_KEY_MAP: Record<string, string> = {
               '/dashboard/admin/color-bar-settings': 'backroom',
             };
-            // Feature-flag-based apps (checked via entitlement hooks)
-            const FEATURE_FLAG_APPS: Record<string, boolean> = {
-              '/dashboard/team-chat': isConnectEntitled,
-            };
             filteredItems = filteredItems.filter(item => {
-              // Check feature flag apps first
-              if (item.href in FEATURE_FLAG_APPS) return FEATURE_FLAG_APPS[item.href];
-              // Then check organization_apps table
+              // Check organization_apps table for gated apps
               const appKey = APP_KEY_MAP[item.href];
               return appKey ? activatedApps.includes(appKey) : true;
             });
