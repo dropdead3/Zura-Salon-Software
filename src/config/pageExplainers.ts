@@ -337,13 +337,8 @@ export const PAGE_EXPLAINERS: Record<string, PageExplainerEntry> = {
     icon: Users,
   },
   'incident-reports': {
-    title: 'Incident Reports',
-    description: 'Document and track workplace incidents. Maintain a formal record for compliance, insurance, and process improvement.',
-    icon: AlertTriangle,
-  },
-  'staff-strikes': {
-    title: 'Staff Accountability',
-    description: 'Track policy violations and accountability measures. Maintain transparent records with progressive documentation.',
+    title: 'Incidents & Accountability',
+    description: 'Document workplace incidents and track staff accountability measures. Maintain formal records for compliance, insurance, process improvement, and progressive documentation.',
     icon: AlertTriangle,
   },
   'decision-history': {
