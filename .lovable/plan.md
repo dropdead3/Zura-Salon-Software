@@ -1,82 +1,113 @@
 
 
-# Zura Command Surface — Polish & Bug Fix Pass
+# Zura Command Surface — Authority & Execution Overhaul
 
-## Issues Found
+## Summary
 
-### Bugs
-1. **Ghost text misalignment**: `CommandInput.tsx` line 68 — the ghost overlay uses `absolute top-0 left-0` but the input has no explicit height/line-height coordination. On some font renders the ghost text sits slightly above/below the typed text. Needs matching `leading` and vertical alignment.
-
-2. **Tab key conflict**: When query is empty and user presses Tab, line 366–369 toggles AI mode. But `CommandInput` also handles Tab for typeahead (line 31). When completion exists AND query is non-empty, both handlers fire — the input handler catches it first, which is correct, but when completion is `null` and query is non-empty, Tab does nothing (expected browser behavior lost). Minor, but Tab should only toggle AI mode when query is empty — this works, just documenting.
-
-3. **Scope filter overflow on mobile**: `CommandSearchFilters.tsx` renders 8 filter pills in a `flex` row with no overflow handling. On narrow viewports they'll wrap or overflow. Needs `overflow-x-auto` and `scrollbar-hide`.
-
-4. **Analytics card click area too small**: The inline analytics card (line 108) uses `w-[calc(100%-2rem)] mx-4` — the margin creates dead click zones on the edges that feel broken.
-
-5. **Footer keyboard hints not responsive**: The footer bar (line 638) shows all hints on mobile but they crowd. The "Tab → ask Zura" hint is irrelevant on mobile (no physical keyboard).
-
-### UX Gaps
-6. **No loading state for initial search**: When entity hooks (`useCommandEntitySearch`) are loading on first open, there's no skeleton/indicator — the panel just shows empty proactive state until data arrives.
-
-7. **AI answer card not dismissible**: Once the AI card appears, there's no way to dismiss it without clearing the query or toggling AI mode off. A small close/dismiss button would help.
-
-8. **No results count in footer**: When results exist, showing "X results" in the footer would give confidence the search is working.
-
-9. **Preview panel has no close gesture**: On desktop the preview panel appears for hovered results but can't be dismissed — it just stays until you hover a non-previewable result.
-
-### UI Polish
-10. **Inconsistent border radius**: The main panel uses `rounded-xl` but the AI answer card uses `rounded-xl` too, creating a card-in-card with matching radii. The inner card should use `rounded-lg` for hierarchy.
-
-11. **CommandResultRow action chip always visible**: Line 96 has `(isSelected || true)` — the `|| true` defeats the conditional, making the "Open"/"Run" chip always visible on top results instead of only on hover/select. Should be just `isSelected` or removed entirely if always-visible is intended (remove the dead conditional).
-
-12. **Suggestion panel padding inconsistency**: `CommandSuggestionPanel` uses `px-2` while all other panels use `px-4`/`px-5`.
-
-13. **No `aria-label` on the surface**: The panel has `<span className="sr-only">Search</span>` but the outer `motion.div` has no `role="dialog"` or `aria-label`.
-
-14. **Missing `reduced-motion` compliance**: All animations use spring physics with no `prefers-reduced-motion` fallback.
+Transform the command surface from a passive search panel into an authoritative command center. The changes span visual hierarchy, section naming, contextual intelligence, and adaptive AI integration.
 
 ## Changes
 
-### `CommandInput.tsx`
-- Add `leading-6` to both the input and ghost text overlay for alignment
-- Ensure ghost text container matches input's vertical position precisely
+### 1. `CommandProactiveState.tsx` — Contextual Empty State
 
-### `CommandSearchFilters.tsx`
-- Add `overflow-x-auto scrollbar-hide` to the filter row
-- Hide less common filters on mobile (keep All, Pages, People, Clients)
+Restructure the empty state (no query) into a living command center:
 
-### `CommandResultRow.tsx`
-- Fix line 96: remove `|| true` so action chip shows only on hover/selected
-- Add `will-change-opacity` for smoother chip transitions
+- **Actions** section stays at top — add more role-aware actions (e.g., "Open Roles & Permissions", "Create Report", "Invite Team Member", "View Today's Appointments") pulled from the existing `useProactiveIntelligence` hook + new static action candidates
+- **Today** section: Show contextual signals — time-aware (morning/afternoon greeting), show appointment count, revenue snapshot if available, underbooked staff count. Pull from existing hooks (`useAIInsights`, `useTodayActualRevenue`)
+- **Recent** section (already renamed from "Continue"): Keep as-is — already correctly labeled
+- **Navigate** section: Keep as-is — already correctly labeled from "Quick Paths"
+- **Needs Attention**: Stays — already good
 
-### `CommandInlineAnalyticsCard.tsx`
-- Change outer container from `w-[calc(100%-2rem)] mx-4` to `mx-3` with `w-auto` for consistent edge-to-edge click area
+Visual changes:
+- Action rows get subtle primary tint on icon instead of muted gray
+- "Today" section items show live counts as right-aligned badges (e.g., "6 appointments", "$1,245")
 
-### `CommandAIAnswerCard.tsx`
-- Change `rounded-xl` to `rounded-lg` for inner card hierarchy
-- Add a small dismiss X button in the header row
+### 2. `CommandResultRow.tsx` — Visual Type Differentiation
 
-### `CommandSuggestionRow.tsx`
-- Fix padding: change `px-2` to `px-3` on the panel container to align with other sections
+Make result types instantly distinguishable:
 
-### `ZuraCommandSurface.tsx`
-- Add `role="dialog" aria-label="Search"` to the main panel
-- Add `useReducedMotion` check: when reduced motion is preferred, replace spring transitions with `duration: 0.01`
-- Hide "Tab → ask Zura" keyboard hint on mobile
-- Add subtle result count in footer when results exist
+- **Actions**: Left border `border-l-2 border-primary/40` (currently only on top results), icon gets `text-primary/70` tint, chip label always visible (not just on hover)
+- **Navigation**: Default style — clean, no accent
+- **Entities** (client/team/inventory): Subtle `bg-muted/20` background tint to visually separate from navigation
+- **Help/Learn**: Icon uses ZuraZ icon instead of generic, slight italic on subtitle
+- Remove the type `Badge` on the right side — it's visual noise. The differentiation comes from styling, not labels. Replace with subtle text-only type hint that appears only on hover
 
-### `CommandNoResultsState.tsx`
-- Remove `font-medium` from "Ask Zura" label (max weight rule: `font-medium` is allowed, but it's the only instance in the surface — verify consistency)
+### 3. `CommandResultPanel.tsx` — Top Result Anchoring
+
+Strengthen the "Best Match" group:
+
+- Top result row gets: larger height (`h-16` vs `h-14`), slightly brighter title (`text-foreground` always), subtle `bg-accent/30` background, and the action chip always visible
+- Add a small "Best Match" label above the top result section with a subtle glow/highlight line
+- Second result in "Best Match" remains `h-14` — only the first gets the dominant treatment
+- Rename group label from "Best Match" to "Top Result" when only 1 result, keep "Best Match" when 2+
+
+### 4. `CommandResultRow.tsx` — Inline Action Chips for All Results
+
+Extend action chips beyond just top results:
+
+- All `action` type results: show "Run" chip always
+- All `navigation` type results: show "Open" chip on hover/selected
+- Entity results: show "View" chip on hover/selected
+- Help results: show "Learn" chip on hover/selected
+- Chips use type-specific colors: actions=primary, navigation=muted, entities=blue-ish, help=purple-ish
+
+### 5. `CommandInput.tsx` — Remove AI Toggle Button
+
+Remove the explicit "Z AI" toggle button from the input bar. AI mode becomes adaptive:
+
+- Remove the button entirely
+- When query matches question patterns (`how`, `what`, `why`, etc.), auto-route to AI (already partially implemented via `autoAiTimerRef` in `ZuraCommandSurface.tsx`)
+- Keep `Tab` keyboard shortcut for power users to force AI mode when query is empty
+- Update placeholder text: "Search, run actions, or ask a question..."
+
+### 6. `ZuraCommandSurface.tsx` — Footer Polish
+
+- Replace "ask Zura" keyboard hint with "AI" (shorter, cleaner)
+- Add "⌘↵ run" hint when action-type results exist (not just when action panel is active)
+- On mobile: only show "↵ open" and result count
+
+### 7. `CommandSearchFilters.tsx` — Scope Filter Refinement
+
+- Reorder: All → Actions → Pages → People → Clients → Inventory → Tasks → Appointments
+- Actions moved to position 2 (was position 4) to emphasize execution
+
+### 8. Section Label Mapping (already done in proactive state, ensure consistency in result groups)
+
+Ensure `CommandResultPanel` and `commandTypes.ts` use these labels:
+- `best` → "Top Result" (1 result) / "Top Results" (2+)
+- `action` → "Actions"
+- `navigation` → "Navigate"
+- `team` → "People"
+- `client` → "Clients"
+- `help` → "Learn" (already done for question queries, make permanent)
+- `insight` → "Insights"
 
 ## Files Changed
 
 | File | Change |
 |------|--------|
-| `src/components/command-surface/CommandInput.tsx` | Ghost text alignment fix |
-| `src/components/command-surface/CommandSearchFilters.tsx` | Overflow scroll + mobile filter hiding |
-| `src/components/command-surface/CommandResultRow.tsx` | Fix always-visible action chip |
-| `src/components/command-surface/CommandInlineAnalyticsCard.tsx` | Click area + padding fix |
-| `src/components/command-surface/CommandAIAnswerCard.tsx` | Border radius hierarchy + dismiss button |
-| `src/components/command-surface/CommandSuggestionRow.tsx` | Padding alignment |
-| `src/components/command-surface/ZuraCommandSurface.tsx` | Aria, reduced-motion, footer polish |
+| `src/components/command-surface/CommandProactiveState.tsx` | Contextual empty state with live data, more actions |
+| `src/components/command-surface/CommandResultRow.tsx` | Type-specific visual differentiation, inline action chips for all types, remove Badge |
+| `src/components/command-surface/CommandResultPanel.tsx` | Stronger top result anchoring, dynamic label |
+| `src/components/command-surface/CommandInput.tsx` | Remove AI toggle button, update placeholder |
+| `src/components/command-surface/CommandSearchFilters.tsx` | Reorder scopes: Actions to position 2 |
+| `src/components/command-surface/ZuraCommandSurface.tsx` | Footer hint refinements, mobile cleanup |
+| `src/components/command-surface/commandTypes.ts` | Update GROUP_ORDER labels: "Pages & Features" → "Navigate", "Help & Resources" → "Learn" |
+
+## What This Does NOT Change
+
+- Ranking engine (`searchRanker.ts`) — scores and grouping logic stay the same
+- AI answer card — already has dismiss button, rounded-lg, grounded navigation
+- Preview panel — stays as-is
+- Chain bar — stays as-is
+- Analytics inline card — stays as-is (already shows real data)
+- Action execution panel — stays as-is
+
+## Design Principles Applied
+
+- Execution over discovery: action chips visible, action scope prominent
+- Authority: top result anchoring reduces scanning
+- Adaptive AI: no manual toggle, question detection routes automatically
+- Contextual: empty state shows live signals, not static menus
+- Calm confidence: subtle differentiation through tint, not loud badges
 
