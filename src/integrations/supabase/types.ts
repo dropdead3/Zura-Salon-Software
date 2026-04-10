@@ -16538,13 +16538,6 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "refund_records_client_id_fkey"
-            columns: ["client_id"]
-            isOneToOne: false
-            referencedRelation: "phorest_clients"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "refund_records_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: false
