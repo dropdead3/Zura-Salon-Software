@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { tokens } from '@/lib/design-tokens';
-import { useFormatDate } from '@/hooks/useFormatDate';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import {
   Table,
@@ -34,6 +33,7 @@ import { cn } from '@/lib/utils';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { PaymentMethodBadge } from './PaymentMethodBadge';
 import { printReceipt } from './ReceiptPrintView';
+import { useLeadershipCheck } from '@/hooks/useLeadershipCheck';
 import type { GroupedTransaction } from '@/hooks/useGroupedTransactions';
 
 interface GroupedTransactionTableProps {
@@ -44,7 +44,7 @@ interface GroupedTransactionTableProps {
   onVoid: (txn: GroupedTransaction) => void;
 }
 
-type SortField = 'transactionDate' | 'clientName' | 'totalAmount';
+type SortField = 'clientName' | 'totalAmount' | 'stylistName';
 type SortDirection = 'asc' | 'desc';
 
 export function GroupedTransactionTable({
@@ -55,9 +55,9 @@ export function GroupedTransactionTable({
   onVoid,
 }: GroupedTransactionTableProps) {
   const { formatCurrency } = useFormatCurrency();
-  const { formatDate } = useFormatDate();
-  const [sortField, setSortField] = useState<SortField>('transactionDate');
-  const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
+  const { isLeadership } = useLeadershipCheck();
+  const [sortField, setSortField] = useState<SortField>('clientName');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
 
   const handleSort = (field: SortField) => {
     if (sortField === field) {
@@ -71,24 +71,24 @@ export function GroupedTransactionTable({
   const sorted = [...transactions].sort((a, b) => {
     let cmp = 0;
     switch (sortField) {
-      case 'transactionDate':
-        cmp = new Date(a.transactionDate).getTime() - new Date(b.transactionDate).getTime();
-        break;
       case 'clientName':
         cmp = (a.clientName || '').localeCompare(b.clientName || '');
         break;
       case 'totalAmount':
         cmp = a.totalAmount - b.totalAmount;
         break;
+      case 'stylistName':
+        cmp = (a.stylistName || '').localeCompare(b.stylistName || '');
+        break;
     }
     return sortDirection === 'asc' ? cmp : -cmp;
   });
 
-  const SortHeader = ({ field, children }: { field: SortField; children: React.ReactNode }) => (
+  const SortHeader = ({ field, children, className: extraClass }: { field: SortField; children: React.ReactNode; className?: string }) => (
     <Button
       variant="ghost"
       size={tokens.button.inline}
-      className="-ml-3 h-8 font-medium hover:bg-transparent"
+      className={cn('h-8 font-medium hover:bg-transparent', extraClass)}
       onClick={() => handleSort(field)}
     >
       {children}
@@ -116,8 +116,10 @@ export function GroupedTransactionTable({
       <Card>
         <div className={tokens.empty.container}>
           <Package className={tokens.empty.icon} />
-          <h3 className={tokens.empty.heading}>No transactions found</h3>
-          <p className={tokens.empty.description}>No sales recorded for this date</p>
+          <h3 className={tokens.empty.heading}>No sales for this date</h3>
+          <p className={tokens.empty.description}>
+            Try selecting a different date, or check that transaction data has been synced
+          </p>
         </div>
       </Card>
     );
@@ -154,77 +156,70 @@ export function GroupedTransactionTable({
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className={cn(tokens.table.columnHeader, 'w-[90px]')}>
-                <SortHeader field="transactionDate">Time</SortHeader>
-              </TableHead>
               <TableHead className={cn(tokens.table.columnHeader, 'min-w-[130px]')}>
                 <SortHeader field="clientName">Client</SortHeader>
               </TableHead>
-              <TableHead className={cn(tokens.table.columnHeader, 'w-[120px]')}>Stylist</TableHead>
+              <TableHead className={cn(tokens.table.columnHeader, 'w-[120px]')}>
+                <SortHeader field="stylistName">Stylist</SortHeader>
+              </TableHead>
               <TableHead className={cn(tokens.table.columnHeader, 'w-[80px] text-center')}>Items</TableHead>
               <TableHead className={cn(tokens.table.columnHeader, 'w-[100px]')}>Payment</TableHead>
               <TableHead className={cn(tokens.table.columnHeader, 'w-[100px] text-right')}>
-                <SortHeader field="totalAmount">Total</SortHeader>
+                <SortHeader field="totalAmount" className="justify-end">Total</SortHeader>
               </TableHead>
               <TableHead className={cn(tokens.table.columnHeader, 'w-[90px]')}>Status</TableHead>
               <TableHead className="w-[50px]" />
             </TableRow>
           </TableHeader>
           <TableBody>
-            {sorted.map((txn) => {
-              const time = new Date(txn.transactionDate).toLocaleTimeString('en-US', {
-                hour: 'numeric',
-                minute: '2-digit',
-              });
-
-              return (
-                <TableRow
-                  key={txn.transactionId}
-                  className="cursor-pointer"
-                  onClick={() => onSelectTransaction(txn)}
-                >
-                  <TableCell className={tokens.body.emphasis}>{time}</TableCell>
-                  <TableCell className={tokens.body.emphasis}>
-                    {txn.clientName || 'Walk-in'}
-                  </TableCell>
-                  <TableCell className="text-sm text-muted-foreground">
-                    {txn.stylistName || '—'}
-                  </TableCell>
-                  <TableCell className="text-center">
-                    <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
-                      {txn.items.length}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <PaymentMethodBadge method={txn.paymentMethod} />
-                  </TableCell>
-                  <TableCell className={cn(tokens.body.emphasis, 'text-right tabular-nums')}>
-                    <BlurredAmount>{formatCurrency(txn.totalAmount)}</BlurredAmount>
-                  </TableCell>
-                  <TableCell>{getStatusBadge(txn)}</TableCell>
-                  <TableCell>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                        <Button variant="ghost" size="icon" className="h-8 w-8">
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
-                        <DropdownMenuItem onClick={() => onSelectTransaction(txn)}>
-                          <Eye className="w-4 h-4 mr-2" />
-                          View Details
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => printReceipt(txn, formatCurrency)}>
-                          <Printer className="w-4 h-4 mr-2" />
-                          Print Receipt
-                        </DropdownMenuItem>
-                        {!txn.isVoided && !txn.refundStatus && (
-                          <>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem onClick={() => onRefund(txn)}>
-                              <RotateCcw className="w-4 h-4 mr-2" />
-                              Process Refund
-                            </DropdownMenuItem>
+            {sorted.map((txn) => (
+              <TableRow
+                key={txn.transactionId}
+                className="cursor-pointer"
+                onClick={() => onSelectTransaction(txn)}
+              >
+                <TableCell className={tokens.body.emphasis}>
+                  {txn.clientName || 'Walk-in'}
+                </TableCell>
+                <TableCell className="text-sm text-muted-foreground">
+                  {txn.stylistName || '—'}
+                </TableCell>
+                <TableCell className="text-center">
+                  <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
+                    {txn.items.length}
+                  </Badge>
+                </TableCell>
+                <TableCell>
+                  <PaymentMethodBadge method={txn.paymentMethod} />
+                </TableCell>
+                <TableCell className={cn(tokens.body.emphasis, 'text-right tabular-nums')}>
+                  <BlurredAmount>{formatCurrency(txn.totalAmount)}</BlurredAmount>
+                </TableCell>
+                <TableCell>{getStatusBadge(txn)}</TableCell>
+                <TableCell>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                      <Button variant="ghost" size="icon" className="h-8 w-8">
+                        <MoreHorizontal className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
+                      <DropdownMenuItem onClick={() => onSelectTransaction(txn)}>
+                        <Eye className="w-4 h-4 mr-2" />
+                        View Details
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => printReceipt(txn, formatCurrency)}>
+                        <Printer className="w-4 h-4 mr-2" />
+                        Print Receipt
+                      </DropdownMenuItem>
+                      {!txn.isVoided && !txn.refundStatus && (
+                        <>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem onClick={() => onRefund(txn)}>
+                            <RotateCcw className="w-4 h-4 mr-2" />
+                            Process Refund
+                          </DropdownMenuItem>
+                          {isLeadership && (
                             <DropdownMenuItem
                               onClick={() => onVoid(txn)}
                               className="text-destructive"
@@ -232,14 +227,14 @@ export function GroupedTransactionTable({
                               <Ban className="w-4 h-4 mr-2" />
                               Void Transaction
                             </DropdownMenuItem>
-                          </>
-                        )}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
-                </TableRow>
-              );
-            })}
+                          )}
+                        </>
+                      )}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </TableCell>
+              </TableRow>
+            ))}
           </TableBody>
         </Table>
       </div>

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Sheet,
   SheetContent,
@@ -31,9 +31,8 @@ import {
   Scissors,
   Package,
   MapPin,
-  Clock,
+  Calendar,
   User,
-  Tag,
 } from 'lucide-react';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
@@ -44,6 +43,7 @@ import { PaymentMethodBadge } from './PaymentMethodBadge';
 import { VoidConfirmDialog } from './VoidConfirmDialog';
 import { printReceipt } from './ReceiptPrintView';
 import { RefundDialog } from './RefundDialog';
+import { useLeadershipCheck } from '@/hooks/useLeadershipCheck';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import type { GroupedTransaction } from '@/hooks/useGroupedTransactions';
 import type { TransactionItem } from '@/hooks/useTransactions';
@@ -55,15 +55,28 @@ interface TransactionDetailSheetProps {
   onOpenChange: (open: boolean) => void;
 }
 
+/** Build a summary item_name for multi-item transactions */
+function buildItemSummary(txn: GroupedTransaction): string {
+  if (txn.items.length === 1) return txn.items[0].itemName;
+  const names = txn.items.slice(0, 3).map(i => i.itemName);
+  const suffix = txn.items.length > 3 ? ` +${txn.items.length - 3} more` : '';
+  return `${txn.items.length} items — ${names.join(', ')}${suffix}`;
+}
+
 export function TransactionDetailSheet({ transaction, open, onOpenChange }: TransactionDetailSheetProps) {
   const { formatCurrency } = useFormatCurrency();
   const { formatDate } = useFormatDate();
+  const { isLeadership } = useLeadershipCheck();
   const [voidOpen, setVoidOpen] = useState(false);
   const [refundOpen, setRefundOpen] = useState(false);
 
+  // Close sheet when void/refund completes (stale data prevention)
+  useEffect(() => {
+    if (!voidOpen && !refundOpen) return;
+  }, [voidOpen, refundOpen]);
+
   if (!transaction) return null;
 
-  const date = new Date(transaction.transactionDate);
   const truncatedId = transaction.transactionId.length > 12
     ? transaction.transactionId.slice(0, 12) + '…'
     : transaction.transactionId;
@@ -87,7 +100,7 @@ export function TransactionDetailSheet({ transaction, open, onOpenChange }: Tran
     ? 'border-amber-300 text-amber-700 bg-amber-50 dark:bg-amber-950 dark:text-amber-400'
     : 'border-green-300 text-green-700 bg-green-50 dark:bg-green-950 dark:text-green-400';
 
-  // Build a mock TransactionItem for RefundDialog compatibility
+  // Build refund adapter with summary label
   const refundItem: TransactionItem | null = transaction.items.length > 0
     ? {
         id: transaction.items[0].id,
@@ -96,10 +109,10 @@ export function TransactionDetailSheet({ transaction, open, onOpenChange }: Tran
         phorest_client_id: transaction.phorestClientId,
         client_name: transaction.clientName,
         item_type: transaction.items[0].itemType,
-        item_name: transaction.items[0].itemName,
+        item_name: buildItemSummary(transaction),
         item_category: transaction.items[0].itemCategory,
-        quantity: transaction.items[0].quantity,
-        unit_price: transaction.items[0].unitPrice,
+        quantity: 1,
+        unit_price: transaction.totalAmount,
         total_amount: transaction.totalAmount,
         tax_amount: transaction.taxAmount,
         discount: transaction.discountAmount,
@@ -109,6 +122,19 @@ export function TransactionDetailSheet({ transaction, open, onOpenChange }: Tran
         promotion_id: null,
       }
     : null;
+
+  const handleVoidComplete = () => {
+    setVoidOpen(false);
+    onOpenChange(false);
+  };
+
+  const handleRefundComplete = (isOpen: boolean) => {
+    setRefundOpen(isOpen);
+    if (!isOpen) {
+      // Close parent sheet after refund dialog closes
+      onOpenChange(false);
+    }
+  };
 
   return (
     <>
@@ -157,8 +183,8 @@ export function TransactionDetailSheet({ transaction, open, onOpenChange }: Tran
               </div>
               <div className="flex items-center gap-4 text-xs text-muted-foreground">
                 <span className="flex items-center gap-1">
-                  <Clock className="w-3.5 h-3.5" />
-                  {formatDate(date, 'MMM d, yyyy')} at {date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
+                  <Calendar className="w-3.5 h-3.5" />
+                  {formatDate(new Date(transaction.transactionDate + 'T12:00:00'), 'MMM d, yyyy')}
                 </span>
                 {transaction.branchName && (
                   <span className="flex items-center gap-1">
@@ -271,15 +297,17 @@ export function TransactionDetailSheet({ transaction, open, onOpenChange }: Tran
                   <RotateCcw className="w-3.5 h-3.5" />
                   Refund
                 </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="rounded-full gap-1.5 text-destructive hover:text-destructive"
-                  onClick={() => setVoidOpen(true)}
-                >
-                  <Ban className="w-3.5 h-3.5" />
-                  Void
-                </Button>
+                {isLeadership && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="rounded-full gap-1.5 text-destructive hover:text-destructive"
+                    onClick={() => setVoidOpen(true)}
+                  >
+                    <Ban className="w-3.5 h-3.5" />
+                    Void
+                  </Button>
+                )}
               </>
             )}
             <DropdownMenu>
@@ -309,14 +337,17 @@ export function TransactionDetailSheet({ transaction, open, onOpenChange }: Tran
       <VoidConfirmDialog
         transaction={transaction}
         open={voidOpen}
-        onOpenChange={setVoidOpen}
+        onOpenChange={(isOpen) => {
+          setVoidOpen(isOpen);
+          if (!isOpen) onOpenChange(false);
+        }}
       />
 
       {refundItem && (
         <RefundDialog
           transaction={refundItem}
           open={refundOpen}
-          onOpenChange={setRefundOpen}
+          onOpenChange={handleRefundComplete}
         />
       )}
     </>
