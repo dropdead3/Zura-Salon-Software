@@ -1,39 +1,43 @@
 
 
-# Audit Pass — Cleanup & Keyboard Shortcut Fix
+# Revised Plan: Merge Appointments & Transactions
 
-## Issues Found
+The original plan is solid. Here are additional gaps and refinements discovered during this deeper pass:
 
-### 1. Keyboard shortcuts use hardcoded `/dashboard/...` paths (Bug)
-`useKeyboardShortcuts.ts` navigates to legacy paths like `/dashboard/schedule`, `/dashboard/team-chat`, etc. These hit `LegacyDashboardRedirect`, causing a full page reload and redirect hop. The hook should use `useOrgDashboardPath` to build org-scoped paths.
+## Additional Findings
 
-### 2. `useOrganizationApps` hook is dead code (Cleanup)
-`src/hooks/useOrganizationApps.ts` has zero consumers after previous refactors. It makes a query to `organization_apps` that nothing uses. Should be deleted.
+### 1. `useProactiveIntelligence.ts` — hardcoded `/dashboard/transactions` in role route maps (Gap)
+Lines 57, 64, 71, 121 reference `/dashboard/transactions` across multiple role configurations. These need updating to `/dashboard/appointments-hub` (since both surfaces now live there).
 
-### 3. `OrgAccessDenied` receives hardcoded `/dashboard` path (Minor)
-In `OrgDashboardRoute.tsx` line 70, `myDashboardPath="/dashboard"` is hardcoded. This is acceptable since the user is being denied access to the current org and needs to go back to their own org — `LegacyDashboardRedirect` handles the resolution. No change needed.
+### 2. `synonymRegistry.ts` — `/dashboard/transactions` in `relatedPaths` (Gap)
+Line 140 includes `/dashboard/transactions` in the appointments synonym group's `relatedPaths`. Should be removed (or replaced with the tab-qualified URL).
 
-### 4. `UnifiedLogin` navigates to `/dashboard` after signup (Acceptable)
-Line 391 uses `navigate('/dashboard', { replace: true })`. This is intentional — after login, the user doesn't yet have org context in the URL, so `LegacyDashboardRedirect` resolves it. No change needed.
+### 3. `ScheduleActionBar.tsx` — `dashPath('/transactions')` link (Gap)
+Line 137 links to the transactions page from the schedule toolbar. Should update to `dashPath('/appointments-hub?tab=transactions')`.
 
----
+### 4. Appointments route permission mismatch (Enhancement)
+`appointments-hub` currently requires `view_transactions` permission (line 375 of App.tsx). After merging, this is correct since it now contains transactions — but the original appointments page likely should have been `view_booking_calendar`. Consider requiring *either* permission, or keeping `view_transactions` since that's the stricter gate and transactions are now embedded.
 
-## Proposed Changes
+### 5. `pageExplainers.ts` — needs a combined entry (Minor)
+Both `appointments-hub` and `transactions` likely have separate explainer entries. The merged page should have one combined explainer that covers both tabs.
+
+### 6. Tab persistence via URL (Enhancement)
+The plan mentions `?tab=` sync. Ensure that when navigating from an external link like `?tab=transactions`, the Transactions tab content initializes its own state (date, filters) fresh — no stale state from a previous Appointments tab interaction.
+
+## Updated Change Table
 
 | File | Change |
 |------|--------|
-| `src/hooks/useKeyboardShortcuts.ts` | Import `useOrgDashboardPath`; replace all hardcoded `/dashboard/...` paths with `dashPath(...)` |
-| `src/hooks/useOrganizationApps.ts` | Delete file (zero consumers) |
+| `src/pages/dashboard/AppointmentsHub.tsx` | Merge — add Tabs with Appointments + Transactions content |
+| `src/pages/dashboard/Transactions.tsx` | Delete |
+| `src/App.tsx` | Remove transactions route; add redirect to `appointments-hub?tab=transactions` |
+| `src/config/dashboardNav.ts` | Merge entries → "Appointments & Transactions" |
+| `src/lib/navKnowledgeBase.ts` | Merge entries |
+| `src/lib/queryChainEngine.ts` | Update refund/refunds route |
+| `src/lib/synonymRegistry.ts` | Remove `/dashboard/transactions` from relatedPaths |
+| `src/hooks/useProactiveIntelligence.ts` | Replace `/dashboard/transactions` with `/dashboard/appointments-hub` in all role maps |
+| `src/components/dashboard/schedule/ScheduleActionBar.tsx` | Update link to `appointments-hub?tab=transactions` |
+| `src/config/pageExplainers.ts` | Combine explainer entries |
 
-### Detail: Keyboard shortcuts
-Import `useOrgDashboardPath` and call `const { dashPath } = useOrgDashboardPath()`. Replace each handler:
-- `navigate('/dashboard')` → `navigate(dashPath('/'))`
-- `navigate('/dashboard/schedule')` → `navigate(dashPath('/schedule'))`
-- `navigate('/dashboard/team-chat')` → `navigate(dashPath('/team-chat'))`
-- `navigate('/dashboard/analytics')` → `navigate(dashPath('/analytics'))`
-- `navigate('/dashboard/team')` → `navigate(dashPath('/team'))`
-- `navigate('/dashboard/profile')` → `navigate(dashPath('/profile'))`
-
-### Detail: Dead code removal
-`useOrganizationApps.ts` queries `organization_apps` but has no importers. Safe to delete.
+Everything else from the original plan remains unchanged. No structural or business logic changes — only the page shell, nav references, and cross-links are affected.
 
