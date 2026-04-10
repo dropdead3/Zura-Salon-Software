@@ -1,102 +1,51 @@
 
 
-# Zura Connect — Phase 1: Subscription Gating and Branding
+# Phase 1.5: Quick Activate Toggle + Apps Sidebar Entry for Zura Connect
 
 ## What We Are Building
 
-Transform Team Chat into **Zura Connect**, a subscription add-on within the Zura ecosystem. Phase 1 focuses on branding, entitlement gating, and the subscription infrastructure. External client communications (SMS + in-app) come in Phase 2.
+Two enhancements to the Zura Connect infrastructure:
 
-## Architecture
-
-The existing Color Bar app follows a proven entitlement pattern: `organization_feature_flags` with a key (`backroom_enabled`), a `useColorBarEntitlement` hook, and UI gating. Zura Connect will mirror this exactly with flag key `connect_enabled`.
-
-```text
-organization_feature_flags
-  ├─ flag_key: 'connect_enabled'
-  └─ is_enabled: true/false
-
-useConnectEntitlement()
-  ├─ checks org flag
-  └─ returns { isEntitled, isLoading }
-
-Team Chat page
-  ├─ if entitled → render Zura Connect UI
-  └─ if not → render upgrade/subscription CTA
-```
+1. **Quick activate toggle** in `AccountAppsCard` — platform admins can flip `connect_enabled` on/off directly from the account detail page, matching the pattern used for other app toggles
+2. **Sidebar Apps section entry** — add Zura Connect to the `appsNavItems` array so it appears in the "Apps" sidebar section alongside Color Bar, with conditional visibility based on the `connect_enabled` flag
 
 ## Changes
 
-### 1. Brand tokens — `src/lib/brand.ts`
+### 1. AccountAppsCard — add toggle switch (`src/components/platform/account/AccountAppsCard.tsx`)
 
-Add `CONNECT_APP_NAME = 'Zura Connect'` and `CONNECT_DESCRIPTOR = 'Team & Client Communications'` to the brand token file.
+- Import `Switch` from `@/components/ui/switch`
+- Import `useUpdateOrgFeatureFlag` from `@/hooks/useOrganizationFeatureFlags`
+- Replace the static `PlatformBadge` for Zura Connect with a `Switch` + badge combo (same as Color Bar should eventually have)
+- On toggle: call `useUpdateOrgFeatureFlag` with `flagKey: 'connect_enabled'` and the new value
+- Show loading/disabled state while mutation is in flight
+- Also add the same toggle pattern to the Color Bar row for consistency
 
-### 2. Entitlement hook — `src/hooks/connect/useConnectEntitlement.ts` (new)
+### 2. Sidebar Apps entry (`src/config/dashboardNav.ts`)
 
-Mirrors `useColorBarEntitlement`: queries `organization_feature_flags` for `connect_enabled`. Returns `{ isEntitled, isLoading }`.
+- Add Zura Connect to `appsNavItems`:
+```text
+{ href: '/dashboard/team-chat', label: 'Zura Connect', icon: MessageSquare, permission: 'manage_settings' }
+```
 
-### 3. Subscription gate component — `src/components/connect/ConnectSubscriptionGate.tsx` (new)
+### 3. Remove Connect from Main nav section
 
-Full-page upgrade CTA shown when the org is not entitled. Describes Zura Connect value proposition, shows pricing, and provides an action to activate (initially a "Contact Sales" or "Activate" button that sets the feature flag for testing).
+- Currently Connect sits in `mainNavItems` (line 78). Move it out — it belongs in `appsNavItems` since it's a subscription add-on, not a core nav item. Non-entitled orgs should not see it in the main section.
+- The `ConnectSubscriptionGate` inside the page still serves as a fallback if someone navigates directly.
 
-### 4. Update Team Chat page — `src/pages/dashboard/TeamChat.tsx`
+### 4. Conditional sidebar visibility
 
-Wrap `TeamChatContainer` in entitlement check:
-- If entitled: render chat as-is
-- If not entitled: render `ConnectSubscriptionGate`
-
-### 5. Rebrand UI surfaces
-
-| File | Change |
-|------|--------|
-| `ChannelSidebar.tsx` | Header text from "Team Chat" to brand token `CONNECT_APP_NAME` |
-| `ChannelHeader.tsx` | Update fallback title |
-| `TeamChatAdminSettingsSheet.tsx` | Title → "Zura Connect Settings" |
-| `pageExplainers.ts` | Update `team-chat` entry description |
-
-### 6. Navigation update — `src/config/dashboardNav.ts`
-
-Change sidebar label from `'Team Chat'` to `'Connect'`, update `labelKey` to `'connect'`. Add localization key `"connect": "Connect"` in `en.json`.
-
-### 7. Apps section in sidebar
-
-Add Zura Connect to the Apps section alongside Color Bar, using the `connect_enabled` flag for conditional visibility (same pattern as Color Bar).
-
-### 8. Feature flag seed
-
-Create a migration to insert a `connect_enabled` global feature flag (disabled by default) so orgs can opt in.
-
-### 9. Platform Admin activation
-
-Add Zura Connect to the Account Settings feature toggles (alongside Color Bar's `backroom_enabled`) so platform admins can activate it per organization.
+- The sidebar already conditionally shows the "Apps" section based on whether the org has any active app flags. Verify the existing logic in `SidebarNavContent.tsx` handles this (if both Color Bar and Connect are disabled, the Apps section hides entirely). If not, add `connect_enabled` to the visibility check.
 
 ## Files
 
-| File | Action |
+| File | Change |
 |------|--------|
-| `src/lib/brand.ts` | Add Connect tokens |
-| `src/hooks/connect/useConnectEntitlement.ts` | Create — entitlement hook |
-| `src/components/connect/ConnectSubscriptionGate.tsx` | Create — upgrade gate UI |
-| `src/pages/dashboard/TeamChat.tsx` | Add entitlement check |
-| `src/components/team-chat/ChannelSidebar.tsx` | Rebrand header |
-| `src/components/team-chat/ChannelHeader.tsx` | Rebrand fallback |
-| `src/components/team-chat/TeamChatAdminSettingsSheet.tsx` | Rebrand title |
-| `src/config/dashboardNav.ts` | Update label + labelKey |
-| `src/config/pageExplainers.ts` | Update description |
-| `src/locales/en.json` | Add `connect` key |
-| `supabase/migrations/` | Seed `connect_enabled` feature flag |
-| `src/components/platform/account/AccountSettingsTab.tsx` | Add Connect toggle |
+| `src/components/platform/account/AccountAppsCard.tsx` | Add Switch toggles for Connect and Color Bar activation |
+| `src/config/dashboardNav.ts` | Move Connect from `mainNavItems` to `appsNavItems`; add MessageSquare import |
+| `src/components/dashboard/SidebarNavContent.tsx` | Verify Apps section visibility includes `connect_enabled` (update if needed) |
 
-## What This Does NOT Include (Phase 2+)
+## Not Included
 
-- External client messaging (SMS via Twilio, in-app portal)
-- Client conversation channel type
-- Dedicated billing/Stripe subscription flow (Phase 1 uses feature flags for activation)
-- Separate app shell or routing (stays enhanced existing page per your preference)
-
-## Technical Notes
-
-- No new database tables needed — reuses existing `feature_flags` and `organization_feature_flags` infrastructure
-- No new permissions required — Team Chat permissions carry over
-- The entitlement hook follows the exact same pattern as Color Bar, ensuring consistency
-- Migration is additive only (INSERT into feature_flags)
+- Stripe subscription flow (Phase 2 — will require product/price creation, checkout edge function, and subscription verification)
+- Self-service activation UI for end-org admins
 
