@@ -366,7 +366,7 @@ export default function AppsMarketplace() {
               Expand your capabilities with purpose-built tools.
             </p>
           </div>
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-2">
             {EXPLORE_APPS.map((app) => (
               <ExploreAppCard key={app.key} app={app} />
             ))}
