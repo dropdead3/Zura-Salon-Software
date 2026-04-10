@@ -90,6 +90,8 @@ const CHART_COLORS = [
 ];
 
 export default function SalesDashboard() {
+  const navigate = useNavigate();
+  const { dashPath } = useOrgDashboardPath();
   const { formatDate } = useFormatDate();
   const [dateRange, setDateRange] = useState<DateRange>('today');
   const [locationFilter, setLocationFilter] = useState<string>('all');
@@ -230,8 +232,7 @@ export default function SalesDashboard() {
 
   // Handle quick link from Phorest Staff tab
   const handleStaffLink = (staff: PhorestStaffData) => {
-    // Navigate to Phorest settings for manual linking
-    window.location.href = '/dashboard/admin/phorest-settings';
+    navigate(dashPath('/admin/phorest-settings'));
   };
 
   // Handle suggestion link
