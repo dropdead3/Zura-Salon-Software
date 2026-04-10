@@ -29,7 +29,7 @@ export function CommandSearchFilters({ activeScope, onScopeChange }: CommandSear
           type="button"
           onClick={() => onScopeChange(scope.value)}
           className={cn(
-            'h-6 px-2.5 rounded-full text-xs font-sans font-medium transition-colors duration-150 shrink-0',
+            'h-6 px-2.5 rounded-full text-xs font-sans font-medium transition-colors duration-150 shrink-0 inline-flex items-center',
             idx >= 5 && 'hidden sm:inline-flex',
             activeScope === scope.value
               ? 'bg-muted text-foreground'
