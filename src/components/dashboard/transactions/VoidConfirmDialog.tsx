@@ -1,7 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   AlertDialog,
-  AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
@@ -9,12 +8,13 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { AlertTriangle, Loader2 } from 'lucide-react';
 import { useVoidTransaction } from '@/hooks/useVoidTransaction';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
-import { DRILLDOWN_DIALOG_CONTENT_CLASS, DRILLDOWN_OVERLAY_CLASS } from '@/components/dashboard/drilldownDialogStyles';
+import { DRILLDOWN_DIALOG_CONTENT_CLASS } from '@/components/dashboard/drilldownDialogStyles';
 import { tokens } from '@/lib/design-tokens';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import type { GroupedTransaction } from '@/hooks/useGroupedTransactions';
@@ -30,14 +30,23 @@ export function VoidConfirmDialog({ transaction, open, onOpenChange }: VoidConfi
   const voidMutation = useVoidTransaction();
   const { formatCurrency } = useFormatCurrency();
 
+  // Reset reason when dialog opens
+  useEffect(() => {
+    if (open) setReason('');
+  }, [open]);
+
   const handleVoid = async () => {
     if (!transaction) return;
-    await voidMutation.mutateAsync({
-      transactionId: transaction.transactionId,
-      reason,
-    });
-    setReason('');
-    onOpenChange(false);
+    try {
+      await voidMutation.mutateAsync({
+        transactionId: transaction.transactionId,
+        reason,
+      });
+      setReason('');
+      onOpenChange(false);
+    } catch {
+      // Toast is handled by the mutation's onError — dialog stays open for retry
+    }
   };
 
   return (
@@ -80,15 +89,17 @@ export function VoidConfirmDialog({ transaction, open, onOpenChange }: VoidConfi
         </div>
 
         <AlertDialogFooter className="px-5 pb-5 pt-0">
-          <AlertDialogCancel className="rounded-full">Cancel</AlertDialogCancel>
-          <AlertDialogAction
+          <AlertDialogCancel className="rounded-full" disabled={voidMutation.isPending}>
+            Cancel
+          </AlertDialogCancel>
+          <Button
             onClick={handleVoid}
             disabled={!reason.trim() || voidMutation.isPending}
             className="rounded-full bg-destructive text-destructive-foreground hover:bg-destructive/90"
           >
             {voidMutation.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
             Void Transaction
-          </AlertDialogAction>
+          </Button>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>

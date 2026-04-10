@@ -17,15 +17,12 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import {
   MoreHorizontal,
   ArrowUpDown,
-  RotateCcw,
   Eye,
-  Ban,
   Printer,
   Package,
 } from 'lucide-react';
@@ -33,15 +30,12 @@ import { cn } from '@/lib/utils';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { PaymentMethodBadge } from './PaymentMethodBadge';
 import { printReceipt } from './ReceiptPrintView';
-import { useLeadershipCheck } from '@/hooks/useLeadershipCheck';
 import type { GroupedTransaction } from '@/hooks/useGroupedTransactions';
 
 interface GroupedTransactionTableProps {
   transactions: GroupedTransaction[];
   isLoading: boolean;
   onSelectTransaction: (txn: GroupedTransaction) => void;
-  onRefund: (txn: GroupedTransaction) => void;
-  onVoid: (txn: GroupedTransaction) => void;
 }
 
 type SortField = 'clientName' | 'totalAmount' | 'stylistName';
@@ -51,11 +45,8 @@ export function GroupedTransactionTable({
   transactions,
   isLoading,
   onSelectTransaction,
-  onRefund,
-  onVoid,
 }: GroupedTransactionTableProps) {
   const { formatCurrency } = useFormatCurrency();
-  const { isLeadership } = useLeadershipCheck();
   const [sortField, setSortField] = useState<SortField>('clientName');
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
 
@@ -212,24 +203,6 @@ export function GroupedTransactionTable({
                         <Printer className="w-4 h-4 mr-2" />
                         Print Receipt
                       </DropdownMenuItem>
-                      {!txn.isVoided && !txn.refundStatus && (
-                        <>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem onClick={() => onRefund(txn)}>
-                            <RotateCcw className="w-4 h-4 mr-2" />
-                            Process Refund
-                          </DropdownMenuItem>
-                          {isLeadership && (
-                            <DropdownMenuItem
-                              onClick={() => onVoid(txn)}
-                              className="text-destructive"
-                            >
-                              <Ban className="w-4 h-4 mr-2" />
-                              Void Transaction
-                            </DropdownMenuItem>
-                          )}
-                        </>
-                      )}
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </TableCell>
