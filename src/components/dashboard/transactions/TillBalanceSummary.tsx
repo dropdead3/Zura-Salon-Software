@@ -2,7 +2,8 @@ import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
-import { Banknote, CreditCard, DollarSign } from 'lucide-react';
+import { Banknote, CreditCard, DollarSign, HandCoins } from 'lucide-react';
+import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { resolvePaymentKey } from './PaymentMethodBadge';
 import type { GroupedTransaction } from '@/hooks/useGroupedTransactions';
 
@@ -28,10 +29,11 @@ export function TillBalanceSummary({ transactions }: TillBalanceSummaryProps) {
       } else {
         acc.card += amount;
       }
+      acc.tips += txn.tipAmount;
       acc.total += amount;
       return acc;
     },
-    { cash: 0, card: 0, split: 0, total: 0 }
+    { cash: 0, card: 0, split: 0, tips: 0, total: 0 }
   );
 
   const segments = [
@@ -40,6 +42,9 @@ export function TillBalanceSummary({ transactions }: TillBalanceSummaryProps) {
     ...(totals.split > 0
       ? [{ label: 'Split', value: totals.split, icon: DollarSign, color: 'text-purple-600 dark:text-purple-400' }]
       : []),
+    ...(totals.tips > 0
+      ? [{ label: 'Tips', value: totals.tips, icon: HandCoins, color: 'text-amber-600 dark:text-amber-400' }]
+      : []),
   ];
 
   return (
@@ -47,6 +52,7 @@ export function TillBalanceSummary({ transactions }: TillBalanceSummaryProps) {
       <div className="flex items-center gap-2">
         <DollarSign className="w-4 h-4 text-muted-foreground" />
         <span className={cn(tokens.kpi.label, 'text-[10px]')}>Till Balance</span>
+        <MetricInfoTooltip description="Total of subtotal + tax for non-voided, non-refunded transactions. Tips shown separately." />
         <span className={cn(tokens.stat.large, 'text-lg')}>
           <BlurredAmount>{formatCurrency(totals.total)}</BlurredAmount>
         </span>

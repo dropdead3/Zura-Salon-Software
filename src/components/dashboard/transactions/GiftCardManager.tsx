@@ -37,6 +37,8 @@ import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
+import { tokens } from '@/lib/design-tokens';
+import { DRILLDOWN_DIALOG_CONTENT_CLASS } from '@/components/dashboard/drilldownDialogStyles';
 
 export function GiftCardManager() {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
@@ -127,7 +129,7 @@ export function GiftCardManager() {
               Create Gift Card
             </Button>
           </DialogTrigger>
-          <DialogContent>
+          <DialogContent className={DRILLDOWN_DIALOG_CONTENT_CLASS} style={{ left: 'calc(50% + var(--sidebar-offset, 0px))' }}>
             <DialogHeader>
               <DialogTitle>Create Gift Card</DialogTitle>
               <DialogDescription>
@@ -242,11 +244,11 @@ export function GiftCardManager() {
                       </Button>
                     </div>
                   </TableCell>
-                  <TableCell className="font-medium">
+                  <TableCell className={tokens.body.emphasis}>
                     {formatCurrency(Number(card.initial_amount))}
                   </TableCell>
                   <TableCell className={cn(
-                    "font-medium",
+                    tokens.body.emphasis,
                     Number(card.current_balance) === 0 && "text-muted-foreground"
                   )}>
                     {formatCurrency(Number(card.current_balance))}

@@ -278,7 +278,7 @@ export function TransactionDetailSheet({ transaction, open, onOpenChange }: Tran
 
           {/* Footer actions */}
           <div className={cn(tokens.drawer.footer, 'flex items-center gap-2 flex-wrap')}>
-            {!transaction.isVoided && !transaction.refundStatus && (
+            {!transaction.isVoided && transaction.refundStatus !== 'completed' && (
               <>
                 <Button
                   variant="outline"
