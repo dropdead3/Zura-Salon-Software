@@ -1,17 +1,35 @@
 
 
-# Update Badge Colors — Active (Ghost Green) & Inactive (Ghost Amber)
+# Remove System Section Label & Roles & Controls Hub from Sidebar
 
-## Change
+## Problem
 
-In `src/pages/dashboard/AppsMarketplace.tsx`, lines 201-211, replace the current `variant`-based badge styling with explicit ghost color classes:
+The "System" section in the sidebar shows two items: "Roles & Controls Hub" and "Settings". Since Roles & Controls Hub already lives inside Settings, it's redundant in the sidebar. The "SYSTEM" label also adds unnecessary visual weight — Settings should just sit below a subtle divider with no header.
 
-- **Active badge**: Green ghost — `bg-emerald-500/15 text-emerald-400 border border-emerald-500/30`
-- **Inactive badge**: Amber ghost — `bg-amber-500/15 text-amber-400 border border-amber-500/30`
+## Changes
 
-Both badges keep `variant="outline"` as base and override with the color classes.
+### 1. `src/config/dashboardNav.ts` (~line 114-116)
+
+Remove the "Roles & Controls Hub" entry from `systemNavItems`, leaving only "Settings":
+
+```ts
+export const systemNavItems: DashboardNavItem[] = [
+  { href: '/dashboard/admin/settings', label: 'Settings', ... },
+];
+```
+
+### 2. `src/components/dashboard/SidebarNavContent.tsx` (~line 575)
+
+Suppress the section header for the `system` section by adding it to the condition that already hides the `main` section header:
+
+```tsx
+{!isCollapsed && sectionId !== 'main' && sectionId !== 'system' && (
+```
+
+This keeps the divider line (rendered at line 568-571) but removes the "SYSTEM" label text, so Settings appears cleanly separated.
 
 | File | Change |
 |------|--------|
-| `src/pages/dashboard/AppsMarketplace.tsx` (lines 201-211) | Replace badge variant/className with ghost green (active) and ghost amber (inactive) styling |
+| `src/config/dashboardNav.ts` | Remove Roles & Controls Hub from `systemNavItems` |
+| `src/components/dashboard/SidebarNavContent.tsx` | Hide section label for `system` section |
 
