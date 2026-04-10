@@ -241,6 +241,11 @@ export const PAGE_EXPLAINERS: Record<string, PageExplainerEntry> = {
     description: 'Comprehensive view of all appointments across staff and locations. Filter, search, and manage booking data in bulk.',
     icon: Calendar,
   },
+  'transactions': {
+    title: 'Sales & Transactions',
+    description: 'Daily transaction management — view till balance, process refunds, issue credits, and manage gift cards. Revenue KPIs exclude tips to match POS reporting.',
+    icon: Receipt,
+  },
   'chair-assignments': {
     title: 'Chair Assignments',
     description: 'Assign stylists to chairs weekly. Randomize or carry over from previous weeks to keep the floor organized.',
@@ -485,11 +490,6 @@ export const PAGE_EXPLAINERS: Record<string, PageExplainerEntry> = {
     title: 'Day Rate Calendar',
     description: 'Visual calendar for day rate availability and bookings. See occupancy at a glance and manage reservations.',
     icon: Calendar,
-  },
-  'transactions': {
-    title: 'Daily Sales & Till Management',
-    description: 'View grouped transactions by day — click any sale to see itemized breakdown, payment method, and actions like refund, void, or print receipt. Use daily navigation to review past days.',
-    icon: Receipt,
   },
   'register': {
     title: 'Register',

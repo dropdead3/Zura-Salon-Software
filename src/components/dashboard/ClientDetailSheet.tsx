@@ -1263,7 +1263,7 @@ export function ClientDetailSheet({ client, open, onOpenChange, locationName, on
                         className="flex items-center justify-between p-2.5 rounded-lg bg-muted/40 hover:bg-muted/60 cursor-pointer transition-colors"
                         onClick={() => {
                           onOpenChange(false);
-                          navigate(`/dashboard/appointments-hub?tab=appointments&search=${encodeURIComponent(client.name)}`);
+                          navigate(`/dashboard/appointments-hub?search=${encodeURIComponent(client.name)}`);
                         }}
                       >
                         <div className="flex flex-col gap-0.5 min-w-0">
@@ -1301,7 +1301,7 @@ export function ClientDetailSheet({ client, open, onOpenChange, locationName, on
             className="w-full gap-1.5 rounded-xl border-border/60"
             onClick={() => {
               onOpenChange(false);
-              navigate(`/dashboard/appointments-hub?tab=appointments&search=${encodeURIComponent(client.name)}`);
+              navigate(`/dashboard/appointments-hub?search=${encodeURIComponent(client.name)}`);
             }}
           >
             <ExternalLink className="w-3.5 h-3.5" />

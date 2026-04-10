@@ -137,7 +137,7 @@ export const CONCEPT_CLUSTERS: ConceptCluster[] = [
     id: 'scheduling',
     terms: ['appointments', 'bookings', 'calendar', 'schedule', 'waitlist', 'availability',
       'no-shows', 'cancellations', 'sessions', 'reservations', 'walk-ins', 'agenda'],
-    relatedPaths: ['/dashboard/schedule', '/dashboard/appointments-hub'],
+    relatedPaths: ['/dashboard/schedule', '/dashboard/appointments-hub', '/dashboard/transactions'],
     boost: 0.25,
   },
   {
