@@ -1,89 +1,44 @@
 
 
-# Transactions Page Audit — Round 4
+# Dock-to-Checkout Pipeline Audit — COMPLETED
 
-## Critical Bug
+## Architecture Clarification
 
-### 1. Refund will crash for any non-walk-in transaction — UUID vs text type mismatch
+The Dock is a **prep station**, not a POS. It writes charges to `checkout_usage_charges`, which are consumed by the **Schedule page's `CheckoutSummarySheet`** (the front desk POS checkout). The Dock does not process payments.
 
-`refund_records.client_id` column is type `uuid`. But `phorest_transaction_items.phorest_client_id` stores text strings like `EtPBfY8e6OZJnll38KdapQ` (not UUIDs). The refund adapter in `TransactionDetailSheet` passes `transaction.phorestClientId` (text) directly to `useProcessRefund`, which inserts it into the `uuid` column. Postgres will reject this with a type error on every refund for a client-linked transaction.
+## Fixes Applied
 
-**Fix:** Change `refund_records.client_id` column from `uuid` to `text` via migration. Alternatively, resolve the phorest client ID to a real UUID from a clients/profiles table before inserting — but since the entire transaction system uses phorest IDs as text, changing the column type is simpler and consistent.
+### Critical
 
-## Medium Bugs
+| # | Issue | Fix | Status |
+|---|-------|-----|--------|
+| 1 | Add-ons not included in checkout total or tax base | Added `addonTotal` to `taxableBase` and `checkoutTotal` | ✅ Done |
+| 2 | `organizationId` missing from Schedule→Checkout | Passed `organizationId={orgId}` | ✅ Done |
+| 3 | `organizationId` missing from TodaysQueue→Checkout | Added `useOrganizationContext`, passed `organizationId` | ✅ Done |
 
-### 2. `IssueCreditsDialog.handleSubmit` has no try/catch — unhandled rejection on failure
+### Medium
 
-Line 75: `await issueCredit.mutateAsync(...)` with no try/catch. If the mutation fails, the promise rejects unhandled and `onOpenChange(false)` on line 83 never fires, but no error feedback appears in-dialog either (toast fires from the hook but may be behind the overlay).
+| # | Issue | Fix | Status |
+|---|-------|-----|--------|
+| 4 | Receipt PDF hardcodes `$` | Replaced all `$${...toFixed(2)}` with `formatCurrency()` | ✅ Done |
+| 5 | Receipt PDF omits add-on line items | Added "Add-Ons" section to receipt PDF | ✅ Done |
+| 6 | Receipt PDF omits discount/promo line | Added "Discount" line when discount > 0 | ✅ Done |
+| 7 | Overage + product charges share one tax flag | Documented behavior in code comment; single flag covers both | ✅ Documented |
+| 8 | Idempotency guard null vs empty string | Changed to `.is('service_name', null)` when serviceName is falsy | ✅ Done |
+| 9 | Applied promo never persisted to DB | Added insert to `applied_promotions` table on checkout confirm | ✅ Done |
 
-**Fix:** Wrap in try/catch like `RefundDialog` already does.
+### Low
 
-### 3. `GiftCardManager.handleCreate` has no try/catch — same issue
+| # | Issue | Fix | Status |
+|---|-------|-----|--------|
+| 10 | TodaysQueue checkout skips rebooking gate | Documented as Schedule-only feature (TodaysQueue is a quick view) | ℹ️ By design |
+| 11 | Receipt preview popup-blocked silently | Added null check + toast fallback | ✅ Done |
 
-Line 69: `await createGiftCard.mutateAsync(...)` with no try/catch. On failure, `setIsCreateOpen(false)` and state resets on lines 76-79 never execute, but no inline error is shown.
-
-**Fix:** Wrap in try/catch; only close dialog and reset state on success.
-
-### 4. GiftCard table headers missing `tokens.table.columnHeader`
-
-`GiftCardManager` lines 200-207: raw `<TableHead>Code</TableHead>` etc. without the `tokens.table.columnHeader` class. Per canon, all table column headers must use this token (Aeonik Pro, Title Case, never uppercase).
-
-**Fix:** Apply `className={tokens.table.columnHeader}` to all `<TableHead>` elements.
-
-### 5. GiftCard stats cards missing `BlurredAmount` on "Outstanding Balance"
-
-Line 109: `{formatCurrency(totalValue)}` is not wrapped in `BlurredAmount`. All monetary values must respect the hide-numbers toggle.
-
-**Fix:** Wrap in `<BlurredAmount>`.
-
-### 6. `Appointment Deposit` payment type classified as "card" by default
-
-`classifySegment` in `PaymentMethodBadge` falls through to `return 'card'` for "appointment deposit" since it doesn't match cash, card, credit, debit, voucher, or gift. This misclassifies deposit-type payments. A transaction with `Credit;Appointment Deposit` is correctly classified as "split," but `Appointment Deposit` alone would show as "card" which is wrong.
-
-**Fix:** Add `deposit` classification: `if (s.includes('deposit')) return 'deposit'`. Add corresponding icon and style entries.
-
-### 7. Refund button visible to non-leadership users
-
-The Void button is correctly gated behind `isLeadership` (line 292-302 of `TransactionDetailSheet`). But the Refund button (line 283-291) is shown to ALL authenticated users. Refunds should also be leadership-gated, or at minimum have a separate permission check.
-
-**Fix:** Gate the Refund button behind `isLeadership` as well (or a dedicated `canRefund` check).
-
-## Low Severity
-
-### 8. Receipt XSS vulnerability — client/item names injected as raw HTML
-
-`ReceiptPrintView` interpolates `transaction.clientName`, `transaction.stylistName`, and `item.itemName` directly into HTML strings without escaping. A client named `<script>alert('xss')</script>` would execute in the print popup.
-
-**Fix:** Create a simple `escapeHtml` utility and use it on all interpolated values.
-
-### 9. `GiftCardManager` search not debounced
-
-`searchCode` state filters the gift cards list on every keystroke. With a small dataset this is fine, but it's inconsistent with the debounced search on the main transactions tab.
-
-**Fix:** Apply `useDebounce` for consistency (low priority since filtering is client-side).
-
-## Summary
-
-| # | Severity | Issue | Fix |
-|---|----------|-------|-----|
-| 1 | **Critical** | `refund_records.client_id` is uuid but receives text phorest IDs | Migrate column to `text` |
-| 2 | **Medium** | IssueCreditsDialog no try/catch on mutateAsync | Add try/catch |
-| 3 | **Medium** | GiftCardManager.handleCreate no try/catch | Add try/catch |
-| 4 | **Medium** | GiftCard table headers missing column header tokens | Apply `tokens.table.columnHeader` |
-| 5 | **Medium** | Outstanding Balance not wrapped in BlurredAmount | Add BlurredAmount wrapper |
-| 6 | **Low** | "Appointment Deposit" misclassified as "card" | Add deposit classification |
-| 7 | **Medium** | Refund button not permission-gated | Gate behind isLeadership |
-| 8 | **Low** | Receipt HTML injection vulnerability | Escape interpolated values |
-| 9 | **Low** | GiftCard search not debounced | Apply useDebounce |
-
-### Files to edit
+## Files Changed
 
 | File | Changes |
 |------|---------|
-| **Migration SQL** | `ALTER TABLE refund_records ALTER COLUMN client_id TYPE text` |
-| `IssueCreditsDialog.tsx` | Add try/catch around mutateAsync |
-| `GiftCardManager.tsx` | Add try/catch; apply `tokens.table.columnHeader`; wrap balance in `BlurredAmount` |
-| `PaymentMethodBadge.tsx` | Add deposit classification + icon/style |
-| `TransactionDetailSheet.tsx` | Gate Refund button behind `isLeadership` |
-| `ReceiptPrintView.tsx` | Add `escapeHtml` utility and escape all interpolated values |
-
+| `CheckoutSummarySheet.tsx` | Fixed add-on math in totals/tax; replaced all hardcoded `$` in receipt PDF with `formatCurrency()`; added add-on + discount sections to receipt; added popup-blocked toast |
+| `Schedule.tsx` | Passed `organizationId={orgId}` to CheckoutSummarySheet; added promo persistence on checkout confirm |
+| `TodaysQueueSection.tsx` | Added `useOrganizationContext` import; passed `organizationId` to CheckoutSummarySheet |
+| `useCalculateOverageCharge.ts` | Fixed idempotency guard to use `.is('service_name', null)` for falsy service names |
