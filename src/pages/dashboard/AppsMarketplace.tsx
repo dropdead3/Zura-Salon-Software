@@ -199,8 +199,13 @@ function SubscribedAppCard({
   return (
     <Card interactive className={cn('relative', isActive && `border-t-2 ${app.accentColor}`)}>
       <Badge
-        variant={isActive ? 'default' : 'secondary'}
-        className="absolute top-4 right-4 text-[10px] px-2"
+        variant="outline"
+        className={cn(
+          "absolute top-4 right-4 text-[10px] px-2",
+          isActive
+            ? "bg-emerald-500/15 text-emerald-400 border-emerald-500/30"
+            : "bg-amber-500/15 text-amber-400 border-amber-500/30"
+        )}
       >
         {isActive ? (
           <span className="flex items-center gap-1">
