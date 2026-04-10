@@ -52,6 +52,8 @@ import {
   BookOpen,
 } from 'lucide-react';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
+import { usePayrollEntitlement } from '@/hooks/payroll/usePayrollEntitlement';
+import { useColorBarEntitlement } from '@/hooks/color-bar/useColorBarEntitlement';
 import { PageExplainer } from '@/components/ui/PageExplainer';
 
 interface ManagementCardProps {
@@ -148,6 +150,8 @@ function CategorySection({ title, children, columns = 3 }: CategorySectionProps)
 export default function TeamHub() {
   const { dashPath } = useOrgDashboardPath();
   const { canInvite } = useInvitableRoles();
+  const { isEntitled: isPayrollEntitled } = usePayrollEntitlement();
+  const { isEntitled: isColorBarEntitled } = useColorBarEntitlement();
   const { data: pendingInvitations } = usePendingInvitations();
   const pendingInvitationCount = pendingInvitations?.length || 0;
 
@@ -226,12 +230,14 @@ export default function TeamHub() {
             title="Growth Hub"
             description="Marketing, campaigns, and growth initiatives"
           />
-          <HubGatewayCard
-            href={dashPath('/admin/payroll')}
-            icon={DollarSign}
-            title="Hiring & Payroll Hub"
-            description="Compensation, commissions, and hiring pipeline"
-          />
+          {isPayrollEntitled && (
+            <HubGatewayCard
+              href={dashPath('/admin/payroll')}
+              icon={DollarSign}
+              title="Hiring & Payroll Hub"
+              description="Compensation, commissions, and hiring pipeline"
+            />
+          )}
           <HubGatewayCard
             href={dashPath('/admin/booth-renters')}
             icon={Store}
@@ -256,12 +262,14 @@ export default function TeamHub() {
             title="Website Hub"
             description="Website themes, editor, settings, and content management"
           />
-          <HubGatewayCard
-            href={dashPath('/admin/color-bar-settings')}
-            icon={Beaker}
-            title="Zura Color Bar Hub"
-            description="Color Bar color & supply management, formulas, and station tracking"
-          />
+          {isColorBarEntitled && (
+            <HubGatewayCard
+              href={dashPath('/admin/color-bar-settings')}
+              icon={Beaker}
+              title="Zura Color Bar Hub"
+              description="Color Bar color & supply management, formulas, and station tracking"
+            />
+          )}
         </CategorySection>
 
         {/* People & Development */}
