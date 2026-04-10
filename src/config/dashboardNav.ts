@@ -75,7 +75,6 @@ export const mainNavItems: DashboardNavItem[] = [
   { href: '/dashboard/schedule', label: 'Schedule', labelKey: 'schedule', icon: CalendarDays, permission: 'view_booking_calendar', roles: ['super_admin', 'admin', 'manager', 'stylist', 'stylist_assistant', 'receptionist', 'assistant', 'admin_assistant', 'operations_assistant', 'booth_renter', 'bookkeeper'] },
   { href: '/dashboard/transactions', label: 'Transactions', labelKey: 'transactions', icon: Receipt, permission: 'view_transactions' },
   { href: '/dashboard/appointments-hub', label: 'Appointments', labelKey: 'appointments', icon: CalendarClock, permission: 'view_booking_calendar' },
-  { href: '/dashboard/team-chat', label: 'Connect', labelKey: 'connect', icon: MessageSquare },
 ];
 
 // ─── SECTION: myTools (staff-facing, replaces growth + stats) ────────────────
@@ -107,6 +106,7 @@ export const manageNavItems: DashboardNavItem[] = [
 
 export const appsNavItems: DashboardNavItem[] = [
   { href: '/dashboard/admin/color-bar-settings', label: 'Zura Color Bar', icon: Package, permission: 'manage_settings' },
+  { href: '/dashboard/team-chat', label: 'Zura Connect', labelKey: 'connect', icon: MessageSquare, permission: 'manage_settings' },
 ];
 
 // ─── SECTION: system (admin config) ──────────────────────────────────────────

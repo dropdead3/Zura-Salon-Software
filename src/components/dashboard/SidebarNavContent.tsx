@@ -538,6 +538,7 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
           if (sectionId === 'apps') {
             const APP_KEY_MAP: Record<string, string> = {
               '/dashboard/admin/color-bar-settings': 'backroom',
+              '/dashboard/team-chat': 'connect',
             };
             filteredItems = filteredItems.filter(item => {
               const appKey = APP_KEY_MAP[item.href];
