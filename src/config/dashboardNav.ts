@@ -112,7 +112,6 @@ export const appsNavItems: DashboardNavItem[] = [
 // ─── SECTION: system (admin config) ──────────────────────────────────────────
 
 export const systemNavItems: DashboardNavItem[] = [
-  { href: '/dashboard/admin/access-hub', label: 'Roles & Controls Hub', labelKey: 'roles_controls_hub', icon: Shield, permission: 'manage_settings' },
   { href: '/dashboard/admin/settings', label: 'Settings', labelKey: 'settings', icon: Settings, permission: 'manage_settings' },
 ];
 
