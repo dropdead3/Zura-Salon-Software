@@ -54,18 +54,21 @@ const ROLE_PATH_PREFERENCES: Record<string, string[]> = {
     '/dashboard/clients',
     '/dashboard/waitlist',
     '/dashboard/appointments-hub',
+    '/dashboard/transactions',
   ],
   assistant: [
     '/dashboard/schedule',
     '/dashboard/clients',
     '/dashboard/waitlist',
     '/dashboard/appointments-hub',
+    '/dashboard/transactions',
   ],
   admin_assistant: [
     '/dashboard/schedule',
     '/dashboard/clients',
     '/dashboard/waitlist',
     '/dashboard/appointments-hub',
+    '/dashboard/transactions',
   ],
   stylist: [
     '/dashboard/stats',
@@ -115,6 +118,7 @@ const ROLE_PATH_PREFERENCES: Record<string, string[]> = {
     '/dashboard/admin/team-hub',
     '/dashboard/waitlist',
     '/dashboard/appointments-hub',
+    '/dashboard/transactions',
   ],
 };
 

@@ -241,6 +241,11 @@ export const PAGE_EXPLAINERS: Record<string, PageExplainerEntry> = {
     description: 'Comprehensive view of all appointments across staff and locations. Filter, search, and manage booking data in bulk.',
     icon: Calendar,
   },
+  'transactions': {
+    title: 'Sales & Transactions',
+    description: 'Daily transaction management — view till balance, process refunds, issue credits, and manage gift cards. Revenue KPIs exclude tips to match POS reporting.',
+    icon: Receipt,
+  },
   'chair-assignments': {
     title: 'Chair Assignments',
     description: 'Assign stylists to chairs weekly. Randomize or carry over from previous weeks to keep the floor organized.',

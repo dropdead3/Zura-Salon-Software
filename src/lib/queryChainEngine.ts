@@ -78,12 +78,12 @@ const TOPIC_FAMILIES: Record<string, { topic: string; route: string; tab?: strin
   products: { topic: 'retail', route: '/dashboard/admin/sales', tab: 'retail' },
   sales: { topic: 'sales', route: '/dashboard/admin/sales' },
   revenue: { topic: 'revenue', route: '/dashboard/admin/sales' },
-  refund: { topic: 'refunds', route: '/dashboard/appointments-hub', tab: 'refunds' },
-  refunds: { topic: 'refunds', route: '/dashboard/appointments-hub', tab: 'refunds' },
+  refund: { topic: 'refunds', route: '/dashboard/transactions' },
+  refunds: { topic: 'refunds', route: '/dashboard/transactions' },
   appointments: { topic: 'appointments', route: '/dashboard/appointments-hub' },
   appointment: { topic: 'appointments', route: '/dashboard/appointments-hub' },
-  cancellations: { topic: 'cancellations', route: '/dashboard/appointments-hub', tab: 'cancellations' },
-  cancelled: { topic: 'cancellations', route: '/dashboard/appointments-hub', tab: 'cancellations' },
+  cancellations: { topic: 'cancellations', route: '/dashboard/appointments-hub' },
+  cancelled: { topic: 'cancellations', route: '/dashboard/appointments-hub' },
   utilization: { topic: 'utilization', route: '/dashboard/admin/staff-utilization' },
   retention: { topic: 'retention', route: '/dashboard/admin/reengagement' },
   rebooking: { topic: 'retention', route: '/dashboard/admin/reengagement' },
@@ -349,6 +349,7 @@ function generateDestinationHint(chain: ChainedQuery): DestinationHint | null {
         break;
       case 'no_show':
         path = '/dashboard/appointments-hub';
+
         params.filter = 'no_show';
         label = 'Appointments — No Shows';
         confidence = 0.8;
