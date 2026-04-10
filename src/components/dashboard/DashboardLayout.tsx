@@ -259,7 +259,7 @@ function DashboardLayoutInner({ children, hideFooter, hideTopBar, hideSidebar }:
   const { isImpersonating, isMultiOrgOwner } = useOrganizationContext();
 
   // Set CSS custom property on documentElement so portaled components (Sheet, Dialog) respect God Mode bar
-  React.useEffect(() => {
+  useEffect(() => {
     document.documentElement.style.setProperty('--god-mode-offset', isImpersonating ? '44px' : '0px');
   }, [isImpersonating]);
   const { viewAsRole, setViewAsRole, isViewingAs, viewAsUser, setViewAsUser, isViewingAsUser, clearViewAs } = useViewAs();
