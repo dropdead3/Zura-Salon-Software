@@ -5,6 +5,7 @@ import {
   Megaphone,
   Star,
   Phone,
+  Users,
   ArrowRight,
   CheckCircle2,
   Lock,
@@ -126,6 +127,23 @@ const EXPLORE_APPS: AppDef[] = [
     accentColor: 'border-emerald-500/30',
     comingSoon: true,
     missedOpportunity: 'The average salon misses 35% of inbound calls. Stop losing revenue.',
+  },
+  {
+    key: 'hiring',
+    name: 'Zura Hiring',
+    tagline: 'Recruiting + Talent Pipeline',
+    valueStatement: 'Stop guessing on hires. Build a talent pipeline that predicts success.',
+    features: [
+      'Application pipelines and candidate CRM',
+      'Interview scoring and trial shift tracking',
+      'Auto follow-ups across the funnel',
+      'AI success prediction based on comparable hires',
+    ],
+    icon: Users,
+    gradient: 'from-indigo-500/30 to-blue-600/30',
+    accentColor: 'border-indigo-500/30',
+    comingSoon: true,
+    missedOpportunity: 'The average salon spends 45 days filling a chair. A structured pipeline cuts that in half.',
   },
 ];
 
