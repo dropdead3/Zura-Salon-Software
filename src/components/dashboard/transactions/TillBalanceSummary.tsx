@@ -3,6 +3,7 @@ import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import { Banknote, CreditCard, DollarSign } from 'lucide-react';
+import { resolvePaymentKey } from './PaymentMethodBadge';
 import type { GroupedTransaction } from '@/hooks/useGroupedTransactions';
 
 interface TillBalanceSummaryProps {
@@ -19,10 +20,10 @@ export function TillBalanceSummary({ transactions }: TillBalanceSummaryProps) {
       if (txn.refundStatus === 'completed') return acc;
 
       const amount = txn.totalAmount;
-      const key = txn.paymentMethod?.toLowerCase() || '';
-      if (key.includes('cash')) {
+      const key = resolvePaymentKey(txn.paymentMethod || '');
+      if (key === 'cash') {
         acc.cash += amount;
-      } else if (key.includes(';') || key.includes(',')) {
+      } else if (key === 'split') {
         acc.split += amount;
       } else {
         acc.card += amount;

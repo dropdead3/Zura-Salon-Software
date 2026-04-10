@@ -26,13 +26,27 @@ const PAYMENT_STYLES: Record<string, string> = {
   gift: 'border-amber-300 text-amber-700 bg-amber-50 dark:bg-amber-950 dark:text-amber-400 dark:border-amber-700',
 };
 
-function resolvePaymentKey(method: string): string {
+/** Classify a single payment string segment into a base type */
+function classifySegment(segment: string): string {
+  const s = segment.trim().toLowerCase();
+  if (s.includes('cash')) return 'cash';
+  if (s.includes('card') || s.includes('credit') || s.includes('debit')) return 'card';
+  if (s.includes('voucher') || s.includes('gift')) return 'voucher';
+  return 'card'; // default fallback
+}
+
+export function resolvePaymentKey(method: string): string {
   const lower = method.toLowerCase();
-  if (lower.includes(';') || lower.includes(',') || lower.includes('+')) return 'split';
-  if (lower.includes('card') || lower.includes('credit') || lower.includes('debit')) return 'card';
-  if (lower.includes('cash')) return 'cash';
-  if (lower.includes('voucher') || lower.includes('gift')) return 'voucher';
-  return 'card';
+  // Check for multi-part separator
+  const separator = lower.includes(';') ? ';' : lower.includes(',') ? ',' : lower.includes('+') ? '+' : null;
+  if (!separator) return classifySegment(method);
+
+  // Multi-part: classify each segment
+  const parts = method.split(separator);
+  const types = new Set(parts.map(classifySegment));
+  // If all segments resolve to the same type, use that type (e.g. Credit;Credit → card)
+  if (types.size === 1) return [...types][0];
+  return 'split';
 }
 
 export function PaymentMethodBadge({ method, className }: PaymentMethodBadgeProps) {

@@ -28,8 +28,6 @@ import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { useLocations } from '@/hooks/useLocations';
 import { GroupedTransactionTable } from '@/components/dashboard/transactions/GroupedTransactionTable';
 import { TransactionDetailSheet } from '@/components/dashboard/transactions/TransactionDetailSheet';
-import { VoidConfirmDialog } from '@/components/dashboard/transactions/VoidConfirmDialog';
-import { RefundDialog } from '@/components/dashboard/transactions/RefundDialog';
 import { IssueCreditsDialog } from '@/components/dashboard/transactions/IssueCreditsDialog';
 import { GiftCardManager } from '@/components/dashboard/transactions/GiftCardManager';
 import { TillBalanceSummary } from '@/components/dashboard/transactions/TillBalanceSummary';
@@ -38,15 +36,7 @@ import { BentoGrid } from '@/components/ui/bento-grid';
 import { PageExplainer } from '@/components/ui/PageExplainer';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import type { TransactionItem } from '@/hooks/useTransactions';
 
-/** Build a summary item_name for multi-item transactions */
-function buildItemSummary(txn: GroupedTransaction): string {
-  if (txn.items.length === 1) return txn.items[0].itemName;
-  const names = txn.items.slice(0, 3).map(i => i.itemName);
-  const suffix = txn.items.length > 3 ? ` +${txn.items.length - 3} more` : '';
-  return `${txn.items.length} items — ${names.join(', ')}${suffix}`;
-}
 
 export default function Transactions() {
   const [selectedDate, setSelectedDate] = useState(format(new Date(), 'yyyy-MM-dd'));
@@ -55,10 +45,7 @@ export default function Transactions() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTxn, setSelectedTxn] = useState<GroupedTransaction | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
-  const [voidTxn, setVoidTxn] = useState<GroupedTransaction | null>(null);
-  const [voidOpen, setVoidOpen] = useState(false);
-  const [refundTxn, setRefundTxn] = useState<TransactionItem | null>(null);
-  const [refundOpen, setRefundOpen] = useState(false);
+  
   const [isCreditsOpen, setIsCreditsOpen] = useState(false);
 
   const { data: locations = [] } = useLocations();
@@ -78,34 +65,6 @@ export default function Transactions() {
     setDetailOpen(true);
   };
 
-  const handleRefund = (txn: GroupedTransaction) => {
-    if (txn.items.length === 0) return;
-    setRefundTxn({
-      id: txn.items[0].id,
-      transaction_id: txn.transactionId,
-      transaction_date: txn.transactionDate,
-      phorest_client_id: txn.phorestClientId,
-      client_name: txn.clientName,
-      item_type: txn.items[0].itemType,
-      item_name: buildItemSummary(txn),
-      item_category: txn.items[0].itemCategory,
-      quantity: 1,
-      unit_price: txn.totalAmount,
-      total_amount: txn.totalAmount,
-      tax_amount: txn.taxAmount,
-      discount: txn.discountAmount,
-      phorest_staff_id: null,
-      location_id: txn.locationId,
-      branch_name: txn.branchName,
-      promotion_id: null,
-    });
-    setRefundOpen(true);
-  };
-
-  const handleVoid = (txn: GroupedTransaction) => {
-    setVoidTxn(txn);
-    setVoidOpen(true);
-  };
 
   // Use parseISO to avoid timezone boundary shifts
   const goToPreviousDay = () => setSelectedDate(format(subDays(parseISO(selectedDate), 1), 'yyyy-MM-dd'));
@@ -290,8 +249,6 @@ export default function Transactions() {
               transactions={transactions}
               isLoading={isLoading}
               onSelectTransaction={handleSelectTransaction}
-              onRefund={handleRefund}
-              onVoid={handleVoid}
             />
 
             {/* Till balance summary */}
@@ -318,25 +275,14 @@ export default function Transactions() {
         </Tabs>
       </div>
 
-      {/* Detail Sheet */}
+      {/* Detail Sheet (contains Void + Refund dialogs) */}
       <TransactionDetailSheet
         transaction={selectedTxn}
         open={detailOpen}
-        onOpenChange={setDetailOpen}
-      />
-
-      {/* Void Dialog */}
-      <VoidConfirmDialog
-        transaction={voidTxn}
-        open={voidOpen}
-        onOpenChange={setVoidOpen}
-      />
-
-      {/* Refund Dialog */}
-      <RefundDialog
-        transaction={refundTxn}
-        open={refundOpen}
-        onOpenChange={setRefundOpen}
+        onOpenChange={(isOpen) => {
+          setDetailOpen(isOpen);
+          if (!isOpen) setSelectedTxn(null);
+        }}
       />
 
       {/* Issue Credits Dialog */}

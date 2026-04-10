@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import {
   Sheet,
   SheetContent,
@@ -70,11 +70,6 @@ export function TransactionDetailSheet({ transaction, open, onOpenChange }: Tran
   const [voidOpen, setVoidOpen] = useState(false);
   const [refundOpen, setRefundOpen] = useState(false);
 
-  // Close sheet when void/refund completes (stale data prevention)
-  useEffect(() => {
-    if (!voidOpen && !refundOpen) return;
-  }, [voidOpen, refundOpen]);
-
   if (!transaction) return null;
 
   const truncatedId = transaction.transactionId.length > 12
@@ -123,17 +118,14 @@ export function TransactionDetailSheet({ transaction, open, onOpenChange }: Tran
       }
     : null;
 
-  const handleVoidComplete = () => {
-    setVoidOpen(false);
-    onOpenChange(false);
+  const handleVoidComplete = (isOpen: boolean) => {
+    setVoidOpen(isOpen);
+    if (!isOpen) onOpenChange(false);
   };
 
   const handleRefundComplete = (isOpen: boolean) => {
     setRefundOpen(isOpen);
-    if (!isOpen) {
-      // Close parent sheet after refund dialog closes
-      onOpenChange(false);
-    }
+    if (!isOpen) onOpenChange(false);
   };
 
   return (
@@ -337,10 +329,7 @@ export function TransactionDetailSheet({ transaction, open, onOpenChange }: Tran
       <VoidConfirmDialog
         transaction={transaction}
         open={voidOpen}
-        onOpenChange={(isOpen) => {
-          setVoidOpen(isOpen);
-          if (!isOpen) onOpenChange(false);
-        }}
+        onOpenChange={handleVoidComplete}
       />
 
       {refundItem && (
