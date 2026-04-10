@@ -34,8 +34,10 @@ interface AppDef {
   features: string[];
   icon: React.ElementType;
   gradient: string;
+  accentColor: string;
   settingsPath?: string;
   comingSoon?: boolean;
+  missedOpportunity?: string;
 }
 
 const SUBSCRIBED_APPS: AppDef[] = [
@@ -51,7 +53,8 @@ const SUBSCRIBED_APPS: AppDef[] = [
       'Smart reorder alerts',
     ],
     icon: Package,
-    gradient: 'from-violet-500/20 to-purple-500/20',
+    gradient: 'from-violet-500/30 to-purple-500/30',
+    accentColor: 'border-violet-500/40',
     settingsPath: '/admin/color-bar',
   },
   {
@@ -66,7 +69,8 @@ const SUBSCRIBED_APPS: AppDef[] = [
       'Client SMS (coming soon)',
     ],
     icon: MessageSquare,
-    gradient: 'from-blue-500/20 to-cyan-500/20',
+    gradient: 'from-blue-500/30 to-cyan-500/30',
+    accentColor: 'border-blue-500/40',
     settingsPath: '/team-chat',
   },
 ];
@@ -84,8 +88,10 @@ const EXPLORE_APPS: AppDef[] = [
       'Capacity-aware targeting',
     ],
     icon: Megaphone,
-    gradient: 'from-pink-500/20 to-rose-500/20',
+    gradient: 'from-pink-500/30 to-rose-500/30',
+    accentColor: 'border-pink-500/30',
     comingSoon: true,
+    missedOpportunity: 'Salons using targeted campaigns see 3x return on ad spend.',
   },
   {
     key: 'reputation',
@@ -99,8 +105,10 @@ const EXPLORE_APPS: AppDef[] = [
       'AI review responses (brand-aligned)',
     ],
     icon: Star,
-    gradient: 'from-amber-500/20 to-yellow-500/20',
+    gradient: 'from-amber-500/30 to-yellow-500/30',
+    accentColor: 'border-amber-500/30',
     comingSoon: true,
+    missedOpportunity: '90% of clients check reviews before booking. Automate the ask.',
   },
   {
     key: 'reception',
@@ -114,8 +122,10 @@ const EXPLORE_APPS: AppDef[] = [
       'After-hours coverage',
     ],
     icon: Phone,
-    gradient: 'from-emerald-500/20 to-teal-500/20',
+    gradient: 'from-emerald-500/30 to-teal-500/30',
+    accentColor: 'border-emerald-500/30',
     comingSoon: true,
+    missedOpportunity: 'The average salon misses 35% of inbound calls. Stop losing revenue.',
   },
 ];
 
@@ -126,9 +136,9 @@ const EXPLORE_APPS: AppDef[] = [
 function AppCardSkeleton() {
   return (
     <Card>
-      <CardContent className="p-6">
+      <CardContent className="p-8">
         <div className="flex items-start gap-4">
-          <Skeleton className="h-12 w-12 rounded-xl shrink-0" />
+          <Skeleton className="h-14 w-14 rounded-2xl shrink-0" />
           <div className="flex-1 space-y-3">
             <Skeleton className="h-4 w-32" />
             <Skeleton className="h-3 w-full" />
@@ -142,16 +152,16 @@ function AppCardSkeleton() {
 
 function FeatureList({ features, muted }: { features: string[]; muted?: boolean }) {
   return (
-    <div className="grid grid-cols-2 gap-x-4 gap-y-1.5">
+    <div className="grid grid-cols-2 gap-x-6 gap-y-2.5">
       {features.map((f) => (
-        <div key={f} className="flex items-start gap-2">
+        <div key={f} className="flex items-start gap-2.5">
           <CheckCircle2
             className={cn(
-              'w-3.5 h-3.5 mt-0.5 shrink-0',
-              muted ? 'text-muted-foreground/40' : 'text-primary/70'
+              'w-4 h-4 mt-0.5 shrink-0',
+              muted ? 'text-muted-foreground/40' : 'text-primary'
             )}
           />
-          <span className="font-sans text-xs text-muted-foreground leading-snug">{f}</span>
+          <span className="font-sans text-sm text-foreground/70 leading-snug">{f}</span>
         </div>
       ))}
     </div>
@@ -169,18 +179,18 @@ function SubscribedAppCard({
 }) {
   const Icon = app.icon;
   return (
-    <Card interactive>
-      <CardContent className="p-6 flex flex-col gap-5">
+    <Card interactive className={cn(isActive && `border-t-2 ${app.accentColor}`)}>
+      <CardContent className="p-8 flex flex-col gap-6">
         {/* Header */}
         <div className="flex items-start justify-between gap-4">
           <div className="flex items-start gap-4">
             <div
               className={cn(
-                'w-12 h-12 rounded-xl bg-gradient-to-br flex items-center justify-center shrink-0',
+                'w-14 h-14 rounded-2xl bg-gradient-to-br flex items-center justify-center shrink-0',
                 app.gradient
               )}
             >
-              <Icon className="w-6 h-6 text-primary" />
+              <Icon className="w-7 h-7 text-primary" />
             </div>
             <div>
               <div className="flex items-center gap-2.5">
@@ -206,23 +216,26 @@ function SubscribedAppCard({
         </div>
 
         {/* Value statement */}
-        <p className="font-sans text-sm text-foreground/80 leading-relaxed">
+        <p className="font-sans text-base font-medium text-foreground leading-relaxed">
           {app.valueStatement}
         </p>
+
+        {/* Divider */}
+        <div className="border-t border-border/40" />
 
         {/* Features */}
         <FeatureList features={app.features} />
 
         {/* CTA */}
-        <div className="pt-1">
+        <div className="pt-2">
           {isActive && app.settingsPath ? (
-            <Button variant="default" size="sm" asChild className="font-sans">
+            <Button variant="default" size="default" asChild className="font-sans">
               <Link to={dashPath(app.settingsPath)}>
                 Open <ArrowRight className="w-4 h-4 ml-1" />
               </Link>
             </Button>
           ) : (
-            <Button variant="outline" size="sm" className="font-sans">
+            <Button variant="outline" size="default" className="font-sans">
               Contact Sales
             </Button>
           )}
@@ -235,17 +248,17 @@ function SubscribedAppCard({
 function ExploreAppCard({ app }: { app: AppDef }) {
   const Icon = app.icon;
   return (
-    <Card className="border-l-2 border-l-muted-foreground/10">
-      <CardContent className="p-6 flex flex-col gap-5">
+    <Card className={cn('border-t-2', app.accentColor)}>
+      <CardContent className="p-8 flex flex-col gap-6">
         {/* Header */}
         <div className="flex items-start gap-4">
           <div
             className={cn(
-              'w-12 h-12 rounded-xl bg-gradient-to-br flex items-center justify-center shrink-0',
+              'w-14 h-14 rounded-2xl bg-gradient-to-br flex items-center justify-center shrink-0',
               app.gradient
             )}
           >
-            <Icon className="w-6 h-6 text-primary" />
+            <Icon className="w-7 h-7 text-primary" />
           </div>
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2.5">
@@ -261,17 +274,30 @@ function ExploreAppCard({ app }: { app: AppDef }) {
         </div>
 
         {/* Value statement */}
-        <p className="font-sans text-sm text-foreground/80 leading-relaxed">
+        <p className="font-sans text-base font-medium text-foreground leading-relaxed">
           {app.valueStatement}
         </p>
+
+        {/* Missed opportunity — urgency driver */}
+        {app.missedOpportunity && (
+          <p className="font-sans text-sm text-primary/80 leading-relaxed italic">
+            {app.missedOpportunity}
+          </p>
+        )}
+
+        {/* Divider */}
+        <div className="border-t border-border/40" />
 
         {/* Features */}
         <FeatureList features={app.features} muted />
 
         {/* CTA */}
-        <div className="pt-1">
-          <Button variant="outline" size="sm" className="font-sans gap-2">
-            <Bell className="w-3.5 h-3.5" /> Notify Me
+        <div className="flex items-center gap-3 pt-2">
+          <Button variant="outline" size="default" className="font-sans gap-2">
+            <Bell className="w-4 h-4" /> Notify Me
+          </Button>
+          <Button variant="ghost" size="default" className="font-sans text-muted-foreground gap-1">
+            Learn More <ArrowRight className="w-4 h-4" />
           </Button>
         </div>
       </CardContent>
@@ -324,7 +350,7 @@ export default function AppsMarketplace() {
         <section className="space-y-4 mt-10">
           <div>
             <h2 className={tokens.heading.section}>Explore Apps</h2>
-            <p className="font-sans text-sm text-muted-foreground mt-1">
+            <p className="font-sans text-base text-muted-foreground mt-1">
               Expand your capabilities with purpose-built tools.
             </p>
           </div>
