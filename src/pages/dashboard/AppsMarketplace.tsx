@@ -9,6 +9,7 @@ import {
   CheckCircle2,
   Lock,
 } from 'lucide-react';
+import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { DashboardPageHeader } from '@/components/dashboard/DashboardPageHeader';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -190,6 +191,7 @@ export default function AppsMarketplace() {
   };
 
   return (
+    <DashboardLayout>
     <div className={tokens.layout.pageContainer}>
       <DashboardPageHeader
         title="Zura Apps"
