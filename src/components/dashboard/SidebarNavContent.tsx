@@ -145,6 +145,8 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
   const sectionItemsMap = useMemo(() => ({
     main: mainNavItems,
     myTools: [...growthNavItems, ...statsNavItems].filter((item, index, arr) => arr.findIndex(i => i.href === item.href) === index),
+    ops: managerNavItems.filter(item => item.href.includes('team-hub')),
+    data: managerNavItems.filter(item => item.href.includes('analytics') || item.href.includes('reports')),
     manage: managerNavItems,
     apps: appsNavItemsProp,
     system: adminOnlyNavItems,
@@ -560,7 +562,7 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
           // For manage and system sections, only apply hardcoded checks 
           // when configurator doesn't have role-specific overrides
           if (!hasConfiguratorOverrides) {
-            if (sectionId === 'manage' || sectionId === 'manager') {
+            if (sectionId === 'manage' || sectionId === 'manager' || sectionId === 'ops' || sectionId === 'data') {
               shouldShow = effectiveIsCoach && filteredItems.length > 0;
             }
             

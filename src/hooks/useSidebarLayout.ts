@@ -9,6 +9,8 @@ import type { LucideIcon } from 'lucide-react';
 export const SECTION_ICONS: Record<string, LucideIcon> = {
   main: LayoutDashboard,
   myTools: Wrench,
+  ops: Users,
+  data: BarChart3,
   manage: BarChart3,
   apps: Package,
   system: Settings,
@@ -21,11 +23,12 @@ export const SECTION_ICONS: Record<string, LucideIcon> = {
 
 const DEFAULT_PLATFORM_LINK_ORDER = platformNavGroups.flatMap((g) => g.items.map((i) => i.href));
 
-// Default section order — consolidated from 5 org sections to 4
+// Default section order — Operations + Data & Reports replace Manage
 export const DEFAULT_SECTION_ORDER = [
   'main',
   'myTools',    // Staff-facing daily tools (replaces growth + stats)
-  'manage',     // Admin hub-only links (replaces manager with 22+ items)
+  'ops',        // Operations Hub (single item, own section)
+  'data',       // Analytics Hub + Report Generator
   'apps',       // Org-activated add-on apps (Color Bar, etc.)
   'system',     // Admin config (replaces adminOnly)
   'platform',
@@ -36,6 +39,7 @@ const LEGACY_SECTION_MAP: Record<string, string> = {
   growth: 'myTools',
   stats: 'myTools',
   manager: 'manage',
+  manage: 'ops',      // Legacy 'manage' maps to 'ops' (data items auto-added)
   adminOnly: 'system',
 };
 
@@ -43,7 +47,9 @@ const LEGACY_SECTION_MAP: Record<string, string> = {
 export const SECTION_LABELS: Record<string, string> = {
   main: 'Main',
   myTools: 'My Tools',
-  manage: 'Manage',
+  ops: 'Operations',
+  data: 'Data & Reports',
+  manage: 'Manage',  // Legacy
   apps: 'Zura Apps',
   system: 'System',
   platform: 'Platform Admin',
@@ -83,13 +89,17 @@ export const DEFAULT_LINK_ORDER: Record<string, string[]> = {
     '/dashboard/ring-the-bell',
     '/dashboard/my-graduation',
   ],
+  ops: [
+    '/dashboard/admin/team-hub',
+  ],
+  data: [
+    '/dashboard/admin/analytics',
+    '/dashboard/admin/reports',
+  ],
   manage: [
     '/dashboard/admin/analytics',
     '/dashboard/admin/team-hub',
-    '/dashboard/admin/client-hub',
-    '/dashboard/admin/growth-hub',
-    '/dashboard/admin/payroll',
-    '/dashboard/admin/booth-renters',
+    '/dashboard/admin/reports',
   ],
   apps: [
     '/dashboard/admin/color-bar-settings',
