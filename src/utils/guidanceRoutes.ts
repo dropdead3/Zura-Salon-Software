@@ -45,7 +45,7 @@ export const VALID_ROUTE_PREFIXES: ReadonlySet<string> = new Set([
   '/dashboard/admin/day-rate-settings',
   '/dashboard/admin/team-hub',
   '/dashboard/admin/client-hub',
-  '/dashboard/admin/growth-hub',
+  
   '/dashboard/admin/access-hub',
   '/dashboard/admin/feedback',
   '/dashboard/admin/client-health',

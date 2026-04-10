@@ -23,7 +23,7 @@ const LINK_CONFIG: Record<string, { label: string }> = {
   '/dashboard/admin/analytics': { label: 'Analytics Hub' },
   '/dashboard/admin/team-hub': { label: 'Operations Hub' },
   '/dashboard/admin/client-hub': { label: 'Client Hub' },
-  '/dashboard/admin/growth-hub': { label: 'Growth Hub' },
+  
   '/dashboard/admin/payroll': { label: 'Hiring & Payroll Hub' },
   '/dashboard/admin/booth-renters': { label: 'Renter Hub' },
   // Apps

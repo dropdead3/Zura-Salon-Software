@@ -43,17 +43,17 @@ import {
   Brain,
   Users,
   HeartPulse,
-  Rocket,
+  
   DollarSign,
   Store,
   Armchair,
   Globe,
-  Beaker,
+  
   BookOpen,
 } from 'lucide-react';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 import { usePayrollEntitlement } from '@/hooks/payroll/usePayrollEntitlement';
-import { useColorBarEntitlement } from '@/hooks/color-bar/useColorBarEntitlement';
+
 import { PageExplainer } from '@/components/ui/PageExplainer';
 
 interface ManagementCardProps {
@@ -151,7 +151,7 @@ export default function TeamHub() {
   const { dashPath } = useOrgDashboardPath();
   const { canInvite } = useInvitableRoles();
   const { isEntitled: isPayrollEntitled } = usePayrollEntitlement();
-  const { isEntitled: isColorBarEntitled } = useColorBarEntitlement();
+  
   const { data: pendingInvitations } = usePendingInvitations();
   const pendingInvitationCount = pendingInvitations?.length || 0;
 
@@ -224,12 +224,8 @@ export default function TeamHub() {
             title="Client Hub"
             description="Client management, retention, and engagement"
           />
-          <HubGatewayCard
-            href={dashPath('/admin/growth-hub')}
-            icon={Rocket}
-            title="Growth Hub"
-            description="Marketing, campaigns, and growth initiatives"
-          />
+
+
           {isPayrollEntitled && (
             <HubGatewayCard
               href={dashPath('/admin/payroll')}
@@ -262,14 +258,8 @@ export default function TeamHub() {
             title="Website Hub"
             description="Website themes, editor, settings, and content management"
           />
-          {isColorBarEntitled && (
-            <HubGatewayCard
-              href={dashPath('/admin/color-bar-settings')}
-              icon={Beaker}
-              title="Zura Color Bar Hub"
-              description="Color Bar color & supply management, formulas, and station tracking"
-            />
-          )}
+
+
         </CategorySection>
 
         {/* People & Development */}
