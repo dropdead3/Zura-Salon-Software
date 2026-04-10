@@ -50,6 +50,9 @@ export function AccountAppsCard({ organizationId }: AccountAppsCardProps) {
   const isColorBarEnabled = colorBarFlag?.org_enabled ?? false;
   const activeLocations = entitlements.filter((e) => e.status === 'active').length;
 
+  const connectFlag = flags?.find((f) => f.flag_key === 'connect_enabled');
+  const isConnectEnabled = connectFlag?.org_enabled ?? false;
+
   return (
     <PlatformCard variant="glass">
       <PlatformCardHeader>
@@ -84,6 +87,24 @@ export function AccountAppsCard({ organizationId }: AccountAppsCardProps) {
                 {isColorBarEnabled ? 'Active' : 'Not Enabled'}
               </PlatformBadge>
             </div>
+          </div>
+
+          {/* Zura Connect */}
+          <div className="flex items-center justify-between py-3 first:pt-0 last:pb-0">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-slate-700/50">
+                <MessageSquare className="h-4 w-4 text-blue-400" />
+              </div>
+              <div>
+                <p className="font-medium text-[hsl(var(--platform-foreground))]">Zura Connect</p>
+                <p className="text-sm text-[hsl(var(--platform-foreground-muted))]">
+                  Team & Client Communications
+                </p>
+              </div>
+            </div>
+            <PlatformBadge variant={isConnectEnabled ? 'success' : 'default'}>
+              {isConnectEnabled ? 'Active' : 'Not Enabled'}
+            </PlatformBadge>
           </div>
         </div>
       </PlatformCardContent>
