@@ -11,9 +11,9 @@ interface CommandSearchFiltersProps {
 
 const SCOPES: { value: SearchScope; label: string }[] = [
   { value: 'all', label: 'All' },
+  { value: 'action', label: 'Actions' },
   { value: 'navigation', label: 'Pages' },
   { value: 'team', label: 'People' },
-  { value: 'action', label: 'Actions' },
   { value: 'client', label: 'Clients' },
   { value: 'inventory', label: 'Inventory' },
   { value: 'task', label: 'Tasks' },

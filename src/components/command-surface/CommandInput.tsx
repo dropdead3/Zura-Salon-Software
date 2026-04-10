@@ -1,6 +1,5 @@
 import React, { useRef, useEffect } from 'react';
 import { Search, X } from 'lucide-react';
-import { ZuraZIcon } from '@/components/icons/ZuraZIcon';
 import { cn } from '@/lib/utils';
 
 interface CommandInputProps {
@@ -43,17 +42,13 @@ export function CommandInput({
 
   return (
     <div className="flex items-center gap-3 px-5 py-3.5 border-b border-border/50 shadow-[inset_0_1px_0_0_hsl(var(--foreground)/0.03)]">
-      {aiMode ? (
-        <ZuraZIcon className="w-4 h-4 shrink-0 text-primary" />
-      ) : (
-        <Search className="w-4 h-4 shrink-0 text-muted-foreground/70" strokeWidth={1.5} />
-      )}
+      <Search className="w-4 h-4 shrink-0 text-muted-foreground/70" strokeWidth={1.5} />
 
       <div className="relative flex-1 min-w-0">
         <input
           ref={inputRef}
           type="text"
-          placeholder={aiMode ? 'Ask a question...' : 'Search or ask Zura...'}
+          placeholder="Search, run actions, or ask a question..."
           value={query}
           onChange={e => onQueryChange(e.target.value)}
           onKeyDown={handleKeyDown}
@@ -75,21 +70,6 @@ export function CommandInput({
       </div>
 
       <div className="flex items-center gap-1.5 shrink-0">
-        <button
-          type="button"
-          onClick={onAiModeToggle}
-          className={cn(
-            'flex items-center gap-1 h-6 px-2 rounded-full text-xs font-sans font-medium transition-colors duration-150',
-            aiMode
-              ? 'bg-primary text-primary-foreground'
-              : 'text-muted-foreground hover:text-foreground hover:bg-muted'
-          )}
-          tabIndex={-1}
-        >
-          <ZuraZIcon className="w-3 h-3" />
-          AI
-        </button>
-
         {query && (
           <button
             type="button"

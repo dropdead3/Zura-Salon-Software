@@ -653,13 +653,13 @@ export function ZuraCommandSurface({ open, onOpenChange, filterNavItems, anchorR
               {!isMobile && (
                 <span className="flex items-center gap-1">
                   <kbd className="rounded border border-border/50 bg-muted/70 px-1 py-0.5 font-mono text-[11px]">Tab</kbd>
-                  ask Zura
+                  AI
                 </span>
               )}
-              {hasActiveAction && (
-                <span className="flex items-center gap-1 ml-auto">
+              {(hasActiveAction || (hasQuery && flatResults.some(r => r.type === 'action'))) && !isMobile && (
+                <span className="flex items-center gap-1">
                   <kbd className="rounded border border-border/50 bg-muted/70 px-1 py-0.5 font-mono text-[11px]">⌘↵</kbd>
-                  run action
+                  run
                 </span>
               )}
               {hasQuery && hasResults && !hasActiveAction && (

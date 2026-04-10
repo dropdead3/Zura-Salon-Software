@@ -1,5 +1,5 @@
 import React from 'react';
-import { Clock, ArrowRight, Search, Zap, AlertTriangle, ChevronRight, Calendar, CheckSquare, TrendingUp, Package, Plus, UserPlus, BarChart3 } from 'lucide-react';
+import { Clock, ArrowRight, Zap, ChevronRight, Calendar, CheckSquare, TrendingUp, Plus, UserPlus, BarChart3, Settings, Shield, FileText, Users } from 'lucide-react';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import {
@@ -26,11 +26,23 @@ const ROW_BASE =
 
 const ICON_BASE = 'w-4 h-4 text-muted-foreground/40 group-hover/row:text-muted-foreground transition-colors duration-150';
 
-const FALLBACK_ACTIONS = [
+const ACTION_ICON_BASE = 'w-4 h-4 text-primary/50 group-hover/row:text-primary/70 transition-colors duration-150';
+
+const EXPANDED_ACTIONS = [
   { label: 'Create Appointment', icon: Plus, path: '/dashboard/schedule' },
   { label: 'Add Client', icon: UserPlus, path: '/dashboard/clients' },
   { label: 'Run Report', icon: BarChart3, path: '/dashboard/admin/analytics' },
+  { label: 'View Today\'s Appointments', icon: Calendar, path: '/dashboard/schedule' },
+  { label: 'Invite Team Member', icon: Users, path: '/dashboard/admin/team' },
+  { label: 'Open Roles & Permissions', icon: Shield, path: '/dashboard/admin/team/roles' },
 ];
+
+function getTimeGreeting(): string {
+  const hour = new Date().getHours();
+  if (hour < 12) return 'This Morning';
+  if (hour < 17) return 'This Afternoon';
+  return 'This Evening';
+}
 
 export const CommandProactiveState = React.forwardRef<HTMLDivElement, CommandProactiveStateProps>(function CommandProactiveState({
   recentSearches,
@@ -49,7 +61,25 @@ export const CommandProactiveState = React.forwardRef<HTMLDivElement, CommandPro
   const hasContinue = hasRecents || hasPages;
   const hasQuickPaths = quickPaths.length > 0;
   const hasAttention = !isMobile && attentionItems.length > 0;
-  const hasActions = !isMobile && recommendedActions.length > 0;
+  const hasProactiveActions = !isMobile && recommendedActions.length > 0;
+
+  // Merge proactive actions with expanded defaults, deduplicate by label
+  const allActions = React.useMemo(() => {
+    const fromProactive = recommendedActions.map(a => ({
+      label: a.action,
+      icon: Zap,
+      path: '/dashboard',
+    }));
+    const merged = [...fromProactive];
+    const labels = new Set(merged.map(a => a.label.toLowerCase()));
+    for (const fa of EXPANDED_ACTIONS) {
+      if (!labels.has(fa.label.toLowerCase())) {
+        merged.push(fa);
+      }
+      if (merged.length >= 5) break;
+    }
+    return merged.slice(0, 5);
+  }, [recommendedActions]);
 
   const todayShortcuts = [
     { label: "Today's Schedule", icon: Calendar, path: '/dashboard/schedule' },
@@ -57,90 +87,41 @@ export const CommandProactiveState = React.forwardRef<HTMLDivElement, CommandPro
     { label: "Today's Revenue", icon: TrendingUp, path: '/dashboard/admin/analytics' },
   ];
 
-  // Absolute fallback — show actionable defaults instead of empty
-  if (!hasContinue && !hasQuickPaths && !hasAttention && !hasActions) {
-    return (
-      <div className="py-1">
-        {/* Actions */}
-        <div>
-          <div className="px-4 pt-2 pb-1">
-            <span className={tokens.heading.subsection}>Actions</span>
-          </div>
-          {FALLBACK_ACTIONS.map((item) => {
-            const Icon = item.icon;
-            return (
-              <button
-                key={item.path}
-                type="button"
-                onClick={() => onNavigate(item.path)}
-                className={ROW_BASE}
-                tabIndex={-1}
-              >
-                <Icon className={ICON_BASE} />
-                <span className="font-sans text-sm text-muted-foreground">{item.label}</span>
-                <ChevronRight className="w-3.5 h-3.5 text-muted-foreground/30 group-hover/row:text-muted-foreground/60 transition-colors duration-150 shrink-0 ml-auto" />
-              </button>
-            );
-          })}
-        </div>
-        {/* Today */}
-        <div className="mx-4 border-t border-border/30 my-1" />
-        <div>
-          <div className="px-4 pt-2 pb-1">
-            <span className={tokens.heading.subsection}>Today</span>
-          </div>
-          {todayShortcuts.map((item) => {
-            const Icon = item.icon;
-            return (
-              <button
-                key={item.path}
-                type="button"
-                onClick={() => onNavigate(item.path)}
-                className={ROW_BASE}
-                tabIndex={-1}
-              >
-                <Icon className={ICON_BASE} />
-                <span className="font-sans text-sm text-muted-foreground">{item.label}</span>
-                <ChevronRight className="w-3.5 h-3.5 text-muted-foreground/30 group-hover/row:text-muted-foreground/60 transition-colors duration-150 shrink-0 ml-auto" />
-              </button>
-            );
-          })}
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="py-1">
       {/* ── 1. Actions (execution first) ──────────────────────────── */}
-      {hasActions && (
-        <div>
-          <div className="px-4 pt-2 pb-1">
-            <span className={tokens.heading.subsection}>Actions</span>
-          </div>
-          {recommendedActions.map((a, i) => (
+      <div>
+        <div className="px-4 pt-2 pb-1">
+          <span className={tokens.heading.subsection}>Actions</span>
+        </div>
+        {allActions.map((item) => {
+          const Icon = item.icon;
+          return (
             <button
-              key={i}
+              key={item.label}
               type="button"
-              onClick={() => onNavigate('/dashboard')}
+              onClick={() => onNavigate(item.path)}
               className={cn(ROW_BASE, 'cursor-pointer')}
               tabIndex={-1}
             >
-              <Zap className={cn(ICON_BASE, 'w-3.5 h-3.5')} />
+              <Icon className={ACTION_ICON_BASE} />
               <span className="font-sans text-sm text-muted-foreground flex-1 truncate">
-                {a.action}
+                {item.label}
               </span>
-              <ChevronRight className="w-3.5 h-3.5 text-muted-foreground/30 group-hover/row:text-muted-foreground/60 transition-colors duration-150 shrink-0 ml-auto" />
+              <span className="font-sans text-[10px] px-2 py-0.5 rounded-full shrink-0 bg-primary/10 text-primary border border-primary/20 opacity-0 group-hover/row:opacity-100 transition-opacity duration-150">
+                Run
+              </span>
+              <ChevronRight className="w-3.5 h-3.5 text-muted-foreground/30 group-hover/row:text-muted-foreground/60 transition-colors duration-150 shrink-0" />
             </button>
-          ))}
-        </div>
-      )}
+          );
+        })}
+      </div>
 
       {/* ── 2. Today ──────────────────────────────────────────────── */}
       <div>
-        {hasActions && <div className="mx-4 border-t border-border/30 my-1" />}
+        <div className="mx-4 border-t border-border/30 my-1" />
         <div className="px-4 pt-2 pb-1">
-          <span className={tokens.heading.subsection}>Today</span>
+          <span className={tokens.heading.subsection}>{getTimeGreeting()}</span>
         </div>
         {todayShortcuts.map((item) => {
           const Icon = item.icon;
