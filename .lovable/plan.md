@@ -1,204 +1,96 @@
 
 
-# Full Sales Page — Phorest-Parity, Zura-Quality Build
+# Transactions Page Audit — Bugs & Gaps
 
-## Current State
+## Critical Bugs
 
-The existing Transactions page (`src/pages/dashboard/Transactions.tsx`) is a flat item-level list with basic filters (date preset, location, type, client search), summary KPI cards, a refund dialog, credits dialog, and a gift card tab. It queries `phorest_transaction_items` row-by-row — meaning a single checkout with 3 services shows as 3 separate rows with no grouping.
+### 1. `transaction_date` is a DATE, not a TIMESTAMP — Time display is broken
+The `phorest_transaction_items.transaction_date` column is type `date` (not `timestamptz`). Every date value is just `2026-02-25` with no time component.
 
-**What exists:**
-- Item-level table with sort, type badges, promotion badges, refund status
-- Refund dialog (3 methods: original payment, salon credit, gift card)
-- Issue Credits dialog, Gift Card manager tab
-- `refund_records` table with full audit trail
-- `v_all_transaction_items` view (unified source across Phorest + retail)
+**Impact:**
+- **GroupedTransactionTable** renders `new Date(txn.transactionDate).toLocaleTimeString(...)` → shows `12:00 AM` for every single row. The "Time" column is meaningless.
+- **useGroupedTransactions** queries with `.gte('transaction_date', '2026-02-25T00:00:00')` and `.lte('transaction_date', '2026-02-25T23:59:59')`. Postgres compares a `date` to a timestamp string — this works but is fragile and semantically wrong.
+- **Sorting by date** within a single day is meaningless since all rows have the same date value.
+- **ReceiptPrintView** shows time as "12:00 AM" for all receipts.
 
-**What's missing (Phorest parity):**
-- Transaction-level grouping (one row per checkout, expandable to see items)
-- Transaction Detail drawer (itemized breakdown, payment method subtotals, tip, tax, client info)
-- Payment Method column and filter
-- Staff column (performing stylist)
-- Void Sale functionality
-- Receipt actions (email/print)
-- Edit Sale capability
-- Till Balance / Petty Cash / Till Floats tabs
-- Daily date navigation (prev/next day)
+**Fix:** Query with plain date equality (`.eq('transaction_date', filters.date)`). Remove the "Time" column or replace it with transaction order. If time data becomes available later, migrate the column to `timestamptz`.
 
-## Architecture
+### 2. Refund adapter loses multi-item context
+Both `Transactions.tsx` (line 72-95) and `TransactionDetailSheet.tsx` (line 91-111) build a mock `TransactionItem` for `RefundDialog` by taking only `items[0]`. This means:
+- The refund dialog shows only the first item's name, not the full transaction
+- `total_amount` is set to the grouped total but `item_name` is just one item — confusing mismatch
+- Partial refunds can't target specific line items
 
-### Data Strategy
+**Fix:** Either refactor `RefundDialog` to accept `GroupedTransaction` directly, or pass the full transaction total with a summary label like "3 items — Cut, Color, Blowout".
 
-Transactions are currently stored as individual line items in `phorest_transaction_items`. For the grouped view, we aggregate client-side by `transaction_id`. No new tables needed for the core page — only a new `voided_transactions` table for void tracking.
+### 3. `voided_transactions` RLS mismatch with `phorest_transaction_items` RLS
+- `voided_transactions` uses `is_org_member(auth.uid(), organization_id)` for SELECT
+- `phorest_transaction_items` uses `has_role(auth.uid(), 'admin')` or `'manager'` or super_admin for SELECT
+- A staff member who can see their own transaction items (`stylist_user_id = auth.uid()`) **cannot** see void records because `is_org_member` may not match the same permission model
 
-**New table: `voided_transactions`**
-- `id` (uuid, PK)
-- `organization_id` (uuid, FK → organizations, RLS)
-- `transaction_id` (text, the Phorest transaction_id)
-- `void_reason` (text)
-- `voided_by` (uuid, FK → auth.users)
-- `voided_at` (timestamptz, default now())
-- RLS: org-member read, org-admin write
+**Fix:** Align `voided_transactions` SELECT policy to use the same role-based check as `phorest_transaction_items`.
 
-### Page Restructure
+### 4. Void INSERT policy uses `is_org_admin` but the UI doesn't gate it
+The `VoidConfirmDialog` allows any authenticated user to attempt voiding. The INSERT will fail silently for non-admins with an RLS error. No UI indication of permission.
 
-Replace the flat item list with a **grouped transaction table**. Each row = one checkout (transaction_id), showing date, client, stylist, payment method, item count, total, status. Clicking a row opens the **Transaction Detail Sheet** (right-side drawer).
+**Fix:** Check user role before showing the Void button, or catch the RLS error with a clear "Insufficient permissions" toast.
 
-```text
-┌─────────────────────────────────────────────────────────┐
-│ SALES                                           [Actions]│
-│ Page Explainer                                           │
-├──────────────────────────────────────────────────────────┤
-│ [Till Transactions] [Petty Cash] [Gift Cards]            │
-├──────────────────────────────────────────────────────────┤
-│ ◀ Apr 9, 2026 ▶   [Location ▾] [Payment ▾] [Search]    │
-├──────────────────────────────────────────────────────────┤
-│ KPIs: Total Revenue │ Transactions │ Avg Ticket │ Tips  │
-├──────────────────────────────────────────────────────────┤
-│ Date    Client    Stylist   Items  Payment  Total  Status│
-│ 2:30pm  Jane D.   Maria     3     Card     $285   Paid  │
-│ 1:15pm  Walk-in   Alex      1     Cash     $85    Paid  │
-│ ...                                                      │
-├──────────────────────────────────────────────────────────┤
-│ Till Balance: $2,340   │ Cash: $420  Card: $1,920       │
-└─────────────────────────────────────────────────────────┘
-```
+## Moderate Bugs
 
-## Detailed Changes
+### 5. `useGroupedTransactions` doesn't scope by `organization_id`
+The main query on `phorest_transaction_items` has **no org filter**. It relies on RLS to scope data, but the void records query explicitly filters by `orgId`. If RLS policies change or are bypassed (e.g., service role), all orgs' data would appear.
 
-### 1. New Hook: `useGroupedTransactions.ts`
+**Fix:** Add `.eq('organization_id', orgId)` if the column exists, or document the RLS-only approach explicitly.
 
-Queries `phorest_transaction_items` grouped by `transaction_id`. Returns:
-```ts
-interface GroupedTransaction {
-  transactionId: string;
-  transactionDate: string;
-  clientName: string | null;
-  phorestClientId: string | null;
-  stylistName: string | null;
-  paymentMethod: string | null;
-  locationId: string | null;
-  branchName: string | null;
-  items: TransactionLineItem[];
-  subtotal: number;
-  taxAmount: number;
-  tipAmount: number;
-  discountAmount: number;
-  totalAmount: number;  // subtotal + tax
-  refundStatus: string | null;
-  isVoided: boolean;
-}
-```
+### 6. No pagination — potential 1000-row limit hit
+`useGroupedTransactions` fetches all items for a date with no `.limit()`. Supabase default limit is 1000 rows. A busy salon day with 200+ transactions averaging 5 items each = 1000+ rows → silently truncated data.
 
-Fetches all items for the date/location/payment filters, then groups client-side by `transaction_id`. Cross-references `refund_records` and `voided_transactions` for status enrichment.
+**Fix:** Either paginate, or use `.limit(5000)` with a warning when approaching the cap.
 
-### 2. New Component: `TransactionDetailSheet.tsx`
+### 7. Date navigation timezone bug
+`new Date(selectedDate)` without a time component is parsed as UTC midnight, but `format()` from date-fns uses local timezone. The `goToPreviousDay` / `goToNextDay` use `new Date(selectedDate)` which can shift dates at timezone boundaries.
 
-A right-side Sheet (not dialog) using `tokens.drawer.*` aesthetic. Opens when a transaction row is clicked.
+The page already mitigates this for display with `new Date(selectedDate + 'T12:00:00')` (line 110), but the nav functions (lines 102-107) don't use this pattern.
 
-**Sections:**
-- **Header**: Client name (or "Walk-in"), date/time, transaction ID (truncated with copy), location badge
-- **Items breakdown**: Table of line items — service/product icon, name, qty, unit price, discount, line total. Promo badges where applicable.
-- **Payment summary**: Subtotal, discount, tax, tip (each on a row), grand total. Payment method badge (Card/Cash/Split with breakdown for multi-method like "Credit;Cash").
-- **Actions footer**: Primary actions as pill buttons:
-  - "Refund" → opens existing RefundDialog
-  - "Void" → opens VoidConfirmDialog (new)
-  - "Receipt" → dropdown with "Email Receipt" / "Print Receipt"
-  - All monetary values wrapped in `BlurredAmount`
+**Fix:** Use `parseISO(selectedDate)` from date-fns consistently, or always append `T12:00:00`.
 
-### 3. New Component: `VoidConfirmDialog.tsx`
+## Design & UX Gaps
 
-AlertDialog confirmation with reason input. Creates a `voided_transactions` record. Uses `DRILLDOWN_DIALOG_CONTENT_CLASS` + `DRILLDOWN_OVERLAY_CLASS`. Requires org-admin permission.
+### 8. `RefundDialog` doesn't use design tokens
+- Uses raw `Dialog` without `DRILLDOWN_DIALOG_CONTENT_CLASS`
+- Has bare `font-medium` on text (acceptable per canon but not using `tokens.body.emphasis`)
+- No `BlurredAmount` wrapping on financial values in the dialog
 
-### 4. Refactored `TransactionList.tsx` → `GroupedTransactionTable.tsx`
+### 9. Transaction count badge doesn't show on the "Total" SortHeader
+The "Total" `SortHeader` renders right-aligned text but the sort button has `-ml-3` which causes slight misalignment in right-aligned columns.
 
-Replaces the old item-level table. Each row shows one transaction (grouped). Columns:
-- Time (formatted from transaction_date)
-- Client (name or "Walk-in")
-- Stylist
-- Items (count badge, e.g., "3 items")
-- Payment (Card/Cash badge with icon)
-- Total (BlurredAmount)
-- Status (Paid/Refunded/Voided badge)
-- Actions (kebab menu: View Details, Refund, Void, Receipt)
+### 10. Missing `Petty Cash` tab
+The plan called for a Petty Cash placeholder tab but it wasn't implemented — only "Till Transactions" and "Gift Cards" exist.
 
-Click anywhere on row → opens TransactionDetailSheet.
+### 11. No empty state differentiation
+When no data exists for a date, the empty state says "No transactions found" — doesn't distinguish between "no data synced yet" vs "genuinely no sales this day".
 
-### 5. Updated Page: `Transactions.tsx` → Renamed to "Sales"
+### 12. `TillBalanceSummary` doesn't exclude refunded transactions
+The till balance sums all non-voided transactions, but refunded transactions (`refundStatus === 'completed'`) should be subtracted or shown separately.
 
-**Tabs**: Till Transactions (default), Petty Cash, Gift Cards
-- Rename page title from "Transactions" to "Sales"
-- Add daily date navigation (◀ date ▶) replacing the preset dropdown for Till Transactions tab
-- Add Payment Method filter dropdown (All, Card, Cash, Split)
-- Add Staff filter if staff data is available
-- Update KPI cards: Total Revenue, Transaction Count, Average Ticket, Total Tips
-- Add Till Balance summary bar at bottom showing cash/card/total breakdown
-- Petty Cash tab: placeholder with empty state (Phase 2 — no existing data model)
+### 13. Detail Sheet doesn't close after void/refund
+After voiding from the detail sheet, `VoidConfirmDialog` closes but the parent sheet stays open showing stale data. Same for refund.
 
-### 6. Receipt Functionality
+## Summary of Fixes
 
-**Email Receipt**: New edge function `send-receipt-email` that composes a formatted receipt from transaction data and sends via Lovable email infrastructure. Takes `transaction_id`, looks up items, formats HTML receipt, sends to client email (resolved from `phorest_clients`).
-
-**Print Receipt**: Client-side — opens a print-optimized window with receipt HTML. No backend needed. Uses `window.print()` with a styled receipt template.
-
-### 7. Database Migration
-
-```sql
--- Voided transactions tracking
-CREATE TABLE public.voided_transactions (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  organization_id uuid NOT NULL REFERENCES public.organizations(id) ON DELETE CASCADE,
-  transaction_id text NOT NULL,
-  void_reason text,
-  voided_by uuid NOT NULL REFERENCES auth.users(id),
-  voided_at timestamptz NOT NULL DEFAULT now(),
-  UNIQUE(organization_id, transaction_id)
-);
-
-ALTER TABLE public.voided_transactions ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY "Org members can view voided transactions"
-  ON public.voided_transactions FOR SELECT TO authenticated
-  USING (public.is_org_member(auth.uid(), organization_id));
-
-CREATE POLICY "Org admins can void transactions"
-  ON public.voided_transactions FOR INSERT TO authenticated
-  WITH CHECK (public.is_org_admin(auth.uid(), organization_id));
-```
-
-## Files
-
-| File | Action | Description |
-|------|--------|-------------|
-| `src/hooks/useGroupedTransactions.ts` | Create | Grouped transaction query + void/refund status enrichment |
-| `src/hooks/useVoidTransaction.ts` | Create | Mutation hook for voiding transactions |
-| `src/components/dashboard/transactions/GroupedTransactionTable.tsx` | Create | Transaction-level table with row click → detail sheet |
-| `src/components/dashboard/transactions/TransactionDetailSheet.tsx` | Create | Right-side Sheet with full transaction breakdown + actions |
-| `src/components/dashboard/transactions/VoidConfirmDialog.tsx` | Create | Void confirmation AlertDialog with reason input |
-| `src/components/dashboard/transactions/ReceiptPrintView.tsx` | Create | Print-optimized receipt component |
-| `src/components/dashboard/transactions/TillBalanceSummary.tsx` | Create | Bottom bar showing cash/card/total breakdown |
-| `src/components/dashboard/transactions/PaymentMethodBadge.tsx` | Create | Reusable badge for Card/Cash/Split display |
-| `src/pages/dashboard/Transactions.tsx` | Rewrite | Full page restructure with grouped view, new filters, daily nav |
-| `src/config/pageExplainers.ts` | Update | Update explainer for "sales" page ID |
-| Migration | Create | `voided_transactions` table with RLS |
-
-## Design Compliance
-
-- All typography via `tokens.*` — no font-bold, no uppercase on table headers
-- Sheet uses `tokens.drawer.*` (glass bento: bg-card/80, backdrop-blur-xl)
-- Drill-down dialog uses `DRILLDOWN_DIALOG_CONTENT_CLASS`
-- All monetary values wrapped in `BlurredAmount`
-- Currency via `useFormatCurrency`
-- KPI cards use `tokens.kpi.*`
-- Empty states use `tokens.empty.*`
-- Buttons use `tokens.button.*` sizing
-- Table headers use `tokens.table.columnHeader` (Title Case, Aeonik Pro)
-- PageExplainer included
-- Tabs default to first tab ("till-transactions")
-
-## Out of Scope (Phase 2)
-
-- Edit Sale (requires POS write-back — architectural decision needed)
-- Petty Cash CRUD (no data model exists yet — tab renders as placeholder)
-- Till Floats (no data model — deferred)
-- Email Receipt edge function (requires email domain setup — can be added later, print receipt ships first)
+| # | Severity | Issue | Fix |
+|---|----------|-------|-----|
+| 1 | **Critical** | Time column shows 12:00 AM for all rows | Use date equality query; remove/replace Time column |
+| 2 | **Critical** | Refund adapter loses multi-item context | Refactor RefundDialog or pass summary label |
+| 3 | **High** | Void/transaction RLS policy mismatch | Align policies |
+| 4 | **High** | Void button shown without permission check | Gate UI by role or handle RLS error |
+| 5 | **Medium** | No org_id filter on main query | Add explicit filter or document RLS reliance |
+| 6 | **Medium** | No pagination, 1000-row silent truncation | Add limit or pagination |
+| 7 | **Medium** | Timezone edge case in date navigation | Use parseISO consistently |
+| 8 | **Low** | RefundDialog missing design tokens + BlurredAmount | Update styling |
+| 9 | **Low** | Sort button misalignment on right-aligned column | Fix negative margin |
+| 10 | **Low** | Missing Petty Cash tab placeholder | Add placeholder |
+| 11 | **Low** | No empty state differentiation | Improve copy |
+| 12 | **Medium** | Till balance doesn't exclude refunds | Subtract refunded amounts |
+| 13 | **Medium** | Detail sheet stays open after void/refund | Close sheet on mutation success |
 
