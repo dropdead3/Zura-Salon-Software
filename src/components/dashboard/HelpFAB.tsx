@@ -11,7 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { AIHelpTab } from './help-fab/AIHelpTab';
 import { ChatLeadershipTab } from './help-fab/ChatLeadershipTab';
 import { useConnectEntitlement } from '@/hooks/connect/useConnectEntitlement';
-import { useAuth } from '@/contexts/AuthContext';
+
 
 export function HelpFAB() {
   const [isOpen, setIsOpen] = useState(false);
