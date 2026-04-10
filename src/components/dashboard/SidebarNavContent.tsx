@@ -147,7 +147,6 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
     myTools: [...growthNavItems, ...statsNavItems].filter((item, index, arr) => arr.findIndex(i => i.href === item.href) === index),
     ops: managerNavItems.filter(item => item.href.includes('team-hub')),
     data: managerNavItems.filter(item => item.href.includes('analytics') || item.href.includes('reports')),
-    manage: managerNavItems,
     apps: appsNavItemsProp,
     system: adminOnlyNavItems,
     housekeeping: housekeepingNavItems,

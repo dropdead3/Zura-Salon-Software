@@ -329,8 +329,8 @@ export function useSidebarLayout() {
 
       let stored = data?.sidebar_layout as unknown as SidebarLayoutConfig | null;
       
-      // Migrate legacy section IDs if present
-      if (stored?.sectionOrder?.some(id => Object.keys(LEGACY_SECTION_MAP).includes(id))) {
+      // Migrate legacy section IDs if present (including deprecated 'manage')
+      if (stored?.sectionOrder?.some(id => Object.keys(LEGACY_SECTION_MAP).includes(id) || DEPRECATED_SECTIONS.has(id))) {
         stored = migrateLegacySections(stored);
       }
 
