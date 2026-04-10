@@ -22,14 +22,15 @@ const SCOPES: { value: SearchScope; label: string }[] = [
 
 export function CommandSearchFilters({ activeScope, onScopeChange }: CommandSearchFiltersProps) {
   return (
-    <div className="flex items-center gap-1 px-5 py-1.5 border-b border-border/30">
-      {SCOPES.map((scope) => (
+    <div className="flex items-center gap-1 px-5 py-1.5 border-b border-border/30 overflow-x-auto scrollbar-hide">
+      {SCOPES.map((scope, idx) => (
         <button
           key={scope.value}
           type="button"
           onClick={() => onScopeChange(scope.value)}
           className={cn(
-            'h-6 px-2.5 rounded-full text-xs font-sans font-medium transition-colors duration-150',
+            'h-6 px-2.5 rounded-full text-xs font-sans font-medium transition-colors duration-150 shrink-0',
+            idx >= 5 && 'hidden sm:inline-flex',
             activeScope === scope.value
               ? 'bg-muted text-foreground'
               : 'text-muted-foreground hover:text-foreground hover:bg-muted/50',

@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { createPortal } from 'react-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { Search } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { tokens } from '@/lib/design-tokens';
@@ -72,8 +72,9 @@ const NAV_LABEL_MAP = (() => {
   return map;
 })();
 
-const SPRING_OPEN = { type: 'spring' as const, damping: 28, stiffness: 320, mass: 0.7 };
-const SPRING_CLOSE = { type: 'spring' as const, damping: 32, stiffness: 400, mass: 0.6 };
+const SPRING_OPEN_DEFAULT = { type: 'spring' as const, damping: 28, stiffness: 320, mass: 0.7 };
+const SPRING_CLOSE_DEFAULT = { type: 'spring' as const, damping: 32, stiffness: 400, mass: 0.6 };
+const INSTANT = { duration: 0.01 };
 
 export function ZuraCommandSurface({ open, onOpenChange, filterNavItems, anchorRef }: ZuraCommandSurfaceProps) {
   const [query, setQuery] = useState('');
@@ -87,6 +88,8 @@ export function ZuraCommandSurface({ open, onOpenChange, filterNavItems, anchorR
   const { dashPath } = useOrgDashboardPath();
   const lastQueryBeforeCloseRef = useRef('');
   const isMobile = useIsMobile();
+  const prefersReducedMotion = useReducedMotion();
+  const SPRING_OPEN = prefersReducedMotion ? INSTANT : SPRING_OPEN_DEFAULT;
   const { isImpersonating, effectiveOrganization } = useOrganizationContext();
   const orgId = effectiveOrganization?.id;
   const primaryRole = useMemo(() => {
@@ -471,6 +474,8 @@ export function ZuraCommandSurface({ open, onOpenChange, filterNavItems, anchorR
           {/* Command Surface Panel */}
           <motion.div
             key="cmd-panel"
+            role="dialog"
+            aria-label="Zura Search"
             initial={{ opacity: 0, scale: 0.97 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.97 }}
@@ -538,7 +543,7 @@ export function ZuraCommandSurface({ open, onOpenChange, filterNavItems, anchorR
                 hasPreview && 'lg:max-w-[calc(100%-340px)]'
               )}>
                 {hasQuery && showAICard && (
-                <CommandAIAnswerCard
+                  <CommandAIAnswerCard
                     response={aiResponse}
                     isLoading={aiLoading}
                     error={aiError}
@@ -550,6 +555,7 @@ export function ZuraCommandSurface({ open, onOpenChange, filterNavItems, anchorR
                       navigate(resolvedPath);
                       close();
                     }}
+                    onDismiss={() => { setAiMode(false); resetAI(); }}
                   />
                 )}
 
@@ -644,14 +650,21 @@ export function ZuraCommandSurface({ open, onOpenChange, filterNavItems, anchorR
                 <kbd className="rounded border border-border/50 bg-muted/70 px-1 py-0.5 font-mono text-[11px]">↵</kbd>
                 open
               </span>
-              <span className="flex items-center gap-1">
-                <kbd className="rounded border border-border/50 bg-muted/70 px-1 py-0.5 font-mono text-[11px]">Tab</kbd>
-                ask Zura
-              </span>
+              {!isMobile && (
+                <span className="flex items-center gap-1">
+                  <kbd className="rounded border border-border/50 bg-muted/70 px-1 py-0.5 font-mono text-[11px]">Tab</kbd>
+                  ask Zura
+                </span>
+              )}
               {hasActiveAction && (
                 <span className="flex items-center gap-1 ml-auto">
                   <kbd className="rounded border border-border/50 bg-muted/70 px-1 py-0.5 font-mono text-[11px]">⌘↵</kbd>
                   run action
+                </span>
+              )}
+              {hasQuery && hasResults && !hasActiveAction && (
+                <span className="ml-auto text-muted-foreground/50">
+                  {flatResults.length} result{flatResults.length !== 1 ? 's' : ''}
                 </span>
               )}
             </div>

@@ -53,7 +53,7 @@ export function CommandSuggestionPanel({
   if (suggestions.length === 0) return null;
 
   return (
-    <div className="py-3 px-2">
+    <div className="py-3 px-3">
       <p className="font-sans text-xs text-muted-foreground px-2 mb-2">
         No direct match. Try these instead:
       </p>

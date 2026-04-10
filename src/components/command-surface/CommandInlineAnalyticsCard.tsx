@@ -105,7 +105,7 @@ export function CommandInlineAnalyticsCard({ hint, onNavigate, timeLabel, data }
       type="button"
       onClick={() => onNavigate(config.path)}
       className={cn(
-        'w-[calc(100%-2rem)] mx-4 my-2 flex items-center gap-3 px-4 py-3',
+        'w-auto mx-3 my-2 flex items-center gap-3 px-4 py-3',
         'bg-card-inner/60 border border-border/30 rounded-lg',
         'hover:bg-muted/50 transition-colors duration-150',
         'text-left group'

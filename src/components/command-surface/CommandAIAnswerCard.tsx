@@ -4,7 +4,7 @@ import { DotsLoader } from '@/components/ui/loaders/DotsLoader';
 import ReactMarkdown from 'react-markdown';
 import { cn } from '@/lib/utils';
 import { AI_ASSISTANT_NAME_DEFAULT } from '@/lib/brand';
-import { ArrowRight, MapPin } from 'lucide-react';
+import { ArrowRight, MapPin, X } from 'lucide-react';
 import type { NavDestination } from '@/lib/navKnowledgeBase';
 
 interface CommandAIAnswerCardProps {
@@ -15,6 +15,7 @@ interface CommandAIAnswerCardProps {
   navConfidence?: 'high' | 'medium' | 'low' | 'none';
   destinations?: NavDestination[];
   onNavigate?: (path: string) => void;
+  onDismiss?: () => void;
 }
 
 function DestinationLink({ dest, query, onNavigate }: { dest: NavDestination; query?: string; onNavigate: (path: string) => void }) {
@@ -72,23 +73,34 @@ function DestinationLink({ dest, query, onNavigate }: { dest: NavDestination; qu
   );
 }
 
-export function CommandAIAnswerCard({ response, isLoading, error, isNavQuestion, navConfidence, destinations = [], onNavigate }: CommandAIAnswerCardProps) {
+export function CommandAIAnswerCard({ response, isLoading, error, isNavQuestion, navConfidence, destinations = [], onNavigate, onDismiss }: CommandAIAnswerCardProps) {
   const [expanded, setExpanded] = useState(false);
   const hasDestinations = destinations.length > 0 && onNavigate;
 
   if (!isLoading && !response && !error) return null;
 
   return (
-    <div className="mx-3 mt-2 mb-1 rounded-xl border border-primary/10 bg-gradient-to-br from-card to-card/60 backdrop-blur-sm p-4">
+    <div className="mx-3 mt-2 mb-1 rounded-lg border border-primary/10 bg-gradient-to-br from-card to-card/60 backdrop-blur-sm p-4">
       {/* Header */}
       <div className="flex items-center gap-1.5 mb-2.5">
         <ZuraZIcon className={cn(
           'w-3.5 h-3.5 text-primary',
           isLoading && 'animate-pulse'
         )} />
-        <span className="font-display text-[10px] font-medium text-primary uppercase tracking-wider">
+        <span className="font-display text-[10px] font-medium text-primary uppercase tracking-wider flex-1">
           {AI_ASSISTANT_NAME_DEFAULT}
         </span>
+        {onDismiss && !isLoading && (
+          <button
+            type="button"
+            onClick={onDismiss}
+            className="text-muted-foreground/50 hover:text-foreground p-0.5 transition-colors"
+            tabIndex={-1}
+            aria-label="Dismiss AI answer"
+          >
+            <X className="w-3 h-3" />
+          </button>
+        )}
       </div>
 
       {/* Loading */}

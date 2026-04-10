@@ -93,9 +93,9 @@ export const CommandResultRow = React.forwardRef<HTMLButtonElement, CommandResul
         )}
 
         {/* Inline action chip on hover/selected for top results */}
-        {isTopResult && actionChipLabel && (isSelected || true) && (
+        {isTopResult && actionChipLabel && (
           <span className={cn(
-            'font-sans text-[10px] px-2 py-0.5 rounded-full shrink-0 transition-opacity duration-150',
+            'font-sans text-[10px] px-2 py-0.5 rounded-full shrink-0 transition-opacity duration-150 will-change-[opacity]',
             'bg-primary/10 text-primary border border-primary/20',
             isSelected ? 'opacity-100' : 'opacity-0 group-hover/row:opacity-100'
           )}>
