@@ -351,7 +351,7 @@ export default function TeamHub() {
           )}
         </CategorySection>
 
-        {/* 3. Scheduling & Time Off */}
+        {/* 2. Scheduling & Time Off */}
         <CategorySection title="Scheduling & Time Off">
           {!isFavorited(dashPath('/admin/schedule-requests')) && (
             <ManagementCard
@@ -402,7 +402,7 @@ export default function TeamHub() {
           )}
         </CategorySection>
 
-        {/* 4. People & Development */}
+        {/* 3. People & Development */}
         <CategorySection title="People & Development">
           {!isFavorited(dashPath('/directory')) && (
             <ManagementCard
@@ -471,7 +471,7 @@ export default function TeamHub() {
           )}
         </CategorySection>
 
-        {/* 5. Client & Business */}
+        {/* 4. Client & Business */}
         <CategorySection title="Client & Business">
           {!isFavorited(dashPath('/admin/client-hub')) && (
             <ManagementCard
@@ -493,7 +493,7 @@ export default function TeamHub() {
           )}
         </CategorySection>
 
-        {/* 6. Compliance & Documentation */}
+        {/* 5. Compliance & Documentation */}
         <CategorySection title="Compliance & Documentation">
           {!isFavorited(dashPath('/admin/performance-reviews')) && (
             <ManagementCard
