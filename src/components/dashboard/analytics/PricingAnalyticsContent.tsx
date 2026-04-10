@@ -20,7 +20,7 @@ import { AnalyticsFilterBadge } from '@/components/dashboard/AnalyticsFilterBadg
 import { EmptyState } from '@/components/ui/empty-state';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { useComputedPriceRecommendations, useDefaultTargetMargin } from '@/hooks/color-bar/useServicePriceRecommendations';
-import { useOrganizationApps } from '@/hooks/useOrganizationApps';
+import { useColorBarEntitlement } from '@/hooks/color-bar/useColorBarEntitlement';
 import { useServiceProfitabilitySnapshots } from '@/hooks/color-bar/useServiceProfitability';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 import type { FilterContext } from '@/components/dashboard/AnalyticsFilterBadge';
@@ -42,7 +42,7 @@ export function PricingAnalyticsContent({
 }: PricingAnalyticsContentProps) {
   const { dashPath } = useOrgDashboardPath();
   const navigate = useNavigate();
-  const { hasApp, isLoading: appsLoading } = useOrganizationApps();
+  const { isEntitled: isColorBarEntitled, isLoading: entitlementLoading } = useColorBarEntitlement();
   const { data: recommendations, isLoading } = useComputedPriceRecommendations();
   const { margin: defaultMargin } = useDefaultTargetMargin();
 
@@ -122,7 +122,7 @@ export function PricingAnalyticsContent({
       }));
   }, [snapshots]);
 
-  if (isLoading || appsLoading) {
+  if (isLoading || entitlementLoading) {
     return (
       <div className="flex items-center justify-center h-64">
         <Loader2 className={tokens.loading?.spinner || 'h-8 w-8 animate-spin text-primary'} />
@@ -131,7 +131,7 @@ export function PricingAnalyticsContent({
   }
 
   // Color Bar not activated — show empty state
-  if (!appsLoading && !hasApp('backroom')) {
+  if (!entitlementLoading && !isColorBarEntitled) {
     return (
       <EmptyState
         icon={Beaker}

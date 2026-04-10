@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Navigate } from 'react-router-dom';
 import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { useQuery } from '@tanstack/react-query';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
@@ -16,6 +17,7 @@ import { AddScalesDialog } from '@/components/dashboard/color-bar-settings/AddSc
 import { ColorBarROICard } from '@/components/dashboard/color-bar-settings/ColorBarROICard';
 import { COLOR_BAR_BASE_PRICE, COLOR_BAR_PER_SERVICE_FEE, SCALE_LICENSE_MONTHLY } from '@/hooks/color-bar/useLocationStylistCounts';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
+import { useColorBarEntitlement } from '@/hooks/color-bar/useColorBarEntitlement';
 import { PageExplainer } from '@/components/ui/PageExplainer';
 
 
@@ -35,8 +37,22 @@ interface SubscriptionData {
 export default function ColorBarSubscription() {
   const { dashPath } = useOrgDashboardPath();
   const { effectiveOrganization } = useOrganizationContext();
+  const { isEntitled, isLoading: entitlementLoading } = useColorBarEntitlement();
   const [portalLoading, setPortalLoading] = useState(false);
   const [addScalesOpen, setAddScalesOpen] = useState(false);
+
+  // Entitlement gate — redirect if org doesn't have Color Bar enabled
+  if (entitlementLoading) {
+    return (
+      <DashboardLayout>
+        <DashboardLoader className="h-64" />
+      </DashboardLayout>
+    );
+  }
+
+  if (!isEntitled) {
+    return <Navigate to={dashPath('/')} replace />;
+  }
 
   const { data: sub, isLoading } = useQuery<SubscriptionData>({
     queryKey: ['color-bar-subscription', effectiveOrganization?.id],

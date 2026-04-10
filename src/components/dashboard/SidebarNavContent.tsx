@@ -27,7 +27,7 @@ import { SidebarFeedbackButtons } from './SidebarFeedbackButtons';
 import { useBusinessSettings } from '@/hooks/useBusinessSettings';
 import { useSidebarLayout, SECTION_LABELS, SECTION_ICONS, DEFAULT_SECTION_ORDER, DEFAULT_LINK_ORDER, isBuiltInSection, getEffectiveHiddenSections, getEffectiveHiddenLinks, anyRoleHasOverrides } from '@/hooks/useSidebarLayout';
 import { useAnalyticsSubtabFavorites } from '@/hooks/useAnalyticsSubtabFavorites';
-import { useOrganizationApps } from '@/hooks/useOrganizationApps';
+
 import { useConnectEntitlement } from '@/hooks/connect/useConnectEntitlement';
 import { usePayrollEntitlement } from '@/hooks/payroll/usePayrollEntitlement';
 import { useColorBarEntitlement } from '@/hooks/color-bar/useColorBarEntitlement';
@@ -117,7 +117,7 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
   const { data: businessSettings } = useBusinessSettings();
   const { data: sidebarLayout } = useSidebarLayout();
   const { groupedFavorites, toggleFavorite: toggleSubtabFavorite } = useAnalyticsSubtabFavorites();
-  const { apps: activatedApps } = useOrganizationApps();
+  
   const { isEntitled: isConnectEntitled } = useConnectEntitlement();
   const { isEntitled: isPayrollEntitled } = usePayrollEntitlement();
   const { isEntitled: isColorBarEntitled } = useColorBarEntitlement();
@@ -575,6 +575,7 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
             { hrefSuffix: '/my-pay', entitled: isPayrollEntitled && hasPayrollEnrollment },
             { hrefSuffix: '/admin/payroll', entitled: isPayrollEntitled },
             { hrefSuffix: '/admin/connect', entitled: isConnectEntitled },
+            { hrefSuffix: '/team-chat', entitled: isConnectEntitled },
             { hrefSuffix: '/admin/color-bar-settings', entitled: isColorBarEntitled },
           ];
 
