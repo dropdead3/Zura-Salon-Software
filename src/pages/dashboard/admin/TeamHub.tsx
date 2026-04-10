@@ -170,6 +170,8 @@ interface CategorySectionProps {
 }
 
 function CategorySection({ title, children, columns = 3 }: CategorySectionProps) {
+  const validChildren = React.Children.toArray(children).filter(Boolean);
+  if (validChildren.length === 0) return null;
   return (
     <div className="space-y-3">
       <h2 className="font-display text-sm tracking-wide text-muted-foreground uppercase">{title}</h2>
@@ -177,7 +179,7 @@ function CategorySection({ title, children, columns = 3 }: CategorySectionProps)
         "grid gap-3 items-stretch",
         columns === 2 ? "sm:grid-cols-2" : "sm:grid-cols-2 lg:grid-cols-3"
       )}>
-        {children}
+        {validChildren}
       </div>
     </div>
   );
@@ -311,14 +313,16 @@ export default function TeamHub() {
 
         {/* 1. Hubs */}
         <CategorySection title="Hubs">
-          <HubGatewayCard
-            href={dashPath('/admin/client-hub')}
-            icon={HeartPulse}
-            title="Client Hub"
-            description="Client management, retention, and engagement"
-            {...favProps('/admin/client-hub', 'Client Hub', HeartPulse)}
-          />
-          {isPayrollEntitled && (
+          {!isFavorited(dashPath('/admin/client-hub')) && (
+            <HubGatewayCard
+              href={dashPath('/admin/client-hub')}
+              icon={HeartPulse}
+              title="Client Hub"
+              description="Client management, retention, and engagement"
+              {...favProps('/admin/client-hub', 'Client Hub', HeartPulse)}
+            />
+          )}
+          {isPayrollEntitled && !isFavorited(dashPath('/admin/payroll')) && (
             <HubGatewayCard
               href={dashPath('/admin/payroll')}
               icon={DollarSign}
@@ -327,190 +331,234 @@ export default function TeamHub() {
               {...favProps('/admin/payroll', 'Hiring & Payroll Hub', DollarSign)}
             />
           )}
-          <HubGatewayCard
-            href={dashPath('/admin/booth-renters')}
-            icon={Store}
-            title="Renter Hub"
-            description="Booth renter contracts, billing, and compliance"
-            {...favProps('/admin/booth-renters', 'Renter Hub', Store)}
-          />
-          <HubGatewayCard
-            href={dashPath('/admin/onboarding-tracker')}
-            icon={ClipboardList}
-            title="Onboarding Hub"
-            description="New hire progress, invitations, and checklist completion"
-            {...favProps('/admin/onboarding-tracker', 'Onboarding Hub', ClipboardList)}
-          />
-          <HubGatewayCard
-            href={dashPath('/admin/training-hub')}
-            icon={Video}
-            title="Training Hub"
-            description="Manage training library and track completions"
-            {...favProps('/admin/training-hub', 'Training Hub', Video)}
-          />
+          {!isFavorited(dashPath('/admin/booth-renters')) && (
+            <HubGatewayCard
+              href={dashPath('/admin/booth-renters')}
+              icon={Store}
+              title="Renter Hub"
+              description="Booth renter contracts, billing, and compliance"
+              {...favProps('/admin/booth-renters', 'Renter Hub', Store)}
+            />
+          )}
+          {!isFavorited(dashPath('/admin/onboarding-tracker')) && (
+            <HubGatewayCard
+              href={dashPath('/admin/onboarding-tracker')}
+              icon={ClipboardList}
+              title="Onboarding Hub"
+              description="New hire progress, invitations, and checklist completion"
+              {...favProps('/admin/onboarding-tracker', 'Onboarding Hub', ClipboardList)}
+            />
+          )}
+          {!isFavorited(dashPath('/admin/training-hub')) && (
+            <HubGatewayCard
+              href={dashPath('/admin/training-hub')}
+              icon={Video}
+              title="Training Hub"
+              description="Manage training library and track completions"
+              {...favProps('/admin/training-hub', 'Training Hub', Video)}
+            />
+          )}
         </CategorySection>
 
         {/* 2. Daily Operations */}
         <CategorySection title="Daily Operations">
-          <ManagementCard
-            href={dashPath('/admin/daily-huddle')}
-            icon={MessageSquare}
-            title="Daily Huddle"
-            description="Create pre-shift notes and daily goals"
-            {...favProps('/admin/daily-huddle', 'Daily Huddle', MessageSquare)}
-          />
-          <ManagementCard
-            href={dashPath('/admin/chair-assignments')}
-            icon={Armchair}
-            title="Chair Assignments"
-            description="Station assignments and floor layout management"
-            {...favProps('/admin/chair-assignments', 'Chair Assignments', Armchair)}
-          />
-          <ManagementCard
-            href={dashPath('/assistant-schedule')}
-            icon={CalendarDays}
-            title="Assistant Scheduling"
-            description="Manage assistant assignments and coverage"
-            {...favProps('/assistant-schedule', 'Assistant Scheduling', CalendarDays)}
-          />
-          <ManagementCard
-            href={dashPath('/admin/announcements')}
-            icon={Bell}
-            title="Announcements"
-            description="Send team-wide communications"
-            {...favProps('/admin/announcements', 'Announcements', Bell)}
-          />
+          {!isFavorited(dashPath('/admin/daily-huddle')) && (
+            <ManagementCard
+              href={dashPath('/admin/daily-huddle')}
+              icon={MessageSquare}
+              title="Daily Huddle"
+              description="Create pre-shift notes and daily goals"
+              {...favProps('/admin/daily-huddle', 'Daily Huddle', MessageSquare)}
+            />
+          )}
+          {!isFavorited(dashPath('/admin/chair-assignments')) && (
+            <ManagementCard
+              href={dashPath('/admin/chair-assignments')}
+              icon={Armchair}
+              title="Chair Assignments"
+              description="Station assignments and floor layout management"
+              {...favProps('/admin/chair-assignments', 'Chair Assignments', Armchair)}
+            />
+          )}
+          {!isFavorited(dashPath('/assistant-schedule')) && (
+            <ManagementCard
+              href={dashPath('/assistant-schedule')}
+              icon={CalendarDays}
+              title="Assistant Scheduling"
+              description="Manage assistant assignments and coverage"
+              {...favProps('/assistant-schedule', 'Assistant Scheduling', CalendarDays)}
+            />
+          )}
+          {!isFavorited(dashPath('/admin/announcements')) && (
+            <ManagementCard
+              href={dashPath('/admin/announcements')}
+              icon={Bell}
+              title="Announcements"
+              description="Send team-wide communications"
+              {...favProps('/admin/announcements', 'Announcements', Bell)}
+            />
+          )}
         </CategorySection>
 
         {/* 3. Scheduling & Time Off */}
         <CategorySection title="Scheduling & Time Off">
-          <ManagementCard
-            href={dashPath('/admin/schedule-requests')}
-            icon={CalendarClock}
-            title="Schedule Requests"
-            description="Time-off and schedule change approvals"
-            {...favProps('/admin/schedule-requests', 'Schedule Requests', CalendarClock)}
-          />
-          <ManagementCard
-            href={dashPath('/admin/shift-swaps')}
-            icon={ArrowLeftRight}
-            title="Shift Swap Approvals"
-            description="Review and approve shift swap requests"
-            {...favProps('/admin/shift-swaps', 'Shift Swap Approvals', ArrowLeftRight)}
-          />
-          <ManagementCard
-            href={dashPath('/admin/assistant-requests')}
-            icon={HandHelping}
-            title="Assistant Requests"
-            description="Manage help requests from stylists"
-            stat={stats?.pendingAssistantRequests || null}
-            statLabel="pending"
-            {...favProps('/admin/assistant-requests', 'Assistant Requests', HandHelping)}
-          />
-          <ManagementCard
-            href={dashPath('/schedule-meeting')}
-            icon={CalendarClock}
-            title="Meetings & Accountability"
-            description="Schedule 1:1s and track commitments"
-            {...favProps('/schedule-meeting', 'Meetings & Accountability', CalendarClock)}
-          />
-          <ManagementCard
-            href={dashPath('/admin/pto')}
-            icon={CalendarDays}
-            title="PTO Balances"
-            description="Manage PTO policies and employee balances"
-            {...favProps('/admin/pto', 'PTO Balances', CalendarDays)}
-          />
+          {!isFavorited(dashPath('/admin/schedule-requests')) && (
+            <ManagementCard
+              href={dashPath('/admin/schedule-requests')}
+              icon={CalendarClock}
+              title="Schedule Requests"
+              description="Time-off and schedule change approvals"
+              {...favProps('/admin/schedule-requests', 'Schedule Requests', CalendarClock)}
+            />
+          )}
+          {!isFavorited(dashPath('/admin/shift-swaps')) && (
+            <ManagementCard
+              href={dashPath('/admin/shift-swaps')}
+              icon={ArrowLeftRight}
+              title="Shift Swap Approvals"
+              description="Review and approve shift swap requests"
+              {...favProps('/admin/shift-swaps', 'Shift Swap Approvals', ArrowLeftRight)}
+            />
+          )}
+          {!isFavorited(dashPath('/admin/assistant-requests')) && (
+            <ManagementCard
+              href={dashPath('/admin/assistant-requests')}
+              icon={HandHelping}
+              title="Assistant Requests"
+              description="Manage help requests from stylists"
+              stat={stats?.pendingAssistantRequests || null}
+              statLabel="pending"
+              {...favProps('/admin/assistant-requests', 'Assistant Requests', HandHelping)}
+            />
+          )}
+          {!isFavorited(dashPath('/schedule-meeting')) && (
+            <ManagementCard
+              href={dashPath('/schedule-meeting')}
+              icon={CalendarClock}
+              title="Meetings & Accountability"
+              description="Schedule 1:1s and track commitments"
+              {...favProps('/schedule-meeting', 'Meetings & Accountability', CalendarClock)}
+            />
+          )}
+          {!isFavorited(dashPath('/admin/pto')) && (
+            <ManagementCard
+              href={dashPath('/admin/pto')}
+              icon={CalendarDays}
+              title="PTO Balances"
+              description="Manage PTO policies and employee balances"
+              {...favProps('/admin/pto', 'PTO Balances', CalendarDays)}
+            />
+          )}
         </CategorySection>
 
         {/* 4. Team & Development */}
         <CategorySection title="Team & Development">
-          <ManagementCard
-            href={dashPath('/directory')}
-            icon={Users}
-            title="Team Directory"
-            description="View and manage your team roster"
-            {...favProps('/directory', 'Team Directory', Users)}
-          />
-          <ManagementCard
-            href={dashPath('/admin/graduation-tracker')}
-            icon={GraduationCap}
-            title="Graduation Tracker"
-            description="Monitor assistant advancement and milestones"
-            stat={stats?.inProgressGraduations || null}
-            statLabel="in progress"
-            {...favProps('/admin/graduation-tracker', 'Graduation Tracker', GraduationCap)}
-          />
-          <ManagementCard
-            href={dashPath('/admin/client-engine-tracker')}
-            icon={Target}
-            title="Client Engine Tracker"
-            description="Program enrollment and participation rates"
-            {...favProps('/admin/client-engine-tracker', 'Client Engine Tracker', Target)}
-          />
-          <ManagementCard
-            href={dashPath('/admin/challenges')}
-            icon={Trophy}
-            title="Team Challenges"
-            description="Create and manage team competitions"
-            {...favProps('/admin/challenges', 'Team Challenges', Trophy)}
-          />
+          {!isFavorited(dashPath('/directory')) && (
+            <ManagementCard
+              href={dashPath('/directory')}
+              icon={Users}
+              title="Team Directory"
+              description="View and manage your team roster"
+              {...favProps('/directory', 'Team Directory', Users)}
+            />
+          )}
+          {!isFavorited(dashPath('/admin/graduation-tracker')) && (
+            <ManagementCard
+              href={dashPath('/admin/graduation-tracker')}
+              icon={GraduationCap}
+              title="Graduation Tracker"
+              description="Monitor assistant advancement and milestones"
+              stat={stats?.inProgressGraduations || null}
+              statLabel="in progress"
+              {...favProps('/admin/graduation-tracker', 'Graduation Tracker', GraduationCap)}
+            />
+          )}
+          {!isFavorited(dashPath('/admin/client-engine-tracker')) && (
+            <ManagementCard
+              href={dashPath('/admin/client-engine-tracker')}
+              icon={Target}
+              title="Client Engine Tracker"
+              description="Program enrollment and participation rates"
+              {...favProps('/admin/client-engine-tracker', 'Client Engine Tracker', Target)}
+            />
+          )}
+          {!isFavorited(dashPath('/admin/challenges')) && (
+            <ManagementCard
+              href={dashPath('/admin/challenges')}
+              icon={Trophy}
+              title="Team Challenges"
+              description="Create and manage team competitions"
+              {...favProps('/admin/challenges', 'Team Challenges', Trophy)}
+            />
+          )}
         </CategorySection>
 
         {/* 5. Compliance & Documentation */}
         <CategorySection title="Compliance & Documentation">
-          <ManagementCard
-            href={dashPath('/admin/performance-reviews')}
-            icon={StarIcon}
-            title="Performance Reviews"
-            description="Structured reviews with ratings and goals"
-            {...favProps('/admin/performance-reviews', 'Performance Reviews', StarIcon)}
-          />
-          <ManagementCard
-            href={dashPath('/admin/incidents')}
-            icon={ShieldAlert}
-            title="Incidents & Accountability"
-            description="Incident reports, strikes, and safety documentation"
-            {...favProps('/admin/incidents', 'Incidents & Accountability', ShieldAlert)}
-          />
-          <ManagementCard
-            href={dashPath('/admin/handbooks')}
-            icon={BookOpen}
-            title="Handbooks"
-            description="Create and manage team handbooks and policy documents"
-            {...favProps('/admin/handbooks', 'Handbooks', BookOpen)}
-          />
+          {!isFavorited(dashPath('/admin/performance-reviews')) && (
+            <ManagementCard
+              href={dashPath('/admin/performance-reviews')}
+              icon={StarIcon}
+              title="Performance Reviews"
+              description="Structured reviews with ratings and goals"
+              {...favProps('/admin/performance-reviews', 'Performance Reviews', StarIcon)}
+            />
+          )}
+          {!isFavorited(dashPath('/admin/incidents')) && (
+            <ManagementCard
+              href={dashPath('/admin/incidents')}
+              icon={ShieldAlert}
+              title="Incidents & Accountability"
+              description="Incident reports, strikes, and safety documentation"
+              {...favProps('/admin/incidents', 'Incidents & Accountability', ShieldAlert)}
+            />
+          )}
+          {!isFavorited(dashPath('/admin/handbooks')) && (
+            <ManagementCard
+              href={dashPath('/admin/handbooks')}
+              icon={BookOpen}
+              title="Handbooks"
+              description="Create and manage team handbooks and policy documents"
+              {...favProps('/admin/handbooks', 'Handbooks', BookOpen)}
+            />
+          )}
         </CategorySection>
 
         {/* 6. Team Services */}
         <CategorySection title="Team Services">
-          <ManagementCard
-            href={dashPath('/admin/business-cards')}
-            icon={CreditCard}
-            title="Business Cards"
-            description="Process business card requests"
-            stat={stats?.pendingBusinessCards || null}
-            statLabel="pending"
-            {...favProps('/admin/business-cards', 'Business Cards', CreditCard)}
-          />
-          <ManagementCard
-            href={dashPath('/admin/headshots')}
-            icon={Camera}
-            title="Headshots"
-            description="Schedule and track photo sessions"
-            stat={stats?.pendingHeadshots || null}
-            statLabel="pending"
-            {...favProps('/admin/headshots', 'Headshots', Camera)}
-          />
-          <ManagementCard
-            href={dashPath('/admin/birthdays')}
-            icon={Cake}
-            title="Birthdays & Anniversaries"
-            description="Upcoming team celebrations and milestones"
-            stat={stats?.birthdaysThisWeek || null}
-            statLabel="this week"
-            {...favProps('/admin/birthdays', 'Birthdays & Anniversaries', Cake)}
-          />
+          {!isFavorited(dashPath('/admin/business-cards')) && (
+            <ManagementCard
+              href={dashPath('/admin/business-cards')}
+              icon={CreditCard}
+              title="Business Cards"
+              description="Process business card requests"
+              stat={stats?.pendingBusinessCards || null}
+              statLabel="pending"
+              {...favProps('/admin/business-cards', 'Business Cards', CreditCard)}
+            />
+          )}
+          {!isFavorited(dashPath('/admin/headshots')) && (
+            <ManagementCard
+              href={dashPath('/admin/headshots')}
+              icon={Camera}
+              title="Headshots"
+              description="Schedule and track photo sessions"
+              stat={stats?.pendingHeadshots || null}
+              statLabel="pending"
+              {...favProps('/admin/headshots', 'Headshots', Camera)}
+            />
+          )}
+          {!isFavorited(dashPath('/admin/birthdays')) && (
+            <ManagementCard
+              href={dashPath('/admin/birthdays')}
+              icon={Cake}
+              title="Birthdays & Anniversaries"
+              description="Upcoming team celebrations and milestones"
+              stat={stats?.birthdaysThisWeek || null}
+              statLabel="this week"
+              {...favProps('/admin/birthdays', 'Birthdays & Anniversaries', Cake)}
+            />
+          )}
         </CategorySection>
       </div>
     </DashboardLayout>
