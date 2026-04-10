@@ -19,6 +19,7 @@ const SheetOverlay = React.forwardRef<
       tokens.drawer.overlay,
       className
     )}
+    style={{ top: 'var(--god-mode-offset, 0px)' }}
     {...props}
     ref={ref}
   />
@@ -33,8 +34,8 @@ interface SheetContentProps
 const sheetVariants: Record<string, string> = {
   top: "inset-x-0 top-0 border-b data-[state=closed]:slide-out-to-top data-[state=open]:slide-in-from-top",
   bottom: "inset-x-0 bottom-0 border-t data-[state=closed]:slide-out-to-bottom data-[state=open]:slide-in-from-bottom",
-  left: "inset-y-0 left-0 h-full w-3/4 border-r data-[state=closed]:slide-out-to-left data-[state=open]:slide-in-from-left sm:max-w-sm",
-  right: "inset-y-0 right-0 h-full w-3/4 border-l data-[state=closed]:slide-out-to-right data-[state=open]:slide-in-from-right sm:max-w-sm",
+  left: "left-0 bottom-0 h-full w-3/4 border-r data-[state=closed]:slide-out-to-left data-[state=open]:slide-in-from-left sm:max-w-sm",
+  right: "right-0 bottom-0 h-full w-3/4 border-l data-[state=closed]:slide-out-to-right data-[state=open]:slide-in-from-right sm:max-w-sm",
 }
 
 const SheetContent = React.forwardRef<
@@ -51,6 +52,10 @@ const SheetContent = React.forwardRef<
         sheetVariants[side],
         className
       )}
+      style={{
+        ...(side === 'left' || side === 'right' ? { top: 'var(--god-mode-offset, 0px)' } : {}),
+        ...props.style,
+      }}
       {...props}
     >
       {children}

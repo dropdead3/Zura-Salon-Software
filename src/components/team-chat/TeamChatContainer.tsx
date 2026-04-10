@@ -29,6 +29,7 @@ function TeamChatLayout() {
           'fixed inset-0 z-50 lg:hidden',
           isSidebarOpen ? 'block' : 'hidden'
         )}
+        style={{ top: 'var(--god-mode-offset, 0px)' }}
       >
         <div
           className="absolute inset-0 bg-black/50"
