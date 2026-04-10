@@ -105,6 +105,14 @@ const ICON_MAP: Record<string, LucideIcon> = {
   Tag,
   Folder,
   FileText,
+  Globe,
+  Search,
+  Brain,
+  MessageSquarePlus,
+  UserCheck,
+  GitMerge,
+  UserPlus,
+  Coins,
   BoothRent: BoothRentIcon as unknown as LucideIcon,
 };
 
