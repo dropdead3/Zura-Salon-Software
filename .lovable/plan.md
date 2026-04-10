@@ -1,49 +1,54 @@
 
 
-# Move Zura Configuration & Points/Rewards from Operations Hub to Settings
+# Conditionally Show "My Pay" Based on Payroll Enrollment
 
 ## Problem
 
-Two items in the Operations Hub are configuration/settings concerns, not daily operational tasks:
-1. **Zura Configuration** (AI personality, knowledge, guardrails) — belongs in Settings under Platform
-2. **Points & Rewards Config** — redundant since Settings already has a "Team Rewards" card that renders `TeamRewardsConfigurator`
+"My Pay" appears in the sidebar for all roles regardless of whether the team member has been enrolled in payroll (i.e., has a row in `employee_payroll_settings`). It should only appear when the user actually has payroll settings configured.
 
-Additionally, the "Points & Rewards Config" title in Ops Hub is ambiguous — it could be mistaken for client-facing loyalty rewards rather than staff incentives.
+## Approach
+
+Add a lightweight query inside `SidebarNavContent` to check if the current user has a record in `employee_payroll_settings`. Then filter out the `/dashboard/my-pay` link when they don't.
 
 ## Changes
 
-### 1. Remove from Operations Hub (`src/pages/dashboard/admin/TeamHub.tsx`)
+### 1. `src/components/dashboard/SidebarNavContent.tsx`
 
-- Remove the "Points & Rewards Config" `ManagementCard` (lines 427-432) — Settings already covers this via the "Team Rewards" card
-- Remove the "Zura Configuration" `ManagementCard` and the entire "AI & Automation" `CategorySection` (lines 441-449)
-
-### 2. Add Zura Configuration to Settings
-
-**`src/hooks/useSettingsLayout.ts`**:
-- Add `'zura-config'` to `DEFAULT_ICON_COLORS` with a Brain-appropriate color (e.g., `'#A855F7'`)
-- Add `'zura-config'` to the `platform` section in `SECTION_GROUPS`
-
-**`src/pages/dashboard/admin/Settings.tsx`**:
-- Add `'zura-config'` entry to `categoriesMap` with label "Zura Configuration", Brain icon, and appropriate description
-- Add navigation handler: clicking it navigates to `/admin/zura-config` (same pattern as `access-hub` and `data-import`)
-
-### 3. Rename "Team Rewards" for clarity
-
-In `src/pages/dashboard/admin/Settings.tsx`, update the `team-rewards` entry:
-- Label: **"Staff Rewards"** (clearer that it's internal team incentives, not client-facing)
-- Description updated to emphasize staff/team context
-
-Also update the Ops Hub card title reference if it appears elsewhere.
+- Import `useQuery` from `@tanstack/react-query`, `supabase` client, `useAuth`, and `useOrganizationContext`
+- Add a query that checks for existence of a row in `employee_payroll_settings` for the current user + org:
+  ```ts
+  const { data: hasPayrollEnrollment } = useQuery({
+    queryKey: ['my-payroll-enrollment', user?.id, organizationId],
+    queryFn: async () => {
+      const { count } = await supabase
+        .from('employee_payroll_settings')
+        .select('id', { count: 'exact', head: true })
+        .eq('employee_id', user!.id)
+        .eq('organization_id', organizationId!);
+      return (count ?? 0) > 0;
+    },
+    enabled: !!user?.id && !!organizationId,
+    staleTime: 5 * 60 * 1000, // cache for 5 min to keep sidebar light
+  });
+  ```
+- In the section-specific filtering block (around line 520-560), add a filter that removes `/dashboard/my-pay` when `hasPayrollEnrollment` is false:
+  ```ts
+  // Hide My Pay if user is not enrolled in payroll
+  if (!hasPayrollEnrollment) {
+    filteredItems = filteredItems.filter(item => 
+      item.href !== '/dashboard/my-pay'
+    );
+  }
+  ```
+  This goes right after the existing section-specific logic, applied to all sections (since My Pay lives in `myTools`/`stats`).
 
 ## Result
 
-- Operations Hub becomes purely operational (daily management tasks)
-- Settings gains "Zura Configuration" under Platform and renames "Team Rewards" → "Staff Rewards"
-- No duplicate entry points for the same configuration
+- "My Pay" only appears when the user has an `employee_payroll_settings` record
+- Lightweight `head: true` query (no data fetched, just count) with 5-min cache
+- Super admins who aren't enrolled in payroll won't see it; enrolled team members will
 
 | File | Change |
 |------|--------|
-| `src/pages/dashboard/admin/TeamHub.tsx` | Remove Points & Rewards Config card and AI & Automation section |
-| `src/pages/dashboard/admin/Settings.tsx` | Add `zura-config` to categoriesMap + nav handler; rename `team-rewards` → "Staff Rewards" |
-| `src/hooks/useSettingsLayout.ts` | Add `zura-config` to icon colors and Platform section group |
+| `src/components/dashboard/SidebarNavContent.tsx` | Add payroll enrollment check; conditionally hide My Pay link |
 
