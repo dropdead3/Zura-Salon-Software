@@ -1,5 +1,6 @@
 import { Package, Play, MessageSquare } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Switch } from '@/components/ui/switch';
 import {
   PlatformCard,
   PlatformCardContent,
@@ -7,7 +8,7 @@ import {
   PlatformCardTitle,
 } from '@/components/platform/ui/PlatformCard';
 import { PlatformBadge } from '@/components/platform/ui/PlatformBadge';
-import { useOrganizationFeatureFlags } from '@/hooks/useOrganizationFeatureFlags';
+import { useOrganizationFeatureFlags, useUpdateOrgFeatureFlag } from '@/hooks/useOrganizationFeatureFlags';
 import { useColorBarLocationEntitlements } from '@/hooks/color-bar/useColorBarLocationEntitlements';
 
 interface AccountAppsCardProps {
@@ -17,11 +18,21 @@ interface AccountAppsCardProps {
 export function AccountAppsCard({ organizationId }: AccountAppsCardProps) {
   const { data: flags, isLoading: flagsLoading } = useOrganizationFeatureFlags(organizationId);
   const { entitlements, isLoading: entitlementsLoading } = useColorBarLocationEntitlements(organizationId);
+  const updateFlag = useUpdateOrgFeatureFlag();
 
   const isLoading = flagsLoading || entitlementsLoading;
 
   const handleLaunchDemo = () => {
     window.open(`/dock?demo=${organizationId}`, '_blank');
+  };
+
+  const handleToggleFlag = (flagKey: string, currentValue: boolean) => {
+    updateFlag.mutate({
+      organizationId,
+      flagKey,
+      isEnabled: !currentValue,
+      reason: `Toggled by platform admin`,
+    });
   };
 
   if (isLoading) {
@@ -75,7 +86,7 @@ export function AccountAppsCard({ organizationId }: AccountAppsCardProps) {
                 </p>
               </div>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3">
               <button
                 onClick={handleLaunchDemo}
                 className="inline-flex items-center gap-1.5 h-8 px-3 rounded-full text-xs font-sans font-medium bg-violet-600/15 text-violet-400 hover:bg-violet-600/25 transition-colors"
@@ -83,9 +94,11 @@ export function AccountAppsCard({ organizationId }: AccountAppsCardProps) {
                 <Play className="h-3 w-3" />
                 Launch Demo
               </button>
-              <PlatformBadge variant={isColorBarEnabled ? 'success' : 'default'}>
-                {isColorBarEnabled ? 'Active' : 'Not Enabled'}
-              </PlatformBadge>
+              <Switch
+                checked={isColorBarEnabled}
+                onCheckedChange={() => handleToggleFlag('backroom_enabled', isColorBarEnabled)}
+                disabled={updateFlag.isPending}
+              />
             </div>
           </div>
 
@@ -102,9 +115,16 @@ export function AccountAppsCard({ organizationId }: AccountAppsCardProps) {
                 </p>
               </div>
             </div>
-            <PlatformBadge variant={isConnectEnabled ? 'success' : 'default'}>
-              {isConnectEnabled ? 'Active' : 'Not Enabled'}
-            </PlatformBadge>
+            <div className="flex items-center gap-3">
+              <PlatformBadge variant={isConnectEnabled ? 'success' : 'default'}>
+                {isConnectEnabled ? 'Active' : 'Inactive'}
+              </PlatformBadge>
+              <Switch
+                checked={isConnectEnabled}
+                onCheckedChange={() => handleToggleFlag('connect_enabled', isConnectEnabled)}
+                disabled={updateFlag.isPending}
+              />
+            </div>
           </div>
         </div>
       </PlatformCardContent>
