@@ -257,6 +257,11 @@ function DashboardLayoutInner({ children, hideFooter, hideTopBar, hideSidebar }:
   const toggleSidebarCollapsed = () => setSidebarCollapsed(prev => !prev);
   const { user, isCoach, roles: actualRoles, permissions: actualPermissions, hasPermission: actualHasPermission, signOut, isPlatformUser, hasPlatformRoleOrHigher } = useAuth();
   const { isImpersonating, isMultiOrgOwner } = useOrganizationContext();
+
+  // Set CSS custom property on documentElement so portaled components (Sheet, Dialog) respect God Mode bar
+  React.useEffect(() => {
+    document.documentElement.style.setProperty('--god-mode-offset', isImpersonating ? '44px' : '0px');
+  }, [isImpersonating]);
   const { viewAsRole, setViewAsRole, isViewingAs, viewAsUser, setViewAsUser, isViewingAsUser, clearViewAs } = useViewAs();
   const { hideNumbers, toggleHideNumbers } = useHideNumbers();
   const { data: employeeProfile } = useEmployeeProfile();
