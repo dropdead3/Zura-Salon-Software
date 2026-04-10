@@ -283,12 +283,24 @@ function SubscribedAppCard({
   );
 }
 
-function ExploreAppCard({ app }: { app: AppDef }) {
+function ExploreAppCard({ app, available }: { app: AppDef; available?: boolean }) {
   const Icon = app.icon;
   return (
     <Card className={cn('relative border-t-2', app.accentColor)}>
-      <Badge variant="outline" className="absolute top-4 right-4 text-[10px] px-2">
-        <Lock className="w-3 h-3 mr-1" /> Coming Soon
+      <Badge
+        variant="outline"
+        className={cn(
+          "absolute top-4 right-4 text-[10px] px-2",
+          available
+            ? "bg-blue-500/15 text-blue-400 border-blue-500/30"
+            : undefined
+        )}
+      >
+        {available ? (
+          'Available'
+        ) : (
+          <><Lock className="w-3 h-3 mr-1" /> Coming Soon</>
+        )}
       </Badge>
       <CardContent className="p-8 flex flex-col gap-6">
         {/* Header */}
@@ -325,16 +337,24 @@ function ExploreAppCard({ app }: { app: AppDef }) {
         <div className="border-t border-border/40" />
 
         {/* Features */}
-        <FeatureList features={app.features} muted />
+        <FeatureList features={app.features} muted={!available} />
 
         {/* CTA */}
         <div className="flex items-center gap-3 pt-2">
-          <Button variant="outline" size="default" className="font-sans gap-2">
-            <Bell className="w-4 h-4" /> Notify Me
-          </Button>
-          <Button variant="ghost" size="default" className="font-sans text-muted-foreground gap-1">
-            Learn More <ArrowRight className="w-4 h-4" />
-          </Button>
+          {available ? (
+            <Button variant="outline" size="default" className="font-sans gap-2">
+              Contact Sales
+            </Button>
+          ) : (
+            <>
+              <Button variant="outline" size="default" className="font-sans gap-2">
+                <Bell className="w-4 h-4" /> Notify Me
+              </Button>
+              <Button variant="ghost" size="default" className="font-sans text-muted-foreground gap-1">
+                Learn More <ArrowRight className="w-4 h-4" />
+              </Button>
+            </>
+          )}
         </div>
       </CardContent>
     </Card>
