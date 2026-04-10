@@ -10,20 +10,18 @@ import { ConnectSubscriptionGate } from '@/components/connect/ConnectSubscriptio
 import { Loader2 } from 'lucide-react';
 
 export default function TeamChat() {
-  const { isPlatformUser } = useAuth();
   const { effectiveOrganization, setSelectedOrganization } = useOrganizationContext();
   const { data: organizations } = useOrganizations();
   const { isEntitled, isLoading: entitlementLoading } = useConnectEntitlement();
 
-  // Auto-select first organization for platform users if none selected
+  // Auto-select first organization if none selected
   useEffect(() => {
-    if (isPlatformUser && !effectiveOrganization && organizations?.length > 0) {
+    if (!effectiveOrganization && organizations?.length > 0) {
       setSelectedOrganization(organizations[0]);
     }
-  }, [isPlatformUser, effectiveOrganization, organizations, setSelectedOrganization]);
+  }, [effectiveOrganization, organizations, setSelectedOrganization]);
 
-  // Platform users bypass entitlement gate
-  if (!isPlatformUser && entitlementLoading) {
+  if (entitlementLoading) {
     return (
       <DashboardLayout hideFooter>
         <div className="flex-1 flex items-center justify-center">

@@ -575,7 +575,7 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
             { hrefSuffix: '/my-pay', entitled: isPayrollEntitled && hasPayrollEnrollment },
             { hrefSuffix: '/admin/payroll', entitled: isPayrollEntitled },
             { hrefSuffix: '/admin/connect', entitled: isConnectEntitled },
-            { hrefSuffix: '/team-chat', entitled: isConnectEntitled || isPlatformUser },
+            { hrefSuffix: '/team-chat', entitled: isConnectEntitled },
             { hrefSuffix: '/admin/color-bar-settings', entitled: isColorBarEntitled },
           ];
 
