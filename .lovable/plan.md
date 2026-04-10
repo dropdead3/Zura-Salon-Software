@@ -1,43 +1,61 @@
 
 
-# Revised Plan: Merge Appointments & Transactions
+# Revised Plan: Gate FAB Chat Tab Behind Zura Connect
 
-The original plan is solid. Here are additional gaps and refinements discovered during this deeper pass:
+## Original Plan (confirmed solid)
+1. Import `useConnectEntitlement` in `HelpFAB.tsx`; hide Chat tab when not entitled
+2. Fix pathname checks to use `.includes()` for org-slug routing
+3. Remove duplicate `MemberItemProps` interface in `ChatLeadershipTab.tsx`
 
 ## Additional Findings
 
-### 1. `useProactiveIntelligence.ts` — hardcoded `/dashboard/transactions` in role route maps (Gap)
-Lines 57, 64, 71, 121 reference `/dashboard/transactions` across multiple role configurations. These need updating to `/dashboard/appointments-hub` (since both surfaces now live there).
+### 1. Schedule page pathname check also broken (Bug — same root cause)
+Line 20: `location.pathname === '/dashboard/schedule'` won't match `/org/:slug/dashboard/schedule`. This affects three behaviors:
+- The schedule-specific copilot FAB button (lines 48-76)
+- The booking popover hide logic (lines 42-45)
+- The copilot toggle dispatch (line 33)
 
-### 2. `synonymRegistry.ts` — `/dashboard/transactions` in `relatedPaths` (Gap)
-Line 140 includes `/dashboard/transactions` in the appointments synonym group's `relatedPaths`. Should be removed (or replaced with the tab-qualified URL).
+All three `isSchedulePage` references need the same `.includes()` fix.
 
-### 3. `ScheduleActionBar.tsx` — `dashPath('/transactions')` link (Gap)
-Line 137 links to the transactions page from the schedule toolbar. Should update to `dashPath('/appointments-hub?tab=transactions')`.
+### 2. ChatLeadershipTab navigates to team-chat without entitlement check (Minor gap)
+`handleSelectMember` creates a DM then navigates to `/team-chat`. If the FAB Chat tab is properly hidden for non-entitled users, this is unreachable — but as defense-in-depth, the navigation will still work if someone accesses it. No change needed since the gate at the FAB level is sufficient.
 
-### 4. Appointments route permission mismatch (Enhancement)
-`appointments-hub` currently requires `view_transactions` permission (line 375 of App.tsx). After merging, this is correct since it now contains transactions — but the original appointments page likely should have been `view_booking_calendar`. Consider requiring *either* permission, or keeping `view_transactions` since that's the stricter gate and transactions are now embedded.
-
-### 5. `pageExplainers.ts` — needs a combined entry (Minor)
-Both `appointments-hub` and `transactions` likely have separate explainer entries. The merged page should have one combined explainer that covers both tabs.
-
-### 6. Tab persistence via URL (Enhancement)
-The plan mentions `?tab=` sync. Ensure that when navigating from an external link like `?tab=transactions`, the Transactions tab content initializes its own state (date, filters) fresh — no stale state from a previous Appointments tab interaction.
+### 3. Platform users should still see the Chat tab (Behavioral note)
+Platform users (God Mode) bypass the Connect gate on the TeamChat page. The FAB should mirror this — platform users always see the Chat tab regardless of entitlement. The `useAuth` hook's `isPlatformUser` is already available in `ChatLeadershipTab` but needs to be checked in `HelpFAB.tsx` too.
 
 ## Updated Change Table
 
 | File | Change |
 |------|--------|
-| `src/pages/dashboard/AppointmentsHub.tsx` | Merge — add Tabs with Appointments + Transactions content |
-| `src/pages/dashboard/Transactions.tsx` | Delete |
-| `src/App.tsx` | Remove transactions route; add redirect to `appointments-hub?tab=transactions` |
-| `src/config/dashboardNav.ts` | Merge entries → "Appointments & Transactions" |
-| `src/lib/navKnowledgeBase.ts` | Merge entries |
-| `src/lib/queryChainEngine.ts` | Update refund/refunds route |
-| `src/lib/synonymRegistry.ts` | Remove `/dashboard/transactions` from relatedPaths |
-| `src/hooks/useProactiveIntelligence.ts` | Replace `/dashboard/transactions` with `/dashboard/appointments-hub` in all role maps |
-| `src/components/dashboard/schedule/ScheduleActionBar.tsx` | Update link to `appointments-hub?tab=transactions` |
-| `src/config/pageExplainers.ts` | Combine explainer entries |
+| `src/components/dashboard/HelpFAB.tsx` | 1) Import `useConnectEntitlement` and `useAuth`. 2) Hide Chat tab + TabsList when `!isEntitled && !isPlatformUser`. 3) Fix team-chat pathname: `.includes('/dashboard/team-chat')`. 4) Fix schedule pathname: `.includes('/dashboard/schedule')`. |
+| `src/components/dashboard/help-fab/ChatLeadershipTab.tsx` | Remove duplicate `MemberItemProps` interface (lines 30-35 duplicate of 37-42). |
 
-Everything else from the original plan remains unchanged. No structural or business logic changes — only the page shell, nav references, and cross-links are affected.
+### Detail: HelpFAB gating logic
+
+```tsx
+const { isEntitled: hasConnect } = useConnectEntitlement();
+const { isPlatformUser } = useAuth();
+
+const showChatTab = hasConnect || isPlatformUser;
+```
+
+When `showChatTab` is false:
+- Remove `TabsList` entirely — no tab switcher visible
+- Lock `activeTab` to `'ai-help'`
+- Only render the AI Help tab content
+
+When `showChatTab` is true:
+- Render both tabs as current behavior
+
+### Detail: Pathname fixes (all in HelpFAB.tsx)
+
+```tsx
+// Before
+const isSchedulePage = location.pathname === '/dashboard/schedule';
+if (location.pathname === '/dashboard/team-chat') { return null; }
+
+// After
+const isSchedulePage = location.pathname.includes('/dashboard/schedule');
+if (location.pathname.includes('/dashboard/team-chat')) { return null; }
+```
 
