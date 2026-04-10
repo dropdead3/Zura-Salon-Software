@@ -1,48 +1,57 @@
 
 
-# Operations Hub Favorites + Sidebar Sub-Links
+# Revised Plan: Consolidate Staff Strikes into Incident Reports
 
 ## Summary
+Merge Staff Strikes into Incident Reports as a tabbed page. Addresses all gaps found in the original plan.
 
-Add a "Favorites" section at the top of the Operations Hub page where users can star individual cards for quick access. Favorited cards also appear as sub-links under "Operations Hub" in the sidebar navigation.
+## Changes
 
-## Data Layer
+### 1. New component: `src/components/dashboard/StaffStrikesTabContent.tsx`
+- Extract the full strikes UI (filters, stats, strike cards, resolve/edit/delete dialogs) from `StaffStrikes.tsx` into a standalone component
+- Accept a `defaultUserId` prop (from URL param) to pre-filter by employee
+- Prevents the consolidated page from becoming a 700-line monolith
 
-**No new tables needed.** Store favorites in the existing `user_preferences.dashboard_layout` JSON field under a new key `opsHubFavorites` — an array of objects: `{ href: string, label: string, icon: string }`.
+### 2. `src/pages/dashboard/admin/IncidentReports.tsx`
+- Rename to **"Incidents & Accountability"**
+- Add `Tabs` with two tabs: **Incidents** and **Staff Strikes**
+- Read `?tab=strikes&userId=xxx` from URL via `useSearchParams`
+- Show active strike count as a badge on the Strikes tab label
+- Each tab has its own stat cards and content
+- Update description: "Document incidents and track accountability measures"
 
-### New hook: `src/hooks/useOpsHubFavorites.ts`
-- Read/write `dashboard_layout.opsHubFavorites` from `user_preferences` (same pattern as `useAnalyticsSubtabFavorites` and `useAnalyticsCardOrder`)
-- Expose: `favorites`, `isFavorited(href)`, `toggleFavorite(href, label, iconName)`, `isAtLimit` (cap at 8)
-- Optimistic updates with rollback on error
+### 3. `src/pages/dashboard/admin/TeamHub.tsx`
+- Remove the **Staff Strikes** card
+- Update Incident Reports card: title → "Incidents & Accountability", description → "Incident reports, strikes, and safety documentation"
 
-## Operations Hub UI Changes
+### 4. `src/pages/dashboard/admin/ManagementHub.tsx`
+- Remove the duplicate Staff Strikes card (line 247)
 
-### `src/pages/dashboard/admin/TeamHub.tsx`
+### 5. `src/App.tsx`
+- Redirect `/admin/strikes` → `/admin/incidents?tab=strikes` using a `<Navigate>` with search param forwarding (preserves `?userId=xxx`)
+- **Permission**: the redirect route keeps `manage_user_roles` gate; the incidents page itself uses `view_team_overview` — strikes tab content checks permission internally and shows read-only if user lacks `manage_user_roles`
 
-1. **Star icon on every card** — Add a favorite toggle (star icon) to `ManagementCard` and `HubGatewayCard`. On hover, a star appears in the top-right corner. Filled star = favorited.
+### 6. `src/pages/dashboard/TeamDirectory.tsx`
+- Fix line 795: change hardcoded path to use `dashPath('/admin/incidents')` with `?tab=strikes&userId=`
 
-2. **Favorites section at top** — When any cards are favorited, render a "Favorites" `CategorySection` above "Hubs" showing only the favorited cards as quick-access links (same card style, slightly compact). If no favorites, the section is hidden.
+### 7. `src/components/dashboard/settings/SidebarLayoutEditor.tsx`
+- Remove the `/dashboard/admin/strikes` entry (line 168)
+- Update `/dashboard/admin/incidents` label to "Incidents & Accountability"
 
-3. **Card components** receive new optional props: `isFavorited`, `onToggleFavorite`, and the star is rendered conditionally.
+### 8. `src/config/pageExplainers.ts`
+- Merge `staff-strikes` content into `incident-reports` entry
+- Rename title to "Incidents & Accountability"
 
-## Sidebar Sub-Links
+### 9. `src/hooks/useOpsHubFavorites.ts`
+- Add a migration step: on load, if any favorite has `href` containing `/admin/strikes`, remap it to `/admin/incidents?tab=strikes` and persist the update
 
-### `src/components/dashboard/SidebarNavContent.tsx`
+### Not touched
+- `StaffStrikes.tsx` — kept as dead code (route redirects away). Can be deleted in follow-up.
+- `reportCatalog.ts` / `ReportsTabContent.tsx` — reports remain independent
+- All strike hooks and sub-components — still used by the new tab content
 
-When rendering the `ops` section:
-- After the "Operations Hub" main link, if the user has `opsHubFavorites`, render them as indented sub-links (smaller text, left-padded, with a dot or small icon)
-- Use the same pattern as regular nav links but with `pl-8` indent and `text-xs` sizing
-- Sub-links resolve through `dashPath()` like all other nav items
-- In collapsed mode, sub-links appear in the hover popover alongside "Operations Hub"
-
-## Icon Mapping
-
-Since we persist to JSON, store icon names as strings (e.g., `"Users"`, `"CalendarClock"`) and resolve them via a lookup map in the hook or a shared utility. The Operations Hub already imports all needed icons.
-
-## Technical Details
-
-- **Files created**: `src/hooks/useOpsHubFavorites.ts`
-- **Files modified**: `src/pages/dashboard/admin/TeamHub.tsx`, `src/components/dashboard/SidebarNavContent.tsx`
-- **No migrations needed** — uses existing `dashboard_layout` JSON column
-- **No new permissions** — favorites are personal preferences, not org-scoped data
+## Technical details
+- `StaffStrikesTabContent` is a pure presentation extraction — same hooks, same state, just no `DashboardLayout` wrapper
+- Two search params coexist: `tab` and `userId` — both read on mount
+- Favorites migration runs once per user on first load after deploy
 
