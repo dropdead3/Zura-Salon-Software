@@ -35,6 +35,7 @@ interface SubscriptionData {
 }
 
 export default function ColorBarSubscription() {
+  const navigate = useNavigate();
   const { dashPath } = useOrgDashboardPath();
   const { effectiveOrganization } = useOrganizationContext();
   const { isEntitled, isLoading: entitlementLoading } = useColorBarEntitlement();
