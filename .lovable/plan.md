@@ -1,44 +1,34 @@
 
 
-# Dock-to-Checkout Pipeline Audit — COMPLETED
+# Add Transactions to Sidebar Manage Section
 
-## Architecture Clarification
+## What Changes
 
-The Dock is a **prep station**, not a POS. It writes charges to `checkout_usage_charges`, which are consumed by the **Schedule page's `CheckoutSummarySheet`** (the front desk POS checkout). The Dock does not process payments.
+One file edit in `src/config/dashboardNav.ts`:
 
-## Fixes Applied
+**Add a Transactions entry** to `manageNavItems` and reorder so the final order is:
+1. Analytics Hub
+2. Report Generator
+3. Transactions
+4. Operations Hub
 
-### Critical
+The Transactions link will point to `/dashboard/appointments-hub?tab=transactions` (matching the existing route) with the `Receipt` icon (already imported) and gated behind `view_transactions` permission.
 
-| # | Issue | Fix | Status |
-|---|-------|-----|--------|
-| 1 | Add-ons not included in checkout total or tax base | Added `addonTotal` to `taxableBase` and `checkoutTotal` | ✅ Done |
-| 2 | `organizationId` missing from Schedule→Checkout | Passed `organizationId={orgId}` | ✅ Done |
-| 3 | `organizationId` missing from TodaysQueue→Checkout | Added `useOrganizationContext`, passed `organizationId` | ✅ Done |
+```ts
+// manageNavItems becomes:
+export const manageNavItems: DashboardNavItem[] = [
+  { href: '/dashboard/admin/analytics', label: 'Analytics Hub', ... },
+  { href: '/dashboard/admin/reports', label: 'Report Generator', ... },
+  { href: '/dashboard/appointments-hub?tab=transactions', label: 'Transactions', icon: Receipt, permission: 'view_transactions' },
+  { href: '/dashboard/admin/team-hub', label: 'Operations Hub', ... },
+];
+```
 
-### Medium
+Since the sidebar, search, and quick links all consume from the nav registry, no other files need updating.
 
-| # | Issue | Fix | Status |
-|---|-------|-----|--------|
-| 4 | Receipt PDF hardcodes `$` | Replaced all `$${...toFixed(2)}` with `formatCurrency()` | ✅ Done |
-| 5 | Receipt PDF omits add-on line items | Added "Add-Ons" section to receipt PDF | ✅ Done |
-| 6 | Receipt PDF omits discount/promo line | Added "Discount" line when discount > 0 | ✅ Done |
-| 7 | Overage + product charges share one tax flag | Documented behavior in code comment; single flag covers both | ✅ Documented |
-| 8 | Idempotency guard null vs empty string | Changed to `.is('service_name', null)` when serviceName is falsy | ✅ Done |
-| 9 | Applied promo never persisted to DB | Added insert to `applied_promotions` table on checkout confirm | ✅ Done |
+## Technical Detail
 
-### Low
+- `Receipt` icon is already imported in `dashboardNav.ts` (line 44)
+- Permission `view_transactions` matches the existing `ProtectedRoute` guard on the appointments-hub page
+- The sidebar active-state matcher uses `startsWith`, so the query param won't break highlighting
 
-| # | Issue | Fix | Status |
-|---|-------|-----|--------|
-| 10 | TodaysQueue checkout skips rebooking gate | Documented as Schedule-only feature (TodaysQueue is a quick view) | ℹ️ By design |
-| 11 | Receipt preview popup-blocked silently | Added null check + toast fallback | ✅ Done |
-
-## Files Changed
-
-| File | Changes |
-|------|---------|
-| `CheckoutSummarySheet.tsx` | Fixed add-on math in totals/tax; replaced all hardcoded `$` in receipt PDF with `formatCurrency()`; added add-on + discount sections to receipt; added popup-blocked toast |
-| `Schedule.tsx` | Passed `organizationId={orgId}` to CheckoutSummarySheet; added promo persistence on checkout confirm |
-| `TodaysQueueSection.tsx` | Added `useOrganizationContext` import; passed `organizationId` to CheckoutSummarySheet |
-| `useCalculateOverageCharge.ts` | Fixed idempotency guard to use `.is('service_name', null)` for falsy service names |
