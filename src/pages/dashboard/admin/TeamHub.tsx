@@ -628,6 +628,15 @@ export default function TeamHub() {
               {...favProps('/admin/handbooks', 'Handbooks', BookOpen)}
             />
           )}
+          {!isFavorited(dashPath('/admin/documents')) && (
+            <ManagementCard
+              href={dashPath('/admin/documents')}
+              icon={FileText}
+              title="Document Tracker"
+              description="Track document completion and compliance status"
+              {...favProps('/admin/documents', 'Document Tracker', FileText)}
+            />
+          )}
         </CategorySection>
 
         {/* 6. Team Services */}
