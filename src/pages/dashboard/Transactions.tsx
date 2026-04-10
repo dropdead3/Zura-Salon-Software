@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { format, addDays, subDays } from 'date-fns';
+import { format, addDays, subDays, parseISO } from 'date-fns';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { DashboardPageHeader } from '@/components/dashboard/DashboardPageHeader';
 import { Card } from '@/components/ui/card';
@@ -21,6 +21,7 @@ import {
   Hash,
   TrendingUp,
   Banknote,
+  Coins,
 } from 'lucide-react';
 import { useGroupedTransactions, type GroupedTransactionFilters, type GroupedTransaction } from '@/hooks/useGroupedTransactions';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
@@ -38,6 +39,14 @@ import { PageExplainer } from '@/components/ui/PageExplainer';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import type { TransactionItem } from '@/hooks/useTransactions';
+
+/** Build a summary item_name for multi-item transactions */
+function buildItemSummary(txn: GroupedTransaction): string {
+  if (txn.items.length === 1) return txn.items[0].itemName;
+  const names = txn.items.slice(0, 3).map(i => i.itemName);
+  const suffix = txn.items.length > 3 ? ` +${txn.items.length - 3} more` : '';
+  return `${txn.items.length} items — ${names.join(', ')}${suffix}`;
+}
 
 export default function Transactions() {
   const [selectedDate, setSelectedDate] = useState(format(new Date(), 'yyyy-MM-dd'));
@@ -71,18 +80,17 @@ export default function Transactions() {
 
   const handleRefund = (txn: GroupedTransaction) => {
     if (txn.items.length === 0) return;
-    const item = txn.items[0];
     setRefundTxn({
-      id: item.id,
+      id: txn.items[0].id,
       transaction_id: txn.transactionId,
       transaction_date: txn.transactionDate,
       phorest_client_id: txn.phorestClientId,
       client_name: txn.clientName,
-      item_type: item.itemType,
-      item_name: item.itemName,
-      item_category: item.itemCategory,
-      quantity: item.quantity,
-      unit_price: item.unitPrice,
+      item_type: txn.items[0].itemType,
+      item_name: buildItemSummary(txn),
+      item_category: txn.items[0].itemCategory,
+      quantity: 1,
+      unit_price: txn.totalAmount,
       total_amount: txn.totalAmount,
       tax_amount: txn.taxAmount,
       discount: txn.discountAmount,
@@ -99,15 +107,16 @@ export default function Transactions() {
     setVoidOpen(true);
   };
 
-  const goToPreviousDay = () => setSelectedDate(format(subDays(new Date(selectedDate), 1), 'yyyy-MM-dd'));
+  // Use parseISO to avoid timezone boundary shifts
+  const goToPreviousDay = () => setSelectedDate(format(subDays(parseISO(selectedDate), 1), 'yyyy-MM-dd'));
   const goToNextDay = () => {
-    const next = addDays(new Date(selectedDate), 1);
+    const next = addDays(parseISO(selectedDate), 1);
     if (next <= new Date()) setSelectedDate(format(next, 'yyyy-MM-dd'));
   };
   const goToToday = () => setSelectedDate(format(new Date(), 'yyyy-MM-dd'));
 
   const isToday = selectedDate === format(new Date(), 'yyyy-MM-dd');
-  const displayDate = format(new Date(selectedDate + 'T12:00:00'), 'EEEE, MMMM d, yyyy');
+  const displayDate = format(parseISO(selectedDate), 'EEEE, MMMM d, yyyy');
 
   // KPI calculations
   const activeTxns = transactions.filter(t => !t.isVoided);
@@ -142,6 +151,10 @@ export default function Transactions() {
             <TabsTrigger value="till-transactions" className="gap-2">
               <Receipt className="w-4 h-4" />
               Till Transactions
+            </TabsTrigger>
+            <TabsTrigger value="petty-cash" className="gap-2">
+              <Coins className="w-4 h-4" />
+              Petty Cash
             </TabsTrigger>
             <TabsTrigger value="gift-cards" className="gap-2">
               <Gift className="w-4 h-4" />
@@ -285,6 +298,18 @@ export default function Transactions() {
             {transactions.length > 0 && (
               <TillBalanceSummary transactions={transactions} />
             )}
+          </TabsContent>
+
+          <TabsContent value="petty-cash">
+            <Card>
+              <div className={tokens.empty.container}>
+                <Coins className={tokens.empty.icon} />
+                <h3 className={tokens.empty.heading}>Petty Cash</h3>
+                <p className={tokens.empty.description}>
+                  Petty cash tracking is coming soon. You'll be able to log cash in/out, track float amounts, and reconcile at end of day.
+                </p>
+              </div>
+            </Card>
           </TabsContent>
 
           <TabsContent value="gift-cards">
