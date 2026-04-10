@@ -598,6 +598,7 @@ export function ZuraCommandSurface({ open, onOpenChange, filterNavItems, anchorR
                           isQuestion={isQuestionQuery(query)}
                           onSelect={handleSelect}
                           onHover={handleHover}
+                          onClose={close}
                         />
                       </>
                     ) : (
