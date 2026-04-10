@@ -262,12 +262,14 @@ export default function TeamHub() {
             title="Website Hub"
             description="Website themes, editor, settings, and content management"
           />
-          <HubGatewayCard
-            href={dashPath('/admin/color-bar-settings')}
-            icon={Beaker}
-            title="Zura Color Bar Hub"
-            description="Color Bar color & supply management, formulas, and station tracking"
-          />
+          {isColorBarEntitled && (
+            <HubGatewayCard
+              href={dashPath('/admin/color-bar-settings')}
+              icon={Beaker}
+              title="Zura Color Bar Hub"
+              description="Color Bar color & supply management, formulas, and station tracking"
+            />
+          )}
         </CategorySection>
 
         {/* People & Development */}
