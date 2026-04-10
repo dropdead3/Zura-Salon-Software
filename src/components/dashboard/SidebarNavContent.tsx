@@ -579,6 +579,14 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
             shouldShow = filteredItems.length > 0;
           }
 
+          // Hide My Pay if user is not enrolled in payroll
+          if (!hasPayrollEnrollment) {
+            filteredItems = filteredItems.filter(item => 
+              !item.href.endsWith('/my-pay')
+            );
+            if (filteredItems.length === 0) shouldShow = false;
+          }
+
           // Platform section should NEVER show in org dashboard
           if (sectionId === 'platform') {
             shouldShow = false;
