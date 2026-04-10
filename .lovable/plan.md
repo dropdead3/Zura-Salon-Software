@@ -1,120 +1,49 @@
 
 
-# Navigation Audit: Super Admin Access Points
+# Move Zura Configuration & Points/Rewards from Operations Hub to Settings
 
-## Current State
+## Problem
 
-Super Admins access features through **3 primary surfaces**:
-1. **Sidebar** — Command Center, Schedule, Transactions, Appointments, Analytics Hub, Report Generator, Operations Hub, Apps (Color Bar, Connect), Settings
-2. **Operations Hub** (team-hub) — 8 hub gateway cards + 30+ management cards across 5 categories
-3. **Settings** — 26+ category cards across 6 sections
+Two items in the Operations Hub are configuration/settings concerns, not daily operational tasks:
+1. **Zura Configuration** (AI personality, knowledge, guardrails) — belongs in Settings under Platform
+2. **Points & Rewards Config** — redundant since Settings already has a "Team Rewards" card that renders `TeamRewardsConfigurator`
 
-## Audit: Is Everything Reachable?
+Additionally, the "Points & Rewards Config" title in Ops Hub is ambiguous — it could be mistaken for client-facing loyalty rewards rather than staff incentives.
 
-### Accessible via Sidebar → Operations Hub → Sub-pages
-| Feature | Access Path | Status |
-|---------|------------|--------|
-| Client Hub | Ops Hub → Hub card | ✅ |
-| Growth Hub | Ops Hub → Hub card | ✅ |
-| Hiring & Payroll Hub | Ops Hub → Hub card | ✅ |
-| Renter Hub | Ops Hub → Hub card | ✅ |
-| Onboarding Hub | Ops Hub → Hub card | ✅ |
-| Training Hub | Ops Hub → Hub card | ✅ |
-| Website Hub | Ops Hub → Hub card | ✅ |
-| Color Bar Hub | Ops Hub → Hub card | ✅ |
-| Team Directory | Ops Hub → People | ✅ |
-| Graduation Tracker | Ops Hub → People | ✅ |
-| Client Engine Tracker | Ops Hub → People | ✅ |
-| Team Challenges | Ops Hub → People | ✅ |
-| Performance Reviews | Ops Hub → Compliance | ✅ |
-| Staff Strikes | Ops Hub → Compliance | ✅ |
-| Document Tracker | Ops Hub → Compliance | ✅ |
-| Incident Reports | Ops Hub → Compliance | ✅ |
-| PTO Balances | Ops Hub → Compliance | ✅ |
-| Chair Assignments | Ops Hub → Team Ops | ✅ |
-| Birthdays | Ops Hub → Team Ops | ✅ |
-| Business Cards | Ops Hub → Team Ops | ✅ |
-| Headshots | Ops Hub → Team Ops | ✅ |
-| Announcements | Ops Hub → Team Ops | ✅ |
-| Points & Rewards Config | Ops Hub → Team Ops | ✅ |
-| Zura Configuration | Ops Hub → AI & Automation | ✅ |
-| Meetings & Accountability | Ops Hub → Scheduling | ✅ |
-| Assistant Requests | Ops Hub → Scheduling | ✅ |
-| Schedule Requests | Ops Hub → Scheduling | ✅ |
-| Shift Swap Approvals | Ops Hub → Scheduling | ✅ |
-| Assistant Scheduling | Ops Hub → Scheduling | ✅ |
-| Daily Huddle | Ops Hub → Scheduling | ✅ |
+## Changes
 
-### Accessible via Sidebar → Settings
-| Feature | Settings Card | Status |
-|---------|--------------|--------|
-| Account & Billing | ✅ | ✅ |
-| My Profile | ✅ | ✅ |
-| Business Settings | ✅ | ✅ |
-| Locations | ✅ | ✅ |
-| Services | ✅ | ✅ |
-| Retail Products | ✅ | ✅ |
-| Schedule Settings | ✅ | ✅ |
-| Kiosk | ✅ | ✅ |
-| Day Rate | ✅ | ✅ |
-| Forms | ✅ | ✅ |
-| Levels | ✅ | ✅ |
-| Leaderboard Config | ✅ | ✅ |
-| Onboarding Settings | ✅ | ✅ |
-| Loyalty | ✅ | ✅ |
-| Team Rewards | ✅ | ✅ |
-| Feedback | ✅ | ✅ |
-| Users | ✅ | ✅ |
-| Access Hub | ✅ | ✅ |
-| Program Config | ✅ | ✅ |
-| System | ✅ | ✅ |
-| Integrations | ✅ | ✅ |
-| Email | ✅ | ✅ |
-| SMS | ✅ | ✅ |
-| Service Flows | ✅ | ✅ |
+### 1. Remove from Operations Hub (`src/pages/dashboard/admin/TeamHub.tsx`)
 
-### Accessible via Sidebar directly
-| Feature | Status |
-|---------|--------|
-| Command Center | ✅ |
-| Schedule | ✅ |
-| Transactions | ✅ |
-| Appointments | ✅ |
-| Analytics Hub | ✅ |
-| Report Generator | ✅ |
-| Team Stats (My Stats) | ✅ |
-| Waitlist | ✅ |
-| My Pay | ✅ |
-| Apps Marketplace | ✅ (via Zura Apps header link) |
+- Remove the "Points & Rewards Config" `ManagementCard` (lines 427-432) — Settings already covers this via the "Team Rewards" card
+- Remove the "Zura Configuration" `ManagementCard` and the entire "AI & Automation" `CategorySection` (lines 441-449)
 
-### Potentially Orphaned / Hard to Find
-| Feature | Route | Reachable? |
-|---------|-------|------------|
-| Handbooks | `/admin/handbooks` | ❓ Not in Ops Hub or Settings |
-| Features Center | `/admin/features` | ❓ Not in Ops Hub or Settings |
-| Data Import | `/admin/data-import` | ❓ Not in Ops Hub or Settings |
-| Price Recommendations | `/admin/price-recommendations` | ❓ Not in Ops Hub or Settings |
-| KPI Builder | `/admin/kpi-builder` | ❓ Likely accessed from Analytics Hub |
-| Executive Brief | `/admin/executive-brief` | ❓ Likely accessed from Command Center |
-| Decision History | `/admin/decision-history` | ❓ Likely contextual link |
-| Changelog | `/changelog` | ❓ Likely accessed from help/profile menu |
-| Metrics Glossary | `/metrics-glossary` | ❓ Likely contextual link |
-| Notification Preferences | `/notification-preferences` | ❓ Likely from profile/bell menu |
-| Help Center | `/help` | ❓ Likely from HelpFAB |
+### 2. Add Zura Configuration to Settings
 
-## Findings
+**`src/hooks/useSettingsLayout.ts`**:
+- Add `'zura-config'` to `DEFAULT_ICON_COLORS` with a Brain-appropriate color (e.g., `'#A855F7'`)
+- Add `'zura-config'` to the `platform` section in `SECTION_GROUPS`
 
-**The coverage is very good.** The sidebar + Operations Hub + Settings combination provides access to virtually every admin feature. The items marked ❓ above are mostly contextual pages accessed through in-app links (e.g., Executive Brief from Command Center, KPI Builder from Analytics). They are not "lost" — they're just not top-level entry points.
+**`src/pages/dashboard/admin/Settings.tsx`**:
+- Add `'zura-config'` entry to `categoriesMap` with label "Zura Configuration", Brain icon, and appropriate description
+- Add navigation handler: clicking it navigates to `/admin/zura-config` (same pattern as `access-hub` and `data-import`)
 
-The only items worth verifying are:
-1. **Handbooks** — admin handbook management; may need a card in Ops Hub under Team Operations
-2. **Features Center** — org-level feature flag management; could belong in Settings under Platform
-3. **Data Import** — data migration tool; could belong in Settings under Platform
-4. **Price Recommendations** — pricing intelligence; likely accessed from Analytics Hub context
+### 3. Rename "Team Rewards" for clarity
 
-## Recommendation
+In `src/pages/dashboard/admin/Settings.tsx`, update the `team-rewards` entry:
+- Label: **"Staff Rewards"** (clearer that it's internal team incentives, not client-facing)
+- Description updated to emphasize staff/team context
 
-No immediate changes needed. The current navigation structure covers all super admin needs comprehensively. The few contextual pages (Executive Brief, KPI Builder, Decision History, etc.) are accessed through relevant in-context links, which is the correct UX pattern — not everything needs a top-level card.
+Also update the Ops Hub card title reference if it appears elsewhere.
 
-If you'd like, I can verify the exact access paths for the 3-4 potentially orphaned items (Handbooks, Features Center, Data Import, Price Recommendations) to confirm they have in-context entry points, or add cards for any that are truly unreachable.
+## Result
+
+- Operations Hub becomes purely operational (daily management tasks)
+- Settings gains "Zura Configuration" under Platform and renames "Team Rewards" → "Staff Rewards"
+- No duplicate entry points for the same configuration
+
+| File | Change |
+|------|--------|
+| `src/pages/dashboard/admin/TeamHub.tsx` | Remove Points & Rewards Config card and AI & Automation section |
+| `src/pages/dashboard/admin/Settings.tsx` | Add `zura-config` to categoriesMap + nav handler; rename `team-rewards` → "Staff Rewards" |
+| `src/hooks/useSettingsLayout.ts` | Add `zura-config` to icon colors and Platform section group |
 
