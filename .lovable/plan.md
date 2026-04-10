@@ -1,30 +1,38 @@
 
 
-# Remove Platform User Bypass for Zura Connect
+# Fix: Only Show Entitled Apps in "Your Apps"
 
-You're absolutely right — if platform admins can toggle apps on/off per organization from the AccountAppsCard, bypassing the subscription gate is redundant and weakens the subscription as the single source of truth. The proper flow is: toggle the flag on for the org, then access works naturally.
+## Problem
+
+The `SUBSCRIBED_APPS` array is hardcoded with all three apps (Color Bar, Connect, Payroll). The page always renders all of them under "Your Apps" regardless of entitlement status. Zura Payroll appears there with an "Inactive" badge even though the organization has no subscription — this is misleading and breaks the marketplace's commercial intent.
+
+## Proposed behavior
+
+- **Your Apps**: Only apps where `getActiveStatus(key) === true`
+- **Inactive apps**: Move to "Explore Apps" section with a "Contact Sales" or "Get Started" CTA, alongside the coming-soon apps
+- If no apps are active, show an empty state under "Your Apps" encouraging the user to explore
 
 ## Changes
 
-Three files need the `isPlatformUser` bypass removed for Connect:
+### `src/pages/dashboard/AppsMarketplace.tsx`
 
-### 1. `src/components/dashboard/HelpFAB.tsx` (line 24)
-- **Before:** `const showChatTab = hasConnect || isPlatformUser;`
-- **After:** `const showChatTab = hasConnect;`
-- Remove the `isPlatformUser` import from `useAuth()` (if no longer used elsewhere in this file)
+1. **Filter `SUBSCRIBED_APPS` by entitlement** — split into active and inactive at render time:
+   ```typescript
+   const activeApps = SUBSCRIBED_APPS.filter(app => getActiveStatus(app.key));
+   const inactiveApps = SUBSCRIBED_APPS.filter(app => !getActiveStatus(app.key));
+   ```
 
-### 2. `src/components/dashboard/SidebarNavContent.tsx` (line 578)
-- **Before:** `{ hrefSuffix: '/team-chat', entitled: isConnectEntitled || isPlatformUser }`
-- **After:** `{ hrefSuffix: '/team-chat', entitled: isConnectEntitled }`
+2. **"Your Apps" section** — render only `activeApps`. If empty, show a minimal empty state ("No apps activated yet. Explore below to get started.")
 
-### 3. `src/pages/dashboard/TeamChat.tsx` (lines 25-36)
-- Remove the `isPlatformUser` bypass from the entitlement gate
-- Show the loading spinner and subscription gate for all users equally
-- Keep the auto-select org logic (still useful for platform users navigating here after the flag is enabled)
+3. **"Explore Apps" section** — prepend `inactiveApps` before the existing `EXPLORE_APPS`, using a variant of `ExploreAppCard` that shows "Contact Sales" instead of "Notify Me" (since these are available now, not coming soon). The badge should say "Available" instead of "Coming Soon."
+
+4. **New card variant or prop** — add an `available` state to `ExploreAppCard` (or create an `AvailableAppCard`) that distinguishes between "available but not subscribed" and "coming soon":
+   - Available: Badge says "Available" (blue outline), CTA is "Contact Sales"
+   - Coming Soon: Badge says "Coming Soon" with lock icon, CTA is "Notify Me"
 
 ## Result
 
-- All Connect access is governed solely by the `connect_enabled` feature flag
-- Platform admins enable access by toggling the flag in AccountAppsCard
-- No special bypass paths — clean, auditable governance
+- Clean commercial hierarchy: active apps up top, available-for-purchase in explore, coming-soon at bottom
+- Payroll only appears in "Your Apps" once the org has `payroll_enabled` toggled on
+- No misleading "Inactive" badges sitting alongside "Active" apps
 
