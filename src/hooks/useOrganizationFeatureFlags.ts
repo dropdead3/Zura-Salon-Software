@@ -60,6 +60,21 @@ export function useOrganizationFeatureFlags(organizationId: string) {
         };
       });
 
+      // Append org-only overrides not present in global flags
+      const globalKeys = new Set((globalFlags || []).map(f => f.flag_key));
+      for (const [key, override] of overrideMap) {
+        if (!globalKeys.has(key)) {
+          merged.push({
+            flag_key: key,
+            global_enabled: false,
+            org_enabled: override.is_enabled,
+            has_override: true,
+            override_reason: override.override_reason || null,
+            override_id: override.id || null,
+          });
+        }
+      }
+
       return merged.sort((a, b) => a.flag_key.localeCompare(b.flag_key));
     },
     enabled: !!organizationId,
