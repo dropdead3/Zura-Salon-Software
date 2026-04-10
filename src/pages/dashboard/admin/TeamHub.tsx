@@ -43,17 +43,17 @@ import {
   Brain,
   Users,
   HeartPulse,
-  Rocket,
+  
   DollarSign,
   Store,
   Armchair,
   Globe,
-  Beaker,
+  
   BookOpen,
 } from 'lucide-react';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 import { usePayrollEntitlement } from '@/hooks/payroll/usePayrollEntitlement';
-import { useColorBarEntitlement } from '@/hooks/color-bar/useColorBarEntitlement';
+
 import { PageExplainer } from '@/components/ui/PageExplainer';
 
 interface ManagementCardProps {
@@ -151,7 +151,7 @@ export default function TeamHub() {
   const { dashPath } = useOrgDashboardPath();
   const { canInvite } = useInvitableRoles();
   const { isEntitled: isPayrollEntitled } = usePayrollEntitlement();
-  const { isEntitled: isColorBarEntitled } = useColorBarEntitlement();
+  
   const { data: pendingInvitations } = usePendingInvitations();
   const pendingInvitationCount = pendingInvitations?.length || 0;
 
