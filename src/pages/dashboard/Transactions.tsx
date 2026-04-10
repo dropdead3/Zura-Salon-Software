@@ -28,8 +28,6 @@ import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { useLocations } from '@/hooks/useLocations';
 import { GroupedTransactionTable } from '@/components/dashboard/transactions/GroupedTransactionTable';
 import { TransactionDetailSheet } from '@/components/dashboard/transactions/TransactionDetailSheet';
-import { VoidConfirmDialog } from '@/components/dashboard/transactions/VoidConfirmDialog';
-import { RefundDialog } from '@/components/dashboard/transactions/RefundDialog';
 import { IssueCreditsDialog } from '@/components/dashboard/transactions/IssueCreditsDialog';
 import { GiftCardManager } from '@/components/dashboard/transactions/GiftCardManager';
 import { TillBalanceSummary } from '@/components/dashboard/transactions/TillBalanceSummary';
@@ -38,15 +36,7 @@ import { BentoGrid } from '@/components/ui/bento-grid';
 import { PageExplainer } from '@/components/ui/PageExplainer';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import type { TransactionItem } from '@/hooks/useTransactions';
 
-/** Build a summary item_name for multi-item transactions */
-function buildItemSummary(txn: GroupedTransaction): string {
-  if (txn.items.length === 1) return txn.items[0].itemName;
-  const names = txn.items.slice(0, 3).map(i => i.itemName);
-  const suffix = txn.items.length > 3 ? ` +${txn.items.length - 3} more` : '';
-  return `${txn.items.length} items — ${names.join(', ')}${suffix}`;
-}
 
 export default function Transactions() {
   const [selectedDate, setSelectedDate] = useState(format(new Date(), 'yyyy-MM-dd'));
