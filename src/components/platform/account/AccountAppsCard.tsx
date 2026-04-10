@@ -101,6 +101,7 @@ export function AccountAppsCard({ organizationId }: AccountAppsCardProps) {
                 checked={isColorBarEnabled}
                 onCheckedChange={() => handleToggleFlag('backroom_enabled', isColorBarEnabled)}
                 disabled={updateFlag.isPending}
+                className="data-[state=checked]:bg-violet-500 data-[state=unchecked]:bg-slate-600"
               />
             </div>
           </div>
@@ -126,6 +127,7 @@ export function AccountAppsCard({ organizationId }: AccountAppsCardProps) {
                 checked={isConnectEnabled}
                 onCheckedChange={() => handleToggleFlag('connect_enabled', isConnectEnabled)}
                 disabled={updateFlag.isPending}
+                className="data-[state=checked]:bg-violet-500 data-[state=unchecked]:bg-slate-600"
               />
             </div>
           </div>
@@ -151,6 +153,7 @@ export function AccountAppsCard({ organizationId }: AccountAppsCardProps) {
                 checked={isPayrollEnabled}
                 onCheckedChange={() => handleToggleFlag('payroll_enabled', isPayrollEnabled)}
                 disabled={updateFlag.isPending}
+                className="data-[state=checked]:bg-violet-500 data-[state=unchecked]:bg-slate-600"
               />
             </div>
           </div>
