@@ -2,7 +2,9 @@ import React from 'react';
 import { cn } from '@/lib/utils';
 import { ChevronRight } from 'lucide-react';
 import { ZuraZIcon } from '@/components/icons/ZuraZIcon';
-import type { RankedResult } from '@/lib/searchRanker';
+import type { RankedResult, QuickAction } from '@/lib/searchRanker';
+import { useNavigate } from 'react-router-dom';
+import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 
 interface CommandResultRowProps {
   result: RankedResult;
@@ -13,6 +15,7 @@ interface CommandResultRowProps {
   onClick: () => void;
   query: string;
   onHover?: (result: RankedResult) => void;
+  onClose?: () => void;
 }
 
 function highlightMatch(text: string, query: string) {
@@ -26,6 +29,21 @@ function highlightMatch(text: string, query: string) {
       <span className="text-muted-foreground">{text.slice(idx + query.length)}</span>
     </>
   );
+}
+
+/** Get the action verb for a result type */
+function getActionVerb(type: string): string {
+  switch (type) {
+    case 'action': return 'Run';
+    case 'navigation': return 'Open';
+    case 'team':
+    case 'client':
+    case 'inventory':
+    case 'appointment':
+    case 'task': return 'View';
+    case 'help': return 'Learn';
+    default: return 'Open';
+  }
 }
 
 /** Get the action chip config for a result type */
@@ -49,14 +67,22 @@ function getActionChip(type: string): { label: string; className: string } | nul
 }
 
 export const CommandResultRow = React.forwardRef<HTMLButtonElement, CommandResultRowProps>(
-  ({ result, isSelected, isTopResult, isDominant, onClick, query, onHover }, ref) => {
+  ({ result, isSelected, isTopResult, isDominant, onClick, query, onHover, onClose }, ref) => {
     const chip = getActionChip(result.type);
     const isAction = result.type === 'action';
     const isEntity = ['team', 'client', 'inventory', 'appointment', 'task'].includes(result.type);
     const isHelp = result.type === 'help';
+    const navigate = useNavigate();
+    const { dashPath } = useOrgDashboardPath();
 
-    // Actions and dominant results always show chip; others show on hover/selected
-    const alwaysShowChip = isAction || isDominant;
+    const handleQuickAction = (e: React.MouseEvent, qa: QuickAction) => {
+      e.stopPropagation();
+      const resolvedPath = qa.path.startsWith('/dashboard')
+        ? dashPath(qa.path.slice('/dashboard'.length))
+        : qa.path;
+      navigate(resolvedPath);
+      onClose?.();
+    };
 
     return (
       <button
@@ -96,21 +122,40 @@ export const CommandResultRow = React.forwardRef<HTMLButtonElement, CommandResul
           {isHelp ? <ZuraZIcon className="w-4 h-4" /> : result.icon}
         </span>
 
-        <div className="flex-1 min-w-0 flex items-center gap-2">
-          <span className={cn(
-            'font-sans text-sm truncate',
-            (isTopResult || isDominant) && 'text-foreground'
-          )}>
-            {highlightMatch(result.title, query)}
-          </span>
-          {result.subtitle && (
+        <div className="flex-1 min-w-0 flex flex-col gap-0.5">
+          <div className="flex items-center gap-2">
             <span className={cn(
-              'font-sans text-xs text-muted-foreground truncate',
-              isTopResult ? 'inline' : 'hidden sm:inline',
-              isHelp && 'italic'
+              'font-sans text-sm truncate',
+              (isTopResult || isDominant) && 'text-foreground'
             )}>
-              {result.subtitle}
+              {highlightMatch(result.title, query)}
             </span>
+            {result.subtitle && (
+              <span className={cn(
+                'font-sans text-xs text-muted-foreground truncate',
+                isTopResult ? 'inline' : 'hidden sm:inline',
+                isHelp && 'italic'
+              )}>
+                {result.subtitle}
+              </span>
+            )}
+          </div>
+
+          {/* Quick actions for dominant results */}
+          {isDominant && result.quickActions && result.quickActions.length > 0 && (
+            <div className="flex items-center gap-2">
+              {result.quickActions.map((qa) => (
+                <span
+                  key={qa.path}
+                  role="button"
+                  tabIndex={-1}
+                  onClick={(e) => handleQuickAction(e, qa)}
+                  className="font-sans text-[10px] text-primary/60 hover:text-primary cursor-pointer transition-colors"
+                >
+                  {qa.label}
+                </span>
+              ))}
+            </div>
           )}
         </div>
 
@@ -128,15 +173,22 @@ export const CommandResultRow = React.forwardRef<HTMLButtonElement, CommandResul
           {result.type === 'navigation' ? 'page' : result.type === 'team' ? 'person' : result.type}
         </span>
 
-        {/* Inline action chip */}
-        {chip && (
-          <span className={cn(
-            'font-sans text-[10px] px-2 py-0.5 rounded-full shrink-0 transition-opacity duration-150 will-change-[opacity] border',
-            chip.className,
-            alwaysShowChip || isSelected ? 'opacity-100' : 'opacity-0 group-hover/row:opacity-100'
-          )}>
-            {chip.label}
+        {/* Dominant result: prominent action button */}
+        {isDominant ? (
+          <span className="font-sans text-xs font-medium px-3 py-1 rounded-full bg-primary text-primary-foreground shrink-0">
+            {getActionVerb(result.type)} {result.title}
           </span>
+        ) : (
+          /* Inline action chip for non-dominant rows */
+          chip && (
+            <span className={cn(
+              'font-sans text-[10px] px-2 py-0.5 rounded-full shrink-0 transition-opacity duration-150 will-change-[opacity] border',
+              chip.className,
+              isAction || isSelected ? 'opacity-100' : 'opacity-0 group-hover/row:opacity-100'
+            )}>
+              {chip.label}
+            </span>
+          )
         )}
 
         <ChevronRight className={cn(
