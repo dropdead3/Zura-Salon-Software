@@ -65,6 +65,7 @@ export interface AnalyticsFilters {
 }
 
 export default function AnalyticsHub() {
+  const { dashPath } = useOrgDashboardPath();
   const [searchParams, setSearchParams] = useSearchParams();
   const tabFromUrl = searchParams.get('tab');
   const subTab = searchParams.get('subtab') || undefined;

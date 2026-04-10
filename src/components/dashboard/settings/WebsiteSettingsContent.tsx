@@ -114,6 +114,8 @@ const SOCIAL_FIELDS = [
 function GeneralTab() {
   const { effectiveOrganization } = useOrganizationContext();
   const { toast } = useToast();
+  const navigate = useNavigate();
+  const { dashPath } = useOrgDashboardPath();
 
   // Announcement bar
   const { data: announcementSettings, isLoading: annLoading } = useAnnouncementBarSettings();
