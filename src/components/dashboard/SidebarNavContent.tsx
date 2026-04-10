@@ -118,6 +118,7 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
   const { groupedFavorites, toggleFavorite: toggleSubtabFavorite } = useAnalyticsSubtabFavorites();
   const { apps: activatedApps } = useOrganizationApps();
   const { isEntitled: isConnectEntitled } = useConnectEntitlement();
+  const { isEntitled: isPayrollEntitled } = usePayrollEntitlement();
   const { user } = useAuth();
   const { effectiveOrganization } = useOrganizationContext();
   const organizationId = effectiveOrganization?.id;
