@@ -31,6 +31,7 @@ import type {
   RankedResultGroup,
   SuggestionFallback,
   SearchCandidate,
+  QuickAction,
 } from '@/lib/searchRanker';
 import {
   mainNavItems,
@@ -56,6 +57,7 @@ import { scoreMatchWithSynonyms } from '@/lib/textMatch';
 import { assembleChain } from '@/lib/queryChainEngine';
 import type { ChainedQuery } from '@/lib/queryChainEngine';
 import { trackFrequencyTimestamp } from '@/lib/searchLearning';
+import { NAV_DESTINATIONS } from '@/lib/navKnowledgeBase';
 
 // ─── Help items ─────────────────────────────────────────────
 
@@ -97,17 +99,33 @@ function buildNavCandidates(
 
   const filtered = filterFn ? filterFn(combined) : combined;
 
-  return filtered.map((item) => ({
-    id: `nav-${item.href}`,
-    type: 'navigation' as const,
-    title: item.label,
-    path: item.href,
-    icon: item.icon
-      ? React.createElement(item.icon, { className: 'w-4 h-4' })
-      : undefined,
-    permission: item.permission,
-    roles: item.roles,
-  }));
+  return filtered.map((item) => {
+    // Cross-reference navKnowledgeBase for richer searchText and quickActions
+    const kbMatch = NAV_DESTINATIONS.find(d => d.path === item.href);
+    const searchText = kbMatch
+      ? [item.label, ...kbMatch.keywords].join(' ')
+      : undefined;
+    const quickActions: QuickAction[] | undefined = kbMatch?.tabs
+      ? kbMatch.tabs.slice(0, 2).map(t => ({
+          label: t.label,
+          path: `${kbMatch.path}?tab=${t.id}`,
+        }))
+      : undefined;
+
+    return {
+      id: `nav-${item.href}`,
+      type: 'navigation' as const,
+      title: item.label,
+      path: item.href,
+      icon: item.icon
+        ? React.createElement(item.icon, { className: 'w-4 h-4' })
+        : undefined,
+      permission: item.permission,
+      roles: item.roles,
+      searchText,
+      quickActions,
+    };
+  });
 }
 
 function buildHelpCandidates(): SearchCandidate[] {
