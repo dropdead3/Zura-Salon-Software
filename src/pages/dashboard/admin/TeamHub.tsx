@@ -92,7 +92,7 @@ const ManagementCard = React.forwardRef<HTMLAnchorElement, ManagementCardProps>(
             </button>
           )}
           <CardContent className="p-5 min-h-[88px]">
-            <div className="flex items-start justify-between gap-3">
+            <div className="flex items-center justify-between gap-3">
               <div className="flex items-start gap-3 flex-1 min-w-0">
                 <div className={cn(tokens.card.iconBox, "shrink-0")}>
                   <Icon className={tokens.card.icon} />
@@ -145,7 +145,7 @@ function HubGatewayCard({ href, icon: Icon, title, description, isFavorited, onT
           </button>
         )}
         <CardContent className="p-5 min-h-[108px]">
-          <div className="flex items-start justify-between gap-3">
+          <div className="flex items-center justify-between gap-3">
             <div className="flex items-start gap-3 flex-1 min-w-0">
               <div className={cn(tokens.card.iconBox, "shrink-0")}>
                 <Icon className={tokens.card.icon} />
