@@ -147,11 +147,14 @@ export function CheckoutSummarySheet({
   const addonTotal = addonEvents.reduce((sum, e) => sum + (e.addon_price || 0), 0);
   const subtotal = (appointment.total_price || 0);
   const discount = appliedPromo?.calculated_discount || 0;
-  // Product charges are NOT discountable — kept separate from promo subtotal
+  // Product charges and add-ons are NOT discountable — kept separate from promo subtotal
   const discountedSubtotal = subtotal - discount;
-  const taxableBase = discountedSubtotal + (productChargeTaxable ? allUsageChargeTotal : 0);
+  // Tax base: discounted service subtotal + add-ons + usage charges (if taxable)
+  // Note: productChargeTaxable controls tax on ALL usage charges (both product_cost and overage).
+  // If separate tax treatment is needed per charge type, add an overage_charge_taxable setting.
+  const taxableBase = discountedSubtotal + addonTotal + (productChargeTaxable ? allUsageChargeTotal : 0);
   const tax = taxableBase * taxRate;
-  const checkoutTotal = discountedSubtotal + allUsageChargeTotal + tax;
+  const checkoutTotal = discountedSubtotal + addonTotal + allUsageChargeTotal + tax;
   const grandTotal = checkoutTotal + tipAmount;
 
   const getDuration = () => {
@@ -299,7 +302,7 @@ export function CheckoutSummarySheet({
     const serviceName = appointment.service_name || 'Service';
     const serviceLines = doc.splitTextToSize(serviceName, pageWidth - margin * 2 - 20);
     doc.text(serviceLines, margin, y);
-    doc.text(`$${subtotal.toFixed(2)}`, pageWidth - margin, y, { align: 'right' });
+    doc.text(formatCurrency(subtotal), pageWidth - margin, y, { align: 'right' });
     y += 4 * serviceLines.length + 4;
 
     // Dashed line
@@ -310,6 +313,20 @@ export function CheckoutSummarySheet({
     doc.setDrawColor(0);
     y += 6;
 
+    // Add-ons
+    if (addonEvents.length > 0) {
+      doc.setFont('helvetica', 'bold');
+      doc.text('Add-Ons', margin, y);
+      y += 4;
+      doc.setFont('helvetica', 'normal');
+      for (const addon of addonEvents) {
+        doc.text(addon.addon_name, margin, y);
+        doc.text(formatCurrency(addon.addon_price), pageWidth - margin, y, { align: 'right' });
+        y += 4;
+      }
+      y += 2;
+    }
+
     // Product charges
     if (productChargeTotal > 0) {
       doc.setFont('helvetica', 'bold');
@@ -318,7 +335,7 @@ export function CheckoutSummarySheet({
       doc.setFont('helvetica', 'normal');
       for (const pc of productCostCharges) {
         doc.text(pc.service_name ?? 'Product', margin, y);
-        doc.text(`$${pc.charge_amount.toFixed(2)}`, pageWidth - margin, y, { align: 'right' });
+        doc.text(formatCurrency(pc.charge_amount), pageWidth - margin, y, { align: 'right' });
         y += 4;
       }
       y += 2;
@@ -326,12 +343,25 @@ export function CheckoutSummarySheet({
 
     // Totals
     doc.text('Subtotal', margin, y);
-    doc.text(`$${subtotal.toFixed(2)}`, pageWidth - margin, y, { align: 'right' });
+    doc.text(formatCurrency(subtotal), pageWidth - margin, y, { align: 'right' });
     y += 4;
+
+    if (addonTotal > 0) {
+      doc.text('Add-Ons', margin, y);
+      doc.text(formatCurrency(addonTotal), pageWidth - margin, y, { align: 'right' });
+      y += 4;
+    }
+
+    // Discount / promo line
+    if (discount > 0) {
+      doc.text(`Discount${appliedPromo?.promotion?.name ? ` (${appliedPromo.promotion.name})` : ''}`, margin, y);
+      doc.text(`-${formatCurrency(discount)}`, pageWidth - margin, y, { align: 'right' });
+      y += 4;
+    }
 
     if (productChargeTotal > 0) {
       doc.text(productChargeLabel, margin, y);
-      doc.text(`$${productChargeTotal.toFixed(2)}`, pageWidth - margin, y, { align: 'right' });
+      doc.text(formatCurrency(productChargeTotal), pageWidth - margin, y, { align: 'right' });
       y += 4;
     }
 
@@ -342,14 +372,14 @@ export function CheckoutSummarySheet({
       doc.setFont('helvetica', 'normal');
       for (const oc of overageCharges) {
         doc.text(oc.service_name ?? 'Overage', margin, y);
-        doc.text(`$${oc.charge_amount.toFixed(2)}`, pageWidth - margin, y, { align: 'right' });
+        doc.text(formatCurrency(oc.charge_amount), pageWidth - margin, y, { align: 'right' });
         y += 4;
       }
       y += 2;
     }
 
     doc.text(`Tax (${(taxRate * 100).toFixed(1)}%)`, margin, y);
-    doc.text(`$${tax.toFixed(2)}`, pageWidth - margin, y, { align: 'right' });
+    doc.text(formatCurrency(tax), pageWidth - margin, y, { align: 'right' });
     y += 4;
 
     // Solid line before total
@@ -358,13 +388,13 @@ export function CheckoutSummarySheet({
 
     doc.setFont('helvetica', 'bold');
     doc.text('Checkout Total', margin, y);
-    doc.text(`$${checkoutTotal.toFixed(2)}`, pageWidth - margin, y, { align: 'right' });
+    doc.text(formatCurrency(checkoutTotal), pageWidth - margin, y, { align: 'right' });
     y += 5;
 
     if (tipAmount > 0) {
       doc.setFont('helvetica', 'normal');
       doc.text('Tip', margin, y);
-      doc.text(`$${tipAmount.toFixed(2)}`, pageWidth - margin, y, { align: 'right' });
+      doc.text(formatCurrency(tipAmount), pageWidth - margin, y, { align: 'right' });
       y += 4;
 
       doc.line(margin, y, pageWidth - margin, y);
@@ -373,7 +403,7 @@ export function CheckoutSummarySheet({
       doc.setFontSize(10);
       doc.setFont('helvetica', 'bold');
       doc.text('GRAND TOTAL', margin, y);
-      doc.text(`$${grandTotal.toFixed(2)}`, pageWidth - margin, y, { align: 'right' });
+      doc.text(formatCurrency(grandTotal), pageWidth - margin, y, { align: 'right' });
       y += 6;
     }
 
@@ -390,7 +420,10 @@ export function CheckoutSummarySheet({
     if (preview) {
       const pdfBlob = doc.output('blob');
       const url = URL.createObjectURL(pdfBlob);
-      window.open(url, '_blank');
+      const win = window.open(url, '_blank');
+      if (!win) {
+        toast.error('Pop-up blocked — please allow pop-ups or use the download button instead.');
+      }
     } else {
       doc.save(`receipt-${appointment.id.slice(-8)}.pdf`);
       toast.success('Receipt downloaded');
