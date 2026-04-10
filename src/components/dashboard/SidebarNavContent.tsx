@@ -117,7 +117,24 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
   const { groupedFavorites, toggleFavorite: toggleSubtabFavorite } = useAnalyticsSubtabFavorites();
   const { apps: activatedApps } = useOrganizationApps();
   const { isEntitled: isConnectEntitled } = useConnectEntitlement();
-  
+  const { user } = useAuth();
+  const { effectiveOrganization } = useOrganizationContext();
+  const organizationId = effectiveOrganization?.id;
+
+  const { data: hasPayrollEnrollment } = useQuery({
+    queryKey: ['my-payroll-enrollment', user?.id, organizationId],
+    queryFn: async () => {
+      const { count } = await supabase
+        .from('employee_payroll_settings')
+        .select('id', { count: 'exact', head: true })
+        .eq('employee_id', user!.id)
+        .eq('organization_id', organizationId!);
+      return (count ?? 0) > 0;
+    },
+    enabled: !!user?.id && !!organizationId,
+    staleTime: 5 * 60 * 1000,
+  });
+
   // Map section IDs to nav items (for built-in sections)
   // New consolidated sections: myTools (replaces growth+stats), manage (replaces manager), system (replaces adminOnly)
   // Legacy IDs still mapped for backward compat with stored layouts
