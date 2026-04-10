@@ -38,10 +38,12 @@ export const DEFAULT_SECTION_ORDER = [
 const LEGACY_SECTION_MAP: Record<string, string> = {
   growth: 'myTools',
   stats: 'myTools',
-  manager: 'manage',
-  manage: 'ops',      // Legacy 'manage' maps to 'ops' (data items auto-added)
+  manager: 'ops',
   adminOnly: 'system',
 };
+
+// Sections that should be completely removed during migration (replaced by new sections)
+const DEPRECATED_SECTIONS = new Set(['manage']);
 
 // Section labels for display
 export const SECTION_LABELS: Record<string, string> = {
@@ -252,6 +254,7 @@ export function getEffectiveHiddenLinks(
  */
 function migrateLegacySections(stored: SidebarLayoutConfig): SidebarLayoutConfig {
   const migratedSectionOrder = stored.sectionOrder
+    .filter(id => !DEPRECATED_SECTIONS.has(id))
     .map(id => LEGACY_SECTION_MAP[id] || id)
     // Deduplicate (e.g. both 'growth' and 'stats' map to 'myTools')
     .filter((id, index, arr) => arr.indexOf(id) === index);
@@ -326,8 +329,8 @@ export function useSidebarLayout() {
 
       let stored = data?.sidebar_layout as unknown as SidebarLayoutConfig | null;
       
-      // Migrate legacy section IDs if present
-      if (stored?.sectionOrder?.some(id => Object.keys(LEGACY_SECTION_MAP).includes(id))) {
+      // Migrate legacy section IDs if present (including deprecated 'manage')
+      if (stored?.sectionOrder?.some(id => Object.keys(LEGACY_SECTION_MAP).includes(id) || DEPRECATED_SECTIONS.has(id))) {
         stored = migrateLegacySections(stored);
       }
 
