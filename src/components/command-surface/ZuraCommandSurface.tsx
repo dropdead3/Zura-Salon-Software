@@ -543,7 +543,7 @@ export function ZuraCommandSurface({ open, onOpenChange, filterNavItems, anchorR
                 hasPreview && 'lg:max-w-[calc(100%-340px)]'
               )}>
                 {hasQuery && showAICard && (
-                <CommandAIAnswerCard
+                  <CommandAIAnswerCard
                     response={aiResponse}
                     isLoading={aiLoading}
                     error={aiError}
@@ -555,6 +555,7 @@ export function ZuraCommandSurface({ open, onOpenChange, filterNavItems, anchorR
                       navigate(resolvedPath);
                       close();
                     }}
+                    onDismiss={() => { setAiMode(false); resetAI(); }}
                   />
                 )}
 
@@ -649,14 +650,21 @@ export function ZuraCommandSurface({ open, onOpenChange, filterNavItems, anchorR
                 <kbd className="rounded border border-border/50 bg-muted/70 px-1 py-0.5 font-mono text-[11px]">↵</kbd>
                 open
               </span>
-              <span className="flex items-center gap-1">
-                <kbd className="rounded border border-border/50 bg-muted/70 px-1 py-0.5 font-mono text-[11px]">Tab</kbd>
-                ask Zura
-              </span>
+              {!isMobile && (
+                <span className="flex items-center gap-1">
+                  <kbd className="rounded border border-border/50 bg-muted/70 px-1 py-0.5 font-mono text-[11px]">Tab</kbd>
+                  ask Zura
+                </span>
+              )}
               {hasActiveAction && (
                 <span className="flex items-center gap-1 ml-auto">
                   <kbd className="rounded border border-border/50 bg-muted/70 px-1 py-0.5 font-mono text-[11px]">⌘↵</kbd>
                   run action
+                </span>
+              )}
+              {hasQuery && hasResults && !hasActiveAction && (
+                <span className="ml-auto text-muted-foreground/50">
+                  {flatResults.length} result{flatResults.length !== 1 ? 's' : ''}
                 </span>
               )}
             </div>
