@@ -57,7 +57,7 @@ export function CommandInput({
           value={query}
           onChange={e => onQueryChange(e.target.value)}
           onKeyDown={handleKeyDown}
-          className="w-full bg-transparent border-none outline-none font-sans text-base text-foreground placeholder:text-muted-foreground"
+          className="w-full bg-transparent border-none outline-none font-sans text-base leading-6 text-foreground placeholder:text-muted-foreground"
           autoCapitalize="off"
           autoComplete="off"
           spellCheck={false}
@@ -65,7 +65,7 @@ export function CommandInput({
         {/* Ghost text overlay */}
         {ghostText && (
           <span
-            className="absolute top-0 left-0 pointer-events-none font-sans text-base whitespace-pre"
+            className="absolute top-0 left-0 pointer-events-none font-sans text-base leading-6 whitespace-pre"
             aria-hidden="true"
           >
             <span className="invisible">{query}</span>
