@@ -1,4 +1,4 @@
-import { Package, Play } from 'lucide-react';
+import { Package, Play, MessageSquare } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   PlatformCard,
