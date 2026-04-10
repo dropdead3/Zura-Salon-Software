@@ -1,51 +1,55 @@
 
 
-# Remove Hubs Section & Redistribute Cards
+# Add 13 Missing Cards to Operations Hub
 
 ## Summary
-Remove the redundant "Hubs" section from the Operations Hub and redistribute its 5 cards into logical existing or new sections.
+The ManagementHub (now dead code) contained 13 cards not present in the current Operations Hub. Add all of them into logical sections, creating new sections where needed.
 
-## Proposed Section Reorganization
+## Missing Cards → Proposed Placement
 
-### Current sections (6):
-Hubs, Daily Operations, Scheduling & Time Off, Team & Development, Compliance & Documentation, Team Services
+### Existing section: "Client & Business" (add 4 cards)
+- **Client Health Hub** — `/admin/client-health` (Brain icon)
+- **Feedback Hub** — `/admin/feedback` (MessageSquarePlus icon)
+- **Re-engagement** — `/admin/reengagement` (UserCheck icon)
+- **Merge Clients** — `/admin/merge-clients` (GitMerge icon)
 
-### New sections (5):
+### Existing section: "Compliance & Documentation" (add 1 card)
+- **Document Tracker** — `/admin/documents` (FileText icon, already imported)
 
-1. **Daily Operations** — unchanged
-   - Daily Huddle, Chair Assignments, Assistant Scheduling, Announcements
+### New section: "Recruiting & Hiring" (3 cards, after People & Development)
+- **Lead Management** — `/admin/leads` (UserPlus icon)
+- **Recruiting Pipeline** — `/admin/recruiting` (Briefcase icon, already imported)
+- **New Hire Wizard** — `/admin/payroll?tab=hire` (UserCheck icon, conditional on payroll entitlement)
+- **Renter Onboard Wizard** — `/admin/booth-renters?tab=onboarding` (Store icon)
 
-2. **Scheduling & Time Off** — unchanged
-   - Schedule Requests, Shift Swap Approvals, Assistant Requests, Meetings & Accountability, PTO Balances
+### New section: "Marketing & Visibility" (2 cards, after Client & Business)
+- **Website Editor** — `/admin/website-sections` (Globe icon)
+- **SEO Workshop** — `/admin/seo-workshop` (Search icon)
 
-3. **People & Development** — renamed from "Team & Development", absorbs hub cards
-   - Team Directory, Graduation Tracker, Client Engine Tracker, Team Challenges
-   - **+ Onboarding Hub** (from Hubs — new hire onboarding fits people management)
-   - **+ Training Hub** (from Hubs — staff training fits development)
-   - **+ Hiring & Payroll Hub** (from Hubs — conditional on entitlement, fits people ops)
+### New section: "Configuration & Rewards" (2 cards, at the end)
+- **Zura Configuration** — `/admin/zura-config` (Brain icon)
+- **Points & Rewards** — `/admin/points-config` (Coins icon, already imported)
 
-4. **Client & Business** — new section for external-facing hubs
-   - **Client Hub** (from Hubs)
-   - **Renter Hub** (from Hubs — booth renters are a business relationship)
+## Final Section Order
+1. Favorites
+2. Daily Operations
+3. Scheduling & Time Off
+4. People & Development
+5. Recruiting & Hiring *(new)*
+6. Client & Business *(expanded)*
+7. Marketing & Visibility *(new)*
+8. Compliance & Documentation *(expanded)*
+9. Team Services
+10. Configuration & Rewards *(new)*
 
-5. **Compliance & Documentation** — unchanged
-   - Performance Reviews, Incidents & Accountability, Handbooks
-
-6. **Team Services** — unchanged
-   - Business Cards, Headshots, Birthdays & Anniversaries
-
-## Changes
+## Technical Changes
 
 ### `src/pages/dashboard/admin/TeamHub.tsx`
-- Delete the entire "Hubs" `CategorySection` block (lines 315–361)
-- Rename "Team & Development" → "People & Development"
-- Add Onboarding Hub, Training Hub, and Hiring & Payroll Hub cards into the People & Development section (using `ManagementCard` instead of `HubGatewayCard` for visual consistency with their new peers)
-- Add new "Client & Business" section before Compliance & Documentation containing Client Hub and Renter Hub cards (also as `ManagementCard`)
-- Reorder sections: Daily Operations → Scheduling & Time Off → People & Development → Client & Business → Compliance & Documentation → Team Services
+- Add missing icon imports: `Globe`, `Search`, `Brain`, `MessageSquarePlus`, `UserCheck`, `GitMerge`, `UserPlus`
+- Add new icons to `ICON_MAP` for favorites serialization
+- Add 13 new `ManagementCard` entries with favorite wiring (`favProps`, `!isFavorited` guard)
+- New Hire Wizard gated behind `isPayrollEntitled`
+- Add 3 new `CategorySection` blocks in the JSX
 
-## Result
-- No more "Hubs" section — eliminates the meta-navigation-inside-navigation pattern
-- All cards use consistent `ManagementCard` styling
-- Logical grouping: people stuff together, client/business stuff together
-- Sections auto-hide when all cards are favorited (existing logic)
+One file changed. All new cards follow the existing pattern with favorite support and conditional rendering.
 
