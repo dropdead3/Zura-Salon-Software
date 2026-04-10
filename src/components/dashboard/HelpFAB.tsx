@@ -10,14 +10,19 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { AIHelpTab } from './help-fab/AIHelpTab';
 import { ChatLeadershipTab } from './help-fab/ChatLeadershipTab';
+import { useConnectEntitlement } from '@/hooks/connect/useConnectEntitlement';
+import { useAuth } from '@/contexts/AuthContext';
 
 export function HelpFAB() {
   const [isOpen, setIsOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('ai-help');
   const [bookingOpen, setBookingOpen] = useState(false);
   const location = useLocation();
+  const { isEntitled: hasConnect } = useConnectEntitlement();
+  const { isPlatformUser } = useAuth();
   
-  const isSchedulePage = location.pathname === '/dashboard/schedule';
+  const showChatTab = hasConnect || isPlatformUser;
+  const isSchedulePage = location.pathname.includes('/dashboard/schedule');
 
   // Listen for booking popover open/close to hide FAB
   useEffect(() => {
@@ -35,7 +40,7 @@ export function HelpFAB() {
   }, [isSchedulePage]);
   
   // Hide on Team Chat page since it has its own AI panel
-  if (location.pathname === '/dashboard/team-chat') {
+  if (location.pathname.includes('/dashboard/team-chat')) {
     return null;
   }
 
@@ -126,22 +131,28 @@ export function HelpFAB() {
       >
         {/* Inner gradient overlay for depth */}
         <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-primary/[0.04] to-transparent pointer-events-none z-0 rounded-t-2xl" />
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col relative z-[1]">
-          <div className="px-4 pt-4 pb-2">
-            <TabsList className="w-full bg-card/60 py-1.5" style={{ borderRadius: '9999px' }}>
-              <TabsTrigger value="ai-help" className="flex-1 font-display text-xs tracking-wider uppercase data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-none data-[state=active]:ring-0" style={{ borderRadius: '9999px' }}>{AI_ASSISTANT_NAME_DEFAULT}</TabsTrigger>
-              <TabsTrigger value="support" className="flex-1 font-display text-xs tracking-wider uppercase data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-none data-[state=active]:ring-0" style={{ borderRadius: '9999px' }}>Chat</TabsTrigger>
-            </TabsList>
-          </div>
-          <div className="h-px bg-gradient-to-r from-primary/20 via-primary/40 to-primary/20" />
+        <Tabs value={showChatTab ? activeTab : 'ai-help'} onValueChange={setActiveTab} className="h-full flex flex-col relative z-[1]">
+          {showChatTab && (
+            <>
+              <div className="px-4 pt-4 pb-2">
+                <TabsList className="w-full bg-card/60 py-1.5" style={{ borderRadius: '9999px' }}>
+                  <TabsTrigger value="ai-help" className="flex-1 font-display text-xs tracking-wider uppercase data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-none data-[state=active]:ring-0" style={{ borderRadius: '9999px' }}>{AI_ASSISTANT_NAME_DEFAULT}</TabsTrigger>
+                  <TabsTrigger value="support" className="flex-1 font-display text-xs tracking-wider uppercase data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-none data-[state=active]:ring-0" style={{ borderRadius: '9999px' }}>Chat</TabsTrigger>
+                </TabsList>
+              </div>
+              <div className="h-px bg-gradient-to-r from-primary/20 via-primary/40 to-primary/20" />
+            </>
+          )}
           
           <TabsContent value="ai-help" className="flex-1 m-0 overflow-hidden">
             <AIHelpTab />
           </TabsContent>
           
-          <TabsContent value="support" className="flex-1 m-0 overflow-hidden">
-            <ChatLeadershipTab />
-          </TabsContent>
+          {showChatTab && (
+            <TabsContent value="support" className="flex-1 m-0 overflow-hidden">
+              <ChatLeadershipTab />
+            </TabsContent>
+          )}
         </Tabs>
       </PopoverContent>
     </Popover>
