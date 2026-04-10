@@ -44,6 +44,13 @@ import {
   Store,
   Armchair,
   BookOpen,
+  Globe,
+  Search,
+  Brain,
+  MessageSquarePlus,
+  UserCheck,
+  GitMerge,
+  UserPlus,
 } from 'lucide-react';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 
