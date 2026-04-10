@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 import { tokens } from '@/lib/design-tokens';
 import { format, startOfMonth, endOfMonth, subMonths, subDays, startOfWeek, startOfYear, min } from 'date-fns';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';

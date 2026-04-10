@@ -397,7 +397,7 @@ function GeneralTab() {
           <Button
             variant="outline"
             className="gap-2"
-            onClick={() => window.location.href = '/dashboard/admin/website-hub'}
+            onClick={() => navigate(dashPath('/admin/website-hub'))}
           >
             <ExternalLink className="w-4 h-4" />
             Open Footer Editor

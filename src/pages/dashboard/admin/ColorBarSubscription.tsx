@@ -111,7 +111,7 @@ export default function ColorBarSubscription() {
               </p>
               <Button
                 className="font-sans font-medium"
-                onClick={() => window.location.href = '/dashboard/admin/color-bar-settings'}
+                onClick={() => window.location.href = dashPath('/admin/color-bar-settings')}
               >
                 View Plans
               </Button>

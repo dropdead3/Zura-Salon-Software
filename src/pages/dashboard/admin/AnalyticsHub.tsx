@@ -349,7 +349,7 @@ export default function AnalyticsHub() {
               )}
 
               <Button variant="outline" size={tokens.button.card} asChild className="gap-2">
-                <Link to="/dashboard/admin/reports">
+                <Link to={dashPath('/admin/reports')}>
                   <FileText className="w-4 h-4" />
                   <span className="hidden lg:inline">Reports</span>
                 </Link>
