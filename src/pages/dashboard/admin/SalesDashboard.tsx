@@ -827,7 +827,7 @@ export default function SalesDashboard() {
                   <Button 
                     variant="outline" 
                     className="gap-2"
-                    onClick={() => window.location.href = '/dashboard/admin/phorest-settings'}
+                    onClick={() => navigate(dashPath('/admin/phorest-settings'))}
                   >
                     <Link2 className="w-4 h-4" />
                     Phorest Settings

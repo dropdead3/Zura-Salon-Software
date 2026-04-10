@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useNavigate } from 'react-router-dom';
 import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { useQuery } from '@tanstack/react-query';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
@@ -35,6 +35,7 @@ interface SubscriptionData {
 }
 
 export default function ColorBarSubscription() {
+  const navigate = useNavigate();
   const { dashPath } = useOrgDashboardPath();
   const { effectiveOrganization } = useOrganizationContext();
   const { isEntitled, isLoading: entitlementLoading } = useColorBarEntitlement();
@@ -111,7 +112,7 @@ export default function ColorBarSubscription() {
               </p>
               <Button
                 className="font-sans font-medium"
-                onClick={() => window.location.href = dashPath('/admin/color-bar-settings')}
+                onClick={() => navigate(dashPath('/admin/color-bar-settings'))}
               >
                 View Plans
               </Button>
