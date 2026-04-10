@@ -410,6 +410,13 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
       {/* Announcements Widget - at the very top (hide when collapsed) */}
       {!isCollapsed && <SidebarAnnouncementsWidget onNavClick={onNavClick} />}
 
+          // Hide My Pay if user is not enrolled in payroll
+          if (!hasPayrollEnrollment) {
+            filteredItems = filteredItems.filter(item => 
+              !item.href.endsWith('/my-pay')
+            );
+            shouldShow = filteredItems.length > 0;
+          }
 
       {/* Phorest Sync Status Widget moved to header popout */}
 
