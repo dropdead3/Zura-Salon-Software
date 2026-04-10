@@ -69,7 +69,6 @@ export const DEFAULT_LINK_ORDER: Record<string, string[]> = {
   main: [
     '/dashboard',
     '/dashboard/schedule',
-    '/dashboard/team-chat',
   ],
   myTools: [
     '/dashboard/today-prep',
@@ -94,6 +93,7 @@ export const DEFAULT_LINK_ORDER: Record<string, string[]> = {
   ],
   apps: [
     '/dashboard/admin/color-bar-settings',
+    '/dashboard/team-chat',
   ],
   system: [
     '/dashboard/admin/access-hub',
