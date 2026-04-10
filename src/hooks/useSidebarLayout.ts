@@ -38,10 +38,12 @@ export const DEFAULT_SECTION_ORDER = [
 const LEGACY_SECTION_MAP: Record<string, string> = {
   growth: 'myTools',
   stats: 'myTools',
-  manager: 'manage',
-  manage: 'ops',      // Legacy 'manage' maps to 'ops' (data items auto-added)
+  manager: 'ops',
   adminOnly: 'system',
 };
+
+// Sections that should be completely removed during migration (replaced by new sections)
+const DEPRECATED_SECTIONS = new Set(['manage']);
 
 // Section labels for display
 export const SECTION_LABELS: Record<string, string> = {
