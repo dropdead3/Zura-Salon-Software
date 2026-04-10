@@ -24,6 +24,7 @@ import { useBusinessSettings } from '@/hooks/useBusinessSettings';
 import { useSidebarLayout, SECTION_LABELS, SECTION_ICONS, DEFAULT_SECTION_ORDER, DEFAULT_LINK_ORDER, isBuiltInSection, getEffectiveHiddenSections, getEffectiveHiddenLinks, anyRoleHasOverrides } from '@/hooks/useSidebarLayout';
 import { useAnalyticsSubtabFavorites } from '@/hooks/useAnalyticsSubtabFavorites';
 import { useOrganizationApps } from '@/hooks/useOrganizationApps';
+import { useConnectEntitlement } from '@/hooks/connect/useConnectEntitlement';
 import { AccountOwnerOrgSwitcher } from './AccountOwnerOrgSwitcher';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 
@@ -111,6 +112,7 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
   const { data: sidebarLayout } = useSidebarLayout();
   const { groupedFavorites, toggleFavorite: toggleSubtabFavorite } = useAnalyticsSubtabFavorites();
   const { apps: activatedApps } = useOrganizationApps();
+  const { isEntitled: isConnectEntitled } = useConnectEntitlement();
   
   // Map section IDs to nav items (for built-in sections)
   // New consolidated sections: myTools (replaces growth+stats), manage (replaces manager), system (replaces adminOnly)
@@ -538,9 +540,15 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
           if (sectionId === 'apps') {
             const APP_KEY_MAP: Record<string, string> = {
               '/dashboard/admin/color-bar-settings': 'backroom',
-              '/dashboard/team-chat': 'connect',
+            };
+            // Feature-flag-based apps (checked via entitlement hooks)
+            const FEATURE_FLAG_APPS: Record<string, boolean> = {
+              '/dashboard/team-chat': isConnectEntitled,
             };
             filteredItems = filteredItems.filter(item => {
+              // Check feature flag apps first
+              if (item.href in FEATURE_FLAG_APPS) return FEATURE_FLAG_APPS[item.href];
+              // Then check organization_apps table
               const appKey = APP_KEY_MAP[item.href];
               return appKey ? activatedApps.includes(appKey) : true;
             });
