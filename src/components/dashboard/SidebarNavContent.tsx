@@ -706,9 +706,46 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
                       badgeCount={getBadgeCount(item.href)}
                     />
                   ))}
+                  {/* Ops Hub favorites sub-links */}
+                  {sectionId === 'ops' && opsHubFavorites.length > 0 && !isCollapsed && (
+                    <div className="space-y-0.5 mt-1">
+                      {opsHubFavorites.map((fav) => {
+                        const resolvedHref = fav.href;
+                        const isActive = location.pathname === resolvedHref || location.pathname.startsWith(resolvedHref + '/');
+                        // Map icon names - use a simple lookup from lucide
+                        const SIDEBAR_ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
+                          HeartPulse, DollarSign, Store, ClipboardList: LayoutGrid, Video, MessageSquare: Briefcase,
+                          Armchair: LayoutGrid, CalendarDays: LayoutGrid, Bell: LayoutGrid, CalendarClock: LayoutGrid,
+                          ArrowLeftRight, HandHelping: Users, Users, GraduationCap: TrendingUp, Target: TrendingUp,
+                          Trophy: TrendingUp, StarIcon: TrendingUp, AlertTriangle: Shield, FileText: LayoutGrid,
+                          ShieldAlert: Shield, BookOpen: LayoutGrid, CreditCard: LayoutGrid, Camera: LayoutGrid, Cake: LayoutGrid,
+                        };
+                        const FavIcon = SIDEBAR_ICON_MAP[fav.icon] || LayoutGrid;
+                        return (
+                          <a
+                            key={fav.href}
+                            href={resolvedHref}
+                            onClick={(e) => {
+                              e.preventDefault();
+                              navigate(resolvedHref, { state: { navTimestamp: Date.now() } });
+                              onNavClick();
+                            }}
+                            className={cn(
+                              "flex items-center gap-2 pl-8 pr-3 py-1.5 mx-3 text-xs font-sans rounded-md",
+                              "transition-all duration-200 cursor-pointer",
+                              isActive
+                                ? "text-foreground bg-muted/60"
+                                : "text-muted-foreground hover:text-foreground hover:bg-foreground/5"
+                            )}
+                          >
+                            <span className="w-1 h-1 rounded-full bg-current opacity-40 shrink-0" />
+                            <span className="truncate">{fav.label}</span>
+                          </a>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
           );
         })}
       </nav>
