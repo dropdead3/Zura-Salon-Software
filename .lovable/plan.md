@@ -1,75 +1,102 @@
 
 
-# Separate Appointments and Transactions into Dedicated Routes
+# Zura Connect — Phase 1: Subscription Gating and Branding
 
-## Overview
+## What We Are Building
 
-Split the current `AppointmentsHub` (3-tab page) into two standalone pages:
-- **Appointments** page at `/dashboard/appointments` — appointments list only
-- **Transactions** page at `/dashboard/transactions` — transactions + gift cards
+Transform Team Chat into **Zura Connect**, a subscription add-on within the Zura ecosystem. Phase 1 focuses on branding, entitlement gating, and the subscription infrastructure. External client communications (SMS + in-app) come in Phase 2.
 
-Update the sidebar nav link to point to the new dedicated route. Remove the old tabbed hub.
+## Architecture
+
+The existing Color Bar app follows a proven entitlement pattern: `organization_feature_flags` with a key (`backroom_enabled`), a `useColorBarEntitlement` hook, and UI gating. Zura Connect will mirror this exactly with flag key `connect_enabled`.
+
+```text
+organization_feature_flags
+  ├─ flag_key: 'connect_enabled'
+  └─ is_enabled: true/false
+
+useConnectEntitlement()
+  ├─ checks org flag
+  └─ returns { isEntitled, isLoading }
+
+Team Chat page
+  ├─ if entitled → render Zura Connect UI
+  └─ if not → render upgrade/subscription CTA
+```
 
 ## Changes
 
-### 1. Create `/dashboard/transactions` page
+### 1. Brand tokens — `src/lib/brand.ts`
 
-New file `src/pages/dashboard/Transactions.tsx`:
-- Extract `TransactionsTab` and `GiftCardManager` from `AppointmentsHub.tsx`
-- Two tabs: Transactions, Gift Cards
-- Page header: "Sales" with description focused on financial records
-- Keep the analytics quick-links callout
-- Permission: `view_transactions`
+Add `CONNECT_APP_NAME = 'Zura Connect'` and `CONNECT_DESCRIPTOR = 'Team & Client Communications'` to the brand token file.
 
-### 2. Simplify `AppointmentsHub` → Appointments-only page
+### 2. Entitlement hook — `src/hooks/connect/useConnectEntitlement.ts` (new)
 
-Rename to `src/pages/dashboard/Appointments.tsx`:
-- Remove Transactions and Gift Cards tabs entirely
-- Remove all transaction-related imports
-- Single-page appointments list (no tabs needed)
-- Page header: "Appointments"
-- Permission: `view_booking_calendar` (or keep `view_transactions`)
+Mirrors `useColorBarEntitlement`: queries `organization_feature_flags` for `connect_enabled`. Returns `{ isEntitled, isLoading }`.
 
-### 3. Update routes in `App.tsx`
+### 3. Subscription gate component — `src/components/connect/ConnectSubscriptionGate.tsx` (new)
 
-- Add route: `transactions` → new Transactions page (permission: `view_transactions`)
-- Change `appointments-hub` route to render the simplified Appointments page
-- Keep redirect: `transactions` (legacy) → new `/dashboard/transactions`
-- Add redirect: `appointments-hub?tab=transactions` → `/dashboard/transactions`
+Full-page upgrade CTA shown when the org is not entitled. Describes Zura Connect value proposition, shows pricing, and provides an action to activate (initially a "Contact Sales" or "Activate" button that sets the feature flag for testing).
 
-### 4. Update sidebar nav in `dashboardNav.ts`
+### 4. Update Team Chat page — `src/pages/dashboard/TeamChat.tsx`
 
-- Change Transactions href from `/dashboard/appointments-hub?tab=transactions` to `/dashboard/transactions`
-- Update search items array entry
+Wrap `TeamChatContainer` in entitlement check:
+- If entitled: render chat as-is
+- If not entitled: render `ConnectSubscriptionGate`
 
-### 5. Update cross-references (~10 files)
+### 5. Rebrand UI surfaces
 
-Files referencing `appointments-hub?tab=transactions` or `appointments-hub`:
-- `queryChainEngine.ts` — update route mappings
-- `navKnowledgeBase.ts` — split into two entries
-- `synonymRegistry.ts` — add transactions path
-- `ClientDetailSheet.tsx` — update appointments link (remove `?tab=appointments`)
-- `ScheduleActionBar.tsx` — update link
-- `useProactiveIntelligence.ts` — add `/dashboard/transactions` to relevant role paths
-- `pageExplainers.ts` — add transactions explainer, update appointments one
+| File | Change |
+|------|--------|
+| `ChannelSidebar.tsx` | Header text from "Team Chat" to brand token `CONNECT_APP_NAME` |
+| `ChannelHeader.tsx` | Update fallback title |
+| `TeamChatAdminSettingsSheet.tsx` | Title → "Zura Connect Settings" |
+| `pageExplainers.ts` | Update `team-chat` entry description |
 
-### 6. Localization
+### 6. Navigation update — `src/config/dashboardNav.ts`
 
-Already have `transactions` key in `en.json`. No changes needed.
+Change sidebar label from `'Team Chat'` to `'Connect'`, update `labelKey` to `'connect'`. Add localization key `"connect": "Connect"` in `en.json`.
+
+### 7. Apps section in sidebar
+
+Add Zura Connect to the Apps section alongside Color Bar, using the `connect_enabled` flag for conditional visibility (same pattern as Color Bar).
+
+### 8. Feature flag seed
+
+Create a migration to insert a `connect_enabled` global feature flag (disabled by default) so orgs can opt in.
+
+### 9. Platform Admin activation
+
+Add Zura Connect to the Account Settings feature toggles (alongside Color Bar's `backroom_enabled`) so platform admins can activate it per organization.
 
 ## Files
 
 | File | Action |
 |------|--------|
-| `src/pages/dashboard/Transactions.tsx` | Create — extracted transactions + gift cards |
-| `src/pages/dashboard/AppointmentsHub.tsx` | Simplify — appointments only, remove tabs |
-| `src/App.tsx` | Add transactions route, update appointments-hub |
-| `src/config/dashboardNav.ts` | Update href + search items |
-| `src/lib/queryChainEngine.ts` | Update route mappings |
-| `src/lib/navKnowledgeBase.ts` | Split entry |
-| `src/lib/synonymRegistry.ts` | Add transactions path |
-| `src/components/dashboard/ClientDetailSheet.tsx` | Update link |
-| `src/components/dashboard/schedule/ScheduleActionBar.tsx` | Update link |
-| `src/hooks/useProactiveIntelligence.ts` | Add path |
-| `src/config/pageExplainers.ts` | Add transactions explainer |
+| `src/lib/brand.ts` | Add Connect tokens |
+| `src/hooks/connect/useConnectEntitlement.ts` | Create — entitlement hook |
+| `src/components/connect/ConnectSubscriptionGate.tsx` | Create — upgrade gate UI |
+| `src/pages/dashboard/TeamChat.tsx` | Add entitlement check |
+| `src/components/team-chat/ChannelSidebar.tsx` | Rebrand header |
+| `src/components/team-chat/ChannelHeader.tsx` | Rebrand fallback |
+| `src/components/team-chat/TeamChatAdminSettingsSheet.tsx` | Rebrand title |
+| `src/config/dashboardNav.ts` | Update label + labelKey |
+| `src/config/pageExplainers.ts` | Update description |
+| `src/locales/en.json` | Add `connect` key |
+| `supabase/migrations/` | Seed `connect_enabled` feature flag |
+| `src/components/platform/account/AccountSettingsTab.tsx` | Add Connect toggle |
+
+## What This Does NOT Include (Phase 2+)
+
+- External client messaging (SMS via Twilio, in-app portal)
+- Client conversation channel type
+- Dedicated billing/Stripe subscription flow (Phase 1 uses feature flags for activation)
+- Separate app shell or routing (stays enhanced existing page per your preference)
+
+## Technical Notes
+
+- No new database tables needed — reuses existing `feature_flags` and `organization_feature_flags` infrastructure
+- No new permissions required — Team Chat permissions carry over
+- The entitlement hook follows the exact same pattern as Color Bar, ensuring consistency
+- Migration is additive only (INSERT into feature_flags)
 
