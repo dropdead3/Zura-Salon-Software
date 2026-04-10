@@ -1,83 +1,120 @@
 
 
-# Role-Aware Sidebar for Super Admins
+# Navigation Audit: Super Admin Access Points
 
-## Problem
+## Current State
 
-The sidebar configurator overrides bypass `roles`-based filtering (line 491-493 in `SidebarNavContent.tsx`). This causes service-provider-only items like "New-Client Engine Program", "Ring the Bell", "My Graduation", "Team Leaderboard", and "Training" to appear for super admins. Super admins should see only management and operational tools — not individual contributor features.
+Super Admins access features through **3 primary surfaces**:
+1. **Sidebar** — Command Center, Schedule, Transactions, Appointments, Analytics Hub, Report Generator, Operations Hub, Apps (Color Bar, Connect), Settings
+2. **Operations Hub** (team-hub) — 8 hub gateway cards + 30+ management cards across 5 categories
+3. **Settings** — 26+ category cards across 6 sections
 
-## Analysis
+## Audit: Is Everything Reachable?
 
-**Current MY TOOLS items visible to super admin** (from screenshot):
-- Team Stats ✅ keep
-- Team Leaderboard ❌ remove (service provider competition tool)
-- Training ❌ remove (unless still in onboarding — but super admins don't onboard this way)
-- New-Client Engine Program ❌ remove (stylist growth tool)
-- Ring the Bell ❌ remove (stylist achievement tool)
-- My Graduation ❌ remove (stylist level progression)
-- My Pay ✅ keep (owners need pay/compensation visibility)
+### Accessible via Sidebar → Operations Hub → Sub-pages
+| Feature | Access Path | Status |
+|---------|------------|--------|
+| Client Hub | Ops Hub → Hub card | ✅ |
+| Growth Hub | Ops Hub → Hub card | ✅ |
+| Hiring & Payroll Hub | Ops Hub → Hub card | ✅ |
+| Renter Hub | Ops Hub → Hub card | ✅ |
+| Onboarding Hub | Ops Hub → Hub card | ✅ |
+| Training Hub | Ops Hub → Hub card | ✅ |
+| Website Hub | Ops Hub → Hub card | ✅ |
+| Color Bar Hub | Ops Hub → Hub card | ✅ |
+| Team Directory | Ops Hub → People | ✅ |
+| Graduation Tracker | Ops Hub → People | ✅ |
+| Client Engine Tracker | Ops Hub → People | ✅ |
+| Team Challenges | Ops Hub → People | ✅ |
+| Performance Reviews | Ops Hub → Compliance | ✅ |
+| Staff Strikes | Ops Hub → Compliance | ✅ |
+| Document Tracker | Ops Hub → Compliance | ✅ |
+| Incident Reports | Ops Hub → Compliance | ✅ |
+| PTO Balances | Ops Hub → Compliance | ✅ |
+| Chair Assignments | Ops Hub → Team Ops | ✅ |
+| Birthdays | Ops Hub → Team Ops | ✅ |
+| Business Cards | Ops Hub → Team Ops | ✅ |
+| Headshots | Ops Hub → Team Ops | ✅ |
+| Announcements | Ops Hub → Team Ops | ✅ |
+| Points & Rewards Config | Ops Hub → Team Ops | ✅ |
+| Zura Configuration | Ops Hub → AI & Automation | ✅ |
+| Meetings & Accountability | Ops Hub → Scheduling | ✅ |
+| Assistant Requests | Ops Hub → Scheduling | ✅ |
+| Schedule Requests | Ops Hub → Scheduling | ✅ |
+| Shift Swap Approvals | Ops Hub → Scheduling | ✅ |
+| Assistant Scheduling | Ops Hub → Scheduling | ✅ |
+| Daily Huddle | Ops Hub → Scheduling | ✅ |
 
-**Root cause**: When the sidebar configurator has role overrides (`hasConfiguratorOverrides === true`), the code at line 491-493 filters from `orderedItems` instead of `permissionFilteredItems`, completely skipping the `roles` check on each nav item.
+### Accessible via Sidebar → Settings
+| Feature | Settings Card | Status |
+|---------|--------------|--------|
+| Account & Billing | ✅ | ✅ |
+| My Profile | ✅ | ✅ |
+| Business Settings | ✅ | ✅ |
+| Locations | ✅ | ✅ |
+| Services | ✅ | ✅ |
+| Retail Products | ✅ | ✅ |
+| Schedule Settings | ✅ | ✅ |
+| Kiosk | ✅ | ✅ |
+| Day Rate | ✅ | ✅ |
+| Forms | ✅ | ✅ |
+| Levels | ✅ | ✅ |
+| Leaderboard Config | ✅ | ✅ |
+| Onboarding Settings | ✅ | ✅ |
+| Loyalty | ✅ | ✅ |
+| Team Rewards | ✅ | ✅ |
+| Feedback | ✅ | ✅ |
+| Users | ✅ | ✅ |
+| Access Hub | ✅ | ✅ |
+| Program Config | ✅ | ✅ |
+| System | ✅ | ✅ |
+| Integrations | ✅ | ✅ |
+| Email | ✅ | ✅ |
+| SMS | ✅ | ✅ |
+| Service Flows | ✅ | ✅ |
 
-## Solution
+### Accessible via Sidebar directly
+| Feature | Status |
+|---------|--------|
+| Command Center | ✅ |
+| Schedule | ✅ |
+| Transactions | ✅ |
+| Appointments | ✅ |
+| Analytics Hub | ✅ |
+| Report Generator | ✅ |
+| Team Stats (My Stats) | ✅ |
+| Waitlist | ✅ |
+| My Pay | ✅ |
+| Apps Marketplace | ✅ (via Zura Apps header link) |
 
-The fix should ensure `roles`-based filtering is **always** enforced as a security/relevance layer, regardless of configurator overrides. The configurator should only control visibility *within* the set of role-appropriate items — it should never surface items that a role shouldn't see.
+### Potentially Orphaned / Hard to Find
+| Feature | Route | Reachable? |
+|---------|-------|------------|
+| Handbooks | `/admin/handbooks` | ❓ Not in Ops Hub or Settings |
+| Features Center | `/admin/features` | ❓ Not in Ops Hub or Settings |
+| Data Import | `/admin/data-import` | ❓ Not in Ops Hub or Settings |
+| Price Recommendations | `/admin/price-recommendations` | ❓ Not in Ops Hub or Settings |
+| KPI Builder | `/admin/kpi-builder` | ❓ Likely accessed from Analytics Hub |
+| Executive Brief | `/admin/executive-brief` | ❓ Likely accessed from Command Center |
+| Decision History | `/admin/decision-history` | ❓ Likely contextual link |
+| Changelog | `/changelog` | ❓ Likely accessed from help/profile menu |
+| Metrics Glossary | `/metrics-glossary` | ❓ Likely contextual link |
+| Notification Preferences | `/notification-preferences` | ❓ Likely from profile/bell menu |
+| Help Center | `/help` | ❓ Likely from HelpFAB |
 
-### Change 1: `src/components/dashboard/SidebarNavContent.tsx` (~line 488-497)
+## Findings
 
-Modify the filtering logic so that even when `hasConfiguratorOverrides` is true, the `roles` array on each nav item is still respected. The configurator can hide additional items but cannot override role restrictions.
+**The coverage is very good.** The sidebar + Operations Hub + Settings combination provides access to virtually every admin feature. The items marked ❓ above are mostly contextual pages accessed through in-app links (e.g., Executive Brief from Command Center, KPI Builder from Analytics). They are not "lost" — they're just not top-level entry points.
 
-```tsx
-// Always enforce role-based filtering first (security layer)
-const roleFilteredItems = orderedItems.filter(item => {
-  if (!item.roles || item.roles.length === 0) return true;
-  return item.roles.some(r => roles.includes(r));
-});
+The only items worth verifying are:
+1. **Handbooks** — admin handbook management; may need a card in Ops Hub under Team Operations
+2. **Features Center** — org-level feature flag management; could belong in Settings under Platform
+3. **Data Import** — data migration tool; could belong in Settings under Platform
+4. **Price Recommendations** — pricing intelligence; likely accessed from Analytics Hub context
 
-let visibleItems: typeof roleFilteredItems;
-if (hasConfiguratorOverrides) {
-  visibleItems = roleFilteredItems.filter(item => !sectionHiddenLinks.includes(item.href));
-} else {
-  const permFiltered = filterNavItems(orderedItems).filter(item => {
-    if (!item.roles || item.roles.length === 0) return true;
-    return item.roles.some(r => roles.includes(r));
-  });
-  visibleItems = permFiltered.filter(item => !sectionHiddenLinks.includes(item.href));
-}
-```
+## Recommendation
 
-### Change 2: `src/config/dashboardNav.ts` — Add `super_admin` to appropriate items
+No immediate changes needed. The current navigation structure covers all super admin needs comprehensively. The few contextual pages (Executive Brief, KPI Builder, Decision History, etc.) are accessed through relevant in-context links, which is the correct UX pattern — not everything needs a top-level card.
 
-Several items that super admins **should** see don't include `super_admin` in their `roles` array. Update:
-
-| Item | Current `roles` | Add `super_admin` |
-|------|----------------|-------------------|
-| Team Stats (`/dashboard/stats`) | no roles restriction | no change needed |
-| My Pay (`/dashboard/my-pay`) | no roles restriction | no change needed |
-| Waitlist | `super_admin` already included | ✅ |
-| Training | `['admin', 'manager', 'stylist', 'stylist_assistant']` | **No** — super admins don't need personal training |
-
-Items that remain excluded from super_admin (no `roles` change needed — they already don't list `super_admin`):
-- New-Client Engine Program
-- Ring the Bell
-- My Graduation / My Level Progress
-- Team Leaderboard
-- Shift Swaps
-- Rewards
-- Today's Prep
-- My Mixing
-
-## Result
-
-Super admin sidebar **MY TOOLS** section will show only:
-- **Team Stats** — team-wide performance overview
-- **Waitlist** — operational queue management
-- **My Pay** — compensation visibility
-
-All service-provider tools (leaderboard, training, graduation, ring the bell, new-client engine, shift swaps, rewards) will be hidden for super admins while remaining visible for their intended roles.
-
-| File | Change |
-|------|--------|
-| `src/components/dashboard/SidebarNavContent.tsx` | Enforce `roles` filtering even when configurator overrides are active |
-| `src/config/dashboardNav.ts` | No changes needed — existing `roles` arrays already correctly exclude `super_admin` from service-provider items |
+If you'd like, I can verify the exact access paths for the 3-4 potentially orphaned items (Handbooks, Features Center, Data Import, Price Recommendations) to confirm they have in-context entry points, or add cards for any that are truly unreachable.
 
