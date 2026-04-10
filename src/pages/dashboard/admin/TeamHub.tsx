@@ -14,6 +14,7 @@ import { DashboardPageHeader } from '@/components/dashboard/DashboardPageHeader'
 import { usePayrollEntitlement } from '@/hooks/payroll/usePayrollEntitlement';
 
 import { PageExplainer } from '@/components/ui/PageExplainer';
+import { useOpsHubFavorites } from '@/hooks/useOpsHubFavorites';
 
 import {
   ClipboardList,
@@ -34,7 +35,7 @@ import {
   MessageSquare,
   Coins,
   FileText,
-  Star,
+  Star as StarIcon,
   ShieldAlert,
   CalendarDays,
   Users,
@@ -46,6 +47,21 @@ import {
 } from 'lucide-react';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 
+// Icon name to component map for favorites serialization
+const ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
+  HeartPulse, DollarSign, Store, ClipboardList, Video, MessageSquare,
+  Armchair, CalendarDays, Bell, CalendarClock, ArrowLeftRight, HandHelping,
+  Users, GraduationCap, Target, Trophy, StarIcon, AlertTriangle, FileText,
+  ShieldAlert, BookOpen, CreditCard, Camera, Cake,
+};
+
+function getIconName(icon: React.ComponentType<{ className?: string }>): string {
+  for (const [name, comp] of Object.entries(ICON_MAP)) {
+    if (comp === icon) return name;
+  }
+  return 'Users';
+}
+
 interface ManagementCardProps {
   href: string;
   icon: React.ComponentType<{ className?: string }>;
@@ -53,13 +69,28 @@ interface ManagementCardProps {
   description: string;
   stat?: string | number | null;
   statLabel?: string;
+  isFavorited?: boolean;
+  onToggleFavorite?: () => void;
 }
 
 const ManagementCard = React.forwardRef<HTMLAnchorElement, ManagementCardProps>(
-  function ManagementCard({ href, icon: Icon, title, description, stat, statLabel }, ref) {
+  function ManagementCard({ href, icon: Icon, title, description, stat, statLabel, isFavorited, onToggleFavorite }, ref) {
     return (
       <Link to={href} ref={ref}>
-        <Card className={cn(tokens.card.wrapper, "group hover:shadow-lg hover:-translate-y-1 transition-all cursor-pointer h-full border-border/50")}>
+        <Card className={cn(tokens.card.wrapper, "group hover:shadow-lg hover:-translate-y-1 transition-all cursor-pointer h-full border-border/50 relative")}>
+          {onToggleFavorite && (
+            <button
+              onClick={(e) => { e.preventDefault(); e.stopPropagation(); onToggleFavorite(); }}
+              className={cn(
+                "absolute top-2 right-2 z-10 p-1 rounded-md transition-all",
+                isFavorited
+                  ? "text-amber-500 opacity-100"
+                  : "text-muted-foreground/40 opacity-0 group-hover:opacity-100 hover:text-amber-500"
+              )}
+            >
+              <StarIcon className="w-3.5 h-3.5" fill={isFavorited ? "currentColor" : "none"} />
+            </button>
+          )}
           <CardContent className="p-5 min-h-[88px]">
             <div className="flex items-start justify-between gap-3">
               <div className="flex items-start gap-3 flex-1 min-w-0">
@@ -92,12 +123,27 @@ interface HubGatewayCardProps {
   icon: React.ComponentType<{ className?: string }>;
   title: string;
   description: string;
+  isFavorited?: boolean;
+  onToggleFavorite?: () => void;
 }
 
-function HubGatewayCard({ href, icon: Icon, title, description }: HubGatewayCardProps) {
+function HubGatewayCard({ href, icon: Icon, title, description, isFavorited, onToggleFavorite }: HubGatewayCardProps) {
   return (
     <Link to={href}>
-      <Card className={cn(tokens.card.wrapper, "group hover:shadow-lg hover:-translate-y-1 transition-all cursor-pointer h-full border-border/50 bg-card/60 backdrop-blur-sm")}>
+      <Card className={cn(tokens.card.wrapper, "group hover:shadow-lg hover:-translate-y-1 transition-all cursor-pointer h-full border-border/50 bg-card/60 backdrop-blur-sm relative")}>
+        {onToggleFavorite && (
+          <button
+            onClick={(e) => { e.preventDefault(); e.stopPropagation(); onToggleFavorite(); }}
+            className={cn(
+              "absolute top-2 right-2 z-10 p-1 rounded-md transition-all",
+              isFavorited
+                ? "text-amber-500 opacity-100"
+                : "text-muted-foreground/40 opacity-0 group-hover:opacity-100 hover:text-amber-500"
+            )}
+          >
+            <StarIcon className="w-3.5 h-3.5" fill={isFavorited ? "currentColor" : "none"} />
+          </button>
+        )}
         <CardContent className="p-5 min-h-[108px]">
           <div className="flex items-start justify-between gap-3">
             <div className="flex items-start gap-3 flex-1 min-w-0">
@@ -137,9 +183,22 @@ function CategorySection({ title, children, columns = 3 }: CategorySectionProps)
   );
 }
 
+// All cards defined as data for favorites rendering
+interface CardDef {
+  href: string;
+  icon: React.ComponentType<{ className?: string }>;
+  title: string;
+  description: string;
+  statKey?: string;
+  statLabel?: string;
+  type: 'hub' | 'card';
+  conditional?: boolean;
+}
+
 export default function TeamHub() {
   const { dashPath } = useOrgDashboardPath();
   const { isEntitled: isPayrollEntitled } = usePayrollEntitlement();
+  const { favorites, isFavorited, toggleFavorite, isAtLimit } = useOpsHubFavorites();
 
   const { data: stats } = useQuery({
     queryKey: ['team-hub-stats'],
@@ -193,6 +252,47 @@ export default function TeamHub() {
     staleTime: 1000 * 60 * 5,
   });
 
+  const getStat = (key?: string): string | number | null => {
+    if (!key || !stats) return null;
+    const val = stats[key as keyof typeof stats];
+    return val || null;
+  };
+
+  const handleToggleFavorite = (href: string, title: string, icon: React.ComponentType<{ className?: string }>) => {
+    toggleFavorite(dashPath(href), title, getIconName(icon));
+  };
+
+  const renderFavoriteCard = (fav: { href: string; label: string; icon: string }) => {
+    const IconComp = ICON_MAP[fav.icon] || Users;
+    return (
+      <Link key={fav.href} to={fav.href}>
+        <Card className={cn(tokens.card.wrapper, "group hover:shadow-lg hover:-translate-y-1 transition-all cursor-pointer h-full border-primary/20 bg-primary/5 relative")}>
+          <button
+            onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleFavorite(fav.href, fav.label, fav.icon); }}
+            className="absolute top-2 right-2 z-10 p-1 rounded-md text-amber-500 opacity-100 transition-all"
+          >
+            <StarIcon className="w-3.5 h-3.5" fill="currentColor" />
+          </button>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <div className={cn(tokens.card.iconBox, "shrink-0")}>
+                <IconComp className={tokens.card.icon} />
+              </div>
+              <h3 className={tokens.card.title}>{fav.label}</h3>
+              <ChevronRight className="w-4 h-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity ml-auto shrink-0" />
+            </div>
+          </CardContent>
+        </Card>
+      </Link>
+    );
+  };
+
+  // Helper to wire favorite props
+  const favProps = (subpath: string, title: string, icon: React.ComponentType<{ className?: string }>) => ({
+    isFavorited: isFavorited(dashPath(subpath)),
+    onToggleFavorite: () => handleToggleFavorite(subpath, title, icon),
+  });
+
   return (
     <DashboardLayout>
       <div className={cn(tokens.layout.pageContainer, "max-w-[1600px] mx-auto")}>
@@ -202,6 +302,13 @@ export default function TeamHub() {
         />
         <PageExplainer pageId="team-hub" />
 
+        {/* Favorites */}
+        {favorites.length > 0 && (
+          <CategorySection title="Favorites" columns={3}>
+            {favorites.map(renderFavoriteCard)}
+          </CategorySection>
+        )}
+
         {/* 1. Hubs */}
         <CategorySection title="Hubs">
           <HubGatewayCard
@@ -209,6 +316,7 @@ export default function TeamHub() {
             icon={HeartPulse}
             title="Client Hub"
             description="Client management, retention, and engagement"
+            {...favProps('/admin/client-hub', 'Client Hub', HeartPulse)}
           />
           {isPayrollEntitled && (
             <HubGatewayCard
@@ -216,6 +324,7 @@ export default function TeamHub() {
               icon={DollarSign}
               title="Hiring & Payroll Hub"
               description="Compensation, commissions, and hiring pipeline"
+              {...favProps('/admin/payroll', 'Hiring & Payroll Hub', DollarSign)}
             />
           )}
           <HubGatewayCard
@@ -223,18 +332,21 @@ export default function TeamHub() {
             icon={Store}
             title="Renter Hub"
             description="Booth renter contracts, billing, and compliance"
+            {...favProps('/admin/booth-renters', 'Renter Hub', Store)}
           />
           <HubGatewayCard
             href={dashPath('/admin/onboarding-tracker')}
             icon={ClipboardList}
             title="Onboarding Hub"
             description="New hire progress, invitations, and checklist completion"
+            {...favProps('/admin/onboarding-tracker', 'Onboarding Hub', ClipboardList)}
           />
           <HubGatewayCard
             href={dashPath('/admin/training-hub')}
             icon={Video}
             title="Training Hub"
             description="Manage training library and track completions"
+            {...favProps('/admin/training-hub', 'Training Hub', Video)}
           />
         </CategorySection>
 
@@ -245,24 +357,28 @@ export default function TeamHub() {
             icon={MessageSquare}
             title="Daily Huddle"
             description="Create pre-shift notes and daily goals"
+            {...favProps('/admin/daily-huddle', 'Daily Huddle', MessageSquare)}
           />
           <ManagementCard
             href={dashPath('/admin/chair-assignments')}
             icon={Armchair}
             title="Chair Assignments"
             description="Station assignments and floor layout management"
+            {...favProps('/admin/chair-assignments', 'Chair Assignments', Armchair)}
           />
           <ManagementCard
             href={dashPath('/assistant-schedule')}
             icon={CalendarDays}
             title="Assistant Scheduling"
             description="Manage assistant assignments and coverage"
+            {...favProps('/assistant-schedule', 'Assistant Scheduling', CalendarDays)}
           />
           <ManagementCard
             href={dashPath('/admin/announcements')}
             icon={Bell}
             title="Announcements"
             description="Send team-wide communications"
+            {...favProps('/admin/announcements', 'Announcements', Bell)}
           />
         </CategorySection>
 
@@ -273,12 +389,14 @@ export default function TeamHub() {
             icon={CalendarClock}
             title="Schedule Requests"
             description="Time-off and schedule change approvals"
+            {...favProps('/admin/schedule-requests', 'Schedule Requests', CalendarClock)}
           />
           <ManagementCard
             href={dashPath('/admin/shift-swaps')}
             icon={ArrowLeftRight}
             title="Shift Swap Approvals"
             description="Review and approve shift swap requests"
+            {...favProps('/admin/shift-swaps', 'Shift Swap Approvals', ArrowLeftRight)}
           />
           <ManagementCard
             href={dashPath('/admin/assistant-requests')}
@@ -287,18 +405,21 @@ export default function TeamHub() {
             description="Manage help requests from stylists"
             stat={stats?.pendingAssistantRequests || null}
             statLabel="pending"
+            {...favProps('/admin/assistant-requests', 'Assistant Requests', HandHelping)}
           />
           <ManagementCard
             href={dashPath('/schedule-meeting')}
             icon={CalendarClock}
             title="Meetings & Accountability"
             description="Schedule 1:1s and track commitments"
+            {...favProps('/schedule-meeting', 'Meetings & Accountability', CalendarClock)}
           />
           <ManagementCard
             href={dashPath('/admin/pto')}
             icon={CalendarDays}
             title="PTO Balances"
             description="Manage PTO policies and employee balances"
+            {...favProps('/admin/pto', 'PTO Balances', CalendarDays)}
           />
         </CategorySection>
 
@@ -309,6 +430,7 @@ export default function TeamHub() {
             icon={Users}
             title="Team Directory"
             description="View and manage your team roster"
+            {...favProps('/directory', 'Team Directory', Users)}
           />
           <ManagementCard
             href={dashPath('/admin/graduation-tracker')}
@@ -317,18 +439,21 @@ export default function TeamHub() {
             description="Monitor assistant advancement and milestones"
             stat={stats?.inProgressGraduations || null}
             statLabel="in progress"
+            {...favProps('/admin/graduation-tracker', 'Graduation Tracker', GraduationCap)}
           />
           <ManagementCard
             href={dashPath('/admin/client-engine-tracker')}
             icon={Target}
             title="Client Engine Tracker"
             description="Program enrollment and participation rates"
+            {...favProps('/admin/client-engine-tracker', 'Client Engine Tracker', Target)}
           />
           <ManagementCard
             href={dashPath('/admin/challenges')}
             icon={Trophy}
             title="Team Challenges"
             description="Create and manage team competitions"
+            {...favProps('/admin/challenges', 'Team Challenges', Trophy)}
           />
         </CategorySection>
 
@@ -336,33 +461,38 @@ export default function TeamHub() {
         <CategorySection title="Compliance & Documentation">
           <ManagementCard
             href={dashPath('/admin/performance-reviews')}
-            icon={Star}
+            icon={StarIcon}
             title="Performance Reviews"
             description="Structured reviews with ratings and goals"
+            {...favProps('/admin/performance-reviews', 'Performance Reviews', StarIcon)}
           />
           <ManagementCard
             href={dashPath('/admin/strikes')}
             icon={AlertTriangle}
             title="Staff Strikes"
             description="Track disciplinary actions and warnings"
+            {...favProps('/admin/strikes', 'Staff Strikes', AlertTriangle)}
           />
           <ManagementCard
             href={dashPath('/admin/documents')}
             icon={FileText}
             title="Document Tracker"
             description="Licenses, certifications, and compliance docs"
+            {...favProps('/admin/documents', 'Document Tracker', FileText)}
           />
           <ManagementCard
             href={dashPath('/admin/incidents')}
             icon={ShieldAlert}
             title="Incident Reports"
             description="Workplace safety and incident documentation"
+            {...favProps('/admin/incidents', 'Incident Reports', ShieldAlert)}
           />
           <ManagementCard
             href={dashPath('/admin/handbooks')}
             icon={BookOpen}
             title="Handbooks"
             description="Create and manage team handbooks and policy documents"
+            {...favProps('/admin/handbooks', 'Handbooks', BookOpen)}
           />
         </CategorySection>
 
@@ -375,6 +505,7 @@ export default function TeamHub() {
             description="Process business card requests"
             stat={stats?.pendingBusinessCards || null}
             statLabel="pending"
+            {...favProps('/admin/business-cards', 'Business Cards', CreditCard)}
           />
           <ManagementCard
             href={dashPath('/admin/headshots')}
@@ -383,6 +514,7 @@ export default function TeamHub() {
             description="Schedule and track photo sessions"
             stat={stats?.pendingHeadshots || null}
             statLabel="pending"
+            {...favProps('/admin/headshots', 'Headshots', Camera)}
           />
           <ManagementCard
             href={dashPath('/admin/birthdays')}
@@ -391,6 +523,7 @@ export default function TeamHub() {
             description="Upcoming team celebrations and milestones"
             stat={stats?.birthdaysThisWeek || null}
             statLabel="this week"
+            {...favProps('/admin/birthdays', 'Birthdays & Anniversaries', Cake)}
           />
         </CategorySection>
       </div>
