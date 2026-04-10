@@ -225,5 +225,6 @@ export default function AppsMarketplace() {
         </div>
       </section>
     </div>
+    </DashboardLayout>
   );
 }
