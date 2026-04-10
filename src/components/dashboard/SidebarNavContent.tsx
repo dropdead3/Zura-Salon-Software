@@ -746,6 +746,8 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
                     </div>
                   )}
                 </div>
+              )}
+            </div>
           );
         })}
       </nav>
