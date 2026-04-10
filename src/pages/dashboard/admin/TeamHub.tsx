@@ -230,12 +230,14 @@ export default function TeamHub() {
             title="Growth Hub"
             description="Marketing, campaigns, and growth initiatives"
           />
-          <HubGatewayCard
-            href={dashPath('/admin/payroll')}
-            icon={DollarSign}
-            title="Hiring & Payroll Hub"
-            description="Compensation, commissions, and hiring pipeline"
-          />
+          {isPayrollEntitled && (
+            <HubGatewayCard
+              href={dashPath('/admin/payroll')}
+              icon={DollarSign}
+              title="Hiring & Payroll Hub"
+              description="Compensation, commissions, and hiring pipeline"
+            />
+          )}
           <HubGatewayCard
             href={dashPath('/admin/booth-renters')}
             icon={Store}
