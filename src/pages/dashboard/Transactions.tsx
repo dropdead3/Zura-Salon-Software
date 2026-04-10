@@ -1,119 +1,130 @@
 import { useState } from 'react';
-import { format, startOfMonth, endOfMonth, subMonths, startOfDay, endOfDay } from 'date-fns';
+import { format, addDays, subDays } from 'date-fns';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { DashboardPageHeader } from '@/components/dashboard/DashboardPageHeader';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { tokens } from '@/lib/design-tokens';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { 
-  Search, 
-  Receipt, 
-  CreditCard, 
+import {
+  Search,
+  Receipt,
   Gift,
   RefreshCw,
-  MoreHorizontal,
-  ArrowUpDown,
-  Filter
+  CreditCard,
+  ChevronLeft,
+  ChevronRight,
+  Calendar,
+  DollarSign,
+  Hash,
+  TrendingUp,
+  Banknote,
 } from 'lucide-react';
-import { useTransactions, TransactionFilters } from '@/hooks/useTransactions';
+import { useGroupedTransactions, type GroupedTransactionFilters, type GroupedTransaction } from '@/hooks/useGroupedTransactions';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { useLocations } from '@/hooks/useLocations';
-import { TransactionList } from '@/components/dashboard/transactions/TransactionList';
+import { GroupedTransactionTable } from '@/components/dashboard/transactions/GroupedTransactionTable';
+import { TransactionDetailSheet } from '@/components/dashboard/transactions/TransactionDetailSheet';
+import { VoidConfirmDialog } from '@/components/dashboard/transactions/VoidConfirmDialog';
 import { RefundDialog } from '@/components/dashboard/transactions/RefundDialog';
 import { IssueCreditsDialog } from '@/components/dashboard/transactions/IssueCreditsDialog';
 import { GiftCardManager } from '@/components/dashboard/transactions/GiftCardManager';
+import { TillBalanceSummary } from '@/components/dashboard/transactions/TillBalanceSummary';
 import { cn } from '@/lib/utils';
 import { BentoGrid } from '@/components/ui/bento-grid';
 import { PageExplainer } from '@/components/ui/PageExplainer';
-import { useRevenueDisplay } from '@/contexts/RevenueDisplayContext';
-
-type DatePreset = 'today' | 'this_week' | 'this_month' | 'last_month' | 'all';
+import { BlurredAmount } from '@/contexts/HideNumbersContext';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import type { TransactionItem } from '@/hooks/useTransactions';
 
 export default function Transactions() {
-  const [datePreset, setDatePreset] = useState<DatePreset>('this_month');
+  const [selectedDate, setSelectedDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [locationId, setLocationId] = useState<string>('all');
-  const [itemType, setItemType] = useState<string>('all');
+  const [paymentFilter, setPaymentFilter] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedTransaction, setSelectedTransaction] = useState<any>(null);
-  const [isRefundOpen, setIsRefundOpen] = useState(false);
+  const [selectedTxn, setSelectedTxn] = useState<GroupedTransaction | null>(null);
+  const [detailOpen, setDetailOpen] = useState(false);
+  const [voidTxn, setVoidTxn] = useState<GroupedTransaction | null>(null);
+  const [voidOpen, setVoidOpen] = useState(false);
+  const [refundTxn, setRefundTxn] = useState<TransactionItem | null>(null);
+  const [refundOpen, setRefundOpen] = useState(false);
   const [isCreditsOpen, setIsCreditsOpen] = useState(false);
 
   const { data: locations = [] } = useLocations();
 
-  // Calculate date range from preset
-  const getDateRange = (): { startDate?: string; endDate?: string } => {
-    const now = new Date();
-    switch (datePreset) {
-      case 'today':
-        return {
-          startDate: format(startOfDay(now), 'yyyy-MM-dd'),
-          endDate: format(endOfDay(now), 'yyyy-MM-dd'),
-        };
-      case 'this_week':
-        const weekStart = new Date(now);
-        weekStart.setDate(now.getDate() - now.getDay());
-        return {
-          startDate: format(weekStart, 'yyyy-MM-dd'),
-          endDate: format(now, 'yyyy-MM-dd'),
-        };
-      case 'this_month':
-        return {
-          startDate: format(startOfMonth(now), 'yyyy-MM-dd'),
-          endDate: format(endOfMonth(now), 'yyyy-MM-dd'),
-        };
-      case 'last_month':
-        const lastMonth = subMonths(now, 1);
-        return {
-          startDate: format(startOfMonth(lastMonth), 'yyyy-MM-dd'),
-          endDate: format(endOfMonth(lastMonth), 'yyyy-MM-dd'),
-        };
-      case 'all':
-      default:
-        return {};
-    }
-  };
-
-  const filters: TransactionFilters = {
-    ...getDateRange(),
+  const filters: GroupedTransactionFilters = {
+    date: selectedDate,
     locationId: locationId !== 'all' ? locationId : undefined,
-    itemType: itemType !== 'all' ? itemType : undefined,
+    paymentMethod: paymentFilter !== 'all' ? paymentFilter : undefined,
     clientSearch: searchQuery || undefined,
-    limit: 500,
   };
 
-  const { data: transactions = [], isLoading, refetch } = useTransactions(filters);
+  const { data: transactions = [], isLoading, refetch } = useGroupedTransactions(filters);
   const { formatCurrency } = useFormatCurrency();
-  const { adjustRevenue, taxLabel } = useRevenueDisplay();
 
-  const handleRefund = (transaction: any) => {
-    setSelectedTransaction(transaction);
-    setIsRefundOpen(true);
+  const handleSelectTransaction = (txn: GroupedTransaction) => {
+    setSelectedTxn(txn);
+    setDetailOpen(true);
   };
 
-  // Calculate summary stats
-  const totalTax = transactions.reduce((sum, t) => sum + (Number(t.tax_amount) || 0), 0);
-  const totalRevenueGross = transactions.reduce((sum, t) => sum + (Number(t.total_amount) || 0) + (Number(t.tax_amount) || 0), 0);
-  const totalRevenue = adjustRevenue(totalRevenueGross, totalTax);
-  const serviceCount = transactions.filter(t => (t.item_type || '').toLowerCase() === 'service').length;
-  const productCount = transactions.filter(t => (t.item_type || '').toLowerCase() === 'product').length;
-  const refundedCount = transactions.filter(t => t.refund_status).length;
+  const handleRefund = (txn: GroupedTransaction) => {
+    if (txn.items.length === 0) return;
+    const item = txn.items[0];
+    setRefundTxn({
+      id: item.id,
+      transaction_id: txn.transactionId,
+      transaction_date: txn.transactionDate,
+      phorest_client_id: txn.phorestClientId,
+      client_name: txn.clientName,
+      item_type: item.itemType,
+      item_name: item.itemName,
+      item_category: item.itemCategory,
+      quantity: item.quantity,
+      unit_price: item.unitPrice,
+      total_amount: txn.totalAmount,
+      tax_amount: txn.taxAmount,
+      discount: txn.discountAmount,
+      phorest_staff_id: null,
+      location_id: txn.locationId,
+      branch_name: txn.branchName,
+      promotion_id: null,
+    });
+    setRefundOpen(true);
+  };
+
+  const handleVoid = (txn: GroupedTransaction) => {
+    setVoidTxn(txn);
+    setVoidOpen(true);
+  };
+
+  const goToPreviousDay = () => setSelectedDate(format(subDays(new Date(selectedDate), 1), 'yyyy-MM-dd'));
+  const goToNextDay = () => {
+    const next = addDays(new Date(selectedDate), 1);
+    if (next <= new Date()) setSelectedDate(format(next, 'yyyy-MM-dd'));
+  };
+  const goToToday = () => setSelectedDate(format(new Date(), 'yyyy-MM-dd'));
+
+  const isToday = selectedDate === format(new Date(), 'yyyy-MM-dd');
+  const displayDate = format(new Date(selectedDate + 'T12:00:00'), 'EEEE, MMMM d, yyyy');
+
+  // KPI calculations
+  const activeTxns = transactions.filter(t => !t.isVoided);
+  const totalRevenue = activeTxns.reduce((sum, t) => sum + t.totalAmount, 0);
+  const totalTips = activeTxns.reduce((sum, t) => sum + t.tipAmount, 0);
+  const avgTicket = activeTxns.length > 0 ? totalRevenue / activeTxns.length : 0;
 
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        {/* Header */}
         <DashboardPageHeader
-          title="Transactions"
-          description="View and manage client transaction history"
+          title="Sales"
+          description="Daily transaction management"
           actions={
             <div className="flex gap-2">
               <Button variant="outline" size={tokens.button.card} onClick={() => refetch()}>
                 <RefreshCw className="w-4 h-4 mr-2" />
-        <PageExplainer pageId="transactions" />
                 Refresh
               </Button>
               <Button size={tokens.button.card} onClick={() => setIsCreditsOpen(true)}>
@@ -124,12 +135,13 @@ export default function Transactions() {
           }
         />
 
-        {/* Tabs */}
-        <Tabs defaultValue="transactions" className="space-y-4">
+        <PageExplainer pageId="transactions" />
+
+        <Tabs defaultValue="till-transactions" className="space-y-4">
           <TabsList>
-            <TabsTrigger value="transactions" className="gap-2">
+            <TabsTrigger value="till-transactions" className="gap-2">
               <Receipt className="w-4 h-4" />
-              Transactions
+              Till Transactions
             </TabsTrigger>
             <TabsTrigger value="gift-cards" className="gap-2">
               <Gift className="w-4 h-4" />
@@ -137,48 +149,54 @@ export default function Transactions() {
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="transactions" className="space-y-4">
-            {/* Stats Cards */}
-            <BentoGrid maxPerRow={4} gap="gap-4">
-              <Card className="p-4">
-                <p className="text-sm text-muted-foreground">Total Revenue <span className="text-[10px] text-muted-foreground/50">({taxLabel})</span></p>
-                <p className="text-2xl font-display font-medium">{formatCurrency(totalRevenue)}</p>
-              </Card>
-              <Card className="p-4">
-                <p className="text-sm text-muted-foreground">Services</p>
-                <p className="text-2xl font-display font-medium">{serviceCount}</p>
-              </Card>
-              <Card className="p-4">
-                <p className="text-sm text-muted-foreground">Products</p>
-                <p className="text-2xl font-display font-medium">{productCount}</p>
-              </Card>
-              <Card className="p-4">
-                <p className="text-sm text-muted-foreground">Refunded</p>
-                <p className={cn("text-2xl font-display font-medium", refundedCount > 0 && "text-amber-600")}>
-                  {refundedCount}
-                </p>
-              </Card>
-            </BentoGrid>
-
-            {/* Filters */}
+          <TabsContent value="till-transactions" className="space-y-4">
+            {/* Daily date navigation + filters */}
             <Card>
-              <CardContent className="pt-4">
-                <div className="flex flex-wrap gap-3">
-                  <Select value={datePreset} onValueChange={(v) => setDatePreset(v as DatePreset)}>
-                    <SelectTrigger className="w-[140px]">
-                      <SelectValue placeholder="Date range" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="today">Today</SelectItem>
-                      <SelectItem value="this_week">This Week</SelectItem>
-                      <SelectItem value="this_month">This Month</SelectItem>
-                      <SelectItem value="last_month">Last Month</SelectItem>
-                      <SelectItem value="all">All Time</SelectItem>
-                    </SelectContent>
-                  </Select>
+              <div className="p-4 space-y-3">
+                {/* Date nav row */}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button variant="outline" size="icon" className="h-8 w-8" onClick={goToPreviousDay}>
+                          <ChevronLeft className="w-4 h-4" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>Previous day</TooltipContent>
+                    </Tooltip>
 
+                    <div className="flex items-center gap-2">
+                      <Calendar className="w-4 h-4 text-muted-foreground" />
+                      <span className={tokens.body.emphasis}>{displayDate}</span>
+                    </div>
+
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          className="h-8 w-8"
+                          onClick={goToNextDay}
+                          disabled={isToday}
+                        >
+                          <ChevronRight className="w-4 h-4" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>Next day</TooltipContent>
+                    </Tooltip>
+
+                    {!isToday && (
+                      <Button variant="ghost" size="sm" className="text-xs" onClick={goToToday}>
+                        Today
+                      </Button>
+                    )}
+                  </div>
+                </div>
+
+                {/* Filter row */}
+                <div className="flex flex-wrap gap-3">
                   <Select value={locationId} onValueChange={setLocationId}>
-                    <SelectTrigger className="w-[160px]">
+                    <SelectTrigger className={cn('w-[160px]', tokens.input.filter)}>
                       <SelectValue placeholder="Location" />
                     </SelectTrigger>
                     <SelectContent>
@@ -189,14 +207,14 @@ export default function Transactions() {
                     </SelectContent>
                   </Select>
 
-                  <Select value={itemType} onValueChange={setItemType}>
-                    <SelectTrigger className="w-[130px]">
-                      <SelectValue placeholder="Type" />
+                  <Select value={paymentFilter} onValueChange={setPaymentFilter}>
+                    <SelectTrigger className={cn('w-[130px]', tokens.input.filter)}>
+                      <SelectValue placeholder="Payment" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all">All Types</SelectItem>
-                      <SelectItem value="service">Services</SelectItem>
-                      <SelectItem value="product">Products</SelectItem>
+                      <SelectItem value="all">All Payments</SelectItem>
+                      <SelectItem value="card">Card</SelectItem>
+                      <SelectItem value="cash">Cash</SelectItem>
                     </SelectContent>
                   </Select>
 
@@ -206,19 +224,67 @@ export default function Transactions() {
                       placeholder="Search by client name..."
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      className="pl-9"
+                      className={cn('pl-9', tokens.input.search)}
                     />
                   </div>
                 </div>
-              </CardContent>
+              </div>
             </Card>
 
-            {/* Transaction List */}
-            <TransactionList 
+            {/* KPI tiles */}
+            <BentoGrid maxPerRow={4} gap="gap-4">
+              <div className={cn(tokens.kpi.tile, 'relative')}>
+                <div className={tokens.card.iconBox}>
+                  <DollarSign className={tokens.card.icon} />
+                </div>
+                <span className={tokens.kpi.label}>Total Revenue</span>
+                <span className={tokens.kpi.value}>
+                  <BlurredAmount>{formatCurrency(totalRevenue)}</BlurredAmount>
+                </span>
+              </div>
+
+              <div className={cn(tokens.kpi.tile, 'relative')}>
+                <div className={tokens.card.iconBox}>
+                  <Hash className={tokens.card.icon} />
+                </div>
+                <span className={tokens.kpi.label}>Transactions</span>
+                <span className={tokens.kpi.value}>{activeTxns.length}</span>
+              </div>
+
+              <div className={cn(tokens.kpi.tile, 'relative')}>
+                <div className={tokens.card.iconBox}>
+                  <TrendingUp className={tokens.card.icon} />
+                </div>
+                <span className={tokens.kpi.label}>Avg Ticket</span>
+                <span className={tokens.kpi.value}>
+                  <BlurredAmount>{formatCurrency(avgTicket)}</BlurredAmount>
+                </span>
+              </div>
+
+              <div className={cn(tokens.kpi.tile, 'relative')}>
+                <div className={tokens.card.iconBox}>
+                  <Banknote className={tokens.card.icon} />
+                </div>
+                <span className={tokens.kpi.label}>Tips</span>
+                <span className={tokens.kpi.value}>
+                  <BlurredAmount>{formatCurrency(totalTips)}</BlurredAmount>
+                </span>
+              </div>
+            </BentoGrid>
+
+            {/* Grouped transaction table */}
+            <GroupedTransactionTable
               transactions={transactions}
               isLoading={isLoading}
+              onSelectTransaction={handleSelectTransaction}
               onRefund={handleRefund}
+              onVoid={handleVoid}
             />
+
+            {/* Till balance summary */}
+            {transactions.length > 0 && (
+              <TillBalanceSummary transactions={transactions} />
+            )}
           </TabsContent>
 
           <TabsContent value="gift-cards">
@@ -227,11 +293,25 @@ export default function Transactions() {
         </Tabs>
       </div>
 
+      {/* Detail Sheet */}
+      <TransactionDetailSheet
+        transaction={selectedTxn}
+        open={detailOpen}
+        onOpenChange={setDetailOpen}
+      />
+
+      {/* Void Dialog */}
+      <VoidConfirmDialog
+        transaction={voidTxn}
+        open={voidOpen}
+        onOpenChange={setVoidOpen}
+      />
+
       {/* Refund Dialog */}
       <RefundDialog
-        transaction={selectedTransaction}
-        open={isRefundOpen}
-        onOpenChange={setIsRefundOpen}
+        transaction={refundTxn}
+        open={refundOpen}
+        onOpenChange={setRefundOpen}
       />
 
       {/* Issue Credits Dialog */}

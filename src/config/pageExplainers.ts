@@ -487,8 +487,8 @@ export const PAGE_EXPLAINERS: Record<string, PageExplainerEntry> = {
     icon: Calendar,
   },
   'transactions': {
-    title: 'Transaction History',
-    description: 'View all financial transactions — payments, refunds, tips, and adjustments. Filter by date, staff, or transaction type.',
+    title: 'Daily Sales & Till Management',
+    description: 'View grouped transactions by day — click any sale to see itemized breakdown, payment method, and actions like refund, void, or print receipt. Use daily navigation to review past days.',
     icon: Receipt,
   },
   'register': {
