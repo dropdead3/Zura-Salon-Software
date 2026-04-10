@@ -1,38 +1,39 @@
 
 
-# Fix: Only Show Entitled Apps in "Your Apps"
+# Move Zura Payroll to "Coming Soon"
 
-## Problem
-
-The `SUBSCRIBED_APPS` array is hardcoded with all three apps (Color Bar, Connect, Payroll). The page always renders all of them under "Your Apps" regardless of entitlement status. Zura Payroll appears there with an "Inactive" badge even though the organization has no subscription — this is misleading and breaks the marketplace's commercial intent.
-
-## Proposed behavior
-
-- **Your Apps**: Only apps where `getActiveStatus(key) === true`
-- **Inactive apps**: Move to "Explore Apps" section with a "Contact Sales" or "Get Started" CTA, alongside the coming-soon apps
-- If no apps are active, show an empty state under "Your Apps" encouraging the user to explore
+Payroll is not fully built yet, so it should not appear as "Available" in the Explore section — it belongs with the other Coming Soon apps.
 
 ## Changes
 
 ### `src/pages/dashboard/AppsMarketplace.tsx`
 
-1. **Filter `SUBSCRIBED_APPS` by entitlement** — split into active and inactive at render time:
-   ```typescript
-   const activeApps = SUBSCRIBED_APPS.filter(app => getActiveStatus(app.key));
-   const inactiveApps = SUBSCRIBED_APPS.filter(app => !getActiveStatus(app.key));
-   ```
+1. **Move Payroll from `SUBSCRIBED_APPS` to `EXPLORE_APPS`** — cut the payroll entry (lines 81-95) from `SUBSCRIBED_APPS` and insert it at the top of `EXPLORE_APPS` with `comingSoon: true` and a `missedOpportunity` line.
 
-2. **"Your Apps" section** — render only `activeApps`. If empty, show a minimal empty state ("No apps activated yet. Explore below to get started.")
+2. **Remove payroll entitlement logic** — remove the `usePayrollEntitlement` import and hook call since Payroll no longer needs entitlement checking on this page. Remove the `payroll` case from `getActiveStatus`. Remove `payrollLoading` from the `isLoading` compound check.
 
-3. **"Explore Apps" section** — prepend `inactiveApps` before the existing `EXPLORE_APPS`, using a variant of `ExploreAppCard` that shows "Contact Sales" instead of "Notify Me" (since these are available now, not coming soon). The badge should say "Available" instead of "Coming Soon."
+3. **Result**: Payroll renders in the Explore section with the lock icon, "Coming Soon" badge, and "Notify Me" / "Learn More" CTAs — identical to Marketer, Reputation, Reception, and Hiring.
 
-4. **New card variant or prop** — add an `available` state to `ExploreAppCard` (or create an `AvailableAppCard`) that distinguishes between "available but not subscribed" and "coming soon":
-   - Available: Badge says "Available" (blue outline), CTA is "Contact Sales"
-   - Coming Soon: Badge says "Coming Soon" with lock icon, CTA is "Notify Me"
+### Payroll entry in `EXPLORE_APPS` (inserted first):
+```typescript
+{
+  key: 'payroll',
+  name: 'Zura Payroll',
+  tagline: 'Compensation Intelligence',
+  valueStatement: 'Full-service payroll powered by Gusto — automated taxes, direct deposit, and commission integration.',
+  features: [
+    'Gusto-powered payroll processing',
+    'Automated tax compliance',
+    'Direct deposit & W-2s',
+    'Commission payout integration',
+  ],
+  icon: DollarSign,
+  gradient: 'from-emerald-500/30 to-green-500/30',
+  accentColor: 'border-emerald-500/30',
+  comingSoon: true,
+  missedOpportunity: 'Manual payroll costs operators 5+ hours per cycle. Automate it.',
+}
+```
 
-## Result
-
-- Clean commercial hierarchy: active apps up top, available-for-purchase in explore, coming-soon at bottom
-- Payroll only appears in "Your Apps" once the org has `payroll_enabled` toggled on
-- No misleading "Inactive" badges sitting alongside "Active" apps
+No database or backend changes needed — this is purely a marketplace presentation change. The existing payroll entitlement hook and subscription gate on the actual payroll pages remain intact for when the feature launches.
 
