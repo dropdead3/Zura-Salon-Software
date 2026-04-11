@@ -214,7 +214,7 @@ function CategoryRow({ category, index }: { category: CategoryBreakdownData; ind
                 <>
                   <div className="space-y-0.5">
                     {visibleStylists.map((stylist, i) => (
-                      <StylistRow key={stylist.phorestStaffId} stylist={stylist} delay={i * 0.04} />
+                      <StylistRow key={stylist.phorestStaffId} stylist={stylist} delay={i * 0.04} categoryName={category.category} />
                     ))}
                   </div>
                   {hasMore && (
