@@ -172,6 +172,11 @@ export function SEOTaskDetailDialog({ task, organizationId, open, onOpenChange }
 
           <Separator />
 
+          {/* AI Auto-Action for eligible templates */}
+          {isActive && AI_ELIGIBLE_TEMPLATES[task.template_key] && (
+            <SEOTaskAutoAction task={task} organizationId={organizationId} />
+          )}
+
           {/* Proof Upload Section (for non-system-verifiable tasks) */}
           {needsProof && canComplete && (
             <Card>
