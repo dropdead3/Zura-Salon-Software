@@ -282,6 +282,7 @@ async function cleanupSuppressedTasks(
       action: "monthly_cleanup",
       previous_status: "suppressed",
       new_status: "canceled",
+      performed_by: "system:monthly_scan",
       notes: "Auto-canceled: suppressed for 60+ days.",
     });
   }
