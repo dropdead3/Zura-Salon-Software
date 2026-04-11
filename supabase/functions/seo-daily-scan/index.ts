@@ -182,7 +182,7 @@ async function detectReviewOpportunities(
 
   // Group by location-service for task generation
   const locationServicePairs = new Map<string, any>();
-  for (const appt of appointments) {
+  for (const appt of eligibleAppointments) {
     if (!appt.location_id || !appt.service_name) continue;
     const key = `${appt.location_id}::${appt.service_name}`;
     if (!locationServicePairs.has(key)) {
