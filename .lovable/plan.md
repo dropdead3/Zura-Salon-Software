@@ -1,122 +1,155 @@
 
 
-# Predicted Revenue Engine
+# Autonomous Growth Engine
 
-## What It Does
+## What It Builds
 
-A deterministic prediction layer that computes expected incremental revenue lift per SEO object and campaign, using baseline POS data, task-type impact coefficients, weakness-adjusted weights, and momentum modifiers. Outputs low/expected/high confidence bands. Updates as tasks complete.
+An autonomous execution layer on top of the existing SEO Task Engine, Revenue Attribution, and Predicted Revenue Engine. Zura detects opportunities, auto-executes high-confidence actions within guardrails, queues human-required tasks, logs everything, and delivers a daily growth report.
 
 ## Architecture
 
 ```text
-Baseline (30d POS)          Task Impact Coefficients
-     │                              │
-     ├── Weakness Adjustment ◄──── Health Scores
-     │                              │
-     ├── Momentum Modifier ◄────── Momentum Calculator
-     │                              │
-     ▼                              ▼
-  Predicted Booking Lift × Avg Ticket = Revenue Lift
+Daily Scan (existing)
      │
-     ├── Low / Expected / High bands
-     ├── Confidence level (high/medium/low)
-     └── Explanation factors
+     ├── Detect Opportunities (existing)
+     │
+     ├── NEW: Autonomy Classification
+     │   ├── Fully Autonomous → Auto-Execute → Log → Measure
+     │   ├── Assisted → Generate Content → Queue for Approval
+     │   └── Human-Only → Assign → Enforce
+     │
+     ├── NEW: Rate Limiter + Brand Guardrails
+     │
+     ├── NEW: Execution Logger (seo_autonomous_actions)
+     │
+     └── NEW: Daily Growth Report (notification + dashboard card)
 ```
 
-## Data Sources (All Existing)
+## Autonomy Classification
 
-- **Appointments table**: `location_id`, `service_category`, `appointment_date`, `total_price`, `status` → 30d baseline bookings + avg ticket
-- **seo_object_revenue**: Rolling 30d revenue snapshots per SEO object
-- **seo_health_scores**: Current weakness signals (review, content, page, conversion domains)
-- **Momentum calculator**: Directional score per object
-- **seo_campaigns + seo_tasks**: Pending/completed task counts by template type
+### Fully Autonomous (execute immediately, no human)
+- `review_request` — send via existing channels
+- `gbp_post` — generate + publish (AI content already built)
+- `metadata_fix` — update meta descriptions
+- `internal_linking` — inject internal links
+- `faq_expansion` — generate + inject FAQs
+- `booking_cta_optimization` — optimize CTA structure
+
+### Assisted (generate → preview → approve)
+- `before_after_publish` — needs photo selection approval
+- `service_description_rewrite` — brand-sensitive copy
+- `content_refresh` — requires manager sign-off
+- `local_landing_page_creation` — new page creation
+
+### Human-Only (assign + enforce only)
+- `photo_upload` — requires physical photography
+- `stylist_spotlight_publish` — requires stylist participation
+- `competitor_gap_response` — strategic decision
+
+## Database Changes
+
+**New table: `seo_autonomous_actions`**
+- `id`, `organization_id`, `task_id`, `template_key`, `action_type` (auto_executed | generated_for_approval | assigned_human)
+- `executed_at`, `content_applied` (jsonb), `confidence_score`, `predicted_lift`
+- `status` (executed | rolled_back | pending_approval | approved | rejected)
+- `rollback_data` (jsonb — stores pre-change state for reversal)
+- `measured_impact` (jsonb — populated post-execution by attribution system)
+
+**New table: `seo_growth_reports`**
+- `id`, `organization_id`, `report_date`, `actions_taken` (jsonb), `impact_summary` (jsonb), `remaining_opportunity`, `next_best_action` (jsonb), `created_at`
+
+**New columns on `seo_engine_settings` schema:**
+- `autonomy_enabled` (boolean, default false) — master kill switch
+- `autonomy_aggressiveness` (1-5, default 2) — controls rate limits
+- `autonomy_review_requests_per_day` (number, default 5)
+- `autonomy_posts_per_week` (number, default 2)
+- `autonomy_page_edits_per_day` (number, default 3)
+- `autonomy_min_confidence` (number, default 0.6) — below this, require approval
 
 ## New Files
 
 | File | Purpose |
 |---|---|
-| `src/lib/seo-engine/seo-revenue-predictor.ts` | Pure computation: baseline → coefficients → weakness adjustment → momentum modifier → prediction bands |
-| `src/hooks/useSEORevenuePrediction.ts` | Hook that fetches baseline data + health scores + momentum, feeds into predictor |
-| `src/components/dashboard/seo-workshop/SEOPredictedLiftCard.tsx` | Dashboard card: object-level "Opportunity: +$6,800 → $12,400" display |
-| `src/components/dashboard/seo-workshop/SEOCampaignPrediction.tsx` | Campaign-level prediction block inside campaign detail dialog |
+| `src/config/seo-engine/seo-autonomy-config.ts` | Autonomy classification map, rate limit defaults, confidence thresholds |
+| `supabase/functions/seo-autonomous-execute/index.ts` | Edge function: daily autonomous execution loop — classify eligible tasks, auto-execute via `seo-generate-content`, log actions, update predictions |
+| `supabase/functions/seo-growth-report/index.ts` | Edge function: compile daily growth report from `seo_autonomous_actions` + attribution data, store + notify owner |
+| `src/hooks/useSEOAutonomousActions.ts` | Query autonomous action log + growth reports |
+| `src/components/dashboard/seo-workshop/SEOGrowthReport.tsx` | Dashboard card: "Zura Growth Report — Today" showing actions taken, impact, remaining opportunity, next best action |
+| `src/components/dashboard/seo-workshop/SEOAutonomySettings.tsx` | Settings panel: enable/disable auto mode, set aggressiveness, rate limits, confidence threshold |
 
 ## Modified Files
 
 | File | Change |
 |---|---|
-| `src/components/dashboard/seo-workshop/SEOEngineDashboard.tsx` | Add `SEOPredictedLiftCard` after Momentum Signals |
-| `src/components/dashboard/seo-workshop/SEOCampaignDetailDialog.tsx` | Add `SEOCampaignPrediction` block showing predicted revenue lift for the campaign |
-| `src/lib/seo-engine/index.ts` | Export predictor functions |
+| `src/config/seo-engine/seo-settings-schema.ts` | Add autonomy settings to schema |
+| `src/config/seo-engine/seo-task-templates.ts` | Add `autonomyLevel` field to template config |
+| `supabase/functions/seo-daily-scan/index.ts` | Add Step 6: call `seo-autonomous-execute` after task generation |
+| `src/components/dashboard/seo-workshop/SEOEngineDashboard.tsx` | Add `SEOGrowthReport` card at top of dashboard |
 
-## Prediction Model (Deterministic)
+## Autonomous Execution Flow (Edge Function)
 
-### Step 1: Baseline
-- Query appointments for 30d: count completed bookings, compute avg ticket per location-service
-- Fallback: use `seo_object_revenue.total_revenue / transaction_count` if appointments sparse
+1. Check `autonomy_enabled` setting — exit if off
+2. Fetch all `detected` + `queued` tasks for the org
+3. For each task, check `autonomyLevel` from template config
+4. **Fully Autonomous**: Check rate limits (daily/weekly caps per template) → Check confidence (predicted lift confidence ≥ min threshold) → Call `seo-generate-content` for content → Apply content to task → Transition task to `completed` → Log in `seo_autonomous_actions` with rollback data
+5. **Assisted**: Generate content → Store on task → Transition to `awaiting_verification` → Notify owner
+6. **Human-Only**: Assign via existing assignment resolver → Skip
+7. Update `seo_growth_reports` with day's activity
 
-### Step 2: Task-Type Impact Coefficients
-Each template type gets a base lift range (% of baseline bookings):
+## Safety Layer
 
-| Template | Low | Expected | High |
-|---|---|---|---|
-| `review_request` | 1% | 3% | 5% |
-| `photo_upload` | 0.5% | 2% | 4% |
-| `page_completion` | 2% | 5% | 8% |
-| `faq_expansion` | 0.5% | 1.5% | 3% |
-| `gbp_post` | 0.5% | 1.5% | 3% |
-| `service_description_rewrite` | 1% | 2.5% | 4% |
-| `booking_cta_optimization` | 2% | 4% | 7% |
-| `before_after_publish` | 1% | 2% | 4% |
+- **Master kill switch**: `autonomy_enabled` defaults to OFF — owner must explicitly enable
+- **Rate limits**: Configurable per-template daily/weekly caps (e.g., max 5 review requests/day, 2 posts/week, 3 page edits/day)
+- **Confidence gate**: Actions only auto-execute when predicted revenue confidence ≥ threshold (default 0.6)
+- **Rollback**: Every auto-executed change stores `rollback_data` — a "Undo" button in the action log reverses the change
+- **Brand guardrails**: AI content generation already enforces tone via system prompts; autonomous mode uses the same `seo-generate-content` function
+- **Audit trail**: Every autonomous action logged in `seo_autonomous_actions` + `seo_task_history`
 
-### Step 3: Weakness Adjustment
-- If review health score < 40 → review task coefficients × 1.5
-- If content health score < 40 → content task coefficients × 1.4
-- If conversion health score < 40 → conversion task coefficients × 1.6
-- If score > 80 → corresponding coefficients × 0.6 (diminishing returns)
+## Growth Report (Daily Notification)
 
-### Step 4: Momentum Modifier
-- Momentum score > 30 ("gaining fast") → multiply all coefficients × 0.7 (diminishing returns)
-- Momentum score < -30 ("losing") → multiply × 1.3 (more upside potential)
-- Between → × 1.0
+Compiled by `seo-growth-report` edge function, triggered after autonomous execution:
 
-### Step 5: Compute Lift
-For each pending task in a campaign or on an object:
-- `adjustedLiftPct = baseCoefficient × weaknessMultiplier × momentumMultiplier`
-- `predictedBookingLift = baselineBookings × adjustedLiftPct`
-- `predictedRevenueLift = predictedBookingLift × avgTicket`
+```text
+Zura Growth Report — April 11
 
-Sum across all pending tasks for campaign-level prediction.
+Yesterday:
+• Sent 5 review requests (Gilbert Extensions, Mesa Balayage)
+• Published 1 Google Business post (Gilbert Location)
+• Updated 2 service page meta descriptions
 
-### Step 6: Confidence Band
-- Output: `{ low, expected, high }` revenue values
-- Confidence level based on: baseline data volume (≥20 bookings = high), health score data freshness, momentum data availability
+Impact:
+• +2 new reviews received
+• +8% page engagement (estimated)
 
-## UI Surfaces
+Opportunity:
+• +$6,200 remaining this month
 
-### Dashboard Card (`SEOPredictedLiftCard`)
-Shows top 3 objects by predicted opportunity:
-```
-Extensions (Gilbert)
-Current Revenue: $18,400  ·  Opportunity: +$6,800 → $12,400
-Momentum: ↑ Gaining  ·  Top Action: Complete "Own Extensions" campaign
+Next Best Action:
+• Upload 3 extension photos (human required)
 ```
 
-### Campaign Prediction (`SEOCampaignPrediction`)
-Inside campaign detail dialog:
-```
-Expected Lift (30d):
-+$6,800 → $12,400
-Progress: 3/5 actions complete
-Remaining Impact: +$4,900
-Confidence: Medium — based on 24 bookings in baseline
-```
+Delivered as:
+1. In-app notification to owner
+2. Dashboard card (`SEOGrowthReport`) — always-visible at top of SEO dashboard
 
-### Safety Layer
-Every prediction includes:
-- Confidence level badge
-- One-line reason summary
-- "Actual results may vary based on seasonality and execution quality" disclaimer on hover
+## Build Order
 
-## No AI Involvement
-All prediction values are deterministic. AI is never consulted for lift calculations. Coefficients are config-driven and tunable via `seo-effectiveness-tracker` historical data when sample sizes are sufficient.
+1. DB migration (new tables + settings)
+2. `seo-autonomy-config.ts` (classification map + defaults)
+3. Template config update (`autonomyLevel` field)
+4. Settings schema update (autonomy settings)
+5. `seo-autonomous-execute` edge function
+6. `seo-growth-report` edge function
+7. `useSEOAutonomousActions` hook
+8. `SEOGrowthReport` dashboard card
+9. `SEOAutonomySettings` panel
+10. Wire autonomous execute into daily scan
+
+## Technical Notes
+
+- Autonomous execution reuses existing `seo-generate-content` edge function for AI content — no new AI integration
+- Revenue prediction data feeds confidence scores into autonomy decisions
+- The system follows the platform's autonomy model: Recommend → Simulate → Request Approval → Execute (within guardrails)
+- Owner controls everything via settings — autonomy never activates without explicit opt-in
+- All autonomous decisions are deterministic (template classification, rate limits, confidence thresholds) — AI only generates content
 
