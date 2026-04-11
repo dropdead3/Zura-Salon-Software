@@ -125,7 +125,7 @@ export function useStylistExperienceScore(
       const transactionItems = await fetchAllBatched<any>((from, to) =>
         supabase
           .from('phorest_transaction_items')
-          .select('phorest_staff_id, item_type, total_amount')
+          .select('phorest_staff_id, item_type, item_name, total_amount')
           .gte('transaction_date', startDate)
           .lte('transaction_date', endDate)
           .range(from, to)
