@@ -184,8 +184,7 @@ export default function DashboardHome() {
   
   // Check if viewing as another role
   const { isViewingAs } = useViewAs();
-  const { isImpersonating: isGodMode, effectiveOrganization } = useOrganizationContext();
-  const organizationId = effectiveOrganization?.id;
+  const { isImpersonating: isGodMode } = useOrganizationContext();
   
   // Leadership team: super admin, admin, and manager
   // God Mode (platform impersonation) = full leadership access
