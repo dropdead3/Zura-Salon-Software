@@ -1,52 +1,40 @@
 
 
-# Clean Up Today Hero Section — Remove Redundancy & Improve Toggle Visibility
+# Remove Remaining Redundancies in Today Hero Expanded Section
 
 ## Problem
-The Today hero section has significant information overlap between the compact summary line and the expanded detail section:
-1. **Double progress bar** — thin bar above compact summary + thicker bar inside expanded section
-2. **Repeated appointment counts** — "33/36 appts" in compact, then "33 of 36 appointments completed · 3 pending" in expanded
-3. **Repeated remaining/exceeded info** — compact line shows "remaining" or "exceeded," then expanded repeats via badge + progress label
-4. **Nearly invisible toggle** — the expand/collapse trigger is tiny muted text with a 3px chevron, easy to miss
+
+The pill button already displays a compact summary: `33/36 appts · $387.00 remaining · on track for $4,316.79`. The expanded section then repeats all three data points:
+
+1. **Appointment count repeated** — pill says "33/36 appts", expanded says "33 of 36 appointments completed · 3 pending"
+2. **Remaining amount repeated** — pill says "$387.00 remaining", expanded shows a large warning badge "Service revenue still expected to collect: $387.00"
+3. **Exceeded/on-track repeated** — pill says "on track for $X" or "exceeded by $X", expanded shows the same with a checkmark icon
 
 ## Approach
 
-Restructure into two clear layers: **always-visible essentials** and **expandable operational detail**, with no overlap between them.
+Keep the pill as the single source for summary metrics. The expanded section should only show **detail the pill cannot contain**: the scheduled total, the breakdown (pending/awaiting/discounts), estimated finish time, and gap analysis.
 
-### Always visible (collapsed state)
-- Hero revenue number (unchanged)
-- Label + tax/tip disclaimer (unchanged)
-- Single progress bar (h-1.5) showing earned % of scheduled
-- A styled **summary button** replacing the current tiny text — pill-shaped, visible border, with chevron icon and a clear label like "33/36 appts · $387 remaining ▾"
+## Changes — `src/components/dashboard/AggregateSalesCard.tsx`
 
-### Expanded detail (on click)
-- Scheduled Services Today total (with info tooltip)
-- Appointment breakdown (pending, awaiting checkout, discounts)
-- Remaining revenue badge (only if > 0)
-- Exceeded/on-track status message
-- Estimated final transaction time
-- Gap analysis trigger
+1. **Remove the appointment count line** (lines 926-934) — the pill already has "33/36 appts"; expanded doesn't need to restate it. Move the "awaiting checkout" and "discounts applied" details into a subtle inline note under the Scheduled Services line instead.
 
-### What gets removed/deduplicated
-- Remove the **top thin progress bar** (lines 861-867) — keep only the one inside expanded
-- Actually, reverse: keep the always-visible bar, remove the expanded one (lines 964-971) since the compact bar already shows the same data
-- Remove redundant "Earned X% of scheduled services today" label from expanded — the bar + compact summary already convey this
-- Remove the "All appointments complete" duplicate at lines 997-1001 — already shown in compact summary or exceeded message
+2. **Remove the remaining revenue badge** (lines 937-949) — "$387 remaining" is already in the pill. Redundant.
 
-## File Changes
+3. **Remove the exceeded/on-track status block** (lines 952-965) — "exceeded by $X" is already in the pill. Redundant.
 
-### `src/components/dashboard/AggregateSalesCard.tsx`
+4. **Remove the "All appointments complete" block** (lines 968-982) — "All complete" is already in the pill text.
 
-1. **Restyle the toggle button** (lines 869-881): Replace the barely-visible text+chevron with a bordered pill button:
-   - `border border-border/60 rounded-full px-3 py-1.5 hover:bg-muted/50` 
-   - Slightly larger text (`text-xs` → keep but add `text-muted-foreground` not `/70`)
-   - Larger chevron (`w-3.5 h-3.5`)
+5. **Keep in expanded section**:
+   - Scheduled Services Today total (with tooltip) — this is the only place it appears
+   - Awaiting checkout count + discounts as a subtle detail line beneath the scheduled total
+   - Estimated final transaction time (operational detail)
+   - Gap analysis trigger + drilldown
 
-2. **Remove duplicate progress bar** from expanded section (lines 953-994): Remove the "Earned X% of scheduled services today" block with its second progress bar and the exceeded/on-track message. Keep the always-visible progress bar above the toggle.
+### Result
+Expanded section becomes: Scheduled total → operational details (awaiting checkout, discounts) → estimated finish time → gap analysis. No repeated metrics.
 
-3. **Remove duplicate "All appointments complete"** (lines 997-1001): This is redundant with the compact summary which already says "All complete".
-
-4. **Keep in expanded section**: Scheduled Services total, appointment breakdown counts, remaining revenue badge (contextual), estimated final time, gap analysis trigger.
-
-Single file change, ~40 lines removed/modified.
+### File Modified
+| File | Change |
+|---|---|
+| `src/components/dashboard/AggregateSalesCard.tsx` | Remove 4 redundant blocks from expanded section; consolidate awaiting/discount detail into single subtle line |
 
