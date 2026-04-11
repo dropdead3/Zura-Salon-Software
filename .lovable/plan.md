@@ -1,175 +1,172 @@
 
 
-# Capital and Expansion Engine
+# Ownership Layer (Zura Network)
 
 ## What It Builds
 
-A capital allocation intelligence layer that computes a **Salon Performance Index (SPI)** per location, combines it with market opportunity and predicted revenue lift to produce **Return on Expansion (ROE)** scores, and ranks all investment opportunities in a global capital priority queue. Supports expansion scenario simulation with projected lift, break-even timeline, and confidence bands.
+A network-level investment and partnership intelligence layer that identifies high-performing salons using a deterministic **Zura Ownership Score (ZOS)**, manages deal pipelines (revenue share, equity, acquisition), tracks capital deployment and returns across the network, and surfaces a centralized Network Dashboard with total revenue, top performers, expansion pipeline, and capital efficiency metrics. Sits on top of the Capital & Expansion Engine.
 
 ## Architecture
 
 ```text
-Location Health Engine (existing)
+Capital Engine (SPI + ROE + Expansion Opportunities)
      │
-     ├── SPI (0–100) per location
-     │   ├── Revenue Efficiency (25%)
-     │   ├── Growth Velocity (20%)
-     │   ├── Conversion Strength (15%)
-     │   ├── Pricing Power (15%)
-     │   ├── Operational Stability (15%)
-     │   └── Execution Quality (10%)
+     ├── Zura Ownership Score (ZOS) per organization
+     │   ├── SPI (Performance)
+     │   ├── Consistency (not spikes)
+     │   ├── Task Execution Reliability
+     │   ├── Growth Responsiveness
+     │   ├── Team Structure Stability
+     │   └── Market Position
      │
-     ├── Expansion Opportunities
-     │   ├── Existing Location Expansion
-     │   ├── New Location Launch
-     │   ├── Category Expansion
-     │   └── Acquisition Targets (future)
+     ├── Pipeline (Observe → Qualify → Offer → Convert → Scale)
      │
-     ├── ROE = Predicted Revenue Lift ÷ Capital Required
+     ├── Deal Structures (Revenue Share / Equity / Acquisition)
      │
-     ├── Capital Priority Queue (ranked by ROE)
+     ├── Capital Recycling (invest → return → reinvest)
      │
-     ├── Investment Scenario Simulator
-     │
-     └── Risk Model (volatility, stylist dependency, competition)
+     └── Network Dashboard (platform-level)
 ```
 
 ## Database Changes
 
-**New table: `expansion_opportunities`**
-- `id`, `organization_id`, `location_id` (nullable — null for new location proposals)
-- `opportunity_type` (enum: `location_expansion`, `new_location`, `category_expansion`, `acquisition`)
-- `title`, `description`, `city`, `service_category`
-- `capital_required` (numeric), `predicted_annual_lift` (numeric), `roe_score` (numeric)
-- `break_even_months` (numeric), `confidence` (low/medium/high)
-- `risk_factors` (jsonb), `spi_at_creation` (numeric)
-- `status` (enum: `identified`, `evaluating`, `approved`, `in_progress`, `completed`, `dismissed`)
-- `is_active` (boolean, default true), `created_at`, `updated_at`
-- RLS: org member read, org admin write
+**New table: `network_ownership_scores`**
+- `id`, `organization_id` (FK organizations), `zos_score` (0–100)
+- `spi_component` (0–100), `consistency_component` (0–100), `execution_reliability` (0–100), `growth_responsiveness` (0–100), `team_stability` (0–100), `market_position` (0–100)
+- `eligibility_status` (enum: `prime`, `watchlist`, `ineligible`)
+- `hard_filter_results` (jsonb — min revenue, review volume, momentum, stability checks)
+- `factors` (jsonb), `scored_at`, `created_at`
+- RLS: platform admin read only (uses `is_platform_user`)
 
-**New table: `expansion_scenarios`**
-- `id`, `organization_id`, `opportunity_id` (FK)
-- `investment_amount` (numeric), `projected_monthly_lift` (numeric), `break_even_months` (numeric)
-- `confidence`, `assumptions` (jsonb), `result_summary` (jsonb)
-- `created_at`, `created_by`
-- RLS: org member read, org admin write
+**New table: `network_deals`**
+- `id`, `organization_id`, `deal_type` (enum: `revenue_share`, `equity_stake`, `full_acquisition`)
+- `pipeline_stage` (enum: `observe`, `qualify`, `offer`, `convert`, `scale`)
+- `terms` (jsonb — percentage, capital amount, vesting, etc.)
+- `capital_deployed` (numeric), `total_return` (numeric), `roi_multiple` (numeric)
+- `start_date`, `status` (active/paused/exited), `notes` (text)
+- `created_at`, `updated_at`
+- RLS: platform admin read/write
 
-**New table: `salon_performance_index`**
-- `id`, `organization_id`, `location_id`
-- `spi_score` (0–100), `revenue_efficiency` (0–100), `growth_velocity` (0–100), `conversion_strength` (0–100), `pricing_power` (0–100), `operational_stability` (0–100), `execution_quality` (0–100)
-- `risk_level` (text), `factors` (jsonb), `scored_at`, `created_at`
-- RLS: org member read
+**New table: `network_capital_ledger`**
+- `id`, `deal_id` (FK network_deals), `organization_id`
+- `entry_type` (enum: `investment`, `return`, `reinvestment`)
+- `amount` (numeric), `description` (text), `recorded_at`, `created_at`
+- RLS: platform admin read/write
 
 ## New Files
 
 | File | Purpose |
 |---|---|
-| `src/lib/capital-engine/capital-engine.ts` | Pure computation: SPI scoring (weighted components from Health Engine data + SEO momentum + task completion), ROE calculation, risk modeling, capital queue ranking, break-even estimation |
-| `src/config/capital-engine/capital-config.ts` | SPI weights, ROE thresholds, risk factor definitions, expansion type labels |
-| `src/hooks/useCapitalEngine.ts` | Composes Health Engine scores + momentum + domination data + revenue; feeds capital engine; returns SPI per location, ranked opportunities, scenario results |
-| `src/hooks/useExpansionOpportunities.ts` | CRUD queries for `expansion_opportunities` and `expansion_scenarios` |
-| `src/components/dashboard/capital-engine/CapitalDashboard.tsx` | Top expansion opportunity, capital priority queue, SPI summary per location |
-| `src/components/dashboard/capital-engine/SPICard.tsx` | Location SPI score display with component breakdown |
-| `src/components/dashboard/capital-engine/ExpansionSimulator.tsx` | Investment scenario form: input capital amount → see projected lift, break-even, confidence |
-| `src/components/dashboard/capital-engine/CapitalPriorityQueue.tsx` | Ranked list of all opportunities by ROE |
-| `supabase/functions/calculate-spi/index.ts` | Edge function: computes SPI scores per location using Health Engine data, SEO momentum, and task completion rates |
+| `src/config/capital-engine/ownership-config.ts` | ZOS weights, eligibility thresholds, hard filter minimums, deal type labels, pipeline stage labels |
+| `src/lib/capital-engine/ownership-engine.ts` | Pure computation: ZOS scoring (weighted components), eligibility determination with hard filters, capital recycling metrics (total deployed, total returned, net multiple), network summary aggregation |
+| `src/hooks/useNetworkOwnership.ts` | Queries `network_ownership_scores`, `network_deals`, `network_capital_ledger`; composes network summary metrics |
+| `src/components/dashboard/capital-engine/NetworkDashboard.tsx` | Platform-level view: total network revenue, top performers, expansion pipeline count, capital efficiency (deployed vs returned) |
+| `src/components/dashboard/capital-engine/ZOSCard.tsx` | Individual org ZOS display with component breakdown and eligibility badge |
+| `src/components/dashboard/capital-engine/DealPipelineCard.tsx` | Pipeline visualization: observe → qualify → offer → convert → scale with deal counts per stage |
+| `src/components/dashboard/capital-engine/CapitalRecyclingCard.tsx` | Capital deployed vs returned, ROI multiple, reinvestment flow |
+| `supabase/functions/calculate-zos/index.ts` | Edge function: computes ZOS per org by aggregating SPI scores, revenue consistency (stddev over 90 days), task completion rates, growth response metrics, team concentration, and domination scores |
 
 ## Modified Files
 
 | File | Change |
 |---|---|
-| `src/components/dashboard/seo-workshop/SEOEngineDashboard.tsx` | Add link/card to Capital Dashboard from growth orchestration section |
-| `src/lib/seo-engine/index.ts` | No changes needed — capital engine is separate module |
+| `src/lib/capital-engine/index.ts` | Export ownership engine functions |
+| `src/config/capital-engine/index.ts` | Export ownership config |
 
 ## Core Computation Model
 
-### SPI (0–100)
+### ZOS (0–100)
 
 | Component | Weight | Source |
 |---|---|---|
-| Revenue Efficiency | 25% | Health Engine `revenue` category (rev/chair, rev/hour, utilization) |
-| Growth Velocity | 20% | SEO momentum score + booking growth rate from Health Engine trends |
-| Conversion Strength | 15% | Health Engine `client` category + SEO conversion health |
-| Pricing Power | 15% | Avg ticket vs industry benchmark (from Industry Intelligence) + Health Engine revenue metrics |
-| Operational Stability | 15% | Health Engine `retention` + `operational_consistency` categories |
-| Execution Quality | 10% | SEO task completion rate + campaign success rate |
+| SPI (Performance) | 30% | Average SPI across org locations from `salon_performance_index` |
+| Consistency | 20% | Inverse of revenue coefficient of variation over 90 days |
+| Task Execution Reliability | 15% | SEO task completion rate + on-time rate |
+| Growth Responsiveness | 15% | Revenue delta after recommended actions (did they follow the system?) |
+| Team Stability | 10% | Inverse of stylist concentration + low cancellation rate |
+| Market Position | 10% | Average domination score across active targets |
 
-SPI reuses existing Health Engine scores (already computed per location) and supplements with SEO engine data. No duplicate computation.
+### Eligibility
 
-### ROE Formula
-```
-ROE = Predicted Annual Revenue Lift ÷ Capital Required
-```
+| Status | Criteria |
+|---|---|
+| **Prime** | ZOS ≥ 85, all hard filters pass |
+| **Watchlist** | ZOS 70–84, all hard filters pass |
+| **Ineligible** | ZOS < 70 OR any hard filter fails |
 
-### Break-Even Estimation
-```
-Break-Even Months = Capital Required ÷ Predicted Monthly Lift
-```
-Adjusted by confidence factor (high: 1.0x, medium: 1.3x, low: 1.6x).
+### Hard Filters (all must pass)
+- Minimum monthly revenue ≥ configurable threshold (default $30K)
+- Minimum review count ≥ 50
+- Positive momentum trend (not declining over 60 days)
+- No operational instability flags (Health Engine critical tier)
 
-### Risk Model (jsonb factors)
-Each opportunity gets risk scores for:
-- `volatility`: Revenue variance coefficient over 90 days
-- `stylist_dependency`: Revenue concentration in top stylists
-- `competition_intensity`: From domination engine competitor data
-- `market_saturation`: From industry intelligence demand signals
+### Capital Recycling Metrics
+- Total Deployed: sum of `investment` entries in ledger
+- Total Returned: sum of `return` entries
+- Net ROI Multiple: Total Returned / Total Deployed
+- Recycled Capital: sum of `reinvestment` entries
 
-### Capital Priority Queue
-Sort all opportunities by ROE descending. Display top recommendation as a directive.
+### Pipeline Summary
+Count of deals per stage, with aggregate capital at each stage.
 
-### Investment Scenario Simulator
-User inputs: capital amount + opportunity type. Engine returns:
-- Projected monthly and annual lift (low/expected/high bands)
-- Break-even timeline
-- Confidence level with reasoning
-- Risk summary
-
-All deterministic — uses existing coefficients from revenue predictor and health engine.
-
-## UI: Capital Dashboard
+## UI: Network Dashboard
 
 ```text
 ┌─────────────────────────────────────────────────┐
-│ CAPITAL & EXPANSION                             │
+│ ZURA NETWORK                                    │
 │                                                 │
-│ Top Opportunity                                 │
-│ Scottsdale Extensions — ROE: 2.5x              │
-│ Investment: $80K · Return: $200K · 6mo payback  │
-│ Confidence: High                                │
+│ Total Network Revenue    Capital Deployed        │
+│ $3.2M (+18%)             $420K → $1.1M (2.6x)  │
 │                                                 │
-│ Location Performance Index                      │
-│ ┌────────────┬──────┬───────────────────┐       │
-│ │ Mesa       │ SPI 82│ High Performer   │       │
-│ │ Gilbert    │ SPI 61│ Growth Opportunity│       │
-│ │ Scottsdale │ SPI 74│ Strong           │       │
-│ └────────────┴──────┴───────────────────┘       │
+│ Pipeline                                        │
+│ Observe: 12 · Qualify: 5 · Offer: 2 · Active: 3│
 │                                                 │
-│ Capital Priority Queue                          │
-│ 1. Scottsdale Expansion (2.5x ROE)             │
-│ 2. Mesa Optimization (2.1x ROE)                │
-│ 3. Gilbert Upgrade (1.5x ROE)                  │
+│ Top Performers                                  │
+│ ┌──────────────────────────────────────────────┐│
+│ │ Mesa Extensions   ZOS: 92  Prime   SPI: 88  ││
+│ │ Gilbert Central   ZOS: 78  Watch   SPI: 72  ││
+│ └──────────────────────────────────────────────┘│
 │                                                 │
-│ [Simulate Investment]                           │
-│ "Focus capital on Scottsdale before Gilbert"    │
+│ Capital Recycling                               │
+│ Deployed: $420K · Returned: $1.1M · 2.6x ROI   │
+│ Reinvested: $380K                               │
 └─────────────────────────────────────────────────┘
 ```
 
+## Access Control
+
+This is a **platform-level** feature — only accessible to platform admins (Super Admin / God Mode). All tables use `is_platform_user(auth.uid())` for RLS. The Network Dashboard is rendered inside the Platform Admin suite, not the tenant dashboard.
+
+## Edge Function: `calculate-zos`
+
+Runs on-demand or weekly. Service-role access.
+
+1. For each active organization, query latest SPI scores and average across locations
+2. Compute revenue consistency from `phorest_appointments` (90-day stddev / mean)
+3. Query `seo_tasks` completion rates for execution reliability
+4. Compute growth responsiveness: revenue delta in periods after task completion bursts
+5. Query stylist revenue concentration for team stability
+6. Query `seo_domination_scores` for market position average
+7. Apply weights → ZOS score
+8. Run hard filters → eligibility status
+9. Upsert into `network_ownership_scores`
+
 ## Build Order
 
-1. DB migration (3 new tables + enums + RLS)
-2. `capital-config.ts` (SPI weights, ROE thresholds, risk definitions)
-3. `capital-engine.ts` (SPI computation, ROE, risk model, queue ranking, break-even)
-4. `calculate-spi` edge function
-5. `useExpansionOpportunities.ts` hook (CRUD)
-6. `useCapitalEngine.ts` hook (compose Health + SEO + capital data)
-7. UI components: `SPICard`, `CapitalPriorityQueue`, `ExpansionSimulator`, `CapitalDashboard`
-8. Wire into navigation / SEO Engine Dashboard
+1. DB migration (3 new tables + enums + RLS with `is_platform_user`)
+2. `ownership-config.ts` (ZOS weights, thresholds, deal/pipeline labels)
+3. `ownership-engine.ts` (ZOS computation, eligibility, capital recycling math)
+4. `calculate-zos` edge function
+5. `useNetworkOwnership.ts` hook
+6. UI: `ZOSCard`, `DealPipelineCard`, `CapitalRecyclingCard`, `NetworkDashboard`
+7. Wire into Platform Admin navigation
+8. Export updates
 
 ## Technical Notes
 
-- SPI deliberately reuses Health Engine location scores — the 8 health categories map cleanly to SPI's 6 components
-- ROE and scenario modeling are pure deterministic computation — AI used only for generating recommendation copy
-- Risk model is additive to ROE, not a replacement — high-risk opportunities can still rank #1 if ROE is high enough, but risk is surfaced clearly
-- All data is org-scoped; no cross-org investment data exposure
-- The `gate_margin_baselines` enforcement gate already exists — Capital Dashboard requires it before showing expansion recommendations
+- ZOS is deterministic — AI used only for generating partnership recommendation summaries
+- All network-level data is visible only to platform admins; organizations never see their ZOS or other orgs' data
+- Capital ledger is append-only for auditability
+- Hard filters are AND-gated — a single failure blocks eligibility regardless of ZOS score
+- The system recommends but never auto-executes deals — all partnership decisions require human approval
 
