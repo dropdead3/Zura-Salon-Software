@@ -15,7 +15,8 @@ export function useSEOTasks(organizationId: string | undefined, filters?: {
         .from('seo_tasks' as any)
         .select('*, seo_objects!primary_seo_object_id(id, label, object_type, object_key)')
         .eq('organization_id', organizationId!)
-        .order('priority_score', { ascending: false });
+        .order('priority_score', { ascending: false })
+        .limit(50);
 
       if (filters?.status?.length) {
         query = query.in('status', filters.status);

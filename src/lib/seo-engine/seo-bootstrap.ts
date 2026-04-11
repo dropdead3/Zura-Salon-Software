@@ -118,7 +118,7 @@ export function generateBootstrapCampaign(input: BootstrapInput): BootstrapCampa
         tasks.push(makeTask(template, tmplDef, input.locationId, input.locationName, 'location', baseOffset, input));
       } else if (tmplDef.scope === 'service') {
         for (const svc of input.services) {
-          tasks.push(makeTask(template, tmplDef, `${input.locationId}:${svc.id}`, `${svc.name} @ ${input.locationName}`, 'location_service', baseOffset, input));
+          tasks.push(makeTask(template, tmplDef, `${input.locationId}::${svc.id}`, `${svc.name} @ ${input.locationName}`, 'location_service', baseOffset, input));
         }
       } else if (tmplDef.scope === 'stylist') {
         for (const stylist of input.stylists) {

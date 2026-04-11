@@ -12,7 +12,8 @@ export function useSEOCampaigns(organizationId: string | undefined, filters?: {
         .from('seo_campaigns' as any)
         .select('*')
         .eq('organization_id', organizationId!)
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .limit(50);
 
       if (filters?.status?.length) {
         query = query.in('status', filters.status);
