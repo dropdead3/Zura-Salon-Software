@@ -78,6 +78,9 @@ async function runWeeklyScan(
   // ─── 3. Conversion weakness ───
   tasksGenerated += await detectConversionWeakness(supabase, organizationId);
 
+  // ─── 4. Competitor gap detection (M10) ───
+  tasksGenerated += await detectCompetitorGaps(supabase, organizationId);
+
   return { tasksGenerated };
 }
 
@@ -454,6 +457,90 @@ async function detectConversionWeakness(
 
       generated++;
     }
+  }
+
+  return generated;
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// 4. Competitor Gap Detection (M10 — stub, requires competitor data)
+// ═══════════════════════════════════════════════════════════════════════
+
+async function detectCompetitorGaps(
+  supabase: ReturnType<typeof createClient>,
+  organizationId: string
+): Promise<number> {
+  // Check if competitive_gap health scores exist for this org
+  const { data: gapScores } = await supabase
+    .from("seo_health_scores")
+    .select("seo_object_id, score, raw_signals, seo_objects!inner(id, object_type, label, location_id)")
+    .eq("organization_id", organizationId)
+    .eq("domain", "competitive_gap")
+    .lt("score", 40)
+    .order("score", { ascending: true })
+    .limit(10);
+
+  if (!gapScores?.length) return 0;
+
+  let generated = 0;
+
+  for (const item of gapScores) {
+    const seoObj = (item as any).seo_objects;
+    if (!seoObj) continue;
+
+    // Suppression: check for open competitor_gap_response tasks
+    const { data: openTasks } = await supabase
+      .from("seo_tasks")
+      .select("id")
+      .eq("organization_id", organizationId)
+      .eq("template_key", "competitor_gap_response")
+      .eq("primary_seo_object_id", seoObj.id)
+      .in("status", ["detected", "queued", "assigned", "in_progress"])
+      .limit(1);
+
+    if (openTasks?.length) continue;
+
+    const dueAt = new Date();
+    dueAt.setDate(dueAt.getDate() + 14);
+
+    const cooldownUntil = new Date();
+    cooldownUntil.setDate(cooldownUntil.getDate() + 30);
+
+    const signals = item.raw_signals as any;
+    const gapDescription = signals?.gap_summary ?? "Competitive gap detected";
+
+    const { data: insertedTask } = await supabase.from("seo_tasks").insert({
+      organization_id: organizationId,
+      location_id: seoObj.location_id,
+      template_key: "competitor_gap_response",
+      primary_seo_object_id: seoObj.id,
+      status: "detected",
+      priority_score: 70,
+      priority_factors: {
+        severity: 0.8,
+        competitive_gap_score: item.score,
+        source: "weekly_scan_competitor_gap",
+      },
+      due_at: dueAt.toISOString(),
+      cooldown_until: cooldownUntil.toISOString(),
+      ai_generated_content: {
+        title: `Competitor gap: ${seoObj.label}`,
+        explanation: `Competitive gap health is ${item.score}/100 — ${gapDescription}.`,
+      },
+    }).select("id").single();
+
+    if (insertedTask) {
+      await supabase.from("seo_task_history").insert({
+        task_id: insertedTask.id,
+        action: "created",
+        previous_status: null,
+        new_status: "detected",
+        performed_by: "system:weekly_scan",
+        notes: "Auto-detected: competitor gap",
+      });
+    }
+
+    generated++;
   }
 
   return generated;

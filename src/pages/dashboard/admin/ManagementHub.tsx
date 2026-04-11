@@ -45,6 +45,9 @@ import {
 } from 'lucide-react';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 import { PageExplainer } from '@/components/ui/PageExplainer';
+import { VisibilityGate } from '@/components/visibility/VisibilityGate';
+import { SEOUnifiedTasksCard } from '@/components/dashboard/seo-workshop/SEOUnifiedTasksCard';
+import { useOrganizationContext } from '@/contexts/OrganizationContext';
 
 interface ManagementCardProps {
   href: string;
@@ -104,6 +107,7 @@ function CategorySection({ title, children }: CategorySectionProps) {
 
 export default function ManagementHub() {
   const { dashPath } = useOrgDashboardPath();
+  const { effectiveOrganization } = useOrganizationContext();
 
   // Fetch stats for badges
   const { data: stats } = useQuery({
@@ -437,6 +441,14 @@ export default function ManagementHub() {
             colorClass="bg-indigo-500/10 text-indigo-600 dark:text-indigo-400"
           />
         </CategorySection>
+        {/* M2: SEO Tasks integration */}
+        <VisibilityGate
+          elementKey="seo_unified_tasks_management"
+          elementName="SEO Tasks"
+          elementCategory="Management Hub"
+        >
+          <SEOUnifiedTasksCard organizationId={effectiveOrganization?.id} />
+        </VisibilityGate>
       </div>
     </DashboardLayout>
   );

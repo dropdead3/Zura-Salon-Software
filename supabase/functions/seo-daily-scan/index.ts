@@ -149,16 +149,24 @@ async function detectReviewOpportunities(
   const dayBefore = new Date(yesterday);
   dayBefore.setDate(dayBefore.getDate() - 1);
 
+  // M5: Include client_id and join to clients for communication eligibility
   const { data: appointments } = await supabase
     .from("appointments")
-    .select("id, service_name, staff_user_id, location_id, client_name")
+    .select("id, service_name, staff_user_id, location_id, client_name, client_id, clients!client_id(id, communication_preference)")
     .eq("organization_id", organizationId)
     .eq("status", "completed")
     .gte("appointment_date", dayBefore.toISOString().split("T")[0])
     .lte("appointment_date", yesterday.toISOString().split("T")[0])
     .limit(50);
 
-  if (!appointments?.length) return 0;
+  // M5: Filter out clients who have opted out of communications
+  const eligibleAppointments = (appointments || []).filter((appt: any) => {
+    const pref = appt.clients?.communication_preference;
+    // Exclude clients who explicitly opted out; null/undefined = eligible
+    return pref !== 'none' && pref !== 'opted_out';
+  });
+
+  if (!eligibleAppointments?.length) return 0;
 
   // Check if review_request template exists
   const { data: template } = await supabase
@@ -174,7 +182,7 @@ async function detectReviewOpportunities(
 
   // Group by location-service for task generation
   const locationServicePairs = new Map<string, any>();
-  for (const appt of appointments) {
+  for (const appt of eligibleAppointments) {
     if (!appt.location_id || !appt.service_name) continue;
     const key = `${appt.location_id}::${appt.service_name}`;
     if (!locationServicePairs.has(key)) {
@@ -321,7 +329,7 @@ async function detectPhotoFreshnessIssues(
     const cooldownUntil = new Date();
     cooldownUntil.setDate(cooldownUntil.getDate() + 30);
 
-    await supabase.from("seo_tasks").insert({
+    const { data: newTask } = await supabase.from("seo_tasks").insert({
       organization_id: organizationId,
       location_id: seoObj.location_id,
       template_key: "photo_upload",
@@ -339,7 +347,18 @@ async function detectPhotoFreshnessIssues(
         title: `Upload photos for ${seoObj.label}`,
         explanation: `Content health score is ${item.score}/100 — fresh photos would improve visibility.`,
       },
-    });
+    }).select("id").single();
+
+    // M3: Create history record for photo freshness tasks
+    if (newTask?.id) {
+      await supabase.from("seo_task_history").insert({
+        task_id: newTask.id,
+        action: "auto_generated",
+        performed_by: "system:daily_scan",
+        new_status: "detected",
+        notes: "Auto-detected: photo freshness deficit",
+      });
+    }
 
     generated++;
   }

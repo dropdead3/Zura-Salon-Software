@@ -11,9 +11,12 @@ import { SEO_TASK_TEMPLATES } from '@/config/seo-engine/seo-task-templates';
 import { TASK_STATUS_CONFIG, ACTIVE_TASK_STATES, type SEOTaskStatus } from '@/config/seo-engine/seo-state-machine';
 import { tokens } from '@/lib/design-tokens';
 import { Skeleton } from '@/components/ui/skeleton';
-import { FileText, ArrowRight } from 'lucide-react';
+import { FileText, ArrowRight, Sparkles } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
+import { toast } from 'sonner';
+import { useState } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 
 interface Props {
   organizationId: string | undefined;
@@ -25,6 +28,7 @@ const CONTENT_TASK_TYPES = [
 
 export function SEOContentTasksCard({ organizationId }: Props) {
   const { dashPath } = useOrgDashboardPath();
+  const [generatingId, setGeneratingId] = useState<string | null>(null);
   const { data: allTasks = [], isLoading } = useSEOTasks(organizationId, {
     status: [...ACTIVE_TASK_STATES],
   });
@@ -33,6 +37,42 @@ export function SEOContentTasksCard({ organizationId }: Props) {
     const template = SEO_TASK_TEMPLATES[t.template_key];
     return template && CONTENT_TASK_TYPES.includes(template.taskType);
   });
+
+  // M8: Generate draft content via AI edge function
+  const handleGenerateDraft = async (task: any) => {
+    setGeneratingId(task.id);
+    try {
+      const template = SEO_TASK_TEMPLATES[task.template_key];
+      const { data, error } = await supabase.functions.invoke('ai-gateway', {
+        body: {
+          action: 'seo_content_draft',
+          taskId: task.id,
+          templateKey: task.template_key,
+          templateLabel: template?.label ?? task.template_key,
+          objectLabel: task.seo_objects?.label ?? '',
+          context: task.ai_generated_content?.explanation ?? '',
+        },
+      });
+
+      if (error) throw error;
+
+      // Update task with draft in ai_generated_content
+      const existingContent = task.ai_generated_content || {};
+      await supabase.from('seo_tasks' as any).update({
+        ai_generated_content: {
+          ...existingContent,
+          draft: data?.draft ?? data?.content ?? 'Draft generated — check task details.',
+          draft_generated_at: new Date().toISOString(),
+        },
+      }).eq('id', task.id);
+
+      toast.success('Draft generated — open the task to review.');
+    } catch {
+      toast.error('Draft generation unavailable — try again later.');
+    } finally {
+      setGeneratingId(null);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -73,11 +113,23 @@ export function SEOContentTasksCard({ organizationId }: Props) {
           const title = task.ai_generated_content?.title ?? template?.label ?? task.template_key;
 
           return (
-            <div key={task.id} className="flex items-center justify-between text-sm font-sans">
+            <div key={task.id} className="flex items-center justify-between text-sm font-sans gap-2">
               <span className="truncate">{title}</span>
-              <Badge variant={statusConf?.variant ?? 'outline'} className={`text-xs shrink-0 ml-2 ${statusConf?.className ?? ''}`}>
-                 {statusConf?.label ?? task.status}
-               </Badge>
+              <div className="flex items-center gap-1.5 shrink-0">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-6 px-2 text-[11px] font-sans gap-1"
+                  disabled={generatingId === task.id}
+                  onClick={() => handleGenerateDraft(task)}
+                >
+                  <Sparkles className="w-3 h-3" />
+                  {generatingId === task.id ? 'Drafting…' : 'Draft'}
+                </Button>
+                <Badge variant={statusConf?.variant ?? 'outline'} className={`text-xs ${statusConf?.className ?? ''}`}>
+                   {statusConf?.label ?? task.status}
+                 </Badge>
+              </div>
             </div>
           );
         })}

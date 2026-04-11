@@ -7,9 +7,10 @@ import { SEO_TASK_TEMPLATES } from '@/config/seo-engine/seo-task-templates';
 import { getPriorityTier, PRIORITY_TIERS } from '@/config/seo-engine/seo-priority-model';
 import { tokens } from '@/lib/design-tokens';
 import { Skeleton } from '@/components/ui/skeleton';
-import { CheckCircle2, Clock, AlertTriangle, Filter, Paperclip } from 'lucide-react';
+import { CheckCircle2, Clock, AlertTriangle, Filter, Paperclip, Plus } from 'lucide-react';
 import { useState } from 'react';
 import { SEOTaskDetailDialog } from './SEOTaskDetailDialog';
+import { SEOCreateTaskDialog } from './SEOCreateTaskDialog';
 
 interface Props {
   organizationId: string | undefined;
@@ -20,6 +21,7 @@ type FilterStatus = 'active' | 'overdue' | 'completed' | 'all';
 export function SEOEngineTaskList({ organizationId }: Props) {
   const [statusFilter, setStatusFilter] = useState<FilterStatus>('active');
   const [selectedTask, setSelectedTask] = useState<any>(null);
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
 
   const statusMap: Record<FilterStatus, string[] | undefined> = {
     active: [...ACTIVE_TASK_STATES],
@@ -41,20 +43,33 @@ export function SEOEngineTaskList({ organizationId }: Props) {
 
   return (
     <div className="space-y-4">
-      {/* Status filter tabs */}
-      <div className="flex gap-2 flex-wrap">
-        {filters.map((f) => (
+      {/* Status filter tabs + Create button */}
+      <div className="flex items-center justify-between gap-2 flex-wrap">
+        <div className="flex gap-2 flex-wrap">
+          {filters.map((f) => (
+            <Button
+              key={f.key}
+              variant={statusFilter === f.key ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setStatusFilter(f.key)}
+              className="gap-1.5 font-sans"
+            >
+              <f.icon className="w-3.5 h-3.5" />
+              {f.label}
+            </Button>
+          ))}
+        </div>
+        {organizationId && (
           <Button
-            key={f.key}
-            variant={statusFilter === f.key ? 'default' : 'outline'}
             size="sm"
-            onClick={() => setStatusFilter(f.key)}
+            variant="outline"
             className="gap-1.5 font-sans"
+            onClick={() => setShowCreateDialog(true)}
           >
-            <f.icon className="w-3.5 h-3.5" />
-            {f.label}
+            <Plus className="w-3.5 h-3.5" />
+            Create Task
           </Button>
-        ))}
+        )}
       </div>
 
       {/* Task list */}
@@ -133,6 +148,15 @@ export function SEOEngineTaskList({ organizationId }: Props) {
         open={!!selectedTask}
         onOpenChange={(open) => { if (!open) setSelectedTask(null); }}
       />
+
+      {/* M6: Manual task creation dialog */}
+      {organizationId && (
+        <SEOCreateTaskDialog
+          organizationId={organizationId}
+          open={showCreateDialog}
+          onOpenChange={setShowCreateDialog}
+        />
+      )}
     </div>
   );
 }
