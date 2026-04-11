@@ -50,7 +50,7 @@ export function SEOEngineDashboard({ organizationId, onGoToTasks, onGoToCampaign
   return (
     <div className="space-y-6">
       {/* Overall Score */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
@@ -120,6 +120,29 @@ export function SEOEngineDashboard({ organizationId, onGoToTasks, onGoToCampaign
                 ) : (
                   <p className="text-2xl font-display tracking-wide">{campaigns.length}</p>
                 )}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <div className={tokens.card.iconBox}>
+                <DollarSign className="w-5 h-5 text-primary" />
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground font-sans">Revenue Attributed</p>
+                {revenueLoading ? (
+                  <Skeleton className="h-7 w-16 mt-1" />
+                ) : (
+                  <p className="text-2xl font-display tracking-wide">
+                    {totalAttributedRevenue > 0
+                      ? `$${totalAttributedRevenue >= 1000 ? `${(totalAttributedRevenue / 1000).toFixed(1)}k` : totalAttributedRevenue.toFixed(0)}`
+                      : '—'}
+                  </p>
+                )}
+                <p className="text-[10px] text-muted-foreground font-sans">30d rolling</p>
               </div>
             </div>
           </CardContent>
