@@ -73,6 +73,7 @@ const PaydayCountdownBanner = React.lazy(() => import('@/components/dashboard/my
 const InsightsNudgeBanner = React.lazy(() => import('@/components/dashboard/InsightsNudgeBanner').then(m => ({ default: m.InsightsNudgeBanner })));
 const ActiveCampaignsCard = React.lazy(() => import('@/components/dashboard/ActiveCampaignsCard').then(m => ({ default: m.ActiveCampaignsCard })));
 const InventoryManagerDashboardCard = React.lazy(() => import('@/components/dashboard/InventoryManagerDashboardCard').then(m => ({ default: m.InventoryManagerDashboardCard })));
+import { SEOMyTasksCard } from '@/components/dashboard/seo-workshop/SEOMyTasksCard';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 
 const ROLE_MESSAGES = {
@@ -686,6 +687,12 @@ function DashboardSections({
     inventory_manager: <InventoryManagerDashboardCard />,
     
     active_campaigns: isLeadership && <ActiveCampaignsCard />,
+
+    seo_my_tasks: (hasStylistRole || isFrontDesk) && (
+      <VisibilityGate elementKey="seo_my_tasks" elementName="My SEO Tasks" elementCategory="seo">
+        <SEOMyTasksCard organizationId={organizationId} />
+      </VisibilityGate>
+    ),
     
     widgets: <WidgetsSection />,
   }), [
