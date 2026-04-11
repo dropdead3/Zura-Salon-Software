@@ -91,6 +91,21 @@ export function SEOCampaignDetailDialog({ campaign, organizationId, open, onOpen
     return { total, completed, overdue, active, pct };
   }, [campaignTasks]);
 
+  // Group tasks by template for a goal-oriented checklist
+  const tasksByTemplate = useMemo(() => {
+    const groups: Record<string, { templateKey: string; label: string; total: number; done: number }> = {};
+    for (const t of campaignTasks as any[]) {
+      const key = t.template_key;
+      if (!groups[key]) {
+        const tmpl = SEO_TASK_TEMPLATES[key];
+        groups[key] = { templateKey: key, label: tmpl?.label ?? key, total: 0, done: 0 };
+      }
+      groups[key].total++;
+      if (t.status === 'completed') groups[key].done++;
+    }
+    return Object.values(groups);
+  }, [campaignTasks]);
+
   if (!campaign) return null;
 
   const handleTransition = async (newStatus: SEOCampaignStatus) => {
@@ -110,21 +125,6 @@ export function SEOCampaignDetailDialog({ campaign, organizationId, open, onOpen
   const daysRemaining = campaign.window_end
     ? Math.max(0, Math.ceil((new Date(campaign.window_end).getTime() - Date.now()) / 86400000))
     : null;
-
-  // Group tasks by template for a goal-oriented checklist
-  const tasksByTemplate = useMemo(() => {
-    const groups: Record<string, { templateKey: string; label: string; total: number; done: number }> = {};
-    for (const t of campaignTasks as any[]) {
-      const key = t.template_key;
-      if (!groups[key]) {
-        const tmpl = SEO_TASK_TEMPLATES[key];
-        groups[key] = { templateKey: key, label: tmpl?.label ?? key, total: 0, done: 0 };
-      }
-      groups[key].total++;
-      if (t.status === 'completed') groups[key].done++;
-    }
-    return Object.values(groups);
-  }, [campaignTasks]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
