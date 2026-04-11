@@ -1,11 +1,12 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { getServiceCategory, isVishServiceCharge } from '@/utils/serviceCategorization';
-import { resolveStaffNamesByPhorestIds } from '@/utils/resolveStaffNames';
+import { resolveStaffWithPhotosByPhorestIds } from '@/utils/resolveStaffNames';
 
 export interface CategoryStylistData {
   phorestStaffId: string;
   staffName: string;
+  photoUrl?: string | null;
   revenue: number;
   count: number;
   sharePercent: number;
@@ -65,7 +66,7 @@ export function useRevenueByCategoryDrilldown({
 
       // Get staff name mappings via centralized resolver
       const staffIds = [...new Set(allItems.map(a => a.phorest_staff_id).filter(Boolean))];
-      const staffNameMap = await resolveStaffNamesByPhorestIds(staffIds);
+      const staffInfoMap = await resolveStaffWithPhotosByPhorestIds(staffIds);
 
       // Aggregate by category → stylist
       const categoryMap: Record<string, {
@@ -174,7 +175,8 @@ export function useRevenueByCategoryDrilldown({
           stylists: Object.entries(data.stylists)
             .map(([staffId, s]) => ({
               phorestStaffId: staffId,
-              staffName: staffNameMap[staffId] || 'Unknown',
+              staffName: staffInfoMap[staffId]?.name || 'Unknown',
+              photoUrl: staffInfoMap[staffId]?.photoUrl || null,
               revenue: s.revenue,
               count: s.count,
               sharePercent: data.revenue > 0 ? Math.round((s.revenue / data.revenue) * 100) : 0,

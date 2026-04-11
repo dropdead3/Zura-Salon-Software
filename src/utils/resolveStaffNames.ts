@@ -50,6 +50,34 @@ export async function resolveStaffNamesByPhorestIds(
 }
 
 /**
+ * Resolve phorest_staff_ids to display names AND photo URLs.
+ * Used when the UI needs headshot photos alongside names.
+ */
+export async function resolveStaffWithPhotosByPhorestIds(
+  phorestStaffIds: string[]
+): Promise<Record<string, { name: string; photoUrl: string | null }>> {
+  if (phorestStaffIds.length === 0) return {};
+
+  const result: Record<string, { name: string; photoUrl: string | null }> = {};
+
+  const { data: mappings } = await supabase
+    .from('phorest_staff_mapping')
+    .select('phorest_staff_id, phorest_staff_name, employee_profiles!phorest_staff_mapping_user_id_fkey(display_name, full_name, photo_url)')
+    .in('phorest_staff_id', phorestStaffIds);
+
+  (mappings || []).forEach((m: any) => {
+    const ep = m.employee_profiles;
+    const name = ep
+      ? formatDisplayName(ep.full_name || '', ep.display_name)
+      : (m.phorest_staff_name ? formatDisplayName(m.phorest_staff_name) : 'Unknown');
+    const photoUrl = ep?.photo_url || null;
+    result[m.phorest_staff_id] = { name, photoUrl };
+  });
+
+  return result;
+}
+
+/**
  * Resolve a list of user_ids to display names using employee_profiles directly.
  * No dependency on phorest_staff_mapping — works fully standalone.
  */

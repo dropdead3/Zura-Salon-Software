@@ -4,7 +4,7 @@ import { ChevronDown, Layers, Calendar } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
-import { ZuraAvatar } from '@/components/ui/ZuraAvatar';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
@@ -79,7 +79,12 @@ function StylistRow({ stylist, delay, categoryName }: { stylist: CategoryStylist
         className="flex items-center gap-3 py-2 px-2 rounded-md hover:bg-muted/30 transition-colors cursor-pointer"
         onClick={() => setExpanded(!expanded)}
       >
-        <ZuraAvatar size="sm" />
+        <Avatar className="h-6 w-6">
+          {stylist.photoUrl && <AvatarImage src={stylist.photoUrl} alt={stylist.staffName} />}
+          <AvatarFallback className="text-[10px]">
+            {stylist.staffName?.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) || '?'}
+          </AvatarFallback>
+        </Avatar>
         <div className="flex-1 min-w-0">
           <p className="text-sm font-medium truncate">{stylist.staffName}</p>
           <p className="text-xs text-muted-foreground">
