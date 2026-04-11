@@ -125,6 +125,14 @@ export function SEOEngineTaskList({ organizationId }: Props) {
           })}
         </div>
       )}
+
+      {/* Task Detail Dialog */}
+      <SEOTaskDetailDialog
+        task={selectedTask}
+        organizationId={organizationId ?? ''}
+        open={!!selectedTask}
+        onOpenChange={(open) => { if (!open) setSelectedTask(null); }}
+      />
     </div>
   );
 }

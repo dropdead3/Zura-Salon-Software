@@ -9,3 +9,7 @@ export {
   calculateDueDate,
   calculateCooldownUntil,
 } from './seo-task-service';
+export {
+  computeContributionConfidence,
+  IMPACT_CATEGORY_LABELS,
+} from './seo-impact-tracker';
