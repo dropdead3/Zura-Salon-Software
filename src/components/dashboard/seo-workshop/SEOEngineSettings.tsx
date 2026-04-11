@@ -4,15 +4,95 @@ import { SEO_TASK_TEMPLATE_LIST } from '@/config/seo-engine/seo-task-templates';
 import { HEALTH_DOMAIN_LIST } from '@/config/seo-engine/seo-health-domains';
 import { tokens } from '@/lib/design-tokens';
 import { Badge } from '@/components/ui/badge';
-import { Settings2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
+import { useState } from 'react';
+import { Loader2, Play, RefreshCw, Zap } from 'lucide-react';
 
 interface Props {
   organizationId: string | undefined;
 }
 
 export function SEOEngineSettings({ organizationId }: Props) {
+  const [runningScans, setRunningScans] = useState<Set<string>>(new Set());
+
+  const runScan = async (functionName: string, label: string) => {
+    if (!organizationId) return;
+    setRunningScans((prev) => new Set(prev).add(functionName));
+    try {
+      const { data, error } = await supabase.functions.invoke(functionName, {
+        body: { organizationId },
+      });
+      if (error) throw new Error(error.message);
+      toast.success(`${label} complete`, {
+        description: JSON.stringify(data).slice(0, 120),
+      });
+    } catch (err) {
+      toast.error(`${label} failed`, {
+        description: err instanceof Error ? err.message : 'Unknown error',
+      });
+    } finally {
+      setRunningScans((prev) => {
+        const next = new Set(prev);
+        next.delete(functionName);
+        return next;
+      });
+    }
+  };
+
+  const isRunning = (fn: string) => runningScans.has(fn);
+
   return (
     <div className="space-y-6">
+      {/* Manual Scan Triggers */}
+      <Card>
+        <CardHeader>
+          <CardTitle className={tokens.card.title}>Engine Controls</CardTitle>
+          <CardDescription>Manually trigger SEO scans for this organization</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <Button
+              variant="outline"
+              className="justify-start gap-2 font-sans"
+              disabled={isRunning('seo-score-calculator') || !organizationId}
+              onClick={() => runScan('seo-score-calculator', 'Score calculation')}
+            >
+              {isRunning('seo-score-calculator') ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
+              Recalculate Health Scores
+            </Button>
+            <Button
+              variant="outline"
+              className="justify-start gap-2 font-sans"
+              disabled={isRunning('seo-daily-scan') || !organizationId}
+              onClick={() => runScan('seo-daily-scan', 'Daily scan')}
+            >
+              {isRunning('seo-daily-scan') ? <Loader2 className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4" />}
+              Run Daily Scan
+            </Button>
+            <Button
+              variant="outline"
+              className="justify-start gap-2 font-sans"
+              disabled={isRunning('seo-weekly-scan') || !organizationId}
+              onClick={() => runScan('seo-weekly-scan', 'Weekly scan')}
+            >
+              {isRunning('seo-weekly-scan') ? <Loader2 className="w-4 h-4 animate-spin" /> : <Zap className="w-4 h-4" />}
+              Run Weekly Scan
+            </Button>
+            <Button
+              variant="outline"
+              className="justify-start gap-2 font-sans"
+              disabled={isRunning('seo-monthly-scan') || !organizationId}
+              onClick={() => runScan('seo-monthly-scan', 'Monthly scan')}
+            >
+              {isRunning('seo-monthly-scan') ? <Loader2 className="w-4 h-4 animate-spin" /> : <Zap className="w-4 h-4" />}
+              Run Monthly Scan
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Quotas */}
       <Card>
         <CardHeader>
@@ -27,9 +107,7 @@ export function SEOEngineSettings({ organizationId }: Props) {
                   <p className="text-sm font-sans font-medium">{q.label}</p>
                   <p className="text-xs text-muted-foreground">{q.description}</p>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Badge variant="outline">{q.defaultTarget}/{q.period === 'weekly' ? 'wk' : 'mo'}</Badge>
-                </div>
+                <Badge variant="outline">{q.defaultTarget}/{q.period === 'weekly' ? 'wk' : 'mo'}</Badge>
               </div>
             ))}
           </div>
