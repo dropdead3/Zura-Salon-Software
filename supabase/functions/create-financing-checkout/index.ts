@@ -91,6 +91,17 @@ serve(async (req) => {
     if (!THRESHOLDS.allowedRisk.includes(riskLevel)) failures.push("Risk level too high");
     if (capital < THRESHOLDS.minCapitalRequired) failures.push("Capital below minimum");
 
+    // Zura-level exposure check: max concurrent funded projects
+    const { data: activeFunded } = await serviceClient
+      .from("financed_projects")
+      .select("id")
+      .eq("organization_id", organizationId)
+      .in("status", ["active", "pending_payment"]);
+
+    if (activeFunded && activeFunded.length >= 3) {
+      failures.push("Organization has reached maximum concurrent funded projects");
+    }
+
     if (failures.length > 0) {
       return new Response(JSON.stringify({ error: "Not eligible", reasons: failures }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -129,6 +140,7 @@ serve(async (req) => {
     const breakEvenMonths = opp.break_even_months ?? 12;
     const targetCompletion = new Date();
     targetCompletion.setMonth(targetCompletion.getMonth() + Number(breakEvenMonths));
+    const monthlyPayment = Math.round(capital / Number(breakEvenMonths));
 
     await serviceClient.from("financed_projects").insert({
       organization_id: organizationId,
@@ -144,6 +156,19 @@ serve(async (req) => {
       repayment_total: capital,
       repayment_remaining: capital,
       target_completion_at: targetCompletion.toISOString(),
+      funding_source: "stripe",
+      estimated_total_repayment: capital,
+      expected_monthly_payment: monthlyPayment,
+    });
+
+    // Log capital event
+    await serviceClient.from("capital_event_log").insert({
+      organization_id: organizationId,
+      user_id: user.id,
+      opportunity_id: opportunityId,
+      event_type: "initiated",
+      surface_area: "capital_queue",
+      metadata_json: { stripe_session_id: session.id },
     });
 
     return new Response(JSON.stringify({ url: session.url }), {
