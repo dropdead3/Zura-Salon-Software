@@ -8355,6 +8355,111 @@ export type Database = {
           },
         ]
       }
+      industry_benchmarks: {
+        Row: {
+          category: string
+          city: string | null
+          cohort_size: number
+          computed_at: string
+          created_at: string
+          id: string
+          metric_key: string
+          p25: number
+          p50: number
+          p75: number
+          p90: number
+          period: string
+        }
+        Insert: {
+          category: string
+          city?: string | null
+          cohort_size?: number
+          computed_at?: string
+          created_at?: string
+          id?: string
+          metric_key: string
+          p25?: number
+          p50?: number
+          p75?: number
+          p90?: number
+          period: string
+        }
+        Update: {
+          category?: string
+          city?: string | null
+          cohort_size?: number
+          computed_at?: string
+          created_at?: string
+          id?: string
+          metric_key?: string
+          p25?: number
+          p50?: number
+          p75?: number
+          p90?: number
+          period?: string
+        }
+        Relationships: []
+      }
+      industry_trend_signals: {
+        Row: {
+          category: string
+          city: string | null
+          cohort_size: number
+          computed_at: string
+          confidence: Database["public"]["Enums"]["trend_confidence"]
+          created_at: string
+          current_value: number
+          delta_pct: number
+          direction: Database["public"]["Enums"]["trend_direction"]
+          expires_at: string
+          id: string
+          insight_text: string | null
+          metric_key: string
+          period_end: string
+          period_start: string
+          previous_value: number
+          signal_type: Database["public"]["Enums"]["industry_signal_type"]
+        }
+        Insert: {
+          category: string
+          city?: string | null
+          cohort_size?: number
+          computed_at?: string
+          confidence?: Database["public"]["Enums"]["trend_confidence"]
+          created_at?: string
+          current_value?: number
+          delta_pct?: number
+          direction?: Database["public"]["Enums"]["trend_direction"]
+          expires_at?: string
+          id?: string
+          insight_text?: string | null
+          metric_key: string
+          period_end: string
+          period_start: string
+          previous_value?: number
+          signal_type: Database["public"]["Enums"]["industry_signal_type"]
+        }
+        Update: {
+          category?: string
+          city?: string | null
+          cohort_size?: number
+          computed_at?: string
+          confidence?: Database["public"]["Enums"]["trend_confidence"]
+          created_at?: string
+          current_value?: number
+          delta_pct?: number
+          direction?: Database["public"]["Enums"]["trend_direction"]
+          expires_at?: string
+          id?: string
+          insight_text?: string | null
+          metric_key?: string
+          period_end?: string
+          period_start?: string
+          previous_value?: number
+          signal_type?: Database["public"]["Enums"]["industry_signal_type"]
+        }
+        Relationships: []
+      }
       infrastructure_metrics: {
         Row: {
           id: string
@@ -26238,6 +26343,12 @@ export type Database = {
         | "shipped"
         | "delivered"
         | "cancelled"
+      industry_signal_type:
+        | "demand_shift"
+        | "keyword_trend"
+        | "price_signal"
+        | "effectiveness_pattern"
+        | "conversion_pattern"
       inquiry_source:
         | "website_form"
         | "google_business"
@@ -26347,6 +26458,8 @@ export type Database = {
         | "resolved"
         | "closed"
       touchpoint_type: "call" | "text" | "email" | "social" | "in_person"
+      trend_confidence: "low" | "medium" | "high"
+      trend_direction: "rising" | "stable" | "declining"
       waste_category:
         | "leftover_bowl_waste"
         | "overmix_waste"
@@ -26548,6 +26661,13 @@ export const Constants = {
         "delivered",
         "cancelled",
       ],
+      industry_signal_type: [
+        "demand_shift",
+        "keyword_trend",
+        "price_signal",
+        "effectiveness_pattern",
+        "conversion_pattern",
+      ],
       inquiry_source: [
         "website_form",
         "google_business",
@@ -26669,6 +26789,8 @@ export const Constants = {
         "closed",
       ],
       touchpoint_type: ["call", "text", "email", "social", "in_person"],
+      trend_confidence: ["low", "medium", "high"],
+      trend_direction: ["rising", "stable", "declining"],
       waste_category: [
         "leftover_bowl_waste",
         "overmix_waste",
