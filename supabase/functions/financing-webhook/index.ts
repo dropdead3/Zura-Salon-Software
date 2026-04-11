@@ -47,6 +47,18 @@ serve(async (req) => {
             funded_at: new Date().toISOString(),
           })
           .eq("stripe_checkout_session_id", session.id);
+
+        // Log funded event
+        if (meta.organization_id) {
+          await supabase.from("capital_event_log").insert({
+            organization_id: meta.organization_id,
+            user_id: meta.user_id ?? "00000000-0000-0000-0000-000000000000",
+            opportunity_id: meta.opportunity_id,
+            event_type: "funded",
+            surface_area: "capital_queue",
+            metadata_json: { stripe_session_id: session.id, amount: session.amount_total },
+          });
+        }
       }
     }
 
