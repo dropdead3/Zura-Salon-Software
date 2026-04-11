@@ -14,3 +14,18 @@ export {
   type ScenarioResult,
   type QueuedOpportunity,
 } from './capital-engine';
+
+export {
+  computeZOS,
+  evaluateHardFilters,
+  determineEligibility,
+  computeCapitalRecycling,
+  computePipelineSummary,
+  consistencyFromCV,
+  type ZOSInput,
+  type ZOSResult,
+  type HardFilterInput,
+  type LedgerEntry,
+  type CapitalRecyclingMetrics,
+  type PipelineSummary,
+} from './ownership-engine';
