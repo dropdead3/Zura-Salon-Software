@@ -12,6 +12,7 @@ export interface CategoryStylistData {
   newClients: number;
   returningClients: number;
   totalClients: number;
+  serviceDetails?: { serviceName: string; amount: number }[];
 }
 
 export interface CategoryBreakdownData {
@@ -47,7 +48,7 @@ export function useRevenueByCategoryDrilldown({
       while (hasMore) {
         let query = supabase
           .from('phorest_transaction_items')
-          .select('item_name, item_type, total_amount, tax_amount, phorest_staff_id, phorest_client_id, transaction_date')
+          .select('item_name, item_type, total_amount, tax_amount, phorest_staff_id, phorest_client_id, transaction_date, transaction_id')
           .gte('transaction_date', dateFrom)
           .lte('transaction_date', dateTo)
           .range(offset, offset + PAGE_SIZE - 1);
@@ -106,10 +107,14 @@ export function useRevenueByCategoryDrilldown({
           newClients: Set<string>;
           returningClients: Set<string>;
           allClients: Set<string>;
+          vishTransactionAmounts: { transactionId: string; amount: number }[];
         }>;
       }> = {};
 
       let totalRevenue = 0;
+
+      // Track Vish transaction IDs for service name resolution
+      const vishTransactionIds = new Set<string>();
 
       allItems.forEach(item => {
         const itemType = (item.item_type || '').toLowerCase();
@@ -140,6 +145,7 @@ export function useRevenueByCategoryDrilldown({
             newClients: new Set(),
             returningClients: new Set(),
             allClients: new Set(),
+            vishTransactionAmounts: [],
           };
         }
         const s = categoryMap[category].stylists[staffId];
@@ -151,7 +157,51 @@ export function useRevenueByCategoryDrilldown({
         } else {
           s.returningClients.add(clientKey);
         }
+
+        // Track Vish transaction IDs for service name lookup
+        if (isVish && item.transaction_id) {
+          vishTransactionIds.add(item.transaction_id);
+          s.vishTransactionAmounts.push({ transactionId: item.transaction_id, amount });
+        }
       });
+
+      // Batch-fetch service names for Vish transactions
+      const txServiceMap = new Map<string, string>();
+      if (vishTransactionIds.size > 0) {
+        const txIds = [...vishTransactionIds];
+        // Batch in chunks of 100 for the IN filter
+        for (let i = 0; i < txIds.length; i += 100) {
+          const batch = txIds.slice(i, i + 100);
+          const { data: svcItems } = await supabase
+            .from('phorest_transaction_items')
+            .select('transaction_id, item_name')
+            .in('transaction_id', batch)
+            .eq('item_type', 'service');
+          (svcItems || []).forEach((si: any) => {
+            // Take first service name per transaction
+            if (!txServiceMap.has(si.transaction_id)) {
+              txServiceMap.set(si.transaction_id, si.item_name);
+            }
+          });
+        }
+      }
+
+      // Populate serviceDetails on Chemical Overage Fees stylists
+      const overageData = categoryMap['Chemical Overage Fees'];
+      if (overageData) {
+        Object.values(overageData.stylists).forEach(s => {
+          // Build serviceDetails from vishTransactionAmounts
+          const detailMap = new Map<string, number>();
+          s.vishTransactionAmounts.forEach(({ transactionId, amount }) => {
+            const svcName = txServiceMap.get(transactionId) || 'Unknown Service';
+            detailMap.set(svcName, (detailMap.get(svcName) || 0) + amount);
+          });
+          (s as any).serviceDetails = [...detailMap.entries()].map(([serviceName, amt]) => ({
+            serviceName,
+            amount: amt,
+          })).sort((a, b) => b.amount - a.amount);
+        });
+      }
 
       // Convert to sorted array
       const result: CategoryBreakdownData[] = Object.entries(categoryMap)
@@ -170,6 +220,7 @@ export function useRevenueByCategoryDrilldown({
               newClients: s.newClients.size,
               returningClients: s.returningClients.size,
               totalClients: s.allClients.size,
+              serviceDetails: (s as any).serviceDetails as { serviceName: string; amount: number }[] | undefined,
             }))
             .sort((a, b) => b.revenue - a.revenue),
         }))
