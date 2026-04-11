@@ -12,6 +12,7 @@ export interface CategoryStylistData {
   newClients: number;
   returningClients: number;
   totalClients: number;
+  serviceDetails?: { serviceName: string; amount: number }[];
 }
 
 export interface CategoryBreakdownData {
