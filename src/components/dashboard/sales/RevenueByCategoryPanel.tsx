@@ -162,6 +162,8 @@ function CategoryRow({ category, index }: { category: CategoryBreakdownData; ind
   const color = colorMap[category.category.toLowerCase()]?.bg || FALLBACK_COLOR;
   const visibleStylists = showAll ? category.stylists : category.stylists.slice(0, MAX_VISIBLE);
   const hasMore = category.stylists.length > MAX_VISIBLE;
+  const isOverage = category.category === 'Chemical Overage Fees';
+  const catItemLabel = isOverage ? 'charge' : 'appointment';
 
   return (
     <motion.div
@@ -178,8 +180,6 @@ function CategoryRow({ category, index }: { category: CategoryBreakdownData; ind
         <div className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: color }} />
         <div className="flex-1 min-w-0">
           <span className="text-sm font-medium">{category.category}</span>
-        const isOverage = category.category === 'Chemical Overage Fees';
-        const catItemLabel = isOverage ? 'charge' : 'appointment';
           <p className="text-xs text-muted-foreground">
             {category.sharePercent}% · {category.count} {catItemLabel}{category.count !== 1 ? 's' : ''}
           </p>
