@@ -296,11 +296,11 @@ export function useSalesMetrics(filters: SalesFilters = {}) {
 
       // Build transaction items query for product revenue, tips, and POS transaction count
       const txItems = await fetchAllBatched<{
-        total_amount: number | null; tax_amount: number | null; item_type: string | null; tip_amount: number | null; phorest_client_id: string | null;
+        total_amount: number | null; tax_amount: number | null; item_type: string | null; item_name: string | null; tip_amount: number | null; phorest_client_id: string | null;
       }>((from, to) => {
         let q = supabase
           .from('phorest_transaction_items')
-          .select('total_amount, tax_amount, item_type, tip_amount, phorest_client_id')
+          .select('total_amount, tax_amount, item_type, item_name, tip_amount, phorest_client_id')
           .not('total_amount', 'is', null)
           .range(from, to);
 
@@ -460,10 +460,11 @@ export function useSalesByStylist(dateFrom?: string, dateTo?: string, locationId
         total_amount: number | null;
         tax_amount: number | null;
         item_type: string | null;
+        item_name: string | null;
       }>((from, to) => {
         let q = supabase
           .from('phorest_transaction_items')
-          .select('phorest_staff_id, total_amount, tax_amount, item_type')
+          .select('phorest_staff_id, total_amount, tax_amount, item_type, item_name')
           .not('phorest_staff_id', 'is', null)
           .not('total_amount', 'is', null)
           .range(from, to);
