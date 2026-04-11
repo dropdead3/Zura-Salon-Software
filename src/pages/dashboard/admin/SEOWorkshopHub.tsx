@@ -1,7 +1,7 @@
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { DashboardPageHeader } from '@/components/dashboard/DashboardPageHeader';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { BarChart3, ListTodo, Target, Layers, Settings2, BookOpen, Wrench } from 'lucide-react';
+import { BarChart3, ListTodo, Target, Layers, Settings2, BookOpen, TrendingUp } from 'lucide-react';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useState } from 'react';
 import { SEOEngineDashboard } from '@/components/dashboard/seo-workshop/SEOEngineDashboard';
@@ -11,6 +11,7 @@ import { SEOEngineObjects } from '@/components/dashboard/seo-workshop/SEOEngineO
 import { SEOEngineSettings } from '@/components/dashboard/seo-workshop/SEOEngineSettings';
 import { SEOWorkshopGuides } from '@/components/dashboard/seo-workshop/SEOWorkshopGuides';
 import { SEOWorkshopTools } from '@/components/dashboard/seo-workshop/SEOWorkshopTools';
+import { SEODashboardAnalytics } from '@/components/dashboard/seo-workshop/SEODashboardAnalytics';
 import { PageExplainer } from '@/components/ui/PageExplainer';
 
 export default function SEOWorkshopHub() {
