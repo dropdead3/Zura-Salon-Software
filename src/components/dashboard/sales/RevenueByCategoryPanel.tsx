@@ -178,8 +178,10 @@ function CategoryRow({ category, index }: { category: CategoryBreakdownData; ind
         <div className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: color }} />
         <div className="flex-1 min-w-0">
           <span className="text-sm font-medium">{category.category}</span>
+        const isOverage = category.category === 'Chemical Overage Fees';
+        const catItemLabel = isOverage ? 'charge' : 'appointment';
           <p className="text-xs text-muted-foreground">
-            {category.sharePercent}% · {category.count} appointment{category.count !== 1 ? 's' : ''}
+            {category.sharePercent}% · {category.count} {catItemLabel}{category.count !== 1 ? 's' : ''}
           </p>
         </div>
         <span className="text-base font-display tabular-nums">
