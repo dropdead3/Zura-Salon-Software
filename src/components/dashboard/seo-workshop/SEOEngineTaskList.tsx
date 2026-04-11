@@ -8,7 +8,8 @@ import { getPriorityTier, PRIORITY_TIERS } from '@/config/seo-engine/seo-priorit
 import { tokens } from '@/lib/design-tokens';
 import { Skeleton } from '@/components/ui/skeleton';
 import { CheckCircle2, Clock, AlertTriangle, Filter } from 'lucide-react';
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
+import { SEOTaskDetailDialog } from './SEOTaskDetailDialog';
 
 interface Props {
   organizationId: string | undefined;
