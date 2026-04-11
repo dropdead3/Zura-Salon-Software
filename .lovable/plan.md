@@ -1,129 +1,163 @@
 
 
-# Multi-Location Growth Orchestration Engine
+# Market Domination Mode
 
 ## What It Builds
 
-A portfolio-level optimization layer that ranks all location-service opportunities across an organization by ROI efficiency, assigns location priority states (Attack/Maintain/Recover/Deprioritized), allocates execution capacity to highest-value opportunities first, detects winning patterns for cross-location propagation, and surfaces a simplified Global Growth Dashboard.
+A category-level competitive intelligence layer that defines "Domination Targets" (city + service category + optional micro-market keywords), computes a 0–100 Domination Score per target, estimates visible market share, assigns strategy states (Attack/Expand/Defend/Abandon), generates multi-location Domination Campaigns, and provides a city-level momentum view. Sits on top of the Growth Orchestration Engine.
 
 ## Architecture
 
 ```text
-Revenue Predictor (per object)
+Domination Targets (city + service + keyword)
      │
-     ├── Effort Unit Weights (per template)
+     ├── Domination Score (0–100)
+     │   ├── Review Dominance (30%)
+     │   ├── Content Volume (20%)
+     │   ├── Page Strength (20%)
+     │   ├── Conversion Strength (15%)
+     │   └── Competitor Suppression (15%)
      │
-     ├── OES = Predicted Lift ÷ Effort Units
+     ├── Market Share Estimate
+     │   ├── Visible Share (review %, content %, ranking)
+     │   └── Revenue Share (bookings vs estimated demand)
      │
-     ├── Location Priority States (Attack/Maintain/Recover/Deprioritized)
+     ├── Strategy State (Attack/Expand/Defend/Abandon)
      │
-     ├── Capacity Allocation (role-based, global priority)
+     ├── Domination Campaigns (cross-location coordination)
      │
-     ├── Cross-Location Pattern Detection
-     │
-     └── Global Growth Dashboard
+     └── City-Level Momentum
 ```
+
+## Database Changes
+
+**New table: `seo_domination_targets`**
+- `id`, `organization_id`, `city`, `service_category`, `micro_market_keywords` (text[])
+- `is_active` (boolean, default true)
+- `created_at`, `updated_at`
+- RLS: org member read, org admin write
+
+**New table: `seo_domination_scores`**
+- `id`, `organization_id`, `target_id` (FK to domination_targets)
+- `domination_score` (0–100), `review_dominance` (0–100), `content_dominance` (0–100), `page_strength` (0–100), `conversion_strength` (0–100), `competitor_suppression` (0–100)
+- `visible_market_share` (numeric 0–1), `captured_revenue_share` (numeric 0–1)
+- `strategy_state` (enum: attack, expand, defend, abandon)
+- `contributing_location_ids` (text[]), `estimated_market_demand` (numeric)
+- `factors` (jsonb — breakdown detail), `scored_at`, `created_at`
+- RLS: org member read, org admin write
 
 ## New Files
 
 | File | Purpose |
 |---|---|
-| `src/lib/seo-engine/seo-growth-orchestrator.ts` | Pure computation: OES scoring, effort units, location priority state assignment, capacity allocation, cross-location pattern detection |
-| `src/hooks/useSEOGrowthOrchestration.ts` | Fetches predictions, tasks, momentum, locations; feeds orchestrator; returns ranked opportunities, location states, allocation plan |
-| `src/components/dashboard/seo-workshop/SEOGlobalGrowthDashboard.tsx` | Simplified global view: Network Revenue, Top Growth Driver, Biggest Opportunity, At Risk segment |
-| `src/components/dashboard/seo-workshop/SEOLocationPriorityCard.tsx` | Per-location priority state badges (Attack/Maintain/Recover/Deprioritized) with reasoning |
+| `src/lib/seo-engine/seo-domination-engine.ts` | Pure computation: Domination Score calculation (weighted components), strategy state assignment, market share estimation, city-level momentum aggregation, domination campaign generation |
+| `src/config/seo-engine/seo-domination-config.ts` | Score weight config, strategy state thresholds and labels, category stacking priority logic |
+| `src/hooks/useSEODomination.ts` | Queries domination targets + scores, composes with orchestration data |
+| `src/components/dashboard/seo-workshop/SEODominationDashboard.tsx` | Market overview card: targets with scores, strategy badges, market share bars, city momentum |
+| `src/components/dashboard/seo-workshop/SEODominationTargetCard.tsx` | Individual target detail: score breakdown radar, contributing locations, top actions |
+| `supabase/functions/seo-domination-score/index.ts` | Edge function: computes domination scores by aggregating health scores, revenue, review counts, and competitor data across locations for each target |
 
 ## Modified Files
 
 | File | Change |
 |---|---|
-| `src/lib/seo-engine/seo-revenue-predictor.ts` | Add effort unit constants export |
-| `src/lib/seo-engine/index.ts` | Export orchestrator functions |
-| `src/components/dashboard/seo-workshop/SEOEngineDashboard.tsx` | Add `SEOGlobalGrowthDashboard` card at top (above growth report) |
-| `src/config/seo-engine/index.ts` | No change needed — orchestrator is lib-only |
+| `src/components/dashboard/seo-workshop/SEOEngineDashboard.tsx` | Add `SEODominationDashboard` above Global Growth Orchestration |
+| `src/lib/seo-engine/index.ts` | Export domination engine functions |
+| `src/config/seo-engine/index.ts` | Export domination config |
 
 ## Core Computation Model
 
-### Effort Unit Weights (standardized per task type)
-| Template | Effort Units |
-|---|---|
-| `review_request` | 1 |
-| `review_response` | 1 |
-| `photo_upload` | 2 |
-| `gbp_post` | 2 |
-| `metadata_fix` | 1 |
-| `internal_linking` | 2 |
-| `faq_expansion` | 3 |
-| `service_description_rewrite` | 3 |
-| `booking_cta_optimization` | 2 |
-| `before_after_publish` | 3 |
-| `page_completion` | 5 |
-| `local_landing_page_creation` | 8 |
-| `content_refresh` | 4 |
-| `service_page_update` | 3 |
-| `competitor_gap_response` | 5 |
-| `stylist_spotlight_publish` | 4 |
+### Domination Score (0–100)
 
-### OES Formula
-```
-OES = Predicted Revenue Lift (expected) ÷ Total Effort Units (pending tasks)
-```
-Higher OES = more revenue per unit of effort = prioritize first.
-
-### Location Priority States
-Assigned per location based on aggregate OES, momentum, and risk:
-
-| State | Criteria | Behavior |
+| Component | Weight | Source |
 |---|---|---|
-| **Attack** | High OES (top 25%), gaining or holding momentum | Aggressive task generation + full autonomy |
-| **Maintain** | Moderate OES, stable momentum | Minimal tasks, hold position |
-| **Recover** | Negative momentum, moderate+ OES | Targeted intervention, focused task assignment |
-| **Deprioritized** | Low OES (bottom 25%), low opportunity | Minimal effort, shift resources to higher ROI |
+| Review Dominance | 30% | Aggregate review count + velocity across org locations vs competitors in same city-service |
+| Content Volume | 20% | Page count, word count, FAQ coverage, before/after content for this service-city |
+| Page Strength | 20% | Average `page` health score across contributing SEO objects |
+| Conversion Strength | 15% | Average `conversion` health score across contributing SEO objects |
+| Competitor Suppression | 15% | Inverse of competitor gap scores (high gap = low suppression) |
 
-### Capacity Allocation
-Given org members with roles and task caps:
-1. Sort all pending tasks globally by parent object OES (descending)
-2. For each task, find eligible assignees (using existing assignment resolver)
-3. Assign until member reaches their task cap
-4. Centralized roles (marketing admin) get assigned across location boundaries based on global OES rank
-5. Location-bound roles (stylists) only get tasks for their assigned location
+### Strategy State Assignment
 
-### Cross-Location Pattern Detection
-Pure pattern matching (no AI):
-1. For each template key, compute average effectiveness score across locations where tasks of that type were completed
-2. If a template has effectiveness > threshold at Location A but hasn't been deployed at Location B (same service category), flag as "Winning Pattern" for propagation
-3. Store as a lightweight in-memory computation — no new DB table needed
+| State | Criteria | Icon/Color |
+|---|---|---|
+| **Defend** | Score ≥ 80, momentum gaining or holding | Shield / blue |
+| **Expand** | Score 60–79, momentum gaining | TrendingUp / green |
+| **Attack** | Score 40–79, momentum not losing, estimated demand high | Zap / amber |
+| **Abandon** | Score < 40 AND estimated demand low relative to other targets | Pause / muted |
 
-## UI: Global Growth Dashboard
+### Market Share Estimation
 
-A compact card at the top of the SEO Engine Dashboard:
+- **Visible share**: `org_review_count / (org_review_count + competitor_review_count)` for this city-service. Supplemented by content volume ratio.
+- **Revenue share**: `org_attributed_revenue / estimated_market_demand`. Market demand estimated from: review volume × avg ticket × conversion factor (configurable).
+
+### City-Level Momentum
+
+Aggregates momentum scores from all SEO objects in a city, weighted by revenue contribution. Output: per-city directional signal.
+
+### Domination Campaigns
+
+When a target is in Attack or Expand state with sufficient opportunity, the engine generates a cross-location campaign bundle:
+- Identifies which locations contribute to this target
+- Distributes tasks based on each location's weakness (one gets reviews, another gets content)
+- Sets a 60–90 day window with milestone checkpoints
+- Links to existing `seo_campaigns` table for execution
+
+### Category Stacking
+
+After a target reaches Defend state (score ≥ 80), the system identifies the next highest-opportunity target in the same city and recommends shifting resources. Surfaced as a "Next Target" directive.
+
+## UI: Domination Dashboard
 
 ```text
 ┌─────────────────────────────────────────────────┐
-│ NETWORK GROWTH OVERVIEW                         │
+│ MARKET DOMINATION                               │
 │                                                 │
-│ Total Network Revenue    Top Growth Driver       │
-│ $182,400 (+12%)         Mesa Blonding (+$6,200) │
+│ Phoenix                                         │
+│ ┌─────────────────────────────────────────────┐ │
+│ │ Hair Extensions        Score: 62  ATTACK    │ │
+│ │ Market Share: ~18%  ·  +$42,000 opportunity │ │
+│ │ Mesa + Gilbert contributing                 │ │
+│ │ "2–3 weeks from controlling this category"  │ │
+│ ├─────────────────────────────────────────────┤ │
+│ │ Blonding               Score: 38  EXPAND    │ │
+│ │ Market Share: ~8%   ·  +$28,000 opportunity │ │
+│ │ "Build after Extensions is won"             │ │
+│ └─────────────────────────────────────────────┘ │
 │                                                 │
-│ Biggest Opportunity      At Risk                │
-│ Gilbert Extensions       Tempe Color            │
-│ +$8,200 available        ↓ Losing momentum      │
-│                                                 │
-│ Focus: "Mesa Blonding — highest ROI this week"  │
+│ Scottsdale                                      │
+│ ┌─────────────────────────────────────────────┐ │
+│ │ Extensions             Score: 45  ATTACK    │ │
+│ └─────────────────────────────────────────────┘ │
 └─────────────────────────────────────────────────┘
 ```
 
-Below that, a `SEOLocationPriorityCard` shows each location with its priority state badge and top opportunity.
+## Edge Function: `seo-domination-score`
 
-## No Database Changes
-All orchestration logic is pure client-side computation over existing data (predictions, momentum, tasks, revenue). No new tables or migrations needed.
+Triggered by daily scan or on-demand. For each active domination target:
+1. Find all `seo_objects` matching the target's service category + city (via location addresses)
+2. Aggregate health scores across contributing objects (review, page, content, conversion, competitive_gap domains)
+3. Sum review counts and content metrics from `seo_health_scores.raw_signals`
+4. Compute competitor totals from `competitor` type SEO objects
+5. Calculate domination score components + market share estimates
+6. Assign strategy state
+7. Upsert into `seo_domination_scores`
 
 ## Build Order
-1. `seo-growth-orchestrator.ts` — effort units, OES, location states, allocation, patterns
-2. Add effort unit exports to `seo-revenue-predictor.ts`
-3. `useSEOGrowthOrchestration.ts` — hook composing predictions + momentum + tasks
-4. `SEOGlobalGrowthDashboard.tsx` — network overview card
-5. `SEOLocationPriorityCard.tsx` — location state display
-6. Wire into `SEOEngineDashboard.tsx`
-7. Update `src/lib/seo-engine/index.ts` exports
+
+1. DB migration (new tables + enum)
+2. `seo-domination-config.ts` (weights, thresholds, strategy labels)
+3. `seo-domination-engine.ts` (pure scoring + strategy + campaign generation)
+4. `seo-domination-score` edge function
+5. `useSEODomination.ts` hook
+6. `SEODominationDashboard.tsx` + `SEODominationTargetCard.tsx`
+7. Wire into `SEOEngineDashboard.tsx`
+8. Export updates
+
+## Technical Notes
+
+- All scoring is deterministic — AI used only for generating campaign copy and directive explanations
+- Domination targets are manually defined by org admins (or auto-suggested from existing `location_service` SEO objects)
+- Integrates with existing Growth Orchestration: domination strategy influences OES weighting
+- No cross-organization data exposure — competitor data is org-scoped estimates
 
