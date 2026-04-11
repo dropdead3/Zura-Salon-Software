@@ -112,9 +112,10 @@ async function getAllActiveOrgs(supabase: ReturnType<typeof createClient>) {
 async function runDailyScan(
   supabase: ReturnType<typeof createClient>,
   organizationId: string
-): Promise<{ escalated: number; tasksGenerated: number }> {
+): Promise<{ escalated: number; tasksGenerated: number; revenueSnapshots: number }> {
   let escalated = 0;
   let tasksGenerated = 0;
+  let revenueSnapshots = 0;
 
   // ─── 1. Escalate overdue tasks ───
   escalated = await escalateOverdueTasks(supabase, organizationId);
@@ -135,7 +136,10 @@ async function runDailyScan(
   const responseTasks = await detectUnrespondedReviews(supabase, organizationId);
   tasksGenerated += responseTasks;
 
-  return { escalated, tasksGenerated };
+  // ─── 6. Revenue attribution snapshot ───
+  revenueSnapshots = await computeRevenueSnapshot(supabase, organizationId);
+
+  return { escalated, tasksGenerated, revenueSnapshots };
 }
 
 // ═══════════════════════════════════════════════════════════════════════
