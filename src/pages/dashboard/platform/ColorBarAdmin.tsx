@@ -11,10 +11,11 @@ import { ColorBarBillingTab } from '@/components/platform/color-bar/ColorBarBill
 import { CoachPerformanceTab } from '@/components/platform/color-bar/CoachPerformanceTab';
 import { RefundHistoryTab } from '@/components/platform/color-bar/RefundHistoryTab';
 import { DockAppTab } from '@/components/platform/color-bar/DockAppTab';
+import { SupplyChainDashboard } from '@/components/dashboard/vertical-integration/SupplyChainDashboard';
 import { cn } from '@/lib/utils';
 import {
   ClipboardList, Database, Building2, Package, BarChart3,
-  CreditCard, Users2, ReceiptText, BoxIcon, Tablet,
+  CreditCard, Users2, ReceiptText, BoxIcon, Tablet, Link2,
   type LucideIcon,
 } from 'lucide-react';
 import { PageExplainer } from '@/components/ui/PageExplainer';
@@ -53,6 +54,7 @@ const navGroups: NavGroup[] = [
       { value: 'coach-performance', label: 'Coach Performance', icon: Users2 },
       { value: 'refund-history', label: 'Refund History', icon: ReceiptText },
       { value: 'hardware-orders', label: 'Hardware Orders', icon: BoxIcon },
+      { value: 'supply-chain', label: 'Supply Chain', icon: Link2 },
     ],
   },
   {
@@ -74,6 +76,7 @@ const panels: Record<string, React.ReactNode> = {
   'refund-history': <RefundHistoryTab />,
   'hardware-orders': <HardwareOrdersTab />,
   'dock-app': <DockAppTab />,
+  'supply-chain': <SupplyChainDashboard organizationId={undefined} />,
 };
 
 export default function ColorBarAdmin() {
