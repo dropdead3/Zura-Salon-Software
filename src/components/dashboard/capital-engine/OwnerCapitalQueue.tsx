@@ -14,6 +14,8 @@ import {
 import { Landmark, ArrowRight, ShieldCheck } from 'lucide-react';
 import type { OpportunityType } from '@/config/capital-engine/zura-capital-config';
 
+function c(cents: number): number { return cents / 100; }
+
 export function OwnerCapitalQueue() {
   const { opportunities, isLoading } = useZuraCapital();
   const logEvent = useLogCapitalEvent();
@@ -25,7 +27,7 @@ export function OwnerCapitalQueue() {
     setDetailOpen(true);
     logEvent.mutate({
       opportunityId: opp.id,
-      eventType: 'viewed',
+      eventType: 'opportunity_viewed',
       surfaceArea: 'capital_queue',
     });
   };
@@ -70,7 +72,6 @@ export function OwnerCapitalQueue() {
         <CardContent>
           {/* Desktop Table */}
           <div className="hidden lg:block space-y-1">
-            {/* Column Headers */}
             <div className="grid grid-cols-[1fr_100px_100px_70px_70px_70px_90px_40px] gap-2 px-3 py-2 text-xs text-muted-foreground font-sans">
               <span>Opportunity</span>
               <span className="text-right">Investment</span>
@@ -101,26 +102,21 @@ export function OwnerCapitalQueue() {
                         <ShieldCheck className="w-3 h-3 text-muted-foreground/40 shrink-0" />
                       )}
                     </div>
-                    <div className="flex items-center gap-1.5 mt-0.5">
-                      <span className="text-[10px] text-muted-foreground font-sans">
-                        {OPPORTUNITY_TYPE_LABELS[opp.opportunityType as OpportunityType] ?? opp.opportunityType}
-                      </span>
-                      {opp.city && (
-                        <span className="text-[10px] text-muted-foreground/60 font-sans">· {opp.city}</span>
-                      )}
-                    </div>
+                    <span className="text-[10px] text-muted-foreground font-sans">
+                      {OPPORTUNITY_TYPE_LABELS[opp.opportunityType as OpportunityType] ?? opp.opportunityType}
+                    </span>
                   </div>
                   <span className="font-sans text-sm text-right">
-                    {formatCurrency(opp.capitalRequired, { noCents: true })}
+                    {formatCurrency(c(opp.investmentCents), { noCents: true })}
                   </span>
                   <span className="font-sans text-sm text-right">
-                    +{formatCurrency(opp.predictedAnnualLift, { noCents: true })}
+                    +{formatCurrency(c(opp.predictedLiftExpectedCents), { noCents: true })}
                   </span>
                   <span className={`font-display text-sm text-right tracking-wide ${opp.roe >= 1.8 ? 'text-primary' : ''}`}>
                     {opp.roe.toFixed(1)}x
                   </span>
                   <span className="font-sans text-sm text-right">
-                    {opp.breakEvenMonths}mo
+                    {opp.breakEvenMonthsExpected}mo
                   </span>
                   <span className="font-sans text-xs text-right capitalize text-muted-foreground">
                     {opp.riskLevel}
@@ -159,12 +155,12 @@ export function OwnerCapitalQueue() {
                     </Badge>
                   </div>
                   <div className="flex items-center gap-4 text-xs text-muted-foreground font-sans">
-                    <span>{formatCurrency(opp.capitalRequired, { noCents: true })}</span>
-                    <span>+{formatCurrency(opp.predictedAnnualLift, { noCents: true })}</span>
+                    <span>{formatCurrency(c(opp.investmentCents), { noCents: true })}</span>
+                    <span>+{formatCurrency(c(opp.predictedLiftExpectedCents), { noCents: true })}</span>
                     <span className={opp.roe >= 1.8 ? 'text-primary font-display tracking-wide' : 'font-display tracking-wide'}>
                       {opp.roe.toFixed(1)}x
                     </span>
-                    <span>{opp.breakEvenMonths}mo</span>
+                    <span>{opp.breakEvenMonthsExpected}mo</span>
                   </div>
                 </div>
               );
