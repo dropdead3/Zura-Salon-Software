@@ -43,20 +43,33 @@ export function SEOEngineTaskList({ organizationId }: Props) {
 
   return (
     <div className="space-y-4">
-      {/* Status filter tabs */}
-      <div className="flex gap-2 flex-wrap">
-        {filters.map((f) => (
+      {/* Status filter tabs + Create button */}
+      <div className="flex items-center justify-between gap-2 flex-wrap">
+        <div className="flex gap-2 flex-wrap">
+          {filters.map((f) => (
+            <Button
+              key={f.key}
+              variant={statusFilter === f.key ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setStatusFilter(f.key)}
+              className="gap-1.5 font-sans"
+            >
+              <f.icon className="w-3.5 h-3.5" />
+              {f.label}
+            </Button>
+          ))}
+        </div>
+        {organizationId && (
           <Button
-            key={f.key}
-            variant={statusFilter === f.key ? 'default' : 'outline'}
             size="sm"
-            onClick={() => setStatusFilter(f.key)}
+            variant="outline"
             className="gap-1.5 font-sans"
+            onClick={() => setShowCreateDialog(true)}
           >
-            <f.icon className="w-3.5 h-3.5" />
-            {f.label}
+            <Plus className="w-3.5 h-3.5" />
+            Create Task
           </Button>
-        ))}
+        )}
       </div>
 
       {/* Task list */}
