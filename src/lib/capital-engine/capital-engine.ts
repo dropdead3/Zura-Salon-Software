@@ -126,7 +126,7 @@ export function computeRisk(input: RiskInput): RiskResult {
   let weightedSum = 0;
 
   for (const def of RISK_FACTORS) {
-    const raw = clamp((input as Record<string, number>)[def.key] ?? 0, 0, 1);
+    const raw = clamp((input as unknown as Record<string, number>)[def.key] ?? 0, 0, 1);
     const score = Math.round(raw * 100);
     factors[def.key] = score;
     weightedSum += score * def.weight;
