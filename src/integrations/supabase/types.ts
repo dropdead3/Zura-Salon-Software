@@ -18820,6 +18820,122 @@ export type Database = {
           },
         ]
       }
+      seo_domination_scores: {
+        Row: {
+          captured_revenue_share: number
+          competitor_suppression: number
+          content_dominance: number
+          contributing_location_ids: string[]
+          conversion_strength: number
+          created_at: string
+          domination_score: number
+          estimated_market_demand: number
+          factors: Json | null
+          id: string
+          organization_id: string
+          page_strength: number
+          review_dominance: number
+          scored_at: string
+          strategy_state: Database["public"]["Enums"]["seo_domination_strategy"]
+          target_id: string
+          visible_market_share: number
+        }
+        Insert: {
+          captured_revenue_share?: number
+          competitor_suppression?: number
+          content_dominance?: number
+          contributing_location_ids?: string[]
+          conversion_strength?: number
+          created_at?: string
+          domination_score?: number
+          estimated_market_demand?: number
+          factors?: Json | null
+          id?: string
+          organization_id: string
+          page_strength?: number
+          review_dominance?: number
+          scored_at?: string
+          strategy_state?: Database["public"]["Enums"]["seo_domination_strategy"]
+          target_id: string
+          visible_market_share?: number
+        }
+        Update: {
+          captured_revenue_share?: number
+          competitor_suppression?: number
+          content_dominance?: number
+          contributing_location_ids?: string[]
+          conversion_strength?: number
+          created_at?: string
+          domination_score?: number
+          estimated_market_demand?: number
+          factors?: Json | null
+          id?: string
+          organization_id?: string
+          page_strength?: number
+          review_dominance?: number
+          scored_at?: string
+          strategy_state?: Database["public"]["Enums"]["seo_domination_strategy"]
+          target_id?: string
+          visible_market_share?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "seo_domination_scores_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "seo_domination_scores_target_id_fkey"
+            columns: ["target_id"]
+            isOneToOne: false
+            referencedRelation: "seo_domination_targets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      seo_domination_targets: {
+        Row: {
+          city: string
+          created_at: string
+          id: string
+          is_active: boolean
+          micro_market_keywords: string[]
+          organization_id: string
+          service_category: string
+          updated_at: string
+        }
+        Insert: {
+          city: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          micro_market_keywords?: string[]
+          organization_id: string
+          service_category: string
+          updated_at?: string
+        }
+        Update: {
+          city?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          micro_market_keywords?: string[]
+          organization_id?: string
+          service_category?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "seo_domination_targets_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       seo_engine_settings: {
         Row: {
           created_at: string
@@ -26185,6 +26301,7 @@ export type Database = {
         | "abandoned"
       seo_completion_method: "system" | "manual_approved"
       seo_dependency_type: "hard" | "soft"
+      seo_domination_strategy: "attack" | "expand" | "defend" | "abandon"
       seo_health_domain:
         | "review"
         | "page"
@@ -26501,6 +26618,7 @@ export const Constants = {
       ],
       seo_completion_method: ["system", "manual_approved"],
       seo_dependency_type: ["hard", "soft"],
+      seo_domination_strategy: ["attack", "expand", "defend", "abandon"],
       seo_health_domain: [
         "review",
         "page",
