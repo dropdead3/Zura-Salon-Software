@@ -83,18 +83,18 @@ export function getCareerStage(key: string) {
   return CAREER_STAGES[key as CareerStageKey] ?? CAREER_STAGES.stylist;
 }
 
-/* ── SPI Tier Thresholds ── */
-export const SPI_TIERS = {
+/* ── Stylist SPI Tier Thresholds ── */
+export const STYLIST_SPI_TIERS = {
   elite: { min: 85, label: 'Elite', color: 'text-green-500' },
   high: { min: 70, label: 'High Performer', color: 'text-blue-500' },
   growth: { min: 50, label: 'Growth', color: 'text-amber-500' },
   underperforming: { min: 0, label: 'Developing', color: 'text-muted-foreground' },
 } as const;
 
-export function getSPITierKey(score: number): keyof typeof SPI_TIERS {
-  if (score >= SPI_TIERS.elite.min) return 'elite';
-  if (score >= SPI_TIERS.high.min) return 'high';
-  if (score >= SPI_TIERS.growth.min) return 'growth';
+export function getSPITierKey(score: number): keyof typeof STYLIST_SPI_TIERS {
+  if (score >= STYLIST_SPI_TIERS.elite.min) return 'elite';
+  if (score >= STYLIST_SPI_TIERS.high.min) return 'high';
+  if (score >= STYLIST_SPI_TIERS.growth.min) return 'growth';
   return 'underperforming';
 }
 
