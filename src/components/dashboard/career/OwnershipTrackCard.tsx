@@ -29,7 +29,7 @@ export function OwnershipTrackCard({
 
   const spi = spiScore ?? 0;
   const tierKey = getSPITierKey(spi);
-  const tier = SPI_TIERS[tierKey];
+  const tier = STYLIST_SPI_TIERS[tierKey];
 
   const progressPct = Math.min(100, Math.round(((currentIdx + 1) / CAREER_STAGES_ORDERED.length) * 100));
 

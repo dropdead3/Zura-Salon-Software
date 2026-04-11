@@ -25,7 +25,7 @@ const COMPONENTS = [
 
 export function StylistSPICard(props: Props) {
   const tierKey = getSPITierKey(props.spiScore);
-  const tier = SPI_TIERS[tierKey];
+  const tier = STYLIST_SPI_TIERS[tierKey];
 
   return (
     <Card className={tokens.card.wrapper}>
