@@ -1,5 +1,7 @@
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Link } from 'react-router-dom';
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { tokens } from '@/lib/design-tokens';
 import { formatCurrency } from '@/lib/format';
@@ -10,10 +12,12 @@ import {
   ACTIVATION_STATUS_LABELS,
 } from '@/config/capital-engine/zura-capital-config';
 import { Banknote } from 'lucide-react';
+import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 
 function c(cents: number): number { return cents / 100; }
 
 export function FinancedProjectsTracker() {
+  const { dashPath } = useOrgDashboardPath();
   const { data: projects = [], isLoading } = useCapitalProjects(
     ['active', 'on_track', 'above_forecast', 'below_forecast', 'at_risk'],
   );
@@ -129,6 +133,11 @@ export function FinancedProjectsTracker() {
           );
         })}
       </CardContent>
+      <CardFooter className="pt-0 pb-3 px-6">
+        <Button variant="ghost" size="sm" className={`${tokens.button.cardFooter} font-sans text-xs`} asChild>
+          <Link to={dashPath('/admin/capital/projects')}>View All Funded Projects</Link>
+        </Button>
+      </CardFooter>
     </Card>
   );
 }

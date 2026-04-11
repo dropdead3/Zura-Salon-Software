@@ -93,6 +93,7 @@ export const DEFAULT_LINK_ORDER: Record<string, string[]> = {
   ],
   ops: [
     '/dashboard/admin/team-hub',
+    '/dashboard/admin/capital',
   ],
   data: [
     '/dashboard/admin/analytics',

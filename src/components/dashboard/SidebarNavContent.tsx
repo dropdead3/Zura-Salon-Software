@@ -15,7 +15,7 @@ import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { ExternalLink, Rocket, TrendingUp, Users, LayoutGrid, Briefcase, ArrowLeft, Shield, FlaskConical, PanelLeftClose, ChevronRight } from 'lucide-react';
+import { ExternalLink, Rocket, TrendingUp, Users, LayoutGrid, Briefcase, ArrowLeft, Shield, FlaskConical, PanelLeftClose, ChevronRight, Landmark } from 'lucide-react';
 import { NavBadge } from './NavBadge';
 import { OrganizationLogo } from '@/components/brand/OrganizationLogo';
 import { SidebarAnnouncementsWidget } from './SidebarAnnouncementsWidget';
@@ -147,7 +147,10 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
   const sectionItemsMap = useMemo(() => ({
     main: mainNavItems,
     myTools: [...growthNavItems, ...statsNavItems].filter((item, index, arr) => arr.findIndex(i => i.href === item.href) === index),
-    ops: managerNavItems.filter(item => item.href.includes('team-hub')),
+    ops: [
+      ...managerNavItems.filter(item => item.href.includes('team-hub')),
+      { href: dashPath('/admin/capital'), label: 'Zura Capital', icon: Landmark, permission: 'view_team_overview' },
+    ],
     data: managerNavItems.filter(item => item.href.includes('analytics') || item.href.includes('reports')),
     apps: appsNavItemsProp,
     system: adminOnlyNavItems,
