@@ -1,43 +1,34 @@
 
 
-# Simplify Stylist Drilldown — Remove Progress Bars, Show Clean Details
+# Stylist Headshot Photos in Revenue by Category Drilldown
 
 ## Problem
-The expanded stylist rows in the Revenue by Category drilldown show a client mix panel with New/Returning counts and a progress bar. This is noisy and not the most useful detail at this level. The user wants a cleaner drilldown: stylist, appointment details, dollar amounts — no progress bars.
+The stylist rows in the Revenue by Category drilldown use the generic `ZuraAvatar` (Zura Z icon) instead of actual stylist headshot photos. The `employee_profiles` table has a `photo_url` field that should be used.
 
 ## Approach
 
-Replace the `ClientMixPanel` (progress bar + new/returning breakdown) with a cleaner **appointment detail list** showing the individual services performed by that stylist in this category, with amounts. This gives actual operational insight instead of a redundant client mix visualization.
+Thread `photo_url` from the staff resolver through to the UI component.
 
 ## Changes
 
-### File: `src/hooks/useRevenueByCategoryDrilldown.ts`
+### 1. `src/utils/resolveStaffNames.ts`
+- Update `resolveStaffNamesByPhorestIds` to also select `photo_url` from the `employee_profiles` join
+- Return `Record<string, { name: string; photoUrl: string | null }>` instead of `Record<string, string>` — or add a parallel map `Record<string, string | null>` for photos
+- To avoid breaking all other consumers of this function, add a **new export** `resolveStaffWithPhotosByPhorestIds` that returns `Record<string, { name: string; photoUrl: string | null }>`
 
-- Already fetches `item_name` and `transaction_date` per item — need to pass individual item details through to the stylist data
-- Add `items?: { itemName: string; amount: number; date: string }[]` to `CategoryStylistData`
-- In the aggregation loop, collect individual items per stylist per category (name, amount, date)
-- Sort items by date descending within each stylist
+### 2. `src/hooks/useRevenueByCategoryDrilldown.ts`
+- Import the new `resolveStaffWithPhotosByPhorestIds` instead of `resolveStaffNamesByPhorestIds`
+- Add `photoUrl?: string | null` to `CategoryStylistData`
+- Populate `photoUrl` from the resolver result when building stylist entries
 
-### File: `src/components/dashboard/sales/RevenueByCategoryPanel.tsx`
-
-- **Remove** the `ClientMixPanel` component entirely (progress bar, new/returning counts)
-- **Replace** with a clean `StylistItemsPanel` that shows:
-  - Each service/item name on the left
-  - Date on the left (subtle, below name)
-  - Dollar amount on the right
-  - Clean list layout with subtle dividers, no progress bars
-- Keep the `ServiceDetailsPanel` for Chemical Overage Fees (already clean)
-- Remove `newClients`, `returningClients`, `totalClients` references from stylist rows since they're no longer displayed
-- Keep the stylist summary line: count + share percent
-
-### Visual Result
-- Stylist row: Avatar + Name + "3 appointments · 42% of category" + $amount + chevron
-- Expanded: Clean list of individual items with date and amount — no bars, no client mix
-- Chemical Overage Fees: continues to show associated service names (already correct)
+### 3. `src/components/dashboard/sales/RevenueByCategoryPanel.tsx`
+- In `StylistRow`, replace `<ZuraAvatar size="sm" />` with a proper `Avatar` + `AvatarImage` + `AvatarFallback` pattern (matching existing usage across the app)
+- Show the headshot photo when `stylist.photoUrl` is available; fall back to initials
 
 ### Files Modified
 | File | Change |
 |---|---|
-| `src/hooks/useRevenueByCategoryDrilldown.ts` | Add per-item details array to stylist data |
-| `src/components/dashboard/sales/RevenueByCategoryPanel.tsx` | Remove `ClientMixPanel`, replace with `StylistItemsPanel` showing individual service items with dates and amounts |
+| `src/utils/resolveStaffNames.ts` | Add `resolveStaffWithPhotosByPhorestIds` that returns names + photo URLs |
+| `src/hooks/useRevenueByCategoryDrilldown.ts` | Use new resolver, add `photoUrl` to `CategoryStylistData` |
+| `src/components/dashboard/sales/RevenueByCategoryPanel.tsx` | Replace `ZuraAvatar` with `Avatar`/`AvatarImage`/`AvatarFallback` using `stylist.photoUrl` |
 
