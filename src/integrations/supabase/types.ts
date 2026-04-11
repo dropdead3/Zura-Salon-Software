@@ -7181,6 +7181,7 @@ export type Database = {
           roe_score: number
           service_category: string | null
           spi_at_creation: number | null
+          staff_user_id: string | null
           status: Database["public"]["Enums"]["expansion_status"]
           title: string
           updated_at: string
@@ -7202,6 +7203,7 @@ export type Database = {
           roe_score?: number
           service_category?: string | null
           spi_at_creation?: number | null
+          staff_user_id?: string | null
           status?: Database["public"]["Enums"]["expansion_status"]
           title: string
           updated_at?: string
@@ -7223,6 +7225,7 @@ export type Database = {
           roe_score?: number
           service_category?: string | null
           spi_at_creation?: number | null
+          staff_user_id?: string | null
           status?: Database["public"]["Enums"]["expansion_status"]
           title?: string
           updated_at?: string
@@ -7537,10 +7540,13 @@ export type Database = {
           predicted_annual_lift: number
           predicted_break_even_months: number
           realized_revenue_lift: number
+          repayment_model: string
           repayment_remaining: number
           repayment_total: number
+          revenue_share_pct: number | null
           risk_level_at_funding: string
           roe_at_funding: number
+          staff_user_id: string | null
           status: Database["public"]["Enums"]["financed_project_status"]
           stripe_checkout_session_id: string | null
           stripe_subscription_id: string | null
@@ -7560,10 +7566,13 @@ export type Database = {
           predicted_annual_lift?: number
           predicted_break_even_months?: number
           realized_revenue_lift?: number
+          repayment_model?: string
           repayment_remaining?: number
           repayment_total?: number
+          revenue_share_pct?: number | null
           risk_level_at_funding?: string
           roe_at_funding?: number
+          staff_user_id?: string | null
           status?: Database["public"]["Enums"]["financed_project_status"]
           stripe_checkout_session_id?: string | null
           stripe_subscription_id?: string | null
@@ -7583,10 +7592,13 @@ export type Database = {
           predicted_annual_lift?: number
           predicted_break_even_months?: number
           realized_revenue_lift?: number
+          repayment_model?: string
           repayment_remaining?: number
           repayment_total?: number
+          revenue_share_pct?: number | null
           risk_level_at_funding?: string
           roe_at_funding?: number
+          staff_user_id?: string | null
           status?: Database["public"]["Enums"]["financed_project_status"]
           stripe_checkout_session_id?: string | null
           stripe_subscription_id?: string | null
@@ -22991,6 +23003,53 @@ export type Database = {
           },
         ]
       }
+      stylist_career_milestones: {
+        Row: {
+          achieved_at: string
+          created_at: string
+          from_stage: string | null
+          id: string
+          milestone_type: string
+          organization_id: string
+          ors_at_milestone: number | null
+          spi_at_milestone: number
+          to_stage: string
+          user_id: string
+        }
+        Insert: {
+          achieved_at?: string
+          created_at?: string
+          from_stage?: string | null
+          id?: string
+          milestone_type: string
+          organization_id: string
+          ors_at_milestone?: number | null
+          spi_at_milestone?: number
+          to_stage: string
+          user_id: string
+        }
+        Update: {
+          achieved_at?: string
+          created_at?: string
+          from_stage?: string | null
+          id?: string
+          milestone_type?: string
+          organization_id?: string
+          ors_at_milestone?: number | null
+          spi_at_milestone?: number
+          to_stage?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stylist_career_milestones_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       stylist_commission_overrides: {
         Row: {
           created_at: string
@@ -23103,6 +23162,65 @@ export type Database = {
           },
         ]
       }
+      stylist_ors_scores: {
+        Row: {
+          career_stage: string
+          consistency_score: number
+          created_at: string
+          demand_stability: number
+          financing_eligible: boolean
+          id: string
+          leadership_score: number
+          organization_id: string
+          ors_score: number
+          ownership_eligible: boolean
+          scored_at: string
+          spi_average: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          career_stage?: string
+          consistency_score?: number
+          created_at?: string
+          demand_stability?: number
+          financing_eligible?: boolean
+          id?: string
+          leadership_score?: number
+          organization_id: string
+          ors_score?: number
+          ownership_eligible?: boolean
+          scored_at?: string
+          spi_average?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          career_stage?: string
+          consistency_score?: number
+          created_at?: string
+          demand_stability?: number
+          financing_eligible?: boolean
+          id?: string
+          leadership_score?: number
+          organization_id?: string
+          ors_score?: number
+          ownership_eligible?: boolean
+          scored_at?: string
+          spi_average?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stylist_ors_scores_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       stylist_personal_goals: {
         Row: {
           created_at: string
@@ -23192,6 +23310,71 @@ export type Database = {
           weekly_wins_due_day?: number | null
         }
         Relationships: []
+      }
+      stylist_spi_scores: {
+        Row: {
+          created_at: string
+          execution_score: number
+          growth_score: number
+          id: string
+          location_id: string | null
+          organization_id: string
+          period_end: string
+          period_start: string
+          rebooking_score: number
+          retention_score: number
+          revenue_score: number
+          review_score: number
+          scored_at: string
+          spi_score: number
+          tier: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          execution_score?: number
+          growth_score?: number
+          id?: string
+          location_id?: string | null
+          organization_id: string
+          period_end: string
+          period_start: string
+          rebooking_score?: number
+          retention_score?: number
+          revenue_score?: number
+          review_score?: number
+          scored_at?: string
+          spi_score?: number
+          tier?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          execution_score?: number
+          growth_score?: number
+          id?: string
+          location_id?: string | null
+          organization_id?: string
+          period_end?: string
+          period_start?: string
+          rebooking_score?: number
+          retention_score?: number
+          revenue_score?: number
+          review_score?: number
+          scored_at?: string
+          spi_score?: number
+          tier?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stylist_spi_scores_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       subscription_invoices: {
         Row: {
