@@ -19,6 +19,7 @@ type FilterStatus = 'active' | 'overdue' | 'completed' | 'all';
 
 export function SEOEngineTaskList({ organizationId }: Props) {
   const [statusFilter, setStatusFilter] = useState<FilterStatus>('active');
+  const [selectedTask, setSelectedTask] = useState<any>(null);
 
   const statusMap: Record<FilterStatus, string[] | undefined> = {
     active: [...ACTIVE_TASK_STATES],
@@ -84,7 +85,8 @@ export function SEOEngineTaskList({ organizationId }: Props) {
             const seoObject = task.seo_objects;
 
             return (
-              <Card key={task.id}>
+              <Card key={task.id} className="cursor-pointer hover:border-primary/30 transition-colors"
+                    onClick={() => setSelectedTask(task)}>
                 <CardContent className="p-4">
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0 flex-1">
