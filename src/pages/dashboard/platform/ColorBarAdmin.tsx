@@ -11,10 +11,11 @@ import { ColorBarBillingTab } from '@/components/platform/color-bar/ColorBarBill
 import { CoachPerformanceTab } from '@/components/platform/color-bar/CoachPerformanceTab';
 import { RefundHistoryTab } from '@/components/platform/color-bar/RefundHistoryTab';
 import { DockAppTab } from '@/components/platform/color-bar/DockAppTab';
+import { SupplyChainDashboard } from '@/components/dashboard/vertical-integration/SupplyChainDashboard';
 import { cn } from '@/lib/utils';
 import {
   ClipboardList, Database, Building2, Package, BarChart3,
-  CreditCard, Users2, ReceiptText, BoxIcon, Tablet,
+  CreditCard, Users2, ReceiptText, BoxIcon, Tablet, Link2,
   type LucideIcon,
 } from 'lucide-react';
 import { PageExplainer } from '@/components/ui/PageExplainer';
