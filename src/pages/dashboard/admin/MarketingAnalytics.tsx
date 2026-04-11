@@ -27,6 +27,9 @@ import { CampaignBudgetManager } from '@/components/dashboard/marketing/Campaign
 import { CommandCenterVisibilityToggle } from '@/components/dashboard/CommandCenterVisibilityToggle';
 import { BentoGrid } from '@/components/ui/bento-grid';
 import { PageExplainer } from '@/components/ui/PageExplainer';
+import { VisibilityGate } from '@/components/visibility/VisibilityGate';
+import { SEOContentTasksCard } from '@/components/dashboard/seo-workshop/SEOContentTasksCard';
+import { useOrganizationContext } from '@/contexts/OrganizationContext';
 
 type DateRange = 'week' | 'month' | '3months';
 
@@ -34,6 +37,7 @@ export default function MarketingAnalytics() {
   const [selectedLocation, setSelectedLocation] = useState<string>('all');
   const [dateRange, setDateRange] = useState<DateRange>('month');
   const [showBudgetManager, setShowBudgetManager] = useState(false);
+  const { effectiveOrganization } = useOrganizationContext();
   
   const { formatCurrency, formatCurrencyWhole } = useFormatCurrency();
   const { data: locations = [] } = useActiveLocations();
@@ -236,6 +240,17 @@ export default function MarketingAnalytics() {
             isLoading={isLoading} 
           />
         </div>
+
+        {/* M2: SEO Content Tasks integration */}
+        <VisibilityGate
+          elementKey="seo_content_tasks_marketing"
+          elementName="SEO Content Tasks"
+          elementCategory="Marketing Analytics"
+        >
+          <div className="mt-6">
+            <SEOContentTasksCard organizationId={effectiveOrganization?.id} />
+          </div>
+        </VisibilityGate>
       </div>
 
       {/* Campaign Budget Manager Sheet */}
