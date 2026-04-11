@@ -710,6 +710,7 @@ function DashboardSections({
     toggleTask,
     deleteTask,
     isImpersonating,
+    organizationId,
   ]);
 
   // Render sections in order based on layout
