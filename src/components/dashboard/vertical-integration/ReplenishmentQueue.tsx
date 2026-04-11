@@ -65,7 +65,7 @@ export function ReplenishmentQueue({ organizationId }: ReplenishmentQueueProps) 
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
                     <span className={cn(tokens.body.default, 'font-medium')}>
-                      {event.product_id}
+                      {(event as any).products?.name ?? event.product_id}
                     </span>
                     <Badge
                       variant="outline"

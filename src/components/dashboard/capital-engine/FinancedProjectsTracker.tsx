@@ -59,8 +59,7 @@ export function FinancedProjectsTracker() {
             >
               <div className="flex items-center justify-between">
                 <span className="font-sans text-sm truncate">
-                  {/* Title from opportunity — fallback to generic */}
-                  Financed Project
+                  {(project as any).expansion_opportunities?.title ?? 'Financed Project'}
                 </span>
                 <Badge
                   variant="outline"

@@ -32,7 +32,12 @@ serve(async (req) => {
 
   try {
     // Authenticate caller
-    const authHeader = req.headers.get("Authorization")!;
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader?.startsWith("Bearer ")) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
     const token = authHeader.replace("Bearer ", "");
     const { data: { user }, error: authError } = await anonClient.auth.getUser(token);
     if (authError || !user) throw new Error("Unauthorized");
@@ -46,6 +51,22 @@ serve(async (req) => {
       _org_id: organizationId,
     });
     if (!isAdmin) throw new Error("Only organization admins can initiate financing");
+
+    // Check for existing pending_payment project (duplicate guard)
+    const { data: existingPending } = await serviceClient
+      .from("financed_projects")
+      .select("id")
+      .eq("opportunity_id", opportunityId)
+      .eq("organization_id", organizationId)
+      .eq("status", "pending_payment")
+      .limit(1);
+
+    if (existingPending && existingPending.length > 0) {
+      return new Response(JSON.stringify({ error: "A financing request is already pending for this opportunity" }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 409,
+      });
+    }
 
     // Load opportunity
     const { data: opp, error: oppErr } = await serviceClient

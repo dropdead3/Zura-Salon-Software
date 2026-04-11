@@ -31,7 +31,7 @@ export function useProductServicePerformance(
     queryFn: async () => {
       let query = supabase
         .from('product_service_performance')
-        .select('*')
+        .select('*, products(name, supplier_name)')
         .eq('organization_id', orgId!)
         .order('margin_pct', { ascending: false });
 

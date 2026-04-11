@@ -11,25 +11,55 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  const supabase = createClient(
-    Deno.env.get("SUPABASE_URL") ?? "",
-    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
-    { auth: { persistSession: false } },
-  );
+  const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
+  const anonKey = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
+  const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+
+  // Use anon client for auth validation (not service-role)
+  const anonClient = createClient(supabaseUrl, anonKey);
+  const supabase = createClient(supabaseUrl, serviceKey, { auth: { persistSession: false } });
 
   try {
-    // Validate caller
+    // Validate caller with anon client
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader) throw new Error("Unauthorized");
+    if (!authHeader?.startsWith("Bearer ")) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 401,
+      });
+    }
     const token = authHeader.replace("Bearer ", "");
-    const { data: { user }, error: authErr } = await supabase.auth.getUser(token);
-    if (authErr || !user) throw new Error("Unauthorized");
+    const { data: claimsData, error: claimsErr } = await anonClient.auth.getClaims(token);
+    if (claimsErr || !claimsData?.claims) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 401,
+      });
+    }
+    const userId = claimsData.claims.sub;
 
     const body = await req.json();
     const organizationId = body.organization_id;
-    const targetUserId = body.user_id; // optional: compute for a single stylist
+    const targetUserId = body.user_id;
 
-    if (!organizationId) throw new Error("organization_id is required");
+    if (!organizationId) {
+      return new Response(JSON.stringify({ error: "organization_id is required" }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 400,
+      });
+    }
+
+    // Verify caller is org admin
+    const { data: isAdmin } = await supabase.rpc("is_org_admin", {
+      _user_id: userId,
+      _org_id: organizationId,
+    });
+    if (!isAdmin) {
+      return new Response(JSON.stringify({ error: "Only organization admins can compute SPI" }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 403,
+      });
+    }
 
     // Fetch stylists
     let staffQuery = supabase
@@ -53,7 +83,6 @@ serve(async (req) => {
     const results: any[] = [];
 
     for (const member of (staff ?? [])) {
-      // Aggregate appointment data for the period
       const { data: appts } = await supabase
         .from("appointments")
         .select("total_price, status, rebooked_at_checkout")
@@ -67,15 +96,13 @@ serve(async (req) => {
       const completedAppts = (appts ?? []).filter(a => a.status === "completed").length;
       const rebookedAppts = (appts ?? []).filter(a => a.rebooked_at_checkout === true).length;
 
-      // Simple scoring (normalized to 0-100, configurable benchmarks)
-      const revenueScore = Math.min(100, Math.round((totalRevenue / 10000) * 100)); // $10K = 100
+      const revenueScore = Math.min(100, Math.round((totalRevenue / 10000) * 100));
       const retentionScore = totalAppts > 0 ? Math.round((completedAppts / totalAppts) * 100) : 50;
       const rebookingScore = completedAppts > 0 ? Math.round((rebookedAppts / completedAppts) * 100) : 50;
-      const executionScore = 70; // placeholder — task completion rate
-      const growthScore = 60; // placeholder — month-over-month trend
-      const reviewScore = 70; // placeholder — review quality
+      const executionScore = 70; // placeholder
+      const growthScore = 60; // placeholder
+      const reviewScore = 70; // placeholder
 
-      // Weighted SPI
       const spiScore = Math.round(
         revenueScore * 0.25 +
         retentionScore * 0.20 +
@@ -87,7 +114,6 @@ serve(async (req) => {
 
       const tier = spiScore >= 85 ? "elite" : spiScore >= 70 ? "high" : spiScore >= 50 ? "growth" : "underperforming";
 
-      // Upsert SPI score
       const { error: upsertErr } = await supabase
         .from("stylist_spi_scores")
         .insert({
@@ -123,7 +149,6 @@ serve(async (req) => {
       const scores = (spiHistory ?? []).map(s => Number(s.spi_score));
       const spiAvg = scores.length > 0 ? scores.reduce((a, b) => a + b, 0) / scores.length : spiScore;
 
-      // Consistency (inverse CV)
       let consistency = 50;
       if (scores.length >= 2) {
         const mean = spiAvg;
@@ -133,21 +158,19 @@ serve(async (req) => {
       }
       if (scores.length < 6) consistency = Math.round(consistency * 0.7);
 
-      const leadershipScore = 60; // placeholder
-      const demandStability = 70; // placeholder
+      const leadershipScore = 60;
+      const demandStability = 70;
 
       const orsScore = Math.round(
         spiAvg * 0.40 + consistency * 0.25 + leadershipScore * 0.20 + demandStability * 0.15,
       );
 
-      // Determine career stage
       let careerStage = "stylist";
       if (spiAvg >= 85 && orsScore >= 85) careerStage = "owner";
       else if (spiAvg >= 80 && orsScore >= 70 && consistency >= 70) careerStage = "operator";
       else if (spiAvg >= 80 && leadershipScore >= 60) careerStage = "lead";
       else if (spiAvg >= 70) careerStage = "high_performer";
 
-      // Upsert ORS
       const { data: existingORS } = await supabase
         .from("stylist_ors_scores")
         .select("career_stage")
@@ -175,7 +198,6 @@ serve(async (req) => {
           { onConflict: "organization_id,user_id" },
         );
 
-      // Record milestone if stage changed
       if (previousStage && previousStage !== careerStage) {
         const stageOrder: Record<string, number> = {
           stylist: 1, high_performer: 2, lead: 3, operator: 4, owner: 5,

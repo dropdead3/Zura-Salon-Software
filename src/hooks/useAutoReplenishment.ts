@@ -31,7 +31,7 @@ export function useReplenishmentEvents(
     queryFn: async () => {
       let query = supabase
         .from('auto_replenishment_events')
-        .select('*')
+        .select('*, products(name)')
         .eq('organization_id', orgId!)
         .order('created_at', { ascending: false });
 

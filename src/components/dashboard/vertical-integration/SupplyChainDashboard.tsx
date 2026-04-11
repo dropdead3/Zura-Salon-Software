@@ -47,17 +47,24 @@ export function SupplyChainDashboard({ organizationId }: SupplyChainDashboardPro
     const comps: ReturnType<typeof compareBrandMargins>[] = [];
 
     for (const [serviceName, items] of Object.entries(byService)) {
-      const inputs: ProductPerformanceInput[] = items.map((item) => ({
-        productId: item.product_id,
-        productName: item.product_id, // Will resolve to name once joined
-        supplierName: '', // Would be joined from products table
-        isPreferredSupplier: false,
-        totalUses: item.total_uses,
-        avgQuantityPerUse: Number(item.avg_quantity_per_use),
-        avgServiceRevenue: Number(item.avg_service_revenue),
-        avgProductCost: Number(item.avg_product_cost),
-        quantityStddev: 0,
-      }));
+      const inputs: ProductPerformanceInput[] = items.map((item) => {
+        const productData = (item as any).products;
+        const supplierName = productData?.supplier_name ?? '';
+        const isPreferred = preferredSupplier
+          ? supplierName.toLowerCase() === preferredSupplier.supplier_name.toLowerCase()
+          : false;
+        return {
+          productId: item.product_id,
+          productName: productData?.name ?? item.product_id,
+          supplierName,
+          isPreferredSupplier: isPreferred,
+          totalUses: item.total_uses,
+          avgQuantityPerUse: Number(item.avg_quantity_per_use),
+          avgServiceRevenue: Number(item.avg_service_revenue),
+          avgProductCost: Number(item.avg_product_cost),
+          quantityStddev: 0,
+        };
+      });
 
       recs.push({ serviceName, items: rankProducts(inputs) });
       comps.push(compareBrandMargins(inputs, serviceName));
