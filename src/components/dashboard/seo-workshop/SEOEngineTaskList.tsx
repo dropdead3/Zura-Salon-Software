@@ -148,6 +148,15 @@ export function SEOEngineTaskList({ organizationId }: Props) {
         open={!!selectedTask}
         onOpenChange={(open) => { if (!open) setSelectedTask(null); }}
       />
+
+      {/* M6: Manual task creation dialog */}
+      {organizationId && (
+        <SEOCreateTaskDialog
+          organizationId={organizationId}
+          open={showCreateDialog}
+          onOpenChange={setShowCreateDialog}
+        />
+      )}
     </div>
   );
 }

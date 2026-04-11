@@ -321,7 +321,7 @@ async function detectPhotoFreshnessIssues(
     const cooldownUntil = new Date();
     cooldownUntil.setDate(cooldownUntil.getDate() + 30);
 
-    await supabase.from("seo_tasks").insert({
+    const { data: newTask } = await supabase.from("seo_tasks").insert({
       organization_id: organizationId,
       location_id: seoObj.location_id,
       template_key: "photo_upload",
@@ -339,7 +339,18 @@ async function detectPhotoFreshnessIssues(
         title: `Upload photos for ${seoObj.label}`,
         explanation: `Content health score is ${item.score}/100 — fresh photos would improve visibility.`,
       },
-    });
+    }).select("id").single();
+
+    // M3: Create history record for photo freshness tasks
+    if (newTask?.id) {
+      await supabase.from("seo_task_history").insert({
+        task_id: newTask.id,
+        action: "auto_generated",
+        performed_by: "system:daily_scan",
+        new_status: "detected",
+        notes: "Auto-detected: photo freshness deficit",
+      });
+    }
 
     generated++;
   }
