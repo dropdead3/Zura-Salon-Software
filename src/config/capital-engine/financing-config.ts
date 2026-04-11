@@ -33,6 +33,14 @@ export const REPAYMENT_DEFAULTS = {
   annualRate: 0,
 } as const;
 
+/** Stylist-level financing thresholds — gates micro-financing by SPI/ORS */
+export const STYLIST_FINANCING_THRESHOLDS = {
+  /** Minimum SPI to access any financing */
+  minSPI: 65,
+  /** Minimum ORS for expansion-level financing */
+  minORS: 60,
+} as const;
+
 export function getVarianceLabel(variancePct: number | null): { label: string; status: 'on_track' | 'watch' | 'at_risk' } {
   if (variancePct === null) return { label: 'No Data', status: 'on_track' };
   const abs = Math.abs(variancePct);
