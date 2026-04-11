@@ -40,3 +40,14 @@ export {
   type PostFinancingCashFlow,
   type RepaymentScheduleEntry,
 } from './financing-engine';
+
+export {
+  computeStylistSPI,
+  computeORS,
+  determineCareerStage,
+  isMicroFinancingEligible,
+  type StylistSPIInput,
+  type StylistSPIResult,
+  type ORSInput,
+  type ORSResult,
+} from './stylist-spi-engine';

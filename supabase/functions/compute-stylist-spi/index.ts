@@ -1,0 +1,210 @@
+import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import { createClient } from "npm:@supabase/supabase-js@2.57.2";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+};
+
+serve(async (req) => {
+  if (req.method === "OPTIONS") {
+    return new Response(null, { headers: corsHeaders });
+  }
+
+  const supabase = createClient(
+    Deno.env.get("SUPABASE_URL") ?? "",
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+    { auth: { persistSession: false } },
+  );
+
+  try {
+    // Validate caller
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) throw new Error("Unauthorized");
+    const token = authHeader.replace("Bearer ", "");
+    const { data: { user }, error: authErr } = await supabase.auth.getUser(token);
+    if (authErr || !user) throw new Error("Unauthorized");
+
+    const body = await req.json();
+    const organizationId = body.organization_id;
+    const targetUserId = body.user_id; // optional: compute for a single stylist
+
+    if (!organizationId) throw new Error("organization_id is required");
+
+    // Fetch stylists
+    let staffQuery = supabase
+      .from("employee_profiles")
+      .select("user_id, location_id")
+      .eq("organization_id", organizationId)
+      .eq("is_active", true)
+      .eq("is_approved", true);
+
+    if (targetUserId) {
+      staffQuery = staffQuery.eq("user_id", targetUserId);
+    }
+
+    const { data: staff, error: staffErr } = await staffQuery;
+    if (staffErr) throw staffErr;
+
+    const now = new Date();
+    const periodEnd = now.toISOString().split("T")[0];
+    const periodStart = new Date(now.getFullYear(), now.getMonth() - 1, 1).toISOString().split("T")[0];
+
+    const results: any[] = [];
+
+    for (const member of (staff ?? [])) {
+      // Aggregate appointment data for the period
+      const { data: appts } = await supabase
+        .from("appointments")
+        .select("total_price, status, rebooked_at_checkout")
+        .eq("staff_user_id", member.user_id)
+        .eq("organization_id", organizationId)
+        .gte("appointment_date", periodStart)
+        .lte("appointment_date", periodEnd);
+
+      const totalRevenue = (appts ?? []).reduce((s, a) => s + (Number(a.total_price) || 0), 0);
+      const totalAppts = (appts ?? []).length;
+      const completedAppts = (appts ?? []).filter(a => a.status === "completed").length;
+      const rebookedAppts = (appts ?? []).filter(a => a.rebooked_at_checkout === true).length;
+
+      // Simple scoring (normalized to 0-100, configurable benchmarks)
+      const revenueScore = Math.min(100, Math.round((totalRevenue / 10000) * 100)); // $10K = 100
+      const retentionScore = totalAppts > 0 ? Math.round((completedAppts / totalAppts) * 100) : 50;
+      const rebookingScore = completedAppts > 0 ? Math.round((rebookedAppts / completedAppts) * 100) : 50;
+      const executionScore = 70; // placeholder — task completion rate
+      const growthScore = 60; // placeholder — month-over-month trend
+      const reviewScore = 70; // placeholder — review quality
+
+      // Weighted SPI
+      const spiScore = Math.round(
+        revenueScore * 0.25 +
+        retentionScore * 0.20 +
+        rebookingScore * 0.15 +
+        executionScore * 0.15 +
+        growthScore * 0.15 +
+        reviewScore * 0.10,
+      );
+
+      const tier = spiScore >= 85 ? "elite" : spiScore >= 70 ? "high" : spiScore >= 50 ? "growth" : "underperforming";
+
+      // Upsert SPI score
+      const { error: upsertErr } = await supabase
+        .from("stylist_spi_scores")
+        .insert({
+          organization_id: organizationId,
+          user_id: member.user_id,
+          location_id: member.location_id,
+          spi_score: spiScore,
+          revenue_score: revenueScore,
+          retention_score: retentionScore,
+          rebooking_score: rebookingScore,
+          execution_score: executionScore,
+          growth_score: growthScore,
+          review_score: reviewScore,
+          tier,
+          period_start: periodStart,
+          period_end: periodEnd,
+        });
+
+      if (upsertErr) {
+        console.error(`SPI upsert error for ${member.user_id}:`, upsertErr);
+        continue;
+      }
+
+      // Fetch SPI history for ORS
+      const { data: spiHistory } = await supabase
+        .from("stylist_spi_scores")
+        .select("spi_score")
+        .eq("user_id", member.user_id)
+        .eq("organization_id", organizationId)
+        .order("scored_at", { ascending: false })
+        .limit(12);
+
+      const scores = (spiHistory ?? []).map(s => Number(s.spi_score));
+      const spiAvg = scores.length > 0 ? scores.reduce((a, b) => a + b, 0) / scores.length : spiScore;
+
+      // Consistency (inverse CV)
+      let consistency = 50;
+      if (scores.length >= 2) {
+        const mean = spiAvg;
+        const variance = scores.reduce((sum, v) => sum + (v - mean) ** 2, 0) / scores.length;
+        const cv = mean > 0 ? Math.sqrt(variance) / mean : 1;
+        consistency = Math.max(0, Math.min(100, Math.round((1 - cv * 2) * 100)));
+      }
+      if (scores.length < 6) consistency = Math.round(consistency * 0.7);
+
+      const leadershipScore = 60; // placeholder
+      const demandStability = 70; // placeholder
+
+      const orsScore = Math.round(
+        spiAvg * 0.40 + consistency * 0.25 + leadershipScore * 0.20 + demandStability * 0.15,
+      );
+
+      // Determine career stage
+      let careerStage = "stylist";
+      if (spiAvg >= 85 && orsScore >= 85) careerStage = "owner";
+      else if (spiAvg >= 80 && orsScore >= 70 && consistency >= 70) careerStage = "operator";
+      else if (spiAvg >= 80 && leadershipScore >= 60) careerStage = "lead";
+      else if (spiAvg >= 70) careerStage = "high_performer";
+
+      // Upsert ORS
+      const { data: existingORS } = await supabase
+        .from("stylist_ors_scores")
+        .select("career_stage")
+        .eq("user_id", member.user_id)
+        .eq("organization_id", organizationId)
+        .maybeSingle();
+
+      const previousStage = existingORS?.career_stage;
+
+      await supabase
+        .from("stylist_ors_scores")
+        .upsert(
+          {
+            organization_id: organizationId,
+            user_id: member.user_id,
+            ors_score: orsScore,
+            spi_average: Math.round(spiAvg),
+            consistency_score: consistency,
+            leadership_score: leadershipScore,
+            demand_stability: demandStability,
+            career_stage: careerStage,
+            financing_eligible: spiAvg >= 70,
+            ownership_eligible: orsScore >= 85,
+          },
+          { onConflict: "organization_id,user_id" },
+        );
+
+      // Record milestone if stage changed
+      if (previousStage && previousStage !== careerStage) {
+        const stageOrder: Record<string, number> = {
+          stylist: 1, high_performer: 2, lead: 3, operator: 4, owner: 5,
+        };
+        if ((stageOrder[careerStage] ?? 0) > (stageOrder[previousStage] ?? 0)) {
+          await supabase.from("stylist_career_milestones").insert({
+            organization_id: organizationId,
+            user_id: member.user_id,
+            milestone_type: "stage_promotion",
+            from_stage: previousStage,
+            to_stage: careerStage,
+            spi_at_milestone: spiScore,
+            ors_at_milestone: orsScore,
+          });
+        }
+      }
+
+      results.push({ user_id: member.user_id, spi: spiScore, ors: orsScore, stage: careerStage });
+    }
+
+    return new Response(JSON.stringify({ computed: results.length, results }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      status: 200,
+    });
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : String(error);
+    return new Response(JSON.stringify({ error: msg }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      status: 500,
+    });
+  }
+});
