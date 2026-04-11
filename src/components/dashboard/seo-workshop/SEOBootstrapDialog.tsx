@@ -86,8 +86,7 @@ export function SEOBootstrapDialog({ organizationId, open, onOpenChange }: Props
 
       if (campErr) throw campErr;
 
-      // 2. Create SEO objects + tasks
-      for (const task of preview.tasks) {
+      const campaignId = (campaign as any)?.id;
         // Upsert SEO object
         const { data: seoObj } = await supabase
           .from('seo_objects' as any)
