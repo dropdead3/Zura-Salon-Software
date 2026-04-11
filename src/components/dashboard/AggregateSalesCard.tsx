@@ -153,6 +153,7 @@ export function AggregateSalesCard({
   const [tipsDrilldownOpen, setTipsDrilldownOpen] = useState(false);
   const [tipsCardExpanded, setTipsCardExpanded] = useState(false);
   const [activeDrilldown, setActiveDrilldown] = useState<'revenue' | 'transactions' | 'avgTicket' | 'revPerHour' | 'goals' | 'expectedGap' | null>(null);
+  const [todaySummaryExpanded, setTodaySummaryExpanded] = useState(false);
   const { hideNumbers } = useHideNumbers();
   const { formatCurrency, formatCurrencyWhole, currency } = useFormatCurrency();
   const { taxLabel } = useRevenueDisplay();
