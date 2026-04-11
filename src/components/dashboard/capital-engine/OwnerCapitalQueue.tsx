@@ -68,7 +68,8 @@ export function OwnerCapitalQueue() {
           </Badge>
         </CardHeader>
         <CardContent>
-          <div className="space-y-1">
+          {/* Desktop Table */}
+          <div className="hidden lg:block space-y-1">
             {/* Column Headers */}
             <div className="grid grid-cols-[1fr_100px_100px_70px_70px_70px_90px_40px] gap-2 px-3 py-2 text-xs text-muted-foreground font-sans">
               <span>Opportunity</span>
