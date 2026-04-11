@@ -4,6 +4,8 @@
  */
 
 import { useState, useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -33,6 +35,20 @@ export function SEOCampaignDetailDialog({ campaign, organizationId, open, onOpen
 
   const { data: campaignTasks = [] } = useSEOTasks(organizationId, {
     campaignId: campaign?.id,
+  });
+
+  // U5: Fetch location name
+  const { data: locationName } = useQuery({
+    queryKey: ['location-name', campaign?.location_id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('locations')
+        .select('name')
+        .eq('id', campaign.location_id)
+        .single();
+      return data?.name ?? null;
+    },
+    enabled: !!campaign?.location_id,
   });
 
   const statusConf = CAMPAIGN_STATUS_CONFIG[campaign?.status as SEOCampaignStatus];
@@ -79,6 +95,11 @@ export function SEOCampaignDetailDialog({ campaign, organizationId, open, onOpen
           {/* Status + dates */}
           <div className="flex items-center gap-2 flex-wrap">
             <Badge variant={statusConf?.variant as any ?? 'outline'}>{statusConf?.label ?? campaign.status}</Badge>
+            {locationName && (
+              <Badge variant="outline" className="font-sans text-xs">
+                📍 {locationName}
+              </Badge>
+            )}
             {daysRemaining !== null && (
               <Badge variant="outline" className="font-sans text-xs">
                 {daysRemaining > 0 ? `${daysRemaining}d remaining` : 'Window closed'}
