@@ -3,8 +3,10 @@ import { useSEOHealthSummary } from '@/hooks/useSEOHealthScores';
 import { useSEOTasks } from '@/hooks/useSEOTasks';
 import { useSEOCampaigns } from '@/hooks/useSEOCampaigns';
 import { useSEOObjectRevenue } from '@/hooks/useSEOObjectRevenue';
+import { useSEOMomentum } from '@/hooks/useSEOMomentum';
 import { SEO_HEALTH_DOMAINS, type SEOHealthDomain } from '@/config/seo-engine/seo-health-domains';
 import { ACTIVE_TASK_STATES } from '@/config/seo-engine/seo-state-machine';
+import { MOMENTUM_DIRECTION_CONFIG } from '@/lib/seo-engine/seo-momentum-calculator';
 import { tokens } from '@/lib/design-tokens';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
@@ -35,6 +37,7 @@ export function SEOEngineDashboard({ organizationId, onGoToTasks, onGoToCampaign
     status: ['active', 'at_risk', 'blocked'],
   });
   const { data: revenueMap = {}, isLoading: revenueLoading } = useSEOObjectRevenue(organizationId);
+  const { data: momentumSignals = [], isLoading: momentumLoading } = useSEOMomentum(organizationId);
 
   const totalAttributedRevenue = Object.values(revenueMap).reduce(
     (sum, r) => sum + (r?.totalRevenue ?? 0), 0
@@ -149,8 +152,34 @@ export function SEOEngineDashboard({ organizationId, onGoToTasks, onGoToCampaign
         </Card>
       </div>
 
-      {/* Momentum placeholder — will populate once momentum data hooks are connected */}
-      {/* Phase 1B: Momentum signals will surface here via useSEOMomentum hook */}
+      {/* Momentum Signals */}
+      {!momentumLoading && momentumSignals.length > 0 && (
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className={tokens.card.title}>Momentum Signals</CardTitle>
+            <CardDescription>Directional movement across your top service-locations</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {momentumSignals.slice(0, 5).map((m, idx) => {
+                const conf = MOMENTUM_DIRECTION_CONFIG[m.direction];
+                const MomentumIcon = m.direction === 'gaining' ? TrendingUp : m.direction === 'losing' ? TrendingDown : Minus;
+                return (
+                  <div key={idx} className="flex items-center justify-between text-sm">
+                    <span className="font-sans flex items-center gap-2">
+                      <MomentumIcon className={`w-4 h-4 ${conf.color}`} />
+                      {m.label}
+                    </span>
+                    <Badge variant="outline" className={`font-display text-xs tracking-wide ${conf.color}`}>
+                      {m.score > 0 ? '+' : ''}{m.score}
+                    </Badge>
+                  </div>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Health Domains */}
       <Card>

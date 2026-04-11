@@ -112,9 +112,10 @@ async function getAllActiveOrgs(supabase: ReturnType<typeof createClient>) {
 async function runDailyScan(
   supabase: ReturnType<typeof createClient>,
   organizationId: string
-): Promise<{ escalated: number; tasksGenerated: number }> {
+): Promise<{ escalated: number; tasksGenerated: number; revenueSnapshots: number }> {
   let escalated = 0;
   let tasksGenerated = 0;
+  let revenueSnapshots = 0;
 
   // ─── 1. Escalate overdue tasks ───
   escalated = await escalateOverdueTasks(supabase, organizationId);
@@ -135,7 +136,10 @@ async function runDailyScan(
   const responseTasks = await detectUnrespondedReviews(supabase, organizationId);
   tasksGenerated += responseTasks;
 
-  return { escalated, tasksGenerated };
+  // ─── 6. Revenue attribution snapshot ───
+  revenueSnapshots = await computeRevenueSnapshot(supabase, organizationId);
+
+  return { escalated, tasksGenerated, revenueSnapshots };
 }
 
 // ═══════════════════════════════════════════════════════════════════════
@@ -684,4 +688,98 @@ async function detectUnrespondedReviews(
   }
 
   return generated;
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// 6. Revenue Attribution Snapshot
+// ═══════════════════════════════════════════════════════════════════════
+
+async function computeRevenueSnapshot(
+  supabase: ReturnType<typeof createClient>,
+  organizationId: string
+): Promise<number> {
+  try {
+    // Fetch SEO objects
+    const { data: seoObjects } = await supabase
+      .from("seo_objects")
+      .select("id, object_type, object_key, location_id, label")
+      .eq("organization_id", organizationId);
+
+    if (!seoObjects?.length) return 0;
+
+    // 30d window
+    const periodEnd = new Date();
+    const periodStart = new Date();
+    periodStart.setDate(periodStart.getDate() - 30);
+    const periodStartStr = periodStart.toISOString().split("T")[0];
+    const periodEndStr = periodEnd.toISOString().split("T")[0];
+
+    // Fetch transaction_items
+    const { data: txItems } = await supabase
+      .from("transaction_items")
+      .select("location_id, item_category, total_amount, tax_amount")
+      .eq("organization_id", organizationId)
+      .eq("item_type", "service")
+      .gte("transaction_date", periodStartStr)
+      .lte("transaction_date", periodEndStr);
+
+    // Aggregate by location_id + category
+    const revenueMap: Record<string, { revenue: number; count: number }> = {};
+    for (const tx of txItems || []) {
+      const key = `${tx.location_id}::${(tx.item_category || "").toLowerCase()}`;
+      if (!revenueMap[key]) revenueMap[key] = { revenue: 0, count: 0 };
+      revenueMap[key].revenue += Number(tx.total_amount || 0);
+      revenueMap[key].count += 1;
+    }
+
+    // Map to SEO objects
+    const upserts: any[] = [];
+    for (const obj of seoObjects) {
+      if (obj.object_type === "location_service" && obj.object_key) {
+        const parts = obj.object_key.split(":");
+        if (parts.length >= 3) {
+          const matchKey = `${parts[1]}::${parts.slice(2).join(":").toLowerCase()}`;
+          if (revenueMap[matchKey]) {
+            upserts.push({
+              seo_object_id: obj.id,
+              organization_id: organizationId,
+              period_start: periodStartStr,
+              period_end: periodEndStr,
+              total_revenue: Math.round(revenueMap[matchKey].revenue * 100) / 100,
+              transaction_count: revenueMap[matchKey].count,
+              computed_at: new Date().toISOString(),
+            });
+          }
+        }
+      } else if (obj.object_type === "location" && obj.location_id) {
+        const prefix = `${obj.location_id}::`;
+        let totalRev = 0, totalCount = 0;
+        for (const [k, v] of Object.entries(revenueMap)) {
+          if (k.startsWith(prefix)) { totalRev += v.revenue; totalCount += v.count; }
+        }
+        if (totalCount > 0) {
+          upserts.push({
+            seo_object_id: obj.id,
+            organization_id: organizationId,
+            period_start: periodStartStr,
+            period_end: periodEndStr,
+            total_revenue: Math.round(totalRev * 100) / 100,
+            transaction_count: totalCount,
+            computed_at: new Date().toISOString(),
+          });
+        }
+      }
+    }
+
+    if (upserts.length > 0) {
+      await supabase.from("seo_object_revenue").upsert(upserts, {
+        onConflict: "seo_object_id,period_start,period_end",
+      });
+    }
+
+    return upserts.length;
+  } catch (err) {
+    console.error("Revenue snapshot error:", err);
+    return 0;
+  }
 }
