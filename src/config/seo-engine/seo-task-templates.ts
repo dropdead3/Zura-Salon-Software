@@ -27,6 +27,8 @@ export interface SEOTaskTemplateConfig {
   cooldownDays: number;
   /** Max open tasks of this template per SEO object */
   maxOpenPerObject: number;
+  /** Autonomy level: autonomous, assisted, or human_only */
+  autonomyLevel: AutonomyLevel;
 }
 
 export const SEO_TASK_TEMPLATES: Record<string, SEOTaskTemplateConfig> = {
