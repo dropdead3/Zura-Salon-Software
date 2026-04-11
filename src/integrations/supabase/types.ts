@@ -3406,6 +3406,123 @@ export type Database = {
           },
         ]
       }
+      capital_event_log: {
+        Row: {
+          created_at: string
+          event_type: string
+          id: string
+          metadata_json: Json | null
+          opportunity_id: string | null
+          organization_id: string
+          surface_area: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          event_type: string
+          id?: string
+          metadata_json?: Json | null
+          opportunity_id?: string | null
+          organization_id: string
+          surface_area?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          event_type?: string
+          id?: string
+          metadata_json?: Json | null
+          opportunity_id?: string | null
+          organization_id?: string
+          surface_area?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "capital_event_log_opportunity_id_fkey"
+            columns: ["opportunity_id"]
+            isOneToOne: false
+            referencedRelation: "expansion_opportunities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "capital_event_log_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      capital_offer_snapshots: {
+        Row: {
+          created_at: string
+          eligible: boolean
+          estimated_payment_amount: number | null
+          expires_at: string | null
+          fees_summary: string | null
+          fetched_at: string
+          id: string
+          offered_amount: number | null
+          opportunity_id: string
+          organization_id: string
+          provider: string
+          provider_offer_id: string | null
+          raw_snapshot_json: Json | null
+          repayment_model: string | null
+          term_length: number | null
+        }
+        Insert: {
+          created_at?: string
+          eligible?: boolean
+          estimated_payment_amount?: number | null
+          expires_at?: string | null
+          fees_summary?: string | null
+          fetched_at?: string
+          id?: string
+          offered_amount?: number | null
+          opportunity_id: string
+          organization_id: string
+          provider?: string
+          provider_offer_id?: string | null
+          raw_snapshot_json?: Json | null
+          repayment_model?: string | null
+          term_length?: number | null
+        }
+        Update: {
+          created_at?: string
+          eligible?: boolean
+          estimated_payment_amount?: number | null
+          expires_at?: string | null
+          fees_summary?: string | null
+          fetched_at?: string
+          id?: string
+          offered_amount?: number | null
+          opportunity_id?: string
+          organization_id?: string
+          provider?: string
+          provider_offer_id?: string | null
+          raw_snapshot_json?: Json | null
+          repayment_model?: string | null
+          term_length?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "capital_offer_snapshots_opportunity_id_fkey"
+            columns: ["opportunity_id"]
+            isOneToOne: false
+            referencedRelation: "expansion_opportunities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "capital_offer_snapshots_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       challenge_participants: {
         Row: {
           challenge_id: string
@@ -7166,67 +7283,130 @@ export type Database = {
       expansion_opportunities: {
         Row: {
           break_even_months: number | null
+          break_even_months_high: number | null
+          break_even_months_low: number | null
+          business_value_score: number | null
+          campaign_id: string | null
           capital_required: number
           city: string | null
           confidence: string
+          constraint_type: string | null
           created_at: string
           description: string | null
+          effort_score: number | null
+          eligibility_status: string
+          expires_at: string | null
           id: string
           is_active: boolean
           location_id: string | null
+          momentum_score: number | null
           opportunity_type: Database["public"]["Enums"]["expansion_opportunity_type"]
           organization_id: string
           predicted_annual_lift: number
+          predicted_booking_lift_expected: number | null
+          predicted_booking_lift_high: number | null
+          predicted_booking_lift_low: number | null
+          predicted_revenue_lift_high: number | null
+          predicted_revenue_lift_low: number | null
+          recommended_action_label: string
           risk_factors: Json | null
           roe_score: number
           service_category: string | null
+          service_id: string | null
           spi_at_creation: number | null
           staff_user_id: string | null
           status: Database["public"]["Enums"]["expansion_status"]
+          stripe_offer_amount: number | null
+          stripe_offer_available: boolean
+          stripe_offer_id: string | null
+          stripe_offer_terms_summary: string | null
+          summary: string | null
           title: string
           updated_at: string
         }
         Insert: {
           break_even_months?: number | null
+          break_even_months_high?: number | null
+          break_even_months_low?: number | null
+          business_value_score?: number | null
+          campaign_id?: string | null
           capital_required?: number
           city?: string | null
           confidence?: string
+          constraint_type?: string | null
           created_at?: string
           description?: string | null
+          effort_score?: number | null
+          eligibility_status?: string
+          expires_at?: string | null
           id?: string
           is_active?: boolean
           location_id?: string | null
+          momentum_score?: number | null
           opportunity_type?: Database["public"]["Enums"]["expansion_opportunity_type"]
           organization_id: string
           predicted_annual_lift?: number
+          predicted_booking_lift_expected?: number | null
+          predicted_booking_lift_high?: number | null
+          predicted_booking_lift_low?: number | null
+          predicted_revenue_lift_high?: number | null
+          predicted_revenue_lift_low?: number | null
+          recommended_action_label?: string
           risk_factors?: Json | null
           roe_score?: number
           service_category?: string | null
+          service_id?: string | null
           spi_at_creation?: number | null
           staff_user_id?: string | null
           status?: Database["public"]["Enums"]["expansion_status"]
+          stripe_offer_amount?: number | null
+          stripe_offer_available?: boolean
+          stripe_offer_id?: string | null
+          stripe_offer_terms_summary?: string | null
+          summary?: string | null
           title: string
           updated_at?: string
         }
         Update: {
           break_even_months?: number | null
+          break_even_months_high?: number | null
+          break_even_months_low?: number | null
+          business_value_score?: number | null
+          campaign_id?: string | null
           capital_required?: number
           city?: string | null
           confidence?: string
+          constraint_type?: string | null
           created_at?: string
           description?: string | null
+          effort_score?: number | null
+          eligibility_status?: string
+          expires_at?: string | null
           id?: string
           is_active?: boolean
           location_id?: string | null
+          momentum_score?: number | null
           opportunity_type?: Database["public"]["Enums"]["expansion_opportunity_type"]
           organization_id?: string
           predicted_annual_lift?: number
+          predicted_booking_lift_expected?: number | null
+          predicted_booking_lift_high?: number | null
+          predicted_booking_lift_low?: number | null
+          predicted_revenue_lift_high?: number | null
+          predicted_revenue_lift_low?: number | null
+          recommended_action_label?: string
           risk_factors?: Json | null
           roe_score?: number
           service_category?: string | null
+          service_id?: string | null
           spi_at_creation?: number | null
           staff_user_id?: string | null
           status?: Database["public"]["Enums"]["expansion_status"]
+          stripe_offer_amount?: number | null
+          stripe_offer_available?: boolean
+          stripe_offer_id?: string | null
+          stripe_offer_terms_summary?: string | null
+          summary?: string | null
           title?: string
           updated_at?: string
         }
@@ -7529,23 +7709,33 @@ export type Database = {
       }
       financed_projects: {
         Row: {
+          actual_monthly_payment: number | null
+          actual_total_repayment_to_date: number
+          break_even_progress_percent: number
           completed_at: string | null
           confidence_at_funding: string
           created_at: string
+          estimated_total_repayment: number | null
+          expected_monthly_payment: number | null
           funded_amount: number
           funded_at: string | null
+          funding_source: string
           id: string
+          last_synced_at: string | null
           opportunity_id: string
           organization_id: string
           predicted_annual_lift: number
           predicted_break_even_months: number
+          predicted_revenue_to_date: number
           realized_revenue_lift: number
           repayment_model: string
           repayment_remaining: number
           repayment_total: number
+          revenue_generated_to_date: number
           revenue_share_pct: number | null
           risk_level_at_funding: string
           roe_at_funding: number
+          roi_to_date: number | null
           staff_user_id: string | null
           status: Database["public"]["Enums"]["financed_project_status"]
           stripe_checkout_session_id: string | null
@@ -7555,23 +7745,33 @@ export type Database = {
           variance_pct: number | null
         }
         Insert: {
+          actual_monthly_payment?: number | null
+          actual_total_repayment_to_date?: number
+          break_even_progress_percent?: number
           completed_at?: string | null
           confidence_at_funding?: string
           created_at?: string
+          estimated_total_repayment?: number | null
+          expected_monthly_payment?: number | null
           funded_amount?: number
           funded_at?: string | null
+          funding_source?: string
           id?: string
+          last_synced_at?: string | null
           opportunity_id: string
           organization_id: string
           predicted_annual_lift?: number
           predicted_break_even_months?: number
+          predicted_revenue_to_date?: number
           realized_revenue_lift?: number
           repayment_model?: string
           repayment_remaining?: number
           repayment_total?: number
+          revenue_generated_to_date?: number
           revenue_share_pct?: number | null
           risk_level_at_funding?: string
           roe_at_funding?: number
+          roi_to_date?: number | null
           staff_user_id?: string | null
           status?: Database["public"]["Enums"]["financed_project_status"]
           stripe_checkout_session_id?: string | null
@@ -7581,23 +7781,33 @@ export type Database = {
           variance_pct?: number | null
         }
         Update: {
+          actual_monthly_payment?: number | null
+          actual_total_repayment_to_date?: number
+          break_even_progress_percent?: number
           completed_at?: string | null
           confidence_at_funding?: string
           created_at?: string
+          estimated_total_repayment?: number | null
+          expected_monthly_payment?: number | null
           funded_amount?: number
           funded_at?: string | null
+          funding_source?: string
           id?: string
+          last_synced_at?: string | null
           opportunity_id?: string
           organization_id?: string
           predicted_annual_lift?: number
           predicted_break_even_months?: number
+          predicted_revenue_to_date?: number
           realized_revenue_lift?: number
           repayment_model?: string
           repayment_remaining?: number
           repayment_total?: number
+          revenue_generated_to_date?: number
           revenue_share_pct?: number | null
           risk_level_at_funding?: string
           roe_at_funding?: number
+          roi_to_date?: number | null
           staff_user_id?: string | null
           status?: Database["public"]["Enums"]["financed_project_status"]
           stripe_checkout_session_id?: string | null
