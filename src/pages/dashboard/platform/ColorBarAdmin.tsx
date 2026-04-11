@@ -54,6 +54,7 @@ const navGroups: NavGroup[] = [
       { value: 'coach-performance', label: 'Coach Performance', icon: Users2 },
       { value: 'refund-history', label: 'Refund History', icon: ReceiptText },
       { value: 'hardware-orders', label: 'Hardware Orders', icon: BoxIcon },
+      { value: 'supply-chain', label: 'Supply Chain', icon: Link2 },
     ],
   },
   {
@@ -75,6 +76,7 @@ const panels: Record<string, React.ReactNode> = {
   'refund-history': <RefundHistoryTab />,
   'hardware-orders': <HardwareOrdersTab />,
   'dock-app': <DockAppTab />,
+  'supply-chain': <SupplyChainDashboard organizationId={undefined} />,
 };
 
 export default function ColorBarAdmin() {
