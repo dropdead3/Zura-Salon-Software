@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { tokens } from '@/lib/design-tokens';
-import { SPI_TIERS, getSPITierKey } from '@/config/capital-engine/stylist-financing-config';
+import { STYLIST_SPI_TIERS, getSPITierKey } from '@/config/capital-engine/stylist-financing-config';
 import { BarChart3 } from 'lucide-react';
 
 interface Props {

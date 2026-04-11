@@ -2,7 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { tokens } from '@/lib/design-tokens';
-import { getCareerStage, CAREER_STAGES_ORDERED, SPI_TIERS, getSPITierKey } from '@/config/capital-engine/stylist-financing-config';
+import { getCareerStage, CAREER_STAGES_ORDERED, STYLIST_SPI_TIERS, getSPITierKey } from '@/config/capital-engine/stylist-financing-config';
 import { Crown } from 'lucide-react';
 
 interface Props {
