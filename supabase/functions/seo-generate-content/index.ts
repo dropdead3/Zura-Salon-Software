@@ -54,6 +54,21 @@ Deno.serve(async (req) => {
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
+    // Extract user ID from auth header for audit trail
+    let performedBy: string | null = null;
+    const authHeader = req.headers.get("Authorization");
+    if (authHeader?.startsWith("Bearer ")) {
+      const token = authHeader.replace("Bearer ", "");
+      try {
+        const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+        const userClient = createClient(supabaseUrl, anonKey, {
+          global: { headers: { Authorization: authHeader } },
+        });
+        const { data: { user } } = await userClient.auth.getUser(token);
+        performedBy = user?.id ?? null;
+      } catch { /* non-authenticated call */ }
+    }
+
     const { templateKey, objectKey, objectLabel, locationName, context, taskId } = await req.json();
 
     if (!templateKey || !SYSTEM_PROMPTS[templateKey]) {
@@ -79,9 +94,21 @@ Deno.serve(async (req) => {
       }
     }
 
+    // Resolve location name from UUID if it looks like a UUID
+    let resolvedLocationName = locationName || "Main Location";
+    const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (resolvedLocationName && uuidPattern.test(resolvedLocationName)) {
+      const { data: loc } = await supabase
+        .from("locations")
+        .select("name")
+        .eq("id", resolvedLocationName)
+        .single();
+      resolvedLocationName = loc?.name || "Main Location";
+    }
+
     const systemPrompt = SYSTEM_PROMPTS[templateKey];
     const userPrompt = `Service: ${objectLabel || "General"}
-Location: ${locationName || "Main Location"}
+Location: ${resolvedLocationName}
 Object Key: ${objectKey || "N/A"}
 ${context ? `Additional Context: ${context}` : ""}
 
@@ -142,7 +169,6 @@ Generate the content now.`;
         content = { raw: toolCall.function.arguments };
       }
     } else {
-      // Fallback: try to parse from message content
       const rawContent = aiResult.choices?.[0]?.message?.content || "";
       try {
         content = JSON.parse(rawContent);
@@ -151,17 +177,16 @@ Generate the content now.`;
       }
     }
 
-    // Log generation in task history
+    // Log generation in task history with user context
     if (taskId) {
       await supabase.from("seo_task_history").insert({
         task_id: taskId,
         action: "ai_content_generated",
         notes: `Generated ${templateKey} content via AI`,
-        performed_by: null,
+        performed_by: performedBy,
       });
     }
 
-    // Build preview string
     const preview = buildPreview(templateKey, content);
 
     return new Response(

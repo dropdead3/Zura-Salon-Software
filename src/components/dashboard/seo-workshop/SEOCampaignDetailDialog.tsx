@@ -4,6 +4,7 @@
  */
 
 import { useState, useMemo } from 'react';
+// Note: useQuery imported below via @tanstack/react-query
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
@@ -16,9 +17,7 @@ import { CAMPAIGN_STATUS_CONFIG, type SEOCampaignStatus } from '@/config/seo-eng
 import { TASK_STATUS_CONFIG, type SEOTaskStatus } from '@/config/seo-engine/seo-state-machine';
 import { SEO_TASK_TEMPLATES } from '@/config/seo-engine/seo-task-templates';
 import { transitionCampaignStatus } from '@/lib/seo-engine/seo-task-service';
-import { IMPACT_CATEGORY_LABELS } from '@/lib/seo-engine/seo-impact-tracker';
 import { useSEOTasks } from '@/hooks/useSEOTasks';
-import { useSEOTaskImpact } from '@/hooks/useSEOTaskActions';
 import { tokens } from '@/lib/design-tokens';
 import { Play, CheckCircle2, Ban, AlertTriangle, MapPin, ChevronDown, ChevronRight, Target } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
@@ -74,11 +73,6 @@ export function SEOCampaignDetailDialog({ campaign, organizationId, open, onOpen
     enabled: !!campaign?.location_id,
   });
 
-  // Aggregate impact from completed tasks
-  const completedTaskIds = useMemo(
-    () => campaignTasks.filter((t: any) => t.status === 'completed').map((t: any) => t.id),
-    [campaignTasks]
-  );
 
   const statusConf = CAMPAIGN_STATUS_CONFIG[campaign?.status as SEOCampaignStatus];
 
