@@ -24,3 +24,7 @@ export {
   computeEffectivenessModifiers,
   aggregateEffectivenessData,
 } from './seo-effectiveness-tracker';
+export {
+  computeMomentum,
+  MOMENTUM_DIRECTION_CONFIG,
+} from './seo-momentum-calculator';

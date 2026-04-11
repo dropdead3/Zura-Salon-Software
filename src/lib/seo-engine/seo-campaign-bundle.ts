@@ -4,6 +4,7 @@
  */
 
 import { SEO_TASK_TEMPLATES } from '@/config/seo-engine/seo-task-templates';
+import { MAX_ACTIVE_CAMPAIGNS_PER_LOCATION_SERVICE } from '@/config/seo-engine/seo-quotas';
 
 export type CampaignBundleType = 'competitive_gap' | 'content_gap' | 'review_velocity' | 'local_presence';
 
@@ -74,7 +75,15 @@ const BUNDLE_TYPE_TEMPLATES: Record<CampaignBundleType, { templateKeys: string[]
 /**
  * Generate a campaign bundle from gap signals.
  */
-export function generateCampaignBundle(input: CampaignBundleInput): GeneratedCampaignBundle {
+export function generateCampaignBundle(input: CampaignBundleInput & {
+  /** Count of currently active campaigns for the same location-service pair */
+  activeCampaignsForLocationService?: number;
+}): GeneratedCampaignBundle | { suppressed: true; reason: string } {
+  // Enforce per-location-service campaign cap
+  if ((input.activeCampaignsForLocationService ?? 0) >= MAX_ACTIVE_CAMPAIGNS_PER_LOCATION_SERVICE) {
+    return { suppressed: true, reason: `Max active campaigns (${MAX_ACTIVE_CAMPAIGNS_PER_LOCATION_SERVICE}) reached for this location-service.` };
+  }
+
   const bundleDef = BUNDLE_TYPE_TEMPLATES[input.type];
   const tasks: CampaignBundleTask[] = [];
 

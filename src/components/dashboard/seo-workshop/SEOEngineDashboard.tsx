@@ -7,7 +7,7 @@ import { ACTIVE_TASK_STATES } from '@/config/seo-engine/seo-state-machine';
 import { tokens } from '@/lib/design-tokens';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
-import { AlertTriangle, TrendingUp, Clock, Target, Star, FileText, MapPin, Pencil, Flag, Crosshair } from 'lucide-react';
+import { AlertTriangle, TrendingUp, TrendingDown, Clock, Target, Star, FileText, MapPin, Pencil, Flag, Crosshair, Minus } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 
 interface Props {
@@ -119,6 +119,9 @@ export function SEOEngineDashboard({ organizationId, onGoToTasks, onGoToCampaign
           </CardContent>
         </Card>
       </div>
+
+      {/* Momentum placeholder — will populate once momentum data hooks are connected */}
+      {/* Phase 1B: Momentum signals will surface here via useSEOMomentum hook */}
 
       {/* Health Domains */}
       <Card>

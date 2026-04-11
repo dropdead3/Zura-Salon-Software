@@ -74,6 +74,18 @@ export const SEO_QUOTA_LIST = Object.values(SEO_QUOTAS);
 export const DEFAULT_USER_TASK_CAP = 10;
 
 /**
+ * Max SEO tasks generated for a single user per day.
+ * Prevents overload from batch generation runs.
+ */
+export const MAX_DAILY_TASKS_PER_USER = 3;
+
+/**
+ * Max active campaigns per location-service pair.
+ * Prevents competing campaigns from diluting focus.
+ */
+export const MAX_ACTIVE_CAMPAIGNS_PER_LOCATION_SERVICE = 1;
+
+/**
  * Min business value score (0–1) for an object to be eligible for recurring tasks.
  */
 export const MIN_BUSINESS_VALUE_THRESHOLD = 0.2;

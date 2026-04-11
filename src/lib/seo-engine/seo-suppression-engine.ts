@@ -5,7 +5,7 @@
 
 import { SEO_TASK_TEMPLATES } from '@/config/seo-engine/seo-task-templates';
 import { ACTIVE_TASK_STATES } from '@/config/seo-engine/seo-state-machine';
-import { DEFAULT_USER_TASK_CAP, MIN_BUSINESS_VALUE_THRESHOLD } from '@/config/seo-engine/seo-quotas';
+import { DEFAULT_USER_TASK_CAP, MAX_DAILY_TASKS_PER_USER, MIN_BUSINESS_VALUE_THRESHOLD } from '@/config/seo-engine/seo-quotas';
 
 export interface ExistingTaskInfo {
   templateKey: string;
@@ -20,6 +20,8 @@ export interface SuppressionContext {
   primarySeoObjectId: string;
   existingTasks: ExistingTaskInfo[];
   assigneeActiveTaskCount: number;
+  /** Tasks generated for this assignee today */
+  assigneeDailyTaskCount?: number;
   businessValueScore: number;
   hasRequiredSourceData: boolean;
   now?: Date;
@@ -88,6 +90,11 @@ export function checkSuppression(ctx: SuppressionContext): SuppressionResult {
   // 6. User task cap
   if (ctx.assigneeActiveTaskCount >= DEFAULT_USER_TASK_CAP) {
     return { suppressed: true, reason: 'Assignee at SEO task cap.' };
+  }
+
+  // 7. Daily task generation cap
+  if ((ctx.assigneeDailyTaskCount ?? 0) >= MAX_DAILY_TASKS_PER_USER) {
+    return { suppressed: true, reason: `Daily task cap (${MAX_DAILY_TASKS_PER_USER}) reached for assignee.` };
   }
 
   return { suppressed: false, reason: null };

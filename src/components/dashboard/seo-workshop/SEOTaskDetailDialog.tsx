@@ -1,6 +1,7 @@
 /**
  * SEO Task Detail Dialog.
- * Shows task details, completion validation, proof upload, and status actions.
+ * Shows task details, completion validation, proof upload, status actions,
+ * and post-completion impact feedback.
  */
 
 import { useState, useRef, useEffect } from 'react';
@@ -13,11 +14,12 @@ import { Separator } from '@/components/ui/separator';
 import { SEO_TASK_TEMPLATES } from '@/config/seo-engine/seo-task-templates';
 import { TASK_STATUS_CONFIG, ACTIVE_TASK_STATES, type SEOTaskStatus } from '@/config/seo-engine/seo-state-machine';
 import { getPriorityTier, PRIORITY_TIERS } from '@/config/seo-engine/seo-priority-model';
-import { useSEOTaskTransition, useSEOTaskComplete, useSEOProofUpload } from '@/hooks/useSEOTaskActions';
+import { useSEOTaskTransition, useSEOTaskComplete, useSEOProofUpload, useSEOTaskImpact } from '@/hooks/useSEOTaskActions';
+import { IMPACT_CATEGORY_LABELS } from '@/lib/seo-engine/seo-impact-tracker';
 import { useAuth } from '@/contexts/AuthContext';
 import { tokens } from '@/lib/design-tokens';
 import type { ProofArtifact } from '@/lib/seo-engine/seo-completion-validator';
-import { Upload, CheckCircle2, Play, AlertTriangle, X, FileImage, Paperclip } from 'lucide-react';
+import { Upload, CheckCircle2, Play, AlertTriangle, X, FileImage, Paperclip, TrendingUp } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 
 interface Props {
@@ -50,6 +52,10 @@ export function SEOTaskDetailDialog({ task, organizationId, open, onOpenChange }
   const transitionMut = useSEOTaskTransition();
   const completeMut = useSEOTaskComplete();
   const uploadMut = useSEOProofUpload();
+
+  // Impact feedback for completed tasks
+  const isCompleted = task?.status === 'completed';
+  const { data: impactData = [] } = useSEOTaskImpact(isCompleted ? task?.id : undefined);
 
   if (!task) return null;
 
@@ -132,6 +138,34 @@ export function SEOTaskDetailDialog({ task, organizationId, open, onOpenChange }
             <div className="text-xs text-muted-foreground">
               Due: {new Date(task.due_at).toLocaleDateString()}
             </div>
+          )}
+
+          {/* Post-completion Impact Feedback */}
+          {isCompleted && impactData.length > 0 && (
+            <Card className="border-primary/20 bg-primary/5">
+              <CardContent className="p-3 space-y-2">
+                <p className="text-xs font-sans font-medium flex items-center gap-1.5">
+                  <TrendingUp className="w-3.5 h-3.5 text-primary" />
+                  Impact Measured
+                </p>
+                {impactData.slice(0, 3).map((impact: any, i: number) => {
+                  const category = impact.impact_category ?? 'unknown';
+                  const label = IMPACT_CATEGORY_LABELS[category] ?? category;
+                  const delta = impact.metric_delta ?? 0;
+                  const confidence = impact.confidence ?? 0;
+                  return (
+                    <div key={i} className="flex items-center justify-between text-xs font-sans">
+                      <span className="text-muted-foreground">
+                        {label}: <span className={delta > 0 ? 'text-green-500' : 'text-destructive'}>{delta > 0 ? '+' : ''}{Math.round(delta * 100)}%</span>
+                      </span>
+                      <Badge variant="outline" className="text-[10px]">
+                        {Math.round(confidence * 100)}% confidence
+                      </Badge>
+                    </div>
+                  );
+                })}
+              </CardContent>
+            </Card>
           )}
 
           <Separator />
