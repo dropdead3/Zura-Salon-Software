@@ -12,6 +12,7 @@ import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { AlertTriangle, TrendingUp, TrendingDown, Clock, Target, Star, FileText, MapPin, Pencil, Flag, Crosshair, Minus, DollarSign } from 'lucide-react';
 import { SEOPredictedLiftCard } from './SEOPredictedLiftCard';
+import { CapitalDashboard } from '../capital-engine/CapitalDashboard';
 import { SEOGrowthReport } from './SEOGrowthReport';
 import { SEOGlobalGrowthDashboard } from './SEOGlobalGrowthDashboard';
 import { SEODominationDashboard } from './SEODominationDashboard';
@@ -280,6 +281,15 @@ export function SEOEngineDashboard({ organizationId, onGoToTasks, onGoToCampaign
           </CardContent>
         </Card>
       )}
+
+      {/* Capital & Expansion Engine */}
+      <div>
+        <h2 className="font-display text-base tracking-wide uppercase mb-4 flex items-center gap-2">
+          <DollarSign className="w-4 h-4 text-primary" />
+          Capital & Expansion
+        </h2>
+        <CapitalDashboard organizationId={organizationId} />
+      </div>
     </div>
   );
 }

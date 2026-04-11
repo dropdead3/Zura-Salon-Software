@@ -1,0 +1,16 @@
+export {
+  computeSPI,
+  computeRisk,
+  computeROE,
+  simulateScenario,
+  rankOpportunities,
+  type SPIInput,
+  type SPIResult,
+  type RiskInput,
+  type RiskResult,
+  type ROEInput,
+  type ROEResult,
+  type ScenarioInput,
+  type ScenarioResult,
+  type QueuedOpportunity,
+} from './capital-engine';

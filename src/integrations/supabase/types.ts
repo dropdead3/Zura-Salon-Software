@@ -7007,6 +7007,144 @@ export type Database = {
           },
         ]
       }
+      expansion_opportunities: {
+        Row: {
+          break_even_months: number | null
+          capital_required: number
+          city: string | null
+          confidence: string
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          location_id: string | null
+          opportunity_type: Database["public"]["Enums"]["expansion_opportunity_type"]
+          organization_id: string
+          predicted_annual_lift: number
+          risk_factors: Json | null
+          roe_score: number
+          service_category: string | null
+          spi_at_creation: number | null
+          status: Database["public"]["Enums"]["expansion_status"]
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          break_even_months?: number | null
+          capital_required?: number
+          city?: string | null
+          confidence?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          location_id?: string | null
+          opportunity_type?: Database["public"]["Enums"]["expansion_opportunity_type"]
+          organization_id: string
+          predicted_annual_lift?: number
+          risk_factors?: Json | null
+          roe_score?: number
+          service_category?: string | null
+          spi_at_creation?: number | null
+          status?: Database["public"]["Enums"]["expansion_status"]
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          break_even_months?: number | null
+          capital_required?: number
+          city?: string | null
+          confidence?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          location_id?: string | null
+          opportunity_type?: Database["public"]["Enums"]["expansion_opportunity_type"]
+          organization_id?: string
+          predicted_annual_lift?: number
+          risk_factors?: Json | null
+          roe_score?: number
+          service_category?: string | null
+          spi_at_creation?: number | null
+          status?: Database["public"]["Enums"]["expansion_status"]
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "expansion_opportunities_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "expansion_opportunities_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      expansion_scenarios: {
+        Row: {
+          assumptions: Json | null
+          break_even_months: number | null
+          confidence: string
+          created_at: string
+          created_by: string | null
+          id: string
+          investment_amount: number
+          opportunity_id: string
+          organization_id: string
+          projected_monthly_lift: number
+          result_summary: Json | null
+        }
+        Insert: {
+          assumptions?: Json | null
+          break_even_months?: number | null
+          confidence?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          investment_amount?: number
+          opportunity_id: string
+          organization_id: string
+          projected_monthly_lift?: number
+          result_summary?: Json | null
+        }
+        Update: {
+          assumptions?: Json | null
+          break_even_months?: number | null
+          confidence?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          investment_amount?: number
+          opportunity_id?: string
+          organization_id?: string
+          projected_monthly_lift?: number
+          result_summary?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "expansion_scenarios_opportunity_id_fkey"
+            columns: ["opportunity_id"]
+            isOneToOne: false
+            referencedRelation: "expansion_opportunities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "expansion_scenarios_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       feature_catalog: {
         Row: {
           category: string
@@ -18402,6 +18540,72 @@ export type Database = {
           },
         ]
       }
+      salon_performance_index: {
+        Row: {
+          conversion_strength: number
+          created_at: string
+          execution_quality: number
+          factors: Json | null
+          growth_velocity: number
+          id: string
+          location_id: string | null
+          operational_stability: number
+          organization_id: string
+          pricing_power: number
+          revenue_efficiency: number
+          risk_level: string
+          scored_at: string
+          spi_score: number
+        }
+        Insert: {
+          conversion_strength?: number
+          created_at?: string
+          execution_quality?: number
+          factors?: Json | null
+          growth_velocity?: number
+          id?: string
+          location_id?: string | null
+          operational_stability?: number
+          organization_id: string
+          pricing_power?: number
+          revenue_efficiency?: number
+          risk_level?: string
+          scored_at?: string
+          spi_score?: number
+        }
+        Update: {
+          conversion_strength?: number
+          created_at?: string
+          execution_quality?: number
+          factors?: Json | null
+          growth_velocity?: number
+          id?: string
+          location_id?: string | null
+          operational_stability?: number
+          organization_id?: string
+          pricing_power?: number
+          revenue_efficiency?: number
+          risk_level?: string
+          scored_at?: string
+          spi_score?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "salon_performance_index_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "salon_performance_index_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       salon_services: {
         Row: {
           category: string | null
@@ -26336,6 +26540,18 @@ export type Database = {
         | "cancelled"
         | "no_show"
       discount_type: "percentage" | "fixed_amount" | "promotional"
+      expansion_opportunity_type:
+        | "location_expansion"
+        | "new_location"
+        | "category_expansion"
+        | "acquisition"
+      expansion_status:
+        | "identified"
+        | "evaluating"
+        | "approved"
+        | "in_progress"
+        | "completed"
+        | "dismissed"
       formula_type: "actual" | "refined"
       fulfillment_status:
         | "pending"
@@ -26653,6 +26869,20 @@ export const Constants = {
         "no_show",
       ],
       discount_type: ["percentage", "fixed_amount", "promotional"],
+      expansion_opportunity_type: [
+        "location_expansion",
+        "new_location",
+        "category_expansion",
+        "acquisition",
+      ],
+      expansion_status: [
+        "identified",
+        "evaluating",
+        "approved",
+        "in_progress",
+        "completed",
+        "dismissed",
+      ],
       formula_type: ["actual", "refined"],
       fulfillment_status: [
         "pending",
