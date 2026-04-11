@@ -157,8 +157,9 @@ async function detectPageIssues(
     const cooldownUntil = new Date();
     cooldownUntil.setDate(cooldownUntil.getDate() + cooldownDays);
 
-    await supabase.from("seo_tasks").insert({
+    const { data: insertedTask } = await supabase.from("seo_tasks").insert({
       organization_id: organizationId,
+      location_id: seoObj.location_id ?? null,
       template_key: templateKey,
       primary_seo_object_id: seoObj.id,
       status: "detected",
@@ -171,7 +172,18 @@ async function detectPageIssues(
       due_at: dueAt.toISOString(),
       cooldown_until: cooldownUntil.toISOString(),
       ai_generated_content: { title, explanation },
-    });
+    }).select("id").single();
+
+    if (insertedTask) {
+      await supabase.from("seo_task_history").insert({
+        task_id: insertedTask.id,
+        action: "created",
+        previous_status: null,
+        new_status: "detected",
+        performed_by: "system:weekly_scan",
+        notes: `Auto-detected page issue: ${templateKey}`,
+      });
+    }
 
     generated++;
   }
@@ -387,8 +399,9 @@ async function detectConversionWeakness(
       const cooldownUntil = new Date();
       cooldownUntil.setDate(cooldownUntil.getDate() + 30);
 
-      await supabase.from("seo_tasks").insert({
+      const { data: insertedTask } = await supabase.from("seo_tasks").insert({
         organization_id: organizationId,
+        location_id: seoObj.location_id ?? null,
         template_key: "booking_cta_optimization",
         primary_seo_object_id: seoObj.id,
         status: "detected",
@@ -404,7 +417,18 @@ async function detectConversionWeakness(
           title: `Add booking CTA to ${seoObj.label}`,
           explanation: `Conversion health is ${item.score}/100 — no booking call-to-action detected.`,
         },
-      });
+      }).select("id").single();
+
+      if (insertedTask) {
+        await supabase.from("seo_task_history").insert({
+          task_id: insertedTask.id,
+          action: "created",
+          previous_status: null,
+          new_status: "detected",
+          performed_by: "system:weekly_scan",
+          notes: "Auto-detected: missing booking CTA",
+        });
+      }
 
       generated++;
     }
