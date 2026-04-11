@@ -12,7 +12,7 @@ export function useFinancedProjects() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('financed_projects')
-        .select('*')
+        .select('*, expansion_opportunities(title)')
         .eq('organization_id', orgId!)
         .order('created_at', { ascending: false });
       if (error) throw error;
@@ -58,8 +58,11 @@ export function useCreateLedgerEntry() {
         .from('financed_project_ledger')
         .insert({
           organization_id: orgId!,
-          ...input,
-        } as any)
+          financed_project_id: input.financed_project_id,
+          entry_type: input.entry_type,
+          amount: input.amount,
+          description: input.description,
+        })
         .select()
         .single();
       if (error) throw error;

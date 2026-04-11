@@ -35,7 +35,11 @@ export function FundThisDialog({ opportunity, open, onOpenChange }: Props) {
     try {
       const result = await initiate.mutateAsync({ opportunityId: opportunity.id });
       if (result?.url) {
-        window.open(result.url, '_blank');
+        const win = window.open(result.url, '_blank');
+        if (!win) {
+          // Popup blocked — redirect in same tab
+          window.location.href = result.url;
+        }
       }
     } finally {
       setIsRedirecting(false);
