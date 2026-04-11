@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { ChevronDown, Users, UserPlus, UserCheck, Layers } from 'lucide-react';
+import { ChevronDown, Layers, Calendar } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
@@ -10,22 +10,14 @@ import { cn } from '@/lib/utils';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { useRevenueByCategoryDrilldown, type CategoryBreakdownData, type CategoryStylistData } from '@/hooks/useRevenueByCategoryDrilldown';
 import { useServiceCategoryColorsMap } from '@/hooks/useServiceCategoryColors';
+import { formatDateShort } from '@/lib/format';
 
 const FALLBACK_COLOR = '#888888';
 
-interface RevenueByCategoryPanelProps {
-  isOpen: boolean;
-  dateFrom: string;
-  dateTo: string;
-  locationId?: string;
-}
-
-const MAX_VISIBLE = 5;
-
-/** Level 3: Client mix for a stylist within a category */
-function ClientMixPanel({ stylist }: { stylist: CategoryStylistData }) {
-  const newPct = stylist.totalClients > 0 ? Math.round((stylist.newClients / stylist.totalClients) * 100) : 0;
-  const returnPct = 100 - newPct;
+/** Level 3: Individual items for a stylist within a category */
+function StylistItemsPanel({ items }: { items?: { itemName: string; amount: number; date: string }[] }) {
+  const { formatCurrencyWhole: fmtWhole } = useFormatCurrency();
+  const list = items || [];
 
   return (
     <motion.div
@@ -35,38 +27,27 @@ function ClientMixPanel({ stylist }: { stylist: CategoryStylistData }) {
       transition={{ duration: 0.2 }}
       className="overflow-hidden"
     >
-      <div className="pl-6 border-l-2 border-primary/20 mt-2 space-y-2">
-        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-          <Users className="w-3 h-3" />
-          <span>{stylist.totalClients} unique client{stylist.totalClients !== 1 ? 's' : ''}</span>
-        </div>
-        {/* New vs Returning bar */}
-        <div className="space-y-1.5">
-          <div className="flex items-center justify-between text-xs">
-            <div className="flex items-center gap-1.5">
-              <UserPlus className="w-3 h-3 text-chart-4" />
-              <span>New</span>
+      <div className="pl-6 border-l-2 border-primary/20 mt-2 space-y-0.5">
+        {list.length === 0 ? (
+          <p className="text-xs text-muted-foreground py-1">No item details</p>
+        ) : (
+          list.map((item, i) => (
+            <div key={i} className="flex items-center justify-between py-1.5 px-1 border-b border-border/10 last:border-0">
+              <div className="min-w-0 flex-1">
+                <p className="text-xs truncate">{item.itemName}</p>
+                {item.date && (
+                  <p className="text-[10px] text-muted-foreground/60 flex items-center gap-1 mt-0.5">
+                    <Calendar className="w-2.5 h-2.5" />
+                    {formatDateShort(item.date)}
+                  </p>
+                )}
+              </div>
+              <span className="text-xs tabular-nums text-muted-foreground ml-3">
+                <BlurredAmount>{fmtWhole(Math.round(item.amount))}</BlurredAmount>
+              </span>
             </div>
-            <span className="tabular-nums">{stylist.newClients} ({newPct}%)</span>
-          </div>
-          <div className="flex items-center justify-between text-xs">
-            <div className="flex items-center gap-1.5">
-              <UserCheck className="w-3 h-3 text-primary" />
-              <span>Returning</span>
-            </div>
-            <span className="tabular-nums">{stylist.returningClients} ({returnPct}%)</span>
-          </div>
-          <div className="h-2 rounded-full overflow-hidden flex bg-muted/50">
-            <div
-              className="h-full bg-chart-4"
-              style={{ width: `${newPct}%` }}
-            />
-            <div
-              className="h-full bg-primary"
-              style={{ width: `${returnPct}%` }}
-            />
-          </div>
-        </div>
+          ))
+        )}
       </div>
     </motion.div>
   );
@@ -109,7 +90,7 @@ function StylistRow({ stylist, delay, categoryName }: { stylist: CategoryStylist
           isOverageFees ? (
             <ServiceDetailsPanel serviceDetails={stylist.serviceDetails} />
           ) : (
-            <ClientMixPanel stylist={stylist} />
+            <StylistItemsPanel items={stylist.items} />
           )
         )}
       </AnimatePresence>
