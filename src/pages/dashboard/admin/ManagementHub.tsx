@@ -107,6 +107,7 @@ function CategorySection({ title, children }: CategorySectionProps) {
 
 export default function ManagementHub() {
   const { dashPath } = useOrgDashboardPath();
+  const { effectiveOrganization } = useOrganizationContext();
 
   // Fetch stats for badges
   const { data: stats } = useQuery({
