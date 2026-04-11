@@ -113,9 +113,13 @@ export function useRevenueByCategoryDrilldown({
 
       allItems.forEach(item => {
         const itemType = (item.item_type || '').toLowerCase();
-        const category = itemType === 'service'
-          ? getServiceCategory(item.item_name)
-          : (itemType === 'product' ? 'Retail' : 'Other');
+        const itemName = item.item_name || '';
+        const isVish = isVishServiceCharge(itemName, itemType) || (itemType === 'sale_fee' && /\bvish\b/i.test(itemName));
+        const category = isVish
+          ? 'Chemical Overage Fees'
+          : itemType === 'service'
+            ? getServiceCategory(itemName)
+            : (itemType === 'product' ? 'Retail' : 'Other');
         const amount = (Number(item.total_amount) || 0) + (Number(item.tax_amount) || 0);
         const staffId = item.phorest_staff_id || 'unknown';
         const clientKey = item.phorest_client_id || 'walk-in';
