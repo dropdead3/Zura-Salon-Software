@@ -1,110 +1,114 @@
 
 
-# SEO Task Engine — Full Gap and Bug Analysis
+# SEO Task Engine — Second Pass Analysis
 
-## Critical Bugs
+## Status
+The engine is structurally sound. Templates seeded (16 rows confirmed), RLS policies in place, FK constraints verified, cleanup function exists. The previous fix pass addressed the critical bugs. This pass surfaces remaining issues across correctness, UX quality, and architectural completeness.
 
-### B1: Operator precedence bug in monthly scan reprioritization
-**File**: `supabase/functions/seo-monthly-scan/index.ts`, line 325
-```
-(task.priority_factors as any)?.opportunity || 0.5 * 0.25 * 100 +
-```
-The `||` operator has lower precedence than `+` and `*`, so this expression evaluates incorrectly. It should be:
-```
-((task.priority_factors as any)?.opportunity ?? 0.5) * 0.25 * 100 +
-```
-The entire formula on lines 323-329 is also structurally wrong — the weighted factors don't add up correctly. Each factor should be `factor * weight * 100` but the `||` splits the expression.
+---
 
-### B2: Orphaned task history record in daily scan
-**File**: `supabase/functions/seo-daily-scan/index.ts`, line 256
-```js
-task_id: crypto.randomUUID(), // Will be replaced by actual task ID after insert
-```
-This inserts a history record with a random UUID that doesn't match the actual task just created. The insert on line 235 doesn't return the created task's ID. Fix: add `.select('id').single()` to the insert, then use the returned ID.
+## Remaining Bugs
 
-### B3: Inconsistent CORS handling across edge functions
-- `seo-score-calculator` uses `requireAuth` + `getCorsHeaders` (auth-based, origin-aware)
-- `seo-daily-scan`, `seo-weekly-scan`, `seo-monthly-scan` use `wildcardCorsHeaders` with no auth
-- The daily/weekly/monthly scans accept arbitrary `organizationId` from the request body with **no authentication** — anyone can trigger scans for any org using the service role key embedded in the function. While this is needed for cron, the manual trigger path from the UI should validate the caller's org membership.
+### B5: `useSEOHealthSummary` averages ALL historical scores, not latest per object
+**File**: `src/hooks/useSEOHealthScores.ts`, line 43-58
+The query fetches all `seo_health_scores` rows for the org ordered by `scored_at` desc, then averages every row per domain. Since each scan inserts new rows (not upserts), older scores dilute the average. With 10 scan runs, an object's score appears as a blended historical average rather than its current health.
+**Fix**: Deduplicate by `(seo_object_id, domain)` — keep only the most recent score per object per domain before averaging.
 
-### B4: Bootstrap creates tasks with `primary_seo_object_id: null`
-**File**: `src/components/dashboard/seo-workshop/SEOBootstrapDialog.tsx`, line 111
-If the `seo_objects` upsert fails to return a row (e.g. RLS blocks it), `seoObj` is null, and the task insert uses `null` for `primary_seo_object_id` — but the DB column is `NOT NULL`. This will throw a Postgres constraint error silently with no user feedback beyond a generic toast.
+### B6: Edge functions insert tasks without `location_id` in several places
+**Files**: `seo-weekly-scan/index.ts` lines 160-174 (page issues), 390-407 (conversion weakness)
+Tasks are inserted without `location_id`. While the column is nullable, this breaks location-scoped filtering in the UI and campaigns. The SEO object's `location_id` is available but not used.
+**Fix**: Include `location_id: seoObj.location_id` in all task inserts.
 
-## Significant Gaps
+### B7: `seo-score-calculator` uses auth-based access but daily/weekly/monthly scans use service-role without auth
+The score calculator is the only scan function that validates the caller's org membership. When the Settings UI triggers daily/weekly/monthly scans via `supabase.functions.invoke()`, the anon key is used but the function creates a service-role client — meaning any authenticated user can trigger scans for any org by sending an arbitrary `organizationId`.
+**Fix**: Add JWT validation + org membership check to the UI-triggered path in all 3 scan functions. Keep the unauthenticated cron path for scheduled runs.
 
-### G1: Template seed data never executed
-The `seo_task_templates` table was created but never seeded with the 16 template rows. The edge functions query this table (`WHERE template_key = 'review_request' AND is_active = true`) and return early if no row exists. **All scan-generated tasks will fail** until templates are seeded.
+### B8: `content_refresh` template not recognized by scan functions
+The weekly scan (line 293) generates tasks with `template_key: 'content_refresh'`, but `content_refresh` has an FK to `seo_task_templates`. While the template IS seeded in the DB, it's a manual-approval template — the scan correctly generates it but the completion flow requires `content_diff` proof type which was already fixed in the previous pass. No action needed, just noting this is working correctly now.
 
-### G2: `useSEOTasks` query uses `seo_tasks` join that may not match
-**File**: `src/hooks/useSEOTasks.ts`, line 15
-```ts
-.select('*, seo_objects!seo_tasks_primary_seo_object_id_fkey(...)')
-```
-This relies on PostgREST inferring the FK name `seo_tasks_primary_seo_object_id_fkey`. If the auto-generated FK name differs (which happens with `IF NOT EXISTS` tables), this will silently fail and `seo_objects` will be `null` on every task.
+---
 
-### G3: `content_refresh` template requires `content_diff` proof type, but `ProofArtifact.type` doesn't include it
-**File**: `src/lib/seo-engine/seo-completion-validator.ts`, line 19
-```ts
-type: 'photo' | 'screenshot' | 'url' | 'text' | 'action_summary';
-```
-The `content_refresh` template's `proofRequirements` include `'content_diff'` which doesn't match any allowed type. The validator's fallback logic (line 69: `a.type === req || a.type === 'action_summary'`) means only `action_summary` uploads will satisfy it, which is misleading.
+## UX Gaps
 
-### G4: Health score accumulation without cleanup
-Every time the score calculator runs, it **inserts** new rows into `seo_health_scores` — it never deletes or upserts. Over time this table will grow linearly with `objects × domains × scan_runs`. There's no retention policy or deduplication.
+### U1: No pagination on any list query
+**Files**: `useSEOTasks.ts`, `SEOEngineObjects.tsx`, `useSEOCampaigns.ts`
+All queries fetch unlimited rows. With active orgs, the task list could return hundreds of rows.
+**Fix**: Add `limit(50)` to default queries and a "Load more" pattern to task/object lists.
 
-### G5: Opportunity/risk score accumulation
-Same issue as G4 — `seo_opportunity_risk_scores` also only inserts, never cleans up.
+### U2: Dashboard health summary uses emoji icons instead of Lucide icons
+**File**: `SEOEngineDashboard.tsx`, line 19-26
+Uses `⭐`, `📄`, `📍` etc. while the rest of the platform uses Lucide icons per UI Canon.
+**Fix**: Replace with proper icon components.
 
-### G6: Campaign state transitions bypass state machine in monthly scan
-**File**: `supabase/functions/seo-monthly-scan/index.ts`, line 228
-The monthly scan directly updates campaign status without validating against `CAMPAIGN_STATE_TRANSITIONS`. For example, it could transition `at_risk` directly to `abandoned` (allowed) but also `at_risk` to `completed` without checking if that's valid.
+### U3: Task detail dialog state doesn't reset between tasks
+**File**: `SEOTaskDetailDialog.tsx`, lines 38-40
+`uploadedProofs` and `managerApproved` are initialized with `useState` but the dialog component receives the task via prop. If React reuses the component instance (same key), state persists from a previous task.
+**Fix**: Add a `useEffect` to reset state when `task?.id` changes.
 
-### G7: Bootstrap dialog uses mock services/stylists
-**File**: `src/components/dashboard/seo-workshop/SEOBootstrapDialog.tsx`, lines 39-48
-Hardcoded `mockServices` and `mockStylists` are used instead of real org data. The bootstrap will always generate the same tasks regardless of what the salon actually offers.
+### U4: No way to manually create a one-off SEO task
+Currently tasks can only be auto-generated by scans or bootstrap. Admins should be able to create ad-hoc tasks from the Tasks tab.
+**Fix**: Add a "Create Task" button that opens a form with template selection, object selection, and priority override.
 
-### G8: No `performed_by` on edge function history inserts
-The daily/weekly/monthly scan edge functions insert `seo_task_history` records without setting `performed_by`. This is acceptable for automated actions but should explicitly set a system identifier for auditability.
+### U5: Campaign detail dialog doesn't show which location the campaign targets
+**File**: `SEOCampaignDetailDialog.tsx`
+The dialog shows title, objective, and progress but no location name. The `location_id` is on the campaign but not resolved to a human-readable name.
+**Fix**: Fetch location name and display it in the dialog header.
 
-### G9: `useSEOHealthSummary` hook missing
-The dashboard imports `useSEOHealthSummary` from `useSEOHealthScores` — need to verify this export exists and correctly aggregates scores.
+### U6: Objects tab has no health scores inline
+`SEOEngineObjects.tsx` shows object cards with type and key but no health score. Users must mentally cross-reference with the Dashboard health scores.
+**Fix**: Join latest health scores per object and show a small badge on each card.
 
-## Minor Issues
+---
 
-- **M1**: All UI components use `as any` extensively (~50 instances). This bypasses TypeScript's type safety for all DB query results.
-- **M2**: `SEOEngineSettings.tsx` imports `toast` from `sonner` while all other SEO components use `@/hooks/use-toast` — inconsistent toast system.
-- **M3**: Task detail dialog doesn't reset `uploadedProofs` and `managerApproved` state when switching between tasks (the dialog unmounts/remounts via `task` prop change, but state could persist if React reuses the component).
-- **M4**: The `seo_tasks` table has a `CHECK` constraint on `priority_score` (`CHECK (priority_score >= 0 AND priority_score <= 100)`) which is fine as-is but the `seo_health_scores` table also uses `CHECK` on score — per project doctrine, validation triggers are preferred over CHECK constraints.
-- **M5**: No pagination on task list, object list, or campaign list — all fetch unlimited rows.
-- **M6**: Edge function `seo-score-calculator` references `website_page_versions` and `employee_profiles` tables — need to verify these exist and have the expected columns.
+## Architectural Enhancements
 
-## Proposed Fix Order
+### A1: `performed_by` missing on task history from weekly/monthly scans
+The daily scan was fixed (previous pass), but weekly and monthly scans still insert `seo_task_history` records without `performed_by`. The monthly scan inserts history for cleanup actions without it.
+**Fix**: Add `performed_by: 'system:weekly_scan'` and `performed_by: 'system:monthly_scan'` to all history inserts.
 
-1. **B1** — Fix priority formula (critical math bug)
-2. **B2** — Fix orphaned history record
-3. **G1** — Seed template data via migration
-4. **B3** — Add auth to scan triggers when called from UI
-5. **B4** — Guard against null SEO object in bootstrap
-6. **G3** — Add `content_diff` to ProofArtifact type union
-7. **G4/G5** — Add score retention (delete scores older than N runs)
-8. **G7** — Replace mock data with real org services/stylists
-9. **G6** — Validate campaign transitions in monthly scan
-10. **M2** — Standardize toast import
-11. **G2** — Use explicit FK hint or verify the join name
-12. **M5** — Add pagination limits
+### A2: Weekly scan doesn't insert `seo_task_history` records at all
+**File**: `seo-weekly-scan/index.ts`
+Unlike the daily scan, the weekly scan inserts tasks but never records a history entry for them. This breaks the audit trail.
+**Fix**: Add history insert after each task creation.
 
-## File Changes Summary
+### A3: Score calculator object-key inconsistency
+**File**: `seo-score-calculator/index.ts`, line 119
+Location-service pairs use `::` separator (`${loc_id}::${svc_id}`), but the bootstrap dialog (line 134) uses `:` separator (`${locationId}:${svc.id}`). The daily scan (line 179) uses `::` with a `LIKE` query. This mismatch means bootstrap-created objects won't match scan-detected objects.
+**Fix**: Standardize on `::` everywhere — update `seo-bootstrap.ts` to use `::`.
+
+### A4: Integration components not wired into host pages
+`SEOInsightsCard`, `SEOContentTasksCard`, `SEOUnifiedTasksCard`, and `SEOPageHealthBadge` were created but never imported into their host pages (Analytics Hub, Marketer, Tasks, Website Builder).
+**Fix**: Import and render them in the appropriate host pages with `VisibilityGate` wrapping.
+
+---
+
+## Fix Priority Order
+
+1. **B5** — Health summary averaging bug (data correctness)
+2. **A3** — Object key separator inconsistency (data integrity)
+3. **U3** — Dialog state reset (UX bug)
+4. **B6** — Missing `location_id` on task inserts (data completeness)
+5. **A2** — Missing audit trail in weekly scan (governance)
+6. **A1** — Missing `performed_by` in weekly/monthly scans
+7. **U1** — Add pagination limits
+8. **U2** — Replace emoji with Lucide icons
+9. **U5** — Show location name in campaign dialog
+10. **U6** — Inline health scores on objects tab
+
+## Files Changed
 
 | File | Changes |
 |---|---|
-| `supabase/functions/seo-monthly-scan/index.ts` | Fix priority formula (B1), validate campaign transitions (G6) |
-| `supabase/functions/seo-daily-scan/index.ts` | Fix orphaned history record (B2) |
-| New migration SQL | Seed 16 task templates (G1), add score cleanup function (G4/G5) |
-| `src/components/dashboard/seo-workshop/SEOBootstrapDialog.tsx` | Replace mocks with real data (G7), guard null object (B4) |
-| `src/lib/seo-engine/seo-completion-validator.ts` | Add `content_diff` type (G3) |
-| `src/components/dashboard/seo-workshop/SEOEngineSettings.tsx` | Fix toast import (M2), add auth to scan triggers (B3) |
-| `src/hooks/useSEOTasks.ts` | Verify/fix FK join hint (G2) |
+| `src/hooks/useSEOHealthScores.ts` | Fix health summary deduplication (B5) |
+| `src/lib/seo-engine/seo-bootstrap.ts` | Fix `::` separator (A3) |
+| `src/components/dashboard/seo-workshop/SEOTaskDetailDialog.tsx` | Reset state on task change (U3) |
+| `supabase/functions/seo-weekly-scan/index.ts` | Add location_id (B6), history records (A2), performed_by (A1) |
+| `supabase/functions/seo-monthly-scan/index.ts` | Add performed_by (A1) |
+| `src/hooks/useSEOTasks.ts` | Add pagination limit (U1) |
+| `src/hooks/useSEOCampaigns.ts` | Add pagination limit (U1) |
+| `src/components/dashboard/seo-workshop/SEOEngineDashboard.tsx` | Replace emoji with icons (U2) |
+| `src/components/dashboard/seo-workshop/SEOCampaignDetailDialog.tsx` | Show location name (U5) |
+| `src/components/dashboard/seo-workshop/SEOEngineObjects.tsx` | Inline health badges (U6), pagination (U1) |
 
-Total: ~8 files modified, 1 new migration.
+Total: ~10 files modified, no new migrations needed.
 
