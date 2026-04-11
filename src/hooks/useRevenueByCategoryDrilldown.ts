@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { getServiceCategory } from '@/utils/serviceCategorization';
+import { getServiceCategory, isVishServiceCharge } from '@/utils/serviceCategorization';
 import { resolveStaffNamesByPhorestIds } from '@/utils/resolveStaffNames';
 
 export interface CategoryStylistData {
