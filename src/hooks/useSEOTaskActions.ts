@@ -2,7 +2,7 @@
  * SEO Task mutation hooks: completion, proof upload, status transitions.
  */
 
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { transitionTaskStatus } from '@/lib/seo-engine/seo-task-service';
 import { validateCompletion, type ProofArtifact, type SystemVerificationSignals } from '@/lib/seo-engine/seo-completion-validator';
@@ -135,7 +135,6 @@ export function useSEOProofUpload() {
 }
 
 export function useSEOTaskImpact(taskId: string | undefined) {
-  const { useQuery } = require('@tanstack/react-query');
   return useQuery({
     queryKey: ['seo-task-impact', taskId],
     queryFn: async () => {
