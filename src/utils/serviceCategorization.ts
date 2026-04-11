@@ -149,6 +149,23 @@ export function isMerchProduct(itemName: string | null): boolean {
 }
 
 /**
+ * Vish chemical charge pattern — matches Phorest "Vish Product Charge" items
+ * that are actually service overage fees, not retail products.
+ */
+const VISH_CHARGE_PATTERN = /\bvish\b/i;
+
+/**
+ * Returns true if the given item is a Vish chemical fee masquerading as a product.
+ * These should be treated as service revenue, not retail.
+ */
+export function isVishServiceCharge(itemName: string | null, itemType: string | null): boolean {
+  if (!itemName || !itemType) return false;
+  const type = itemType.toLowerCase();
+  if (type !== 'product' && type !== 'retail') return false;
+  return VISH_CHARGE_PATTERN.test(itemName.trim());
+}
+
+/**
  * Category colors for charts (matches the service category theme)
  */
 export const CATEGORY_COLORS: Record<string, string> = {

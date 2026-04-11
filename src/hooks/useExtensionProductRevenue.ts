@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { isAllLocations, parseLocationIds } from '@/lib/locationFilter';
-import { isExtensionProduct } from '@/utils/serviceCategorization';
+import { isExtensionProduct, isVishServiceCharge } from '@/utils/serviceCategorization';
 
 /** Apply location filter. */
 function addLocationFilter(query: any, locationId?: string) {
@@ -54,6 +54,7 @@ export function useExtensionProductRevenue(
       let extensionCount = 0;
 
       for (const item of items) {
+        if (isVishServiceCharge(item.item_name, 'product')) continue;
         if (isExtensionProduct(item.item_name)) {
           extensionRevenue += (Number(item.total_amount) || 0) + (Number(item.tax_amount) || 0);
           extensionCount += 1;

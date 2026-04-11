@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { isAllLocations, parseLocationIds } from '@/lib/locationFilter';
-import { isExtensionProduct, isGiftCardProduct, isMerchProduct } from '@/utils/serviceCategorization';
+import { isExtensionProduct, isGiftCardProduct, isMerchProduct, isVishServiceCharge } from '@/utils/serviceCategorization';
 
 /** Apply location filter. */
 function addLocationFilter(query: any, locationId?: string) {
@@ -73,6 +73,8 @@ export function useRetailBreakdown(
       let productCount = 0, merchCount = 0, extensionCount = 0, giftCardCount = 0, feesCount = 0;
 
       for (const item of items) {
+        // Vish chemical fees masquerade as products — skip them from retail
+        if (isVishServiceCharge(item.item_name, item.item_type)) continue;
         const amount = (Number(item.total_amount) || 0) + (Number(item.tax_amount) || 0);
         const itemType = (item.item_type || '').toLowerCase();
 

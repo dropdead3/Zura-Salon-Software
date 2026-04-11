@@ -262,6 +262,7 @@ function getAppointmentDurationHours(startTime: string, endTime: string): number
 
 // Using shared fetchAllBatched from @/utils/fetchAllBatched
 import { fetchAllBatched } from '@/utils/fetchAllBatched';
+import { isVishServiceCharge } from '@/utils/serviceCategorization';
 
 // Get aggregated sales metrics for dashboard from appointments (since sales API is not available)
 export function useSalesMetrics(filters: SalesFilters = {}) {
@@ -319,7 +320,7 @@ export function useSalesMetrics(filters: SalesFilters = {}) {
       const posClientIds = new Set<string>();
       for (const item of txItems) {
         const itemType = (item.item_type || '').toLowerCase();
-        if (['product', 'retail'].includes(itemType)) {
+        if (['product', 'retail'].includes(itemType) && !isVishServiceCharge(item.item_name, item.item_type)) {
           productRevenue += (Number(item.total_amount) || 0) + (Number(item.tax_amount) || 0);
           totalProducts += 1;
         }
@@ -336,7 +337,7 @@ export function useSalesMetrics(filters: SalesFilters = {}) {
         const amount = (Number(item.total_amount) || 0) + (Number(item.tax_amount) || 0);
         txTotalRevenue += amount;
         const itemType = (item.item_type || '').toLowerCase();
-        if (itemType === 'service' || itemType === 'sale_fee') {
+        if (itemType === 'service' || itemType === 'sale_fee' || isVishServiceCharge(item.item_name, item.item_type)) {
           txServiceRevenue += amount;
         }
       }
@@ -505,7 +506,7 @@ export function useSalesByStylist(dateFrom?: string, dateTo?: string, locationId
 
         const amount = (Number(item.total_amount) || 0) + (Number(item.tax_amount) || 0);
         const itemType = (item.item_type || '').toLowerCase();
-        const isProduct = ['product', 'retail'].includes(itemType);
+        const isProduct = ['product', 'retail'].includes(itemType) && !isVishServiceCharge(item.item_name, item.item_type);
 
         byUser[userId].totalRevenue += amount;
         if (isProduct) {

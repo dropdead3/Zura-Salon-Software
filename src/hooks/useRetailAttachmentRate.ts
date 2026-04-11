@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { isExtensionProduct } from '@/utils/serviceCategorization';
+import { isExtensionProduct, isVishServiceCharge } from '@/utils/serviceCategorization';
 
 export interface RetailAttachmentData {
   /** Total distinct client-visit combos that included at least one service */
@@ -80,9 +80,9 @@ export function useRetailAttachmentRate({ dateFrom, dateTo, locationId }: UseRet
         }
       }
 
-      // Filter out extension products — they are service inputs, not cross-sells
+      // Filter out extension products and Vish chemical charges — not cross-sells
       const nonExtensionProducts = productItems.filter(
-        (row: any) => !isExtensionProduct(row.item_name)
+        (row: any) => !isExtensionProduct(row.item_name) && !isVishServiceCharge(row.item_name, 'product')
       );
 
       const productVisitSet = new Set<string>();

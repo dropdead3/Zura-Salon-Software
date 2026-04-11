@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { isVishServiceCharge } from '@/utils/serviceCategorization';
 
 export interface TransactionLineItem {
   id: string;
@@ -56,7 +57,11 @@ export interface TransactionBreakdown {
 function categorize(item: TransactionLineItem) {
   const t = item.itemType?.toLowerCase() || '';
   if (t === 'service' || t === 'special_offer_item') return 'service';
-  if (t === 'product') return 'product';
+  if (t === 'product') {
+    // Vish chemical charges are service overage fees, not retail
+    if (isVishServiceCharge(item.itemName, item.itemType)) return 'fee';
+    return 'product';
+  }
   if (t === 'sale_fee') return 'fee';
   if (t === 'appointment_deposit' || t === 'outstanding_balance_pmt') return 'deposit';
   return 'other';

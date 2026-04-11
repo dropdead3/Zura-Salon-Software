@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { formatDisplayName } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { isAllLocations, parseLocationIds } from '@/lib/locationFilter';
+import { isVishServiceCharge } from '@/utils/serviceCategorization';
 
 export interface ProductLineItem {
   itemName: string;
@@ -132,6 +133,7 @@ export function useServiceProductDrilldown({ dateFrom, dateTo, locationId }: Use
       productItems.forEach(item => {
         const sid = item.phorest_staff_id;
         if (!sid) return;
+        if (isVishServiceCharge(item.item_name, 'product')) return;
         if (!productMap[sid]) productMap[sid] = { productRevenue: 0, productCount: 0, items: [] };
         const amt = (Number(item.total_amount) || 0) + (Number(item.tax_amount) || 0);
         productMap[sid].productRevenue += amt;
