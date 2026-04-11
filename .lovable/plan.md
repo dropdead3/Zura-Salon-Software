@@ -1,42 +1,43 @@
 
 
-# Chemical Overage Fees Drilldown — Show Service Names & Remove Client Mix
+# Simplify Stylist Drilldown — Remove Progress Bars, Show Clean Details
 
 ## Problem
-1. The "Chemical Overage Fees" category drilldown shows items as "Vish Product Charge" or "Vish" — it doesn't tell you **which service** triggered the overage fee.
-2. The stylist sub-drilldown shows "New/Returning client" counts and a progress bar, which is meaningless for chemical overage fees.
+The expanded stylist rows in the Revenue by Category drilldown show a client mix panel with New/Returning counts and a progress bar. This is noisy and not the most useful detail at this level. The user wants a cleaner drilldown: stylist, appointment details, dollar amounts — no progress bars.
 
 ## Approach
 
-### 1. Resolve the associated service name per Vish charge
+Replace the `ClientMixPanel` (progress bar + new/returning breakdown) with a cleaner **appointment detail list** showing the individual services performed by that stylist in this category, with amounts. This gives actual operational insight instead of a redundant client mix visualization.
 
-In `useRevenueByCategoryDrilldown.ts`, when building the category data for "Chemical Overage Fees":
-- Collect the `transaction_id` for each Vish item
-- After the main loop, batch-query `phorest_transaction_items` for those `transaction_id`s, filtering `item_type = 'service'`, to find the service name on the same ticket
-- Build a map: `transaction_id → service_name`
-- Store the associated service name on each Vish stylist entry (e.g. as a `serviceNames` field on the stylist data)
+## Changes
 
-This requires adding `transaction_id` to the initial select query.
+### File: `src/hooks/useRevenueByCategoryDrilldown.ts`
 
-### 2. Add service context to the data model
+- Already fetches `item_name` and `transaction_date` per item — need to pass individual item details through to the stylist data
+- Add `items?: { itemName: string; amount: number; date: string }[]` to `CategoryStylistData`
+- In the aggregation loop, collect individual items per stylist per category (name, amount, date)
+- Sort items by date descending within each stylist
 
-Extend `CategoryStylistData` with an optional `serviceDetails?: { serviceName: string; amount: number }[]` array. For "Chemical Overage Fees", each stylist entry will carry the list of services that triggered the fees.
+### File: `src/components/dashboard/sales/RevenueByCategoryPanel.tsx`
 
-### 3. Conditionally hide client mix for Chemical Overage Fees
+- **Remove** the `ClientMixPanel` component entirely (progress bar, new/returning counts)
+- **Replace** with a clean `StylistItemsPanel` that shows:
+  - Each service/item name on the left
+  - Date on the left (subtle, below name)
+  - Dollar amount on the right
+  - Clean list layout with subtle dividers, no progress bars
+- Keep the `ServiceDetailsPanel` for Chemical Overage Fees (already clean)
+- Remove `newClients`, `returningClients`, `totalClients` references from stylist rows since they're no longer displayed
+- Keep the stylist summary line: count + share percent
 
-In `RevenueByCategoryPanel.tsx`:
-- Pass `category.category` (the category name string) down to `StylistRow`
-- When category is `"Chemical Overage Fees"`, skip rendering `ClientMixPanel` (no new/returning client breakdown)
-- Instead, show the service names associated with each stylist's overage fees (e.g. "Color Touch · Balayage")
+### Visual Result
+- Stylist row: Avatar + Name + "3 appointments · 42% of category" + $amount + chevron
+- Expanded: Clean list of individual items with date and amount — no bars, no client mix
+- Chemical Overage Fees: continues to show associated service names (already correct)
 
-### 4. Update labels
-
-For "Chemical Overage Fees", change the stylist subtitle from `"3 appointments"` to `"3 charges"` since these aren't appointments.
-
-## Files Modified
-
+### Files Modified
 | File | Change |
 |---|---|
-| `src/hooks/useRevenueByCategoryDrilldown.ts` | Add `transaction_id` to select; after main loop, batch-fetch service names for Vish transactions; populate `serviceDetails` on stylist data |
-| `src/components/dashboard/sales/RevenueByCategoryPanel.tsx` | Pass category name to `StylistRow`; conditionally hide `ClientMixPanel` for Chemical Overage Fees; show associated service names instead; change "appointments" → "charges" label |
+| `src/hooks/useRevenueByCategoryDrilldown.ts` | Add per-item details array to stylist data |
+| `src/components/dashboard/sales/RevenueByCategoryPanel.tsx` | Remove `ClientMixPanel`, replace with `StylistItemsPanel` showing individual service items with dates and amounts |
 
