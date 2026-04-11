@@ -1,160 +1,166 @@
 
 
-# Stripe Financing Layer for Capital & Expansion Engine
+# Stylist-Level Financing and Ownership Path System
 
 ## What It Builds
 
-A conditional financing execution layer embedded within the Capital & Expansion Engine. Financing is not a standalone feature — it surfaces only when a validated expansion opportunity exceeds deterministic ROE, confidence, and risk thresholds. Eligible opportunities display a "Fund This" action that initiates a Stripe-backed financing flow pre-filled with the modeled investment amount. Post-funding, the system tracks repayment progress, realized revenue lift, and variance from predictions.
+An individual stylist performance scoring and career progression engine that extends the existing level system with a **Stylist Performance Index (SPI)** and **Ownership Readiness Score (ORS)**. Stylists who meet deterministic thresholds unlock micro-financing opportunities (chair expansion, inventory, marketing, mini-location launches) presented as growth actions — never as loan applications. Career stages (Stylist → High Performer → Lead → Operator → Owner) are tracked and surfaced with milestone-based unlocks.
 
 ## Architecture
 
 ```text
-Expansion Opportunity (validated)
+Stylist Performance Data (appointments, revenue, retention, tasks)
      │
-     ├── Financing Eligibility Engine (deterministic)
-     │   ├── ROE ≥ 1.5x
-     │   ├── Confidence = high or medium
-     │   ├── Risk ≤ moderate
-     │   └── All hard filters pass → eligible
+     ├── Stylist SPI Engine (individual-level, 0-100)
+     │   ├── Revenue/mo (25%)
+     │   ├── Retention Rate (20%)
+     │   ├── Rebooking Rate (15%)
+     │   ├── Execution Discipline (15%)
+     │   ├── Growth Trend (15%)
+     │   └── Review Quality (10%)
      │
-     ├── "Fund This" Action
-     │   └── Stripe Checkout (pre-filled amount from capital model)
+     ├── ORS Engine (stricter, 0-100)
+     │   ├── SPI Average (40%)
+     │   ├── Consistency over time (25%)
+     │   ├── Leadership signals (20%)
+     │   └── Demand stability (15%)
      │
-     ├── Financed Project Tracking
-     │   ├── Repayment schedule & progress
-     │   ├── Realized revenue lift vs predicted
-     │   └── Variance alerts
+     ├── Career Stage Assignment (deterministic)
+     │   ├── Stage 1: Stylist (default)
+     │   ├── Stage 2: High Performer (SPI ≥ 70)
+     │   ├── Stage 3: Lead (SPI ≥ 80 + leadership criteria)
+     │   ├── Stage 4: Operator (ORS ≥ 70)
+     │   └── Stage 5: Owner (ORS ≥ 85 + hard filters)
      │
-     └── Capital Dashboard integration
+     ├── Micro-Financing Eligibility (gated)
+     │   ├── SPI threshold per use case
+     │   ├── ORS threshold for expansion-level financing
+     │   └── Demand + confidence checks
+     │
+     └── Ownership Track Dashboard (stylist-facing)
 ```
+
+## How It Connects to Existing Infrastructure
+
+- **Reuses** `useLevelProgress` composite score data as inputs to Stylist SPI (revenue, retention, rebooking, utilization are already computed)
+- **Reuses** existing `financing-engine.ts` eligibility checks and `FundThisDialog` Stripe flow for micro-financing execution
+- **Reuses** `financed_projects` + `financed_project_ledger` tables for tracking funded projects
+- **Extends** `expansion_opportunities` to support stylist-scoped opportunities (adds `staff_user_id` column)
 
 ## Database Changes
 
-**New table: `financed_projects`**
-- `id`, `organization_id` (FK), `opportunity_id` (FK `expansion_opportunities`)
-- `stripe_checkout_session_id` (text), `stripe_subscription_id` (text, nullable)
-- `funded_amount` (numeric), `predicted_annual_lift` (numeric), `predicted_break_even_months` (numeric)
-- `roe_at_funding` (numeric), `confidence_at_funding` (text), `risk_level_at_funding` (text)
-- `status` (enum: `pending_payment`, `active`, `completed`, `defaulted`, `cancelled`)
-- `repayment_total` (numeric, default 0), `repayment_remaining` (numeric, default 0)
-- `realized_revenue_lift` (numeric, default 0), `variance_pct` (numeric, nullable)
-- `funded_at` (timestamptz), `target_completion_at` (timestamptz), `completed_at` (timestamptz, nullable)
-- `created_at`, `updated_at`
-- RLS: org member read, org admin write
+**New table: `stylist_spi_scores`**
+- `id`, `organization_id`, `user_id` (FK employee), `location_id` (nullable)
+- `spi_score` (numeric 0-100), `revenue_score`, `retention_score`, `rebooking_score`, `execution_score`, `growth_score`, `review_score` (all numeric 0-100)
+- `tier` (text: elite/high/growth/underperforming)
+- `scored_at` (timestamptz), `period_start` (date), `period_end` (date)
+- RLS: org member read, service-role write
 
-**New table: `financed_project_ledger`**
-- `id`, `financed_project_id` (FK), `organization_id`
-- `entry_type` (enum: `repayment`, `revenue_lift_recorded`, `adjustment`)
-- `amount` (numeric), `description` (text), `recorded_at` (timestamptz), `created_at`
-- RLS: org member read, org admin write
+**New table: `stylist_ors_scores`**
+- `id`, `organization_id`, `user_id`
+- `ors_score` (numeric 0-100), `spi_average` (numeric), `consistency_score` (numeric), `leadership_score` (numeric), `demand_stability` (numeric)
+- `career_stage` (text: stylist/high_performer/lead/operator/owner)
+- `financing_eligible` (boolean), `ownership_eligible` (boolean)
+- `scored_at` (timestamptz)
+- RLS: org member read (own record), org admin read all
 
-## Eligibility Logic (Deterministic)
+**New table: `stylist_career_milestones`**
+- `id`, `organization_id`, `user_id`
+- `milestone_type` (text: stage_promotion/financing_unlock/ownership_eligible)
+- `from_stage` (text, nullable), `to_stage` (text)
+- `spi_at_milestone` (numeric), `ors_at_milestone` (numeric, nullable)
+- `achieved_at` (timestamptz)
+- RLS: org member read own, org admin read all
 
-An opportunity qualifies for financing when ALL conditions are met:
-- ROE ≥ 1.5x (configurable via `FINANCING_THRESHOLDS`)
-- Confidence is `high` or `medium`
-- Risk level is `low` or `moderate`
-- Status is `identified` or `evaluating` (not dismissed/completed)
-- Capital required ≥ $5,000 minimum (configurable)
+**Alter table: `expansion_opportunities`**
+- Add `staff_user_id` (uuid, nullable, FK employee_profiles.user_id) — enables stylist-scoped micro-financing opportunities
 
-This is a pure function — no AI involvement in eligibility determination.
+**Alter table: `financed_projects`**
+- Add `staff_user_id` (uuid, nullable) — tracks which stylist a financed project belongs to
+- Add `repayment_model` (text, default 'fixed', enum: fixed/revenue_based/hybrid)
+- Add `revenue_share_pct` (numeric, nullable) — for revenue-based repayment
 
 ## New Files
 
 | File | Purpose |
 |---|---|
-| `src/config/capital-engine/financing-config.ts` | Eligibility thresholds (min ROE, allowed confidence/risk levels, min capital), status labels, repayment term defaults |
-| `src/lib/capital-engine/financing-engine.ts` | Pure computation: `isFinancingEligible()`, `computePostFinancingCashFlow()`, `computeVariance()`, `computeRepaymentSchedule()` |
-| `src/hooks/useFinancedProjects.ts` | Queries `financed_projects` + `financed_project_ledger`; mutations for status updates and ledger entries |
-| `src/components/dashboard/capital-engine/FinancingEligibilityBadge.tsx` | Small badge/indicator on eligible opportunities in the Capital Priority Queue |
-| `src/components/dashboard/capital-engine/FundThisDialog.tsx` | Modal: shows investment summary (ROE, lift, break-even, post-financing cash flow), initiates Stripe checkout |
-| `src/components/dashboard/capital-engine/FinancedProjectsTracker.tsx` | Card showing active financed projects: repayment progress, realized lift vs predicted, variance |
-| `supabase/functions/create-financing-checkout/index.ts` | Edge function: validates eligibility server-side, creates Stripe checkout session with pre-filled amount, records `financed_projects` row with `pending_payment` status |
-| `supabase/functions/financing-webhook/index.ts` | Edge function: handles `checkout.session.completed` webhook to activate financed project |
+| `src/config/capital-engine/stylist-financing-config.ts` | Career stage definitions, SPI weights, ORS weights, micro-financing thresholds per use case, repayment model defaults |
+| `src/lib/capital-engine/stylist-spi-engine.ts` | Pure computation: `computeStylistSPI()` from revenue/retention/rebooking/execution/growth/review inputs; `computeORS()` from SPI history + leadership + consistency; `determineCareerStage()` |
+| `src/hooks/useStylistSPI.ts` | Queries `stylist_spi_scores` + `stylist_ors_scores` for a given user; composes career stage data |
+| `src/hooks/useStylistFinancingEligibility.ts` | Evaluates micro-financing eligibility for a stylist using SPI/ORS thresholds + existing `isFinancingEligible()` |
+| `src/components/dashboard/career/OwnershipTrackCard.tsx` | Stylist-facing card: current career stage, SPI gauge, next milestone, progress indicators |
+| `src/components/dashboard/career/StylistSPICard.tsx` | Individual SPI breakdown with component scores and tier badge |
+| `src/components/dashboard/career/MicroFinancingOpportunities.tsx` | Lists eligible micro-financing opportunities with "Activate Growth" action (reuses FundThisDialog) |
+| `src/components/dashboard/career/CareerMilestoneTimeline.tsx` | Timeline of achieved milestones |
+| `supabase/functions/compute-stylist-spi/index.ts` | Edge function: aggregates appointment/revenue/retention data per stylist, computes SPI + ORS, upserts scores, detects stage transitions, records milestones |
 
 ## Modified Files
 
 | File | Change |
 |---|---|
-| `src/components/dashboard/capital-engine/CapitalPriorityQueue.tsx` | Add `FinancingEligibilityBadge` + "Fund This" button per eligible row |
-| `src/components/dashboard/capital-engine/CapitalDashboard.tsx` | Add `FinancedProjectsTracker` card below expansion simulator |
-| `src/lib/capital-engine/index.ts` | Export financing engine functions |
-| `src/config/capital-engine/index.ts` | Export financing config |
+| `src/lib/capital-engine/financing-engine.ts` | Add `isStylistFinancingEligible()` that checks SPI + ORS thresholds in addition to existing ROE/confidence/risk checks |
+| `src/lib/capital-engine/index.ts` | Export new stylist SPI/ORS functions |
+| `src/config/capital-engine/index.ts` | Export stylist financing config |
+| `src/config/capital-engine/financing-config.ts` | Add `STYLIST_FINANCING_THRESHOLDS` for micro-financing use cases and `REPAYMENT_MODELS` config |
+| Stylist dashboard page (existing) | Add `OwnershipTrackCard` to stylist-facing dashboard |
+| `src/components/dashboard/capital-engine/CapitalDashboard.tsx` | Add admin view of stylist-level financing pipeline |
 
-## Edge Function: `create-financing-checkout`
+## Core Computation Model
 
-1. Authenticate caller, verify org admin
-2. Load expansion opportunity by ID, verify org ownership
-3. Run `isFinancingEligible()` server-side (re-validate — never trust client)
-4. Create Stripe checkout session with `mode: 'payment'`, amount = `capital_required` (in cents), metadata includes `opportunity_id` and `organization_id`
-5. Insert `financed_projects` row with status `pending_payment`
-6. Return checkout URL
-
-## Edge Function: `financing-webhook`
-
-1. Verify Stripe webhook signature
-2. On `checkout.session.completed`: update `financed_projects` status to `active`, set `funded_at`
-3. On `checkout.session.expired`: update status to `cancelled`
-
-## UI: Fund This Flow
-
-```text
-Capital Priority Queue Row
-┌──────────────────────────────────────────────┐
-│ 1  Mesa Extensions  2.3x ROE  $45K → $104K  │
-│    Location Expansion · Mesa   12mo payback  │
-│    [ELIGIBLE] ──────────── [Fund This]       │
-└──────────────────────────────────────────────┘
-
-Fund This Dialog
-┌──────────────────────────────────────────────┐
-│ FUND: Mesa Extensions                        │
-│                                              │
-│ Investment      $45,000                      │
-│ Predicted Lift  $104,000/yr                  │
-│ ROE             2.3x                         │
-│ Break-Even      12 months                    │
-│ Post-Financing  +$4,917/mo net cash flow     │
-│                                              │
-│ Risk: Moderate · Confidence: High            │
-│                                              │
-│         [Proceed to Payment]                 │
-└──────────────────────────────────────────────┘
+### Stylist SPI (0-100)
 ```
-
-## Financed Projects Tracker
-
-```text
-┌──────────────────────────────────────────────┐
-│ FINANCED PROJECTS                            │
-│                                              │
-│ Mesa Extensions        Status: Active        │
-│ Funded: $45,000        6 of 12 months        │
-│ Realized Lift: $48,200  (vs $52,000 pred.)   │
-│ Variance: -7.3%        On Track              │
-└──────────────────────────────────────────────┘
+SPI = Revenue(25%) + Retention(20%) + Rebooking(15%) + Execution(15%) + Growth(15%) + Review(10%)
 ```
+Inputs derived from existing `useLevelProgress` data + appointment analytics.
+
+### ORS (0-100)
+```
+ORS = SPIAverage_6mo(40%) + Consistency(25%) + Leadership(20%) + DemandStability(15%)
+```
+Consistency = inverse CV of monthly SPI scores. Leadership = task completion + mentoring signals. Demand stability = booking velocity variance.
+
+### Career Stage Thresholds
+| Stage | SPI Min | ORS Min | Additional |
+|---|---|---|---|
+| Stylist | 0 | — | Default |
+| High Performer | 70 | — | — |
+| Lead | 80 | — | Leadership score ≥ 60 |
+| Operator | 80 | 70 | Consistency ≥ 70 |
+| Owner | 85 | 85 | All hard filters pass |
+
+### Micro-Financing Thresholds
+| Use Case | SPI Min | ORS Min | Max Amount |
+|---|---|---|---|
+| Marketing Boost | 65 | — | $5,000 |
+| Inventory Scaling | 70 | — | $10,000 |
+| Chair Expansion | 75 | 60 | $15,000 |
+| Mini Location | 80 | 75 | $50,000 |
+
+### Repayment Models
+- **Fixed**: Equal monthly payments (existing behavior)
+- **Revenue-based**: % of service revenue until repaid (configurable 5-15%)
+- **Hybrid**: Minimum payment + % of upside above baseline
 
 ## Build Order
 
-1. DB migration (2 new tables + enums + RLS)
-2. `financing-config.ts` (thresholds, labels)
-3. `financing-engine.ts` (eligibility, cash flow, variance computation)
-4. `create-financing-checkout` edge function
-5. `financing-webhook` edge function
-6. `useFinancedProjects.ts` hook
-7. UI: `FinancingEligibilityBadge`, `FundThisDialog`, `FinancedProjectsTracker`
-8. Wire into `CapitalPriorityQueue` and `CapitalDashboard`
+1. DB migration (3 new tables + 2 alter tables)
+2. `stylist-financing-config.ts` (thresholds, career stages, repayment models)
+3. `stylist-spi-engine.ts` (pure computation: SPI, ORS, career stage)
+4. `compute-stylist-spi` edge function
+5. `useStylistSPI.ts` + `useStylistFinancingEligibility.ts` hooks
+6. Update `financing-engine.ts` with stylist-level eligibility
+7. UI: `OwnershipTrackCard`, `StylistSPICard`, `MicroFinancingOpportunities`, `CareerMilestoneTimeline`
+8. Wire into stylist dashboard + admin capital dashboard
 9. Export updates
 
 ## Technical Notes
 
-- Financing eligibility is deterministic — computed from ROE, confidence, and risk level only. AI is used only for generating user-facing summaries of why an opportunity qualifies
-- Server-side re-validation in the edge function prevents client-side manipulation of eligibility
-- The webhook pattern follows the existing Stripe integration patterns already in the codebase (e.g., `create-backroom-checkout`)
-- `STRIPE_SECRET_KEY` is already configured in the environment — no new secrets needed
-- Repayment tracking is manual/admin-driven (ledger entries) — Stripe subscription-based repayment is a future enhancement
-- Variance computation: `(realized_lift - predicted_lift) / predicted_lift * 100`
-- No arbitrary loan requests — financing is only accessible through validated expansion opportunities
-- Follows the Recommend → Approve → Execute autonomy model — "Fund This" requires explicit admin action
+- Stylist SPI is deterministic — computed from existing appointment, revenue, and retention data already tracked by the platform
+- ORS requires 6 months of SPI history for the consistency component; falls back to current SPI with a penalty multiplier if insufficient history
+- Career stage transitions are logged as milestones for auditability — the system recommends but never auto-promotes
+- Micro-financing reuses the existing Stripe checkout flow via `create-financing-checkout` edge function; the only addition is stylist-scoped opportunity creation
+- Revenue-based repayment is tracked via `financed_project_ledger` entries; actual collection integration with Stripe subscriptions is a future enhancement
+- All financing is presented as opportunity-driven ("You can increase monthly revenue by +$X") — never as a loan application
+- Stylists see only their own SPI/ORS; admins see all stylists in their org; platform admins see network-wide
+- The `compute-stylist-spi` edge function runs on a schedule (daily) or can be triggered on-demand by admins
 
