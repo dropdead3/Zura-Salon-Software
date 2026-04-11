@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { getServiceCategory, isExtensionProduct } from '@/utils/serviceCategorization';
+import { getServiceCategory, isExtensionProduct, isVishServiceCharge } from '@/utils/serviceCategorization';
 
 export interface ServiceRetailRow {
   serviceName: string;
@@ -76,6 +76,7 @@ export function useServiceRetailAttachment({ dateFrom, dateTo, locationId }: Use
       for (const p of productItems) {
         if (!p.phorest_client_id || !p.transaction_date) continue;
         if (isExtensionProduct(p.item_name)) continue;
+        if (isVishServiceCharge(p.item_name, 'product')) continue;
         const key = `${p.phorest_client_id}|${p.transaction_date}`;
         productVisitMap.set(
           key,

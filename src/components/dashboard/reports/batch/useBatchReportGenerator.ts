@@ -16,6 +16,7 @@ import {
   type ReportHeaderOptions,
 } from '@/lib/reportPdfLayout';
 import { fetchAllBatched } from '@/utils/fetchAllBatched';
+import { isVishServiceCharge } from '@/utils/serviceCategorization';
 
 export interface BatchReportConfig {
   reportId: string;
@@ -205,7 +206,7 @@ async function fetchReportData(
     case 'payroll-summary': {
       const data = await fetchAllBatched<any>((from, to) => {
         let q = supabase.from('v_all_transaction_items')
-          .select('transaction_date, item_type, total_amount, tip_amount')
+          .select('transaction_date, item_type, item_name, total_amount, tip_amount')
           .gte('transaction_date', dateFrom)
           .lte('transaction_date', dateTo)
           .range(from, to);
@@ -216,7 +217,7 @@ async function fetchReportData(
       for (const r of data) {
         const amt = Number(r.total_amount) || 0;
         totalRevenue += amt;
-        if (r.item_type === 'service') serviceRev += amt;
+        if (r.item_type === 'service' || isVishServiceCharge(r.item_name, r.item_type)) serviceRev += amt;
         else productRev += amt;
         totalTips += Number(r.tip_amount) || 0;
       }

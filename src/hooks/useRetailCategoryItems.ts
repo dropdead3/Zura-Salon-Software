@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { isAllLocations, parseLocationIds } from '@/lib/locationFilter';
-import { isExtensionProduct, isGiftCardProduct, isMerchProduct } from '@/utils/serviceCategorization';
+import { isExtensionProduct, isGiftCardProduct, isMerchProduct, isVishServiceCharge } from '@/utils/serviceCategorization';
 
 type RetailCategory = 'Products' | 'Merch' | 'Gift Cards' | 'Extensions' | 'Fees & Deposits';
 
@@ -66,6 +66,7 @@ export function useRetailCategoryItems(
 
       const grouped = new Map<string, { quantity: number; revenue: number }>();
       for (const item of items) {
+        if (isVishServiceCharge(item.item_name, item.item_type)) continue;
         if (!matchesCategory(item.item_name, item.item_type, category)) continue;
         const name = item.item_name?.trim() || 'Unknown Product';
         const amount = (Number(item.total_amount) || 0) + (Number(item.tax_amount) || 0);

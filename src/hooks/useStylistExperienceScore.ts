@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { format, subDays, startOfDay } from 'date-fns';
 import { resolveStaffNames } from '@/utils/resolveStaffNames';
 import { fetchAllBatched } from '@/utils/fetchAllBatched';
+import { isVishServiceCharge } from '@/utils/serviceCategorization';
 
 export interface StylistExperienceScore {
   staffId: string;
@@ -124,7 +125,7 @@ export function useStylistExperienceScore(
       const transactionItems = await fetchAllBatched<any>((from, to) =>
         supabase
           .from('phorest_transaction_items')
-          .select('phorest_staff_id, item_type, total_amount')
+          .select('phorest_staff_id, item_type, item_name, total_amount')
           .gte('transaction_date', startDate)
           .lte('transaction_date', endDate)
           .range(from, to)
@@ -149,7 +150,7 @@ export function useStylistExperienceScore(
         }
         const data = staffRetail.get(item.phorest_staff_id)!;
         data.total += item.total_amount || 0;
-        if (item.item_type === 'Product' || item.item_type === 'product') {
+        if ((item.item_type === 'Product' || item.item_type === 'product') && !isVishServiceCharge(item.item_name, item.item_type)) {
           data.retail += item.total_amount || 0;
         }
       });
