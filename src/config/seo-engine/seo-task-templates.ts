@@ -4,6 +4,8 @@
  */
 
 import type { SEOHealthDomain } from './seo-health-domains';
+import type { AutonomyLevel } from './seo-autonomy-config';
+import { TEMPLATE_AUTONOMY_MAP } from './seo-autonomy-config';
 
 export interface SEOTaskTemplateConfig {
   templateKey: string;
@@ -46,6 +48,7 @@ export const SEO_TASK_TEMPLATES: Record<string, SEOTaskTemplateConfig> = {
     escalationThresholdDays: 3,
     cooldownDays: 7,
     maxOpenPerObject: 3,
+    autonomyLevel: TEMPLATE_AUTONOMY_MAP.review_request,
   },
   review_response: {
     templateKey: 'review_response',
@@ -61,6 +64,7 @@ export const SEO_TASK_TEMPLATES: Record<string, SEOTaskTemplateConfig> = {
     escalationThresholdDays: 2,
     cooldownDays: 0,
     maxOpenPerObject: 5,
+    autonomyLevel: TEMPLATE_AUTONOMY_MAP.review_response,
   },
   photo_upload: {
     templateKey: 'photo_upload',
@@ -76,6 +80,7 @@ export const SEO_TASK_TEMPLATES: Record<string, SEOTaskTemplateConfig> = {
     escalationThresholdDays: 5,
     cooldownDays: 30,
     maxOpenPerObject: 1,
+    autonomyLevel: TEMPLATE_AUTONOMY_MAP.photo_upload,
   },
   gbp_post: {
     templateKey: 'gbp_post',
@@ -91,6 +96,7 @@ export const SEO_TASK_TEMPLATES: Record<string, SEOTaskTemplateConfig> = {
     escalationThresholdDays: 4,
     cooldownDays: 7,
     maxOpenPerObject: 1,
+    autonomyLevel: TEMPLATE_AUTONOMY_MAP.gbp_post,
   },
   service_page_update: {
     templateKey: 'service_page_update',
@@ -106,6 +112,7 @@ export const SEO_TASK_TEMPLATES: Record<string, SEOTaskTemplateConfig> = {
     escalationThresholdDays: 5,
     cooldownDays: 30,
     maxOpenPerObject: 1,
+    autonomyLevel: TEMPLATE_AUTONOMY_MAP.service_page_update,
   },
   page_completion: {
     templateKey: 'page_completion',
@@ -121,6 +128,7 @@ export const SEO_TASK_TEMPLATES: Record<string, SEOTaskTemplateConfig> = {
     escalationThresholdDays: 7,
     cooldownDays: 60,
     maxOpenPerObject: 1,
+    autonomyLevel: TEMPLATE_AUTONOMY_MAP.page_completion,
   },
   metadata_fix: {
     templateKey: 'metadata_fix',
@@ -136,6 +144,7 @@ export const SEO_TASK_TEMPLATES: Record<string, SEOTaskTemplateConfig> = {
     escalationThresholdDays: 3,
     cooldownDays: 30,
     maxOpenPerObject: 1,
+    autonomyLevel: TEMPLATE_AUTONOMY_MAP.metadata_fix,
   },
   internal_linking: {
     templateKey: 'internal_linking',
@@ -151,6 +160,7 @@ export const SEO_TASK_TEMPLATES: Record<string, SEOTaskTemplateConfig> = {
     escalationThresholdDays: 5,
     cooldownDays: 60,
     maxOpenPerObject: 1,
+    autonomyLevel: TEMPLATE_AUTONOMY_MAP.internal_linking,
   },
   before_after_publish: {
     templateKey: 'before_after_publish',
@@ -166,6 +176,7 @@ export const SEO_TASK_TEMPLATES: Record<string, SEOTaskTemplateConfig> = {
     escalationThresholdDays: 7,
     cooldownDays: 30,
     maxOpenPerObject: 2,
+    autonomyLevel: TEMPLATE_AUTONOMY_MAP.before_after_publish,
   },
   stylist_spotlight_publish: {
     templateKey: 'stylist_spotlight_publish',
@@ -181,6 +192,7 @@ export const SEO_TASK_TEMPLATES: Record<string, SEOTaskTemplateConfig> = {
     escalationThresholdDays: 7,
     cooldownDays: 90,
     maxOpenPerObject: 1,
+    autonomyLevel: TEMPLATE_AUTONOMY_MAP.stylist_spotlight_publish,
   },
   faq_expansion: {
     templateKey: 'faq_expansion',
@@ -196,6 +208,7 @@ export const SEO_TASK_TEMPLATES: Record<string, SEOTaskTemplateConfig> = {
     escalationThresholdDays: 5,
     cooldownDays: 60,
     maxOpenPerObject: 1,
+    autonomyLevel: TEMPLATE_AUTONOMY_MAP.faq_expansion,
   },
   competitor_gap_response: {
     templateKey: 'competitor_gap_response',
@@ -211,6 +224,7 @@ export const SEO_TASK_TEMPLATES: Record<string, SEOTaskTemplateConfig> = {
     escalationThresholdDays: 7,
     cooldownDays: 30,
     maxOpenPerObject: 1,
+    autonomyLevel: TEMPLATE_AUTONOMY_MAP.competitor_gap_response,
   },
   booking_cta_optimization: {
     templateKey: 'booking_cta_optimization',
@@ -226,6 +240,7 @@ export const SEO_TASK_TEMPLATES: Record<string, SEOTaskTemplateConfig> = {
     escalationThresholdDays: 5,
     cooldownDays: 30,
     maxOpenPerObject: 1,
+    autonomyLevel: TEMPLATE_AUTONOMY_MAP.booking_cta_optimization,
   },
   content_refresh: {
     templateKey: 'content_refresh',
@@ -241,6 +256,7 @@ export const SEO_TASK_TEMPLATES: Record<string, SEOTaskTemplateConfig> = {
     escalationThresholdDays: 7,
     cooldownDays: 60,
     maxOpenPerObject: 1,
+    autonomyLevel: TEMPLATE_AUTONOMY_MAP.content_refresh,
   },
   local_landing_page_creation: {
     templateKey: 'local_landing_page_creation',
@@ -256,6 +272,7 @@ export const SEO_TASK_TEMPLATES: Record<string, SEOTaskTemplateConfig> = {
     escalationThresholdDays: 10,
     cooldownDays: 90,
     maxOpenPerObject: 1,
+    autonomyLevel: TEMPLATE_AUTONOMY_MAP.local_landing_page_creation,
   },
   service_description_rewrite: {
     templateKey: 'service_description_rewrite',
@@ -271,6 +288,7 @@ export const SEO_TASK_TEMPLATES: Record<string, SEOTaskTemplateConfig> = {
     escalationThresholdDays: 5,
     cooldownDays: 60,
     maxOpenPerObject: 1,
+    autonomyLevel: TEMPLATE_AUTONOMY_MAP.service_description_rewrite,
   },
 };
 
