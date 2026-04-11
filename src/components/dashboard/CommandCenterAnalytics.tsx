@@ -29,6 +29,7 @@ import { StaffPerformanceReport } from '@/components/dashboard/analytics/StaffPe
 import { ServiceProfitabilityCard } from '@/components/dashboard/analytics/ServiceProfitabilityCard';
 import { ColorBarControlTower } from '@/components/dashboard/color-bar/control-tower/ColorBarControlTower';
 import { PredictiveColorBarSummary } from '@/components/dashboard/color-bar/predictive-color-bar/PredictiveColorBarSummary';
+import { ZuraCapitalCard } from '@/components/dashboard/capital-engine/ZuraCapitalCard';
 import { ClientExperienceCard } from '@/components/dashboard/sales/ClientExperienceCard';
 import { OperationsQuickStats } from '@/components/dashboard/operations/OperationsQuickStats';
 import { useDashboardVisibility } from '@/hooks/useDashboardVisibility';
@@ -92,6 +93,7 @@ const CARD_COMPONENTS: Record<string, string> = {
   'predictive_inventory': 'PredictiveInventory',
   'client_experience_staff': 'ClientExperience',
   'operations_stats': 'OperationsStats',
+  'zura_capital': 'ZuraCapital',
 };
 
 /**
@@ -525,6 +527,14 @@ export function CommandCenterAnalytics() {
           <VisibilityGate key={cardId} elementKey="operations_quick_stats">
             <PinnableCard elementKey="operations_quick_stats" elementName="Operations Queue" category="Command Center">
               <OperationsQuickStats locationId={locationFilter} filterContext={{ locationId, dateRange }} />
+            </PinnableCard>
+          </VisibilityGate>
+        );
+      case 'zura_capital':
+        return (
+          <VisibilityGate key={cardId} elementKey="zura_capital">
+            <PinnableCard elementKey="zura_capital" elementName="Zura Capital" category="Command Center">
+              <ZuraCapitalCard />
             </PinnableCard>
           </VisibilityGate>
         );

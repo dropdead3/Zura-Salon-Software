@@ -51,3 +51,11 @@ export {
   type ORSInput,
   type ORSResult,
 } from './stylist-spi-engine';
+
+export {
+  isZuraEligible,
+  computeCoverageRatio,
+  type ZuraOpportunity,
+  type ZuraOrgContext,
+  type ZuraEligibilityResult,
+} from './zura-eligibility-engine';
