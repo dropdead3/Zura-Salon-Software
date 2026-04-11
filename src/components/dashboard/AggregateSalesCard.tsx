@@ -857,27 +857,29 @@ export function AggregateSalesCard({
                     
                     return (
                       <>
-                        {/* Compact progress bar */}
+                        {/* Compact progress bar — always visible */}
                         {todayActual?.hasActualData && displayExpected > 0 && (
                           <Progress 
                             value={Math.min((serviceRevenue / displayExpected) * 100, 100)}
-                            className="h-1 mx-auto"
+                            className="h-1.5 mx-auto"
                             indicatorClassName={exceededTotal ? "bg-success-foreground" : undefined}
                           />
                         )}
 
-                        {/* Clickable compact summary row */}
-                        <div 
-                          className="flex items-center justify-center gap-1.5 cursor-pointer group transition-colors"
-                          onClick={() => setTodaySummaryExpanded(prev => !prev)}
-                        >
-                          <p className="text-xs text-muted-foreground/70 group-hover:text-muted-foreground transition-colors">
-                            {compactParts.join(' · ')}
-                          </p>
-                          <ChevronDown className={cn(
-                            "w-3 h-3 text-muted-foreground/50 group-hover:text-muted-foreground transition-all duration-200",
-                            todaySummaryExpanded && "rotate-180"
-                          )} />
+                        {/* Styled summary toggle button */}
+                        <div className="flex items-center justify-center">
+                          <button 
+                            className="flex items-center gap-2 border border-border/60 rounded-full px-3 py-1.5 cursor-pointer group transition-all duration-200 hover:bg-muted/50 hover:border-border"
+                            onClick={() => setTodaySummaryExpanded(prev => !prev)}
+                          >
+                            <span className="text-xs text-muted-foreground group-hover:text-foreground transition-colors">
+                              {compactParts.join(' · ')}
+                            </span>
+                            <ChevronDown className={cn(
+                              "w-3.5 h-3.5 text-muted-foreground/60 group-hover:text-foreground transition-all duration-200",
+                              todaySummaryExpanded && "rotate-180"
+                            )} />
+                          </button>
                         </div>
 
                         {/* Expanded detail section */}
