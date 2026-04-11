@@ -2,12 +2,13 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { useSEOHealthSummary } from '@/hooks/useSEOHealthScores';
 import { useSEOTasks } from '@/hooks/useSEOTasks';
 import { useSEOCampaigns } from '@/hooks/useSEOCampaigns';
+import { useSEOObjectRevenue } from '@/hooks/useSEOObjectRevenue';
 import { SEO_HEALTH_DOMAINS, type SEOHealthDomain } from '@/config/seo-engine/seo-health-domains';
 import { ACTIVE_TASK_STATES } from '@/config/seo-engine/seo-state-machine';
 import { tokens } from '@/lib/design-tokens';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
-import { AlertTriangle, TrendingUp, TrendingDown, Clock, Target, Star, FileText, MapPin, Pencil, Flag, Crosshair, Minus } from 'lucide-react';
+import { AlertTriangle, TrendingUp, TrendingDown, Clock, Target, Star, FileText, MapPin, Pencil, Flag, Crosshair, Minus, DollarSign } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 
 interface Props {
@@ -33,6 +34,11 @@ export function SEOEngineDashboard({ organizationId, onGoToTasks, onGoToCampaign
   const { data: campaigns = [], isLoading: campaignsLoading } = useSEOCampaigns(organizationId, {
     status: ['active', 'at_risk', 'blocked'],
   });
+  const { data: revenueMap = {}, isLoading: revenueLoading } = useSEOObjectRevenue(organizationId);
+
+  const totalAttributedRevenue = Object.values(revenueMap).reduce(
+    (sum, r) => sum + (r?.totalRevenue ?? 0), 0
+  );
 
   const overdueTasks = tasks.filter((t: any) => t.status === 'overdue' || t.status === 'escalated');
   const activeTasks = tasks.filter((t: any) => ACTIVE_TASK_STATES.includes(t.status));
@@ -44,7 +50,7 @@ export function SEOEngineDashboard({ organizationId, onGoToTasks, onGoToCampaign
   return (
     <div className="space-y-6">
       {/* Overall Score */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
@@ -114,6 +120,29 @@ export function SEOEngineDashboard({ organizationId, onGoToTasks, onGoToCampaign
                 ) : (
                   <p className="text-2xl font-display tracking-wide">{campaigns.length}</p>
                 )}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <div className={tokens.card.iconBox}>
+                <DollarSign className="w-5 h-5 text-primary" />
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground font-sans">Revenue Attributed</p>
+                {revenueLoading ? (
+                  <Skeleton className="h-7 w-16 mt-1" />
+                ) : (
+                  <p className="text-2xl font-display tracking-wide">
+                    {totalAttributedRevenue > 0
+                      ? `$${totalAttributedRevenue >= 1000 ? `${(totalAttributedRevenue / 1000).toFixed(1)}k` : totalAttributedRevenue.toFixed(0)}`
+                      : '—'}
+                  </p>
+                )}
+                <p className="text-[10px] text-muted-foreground font-sans">30d rolling</p>
               </div>
             </div>
           </CardContent>

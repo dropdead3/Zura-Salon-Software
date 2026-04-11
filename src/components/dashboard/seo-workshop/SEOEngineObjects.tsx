@@ -4,7 +4,8 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { tokens } from '@/lib/design-tokens';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Layers } from 'lucide-react';
+import { Layers, DollarSign } from 'lucide-react';
+import { useSEOObjectRevenue } from '@/hooks/useSEOObjectRevenue';
 
 interface Props {
   organizationId: string | undefined;
@@ -38,6 +39,8 @@ export function SEOEngineObjects({ organizationId }: Props) {
     },
     enabled: !!organizationId,
   });
+
+  const { data: revenueMap = {} } = useSEOObjectRevenue(organizationId);
 
   // Fetch latest health scores per object (deduplicated)
   const objectIds = objects.map((o: any) => o.id);
@@ -116,6 +119,7 @@ export function SEOEngineObjects({ organizationId }: Props) {
               const scoreVariant = score !== undefined
                 ? score >= 80 ? 'default' : score >= 50 ? 'secondary' : 'destructive'
                 : null;
+              const rev = revenueMap[obj.id];
 
               return (
                 <Card key={obj.id}>
@@ -123,14 +127,20 @@ export function SEOEngineObjects({ organizationId }: Props) {
                     <div className="flex items-center justify-between">
                       <span className="text-sm font-sans font-medium">{obj.label}</span>
                       <div className="flex items-center gap-1.5">
+                        {rev && rev.totalRevenue > 0 && (
+                          <Badge variant="outline" className="text-[10px] font-display tracking-wide gap-0.5">
+                            <DollarSign className="w-2.5 h-2.5" />
+                            {rev.totalRevenue >= 1000
+                              ? `${(rev.totalRevenue / 1000).toFixed(1)}k`
+                              : rev.totalRevenue.toFixed(0)}
+                            <span className="text-muted-foreground">/30d</span>
+                          </Badge>
+                        )}
                         {score !== undefined && (
                           <Badge variant={scoreVariant as any} className="text-[10px] font-display tracking-wide">
                             {score}
                           </Badge>
                         )}
-                        <Badge variant="outline" className="text-xs">
-                          {OBJECT_TYPE_LABELS[obj.object_type] ?? obj.object_type}
-                        </Badge>
                       </div>
                     </div>
                     <p className="text-xs text-muted-foreground mt-1 font-sans truncate">

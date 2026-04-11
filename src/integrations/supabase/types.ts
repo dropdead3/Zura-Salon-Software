@@ -18691,6 +18691,7 @@ export type Database = {
       }
       seo_campaigns: {
         Row: {
+          actual_revenue_impact: Json | null
           created_at: string
           expected_metrics: Json | null
           id: string
@@ -18705,6 +18706,7 @@ export type Database = {
           window_start: string | null
         }
         Insert: {
+          actual_revenue_impact?: Json | null
           created_at?: string
           expected_metrics?: Json | null
           id?: string
@@ -18719,6 +18721,7 @@ export type Database = {
           window_start?: string | null
         }
         Update: {
+          actual_revenue_impact?: Json | null
           created_at?: string
           expected_metrics?: Json | null
           id?: string
@@ -18828,6 +18831,57 @@ export type Database = {
           },
           {
             foreignKeyName: "seo_health_scores_seo_object_id_fkey"
+            columns: ["seo_object_id"]
+            isOneToOne: false
+            referencedRelation: "seo_objects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      seo_object_revenue: {
+        Row: {
+          computed_at: string
+          created_at: string
+          id: string
+          organization_id: string
+          period_end: string
+          period_start: string
+          seo_object_id: string
+          total_revenue: number
+          transaction_count: number
+        }
+        Insert: {
+          computed_at?: string
+          created_at?: string
+          id?: string
+          organization_id: string
+          period_end: string
+          period_start: string
+          seo_object_id: string
+          total_revenue?: number
+          transaction_count?: number
+        }
+        Update: {
+          computed_at?: string
+          created_at?: string
+          id?: string
+          organization_id?: string
+          period_end?: string
+          period_start?: string
+          seo_object_id?: string
+          total_revenue?: number
+          transaction_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "seo_object_revenue_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "seo_object_revenue_seo_object_id_fkey"
             columns: ["seo_object_id"]
             isOneToOne: false
             referencedRelation: "seo_objects"
