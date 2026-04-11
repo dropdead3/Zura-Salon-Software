@@ -404,6 +404,7 @@ function DashboardSections({
   const { dashPath } = useOrgDashboardPath();
   const { t } = useTranslation('dashboard');
   const { formatCurrencyWhole } = useFormatCurrency();
+  const { effectiveOrganization } = useOrganizationContext();
   const { todayClients, thisWeekRevenue, newClients, rebookingRate, isLoading: quickStatsLoading } = useQuickStats();
   // Fetch visibility data to check if cards are pinned
   const { data: visibilityData } = useDashboardVisibility();
@@ -710,7 +711,7 @@ function DashboardSections({
     toggleTask,
     deleteTask,
     isImpersonating,
-    effectiveOrganization,
+    isImpersonating,
   ]);
 
   // Render sections in order based on layout
