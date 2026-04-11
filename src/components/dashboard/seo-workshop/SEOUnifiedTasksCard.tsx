@@ -79,9 +79,9 @@ export function SEOUnifiedTasksCard({ organizationId, assignedTo, limit = 5 }: P
                 </Badge>
                 <span className="truncate">{title}</span>
               </div>
-              <Badge variant={statusConf?.variant as any ?? 'outline'} className="text-xs shrink-0">
-                {statusConf?.label ?? task.status}
-              </Badge>
+              <Badge variant={statusConf?.variant ?? 'outline'} className={`text-xs shrink-0 ${statusConf?.className ?? ''}`}>
+                 {statusConf?.label ?? task.status}
+               </Badge>
             </div>
           );
         })}

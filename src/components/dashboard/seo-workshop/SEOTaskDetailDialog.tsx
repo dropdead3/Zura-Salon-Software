@@ -108,7 +108,7 @@ export function SEOTaskDetailDialog({ task, organizationId, open, onOpenChange }
         <div className="space-y-4">
           {/* Status & Priority */}
           <div className="flex items-center gap-2 flex-wrap">
-            <Badge variant={statusConf?.variant as any ?? 'outline'}>{statusConf?.label ?? task.status}</Badge>
+            <Badge variant={statusConf?.variant ?? 'outline'} className={statusConf?.className}>{statusConf?.label ?? task.status}</Badge>
             <Badge variant={tierConf.color as any} className="font-display tracking-wide">
               P{task.priority_score}
             </Badge>
