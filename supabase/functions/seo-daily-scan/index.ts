@@ -149,16 +149,24 @@ async function detectReviewOpportunities(
   const dayBefore = new Date(yesterday);
   dayBefore.setDate(dayBefore.getDate() - 1);
 
+  // M5: Include client_id and join to clients for communication eligibility
   const { data: appointments } = await supabase
     .from("appointments")
-    .select("id, service_name, staff_user_id, location_id, client_name")
+    .select("id, service_name, staff_user_id, location_id, client_name, client_id, clients!client_id(id, communication_preference)")
     .eq("organization_id", organizationId)
     .eq("status", "completed")
     .gte("appointment_date", dayBefore.toISOString().split("T")[0])
     .lte("appointment_date", yesterday.toISOString().split("T")[0])
     .limit(50);
 
-  if (!appointments?.length) return 0;
+  // M5: Filter out clients who have opted out of communications
+  const eligibleAppointments = (appointments || []).filter((appt: any) => {
+    const pref = appt.clients?.communication_preference;
+    // Exclude clients who explicitly opted out; null/undefined = eligible
+    return pref !== 'none' && pref !== 'opted_out';
+  });
+
+  if (!eligibleAppointments?.length) return 0;
 
   // Check if review_request template exists
   const { data: template } = await supabase
