@@ -1748,6 +1748,162 @@ export type Database = {
           },
         ]
       }
+      auto_replenishment_events: {
+        Row: {
+          created_at: string
+          id: string
+          location_id: string | null
+          organization_id: string
+          product_id: string
+          purchase_order_id: string | null
+          recommended_qty: number
+          status: Database["public"]["Enums"]["replenishment_event_status"]
+          supplier_name: string
+          trigger_reason: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          location_id?: string | null
+          organization_id: string
+          product_id: string
+          purchase_order_id?: string | null
+          recommended_qty?: number
+          status?: Database["public"]["Enums"]["replenishment_event_status"]
+          supplier_name: string
+          trigger_reason: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          location_id?: string | null
+          organization_id?: string
+          product_id?: string
+          purchase_order_id?: string | null
+          recommended_qty?: number
+          status?: Database["public"]["Enums"]["replenishment_event_status"]
+          supplier_name?: string
+          trigger_reason?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "auto_replenishment_events_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "auto_replenishment_events_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "auto_replenishment_events_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "auto_replenishment_events_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "auto_replenishment_events_purchase_order_id_fkey"
+            columns: ["purchase_order_id"]
+            isOneToOne: false
+            referencedRelation: "purchase_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      auto_replenishment_rules: {
+        Row: {
+          created_at: string
+          enabled: boolean
+          id: string
+          location_id: string | null
+          max_order_value: number | null
+          organization_id: string
+          product_id: string | null
+          require_approval: boolean
+          supplier_preference_id: string | null
+          threshold_type: Database["public"]["Enums"]["replenishment_threshold_type"]
+          threshold_value: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          location_id?: string | null
+          max_order_value?: number | null
+          organization_id: string
+          product_id?: string | null
+          require_approval?: boolean
+          supplier_preference_id?: string | null
+          threshold_type?: Database["public"]["Enums"]["replenishment_threshold_type"]
+          threshold_value?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          location_id?: string | null
+          max_order_value?: number | null
+          organization_id?: string
+          product_id?: string | null
+          require_approval?: boolean
+          supplier_preference_id?: string | null
+          threshold_type?: Database["public"]["Enums"]["replenishment_threshold_type"]
+          threshold_value?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "auto_replenishment_rules_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "auto_replenishment_rules_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "auto_replenishment_rules_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "auto_replenishment_rules_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "auto_replenishment_rules_supplier_preference_id_fkey"
+            columns: ["supplier_preference_id"]
+            isOneToOne: false
+            referencedRelation: "supplier_preferences"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       backroom_alert_rules: {
         Row: {
           created_at: string
@@ -15181,6 +15337,89 @@ export type Database = {
         }
         Relationships: []
       }
+      product_service_performance: {
+        Row: {
+          avg_product_cost: number
+          avg_quantity_per_use: number
+          avg_service_revenue: number
+          created_at: string
+          id: string
+          last_used_at: string | null
+          location_id: string | null
+          margin_pct: number
+          organization_id: string
+          outcome_score: number | null
+          period_end: string
+          period_start: string
+          product_id: string
+          service_name: string
+          total_uses: number
+        }
+        Insert: {
+          avg_product_cost?: number
+          avg_quantity_per_use?: number
+          avg_service_revenue?: number
+          created_at?: string
+          id?: string
+          last_used_at?: string | null
+          location_id?: string | null
+          margin_pct?: number
+          organization_id: string
+          outcome_score?: number | null
+          period_end: string
+          period_start: string
+          product_id: string
+          service_name: string
+          total_uses?: number
+        }
+        Update: {
+          avg_product_cost?: number
+          avg_quantity_per_use?: number
+          avg_service_revenue?: number
+          created_at?: string
+          id?: string
+          last_used_at?: string | null
+          location_id?: string | null
+          margin_pct?: number
+          organization_id?: string
+          outcome_score?: number | null
+          period_end?: string
+          period_start?: string
+          product_id?: string
+          service_name?: string
+          total_uses?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_service_performance_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_service_performance_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_service_performance_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_service_performance_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products_public"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       product_substitutions: {
         Row: {
           created_at: string
@@ -22941,6 +23180,53 @@ export type Database = {
         }
         Relationships: []
       }
+      supplier_preferences: {
+        Row: {
+          auto_replenish_enabled: boolean
+          created_at: string
+          fulfillment_api_url: string | null
+          id: string
+          is_preferred: boolean
+          notes: string | null
+          organization_id: string
+          priority_rank: number
+          supplier_name: string
+          updated_at: string
+        }
+        Insert: {
+          auto_replenish_enabled?: boolean
+          created_at?: string
+          fulfillment_api_url?: string | null
+          id?: string
+          is_preferred?: boolean
+          notes?: string | null
+          organization_id: string
+          priority_rank?: number
+          supplier_name: string
+          updated_at?: string
+        }
+        Update: {
+          auto_replenish_enabled?: boolean
+          created_at?: string
+          fulfillment_api_url?: string | null
+          id?: string
+          is_preferred?: boolean
+          notes?: string | null
+          organization_id?: string
+          priority_rank?: number
+          supplier_name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "supplier_preferences_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       supply_library_brands: {
         Row: {
           country_of_origin: string | null
@@ -26788,6 +27074,15 @@ export type Database = {
       price_queue_status: "pending" | "approved" | "rejected" | "auto_applied"
       price_recommendation_status: "pending" | "accepted" | "dismissed"
       program_status: "active" | "paused" | "completed" | "restarted"
+      replenishment_event_status:
+        | "suggested"
+        | "approved"
+        | "ordered"
+        | "dismissed"
+      replenishment_threshold_type:
+        | "days_of_stock"
+        | "fixed_quantity"
+        | "forecast_driven"
       retention_action_type: "coaching_flag" | "demotion_eligible"
       rsvp_status: "pending" | "accepted" | "declined"
       seo_campaign_status:
@@ -27137,6 +27432,17 @@ export const Constants = {
       price_queue_status: ["pending", "approved", "rejected", "auto_applied"],
       price_recommendation_status: ["pending", "accepted", "dismissed"],
       program_status: ["active", "paused", "completed", "restarted"],
+      replenishment_event_status: [
+        "suggested",
+        "approved",
+        "ordered",
+        "dismissed",
+      ],
+      replenishment_threshold_type: [
+        "days_of_stock",
+        "fixed_quantity",
+        "forecast_driven",
+      ],
       retention_action_type: ["coaching_flag", "demotion_eligible"],
       rsvp_status: ["pending", "accepted", "declined"],
       seo_campaign_status: [
