@@ -11489,6 +11489,169 @@ export type Database = {
           },
         ]
       }
+      network_capital_ledger: {
+        Row: {
+          amount: number
+          created_at: string
+          deal_id: string
+          description: string | null
+          entry_type: Database["public"]["Enums"]["capital_entry_type"]
+          id: string
+          organization_id: string
+          recorded_at: string
+        }
+        Insert: {
+          amount?: number
+          created_at?: string
+          deal_id: string
+          description?: string | null
+          entry_type: Database["public"]["Enums"]["capital_entry_type"]
+          id?: string
+          organization_id: string
+          recorded_at?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          deal_id?: string
+          description?: string | null
+          entry_type?: Database["public"]["Enums"]["capital_entry_type"]
+          id?: string
+          organization_id?: string
+          recorded_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "network_capital_ledger_deal_id_fkey"
+            columns: ["deal_id"]
+            isOneToOne: false
+            referencedRelation: "network_deals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "network_capital_ledger_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      network_deals: {
+        Row: {
+          capital_deployed: number
+          created_at: string
+          deal_type: Database["public"]["Enums"]["network_deal_type"]
+          id: string
+          notes: string | null
+          organization_id: string
+          pipeline_stage: Database["public"]["Enums"]["network_pipeline_stage"]
+          roi_multiple: number
+          start_date: string | null
+          status: string
+          terms: Json
+          total_return: number
+          updated_at: string
+        }
+        Insert: {
+          capital_deployed?: number
+          created_at?: string
+          deal_type: Database["public"]["Enums"]["network_deal_type"]
+          id?: string
+          notes?: string | null
+          organization_id: string
+          pipeline_stage?: Database["public"]["Enums"]["network_pipeline_stage"]
+          roi_multiple?: number
+          start_date?: string | null
+          status?: string
+          terms?: Json
+          total_return?: number
+          updated_at?: string
+        }
+        Update: {
+          capital_deployed?: number
+          created_at?: string
+          deal_type?: Database["public"]["Enums"]["network_deal_type"]
+          id?: string
+          notes?: string | null
+          organization_id?: string
+          pipeline_stage?: Database["public"]["Enums"]["network_pipeline_stage"]
+          roi_multiple?: number
+          start_date?: string | null
+          status?: string
+          terms?: Json
+          total_return?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "network_deals_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      network_ownership_scores: {
+        Row: {
+          consistency_component: number
+          created_at: string
+          eligibility_status: Database["public"]["Enums"]["zos_eligibility"]
+          execution_reliability: number
+          factors: Json
+          growth_responsiveness: number
+          hard_filter_results: Json
+          id: string
+          market_position: number
+          organization_id: string
+          scored_at: string
+          spi_component: number
+          team_stability: number
+          zos_score: number
+        }
+        Insert: {
+          consistency_component?: number
+          created_at?: string
+          eligibility_status?: Database["public"]["Enums"]["zos_eligibility"]
+          execution_reliability?: number
+          factors?: Json
+          growth_responsiveness?: number
+          hard_filter_results?: Json
+          id?: string
+          market_position?: number
+          organization_id: string
+          scored_at?: string
+          spi_component?: number
+          team_stability?: number
+          zos_score?: number
+        }
+        Update: {
+          consistency_component?: number
+          created_at?: string
+          eligibility_status?: Database["public"]["Enums"]["zos_eligibility"]
+          execution_reliability?: number
+          factors?: Json
+          growth_responsiveness?: number
+          hard_filter_results?: Json
+          id?: string
+          market_position?: number
+          organization_id?: string
+          scored_at?: string
+          spi_component?: number
+          team_stability?: number
+          zos_score?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "network_ownership_scores_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notification_preferences: {
         Row: {
           announcement_enabled: boolean
@@ -26527,6 +26690,7 @@ export type Database = {
         | "past_due"
         | "paused"
         | "cancelled"
+      capital_entry_type: "investment" | "return" | "reinvestment"
       chat_channel_type: "public" | "private" | "dm" | "group_dm" | "location"
       chat_member_role: "owner" | "admin" | "member"
       chat_user_status_type: "available" | "busy" | "dnd" | "away"
@@ -26604,6 +26768,13 @@ export type Database = {
         | "pending_reweigh"
         | "completed"
         | "cancelled"
+      network_deal_type: "revenue_share" | "equity_stake" | "full_acquisition"
+      network_pipeline_stage:
+        | "observe"
+        | "qualify"
+        | "offer"
+        | "convert"
+        | "scale"
       payroll_provider:
         | "gusto"
         | "quickbooks"
@@ -26684,6 +26855,7 @@ export type Database = {
         | "contamination_discard"
         | "wrong_mix"
         | "client_refusal"
+      zos_eligibility: "prime" | "watchlist" | "ineligible"
       zura_guardrail_severity: "soft_warn" | "hard_block"
       zura_guardrail_type:
         | "topic_block"
@@ -26855,6 +27027,7 @@ export const Constants = {
         "paused",
         "cancelled",
       ],
+      capital_entry_type: ["investment", "return", "reinvestment"],
       chat_channel_type: ["public", "private", "dm", "group_dm", "location"],
       chat_member_role: ["owner", "admin", "member"],
       chat_user_status_type: ["available", "busy", "dnd", "away"],
@@ -26941,6 +27114,14 @@ export const Constants = {
         "pending_reweigh",
         "completed",
         "cancelled",
+      ],
+      network_deal_type: ["revenue_share", "equity_stake", "full_acquisition"],
+      network_pipeline_stage: [
+        "observe",
+        "qualify",
+        "offer",
+        "convert",
+        "scale",
       ],
       payroll_provider: [
         "gusto",
@@ -27030,6 +27211,7 @@ export const Constants = {
         "wrong_mix",
         "client_refusal",
       ],
+      zos_eligibility: ["prime", "watchlist", "ineligible"],
       zura_guardrail_severity: ["soft_warn", "hard_block"],
       zura_guardrail_type: [
         "topic_block",
