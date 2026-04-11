@@ -1,0 +1,181 @@
+import { useEffect, useState } from 'react';
+import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
+import { DashboardPageHeader } from '@/components/dashboard/DashboardPageHeader';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
+import { Skeleton } from '@/components/ui/skeleton';
+import { tokens } from '@/lib/design-tokens';
+import { cn } from '@/lib/utils';
+import { useCapitalPolicySettings, useUpdateCapitalPolicySettings } from '@/hooks/useCapitalPolicySettings';
+import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
+import { PageExplainer } from '@/components/ui/PageExplainer';
+import { Settings } from 'lucide-react';
+
+export default function CapitalSettings() {
+  const { dashPath } = useOrgDashboardPath();
+  const { data: settings, isLoading } = useCapitalPolicySettings();
+  const updateSettings = useUpdateCapitalPolicySettings();
+
+  const [form, setForm] = useState({
+    roe_threshold: 1.8,
+    confidence_threshold: 70,
+    max_risk_level: 'medium',
+    max_concurrent_projects: 2,
+    max_exposure_cents: null as number | null,
+    cooldown_after_decline_days: 14,
+    cooldown_after_underperformance_days: 30,
+    allow_manager_initiation: false,
+    allow_stylist_microfunding: false,
+    stylist_spi_threshold: 80,
+    stylist_ors_threshold: 85,
+  });
+
+  useEffect(() => {
+    if (settings) {
+      setForm({
+        roe_threshold: Number(settings.roe_threshold),
+        confidence_threshold: Number(settings.confidence_threshold),
+        max_risk_level: settings.max_risk_level,
+        max_concurrent_projects: Number(settings.max_concurrent_projects),
+        max_exposure_cents: settings.max_exposure_cents != null ? Number(settings.max_exposure_cents) : null,
+        cooldown_after_decline_days: Number(settings.cooldown_after_decline_days),
+        cooldown_after_underperformance_days: Number(settings.cooldown_after_underperformance_days),
+        allow_manager_initiation: Boolean(settings.allow_manager_initiation),
+        allow_stylist_microfunding: Boolean(settings.allow_stylist_microfunding),
+        stylist_spi_threshold: Number(settings.stylist_spi_threshold),
+        stylist_ors_threshold: Number(settings.stylist_ors_threshold),
+      });
+    }
+  }, [settings]);
+
+  const handleSave = () => {
+    updateSettings.mutate(form as any);
+  };
+
+  return (
+    <DashboardLayout>
+      <div className={cn(tokens.layout.pageContainer, 'max-w-[900px] mx-auto')}>
+        <DashboardPageHeader
+          title="Capital Settings"
+          description="Configure eligibility thresholds, exposure limits, and funding policies"
+          backTo={dashPath('/admin/capital')}
+          backLabel="Back to Capital Queue"
+        />
+        <PageExplainer pageId="capital-settings" />
+
+        {isLoading ? (
+          <div className="space-y-4">{[1, 2, 3].map(i => <Skeleton key={i} className={tokens.loading.skeleton} />)}</div>
+        ) : (
+          <div className="space-y-6">
+            <Card className={tokens.card.wrapper}>
+              <CardHeader className="flex flex-row items-center gap-3 pb-3">
+                <div className={tokens.card.iconBox}><Settings className="w-5 h-5 text-primary" /></div>
+                <div>
+                  <CardTitle className={tokens.card.title}>Eligibility Thresholds</CardTitle>
+                  <CardDescription className="font-sans text-sm">Minimum requirements for opportunities to surface</CardDescription>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <Label className="font-sans text-sm">Min ROE Score</Label>
+                    <Input type="number" step="0.1" value={form.roe_threshold} onChange={e => setForm(f => ({ ...f, roe_threshold: parseFloat(e.target.value) || 0 }))} />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="font-sans text-sm">Min Confidence Score</Label>
+                    <Input type="number" value={form.confidence_threshold} onChange={e => setForm(f => ({ ...f, confidence_threshold: parseInt(e.target.value) || 0 }))} />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="font-sans text-sm">Max Risk Level</Label>
+                    <Select value={form.max_risk_level} onValueChange={v => setForm(f => ({ ...f, max_risk_level: v }))}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="low">Low</SelectItem>
+                        <SelectItem value="medium">Medium</SelectItem>
+                        <SelectItem value="high">High</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="font-sans text-sm">Max Concurrent Projects</Label>
+                    <Input type="number" value={form.max_concurrent_projects} onChange={e => setForm(f => ({ ...f, max_concurrent_projects: parseInt(e.target.value) || 0 }))} />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className={tokens.card.wrapper}>
+              <CardHeader className="flex flex-row items-center gap-3 pb-3">
+                <div className={tokens.card.iconBox}><Settings className="w-5 h-5 text-primary" /></div>
+                <div>
+                  <CardTitle className={tokens.card.title}>Cooldowns & Suppression</CardTitle>
+                  <CardDescription className="font-sans text-sm">Control resurface timing after declines or underperformance</CardDescription>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <Label className="font-sans text-sm">Cooldown After Decline (days)</Label>
+                    <Input type="number" value={form.cooldown_after_decline_days} onChange={e => setForm(f => ({ ...f, cooldown_after_decline_days: parseInt(e.target.value) || 0 }))} />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="font-sans text-sm">Cooldown After Underperformance (days)</Label>
+                    <Input type="number" value={form.cooldown_after_underperformance_days} onChange={e => setForm(f => ({ ...f, cooldown_after_underperformance_days: parseInt(e.target.value) || 0 }))} />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className={tokens.card.wrapper}>
+              <CardHeader className="flex flex-row items-center gap-3 pb-3">
+                <div className={tokens.card.iconBox}><Settings className="w-5 h-5 text-primary" /></div>
+                <div>
+                  <CardTitle className={tokens.card.title}>Access Policies</CardTitle>
+                  <CardDescription className="font-sans text-sm">Who can initiate capital funding</CardDescription>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label className="font-sans text-sm">Allow Manager Initiation</Label>
+                    <p className="text-xs text-muted-foreground font-sans">Managers can initiate operational funding</p>
+                  </div>
+                  <Switch checked={form.allow_manager_initiation} onCheckedChange={v => setForm(f => ({ ...f, allow_manager_initiation: v }))} />
+                </div>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label className="font-sans text-sm">Allow Stylist Micro-Funding</Label>
+                    <p className="text-xs text-muted-foreground font-sans">Stylists meeting thresholds can access personal growth funding</p>
+                  </div>
+                  <Switch checked={form.allow_stylist_microfunding} onCheckedChange={v => setForm(f => ({ ...f, allow_stylist_microfunding: v }))} />
+                </div>
+                {form.allow_stylist_microfunding && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+                    <div className="space-y-1.5">
+                      <Label className="font-sans text-sm">Stylist SPI Threshold</Label>
+                      <Input type="number" value={form.stylist_spi_threshold} onChange={e => setForm(f => ({ ...f, stylist_spi_threshold: parseInt(e.target.value) || 0 }))} />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="font-sans text-sm">Stylist ORS Threshold</Label>
+                      <Input type="number" value={form.stylist_ors_threshold} onChange={e => setForm(f => ({ ...f, stylist_ors_threshold: parseInt(e.target.value) || 0 }))} />
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            <div className="flex justify-end">
+              <Button onClick={handleSave} disabled={updateSettings.isPending} className={`${tokens.button.page} font-sans`}>
+                {updateSettings.isPending ? 'Saving…' : 'Save Settings'}
+              </Button>
+            </div>
+          </div>
+        )}
+      </div>
+    </DashboardLayout>
+  );
+}
