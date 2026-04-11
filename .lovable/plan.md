@@ -1,163 +1,166 @@
 
 
-# Market Domination Mode
+# Industry Intelligence Layer
 
 ## What It Builds
 
-A category-level competitive intelligence layer that defines "Domination Targets" (city + service category + optional micro-market keywords), computes a 0–100 Domination Score per target, estimates visible market share, assigns strategy states (Attack/Expand/Defend/Abandon), generates multi-location Domination Campaigns, and provides a city-level momentum view. Sits on top of the Growth Orchestration Engine.
+A cross-network aggregation and trend detection layer that computes anonymized, privacy-safe industry signals from all organizations on the platform. Detects demand shifts, keyword trends, pricing signals, and task effectiveness patterns. Surfaces benchmarking, a "What's Working Now" feed, and predictive trend signals — all feeding into the existing Momentum, Revenue Predictor, and Task Engines to dynamically adjust strategy.
 
 ## Architecture
 
 ```text
-Domination Targets (city + service + keyword)
+All Orgs (anonymized, aggregated)
      │
-     ├── Domination Score (0–100)
-     │   ├── Review Dominance (30%)
-     │   ├── Content Volume (20%)
-     │   ├── Page Strength (20%)
-     │   ├── Conversion Strength (15%)
-     │   └── Competitor Suppression (15%)
+     ├── Edge Function: seo-industry-aggregator
+     │   ├── Demand Trends (booking velocity by service category × city)
+     │   ├── Keyword Trends (review keyword frequency shifts)
+     │   ├── Price Signals (avg ticket changes by category × market)
+     │   ├── Task Effectiveness (which actions produce results network-wide)
+     │   └── Conversion Patterns (content type → booking correlation)
      │
-     ├── Market Share Estimate
-     │   ├── Visible Share (review %, content %, ranking)
-     │   └── Revenue Share (bookings vs estimated demand)
+     ├── industry_trend_signals (platform-scoped, no org identity)
      │
-     ├── Strategy State (Attack/Expand/Defend/Abandon)
+     ├── industry_benchmarks (percentile bands, updated weekly)
      │
-     ├── Domination Campaigns (cross-location coordination)
-     │
-     └── City-Level Momentum
+     └── UI: IndustryIntelligenceFeed + Benchmarking Card
 ```
+
+## Privacy Model (Critical)
+
+- The aggregation edge function runs with service-role access
+- All outputs are **platform-scoped** (`organization_id IS NULL`) — no org identity stored in trend tables
+- Minimum cohort size enforced: signals require data from ≥5 organizations to be published
+- No raw data leaves org scope — only pre-aggregated counts, averages, and deltas
+- Trend rows contain only: category, city, metric_type, value, delta, cohort_size, period
 
 ## Database Changes
 
-**New table: `seo_domination_targets`**
-- `id`, `organization_id`, `city`, `service_category`, `micro_market_keywords` (text[])
-- `is_active` (boolean, default true)
-- `created_at`, `updated_at`
-- RLS: org member read, org admin write
+**New table: `industry_trend_signals`**
+- `id`, `signal_type` (demand_shift | keyword_trend | price_signal | effectiveness_pattern | conversion_pattern)
+- `category` (service category), `city` (geographic market), `metric_key`, `current_value`, `previous_value`, `delta_pct`, `direction` (rising | stable | declining)
+- `cohort_size` (number of orgs contributing), `confidence` (low | medium | high)
+- `period_start`, `period_end`, `computed_at`, `expires_at`
+- `insight_text` (AI-generated human-readable summary)
+- **No `organization_id` column** — this is platform-level data
+- RLS: readable by any authenticated user (public industry data)
 
-**New table: `seo_domination_scores`**
-- `id`, `organization_id`, `target_id` (FK to domination_targets)
-- `domination_score` (0–100), `review_dominance` (0–100), `content_dominance` (0–100), `page_strength` (0–100), `conversion_strength` (0–100), `competitor_suppression` (0–100)
-- `visible_market_share` (numeric 0–1), `captured_revenue_share` (numeric 0–1)
-- `strategy_state` (enum: attack, expand, defend, abandon)
-- `contributing_location_ids` (text[]), `estimated_market_demand` (numeric)
-- `factors` (jsonb — breakdown detail), `scored_at`, `created_at`
-- RLS: org member read, org admin write
+**New table: `industry_benchmarks`**
+- `id`, `category`, `city`, `metric_key`
+- `p25`, `p50`, `p75`, `p90` (percentile values)
+- `cohort_size`, `computed_at`, `period`
+- **No `organization_id`** — platform-level
+- RLS: readable by authenticated users
+
+**Extend `metric_benchmarks`**: Add rows with `benchmark_type = 'network_p50'` and `'network_p90'` per org (org-scoped comparison against industry percentiles), computed by the aggregator
 
 ## New Files
 
 | File | Purpose |
 |---|---|
-| `src/lib/seo-engine/seo-domination-engine.ts` | Pure computation: Domination Score calculation (weighted components), strategy state assignment, market share estimation, city-level momentum aggregation, domination campaign generation |
-| `src/config/seo-engine/seo-domination-config.ts` | Score weight config, strategy state thresholds and labels, category stacking priority logic |
-| `src/hooks/useSEODomination.ts` | Queries domination targets + scores, composes with orchestration data |
-| `src/components/dashboard/seo-workshop/SEODominationDashboard.tsx` | Market overview card: targets with scores, strategy badges, market share bars, city momentum |
-| `src/components/dashboard/seo-workshop/SEODominationTargetCard.tsx` | Individual target detail: score breakdown radar, contributing locations, top actions |
-| `supabase/functions/seo-domination-score/index.ts` | Edge function: computes domination scores by aggregating health scores, revenue, review counts, and competitor data across locations for each target |
+| `src/config/seo-engine/seo-industry-config.ts` | Signal types, confidence thresholds, minimum cohort sizes, trend detection parameters |
+| `src/lib/seo-engine/seo-industry-intelligence.ts` | Pure computation: trend detection (compare rolling windows), percentile benchmarking, demand shift classification, pattern matching for "what's working" |
+| `supabase/functions/seo-industry-aggregator/index.ts` | Weekly edge function: queries anonymized aggregates across all orgs, computes trends + benchmarks, upserts into platform tables, generates insight text via AI |
+| `src/hooks/useSEOIndustryIntelligence.ts` | Queries `industry_trend_signals` + `industry_benchmarks`, composes with org data for relative positioning |
+| `src/components/dashboard/seo-workshop/SEOIndustryFeed.tsx` | "What's Working Now" feed card + demand shift alerts + benchmark comparison |
 
 ## Modified Files
 
 | File | Change |
 |---|---|
-| `src/components/dashboard/seo-workshop/SEOEngineDashboard.tsx` | Add `SEODominationDashboard` above Global Growth Orchestration |
-| `src/lib/seo-engine/index.ts` | Export domination engine functions |
-| `src/config/seo-engine/index.ts` | Export domination config |
+| `src/components/dashboard/seo-workshop/SEOEngineDashboard.tsx` | Add `SEOIndustryFeed` card below Domination Dashboard |
+| `src/lib/seo-engine/index.ts` | Export industry intelligence functions |
+| `src/config/seo-engine/index.ts` | Export industry config |
 
 ## Core Computation Model
 
-### Domination Score (0–100)
+### Trend Detection
+Compare 4-week rolling windows (current vs previous):
+- **Demand shift**: booking count delta by service category × city. ≥15% = "rising", ≤-15% = "declining"
+- **Keyword trends**: review keyword frequency shift. New keywords appearing in ≥10% of reviews = "emerging"
+- **Price signals**: avg ticket delta by category. ≥10% increase without booking decline = "elastic"
+- **Task effectiveness**: network-wide completion rate × impact score by template key. Feeds back into `computeEffectivenessModifiers`
+- **Conversion patterns**: content type (FAQ, before/after, video) → booking correlation
 
-| Component | Weight | Source |
-|---|---|---|
-| Review Dominance | 30% | Aggregate review count + velocity across org locations vs competitors in same city-service |
-| Content Volume | 20% | Page count, word count, FAQ coverage, before/after content for this service-city |
-| Page Strength | 20% | Average `page` health score across contributing SEO objects |
-| Conversion Strength | 15% | Average `conversion` health score across contributing SEO objects |
-| Competitor Suppression | 15% | Inverse of competitor gap scores (high gap = low suppression) |
+### Confidence Assignment
+- High: cohort ≥20 orgs, consistent direction across 3+ weeks
+- Medium: cohort 10–19 orgs, consistent 2+ weeks
+- Low: cohort 5–9 orgs or single-week signal
 
-### Strategy State Assignment
+### Benchmarking
+For each org, compute percentile rank against network for:
+- Review velocity, content volume, avg ticket, conversion rate, page health scores
+- Display: "Your review velocity: 62nd percentile (above 62% of similar salons)"
 
-| State | Criteria | Icon/Color |
-|---|---|---|
-| **Defend** | Score ≥ 80, momentum gaining or holding | Shield / blue |
-| **Expand** | Score 60–79, momentum gaining | TrendingUp / green |
-| **Attack** | Score 40–79, momentum not losing, estimated demand high | Zap / amber |
-| **Abandon** | Score < 40 AND estimated demand low relative to other targets | Pause / muted |
+### "What's Working Now" Feed
+Top 5 actionable signals sorted by confidence × relevance to org's active targets:
+- "Review-driven growth outperforming content-heavy strategies this month"
+- "FAQ-heavy pages improving conversion by ~9% across the network"
+- "High-ticket extension services converting best with before/after proof"
 
-### Market Share Estimation
+### Integration with Existing Engines
+- **Effectiveness Tracker**: Network-wide effectiveness data supplements org-level data when org sample size < 5 (cold-start problem)
+- **Revenue Predictor**: Network coefficients used as fallback baseline when org has insufficient history
+- **Domination Engine**: Market demand estimates enriched with network booking velocity data
 
-- **Visible share**: `org_review_count / (org_review_count + competitor_review_count)` for this city-service. Supplemented by content volume ratio.
-- **Revenue share**: `org_attributed_revenue / estimated_market_demand`. Market demand estimated from: review volume × avg ticket × conversion factor (configurable).
+## Edge Function: `seo-industry-aggregator`
 
-### City-Level Momentum
+Runs weekly (via pg_cron). Service-role access only.
 
-Aggregates momentum scores from all SEO objects in a city, weighted by revenue contribution. Output: per-city directional signal.
+1. Query all `phorest_appointments` grouped by service category + location city → aggregate booking counts per 4-week window (no org identity in output)
+2. Query all `seo_health_scores` → compute percentile bands per domain per category
+3. Query all `seo_tasks` completed → aggregate effectiveness by template key (no org identity)
+4. Query review text from `seo_health_scores.raw_signals` → extract keyword frequency shifts
+5. Enforce minimum cohort (≥5 orgs per signal)
+6. Upsert into `industry_trend_signals` + `industry_benchmarks`
+7. For top signals, call AI to generate one-line human-readable `insight_text`
+8. Compute per-org percentile positions → upsert into `metric_benchmarks` with `benchmark_type = 'network_p50'`
 
-### Domination Campaigns
-
-When a target is in Attack or Expand state with sufficient opportunity, the engine generates a cross-location campaign bundle:
-- Identifies which locations contribute to this target
-- Distributes tasks based on each location's weakness (one gets reviews, another gets content)
-- Sets a 60–90 day window with milestone checkpoints
-- Links to existing `seo_campaigns` table for execution
-
-### Category Stacking
-
-After a target reaches Defend state (score ≥ 80), the system identifies the next highest-opportunity target in the same city and recommends shifting resources. Surfaced as a "Next Target" directive.
-
-## UI: Domination Dashboard
+## UI: Industry Intelligence Feed
 
 ```text
 ┌─────────────────────────────────────────────────┐
-│ MARKET DOMINATION                               │
+│ INDUSTRY INTELLIGENCE                           │
 │                                                 │
-│ Phoenix                                         │
+│ What's Working Now                              │
 │ ┌─────────────────────────────────────────────┐ │
-│ │ Hair Extensions        Score: 62  ATTACK    │ │
-│ │ Market Share: ~18%  ·  +$42,000 opportunity │ │
-│ │ Mesa + Gilbert contributing                 │ │
-│ │ "2–3 weeks from controlling this category"  │ │
+│ │ ↑ Review campaigns producing +22% booking   │ │
+│ │   lift across network (high confidence)      │ │
 │ ├─────────────────────────────────────────────┤ │
-│ │ Blonding               Score: 38  EXPAND    │ │
-│ │ Market Share: ~8%   ·  +$28,000 opportunity │ │
-│ │ "Build after Extensions is won"             │ │
+│ │ ↑ FAQ-heavy pages +9% conversion vs plain   │ │
+│ │   service pages (medium confidence)          │ │
+│ ├─────────────────────────────────────────────┤ │
+│ │ → GBP posting showing diminishing returns   │ │
+│ │   after 3x/week (medium confidence)         │ │
 │ └─────────────────────────────────────────────┘ │
 │                                                 │
-│ Scottsdale                                      │
-│ ┌─────────────────────────────────────────────┐ │
-│ │ Extensions             Score: 45  ATTACK    │ │
-│ └─────────────────────────────────────────────┘ │
+│ Your Position                                   │
+│ Review Velocity:  72nd percentile  ↑            │
+│ Content Volume:   45th percentile  →            │
+│ Avg Ticket:       81st percentile  ↑            │
+│                                                 │
+│ Market Alert                                    │
+│ "Extensions demand rising +18% in Phoenix —     │
+│  competition hasn't adjusted yet"               │
 └─────────────────────────────────────────────────┘
 ```
 
-## Edge Function: `seo-domination-score`
-
-Triggered by daily scan or on-demand. For each active domination target:
-1. Find all `seo_objects` matching the target's service category + city (via location addresses)
-2. Aggregate health scores across contributing objects (review, page, content, conversion, competitive_gap domains)
-3. Sum review counts and content metrics from `seo_health_scores.raw_signals`
-4. Compute competitor totals from `competitor` type SEO objects
-5. Calculate domination score components + market share estimates
-6. Assign strategy state
-7. Upsert into `seo_domination_scores`
-
 ## Build Order
 
-1. DB migration (new tables + enum)
-2. `seo-domination-config.ts` (weights, thresholds, strategy labels)
-3. `seo-domination-engine.ts` (pure scoring + strategy + campaign generation)
-4. `seo-domination-score` edge function
-5. `useSEODomination.ts` hook
-6. `SEODominationDashboard.tsx` + `SEODominationTargetCard.tsx`
+1. DB migration (new tables, RLS)
+2. `seo-industry-config.ts` (signal types, thresholds, cohort minimums)
+3. `seo-industry-intelligence.ts` (pure trend detection + benchmarking logic)
+4. `seo-industry-aggregator` edge function
+5. `useSEOIndustryIntelligence.ts` hook
+6. `SEOIndustryFeed.tsx` card
 7. Wire into `SEOEngineDashboard.tsx`
 8. Export updates
+9. Schedule weekly cron job for aggregator
 
 ## Technical Notes
 
-- All scoring is deterministic — AI used only for generating campaign copy and directive explanations
-- Domination targets are manually defined by org admins (or auto-suggested from existing `location_service` SEO objects)
-- Integrates with existing Growth Orchestration: domination strategy influences OES weighting
-- No cross-organization data exposure — competitor data is org-scoped estimates
+- All trend computation is deterministic — AI generates explanation text only, never determines signal existence or confidence
+- Privacy enforced at the aggregation layer: the edge function outputs only aggregate values; no org-level data enters the trend tables
+- Minimum cohort of 5 prevents de-anonymization in small markets
+- Network effectiveness data supplements org-level cold starts but never overrides org-specific data when sufficient samples exist
+- Signals expire automatically (`expires_at`) to prevent stale intelligence
 
