@@ -33,3 +33,12 @@ export {
   computeRemainingLift,
   TASK_TYPE_COEFFICIENTS,
 } from './seo-revenue-predictor';
+export {
+  orchestrateGrowth,
+  computeOES,
+  assignLocationStates,
+  allocateCapacity,
+  detectWinningPatterns,
+  EFFORT_UNIT_WEIGHTS,
+  LOCATION_PRIORITY_CONFIG,
+} from './seo-growth-orchestrator';

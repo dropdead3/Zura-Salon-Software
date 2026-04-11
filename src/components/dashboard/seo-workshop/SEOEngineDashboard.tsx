@@ -13,6 +13,7 @@ import { Badge } from '@/components/ui/badge';
 import { AlertTriangle, TrendingUp, TrendingDown, Clock, Target, Star, FileText, MapPin, Pencil, Flag, Crosshair, Minus, DollarSign } from 'lucide-react';
 import { SEOPredictedLiftCard } from './SEOPredictedLiftCard';
 import { SEOGrowthReport } from './SEOGrowthReport';
+import { SEOGlobalGrowthDashboard } from './SEOGlobalGrowthDashboard';
 import { Skeleton } from '@/components/ui/skeleton';
 
 interface Props {
@@ -54,6 +55,9 @@ export function SEOEngineDashboard({ organizationId, onGoToTasks, onGoToCampaign
 
   return (
     <div className="space-y-6">
+      {/* Global Growth Orchestration */}
+      <SEOGlobalGrowthDashboard organizationId={organizationId} />
+
       {/* Growth Report */}
       <SEOGrowthReport organizationId={organizationId} />
 
