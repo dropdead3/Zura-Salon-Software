@@ -1,160 +1,110 @@
 
 
-# Zura SEO Task Engine — Implementation Plan
+# SEO Task Engine — Full Gap and Bug Analysis
 
-## Assessment
+## Critical Bugs
 
-This is a **full product vertical** spanning 15+ database tables, 3+ edge functions, 30+ config modules, and 40+ UI components. The existing SEO Workshop is a static checklist with ~27 manual items and a simple completions table. The existing `operational_tasks` infrastructure (state machine, history, escalation) provides a strong foundation to build on rather than reinvent.
+### B1: Operator precedence bug in monthly scan reprioritization
+**File**: `supabase/functions/seo-monthly-scan/index.ts`, line 325
+```
+(task.priority_factors as any)?.opportunity || 0.5 * 0.25 * 100 +
+```
+The `||` operator has lower precedence than `+` and `*`, so this expression evaluates incorrectly. It should be:
+```
+((task.priority_factors as any)?.opportunity ?? 0.5) * 0.25 * 100 +
+```
+The entire formula on lines 323-329 is also structurally wrong — the weighted factors don't add up correctly. Each factor should be `factor * weight * 100` but the `||` splits the expression.
 
-The scope described is approximately 3–4 months of focused engineering. To ship incrementally and avoid overbuilding ahead of data availability, this plan is structured in **4 phases**, each delivering a usable vertical slice.
+### B2: Orphaned task history record in daily scan
+**File**: `supabase/functions/seo-daily-scan/index.ts`, line 256
+```js
+task_id: crypto.randomUUID(), // Will be replaced by actual task ID after insert
+```
+This inserts a history record with a random UUID that doesn't match the actual task just created. The insert on line 235 doesn't return the created task's ID. Fix: add `.select('id').single()` to the insert, then use the returned ID.
 
----
+### B3: Inconsistent CORS handling across edge functions
+- `seo-score-calculator` uses `requireAuth` + `getCorsHeaders` (auth-based, origin-aware)
+- `seo-daily-scan`, `seo-weekly-scan`, `seo-monthly-scan` use `wildcardCorsHeaders` with no auth
+- The daily/weekly/monthly scans accept arbitrary `organizationId` from the request body with **no authentication** — anyone can trigger scans for any org using the service role key embedded in the function. While this is needed for cron, the manual trigger path from the UI should validate the caller's org membership.
 
-## Phase 1: Foundation — SEO Object Model, Health Scoring, and Task Templates (Week 1–3)
+### B4: Bootstrap creates tasks with `primary_seo_object_id: null`
+**File**: `src/components/dashboard/seo-workshop/SEOBootstrapDialog.tsx`, line 111
+If the `seo_objects` upsert fails to return a row (e.g. RLS blocks it), `seoObj` is null, and the task insert uses `null` for `primary_seo_object_id` — but the DB column is `NOT NULL`. This will throw a Postgres constraint error silently with no user feedback beyond a generic toast.
 
-### Database (8 new tables, 2 altered)
+## Significant Gaps
 
-**`seo_objects`** — The universal entity that SEO work attaches to.
-- `id`, `organization_id`, `location_id`, `object_type` (enum: `location`, `service`, `location_service`, `stylist_page`, `website_page`, `gbp_listing`, `review_stream`, `competitor`), `object_key` (composite natural key), `label`, `metadata` (JSONB), `created_at`
-- Unique on `(organization_id, object_type, object_key)`
+### G1: Template seed data never executed
+The `seo_task_templates` table was created but never seeded with the 16 template rows. The edge functions query this table (`WHERE template_key = 'review_request' AND is_active = true`) and return early if no row exists. **All scan-generated tasks will fail** until templates are seeded.
 
-**`seo_health_scores`** — Per-object, per-domain scores (0–100).
-- `id`, `seo_object_id`, `domain` (enum: `review`, `page`, `local_presence`, `content`, `competitive_gap`, `conversion`), `score`, `raw_signals` (JSONB), `scored_at`, `organization_id`
-- One row per object per domain per scan run
+### G2: `useSEOTasks` query uses `seo_tasks` join that may not match
+**File**: `src/hooks/useSEOTasks.ts`, line 15
+```ts
+.select('*, seo_objects!seo_tasks_primary_seo_object_id_fkey(...)')
+```
+This relies on PostgREST inferring the FK name `seo_tasks_primary_seo_object_id_fkey`. If the auto-generated FK name differs (which happens with `IF NOT EXISTS` tables), this will silently fail and `seo_objects` will be `null` on every task.
 
-**`seo_opportunity_risk_scores`** — Per location-service pair.
-- `id`, `organization_id`, `location_id`, `service_id`, `opportunity_score`, `risk_score`, `factors` (JSONB), `scored_at`
+### G3: `content_refresh` template requires `content_diff` proof type, but `ProofArtifact.type` doesn't include it
+**File**: `src/lib/seo-engine/seo-completion-validator.ts`, line 19
+```ts
+type: 'photo' | 'screenshot' | 'url' | 'text' | 'action_summary';
+```
+The `content_refresh` template's `proofRequirements` include `'content_diff'` which doesn't match any allowed type. The validator's fallback logic (line 69: `a.type === req || a.type === 'action_summary'`) means only `action_summary` uploads will satisfy it, which is misleading.
 
-**`seo_task_templates`** — Reusable deterministic blueprints.
-- `id`, `template_key` (unique), `label`, `description_template`, `task_type`, `trigger_domain`, `trigger_conditions` (JSONB), `assignment_rules` (JSONB), `due_date_rules` (JSONB), `completion_criteria` (JSONB), `recurrence_rules` (JSONB), `dependency_rules` (JSONB), `suppression_rules` (JSONB), `escalation_rules` (JSONB), `expected_impact_category`, `priority_weight_overrides` (JSONB), `is_active`
-- Seeded with 16 templates (Review Request, Review Response, Photo Upload, GBP Post, Service Page Update, Page Completion, Metadata Fix, Internal Linking, Before/After Publish, Stylist Spotlight Publish, FAQ Expansion, Competitor Gap Response, Booking CTA Optimization, Content Refresh, Local Landing Page Creation, Service Description Rewrite)
+### G4: Health score accumulation without cleanup
+Every time the score calculator runs, it **inserts** new rows into `seo_health_scores` — it never deletes or upserts. Over time this table will grow linearly with `objects × domains × scan_runs`. There's no retention policy or deduplication.
 
-**`seo_tasks`** — Generated task instances (extends `operational_tasks` pattern but SEO-specific).
-- `id`, `organization_id`, `location_id`, `template_key` (FK to seo_task_templates), `primary_seo_object_id` (FK), `secondary_seo_object_id` (FK, nullable), `assigned_to`, `assigned_role`, `assigned_at`, `due_at`, `priority_score` (0–100), `priority_factors` (JSONB), `status` (enum: `detected`, `queued`, `assigned`, `in_progress`, `awaiting_dependency`, `awaiting_verification`, `completed`, `overdue`, `escalated`, `suppressed`, `canceled`), `escalation_level`, `proof_artifacts` (JSONB), `completion_verified_at`, `completion_method` (`system` | `manual_approved`), `suppression_reason`, `cooldown_until`, `campaign_id` (FK, nullable), `ai_generated_content` (JSONB — title, explanation, draft copy), `created_at`, `updated_at`, `resolved_at`, `resolved_by`
+### G5: Opportunity/risk score accumulation
+Same issue as G4 — `seo_opportunity_risk_scores` also only inserts, never cleans up.
 
-**`seo_task_history`** — Full audit trail mirroring `operational_task_history`.
-- `id`, `task_id`, `action`, `previous_status`, `new_status`, `performed_by`, `notes`, `created_at`
+### G6: Campaign state transitions bypass state machine in monthly scan
+**File**: `supabase/functions/seo-monthly-scan/index.ts`, line 228
+The monthly scan directly updates campaign status without validating against `CAMPAIGN_STATE_TRANSITIONS`. For example, it could transition `at_risk` directly to `abandoned` (allowed) but also `at_risk` to `completed` without checking if that's valid.
 
-**`seo_task_dependencies`** — Hard and soft deps.
-- `id`, `task_id`, `depends_on_task_id`, `dependency_type` (`hard` | `soft`), `created_at`
+### G7: Bootstrap dialog uses mock services/stylists
+**File**: `src/components/dashboard/seo-workshop/SEOBootstrapDialog.tsx`, lines 39-48
+Hardcoded `mockServices` and `mockStylists` are used instead of real org data. The bootstrap will always generate the same tasks regardless of what the salon actually offers.
 
-**`seo_campaigns`** — Bundled task groups.
-- `id`, `organization_id`, `location_id`, `title`, `objective`, `status` (enum: `planning`, `active`, `blocked`, `at_risk`, `completed`, `abandoned`), `owner_user_id`, `expected_metrics` (JSONB), `window_start`, `window_end`, `created_at`, `updated_at`
+### G8: No `performed_by` on edge function history inserts
+The daily/weekly/monthly scan edge functions insert `seo_task_history` records without setting `performed_by`. This is acceptable for automated actions but should explicitly set a system identifier for auditability.
 
-**`seo_task_impact`** — Post-completion measurement.
-- `id`, `task_id`, `measurement_window` (`7d` | `30d` | `90d`), `metrics` (JSONB — review_velocity_delta, keyword_mentions_delta, page_traffic_delta, booking_conversion_delta, etc.), `contribution_confidence`, `measured_at`
+### G9: `useSEOHealthSummary` hook missing
+The dashboard imports `useSEOHealthSummary` from `useSEOHealthScores` — need to verify this export exists and correctly aggregates scores.
 
-**Alter `operational_tasks`**: No changes — SEO tasks get their own table to avoid polluting the existing Color Bar task system with SEO-specific fields.
+## Minor Issues
 
-### Config Layer (client-side, `src/config/seo-engine/`)
+- **M1**: All UI components use `as any` extensively (~50 instances). This bypasses TypeScript's type safety for all DB query results.
+- **M2**: `SEOEngineSettings.tsx` imports `toast` from `sonner` while all other SEO components use `@/hooks/use-toast` — inconsistent toast system.
+- **M3**: Task detail dialog doesn't reset `uploadedProofs` and `managerApproved` state when switching between tasks (the dialog unmounts/remounts via `task` prop change, but state could persist if React reuses the component).
+- **M4**: The `seo_tasks` table has a `CHECK` constraint on `priority_score` (`CHECK (priority_score >= 0 AND priority_score <= 100)`) which is fine as-is but the `seo_health_scores` table also uses `CHECK` on score — per project doctrine, validation triggers are preferred over CHECK constraints.
+- **M5**: No pagination on task list, object list, or campaign list — all fetch unlimited rows.
+- **M6**: Edge function `seo-score-calculator` references `website_page_versions` and `employee_profiles` tables — need to verify these exist and have the expected columns.
 
-- `seo-problem-types.ts` — All ~22 problem type definitions with domain, detection logic references, severity defaults
-- `seo-task-templates.ts` — 16 template definitions (mirrors DB seed but used for client-side rendering and validation)
-- `seo-priority-model.ts` — Weighted scoring formula: `severity * 0.25 + opportunity * 0.25 + business_value * 0.20 + ease * 0.15 + freshness * 0.10 - fatigue_penalty * 0.05`
-- `seo-assignment-rules.ts` — Deterministic role-routing per task type with fallback chains
-- `seo-state-machine.ts` — Valid transitions, escalation rules, suppression rules
-- `seo-health-domains.ts` — 6 domain definitions with metric compositions
-- `seo-quotas.ts` — Weekly/monthly quotas per object type (review requests, GBP posts, photo freshness, stylist contributions)
+## Proposed Fix Order
 
-### Service Layer (`src/lib/seo-engine/`)
+1. **B1** — Fix priority formula (critical math bug)
+2. **B2** — Fix orphaned history record
+3. **G1** — Seed template data via migration
+4. **B3** — Add auth to scan triggers when called from UI
+5. **B4** — Guard against null SEO object in bootstrap
+6. **G3** — Add `content_diff` to ProofArtifact type union
+7. **G4/G5** — Add score retention (delete scores older than N runs)
+8. **G7** — Replace mock data with real org services/stylists
+9. **G6** — Validate campaign transitions in monthly scan
+10. **M2** — Standardize toast import
+11. **G2** — Use explicit FK hint or verify the join name
+12. **M5** — Add pagination limits
 
-- `seo-task-service.ts` — CRUD, state transitions, validation (mirrors `operational-task-service.ts` pattern)
-- `seo-priority-calculator.ts` — Pure function: inputs → 0–100 score
-- `seo-assignment-resolver.ts` — Pure function: template + org context → user_id
-- `seo-suppression-engine.ts` — Checks open duplicates, cooldowns, caps, missing data
-- `seo-completion-validator.ts` — Per-template validation logic (system-verifiable vs proof-required)
-- `seo-dependency-resolver.ts` — Checks hard/soft deps before allowing state transitions
+## File Changes Summary
 
-### Hooks (`src/hooks/`)
+| File | Changes |
+|---|---|
+| `supabase/functions/seo-monthly-scan/index.ts` | Fix priority formula (B1), validate campaign transitions (G6) |
+| `supabase/functions/seo-daily-scan/index.ts` | Fix orphaned history record (B2) |
+| New migration SQL | Seed 16 task templates (G1), add score cleanup function (G4/G5) |
+| `src/components/dashboard/seo-workshop/SEOBootstrapDialog.tsx` | Replace mocks with real data (G7), guard null object (B4) |
+| `src/lib/seo-engine/seo-completion-validator.ts` | Add `content_diff` type (G3) |
+| `src/components/dashboard/seo-workshop/SEOEngineSettings.tsx` | Fix toast import (M2), add auth to scan triggers (B3) |
+| `src/hooks/useSEOTasks.ts` | Verify/fix FK join hint (G2) |
 
-- `useSEOTasks.ts` — Query/mutate seo_tasks with org scoping
-- `useSEOHealthScores.ts` — Query seo_health_scores by object/domain
-- `useSEOCampaigns.ts` — Query/mutate campaigns
-- `useSEOTaskTemplates.ts` — Read templates
-- `useSEOOpportunityRisk.ts` — Query opportunity/risk scores
-
-### UI — SEO Workshop Tabs Replacement
-
-Replace the 4 existing tabs (Overview, Actions, Guides, Tools) with:
-
-1. **Dashboard** — Health scores by domain, top risks, top opportunities, campaign status, overdue count
-2. **Tasks** — Role-filtered task list with status badges, priority scores, assignment, completion actions, proof upload
-3. **Campaigns** — Active/planned campaign bundles with progress tracking
-4. **Objects** — Browse SEO objects by type, see per-object health and attached tasks
-5. **Settings** — Quota config, assignment overrides, suppression tuning
-
-Keep Guides and Tools as sub-sections within the Dashboard or a Help tab.
-
----
-
-## Phase 2: Detection Engine — Edge Functions for Scanning (Week 4–6)
-
-### Edge Functions
-
-**`seo-daily-scan/index.ts`** — Lightweight daily checks:
-- Review velocity per location-service (from existing review/feedback data)
-- GBP posting freshness (from stored GBP metadata)
-- Photo freshness per service page
-- Post-appointment review candidate identification
-- Overdue task escalation
-- Generates `seo_tasks` rows via deterministic template matching
-
-**`seo-weekly-scan/index.ts`** — Deeper analysis:
-- Page completeness/freshness audit (query website_sections data)
-- Content gap detection
-- Competitor gap analysis (if competitor data exists)
-- Conversion weakness detection
-- Service-location ranking movement
-
-**`seo-monthly-scan/index.ts`** — Strategic:
-- Quota tuning based on effectiveness history
-- Task effectiveness analysis → update `seo_task_impact`
-- Fatigue reset
-- Campaign health evaluation
-
-**`seo-score-calculator/index.ts`** — Computes health scores per object per domain, opportunity/risk scores per location-service.
-
-All scans are scheduled via `pg_cron`. AI is invoked only for: generating natural-language task titles/explanations, drafting content, interpreting review text.
-
----
-
-## Phase 3: Completion Validation, Impact Measurement, and Integration Points (Week 7–9)
-
-- Hard completion validation logic per template type
-- Proof artifact upload flow (storage bucket `seo-proof-artifacts`)
-- Post-completion impact measurement (7d/30d/90d delta tracking)
-- Contribution-confidence model
-- Integration into Zura Insights (top SEO risks/opportunities cards)
-- Integration into Zura Tasks (SEO tasks in unified task view)
-- Integration into Website Builder (Page Health badge + guided fix tasks)
-- Integration into Zura Marketer (pending content tasks + AI draft flows)
-
----
-
-## Phase 4: New Location Bootstrap, Campaign Bundles, and Advanced Features (Week 10–12)
-
-- New Location Bootstrap mode — auto-generates foundational SEO campaign
-- Competitor gap campaign bundle generation
-- Review-capture logic tied to appointment completion
-- Historical effectiveness tuning of priority weights
-- Full campaign lifecycle management
-- Dashboard analytics: task velocity, completion rates, SEO score trends
-
----
-
-## Technical Notes
-
-- **Existing infrastructure reused**: `operational_tasks` pattern (state machine, history, escalation), Health Engine scoring pattern, edge function scheduling pattern, `_shared/` utilities
-- **No AI in deterministic paths**: Task existence, assignment, priority, completion, suppression — all rule-based. AI only generates text content.
-- **RLS**: All new tables get `organization_id` with `is_org_member`/`is_org_admin` policies
-- **Tenant isolation**: All queries scoped via `effectiveOrganization`
-- **State machine**: Strict enum-based transitions with audit trail on every change
-
----
-
-## Recommendation
-
-**Start with Phase 1.** It delivers the data model, config layer, service layer, hooks, and a functional UI inside the SEO Workshop. Phases 2–4 layer on automated detection, validation, and integrations incrementally. Each phase is independently useful.
-
-Shall I proceed with Phase 1?
+Total: ~8 files modified, 1 new migration.
 
