@@ -50,6 +50,10 @@ export default function SEOWorkshopHub() {
               <BookOpen className="h-4 w-4" />
               Resources
             </TabsTrigger>
+            <TabsTrigger value="analytics" className="gap-2">
+              <TrendingUp className="h-4 w-4" />
+              Analytics
+            </TabsTrigger>
             <TabsTrigger value="settings" className="gap-2">
               <Settings2 className="h-4 w-4" />
               Settings
