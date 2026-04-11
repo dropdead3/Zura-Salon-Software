@@ -18689,6 +18689,543 @@ export type Database = {
           },
         ]
       }
+      seo_campaigns: {
+        Row: {
+          created_at: string
+          expected_metrics: Json | null
+          id: string
+          location_id: string | null
+          objective: string | null
+          organization_id: string
+          owner_user_id: string | null
+          status: Database["public"]["Enums"]["seo_campaign_status"]
+          title: string
+          updated_at: string
+          window_end: string | null
+          window_start: string | null
+        }
+        Insert: {
+          created_at?: string
+          expected_metrics?: Json | null
+          id?: string
+          location_id?: string | null
+          objective?: string | null
+          organization_id: string
+          owner_user_id?: string | null
+          status?: Database["public"]["Enums"]["seo_campaign_status"]
+          title: string
+          updated_at?: string
+          window_end?: string | null
+          window_start?: string | null
+        }
+        Update: {
+          created_at?: string
+          expected_metrics?: Json | null
+          id?: string
+          location_id?: string | null
+          objective?: string | null
+          organization_id?: string
+          owner_user_id?: string | null
+          status?: Database["public"]["Enums"]["seo_campaign_status"]
+          title?: string
+          updated_at?: string
+          window_end?: string | null
+          window_start?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "seo_campaigns_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "seo_campaigns_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      seo_health_scores: {
+        Row: {
+          created_at: string
+          domain: Database["public"]["Enums"]["seo_health_domain"]
+          id: string
+          organization_id: string
+          raw_signals: Json | null
+          score: number
+          scored_at: string
+          seo_object_id: string
+        }
+        Insert: {
+          created_at?: string
+          domain: Database["public"]["Enums"]["seo_health_domain"]
+          id?: string
+          organization_id: string
+          raw_signals?: Json | null
+          score: number
+          scored_at?: string
+          seo_object_id: string
+        }
+        Update: {
+          created_at?: string
+          domain?: Database["public"]["Enums"]["seo_health_domain"]
+          id?: string
+          organization_id?: string
+          raw_signals?: Json | null
+          score?: number
+          scored_at?: string
+          seo_object_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "seo_health_scores_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "seo_health_scores_seo_object_id_fkey"
+            columns: ["seo_object_id"]
+            isOneToOne: false
+            referencedRelation: "seo_objects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      seo_objects: {
+        Row: {
+          created_at: string
+          id: string
+          label: string
+          location_id: string | null
+          metadata: Json | null
+          object_key: string
+          object_type: Database["public"]["Enums"]["seo_object_type"]
+          organization_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          label: string
+          location_id?: string | null
+          metadata?: Json | null
+          object_key: string
+          object_type: Database["public"]["Enums"]["seo_object_type"]
+          organization_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          label?: string
+          location_id?: string | null
+          metadata?: Json | null
+          object_key?: string
+          object_type?: Database["public"]["Enums"]["seo_object_type"]
+          organization_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "seo_objects_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "seo_objects_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      seo_opportunity_risk_scores: {
+        Row: {
+          created_at: string
+          factors: Json | null
+          id: string
+          location_id: string
+          opportunity_score: number
+          organization_id: string
+          risk_score: number
+          scored_at: string
+          service_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          factors?: Json | null
+          id?: string
+          location_id: string
+          opportunity_score: number
+          organization_id: string
+          risk_score: number
+          scored_at?: string
+          service_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          factors?: Json | null
+          id?: string
+          location_id?: string
+          opportunity_score?: number
+          organization_id?: string
+          risk_score?: number
+          scored_at?: string
+          service_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "seo_opportunity_risk_scores_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "seo_opportunity_risk_scores_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      seo_task_dependencies: {
+        Row: {
+          created_at: string
+          dependency_type: Database["public"]["Enums"]["seo_dependency_type"]
+          depends_on_task_id: string
+          id: string
+          task_id: string
+        }
+        Insert: {
+          created_at?: string
+          dependency_type?: Database["public"]["Enums"]["seo_dependency_type"]
+          depends_on_task_id: string
+          id?: string
+          task_id: string
+        }
+        Update: {
+          created_at?: string
+          dependency_type?: Database["public"]["Enums"]["seo_dependency_type"]
+          depends_on_task_id?: string
+          id?: string
+          task_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "seo_task_dependencies_depends_on_task_id_fkey"
+            columns: ["depends_on_task_id"]
+            isOneToOne: false
+            referencedRelation: "seo_tasks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "seo_task_dependencies_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "seo_tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      seo_task_history: {
+        Row: {
+          action: string
+          created_at: string
+          id: string
+          new_status: Database["public"]["Enums"]["seo_task_status"] | null
+          notes: string | null
+          performed_by: string | null
+          previous_status: Database["public"]["Enums"]["seo_task_status"] | null
+          task_id: string
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          id?: string
+          new_status?: Database["public"]["Enums"]["seo_task_status"] | null
+          notes?: string | null
+          performed_by?: string | null
+          previous_status?:
+            | Database["public"]["Enums"]["seo_task_status"]
+            | null
+          task_id: string
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          id?: string
+          new_status?: Database["public"]["Enums"]["seo_task_status"] | null
+          notes?: string | null
+          performed_by?: string | null
+          previous_status?:
+            | Database["public"]["Enums"]["seo_task_status"]
+            | null
+          task_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "seo_task_history_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "seo_tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      seo_task_impact: {
+        Row: {
+          contribution_confidence: number | null
+          created_at: string
+          id: string
+          measured_at: string
+          measurement_window: Database["public"]["Enums"]["seo_impact_window"]
+          metrics: Json
+          task_id: string
+        }
+        Insert: {
+          contribution_confidence?: number | null
+          created_at?: string
+          id?: string
+          measured_at?: string
+          measurement_window: Database["public"]["Enums"]["seo_impact_window"]
+          metrics?: Json
+          task_id: string
+        }
+        Update: {
+          contribution_confidence?: number | null
+          created_at?: string
+          id?: string
+          measured_at?: string
+          measurement_window?: Database["public"]["Enums"]["seo_impact_window"]
+          metrics?: Json
+          task_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "seo_task_impact_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "seo_tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      seo_task_templates: {
+        Row: {
+          assignment_rules: Json
+          completion_criteria: Json
+          created_at: string
+          dependency_rules: Json
+          description_template: string
+          due_date_rules: Json
+          escalation_rules: Json
+          expected_impact_category: string | null
+          id: string
+          is_active: boolean
+          label: string
+          priority_weight_overrides: Json | null
+          recurrence_rules: Json
+          suppression_rules: Json
+          task_type: string
+          template_key: string
+          trigger_conditions: Json
+          trigger_domain:
+            | Database["public"]["Enums"]["seo_health_domain"]
+            | null
+          updated_at: string
+        }
+        Insert: {
+          assignment_rules?: Json
+          completion_criteria?: Json
+          created_at?: string
+          dependency_rules?: Json
+          description_template?: string
+          due_date_rules?: Json
+          escalation_rules?: Json
+          expected_impact_category?: string | null
+          id?: string
+          is_active?: boolean
+          label: string
+          priority_weight_overrides?: Json | null
+          recurrence_rules?: Json
+          suppression_rules?: Json
+          task_type: string
+          template_key: string
+          trigger_conditions?: Json
+          trigger_domain?:
+            | Database["public"]["Enums"]["seo_health_domain"]
+            | null
+          updated_at?: string
+        }
+        Update: {
+          assignment_rules?: Json
+          completion_criteria?: Json
+          created_at?: string
+          dependency_rules?: Json
+          description_template?: string
+          due_date_rules?: Json
+          escalation_rules?: Json
+          expected_impact_category?: string | null
+          id?: string
+          is_active?: boolean
+          label?: string
+          priority_weight_overrides?: Json | null
+          recurrence_rules?: Json
+          suppression_rules?: Json
+          task_type?: string
+          template_key?: string
+          trigger_conditions?: Json
+          trigger_domain?:
+            | Database["public"]["Enums"]["seo_health_domain"]
+            | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      seo_tasks: {
+        Row: {
+          ai_generated_content: Json | null
+          assigned_at: string | null
+          assigned_role: string | null
+          assigned_to: string | null
+          campaign_id: string | null
+          completion_method:
+            | Database["public"]["Enums"]["seo_completion_method"]
+            | null
+          completion_verified_at: string | null
+          cooldown_until: string | null
+          created_at: string
+          due_at: string | null
+          escalation_level: number
+          id: string
+          location_id: string | null
+          organization_id: string
+          primary_seo_object_id: string
+          priority_factors: Json | null
+          priority_score: number
+          proof_artifacts: Json | null
+          resolved_at: string | null
+          resolved_by: string | null
+          secondary_seo_object_id: string | null
+          status: Database["public"]["Enums"]["seo_task_status"]
+          suppression_reason: string | null
+          template_key: string
+          updated_at: string
+        }
+        Insert: {
+          ai_generated_content?: Json | null
+          assigned_at?: string | null
+          assigned_role?: string | null
+          assigned_to?: string | null
+          campaign_id?: string | null
+          completion_method?:
+            | Database["public"]["Enums"]["seo_completion_method"]
+            | null
+          completion_verified_at?: string | null
+          cooldown_until?: string | null
+          created_at?: string
+          due_at?: string | null
+          escalation_level?: number
+          id?: string
+          location_id?: string | null
+          organization_id: string
+          primary_seo_object_id: string
+          priority_factors?: Json | null
+          priority_score?: number
+          proof_artifacts?: Json | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          secondary_seo_object_id?: string | null
+          status?: Database["public"]["Enums"]["seo_task_status"]
+          suppression_reason?: string | null
+          template_key: string
+          updated_at?: string
+        }
+        Update: {
+          ai_generated_content?: Json | null
+          assigned_at?: string | null
+          assigned_role?: string | null
+          assigned_to?: string | null
+          campaign_id?: string | null
+          completion_method?:
+            | Database["public"]["Enums"]["seo_completion_method"]
+            | null
+          completion_verified_at?: string | null
+          cooldown_until?: string | null
+          created_at?: string
+          due_at?: string | null
+          escalation_level?: number
+          id?: string
+          location_id?: string | null
+          organization_id?: string
+          primary_seo_object_id?: string
+          priority_factors?: Json | null
+          priority_score?: number
+          proof_artifacts?: Json | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          secondary_seo_object_id?: string | null
+          status?: Database["public"]["Enums"]["seo_task_status"]
+          suppression_reason?: string | null
+          template_key?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "seo_tasks_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "seo_campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "seo_tasks_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "seo_tasks_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "seo_tasks_primary_seo_object_id_fkey"
+            columns: ["primary_seo_object_id"]
+            isOneToOne: false
+            referencedRelation: "seo_objects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "seo_tasks_secondary_seo_object_id_fkey"
+            columns: ["secondary_seo_object_id"]
+            isOneToOne: false
+            referencedRelation: "seo_objects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "seo_tasks_template_key_fkey"
+            columns: ["template_key"]
+            isOneToOne: false
+            referencedRelation: "seo_task_templates"
+            referencedColumns: ["template_key"]
+          },
+        ]
+      }
       service_addon_assignments: {
         Row: {
           addon_id: string
@@ -25437,6 +25974,44 @@ export type Database = {
       program_status: "active" | "paused" | "completed" | "restarted"
       retention_action_type: "coaching_flag" | "demotion_eligible"
       rsvp_status: "pending" | "accepted" | "declined"
+      seo_campaign_status:
+        | "planning"
+        | "active"
+        | "blocked"
+        | "at_risk"
+        | "completed"
+        | "abandoned"
+      seo_completion_method: "system" | "manual_approved"
+      seo_dependency_type: "hard" | "soft"
+      seo_health_domain:
+        | "review"
+        | "page"
+        | "local_presence"
+        | "content"
+        | "competitive_gap"
+        | "conversion"
+      seo_impact_window: "7d" | "30d" | "90d"
+      seo_object_type:
+        | "location"
+        | "service"
+        | "location_service"
+        | "stylist_page"
+        | "website_page"
+        | "gbp_listing"
+        | "review_stream"
+        | "competitor"
+      seo_task_status:
+        | "detected"
+        | "queued"
+        | "assigned"
+        | "in_progress"
+        | "awaiting_dependency"
+        | "awaiting_verification"
+        | "completed"
+        | "overdue"
+        | "escalated"
+        | "suppressed"
+        | "canceled"
       shift_role_context:
         | "front_desk"
         | "receptionist"
@@ -25714,6 +26289,48 @@ export const Constants = {
       program_status: ["active", "paused", "completed", "restarted"],
       retention_action_type: ["coaching_flag", "demotion_eligible"],
       rsvp_status: ["pending", "accepted", "declined"],
+      seo_campaign_status: [
+        "planning",
+        "active",
+        "blocked",
+        "at_risk",
+        "completed",
+        "abandoned",
+      ],
+      seo_completion_method: ["system", "manual_approved"],
+      seo_dependency_type: ["hard", "soft"],
+      seo_health_domain: [
+        "review",
+        "page",
+        "local_presence",
+        "content",
+        "competitive_gap",
+        "conversion",
+      ],
+      seo_impact_window: ["7d", "30d", "90d"],
+      seo_object_type: [
+        "location",
+        "service",
+        "location_service",
+        "stylist_page",
+        "website_page",
+        "gbp_listing",
+        "review_stream",
+        "competitor",
+      ],
+      seo_task_status: [
+        "detected",
+        "queued",
+        "assigned",
+        "in_progress",
+        "awaiting_dependency",
+        "awaiting_verification",
+        "completed",
+        "overdue",
+        "escalated",
+        "suppressed",
+        "canceled",
+      ],
       shift_role_context: [
         "front_desk",
         "receptionist",

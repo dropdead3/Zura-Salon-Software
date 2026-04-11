@@ -1,11 +1,14 @@
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { DashboardPageHeader } from '@/components/dashboard/DashboardPageHeader';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { BarChart3, ListTodo, BookOpen, Wrench } from 'lucide-react';
+import { BarChart3, ListTodo, Target, Layers, Settings2, BookOpen, Wrench } from 'lucide-react';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useState } from 'react';
-import { SEOWorkshopOverview } from '@/components/dashboard/seo-workshop/SEOWorkshopOverview';
-import { SEOWorkshopActionList } from '@/components/dashboard/seo-workshop/SEOWorkshopActionList';
+import { SEOEngineDashboard } from '@/components/dashboard/seo-workshop/SEOEngineDashboard';
+import { SEOEngineTaskList } from '@/components/dashboard/seo-workshop/SEOEngineTaskList';
+import { SEOEngineCampaigns } from '@/components/dashboard/seo-workshop/SEOEngineCampaigns';
+import { SEOEngineObjects } from '@/components/dashboard/seo-workshop/SEOEngineObjects';
+import { SEOEngineSettings } from '@/components/dashboard/seo-workshop/SEOEngineSettings';
 import { SEOWorkshopGuides } from '@/components/dashboard/seo-workshop/SEOWorkshopGuides';
 import { SEOWorkshopTools } from '@/components/dashboard/seo-workshop/SEOWorkshopTools';
 import { PageExplainer } from '@/components/ui/PageExplainer';
@@ -13,54 +16,78 @@ import { PageExplainer } from '@/components/ui/PageExplainer';
 export default function SEOWorkshopHub() {
   const { effectiveOrganization } = useOrganizationContext();
   const organizationId = effectiveOrganization?.id;
-  const [activeTab, setActiveTab] = useState('overview');
+  const [activeTab, setActiveTab] = useState('dashboard');
 
   return (
     <DashboardLayout>
       <div className="p-6 lg:p-8 max-w-[1600px] mx-auto space-y-6">
         <DashboardPageHeader
           title="SEO Workshop"
-          description="Tasks and guides to improve local visibility"
+          description="Deterministic SEO task engine for local visibility"
         />
         <PageExplainer pageId="seo-workshop" />
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList>
-            <TabsTrigger value="overview" className="gap-2">
+          <TabsList className="flex-wrap">
+            <TabsTrigger value="dashboard" className="gap-2">
               <BarChart3 className="h-4 w-4" />
-              Overview
+              Dashboard
             </TabsTrigger>
-            <TabsTrigger value="actions" className="gap-2">
+            <TabsTrigger value="tasks" className="gap-2">
               <ListTodo className="h-4 w-4" />
-              Action items
+              Tasks
             </TabsTrigger>
-            <TabsTrigger value="guides" className="gap-2">
+            <TabsTrigger value="campaigns" className="gap-2">
+              <Target className="h-4 w-4" />
+              Campaigns
+            </TabsTrigger>
+            <TabsTrigger value="objects" className="gap-2">
+              <Layers className="h-4 w-4" />
+              Objects
+            </TabsTrigger>
+            <TabsTrigger value="resources" className="gap-2">
               <BookOpen className="h-4 w-4" />
-              Guides
+              Resources
             </TabsTrigger>
-            <TabsTrigger value="tools" className="gap-2">
-              <Wrench className="h-4 w-4" />
-              Tools
+            <TabsTrigger value="settings" className="gap-2">
+              <Settings2 className="h-4 w-4" />
+              Settings
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="overview" className="mt-6">
-            <SEOWorkshopOverview
+          <TabsContent value="dashboard" className="mt-6">
+            <SEOEngineDashboard
               organizationId={organizationId}
-              onGoToActions={() => setActiveTab('actions')}
+              onGoToTasks={() => setActiveTab('tasks')}
+              onGoToCampaigns={() => setActiveTab('campaigns')}
             />
           </TabsContent>
 
-          <TabsContent value="actions" className="mt-6">
-            <SEOWorkshopActionList organizationId={organizationId} />
+          <TabsContent value="tasks" className="mt-6">
+            <SEOEngineTaskList organizationId={organizationId} />
           </TabsContent>
 
-          <TabsContent value="guides" className="mt-6">
-            <SEOWorkshopGuides />
+          <TabsContent value="campaigns" className="mt-6">
+            <SEOEngineCampaigns organizationId={organizationId} />
           </TabsContent>
 
-          <TabsContent value="tools" className="mt-6">
-            <SEOWorkshopTools />
+          <TabsContent value="objects" className="mt-6">
+            <SEOEngineObjects organizationId={organizationId} />
+          </TabsContent>
+
+          <TabsContent value="resources" className="mt-6 space-y-8">
+            <div>
+              <h3 className="text-sm font-display tracking-wide uppercase text-muted-foreground mb-4">Guides</h3>
+              <SEOWorkshopGuides />
+            </div>
+            <div>
+              <h3 className="text-sm font-display tracking-wide uppercase text-muted-foreground mb-4">Tools</h3>
+              <SEOWorkshopTools />
+            </div>
+          </TabsContent>
+
+          <TabsContent value="settings" className="mt-6">
+            <SEOEngineSettings organizationId={organizationId} />
           </TabsContent>
         </Tabs>
       </div>
