@@ -821,163 +821,213 @@ export function AggregateSalesCard({
                 <p className="text-xs text-muted-foreground/50">Excludes Tips · {taxLabel}</p>
               </div>
 
-              {/* Expected Service Revenue — stacked info block (today only) */}
+              {/* Expected Service Revenue — collapsible summary (today only) */}
               {isToday && (todayExpectedDisplay > 0 || (scheduledRevenue != null && scheduledRevenue > 0)) && (
-                <div className="mt-4 mx-auto max-w-sm space-y-3">
+                <div className="mt-4 mx-auto max-w-sm space-y-2">
                   {(() => {
                     const displayExpected = todayExpectedDisplay;
                     const remainingExpected = adjustedExpected 
                       ? adjustedExpected.pendingExpectedRevenue + (adjustedExpected.awaitingCheckoutRevenue ?? 0)
                       : displayExpected;
                     
-                    // Tracking: compare actual POS revenue against what completed appointments were scheduled for
                     const completedScheduled = adjustedExpected?.completedScheduledRevenue ?? 0;
                     const completedActual = adjustedExpected?.completedActualRevenue ?? 0;
                     const serviceDelta = completedActual - completedScheduled;
                     const hasResolvedAppts = (adjustedExpected?.resolvedCount ?? 0) > 0;
+
+                    const totalAppts = adjustedExpected 
+                      ? adjustedExpected.resolvedCount + adjustedExpected.pendingCount + adjustedExpected.cancelledCount + adjustedExpected.noShowCount 
+                      : 0;
+                    const resolvedCount = adjustedExpected?.resolvedCount ?? 0;
+                    const serviceRevenue = completedActual;
+                    const exceededTotal = displayExpected > 0 && serviceRevenue > displayExpected;
+                    const earnedPct = displayExpected > 0 
+                      ? Math.min(Math.round((serviceRevenue / displayExpected) * 100), 100) 
+                      : 0;
+                    const projectedFinish = (adjustedExpected?.completedActualRevenue ?? 0) + (adjustedExpected?.awaitingCheckoutRevenue ?? 0) + (adjustedExpected?.pendingExpectedRevenue ?? 0);
+
+                    // Compact summary line
+                    const compactParts: string[] = [];
+                    if (totalAppts > 0) compactParts.push(`${resolvedCount}/${totalAppts} appts`);
+                    if (remainingExpected > 0) compactParts.push(`${formatCurrency(remainingExpected)} remaining`);
+                    else if (allAppointmentsComplete) compactParts.push('All complete');
+                    if (!allAppointmentsComplete && projectedFinish > 0) compactParts.push(`on track for ${formatCurrency(projectedFinish)}`);
+                    else if (exceededTotal) compactParts.push(`exceeded by ${formatCurrency(serviceRevenue - displayExpected)}`);
                     
                     return (
                       <>
-                        {/* Line 1: Scheduled Services Today total */}
-                        <div className="flex items-center justify-center gap-1.5 cursor-pointer" onClick={() => toggleDrilldown('expectedGap')}>
-                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                            <Clock className="w-3.5 h-3.5" />
-                            <span>Scheduled Services Today:</span>
-                            <BlurredAmount disableTooltip>
-                              <span className="text-foreground font-medium">{formatCurrency(displayExpected)}</span>
-                            </BlurredAmount>
-                          </div>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Info className="w-3.5 h-3.5 text-muted-foreground/60 cursor-help" />
-                            </TooltipTrigger>
-                            <TooltipContent side="bottom" className="max-w-[280px] text-xs">
-                                {adjustedExpected ? (
-                                <div className="space-y-1">
-                                  <p>Total service revenue originally booked for today. Completed appointments show actual POS totals; pending appointments use their scheduled price.</p>
-                                  <p>{adjustedExpected.resolvedCount} completed ({formatCurrency(adjustedExpected.completedActualRevenue)} actual vs {formatCurrency(adjustedExpected.completedScheduledRevenue)} scheduled) · {adjustedExpected.pendingCount} pending ({formatCurrency(adjustedExpected.pendingScheduledRevenue)} scheduled)</p>
-                                  {(adjustedExpected.cancelledCount > 0 || adjustedExpected.noShowCount > 0) && (
-                                    <p className="text-muted-foreground/70">{adjustedExpected.cancelledCount} cancelled, {adjustedExpected.noShowCount} no-shows included in total</p>
-                                  )}
-                                </div>
-                              ) : (
-                                'Total service revenue scheduled for today based on appointment bookings.'
-                              )}
-                            </TooltipContent>
-                          </Tooltip>
-                        </div>
-
-                        {/* Appointment completion fraction */}
-                        {adjustedExpected && (adjustedExpected.resolvedCount + adjustedExpected.pendingCount + adjustedExpected.cancelledCount + adjustedExpected.noShowCount) > 0 && (
-                          <p className="text-xs text-muted-foreground/70 text-center">
-                            {adjustedExpected.resolvedCount} of {adjustedExpected.resolvedCount + adjustedExpected.pendingCount + adjustedExpected.cancelledCount + adjustedExpected.noShowCount} appointments completed{adjustedExpected.pendingCount > 0 && ` · ${adjustedExpected.pendingCount} pending`}
-                            {(adjustedExpected.awaitingCheckoutCount ?? 0) > 0 && ` · ${adjustedExpected.awaitingCheckoutCount} awaiting checkout`}
-                            {adjustedExpected.discountedAppointmentCount > 0 && (
-                              <span className="text-accent-foreground/70"> · {adjustedExpected.discountedAppointmentCount} discount{adjustedExpected.discountedAppointmentCount !== 1 ? 's' : ''} applied</span>
-                            )}
-                          </p>
+                        {/* Compact progress bar */}
+                        {todayActual?.hasActualData && displayExpected > 0 && (
+                          <Progress 
+                            value={Math.min((serviceRevenue / displayExpected) * 100, 100)}
+                            className="h-1 mx-auto"
+                            indicatorClassName={exceededTotal ? "bg-success-foreground" : undefined}
+                          />
                         )}
 
-                        {/* Remaining service revenue badge */}
-                        {remainingExpected > 0 && (
-                          <div className="flex items-center justify-center">
-                            <Badge 
-                              variant="outline" 
-                              className="text-sm font-normal gap-1 px-3 py-1.5 bg-warning/10 text-warning border-warning/30"
-                            >
-                              <span>Service revenue still expected to collect:</span>
-                              <BlurredAmount disableTooltip>
-                                <span>{formatCurrency(remainingExpected)}</span>
-                              </BlurredAmount>
-                            </Badge>
-                          </div>
-                        )}
-
-                        {/* Progress bar: earned % of scheduled + projection */}
-                        {todayActual?.hasActualData ? (() => {
-                          const serviceRevenue = completedActual;
-                          const exceededTotal = displayExpected > 0 && serviceRevenue > displayExpected;
-                          const earnedPct = displayExpected > 0 
-                            ? Math.round((serviceRevenue / displayExpected) * 100) 
-                            : 0;
-                          const projectedFinish = (adjustedExpected?.completedActualRevenue ?? 0) + (adjustedExpected?.awaitingCheckoutRevenue ?? 0) + (adjustedExpected?.pendingExpectedRevenue ?? 0);
-                          const excessAmount = serviceRevenue - displayExpected;
-                          return (
-                          <div className="space-y-1.5">
-                            <div className="flex items-center justify-between text-xs">
-                              <span className="text-muted-foreground">
-                                Earned {exceededTotal ? '100' : earnedPct}% of scheduled services today
-                              </span>
-                              <BlurredAmount>
-                                <span className={cn("font-medium", exceededTotal && "text-success-foreground")}>
-                                  {formatCurrency(serviceRevenue)}
-                                </span>
-                              </BlurredAmount>
-                            </div>
-                            <Progress 
-                              value={displayExpected > 0 
-                                ? Math.min((serviceRevenue / displayExpected) * 100, 100) 
-                                : 0
-                              }
-                              className="h-1.5"
-                              indicatorClassName={exceededTotal ? "bg-success-foreground" : undefined}
-                            />
-                            <div className="text-xs text-center text-muted-foreground">
-                              {exceededTotal ? (
-                                <span className="text-success-foreground flex items-center justify-center gap-1">
-                                  <CheckCircle2 className="w-3.5 h-3.5" />
-                                  <BlurredAmount disableTooltip>
-                                    <span>Exceeded scheduled by {formatCurrency(excessAmount)}</span>
-                                  </BlurredAmount>
-                                </span>
-                              ) : allAppointmentsComplete ? (
-                                <span className="flex items-center justify-center gap-1">
-                                  <CheckCircle2 className="w-3.5 h-3.5 text-success-foreground" />
-                                  <BlurredAmount disableTooltip>
-                                    <span>Final: {formatCurrency(serviceRevenue)} service revenue</span>
-                                  </BlurredAmount>
-                                </span>
-                              ) : (
-                                <BlurredAmount disableTooltip>
-                                  <span>On track to finish at {formatCurrency(projectedFinish)} service revenue</span>
-                                </BlurredAmount>
-                              )}
-                            </div>
-                          </div>
-                          );
-                        })() : null}
-
-                        {remainingExpected <= 0 && allAppointmentsComplete ? (
-                          <div className="flex items-center justify-center gap-1.5 text-xs text-success-foreground">
-                            <CheckCircle2 className="w-3.5 h-3.5" />
-                            <span>All appointments complete</span>
-                          </div>
-                        ) : !allAppointmentsComplete && todayActual?.lastAppointmentEndTime ? (
-                          <p className="text-xs text-muted-foreground/70 text-center">
-                            {t('sales.estimated_final_at')}{' '}
-                            <span className="font-medium text-foreground/70">
-                              {formatEndTime(todayActual.lastAppointmentEndTime)}
-                            </span>
-                          </p>
-                        ) : null}
-
-                        {/* Gap analysis drill-down trigger */}
+                        {/* Clickable compact summary row */}
                         <div 
-                          className="flex items-center justify-center gap-1 text-xs text-muted-foreground/60 hover:text-muted-foreground cursor-pointer transition-colors"
-                          onClick={() => toggleDrilldown('expectedGap')}
+                          className="flex items-center justify-center gap-1.5 cursor-pointer group transition-colors"
+                          onClick={() => setTodaySummaryExpanded(prev => !prev)}
                         >
-                          <ChevronDown className={cn("w-3 h-3 transition-transform duration-200", activeDrilldown === 'expectedGap' && "rotate-180")} />
-                          <span>{activeDrilldown === 'expectedGap' ? 'Hide' : 'View'} gap analysis</span>
+                          <p className="text-xs text-muted-foreground/70 group-hover:text-muted-foreground transition-colors">
+                            {compactParts.join(' · ')}
+                          </p>
+                          <ChevronDown className={cn(
+                            "w-3 h-3 text-muted-foreground/50 group-hover:text-muted-foreground transition-all duration-200",
+                            todaySummaryExpanded && "rotate-180"
+                          )} />
                         </div>
 
-                        {/* Gap analysis drill-down (today) */}
-                        <RevenueGapDrilldown
-                          isOpen={activeDrilldown === 'expectedGap'}
-                          data={gapAnalysis}
-                          isLoading={gapLoading}
-                        />
+                        {/* Expanded detail section */}
+                        <AnimatePresence initial={false}>
+                          {todaySummaryExpanded && (
+                            <motion.div
+                              initial={{ height: 0, opacity: 0 }}
+                              animate={{ height: 'auto', opacity: 1 }}
+                              exit={{ height: 0, opacity: 0 }}
+                              transition={{ duration: 0.2, ease: 'easeInOut' }}
+                              className="overflow-hidden"
+                            >
+                              <div className="space-y-3 pt-1">
+                                {/* Line 1: Scheduled Services Today total */}
+                                <div className="flex items-center justify-center gap-1.5 cursor-pointer" onClick={() => toggleDrilldown('expectedGap')}>
+                                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                    <Clock className="w-3.5 h-3.5" />
+                                    <span>Scheduled Services Today:</span>
+                                    <BlurredAmount disableTooltip>
+                                      <span className="text-foreground font-medium">{formatCurrency(displayExpected)}</span>
+                                    </BlurredAmount>
+                                  </div>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <Info className="w-3.5 h-3.5 text-muted-foreground/60 cursor-help" />
+                                    </TooltipTrigger>
+                                    <TooltipContent side="bottom" className="max-w-[280px] text-xs">
+                                        {adjustedExpected ? (
+                                        <div className="space-y-1">
+                                          <p>Total service revenue originally booked for today. Completed appointments show actual POS totals; pending appointments use their scheduled price.</p>
+                                          <p>{adjustedExpected.resolvedCount} completed ({formatCurrency(adjustedExpected.completedActualRevenue)} actual vs {formatCurrency(adjustedExpected.completedScheduledRevenue)} scheduled) · {adjustedExpected.pendingCount} pending ({formatCurrency(adjustedExpected.pendingScheduledRevenue)} scheduled)</p>
+                                          {(adjustedExpected.cancelledCount > 0 || adjustedExpected.noShowCount > 0) && (
+                                            <p className="text-muted-foreground/70">{adjustedExpected.cancelledCount} cancelled, {adjustedExpected.noShowCount} no-shows included in total</p>
+                                          )}
+                                        </div>
+                                      ) : (
+                                        'Total service revenue scheduled for today based on appointment bookings.'
+                                      )}
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </div>
 
-                        {/* Last updated timestamp */}
+                                {/* Appointment completion fraction */}
+                                {adjustedExpected && totalAppts > 0 && (
+                                  <p className="text-xs text-muted-foreground/70 text-center">
+                                    {adjustedExpected.resolvedCount} of {totalAppts} appointments completed{adjustedExpected.pendingCount > 0 && ` · ${adjustedExpected.pendingCount} pending`}
+                                    {(adjustedExpected.awaitingCheckoutCount ?? 0) > 0 && ` · ${adjustedExpected.awaitingCheckoutCount} awaiting checkout`}
+                                    {adjustedExpected.discountedAppointmentCount > 0 && (
+                                      <span className="text-accent-foreground/70"> · {adjustedExpected.discountedAppointmentCount} discount{adjustedExpected.discountedAppointmentCount !== 1 ? 's' : ''} applied</span>
+                                    )}
+                                  </p>
+                                )}
+
+                                {/* Remaining service revenue badge */}
+                                {remainingExpected > 0 && (
+                                  <div className="flex items-center justify-center">
+                                    <Badge 
+                                      variant="outline" 
+                                      className="text-sm font-normal gap-1 px-3 py-1.5 bg-warning/10 text-warning border-warning/30"
+                                    >
+                                      <span>Service revenue still expected to collect:</span>
+                                      <BlurredAmount disableTooltip>
+                                        <span>{formatCurrency(remainingExpected)}</span>
+                                      </BlurredAmount>
+                                    </Badge>
+                                  </div>
+                                )}
+
+                                {/* Progress bar: earned % of scheduled + projection */}
+                                {todayActual?.hasActualData ? (() => {
+                                  const excessAmount = serviceRevenue - displayExpected;
+                                  return (
+                                  <div className="space-y-1.5">
+                                    <div className="flex items-center justify-between text-xs">
+                                      <span className="text-muted-foreground">
+                                        Earned {exceededTotal ? '100' : earnedPct}% of scheduled services today
+                                      </span>
+                                      <BlurredAmount>
+                                        <span className={cn("font-medium", exceededTotal && "text-success-foreground")}>
+                                          {formatCurrency(serviceRevenue)}
+                                        </span>
+                                      </BlurredAmount>
+                                    </div>
+                                    <Progress 
+                                      value={displayExpected > 0 
+                                        ? Math.min((serviceRevenue / displayExpected) * 100, 100) 
+                                        : 0
+                                      }
+                                      className="h-1.5"
+                                      indicatorClassName={exceededTotal ? "bg-success-foreground" : undefined}
+                                    />
+                                    <div className="text-xs text-center text-muted-foreground">
+                                      {exceededTotal ? (
+                                        <span className="text-success-foreground flex items-center justify-center gap-1">
+                                          <CheckCircle2 className="w-3.5 h-3.5" />
+                                          <BlurredAmount disableTooltip>
+                                            <span>Exceeded scheduled by {formatCurrency(excessAmount)}</span>
+                                          </BlurredAmount>
+                                        </span>
+                                      ) : allAppointmentsComplete ? (
+                                        <span className="flex items-center justify-center gap-1">
+                                          <CheckCircle2 className="w-3.5 h-3.5 text-success-foreground" />
+                                          <BlurredAmount disableTooltip>
+                                            <span>Final: {formatCurrency(serviceRevenue)} service revenue</span>
+                                          </BlurredAmount>
+                                        </span>
+                                      ) : (
+                                        <BlurredAmount disableTooltip>
+                                          <span>On track to finish at {formatCurrency(projectedFinish)} service revenue</span>
+                                        </BlurredAmount>
+                                      )}
+                                    </div>
+                                  </div>
+                                  );
+                                })() : null}
+
+                                {remainingExpected <= 0 && allAppointmentsComplete ? (
+                                  <div className="flex items-center justify-center gap-1.5 text-xs text-success-foreground">
+                                    <CheckCircle2 className="w-3.5 h-3.5" />
+                                    <span>All appointments complete</span>
+                                  </div>
+                                ) : !allAppointmentsComplete && todayActual?.lastAppointmentEndTime ? (
+                                  <p className="text-xs text-muted-foreground/70 text-center">
+                                    {t('sales.estimated_final_at')}{' '}
+                                    <span className="font-medium text-foreground/70">
+                                      {formatEndTime(todayActual.lastAppointmentEndTime)}
+                                    </span>
+                                  </p>
+                                ) : null}
+
+                                {/* Gap analysis drill-down trigger */}
+                                <div 
+                                  className="flex items-center justify-center gap-1 text-xs text-muted-foreground/60 hover:text-muted-foreground cursor-pointer transition-colors"
+                                  onClick={() => toggleDrilldown('expectedGap')}
+                                >
+                                  <ChevronDown className={cn("w-3 h-3 transition-transform duration-200", activeDrilldown === 'expectedGap' && "rotate-180")} />
+                                  <span>{activeDrilldown === 'expectedGap' ? 'Hide' : 'View'} gap analysis</span>
+                                </div>
+
+                                {/* Gap analysis drill-down (today) */}
+                                <RevenueGapDrilldown
+                                  isOpen={activeDrilldown === 'expectedGap'}
+                                  data={gapAnalysis}
+                                  isLoading={gapLoading}
+                                />
+                              </div>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+
+                        {/* Last updated timestamp — always visible */}
                         {todayDataUpdatedAt && (
                           <p className="text-[10px] text-muted-foreground/50 text-center">
                             Updated {(() => {
