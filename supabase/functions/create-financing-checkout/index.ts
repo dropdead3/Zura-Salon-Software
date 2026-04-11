@@ -8,13 +8,11 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-// Deterministic eligibility thresholds (mirror client-side config)
 const THRESHOLDS = {
   minROE: 1.5,
-  allowedConfidence: ["high", "medium"],
-  allowedRisk: ["low", "moderate"],
-  minCapitalRequired: 5000,
-  allowedStatuses: ["identified", "evaluating"],
+  maxRisk: ["low", "moderate", "medium"],
+  minCapitalCents: 500_000,
+  maxConcurrentProjects: 2,
 };
 
 serve(async (req) => {
@@ -31,7 +29,7 @@ serve(async (req) => {
   const serviceClient = createClient(supabaseUrl, serviceKey);
 
   try {
-    // Authenticate caller
+    // Authenticate
     const authHeader = req.headers.get("Authorization");
     if (!authHeader?.startsWith("Bearer ")) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
@@ -52,8 +50,22 @@ serve(async (req) => {
     });
     if (!isAdmin) throw new Error("Only organization admins can initiate financing");
 
-    // Check for existing pending_payment project (duplicate guard)
-    const { data: existingPending } = await serviceClient
+    // Duplicate guard: check capital_funding_projects
+    const { data: existingProject } = await serviceClient
+      .from("capital_funding_projects")
+      .select("id")
+      .eq("funding_opportunity_id", opportunityId)
+      .limit(1);
+
+    if (existingProject && existingProject.length > 0) {
+      return new Response(JSON.stringify({ error: "A funding project already exists for this opportunity" }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 409,
+      });
+    }
+
+    // Also check legacy financed_projects
+    const { data: legacyPending } = await serviceClient
       .from("financed_projects")
       .select("id")
       .eq("opportunity_id", opportunityId)
@@ -61,45 +73,76 @@ serve(async (req) => {
       .eq("status", "pending_payment")
       .limit(1);
 
-    if (existingPending && existingPending.length > 0) {
-      return new Response(JSON.stringify({ error: "A financing request is already pending for this opportunity" }), {
+    if (legacyPending && legacyPending.length > 0) {
+      return new Response(JSON.stringify({ error: "A financing request is already pending" }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 409,
       });
     }
 
-    // Load opportunity
-    const { data: opp, error: oppErr } = await serviceClient
-      .from("expansion_opportunities")
+    // Load from capital_funding_opportunities first, fallback to expansion_opportunities
+    let opp: any = null;
+    let isProductionOpp = false;
+
+    const { data: capitalOpp } = await serviceClient
+      .from("capital_funding_opportunities")
       .select("*")
       .eq("id", opportunityId)
       .eq("organization_id", organizationId)
       .single();
-    if (oppErr || !opp) throw new Error("Opportunity not found");
 
-    // Server-side eligibility re-validation
-    const roe = Number(opp.capital_required) > 0
-      ? Number(opp.predicted_annual_lift) / Number(opp.capital_required)
-      : 0;
-    const confidence = opp.confidence || "medium";
-    const riskLevel = (opp.risk_factors as any)?.level ?? "moderate";
-    const capital = Number(opp.capital_required);
+    if (capitalOpp) {
+      opp = capitalOpp;
+      isProductionOpp = true;
+    } else {
+      const { data: legacyOpp, error: oppErr } = await serviceClient
+        .from("expansion_opportunities")
+        .select("*")
+        .eq("id", opportunityId)
+        .eq("organization_id", organizationId)
+        .single();
+      if (oppErr || !legacyOpp) throw new Error("Opportunity not found");
+      opp = legacyOpp;
+    }
 
+    // Server-side eligibility
     const failures: string[] = [];
-    if (roe < THRESHOLDS.minROE) failures.push("ROE below threshold");
-    if (!THRESHOLDS.allowedConfidence.includes(confidence)) failures.push("Confidence level ineligible");
-    if (!THRESHOLDS.allowedRisk.includes(riskLevel)) failures.push("Risk level too high");
-    if (capital < THRESHOLDS.minCapitalRequired) failures.push("Capital below minimum");
 
-    // Zura-level exposure check: max concurrent funded projects
-    const { data: activeFunded } = await serviceClient
+    if (isProductionOpp) {
+      const roe = Number(opp.roe_score);
+      const riskLevel = opp.risk_level || "medium";
+      const capitalCents = Number(opp.required_investment_cents);
+
+      if (roe < THRESHOLDS.minROE) failures.push("ROE below threshold");
+      if (!THRESHOLDS.maxRisk.includes(riskLevel)) failures.push("Risk level too high");
+      if (capitalCents < THRESHOLDS.minCapitalCents) failures.push("Capital below minimum");
+    } else {
+      const roe = Number(opp.capital_required) > 0
+        ? Number(opp.predicted_annual_lift) / Number(opp.capital_required) : 0;
+      const riskLevel = (opp.risk_factors as any)?.level ?? "moderate";
+      const capital = Number(opp.capital_required);
+
+      if (roe < THRESHOLDS.minROE) failures.push("ROE below threshold");
+      if (!THRESHOLDS.maxRisk.includes(riskLevel)) failures.push("Risk level too high");
+      if (capital < THRESHOLDS.minCapitalCents / 100) failures.push("Capital below minimum");
+    }
+
+    // Concurrent project check across both tables
+    const { data: activeCapital } = await serviceClient
+      .from("capital_funding_projects")
+      .select("id")
+      .eq("organization_id", organizationId)
+      .in("status", ["active", "on_track", "above_forecast", "below_forecast", "at_risk"]);
+
+    const { data: activeLegacy } = await serviceClient
       .from("financed_projects")
       .select("id")
       .eq("organization_id", organizationId)
       .in("status", ["active", "pending_payment"]);
 
-    if (activeFunded && activeFunded.length >= 3) {
-      failures.push("Organization has reached maximum concurrent funded projects");
+    const totalActive = (activeCapital?.length ?? 0) + (activeLegacy?.length ?? 0);
+    if (totalActive >= THRESHOLDS.maxConcurrentProjects) {
+      failures.push("Maximum concurrent funded projects reached");
     }
 
     if (failures.length > 0) {
@@ -109,8 +152,14 @@ serve(async (req) => {
       });
     }
 
-    // Create Stripe checkout session
+    // Create Stripe checkout
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
+
+    const capitalCents = isProductionOpp
+      ? Number(opp.required_investment_cents)
+      : Math.round(Number(opp.capital_required) * 100);
+
+    const title = opp.title || "Growth Funding";
 
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
@@ -119,10 +168,10 @@ serve(async (req) => {
           price_data: {
             currency: "usd",
             product_data: {
-              name: `Expansion Financing: ${opp.title}`,
-              description: `Capital investment for ${opp.title}. ROE: ${roe.toFixed(1)}x`,
+              name: `Capital Investment: ${title}`,
+              description: `Growth funding for ${title}`,
             },
-            unit_amount: Math.round(capital * 100),
+            unit_amount: capitalCents,
           },
           quantity: 1,
         },
@@ -131,45 +180,79 @@ serve(async (req) => {
         opportunity_id: opportunityId,
         organization_id: organizationId,
         user_id: user.id,
-        type: "expansion_financing",
+        type: "zura_capital",
+        is_production: isProductionOpp ? "true" : "false",
       },
       success_url: `${req.headers.get("origin")}/dashboard/capital?funded=true`,
       cancel_url: `${req.headers.get("origin")}/dashboard/capital`,
     });
 
-    // Record financed project
-    const breakEvenMonths = opp.break_even_months ?? 12;
-    const targetCompletion = new Date();
-    targetCompletion.setMonth(targetCompletion.getMonth() + Number(breakEvenMonths));
-    const monthlyPayment = Math.round(capital / Number(breakEvenMonths));
+    // Create capital_funding_projects record if production opportunity
+    if (isProductionOpp) {
+      const coverageRatio = opp.provider_offer_amount_cents
+        ? Number(opp.provider_offer_amount_cents) / capitalCents
+        : 1.0;
 
-    await serviceClient.from("financed_projects").insert({
-      organization_id: organizationId,
-      opportunity_id: opportunityId,
-      stripe_checkout_session_id: session.id,
-      funded_amount: capital,
-      predicted_annual_lift: Number(opp.predicted_annual_lift),
-      predicted_break_even_months: Number(breakEvenMonths),
-      roe_at_funding: Math.round(roe * 100) / 100,
-      confidence_at_funding: confidence,
-      risk_level_at_funding: riskLevel,
-      status: "pending_payment",
-      repayment_total: capital,
-      repayment_remaining: capital,
-      target_completion_at: targetCompletion.toISOString(),
-      funding_source: "stripe",
-      estimated_total_repayment: capital,
-      expected_monthly_payment: monthlyPayment,
-    });
+      await serviceClient.from("capital_funding_projects").insert({
+        organization_id: organizationId,
+        funding_opportunity_id: opportunityId,
+        provider: "stripe",
+        provider_offer_id: session.id,
+        funded_amount_cents: capitalCents,
+        required_investment_cents: capitalCents,
+        coverage_ratio: Math.round(coverageRatio * 10000) / 10000,
+        funding_start_date: new Date().toISOString().split("T")[0],
+        repayment_status: "not_started",
+        estimated_total_repayment_cents: capitalCents,
+        expected_monthly_payment_cents: Math.round(capitalCents / Math.max(1, Number(opp.break_even_months_expected) || 12)),
+        status: "active",
+        activation_status: "pending",
+      });
 
-    // Log capital event
+      // Update opportunity status
+      await serviceClient
+        .from("capital_funding_opportunities")
+        .update({
+          status: "initiated",
+          eligibility_status: "surfaced",
+          initiated_at: new Date().toISOString(),
+        })
+        .eq("id", opportunityId);
+    } else {
+      // Legacy path
+      const breakEvenMonths = opp.break_even_months ?? 12;
+      const targetCompletion = new Date();
+      targetCompletion.setMonth(targetCompletion.getMonth() + Number(breakEvenMonths));
+
+      await serviceClient.from("financed_projects").insert({
+        organization_id: organizationId,
+        opportunity_id: opportunityId,
+        stripe_checkout_session_id: session.id,
+        funded_amount: capitalCents / 100,
+        predicted_annual_lift: Number(opp.predicted_annual_lift),
+        predicted_break_even_months: Number(breakEvenMonths),
+        roe_at_funding: Number(opp.roe_score),
+        confidence_at_funding: opp.confidence || "medium",
+        risk_level_at_funding: (opp.risk_factors as any)?.level ?? "moderate",
+        status: "pending_payment",
+        repayment_total: capitalCents / 100,
+        repayment_remaining: capitalCents / 100,
+        target_completion_at: targetCompletion.toISOString(),
+        funding_source: "stripe",
+        estimated_total_repayment: capitalCents / 100,
+        expected_monthly_payment: Math.round((capitalCents / 100) / Number(breakEvenMonths)),
+      });
+    }
+
+    // Log event
     await serviceClient.from("capital_event_log").insert({
       organization_id: organizationId,
       user_id: user.id,
       opportunity_id: opportunityId,
-      event_type: "initiated",
+      funding_opportunity_id: isProductionOpp ? opportunityId : null,
+      event_type: "funding_initiated",
       surface_area: "capital_queue",
-      metadata_json: { stripe_session_id: session.id },
+      metadata_json: { stripe_session_id: session.id, is_production: isProductionOpp },
     });
 
     return new Response(JSON.stringify({ url: session.url }), {

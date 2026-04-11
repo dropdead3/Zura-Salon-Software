@@ -1,33 +1,22 @@
 /**
- * Zura Capital — Configuration
+ * Zura Capital — Production Configuration
  *
- * Deterministic thresholds, status enums, and type constants
- * for the capital execution layer. No AI involvement.
+ * Deterministic thresholds, state machines, surface controls,
+ * priority weights, and type constants for the capital execution layer.
  */
 
 /* ── Zura Eligibility Thresholds ── */
 export const ZURA_ELIGIBILITY_THRESHOLDS = {
-  /** Minimum ROE multiplier to surface a funding opportunity */
   minROE: 1.8,
-  /** Minimum confidence score (0–100) */
   minConfidence: 70,
-  /** Maximum risk level allowed */
   maxRisk: 'medium' as const,
-  /** Max concurrent funded projects per organization */
-  maxConcurrentFundedProjects: 3,
-  /** Max capital exposure per location ($) */
+  maxConcurrentFundedProjects: 2,
   maxExposurePerLocation: 200_000,
-  /** Max capital exposure per stylist ($) */
   maxExposurePerStylist: 50_000,
-  /** Cooldown after declined offer (days) */
-  cooldownAfterDeclineDays: 30,
-  /** Cooldown after underperforming funded project (days) */
-  cooldownAfterUnderperformingDays: 60,
-  /** Variance threshold that marks a funded project as underperforming (%) */
+  cooldownAfterDeclineDays: 14,
+  cooldownAfterUnderperformingDays: 30,
   underperformanceVarianceThreshold: -25,
-  /** Days after which an un-surfaced opportunity is stale */
   maxStaleDays: 90,
-  /** Minimum capital required to be worth surfacing ($) */
   minCapitalRequired: 5_000,
 } as const;
 
@@ -44,8 +33,9 @@ export function isRiskWithinTolerance(riskLevel: string, maxRisk: string): boole
   return (RISK_RANK[riskLevel] ?? 99) <= (RISK_RANK[maxRisk] ?? 0);
 }
 
-/* ── Funding Opportunity Status ── */
+/* ── Funding Opportunity Status (State Machine) ── */
 export const FUNDING_OPPORTUNITY_STATUSES = [
+  'draft',
   'detected',
   'eligible_internal',
   'eligible_provider',
@@ -64,6 +54,7 @@ export const FUNDING_OPPORTUNITY_STATUSES = [
 export type FundingOpportunityStatus = typeof FUNDING_OPPORTUNITY_STATUSES[number];
 
 export const FUNDING_STATUS_LABELS: Record<string, { label: string; color: string }> = {
+  draft: { label: 'Draft', color: 'text-muted-foreground' },
   detected: { label: 'Detected', color: 'text-muted-foreground' },
   eligible_internal: { label: 'Eligible', color: 'text-primary' },
   eligible_provider: { label: 'Funding Available', color: 'text-primary' },
@@ -79,9 +70,26 @@ export const FUNDING_STATUS_LABELS: Record<string, { label: string; color: strin
   underperforming: { label: 'Underperforming', color: 'text-destructive' },
 };
 
-/* ── Funding Performance Status ── */
-export const FUNDING_PERFORMANCE_STATUSES = [
-  'not_started',
+/** Allowed state transitions for funding opportunities */
+export const FUNDING_OPPORTUNITY_TRANSITIONS: Record<string, string[]> = {
+  draft: ['detected'],
+  detected: ['eligible_internal', 'expired', 'canceled'],
+  eligible_internal: ['eligible_provider', 'expired', 'canceled', 'draft'],
+  eligible_provider: ['surfaced', 'expired', 'canceled'],
+  surfaced: ['viewed', 'initiated', 'expired'],
+  viewed: ['initiated', 'expired'],
+  initiated: ['pending_provider'],
+  pending_provider: ['funded', 'declined', 'canceled'],
+  funded: ['completed', 'underperforming'],
+  underperforming: ['completed', 'canceled'],
+  expired: [],
+  declined: [],
+  canceled: [],
+  completed: [],
+};
+
+/* ── Funding Project Status (State Machine) ── */
+export const FUNDING_PROJECT_STATUSES = [
   'active',
   'on_track',
   'above_forecast',
@@ -91,10 +99,9 @@ export const FUNDING_PERFORMANCE_STATUSES = [
   'closed',
 ] as const;
 
-export type FundingPerformanceStatus = typeof FUNDING_PERFORMANCE_STATUSES[number];
+export type FundingProjectStatus = typeof FUNDING_PROJECT_STATUSES[number];
 
-export const PERFORMANCE_STATUS_LABELS: Record<string, { label: string; color: string }> = {
-  not_started: { label: 'Not Started', color: 'text-muted-foreground' },
+export const PROJECT_STATUS_LABELS: Record<string, { label: string; color: string }> = {
   active: { label: 'Active', color: 'text-primary' },
   on_track: { label: 'On Track', color: 'text-green-600' },
   above_forecast: { label: 'Above Forecast', color: 'text-green-600' },
@@ -102,6 +109,46 @@ export const PERFORMANCE_STATUS_LABELS: Record<string, { label: string; color: s
   at_risk: { label: 'At Risk', color: 'text-destructive' },
   repaid: { label: 'Repaid', color: 'text-green-600' },
   closed: { label: 'Closed', color: 'text-muted-foreground' },
+};
+
+/* ── Repayment Status ── */
+export const REPAYMENT_STATUSES = [
+  'not_started',
+  'active',
+  'behind',
+  'completed',
+  'delinquent',
+  'unknown',
+] as const;
+
+export type RepaymentStatus = typeof REPAYMENT_STATUSES[number];
+
+export const REPAYMENT_STATUS_LABELS: Record<string, { label: string; color: string }> = {
+  not_started: { label: 'Not Started', color: 'text-muted-foreground' },
+  active: { label: 'Active', color: 'text-primary' },
+  behind: { label: 'Behind', color: 'text-amber-600' },
+  completed: { label: 'Completed', color: 'text-green-600' },
+  delinquent: { label: 'Delinquent', color: 'text-destructive' },
+  unknown: { label: 'Unknown', color: 'text-muted-foreground' },
+};
+
+/* ── Activation Status ── */
+export const ACTIVATION_STATUSES = [
+  'pending',
+  'launched',
+  'partially_launched',
+  'blocked',
+  'completed',
+] as const;
+
+export type ActivationStatus = typeof ACTIVATION_STATUSES[number];
+
+export const ACTIVATION_STATUS_LABELS: Record<string, { label: string; color: string }> = {
+  pending: { label: 'Pending', color: 'text-muted-foreground' },
+  launched: { label: 'Launched', color: 'text-green-600' },
+  partially_launched: { label: 'Partial', color: 'text-amber-600' },
+  blocked: { label: 'Blocked', color: 'text-destructive' },
+  completed: { label: 'Completed', color: 'text-green-600' },
 };
 
 /* ── Opportunity Types ── */
@@ -156,16 +203,30 @@ export const CONSTRAINT_LABELS: Record<ConstraintType, string> = {
   understocking_risk: 'Understocking Risk',
 };
 
-/* ── Surfacing Limits ── */
-export const SURFACING_LIMITS = {
-  /** Max opportunities to show in a contextual card */
-  perLocalView: 2,
-  /** Max top opportunities in owner-level views */
-  perOwnerView: 3,
-} as const;
-
-/* ── Capital Event Types ── */
+/* ── Capital Event Types (Full Production Set) ── */
 export const CAPITAL_EVENT_TYPES = [
+  'opportunity_detected',
+  'opportunity_updated',
+  'internal_eligibility_passed',
+  'internal_eligibility_failed',
+  'provider_check_requested',
+  'provider_offer_received',
+  'provider_ineligible',
+  'opportunity_surfaced',
+  'opportunity_viewed',
+  'funding_initiated',
+  'provider_redirect_started',
+  'provider_redirect_completed',
+  'funding_approved',
+  'funding_declined',
+  'project_activated',
+  'project_activation_failed',
+  'repayment_synced',
+  'performance_synced',
+  'status_changed',
+  'opportunity_dismissed',
+  'opportunity_expired',
+  // Legacy compat
   'surfaced',
   'viewed',
   'clicked',
@@ -188,3 +249,54 @@ export const SURFACE_AREAS = [
 ] as const;
 
 export type SurfaceArea = typeof SURFACE_AREAS[number];
+
+/* ── Surface Cooldown Defaults (days) ── */
+export const SURFACE_COOLDOWN_DEFAULTS: Record<SurfaceArea, number> = {
+  command_center: 7,
+  ops_hub: 3,
+  service_dashboard: 5,
+  stylist_dashboard: 14,
+  capital_queue: 0,
+  expansion_planner: 0,
+};
+
+/* ── Surface Priority Weights (must sum to 1.0) ── */
+export const SURFACE_PRIORITY_WEIGHTS = {
+  roe: 0.35,
+  confidence: 0.20,
+  businessValue: 0.15,
+  momentum: 0.10,
+  urgency: 0.10,
+  constraintSeverity: 0.10,
+} as const;
+
+/* ── Surface Type Filters ── */
+export const SURFACE_TYPE_FILTERS: Record<SurfaceArea, OpportunityType[] | null> = {
+  command_center: null, // top opportunity across all types
+  ops_hub: ['capacity_expansion', 'inventory_expansion', 'equipment_expansion'],
+  service_dashboard: ['service_growth', 'capacity_expansion', 'inventory_expansion', 'campaign_acceleration'],
+  stylist_dashboard: ['stylist_capacity_growth'],
+  capital_queue: null, // all types
+  expansion_planner: ['location_expansion', 'new_location_launch'],
+};
+
+/* ── Surfacing Limits ── */
+export const SURFACING_LIMITS = {
+  perLocalView: 2,
+  perOwnerView: 3,
+} as const;
+
+/* ── Variance Thresholds for Performance Status ── */
+export const VARIANCE_THRESHOLDS = {
+  aboveForecast: 15,
+  onTrackLow: -10,
+  belowForecast: -25,
+} as const;
+
+export function getPerformanceStatus(variancePercent: number | null): FundingProjectStatus {
+  if (variancePercent == null) return 'active';
+  if (variancePercent >= VARIANCE_THRESHOLDS.aboveForecast) return 'above_forecast';
+  if (variancePercent > VARIANCE_THRESHOLDS.onTrackLow) return 'on_track';
+  if (variancePercent > VARIANCE_THRESHOLDS.belowForecast) return 'below_forecast';
+  return 'at_risk';
+}

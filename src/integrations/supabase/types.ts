@@ -3410,6 +3410,8 @@ export type Database = {
         Row: {
           created_at: string
           event_type: string
+          funding_opportunity_id: string | null
+          funding_project_id: string | null
           id: string
           metadata_json: Json | null
           opportunity_id: string | null
@@ -3420,6 +3422,8 @@ export type Database = {
         Insert: {
           created_at?: string
           event_type: string
+          funding_opportunity_id?: string | null
+          funding_project_id?: string | null
           id?: string
           metadata_json?: Json | null
           opportunity_id?: string | null
@@ -3430,6 +3434,8 @@ export type Database = {
         Update: {
           created_at?: string
           event_type?: string
+          funding_opportunity_id?: string | null
+          funding_project_id?: string | null
           id?: string
           metadata_json?: Json | null
           opportunity_id?: string | null
@@ -3447,6 +3453,281 @@ export type Database = {
           },
           {
             foreignKeyName: "capital_event_log_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      capital_funding_opportunities: {
+        Row: {
+          break_even_months_expected: number
+          break_even_months_high: number
+          break_even_months_low: number
+          business_value_score: number | null
+          campaign_id: string | null
+          confidence_score: number
+          constraint_type: string | null
+          coverage_ratio: number | null
+          created_at: string
+          created_by_system: boolean
+          detected_at: string
+          effort_score: number | null
+          eligibility_status: string
+          expires_at: string | null
+          funded_at: string | null
+          funding_provider: string | null
+          id: string
+          initiated_at: string | null
+          location_id: string | null
+          momentum_score: number | null
+          net_monthly_gain_expected_cents: number | null
+          operational_stability_score: number | null
+          opportunity_type: string
+          organization_id: string
+          predicted_booking_lift_expected: number
+          predicted_booking_lift_high: number
+          predicted_booking_lift_low: number
+          predicted_revenue_lift_expected_cents: number
+          predicted_revenue_lift_high_cents: number
+          predicted_revenue_lift_low_cents: number
+          provider_estimated_payment_cents: number | null
+          provider_fees_summary: string | null
+          provider_offer_amount_cents: number | null
+          provider_offer_id: string | null
+          provider_offer_term_months: number | null
+          reason_code: string | null
+          reason_summary: string | null
+          recommended_action_label: string
+          required_investment_cents: number
+          risk_level: string
+          roe_score: number
+          service_id: string | null
+          source_opportunity_id: string | null
+          source_opportunity_type: string | null
+          status: string
+          stripe_offer_available: boolean
+          stylist_id: string | null
+          summary: string
+          surface_priority: number
+          surfaced_at: string | null
+          title: string
+          updated_at: string
+          viewed_at: string | null
+        }
+        Insert: {
+          break_even_months_expected?: number
+          break_even_months_high?: number
+          break_even_months_low?: number
+          business_value_score?: number | null
+          campaign_id?: string | null
+          confidence_score?: number
+          constraint_type?: string | null
+          coverage_ratio?: number | null
+          created_at?: string
+          created_by_system?: boolean
+          detected_at?: string
+          effort_score?: number | null
+          eligibility_status?: string
+          expires_at?: string | null
+          funded_at?: string | null
+          funding_provider?: string | null
+          id?: string
+          initiated_at?: string | null
+          location_id?: string | null
+          momentum_score?: number | null
+          net_monthly_gain_expected_cents?: number | null
+          operational_stability_score?: number | null
+          opportunity_type: string
+          organization_id: string
+          predicted_booking_lift_expected?: number
+          predicted_booking_lift_high?: number
+          predicted_booking_lift_low?: number
+          predicted_revenue_lift_expected_cents?: number
+          predicted_revenue_lift_high_cents?: number
+          predicted_revenue_lift_low_cents?: number
+          provider_estimated_payment_cents?: number | null
+          provider_fees_summary?: string | null
+          provider_offer_amount_cents?: number | null
+          provider_offer_id?: string | null
+          provider_offer_term_months?: number | null
+          reason_code?: string | null
+          reason_summary?: string | null
+          recommended_action_label?: string
+          required_investment_cents: number
+          risk_level?: string
+          roe_score?: number
+          service_id?: string | null
+          source_opportunity_id?: string | null
+          source_opportunity_type?: string | null
+          status?: string
+          stripe_offer_available?: boolean
+          stylist_id?: string | null
+          summary?: string
+          surface_priority?: number
+          surfaced_at?: string | null
+          title: string
+          updated_at?: string
+          viewed_at?: string | null
+        }
+        Update: {
+          break_even_months_expected?: number
+          break_even_months_high?: number
+          break_even_months_low?: number
+          business_value_score?: number | null
+          campaign_id?: string | null
+          confidence_score?: number
+          constraint_type?: string | null
+          coverage_ratio?: number | null
+          created_at?: string
+          created_by_system?: boolean
+          detected_at?: string
+          effort_score?: number | null
+          eligibility_status?: string
+          expires_at?: string | null
+          funded_at?: string | null
+          funding_provider?: string | null
+          id?: string
+          initiated_at?: string | null
+          location_id?: string | null
+          momentum_score?: number | null
+          net_monthly_gain_expected_cents?: number | null
+          operational_stability_score?: number | null
+          opportunity_type?: string
+          organization_id?: string
+          predicted_booking_lift_expected?: number
+          predicted_booking_lift_high?: number
+          predicted_booking_lift_low?: number
+          predicted_revenue_lift_expected_cents?: number
+          predicted_revenue_lift_high_cents?: number
+          predicted_revenue_lift_low_cents?: number
+          provider_estimated_payment_cents?: number | null
+          provider_fees_summary?: string | null
+          provider_offer_amount_cents?: number | null
+          provider_offer_id?: string | null
+          provider_offer_term_months?: number | null
+          reason_code?: string | null
+          reason_summary?: string | null
+          recommended_action_label?: string
+          required_investment_cents?: number
+          risk_level?: string
+          roe_score?: number
+          service_id?: string | null
+          source_opportunity_id?: string | null
+          source_opportunity_type?: string | null
+          status?: string
+          stripe_offer_available?: boolean
+          stylist_id?: string | null
+          summary?: string
+          surface_priority?: number
+          surfaced_at?: string | null
+          title?: string
+          updated_at?: string
+          viewed_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "capital_funding_opportunities_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      capital_funding_projects: {
+        Row: {
+          activation_status: string
+          actual_monthly_payment_cents: number | null
+          actual_total_repayment_to_date_cents: number
+          break_even_progress_percent: number
+          coverage_ratio: number
+          created_at: string
+          estimated_total_repayment_cents: number | null
+          expected_monthly_payment_cents: number | null
+          funded_amount_cents: number
+          funding_opportunity_id: string
+          funding_start_date: string
+          id: string
+          last_synced_at: string | null
+          organization_id: string
+          predicted_revenue_to_date_cents: number
+          provider: string
+          provider_offer_id: string | null
+          repayment_progress_percent: number
+          repayment_status: string
+          required_investment_cents: number
+          revenue_generated_to_date_cents: number
+          roi_to_date: number | null
+          status: string
+          updated_at: string
+          variance_percent: number | null
+        }
+        Insert: {
+          activation_status?: string
+          actual_monthly_payment_cents?: number | null
+          actual_total_repayment_to_date_cents?: number
+          break_even_progress_percent?: number
+          coverage_ratio?: number
+          created_at?: string
+          estimated_total_repayment_cents?: number | null
+          expected_monthly_payment_cents?: number | null
+          funded_amount_cents: number
+          funding_opportunity_id: string
+          funding_start_date?: string
+          id?: string
+          last_synced_at?: string | null
+          organization_id: string
+          predicted_revenue_to_date_cents?: number
+          provider?: string
+          provider_offer_id?: string | null
+          repayment_progress_percent?: number
+          repayment_status?: string
+          required_investment_cents: number
+          revenue_generated_to_date_cents?: number
+          roi_to_date?: number | null
+          status?: string
+          updated_at?: string
+          variance_percent?: number | null
+        }
+        Update: {
+          activation_status?: string
+          actual_monthly_payment_cents?: number | null
+          actual_total_repayment_to_date_cents?: number
+          break_even_progress_percent?: number
+          coverage_ratio?: number
+          created_at?: string
+          estimated_total_repayment_cents?: number | null
+          expected_monthly_payment_cents?: number | null
+          funded_amount_cents?: number
+          funding_opportunity_id?: string
+          funding_start_date?: string
+          id?: string
+          last_synced_at?: string | null
+          organization_id?: string
+          predicted_revenue_to_date_cents?: number
+          provider?: string
+          provider_offer_id?: string | null
+          repayment_progress_percent?: number
+          repayment_status?: string
+          required_investment_cents?: number
+          revenue_generated_to_date_cents?: number
+          roi_to_date?: number | null
+          status?: string
+          updated_at?: string
+          variance_percent?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "capital_funding_projects_funding_opportunity_id_fkey"
+            columns: ["funding_opportunity_id"]
+            isOneToOne: false
+            referencedRelation: "capital_funding_opportunities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "capital_funding_projects_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
@@ -3516,6 +3797,200 @@ export type Database = {
           },
           {
             foreignKeyName: "capital_offer_snapshots_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      capital_policy_settings: {
+        Row: {
+          allow_manager_initiation: boolean
+          allow_stylist_microfunding: boolean
+          confidence_threshold: number
+          cooldown_after_decline_days: number
+          cooldown_after_underperformance_days: number
+          created_at: string
+          id: string
+          max_concurrent_projects: number
+          max_exposure_cents: number | null
+          max_risk_level: string
+          organization_id: string | null
+          roe_threshold: number
+          stylist_ors_threshold: number
+          stylist_spi_threshold: number
+          updated_at: string
+        }
+        Insert: {
+          allow_manager_initiation?: boolean
+          allow_stylist_microfunding?: boolean
+          confidence_threshold?: number
+          cooldown_after_decline_days?: number
+          cooldown_after_underperformance_days?: number
+          created_at?: string
+          id?: string
+          max_concurrent_projects?: number
+          max_exposure_cents?: number | null
+          max_risk_level?: string
+          organization_id?: string | null
+          roe_threshold?: number
+          stylist_ors_threshold?: number
+          stylist_spi_threshold?: number
+          updated_at?: string
+        }
+        Update: {
+          allow_manager_initiation?: boolean
+          allow_stylist_microfunding?: boolean
+          confidence_threshold?: number
+          cooldown_after_decline_days?: number
+          cooldown_after_underperformance_days?: number
+          created_at?: string
+          id?: string
+          max_concurrent_projects?: number
+          max_exposure_cents?: number | null
+          max_risk_level?: string
+          organization_id?: string | null
+          roe_threshold?: number
+          stylist_ors_threshold?: number
+          stylist_spi_threshold?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "capital_policy_settings_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      capital_provider_offers: {
+        Row: {
+          apr_text: string | null
+          created_at: string
+          eligible: boolean
+          estimated_payment_cents: number | null
+          estimated_total_repayment_cents: number | null
+          expires_at: string | null
+          fees_summary: string | null
+          fetched_at: string
+          funding_opportunity_id: string
+          id: string
+          offered_amount_cents: number | null
+          organization_id: string
+          provider: string
+          provider_offer_id: string
+          raw_snapshot_json: Json
+          repayment_model: string | null
+          term_length_months: number | null
+        }
+        Insert: {
+          apr_text?: string | null
+          created_at?: string
+          eligible?: boolean
+          estimated_payment_cents?: number | null
+          estimated_total_repayment_cents?: number | null
+          expires_at?: string | null
+          fees_summary?: string | null
+          fetched_at?: string
+          funding_opportunity_id: string
+          id?: string
+          offered_amount_cents?: number | null
+          organization_id: string
+          provider?: string
+          provider_offer_id: string
+          raw_snapshot_json?: Json
+          repayment_model?: string | null
+          term_length_months?: number | null
+        }
+        Update: {
+          apr_text?: string | null
+          created_at?: string
+          eligible?: boolean
+          estimated_payment_cents?: number | null
+          estimated_total_repayment_cents?: number | null
+          expires_at?: string | null
+          fees_summary?: string | null
+          fetched_at?: string
+          funding_opportunity_id?: string
+          id?: string
+          offered_amount_cents?: number | null
+          organization_id?: string
+          provider?: string
+          provider_offer_id?: string
+          raw_snapshot_json?: Json
+          repayment_model?: string | null
+          term_length_months?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "capital_provider_offers_funding_opportunity_id_fkey"
+            columns: ["funding_opportunity_id"]
+            isOneToOne: false
+            referencedRelation: "capital_funding_opportunities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "capital_provider_offers_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      capital_surface_state: {
+        Row: {
+          cooldown_until: string | null
+          created_at: string
+          dismiss_reason: string | null
+          dismissed_at: string | null
+          funding_opportunity_id: string
+          id: string
+          last_shown_at: string | null
+          organization_id: string
+          show_count: number
+          surface_area: string
+          updated_at: string
+        }
+        Insert: {
+          cooldown_until?: string | null
+          created_at?: string
+          dismiss_reason?: string | null
+          dismissed_at?: string | null
+          funding_opportunity_id: string
+          id?: string
+          last_shown_at?: string | null
+          organization_id: string
+          show_count?: number
+          surface_area: string
+          updated_at?: string
+        }
+        Update: {
+          cooldown_until?: string | null
+          created_at?: string
+          dismiss_reason?: string | null
+          dismissed_at?: string | null
+          funding_opportunity_id?: string
+          id?: string
+          last_shown_at?: string | null
+          organization_id?: string
+          show_count?: number
+          surface_area?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "capital_surface_state_funding_opportunity_id_fkey"
+            columns: ["funding_opportunity_id"]
+            isOneToOne: false
+            referencedRelation: "capital_funding_opportunities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "capital_surface_state_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"

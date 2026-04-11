@@ -9,7 +9,8 @@ export function useLogCapitalEvent() {
 
   return useMutation({
     mutationFn: async (input: {
-      opportunityId: string;
+      opportunityId?: string;
+      projectId?: string;
       eventType: CapitalEventType;
       surfaceArea: SurfaceArea;
       metadata?: Record<string, unknown>;
@@ -22,7 +23,9 @@ export function useLogCapitalEvent() {
         .insert({
           organization_id: orgId,
           user_id: user.id,
-          opportunity_id: input.opportunityId,
+          opportunity_id: input.opportunityId ?? null,
+          funding_opportunity_id: input.opportunityId ?? null,
+          funding_project_id: input.projectId ?? null,
           event_type: input.eventType,
           surface_area: input.surfaceArea,
           metadata_json: input.metadata ?? null,

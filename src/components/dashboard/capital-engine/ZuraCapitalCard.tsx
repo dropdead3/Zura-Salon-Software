@@ -5,12 +5,15 @@ import { tokens } from '@/lib/design-tokens';
 import { formatCurrency } from '@/lib/format';
 import { useZuraCapital, type ZuraCapitalOpportunity } from '@/hooks/useZuraCapital';
 import { useLogCapitalEvent } from '@/hooks/useCapitalEventLog';
-import { computeCoverageRatio } from '@/lib/capital-engine/zura-eligibility-engine';
 import { CONSTRAINT_LABELS, OPPORTUNITY_TYPE_LABELS } from '@/config/capital-engine/zura-capital-config';
 import { Landmark, TrendingUp, ArrowRight } from 'lucide-react';
 import React, { useState, useEffect } from 'react';
 import { FundingOpportunityDetail } from './FundingOpportunityDetail';
 import type { ConstraintType, OpportunityType } from '@/config/capital-engine/zura-capital-config';
+
+function centsToDisplay(cents: number): number {
+  return cents / 100;
+}
 
 export function ZuraCapitalCard() {
   const { topOpportunity, eligibleOpportunities, isLoading } = useZuraCapital();
@@ -18,35 +21,31 @@ export function ZuraCapitalCard() {
   const [detailOpen, setDetailOpen] = useState(false);
   const [selectedOpp, setSelectedOpp] = useState<ZuraCapitalOpportunity | null>(null);
 
-  // Log surfacing event once per opportunity (deduplicated via ref)
   const surfacedRef = React.useRef<string | null>(null);
   useEffect(() => {
     if (topOpportunity && surfacedRef.current !== topOpportunity.id) {
       surfacedRef.current = topOpportunity.id;
       logEvent.mutate({
         opportunityId: topOpportunity.id,
-        eventType: 'surfaced',
+        eventType: 'opportunity_surfaced',
         surfaceArea: 'command_center',
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [topOpportunity?.id]);
 
-  if (isLoading || !topOpportunity) {
-    return null;
-  }
+  if (isLoading || !topOpportunity) return null;
 
-  const coverage = computeCoverageRatio(
-    topOpportunity.capitalRequired,
-    topOpportunity.stripeOfferAmount,
-  );
+  const coveragePercent = topOpportunity.coverageRatio
+    ? Math.round(Number(topOpportunity.coverageRatio) * 100)
+    : null;
 
   const handleOpenDetail = (opp: ZuraCapitalOpportunity) => {
     setSelectedOpp(opp);
     setDetailOpen(true);
     logEvent.mutate({
       opportunityId: opp.id,
-      eventType: 'viewed',
+      eventType: 'opportunity_viewed',
       surfaceArea: 'command_center',
     });
   };
@@ -73,14 +72,10 @@ export function ZuraCapitalCard() {
           )}
         </CardHeader>
         <CardContent className="space-y-3">
-          {/* Top Opportunity */}
           <div className="space-y-2">
             <div className="flex items-start justify-between gap-3">
               <div>
                 <span className="font-display text-base tracking-wide">{topOpportunity.title}</span>
-                {topOpportunity.city && (
-                  <span className="text-xs text-muted-foreground font-sans block">{topOpportunity.city}</span>
-                )}
                 {topOpportunity.constraintType && (
                   <Badge variant="outline" className="text-[10px] font-sans mt-1">
                     {CONSTRAINT_LABELS[topOpportunity.constraintType as ConstraintType] ?? topOpportunity.constraintType}
@@ -96,7 +91,6 @@ export function ZuraCapitalCard() {
               <p className="text-xs text-muted-foreground font-sans">{topOpportunity.summary}</p>
             )}
 
-            {/* Metrics Row */}
             <div className="flex items-center gap-4 pt-1">
               <div className="text-center">
                 <span className="font-display text-lg tracking-wide text-primary">
@@ -106,39 +100,37 @@ export function ZuraCapitalCard() {
               </div>
               <div className="text-center">
                 <span className="font-display text-sm tracking-wide">
-                  {formatCurrency(topOpportunity.capitalRequired, { noCents: true })}
+                  {formatCurrency(centsToDisplay(topOpportunity.investmentCents), { noCents: true })}
                 </span>
                 <span className="text-[10px] text-muted-foreground font-sans block">Investment</span>
               </div>
               <div className="text-center">
                 <span className="font-display text-sm tracking-wide">
-                  +{formatCurrency(topOpportunity.predictedAnnualLift, { noCents: true })}
+                  +{formatCurrency(centsToDisplay(topOpportunity.predictedLiftExpectedCents), { noCents: true })}
                 </span>
                 <span className="text-[10px] text-muted-foreground font-sans block">Expected Lift</span>
               </div>
               <div className="text-center">
                 <span className="font-display text-sm tracking-wide">
-                  {topOpportunity.breakEvenMonths}mo
+                  {topOpportunity.breakEvenMonthsExpected}mo
                 </span>
                 <span className="text-[10px] text-muted-foreground font-sans block">Break-Even</span>
               </div>
             </div>
 
-            {/* Funding Availability */}
-            {topOpportunity.stripeOfferAvailable && topOpportunity.stripeOfferAmount && (
+            {topOpportunity.stripeOfferAvailable && topOpportunity.providerOfferAmountCents && (
               <div className="flex items-center gap-2 text-xs font-sans text-muted-foreground pt-1">
                 <TrendingUp className="w-3 h-3 text-primary" />
                 <span>
-                  Funding available: {formatCurrency(topOpportunity.stripeOfferAmount, { noCents: true })}
-                  {!coverage.covered && (
-                    <span className="text-muted-foreground/60"> ({coverage.label} coverage)</span>
+                  Funding available: {formatCurrency(centsToDisplay(topOpportunity.providerOfferAmountCents), { noCents: true })}
+                  {coveragePercent != null && coveragePercent < 100 && (
+                    <span className="text-muted-foreground/60"> ({coveragePercent}% coverage)</span>
                   )}
                 </span>
               </div>
             )}
           </div>
 
-          {/* CTA */}
           <Button
             onClick={() => handleOpenDetail(topOpportunity)}
             className={`${tokens.button.cardAction} font-sans`}

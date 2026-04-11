@@ -10,16 +10,16 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { tokens } from '@/lib/design-tokens';
 import { formatCurrency } from '@/lib/format';
-import { computePostFinancingCashFlow } from '@/lib/capital-engine/financing-engine';
-import { computeCoverageRatio } from '@/lib/capital-engine/zura-eligibility-engine';
 import { getROELabel } from '@/config/capital-engine/capital-config';
 import {
   CONSTRAINT_LABELS,
   OPPORTUNITY_TYPE_LABELS,
   FUNDING_STATUS_LABELS,
+  ACTIVATION_STATUS_LABELS,
 } from '@/config/capital-engine/zura-capital-config';
-import { useInitiateFinancing } from '@/hooks/useFinancedProjects';
 import { useLogCapitalEvent } from '@/hooks/useCapitalEventLog';
+import { useDismissOpportunity } from '@/hooks/useCapitalSurfaceState';
+import { getProvider } from '@/lib/capital-engine/capital-provider';
 import {
   Landmark,
   TrendingUp,
@@ -29,31 +29,40 @@ import {
   Target,
   ArrowUpRight,
   Zap,
+  X,
 } from 'lucide-react';
 import { useState } from 'react';
 import type { ZuraCapitalOpportunity } from '@/hooks/useZuraCapital';
 import type { ConstraintType, OpportunityType } from '@/config/capital-engine/zura-capital-config';
 
+function c(cents: number): number { return cents / 100; }
+
 interface Props {
   opportunity: ZuraCapitalOpportunity;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  surfaceArea?: 'command_center' | 'ops_hub' | 'service_dashboard' | 'stylist_dashboard' | 'capital_queue' | 'expansion_planner';
 }
 
-export function FundingOpportunityDetail({ opportunity, open, onOpenChange }: Props) {
+export function FundingOpportunityDetail({ opportunity, open, onOpenChange, surfaceArea = 'capital_queue' }: Props) {
   const [isRedirecting, setIsRedirecting] = useState(false);
-  const initiate = useInitiateFinancing();
   const logEvent = useLogCapitalEvent();
+  const dismiss = useDismissOpportunity();
 
-  const cashFlow = computePostFinancingCashFlow(
-    opportunity.capitalRequired,
-    opportunity.predictedAnnualLift,
-  );
+  const investmentDollars = c(opportunity.investmentCents);
+  const liftExpected = c(opportunity.predictedLiftExpectedCents);
+  const liftLow = c(opportunity.predictedLiftLowCents);
+  const liftHigh = c(opportunity.predictedLiftHighCents);
 
-  const coverage = computeCoverageRatio(
-    opportunity.capitalRequired,
-    opportunity.stripeOfferAmount,
-  );
+  const monthlyLift = liftExpected / Math.max(1, opportunity.breakEvenMonthsExpected);
+  const monthlyPayment = opportunity.providerEstimatedPaymentCents
+    ? c(opportunity.providerEstimatedPaymentCents)
+    : investmentDollars / Math.max(1, opportunity.breakEvenMonthsExpected);
+  const netMonthly = monthlyLift - monthlyPayment;
+
+  const coveragePercent = opportunity.coverageRatio
+    ? Math.round(Number(opportunity.coverageRatio) * 100)
+    : null;
 
   const statusInfo = FUNDING_STATUS_LABELS[opportunity.eligibilityStatus] ?? {
     label: opportunity.eligibilityStatus,
@@ -64,16 +73,17 @@ export function FundingOpportunityDetail({ opportunity, open, onOpenChange }: Pr
     setIsRedirecting(true);
     logEvent.mutate({
       opportunityId: opportunity.id,
-      eventType: 'initiated',
-      surfaceArea: 'capital_queue',
+      eventType: 'funding_initiated',
+      surfaceArea,
     });
     try {
-      const result = await initiate.mutateAsync({ opportunityId: opportunity.id });
-      if (result?.url) {
-        const win = window.open(result.url, '_blank');
-        if (!win) {
-          window.location.href = result.url;
-        }
+      const provider = getProvider('stripe');
+      const result = await provider.initiateFunding(opportunity.id, '', '');
+      if (result.redirectUrl) {
+        const win = window.open(result.redirectUrl, '_blank');
+        if (!win) window.location.href = result.redirectUrl;
+      } else if (result.error) {
+        console.error('Funding initiation failed:', result.error);
       }
     } finally {
       setIsRedirecting(false);
@@ -81,21 +91,39 @@ export function FundingOpportunityDetail({ opportunity, open, onOpenChange }: Pr
     }
   };
 
+  const handleDismiss = () => {
+    dismiss.mutate({
+      opportunityId: opportunity.id,
+      surfaceArea,
+      reason: 'user_dismissed',
+    });
+    logEvent.mutate({
+      opportunityId: opportunity.id,
+      eventType: 'opportunity_dismissed',
+      surfaceArea,
+    });
+    onOpenChange(false);
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg p-0 max-h-[85vh] overflow-y-auto">
-        {/* Header */}
         <DialogHeader className="p-6 pb-3">
-          <div className="flex items-center gap-2">
-            <Landmark className="w-5 h-5 text-primary" />
-            <DialogTitle className="font-display text-base tracking-wide">
-              {opportunity.title}
-            </DialogTitle>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Landmark className="w-5 h-5 text-primary" />
+              <DialogTitle className="font-display text-base tracking-wide">
+                {opportunity.title}
+              </DialogTitle>
+            </div>
+            <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={handleDismiss}>
+              <X className="w-3.5 h-3.5 text-muted-foreground" />
+            </Button>
           </div>
           <DialogDescription className="font-sans text-sm">
-            {opportunity.summary ?? 'Review opportunity metrics and funding availability.'}
+            {opportunity.summary || 'Review opportunity metrics and funding availability.'}
           </DialogDescription>
-          <div className="flex items-center gap-2 pt-1">
+          <div className="flex items-center gap-2 pt-1 flex-wrap">
             <Badge variant="outline" className="text-[10px] font-sans">
               {OPPORTUNITY_TYPE_LABELS[opportunity.opportunityType as OpportunityType] ?? opportunity.opportunityType}
             </Badge>
@@ -120,16 +148,15 @@ export function FundingOpportunityDetail({ opportunity, open, onOpenChange }: Pr
               <MetricTile
                 icon={<DollarSign className="w-3.5 h-3.5 text-muted-foreground" />}
                 label="Investment"
-                value={formatCurrency(opportunity.capitalRequired, { noCents: true })}
+                value={formatCurrency(investmentDollars, { noCents: true })}
               />
               <MetricTile
                 icon={<TrendingUp className="w-3.5 h-3.5 text-muted-foreground" />}
                 label="Expected Lift"
-                value={`+${formatCurrency(opportunity.predictedAnnualLift, { noCents: true })}/yr`}
-                sub={
-                  opportunity.predictedRevenueLiftLow != null && opportunity.predictedRevenueLiftHigh != null
-                    ? `${formatCurrency(opportunity.predictedRevenueLiftLow, { noCents: true })} – ${formatCurrency(opportunity.predictedRevenueLiftHigh, { noCents: true })}`
-                    : undefined
+                value={`+${formatCurrency(liftExpected, { noCents: true })}/yr`}
+                sub={liftLow > 0 && liftHigh > 0
+                  ? `${formatCurrency(liftLow, { noCents: true })} – ${formatCurrency(liftHigh, { noCents: true })}`
+                  : undefined
                 }
               />
               <MetricTile
@@ -142,11 +169,10 @@ export function FundingOpportunityDetail({ opportunity, open, onOpenChange }: Pr
               <MetricTile
                 icon={<Clock className="w-3.5 h-3.5 text-muted-foreground" />}
                 label="Break-Even"
-                value={`${opportunity.breakEvenMonths}mo`}
-                sub={
-                  opportunity.breakEvenMonthsLow != null && opportunity.breakEvenMonthsHigh != null
-                    ? `${opportunity.breakEvenMonthsLow}–${opportunity.breakEvenMonthsHigh}mo range`
-                    : undefined
+                value={`${opportunity.breakEvenMonthsExpected}mo`}
+                sub={opportunity.breakEvenMonthsLow > 0 && opportunity.breakEvenMonthsHigh > 0
+                  ? `${opportunity.breakEvenMonthsLow}–${opportunity.breakEvenMonthsHigh}mo range`
+                  : undefined
                 }
               />
             </div>
@@ -158,37 +184,41 @@ export function FundingOpportunityDetail({ opportunity, open, onOpenChange }: Pr
               <ShieldCheck className="w-3.5 h-3.5" />
               Risk: <span className="capitalize">{opportunity.riskLevel}</span>
             </div>
-            <div>Confidence: <span className="capitalize">{opportunity.confidence}</span></div>
+            <div>Confidence: {opportunity.confidenceScore}</div>
             {opportunity.momentumScore !== null && (
               <div>Momentum: {opportunity.momentumScore}</div>
             )}
           </div>
 
           {/* Funding Availability */}
-          {opportunity.stripeOfferAvailable && opportunity.stripeOfferAmount && (
+          {opportunity.stripeOfferAvailable && opportunity.providerOfferAmountCents && (
             <div>
               <h3 className="font-display text-xs tracking-[0.15em] text-muted-foreground/60 uppercase mb-2">
                 Funding Availability
               </h3>
               <div className="p-3 rounded-lg bg-muted/30 border border-border/40 space-y-2">
                 <div className="flex items-center justify-between text-sm font-sans">
-                  <span className="text-muted-foreground">Available via Stripe</span>
+                  <span className="text-muted-foreground">Provider Amount</span>
                   <span className="font-display tracking-wide">
-                    {formatCurrency(opportunity.stripeOfferAmount, { noCents: true })}
+                    {formatCurrency(c(opportunity.providerOfferAmountCents), { noCents: true })}
                   </span>
                 </div>
-                <div className="flex items-center justify-between text-xs font-sans text-muted-foreground">
-                  <span>Coverage</span>
-                  <span>{coverage.label}</span>
-                </div>
-                <Progress value={Math.min(coverage.ratio, 100)} className="h-1.5" />
-                {!coverage.covered && (
+                {coveragePercent != null && (
+                  <>
+                    <div className="flex items-center justify-between text-xs font-sans text-muted-foreground">
+                      <span>Coverage</span>
+                      <span>{coveragePercent}%</span>
+                    </div>
+                    <Progress value={Math.min(coveragePercent, 100)} className="h-1.5" />
+                  </>
+                )}
+                {coveragePercent != null && coveragePercent < 100 && (
                   <p className="text-[10px] text-muted-foreground font-sans">
-                    Funding covers {coverage.label} of the recommended {formatCurrency(opportunity.capitalRequired, { noCents: true })} investment.
+                    Funding covers {coveragePercent}% of the recommended {formatCurrency(investmentDollars, { noCents: true })} investment.
                   </p>
                 )}
-                {opportunity.stripeOfferTermsSummary && (
-                  <p className="text-[10px] text-muted-foreground font-sans">{opportunity.stripeOfferTermsSummary}</p>
+                {opportunity.providerFeesSummary && (
+                  <p className="text-[10px] text-muted-foreground font-sans">{opportunity.providerFeesSummary}</p>
                 )}
               </div>
             </div>
@@ -205,16 +235,16 @@ export function FundingOpportunityDetail({ opportunity, open, onOpenChange }: Pr
                 <span className="text-xs text-primary font-sans font-medium">Post-Financing Net Cash Flow</span>
               </div>
               <span className="font-display text-xl tracking-wide text-primary">
-                +{formatCurrency(cashFlow.netMonthlyCashFlow, { noCents: true })}
+                {netMonthly >= 0 ? '+' : ''}{formatCurrency(netMonthly, { noCents: true })}
                 <span className="text-xs font-sans text-primary/70">/mo</span>
               </span>
               <p className="text-xs text-muted-foreground font-sans">
-                {formatCurrency(cashFlow.monthlyLift, { noCents: true })} lift − {formatCurrency(cashFlow.monthlyRepayment, { noCents: true })} repayment over {cashFlow.termMonths}mo
+                {formatCurrency(monthlyLift, { noCents: true })} lift − {formatCurrency(monthlyPayment, { noCents: true })} repayment over {opportunity.breakEvenMonthsExpected}mo
               </p>
             </div>
           </div>
 
-          {/* Why This Makes Sense — deterministic explanation */}
+          {/* Why This Makes Sense */}
           {opportunity.constraintType && (
             <div>
               <h3 className="font-display text-xs tracking-[0.15em] text-muted-foreground/60 uppercase mb-2">
@@ -247,7 +277,7 @@ export function FundingOpportunityDetail({ opportunity, open, onOpenChange }: Pr
           {opportunity.zuraEligible && (
             <Button
               onClick={handleFund}
-              disabled={isRedirecting || initiate.isPending}
+              disabled={isRedirecting}
               className={`${tokens.button.page} w-full font-sans`}
             >
               {isRedirecting ? 'Redirecting…' : opportunity.recommendedActionLabel}
@@ -292,24 +322,24 @@ function MetricTile({
 
 function getConstraintExplanation(opp: ZuraCapitalOpportunity): string {
   const type = opp.constraintType;
-  const lift = formatCurrency(opp.predictedAnnualLift, { noCents: true });
+  const lift = formatCurrency(opp.predictedLiftExpectedCents / 100, { noCents: true });
 
   switch (type) {
     case 'capacity_bottleneck':
-      return `This location is operating at or near capacity. The current constraint is suppressing potential revenue. Expanding capacity is projected to generate ${lift} in additional annual revenue with a ${opp.roe.toFixed(1)}x return on investment.`;
+      return `This location is operating at or near capacity. Expanding capacity is projected to generate ${lift} in additional annual revenue with a ${opp.roe.toFixed(1)}x return on investment.`;
     case 'inventory_bottleneck':
       return `Inventory shortages are limiting bookings. Restocking and expanding inventory coverage is projected to recover ${lift} in annual revenue.`;
     case 'strong_demand':
       return `Demand signals are strong and exceeding current capacity. This investment captures unmet demand with a projected ${lift} lift.`;
     case 'market_opportunity':
-      return `Market analysis indicates a high-value expansion opportunity. The projected return of ${opp.roe.toFixed(1)}x ROE meets Zura's investment threshold.`;
+      return `Market analysis indicates a high-value expansion opportunity. The projected return of ${opp.roe.toFixed(1)}x ROE meets investment threshold.`;
     case 'stylist_ready_to_scale':
       return `This stylist has demonstrated consistent performance and readiness to scale. The investment supports their growth with an expected ${lift} annual lift.`;
     case 'service_waitlist_pressure':
-      return `Service demand is creating waitlist pressure. Expanding capacity for this service line is projected to capture ${lift} in additional revenue.`;
+      return `Service demand is creating waitlist pressure. Expanding capacity is projected to capture ${lift} in additional revenue.`;
     case 'understocking_risk':
       return `Current inventory levels risk service disruptions. This investment ensures continuity and protects an estimated ${lift} in annual revenue.`;
     default:
-      return `This opportunity has been validated with ${opp.roe.toFixed(1)}x ROE and ${opp.confidence} confidence based on current performance data.`;
+      return `This opportunity has been validated with ${opp.roe.toFixed(1)}x ROE and ${opp.confidenceScore} confidence based on current performance data.`;
   }
 }

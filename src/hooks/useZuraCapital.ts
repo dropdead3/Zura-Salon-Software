@@ -3,38 +3,44 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { isZuraEligible, type ZuraOpportunity, type ZuraOrgContext } from '@/lib/capital-engine/zura-eligibility-engine';
-import { computeROE } from '@/lib/capital-engine/capital-engine';
+import { computeSurfacePriority, type PriorityContext } from '@/lib/capital-engine/surface-priority-engine';
 
 export interface ZuraCapitalOpportunity {
   id: string;
   title: string;
-  summary: string | null;
+  summary: string;
   opportunityType: string;
   constraintType: string | null;
-  capitalRequired: number;
-  predictedAnnualLift: number;
-  predictedRevenueLiftLow: number | null;
-  predictedRevenueLiftHigh: number | null;
-  breakEvenMonths: number;
-  breakEvenMonthsLow: number | null;
-  breakEvenMonthsHigh: number | null;
+  investmentCents: number;
+  predictedLiftExpectedCents: number;
+  predictedLiftLowCents: number;
+  predictedLiftHighCents: number;
+  breakEvenMonthsExpected: number;
+  breakEvenMonthsLow: number;
+  breakEvenMonthsHigh: number;
   roe: number;
-  confidence: string;
+  confidenceScore: number;
   riskLevel: string;
   momentumScore: number | null;
   businessValueScore: number | null;
   effortScore: number | null;
   eligibilityStatus: string;
+  status: string;
   stripeOfferAvailable: boolean;
-  stripeOfferAmount: number | null;
-  stripeOfferTermsSummary: string | null;
+  providerOfferAmountCents: number | null;
+  providerOfferTermMonths: number | null;
+  providerEstimatedPaymentCents: number | null;
+  providerFeesSummary: string | null;
+  coverageRatio: number | null;
+  netMonthlyGainCents: number | null;
   recommendedActionLabel: string;
   locationId: string | null;
-  city: string | null;
   serviceId: string | null;
+  stylistId: string | null;
   campaignId: string | null;
   createdAt: string;
   expiresAt: string | null;
+  surfacePriority: number;
   zuraEligible: boolean;
   zuraReasons: string[];
 }
@@ -43,16 +49,16 @@ export function useZuraCapital() {
   const { effectiveOrganization } = useOrganizationContext();
   const orgId = effectiveOrganization?.id;
 
-  // Fetch opportunities
-  const { data: rawOpportunities = [], isLoading: oppLoading } = useQuery({
+  // Fetch from production capital_funding_opportunities
+  const { data: rawOpps = [], isLoading: oppLoading } = useQuery({
     queryKey: ['zura-capital-opportunities', orgId],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('expansion_opportunities')
+        .from('capital_funding_opportunities')
         .select('*')
         .eq('organization_id', orgId!)
-        .eq('is_active', true)
-        .order('roe_score', { ascending: false });
+        .not('status', 'in', '("canceled","expired")')
+        .order('surface_priority', { ascending: false });
       if (error) throw error;
       return data;
     },
@@ -64,10 +70,10 @@ export function useZuraCapital() {
     queryKey: ['zura-capital-funded', orgId],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('financed_projects')
-        .select('*, expansion_opportunities(location_id)')
+        .from('capital_funding_projects')
+        .select('*')
         .eq('organization_id', orgId!)
-        .in('status', ['active', 'pending_payment']);
+        .in('status', ['active', 'on_track', 'above_forecast', 'below_forecast', 'at_risk']);
       if (error) throw error;
       return data;
     },
@@ -79,89 +85,116 @@ export function useZuraCapital() {
     const locationExposure: Record<string, number> = {};
     const stylistExposure: Record<string, number> = {};
 
+    // Build exposure from funded projects + opportunities
     (fundedProjects as any[]).forEach((fp) => {
-      const locId = (fp as any).expansion_opportunities?.location_id;
-      if (locId) {
-        locationExposure[locId] = (locationExposure[locId] ?? 0) + Number(fp.funded_amount ?? 0);
-      }
+      // TODO: join with opportunity for location_id if needed
     });
 
     return {
       activeFundedProjectCount: fundedProjects.length,
       hasUnderperformingProject: (fundedProjects as any[]).some(
-        (fp) => fp.status === 'active' && Number(fp.roi_to_date ?? 0) < -25,
+        (fp) => fp.status === 'at_risk' || (fp.variance_percent != null && Number(fp.variance_percent) <= -25),
       ),
-      hasCriticalOperationalAlerts: false, // TODO: integrate with operational alerts
+      hasCriticalOperationalAlerts: false,
       locationExposure,
       stylistExposure,
-      lastDeclinedAt: null, // TODO: query capital_event_log for last declined
+      lastDeclinedAt: null,
       lastUnderperformingAt: null,
     };
   }, [fundedProjects]);
 
-  // Compute eligibility and map opportunities
-  const opportunities = useMemo<ZuraCapitalOpportunity[]>(() => {
-    return (rawOpportunities as any[])
-      .filter((o) => o.status !== 'dismissed' && o.status !== 'completed' && o.status !== 'canceled')
-      .map((o) => {
-        const roeResult = computeROE({
-          capitalRequired: Number(o.capital_required),
-          predictedAnnualLift: Number(o.predicted_annual_lift),
-          confidence: (o.confidence as 'high' | 'medium' | 'low') ?? 'medium',
-        });
+  const priorityContext = useMemo<PriorityContext>(() => ({
+    activeProjectCount: fundedProjects.length,
+    recentDismissals: 0,
+    recentDeclines: 0,
+  }), [fundedProjects]);
 
+  // Map and score opportunities
+  const opportunities = useMemo<ZuraCapitalOpportunity[]>(() => {
+    return (rawOpps as any[])
+      .filter((o) => o.status !== 'completed')
+      .map((o) => {
         const zuraOpp: ZuraOpportunity = {
           id: o.id,
-          roe_score: roeResult.roe,
-          confidence: o.confidence ?? 'medium',
-          risk_level: (o.risk_factors as any)?.level ?? 'moderate',
-          capital_required: Number(o.capital_required),
-          momentum_score: o.momentum_score != null ? Number(o.momentum_score) : null,
+          roe_score: Number(o.roe_score),
+          confidence: o.confidence_score >= 80 ? 'high' : o.confidence_score >= 60 ? 'medium' : 'low',
+          risk_level: o.risk_level,
+          capital_required: o.required_investment_cents / 100,
+          momentum_score: o.momentum_score,
           constraint_type: o.constraint_type,
-          eligibility_status: o.eligibility_status ?? 'detected',
+          eligibility_status: o.eligibility_status,
           created_at: o.created_at,
           expires_at: o.expires_at,
           location_id: o.location_id,
+          stylist_id: o.stylist_id,
         };
 
         const eligibility = isZuraEligible(zuraOpp, orgContext);
 
+        const priority = computeSurfacePriority(
+          {
+            id: o.id,
+            roe_score: Number(o.roe_score),
+            confidence_score: Number(o.confidence_score),
+            business_value_score: o.business_value_score,
+            momentum_score: o.momentum_score,
+            effort_score: o.effort_score,
+            opportunity_type: o.opportunity_type,
+            risk_level: o.risk_level,
+            constraint_type: o.constraint_type,
+            status: o.status,
+            eligibility_status: o.eligibility_status,
+            detected_at: o.detected_at,
+            expires_at: o.expires_at,
+            location_id: o.location_id,
+            service_id: o.service_id,
+            stylist_id: o.stylist_id,
+          },
+          priorityContext,
+        );
+
         return {
           id: o.id,
           title: o.title,
-          summary: o.summary,
+          summary: o.summary || '',
           opportunityType: o.opportunity_type,
           constraintType: o.constraint_type,
-          capitalRequired: Number(o.capital_required),
-          predictedAnnualLift: Number(o.predicted_annual_lift),
-          predictedRevenueLiftLow: o.predicted_revenue_lift_low ? Number(o.predicted_revenue_lift_low) : null,
-          predictedRevenueLiftHigh: o.predicted_revenue_lift_high ? Number(o.predicted_revenue_lift_high) : null,
-          breakEvenMonths: roeResult.adjustedBreakEvenMonths,
-          breakEvenMonthsLow: o.break_even_months_low ? Number(o.break_even_months_low) : null,
-          breakEvenMonthsHigh: o.break_even_months_high ? Number(o.break_even_months_high) : null,
-          roe: roeResult.roe,
-          confidence: o.confidence ?? 'medium',
-          riskLevel: (o.risk_factors as any)?.level ?? 'moderate',
+          investmentCents: Number(o.required_investment_cents),
+          predictedLiftExpectedCents: Number(o.predicted_revenue_lift_expected_cents),
+          predictedLiftLowCents: Number(o.predicted_revenue_lift_low_cents),
+          predictedLiftHighCents: Number(o.predicted_revenue_lift_high_cents),
+          breakEvenMonthsExpected: Number(o.break_even_months_expected),
+          breakEvenMonthsLow: Number(o.break_even_months_low),
+          breakEvenMonthsHigh: Number(o.break_even_months_high),
+          roe: Number(o.roe_score),
+          confidenceScore: Number(o.confidence_score),
+          riskLevel: o.risk_level,
           momentumScore: o.momentum_score != null ? Number(o.momentum_score) : null,
           businessValueScore: o.business_value_score != null ? Number(o.business_value_score) : null,
           effortScore: o.effort_score != null ? Number(o.effort_score) : null,
-          eligibilityStatus: o.eligibility_status ?? 'detected',
-          stripeOfferAvailable: o.stripe_offer_available ?? false,
-          stripeOfferAmount: o.stripe_offer_amount ? Number(o.stripe_offer_amount) : null,
-          stripeOfferTermsSummary: o.stripe_offer_terms_summary,
-          recommendedActionLabel: o.recommended_action_label ?? 'Fund This',
+          eligibilityStatus: o.eligibility_status,
+          status: o.status,
+          stripeOfferAvailable: o.stripe_offer_available,
+          providerOfferAmountCents: o.provider_offer_amount_cents,
+          providerOfferTermMonths: o.provider_offer_term_months,
+          providerEstimatedPaymentCents: o.provider_estimated_payment_cents,
+          providerFeesSummary: o.provider_fees_summary,
+          coverageRatio: o.coverage_ratio ? Number(o.coverage_ratio) : null,
+          netMonthlyGainCents: o.net_monthly_gain_expected_cents,
+          recommendedActionLabel: o.recommended_action_label,
           locationId: o.location_id,
-          city: o.city,
           serviceId: o.service_id,
+          stylistId: o.stylist_id,
           campaignId: o.campaign_id,
           createdAt: o.created_at,
           expiresAt: o.expires_at,
+          surfacePriority: priority,
           zuraEligible: eligibility.eligible,
           zuraReasons: eligibility.reasons,
         };
       })
-      .sort((a, b) => b.roe - a.roe);
-  }, [rawOpportunities, orgContext]);
+      .sort((a, b) => b.surfacePriority - a.surfacePriority);
+  }, [rawOpps, orgContext, priorityContext]);
 
   const eligibleOpportunities = opportunities.filter((o) => o.zuraEligible);
   const topOpportunity = eligibleOpportunities[0] ?? null;
