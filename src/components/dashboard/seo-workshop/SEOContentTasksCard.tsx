@@ -75,9 +75,9 @@ export function SEOContentTasksCard({ organizationId }: Props) {
           return (
             <div key={task.id} className="flex items-center justify-between text-sm font-sans">
               <span className="truncate">{title}</span>
-              <Badge variant={statusConf?.variant as any ?? 'outline'} className="text-xs shrink-0 ml-2">
-                {statusConf?.label ?? task.status}
-              </Badge>
+              <Badge variant={statusConf?.variant ?? 'outline'} className={`text-xs shrink-0 ml-2 ${statusConf?.className ?? ''}`}>
+                 {statusConf?.label ?? task.status}
+               </Badge>
             </div>
           );
         })}
