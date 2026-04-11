@@ -2,12 +2,13 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { useSEOHealthSummary } from '@/hooks/useSEOHealthScores';
 import { useSEOTasks } from '@/hooks/useSEOTasks';
 import { useSEOCampaigns } from '@/hooks/useSEOCampaigns';
+import { useSEOObjectRevenue } from '@/hooks/useSEOObjectRevenue';
 import { SEO_HEALTH_DOMAINS, type SEOHealthDomain } from '@/config/seo-engine/seo-health-domains';
 import { ACTIVE_TASK_STATES } from '@/config/seo-engine/seo-state-machine';
 import { tokens } from '@/lib/design-tokens';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
-import { AlertTriangle, TrendingUp, TrendingDown, Clock, Target, Star, FileText, MapPin, Pencil, Flag, Crosshair, Minus } from 'lucide-react';
+import { AlertTriangle, TrendingUp, TrendingDown, Clock, Target, Star, FileText, MapPin, Pencil, Flag, Crosshair, Minus, DollarSign } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 
 interface Props {
@@ -33,6 +34,11 @@ export function SEOEngineDashboard({ organizationId, onGoToTasks, onGoToCampaign
   const { data: campaigns = [], isLoading: campaignsLoading } = useSEOCampaigns(organizationId, {
     status: ['active', 'at_risk', 'blocked'],
   });
+  const { data: revenueMap = {}, isLoading: revenueLoading } = useSEOObjectRevenue(organizationId);
+
+  const totalAttributedRevenue = Object.values(revenueMap).reduce(
+    (sum, r) => sum + (r?.totalRevenue ?? 0), 0
+  );
 
   const overdueTasks = tasks.filter((t: any) => t.status === 'overdue' || t.status === 'escalated');
   const activeTasks = tasks.filter((t: any) => ACTIVE_TASK_STATES.includes(t.status));
