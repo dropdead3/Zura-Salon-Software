@@ -55,6 +55,9 @@ export function SEOEngineDashboard({ organizationId, onGoToTasks, onGoToCampaign
 
   return (
     <div className="space-y-6">
+      {/* Market Domination */}
+      <SEODominationDashboard organizationId={organizationId} />
+
       {/* Global Growth Orchestration */}
       <SEOGlobalGrowthDashboard organizationId={organizationId} />
 

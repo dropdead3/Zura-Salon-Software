@@ -7,3 +7,4 @@ export * from './seo-state-machine';
 export * from './seo-quotas';
 export * from './seo-settings-schema';
 export * from './seo-autonomy-config';
+export * from './seo-domination-config';

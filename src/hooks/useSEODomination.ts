@@ -60,7 +60,7 @@ export function useSEODomination(organizationId: string | undefined): {
         .eq('is_active', true)
         .order('city', { ascending: true });
       if (error) throw error;
-      return (data || []) as DominationTarget[];
+      return (data || []) as unknown as DominationTarget[];
     },
     enabled: !!organizationId,
   });
@@ -78,7 +78,7 @@ export function useSEODomination(organizationId: string | undefined): {
       // Deduplicate: keep latest score per target
       const seen = new Set<string>();
       const latest: DominationScoreRow[] = [];
-      for (const row of (data || []) as DominationScoreRow[]) {
+      for (const row of (data || []) as unknown as DominationScoreRow[]) {
         if (seen.has(row.target_id)) continue;
         seen.add(row.target_id);
         latest.push(row);

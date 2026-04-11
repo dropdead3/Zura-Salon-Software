@@ -42,3 +42,10 @@ export {
   EFFORT_UNIT_WEIGHTS,
   LOCATION_PRIORITY_CONFIG,
 } from './seo-growth-orchestrator';
+export {
+  computeDominationScore,
+  assignStrategy,
+  computeCityMomentum,
+  generateDominationCampaigns,
+  detectCategoryStacking,
+} from './seo-domination-engine';
