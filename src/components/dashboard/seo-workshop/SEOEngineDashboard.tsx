@@ -11,6 +11,7 @@ import { tokens } from '@/lib/design-tokens';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { AlertTriangle, TrendingUp, TrendingDown, Clock, Target, Star, FileText, MapPin, Pencil, Flag, Crosshair, Minus, DollarSign } from 'lucide-react';
+import { SEOPredictedLiftCard } from './SEOPredictedLiftCard';
 import { Skeleton } from '@/components/ui/skeleton';
 
 interface Props {
@@ -180,6 +181,9 @@ export function SEOEngineDashboard({ organizationId, onGoToTasks, onGoToCampaign
           </CardContent>
         </Card>
       )}
+
+      {/* Predicted Revenue Opportunity */}
+      <SEOPredictedLiftCard organizationId={organizationId} />
 
       {/* Health Domains */}
       <Card>

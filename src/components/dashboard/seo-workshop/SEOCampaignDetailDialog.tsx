@@ -20,6 +20,7 @@ import { transitionCampaignStatus } from '@/lib/seo-engine/seo-task-service';
 import { useSEOTasks } from '@/hooks/useSEOTasks';
 import { tokens } from '@/lib/design-tokens';
 import { Play, CheckCircle2, Ban, AlertTriangle, MapPin, ChevronDown, ChevronRight, Target } from 'lucide-react';
+import { SEOCampaignPrediction } from './SEOCampaignPrediction';
 import { toast } from '@/hooks/use-toast';
 import { useQueryClient } from '@tanstack/react-query';
 
@@ -203,6 +204,9 @@ export function SEOCampaignDetailDialog({ campaign, organizationId, open, onOpen
               )}
             </CollapsibleContent>
           </Collapsible>
+
+          {/* Predicted Revenue Lift */}
+          <SEOCampaignPrediction organizationId={organizationId} campaignId={campaign.id} />
 
           {/* Expected Metrics */}
           {campaign.expected_metrics && Object.keys(campaign.expected_metrics).length > 0 && (

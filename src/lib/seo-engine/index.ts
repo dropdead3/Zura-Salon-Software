@@ -28,3 +28,8 @@ export {
   computeMomentum,
   MOMENTUM_DIRECTION_CONFIG,
 } from './seo-momentum-calculator';
+export {
+  computePredictedLift,
+  computeRemainingLift,
+  TASK_TYPE_COEFFICIENTS,
+} from './seo-revenue-predictor';
