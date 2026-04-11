@@ -62,34 +62,6 @@ export function useRevenueByCategoryDrilldown({
         offset += PAGE_SIZE;
       }
 
-      // Also fetch appointment new/returning status for client classification
-      const clientNewMap = new Map<string, boolean>();
-      {
-        let aptOffset = 0;
-        let aptHasMore = true;
-        while (aptHasMore) {
-          let aptQuery = supabase
-            .from('phorest_appointments')
-            .select('phorest_client_id, is_new_client')
-            .gte('appointment_date', dateFrom)
-            .lte('appointment_date', dateTo)
-            .not('status', 'in', '("cancelled","no_show")')
-            .range(aptOffset, aptOffset + PAGE_SIZE - 1);
-
-          if (locationId && locationId !== 'all') {
-            aptQuery = aptQuery.eq('location_id', locationId);
-          }
-
-          const { data: aptData } = await aptQuery;
-          (aptData || []).forEach((a: any) => {
-            if (a.phorest_client_id && !clientNewMap.has(a.phorest_client_id)) {
-              clientNewMap.set(a.phorest_client_id, a.is_new_client === true);
-            }
-          });
-          aptHasMore = (aptData?.length || 0) === PAGE_SIZE;
-          aptOffset += PAGE_SIZE;
-        }
-      }
 
       // Get staff name mappings via centralized resolver
       const staffIds = [...new Set(allItems.map(a => a.phorest_staff_id).filter(Boolean))];
@@ -123,8 +95,8 @@ export function useRevenueByCategoryDrilldown({
             : (itemType === 'product' ? 'Retail' : 'Other');
         const amount = (Number(item.total_amount) || 0) + (Number(item.tax_amount) || 0);
         const staffId = item.phorest_staff_id || 'unknown';
-        const clientKey = item.phorest_client_id || 'walk-in';
-        const isNew = clientNewMap.get(clientKey) === true;
+
+
 
         totalRevenue += amount;
 
