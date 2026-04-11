@@ -1,67 +1,57 @@
 
 
-# Sales Overview Hero — Simplify the Today Summary
+# Fix Vish Product Charges — Reclassify as Service Revenue
 
 ## Problem
-The "today" view in the Sales Overview card stacks too many information lines vertically beneath the hero revenue number:
-1. "Scheduled Services Today: $X" with info tooltip
-2. "33 of 36 appointments completed · 3 pending · 1 awaiting checkout"
-3. Yellow badge: "Service revenue still expected to collect: $387.00"
-4. Progress bar: "Earned X% of scheduled services today" + dollar amount
-5. "Exceeded scheduled by $X" or "On track to finish at $X"
-6. "Estimated final transaction at 7:00 PM"
-7. "View gap analysis" toggle
-8. "Updated just now" timestamp
 
-That is 8 distinct visual elements crammed under one number. It reads like a report, not a dashboard.
+Phorest records Vish chemical charges in two ways:
+- `item_name: 'Vish'`, `item_type: 'sale_fee'` (324 rows) — already correctly treated as service revenue everywhere
+- `item_name: 'Vish Product Charge'`, `item_type: 'product'` (14 rows) — **incorrectly categorized as retail product revenue**
 
-## Design Approach
+These are service overage fees (chemical cost pass-throughs), not retail sales. They inflate retail metrics, retail attachment rates, and "Products by Stylist" numbers while deflating service revenue.
 
-Keep the hero number and its label clean. Collapse the operational detail into an expandable summary that defaults to **collapsed**.
+## Approach
 
-**Collapsed state** (default) shows only:
-- Hero revenue number (unchanged)
-- "Revenue So Far Today" label (unchanged)
-- "Excludes Tips · Incl. Tax" subtitle (unchanged)
-- **One compact summary line**: progress bar + compact status text, e.g. "33/36 appts · $387 remaining · on track for $3,930" — a single scannable line
-- "Updated just now" timestamp (stays at bottom)
+Create a single `isVishServiceCharge()` utility in `serviceCategorization.ts` and apply it consistently across every file that splits service vs product revenue.
 
-**Expanded state** (click chevron or summary line) reveals:
-- Scheduled Services Today total with tooltip
-- Appointment breakdown (completed, pending, awaiting checkout, discounts)
-- Yellow "still expected" badge
-- Full progress bar with earned % and dollar amount
-- Exceeded/on-track/final status
-- Estimated final transaction time
-- Gap analysis toggle + drilldown
+The pattern: `item_name` matches `/vish/i` AND `item_type` is `product` → treat as service revenue, exclude from retail.
 
-This preserves every data point but hides the operational detail behind one click.
+---
 
 ## Technical Changes
 
-**File**: `src/components/dashboard/AggregateSalesCard.tsx`
+### 1. New utility in `src/utils/serviceCategorization.ts`
 
-1. Add a `const [todaySummaryExpanded, setTodaySummaryExpanded] = useState(false)` state variable
+Add `isVishServiceCharge(itemName, itemType)` — returns true when the item is a Vish chemical fee masquerading as a product. Pattern: `/\bvish\b/i` on item_name when item_type is `product`.
 
-2. Replace the entire `mt-4 mx-auto max-w-sm space-y-3` block (lines ~826-996) with a two-state render:
+### 2. Files that need the Vish filter (10 files)
 
-   **Collapsed**: A single clickable row with:
-   - Compact progress bar (h-1, no labels)
-   - One-line summary: `{resolved}/{total} appts · {formatCurrency(remaining)} remaining` (or "All complete" if done)
-   - Chevron icon to expand
+| File | Current behavior | Fix |
+|---|---|---|
+| `useRetailBreakdown.ts` | Vish Product Charge lands in generic product bucket | Add early-continue for `isVishServiceCharge` before category checks |
+| `useRetailCategoryItems.ts` | Fetches non-service items, Vish included | Skip items matching `isVishServiceCharge` in the loop |
+| `useServiceProductDrilldown.ts` | Queries `item_type IN (product)`, Vish included in "Products by Stylist" | Filter out Vish items from productItems before aggregation |
+| `useRetailAttachmentRate.ts` | Vish counts as a retail "attachment" | Filter out Vish from productItems alongside extension filter |
+| `useServiceRetailAttachment.ts` | Same attachment inflation | Filter out Vish alongside extension filter |
+| `useExtensionProductRevenue.ts` | Vish could land in "other product" if not extension | Filter out Vish before counting |
+| `useAppointmentTransactionBreakdown.ts` | `categorize()` sends `item_type=product` to 'product' bucket | Check item_name for Vish, return 'fee' instead of 'product' |
+| `useSalesData.ts` | Only `service` and `sale_fee` count as service revenue | Add Vish product check to service revenue accumulator |
+| `useBatchReportGenerator.ts` | `item_type !== 'service'` → productRev | Check for Vish, add to serviceRev instead |
+| `useStylistExperienceScore.ts` | Vish counted as retail for experience scoring | Filter out Vish from retail accumulator |
 
-   **Expanded**: The existing content (scheduled line, appointment fraction, badge, full progress bar, status, estimated time, gap analysis, timestamp) — wrapped in an AnimatePresence/motion.div for smooth reveal
+### 3. Hooks that already handle it correctly (no changes needed)
 
-3. Move the "Updated just now" timestamp outside both states so it always shows
+- `useActualRevenue.ts` — uses `SERVICE_TYPES` set with `sale_fee` (the 324 `sale_fee` rows are fine; the 14 `product` rows aren't fetched here because it queries a view)
+- `useTodayActualRevenue.tsx` — same pattern
+- `useRevenueGapAnalysis.ts` — queries `item_type IN ['service', 'sale_fee']` only
 
-4. The gap analysis toggle stays inside the expanded section — it is deep operational detail
+### 4. Summary of impact
 
-## Visual Result
-- Default view: hero number + one clean summary line + thin progress bar
-- One click reveals the full breakdown the user already built
-- No data is lost, just layered by importance
-- Matches the calm, executive UX doctrine
+- Retail revenue decreases by the Vish Product Charge total (~$278 based on 14 items at ~$19.87 avg)
+- Service revenue increases by the same amount
+- Retail attachment rate drops slightly (fewer false "product" visits)
+- "Products by Stylist" drilldown no longer shows Vish charges
+- Batch reports correctly attribute Vish to service column
 
-## Files Modified
-- `src/components/dashboard/AggregateSalesCard.tsx` (single file)
+Total: 1 new utility function, 10 files updated with a one-line filter each.
 
