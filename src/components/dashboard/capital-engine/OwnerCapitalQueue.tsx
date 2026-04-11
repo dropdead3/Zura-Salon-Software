@@ -68,7 +68,8 @@ export function OwnerCapitalQueue() {
           </Badge>
         </CardHeader>
         <CardContent>
-          <div className="space-y-1">
+          {/* Desktop Table */}
+          <div className="hidden lg:block space-y-1">
             {/* Column Headers */}
             <div className="grid grid-cols-[1fr_100px_100px_70px_70px_70px_90px_40px] gap-2 px-3 py-2 text-xs text-muted-foreground font-sans">
               <span>Opportunity</span>
@@ -132,6 +133,39 @@ export function OwnerCapitalQueue() {
                   <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
                     <ArrowRight className="w-3.5 h-3.5 text-muted-foreground" />
                   </Button>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Mobile Cards */}
+          <div className="lg:hidden space-y-2">
+            {opportunities.map((opp) => {
+              const statusInfo = FUNDING_STATUS_LABELS[opp.eligibilityStatus] ?? {
+                label: opp.eligibilityStatus,
+                color: 'text-muted-foreground',
+              };
+
+              return (
+                <div
+                  key={opp.id}
+                  className="p-3 rounded-lg bg-muted/30 border border-border/40 space-y-2 cursor-pointer"
+                  onClick={() => handleOpenDetail(opp)}
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="font-sans text-sm truncate">{opp.title}</span>
+                    <Badge variant="outline" className={`text-[10px] font-sans ${statusInfo.color}`}>
+                      {statusInfo.label}
+                    </Badge>
+                  </div>
+                  <div className="flex items-center gap-4 text-xs text-muted-foreground font-sans">
+                    <span>{formatCurrency(opp.capitalRequired, { noCents: true })}</span>
+                    <span>+{formatCurrency(opp.predictedAnnualLift, { noCents: true })}</span>
+                    <span className={opp.roe >= 1.8 ? 'text-primary font-display tracking-wide' : 'font-display tracking-wide'}>
+                      {opp.roe.toFixed(1)}x
+                    </span>
+                    <span>{opp.breakEvenMonths}mo</span>
+                  </div>
                 </div>
               );
             })}

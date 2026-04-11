@@ -27523,6 +27523,13 @@ export type Database = {
         | "new_location"
         | "category_expansion"
         | "acquisition"
+        | "capacity_expansion"
+        | "inventory_expansion"
+        | "service_growth"
+        | "stylist_capacity_growth"
+        | "campaign_acceleration"
+        | "equipment_expansion"
+        | "marketing_acceleration"
       expansion_status:
         | "identified"
         | "evaluating"
@@ -27530,6 +27537,11 @@ export type Database = {
         | "in_progress"
         | "completed"
         | "dismissed"
+        | "funded"
+        | "surfaced"
+        | "underperforming"
+        | "expired"
+        | "canceled"
       financed_ledger_entry_type:
         | "repayment"
         | "revenue_lift_recorded"
@@ -27540,6 +27552,7 @@ export type Database = {
         | "completed"
         | "defaulted"
         | "cancelled"
+        | "underperforming"
       formula_type: "actual" | "refined"
       fulfillment_status:
         | "pending"
@@ -27880,6 +27893,13 @@ export const Constants = {
         "new_location",
         "category_expansion",
         "acquisition",
+        "capacity_expansion",
+        "inventory_expansion",
+        "service_growth",
+        "stylist_capacity_growth",
+        "campaign_acceleration",
+        "equipment_expansion",
+        "marketing_acceleration",
       ],
       expansion_status: [
         "identified",
@@ -27888,6 +27908,11 @@ export const Constants = {
         "in_progress",
         "completed",
         "dismissed",
+        "funded",
+        "surfaced",
+        "underperforming",
+        "expired",
+        "canceled",
       ],
       financed_ledger_entry_type: [
         "repayment",
@@ -27900,6 +27925,7 @@ export const Constants = {
         "completed",
         "defaulted",
         "cancelled",
+        "underperforming",
       ],
       formula_type: ["actual", "refined"],
       fulfillment_status: [

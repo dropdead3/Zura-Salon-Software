@@ -69,13 +69,23 @@ export function FinancedProjectsTracker() {
                 </Badge>
               </div>
 
-              <div className="flex items-center gap-6 text-xs text-muted-foreground font-sans">
+              <div className="flex items-center gap-6 text-xs text-muted-foreground font-sans flex-wrap">
                 <span>
                   Funded: {formatCurrency(funded, { noCents: true })}
                 </span>
                 {monthsElapsed > 0 && (
                   <span>
                     {monthsElapsed} of {Number(project.predicted_break_even_months)} months
+                  </span>
+                )}
+                {project.roi_to_date != null && Number(project.roi_to_date) !== 0 && (
+                  <span className={Number(project.roi_to_date) >= 0 ? 'text-green-600' : 'text-destructive'}>
+                    ROI: {Number(project.roi_to_date) > 0 ? '+' : ''}{Number(project.roi_to_date).toFixed(0)}%
+                  </span>
+                )}
+                {project.break_even_progress_percent != null && Number(project.break_even_progress_percent) > 0 && (
+                  <span>
+                    Break-even: {Number(project.break_even_progress_percent).toFixed(0)}%
                   </span>
                 )}
               </div>
