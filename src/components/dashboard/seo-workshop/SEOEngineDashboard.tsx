@@ -15,6 +15,7 @@ import { SEOPredictedLiftCard } from './SEOPredictedLiftCard';
 import { SEOGrowthReport } from './SEOGrowthReport';
 import { SEOGlobalGrowthDashboard } from './SEOGlobalGrowthDashboard';
 import { SEODominationDashboard } from './SEODominationDashboard';
+import { SEOIndustryFeed } from './SEOIndustryFeed';
 import { Skeleton } from '@/components/ui/skeleton';
 
 interface Props {
@@ -56,6 +57,9 @@ export function SEOEngineDashboard({ organizationId, onGoToTasks, onGoToCampaign
 
   return (
     <div className="space-y-6">
+      {/* Industry Intelligence */}
+      <SEOIndustryFeed organizationId={organizationId} />
+
       {/* Market Domination */}
       <SEODominationDashboard organizationId={organizationId} />
 

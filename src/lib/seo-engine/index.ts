@@ -49,3 +49,11 @@ export {
   generateDominationCampaigns,
   detectCategoryStacking,
 } from './seo-domination-engine';
+export {
+  detectTrends,
+  classifyDirection,
+  assignConfidence,
+  computePercentiles,
+  computeOrgPercentile,
+  rankWhatsWorking,
+} from './seo-industry-intelligence';
