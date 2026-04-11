@@ -694,10 +694,7 @@ export function ServicePopularityChart({ dateFrom, dateTo, locationId, filterCon
                   const isExpanded = expandedCategory === cat.category;
                   const topStylist = cat.stylists[0];
                   const concentrationRisk = topStylist && cat.stylists.length > 1 && topStylist.sharePercent > 70;
-                  const totalNewClients = cat.stylists.reduce((s, st) => s + st.newClients, 0);
-                  const totalReturningClients = cat.stylists.reduce((s, st) => s + st.returningClients, 0);
-                  const totalClients = totalNewClients + totalReturningClients;
-                  const newPct = totalClients > 0 ? Math.round((totalNewClients / totalClients) * 100) : 0;
+                  const totalItems = cat.stylists.reduce((s, st) => s + st.count, 0);
 
                   return (
                     <div key={cat.category}>
@@ -732,13 +729,10 @@ export function ServicePopularityChart({ dateFrom, dateTo, locationId, filterCon
                             className="overflow-hidden"
                           >
                             <div className="pt-2 pb-1 pl-6 space-y-3">
-                              {/* Client mix + concentration risk */}
+                              {/* Summary + concentration risk */}
                               <div className="flex gap-4 text-xs flex-wrap">
                                 <span className="flex items-center gap-1">
-                                  <Users className="w-3 h-3" /> New clients: <strong>{newPct}%</strong> ({totalNewClients})
-                                </span>
-                                <span className="flex items-center gap-1">
-                                  <RefreshCw className="w-3 h-3" /> Returning: <strong>{100 - newPct}%</strong> ({totalReturningClients})
+                                  {totalItems} item{totalItems !== 1 ? 's' : ''} across {cat.stylists.length} stylist{cat.stylists.length !== 1 ? 's' : ''}
                                 </span>
                                 {concentrationRisk && (
                                   <span className="flex items-center gap-1 text-amber-600 dark:text-amber-400">
@@ -774,7 +768,7 @@ export function ServicePopularityChart({ dateFrom, dateTo, locationId, filterCon
                                             <BlurredAmount>{formatCurrencyWhole(stylist.revenue)}</BlurredAmount>
                                           </Badge>
                                           <span className="text-xs text-muted-foreground/60">
-                                            {stylist.newClients} new · {stylist.returningClients} ret
+                                            {stylist.count} items
                                           </span>
                                         </div>
                                       </div>

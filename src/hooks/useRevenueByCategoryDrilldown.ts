@@ -9,10 +9,8 @@ export interface CategoryStylistData {
   revenue: number;
   count: number;
   sharePercent: number;
-  newClients: number;
-  returningClients: number;
-  totalClients: number;
   serviceDetails?: { serviceName: string; amount: number }[];
+  items?: { itemName: string; amount: number; date: string }[];
 }
 
 export interface CategoryBreakdownData {
@@ -64,34 +62,6 @@ export function useRevenueByCategoryDrilldown({
         offset += PAGE_SIZE;
       }
 
-      // Also fetch appointment new/returning status for client classification
-      const clientNewMap = new Map<string, boolean>();
-      {
-        let aptOffset = 0;
-        let aptHasMore = true;
-        while (aptHasMore) {
-          let aptQuery = supabase
-            .from('phorest_appointments')
-            .select('phorest_client_id, is_new_client')
-            .gte('appointment_date', dateFrom)
-            .lte('appointment_date', dateTo)
-            .not('status', 'in', '("cancelled","no_show")')
-            .range(aptOffset, aptOffset + PAGE_SIZE - 1);
-
-          if (locationId && locationId !== 'all') {
-            aptQuery = aptQuery.eq('location_id', locationId);
-          }
-
-          const { data: aptData } = await aptQuery;
-          (aptData || []).forEach((a: any) => {
-            if (a.phorest_client_id && !clientNewMap.has(a.phorest_client_id)) {
-              clientNewMap.set(a.phorest_client_id, a.is_new_client === true);
-            }
-          });
-          aptHasMore = (aptData?.length || 0) === PAGE_SIZE;
-          aptOffset += PAGE_SIZE;
-        }
-      }
 
       // Get staff name mappings via centralized resolver
       const staffIds = [...new Set(allItems.map(a => a.phorest_staff_id).filter(Boolean))];
@@ -104,10 +74,8 @@ export function useRevenueByCategoryDrilldown({
         stylists: Record<string, {
           revenue: number;
           count: number;
-          newClients: Set<string>;
-          returningClients: Set<string>;
-          allClients: Set<string>;
           vishTransactionAmounts: { transactionId: string; amount: number }[];
+          items: { itemName: string; amount: number; date: string }[];
         }>;
       }> = {};
 
@@ -127,8 +95,8 @@ export function useRevenueByCategoryDrilldown({
             : (itemType === 'product' ? 'Retail' : 'Other');
         const amount = (Number(item.total_amount) || 0) + (Number(item.tax_amount) || 0);
         const staffId = item.phorest_staff_id || 'unknown';
-        const clientKey = item.phorest_client_id || 'walk-in';
-        const isNew = clientNewMap.get(clientKey) === true;
+
+
 
         totalRevenue += amount;
 
@@ -142,21 +110,14 @@ export function useRevenueByCategoryDrilldown({
           categoryMap[category].stylists[staffId] = {
             revenue: 0,
             count: 0,
-            newClients: new Set(),
-            returningClients: new Set(),
-            allClients: new Set(),
             vishTransactionAmounts: [],
+            items: [],
           };
         }
         const s = categoryMap[category].stylists[staffId];
         s.revenue += amount;
         s.count += 1;
-        s.allClients.add(clientKey);
-        if (isNew) {
-          s.newClients.add(clientKey);
-        } else {
-          s.returningClients.add(clientKey);
-        }
+        s.items.push({ itemName, amount, date: item.transaction_date || '' });
 
         // Track Vish transaction IDs for service name lookup
         if (isVish && item.transaction_id) {
@@ -217,10 +178,8 @@ export function useRevenueByCategoryDrilldown({
               revenue: s.revenue,
               count: s.count,
               sharePercent: data.revenue > 0 ? Math.round((s.revenue / data.revenue) * 100) : 0,
-              newClients: s.newClients.size,
-              returningClients: s.returningClients.size,
-              totalClients: s.allClients.size,
               serviceDetails: (s as any).serviceDetails as { serviceName: string; amount: number }[] | undefined,
+              items: s.items.sort((a, b) => b.date.localeCompare(a.date)),
             }))
             .sort((a, b) => b.revenue - a.revenue),
         }))
