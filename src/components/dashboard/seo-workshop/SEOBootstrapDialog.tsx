@@ -124,6 +124,8 @@ export function SEOBootstrapDialog({ organizationId, open, onOpenChange }: Props
 
       // 2. Create SEO objects + tasks
       let taskCount = 0;
+      const taskIdByTemplate = new Map<string, string>(); // GAP 3: track for dependency insertion
+
       for (const task of preview.tasks) {
         const { data: seoObj, error: objErr } = await supabase
           .from('seo_objects' as any)
@@ -137,7 +139,6 @@ export function SEOBootstrapDialog({ organizationId, open, onOpenChange }: Props
           .select('id')
           .single();
 
-        // B4 fix: skip task if SEO object creation failed
         if (objErr || !(seoObj as any)?.id) {
           console.warn(`Skipping task "${task.label}": SEO object creation failed`, objErr);
           continue;
@@ -162,16 +163,32 @@ export function SEOBootstrapDialog({ organizationId, open, onOpenChange }: Props
            },
          }).select('id').single();
 
-         // G12: Create audit history record for bootstrap task
          if (!taskErr && (taskData as any)?.id) {
+           const createdTaskId = (taskData as any).id;
+           taskIdByTemplate.set(task.templateKey, createdTaskId);
+
            await supabase.from('seo_task_history' as any).insert({
-             task_id: (taskData as any).id,
+             task_id: createdTaskId,
              previous_status: null,
              new_status: 'detected',
              performed_by: user?.id ?? 'system:bootstrap',
              action: 'bootstrap_created',
              metadata: { campaign_id: campaignId, template_key: task.templateKey },
            });
+
+           // GAP 3: Insert dependency rows
+           if (task.dependsOn?.length) {
+             for (const depKey of task.dependsOn) {
+               const depTaskId = taskIdByTemplate.get(depKey);
+               if (depTaskId) {
+                 await supabase.from('seo_task_dependencies' as any).insert({
+                   task_id: createdTaskId,
+                   depends_on_task_id: depTaskId,
+                   dependency_type: 'hard',
+                 });
+               }
+             }
+           }
          }
          taskCount++;
       }

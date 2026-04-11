@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, lazy, Suspense } from 'react';
+import { SEOPageHealthBadge } from '@/components/dashboard/seo-workshop/SEOPageHealthBadge';
 import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
@@ -196,7 +197,13 @@ export default function WebsiteSectionsHub() {
                       <p className="font-medium text-sm">{section.component}</p>
                       <p className="text-xs text-muted-foreground">Sort: {section.sort_order}</p>
                     </div>
-                    <Badge variant="secondary" className="text-xs">{section.component}</Badge>
+                    <div className="flex items-center gap-2">
+                      <SEOPageHealthBadge
+                        organizationId={organizationId}
+                        objectKey={`page::${section.component}`}
+                      />
+                      <Badge variant="secondary" className="text-xs">{section.component}</Badge>
+                    </div>
                   </CardContent>
                 </Card>
               ))
