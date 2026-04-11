@@ -130,6 +130,7 @@ serve(async (req) => {
       metadata: {
         opportunity_id: opportunityId,
         organization_id: organizationId,
+        user_id: user.id,
         type: "expansion_financing",
       },
       success_url: `${req.headers.get("origin")}/dashboard/capital?funded=true`,

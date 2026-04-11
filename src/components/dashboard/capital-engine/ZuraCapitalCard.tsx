@@ -8,7 +8,7 @@ import { useLogCapitalEvent } from '@/hooks/useCapitalEventLog';
 import { computeCoverageRatio } from '@/lib/capital-engine/zura-eligibility-engine';
 import { CONSTRAINT_LABELS, OPPORTUNITY_TYPE_LABELS } from '@/config/capital-engine/zura-capital-config';
 import { Landmark, TrendingUp, ArrowRight } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { FundingOpportunityDetail } from './FundingOpportunityDetail';
 import type { ConstraintType, OpportunityType } from '@/config/capital-engine/zura-capital-config';
 
@@ -18,9 +18,11 @@ export function ZuraCapitalCard() {
   const [detailOpen, setDetailOpen] = useState(false);
   const [selectedOpp, setSelectedOpp] = useState<ZuraCapitalOpportunity | null>(null);
 
-  // Log surfacing event when top opportunity appears
+  // Log surfacing event once per opportunity (deduplicated via ref)
+  const surfacedRef = React.useRef<string | null>(null);
   useEffect(() => {
-    if (topOpportunity) {
+    if (topOpportunity && surfacedRef.current !== topOpportunity.id) {
+      surfacedRef.current = topOpportunity.id;
       logEvent.mutate({
         opportunityId: topOpportunity.id,
         eventType: 'surfaced',
