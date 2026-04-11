@@ -1,24 +1,42 @@
 
 
-# Rename Vish Charges to "Chemical Overage Fees" in Revenue by Category
+# Chemical Overage Fees Drilldown — Show Service Names & Remove Client Mix
 
 ## Problem
-In the Revenue by Category drilldown, Vish chemical overage fees appear as "Retail" (when `item_type=product`) or "Other" (when `item_type=sale_fee`). These are service-adjacent costs, not retail sales or miscellaneous items.
+1. The "Chemical Overage Fees" category drilldown shows items as "Vish Product Charge" or "Vish" — it doesn't tell you **which service** triggered the overage fee.
+2. The stylist sub-drilldown shows "New/Returning client" counts and a progress bar, which is meaningless for chemical overage fees.
 
-## Fix
+## Approach
 
-**File**: `src/hooks/useRevenueByCategoryDrilldown.ts`
+### 1. Resolve the associated service name per Vish charge
 
-In the `allItems.forEach` loop (line 114-150), before the current category assignment logic, add an `isVishServiceCharge` check. When matched, assign the category as `"Chemical Overage Fees"` instead of `"Retail"` or `"Other"`.
+In `useRevenueByCategoryDrilldown.ts`, when building the category data for "Chemical Overage Fees":
+- Collect the `transaction_id` for each Vish item
+- After the main loop, batch-query `phorest_transaction_items` for those `transaction_id`s, filtering `item_type = 'service'`, to find the service name on the same ticket
+- Build a map: `transaction_id → service_name`
+- Store the associated service name on each Vish stylist entry (e.g. as a `serviceNames` field on the stylist data)
 
-Also handle the `sale_fee` Vish items (item_name containing "vish" with item_type `sale_fee`) — these currently land in "Other" and should also map to "Chemical Overage Fees".
+This requires adding `transaction_id` to the initial select query.
 
-Changes:
-1. Import `isVishServiceCharge` from `@/utils/serviceCategorization`
-2. Replace the category assignment block (lines 116-118) with:
-   - If `isVishServiceCharge(item.item_name, item.item_type)` → category = `"Chemical Overage Fees"`
-   - If item_name matches `/\bvish\b/i` and item_type is `sale_fee` → category = `"Chemical Overage Fees"`
-   - Otherwise keep existing logic (service → `getServiceCategory`, product → `"Retail"`, else → `"Other"`)
+### 2. Add service context to the data model
 
-**Single file change, ~5 lines modified.**
+Extend `CategoryStylistData` with an optional `serviceDetails?: { serviceName: string; amount: number }[]` array. For "Chemical Overage Fees", each stylist entry will carry the list of services that triggered the fees.
+
+### 3. Conditionally hide client mix for Chemical Overage Fees
+
+In `RevenueByCategoryPanel.tsx`:
+- Pass `category.category` (the category name string) down to `StylistRow`
+- When category is `"Chemical Overage Fees"`, skip rendering `ClientMixPanel` (no new/returning client breakdown)
+- Instead, show the service names associated with each stylist's overage fees (e.g. "Color Touch · Balayage")
+
+### 4. Update labels
+
+For "Chemical Overage Fees", change the stylist subtitle from `"3 appointments"` to `"3 charges"` since these aren't appointments.
+
+## Files Modified
+
+| File | Change |
+|---|---|
+| `src/hooks/useRevenueByCategoryDrilldown.ts` | Add `transaction_id` to select; after main loop, batch-fetch service names for Vish transactions; populate `serviceDetails` on stylist data |
+| `src/components/dashboard/sales/RevenueByCategoryPanel.tsx` | Pass category name to `StylistRow`; conditionally hide `ClientMixPanel` for Chemical Overage Fees; show associated service names instead; change "appointments" → "charges" label |
 
