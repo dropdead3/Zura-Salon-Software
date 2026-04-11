@@ -58,8 +58,8 @@ export function BrandMarginComparison({ comparisons }: BrandMarginComparisonProp
                 className="flex items-center justify-between p-3 rounded-lg bg-muted/40"
               >
                 <div>
-                  <p className={cn(tokens.body.base, 'font-medium')}>{c.serviceName}</p>
-                  <p className={tokens.label.muted}>
+                  <p className={cn(tokens.body.default, 'font-medium')}>{c.serviceName}</p>
+                  <p className={tokens.label.default}>
                     {PREFERRED_SUPPLIER_LABEL}: {c.preferredMarginPct}% · Alt:{' '}
                     {c.alternativeMarginPct}%
                   </p>

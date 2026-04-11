@@ -117,7 +117,7 @@ export function SupplyChainDashboard({ organizationId }: SupplyChainDashboardPro
                   )}
                 >
                   <div>
-                    <span className={cn(tokens.body.base, 'font-medium')}>
+                    <span className={cn(tokens.body.default, 'font-medium')}>
                       {s.supplier_name}
                     </span>
                     <div className="flex items-center gap-2 mt-0.5">
@@ -126,7 +126,7 @@ export function SupplyChainDashboard({ organizationId }: SupplyChainDashboardPro
                           AUTO-REPLENISH
                         </Badge>
                       )}
-                      <span className={tokens.label.muted}>
+                      <span className={tokens.label.default}>
                         Priority {s.priority_rank}
                       </span>
                     </div>

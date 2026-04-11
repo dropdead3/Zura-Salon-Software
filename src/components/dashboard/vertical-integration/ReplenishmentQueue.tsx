@@ -64,7 +64,7 @@ export function ReplenishmentQueue({ organizationId }: ReplenishmentQueueProps) 
               >
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
-                    <span className={cn(tokens.body.base, 'font-medium')}>
+                    <span className={cn(tokens.body.default, 'font-medium')}>
                       {event.product_id}
                     </span>
                     <Badge
@@ -74,7 +74,7 @@ export function ReplenishmentQueue({ organizationId }: ReplenishmentQueueProps) 
                       {event.status.toUpperCase()}
                     </Badge>
                   </div>
-                  <p className={tokens.label.muted}>
+                  <p className={tokens.label.default}>
                     {event.supplier_name} · {event.recommended_qty} units · {event.trigger_reason}
                   </p>
                 </div>

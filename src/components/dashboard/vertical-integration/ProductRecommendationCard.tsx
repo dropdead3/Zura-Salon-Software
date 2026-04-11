@@ -45,7 +45,7 @@ export function ProductRecommendationCard({
                 </span>
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className={cn(tokens.body.base, 'font-medium')}>
+                    <span className={cn(tokens.body.default, 'font-medium')}>
                       {rec.productName}
                     </span>
                     {rec.isPreferred && (
@@ -57,7 +57,7 @@ export function ProductRecommendationCard({
                       </Badge>
                     )}
                   </div>
-                  <p className={tokens.label.muted}>
+                  <p className={tokens.label.default}>
                     {rec.supplierName} · {rec.marginPct}% margin
                   </p>
                 </div>
