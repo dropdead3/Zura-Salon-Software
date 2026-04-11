@@ -1,166 +1,175 @@
 
 
-# Industry Intelligence Layer
+# Capital and Expansion Engine
 
 ## What It Builds
 
-A cross-network aggregation and trend detection layer that computes anonymized, privacy-safe industry signals from all organizations on the platform. Detects demand shifts, keyword trends, pricing signals, and task effectiveness patterns. Surfaces benchmarking, a "What's Working Now" feed, and predictive trend signals — all feeding into the existing Momentum, Revenue Predictor, and Task Engines to dynamically adjust strategy.
+A capital allocation intelligence layer that computes a **Salon Performance Index (SPI)** per location, combines it with market opportunity and predicted revenue lift to produce **Return on Expansion (ROE)** scores, and ranks all investment opportunities in a global capital priority queue. Supports expansion scenario simulation with projected lift, break-even timeline, and confidence bands.
 
 ## Architecture
 
 ```text
-All Orgs (anonymized, aggregated)
+Location Health Engine (existing)
      │
-     ├── Edge Function: seo-industry-aggregator
-     │   ├── Demand Trends (booking velocity by service category × city)
-     │   ├── Keyword Trends (review keyword frequency shifts)
-     │   ├── Price Signals (avg ticket changes by category × market)
-     │   ├── Task Effectiveness (which actions produce results network-wide)
-     │   └── Conversion Patterns (content type → booking correlation)
+     ├── SPI (0–100) per location
+     │   ├── Revenue Efficiency (25%)
+     │   ├── Growth Velocity (20%)
+     │   ├── Conversion Strength (15%)
+     │   ├── Pricing Power (15%)
+     │   ├── Operational Stability (15%)
+     │   └── Execution Quality (10%)
      │
-     ├── industry_trend_signals (platform-scoped, no org identity)
+     ├── Expansion Opportunities
+     │   ├── Existing Location Expansion
+     │   ├── New Location Launch
+     │   ├── Category Expansion
+     │   └── Acquisition Targets (future)
      │
-     ├── industry_benchmarks (percentile bands, updated weekly)
+     ├── ROE = Predicted Revenue Lift ÷ Capital Required
      │
-     └── UI: IndustryIntelligenceFeed + Benchmarking Card
+     ├── Capital Priority Queue (ranked by ROE)
+     │
+     ├── Investment Scenario Simulator
+     │
+     └── Risk Model (volatility, stylist dependency, competition)
 ```
-
-## Privacy Model (Critical)
-
-- The aggregation edge function runs with service-role access
-- All outputs are **platform-scoped** (`organization_id IS NULL`) — no org identity stored in trend tables
-- Minimum cohort size enforced: signals require data from ≥5 organizations to be published
-- No raw data leaves org scope — only pre-aggregated counts, averages, and deltas
-- Trend rows contain only: category, city, metric_type, value, delta, cohort_size, period
 
 ## Database Changes
 
-**New table: `industry_trend_signals`**
-- `id`, `signal_type` (demand_shift | keyword_trend | price_signal | effectiveness_pattern | conversion_pattern)
-- `category` (service category), `city` (geographic market), `metric_key`, `current_value`, `previous_value`, `delta_pct`, `direction` (rising | stable | declining)
-- `cohort_size` (number of orgs contributing), `confidence` (low | medium | high)
-- `period_start`, `period_end`, `computed_at`, `expires_at`
-- `insight_text` (AI-generated human-readable summary)
-- **No `organization_id` column** — this is platform-level data
-- RLS: readable by any authenticated user (public industry data)
+**New table: `expansion_opportunities`**
+- `id`, `organization_id`, `location_id` (nullable — null for new location proposals)
+- `opportunity_type` (enum: `location_expansion`, `new_location`, `category_expansion`, `acquisition`)
+- `title`, `description`, `city`, `service_category`
+- `capital_required` (numeric), `predicted_annual_lift` (numeric), `roe_score` (numeric)
+- `break_even_months` (numeric), `confidence` (low/medium/high)
+- `risk_factors` (jsonb), `spi_at_creation` (numeric)
+- `status` (enum: `identified`, `evaluating`, `approved`, `in_progress`, `completed`, `dismissed`)
+- `is_active` (boolean, default true), `created_at`, `updated_at`
+- RLS: org member read, org admin write
 
-**New table: `industry_benchmarks`**
-- `id`, `category`, `city`, `metric_key`
-- `p25`, `p50`, `p75`, `p90` (percentile values)
-- `cohort_size`, `computed_at`, `period`
-- **No `organization_id`** — platform-level
-- RLS: readable by authenticated users
+**New table: `expansion_scenarios`**
+- `id`, `organization_id`, `opportunity_id` (FK)
+- `investment_amount` (numeric), `projected_monthly_lift` (numeric), `break_even_months` (numeric)
+- `confidence`, `assumptions` (jsonb), `result_summary` (jsonb)
+- `created_at`, `created_by`
+- RLS: org member read, org admin write
 
-**Extend `metric_benchmarks`**: Add rows with `benchmark_type = 'network_p50'` and `'network_p90'` per org (org-scoped comparison against industry percentiles), computed by the aggregator
+**New table: `salon_performance_index`**
+- `id`, `organization_id`, `location_id`
+- `spi_score` (0–100), `revenue_efficiency` (0–100), `growth_velocity` (0–100), `conversion_strength` (0–100), `pricing_power` (0–100), `operational_stability` (0–100), `execution_quality` (0–100)
+- `risk_level` (text), `factors` (jsonb), `scored_at`, `created_at`
+- RLS: org member read
 
 ## New Files
 
 | File | Purpose |
 |---|---|
-| `src/config/seo-engine/seo-industry-config.ts` | Signal types, confidence thresholds, minimum cohort sizes, trend detection parameters |
-| `src/lib/seo-engine/seo-industry-intelligence.ts` | Pure computation: trend detection (compare rolling windows), percentile benchmarking, demand shift classification, pattern matching for "what's working" |
-| `supabase/functions/seo-industry-aggregator/index.ts` | Weekly edge function: queries anonymized aggregates across all orgs, computes trends + benchmarks, upserts into platform tables, generates insight text via AI |
-| `src/hooks/useSEOIndustryIntelligence.ts` | Queries `industry_trend_signals` + `industry_benchmarks`, composes with org data for relative positioning |
-| `src/components/dashboard/seo-workshop/SEOIndustryFeed.tsx` | "What's Working Now" feed card + demand shift alerts + benchmark comparison |
+| `src/lib/capital-engine/capital-engine.ts` | Pure computation: SPI scoring (weighted components from Health Engine data + SEO momentum + task completion), ROE calculation, risk modeling, capital queue ranking, break-even estimation |
+| `src/config/capital-engine/capital-config.ts` | SPI weights, ROE thresholds, risk factor definitions, expansion type labels |
+| `src/hooks/useCapitalEngine.ts` | Composes Health Engine scores + momentum + domination data + revenue; feeds capital engine; returns SPI per location, ranked opportunities, scenario results |
+| `src/hooks/useExpansionOpportunities.ts` | CRUD queries for `expansion_opportunities` and `expansion_scenarios` |
+| `src/components/dashboard/capital-engine/CapitalDashboard.tsx` | Top expansion opportunity, capital priority queue, SPI summary per location |
+| `src/components/dashboard/capital-engine/SPICard.tsx` | Location SPI score display with component breakdown |
+| `src/components/dashboard/capital-engine/ExpansionSimulator.tsx` | Investment scenario form: input capital amount → see projected lift, break-even, confidence |
+| `src/components/dashboard/capital-engine/CapitalPriorityQueue.tsx` | Ranked list of all opportunities by ROE |
+| `supabase/functions/calculate-spi/index.ts` | Edge function: computes SPI scores per location using Health Engine data, SEO momentum, and task completion rates |
 
 ## Modified Files
 
 | File | Change |
 |---|---|
-| `src/components/dashboard/seo-workshop/SEOEngineDashboard.tsx` | Add `SEOIndustryFeed` card below Domination Dashboard |
-| `src/lib/seo-engine/index.ts` | Export industry intelligence functions |
-| `src/config/seo-engine/index.ts` | Export industry config |
+| `src/components/dashboard/seo-workshop/SEOEngineDashboard.tsx` | Add link/card to Capital Dashboard from growth orchestration section |
+| `src/lib/seo-engine/index.ts` | No changes needed — capital engine is separate module |
 
 ## Core Computation Model
 
-### Trend Detection
-Compare 4-week rolling windows (current vs previous):
-- **Demand shift**: booking count delta by service category × city. ≥15% = "rising", ≤-15% = "declining"
-- **Keyword trends**: review keyword frequency shift. New keywords appearing in ≥10% of reviews = "emerging"
-- **Price signals**: avg ticket delta by category. ≥10% increase without booking decline = "elastic"
-- **Task effectiveness**: network-wide completion rate × impact score by template key. Feeds back into `computeEffectivenessModifiers`
-- **Conversion patterns**: content type (FAQ, before/after, video) → booking correlation
+### SPI (0–100)
 
-### Confidence Assignment
-- High: cohort ≥20 orgs, consistent direction across 3+ weeks
-- Medium: cohort 10–19 orgs, consistent 2+ weeks
-- Low: cohort 5–9 orgs or single-week signal
+| Component | Weight | Source |
+|---|---|---|
+| Revenue Efficiency | 25% | Health Engine `revenue` category (rev/chair, rev/hour, utilization) |
+| Growth Velocity | 20% | SEO momentum score + booking growth rate from Health Engine trends |
+| Conversion Strength | 15% | Health Engine `client` category + SEO conversion health |
+| Pricing Power | 15% | Avg ticket vs industry benchmark (from Industry Intelligence) + Health Engine revenue metrics |
+| Operational Stability | 15% | Health Engine `retention` + `operational_consistency` categories |
+| Execution Quality | 10% | SEO task completion rate + campaign success rate |
 
-### Benchmarking
-For each org, compute percentile rank against network for:
-- Review velocity, content volume, avg ticket, conversion rate, page health scores
-- Display: "Your review velocity: 62nd percentile (above 62% of similar salons)"
+SPI reuses existing Health Engine scores (already computed per location) and supplements with SEO engine data. No duplicate computation.
 
-### "What's Working Now" Feed
-Top 5 actionable signals sorted by confidence × relevance to org's active targets:
-- "Review-driven growth outperforming content-heavy strategies this month"
-- "FAQ-heavy pages improving conversion by ~9% across the network"
-- "High-ticket extension services converting best with before/after proof"
+### ROE Formula
+```
+ROE = Predicted Annual Revenue Lift ÷ Capital Required
+```
 
-### Integration with Existing Engines
-- **Effectiveness Tracker**: Network-wide effectiveness data supplements org-level data when org sample size < 5 (cold-start problem)
-- **Revenue Predictor**: Network coefficients used as fallback baseline when org has insufficient history
-- **Domination Engine**: Market demand estimates enriched with network booking velocity data
+### Break-Even Estimation
+```
+Break-Even Months = Capital Required ÷ Predicted Monthly Lift
+```
+Adjusted by confidence factor (high: 1.0x, medium: 1.3x, low: 1.6x).
 
-## Edge Function: `seo-industry-aggregator`
+### Risk Model (jsonb factors)
+Each opportunity gets risk scores for:
+- `volatility`: Revenue variance coefficient over 90 days
+- `stylist_dependency`: Revenue concentration in top stylists
+- `competition_intensity`: From domination engine competitor data
+- `market_saturation`: From industry intelligence demand signals
 
-Runs weekly (via pg_cron). Service-role access only.
+### Capital Priority Queue
+Sort all opportunities by ROE descending. Display top recommendation as a directive.
 
-1. Query all `phorest_appointments` grouped by service category + location city → aggregate booking counts per 4-week window (no org identity in output)
-2. Query all `seo_health_scores` → compute percentile bands per domain per category
-3. Query all `seo_tasks` completed → aggregate effectiveness by template key (no org identity)
-4. Query review text from `seo_health_scores.raw_signals` → extract keyword frequency shifts
-5. Enforce minimum cohort (≥5 orgs per signal)
-6. Upsert into `industry_trend_signals` + `industry_benchmarks`
-7. For top signals, call AI to generate one-line human-readable `insight_text`
-8. Compute per-org percentile positions → upsert into `metric_benchmarks` with `benchmark_type = 'network_p50'`
+### Investment Scenario Simulator
+User inputs: capital amount + opportunity type. Engine returns:
+- Projected monthly and annual lift (low/expected/high bands)
+- Break-even timeline
+- Confidence level with reasoning
+- Risk summary
 
-## UI: Industry Intelligence Feed
+All deterministic — uses existing coefficients from revenue predictor and health engine.
+
+## UI: Capital Dashboard
 
 ```text
 ┌─────────────────────────────────────────────────┐
-│ INDUSTRY INTELLIGENCE                           │
+│ CAPITAL & EXPANSION                             │
 │                                                 │
-│ What's Working Now                              │
-│ ┌─────────────────────────────────────────────┐ │
-│ │ ↑ Review campaigns producing +22% booking   │ │
-│ │   lift across network (high confidence)      │ │
-│ ├─────────────────────────────────────────────┤ │
-│ │ ↑ FAQ-heavy pages +9% conversion vs plain   │ │
-│ │   service pages (medium confidence)          │ │
-│ ├─────────────────────────────────────────────┤ │
-│ │ → GBP posting showing diminishing returns   │ │
-│ │   after 3x/week (medium confidence)         │ │
-│ └─────────────────────────────────────────────┘ │
+│ Top Opportunity                                 │
+│ Scottsdale Extensions — ROE: 2.5x              │
+│ Investment: $80K · Return: $200K · 6mo payback  │
+│ Confidence: High                                │
 │                                                 │
-│ Your Position                                   │
-│ Review Velocity:  72nd percentile  ↑            │
-│ Content Volume:   45th percentile  →            │
-│ Avg Ticket:       81st percentile  ↑            │
+│ Location Performance Index                      │
+│ ┌────────────┬──────┬───────────────────┐       │
+│ │ Mesa       │ SPI 82│ High Performer   │       │
+│ │ Gilbert    │ SPI 61│ Growth Opportunity│       │
+│ │ Scottsdale │ SPI 74│ Strong           │       │
+│ └────────────┴──────┴───────────────────┘       │
 │                                                 │
-│ Market Alert                                    │
-│ "Extensions demand rising +18% in Phoenix —     │
-│  competition hasn't adjusted yet"               │
+│ Capital Priority Queue                          │
+│ 1. Scottsdale Expansion (2.5x ROE)             │
+│ 2. Mesa Optimization (2.1x ROE)                │
+│ 3. Gilbert Upgrade (1.5x ROE)                  │
+│                                                 │
+│ [Simulate Investment]                           │
+│ "Focus capital on Scottsdale before Gilbert"    │
 └─────────────────────────────────────────────────┘
 ```
 
 ## Build Order
 
-1. DB migration (new tables, RLS)
-2. `seo-industry-config.ts` (signal types, thresholds, cohort minimums)
-3. `seo-industry-intelligence.ts` (pure trend detection + benchmarking logic)
-4. `seo-industry-aggregator` edge function
-5. `useSEOIndustryIntelligence.ts` hook
-6. `SEOIndustryFeed.tsx` card
-7. Wire into `SEOEngineDashboard.tsx`
-8. Export updates
-9. Schedule weekly cron job for aggregator
+1. DB migration (3 new tables + enums + RLS)
+2. `capital-config.ts` (SPI weights, ROE thresholds, risk definitions)
+3. `capital-engine.ts` (SPI computation, ROE, risk model, queue ranking, break-even)
+4. `calculate-spi` edge function
+5. `useExpansionOpportunities.ts` hook (CRUD)
+6. `useCapitalEngine.ts` hook (compose Health + SEO + capital data)
+7. UI components: `SPICard`, `CapitalPriorityQueue`, `ExpansionSimulator`, `CapitalDashboard`
+8. Wire into navigation / SEO Engine Dashboard
 
 ## Technical Notes
 
-- All trend computation is deterministic — AI generates explanation text only, never determines signal existence or confidence
-- Privacy enforced at the aggregation layer: the edge function outputs only aggregate values; no org-level data enters the trend tables
-- Minimum cohort of 5 prevents de-anonymization in small markets
-- Network effectiveness data supplements org-level cold starts but never overrides org-specific data when sufficient samples exist
-- Signals expire automatically (`expires_at`) to prevent stale intelligence
+- SPI deliberately reuses Health Engine location scores — the 8 health categories map cleanly to SPI's 6 components
+- ROE and scenario modeling are pure deterministic computation — AI used only for generating recommendation copy
+- Risk model is additive to ROE, not a replacement — high-risk opportunities can still rank #1 if ROE is high enough, but risk is surfaced clearly
+- All data is org-scoped; no cross-org investment data exposure
+- The `gate_margin_baselines` enforcement gate already exists — Capital Dashboard requires it before showing expansion recommendations
 
