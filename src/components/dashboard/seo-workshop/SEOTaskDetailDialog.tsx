@@ -3,7 +3,7 @@
  * Shows task details, completion validation, proof upload, and status actions.
  */
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -39,6 +39,13 @@ export function SEOTaskDetailDialog({ task, organizationId, open, onOpenChange }
   const [uploadedProofs, setUploadedProofs] = useState<ProofArtifact[]>([]);
   const [managerApproved, setManagerApproved] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // U3: Reset state when switching between tasks
+  useEffect(() => {
+    setNotes('');
+    setUploadedProofs([]);
+    setManagerApproved(false);
+  }, [task?.id]);
 
   const transitionMut = useSEOTaskTransition();
   const completeMut = useSEOTaskComplete();

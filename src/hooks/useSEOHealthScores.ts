@@ -44,9 +44,19 @@ export function useSEOHealthSummary(organizationId: string | undefined) {
 
       if (error) throw error;
 
-      // Aggregate: average score per domain
-      const byDomain: Record<string, number[]> = {};
+      // Deduplicate: keep only latest score per (seo_object_id, domain)
+      const seen = new Set<string>();
+      const latestScores: any[] = [];
       for (const row of (data || []) as any[]) {
+        const key = `${row.seo_object_id}::${row.domain}`;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        latestScores.push(row);
+      }
+
+      // Aggregate: average latest score per domain
+      const byDomain: Record<string, number[]> = {};
+      for (const row of latestScores) {
         if (!byDomain[row.domain]) byDomain[row.domain] = [];
         byDomain[row.domain].push(row.score);
       }

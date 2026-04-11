@@ -7,7 +7,7 @@ import { ACTIVE_TASK_STATES } from '@/config/seo-engine/seo-state-machine';
 import { tokens } from '@/lib/design-tokens';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
-import { AlertTriangle, TrendingUp, Clock, Target } from 'lucide-react';
+import { AlertTriangle, TrendingUp, Clock, Target, Star, FileText, MapPin, Pencil, Flag, Crosshair } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 
 interface Props {
@@ -16,13 +16,13 @@ interface Props {
   onGoToCampaigns?: () => void;
 }
 
-const DOMAIN_ICONS: Record<string, string> = {
-  review: '⭐',
-  page: '📄',
-  local_presence: '📍',
-  content: '✏️',
-  competitive_gap: '🏁',
-  conversion: '🎯',
+const DOMAIN_ICONS: Record<string, React.ElementType> = {
+  review: Star,
+  page: FileText,
+  local_presence: MapPin,
+  content: Pencil,
+  competitive_gap: Flag,
+  conversion: Crosshair,
 };
 
 export function SEOEngineDashboard({ organizationId, onGoToTasks, onGoToCampaigns }: Props) {
@@ -146,8 +146,12 @@ export function SEOEngineDashboard({ organizationId, onGoToTasks, onGoToCampaign
                 return (
                   <div key={d.domain} className="space-y-1">
                     <div className="flex items-center justify-between">
-                      <span className="text-sm font-sans">
-                        {DOMAIN_ICONS[d.domain] ?? '📊'} {def?.label ?? d.domain}
+                      <span className="text-sm font-sans flex items-center gap-1.5">
+                        {(() => {
+                          const IconComp = DOMAIN_ICONS[d.domain];
+                          return IconComp ? <IconComp className="w-3.5 h-3.5 text-muted-foreground" /> : null;
+                        })()}
+                        {def?.label ?? d.domain}
                       </span>
                       <span className="text-sm font-display tracking-wide">{d.averageScore}</span>
                     </div>
