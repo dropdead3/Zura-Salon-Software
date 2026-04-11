@@ -13,7 +13,7 @@ export function useSEOTasks(organizationId: string | undefined, filters?: {
     queryFn: async () => {
       let query = supabase
         .from('seo_tasks' as any)
-        .select('*, seo_objects!seo_tasks_primary_seo_object_id_fkey(id, label, object_type, object_key)')
+        .select('*, seo_objects!primary_seo_object_id(id, label, object_type, object_key)')
         .eq('organization_id', organizationId!)
         .order('priority_score', { ascending: false });
 

@@ -16,7 +16,7 @@ export interface CompletionContext {
 }
 
 export interface ProofArtifact {
-  type: 'photo' | 'screenshot' | 'url' | 'text' | 'action_summary';
+  type: 'photo' | 'screenshot' | 'url' | 'text' | 'action_summary' | 'content_diff';
   value: string;
   uploadedAt: string;
 }

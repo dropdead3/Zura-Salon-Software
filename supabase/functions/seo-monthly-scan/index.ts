@@ -222,11 +222,22 @@ async function evaluateCampaignHealth(
       newStatus = "active";
     }
 
+    // Validate transition against state machine before applying
+    const VALID_TRANSITIONS: Record<string, string[]> = {
+      planning: ["active", "abandoned"],
+      active: ["blocked", "at_risk", "completed", "abandoned"],
+      blocked: ["active", "at_risk", "abandoned"],
+      at_risk: ["active", "blocked", "completed", "abandoned"],
+    };
+
     if (newStatus && newStatus !== campaign.status) {
-      await supabase
-        .from("seo_campaigns")
-        .update({ status: newStatus })
-        .eq("id", campaign.id);
+      const allowed = VALID_TRANSITIONS[campaign.status] ?? [];
+      if (allowed.includes(newStatus)) {
+        await supabase
+          .from("seo_campaigns")
+          .update({ status: newStatus })
+          .eq("id", campaign.id);
+      }
     }
 
     evaluated++;
@@ -320,9 +331,10 @@ async function reprioritizeActiveTasks(
       : 7;
     const freshness = Math.max(0, Math.min(1, 1 - daysUntilDue / 14));
 
+    const opportunity = ((task.priority_factors as any)?.opportunity ?? 0.5);
     const newScore = Math.round(
       severity * 0.25 * 100 +
-      (task.priority_factors as any)?.opportunity || 0.5 * 0.25 * 100 +
+      opportunity * 0.25 * 100 +
       0.5 * 0.20 * 100 + // business value placeholder
       0.5 * 0.15 * 100 + // ease placeholder
       freshness * 0.10 * 100
