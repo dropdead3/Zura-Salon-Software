@@ -1,40 +1,98 @@
 
 
-# Remove Remaining Redundancies in Today Hero Expanded Section
+# SEO Engine: Strategic Gap Assessment & Upgrade Plan
 
-## Problem
+## Current State — What's Already Built
 
-The pill button already displays a compact summary: `33/36 appts · $387.00 remaining · on track for $4,316.79`. The expanded section then repeats all three data points:
+Your SEO engine has strong deterministic foundations:
 
-1. **Appointment count repeated** — pill says "33/36 appts", expanded says "33 of 36 appointments completed · 3 pending"
-2. **Remaining amount repeated** — pill says "$387.00 remaining", expanded shows a large warning badge "Service revenue still expected to collect: $387.00"
-3. **Exceeded/on-track repeated** — pill says "on track for $X" or "exceeded by $X", expanded shows the same with a checkmark icon
+- **Task templates** (16 types) with due dates, cooldowns, escalation thresholds
+- **Campaign bundles** that group tasks by gap type (competitive, content, review, local)
+- **Suppression engine** with duplicate, cooldown, cap, and data-quality checks
+- **Impact tracker** with 7d/30d/90d measurement windows and contribution-confidence model
+- **Effectiveness tracker** that tunes priority weights based on historical completion + impact data
+- **Priority calculator** with weighted scoring model
+- **Dependency resolver** for task sequencing
+- **Completion validator** with proof artifacts and system verification
+- **User task cap** (DEFAULT_USER_TASK_CAP = 10) as overload protection
+- **Lever recommendation system** (lever_recommendations table + edge function + approve/decline/modify UX)
 
-## Approach
+## Gap Assessment vs. Your 5 Critical Upgrades
 
-Keep the pill as the single source for summary metrics. The expanded section should only show **detail the pill cannot contain**: the scheduled total, the breakdown (pending/awaiting/discounts), estimated finish time, and gap analysis.
+### A. Task Compression → Campaign Execution: PARTIALLY BUILT
 
-## Changes — `src/components/dashboard/AggregateSalesCard.tsx`
+`seo-campaign-bundle.ts` generates campaign bundles that group tasks by gap type. `SEOEngineCampaigns.tsx` renders them. **But the UX still lists individual tasks** — there's no "Own Hair Extensions in Gilbert" campaign-first view that collapses 6 tasks into one goal with a progress ring. The campaign detail dialog exists but is a flat task list, not a goal-oriented execution view.
 
-1. **Remove the appointment count line** (lines 926-934) — the pill already has "33/36 appts"; expanded doesn't need to restate it. Move the "awaiting checkout" and "discounts applied" details into a subtle inline note under the Scheduled Services line instead.
+**Gap**: Campaign-first UX with goal framing, progress visualization, and collapsed task checklist.
 
-2. **Remove the remaining revenue badge** (lines 937-949) — "$387 remaining" is already in the pill. Redundant.
+### B. Revenue Attribution Layer: NOT BUILT
 
-3. **Remove the exceeded/on-track status block** (lines 952-965) — "exceeded by $X" is already in the pill. Redundant.
+`ImpactMetrics` tracks deltas (review velocity, traffic, conversion) but **no revenue is attributed to SEO objects or campaigns**. There's no "$18,400 from this page" or "campaign expected to generate +$6,200/month." The POS data (appointments, transactions) exists in the platform but isn't connected to SEO objects.
 
-4. **Remove the "All appointments complete" block** (lines 968-982) — "All complete" is already in the pill text.
+**Gap**: Revenue-per-SEO-object calculation, campaign revenue attribution, and estimated ROI projection.
 
-5. **Keep in expanded section**:
-   - Scheduled Services Today total (with tooltip) — this is the only place it appears
-   - Awaiting checkout count + discounts as a subtle detail line beneath the scheduled total
-   - Estimated final transaction time (operational detail)
-   - Gap analysis trigger + drilldown
+### C. Task Impact Feedback Loop: PARTIALLY BUILT
 
-### Result
-Expanded section becomes: Scheduled total → operational details (awaiting checkout, discounts) → estimated finish time → gap analysis. No repeated metrics.
+`seo-impact-tracker.ts` has the contribution-confidence model. `seo-effectiveness-tracker.ts` computes modifiers that tune priority weights. **But this isn't wired to any UI** — there's no post-completion message like "This increased extension reviews by 18%." The `seo_task_impact` table query exists in `useSEOTaskImpact` but it's not surfaced in the task completion flow or anywhere visible.
 
-### File Modified
+**Gap**: Post-completion impact summary in task detail, campaign results summary, and visible learning feedback.
+
+### D. Overload Protection: MOSTLY BUILT
+
+`DEFAULT_USER_TASK_CAP = 10` exists. Suppression engine enforces it. Cooldowns, max-per-object, and duplicate checks are all in place. **Missing**: per-location active campaign cap (1 campaign per location-service), and daily task cap (currently only total cap).
+
+**Gap**: Daily task generation cap per user (3/day), active campaign cap per location-service (1).
+
+### E. "Do It For Me" Layer: NOT BUILT
+
+No auto-generation or auto-execution buttons exist. Tasks are manual. No "Generate + Apply FAQs" or "Generate + Post to GBP" capability.
+
+**Gap**: AI-powered action buttons on eligible task types.
+
+### F. SEO Momentum Score: NOT BUILT
+
+Current `SEOInsightsCard` shows static health scores and opportunity/risk numbers. No forward-looking momentum metric combining task completion velocity + review velocity + content freshness + competitor movement. No "gaining/losing ground" framing.
+
+**Gap**: Momentum score computation and directional UX ("gaining in Blonding, losing in Extensions").
+
+---
+
+## Recommended Build Sequence (Phase-Aligned)
+
+Given your phase map (Phase 1 = structured visibility, Phase 2 = advisory), here's what to build and in what order:
+
+### Phase 1A — Campaign-First UX (Upgrade A)
+Restructure `SEOCampaignDetailDialog` and `SEOEngineDashboard` to lead with campaigns as goals, not task lists. Show: campaign title as a goal statement, progress ring (X/Y tasks done), collapsed task checklist, and campaign-level status.
+
+### Phase 1B — Momentum Score (Upgrade F)
+Add `seo-momentum-calculator.ts` that computes a directional score from: task completion velocity (7d rolling), review velocity delta, content freshness recency, and competitor distance changes. Surface in `SEOInsightsCard` and `SEOEngineDashboard` with "gaining/losing" directional language per service-location.
+
+### Phase 1C — Impact Feedback in UI (Upgrade C)
+Wire `useSEOTaskImpact` into `SEOTaskDetailDialog` post-completion view. Show "This task contributed to: +18% review velocity (high confidence)" after completion. Add campaign-level impact rollup in `SEOCampaignDetailDialog`.
+
+### Phase 1D — Overload Refinement (Upgrade D)
+Add `MAX_DAILY_TASKS_PER_USER = 3` and `MAX_ACTIVE_CAMPAIGNS_PER_LOCATION_SERVICE = 1` to `seo-quotas.ts`. Enforce in suppression engine and campaign creation logic.
+
+### Phase 2A — Revenue Attribution (Upgrade B)
+Connect POS appointment/transaction data to SEO objects via service-location mapping. Compute rolling 30d revenue per SEO object. Show in object detail and campaign cards. Add estimated ROI to campaign creation flow.
+
+### Phase 2B — "Do It For Me" (Upgrade E)
+Add AI-powered action buttons to eligible templates (FAQ generation, GBP post generation, review request automation). Each follows: Generate → Preview → Approve → Execute. Guardrailed by the autonomy model.
+
+---
+
+## Files to Create/Modify (Phase 1A-1D)
+
 | File | Change |
 |---|---|
-| `src/components/dashboard/AggregateSalesCard.tsx` | Remove 4 redundant blocks from expanded section; consolidate awaiting/discount detail into single subtle line |
+| `src/lib/seo-engine/seo-momentum-calculator.ts` | New: Momentum score computation |
+| `src/config/seo-engine/seo-quotas.ts` | Add daily cap + campaign-per-location cap |
+| `src/lib/seo-engine/seo-suppression-engine.ts` | Enforce daily cap in suppression checks |
+| `src/components/dashboard/seo-workshop/SEOCampaignDetailDialog.tsx` | Redesign as goal-oriented view with progress ring + impact rollup |
+| `src/components/dashboard/seo-workshop/SEOEngineDashboard.tsx` | Add Momentum Score tile, campaign-first summary |
+| `src/components/dashboard/seo-workshop/SEOInsightsCard.tsx` | Add momentum directional language |
+| `src/components/dashboard/seo-workshop/SEOTaskDetailDialog.tsx` | Add post-completion impact summary |
+| `src/lib/seo-engine/seo-campaign-bundle.ts` | Add location-service campaign cap validation |
+
+This is a multi-session build. I recommend starting with **Phase 1A (Campaign-First UX)** and **Phase 1B (Momentum Score)** as the first implementation pass — these create the most visible strategic differentiation with the least backend dependency.
 
