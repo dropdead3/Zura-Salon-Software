@@ -220,6 +220,7 @@ export function useRevenueByCategoryDrilldown({
               newClients: s.newClients.size,
               returningClients: s.returningClients.size,
               totalClients: s.allClients.size,
+              serviceDetails: (s as any).serviceDetails as { serviceName: string; amount: number }[] | undefined,
             }))
             .sort((a, b) => b.revenue - a.revenue),
         }))
