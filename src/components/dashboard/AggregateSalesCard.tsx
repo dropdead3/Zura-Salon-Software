@@ -922,63 +922,27 @@ export function AggregateSalesCard({
                                   </Tooltip>
                                 </div>
 
-                                {/* Appointment completion fraction */}
-                                {adjustedExpected && totalAppts > 0 && (
-                                  <p className="text-xs text-muted-foreground/70 text-center">
-                                    {adjustedExpected.resolvedCount} of {totalAppts} appointments completed{adjustedExpected.pendingCount > 0 && ` · ${adjustedExpected.pendingCount} pending`}
-                                    {(adjustedExpected.awaitingCheckoutCount ?? 0) > 0 && ` · ${adjustedExpected.awaitingCheckoutCount} awaiting checkout`}
+                                {/* Operational details: awaiting checkout, discounts */}
+                                {adjustedExpected && (
+                                  <p className="text-[11px] text-muted-foreground/60 text-center">
+                                    {(adjustedExpected.awaitingCheckoutCount ?? 0) > 0 && (
+                                      <span>{adjustedExpected.awaitingCheckoutCount} awaiting checkout</span>
+                                    )}
+                                    {(adjustedExpected.awaitingCheckoutCount ?? 0) > 0 && adjustedExpected.discountedAppointmentCount > 0 && ' · '}
                                     {adjustedExpected.discountedAppointmentCount > 0 && (
-                                      <span className="text-accent-foreground/70"> · {adjustedExpected.discountedAppointmentCount} discount{adjustedExpected.discountedAppointmentCount !== 1 ? 's' : ''} applied</span>
+                                      <span>{adjustedExpected.discountedAppointmentCount} discount{adjustedExpected.discountedAppointmentCount !== 1 ? 's' : ''} applied</span>
                                     )}
                                   </p>
                                 )}
 
-                                {/* Remaining service revenue badge */}
-                                {remainingExpected > 0 && (
-                                  <div className="flex items-center justify-center">
-                                    <Badge 
-                                      variant="outline" 
-                                      className="text-sm font-normal gap-1 px-3 py-1.5 bg-warning/10 text-warning border-warning/30"
-                                    >
-                                      <span>Service revenue still expected to collect:</span>
-                                      <BlurredAmount disableTooltip>
-                                        <span>{formatCurrency(remainingExpected)}</span>
-                                      </BlurredAmount>
-                                    </Badge>
-                                  </div>
-                                )}
-
-                                {/* Exceeded / on-track / final status */}
-                                {todayActual?.hasActualData && (() => {
-                                  const excessAmount = serviceRevenue - displayExpected;
-                                  if (exceededTotal) {
-                                    return (
-                                      <div className="flex items-center justify-center gap-1.5 text-xs text-success-foreground">
-                                        <CheckCircle2 className="w-3.5 h-3.5" />
-                                        <BlurredAmount disableTooltip>
-                                          <span>Exceeded scheduled by {formatCurrency(excessAmount)}</span>
-                                        </BlurredAmount>
-                                      </div>
-                                    );
-                                  }
-                                  return null;
-                                })()}
-
-                                {/* Estimated final time or all-complete */}
-                                {!exceededTotal && (
-                                  remainingExpected <= 0 && allAppointmentsComplete ? (
-                                    <div className="flex items-center justify-center gap-1.5 text-xs text-success-foreground">
-                                      <CheckCircle2 className="w-3.5 h-3.5" />
-                                      <span>All appointments complete</span>
-                                    </div>
-                                  ) : !allAppointmentsComplete && todayActual?.lastAppointmentEndTime ? (
-                                    <p className="text-xs text-muted-foreground/70 text-center">
-                                      {t('sales.estimated_final_at')}{' '}
-                                      <span className="font-medium text-foreground/70">
-                                        {formatEndTime(todayActual.lastAppointmentEndTime)}
-                                      </span>
-                                    </p>
-                                  ) : null
+                                {/* Estimated final transaction time */}
+                                {!allAppointmentsComplete && todayActual?.lastAppointmentEndTime && (
+                                  <p className="text-xs text-muted-foreground/70 text-center">
+                                    {t('sales.estimated_final_at')}{' '}
+                                    <span className="font-medium text-foreground/70">
+                                      {formatEndTime(todayActual.lastAppointmentEndTime)}
+                                    </span>
+                                  </p>
                                 )}
 
                                 {/* Gap analysis drill-down trigger */}
