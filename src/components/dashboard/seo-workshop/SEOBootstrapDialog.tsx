@@ -16,7 +16,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { tokens } from '@/lib/design-tokens';
 import { Rocket, CheckCircle2, Loader2 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQueryClient, useQuery } from '@tanstack/react-query';
 
 interface Props {
   organizationId: string;
@@ -35,17 +35,51 @@ export function SEOBootstrapDialog({ organizationId, open, onOpenChange }: Props
 
   const selectedLocation = locations.find((l: any) => l.id === selectedLocationId);
 
-  // Mock services/stylists for now — in production these come from org data
-  const mockServices = useMemo(() => [
-    { id: 'svc-1', name: 'Hair Extensions', isHighValue: true },
-    { id: 'svc-2', name: 'Balayage', isHighValue: true },
-    { id: 'svc-3', name: 'Haircut & Style', isHighValue: false },
-    { id: 'svc-4', name: 'Color Correction', isHighValue: true },
-  ], []);
+  // Fetch real services from org
+  const { data: orgServices = [] } = useQuery({
+    queryKey: ['bootstrap-services', organizationId],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('services')
+        .select('id, name, category, price')
+        .eq('organization_id', organizationId)
+        .eq('is_active', true)
+        .order('name');
+      return (data || []).map((s: any) => ({
+        id: s.id,
+        name: s.name,
+        isHighValue: (s.price ?? 0) >= 100,
+      }));
+    },
+    enabled: !!organizationId && open,
+  });
 
-  const mockStylists = useMemo(() => [
-    { id: 'sty-1', name: 'New Stylist' },
-  ], []);
+  // Fetch real stylists from org
+  const { data: orgStylists = [] } = useQuery({
+    queryKey: ['bootstrap-stylists', organizationId, selectedLocationId],
+    queryFn: async () => {
+      let query = supabase
+        .from('employee_profiles')
+        .select('user_id, display_name')
+        .eq('organization_id', organizationId)
+        .eq('is_active', true)
+        .eq('is_approved', true);
+
+      if (selectedLocationId) {
+        query = query.contains('location_ids', [selectedLocationId]);
+      }
+
+      const { data } = await query.order('display_name');
+      return (data || []).map((e: any) => ({
+        id: e.user_id,
+        name: e.display_name || 'Staff',
+      }));
+    },
+    enabled: !!organizationId && !!selectedLocationId && open,
+  });
+
+  const services = orgServices.length > 0 ? orgServices : [{ id: 'default', name: 'General Service', isHighValue: false }];
+  const stylists = orgStylists.length > 0 ? orgStylists : [{ id: 'default', name: 'Staff' }];
 
   const handlePreview = () => {
     if (!selectedLocation) return;
@@ -54,8 +88,8 @@ export function SEOBootstrapDialog({ organizationId, open, onOpenChange }: Props
       organizationId,
       locationId: selectedLocationId,
       locationName: selectedLocation.name ?? 'New Location',
-      services: mockServices,
-      stylists: mockStylists,
+      services,
+      stylists,
       createdBy: user?.id ?? '',
     });
 
@@ -89,8 +123,9 @@ export function SEOBootstrapDialog({ organizationId, open, onOpenChange }: Props
       const campaignId = (campaign as any)?.id;
 
       // 2. Create SEO objects + tasks
+      let taskCount = 0;
       for (const task of preview.tasks) {
-        const { data: seoObj } = await supabase
+        const { data: seoObj, error: objErr } = await supabase
           .from('seo_objects' as any)
           .upsert({
             organization_id: organizationId,
@@ -102,13 +137,19 @@ export function SEOBootstrapDialog({ organizationId, open, onOpenChange }: Props
           .select('id')
           .single();
 
+        // B4 fix: skip task if SEO object creation failed
+        if (objErr || !(seoObj as any)?.id) {
+          console.warn(`Skipping task "${task.label}": SEO object creation failed`, objErr);
+          continue;
+        }
+
         const dueAt = new Date(Date.now() + task.dueOffsetDays * 86400000).toISOString();
 
         await supabase.from('seo_tasks' as any).insert({
           organization_id: organizationId,
           location_id: selectedLocationId,
           template_key: task.templateKey,
-          primary_seo_object_id: (seoObj as any)?.id ?? null,
+          primary_seo_object_id: (seoObj as any).id,
           status: 'queued',
           priority_score: task.priority,
           priority_factors: { bootstrap: true },
@@ -120,12 +161,13 @@ export function SEOBootstrapDialog({ organizationId, open, onOpenChange }: Props
             explanation: `Part of the ${preview.title} bootstrap campaign.`,
           },
         });
+        taskCount++;
       }
 
       setIsCreated(true);
       qc.invalidateQueries({ queryKey: ['seo-campaigns'] });
       qc.invalidateQueries({ queryKey: ['seo-tasks'] });
-      toast({ title: 'Bootstrap campaign created', description: `${preview.tasks.length} tasks generated for ${selectedLocation.name}.` });
+      toast({ title: 'Bootstrap campaign created', description: `${taskCount} tasks generated for ${selectedLocation.name}.` });
     } catch (err) {
       toast({ title: 'Failed to create campaign', description: err instanceof Error ? err.message : 'Unknown error', variant: 'destructive' });
     } finally {
@@ -181,7 +223,7 @@ export function SEOBootstrapDialog({ organizationId, open, onOpenChange }: Props
             {selectedLocationId && (
               <Card>
                 <CardContent className="p-4 text-sm font-sans space-y-2">
-                  <p>This will generate approximately <span className="font-medium">{estimateBootstrapTaskCount(mockServices.length, mockStylists.length)}</span> tasks across 5 phases:</p>
+                  <p>This will generate approximately <span className="font-medium">{estimateBootstrapTaskCount(services.length, stylists.length)}</span> tasks across 5 phases:</p>
                   <ul className="text-xs text-muted-foreground space-y-1 pl-4 list-disc">
                     <li>Foundation — Landing page + metadata</li>
                     <li>Service Pages — Per-service pages, descriptions, FAQs</li>
