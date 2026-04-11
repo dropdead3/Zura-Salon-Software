@@ -9,10 +9,8 @@ export interface CategoryStylistData {
   revenue: number;
   count: number;
   sharePercent: number;
-  newClients: number;
-  returningClients: number;
-  totalClients: number;
   serviceDetails?: { serviceName: string; amount: number }[];
+  items?: { itemName: string; amount: number; date: string }[];
 }
 
 export interface CategoryBreakdownData {
@@ -104,10 +102,8 @@ export function useRevenueByCategoryDrilldown({
         stylists: Record<string, {
           revenue: number;
           count: number;
-          newClients: Set<string>;
-          returningClients: Set<string>;
-          allClients: Set<string>;
           vishTransactionAmounts: { transactionId: string; amount: number }[];
+          items: { itemName: string; amount: number; date: string }[];
         }>;
       }> = {};
 
@@ -142,21 +138,14 @@ export function useRevenueByCategoryDrilldown({
           categoryMap[category].stylists[staffId] = {
             revenue: 0,
             count: 0,
-            newClients: new Set(),
-            returningClients: new Set(),
-            allClients: new Set(),
             vishTransactionAmounts: [],
+            items: [],
           };
         }
         const s = categoryMap[category].stylists[staffId];
         s.revenue += amount;
         s.count += 1;
-        s.allClients.add(clientKey);
-        if (isNew) {
-          s.newClients.add(clientKey);
-        } else {
-          s.returningClients.add(clientKey);
-        }
+        s.items.push({ itemName, amount, date: item.transaction_date || '' });
 
         // Track Vish transaction IDs for service name lookup
         if (isVish && item.transaction_id) {
@@ -217,10 +206,8 @@ export function useRevenueByCategoryDrilldown({
               revenue: s.revenue,
               count: s.count,
               sharePercent: data.revenue > 0 ? Math.round((s.revenue / data.revenue) * 100) : 0,
-              newClients: s.newClients.size,
-              returningClients: s.returningClients.size,
-              totalClients: s.allClients.size,
               serviceDetails: (s as any).serviceDetails as { serviceName: string; amount: number }[] | undefined,
+              items: s.items.sort((a, b) => b.date.localeCompare(a.date)),
             }))
             .sort((a, b) => b.revenue - a.revenue),
         }))
