@@ -19,6 +19,8 @@ import { IMPACT_CATEGORY_LABELS } from '@/lib/seo-engine/seo-impact-tracker';
 import { useAuth } from '@/contexts/AuthContext';
 import { tokens } from '@/lib/design-tokens';
 import type { ProofArtifact } from '@/lib/seo-engine/seo-completion-validator';
+import { SEOTaskAutoAction } from './SEOTaskAutoAction';
+import { AI_ELIGIBLE_TEMPLATES } from '@/config/seo-engine/seo-task-templates';
 import { Upload, CheckCircle2, Play, AlertTriangle, X, FileImage, Paperclip, TrendingUp } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 
