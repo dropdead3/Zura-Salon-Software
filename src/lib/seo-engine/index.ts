@@ -13,3 +13,14 @@ export {
   computeContributionConfidence,
   IMPACT_CATEGORY_LABELS,
 } from './seo-impact-tracker';
+export {
+  generateBootstrapCampaign,
+  estimateBootstrapTaskCount,
+} from './seo-bootstrap';
+export {
+  generateCampaignBundle,
+} from './seo-campaign-bundle';
+export {
+  computeEffectivenessModifiers,
+  aggregateEffectivenessData,
+} from './seo-effectiveness-tracker';
