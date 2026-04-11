@@ -25536,6 +25536,7 @@ export type Database = {
         Returns: undefined
       }
       check_user_has_pin: { Args: { _user_id: string }; Returns: boolean }
+      cleanup_old_seo_scores: { Args: never; Returns: undefined }
       create_booking: {
         Args: {
           p_appointment_date: string

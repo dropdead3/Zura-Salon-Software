@@ -6,7 +6,7 @@ import { tokens } from '@/lib/design-tokens';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
+import { toast } from '@/hooks/use-toast';
 import { useState } from 'react';
 import { Loader2, Play, RefreshCw, Zap } from 'lucide-react';
 
@@ -25,13 +25,9 @@ export function SEOEngineSettings({ organizationId }: Props) {
         body: { organizationId },
       });
       if (error) throw new Error(error.message);
-      toast.success(`${label} complete`, {
-        description: JSON.stringify(data).slice(0, 120),
-      });
+      toast({ title: `${label} complete`, description: JSON.stringify(data).slice(0, 120) });
     } catch (err) {
-      toast.error(`${label} failed`, {
-        description: err instanceof Error ? err.message : 'Unknown error',
-      });
+      toast({ title: `${label} failed`, description: err instanceof Error ? err.message : 'Unknown error', variant: 'destructive' });
     } finally {
       setRunningScans((prev) => {
         const next = new Set(prev);
