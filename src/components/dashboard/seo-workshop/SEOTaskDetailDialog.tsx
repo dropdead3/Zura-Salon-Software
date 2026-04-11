@@ -1,6 +1,7 @@
 /**
  * SEO Task Detail Dialog.
- * Shows task details, completion validation, proof upload, and status actions.
+ * Shows task details, completion validation, proof upload, status actions,
+ * and post-completion impact feedback.
  */
 
 import { useState, useRef, useEffect } from 'react';
@@ -13,11 +14,12 @@ import { Separator } from '@/components/ui/separator';
 import { SEO_TASK_TEMPLATES } from '@/config/seo-engine/seo-task-templates';
 import { TASK_STATUS_CONFIG, ACTIVE_TASK_STATES, type SEOTaskStatus } from '@/config/seo-engine/seo-state-machine';
 import { getPriorityTier, PRIORITY_TIERS } from '@/config/seo-engine/seo-priority-model';
-import { useSEOTaskTransition, useSEOTaskComplete, useSEOProofUpload } from '@/hooks/useSEOTaskActions';
+import { useSEOTaskTransition, useSEOTaskComplete, useSEOProofUpload, useSEOTaskImpact } from '@/hooks/useSEOTaskActions';
+import { IMPACT_CATEGORY_LABELS } from '@/lib/seo-engine/seo-impact-tracker';
 import { useAuth } from '@/contexts/AuthContext';
 import { tokens } from '@/lib/design-tokens';
 import type { ProofArtifact } from '@/lib/seo-engine/seo-completion-validator';
-import { Upload, CheckCircle2, Play, AlertTriangle, X, FileImage, Paperclip } from 'lucide-react';
+import { Upload, CheckCircle2, Play, AlertTriangle, X, FileImage, Paperclip, TrendingUp } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 
 interface Props {
@@ -50,6 +52,10 @@ export function SEOTaskDetailDialog({ task, organizationId, open, onOpenChange }
   const transitionMut = useSEOTaskTransition();
   const completeMut = useSEOTaskComplete();
   const uploadMut = useSEOProofUpload();
+
+  // Impact feedback for completed tasks
+  const isCompleted = task?.status === 'completed';
+  const { data: impactData = [] } = useSEOTaskImpact(isCompleted ? task?.id : undefined);
 
   if (!task) return null;
 
