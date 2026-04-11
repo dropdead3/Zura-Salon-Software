@@ -4,7 +4,8 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { tokens } from '@/lib/design-tokens';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Layers } from 'lucide-react';
+import { Layers, DollarSign } from 'lucide-react';
+import { useSEOObjectRevenue } from '@/hooks/useSEOObjectRevenue';
 
 interface Props {
   organizationId: string | undefined;

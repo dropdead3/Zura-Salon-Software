@@ -273,3 +273,13 @@ export const SEO_TASK_TEMPLATES: Record<string, SEOTaskTemplateConfig> = {
 };
 
 export const SEO_TASK_TEMPLATE_LIST = Object.values(SEO_TASK_TEMPLATES);
+
+/**
+ * AI-eligible templates: defines which task types support "Do It For Me" content generation.
+ */
+export const AI_ELIGIBLE_TEMPLATES: Record<string, { label: string; buttonLabel: string }> = {
+  faq_expansion: { label: 'Generate FAQs', buttonLabel: 'Generate FAQ Content' },
+  gbp_post: { label: 'Generate GBP Post', buttonLabel: 'Generate Post Content' },
+  service_description_rewrite: { label: 'Generate Description', buttonLabel: 'Generate Description' },
+  review_request: { label: 'Draft Review Request', buttonLabel: 'Draft Message' },
+};
