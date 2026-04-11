@@ -7,9 +7,10 @@ import { SEO_TASK_TEMPLATES } from '@/config/seo-engine/seo-task-templates';
 import { getPriorityTier, PRIORITY_TIERS } from '@/config/seo-engine/seo-priority-model';
 import { tokens } from '@/lib/design-tokens';
 import { Skeleton } from '@/components/ui/skeleton';
-import { CheckCircle2, Clock, AlertTriangle, Filter, Paperclip } from 'lucide-react';
+import { CheckCircle2, Clock, AlertTriangle, Filter, Paperclip, Plus } from 'lucide-react';
 import { useState } from 'react';
 import { SEOTaskDetailDialog } from './SEOTaskDetailDialog';
+import { SEOCreateTaskDialog } from './SEOCreateTaskDialog';
 
 interface Props {
   organizationId: string | undefined;
@@ -20,6 +21,7 @@ type FilterStatus = 'active' | 'overdue' | 'completed' | 'all';
 export function SEOEngineTaskList({ organizationId }: Props) {
   const [statusFilter, setStatusFilter] = useState<FilterStatus>('active');
   const [selectedTask, setSelectedTask] = useState<any>(null);
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
 
   const statusMap: Record<FilterStatus, string[] | undefined> = {
     active: [...ACTIVE_TASK_STATES],
