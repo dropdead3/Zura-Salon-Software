@@ -12,7 +12,7 @@ export interface SEOSettingDef {
   defaultValue: number | string | boolean;
   min?: number;
   max?: number;
-  group: 'quotas' | 'cooldowns' | 'thresholds' | 'capacity';
+  group: 'quotas' | 'cooldowns' | 'thresholds' | 'capacity' | 'autonomy';
 }
 
 export const SEO_SETTINGS_SCHEMA: SEOSettingDef[] = [
