@@ -17,7 +17,7 @@ import { useSEOTaskTransition, useSEOTaskComplete, useSEOProofUpload } from '@/h
 import { useAuth } from '@/contexts/AuthContext';
 import { tokens } from '@/lib/design-tokens';
 import type { ProofArtifact } from '@/lib/seo-engine/seo-completion-validator';
-import { Upload, CheckCircle2, Play, AlertTriangle, X, FileImage } from 'lucide-react';
+import { Upload, CheckCircle2, Play, AlertTriangle, X, FileImage, Paperclip } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 
 interface Props {
@@ -108,7 +108,7 @@ export function SEOTaskDetailDialog({ task, organizationId, open, onOpenChange }
         <div className="space-y-4">
           {/* Status & Priority */}
           <div className="flex items-center gap-2 flex-wrap">
-            <Badge variant={statusConf?.variant as any ?? 'outline'}>{statusConf?.label ?? task.status}</Badge>
+            <Badge variant={statusConf?.variant ?? 'outline'} className={statusConf?.className}>{statusConf?.label ?? task.status}</Badge>
             <Badge variant={tierConf.color as any} className="font-display tracking-wide">
               P{task.priority_score}
             </Badge>
@@ -122,10 +122,10 @@ export function SEOTaskDetailDialog({ task, organizationId, open, onOpenChange }
 
           {/* SEO Object */}
           {task.seo_objects && (
-            <div className="text-xs text-muted-foreground">
-              📎 {task.seo_objects.label} ({task.seo_objects.object_type})
-            </div>
-          )}
+             <div className="text-xs text-muted-foreground flex items-center gap-1">
+               <Paperclip className="w-3 h-3" /> {task.seo_objects.label} ({task.seo_objects.object_type})
+             </div>
+           )}
 
           {/* Due date */}
           {task.due_at && (

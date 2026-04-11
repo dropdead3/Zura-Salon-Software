@@ -56,9 +56,9 @@ export function SEOEngineCampaigns({ organizationId }: Props) {
                 <CardHeader className="pb-2">
                   <div className="flex items-center justify-between">
                     <CardTitle className={tokens.card.title}>{campaign.title}</CardTitle>
-                    <Badge variant={statusConf?.variant as any ?? 'outline'}>
-                      {statusConf?.label ?? campaign.status}
-                    </Badge>
+                    <Badge variant={statusConf?.variant ?? 'outline'} className={statusConf?.className}>
+                       {statusConf?.label ?? campaign.status}
+                     </Badge>
                   </div>
                 </CardHeader>
                 <CardContent>

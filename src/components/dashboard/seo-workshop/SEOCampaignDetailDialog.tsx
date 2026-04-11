@@ -18,7 +18,7 @@ import { SEO_TASK_TEMPLATES } from '@/config/seo-engine/seo-task-templates';
 import { transitionCampaignStatus } from '@/lib/seo-engine/seo-task-service';
 import { useSEOTasks } from '@/hooks/useSEOTasks';
 import { tokens } from '@/lib/design-tokens';
-import { Play, CheckCircle2, Ban, AlertTriangle, Clock } from 'lucide-react';
+import { Play, CheckCircle2, Ban, AlertTriangle, Clock, MapPin } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { useQueryClient } from '@tanstack/react-query';
 
@@ -94,11 +94,11 @@ export function SEOCampaignDetailDialog({ campaign, organizationId, open, onOpen
         <div className="space-y-4">
           {/* Status + dates */}
           <div className="flex items-center gap-2 flex-wrap">
-            <Badge variant={statusConf?.variant as any ?? 'outline'}>{statusConf?.label ?? campaign.status}</Badge>
-            {locationName && (
-              <Badge variant="outline" className="font-sans text-xs">
-                📍 {locationName}
-              </Badge>
+            <Badge variant={statusConf?.variant ?? 'outline'} className={statusConf?.className}>{statusConf?.label ?? campaign.status}</Badge>
+             {locationName && (
+               <Badge variant="outline" className="font-sans text-xs flex items-center gap-1">
+                 <MapPin className="w-3 h-3" /> {locationName}
+               </Badge>
             )}
             {daysRemaining !== null && (
               <Badge variant="outline" className="font-sans text-xs">
@@ -147,9 +147,9 @@ export function SEOCampaignDetailDialog({ campaign, organizationId, open, onOpen
               return (
                 <div key={task.id} className="flex items-center justify-between text-xs font-sans py-1 border-b border-border/40 last:border-0">
                   <span className="truncate">{title}</span>
-                  <Badge variant={tStatusConf?.variant as any ?? 'outline'} className="text-[10px] shrink-0 ml-2">
-                    {tStatusConf?.label ?? task.status}
-                  </Badge>
+                  <Badge variant={tStatusConf?.variant ?? 'outline'} className={`text-[10px] shrink-0 ml-2 ${tStatusConf?.className ?? ''}`}>
+                     {tStatusConf?.label ?? task.status}
+                   </Badge>
                 </div>
               );
             })}

@@ -145,23 +145,35 @@ export function SEOBootstrapDialog({ organizationId, open, onOpenChange }: Props
 
         const dueAt = new Date(Date.now() + task.dueOffsetDays * 86400000).toISOString();
 
-        await supabase.from('seo_tasks' as any).insert({
-          organization_id: organizationId,
-          location_id: selectedLocationId,
-          template_key: task.templateKey,
-          primary_seo_object_id: (seoObj as any).id,
-          status: 'queued',
-          priority_score: task.priority,
-          priority_factors: { bootstrap: true },
-          assigned_role: task.assignedRole,
-          due_at: dueAt,
-          campaign_id: campaignId,
-          ai_generated_content: {
-            title: `${task.label}: ${task.objectLabel}`,
-            explanation: `Part of the ${preview.title} bootstrap campaign.`,
-          },
-        });
-        taskCount++;
+        const { data: taskData, error: taskErr } = await supabase.from('seo_tasks' as any).insert({
+           organization_id: organizationId,
+           location_id: selectedLocationId,
+           template_key: task.templateKey,
+           primary_seo_object_id: (seoObj as any).id,
+           status: 'detected',
+           priority_score: task.priority,
+           priority_factors: { bootstrap: true },
+           assigned_role: task.assignedRole,
+           due_at: dueAt,
+           campaign_id: campaignId,
+           ai_generated_content: {
+             title: `${task.label}: ${task.objectLabel}`,
+             explanation: `Part of the ${preview.title} bootstrap campaign.`,
+           },
+         }).select('id').single();
+
+         // G12: Create audit history record for bootstrap task
+         if (!taskErr && (taskData as any)?.id) {
+           await supabase.from('seo_task_history' as any).insert({
+             task_id: (taskData as any).id,
+             previous_status: null,
+             new_status: 'detected',
+             performed_by: user?.id ?? 'system:bootstrap',
+             action: 'bootstrap_created',
+             metadata: { campaign_id: campaignId, template_key: task.templateKey },
+           });
+         }
+         taskCount++;
       }
 
       setIsCreated(true);

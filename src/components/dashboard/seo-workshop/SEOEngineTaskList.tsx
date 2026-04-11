@@ -7,7 +7,7 @@ import { SEO_TASK_TEMPLATES } from '@/config/seo-engine/seo-task-templates';
 import { getPriorityTier, PRIORITY_TIERS } from '@/config/seo-engine/seo-priority-model';
 import { tokens } from '@/lib/design-tokens';
 import { Skeleton } from '@/components/ui/skeleton';
-import { CheckCircle2, Clock, AlertTriangle, Filter } from 'lucide-react';
+import { CheckCircle2, Clock, AlertTriangle, Filter, Paperclip } from 'lucide-react';
 import { useState } from 'react';
 import { SEOTaskDetailDialog } from './SEOTaskDetailDialog';
 
@@ -92,9 +92,9 @@ export function SEOEngineTaskList({ organizationId }: Props) {
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className="text-sm font-sans font-medium">{title}</span>
-                        <Badge variant={statusConf?.variant as any ?? 'outline'} className="text-xs">
-                          {statusConf?.label ?? task.status}
-                        </Badge>
+                         <Badge variant={statusConf?.variant ?? 'outline'} className={`text-xs ${statusConf?.className ?? ''}`}>
+                           {statusConf?.label ?? task.status}
+                         </Badge>
                       </div>
                       {task.ai_generated_content?.explanation && (
                         <p className="text-xs text-muted-foreground mt-1 font-sans">
@@ -103,8 +103,8 @@ export function SEOEngineTaskList({ organizationId }: Props) {
                       )}
                       <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground">
                         {seoObject && (
-                          <span>📎 {seoObject.label}</span>
-                        )}
+                           <span className="flex items-center gap-1"><Paperclip className="w-3 h-3" />{seoObject.label}</span>
+                         )}
                         {task.due_at && (
                           <span>Due {new Date(task.due_at).toLocaleDateString()}</span>
                         )}

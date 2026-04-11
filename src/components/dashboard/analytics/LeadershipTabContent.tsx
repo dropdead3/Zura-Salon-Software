@@ -3,10 +3,14 @@ import { PinnableCard } from '@/components/dashboard/PinnableCard';
 import { ExecutiveSummaryCard } from '@/components/dashboard/analytics/ExecutiveSummaryCard';
 import { ExecutiveTrendChart } from '@/components/dashboard/analytics/ExecutiveTrendChart';
 import { WeeklyLeverSection } from '@/components/dashboard/analytics/WeeklyLeverSection';
+import { SEOInsightsCard } from '@/components/dashboard/seo-workshop/SEOInsightsCard';
+import { VisibilityGate } from '@/components/visibility/VisibilityGate';
+import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { Target, ChevronDown } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 
 export function LeadershipTabContent() {
+  const { effectiveOrganization } = useOrganizationContext();
   const [isExpanded, setIsExpanded] = useState(false);
 
   return (
@@ -58,6 +62,14 @@ export function LeadershipTabContent() {
       >
         <ExecutiveTrendChart />
       </PinnableCard>
+
+      <VisibilityGate
+        elementKey="seo_insights_leadership"
+        elementName="SEO Insights"
+        elementCategory="Analytics Hub - Leadership"
+      >
+        <SEOInsightsCard organizationId={effectiveOrganization?.id} />
+      </VisibilityGate>
     </div>
   );
 }
