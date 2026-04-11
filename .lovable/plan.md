@@ -1,114 +1,113 @@
 
 
-# SEO Task Engine — Second Pass Analysis
+# SEO Task Engine — Third Pass Analysis
 
 ## Status
-The engine is structurally sound. Templates seeded (16 rows confirmed), RLS policies in place, FK constraints verified, cleanup function exists. The previous fix pass addressed the critical bugs. This pass surfaces remaining issues across correctness, UX quality, and architectural completeness.
+Previous fixes landed correctly: template seeding confirmed, priority formula fixed, `::` separator standardized, deduplication in health summary, `performed_by` on scan history, pagination limits, emoji→icon replacement on dashboard. The engine is architecturally sound. This pass surfaces remaining correctness bugs, a significant UI rendering issue, and the still-unimplemented integration wiring.
 
 ---
 
-## Remaining Bugs
+## Critical Bugs
 
-### B5: `useSEOHealthSummary` averages ALL historical scores, not latest per object
-**File**: `src/hooks/useSEOHealthScores.ts`, line 43-58
-The query fetches all `seo_health_scores` rows for the org ordered by `scored_at` desc, then averages every row per domain. Since each scan inserts new rows (not upserts), older scores dilute the average. With 10 scan runs, an object's score appears as a blended historical average rather than its current health.
-**Fix**: Deduplicate by `(seo_object_id, domain)` — keep only the most recent score per object per domain before averaging.
+### B9: Badge variant mismatch — `warning`, `success`, `muted` don't exist
+**Impact**: High — affects every status badge across the entire SEO engine.
 
-### B6: Edge functions insert tasks without `location_id` in several places
-**Files**: `seo-weekly-scan/index.ts` lines 160-174 (page issues), 390-407 (conversion weakness)
-Tasks are inserted without `location_id`. While the column is nullable, this breaks location-scoped filtering in the UI and campaigns. The SEO object's `location_id` is available but not used.
-**Fix**: Include `location_id: seoObj.location_id` in all task inserts.
+The `Badge` component (`src/components/ui/badge.tsx`) only supports: `default`, `secondary`, `destructive`, `outline`, `glass`, `glass-dark`.
 
-### B7: `seo-score-calculator` uses auth-based access but daily/weekly/monthly scans use service-role without auth
-The score calculator is the only scan function that validates the caller's org membership. When the Settings UI triggers daily/weekly/monthly scans via `supabase.functions.invoke()`, the anon key is used but the function creates a service-role client — meaning any authenticated user can trigger scans for any org by sending an arbitrary `organizationId`.
-**Fix**: Add JWT validation + org membership check to the UI-triggered path in all 3 scan functions. Keep the unauthenticated cron path for scheduled runs.
+But `TASK_STATUS_CONFIG` and `CAMPAIGN_STATUS_CONFIG` reference:
+- `warning` — used by `awaiting_dependency` (tasks) and `blocked` (campaigns)
+- `success` — used by `completed` (tasks and campaigns)
+- `muted` — used by `suppressed`, `canceled` (tasks) and `abandoned` (campaigns)
 
-### B8: `content_refresh` template not recognized by scan functions
-The weekly scan (line 293) generates tasks with `template_key: 'content_refresh'`, but `content_refresh` has an FK to `seo_task_templates`. While the template IS seeded in the DB, it's a manual-approval template — the scan correctly generates it but the completion flow requires `content_diff` proof type which was already fixed in the previous pass. No action needed, just noting this is working correctly now.
+These variants silently render with no styling (just base classes), making status badges invisible or indistinguishable.
 
----
+**Fix**: Map the state machine variant strings to actual Badge variants. Replace `warning` → `outline` with amber styling, `success` → `secondary` with green styling, `muted` → `outline` with muted styling. Alternatively, add a small mapping function used at render time.
 
-## UX Gaps
+### B10: Priority weights in monthly scan don't sum to 1.0
+**File**: `supabase/functions/seo-monthly-scan/index.ts`, lines 336-342
 
-### U1: No pagination on any list query
-**Files**: `useSEOTasks.ts`, `SEOEngineObjects.tsx`, `useSEOCampaigns.ts`
-All queries fetch unlimited rows. With active orgs, the task list could return hundreds of rows.
-**Fix**: Add `limit(50)` to default queries and a "Load more" pattern to task/object lists.
+Weights: 0.25 + 0.25 + 0.20 + 0.15 + 0.10 = **0.95**. The fatigue penalty (0.05) is omitted entirely. The client-side `computePriorityScore` in `seo-priority-model.ts` includes all 6 factors and **subtracts** fatigue. The monthly scan's inline formula ignores fatigue, causing scores to differ from client-side calculations by up to 5 points.
 
-### U2: Dashboard health summary uses emoji icons instead of Lucide icons
-**File**: `SEOEngineDashboard.tsx`, line 19-26
-Uses `⭐`, `📄`, `📍` etc. while the rest of the platform uses Lucide icons per UI Canon.
-**Fix**: Replace with proper icon components.
+**Fix**: Add `- fatiguePenalty * 0.05 * 100` to the formula (or use a constant 0 since fatigue data isn't available server-side, and add a comment).
 
-### U3: Task detail dialog state doesn't reset between tasks
-**File**: `SEOTaskDetailDialog.tsx`, lines 38-40
-`uploadedProofs` and `managerApproved` are initialized with `useState` but the dialog component receives the task via prop. If React reuses the component instance (same key), state persists from a previous task.
-**Fix**: Add a `useEffect` to reset state when `task?.id` changes.
+### B11: Emoji icons remain in 3 places
+Previous pass replaced emojis on the dashboard, but 3 emoji usages remain:
+- `📎` in `SEOEngineTaskList.tsx` (line 106) and `SEOTaskDetailDialog.tsx` (line 126)
+- `📍` in `SEOCampaignDetailDialog.tsx` (line 100)
 
-### U4: No way to manually create a one-off SEO task
-Currently tasks can only be auto-generated by scans or bootstrap. Admins should be able to create ad-hoc tasks from the Tasks tab.
-**Fix**: Add a "Create Task" button that opens a form with template selection, object selection, and priority override.
-
-### U5: Campaign detail dialog doesn't show which location the campaign targets
-**File**: `SEOCampaignDetailDialog.tsx`
-The dialog shows title, objective, and progress but no location name. The `location_id` is on the campaign but not resolved to a human-readable name.
-**Fix**: Fetch location name and display it in the dialog header.
-
-### U6: Objects tab has no health scores inline
-`SEOEngineObjects.tsx` shows object cards with type and key but no health score. Users must mentally cross-reference with the Dashboard health scores.
-**Fix**: Join latest health scores per object and show a small badge on each card.
+**Fix**: Replace with Lucide `Paperclip` and `MapPin` icons.
 
 ---
 
-## Architectural Enhancements
+## Remaining Gaps
 
-### A1: `performed_by` missing on task history from weekly/monthly scans
-The daily scan was fixed (previous pass), but weekly and monthly scans still insert `seo_task_history` records without `performed_by`. The monthly scan inserts history for cleanup actions without it.
-**Fix**: Add `performed_by: 'system:weekly_scan'` and `performed_by: 'system:monthly_scan'` to all history inserts.
+### G10: Integration components never wired into host pages (A4 from previous pass — still open)
+`SEOInsightsCard`, `SEOContentTasksCard`, `SEOUnifiedTasksCard`, and `SEOPageHealthBadge` exist but are imported nowhere outside the SEO Workshop. They need to be embedded in:
+- Analytics Hub / main dashboard → `SEOInsightsCard`
+- Unified task views → `SEOUnifiedTasksCard`
+- Zura Marketer → `SEOContentTasksCard`
+- Website Builder → `SEOPageHealthBadge`
 
-### A2: Weekly scan doesn't insert `seo_task_history` records at all
-**File**: `seo-weekly-scan/index.ts`
-Unlike the daily scan, the weekly scan inserts tasks but never records a history entry for them. This breaks the audit trail.
-**Fix**: Add history insert after each task creation.
+**Fix**: Import and render in appropriate host pages wrapped in `VisibilityGate`.
 
-### A3: Score calculator object-key inconsistency
-**File**: `seo-score-calculator/index.ts`, line 119
-Location-service pairs use `::` separator (`${loc_id}::${svc_id}`), but the bootstrap dialog (line 134) uses `:` separator (`${locationId}:${svc.id}`). The daily scan (line 179) uses `::` with a `LIKE` query. This mismatch means bootstrap-created objects won't match scan-detected objects.
-**Fix**: Standardize on `::` everywhere — update `seo-bootstrap.ts` to use `::`.
+### G11: Bootstrap tasks created with `status: 'queued'` but state machine requires `detected → queued`
+**File**: `src/components/dashboard/seo-workshop/SEOBootstrapDialog.tsx`, line 153
 
-### A4: Integration components not wired into host pages
-`SEOInsightsCard`, `SEOContentTasksCard`, `SEOUnifiedTasksCard`, and `SEOPageHealthBadge` were created but never imported into their host pages (Analytics Hub, Marketer, Tasks, Website Builder).
-**Fix**: Import and render them in the appropriate host pages with `VisibilityGate` wrapping.
+Tasks are inserted directly as `queued`, skipping the `detected` state. The state machine defines `detected` as the entry state. While this works at the DB level (no constraint), it creates orphan history — the task was never "detected". The history record from the daily scan uses `new_status: "detected"`, but bootstrap tasks start at `queued` with no history entry at all.
+
+**Fix**: Insert tasks as `detected`, then batch-transition to `queued`, creating proper history. Alternatively, accept `queued` as a valid bootstrap entry point and document it.
+
+### G12: No history records created for bootstrap tasks
+The `SEOBootstrapDialog` inserts tasks but never creates `seo_task_history` records. Every scan function creates history entries, but bootstrap bypasses this entirely. Breaks the audit trail for potentially 30+ tasks per campaign.
+
+**Fix**: After each task insert, insert a history record with `performed_by: userId`, `action: 'bootstrap_created'`.
+
+### G13: Campaign detail dialog tasks list doesn't support pagination
+`SEOCampaignDetailDialog` renders all campaign tasks in a scrollable div. A bootstrap campaign can have 30-50 tasks, all rendered at once. While `.limit(50)` applies from the hook, this is still a dense render.
+
+**Fix**: Show task counts by status (already done) and collapse the full list behind a "Show all tasks" toggle, or add virtual scrolling.
 
 ---
 
-## Fix Priority Order
+## Enhancements
 
-1. **B5** — Health summary averaging bug (data correctness)
-2. **A3** — Object key separator inconsistency (data integrity)
-3. **U3** — Dialog state reset (UX bug)
-4. **B6** — Missing `location_id` on task inserts (data completeness)
-5. **A2** — Missing audit trail in weekly scan (governance)
-6. **A1** — Missing `performed_by` in weekly/monthly scans
-7. **U1** — Add pagination limits
-8. **U2** — Replace emoji with Lucide icons
-9. **U5** — Show location name in campaign dialog
-10. **U6** — Inline health scores on objects tab
+### E1: No manual ad-hoc task creation
+Currently tasks can only be auto-generated by scans or bootstrap. Admins should be able to create one-off tasks from the Tasks tab — e.g., "Fix this specific page's metadata." A simple form with template selection, SEO object picker, and priority override.
+
+### E2: Task list lacks location and template filters
+`SEOEngineTaskList` only has status filters. For multi-location orgs, filtering by location, template type, or assignee would significantly improve usability.
+
+### E3: Dashboard domain health bars lack color coding
+The health domain progress bars all use the same default color. Scores below 50 should use destructive/amber colors to draw attention to weak domains.
+
+### E4: Campaign auto-complete threshold is aggressive
+`seo-monthly-scan` auto-completes campaigns at 80% task completion when the window closes (line 218). This means 20% of tasks can be silently abandoned. Consider lowering to 90% or surfacing incomplete tasks.
+
+---
+
+## Fix Priority
+
+1. **B9** — Badge variant mapping (visual correctness across all status badges)
+2. **B11** — Replace remaining emojis with Lucide icons
+3. **G12** — Add history records for bootstrap tasks
+4. **G11** — Standardize bootstrap task initial status
+5. **B10** — Add fatigue factor to monthly scan formula
+6. **G10** — Wire integration components into host pages
+7. **E2** — Add location/template filters to task list
+8. **E3** — Color-code health domain bars
 
 ## Files Changed
 
 | File | Changes |
 |---|---|
-| `src/hooks/useSEOHealthScores.ts` | Fix health summary deduplication (B5) |
-| `src/lib/seo-engine/seo-bootstrap.ts` | Fix `::` separator (A3) |
-| `src/components/dashboard/seo-workshop/SEOTaskDetailDialog.tsx` | Reset state on task change (U3) |
-| `supabase/functions/seo-weekly-scan/index.ts` | Add location_id (B6), history records (A2), performed_by (A1) |
-| `supabase/functions/seo-monthly-scan/index.ts` | Add performed_by (A1) |
-| `src/hooks/useSEOTasks.ts` | Add pagination limit (U1) |
-| `src/hooks/useSEOCampaigns.ts` | Add pagination limit (U1) |
-| `src/components/dashboard/seo-workshop/SEOEngineDashboard.tsx` | Replace emoji with icons (U2) |
-| `src/components/dashboard/seo-workshop/SEOCampaignDetailDialog.tsx` | Show location name (U5) |
-| `src/components/dashboard/seo-workshop/SEOEngineObjects.tsx` | Inline health badges (U6), pagination (U1) |
+| `src/config/seo-engine/seo-state-machine.ts` | Map variant strings to real Badge variants (B9) |
+| `src/components/dashboard/seo-workshop/SEOEngineTaskList.tsx` | Replace emoji, add location/template filters (B11, E2) |
+| `src/components/dashboard/seo-workshop/SEOTaskDetailDialog.tsx` | Replace emoji (B11) |
+| `src/components/dashboard/seo-workshop/SEOCampaignDetailDialog.tsx` | Replace emoji (B11) |
+| `src/components/dashboard/seo-workshop/SEOBootstrapDialog.tsx` | Add history records, fix initial status (G11, G12) |
+| `supabase/functions/seo-monthly-scan/index.ts` | Add fatigue factor to formula (B10) |
+| `src/components/dashboard/seo-workshop/SEOEngineDashboard.tsx` | Color-code health bars (E3) |
+| Host pages (Analytics Hub, Marketer, etc.) | Wire integration components (G10) |
 
-Total: ~10 files modified, no new migrations needed.
+Total: ~8-10 files modified, no new migrations.
 
