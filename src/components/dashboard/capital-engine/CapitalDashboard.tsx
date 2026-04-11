@@ -7,6 +7,7 @@ import { useEnforcementGate } from '@/hooks/useEnforcementGate';
 import { SPICard } from './SPICard';
 import { CapitalPriorityQueue } from './CapitalPriorityQueue';
 import { ExpansionSimulator } from './ExpansionSimulator';
+import { FinancedProjectsTracker } from './FinancedProjectsTracker';
 import { Landmark, TrendingUp, ShieldCheck } from 'lucide-react';
 
 interface Props {
@@ -120,6 +121,9 @@ export function CapitalDashboard({ organizationId }: Props) {
 
       {/* Investment Simulator */}
       <ExpansionSimulator opportunities={capitalQueue} />
+
+      {/* Financed Projects */}
+      <FinancedProjectsTracker />
     </div>
   );
 }

@@ -7476,6 +7476,141 @@ export type Database = {
           },
         ]
       }
+      financed_project_ledger: {
+        Row: {
+          amount: number
+          created_at: string
+          description: string | null
+          entry_type: Database["public"]["Enums"]["financed_ledger_entry_type"]
+          financed_project_id: string
+          id: string
+          organization_id: string
+          recorded_at: string
+        }
+        Insert: {
+          amount?: number
+          created_at?: string
+          description?: string | null
+          entry_type: Database["public"]["Enums"]["financed_ledger_entry_type"]
+          financed_project_id: string
+          id?: string
+          organization_id: string
+          recorded_at?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          description?: string | null
+          entry_type?: Database["public"]["Enums"]["financed_ledger_entry_type"]
+          financed_project_id?: string
+          id?: string
+          organization_id?: string
+          recorded_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "financed_project_ledger_financed_project_id_fkey"
+            columns: ["financed_project_id"]
+            isOneToOne: false
+            referencedRelation: "financed_projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "financed_project_ledger_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      financed_projects: {
+        Row: {
+          completed_at: string | null
+          confidence_at_funding: string
+          created_at: string
+          funded_amount: number
+          funded_at: string | null
+          id: string
+          opportunity_id: string
+          organization_id: string
+          predicted_annual_lift: number
+          predicted_break_even_months: number
+          realized_revenue_lift: number
+          repayment_remaining: number
+          repayment_total: number
+          risk_level_at_funding: string
+          roe_at_funding: number
+          status: Database["public"]["Enums"]["financed_project_status"]
+          stripe_checkout_session_id: string | null
+          stripe_subscription_id: string | null
+          target_completion_at: string | null
+          updated_at: string
+          variance_pct: number | null
+        }
+        Insert: {
+          completed_at?: string | null
+          confidence_at_funding?: string
+          created_at?: string
+          funded_amount?: number
+          funded_at?: string | null
+          id?: string
+          opportunity_id: string
+          organization_id: string
+          predicted_annual_lift?: number
+          predicted_break_even_months?: number
+          realized_revenue_lift?: number
+          repayment_remaining?: number
+          repayment_total?: number
+          risk_level_at_funding?: string
+          roe_at_funding?: number
+          status?: Database["public"]["Enums"]["financed_project_status"]
+          stripe_checkout_session_id?: string | null
+          stripe_subscription_id?: string | null
+          target_completion_at?: string | null
+          updated_at?: string
+          variance_pct?: number | null
+        }
+        Update: {
+          completed_at?: string | null
+          confidence_at_funding?: string
+          created_at?: string
+          funded_amount?: number
+          funded_at?: string | null
+          id?: string
+          opportunity_id?: string
+          organization_id?: string
+          predicted_annual_lift?: number
+          predicted_break_even_months?: number
+          realized_revenue_lift?: number
+          repayment_remaining?: number
+          repayment_total?: number
+          risk_level_at_funding?: string
+          roe_at_funding?: number
+          status?: Database["public"]["Enums"]["financed_project_status"]
+          stripe_checkout_session_id?: string | null
+          stripe_subscription_id?: string | null
+          target_completion_at?: string | null
+          updated_at?: string
+          variance_pct?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "financed_projects_opportunity_id_fkey"
+            columns: ["opportunity_id"]
+            isOneToOne: false
+            referencedRelation: "expansion_opportunities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "financed_projects_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       form_templates: {
         Row: {
           content: string
@@ -27002,6 +27137,16 @@ export type Database = {
         | "in_progress"
         | "completed"
         | "dismissed"
+      financed_ledger_entry_type:
+        | "repayment"
+        | "revenue_lift_recorded"
+        | "adjustment"
+      financed_project_status:
+        | "pending_payment"
+        | "active"
+        | "completed"
+        | "defaulted"
+        | "cancelled"
       formula_type: "actual" | "refined"
       fulfillment_status:
         | "pending"
@@ -27350,6 +27495,18 @@ export const Constants = {
         "in_progress",
         "completed",
         "dismissed",
+      ],
+      financed_ledger_entry_type: [
+        "repayment",
+        "revenue_lift_recorded",
+        "adjustment",
+      ],
+      financed_project_status: [
+        "pending_payment",
+        "active",
+        "completed",
+        "defaulted",
+        "cancelled",
       ],
       formula_type: ["actual", "refined"],
       fulfillment_status: [
