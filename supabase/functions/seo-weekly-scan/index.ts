@@ -10,8 +10,9 @@ import { wildcardCorsHeaders } from "../_shared/cors.ts";
  * - Metadata quality checks
  * - Internal linking gaps
  * - Conversion weakness detection
- * - Service-location health aggregation
+ * - Competitor gap detection
  *
+ * GAP 5: Auth validation added for authenticated calls.
  * Deterministic task generation — AI only for titles/explanations.
  */
 
@@ -23,13 +24,55 @@ Deno.serve(async (req: Request) => {
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
+    // ── GAP 5: Auth validation ──
     let organizationId: string | null = null;
-    try {
-      const body = await req.json();
-      organizationId = body.organizationId || body.organization_id || null;
-    } catch { /* cron call */ }
+    const authHeader = req.headers.get("Authorization");
+
+    if (authHeader?.startsWith("Bearer ")) {
+      const userClient = createClient(supabaseUrl, anonKey, {
+        global: { headers: { Authorization: authHeader } },
+      });
+      const { data: claims, error: claimsErr } = await userClient.auth.getClaims(
+        authHeader.replace("Bearer ", "")
+      );
+      if (claimsErr || !claims?.claims?.sub) {
+        return new Response(JSON.stringify({ error: "Unauthorized" }), {
+          status: 401,
+          headers: { ...wildcardCorsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      const userId = claims.claims.sub as string;
+
+      try {
+        const body = await req.json();
+        organizationId = body.organizationId || body.organization_id || null;
+      } catch { /* no body */ }
+
+      if (organizationId) {
+        const { data: membership } = await supabase
+          .from("organization_members")
+          .select("id")
+          .eq("user_id", userId)
+          .eq("organization_id", organizationId)
+          .limit(1)
+          .single();
+
+        if (!membership) {
+          return new Response(JSON.stringify({ error: "Not a member of this organization" }), {
+            status: 403,
+            headers: { ...wildcardCorsHeaders, "Content-Type": "application/json" },
+          });
+        }
+      }
+    } else {
+      try {
+        const body = await req.json();
+        organizationId = body.organizationId || body.organization_id || null;
+      } catch { /* cron call */ }
+    }
 
     const orgs = organizationId
       ? [{ id: organizationId }]
@@ -69,16 +112,9 @@ async function runWeeklyScan(
 ): Promise<{ tasksGenerated: number }> {
   let tasksGenerated = 0;
 
-  // ─── 1. Page completeness & metadata checks ───
   tasksGenerated += await detectPageIssues(supabase, organizationId);
-
-  // ─── 2. Content gap detection ───
   tasksGenerated += await detectContentGaps(supabase, organizationId);
-
-  // ─── 3. Conversion weakness ───
   tasksGenerated += await detectConversionWeakness(supabase, organizationId);
-
-  // ─── 4. Competitor gap detection (M10) ───
   tasksGenerated += await detectCompetitorGaps(supabase, organizationId);
 
   return { tasksGenerated };
@@ -92,7 +128,6 @@ async function detectPageIssues(
   supabase: ReturnType<typeof createClient>,
   organizationId: string
 ): Promise<number> {
-  // Find website_page objects with low page health
   const { data: lowPageScores } = await supabase
     .from("seo_health_scores")
     .select("seo_object_id, score, raw_signals, seo_objects!inner(id, object_type, object_key, label)")
@@ -104,7 +139,6 @@ async function detectPageIssues(
 
   if (!lowPageScores?.length) return 0;
 
-  // Deduplicate by object
   const seen = new Set<string>();
   const unique = lowPageScores.filter((s: any) => {
     if (seen.has(s.seo_object_id)) return false;
@@ -119,7 +153,6 @@ async function detectPageIssues(
     const seoObj = (item as any).seo_objects;
     if (!seoObj) continue;
 
-    // Determine which template to use based on signals
     let templateKey: string;
     let title: string;
     let explanation: string;
@@ -141,7 +174,6 @@ async function detectPageIssues(
       explanation = `Page health score is ${item.score}/100. Multiple signals need improvement.`;
     }
 
-    // Suppression check
     const { data: openTasks } = await supabase
       .from("seo_tasks")
       .select("id")
@@ -202,7 +234,6 @@ async function detectContentGaps(
   supabase: ReturnType<typeof createClient>,
   organizationId: string
 ): Promise<number> {
-  // Find services without corresponding website pages
   const { data: services } = await supabase
     .from("services")
     .select("id, name, location_id, price, category")
@@ -214,7 +245,6 @@ async function detectContentGaps(
 
   if (!services?.length) return 0;
 
-  // Get existing website page objects
   const { data: pageObjects } = await supabase
     .from("seo_objects")
     .select("object_key, label, metadata")
@@ -225,7 +255,6 @@ async function detectContentGaps(
     (pageObjects || []).map((p: any) => (p.label || "").toLowerCase())
   );
 
-  // Find location-service objects with low content health
   const { data: lowContentScores } = await supabase
     .from("seo_health_scores")
     .select("seo_object_id, score, raw_signals, seo_objects!inner(id, object_type, object_key, label, location_id, metadata)")
@@ -237,16 +266,14 @@ async function detectContentGaps(
 
   let generated = 0;
 
-  // Check for services that might need dedicated pages
   for (const svc of services) {
-    if (!svc.price || svc.price < 50) continue; // Skip low-value services
+    if (!svc.price || svc.price < 50) continue;
     const nameNorm = svc.name.toLowerCase();
     const hasPage = existingPageLabels.has(nameNorm) ||
       [...existingPageLabels].some((l) => l.includes(nameNorm) || nameNorm.includes(l));
 
     if (hasPage) continue;
 
-    // Find or create SEO object for this service
     const { data: seoObj } = await supabase
       .from("seo_objects")
       .select("id")
@@ -257,7 +284,6 @@ async function detectContentGaps(
 
     if (!seoObj) continue;
 
-    // Suppression
     const { data: openTasks } = await supabase
       .from("seo_tasks")
       .select("id")
@@ -307,10 +333,9 @@ async function detectContentGaps(
     }
 
     generated++;
-    if (generated >= 5) break; // Limit per scan
+    if (generated >= 5) break;
   }
 
-  // Content refresh for low-scoring existing content
   if (lowContentScores?.length) {
     for (const item of lowContentScores) {
       const seoObj = (item as any).seo_objects;
@@ -382,7 +407,6 @@ async function detectConversionWeakness(
   supabase: ReturnType<typeof createClient>,
   organizationId: string
 ): Promise<number> {
-  // Find website pages with low conversion scores
   const { data: lowConversion } = await supabase
     .from("seo_health_scores")
     .select("seo_object_id, score, raw_signals, seo_objects!inner(id, object_type, object_key, label)")
@@ -406,7 +430,6 @@ async function detectConversionWeakness(
 
     const signals = item.raw_signals as any || {};
 
-    // Only generate CTA optimization if CTA is missing
     if (signals.has_booking_cta === false) {
       const { data: openTasks } = await supabase
         .from("seo_tasks")
@@ -463,14 +486,13 @@ async function detectConversionWeakness(
 }
 
 // ═══════════════════════════════════════════════════════════════════════
-// 4. Competitor Gap Detection (M10 — stub, requires competitor data)
+// 4. Competitor Gap Detection
 // ═══════════════════════════════════════════════════════════════════════
 
 async function detectCompetitorGaps(
   supabase: ReturnType<typeof createClient>,
   organizationId: string
 ): Promise<number> {
-  // Check if competitive_gap health scores exist for this org
   const { data: gapScores } = await supabase
     .from("seo_health_scores")
     .select("seo_object_id, score, raw_signals, seo_objects!inner(id, object_type, label, location_id)")
@@ -488,7 +510,6 @@ async function detectCompetitorGaps(
     const seoObj = (item as any).seo_objects;
     if (!seoObj) continue;
 
-    // Suppression: check for open competitor_gap_response tasks
     const { data: openTasks } = await supabase
       .from("seo_tasks")
       .select("id")
