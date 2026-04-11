@@ -78,6 +78,9 @@ async function runWeeklyScan(
   // ─── 3. Conversion weakness ───
   tasksGenerated += await detectConversionWeakness(supabase, organizationId);
 
+  // ─── 4. Competitor gap detection (M10) ───
+  tasksGenerated += await detectCompetitorGaps(supabase, organizationId);
+
   return { tasksGenerated };
 }
 
