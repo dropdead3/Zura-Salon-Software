@@ -19,7 +19,7 @@ function getConfidenceVariant(c: string) {
 export function CapitalPriorityQueue({ queue }: Props) {
   if (!queue.length) {
     return (
-      <Card className={tokens.card.base}>
+      <Card className={tokens.card.wrapper}>
         <CardHeader>
           <div className="flex items-center gap-3">
             <div className={tokens.card.iconBox}>
@@ -42,7 +42,7 @@ export function CapitalPriorityQueue({ queue }: Props) {
   }
 
   return (
-    <Card className={tokens.card.base}>
+    <Card className={tokens.card.wrapper}>
       <CardHeader>
         <div className="flex items-center gap-3">
           <div className={tokens.card.iconBox}>

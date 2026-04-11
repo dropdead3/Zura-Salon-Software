@@ -29,7 +29,7 @@ export function CapitalDashboard({ organizationId }: Props) {
 
   if (!marginGateCompleted) {
     return (
-      <Card className={tokens.card.base}>
+      <Card className={tokens.card.wrapper}>
         <CardContent className="py-12">
           <div className={tokens.empty.container}>
             <ShieldCheck className={tokens.empty.icon} />
@@ -47,7 +47,7 @@ export function CapitalDashboard({ organizationId }: Props) {
     <div className="space-y-6">
       {/* Top Opportunity Highlight */}
       {topOpportunity && (
-        <Card className={`${tokens.card.base} border-primary/20`}>
+        <Card className={`${tokens.card.wrapper} border-primary/20`}>
           <CardHeader className="flex flex-row items-start justify-between pb-3">
             <div className="flex items-center gap-3">
               <div className={tokens.card.iconBox}>

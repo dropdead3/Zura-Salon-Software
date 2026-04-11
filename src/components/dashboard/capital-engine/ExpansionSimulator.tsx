@@ -34,7 +34,7 @@ export function ExpansionSimulator({ opportunities }: Props) {
   };
 
   return (
-    <Card className={tokens.card.base}>
+    <Card className={tokens.card.wrapper}>
       <CardHeader>
         <div className="flex items-center gap-3">
           <div className={tokens.card.iconBox}>

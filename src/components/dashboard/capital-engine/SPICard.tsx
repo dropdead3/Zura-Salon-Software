@@ -44,7 +44,7 @@ export function SPICard({ spiData }: Props) {
   const locationName = spiData.factors?.locationName ?? spiData.locationId;
 
   return (
-    <Card className={tokens.card.base}>
+    <Card className={tokens.card.wrapper}>
       <CardHeader className="flex flex-row items-start justify-between pb-3">
         <div className="flex items-center gap-3">
           <div className={tokens.card.iconBox}>
