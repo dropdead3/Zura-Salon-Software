@@ -230,6 +230,7 @@ const BenchmarksPage = lazyWithRetry(() => import("./pages/dashboard/platform/Be
 const ColorBarAdmin = lazyWithRetry(() => import("./pages/dashboard/platform/ColorBarAdmin"));
 const CoachDashboard = lazyWithRetry(() => import("./pages/dashboard/platform/CoachDashboard"));
 const BillingGuide = lazyWithRetry(() => import("./pages/dashboard/platform/BillingGuide"));
+const PlatformNetwork = lazyWithRetry(() => import("./pages/dashboard/platform/Network"));
 const PlatformLayout = lazyWithRetry(() => import("./components/platform/layout/PlatformLayout").then((module) => ({ default: module.PlatformLayout })));
 const TeamCalendar = lazyWithRetry(() => import("./pages/dashboard/TeamCalendar"));
 const SalesDashboard = lazyWithRetry(() => import("./pages/dashboard/admin/SalesDashboard"));
@@ -506,6 +507,7 @@ const App = () => (
                         <Route path="stripe-health" element={<StripeHealthPage />} />
                         <Route path="notifications" element={<ProtectedRoute requirePlatformRole="platform_admin"><NotificationsPage /></ProtectedRoute>} />
                         <Route path="analytics" element={<ProtectedRoute requirePlatformRole="platform_owner"><PlatformAnalytics /></ProtectedRoute>} />
+                        <Route path="network" element={<ProtectedRoute requirePlatformRole="platform_admin"><PlatformNetwork /></ProtectedRoute>} />
                         <Route path="knowledge-base" element={<ProtectedRoute requirePlatformRole="platform_admin"><PlatformKnowledgeBase /></ProtectedRoute>} />
                         <Route path="revenue" element={<ProtectedRoute requirePlatformRole="platform_admin"><PlatformRevenue /></ProtectedRoute>} />
                         <Route path="billing-guide" element={<BillingGuide />} />
