@@ -691,7 +691,7 @@ function DashboardSections({
 
     seo_my_tasks: (hasStylistRole || isFrontDesk) && (
       <VisibilityGate elementKey="seo_my_tasks" elementName="My SEO Tasks" elementCategory="seo">
-        <SEOMyTasksCard organizationId={organizationId} />
+        <SEOMyTasksCard organizationId={effectiveOrganization?.id} />
       </VisibilityGate>
     ),
     
@@ -710,7 +710,7 @@ function DashboardSections({
     toggleTask,
     deleteTask,
     isImpersonating,
-    organizationId,
+    effectiveOrganization,
   ]);
 
   // Render sections in order based on layout
