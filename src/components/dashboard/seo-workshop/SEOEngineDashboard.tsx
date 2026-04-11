@@ -14,6 +14,7 @@ import { AlertTriangle, TrendingUp, TrendingDown, Clock, Target, Star, FileText,
 import { SEOPredictedLiftCard } from './SEOPredictedLiftCard';
 import { SEOGrowthReport } from './SEOGrowthReport';
 import { SEOGlobalGrowthDashboard } from './SEOGlobalGrowthDashboard';
+import { SEODominationDashboard } from './SEODominationDashboard';
 import { Skeleton } from '@/components/ui/skeleton';
 
 interface Props {
