@@ -40,6 +40,8 @@ export function SEOEngineObjects({ organizationId }: Props) {
     enabled: !!organizationId,
   });
 
+  const { data: revenueMap = {} } = useSEOObjectRevenue(organizationId);
+
   // Fetch latest health scores per object (deduplicated)
   const objectIds = objects.map((o: any) => o.id);
   const { data: healthScores = [] } = useQuery({
