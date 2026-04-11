@@ -73,9 +73,11 @@ function ClientMixPanel({ stylist }: { stylist: CategoryStylistData }) {
 }
 
 /** Level 2: Stylists within a category */
-function StylistRow({ stylist, delay }: { stylist: CategoryStylistData; delay: number }) {
+function StylistRow({ stylist, delay, categoryName }: { stylist: CategoryStylistData; delay: number; categoryName: string }) {
   const [expanded, setExpanded] = useState(false);
   const { formatCurrencyWhole: fmtWhole } = useFormatCurrency();
+  const isOverageFees = categoryName === 'Chemical Overage Fees';
+  const itemLabel = isOverageFees ? 'charge' : 'appointment';
 
   return (
     <motion.div
@@ -91,7 +93,7 @@ function StylistRow({ stylist, delay }: { stylist: CategoryStylistData; delay: n
         <div className="flex-1 min-w-0">
           <p className="text-sm font-medium truncate">{stylist.staffName}</p>
           <p className="text-xs text-muted-foreground">
-            {stylist.count} appointment{stylist.count !== 1 ? 's' : ''} · {stylist.sharePercent}% of category
+            {stylist.count} {itemLabel}{stylist.count !== 1 ? 's' : ''} · {stylist.sharePercent}% of category
           </p>
         </div>
         <span className="text-sm font-display tabular-nums">
@@ -103,8 +105,49 @@ function StylistRow({ stylist, delay }: { stylist: CategoryStylistData; delay: n
         )} />
       </div>
       <AnimatePresence>
-        {expanded && <ClientMixPanel stylist={stylist} />}
+        {expanded && (
+          isOverageFees ? (
+            <ServiceDetailsPanel serviceDetails={stylist.serviceDetails} />
+          ) : (
+            <ClientMixPanel stylist={stylist} />
+          )
+        )}
       </AnimatePresence>
+    </motion.div>
+  );
+}
+
+/** Service details sub-panel for Chemical Overage Fees */
+function ServiceDetailsPanel({ serviceDetails }: { serviceDetails?: { serviceName: string; amount: number }[] }) {
+  const { formatCurrencyWhole: fmtWhole } = useFormatCurrency();
+  const details = serviceDetails || [];
+
+  return (
+    <motion.div
+      initial={{ height: 0, opacity: 0 }}
+      animate={{ height: 'auto', opacity: 1 }}
+      exit={{ height: 0, opacity: 0 }}
+      transition={{ duration: 0.2 }}
+      className="overflow-hidden"
+    >
+      <div className="pl-6 border-l-2 border-primary/20 mt-2 space-y-1.5">
+        <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
+          <Layers className="w-3 h-3" />
+          <span>Associated services</span>
+        </div>
+        {details.length === 0 ? (
+          <p className="text-xs text-muted-foreground">No service data available</p>
+        ) : (
+          details.map((d, i) => (
+            <div key={i} className="flex items-center justify-between text-xs px-1">
+              <span className="truncate">{d.serviceName}</span>
+              <span className="tabular-nums text-muted-foreground ml-2">
+                <BlurredAmount>{fmtWhole(Math.round(d.amount))}</BlurredAmount>
+              </span>
+            </div>
+          ))
+        )}
+      </div>
     </motion.div>
   );
 }
