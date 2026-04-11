@@ -45,6 +45,9 @@ import {
 } from 'lucide-react';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 import { PageExplainer } from '@/components/ui/PageExplainer';
+import { VisibilityGate } from '@/components/visibility/VisibilityGate';
+import { SEOUnifiedTasksCard } from '@/components/dashboard/seo-workshop/SEOUnifiedTasksCard';
+import { useOrganizationContext } from '@/contexts/OrganizationContext';
 
 interface ManagementCardProps {
   href: string;
