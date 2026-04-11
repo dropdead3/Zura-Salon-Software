@@ -2,13 +2,16 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { SEO_QUOTA_LIST } from '@/config/seo-engine/seo-quotas';
 import { SEO_TASK_TEMPLATE_LIST } from '@/config/seo-engine/seo-task-templates';
 import { HEALTH_DOMAIN_LIST } from '@/config/seo-engine/seo-health-domains';
+import { SEO_SETTINGS_SCHEMA, SEO_SETTINGS_GROUPS } from '@/config/seo-engine/seo-settings-schema';
+import { useSEOEngineSettings } from '@/hooks/useSEOEngineSettings';
 import { tokens } from '@/lib/design-tokens';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import { useState } from 'react';
-import { Loader2, Play, RefreshCw, Zap } from 'lucide-react';
+import { Loader2, Play, RefreshCw, Zap, Save } from 'lucide-react';
 
 interface Props {
   organizationId: string | undefined;
@@ -16,6 +19,8 @@ interface Props {
 
 export function SEOEngineSettings({ organizationId }: Props) {
   const [runningScans, setRunningScans] = useState<Set<string>>(new Set());
+  const { getSetting, updateSetting, isLoading: settingsLoading } = useSEOEngineSettings(organizationId);
+  const [pendingChanges, setPendingChanges] = useState<Record<string, any>>({});
 
   const runScan = async (functionName: string, label: string) => {
     if (!organizationId) return;
@@ -38,6 +43,29 @@ export function SEOEngineSettings({ organizationId }: Props) {
   };
 
   const isRunning = (fn: string) => runningScans.has(fn);
+
+  const handleSettingChange = (key: string, value: string) => {
+    const def = SEO_SETTINGS_SCHEMA.find((s) => s.key === key);
+    if (!def) return;
+    const parsed = def.type === 'number' ? parseFloat(value) : value;
+    setPendingChanges((prev) => ({ ...prev, [key]: parsed }));
+  };
+
+  const handleSaveSettings = async () => {
+    const entries = Object.entries(pendingChanges);
+    if (!entries.length) return;
+
+    for (const [key, value] of entries) {
+      await updateSetting.mutateAsync({ key, value });
+    }
+    setPendingChanges({});
+    toast({ title: 'Settings saved', description: `${entries.length} setting(s) updated.` });
+  };
+
+  const getDisplayValue = (key: string) => {
+    if (pendingChanges[key] !== undefined) return pendingChanges[key];
+    return getSetting(key);
+  };
 
   return (
     <div className="space-y-6">
@@ -89,26 +117,53 @@ export function SEOEngineSettings({ organizationId }: Props) {
         </CardContent>
       </Card>
 
-      {/* Quotas */}
-      <Card>
-        <CardHeader>
-          <CardTitle className={tokens.card.title}>Activity Quotas</CardTitle>
-          <CardDescription>Target activity levels that drive recurring task generation</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
-            {SEO_QUOTA_LIST.map((q) => (
-              <div key={q.key} className="flex items-center justify-between py-2 border-b border-border/60 last:border-0">
-                <div>
-                  <p className="text-sm font-sans font-medium">{q.label}</p>
-                  <p className="text-xs text-muted-foreground">{q.description}</p>
+      {/* Configurable Settings */}
+      {SEO_SETTINGS_GROUPS.map((group) => {
+        const groupSettings = SEO_SETTINGS_SCHEMA.filter((s) => s.group === group.key);
+        if (!groupSettings.length) return null;
+
+        return (
+          <Card key={group.key}>
+            <CardHeader>
+              <CardTitle className={tokens.card.title}>{group.label}</CardTitle>
+              <CardDescription>Organization-level overrides for {group.label.toLowerCase()}</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {groupSettings.map((setting) => (
+                <div key={setting.key} className="flex items-center justify-between gap-4">
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-sans font-medium">{setting.label}</p>
+                    <p className="text-xs text-muted-foreground">{setting.description}</p>
+                  </div>
+                  <Input
+                    type="number"
+                    className="w-20 text-right font-sans"
+                    value={getDisplayValue(setting.key) ?? ''}
+                    min={setting.min}
+                    max={setting.max}
+                    step={setting.key === 'min_business_value_threshold' ? 0.1 : 1}
+                    onChange={(e) => handleSettingChange(setting.key, e.target.value)}
+                    disabled={settingsLoading}
+                  />
                 </div>
-                <Badge variant="outline">{q.defaultTarget}/{q.period === 'weekly' ? 'wk' : 'mo'}</Badge>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+              ))}
+            </CardContent>
+          </Card>
+        );
+      })}
+
+      {Object.keys(pendingChanges).length > 0 && (
+        <div className="flex justify-end">
+          <Button
+            onClick={handleSaveSettings}
+            disabled={updateSetting.isPending}
+            className="font-sans gap-2"
+          >
+            {updateSetting.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+            Save Settings
+          </Button>
+        </div>
+      )}
 
       {/* Task Templates */}
       <Card>
