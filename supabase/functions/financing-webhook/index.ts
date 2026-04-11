@@ -30,8 +30,7 @@ serve(async (req) => {
     if (webhookSecret && sig) {
       event = stripe.webhooks.constructEvent(body, sig, webhookSecret);
     } else {
-      // Dev fallback — log warning
-      console.warn("[financing-webhook] STRIPE_FINANCING_WEBHOOK_SECRET is not set. Accepting unverified payload. DO NOT use in production.");
+      console.warn("[financing-webhook] No webhook secret. Accepting unverified payload.");
       event = JSON.parse(body) as Stripe.Event;
     }
 
@@ -39,7 +38,40 @@ serve(async (req) => {
       const session = event.data.object as Stripe.Checkout.Session;
       const meta = session.metadata;
 
-      if (meta?.type === "expansion_financing" && meta?.opportunity_id) {
+      if (meta?.type === "zura_capital" && meta?.is_production === "true" && meta?.opportunity_id) {
+        // Production path: update capital_funding_projects
+        await supabase
+          .from("capital_funding_projects")
+          .update({
+            status: "active",
+            repayment_status: "active",
+            activation_status: "pending",
+          })
+          .eq("provider_offer_id", session.id);
+
+        // Update opportunity status to funded
+        await supabase
+          .from("capital_funding_opportunities")
+          .update({
+            status: "funded",
+            funded_at: new Date().toISOString(),
+          })
+          .eq("id", meta.opportunity_id);
+
+        // Log funded event
+        if (meta.organization_id) {
+          await supabase.from("capital_event_log").insert({
+            organization_id: meta.organization_id,
+            user_id: meta.user_id || null,
+            opportunity_id: meta.opportunity_id,
+            funding_opportunity_id: meta.opportunity_id,
+            event_type: "funding_approved",
+            surface_area: "capital_queue",
+            metadata_json: { stripe_session_id: session.id, amount_cents: session.amount_total },
+          });
+        }
+      } else if (meta?.type === "expansion_financing" && meta?.opportunity_id) {
+        // Legacy path
         await supabase
           .from("financed_projects")
           .update({
@@ -48,11 +80,10 @@ serve(async (req) => {
           })
           .eq("stripe_checkout_session_id", session.id);
 
-        // Log funded event
         if (meta.organization_id) {
           await supabase.from("capital_event_log").insert({
             organization_id: meta.organization_id,
-            user_id: meta.user_id || "00000000-0000-0000-0000-000000000000",
+            user_id: meta.user_id || null,
             opportunity_id: meta.opportunity_id,
             event_type: "funded",
             surface_area: "capital_queue",
@@ -66,7 +97,19 @@ serve(async (req) => {
       const session = event.data.object as Stripe.Checkout.Session;
       const meta = session.metadata;
 
-      if (meta?.type === "expansion_financing") {
+      if (meta?.type === "zura_capital" && meta?.is_production === "true") {
+        await supabase
+          .from("capital_funding_projects")
+          .update({ status: "closed" })
+          .eq("provider_offer_id", session.id);
+
+        if (meta.opportunity_id) {
+          await supabase
+            .from("capital_funding_opportunities")
+            .update({ status: "canceled" })
+            .eq("id", meta.opportunity_id);
+        }
+      } else if (meta?.type === "expansion_financing") {
         await supabase
           .from("financed_projects")
           .update({ status: "cancelled" })

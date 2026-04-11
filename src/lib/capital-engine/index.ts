@@ -59,3 +59,22 @@ export {
   type ZuraOrgContext,
   type ZuraEligibilityResult,
 } from './zura-eligibility-engine';
+
+export {
+  getProvider,
+  StripeCapitalProvider,
+  type CapitalProvider,
+  type ProviderOffer,
+  type ProviderEligibilityResult,
+  type ProviderInitiationResult,
+  type FundingStatusResult,
+  type RepaymentStatusResult,
+} from './capital-provider';
+
+export {
+  computeSurfacePriority,
+  selectForSurface,
+  type PriorityOpportunity,
+  type SurfaceState,
+  type PriorityContext,
+} from './surface-priority-engine';
