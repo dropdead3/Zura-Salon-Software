@@ -91,6 +91,10 @@ export default function SEOWorkshopHub() {
             </div>
           </TabsContent>
 
+          <TabsContent value="analytics" className="mt-6">
+            <SEODashboardAnalytics organizationId={organizationId} />
+          </TabsContent>
+
           <TabsContent value="settings" className="mt-6">
             <SEOEngineSettings organizationId={organizationId} />
           </TabsContent>
