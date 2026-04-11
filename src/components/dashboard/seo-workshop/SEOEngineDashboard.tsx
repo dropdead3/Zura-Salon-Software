@@ -12,6 +12,7 @@ import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { AlertTriangle, TrendingUp, TrendingDown, Clock, Target, Star, FileText, MapPin, Pencil, Flag, Crosshair, Minus, DollarSign } from 'lucide-react';
 import { SEOPredictedLiftCard } from './SEOPredictedLiftCard';
+import { SEOGrowthReport } from './SEOGrowthReport';
 import { Skeleton } from '@/components/ui/skeleton';
 
 interface Props {
@@ -53,6 +54,9 @@ export function SEOEngineDashboard({ organizationId, onGoToTasks, onGoToCampaign
 
   return (
     <div className="space-y-6">
+      {/* Growth Report */}
+      <SEOGrowthReport organizationId={organizationId} />
+
       {/* Overall Score */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
         <Card>

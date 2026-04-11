@@ -18689,6 +18689,74 @@ export type Database = {
           },
         ]
       }
+      seo_autonomous_actions: {
+        Row: {
+          action_type: string
+          confidence_score: number | null
+          content_applied: Json | null
+          created_at: string
+          error_message: string | null
+          executed_at: string
+          id: string
+          measured_impact: Json | null
+          organization_id: string
+          predicted_lift: number | null
+          rollback_data: Json | null
+          rolled_back_at: string | null
+          rolled_back_by: string | null
+          status: string
+          task_id: string | null
+          template_key: string
+          updated_at: string
+        }
+        Insert: {
+          action_type?: string
+          confidence_score?: number | null
+          content_applied?: Json | null
+          created_at?: string
+          error_message?: string | null
+          executed_at?: string
+          id?: string
+          measured_impact?: Json | null
+          organization_id: string
+          predicted_lift?: number | null
+          rollback_data?: Json | null
+          rolled_back_at?: string | null
+          rolled_back_by?: string | null
+          status?: string
+          task_id?: string | null
+          template_key: string
+          updated_at?: string
+        }
+        Update: {
+          action_type?: string
+          confidence_score?: number | null
+          content_applied?: Json | null
+          created_at?: string
+          error_message?: string | null
+          executed_at?: string
+          id?: string
+          measured_impact?: Json | null
+          organization_id?: string
+          predicted_lift?: number | null
+          rollback_data?: Json | null
+          rolled_back_at?: string | null
+          rolled_back_by?: string | null
+          status?: string
+          task_id?: string | null
+          template_key?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "seo_autonomous_actions_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       seo_campaigns: {
         Row: {
           actual_revenue_impact: Json | null
@@ -18783,6 +18851,47 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "seo_engine_settings_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      seo_growth_reports: {
+        Row: {
+          actions_taken: Json
+          created_at: string
+          id: string
+          impact_summary: Json
+          next_best_action: Json | null
+          organization_id: string
+          remaining_opportunity: number | null
+          report_date: string
+        }
+        Insert: {
+          actions_taken?: Json
+          created_at?: string
+          id?: string
+          impact_summary?: Json
+          next_best_action?: Json | null
+          organization_id: string
+          remaining_opportunity?: number | null
+          report_date: string
+        }
+        Update: {
+          actions_taken?: Json
+          created_at?: string
+          id?: string
+          impact_summary?: Json
+          next_best_action?: Json | null
+          organization_id?: string
+          remaining_opportunity?: number | null
+          report_date?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "seo_growth_reports_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"

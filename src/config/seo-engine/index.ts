@@ -6,3 +6,4 @@ export * from './seo-assignment-rules';
 export * from './seo-state-machine';
 export * from './seo-quotas';
 export * from './seo-settings-schema';
+export * from './seo-autonomy-config';

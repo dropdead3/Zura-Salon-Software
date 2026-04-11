@@ -12,7 +12,7 @@ export interface SEOSettingDef {
   defaultValue: number | string | boolean;
   min?: number;
   max?: number;
-  group: 'quotas' | 'cooldowns' | 'thresholds' | 'capacity';
+  group: 'quotas' | 'cooldowns' | 'thresholds' | 'capacity' | 'autonomy';
 }
 
 export const SEO_SETTINGS_SCHEMA: SEOSettingDef[] = [
@@ -130,6 +130,65 @@ export const SEO_SETTINGS_SCHEMA: SEOSettingDef[] = [
     max: 50,
     group: 'capacity',
   },
+  // Autonomy
+  {
+    key: 'autonomy_enabled',
+    label: 'Autonomous Mode',
+    description: 'Enable Zura to auto-execute high-confidence SEO tasks',
+    type: 'boolean',
+    defaultValue: false,
+    group: 'autonomy',
+  },
+  {
+    key: 'autonomy_aggressiveness',
+    label: 'Aggressiveness',
+    description: 'Controls autonomous task volume (1 = conservative, 5 = aggressive)',
+    type: 'number',
+    defaultValue: 2,
+    min: 1,
+    max: 5,
+    group: 'autonomy',
+  },
+  {
+    key: 'autonomy_review_requests_per_day',
+    label: 'Review Requests / Day',
+    description: 'Maximum review requests Zura can send per day automatically',
+    type: 'number',
+    defaultValue: 5,
+    min: 0,
+    max: 20,
+    group: 'autonomy',
+  },
+  {
+    key: 'autonomy_posts_per_week',
+    label: 'GBP Posts / Week',
+    description: 'Maximum Google Business posts Zura can publish per week',
+    type: 'number',
+    defaultValue: 2,
+    min: 0,
+    max: 7,
+    group: 'autonomy',
+  },
+  {
+    key: 'autonomy_page_edits_per_day',
+    label: 'Page Edits / Day',
+    description: 'Maximum page metadata/content edits per day',
+    type: 'number',
+    defaultValue: 3,
+    min: 0,
+    max: 10,
+    group: 'autonomy',
+  },
+  {
+    key: 'autonomy_min_confidence',
+    label: 'Minimum Confidence',
+    description: 'Minimum prediction confidence (0–1) for auto-execution',
+    type: 'number',
+    defaultValue: 0.6,
+    min: 0,
+    max: 1,
+    group: 'autonomy',
+  },
 ];
 
 export const SEO_SETTINGS_GROUPS = [
@@ -137,4 +196,5 @@ export const SEO_SETTINGS_GROUPS = [
   { key: 'cooldowns', label: 'Cooldown Windows' },
   { key: 'thresholds', label: 'Thresholds' },
   { key: 'capacity', label: 'Capacity Limits' },
+  { key: 'autonomy', label: 'Autonomous Growth' },
 ] as const;
