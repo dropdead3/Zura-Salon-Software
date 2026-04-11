@@ -147,9 +147,9 @@ export function SEOCampaignDetailDialog({ campaign, organizationId, open, onOpen
               return (
                 <div key={task.id} className="flex items-center justify-between text-xs font-sans py-1 border-b border-border/40 last:border-0">
                   <span className="truncate">{title}</span>
-                  <Badge variant={tStatusConf?.variant as any ?? 'outline'} className="text-[10px] shrink-0 ml-2">
-                    {tStatusConf?.label ?? task.status}
-                  </Badge>
+                  <Badge variant={tStatusConf?.variant ?? 'outline'} className={`text-[10px] shrink-0 ml-2 ${tStatusConf?.className ?? ''}`}>
+                     {tStatusConf?.label ?? task.status}
+                   </Badge>
                 </div>
               );
             })}
