@@ -729,13 +729,10 @@ export function ServicePopularityChart({ dateFrom, dateTo, locationId, filterCon
                             className="overflow-hidden"
                           >
                             <div className="pt-2 pb-1 pl-6 space-y-3">
-                              {/* Client mix + concentration risk */}
+                              {/* Summary + concentration risk */}
                               <div className="flex gap-4 text-xs flex-wrap">
                                 <span className="flex items-center gap-1">
-                                  <Users className="w-3 h-3" /> New clients: <strong>{newPct}%</strong> ({totalNewClients})
-                                </span>
-                                <span className="flex items-center gap-1">
-                                  <RefreshCw className="w-3 h-3" /> Returning: <strong>{100 - newPct}%</strong> ({totalReturningClients})
+                                  {totalItems} item{totalItems !== 1 ? 's' : ''} across {cat.stylists.length} stylist{cat.stylists.length !== 1 ? 's' : ''}
                                 </span>
                                 {concentrationRisk && (
                                   <span className="flex items-center gap-1 text-amber-600 dark:text-amber-400">

@@ -14,6 +14,15 @@ import { formatDateShort } from '@/lib/format';
 
 const FALLBACK_COLOR = '#888888';
 
+interface RevenueByCategoryPanelProps {
+  isOpen: boolean;
+  dateFrom: string;
+  dateTo: string;
+  locationId?: string;
+}
+
+const MAX_VISIBLE = 5;
+
 /** Level 3: Individual items for a stylist within a category */
 function StylistItemsPanel({ items }: { items?: { itemName: string; amount: number; date: string }[] }) {
   const { formatCurrencyWhole: fmtWhole } = useFormatCurrency();
