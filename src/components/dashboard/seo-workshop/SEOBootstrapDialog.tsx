@@ -87,7 +87,9 @@ export function SEOBootstrapDialog({ organizationId, open, onOpenChange }: Props
       if (campErr) throw campErr;
 
       const campaignId = (campaign as any)?.id;
-        // Upsert SEO object
+
+      // 2. Create SEO objects + tasks
+      for (const task of preview.tasks) {
         const { data: seoObj } = await supabase
           .from('seo_objects' as any)
           .upsert({
@@ -106,13 +108,13 @@ export function SEOBootstrapDialog({ organizationId, open, onOpenChange }: Props
           organization_id: organizationId,
           location_id: selectedLocationId,
           template_key: task.templateKey,
-          primary_seo_object_id: seoObj?.id ?? null,
+          primary_seo_object_id: (seoObj as any)?.id ?? null,
           status: 'queued',
           priority_score: task.priority,
           priority_factors: { bootstrap: true },
           assigned_role: task.assignedRole,
           due_at: dueAt,
-          campaign_id: (campaign as any).id,
+          campaign_id: campaignId,
           ai_generated_content: {
             title: `${task.label}: ${task.objectLabel}`,
             explanation: `Part of the ${preview.title} bootstrap campaign.`,
