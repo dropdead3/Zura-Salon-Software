@@ -30,7 +30,8 @@ serve(async (req) => {
     if (webhookSecret && sig) {
       event = stripe.webhooks.constructEvent(body, sig, webhookSecret);
     } else {
-      // Fallback for dev — parse raw
+      // Dev fallback — log warning
+      console.warn("[financing-webhook] STRIPE_FINANCING_WEBHOOK_SECRET is not set. Accepting unverified payload. DO NOT use in production.");
       event = JSON.parse(body) as Stripe.Event;
     }
 

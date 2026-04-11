@@ -3,7 +3,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
+    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
 Deno.serve(async (req) => {
@@ -11,10 +11,29 @@ Deno.serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+  const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+  const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+
   try {
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    // Authenticate caller
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader?.startsWith("Bearer ")) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const token = authHeader.replace("Bearer ", "");
+    const anonClient = createClient(supabaseUrl, anonKey);
+    const { data: claimsData, error: claimsErr } = await anonClient.auth.getClaims(token);
+    if (claimsErr || !claimsData?.claims) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const userId = claimsData.claims.sub;
+
+    const supabase = createClient(supabaseUrl, serviceKey);
 
     const { organization_id } = await req.json();
     if (!organization_id) {
@@ -22,6 +41,17 @@ Deno.serve(async (req) => {
         JSON.stringify({ error: "organization_id required" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
+    }
+
+    // Verify caller is org admin
+    const { data: isAdmin } = await supabase.rpc("is_org_admin", {
+      _user_id: userId,
+      _org_id: organization_id,
+    });
+    if (!isAdmin) {
+      return new Response(JSON.stringify({ error: "Only organization admins can trigger aggregation" }), {
+        status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     const thirtyDaysAgo = new Date();
@@ -97,23 +127,24 @@ Deno.serve(async (req) => {
       const avgQty = agg.total_uses > 0 ? agg.total_qty / agg.total_uses : 0;
       const avgCost = agg.total_uses > 0 ? agg.total_cost / agg.total_uses : 0;
 
+      // Use composite unique constraint for proper upsert
       const { error: upsertErr } = await supabase
         .from("product_service_performance")
         .upsert(
           {
             organization_id,
             product_id: agg.product_id,
-            service_name: "Chemical Service", // Generic; refined with appointment data in future
+            service_name: "Chemical Service",
             total_uses: agg.total_uses,
             avg_quantity_per_use: Math.round(avgQty * 100) / 100,
             avg_product_cost: Math.round(avgCost * 100) / 100,
-            avg_service_revenue: 0, // To be joined from profitability snapshots
+            avg_service_revenue: 0,
             margin_pct: 0,
             last_used_at: new Date().toISOString(),
             period_start: periodStart,
             period_end: periodEnd,
           },
-          { onConflict: "id" }
+          { onConflict: "organization_id,product_id,service_name,period_start,period_end" }
         );
 
       if (!upsertErr) upserted++;

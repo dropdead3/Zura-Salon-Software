@@ -3,7 +3,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
+    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
 Deno.serve(async (req) => {
@@ -11,10 +11,29 @@ Deno.serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+  const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+  const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+
   try {
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    // Authenticate caller
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader?.startsWith("Bearer ")) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const token = authHeader.replace("Bearer ", "");
+    const anonClient = createClient(supabaseUrl, anonKey);
+    const { data: claimsData, error: claimsErr } = await anonClient.auth.getClaims(token);
+    if (claimsErr || !claimsData?.claims) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const userId = claimsData.claims.sub;
+
+    const supabase = createClient(supabaseUrl, serviceKey);
 
     const { organization_id } = await req.json();
     if (!organization_id) {
@@ -22,6 +41,17 @@ Deno.serve(async (req) => {
         JSON.stringify({ error: "organization_id required" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
+    }
+
+    // Verify caller is org admin
+    const { data: isAdmin } = await supabase.rpc("is_org_admin", {
+      _user_id: userId,
+      _org_id: organization_id,
+    });
+    if (!isAdmin) {
+      return new Response(JSON.stringify({ error: "Only organization admins can trigger replenishment" }), {
+        status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     // Fetch enabled rules with supplier info
@@ -85,7 +115,7 @@ Deno.serve(async (req) => {
           reason = `${onHand} units on hand (threshold: ${rule.threshold_value})`;
           break;
         case "forecast_driven":
-          triggered = daysOfStock <= 14; // 2-week horizon
+          triggered = daysOfStock <= 14;
           reason = `Forecast: ${Math.round(daysOfStock)} days remaining`;
           break;
       }
@@ -104,7 +134,7 @@ Deno.serve(async (req) => {
       if (existing && existing.length > 0) continue;
 
       const recommendedQty = Math.max(
-        Math.ceil(avgDaily * 28), // 4-week supply
+        Math.ceil(avgDaily * 28),
         risk?.recommended_order_qty || 0
       );
 
