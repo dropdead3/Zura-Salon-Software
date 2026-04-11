@@ -234,6 +234,11 @@ const PlatformNetwork = lazyWithRetry(() => import("./pages/dashboard/platform/N
 const PlatformLayout = lazyWithRetry(() => import("./components/platform/layout/PlatformLayout").then((module) => ({ default: module.PlatformLayout })));
 const TeamCalendar = lazyWithRetry(() => import("./pages/dashboard/TeamCalendar"));
 const SalesDashboard = lazyWithRetry(() => import("./pages/dashboard/admin/SalesDashboard"));
+const CapitalQueue = lazyWithRetry(() => import("./pages/dashboard/admin/CapitalQueue"));
+const CapitalOpportunityDetail = lazyWithRetry(() => import("./pages/dashboard/admin/CapitalOpportunityDetail"));
+const CapitalProjects = lazyWithRetry(() => import("./pages/dashboard/admin/CapitalProjects"));
+const CapitalProjectDetail = lazyWithRetry(() => import("./pages/dashboard/admin/CapitalProjectDetail"));
+const CapitalSettings = lazyWithRetry(() => import("./pages/dashboard/admin/CapitalSettings"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -385,6 +390,13 @@ function DashboardRoutes() {
       <Route path="admin/features" element={<ProtectedRoute requiredPermission="manage_settings"><FeaturesCenter /></ProtectedRoute>} />
       <Route path="admin/merge-clients" element={<ProtectedRoute requiredPermission="client_merge"><MergeClients /></ProtectedRoute>} />
       <Route path="admin/access-hub" element={<ProtectedRoute requiredPermission="manage_settings"><AccessHub /></ProtectedRoute>} />
+
+      {/* Zura Capital routes */}
+      <Route path="admin/capital" element={<ProtectedRoute requiredPermission="view_team_overview"><CapitalQueue /></ProtectedRoute>} />
+      <Route path="admin/capital/opportunities/:opportunityId" element={<ProtectedRoute requiredPermission="view_team_overview"><CapitalOpportunityDetail /></ProtectedRoute>} />
+      <Route path="admin/capital/projects" element={<ProtectedRoute requiredPermission="view_team_overview"><CapitalProjects /></ProtectedRoute>} />
+      <Route path="admin/capital/projects/:projectId" element={<ProtectedRoute requiredPermission="view_team_overview"><CapitalProjectDetail /></ProtectedRoute>} />
+      <Route path="admin/capital/settings" element={<ProtectedRoute requiredPermission="manage_settings"><CapitalSettings /></ProtectedRoute>} />
 
       {/* Team Challenges routes */}
       <Route path="admin/challenges" element={<ProtectedRoute requiredPermission="view_team_overview"><ChallengesDashboard /></ProtectedRoute>} />

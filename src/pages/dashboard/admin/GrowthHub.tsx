@@ -5,9 +5,9 @@ import { cn } from '@/lib/utils';
 import { tokens } from '@/lib/design-tokens';
 import { DashboardPageHeader } from '@/components/dashboard/DashboardPageHeader';
 import {
-
   Rocket,
   Search,
+  Landmark,
   ChevronRight,
 } from 'lucide-react';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
@@ -68,6 +68,12 @@ export default function GrowthHub() {
               icon={Search}
               title="SEO Workshop"
               description="Tasks and guides to improve local search visibility"
+            />
+            <HubCard
+              href={dashPath('/admin/capital')}
+              icon={Landmark}
+              title="Zura Capital"
+              description="Ranked growth opportunities and funded projects"
             />
           </div>
         </div>
