@@ -108,27 +108,41 @@ export const DEFAULT_ESCALATION_RULES: EscalationRule = {
 };
 
 /**
- * Status display config for UI.
+ * Badge variant type matching the Badge component's supported variants.
+ * Maps semantic status colors to real Badge variants + optional className.
  */
-export const TASK_STATUS_CONFIG: Record<SEOTaskStatus, { label: string; variant: string }> = {
+type BadgeVariant = 'default' | 'secondary' | 'destructive' | 'outline' | 'glass' | 'glass-dark';
+
+export interface StatusDisplayConfig {
+  label: string;
+  variant: BadgeVariant;
+  className?: string;
+}
+
+/**
+ * Status display config for UI.
+ * All variants map to real Badge component variants.
+ * Semantic colors (warning/success/muted) are achieved via className overrides.
+ */
+export const TASK_STATUS_CONFIG: Record<SEOTaskStatus, StatusDisplayConfig> = {
   detected: { label: 'Detected', variant: 'outline' },
   queued: { label: 'Queued', variant: 'secondary' },
   assigned: { label: 'Assigned', variant: 'default' },
   in_progress: { label: 'In Progress', variant: 'default' },
-  awaiting_dependency: { label: 'Blocked', variant: 'warning' },
+  awaiting_dependency: { label: 'Blocked', variant: 'outline', className: 'border-amber-500/50 bg-amber-500/10 text-amber-700 dark:text-amber-400' },
   awaiting_verification: { label: 'Verifying', variant: 'default' },
-  completed: { label: 'Complete', variant: 'success' },
+  completed: { label: 'Complete', variant: 'outline', className: 'border-emerald-500/50 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400' },
   overdue: { label: 'Overdue', variant: 'destructive' },
   escalated: { label: 'Escalated', variant: 'destructive' },
-  suppressed: { label: 'Suppressed', variant: 'muted' },
-  canceled: { label: 'Canceled', variant: 'muted' },
+  suppressed: { label: 'Suppressed', variant: 'outline', className: 'border-muted bg-muted/50 text-muted-foreground' },
+  canceled: { label: 'Canceled', variant: 'outline', className: 'border-muted bg-muted/50 text-muted-foreground' },
 };
 
-export const CAMPAIGN_STATUS_CONFIG: Record<SEOCampaignStatus, { label: string; variant: string }> = {
+export const CAMPAIGN_STATUS_CONFIG: Record<SEOCampaignStatus, StatusDisplayConfig> = {
   planning: { label: 'Planning', variant: 'outline' },
   active: { label: 'Active', variant: 'default' },
-  blocked: { label: 'Blocked', variant: 'warning' },
+  blocked: { label: 'Blocked', variant: 'outline', className: 'border-amber-500/50 bg-amber-500/10 text-amber-700 dark:text-amber-400' },
   at_risk: { label: 'At Risk', variant: 'destructive' },
-  completed: { label: 'Complete', variant: 'success' },
-  abandoned: { label: 'Abandoned', variant: 'muted' },
+  completed: { label: 'Complete', variant: 'outline', className: 'border-emerald-500/50 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400' },
+  abandoned: { label: 'Abandoned', variant: 'outline', className: 'border-muted bg-muted/50 text-muted-foreground' },
 };

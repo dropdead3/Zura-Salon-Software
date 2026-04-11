@@ -153,9 +153,12 @@ export function SEOEngineDashboard({ organizationId, onGoToTasks, onGoToCampaign
                         })()}
                         {def?.label ?? d.domain}
                       </span>
-                      <span className="text-sm font-display tracking-wide">{d.averageScore}</span>
-                    </div>
-                    <Progress value={d.averageScore} className="h-2" />
+                       <span className="text-sm font-display tracking-wide">{d.averageScore}</span>
+                     </div>
+                     <Progress
+                       value={d.averageScore}
+                       className={`h-2 ${d.averageScore < 40 ? '[&>div]:bg-destructive' : d.averageScore < 60 ? '[&>div]:bg-amber-500' : ''}`}
+                     />
                     <p className="text-xs text-muted-foreground">
                       {d.objectCount} object{d.objectCount !== 1 ? 's' : ''} scored
                     </p>

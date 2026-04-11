@@ -333,13 +333,16 @@ async function reprioritizeActiveTasks(
     const freshness = Math.max(0, Math.min(1, 1 - daysUntilDue / 14));
 
     const opportunity = ((task.priority_factors as any)?.opportunity ?? 0.5);
+    // Fatigue penalty not available server-side; use 0 and document
+    const fatiguePenalty = 0; // TODO: compute from task history when available
     const newScore = Math.round(
-      severity * 0.25 * 100 +
-      opportunity * 0.25 * 100 +
-      0.5 * 0.20 * 100 + // business value placeholder
-      0.5 * 0.15 * 100 + // ease placeholder
-      freshness * 0.10 * 100
-    );
+       severity * 0.25 * 100 +
+       opportunity * 0.25 * 100 +
+       0.5 * 0.20 * 100 + // business value placeholder
+       0.5 * 0.15 * 100 + // ease placeholder
+       freshness * 0.10 * 100 -
+       fatiguePenalty * 0.05 * 100
+     );
 
     const clampedScore = Math.max(0, Math.min(100, newScore));
 
