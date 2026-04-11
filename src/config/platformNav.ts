@@ -70,6 +70,7 @@ export const platformNavGroups: PlatformNavGroup[] = [
     label: 'Intelligence',
     items: [
       { href: '/platform/analytics', label: 'Analytics', icon: BarChart3, platformRoles: ['platform_owner'] },
+      { href: '/platform/network', label: 'Zura Network', icon: Building2, platformRoles: ['platform_owner', 'platform_admin'] },
       { href: '/platform/knowledge-base', label: 'Knowledge Base', icon: BookOpen, platformRoles: ['platform_owner', 'platform_admin'] },
       { href: '/platform/revenue', label: 'Revenue', icon: DollarSign, platformRoles: ['platform_owner', 'platform_admin'] },
       { href: '/platform/billing-guide', label: 'Billing Guide', icon: HelpCircle, platformRoles: ['platform_owner', 'platform_admin', 'platform_support'] },
