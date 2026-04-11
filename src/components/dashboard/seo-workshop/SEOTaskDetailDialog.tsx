@@ -140,6 +140,34 @@ export function SEOTaskDetailDialog({ task, organizationId, open, onOpenChange }
             </div>
           )}
 
+          {/* Post-completion Impact Feedback */}
+          {isCompleted && impactData.length > 0 && (
+            <Card className="border-primary/20 bg-primary/5">
+              <CardContent className="p-3 space-y-2">
+                <p className="text-xs font-sans font-medium flex items-center gap-1.5">
+                  <TrendingUp className="w-3.5 h-3.5 text-primary" />
+                  Impact Measured
+                </p>
+                {impactData.slice(0, 3).map((impact: any, i: number) => {
+                  const category = impact.impact_category ?? 'unknown';
+                  const label = IMPACT_CATEGORY_LABELS[category] ?? category;
+                  const delta = impact.metric_delta ?? 0;
+                  const confidence = impact.confidence ?? 0;
+                  return (
+                    <div key={i} className="flex items-center justify-between text-xs font-sans">
+                      <span className="text-muted-foreground">
+                        {label}: <span className={delta > 0 ? 'text-green-500' : 'text-destructive'}>{delta > 0 ? '+' : ''}{Math.round(delta * 100)}%</span>
+                      </span>
+                      <Badge variant="outline" className="text-[10px]">
+                        {Math.round(confidence * 100)}% confidence
+                      </Badge>
+                    </div>
+                  );
+                })}
+              </CardContent>
+            </Card>
+          )}
+
           <Separator />
 
           {/* Proof Upload Section (for non-system-verifiable tasks) */}
