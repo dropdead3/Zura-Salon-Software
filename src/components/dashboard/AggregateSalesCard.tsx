@@ -948,67 +948,38 @@ export function AggregateSalesCard({
                                   </div>
                                 )}
 
-                                {/* Progress bar: earned % of scheduled + projection */}
-                                {todayActual?.hasActualData ? (() => {
+                                {/* Exceeded / on-track / final status */}
+                                {todayActual?.hasActualData && (() => {
                                   const excessAmount = serviceRevenue - displayExpected;
-                                  return (
-                                  <div className="space-y-1.5">
-                                    <div className="flex items-center justify-between text-xs">
-                                      <span className="text-muted-foreground">
-                                        Earned {exceededTotal ? '100' : earnedPct}% of scheduled services today
-                                      </span>
-                                      <BlurredAmount>
-                                        <span className={cn("font-medium", exceededTotal && "text-success-foreground")}>
-                                          {formatCurrency(serviceRevenue)}
-                                        </span>
-                                      </BlurredAmount>
-                                    </div>
-                                    <Progress 
-                                      value={displayExpected > 0 
-                                        ? Math.min((serviceRevenue / displayExpected) * 100, 100) 
-                                        : 0
-                                      }
-                                      className="h-1.5"
-                                      indicatorClassName={exceededTotal ? "bg-success-foreground" : undefined}
-                                    />
-                                    <div className="text-xs text-center text-muted-foreground">
-                                      {exceededTotal ? (
-                                        <span className="text-success-foreground flex items-center justify-center gap-1">
-                                          <CheckCircle2 className="w-3.5 h-3.5" />
-                                          <BlurredAmount disableTooltip>
-                                            <span>Exceeded scheduled by {formatCurrency(excessAmount)}</span>
-                                          </BlurredAmount>
-                                        </span>
-                                      ) : allAppointmentsComplete ? (
-                                        <span className="flex items-center justify-center gap-1">
-                                          <CheckCircle2 className="w-3.5 h-3.5 text-success-foreground" />
-                                          <BlurredAmount disableTooltip>
-                                            <span>Final: {formatCurrency(serviceRevenue)} service revenue</span>
-                                          </BlurredAmount>
-                                        </span>
-                                      ) : (
+                                  if (exceededTotal) {
+                                    return (
+                                      <div className="flex items-center justify-center gap-1.5 text-xs text-success-foreground">
+                                        <CheckCircle2 className="w-3.5 h-3.5" />
                                         <BlurredAmount disableTooltip>
-                                          <span>On track to finish at {formatCurrency(projectedFinish)} service revenue</span>
+                                          <span>Exceeded scheduled by {formatCurrency(excessAmount)}</span>
                                         </BlurredAmount>
-                                      )}
-                                    </div>
-                                  </div>
-                                  );
-                                })() : null}
+                                      </div>
+                                    );
+                                  }
+                                  return null;
+                                })()}
 
-                                {remainingExpected <= 0 && allAppointmentsComplete ? (
-                                  <div className="flex items-center justify-center gap-1.5 text-xs text-success-foreground">
-                                    <CheckCircle2 className="w-3.5 h-3.5" />
-                                    <span>All appointments complete</span>
-                                  </div>
-                                ) : !allAppointmentsComplete && todayActual?.lastAppointmentEndTime ? (
-                                  <p className="text-xs text-muted-foreground/70 text-center">
-                                    {t('sales.estimated_final_at')}{' '}
-                                    <span className="font-medium text-foreground/70">
-                                      {formatEndTime(todayActual.lastAppointmentEndTime)}
-                                    </span>
-                                  </p>
-                                ) : null}
+                                {/* Estimated final time or all-complete */}
+                                {!exceededTotal && (
+                                  remainingExpected <= 0 && allAppointmentsComplete ? (
+                                    <div className="flex items-center justify-center gap-1.5 text-xs text-success-foreground">
+                                      <CheckCircle2 className="w-3.5 h-3.5" />
+                                      <span>All appointments complete</span>
+                                    </div>
+                                  ) : !allAppointmentsComplete && todayActual?.lastAppointmentEndTime ? (
+                                    <p className="text-xs text-muted-foreground/70 text-center">
+                                      {t('sales.estimated_final_at')}{' '}
+                                      <span className="font-medium text-foreground/70">
+                                        {formatEndTime(todayActual.lastAppointmentEndTime)}
+                                      </span>
+                                    </p>
+                                  ) : null
+                                )}
 
                                 {/* Gap analysis drill-down trigger */}
                                 <div 
