@@ -441,6 +441,14 @@ export default function ManagementHub() {
             colorClass="bg-indigo-500/10 text-indigo-600 dark:text-indigo-400"
           />
         </CategorySection>
+        {/* M2: SEO Tasks integration */}
+        <VisibilityGate
+          elementKey="seo_unified_tasks_management"
+          elementName="SEO Tasks"
+          elementCategory="Management Hub"
+        >
+          <SEOUnifiedTasksCard organizationId={effectiveOrganization?.id} />
+        </VisibilityGate>
       </div>
     </DashboardLayout>
   );
