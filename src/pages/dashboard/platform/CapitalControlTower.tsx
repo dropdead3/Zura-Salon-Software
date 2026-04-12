@@ -1,4 +1,5 @@
 import { useState, Fragment, useMemo } from 'react';
+import { Info } from 'lucide-react';
 import { Landmark, Building2, TrendingUp, Eye, Loader2, BookOpen, ChevronDown, ChevronRight, Check, X, AlertTriangle, Minus, CreditCard, Shield } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -32,7 +33,7 @@ import {
 } from '@/hooks/useOrgCapitalDiagnostics';
 import type { EligibilityInputs } from '@/lib/capital-engine/capital-formulas';
 import type { CapitalPolicy } from '@/config/capital-engine/capital-formulas-config';
-import { STRIPE_CAPITAL_REQUIREMENTS, ZURA_OPERATIONAL_GUARDRAILS } from '@/config/capital-engine/capital-formulas-config';
+import { STRIPE_CAPITAL_REQUIREMENTS, ZURA_HARD_GATES, ZURA_ADVISORIES } from '@/config/capital-engine/capital-formulas-config';
 import { toast } from 'sonner';
 
 /* ── Types ── */
@@ -113,19 +114,19 @@ function EligibilityCheckList({ opp }: { opp: OpportunityDiagnostic }) {
 
   return (
     <div className="px-4 py-3 space-y-4 border-t border-[hsl(var(--platform-border)/0.15)] bg-[hsl(var(--platform-bg-card)/0.08)]">
-      {/* Section 1: Zura Operational Guardrails (pass/fail) */}
+      {/* Section 1: Hard Gate (critical ops only) */}
       <div>
         <div className="flex items-center gap-2 mb-2">
-          <Shield className="h-3.5 w-3.5 text-amber-400" />
+          <Shield className="h-3.5 w-3.5 text-red-400" />
           <p className="text-xs font-sans text-[hsl(var(--platform-foreground))] uppercase">
-            Zura Guardrails ({readiness.ready ? 'All Clear' : `${readiness.blockerCodes.length} Blocker${readiness.blockerCodes.length > 1 ? 's' : ''}`})
+            Hard Gate ({readiness.ready ? 'Clear' : 'Blocked'})
           </p>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-1">
-          {ZURA_OPERATIONAL_GUARDRAILS.map((guard) => {
-            const isBlocked = readiness.blockerCodes.includes(guard.code as any);
+        <div className="space-y-1">
+          {ZURA_HARD_GATES.map((gate) => {
+            const isBlocked = readiness.blockerCodes.includes(gate.code as any);
             return (
-              <div key={guard.code} className="flex items-start gap-2 text-xs py-0.5">
+              <div key={gate.code} className="flex items-start gap-2 text-xs py-0.5">
                 <div className="mt-0.5 shrink-0">
                   {isBlocked ? (
                     <X className="h-3.5 w-3.5 text-red-400" />
@@ -134,8 +135,8 @@ function EligibilityCheckList({ opp }: { opp: OpportunityDiagnostic }) {
                   )}
                 </div>
                 <span className="text-[hsl(var(--platform-foreground)/0.85)]">
-                  {guard.label}
-                  <span className="text-[hsl(var(--platform-foreground-muted))] ml-1">— {guard.description}</span>
+                  {gate.label}
+                  <span className="text-[hsl(var(--platform-foreground-muted))] ml-1">— {gate.description}</span>
                 </span>
               </div>
             );
@@ -143,7 +144,40 @@ function EligibilityCheckList({ opp }: { opp: OpportunityDiagnostic }) {
         </div>
       </div>
 
-      {/* Section 2: Ranking Factors (scored, not gates) */}
+      {/* Section 2: Advisory Context (informational, does not block) */}
+      {(readiness.advisoryCodes.length > 0) && (
+        <div>
+          <div className="flex items-center gap-2 mb-2">
+            <AlertTriangle className="h-3.5 w-3.5 text-amber-400" />
+            <p className="text-xs font-sans text-[hsl(var(--platform-foreground))] uppercase">
+              Advisory Context
+            </p>
+          </div>
+          <div className="space-y-1">
+            {ZURA_ADVISORIES.map((adv) => {
+              const isActive = readiness.advisoryCodes.includes(adv.code as any);
+              if (!isActive) return null;
+              return (
+                <div key={adv.code} className="flex items-start gap-2 text-xs py-0.5">
+                  <div className="mt-0.5 shrink-0">
+                    {adv.severity === 'warning' ? (
+                      <AlertTriangle className="h-3.5 w-3.5 text-amber-400" />
+                    ) : (
+                      <Info className="h-3.5 w-3.5 text-blue-400" />
+                    )}
+                  </div>
+                  <span className="text-[hsl(var(--platform-foreground)/0.85)]">
+                    {adv.label}
+                    <span className="text-[hsl(var(--platform-foreground-muted))] ml-1">— {adv.description}</span>
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Section 3: Ranking Factors (scored, not gates) */}
       <div>
         <div className="flex items-center gap-2 mb-2">
           <TrendingUp className="h-3.5 w-3.5 text-violet-400" />
@@ -204,31 +238,47 @@ function EligibilityReferenceList({ policy }: { policy: CapitalPolicy }) {
         </div>
       </div>
 
-      {/* Section B — Zura Operational Guardrails */}
+      {/* Section B — Zura Operational Context */}
       <div className="rounded-lg border border-[hsl(var(--platform-border)/0.2)] bg-[hsl(var(--platform-bg-card)/0.08)] p-4 space-y-3">
         <div className="flex items-center gap-2 mb-1">
           <Shield className="h-4 w-4 text-amber-400" />
           <h5 className="font-sans text-xs tracking-normal text-[hsl(var(--platform-foreground))] uppercase">
-            Layer 2 — Zura Operational Guardrails
+            Layer 2 — Zura Operational Context
           </h5>
         </div>
         <p className="text-xs text-[hsl(var(--platform-foreground-muted))]">
-          Before surfacing a Stripe-approved offer, Zura checks these operational readiness conditions. These are not underwriting criteria — they are guardrails to ensure the organization is ready to deploy capital.
+          Stripe is the lender — Zura provides operational context, not additional underwriting. Only critical operational alerts block surfacing. Repayment and project context is shown as advisory information.
         </p>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-1">
-          {ZURA_OPERATIONAL_GUARDRAILS.map((guard) => (
-            <div key={guard.code} className="flex items-start gap-2 text-xs py-0.5">
-              <BookOpen className="h-3.5 w-3.5 mt-0.5 shrink-0 text-amber-400/50" />
+        <div className="space-y-2">
+          {ZURA_HARD_GATES.map((gate) => (
+            <div key={gate.code} className="flex items-start gap-2 text-xs py-0.5">
+              <Shield className="h-3.5 w-3.5 mt-0.5 shrink-0 text-red-400/60" />
               <span className="text-[hsl(var(--platform-foreground)/0.85)]">
-                {guard.label}
-                <span className="text-[hsl(var(--platform-foreground-muted))] ml-1">— {guard.description}</span>
+                <span className="text-red-400/80">[Blocker]</span> {gate.label}
+                <span className="text-[hsl(var(--platform-foreground-muted))] ml-1">— {gate.description}</span>
+              </span>
+            </div>
+          ))}
+          {ZURA_ADVISORIES.map((adv) => (
+            <div key={adv.code} className="flex items-start gap-2 text-xs py-0.5">
+              {adv.severity === 'warning' ? (
+                <AlertTriangle className="h-3.5 w-3.5 mt-0.5 shrink-0 text-amber-400/60" />
+              ) : (
+                <BookOpen className="h-3.5 w-3.5 mt-0.5 shrink-0 text-blue-400/60" />
+              )}
+              <span className="text-[hsl(var(--platform-foreground)/0.85)]">
+                <span className={adv.severity === 'warning' ? 'text-amber-400/80' : 'text-blue-400/80'}>
+                  [{adv.severity === 'warning' ? 'Warning' : 'Info'}]
+                </span>{' '}
+                {adv.label}
+                <span className="text-[hsl(var(--platform-foreground-muted))] ml-1">— {adv.description}</span>
               </span>
             </div>
           ))}
         </div>
         <div className="pt-2 border-t border-[hsl(var(--platform-border)/0.1)]">
           <p className="text-xs text-[hsl(var(--platform-foreground-muted))]">
-            Policy: Max {policy.maxConcurrentProjects} concurrent projects · {policy.cooldownAfterDeclineDays}d decline cooldown · {policy.cooldownAfterUnderperformanceDays}d underperformance cooldown
+            Capital offers are surfaced when no critical operational alerts are active. Repayment and project context is shown as advisory information.
           </p>
         </div>
       </div>
