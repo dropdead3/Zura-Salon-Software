@@ -34,6 +34,7 @@ import { usePayrollEntitlement } from '@/hooks/payroll/usePayrollEntitlement';
 import { useColorBarEntitlement } from '@/hooks/color-bar/useColorBarEntitlement';
 import { AccountOwnerOrgSwitcher } from './AccountOwnerOrgSwitcher';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
+import { useEmployeeProfile } from '@/hooks/useEmployeeProfile';
 
 type PlatformRole = 'platform_owner' | 'platform_admin' | 'platform_support' | 'platform_developer';
 
