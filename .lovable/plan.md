@@ -1,28 +1,29 @@
 
 
-# Add Third-Party Provider Clarity to Capital Feature Guide
+# Add "How to Talk About It" Tiered Messaging Section
 
-## Problem
+## What
 
-The Overview section currently describes Capital as a "growth execution layer" but doesn't clarify that actual funding is powered by third-party providers. Platform admins need to understand this distinction.
+Add a new section to the Capital Knowledge Base page that gives platform admins three layers of messaging clarity — so they know exactly how to describe the feature depending on context (marketing, product explanation, or full transparency).
 
 ## Change
 
 **File:** `src/pages/dashboard/platform/CapitalKnowledgeBase.tsx`
 
-Update the Overview section's description paragraph (line 122) to include a clear statement that Zura identifies and validates opportunities, and when appropriate, surfaces funding options powered by third-party providers like Stripe.
+Insert a new `PlatformCard` before the FAQ section (before line 335) with:
 
-Also update the closing philosophy paragraph (line 141-143) to reinforce this — Zura is the intelligence layer; funding execution flows through trusted payment infrastructure partners.
+- **Title**: "How to Talk About It" with a `MessageSquare` icon
+- **Description**: "Three layers of explanation for different contexts."
+- **Three tier blocks**, each with a label badge and the corresponding copy:
+  - **Layer 1 — Marketing** (front-end messaging): "Zura doesn't just tell you how to grow — it helps you fund it."
+  - **Layer 2 — Product Explanation** (admin/org conversations): "When Zura identifies a strong growth opportunity, it may surface funding options so you can act on it."
+  - **Layer 3 — Full Transparency** (details/legal): "Funding is provided by third-party partners such as Stripe and is subject to their underwriting criteria."
 
-**Specific copy changes:**
+Each tier rendered as a styled row with a muted label pill and the quote in a slightly larger font. Clean, scannable, no decoration.
 
-- **Main paragraph** (line 122): After the existing sentence about deterministic scoring, add: *"When an opportunity qualifies, Zura surfaces funding options powered by third-party providers such as Stripe. Zura handles the intelligence — opportunity detection, scoring, and tracking — while funding execution flows through trusted financial infrastructure partners."*
-
-- **Philosophy paragraph** (line 141-143): Append: *"Zura is the brain; third-party providers like Stripe are the funding rails."*
-
-One file, two paragraph edits. No structural or component changes.
+Add `MessageSquare` to the lucide-react import.
 
 | File | Change |
 |---|---|
-| `src/pages/dashboard/platform/CapitalKnowledgeBase.tsx` | Add third-party provider language to Overview section |
+| `src/pages/dashboard/platform/CapitalKnowledgeBase.tsx` | Add tiered messaging section before FAQ, add `MessageSquare` import |
 
