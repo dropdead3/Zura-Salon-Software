@@ -7,6 +7,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import { formatCurrency } from '@/lib/format';
+import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { useCapitalProject } from '@/hooks/useCapitalProjects';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 import { CapitalMetricTile } from '@/components/dashboard/capital-engine/CapitalMetricTile';
@@ -19,7 +20,7 @@ import {
   calculateBreakEvenProgress,
   calculateForecastStatus,
 } from '@/lib/capital-engine/capital-formulas';
-import { DollarSign, TrendingUp, BarChart3, Clock, Activity, Zap } from 'lucide-react';
+import { DollarSign, TrendingUp, BarChart3, Clock, Activity, Zap, Link2 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
@@ -81,7 +82,7 @@ export default function CapitalProjectDetail() {
       <div className={cn(tokens.layout.pageContainer, 'max-w-[1200px] mx-auto')}>
         <DashboardPageHeader
           title={title}
-          description={`Funded ${formatCurrency(c(funded), { noCents: true })} · Started ${p.funding_start_date}`}
+          description={<>Funded <BlurredAmount>{formatCurrency(c(funded), { noCents: true })}</BlurredAmount> · Started {p.funding_start_date}</>}
           backTo={dashPath('/admin/capital/projects')}
           backLabel="Back to Projects"
           actions={
@@ -96,12 +97,12 @@ export default function CapitalProjectDetail() {
         <div className="space-y-6">
           {/* Performance Strip */}
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
-            <CapitalMetricTile icon={<DollarSign className="w-3.5 h-3.5 text-muted-foreground" />} label="Funded" value={formatCurrency(c(funded), { noCents: true })} />
-            <CapitalMetricTile icon={<TrendingUp className="w-3.5 h-3.5 text-muted-foreground" />} label="Revenue Generated" value={formatCurrency(c(revenue), { noCents: true })} />
+            <CapitalMetricTile icon={<DollarSign className="w-3.5 h-3.5 text-muted-foreground" />} label="Funded" value={<BlurredAmount>{formatCurrency(c(funded), { noCents: true })}</BlurredAmount>} />
+            <CapitalMetricTile icon={<TrendingUp className="w-3.5 h-3.5 text-muted-foreground" />} label="Revenue Generated" value={<BlurredAmount>{formatCurrency(c(revenue), { noCents: true })}</BlurredAmount>} />
             <CapitalMetricTile icon={<BarChart3 className="w-3.5 h-3.5 text-muted-foreground" />} label="ROI to Date" value={`${roi > 0 ? '+' : ''}${(roi * 100).toFixed(0)}%`} highlight={roi > 0} />
             <CapitalMetricTile icon={<Zap className="w-3.5 h-3.5 text-muted-foreground" />} label="Variance" value={variancePct != null ? `${variancePct > 0 ? '+' : ''}${variancePct.toFixed(0)}%` : '—'} highlight={variancePct != null && variancePct >= 15} />
             <CapitalMetricTile icon={<Clock className="w-3.5 h-3.5 text-muted-foreground" />} label="Break-Even" value={`${breakEvenPct.toFixed(0)}%`} />
-            <CapitalMetricTile icon={<DollarSign className="w-3.5 h-3.5 text-muted-foreground" />} label="Predicted Revenue" value={formatCurrency(c(predicted), { noCents: true })} />
+            <CapitalMetricTile icon={<DollarSign className="w-3.5 h-3.5 text-muted-foreground" />} label="Predicted Revenue" value={<BlurredAmount>{formatCurrency(c(predicted), { noCents: true })}</BlurredAmount>} />
           </div>
 
           {/* Repayment */}
@@ -109,14 +110,14 @@ export default function CapitalProjectDetail() {
             <CardContent className="p-5 space-y-3">
               <h3 className={cn(tokens.heading.subsection, 'mb-1')}>Repayment Progress</h3>
               <div className="flex items-center justify-between text-sm font-sans">
-                <span className="text-muted-foreground">Repaid: {formatCurrency(c(repaid), { noCents: true })}</span>
+                <span className="text-muted-foreground">Repaid: <BlurredAmount>{formatCurrency(c(repaid), { noCents: true })}</BlurredAmount></span>
                 <span>{repaidPct}%</span>
               </div>
               <Progress value={repaidPct} className="h-2" />
               {p.estimated_total_repayment_cents && (
                 <p className="text-xs text-muted-foreground font-sans">
-                  Total repayment: {formatCurrency(c(Number(p.estimated_total_repayment_cents)), { noCents: true })}
-                  {p.expected_monthly_payment_cents && ` · ${formatCurrency(c(Number(p.expected_monthly_payment_cents)), { noCents: true })}/mo expected`}
+                  Total repayment: <BlurredAmount>{formatCurrency(c(Number(p.estimated_total_repayment_cents)), { noCents: true })}</BlurredAmount>
+                  {p.expected_monthly_payment_cents && <> · <BlurredAmount>{formatCurrency(c(Number(p.expected_monthly_payment_cents)), { noCents: true })}</BlurredAmount>/mo expected</>}
                 </p>
               )}
             </CardContent>
@@ -129,13 +130,27 @@ export default function CapitalProjectDetail() {
               <div className="p-3 rounded-lg bg-muted/30 border border-border/40 space-y-2">
                 <div className="flex items-center justify-between text-sm font-sans">
                   <span className="text-muted-foreground">Revenue vs Predicted</span>
-                  <span>{formatCurrency(c(revenue), { noCents: true })} / {formatCurrency(c(predicted), { noCents: true })}</span>
+                  <span><BlurredAmount>{formatCurrency(c(revenue), { noCents: true })}</BlurredAmount> / <BlurredAmount>{formatCurrency(c(predicted), { noCents: true })}</BlurredAmount></span>
                 </div>
                 {variancePct != null && (
                   <p className={`text-xs font-sans ${variancePct >= 15 ? 'text-green-600' : variancePct > -10 ? 'text-green-600' : variancePct > -25 ? 'text-amber-600' : 'text-destructive'}`}>
                     {variancePct > 0 ? '+' : ''}{variancePct.toFixed(1)}% variance from forecast
                   </p>
                 )}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Linked Work */}
+          <Card className={tokens.card.wrapper}>
+            <CardContent className="p-5">
+              <h3 className={cn(tokens.heading.subsection, 'mb-3')}>Linked Work</h3>
+              <div className={tokens.empty.container}>
+                <Link2 className={tokens.empty.icon} />
+                <h3 className={tokens.empty.heading}>No Linked Work Yet</h3>
+                <p className={tokens.empty.description}>
+                  When this funded project triggers campaigns, task batches, inventory orders, or expansion plans, they will appear here.
+                </p>
               </div>
             </CardContent>
           </Card>

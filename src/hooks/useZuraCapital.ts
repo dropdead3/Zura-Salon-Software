@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
+import { useCapitalPolicySettings } from '@/hooks/useCapitalPolicySettings';
 import {
   calculateInternalEligibility,
   calculateSurfacePriority,
@@ -15,6 +16,7 @@ import {
   calculateCoverageRatio,
   type EligibilityInputs,
 } from '@/lib/capital-engine/capital-formulas';
+import { DEFAULT_CAPITAL_POLICY, type CapitalPolicy } from '@/config/capital-engine/capital-formulas-config';
 
 export interface ZuraCapitalOpportunity {
   id: string;
@@ -56,9 +58,33 @@ export interface ZuraCapitalOpportunity {
   zuraReasons: string[];
 }
 
+/** Map org policy settings row to CapitalPolicy override */
+function buildPolicyOverride(settings: Record<string, any> | null | undefined): Partial<CapitalPolicy> {
+  if (!settings) return {};
+  const override: Partial<CapitalPolicy> = {};
+  if (settings.roe_threshold != null) override.roeThreshold = Number(settings.roe_threshold);
+  if (settings.confidence_threshold != null) override.confidenceThreshold = Number(settings.confidence_threshold);
+  if (settings.max_risk_level != null) override.maxRiskLevel = settings.max_risk_level;
+  if (settings.min_operational_stability != null) override.minOperationalStability = Number(settings.min_operational_stability);
+  if (settings.min_execution_readiness != null) override.minExecutionReadiness = Number(settings.min_execution_readiness);
+  if (settings.max_concurrent_projects != null) override.maxConcurrentProjects = Number(settings.max_concurrent_projects);
+  if (settings.cooldown_after_decline_days != null) override.cooldownAfterDeclineDays = Number(settings.cooldown_after_decline_days);
+  if (settings.cooldown_after_underperformance_days != null) override.cooldownAfterUnderperformanceDays = Number(settings.cooldown_after_underperformance_days);
+  if (settings.stale_days != null) override.staleDays = Number(settings.stale_days);
+  if (settings.max_exposure_per_location != null) override.maxExposurePerLocation = Number(settings.max_exposure_per_location);
+  if (settings.max_exposure_per_stylist != null) override.maxExposurePerStylist = Number(settings.max_exposure_per_stylist);
+  if (settings.min_capital_required != null) override.minCapitalRequired = Number(settings.min_capital_required);
+  if (settings.allow_manager_initiation != null) override.allowManagerInitiation = Boolean(settings.allow_manager_initiation);
+  if (settings.allow_stylist_microfunding != null) override.allowStylistMicrofunding = Boolean(settings.allow_stylist_microfunding);
+  return override;
+}
+
 export function useZuraCapital() {
   const { effectiveOrganization } = useOrganizationContext();
   const orgId = effectiveOrganization?.id;
+
+  // Org policy settings
+  const { data: policySettings } = useCapitalPolicySettings();
 
   // Fetch from production capital_funding_opportunities
   const { data: rawOpps = [], isLoading: oppLoading } = useQuery({
@@ -163,6 +189,12 @@ export function useZuraCapital() {
     };
   }, [surfaceStates, recentEvents]);
 
+  // Build effective policy: defaults merged with org overrides
+  const effectivePolicy = useMemo<CapitalPolicy>(() => {
+    const overrides = buildPolicyOverride(policySettings);
+    return { ...DEFAULT_CAPITAL_POLICY, ...overrides };
+  }, [policySettings]);
+
   // Map and score opportunities using canonical formulas
   const opportunities = useMemo<ZuraCapitalOpportunity[]>(() => {
     const activeProjectCount = fundedProjects.length;
@@ -190,7 +222,7 @@ export function useZuraCapital() {
         const freshnessDays = calculateOpportunityFreshnessDays(o.detected_at || o.created_at);
         const roeRatio = calculateRoeRatio(liftCents, investmentCents);
 
-        // Canonical eligibility
+        // Canonical eligibility with org policy
         const eligInputs: EligibilityInputs = {
           roeRatio,
           confidenceScore,
@@ -213,7 +245,7 @@ export function useZuraCapital() {
           lastDeclinedAt,
           lastUnderperformingAt,
         };
-        const eligibility = calculateInternalEligibility(eligInputs);
+        const eligibility = calculateInternalEligibility(eligInputs, effectivePolicy);
 
         // Canonical surface priority
         const roeScore = calculateRoeScore(roeRatio);
@@ -287,7 +319,7 @@ export function useZuraCapital() {
         };
       })
       .sort((a, b) => b.surfacePriority - a.surfacePriority);
-  }, [rawOpps, fundedProjects, locationExposure, stylistExposure, lastDeclinedAt, lastUnderperformingAt, surfaceStates]);
+  }, [rawOpps, fundedProjects, locationExposure, stylistExposure, lastDeclinedAt, lastUnderperformingAt, surfaceStates, effectivePolicy]);
 
   const eligibleOpportunities = opportunities.filter((o) => o.zuraEligible);
   const topOpportunity = eligibleOpportunities[0] ?? null;

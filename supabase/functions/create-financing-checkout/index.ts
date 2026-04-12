@@ -8,10 +8,15 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+// Canonical thresholds aligned with DEFAULT_CAPITAL_POLICY
 const THRESHOLDS = {
-  minROE: 1.5,
+  minROE: 1.8,
+  minConfidence: 70,
+  minOperationalStability: 60,
+  minExecutionReadiness: 70,
   maxRisk: ["low", "moderate", "medium"],
-  minCapitalCents: 500_000,
+  maxStaleDays: 45,
+  minCapitalCents: 500_000, // $5,000
   maxConcurrentProjects: 2,
 };
 
@@ -112,10 +117,45 @@ serve(async (req) => {
       const roe = Number(opp.roe_score);
       const riskLevel = opp.risk_level || "medium";
       const capitalCents = Number(opp.required_investment_cents);
+      const confidence = Number(opp.confidence_score ?? 0);
+      const operationalStability = Number(opp.operational_stability_score ?? 100);
+      const executionReadiness = Number(opp.execution_readiness_score ?? 100);
+
+      // Freshness check
+      const detectedAt = opp.detected_at || opp.created_at;
+      if (detectedAt) {
+        const freshnessDays = Math.floor((Date.now() - new Date(detectedAt).getTime()) / 86400000);
+        if (freshnessDays > THRESHOLDS.maxStaleDays) failures.push("Opportunity is stale");
+      }
 
       if (roe < THRESHOLDS.minROE) failures.push("ROE below threshold");
+      if (confidence < THRESHOLDS.minConfidence) failures.push("Confidence below threshold");
       if (!THRESHOLDS.maxRisk.includes(riskLevel)) failures.push("Risk level too high");
       if (capitalCents < THRESHOLDS.minCapitalCents) failures.push("Capital below minimum");
+      if (operationalStability < THRESHOLDS.minOperationalStability) failures.push("Operational stability below threshold");
+      if (executionReadiness < THRESHOLDS.minExecutionReadiness) failures.push("Execution readiness below threshold");
+
+      // Repayment distress check
+      const { data: distressedProjects } = await serviceClient
+        .from("capital_funding_projects")
+        .select("id")
+        .eq("organization_id", organizationId)
+        .eq("repayment_status", "delinquent")
+        .limit(1);
+      if (distressedProjects && distressedProjects.length > 0) {
+        failures.push("Active repayment distress must be resolved first");
+      }
+
+      // Underperforming project check
+      const { data: underperformingProjects } = await serviceClient
+        .from("capital_funding_projects")
+        .select("id")
+        .eq("organization_id", organizationId)
+        .eq("status", "at_risk")
+        .limit(1);
+      if (underperformingProjects && underperformingProjects.length > 0) {
+        failures.push("Underperforming active project blocks new funding");
+      }
     } else {
       const roe = Number(opp.capital_required) > 0
         ? Number(opp.predicted_annual_lift) / Number(opp.capital_required) : 0;

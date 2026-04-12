@@ -8,6 +8,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import { formatCurrency } from '@/lib/format';
+import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { useCapitalProjects } from '@/hooks/useCapitalProjects';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 import { CapitalStatusBadge } from '@/components/dashboard/capital-engine/CapitalStatusBadge';
@@ -81,8 +82,8 @@ export default function CapitalProjects() {
                       className="grid grid-cols-[1fr_100px_100px_80px_80px_80px_80px_90px_36px] gap-2 items-center px-3 py-2.5 rounded-lg hover:bg-muted/30 transition-colors border border-transparent hover:border-border/40"
                     >
                       <span className="font-sans text-sm truncate">{title}</span>
-                      <span className="font-sans text-sm text-right">{formatCurrency(c(funded), { noCents: true })}</span>
-                      <span className="font-sans text-sm text-right">{formatCurrency(c(revenue), { noCents: true })}</span>
+                      <span className="font-sans text-sm text-right"><BlurredAmount>{formatCurrency(c(funded), { noCents: true })}</BlurredAmount></span>
+                      <span className="font-sans text-sm text-right"><BlurredAmount>{formatCurrency(c(revenue), { noCents: true })}</BlurredAmount></span>
                       <span className="font-sans text-sm text-right">{repaidPct}%</span>
                       <span className={`font-sans text-sm text-right ${roi != null && roi >= 0 ? 'text-green-600' : roi != null ? 'text-destructive' : ''}`}>
                         {roi != null ? `${roi > 0 ? '+' : ''}${(roi * 100).toFixed(0)}%` : '—'}
@@ -109,7 +110,7 @@ export default function CapitalProjects() {
                         <CapitalStatusBadge status={p.status} type="project" />
                       </div>
                       <div className="flex items-center gap-4 text-xs text-muted-foreground font-sans">
-                        <span>{formatCurrency(c(funded), { noCents: true })}</span>
+                        <span><BlurredAmount>{formatCurrency(c(funded), { noCents: true })}</BlurredAmount></span>
                         <span>Repaid: {repaidPct}%</span>
                       </div>
                     </Link>

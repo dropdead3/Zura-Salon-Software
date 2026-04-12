@@ -9,6 +9,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import { formatCurrency } from '@/lib/format';
+import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { useCapitalOpportunity } from '@/hooks/useCapitalOpportunity';
 import { useLogCapitalEvent } from '@/hooks/useCapitalEventLog';
 import { useDismissOpportunity } from '@/hooks/useCapitalSurfaceState';
@@ -27,12 +28,67 @@ import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 import { PageExplainer } from '@/components/ui/PageExplainer';
 import {
   Landmark, DollarSign, TrendingUp, Target, Clock, ShieldCheck,
-  ArrowUpRight, Zap, X, Activity,
+  ArrowUpRight, Zap, X, Activity, ListChecks,
 } from 'lucide-react';
 import { useState } from 'react';
 import { format } from 'date-fns';
 
 function c(cents: number) { return cents / 100; }
+
+/* ── Execution Plan Preview by Opportunity Type ── */
+const EXECUTION_PLAN_STEPS: Record<string, { label: string; description: string }[]> = {
+  capacity_expansion: [
+    { label: 'Add capacity resources', description: 'Increase chairs, extend hours, or add stations based on identified bottleneck.' },
+    { label: 'Update scheduling', description: 'Adjust booking calendar to reflect new availability windows.' },
+    { label: 'Launch demand campaign', description: 'Activate targeted campaign to fill new capacity slots.' },
+  ],
+  inventory_expansion: [
+    { label: 'Generate purchase order', description: 'Auto-create purchase order for identified inventory gaps.' },
+    { label: 'Restock workflow', description: 'Trigger replenishment workflow with preferred suppliers.' },
+    { label: 'Update retail displays', description: 'Adjust merchandising to feature newly stocked items.' },
+  ],
+  service_growth: [
+    { label: 'Service enablement', description: 'Configure new service offerings in the booking system.' },
+    { label: 'Staff training tasks', description: 'Create training task batch for relevant team members.' },
+    { label: 'Promotion campaign', description: 'Launch service introduction campaign to existing client base.' },
+  ],
+  location_expansion: [
+    { label: 'Expansion plan activation', description: 'Initiate location expansion plan with milestone tracking.' },
+    { label: 'Staffing allocation', description: 'Begin hiring or transfer workflow for new capacity.' },
+    { label: 'Market launch campaign', description: 'Prepare geo-targeted marketing for expanded location.' },
+  ],
+  new_location_launch: [
+    { label: 'Location setup', description: 'Activate new location entity with full operational configuration.' },
+    { label: 'Team hiring', description: 'Initiate hiring pipeline for new location staffing needs.' },
+    { label: 'Grand opening campaign', description: 'Launch multi-channel grand opening marketing campaign.' },
+  ],
+  stylist_capacity_growth: [
+    { label: 'Schedule optimization', description: 'Expand stylist availability windows based on demand data.' },
+    { label: 'Client growth tasks', description: 'Create client acquisition task batch for the stylist.' },
+    { label: 'Performance tracking', description: 'Activate enhanced performance monitoring for funded period.' },
+  ],
+  campaign_acceleration: [
+    { label: 'Campaign launch', description: 'Activate funded marketing campaign with allocated budget.' },
+    { label: 'Creative deployment', description: 'Deploy campaign creative assets across target channels.' },
+    { label: 'Attribution tracking', description: 'Enable revenue attribution tracking for campaign ROI.' },
+  ],
+  equipment_expansion: [
+    { label: 'Equipment procurement', description: 'Initiate purchase workflow for identified equipment needs.' },
+    { label: 'Installation scheduling', description: 'Schedule equipment installation with minimal disruption.' },
+    { label: 'Staff onboarding', description: 'Create training tasks for new equipment operation.' },
+  ],
+  marketing_acceleration: [
+    { label: 'Budget allocation', description: 'Distribute marketing budget across highest-ROI channels.' },
+    { label: 'Campaign activation', description: 'Launch coordinated multi-channel marketing initiative.' },
+    { label: 'Performance monitoring', description: 'Activate real-time marketing performance dashboard.' },
+  ],
+};
+
+const DEFAULT_EXECUTION_STEPS = [
+  { label: 'Activation planning', description: 'Define execution milestones for funded opportunity.' },
+  { label: 'Resource allocation', description: 'Allocate resources and assign ownership for execution.' },
+  { label: 'Performance tracking', description: 'Enable automated performance and ROI tracking.' },
+];
 
 export default function CapitalOpportunityDetail() {
   const { opportunityId } = useParams<{ opportunityId: string }>();
@@ -75,6 +131,8 @@ export default function CapitalOpportunityDetail() {
   const monthlyLift = c(monthlyLiftVal);
   const monthlyPayment = c(monthlyPaymentCents);
   const netMonthly = c(netMonthlyCents);
+
+  const executionSteps = EXECUTION_PLAN_STEPS[o.opportunity_type] ?? DEFAULT_EXECUTION_STEPS;
 
   const handleFund = async () => {
     setIsRedirecting(true);
@@ -138,8 +196,8 @@ export default function CapitalOpportunityDetail() {
             <CardContent className="p-5">
               <h3 className={cn(tokens.heading.subsection, 'mb-3')}>Growth Math</h3>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                <CapitalMetricTile icon={<DollarSign className="w-3.5 h-3.5 text-muted-foreground" />} label="Investment" value={formatCurrency(investmentDollars, { noCents: true })} />
-                <CapitalMetricTile icon={<TrendingUp className="w-3.5 h-3.5 text-muted-foreground" />} label="Expected Lift" value={`+${formatCurrency(liftExpected, { noCents: true })}/yr`} sub={liftLow > 0 && liftHigh > 0 ? `${formatCurrency(liftLow, { noCents: true })} – ${formatCurrency(liftHigh, { noCents: true })}` : undefined} />
+                <CapitalMetricTile icon={<DollarSign className="w-3.5 h-3.5 text-muted-foreground" />} label="Investment" value={<BlurredAmount>{formatCurrency(investmentDollars, { noCents: true })}</BlurredAmount>} />
+                <CapitalMetricTile icon={<TrendingUp className="w-3.5 h-3.5 text-muted-foreground" />} label="Expected Lift" value={<BlurredAmount>+{formatCurrency(liftExpected, { noCents: true })}/yr</BlurredAmount>} sub={liftLow > 0 && liftHigh > 0 ? <BlurredAmount>{formatCurrency(liftLow, { noCents: true })} – {formatCurrency(liftHigh, { noCents: true })}</BlurredAmount> : undefined} />
                 <CapitalMetricTile icon={<Target className="w-3.5 h-3.5 text-muted-foreground" />} label="ROE" value={`${roe.toFixed(1)}x`} sub={getROELabel(roe)} highlight />
                 <CapitalMetricTile icon={<Clock className="w-3.5 h-3.5 text-muted-foreground" />} label="Break-Even" value={`${breakEvenExpected}mo`} sub={Number(o.break_even_months_low) > 0 ? `${o.break_even_months_low}–${o.break_even_months_high}mo range` : undefined} />
               </div>
@@ -159,7 +217,7 @@ export default function CapitalOpportunityDetail() {
                 <div className="p-3 rounded-lg bg-muted/30 border border-border/40 space-y-2">
                   <div className="flex items-center justify-between text-sm font-sans">
                     <span className="text-muted-foreground">Provider Amount</span>
-                    <span className="font-display tracking-wide">{formatCurrency(c(Number(o.provider_offer_amount_cents)), { noCents: true })}</span>
+                    <span className="font-display tracking-wide"><BlurredAmount>{formatCurrency(c(Number(o.provider_offer_amount_cents)), { noCents: true })}</BlurredAmount></span>
                   </div>
                   {coveragePercent != null && (
                     <>
@@ -186,12 +244,35 @@ export default function CapitalOpportunityDetail() {
                   <span className="text-xs text-primary font-sans font-medium">Post-Financing Net Cash Flow</span>
                 </div>
                 <span className="font-display text-xl tracking-wide text-primary">
-                  {netMonthly >= 0 ? '+' : ''}{formatCurrency(netMonthly, { noCents: true })}
+                  <BlurredAmount>{netMonthly >= 0 ? '+' : ''}{formatCurrency(netMonthly, { noCents: true })}</BlurredAmount>
                   <span className="text-xs font-sans text-primary/70">/mo</span>
                 </span>
                 <p className="text-xs text-muted-foreground font-sans">
-                  {formatCurrency(monthlyLift, { noCents: true })} lift − {formatCurrency(monthlyPayment, { noCents: true })} repayment over {breakEvenExpected}mo
+                  <BlurredAmount>{formatCurrency(monthlyLift, { noCents: true })}</BlurredAmount> lift − <BlurredAmount>{formatCurrency(monthlyPayment, { noCents: true })}</BlurredAmount> repayment over {breakEvenExpected}mo
                 </p>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Execution Plan */}
+          <Card className={tokens.card.wrapper}>
+            <CardContent className="p-5">
+              <h3 className={cn(tokens.heading.subsection, 'mb-3')}>Execution Plan</h3>
+              <p className="text-xs text-muted-foreground font-sans mb-3">
+                When funded, Zura will automatically initiate the following execution steps:
+              </p>
+              <div className="space-y-2">
+                {executionSteps.map((step, i) => (
+                  <div key={i} className="flex items-start gap-3 p-2.5 rounded-lg bg-muted/30 border border-border/40">
+                    <div className="flex items-center justify-center w-5 h-5 rounded-full bg-primary/10 text-primary text-[10px] font-display tracking-wide shrink-0 mt-0.5">
+                      {i + 1}
+                    </div>
+                    <div className="min-w-0">
+                      <span className="text-sm font-sans">{step.label}</span>
+                      <p className="text-xs text-muted-foreground font-sans mt-0.5">{step.description}</p>
+                    </div>
+                  </div>
+                ))}
               </div>
             </CardContent>
           </Card>
