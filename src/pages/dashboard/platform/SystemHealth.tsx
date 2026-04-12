@@ -91,7 +91,7 @@ export default function SystemHealthPage() {
 
       {/* Overall Status Banner */}
       <div className={cn(
-        "rounded-xl border p-6 flex items-center justify-between",
+        "rounded-[22px] border p-6 flex items-center justify-between",
         health?.overallStatus === 'healthy' && "border-emerald-500/30 bg-emerald-500/10",
         health?.overallStatus === 'degraded' && "border-amber-500/30 bg-amber-500/10",
         health?.overallStatus === 'down' && "border-rose-500/30 bg-rose-500/10",
