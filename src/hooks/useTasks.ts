@@ -18,6 +18,8 @@ export interface Task {
   recurrence_pattern: string | null;
   recurrence_parent_id: string | null;
   snoozed_until: string | null;
+  estimated_revenue_impact_cents: number | null;
+  expires_at: string | null;
 }
 
 /**
@@ -48,7 +50,7 @@ export function useTasks() {
   });
 
   const createTask = useMutation({
-    mutationFn: async (task: { title: string; description?: string; due_date?: string; priority?: 'low' | 'normal' | 'high'; source?: string; recurrence_pattern?: string | null }) => {
+    mutationFn: async (task: { title: string; description?: string; due_date?: string; priority?: 'low' | 'normal' | 'high'; source?: string; recurrence_pattern?: string | null; estimated_revenue_impact_cents?: number | null; expires_at?: string | null }) => {
       const { data, error } = await supabase
         .from('tasks')
         .insert({
@@ -59,6 +61,8 @@ export function useTasks() {
           priority: task.priority || 'normal',
           source: task.source || 'manual',
           recurrence_pattern: task.recurrence_pattern || null,
+          estimated_revenue_impact_cents: task.estimated_revenue_impact_cents || null,
+          expires_at: task.expires_at || null,
         } as any)
         .select()
         .single();
@@ -131,7 +135,7 @@ export function useTasks() {
   });
 
   const updateTask = useMutation({
-    mutationFn: async ({ id, updates }: { id: string; updates: { title?: string; description?: string | null; due_date?: string | null; priority?: 'low' | 'normal' | 'high'; notes?: string | null; recurrence_pattern?: string | null } }) => {
+    mutationFn: async ({ id, updates }: { id: string; updates: { title?: string; description?: string | null; due_date?: string | null; priority?: 'low' | 'normal' | 'high'; notes?: string | null; recurrence_pattern?: string | null; estimated_revenue_impact_cents?: number | null; expires_at?: string | null } }) => {
       const { error } = await supabase
         .from('tasks')
         .update(updates)
