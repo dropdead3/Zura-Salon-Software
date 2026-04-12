@@ -366,12 +366,12 @@ function RevenueSkeleton() {
       </div>
       <div className="grid gap-4 md:grid-cols-4">
         {[...Array(4)].map((_, i) => (
-          <Skeleton key={i} className="h-32 bg-slate-800 rounded-2xl" />
+          <Skeleton key={i} className="h-32 bg-slate-800 rounded-[16px]" />
         ))}
       </div>
       <div className="grid gap-6 lg:grid-cols-2">
-        <Skeleton className="h-[350px] bg-slate-800 rounded-2xl" />
-        <Skeleton className="h-[350px] bg-slate-800 rounded-2xl" />
+        <Skeleton className="h-[350px] bg-slate-800 rounded-[16px]" />
+        <Skeleton className="h-[350px] bg-slate-800 rounded-[16px]" />
       </div>
     </div>
   );
