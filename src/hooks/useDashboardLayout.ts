@@ -219,6 +219,25 @@ function migrateLayout(layout: DashboardLayout, pinnedCards: string[]): Dashboar
     }
   }
 
+  // Ensure Operator Mode sections exist for existing layouts
+  const operatorSections = ['operator_top_lever', 'money_left', 'operator_performance', 'team_growth'];
+  for (const sectionKey of operatorSections) {
+    if (!migrated.sectionOrder?.includes(sectionKey)) {
+      // Insert before daily_briefing for top_lever, after daily_briefing for others
+      const briefingIdx = migrated.sectionOrder?.indexOf('daily_briefing') ?? 0;
+      const insertIdx = sectionKey === 'operator_top_lever' ? briefingIdx : briefingIdx + 1;
+      const newSections = [...(migrated.sections || [])];
+      const newOrder = [...(migrated.sectionOrder || [])];
+      newSections.splice(insertIdx, 0, sectionKey);
+      newOrder.splice(insertIdx, 0, sectionKey);
+      migrated = {
+        ...migrated,
+        sections: newSections,
+        sectionOrder: newOrder,
+      };
+    }
+  }
+
   return sanitizeDashboardLayout(migrated);
 }
 
