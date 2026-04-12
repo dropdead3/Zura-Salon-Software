@@ -1,17 +1,23 @@
 
 
-# Fix Capital Control Tower Padding
+# Fix Platform Accounts Page — Button & Page Explainer
 
-## Problem
+## Problems
 
-The `CapitalControlTower` page uses a bare `<div className="space-y-6">` as its root container. Every other platform page wraps content in `<PlatformPageContainer>`, which provides consistent responsive padding (`px-4 py-6 sm:px-6 sm:py-8 lg:px-8`, max-width 1600px, centered). This causes the Capital page to have no page-level padding.
+1. **PageExplainer inside PlatformButton**: Line 166 places `<PageExplainer pageId="platform-accounts" />` *inside* the `<PlatformButton>` JSX, between the Plus icon and "New Account" text. This causes the explainer to render as a child of the button, creating the visual overlap seen in the screenshot.
+
+2. **Page Explainers don't belong on platform pages**: Per governance rules, Page Explainers are an organization dashboard feature. Platform admin pages should not include them.
 
 ## Fix
 
-**File:** `src/pages/dashboard/platform/CapitalControlTower.tsx`
+**File:** `src/pages/dashboard/platform/Accounts.tsx`
 
-- Import `PlatformPageContainer` from `@/components/platform/ui/PlatformPageContainer`
-- Replace the root `<div className="space-y-6">` with `<PlatformPageContainer className="space-y-6">`
+- Delete line 166 (`<PageExplainer pageId="platform-accounts" />`) entirely
+- Remove the `PageExplainer` import (line 56)
 
-One import, one line change. Matches the pattern used by every other platform page (Permissions, FeatureFlags, AuditLog, Onboarding, Notifications, Settings, etc.).
+This restores the button to its correct layout (`<Plus icon> New Account`) and removes the misplaced explainer from the platform page.
+
+| File | Change |
+|---|---|
+| `src/pages/dashboard/platform/Accounts.tsx` | Remove PageExplainer import and usage (lines 56, 166) |
 
