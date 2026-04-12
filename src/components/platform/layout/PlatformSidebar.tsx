@@ -130,7 +130,7 @@ export function PlatformSidebar() {
             <div key={group.label}>
               {/* Section label */}
               {!collapsed && (
-                <div className="px-3 pb-1.5 text-[10px] font-medium uppercase tracking-[0.15em] transition-colors duration-200 text-[hsl(var(--platform-foreground-subtle))]">
+                <div className="px-3 pb-1.5 font-display text-[10px] tracking-[0.12em] uppercase transition-colors duration-200 text-[hsl(var(--platform-foreground-subtle))]">
                   {group.label}
                 </div>
               )}
