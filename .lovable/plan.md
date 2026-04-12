@@ -1,60 +1,39 @@
 
 
-# Capital Control Tower — Show 19-Check Reference When No Opportunities Exist
+# Zura Capital — Two-Layer Eligibility Model (Stripe + Zura Guardrails)
 
-## Problem
+## Completed
 
-The 19-check eligibility checklist only renders when an org has actual `capital_funding_opportunities` records. For orgs like Drop Dead Salons with zero opportunities, admins see only the 3 visibility checks and a "No opportunities detected" warning — with no visibility into what the qualification criteria even are.
+### Architecture Change: Stripe Capital Alignment
 
-## Change
+Realigned Zura Capital from a custom 19-check eligibility engine to a two-layer model:
 
-### `src/pages/dashboard/platform/CapitalControlTower.tsx`
+**Layer 1 — Stripe Capital Underwriting (Stripe-owned)**
+Stripe reviews connected accounts daily based on processing history, volume, growth, disputes, etc. Zura cannot influence this — it can only surface offers Stripe has already approved.
 
-When `data.flagEnabled && data.opportunities.length === 0`, replace the current bare warning message with a **reference checklist** showing all 19 eligibility criteria with their policy thresholds. This uses the org's effective policy (or default) and renders each check in a neutral/informational style (no pass/fail since there's no opportunity to evaluate — just the criterion name and threshold).
+**Layer 2 — Zura Operational Guardrails (Zura-owned)**
+Before surfacing a Stripe-approved offer, Zura checks 6 operational readiness conditions:
+- No critical ops alerts
+- No active repayment distress
+- Under max concurrent project limit
+- No underperforming projects
+- Decline cooldown clear
+- Underperformance cooldown clear
 
-Layout:
-```text
-⚠ No opportunities have been detected for this organization yet.
-
-Eligibility Reference — What Gets Checked
-  When an opportunity is detected, it must pass all 19 checks:
-
-  · ROE Ratio — must be ≥ 1.8x
-  · Confidence Score — must be ≥ 70
-  · Risk Level — must be ≤ medium
-  · Operational Stability — must be ≥ 60
-  · Execution Readiness — must be ≥ 70
-  · Concurrent Projects — must be < 2
-  · No Underperforming Projects
-  · No Repayment Distress
-  · Opportunity Freshness — must be ≤ 45 days
-  · Investment Amount — must be > $0
-  · Above Minimum Capital — must be ≥ $5,000
-  · Not Expired
-  · Constraint Type — must be identified
-  · Momentum Score — must be ≥ 20
-  · No Critical Ops Alerts
-  · Location Exposure — must be ≤ $200,000
-  · Stylist Exposure — must be ≤ $100,000
-  · Decline Cooldown — 14 day wait
-  · Underperformance Cooldown — 30 day wait
-```
-
-Each line uses the **actual policy values** from the org's `capital_policy_settings` (or defaults), so admins see the real thresholds that would apply.
-
-### Implementation
-
-Add a new `EligibilityReferenceList` component that:
-- Takes the effective `CapitalPolicy` from the diagnostics hook (already available via `data.policy` on each opportunity — we'll also expose the org-level policy from the hook)
-- Renders each criterion with a neutral info icon (not pass/fail) and the threshold value
-- Displays below the "No opportunities detected" warning
-
-Also update `useOrgCapitalDiagnostics.ts` to return the `effectivePolicy` at the top level of the diagnostics result (not just per-opportunity), so the reference list can access it even when there are zero opportunities.
-
-## File Summary
+### Files Changed
 
 | File | Change |
 |---|---|
-| `src/hooks/useOrgCapitalDiagnostics.ts` | Add `effectivePolicy: CapitalPolicy` to the top-level return type |
-| `src/pages/dashboard/platform/CapitalControlTower.tsx` | Add `EligibilityReferenceList` component; render it in the zero-opportunities state |
+| `src/config/capital-engine/capital-formulas-config.ts` | Added `STRIPE_CAPITAL_REQUIREMENTS` and `ZURA_OPERATIONAL_GUARDRAILS` constants |
+| `src/lib/capital-engine/capital-formulas.ts` | Added `calculateOperationalReadiness` and `calculateOpportunityRanking`; kept `calculateInternalEligibility` for backward compat |
+| `src/pages/dashboard/platform/CapitalControlTower.tsx` | Replaced 19-check reference with two-section Stripe Requirements + Zura Guardrails view |
+| `src/pages/dashboard/platform/CapitalKnowledgeBase.tsx` | Updated to explain two-layer model with new FAQ entries |
+| `src/hooks/useOrgCapitalDiagnostics.ts` | Added operational readiness and ranking results to diagnostics |
+| `supabase/functions/detect-capital-opportunities/index.ts` | New edge function: polls Stripe Capital API for financing offers |
+| DB migration | Added `stripe_offer_id` and `provider_offer_details` columns to `capital_funding_opportunities` |
 
+### Prerequisites for Live Detection
+
+1. Stripe Connect accounts must have Capital for Platforms enabled
+2. Locations need `stripe_account_id` populated
+3. The `detect-capital-opportunities` edge function needs to be scheduled (cron) or triggered manually
