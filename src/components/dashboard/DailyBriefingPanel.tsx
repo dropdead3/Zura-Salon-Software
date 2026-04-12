@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import {
   Zap, CheckCircle2, AlertTriangle, TrendingUp,
-  Rocket, ShieldAlert, ArrowRight, Sparkles,
+  Rocket, ShieldAlert, ArrowRight, Sparkles, Timer,
 } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -15,6 +15,7 @@ import {
   type BriefingRoleContext,
 } from '@/hooks/useDailyBriefingEngine';
 import { useTasks, type Task } from '@/hooks/useTasks';
+import { MissedOpportunityBanner } from '@/components/dashboard/MissedOpportunityBanner';
 import { toast } from 'sonner';
 
 interface DailyBriefingPanelProps {
@@ -169,11 +170,28 @@ export function DailyBriefingPanel({
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2">
                         <p className="text-xs font-sans truncate">{task.title}</p>
+                        {task.task_type && (
+                          <span className={cn(
+                            "shrink-0 text-[10px] font-sans px-1 py-0.5 rounded capitalize",
+                            task.task_type === 'growth' ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' :
+                            task.task_type === 'protection' ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400' :
+                            task.task_type === 'acceleration' ? 'bg-violet-500/10 text-violet-600 dark:text-violet-400' :
+                            'bg-amber-500/10 text-amber-600 dark:text-amber-400',
+                          )}>
+                            {task.task_type}
+                          </span>
+                        )}
                         {task.estimated_revenue_impact_cents != null && task.estimated_revenue_impact_cents > 0 && (
                           <span className="shrink-0 text-[10px] font-sans text-emerald-600 dark:text-emerald-400">
                             <BlurredAmount>
                               ~{formatCurrency(task.estimated_revenue_impact_cents / 100)}
                             </BlurredAmount>/mo
+                          </span>
+                        )}
+                        {task.execution_time_minutes != null && (
+                          <span className="shrink-0 text-[10px] font-sans text-muted-foreground flex items-center gap-0.5">
+                            <Timer className="w-2.5 h-2.5" />
+                            {task.execution_time_minutes}m
                           </span>
                         )}
                       </div>
@@ -183,11 +201,17 @@ export function DailyBriefingPanel({
                         </p>
                       )}
                     </div>
+                    {/* Priority score dot */}
                     <div className={cn(
                       'w-1.5 h-1.5 rounded-full mt-1.5 shrink-0',
-                      task.priority === 'high' ? 'bg-orange-500'
-                        : task.priority === 'normal' ? 'bg-blue-500'
-                        : 'bg-muted-foreground',
+                      task.priority_score != null
+                        ? (task.priority_score >= 80 ? 'bg-destructive'
+                          : task.priority_score >= 60 ? 'bg-orange-500'
+                          : task.priority_score >= 40 ? 'bg-blue-500'
+                          : 'bg-muted-foreground')
+                        : (task.priority === 'high' ? 'bg-orange-500'
+                          : task.priority === 'normal' ? 'bg-blue-500'
+                          : 'bg-muted-foreground'),
                     )} />
                   </div>
                 ))}
@@ -228,6 +252,9 @@ export function DailyBriefingPanel({
               </p>
             </div>
           )}
+
+          {/* ── Missed Revenue Banner ─────────────────────────────────── */}
+          <MissedOpportunityBanner tasks={tasks} />
 
           {/* Bottom row: Opportunity Remaining + Active Growth Moves */}
           {(opportunityRemainingCents > 0 || activeGrowthMoves.length > 0) && (
