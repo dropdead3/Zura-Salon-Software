@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Landmark, Building2, TrendingUp, Loader2 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { PlatformPageContainer } from '@/components/platform/ui/PlatformPageContainer';
 import { PlatformPageHeader } from '@/components/platform/ui/PlatformPageHeader';
 import {
   PlatformCard,
@@ -100,7 +101,7 @@ export default function CapitalControlTower() {
   });
 
   return (
-    <div className="space-y-6">
+    <PlatformPageContainer className="space-y-6">
       <PlatformPageHeader
         title="Zura Capital Control Tower"
         description="Manage Capital access and monitor rollout across the platform"
@@ -259,6 +260,6 @@ export default function CapitalControlTower() {
           )}
         </PlatformCardContent>
       </PlatformCard>
-    </div>
+    </PlatformPageContainer>
   );
 }
