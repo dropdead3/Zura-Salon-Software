@@ -145,6 +145,7 @@ const StylistMixingDashboard = lazyWithRetry(() => import("./pages/dashboard/Sty
 const MetricsGlossary = lazyWithRetry(() => import("./pages/dashboard/MetricsGlossary"));
 const AppsMarketplace = lazyWithRetry(() => import("./pages/dashboard/AppsMarketplace"));
 const PublicBooking = lazyWithRetry(() => import("./pages/PublicBooking"));
+const BookingSurface = lazyWithRetry(() => import("./pages/BookingSurface"));
 const DayRateBooking = lazyWithRetry(() => import("./pages/DayRateBooking"));
 const ProductDemo = lazyWithRetry(() => import("./pages/ProductDemo"));
 const SolIndependent = lazyWithRetry(() => import("./pages/solutions/IndependentStylist"));
@@ -239,6 +240,7 @@ const CapitalOpportunityDetail = lazyWithRetry(() => import("./pages/dashboard/a
 const CapitalProjects = lazyWithRetry(() => import("./pages/dashboard/admin/CapitalProjects"));
 const CapitalProjectDetail = lazyWithRetry(() => import("./pages/dashboard/admin/CapitalProjectDetail"));
 const CapitalSettings = lazyWithRetry(() => import("./pages/dashboard/admin/CapitalSettings"));
+const BookingSurfaceSettingsPage = lazyWithRetry(() => import("./pages/dashboard/admin/BookingSurfaceSettingsPage"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -397,6 +399,7 @@ function DashboardRoutes() {
       <Route path="admin/capital/projects" element={<ProtectedRoute requiredPermission="view_team_overview"><CapitalProjects /></ProtectedRoute>} />
       <Route path="admin/capital/projects/:projectId" element={<ProtectedRoute requiredPermission="view_team_overview"><CapitalProjectDetail /></ProtectedRoute>} />
       <Route path="admin/capital/settings" element={<ProtectedRoute requiredPermission="manage_settings"><CapitalSettings /></ProtectedRoute>} />
+      <Route path="admin/booking-surface" element={<ProtectedRoute requiredPermission="manage_settings"><BookingSurfaceSettingsPage /></ProtectedRoute>} />
 
       {/* Team Challenges routes */}
       <Route path="admin/challenges" element={<ProtectedRoute requiredPermission="view_team_overview"><ChallengesDashboard /></ProtectedRoute>} />
@@ -485,6 +488,7 @@ const App = () => (
                     <Route path="/rewards" element={<ClientPortalPage />} />
                     <Route path="/kiosk/:locationId" element={<Kiosk />} />
                     <Route path="/dock" element={<Dock />} />
+                    <Route path="/book/:orgSlug" element={<BookingSurface />} />
                     {/* TEMP: Preview access denied page — remove after review */}
                     <Route path="/_preview/access-denied" element={<AccessDeniedPreview />} />
 
