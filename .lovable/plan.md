@@ -1,164 +1,129 @@
 
 
-# Zura Capital — Deterministic Formulas Pack
+# Zura Capital — Audit: Gaps and Bugs
 
-## Current State
+## Critical Findings
 
-Formula logic is scattered across 4 files and multiple UI components:
+### BUG 1: Dual Eligibility System — Two Competing Engines
 
-- **`capital-engine.ts`** — has `clamp`, `computeROE` (uses confidence string + annual lift, not cents), `computeRisk` (uses 0-1 inputs, not 0-100 scores)
-- **`financing-engine.ts`** — has `computeVariance`, `computePostFinancingCashFlow` (uses dollars, not cents)
-- **`zura-eligibility-engine.ts`** — hardcodes `confidenceToNumber()` mapping, missing checks for `execution_readiness_score`, `operational_stability_score >= 60`, `repayment_distress_flag`, returns free-text reasons not structured reason codes
-- **`surface-priority-engine.ts`** — weights differ from spec (0.35 roe vs spec 0.30, missing `break_even_score` and `net_impact_score` terms), staleness penalty thresholds differ (30/60/90 days vs spec 7/14/30)
-- **UI inline math** — `CapitalOpportunityDetail.tsx` line 65-69 computes monthly lift/net gain inline; `ZuraCapitalCard.tsx` computes coverage inline
+**`zura-eligibility-engine.ts`** (legacy) and **`capital-formulas.ts`** (canonical) both implement eligibility logic, but `useZuraCapital.ts` still calls the **legacy** `isZuraEligible()`. This means the production hook does not use the canonical `calculateInternalEligibility()` from the formulas pack.
 
-**Missing entirely:**
-- ROE score normalization (0-100 from ratio)
-- Break-even score
-- Confidence score composition (weighted from historical accuracy, stability, readiness, etc.)
-- Risk score composition (from stability, uncertainty, project load, etc.)
-- Business value score composition
-- Net impact score
-- Freshness score / freshness multiplier
-- Forecast status derivation (with early-stage override)
-- Underperformance detection
-- Predicted revenue to date (linear pacing)
-- Concurrent exposure checks (org/location/stylist level)
-- Stylist micro-funding eligibility
-- Explanation template mapping from reason codes
-- Normalization helpers (`normalize_ratio_to_100`, `normalize_inverse_to_100`, `safe_divide`)
+Key differences causing inconsistency:
+- Legacy engine uses `confidence` as a string (`'high'|'medium'|'low'`) mapped via `confidenceToNumber()`, while canonical uses numeric `confidenceScore` directly
+- Legacy `maxStaleDays` is **90** days; canonical `staleDays` is **45** days (per spec)
+- Legacy is missing checks for `execution_readiness_score >= 70`, `operational_stability_score >= 60`, `repayment_distress_flag`
+- Legacy returns free-text `reasons: string[]`; canonical returns structured `reasonCodes: ReasonCode[]`
 
-## Architecture
+**Fix:** Rewire `useZuraCapital.ts` to call `calculateInternalEligibility()` from `capital-formulas.ts` instead of `isZuraEligible()`.
 
-Create one canonical formulas module. All consumers import from it. No inline math.
+---
 
-```text
-src/lib/capital-engine/capital-formulas.ts  ← NEW (single source of truth)
-src/config/capital-engine/capital-formulas-config.ts  ← NEW (all thresholds/weights)
+### BUG 2: Dual Surface Priority System — Two Competing Engines
+
+**`surface-priority-engine.ts`** still uses its own inline `computeSurfacePriority()` with **different weights and penalties** than the canonical `calculateSurfacePriority()` in `capital-formulas.ts`.
+
+Differences:
+- Old engine: ROE normalized by dividing by 5x, not using `calculateRoeScore()`
+- Old engine: `breakEven` term uses an urgency proxy, not `calculateBreakEvenScore()`
+- Old engine: `netImpact` hardcoded to 50, not computed
+- Old engine: staleness penalties at 30/60/90 days (5/15/30), canonical uses 7/14/30 days (0/5/10/20)
+- Old engine: project load penalty is `count * 3`, canonical is `count * 10`
+- Old engine: dismissal penalty is `count * 5`, canonical uses `min(20, 5 * count)`
+- Old engine: missing coverage penalty entirely
+
+`useZuraCapital.ts` imports from the **old** engine. `selectForSurface()` also uses the old engine internally.
+
+**Fix:** Replace `computeSurfacePriority()` internals with delegation to `calculateSurfacePriority()` from `capital-formulas.ts`, or remove the old function entirely and have `useZuraCapital.ts` + `selectForSurface()` call the canonical version.
+
+---
+
+### BUG 3: Exposure Tracking Is Empty (TODO Comment)
+
+In `useZuraCapital.ts` lines 89-91, the exposure computation has a `// TODO` and an empty `forEach`:
+```ts
+(fundedProjects as any[]).forEach((fp) => {
+  // TODO: join with opportunity for location_id if needed
+});
 ```
+This means `locationExposure` and `stylistExposure` are always empty objects `{}`, so **exposure limit checks in eligibility always pass** — even when real exposure exceeds policy limits.
 
-## Build Plan
+**Fix:** Populate `locationExposure` and `stylistExposure` from `capital_funding_projects` joined with their parent `capital_funding_opportunities` for `location_id`/`stylist_id`.
 
-### 1. Create `capital-formulas-config.ts`
+---
 
-All policy defaults, weights, and thresholds in one file:
-- `DEFAULT_POLICY` — roe_threshold, confidence_threshold, max_risk_level, max_concurrent_projects, cooldowns, stylist thresholds, min_operational_stability, min_execution_readiness, stale_days
-- `ROE_SCORE_RANGE` — min 0.5, max 3.0
-- `BREAK_EVEN_RANGE` — min 0, max 18
-- `FRESHNESS_DECAY` — day thresholds and multipliers
-- `SURFACE_PRIORITY_WEIGHTS` — spec weights (roe 0.30, confidence 0.20, business_value 0.15, break_even 0.10, momentum 0.10, constraint_severity 0.10, net_impact 0.05)
-- `CONFIDENCE_WEIGHTS` — historical_accuracy 0.30, operational_stability 0.20, execution_readiness 0.20, break_even 0.10, momentum 0.10, freshness 0.10
-- `RISK_WEIGHTS` — instability 0.25, uncertainty 0.20, underperformance 0.20, project_load 0.15, repayment 0.10, momentum 0.10
-- `RISK_LEVEL_THRESHOLDS` — low 0-34, medium 35-59, high 60-79, critical 80-100
-- `VARIANCE_THRESHOLDS` — above_forecast 15, on_track_low -10, below_forecast -25
-- `COVERAGE_TIERS` — full >= 1.0, strong >= 0.75, partial >= 0.50, weak < 0.50
-- `STALENESS_PENALTIES`, `DISMISSAL_PENALTIES`, `COVERAGE_PENALTIES`, `PROJECT_LOAD_PENALTY_PER`
-- `CONSTRAINT_SEVERITY_MAP`
-- `REASON_CODES` — structured enum of all eligibility failure codes
-- `EXPLANATION_TEMPLATES` — deterministic text for each reason code
+### BUG 4: `VARIANCE_THRESHOLDS` Duplicated
 
-### 2. Create `capital-formulas.ts` — 22 canonical functions
+`zura-capital-config.ts` defines `VARIANCE_THRESHOLDS` and `getPerformanceStatus()`. `capital-formulas-config.ts` defines `CANONICAL_VARIANCE_THRESHOLDS` and `capital-formulas.ts` defines `calculateForecastStatus()`. These are parallel implementations. Any consumer using the wrong one gets inconsistent status labels.
 
-All pure, deterministic, no side effects:
+**Fix:** Remove `VARIANCE_THRESHOLDS` and `getPerformanceStatus()` from `zura-capital-config.ts`; all consumers should use canonical versions.
 
-**Normalization helpers:**
-- `clamp(value, min, max)`
-- `normalizeRatioTo100(value, minValue, maxValue)`
-- `normalizeInverseTo100(value, minValue, maxValue)`
-- `safeDivide(numerator, denominator, fallback)`
-- `freshnessMultiplier(days)`
+---
 
-**Core scoring:**
-- `calculateRoeRatio(predictedLiftCents, investmentCents)` — returns decimal ratio
-- `calculateRoeScore(roeRatio)` — returns 0-100 normalized
-- `calculateBreakEvenScore(months)` — inverse normalize 0-18 range
-- `calculateConfidenceScore(inputs)` — weighted composition, returns 0-100
-- `calculateRiskScore(inputs)` — weighted composition, returns 0-100
-- `mapRiskLevel(riskScore)` — returns low/medium/high/critical
-- `calculateBusinessValueScore(inputs)` — weighted composition placeholder
-- `calculateNetMonthlyGainCents(liftExpectedCents, paymentCents, breakEvenMonths)` — cents in, cents out
-- `calculateNetImpactScore(netGainCents, investmentCents)` — 0-100
-- `calculateCoverageRatio(providerAmountCents, investmentCents)` — ratio + tier label
+### GAP 5: `SURFACE_COOLDOWN_DEFAULTS` Duplicated
 
-**Eligibility:**
-- `calculateInternalEligibility(inputs, policy)` — returns `{ eligible, reasonCode, reasonSummary }` with structured codes
-- `calculateStylistEligibility(inputs, policy)` — separate path
+`zura-capital-config.ts` defines `SURFACE_COOLDOWN_DEFAULTS` (with `expansion_planner: 0`). `capital-formulas-config.ts` defines `CANONICAL_SURFACE_COOLDOWNS` (with `expansion_planner: 7`). Different values for the same surface. `surface-priority-engine.ts` imports from `zura-capital-config.ts`.
 
-**Surface priority:**
-- `calculateSurfacePriority(inputs, penalties)` — single canonical formula, 0-100 clamped
-- `calculateFreshnessScore(days)` — inverse normalize 0-30
+**Fix:** Remove `SURFACE_COOLDOWN_DEFAULTS` from `zura-capital-config.ts`; use `CANONICAL_SURFACE_COOLDOWNS` everywhere.
 
-**Funded project performance:**
-- `calculateVariancePercent(actualCents, predictedCents)` — safe divide
-- `calculateRoiToDate(revenueCents, repaymentCents, fundedCents)` — ratio
-- `calculateRepaymentProgress(repaidCents, totalRepaymentCents)` — percent
-- `calculateBreakEvenProgress(revenueCents, totalRepaymentOrFundedCents)` — percent
-- `calculateForecastStatus(variancePercent, repaymentDistress, projectAgeDays)` — with early-stage override
-- `calculateUnderperformance(forecastStatus, projectAgeDays, variancePercent)` — boolean + suppress flag
-- `calculatePredictedRevenueToDateCents(liftExpectedCents, fundingStartDate, breakEvenMonths)` — linear pacing
+---
 
-### 3. Update `surface-priority-engine.ts`
+### GAP 6: `computeCoverageRatio` in Legacy Engine Still Exists
 
-- Replace inline weight constants with imports from `capital-formulas-config.ts`
-- Replace inline staleness/urgency functions with calls to `capital-formulas.ts`
-- Add `break_even_score` and `net_impact_score` to the priority formula
-- Align penalty values with spec (staleness: 0/5/10/20 at 7/14/30/30+ days)
-- Add `partial_coverage_penalty` and `project_load_penalty`
+`zura-eligibility-engine.ts` exports `computeCoverageRatio()` which returns `{ ratio, label, covered }`. The canonical `calculateCoverageRatio()` returns `{ ratio, percent, tier, tierLabel }`. Both are exported from `index.ts`. Consumers might use either.
 
-### 4. Update `zura-eligibility-engine.ts`
+**Fix:** Remove legacy `computeCoverageRatio` from `zura-eligibility-engine.ts` and update any remaining consumers.
 
-- Replace with call to `calculateInternalEligibility` from formulas module
-- Add missing checks: `execution_readiness_score >= 70`, `operational_stability_score >= 60`, `repayment_distress_flag`
-- Return structured `reason_code` alongside text
-- Keep existing `isZuraEligible` signature but delegate to canonical function
+---
 
-### 5. Update `zura-capital-config.ts`
+### GAP 7: `recentDismissals` and `recentDeclines` Always Zero
 
-- Move weights/thresholds that now live in `capital-formulas-config.ts` to avoid duplication
-- Keep status labels, state machine transitions, surface areas, event types (those are not formula concerns)
-- Re-export from formulas config for backward compat where needed
+In `useZuraCapital.ts` line 106-110, `priorityContext` hardcodes:
+```ts
+recentDismissals: 0,
+recentDeclines: 0,
+```
+This means dismissal and decline penalties never apply to surface priority scoring.
 
-### 6. Rewire UI consumers
+**Fix:** Query `capital_surface_state` for recent dismissals and `capital_event_log` for recent declines to populate these values.
 
-- **`CapitalOpportunityDetail.tsx`** — remove inline `monthlyLift`, `monthlyPayment`, `netMonthly`, `coveragePercent` computation; import and call `calculateNetMonthlyGainCents`, `calculateCoverageRatio`
-- **`ZuraCapitalCard.tsx`** — remove inline `coveragePercent` computation; use `calculateCoverageRatio`
-- **`CapitalProjectDetail.tsx`** — use `calculateVariancePercent`, `calculateRoiToDate`, `calculateForecastStatus` from formulas
-- **`useZuraCapital.ts`** — use `calculateRoeScore`, `calculateSurfacePriority` from formulas module instead of direct `computeSurfacePriority` call; use `calculateInternalEligibility` wrapper
+---
 
-### 7. Update exports
+### GAP 8: `hasCriticalOperationalAlerts` Always False
 
-- `src/lib/capital-engine/index.ts` — export all formulas
-- `src/config/capital-engine/index.ts` — export formulas config
+`useZuraCapital.ts` line 98 hardcodes `hasCriticalOperationalAlerts: false`. This eligibility check is disabled.
 
-## Files Created
+**Fix:** Wire this to actual operational alert state from the ops engine if available, or leave as false with a documented TODO if the alerting system is not yet built.
 
-| File | Purpose |
-|---|---|
-| `src/config/capital-engine/capital-formulas-config.ts` | All weights, thresholds, reason codes, explanation templates |
-| `src/lib/capital-engine/capital-formulas.ts` | 22 canonical formula functions |
+---
 
-## Files Modified
+### GAP 9: `lastDeclinedAt` and `lastUnderperformingAt` Always Null
 
-| File | Change |
-|---|---|
-| `src/lib/capital-engine/surface-priority-engine.ts` | Delegate to formulas, add break_even/net_impact terms |
-| `src/lib/capital-engine/zura-eligibility-engine.ts` | Add missing checks, structured reason codes |
-| `src/config/capital-engine/zura-capital-config.ts` | Remove duplicated weights, re-export from formulas config |
-| `src/hooks/useZuraCapital.ts` | Use canonical scoring functions |
-| `src/pages/dashboard/admin/CapitalOpportunityDetail.tsx` | Remove inline math |
-| `src/pages/dashboard/admin/CapitalProjectDetail.tsx` | Use canonical performance formulas |
-| `src/components/dashboard/capital-engine/ZuraCapitalCard.tsx` | Use canonical coverage computation |
-| `src/lib/capital-engine/index.ts` | Export formulas |
-| `src/config/capital-engine/index.ts` | Export formulas config |
+`useZuraCapital.ts` lines 101-102 hardcode both to `null`, disabling decline and underperformance cooldowns entirely.
+
+**Fix:** Query `capital_event_log` for the most recent `funding_declined` event and `capital_funding_projects` for the most recent `at_risk` status to populate these.
+
+---
+
+## Summary of Required Changes
+
+| Priority | Issue | File(s) |
+|---|---|---|
+| P0 | Rewire eligibility to canonical `calculateInternalEligibility` | `useZuraCapital.ts` |
+| P0 | Rewire surface priority to canonical `calculateSurfacePriority` | `surface-priority-engine.ts`, `useZuraCapital.ts` |
+| P0 | Populate exposure tracking (remove TODO) | `useZuraCapital.ts` |
+| P1 | Remove duplicated `VARIANCE_THRESHOLDS` + `getPerformanceStatus` | `zura-capital-config.ts` |
+| P1 | Consolidate `SURFACE_COOLDOWN_DEFAULTS` to canonical | `zura-capital-config.ts`, `surface-priority-engine.ts` |
+| P1 | Remove legacy `computeCoverageRatio` | `zura-eligibility-engine.ts`, `index.ts` |
+| P1 | Populate `recentDismissals` and `recentDeclines` from data | `useZuraCapital.ts` |
+| P2 | Populate `lastDeclinedAt` and `lastUnderperformingAt` from data | `useZuraCapital.ts` |
+| P2 | Wire or document `hasCriticalOperationalAlerts` | `useZuraCapital.ts` |
 
 ## Build Order
 
-1. `capital-formulas-config.ts` — all constants
-2. `capital-formulas.ts` — all 22 functions
-3. Update `surface-priority-engine.ts` and `zura-eligibility-engine.ts` to delegate
-4. Update `zura-capital-config.ts` to remove duplicates
-5. Rewire `useZuraCapital.ts`
-6. Rewire 3 UI components
-7. Update exports
-8. TypeScript build check
+1. **`useZuraCapital.ts`** — Replace `isZuraEligible` with `calculateInternalEligibility`. Replace `computeSurfacePriority` import with canonical `calculateSurfacePriority`. Populate exposure maps from funded projects. Query dismissals/declines from `capital_surface_state` and `capital_event_log`. Populate `lastDeclinedAt`/`lastUnderperformingAt` from event log.
+2. **`surface-priority-engine.ts`** — Replace `computeSurfacePriority` internals with delegation to canonical formula. Update `selectForSurface` to use canonical cooldowns.
+3. **`zura-capital-config.ts`** — Remove `VARIANCE_THRESHOLDS`, `getPerformanceStatus`, `SURFACE_COOLDOWN_DEFAULTS`. Re-export canonical versions for backward compat if any consumers remain.
+4. **`zura-eligibility-engine.ts`** — Remove `computeCoverageRatio`. Keep `isZuraEligible` as a thin wrapper around canonical if needed, or deprecate.
+5. **`index.ts`** — Clean up exports to remove legacy duplicates.
+6. **TypeScript build check** — Verify no broken imports or type errors.
 
