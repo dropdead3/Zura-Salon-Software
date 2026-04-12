@@ -32,6 +32,7 @@ import {
   REASON_CODES,
   EXPLANATION_TEMPLATES,
   BUSINESS_VALUE_WEIGHTS,
+  CANONICAL_SURFACE_COOLDOWNS,
   type CanonicalRiskLevel,
   type CoverageTier,
   type ForecastStatus,
