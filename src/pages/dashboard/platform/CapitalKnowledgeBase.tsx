@@ -25,6 +25,7 @@ import {
   PlatformCardTitle,
   PlatformCardDescription,
 } from '@/components/platform/ui/PlatformCard';
+import { PlatformBadge } from '@/components/platform/ui/PlatformBadge';
 import {
   Accordion,
   AccordionContent,
