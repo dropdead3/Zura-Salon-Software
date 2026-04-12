@@ -1,41 +1,89 @@
 
 
-# Add Third-Party POS Diagnostic Note to Capital Control Tower
+# Stripe Terminal Configurator — Organization Settings
 
-## Problem
+## Overview
 
-When an organization like Drop Dead Salons processes payments through Phorest Pay (a third-party POS with its own Stripe Connect relationship), the Capital Control Tower shows "No locations connected to Zura Pay" but doesn't explain **why** this matters or that the org is actively processing payments through another platform. This leaves platform admins without the context needed to advise the organization.
+Build a complete Stripe Terminal management experience inside the organization dashboard Settings, allowing org admins to register terminal locations, pair readers, and manage their hardware fleet. Designed for multi-location organizations with multiple readers per site.
 
-## Solution
+## Architecture
 
-Add a contextual diagnostic note that detects when an organization has Phorest-connected locations but no Zura Pay connections, and explains why Capital cannot surface for that configuration.
+```text
+Settings Grid → "Terminals" card (NEW)
+└── SettingsCategoryDetail → "terminals" tab
+    ├── Location Selector (top bar)
+    │   └── Dropdown of org locations with Zura Pay status
+    ├── Terminal Locations Panel
+    │   ├── List Stripe Terminal Locations for selected location
+    │   ├── Create Terminal Location (maps address from org location)
+    │   └── Delete Terminal Location
+    └── Terminal Readers Panel
+        ├── List readers with status badges (online/offline)
+        ├── Register Reader wizard (pairing code + location assignment)
+        └── Deregister Reader (with confirmation)
+
+Gate: Entire section hidden if org has zero locations with stripe_account_id
+```
 
 ## Changes
 
-### 1. `src/hooks/useOrgCapitalDiagnostics.ts`
-- Extend the `locations` query to also select `phorest_branch_id`
-- Add two new fields to `OrgCapitalDiagnostics`:
-  - `phorestConnectedLocationCount: number` — count of locations with a `phorest_branch_id`
-  - `usesThirdPartyPOS: boolean` — true when phorest locations exist but no Zura Pay connections
-- Derive `usesThirdPartyPOS` from: `phorestConnectedLocationCount > 0 && !hasActiveStripeConnect`
+### 1. Edge Function: `supabase/functions/manage-stripe-terminals/index.ts`
+Single edge function handling all terminal CRUD via `action` parameter:
+- `list_locations` — `GET /v1/terminal/locations` with `Stripe-Account` header
+- `create_location` — `POST /v1/terminal/locations` (display_name, address from org location)
+- `delete_location` — `DELETE /v1/terminal/locations/:id`
+- `list_readers` — `GET /v1/terminal/readers` (optionally filtered by location)
+- `register_reader` — `POST /v1/terminal/readers` (registration_code + location)
+- `delete_reader` — `DELETE /v1/terminal/readers/:id`
 
-### 2. `src/pages/dashboard/platform/CapitalControlTower.tsx` — `DiagnosticPanel`
-- After the "Zura Pay Connected" check item, insert a conditional diagnostic note when `data.usesThirdPartyPOS` is true
-- Styled as an amber info box with clear explanation:
-  - **Title**: "Third-Party Payment Processor Detected"
-  - **Detail**: "This organization processes payments through Phorest Pay (X locations connected). Stripe Capital eligibility is determined by the platform that owns the Stripe Connect relationship. Since Phorest — not Zura — is the platform of record, Zura's API keys cannot access this organization's processing history or Capital offers. To qualify for Zura Capital, the organization would need to migrate payment processing to Zura Pay."
+Auth: Verifies caller is org member, looks up `stripe_account_id` from the location record, uses `Stripe-Account` header for all calls.
 
-### Visual Treatment
-- Amber-bordered card matching the existing operational context styling
-- `AlertTriangle` icon consistent with existing advisory patterns
-- Placed inline within the Visibility Checklist, directly after the "Zura Pay Connected" row (only when relevant)
+### 2. Hook: `src/hooks/useStripeTerminals.ts`
+React Query hooks wrapping the edge function:
+- `useTerminalLocations(locationId)` — list terminal locations for a given org location
+- `useTerminalReaders(locationId, terminalLocationId?)` — list readers
+- `useCreateTerminalLocation()` — mutation
+- `useRegisterReader()` — mutation
+- `useDeleteReader()` — mutation
+- All queries keyed by org location ID for proper cache isolation
 
-## Files Changed
+### 3. UI Component: `src/components/dashboard/settings/TerminalSettingsContent.tsx`
+Main settings content component following existing patterns:
+- **Location picker** at top — dropdown of org locations that have `stripe_account_id` (Zura Pay active)
+- **Terminal Locations card** — list with create button, each showing reader count
+- **Terminal Readers card** — list with status badges, register button
+- **Register Reader dialog** — wizard-style: Step 1: Select/create terminal location → Step 2: Enter pairing code → Step 3: Confirmation
+- **Empty state** when no Zura Pay locations exist — explains prerequisite with clear messaging
+- Follows design tokens: `font-display` for headers, `tokens.card.*`, `tokens.empty.*`
 
-| File | Change |
+### 4. Settings Grid Integration
+- **`src/pages/dashboard/admin/Settings.tsx`**: Add `'terminals'` to `categoriesMap` with `CreditCard` icon (or `Smartphone` icon)
+- **`src/components/dashboard/settings/SettingsCategoryDetail.tsx`**:
+  - Add `'terminals'` to `SettingsCategory` union type
+  - Add lazy import for `TerminalSettingsContent`
+  - Render when `activeCategory === 'terminals'`
+
+### Multi-Location UX Design
+For orgs with many locations and multiple terminals:
+- Location picker shows location name + reader count badge
+- Each terminal location shows its readers inline (expandable rows)
+- Bulk view: "All Locations" option shows summary table — location name, terminal location count, total readers, online/offline counts
+- Reader status uses `tokens.status` color coding (green = online, muted = offline)
+
+### Gating
+- Settings card only visible when org has at least one location with `stripe_account_id`
+- Individual location sections only show for Zura Pay-connected locations
+- Non-connected locations show inline note: "Connect to Zura Pay to manage terminals"
+
+## Files
+
+| File | Action |
 |---|---|
-| `src/hooks/useOrgCapitalDiagnostics.ts` | Add `phorest_branch_id` to query, add 2 new fields |
-| `src/pages/dashboard/platform/CapitalControlTower.tsx` | Add conditional third-party POS note in DiagnosticPanel |
+| `supabase/functions/manage-stripe-terminals/index.ts` | Create — Stripe Terminal CRUD edge function |
+| `src/hooks/useStripeTerminals.ts` | Create — React Query hooks |
+| `src/components/dashboard/settings/TerminalSettingsContent.tsx` | Create — Terminal management UI |
+| `src/pages/dashboard/admin/Settings.tsx` | Add terminals to categories map |
+| `src/components/dashboard/settings/SettingsCategoryDetail.tsx` | Add terminals category + lazy import |
 
-2 files. No database changes. No new dependencies.
+5 files (3 new, 2 modified). No database changes needed — all state lives in Stripe API.
 
