@@ -130,14 +130,23 @@ export const STRIPE_CAPITAL_REQUIREMENTS = [
   { label: 'Good standing with Stripe', description: 'No Capital rejection in the last 30 days; account in good standing.' },
 ] as const;
 
-/* ── Zura Operational Guardrails (what Zura checks before surfacing a Stripe offer) ── */
+/* ── Zura Operational Context (what Zura checks before surfacing a Stripe offer) ── */
+
+/** Hard gate — blocks surfacing entirely */
+export const ZURA_HARD_GATES = [
+  { code: 'critical_ops_alerts', label: 'No Critical Ops Alerts', description: 'Unresolved critical operational alerts pause new capital surfacing until resolved.', severity: 'blocker' as const },
+] as const;
+
+/** Advisory warnings — shown but do NOT block surfacing */
+export const ZURA_ADVISORIES = [
+  { code: 'repayment_distress', label: 'Repayment Distress Active', description: 'This organization has active repayment concerns. Review before proceeding.', severity: 'warning' as const },
+  { code: 'too_many_active_projects', label: 'Multiple Active Projects', description: 'This organization has active funded projects. Context provided for decision-making.', severity: 'info' as const },
+] as const;
+
+/** Combined list for reference UIs (backward compat) */
 export const ZURA_OPERATIONAL_GUARDRAILS = [
-  { code: 'critical_ops_alerts', label: 'No Critical Ops Alerts', description: 'Unresolved critical operational alerts block new capital deployment.' },
-  { code: 'repayment_distress', label: 'No Active Repayment Distress', description: 'Active repayment distress must be resolved before new funding.' },
-  { code: 'too_many_active_projects', label: 'Under Max Concurrent Projects', description: 'The organization must not exceed the concurrent funded project limit.' },
-  { code: 'underperforming_project_exists', label: 'No Underperforming Projects', description: 'An underperforming funded project blocks new capital deployment.' },
-  { code: 'decline_cooldown', label: 'Decline Cooldown Clear', description: 'A recent decline must be past the cooldown period.' },
-  { code: 'underperformance_cooldown', label: 'Underperformance Cooldown Clear', description: 'A recent underperformance event must be past the cooldown period.' },
+  ...ZURA_HARD_GATES,
+  ...ZURA_ADVISORIES,
 ] as const;
 
 /* ── Default Policy ── */
@@ -148,7 +157,7 @@ export const DEFAULT_CAPITAL_POLICY = {
   maxRiskLevel: 'medium' as CanonicalRiskLevel,
   minOperationalStability: 60,
   minExecutionReadiness: 70,
-  // Operational guardrails (hard gates)
+  // Operational context (advisory, not hard gates except critical alerts)
   maxConcurrentProjects: 2,
   cooldownAfterDeclineDays: 14,
   cooldownAfterUnderperformanceDays: 30,

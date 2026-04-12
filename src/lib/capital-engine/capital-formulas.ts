@@ -272,11 +272,13 @@ export interface EligibilityResult {
   topReasonSummary: string | null;
 }
 
-/** Operational readiness result — hard gates that block surfacing. */
+/** Operational readiness result — 1 hard gate + advisory context. */
 export interface OperationalReadinessResult {
   ready: boolean;
   blockerCodes: ReasonCode[];
   blockerSummaries: string[];
+  advisoryCodes: ReasonCode[];
+  advisorySummaries: string[];
 }
 
 /** Opportunity ranking result — scoring for prioritization (not gating). */
@@ -294,55 +296,38 @@ function riskLevelRank(level: string): number {
 }
 
 /**
- * Operational Readiness — Hard gates that block surfacing a Stripe offer.
- * These are Zura's guardrails, not Stripe's underwriting criteria.
+ * Operational Readiness — Only critical ops alerts block surfacing.
+ * Repayment distress and concurrent projects are advisory (informational).
+ * Stripe is the lender — Zura provides operational context, not underwriting.
  */
 export function calculateOperationalReadiness(
   inputs: EligibilityInputs,
   policy: CapitalPolicy = DEFAULT_CAPITAL_POLICY,
 ): OperationalReadinessResult {
-  const codes: ReasonCode[] = [];
+  const blockers: ReasonCode[] = [];
+  const advisories: ReasonCode[] = [];
 
-  // 1. Critical ops alerts
+  // Hard gate: Critical ops alerts (timing protection)
   if (inputs.hasCriticalOpsAlerts) {
-    codes.push(REASON_CODES.critical_ops_alerts);
+    blockers.push(REASON_CODES.critical_ops_alerts);
   }
 
-  // 2. Repayment distress
+  // Advisory: Repayment distress (informational, does not block)
   if (inputs.repaymentDistressFlag) {
-    codes.push(REASON_CODES.repayment_distress);
+    advisories.push(REASON_CODES.repayment_distress);
   }
 
-  // 3. Concurrent projects limit
+  // Advisory: Concurrent projects (informational, does not block)
   if (inputs.activeCapitalProjectsCount >= policy.maxConcurrentProjects) {
-    codes.push(REASON_CODES.too_many_active_projects);
-  }
-
-  // 4. Underperforming projects
-  if (inputs.activeUnderperformingProjectsCount > 0) {
-    codes.push(REASON_CODES.underperforming_project_exists);
-  }
-
-  // 5. Decline cooldown
-  if (inputs.lastDeclinedAt) {
-    const daysSince = Math.floor((Date.now() - new Date(inputs.lastDeclinedAt).getTime()) / 86400000);
-    if (daysSince < policy.cooldownAfterDeclineDays) {
-      codes.push(REASON_CODES.decline_cooldown);
-    }
-  }
-
-  // 6. Underperformance cooldown
-  if (inputs.lastUnderperformingAt) {
-    const daysSince = Math.floor((Date.now() - new Date(inputs.lastUnderperformingAt).getTime()) / 86400000);
-    if (daysSince < policy.cooldownAfterUnderperformanceDays) {
-      codes.push(REASON_CODES.underperformance_cooldown);
-    }
+    advisories.push(REASON_CODES.too_many_active_projects);
   }
 
   return {
-    ready: codes.length === 0,
-    blockerCodes: codes,
-    blockerSummaries: codes.map(c => EXPLANATION_TEMPLATES[c] ?? c),
+    ready: blockers.length === 0,
+    blockerCodes: blockers,
+    blockerSummaries: blockers.map(c => EXPLANATION_TEMPLATES[c] ?? c),
+    advisoryCodes: advisories,
+    advisorySummaries: advisories.map(c => EXPLANATION_TEMPLATES[c] ?? c),
   };
 }
 
