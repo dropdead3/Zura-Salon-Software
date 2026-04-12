@@ -58,15 +58,15 @@ export default function CapitalProjects() {
             <CardContent className="space-y-2">
               {/* Desktop table */}
               <div className="hidden lg:block space-y-1">
-                <div className="grid grid-cols-[1fr_100px_100px_80px_80px_80px_80px_90px_36px] gap-2 px-3 py-2 text-xs text-muted-foreground font-sans">
+                <div className="grid grid-cols-[1fr_100px_100px_80px_80px_90px_90px_90px_36px] gap-2 px-3 py-2 text-xs text-muted-foreground font-sans">
                   <span>Project</span>
                   <span className="text-right">Funded</span>
                   <span className="text-right">Revenue</span>
-                  <span className="text-right">Repayment</span>
+                  <span className="text-right">Repaid</span>
                   <span className="text-right">ROI</span>
-                  <span className="text-right">Forecast</span>
-                  <span className="text-right">Activation</span>
                   <span className="text-right">Status</span>
+                  <span className="text-right">Activation</span>
+                  <span className="text-right">Repayment</span>
                   <span />
                 </div>
                 {(projects as any[]).map(p => {
@@ -79,7 +79,7 @@ export default function CapitalProjects() {
                     <Link
                       key={p.id}
                       to={dashPath(`/admin/capital/projects/${p.id}`)}
-                      className="grid grid-cols-[1fr_100px_100px_80px_80px_80px_80px_90px_36px] gap-2 items-center px-3 py-2.5 rounded-lg hover:bg-muted/30 transition-colors border border-transparent hover:border-border/40"
+                      className="grid grid-cols-[1fr_100px_100px_80px_80px_90px_90px_90px_36px] gap-2 items-center px-3 py-2.5 rounded-lg hover:bg-muted/30 transition-colors border border-transparent hover:border-border/40"
                     >
                       <span className="font-sans text-sm truncate">{title}</span>
                       <span className="font-sans text-sm text-right"><BlurredAmount>{formatCurrency(c(funded), { noCents: true })}</BlurredAmount></span>

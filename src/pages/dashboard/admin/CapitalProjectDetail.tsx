@@ -141,19 +141,7 @@ export default function CapitalProjectDetail() {
             </CardContent>
           </Card>
 
-          {/* Linked Work */}
-          <Card className={tokens.card.wrapper}>
-            <CardContent className="p-5">
-              <h3 className={cn(tokens.heading.subsection, 'mb-3')}>Linked Work</h3>
-              <div className={tokens.empty.container}>
-                <Link2 className={tokens.empty.icon} />
-                <h3 className={tokens.empty.heading}>No Linked Work Yet</h3>
-                <p className={tokens.empty.description}>
-                  When this funded project triggers campaigns, task batches, inventory orders, or expansion plans, they will appear here.
-                </p>
-              </div>
-            </CardContent>
-          </Card>
+          {/* Linked Work — hidden until wired to downstream data (Phase 2+) */}
 
           {/* Timeline */}
           {(events as any[]).length > 0 && (

@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 import { PageExplainer } from '@/components/ui/PageExplainer';
+import { CapitalFeatureGate } from '@/components/features/CapitalFeatureGate';
 
 interface HubCardProps {
   href: string;
@@ -69,12 +70,14 @@ export default function GrowthHub() {
               title="SEO Workshop"
               description="Tasks and guides to improve local search visibility"
             />
-            <HubCard
-              href={dashPath('/admin/capital')}
-              icon={Landmark}
-              title="Zura Capital"
-              description="Ranked growth opportunities and funded projects"
-            />
+            <CapitalFeatureGate>
+              <HubCard
+                href={dashPath('/admin/capital')}
+                icon={Landmark}
+                title="Zura Capital"
+                description="Ranked growth opportunities and funded projects"
+              />
+            </CapitalFeatureGate>
           </div>
         </div>
       </div>

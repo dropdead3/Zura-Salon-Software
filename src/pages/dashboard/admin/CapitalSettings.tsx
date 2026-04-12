@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { DashboardPageHeader } from '@/components/dashboard/DashboardPageHeader';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -48,7 +49,10 @@ export default function CapitalSettings() {
   }, [settings]);
 
   const handleSave = () => {
-    updateSettings.mutate(form as any);
+    updateSettings.mutate(form as any, {
+      onSuccess: () => toast.success('Capital settings saved'),
+      onError: () => toast.error('Failed to save settings'),
+    });
   };
 
   return (
