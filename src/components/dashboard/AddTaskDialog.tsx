@@ -26,7 +26,17 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { cn } from '@/lib/utils';
 
 interface AddTaskDialogProps {
-  onAdd: (task: { title: string; description?: string; due_date?: string; priority?: 'low' | 'normal' | 'high'; recurrence_pattern?: string | null; estimated_revenue_impact_cents?: number | null }) => void;
+  onAdd: (task: {
+    title: string;
+    description?: string;
+    due_date?: string;
+    priority?: 'low' | 'normal' | 'high';
+    recurrence_pattern?: string | null;
+    estimated_revenue_impact_cents?: number | null;
+    task_type?: string | null;
+    execution_time_minutes?: number | null;
+    revenue_type?: string | null;
+  }) => void;
   isPending: boolean;
   isReadOnly?: boolean;
 }
@@ -39,6 +49,9 @@ export function AddTaskDialog({ onAdd, isPending, isReadOnly = false }: AddTaskD
   const [priority, setPriority] = useState<'low' | 'normal' | 'high'>('normal');
   const [recurrence, setRecurrence] = useState<string>('none');
   const [revenueImpact, setRevenueImpact] = useState<string>('');
+  const [taskType, setTaskType] = useState<string>('none');
+  const [executionTime, setExecutionTime] = useState<string>('');
+  const [revenueType, setRevenueType] = useState<string>('none');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -53,6 +66,9 @@ export function AddTaskDialog({ onAdd, isPending, isReadOnly = false }: AddTaskD
       priority,
       recurrence_pattern: recurrence === 'none' ? null : recurrence,
       estimated_revenue_impact_cents: impactCents && impactCents > 0 ? impactCents : null,
+      task_type: taskType === 'none' ? null : taskType,
+      execution_time_minutes: executionTime ? parseInt(executionTime) : null,
+      revenue_type: revenueType === 'none' ? null : revenueType,
     });
 
     setTitle('');
@@ -61,6 +77,9 @@ export function AddTaskDialog({ onAdd, isPending, isReadOnly = false }: AddTaskD
     setPriority('normal');
     setRecurrence('none');
     setRevenueImpact('');
+    setTaskType('none');
+    setExecutionTime('');
+    setRevenueType('none');
     setOpen(false);
   };
 
@@ -174,17 +193,60 @@ export function AddTaskDialog({ onAdd, isPending, isReadOnly = false }: AddTaskD
               </SelectContent>
             </Select>
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="revenue-impact">Est. Revenue Impact ($/mo, optional)</Label>
-            <Input
-              id="revenue-impact"
-              type="number"
-              min="0"
-              step="1"
-              value={revenueImpact}
-              onChange={(e) => setRevenueImpact(e.target.value)}
-              placeholder="e.g. 800"
-            />
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="revenue-impact">Revenue Impact ($/mo)</Label>
+              <Input
+                id="revenue-impact"
+                type="number"
+                min="0"
+                step="1"
+                value={revenueImpact}
+                onChange={(e) => setRevenueImpact(e.target.value)}
+                placeholder="e.g. 800"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="exec-time">Time to Complete (min)</Label>
+              <Input
+                id="exec-time"
+                type="number"
+                min="1"
+                value={executionTime}
+                onChange={(e) => setExecutionTime(e.target.value)}
+                placeholder="e.g. 15"
+              />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="task-type">Task Type</Label>
+              <Select value={taskType} onValueChange={setTaskType}>
+                <SelectTrigger id="task-type">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">None</SelectItem>
+                  <SelectItem value="growth">Growth</SelectItem>
+                  <SelectItem value="protection">Protection</SelectItem>
+                  <SelectItem value="acceleration">Acceleration</SelectItem>
+                  <SelectItem value="unlock">Unlock</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="revenue-type">Revenue Type</Label>
+              <Select value={revenueType} onValueChange={setRevenueType}>
+                <SelectTrigger id="revenue-type">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">None</SelectItem>
+                  <SelectItem value="generated">Generated</SelectItem>
+                  <SelectItem value="protected">Protected</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
           <div className="flex justify-end gap-2 pt-2">
             <Button type="button" variant="outline" onClick={() => setOpen(false)}>

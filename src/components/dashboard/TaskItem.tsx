@@ -3,7 +3,7 @@ import { parseISO, startOfDay, differenceInCalendarDays, differenceInHours, addD
 import { motion } from 'framer-motion';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
-import { Trash2, Lock, Pencil, RefreshCw, AlarmClock, TrendingUp, Clock } from 'lucide-react';
+import { Trash2, Lock, Pencil, RefreshCw, AlarmClock, TrendingUp, Clock, Timer, Shield, Rocket, Unlock } from 'lucide-react';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { cn } from '@/lib/utils';
@@ -30,6 +30,13 @@ const priorityIndicator = {
   low: 'bg-muted-foreground',
   normal: 'bg-blue-500',
   high: 'bg-orange-500',
+};
+
+const taskTypeConfig: Record<string, { icon: typeof TrendingUp; label: string; className: string }> = {
+  growth: { icon: TrendingUp, label: 'Growth', className: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' },
+  protection: { icon: Shield, label: 'Protection', className: 'bg-blue-500/10 text-blue-600 dark:text-blue-400' },
+  acceleration: { icon: Rocket, label: 'Acceleration', className: 'bg-violet-500/10 text-violet-600 dark:text-violet-400' },
+  unlock: { icon: Unlock, label: 'Unlock', className: 'bg-amber-500/10 text-amber-600 dark:text-amber-400' },
 };
 
 export function TaskItem({ task, onToggle, onDelete, onEdit, onView, onSnooze, isReadOnly = false, isArchiveView = false, checklistProgress }: TaskItemProps) {
@@ -114,7 +121,24 @@ export function TaskItem({ task, onToggle, onDelete, onEdit, onView, onSnooze, i
           onClick={() => onView?.(task)}
         >
           <div className="flex items-center gap-2">
-            <div className={cn('w-1.5 h-1.5 rounded-full', priorityIndicator[task.priority])} />
+            {/* Priority score dot or fallback priority indicator */}
+            {task.priority_score != null ? (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className={cn(
+                    'w-1.5 h-1.5 rounded-full shrink-0',
+                    task.priority_score >= 80 ? 'bg-destructive' :
+                    task.priority_score >= 60 ? 'bg-orange-500' :
+                    task.priority_score >= 40 ? 'bg-blue-500' : 'bg-muted-foreground',
+                  )} />
+                </TooltipTrigger>
+                <TooltipContent side="top" className="text-xs">
+                  Priority: {task.priority_score}/100
+                </TooltipContent>
+              </Tooltip>
+            ) : (
+              <div className={cn('w-1.5 h-1.5 rounded-full', priorityIndicator[task.priority])} />
+            )}
             <span
               className={cn(
                 'text-sm font-sans truncate',
@@ -123,6 +147,17 @@ export function TaskItem({ task, onToggle, onDelete, onEdit, onView, onSnooze, i
             >
               {task.title}
             </span>
+            {/* Task type badge */}
+            {task.task_type && taskTypeConfig[task.task_type] && (() => {
+              const config = taskTypeConfig[task.task_type!];
+              const Icon = config.icon;
+              return (
+                <span className={cn("text-[10px] px-1.5 py-0.5 rounded shrink-0 flex items-center gap-0.5", config.className)}>
+                  <Icon className="w-2.5 h-2.5" />
+                  {config.label}
+                </span>
+              );
+            })()}
             {task.recurrence_pattern && (
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -137,6 +172,13 @@ export function TaskItem({ task, onToggle, onDelete, onEdit, onView, onSnooze, i
               <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 shrink-0 flex items-center gap-0.5">
                 <TrendingUp className="w-2.5 h-2.5" />
                 <BlurredAmount>~{formatCurrency(task.estimated_revenue_impact_cents / 100)}</BlurredAmount>/mo
+              </span>
+            )}
+            {/* Execution time estimate */}
+            {task.execution_time_minutes != null && task.execution_time_minutes > 0 && (
+              <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground shrink-0 flex items-center gap-0.5">
+                <Timer className="w-2.5 h-2.5" />
+                {task.execution_time_minutes}m
               </span>
             )}
             {expiryLabel && (
