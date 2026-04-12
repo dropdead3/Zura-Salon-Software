@@ -37,25 +37,46 @@ const EMBED_TYPES = [
   },
 ];
 
-function generateSnippet(type: EmbedType, url: string): string {
-  const embedUrl = `${url}?embed=true`;
+function getOrgSlugFromUrl(bookingUrl: string): string {
+  const match = bookingUrl.match(/\/book\/([^?#/]+)/);
+  return match?.[1] || '';
+}
+
+function getOriginFromUrl(bookingUrl: string): string {
+  try {
+    return new URL(bookingUrl).origin;
+  } catch {
+    return window.location.origin;
+  }
+}
+
+function generateSnippet(type: EmbedType, bookingUrl: string): string {
+  const orgSlug = getOrgSlugFromUrl(bookingUrl);
+  const origin = getOriginFromUrl(bookingUrl);
+  const embedUrl = `${bookingUrl}?embed=true`;
 
   switch (type) {
     case 'inline':
       return `<!-- Zura Inline Booking Widget -->
 <div id="zura-booking" style="min-height:600px"></div>
-<script src="${url}/embed.js" data-mode="inline"></script>`;
+<script src="${origin}/embed.js"
+  data-zura-org="${orgSlug}"
+  data-zura-mode="inline"></script>`;
 
     case 'modal':
       return `<!-- Zura Modal Booking Launcher -->
-<button onclick="window.ZuraBooking.open()" style="padding:12px 24px;background:#7c3aed;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:14px;font-weight:500">
+<button onclick="window.ZuraBooking.open()"
+  style="padding:12px 24px;background:#7c3aed;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:14px;font-weight:500">
   Book Now
 </button>
-<script src="${url}/embed.js" data-mode="modal"></script>`;
+<script src="${origin}/embed.js"
+  data-zura-org="${orgSlug}"
+  data-zura-mode="modal"></script>`;
 
     case 'popup':
       return `<!-- Zura Popup Booking Link -->
-<a href="${embedUrl}" target="_blank" rel="noopener noreferrer" style="display:inline-block;padding:12px 24px;background:#7c3aed;color:#fff;text-decoration:none;border-radius:8px;font-size:14px;font-weight:500">
+<a href="${embedUrl}" target="_blank" rel="noopener noreferrer"
+  style="display:inline-block;padding:12px 24px;background:#7c3aed;color:#fff;text-decoration:none;border-radius:8px;font-size:14px;font-weight:500">
   Book Now
 </a>`;
 
@@ -69,6 +90,7 @@ function generateSnippet(type: EmbedType, url: string): string {
   style="border:none;border-radius:12px;max-width:800px"
   allow="payment"
   loading="lazy"
+  title="Book an appointment"
 ></iframe>`;
   }
 }

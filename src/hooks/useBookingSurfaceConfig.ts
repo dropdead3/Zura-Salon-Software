@@ -109,6 +109,15 @@ export const DEFAULT_BOOKING_HOSTED: BookingSurfaceHosted = {
   poweredByVisible: true,
 };
 
+export const DEFAULT_BOOKING_EMBED: BookingSurfaceEmbed = {
+  allowedTypes: ['inline', 'modal', 'iframe'],
+  allowServicePreselect: true,
+  allowStylistPreselect: true,
+  allowLocationPreselect: true,
+  allowCategoryPreselect: true,
+  allowConsultationMode: true,
+};
+
 export const DEFAULT_BOOKING_SURFACE_CONFIG: BookingSurfaceConfig = {
   mode: 'hosted',
   published: false,
@@ -116,6 +125,10 @@ export const DEFAULT_BOOKING_SURFACE_CONFIG: BookingSurfaceConfig = {
   theme: DEFAULT_BOOKING_THEME,
   flow: DEFAULT_BOOKING_FLOW,
   hosted: DEFAULT_BOOKING_HOSTED,
+  embed: DEFAULT_BOOKING_EMBED,
+  version: 1,
+  publishedAt: null,
+  updatedAt: null,
 };
 
 // ─── Hooks ───────────────────────────────────────────────────────
