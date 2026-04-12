@@ -202,7 +202,7 @@ export default function CapitalKnowledgeBase() {
         <PlatformCardContent>
           <Accordion type="single" collapsible className="w-full">
             <AccordionItem value="q1" className="border-[hsl(var(--platform-border)/0.3)]">
-              <AccordionTrigger className="text-sm text-[hsl(var(--platform-foreground))] hover:no-underline">
+              <AccordionTrigger className="font-sans tracking-normal text-sm text-[hsl(var(--platform-foreground))] hover:no-underline">
                 Is Zura providing the funding?
               </AccordionTrigger>
               <AccordionContent className="text-sm text-[hsl(var(--platform-foreground-muted))]">
@@ -210,7 +210,7 @@ export default function CapitalKnowledgeBase() {
               </AccordionContent>
             </AccordionItem>
             <AccordionItem value="q2" className="border-[hsl(var(--platform-border)/0.3)]">
-              <AccordionTrigger className="text-sm text-[hsl(var(--platform-foreground))] hover:no-underline">
+              <AccordionTrigger className="font-sans tracking-normal text-sm text-[hsl(var(--platform-foreground))] hover:no-underline">
                 What happens when I enable Capital for an organization?
               </AccordionTrigger>
               <AccordionContent className="text-sm text-[hsl(var(--platform-foreground-muted))]">
@@ -218,7 +218,7 @@ export default function CapitalKnowledgeBase() {
               </AccordionContent>
             </AccordionItem>
             <AccordionItem value="q3" className="border-[hsl(var(--platform-border)/0.3)]">
-              <AccordionTrigger className="text-sm text-[hsl(var(--platform-foreground))] hover:no-underline">
+              <AccordionTrigger className="font-sans tracking-normal text-sm text-[hsl(var(--platform-foreground))] hover:no-underline">
                 Can organizations enable this themselves?
               </AccordionTrigger>
               <AccordionContent className="text-sm text-[hsl(var(--platform-foreground-muted))]">
@@ -226,7 +226,7 @@ export default function CapitalKnowledgeBase() {
               </AccordionContent>
             </AccordionItem>
             <AccordionItem value="q4" className="border-[hsl(var(--platform-border)/0.3)]">
-              <AccordionTrigger className="text-sm text-[hsl(var(--platform-foreground))] hover:no-underline">
+              <AccordionTrigger className="font-sans tracking-normal text-sm text-[hsl(var(--platform-foreground))] hover:no-underline">
                 What if no opportunities qualify?
               </AccordionTrigger>
               <AccordionContent className="text-sm text-[hsl(var(--platform-foreground-muted))]">
@@ -234,7 +234,7 @@ export default function CapitalKnowledgeBase() {
               </AccordionContent>
             </AccordionItem>
             <AccordionItem value="q5" className="border-[hsl(var(--platform-border)/0.3)]">
-              <AccordionTrigger className="text-sm text-[hsl(var(--platform-foreground))] hover:no-underline">
+              <AccordionTrigger className="font-sans tracking-normal text-sm text-[hsl(var(--platform-foreground))] hover:no-underline">
                 How does Zura decide what qualifies?
               </AccordionTrigger>
               <AccordionContent className="text-sm text-[hsl(var(--platform-foreground-muted))]">
@@ -242,7 +242,7 @@ export default function CapitalKnowledgeBase() {
               </AccordionContent>
             </AccordionItem>
             <AccordionItem value="q6" className="border-[hsl(var(--platform-border)/0.3)]">
-              <AccordionTrigger className="text-sm text-[hsl(var(--platform-foreground))] hover:no-underline">
+              <AccordionTrigger className="font-sans tracking-normal text-sm text-[hsl(var(--platform-foreground))] hover:no-underline">
                 Is there risk to the organization?
               </AccordionTrigger>
               <AccordionContent className="text-sm text-[hsl(var(--platform-foreground-muted))]">
