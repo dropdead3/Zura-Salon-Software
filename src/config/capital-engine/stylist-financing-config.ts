@@ -98,47 +98,6 @@ export function getSPITierKey(score: number): keyof typeof STYLIST_SPI_TIERS {
   return 'underperforming';
 }
 
-/* ── Micro-Financing Use Case Thresholds ── */
-export const MICRO_FINANCING_USE_CASES = {
-  marketing_boost: {
-    key: 'marketing_boost',
-    label: 'Marketing Boost',
-    description: 'Accelerate client acquisition',
-    spiMin: 65,
-    orsMin: null,
-    maxAmount: 5_000,
-    typicalRange: '$1K–$5K',
-  },
-  inventory_scaling: {
-    key: 'inventory_scaling',
-    label: 'Inventory Scaling',
-    description: 'Increase capacity for extension clients',
-    spiMin: 70,
-    orsMin: null,
-    maxAmount: 10_000,
-    typicalRange: '$3K–$10K',
-  },
-  chair_expansion: {
-    key: 'chair_expansion',
-    label: 'Chair Expansion',
-    description: 'Add chairs and take junior stylists',
-    spiMin: 75,
-    orsMin: 60,
-    maxAmount: 15_000,
-    typicalRange: '$5K–$15K',
-  },
-  mini_location: {
-    key: 'mini_location',
-    label: 'Mini Location Launch',
-    description: 'First step toward ownership',
-    spiMin: 80,
-    orsMin: 75,
-    maxAmount: 50_000,
-    typicalRange: '$15K–$50K',
-  },
-} as const;
-
-export type MicroFinancingUseCase = keyof typeof MICRO_FINANCING_USE_CASES;
 
 /* ── Repayment Models ── */
 export const REPAYMENT_MODELS = {
