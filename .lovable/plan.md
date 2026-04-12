@@ -1,91 +1,103 @@
 
 
-# Booking Surface UI/UX Enhancement — Build Plan
+# Booking Surface Embed Architecture — Build Plan
 
-## Current State Assessment
+## Current State
 
-Phase 1 infrastructure is in place: hooks (`useBookingSurfaceConfig`), 11 client-facing components, 5 admin components, routes registered. However the current build is a **functional skeleton** — it lacks the premium UX, guided admin experience, live preview, mode selector, deep link configurator, embed code generator, and theme presets described in the spec.
+The system already has:
+- **11 client-facing components** in `src/components/booking-surface/` (HostedBookingPage, service browser, stylist picker, date picker, client form, confirmation, flow progress, header, theme provider, location picker)
+- **9 admin components** in `src/components/dashboard/booking-surface/` (mode selector, theme editor, flow configurator, hosted page editor, live preview, publish bar, link configurator, embed code generator)
+- **Config hook** (`useBookingSurfaceConfig`) storing config in `site_settings` as JSON
+- **Public route** at `/book/:orgSlug` rendering `HostedBookingPage`
+- **Embed code generator** producing inline/modal/popup/iframe snippets (referencing a non-existent `embed.js`)
 
-## What Needs to Be Built
+## What's Missing
 
-### Gap Analysis (what exists vs what's needed)
+The current system generates embed snippets that reference an `embed.js` loader that doesn't exist. There is no actual embeddable widget runtime, no style isolation, no cross-origin messaging, no embed-mode rendering, no booking session state abstraction, and no public bootstrap endpoint. The booking flow state is scattered across `useState` calls in `HostedBookingPage` rather than a reusable engine.
 
-| Area | Current | Needed |
-|---|---|---|
-| Admin layout | Flat tabs (Theme/Flow/Hosted) | Guided deployment studio with mode selector, live preview, deep link config, embed panel |
-| Mode selector | `mode` field in config, no UI | Visual `BookingSurfaceModeSelector` with icons + descriptions |
-| Theme editor | Basic color pickers + selects | Add theme presets dropdown, branding section (logo/favicon upload), reset to defaults |
-| Live preview | None | Side-panel `BookingLivePreview` with desktop/mobile/widget mode switching |
-| Deep link config | URL params read in hosted page, no admin UI | `BookingLinkConfigurator` — generate links for location/stylist/service/consultation |
-| Embed code generator | None | `EmbedCodeGenerator` — inline/modal/popup/iframe snippets with copy buttons |
-| Publish bar | Top card with toggle + copy link | Sticky bottom bar with draft/published state + unsaved changes indicator |
-| Flow configurator | Basic template select + toggles | Add visual step preview per template, "best for" descriptions |
-| Hosted page editor | Title, intro, policy, powered-by | Add slug input, hero toggle, FAQ builder, salon info block toggle |
-| Client booking UX | Functional but basic inline styles | Add step transitions (framer-motion), sticky mobile CTA, better date picker polish, booking summary sidebar |
+## Build Scope
 
-### Admin Components to Create/Rewrite
+### 1. Booking Session State Engine
+Extract all booking state from `HostedBookingPage` into a shared `useBookingSession` hook that both hosted page and embedded widget consume.
 
-1. **`BookingSurfaceModeSelector.tsx`** (NEW) — Visual card selector for Embedded / Hosted / Both with icons, descriptions, recommended use cases
-2. **`BookingLivePreview.tsx`** (NEW) — Side-panel iframe/render preview with desktop/mobile/widget mode tabs, reflects config changes in real-time
-3. **`BookingLinkConfigurator.tsx`** (NEW) — Generate deep links for specific location/stylist/service/category/consultation. Copy buttons for each generated link
-4. **`EmbedCodeGenerator.tsx`** (NEW) — Install method selector (inline/modal/popup/iframe), code snippets with copy, setup instructions per method
-5. **`BookingThemeEditor.tsx`** (REWRITE) — Add theme presets dropdown (Minimal, Luxury, Editorial, Soft Modern, Bold Fashion), branding section with logo upload, reset to defaults button
-6. **`BookingSurfaceSettings.tsx`** (REWRITE) — Restructure from flat tabs into guided section layout: Mode → Theme → Flow → Content → Deep Links → Embed → Publish. Two-column layout on desktop (settings left, live preview right)
-7. **`BookingPublishBar.tsx`** (REWRITE) — Sticky bottom bar with draft/published badge, unsaved changes detection, Preview + Publish/Update buttons
-8. **`BookingFlowConfigurator.tsx`** (ENHANCE) — Add visual step sequence preview per template, "best for" labels
-9. **`BookingHostedPageEditor.tsx`** (ENHANCE) — Add slug input field, hero toggle, FAQ item builder, salon info block toggle, open/copy hosted page link
+**File**: `src/hooks/useBookingSession.ts`
 
-### Client-Facing Components to Enhance
+Manages: selectedLocation, selectedService, selectedCategory, selectedStylist, selectedDate, selectedTime, clientInfo, currentStep, direction, isConfirmed. Provides: goNext, goBack, reset, applyDeepLinks. Accepts flow template to determine step sequence.
 
-10. **`HostedBookingPage.tsx`** (ENHANCE) — Add framer-motion step transitions (AnimatePresence), floating booking summary sidebar on desktop, policy text footer section
-11. **`BookingDateTimePicker.tsx`** (ENHANCE) — Better selected state styling, loading skeleton for availability, smoother mobile UX with larger tap targets
-12. **`BookingClientForm.tsx`** (ENHANCE) — Sticky submit button on mobile, better field focus states using theme primary color
-13. **`BookingConfirmation.tsx`** (ENHANCE) — Add "Add to Calendar" link, richer success animation
-14. **`BookingFlowProgress.tsx`** (ENHANCE) — Smoother transitions, better mobile compact mode
+### 2. Embed-Aware Hosted Page
+Update `HostedBookingPage` to detect `?embed=true` query param and render in embed mode (no header, no policy footer, no powered-by, compact padding). This makes the iframe fallback actually work.
 
-### Page-Level Changes
+**File**: `src/components/booking-surface/HostedBookingPage.tsx` — UPDATE
 
-15. **`BookingSurfaceSettingsPage.tsx`** — Update title to "Booking Surfaces", add publish state badge + Preview/Publish actions in header
+### 3. Embed Loader Script
+Create a standalone vanilla JS embed loader that external sites include via `<script>` tag. Uses iframe-based embedding (most robust for third-party sites — avoids CSS conflicts entirely).
 
-## Build Order
+**File**: `public/embed.js` — CREATE
 
-1. Create `BookingSurfaceModeSelector` + `BookingLinkConfigurator` + `EmbedCodeGenerator` (new admin components, no dependencies)
-2. Enhance `BookingThemeEditor` (presets + branding section)
-3. Enhance `BookingFlowConfigurator` + `BookingHostedPageEditor` (visual previews + new fields)
-4. Create `BookingLivePreview` (renders booking components inline with config)
-5. Rewrite `BookingSurfaceSettings` (guided layout with live preview panel)
-6. Rewrite `BookingPublishBar` (sticky bottom, unsaved state)
-7. Update `BookingSurfaceSettingsPage` header
-8. Enhance client-facing components (transitions, mobile polish, summary sidebar)
-9. TypeScript build check
+Responsibilities:
+- Reads `data-zura-org`, `data-zura-mode` (inline|modal), `data-zura-*` preselection attributes from the script tag
+- For **inline mode**: creates a responsive iframe in `#zura-booking` container pointing to `/book/{org}?embed=true&{params}`
+- For **modal mode**: exposes `window.ZuraBooking.open()`, creates overlay + iframe on demand
+- Listens for `postMessage` from iframe for height resize and booking completion
+- Lightweight (~3KB), no framework dependencies
 
-## Files
+### 4. PostMessage Contract
+Add postMessage dispatching inside the booking flow so the embed loader can react.
+
+**File**: `src/lib/booking-embed-messages.ts` — CREATE
+
+Message types: `ZURA_BOOKING_READY`, `ZURA_BOOKING_RESIZE`, `ZURA_BOOKING_STEP_CHANGE`, `ZURA_BOOKING_COMPLETE`, `ZURA_BOOKING_ERROR`, `ZURA_MODAL_CLOSE`
+
+**Integration**: `HostedBookingPage` dispatches these messages when in embed mode via `window.parent.postMessage()`.
+
+### 5. Auto-Resize Observer
+In embed mode, attach a `ResizeObserver` to the booking root that posts height changes to the parent window, eliminating scroll-in-scroll.
+
+Integrated into `HostedBookingPage` when `embed=true`.
+
+### 6. Updated Embed Code Generator
+Fix the admin snippet generator to produce working snippets that reference the real `embed.js` path and use correct `data-*` attributes.
+
+**File**: `src/components/dashboard/booking-surface/EmbedCodeGenerator.tsx` — UPDATE
+
+Snippets will reference `{origin}/embed.js` with proper data attributes (`data-zura-org`, `data-zura-mode`). Deep link configurator links will be reflected in generated snippets when preselections are set.
+
+### 7. Config Model Extension
+Add missing fields to `BookingSurfaceConfig` type for embed-specific settings.
+
+**File**: `src/hooks/useBookingSurfaceConfig.ts` — UPDATE
+
+Add to config: `allowedEmbedTypes: ('inline'|'modal'|'popup'|'iframe')[]` and deep link permission flags (`allowServicePreselect`, `allowStylistPreselect`, etc.). Add `version`, `publishedAt`, `updatedAt` metadata fields.
+
+## Architecture Decision: iframe Over Shadow DOM
+
+Using iframe-based embedding rather than Shadow DOM because:
+- Complete style isolation without CSS leakage in either direction
+- Works on all host sites regardless of framework
+- The booking app already runs as a full React app — mounting it inside Shadow DOM would require significant rearchitecting
+- postMessage provides clean cross-origin communication
+- iframe fallback and script embed share the same rendering path
+
+The embed loader script creates and manages the iframe, handling resize, modal overlay, and deep linking — making it feel native despite being an iframe.
+
+## Files Summary
 
 | File | Action |
 |---|---|
-| `src/components/dashboard/booking-surface/BookingSurfaceModeSelector.tsx` | CREATE |
-| `src/components/dashboard/booking-surface/BookingLivePreview.tsx` | CREATE |
-| `src/components/dashboard/booking-surface/BookingLinkConfigurator.tsx` | CREATE |
-| `src/components/dashboard/booking-surface/EmbedCodeGenerator.tsx` | CREATE |
-| `src/components/dashboard/booking-surface/BookingThemeEditor.tsx` | REWRITE |
-| `src/components/dashboard/booking-surface/BookingFlowConfigurator.tsx` | ENHANCE |
-| `src/components/dashboard/booking-surface/BookingHostedPageEditor.tsx` | ENHANCE |
-| `src/components/dashboard/booking-surface/BookingSurfaceSettings.tsx` | REWRITE |
-| `src/components/dashboard/booking-surface/BookingPublishBar.tsx` | REWRITE |
-| `src/pages/dashboard/admin/BookingSurfaceSettingsPage.tsx` | UPDATE |
-| `src/components/booking-surface/HostedBookingPage.tsx` | ENHANCE |
-| `src/components/booking-surface/BookingDateTimePicker.tsx` | ENHANCE |
-| `src/components/booking-surface/BookingClientForm.tsx` | ENHANCE |
-| `src/components/booking-surface/BookingConfirmation.tsx` | ENHANCE |
-| `src/components/booking-surface/BookingFlowProgress.tsx` | ENHANCE |
+| `src/hooks/useBookingSession.ts` | CREATE — shared booking state machine |
+| `src/lib/booking-embed-messages.ts` | CREATE — postMessage type definitions + helpers |
+| `public/embed.js` | CREATE — lightweight embed loader script |
+| `src/components/booking-surface/HostedBookingPage.tsx` | UPDATE — embed mode, use session hook, postMessage dispatch |
+| `src/hooks/useBookingSurfaceConfig.ts` | UPDATE — add embed config fields |
+| `src/components/dashboard/booking-surface/EmbedCodeGenerator.tsx` | UPDATE — working snippets with real embed.js |
 
-## Technical Notes
+## Build Order
 
-- Live preview renders booking components directly (not iframe) using the draft config, wrapped in a scaled container with device frame chrome
-- Theme presets are static config objects that overwrite the theme section of draft config
-- Embed code generator produces `<script>` + `<div>` snippets pointing to `/book/:orgSlug?embed=true&mode=inline|modal`
-- Deep link configurator queries locations/stylists/services to populate dropdowns, generates URL with params
-- Sticky publish bar uses `position: sticky; bottom: 0` with blur backdrop
-- Step transitions use `motion` + `AnimatePresence` with slide direction based on navigation direction
-- No new database tables or schema changes needed — all config stays in `site_settings`
+1. Create `booking-embed-messages.ts` (message types)
+2. Create `useBookingSession.ts` (extract state from HostedBookingPage)
+3. Update `useBookingSurfaceConfig.ts` (add embed fields)
+4. Update `HostedBookingPage.tsx` (embed mode + session hook + postMessage)
+5. Create `public/embed.js` (embed loader)
+6. Update `EmbedCodeGenerator.tsx` (correct snippets)
+7. TypeScript build check
 
