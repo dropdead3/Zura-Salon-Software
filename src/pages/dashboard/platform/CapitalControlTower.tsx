@@ -518,6 +518,7 @@ function DiagnosticPanel({ orgId }: { orgId: string }) {
             No opportunities have been detected for this organization yet.
           </div>
           <EligibilityReferenceList policy={data.effectivePolicy} />
+          <OrgOperationalContext data={data} />
         </div>
       )}
     </div>
