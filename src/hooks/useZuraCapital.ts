@@ -59,10 +59,28 @@ export interface ZuraCapitalOpportunity {
 }
 
 /** Map org policy settings row to CapitalPolicy override */
+type MutableCapitalPolicy = {
+  roeThreshold: number;
+  confidenceThreshold: number;
+  maxRiskLevel: string;
+  minOperationalStability: number;
+  minExecutionReadiness: number;
+  maxConcurrentProjects: number;
+  cooldownAfterDeclineDays: number;
+  cooldownAfterUnderperformanceDays: number;
+  staleDays: number;
+  stylistSpiThreshold: number;
+  stylistOrsThreshold: number;
+  maxExposurePerLocation: number;
+  maxExposurePerStylist: number;
+  minCapitalRequired: number;
+  allowManagerInitiation: boolean;
+  allowStylistMicrofunding: boolean;
+};
+
 /** Map org policy settings row to a mutable policy object merged with defaults */
-function buildEffectivePolicy(settings: Record<string, any> | null | undefined): CapitalPolicy {
-  // Start with a mutable copy of defaults
-  const base = { ...DEFAULT_CAPITAL_POLICY } as { -readonly [K in keyof CapitalPolicy]: CapitalPolicy[K] };
+function buildEffectivePolicy(settings: Record<string, any> | null | undefined): MutableCapitalPolicy {
+  const base: MutableCapitalPolicy = { ...DEFAULT_CAPITAL_POLICY };
   if (!settings) return base;
 
   if (settings.roe_threshold != null) base.roeThreshold = Number(settings.roe_threshold);
