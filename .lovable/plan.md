@@ -1,63 +1,75 @@
 
 
-# Improve Capital Control Tower UI Alignment and Separation
+# Make Layer 2 Guardrails Show Real Data Per Organization
 
 ## Problem
 
-The Visibility Checklist and Two-Layer Reference sections have labels and descriptions that run together on a single line with a dash separator, making them hard to scan. The checklist items lack visual separation, and the Layer 1/Layer 2 sections could use better internal structure.
+The Layer 2 (Zura Operational Context) section currently shows static, generic descriptions for all three items:
+- "Unresolved critical operational alerts pause new capital surfacing until resolved."
+- "This organization has active repayment concerns. Review before proceeding."
+- "This organization has active funded projects. Context provided for decision-making."
 
-## Changes — `src/pages/dashboard/platform/CapitalControlTower.tsx`
+These tell the admin nothing about the **actual state** of the organization they're inspecting. The data already exists in `useOrgCapitalDiagnostics` — it just isn't surfaced.
 
-### 1. Visibility Checklist — Stack label above detail
-Currently: `✓ Feature Flag — capital_enabled is ON` (single line, label and detail blurred together)
+## Solution
 
-After: Label on first line (brighter), detail on second line (muted, slightly indented). Add `py-2` spacing between items with a subtle divider or gap instead of `space-y-2`.
+Replace the static `EligibilityReferenceList` Layer 2 section with a **data-aware** version that reads from the diagnostics query and shows specifics.
 
-### 2. Layer 1 (Stripe Capital Requirements) — Separate label from description
-Currently each requirement is: `icon Label — Description` on one line.
+## Changes
 
-After: **Label** on first line with slightly brighter color, description on second line in muted color. This makes the 8 Stripe criteria scannable at a glance without reading every description. Keep the 2-column grid.
+### 1. `src/hooks/useOrgCapitalDiagnostics.ts`
+Expose the data needed for specific descriptions:
+- `criticalOpsAlertCount: number` — currently hardcoded to 0 (with existing TODO), keep as-is but surface it
+- `repaymentDistress: boolean` + `distressedProjectNames: string[]` — extract project titles/IDs that have `repayment_status === 'delinquent'`
+- `activeProjectCount: number` + `activeProjectSummaries: { id, title, status, fundedAmount }[]` — already queried, just expose in the return type
 
-### 3. Layer 2 (Zura Operational Context) — Same treatment
-Separate `[Blocker] No Critical Ops Alerts` from `— Unresolved critical operational alerts pause...` onto two lines. The severity tag (`[Blocker]`, `[Warning]`, `[Info]`) stays inline with the label.
+### 2. `src/pages/dashboard/platform/CapitalControlTower.tsx`
 
-### 4. Add visual dividers between sections
-Add a subtle `border-t` between the Visibility Checklist and the "No opportunities detected" warning, and between Layer 1 and Layer 2 cards (already have separate cards, but add `gap-5` instead of `gap-4`).
+**In `DiagnosticPanel`**: Replace the static `EligibilityReferenceList` with a new `OrgOperationalContext` component that receives `data` (the diagnostics result) and renders Layer 2 with real values:
 
-### 5. EligibilityCheckList (opportunity expanded view) — Same stacking
-Apply the same label/description stacking to the Hard Gate, Advisory, and Ranking sections when viewing an actual opportunity's details.
+- **Critical Ops Alerts**: 
+  - If none: `✓ No critical operational alerts detected`
+  - If present: `✗ N critical alert(s) active — [alert types listed]` (future-proofed for when wired)
+  
+- **Repayment Distress**:
+  - If no distress: `✓ No repayment distress — all active projects current`
+  - If distress: `⚠ Repayment distress on N project(s): [Project Title 1], [Project Title 2]`
+
+- **Active Projects**:
+  - If none: `ℹ No active funded projects`
+  - If some: `ℹ N active project(s): [Project Title 1] ($X,XXX funded, status), [Project Title 2] ($Y,YYY funded, status)`
+
+Each item shows a pass/fail/info icon based on actual state, not a static reference icon.
+
+### 3. Keep static `EligibilityReferenceList` for Knowledge Base
+The `CapitalKnowledgeBase.tsx` page continues to use the static descriptions since it's a documentation/reference page, not a per-org diagnostic.
 
 ## Visual Result
 
 ```text
-Visibility Checklist
-─────────────────────────────────
-✓  Feature Flag
-   capital_enabled is ON
+Layer 2 — Zura Operational Context
+──────────────────────────────────
+✓  No Critical Ops Alerts
+   No critical operational alerts detected for this organization.
 
-✗  Zura Pay Connected
-   No locations connected to Zura Pay — Stripe Capital
-   requires an active payment processing account
+✓  Repayment Status
+   No repayment distress — all active projects are current.
 
-✗  Qualifying Opportunities
-   No opportunities detected for this organization
-
-✗  Sidebar Visible
-   Zura Capital is NOT visible — all conditions above must pass
+ℹ  Active Projects (2)
+   "Downtown Expansion" — $12,500 funded · on_track
+   "Retail Lift Program" — $8,000 funded · active
 ```
 
-Layer 1 items become:
+Or when there are issues:
 ```text
-◻ 3+ months processing history
-  The connected account must have been processing payments
-  on Stripe for at least 3 months.
-
-◻ $5K+ annual processing volume
-  At least $5,000 in annual processing volume and $1,000
-  average over the last 3 months.
+⚠  Repayment Distress
+   1 project in distress: "Downtown Expansion" (delinquent)
 ```
 
-## Scope
+## Files
 
-Single file: `src/pages/dashboard/platform/CapitalControlTower.tsx`. No logic changes — purely layout and spacing adjustments.
+| File | Change |
+|---|---|
+| `src/hooks/useOrgCapitalDiagnostics.ts` | Add `activeProjectSummaries`, `distressedProjects`, and `criticalOpsAlertCount` to return type |
+| `src/pages/dashboard/platform/CapitalControlTower.tsx` | New `OrgOperationalContext` component replacing static Layer 2 in diagnostic panel |
 
