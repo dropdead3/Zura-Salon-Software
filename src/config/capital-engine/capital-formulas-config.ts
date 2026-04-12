@@ -118,13 +118,37 @@ export const CONSTRAINT_SEVERITY_DEFAULT = 30;
 /* ── Net Impact Score Range ── */
 export const NET_IMPACT_RATIO_MAX = 0.25;
 
+/* ── Stripe Capital Requirements (informational reference) ── */
+export const STRIPE_CAPITAL_REQUIREMENTS = [
+  { label: '3+ months processing history', description: 'The connected account must have been processing payments on Stripe for at least 3 months.' },
+  { label: '$5K+ annual processing volume', description: 'At least $5,000 in annual processing volume and $1,000 average over the last 3 months.' },
+  { label: 'Positive growth trajectory', description: 'Stripe looks for positive trends in payment volume over time.' },
+  { label: 'Consistent processing record', description: 'Steady volume with few zero-activity periods signals business stability.' },
+  { label: 'Diverse customer base', description: 'More unique customers increases likelihood of eligibility.' },
+  { label: 'Low dispute rate', description: 'Few unresolved chargebacks and disputes.' },
+  { label: 'US-based business', description: 'Business must be US-based with a physical address.' },
+  { label: 'Good standing with Stripe', description: 'No Capital rejection in the last 30 days; account in good standing.' },
+] as const;
+
+/* ── Zura Operational Guardrails (what Zura checks before surfacing a Stripe offer) ── */
+export const ZURA_OPERATIONAL_GUARDRAILS = [
+  { code: 'critical_ops_alerts', label: 'No Critical Ops Alerts', description: 'Unresolved critical operational alerts block new capital deployment.' },
+  { code: 'repayment_distress', label: 'No Active Repayment Distress', description: 'Active repayment distress must be resolved before new funding.' },
+  { code: 'too_many_active_projects', label: 'Under Max Concurrent Projects', description: 'The organization must not exceed the concurrent funded project limit.' },
+  { code: 'underperforming_project_exists', label: 'No Underperforming Projects', description: 'An underperforming funded project blocks new capital deployment.' },
+  { code: 'decline_cooldown', label: 'Decline Cooldown Clear', description: 'A recent decline must be past the cooldown period.' },
+  { code: 'underperformance_cooldown', label: 'Underperformance Cooldown Clear', description: 'A recent underperformance event must be past the cooldown period.' },
+] as const;
+
 /* ── Default Policy ── */
 export const DEFAULT_CAPITAL_POLICY = {
+  // Scoring thresholds (used for ranking, not hard gating)
   roeThreshold: 1.8,
   confidenceThreshold: 70,
   maxRiskLevel: 'medium' as CanonicalRiskLevel,
   minOperationalStability: 60,
   minExecutionReadiness: 70,
+  // Operational guardrails (hard gates)
   maxConcurrentProjects: 2,
   cooldownAfterDeclineDays: 14,
   cooldownAfterUnderperformanceDays: 30,

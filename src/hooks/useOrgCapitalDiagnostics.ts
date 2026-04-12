@@ -2,9 +2,13 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import {
   calculateInternalEligibility,
+  calculateOperationalReadiness,
+  calculateOpportunityRanking,
   calculateOpportunityFreshnessDays,
   type EligibilityInputs,
   type EligibilityResult,
+  type OperationalReadinessResult,
+  type OpportunityRankingResult,
 } from '@/lib/capital-engine/capital-formulas';
 import { DEFAULT_CAPITAL_POLICY, type CapitalPolicy } from '@/config/capital-engine/capital-formulas-config';
 
@@ -17,9 +21,12 @@ export interface OpportunityDiagnostic {
   status: string;
   isQualifying: boolean;
   eligibility: EligibilityResult;
+  operationalReadiness: OperationalReadinessResult;
+  ranking: OpportunityRankingResult;
   inputs: EligibilityInputs;
   policy: CapitalPolicy;
   createdAt: string;
+  isStripeOffer: boolean;
 }
 
 export interface OrgCapitalDiagnostics {
@@ -141,6 +148,8 @@ export function useOrgCapitalDiagnostics(orgId: string | null) {
         };
 
         const eligibility = calculateInternalEligibility(inputs, effectivePolicy);
+        const operationalReadiness = calculateOperationalReadiness(inputs, effectivePolicy);
+        const ranking = calculateOpportunityRanking(inputs, effectivePolicy);
 
         return {
           id: opp.id,
@@ -148,9 +157,12 @@ export function useOrgCapitalDiagnostics(orgId: string | null) {
           status: opp.status,
           isQualifying,
           eligibility,
+          operationalReadiness,
+          ranking,
           inputs,
           policy: effectivePolicy,
           createdAt: opp.created_at,
+          isStripeOffer: opp.opportunity_type === 'stripe_capital' || opp.stripe_offer_available === true,
         };
       });
 

@@ -3495,6 +3495,7 @@ export type Database = {
           provider_estimated_payment_cents: number | null
           provider_fees_summary: string | null
           provider_offer_amount_cents: number | null
+          provider_offer_details: Json | null
           provider_offer_id: string | null
           provider_offer_term_months: number | null
           reason_code: string | null
@@ -3508,6 +3509,7 @@ export type Database = {
           source_opportunity_type: string | null
           status: string
           stripe_offer_available: boolean
+          stripe_offer_id: string | null
           stylist_id: string | null
           summary: string
           surface_priority: number
@@ -3550,6 +3552,7 @@ export type Database = {
           provider_estimated_payment_cents?: number | null
           provider_fees_summary?: string | null
           provider_offer_amount_cents?: number | null
+          provider_offer_details?: Json | null
           provider_offer_id?: string | null
           provider_offer_term_months?: number | null
           reason_code?: string | null
@@ -3563,6 +3566,7 @@ export type Database = {
           source_opportunity_type?: string | null
           status?: string
           stripe_offer_available?: boolean
+          stripe_offer_id?: string | null
           stylist_id?: string | null
           summary?: string
           surface_priority?: number
@@ -3605,6 +3609,7 @@ export type Database = {
           provider_estimated_payment_cents?: number | null
           provider_fees_summary?: string | null
           provider_offer_amount_cents?: number | null
+          provider_offer_details?: Json | null
           provider_offer_id?: string | null
           provider_offer_term_months?: number | null
           reason_code?: string | null
@@ -3618,6 +3623,7 @@ export type Database = {
           source_opportunity_type?: string | null
           status?: string
           stripe_offer_available?: boolean
+          stripe_offer_id?: string | null
           stylist_id?: string | null
           summary?: string
           surface_priority?: number

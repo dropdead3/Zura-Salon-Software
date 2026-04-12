@@ -272,6 +272,19 @@ export interface EligibilityResult {
   topReasonSummary: string | null;
 }
 
+/** Operational readiness result — hard gates that block surfacing. */
+export interface OperationalReadinessResult {
+  ready: boolean;
+  blockerCodes: ReasonCode[];
+  blockerSummaries: string[];
+}
+
+/** Opportunity ranking result — scoring for prioritization (not gating). */
+export interface OpportunityRankingResult {
+  score: number; // 0-100
+  factors: { code: string; label: string; value: number; passed: boolean }[];
+}
+
 const ALLOWED_RISK_LEVELS: Record<CanonicalRiskLevel, number> = {
   low: 1, medium: 2, high: 3, critical: 4,
 };
@@ -280,6 +293,115 @@ function riskLevelRank(level: string): number {
   return ALLOWED_RISK_LEVELS[level as CanonicalRiskLevel] ?? 99;
 }
 
+/**
+ * Operational Readiness — Hard gates that block surfacing a Stripe offer.
+ * These are Zura's guardrails, not Stripe's underwriting criteria.
+ */
+export function calculateOperationalReadiness(
+  inputs: EligibilityInputs,
+  policy: CapitalPolicy = DEFAULT_CAPITAL_POLICY,
+): OperationalReadinessResult {
+  const codes: ReasonCode[] = [];
+
+  // 1. Critical ops alerts
+  if (inputs.hasCriticalOpsAlerts) {
+    codes.push(REASON_CODES.critical_ops_alerts);
+  }
+
+  // 2. Repayment distress
+  if (inputs.repaymentDistressFlag) {
+    codes.push(REASON_CODES.repayment_distress);
+  }
+
+  // 3. Concurrent projects limit
+  if (inputs.activeCapitalProjectsCount >= policy.maxConcurrentProjects) {
+    codes.push(REASON_CODES.too_many_active_projects);
+  }
+
+  // 4. Underperforming projects
+  if (inputs.activeUnderperformingProjectsCount > 0) {
+    codes.push(REASON_CODES.underperforming_project_exists);
+  }
+
+  // 5. Decline cooldown
+  if (inputs.lastDeclinedAt) {
+    const daysSince = Math.floor((Date.now() - new Date(inputs.lastDeclinedAt).getTime()) / 86400000);
+    if (daysSince < policy.cooldownAfterDeclineDays) {
+      codes.push(REASON_CODES.decline_cooldown);
+    }
+  }
+
+  // 6. Underperformance cooldown
+  if (inputs.lastUnderperformingAt) {
+    const daysSince = Math.floor((Date.now() - new Date(inputs.lastUnderperformingAt).getTime()) / 86400000);
+    if (daysSince < policy.cooldownAfterUnderperformanceDays) {
+      codes.push(REASON_CODES.underperformance_cooldown);
+    }
+  }
+
+  return {
+    ready: codes.length === 0,
+    blockerCodes: codes,
+    blockerSummaries: codes.map(c => EXPLANATION_TEMPLATES[c] ?? c),
+  };
+}
+
+/**
+ * Opportunity Ranking — Scoring factors for prioritizing which opportunities to show first.
+ * These are NOT gates — they inform display order and quality indicators.
+ */
+export function calculateOpportunityRanking(
+  inputs: EligibilityInputs,
+  policy: CapitalPolicy = DEFAULT_CAPITAL_POLICY,
+): OpportunityRankingResult {
+  const factors: OpportunityRankingResult['factors'] = [];
+
+  // ROE
+  const roePassed = inputs.roeRatio >= policy.roeThreshold;
+  factors.push({ code: 'roe', label: 'ROE Ratio', value: inputs.roeRatio, passed: roePassed });
+
+  // Confidence
+  const confPassed = inputs.confidenceScore >= policy.confidenceThreshold;
+  factors.push({ code: 'confidence', label: 'Confidence Score', value: inputs.confidenceScore, passed: confPassed });
+
+  // Risk level
+  const riskPassed = riskLevelRank(inputs.riskLevel) <= riskLevelRank(policy.maxRiskLevel);
+  factors.push({ code: 'risk', label: 'Risk Level', value: riskLevelRank(inputs.riskLevel), passed: riskPassed });
+
+  // Momentum
+  const momentumVal = inputs.momentumScore ?? 0;
+  factors.push({ code: 'momentum', label: 'Momentum Score', value: momentumVal, passed: momentumVal >= 20 });
+
+  // Operational stability
+  const stabPassed = inputs.operationalStabilityScore >= policy.minOperationalStability;
+  factors.push({ code: 'stability', label: 'Operational Stability', value: inputs.operationalStabilityScore, passed: stabPassed });
+
+  // Execution readiness
+  const execPassed = inputs.executionReadinessScore >= policy.minExecutionReadiness;
+  factors.push({ code: 'execution', label: 'Execution Readiness', value: inputs.executionReadinessScore, passed: execPassed });
+
+  // Simple weighted score for ranking
+  const weights = { roe: 0.25, confidence: 0.20, stability: 0.15, execution: 0.15, momentum: 0.15, risk: 0.10 };
+  const roeNorm = normalizeRatioTo100(inputs.roeRatio, ROE_SCORE_RANGE.min, ROE_SCORE_RANGE.max);
+  const riskNorm = 100 - normalizeRatioTo100(riskLevelRank(inputs.riskLevel), 1, 4);
+
+  const score = Math.round(
+    roeNorm * weights.roe +
+    inputs.confidenceScore * weights.confidence +
+    inputs.operationalStabilityScore * weights.stability +
+    inputs.executionReadinessScore * weights.execution +
+    momentumVal * weights.momentum +
+    riskNorm * weights.risk
+  );
+
+  return { score: clamp(score, 0, 100), factors };
+}
+
+/**
+ * Full internal eligibility (legacy — runs all 19 checks as hard gates).
+ * Kept for backward compatibility. New code should use
+ * calculateOperationalReadiness + calculateOpportunityRanking separately.
+ */
 export function calculateInternalEligibility(
   inputs: EligibilityInputs,
   policy: CapitalPolicy = DEFAULT_CAPITAL_POLICY,

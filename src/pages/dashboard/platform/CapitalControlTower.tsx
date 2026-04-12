@@ -1,5 +1,5 @@
 import { useState, Fragment, useMemo } from 'react';
-import { Landmark, Building2, TrendingUp, Eye, Loader2, BookOpen, ChevronDown, ChevronRight, Check, X, AlertTriangle, Minus } from 'lucide-react';
+import { Landmark, Building2, TrendingUp, Eye, Loader2, BookOpen, ChevronDown, ChevronRight, Check, X, AlertTriangle, Minus, CreditCard, Shield } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -32,6 +32,7 @@ import {
 } from '@/hooks/useOrgCapitalDiagnostics';
 import type { EligibilityInputs } from '@/lib/capital-engine/capital-formulas';
 import type { CapitalPolicy } from '@/config/capital-engine/capital-formulas-config';
+import { STRIPE_CAPITAL_REQUIREMENTS, ZURA_OPERATIONAL_GUARDRAILS } from '@/config/capital-engine/capital-formulas-config';
 import { toast } from 'sonner';
 
 /* ── Types ── */
@@ -264,53 +265,62 @@ function EligibilityCheckList({ opp }: { opp: OpportunityDiagnostic }) {
   );
 }
 
-/* ── Eligibility Reference List (no-opportunity state) ── */
+/* ── Two-Layer Eligibility Reference (no-opportunity state) ── */
 
 function EligibilityReferenceList({ policy }: { policy: CapitalPolicy }) {
-  const fmtDollars = (v: number) => `$${v.toLocaleString()}`;
-
-  const criteria = [
-    { label: 'ROE Ratio', threshold: `must be ≥ ${policy.roeThreshold}x` },
-    { label: 'Confidence Score', threshold: `must be ≥ ${policy.confidenceThreshold}` },
-    { label: 'Risk Level', threshold: `must be ≤ ${policy.maxRiskLevel}` },
-    { label: 'Operational Stability', threshold: `must be ≥ ${policy.minOperationalStability}` },
-    { label: 'Execution Readiness', threshold: `must be ≥ ${policy.minExecutionReadiness}` },
-    { label: 'Concurrent Projects', threshold: `must be < ${policy.maxConcurrentProjects}` },
-    { label: 'No Underperforming Projects', threshold: 'must have none' },
-    { label: 'No Repayment Distress', threshold: 'must be clear' },
-    { label: 'Opportunity Freshness', threshold: `must be ≤ ${policy.staleDays} days` },
-    { label: 'Investment Amount', threshold: 'must be > $0' },
-    { label: 'Above Minimum Capital', threshold: `must be ≥ ${fmtDollars(policy.minCapitalRequired)}` },
-    { label: 'Not Expired', threshold: 'must not be past expiration' },
-    { label: 'Constraint Type', threshold: 'must be identified' },
-    { label: 'Momentum Score', threshold: 'must be ≥ 20' },
-    { label: 'No Critical Ops Alerts', threshold: 'must be clear' },
-    { label: 'Location Exposure', threshold: `must be ≤ ${fmtDollars(policy.maxExposurePerLocation)}` },
-    { label: 'Stylist Exposure', threshold: `must be ≤ ${fmtDollars(policy.maxExposurePerStylist ?? policy.maxExposurePerLocation)}` },
-    { label: 'Decline Cooldown', threshold: `${policy.cooldownAfterDeclineDays} day wait` },
-    { label: 'Underperformance Cooldown', threshold: `${policy.cooldownAfterUnderperformanceDays} day wait` },
-  ];
-
   return (
-    <div className="rounded-lg border border-[hsl(var(--platform-border)/0.2)] bg-[hsl(var(--platform-bg-card)/0.08)] p-4 space-y-3">
-      <div>
-        <h5 className="font-sans text-xs tracking-normal text-[hsl(var(--platform-foreground))] uppercase mb-1">
-          Eligibility Reference — What Gets Checked
-        </h5>
+    <div className="space-y-4">
+      {/* Section A — Stripe Capital Requirements */}
+      <div className="rounded-lg border border-[hsl(var(--platform-border)/0.2)] bg-[hsl(var(--platform-bg-card)/0.08)] p-4 space-y-3">
+        <div className="flex items-center gap-2 mb-1">
+          <CreditCard className="h-4 w-4 text-violet-400" />
+          <h5 className="font-sans text-xs tracking-normal text-[hsl(var(--platform-foreground))] uppercase">
+            Layer 1 — Stripe Capital Underwriting
+          </h5>
+        </div>
         <p className="text-xs text-[hsl(var(--platform-foreground-muted))]">
-          When an opportunity is detected, it must pass all {criteria.length} checks:
+          Stripe reviews connected accounts daily and determines eligibility automatically. Zura cannot influence these criteria — they are evaluated by Stripe's underwriting engine.
         </p>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-1">
+          {STRIPE_CAPITAL_REQUIREMENTS.map((req) => (
+            <div key={req.label} className="flex items-start gap-2 text-xs py-0.5">
+              <BookOpen className="h-3.5 w-3.5 mt-0.5 shrink-0 text-violet-400/50" />
+              <span className="text-[hsl(var(--platform-foreground)/0.85)]">
+                {req.label}
+                <span className="text-[hsl(var(--platform-foreground-muted))] ml-1">— {req.description}</span>
+              </span>
+            </div>
+          ))}
+        </div>
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-1">
-        {criteria.map((c) => (
-          <div key={c.label} className="flex items-start gap-2 text-xs py-0.5">
-            <BookOpen className="h-3.5 w-3.5 mt-0.5 shrink-0 text-[hsl(var(--platform-foreground-muted)/0.5)]" />
-            <span className="text-[hsl(var(--platform-foreground)/0.85)]">
-              {c.label}
-              <span className="text-[hsl(var(--platform-foreground-muted))] ml-1">— {c.threshold}</span>
-            </span>
-          </div>
-        ))}
+
+      {/* Section B — Zura Operational Guardrails */}
+      <div className="rounded-lg border border-[hsl(var(--platform-border)/0.2)] bg-[hsl(var(--platform-bg-card)/0.08)] p-4 space-y-3">
+        <div className="flex items-center gap-2 mb-1">
+          <Shield className="h-4 w-4 text-amber-400" />
+          <h5 className="font-sans text-xs tracking-normal text-[hsl(var(--platform-foreground))] uppercase">
+            Layer 2 — Zura Operational Guardrails
+          </h5>
+        </div>
+        <p className="text-xs text-[hsl(var(--platform-foreground-muted))]">
+          Before surfacing a Stripe-approved offer, Zura checks these operational readiness conditions. These are not underwriting criteria — they are guardrails to ensure the organization is ready to deploy capital.
+        </p>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-1">
+          {ZURA_OPERATIONAL_GUARDRAILS.map((guard) => (
+            <div key={guard.code} className="flex items-start gap-2 text-xs py-0.5">
+              <BookOpen className="h-3.5 w-3.5 mt-0.5 shrink-0 text-amber-400/50" />
+              <span className="text-[hsl(var(--platform-foreground)/0.85)]">
+                {guard.label}
+                <span className="text-[hsl(var(--platform-foreground-muted))] ml-1">— {guard.description}</span>
+              </span>
+            </div>
+          ))}
+        </div>
+        <div className="pt-2 border-t border-[hsl(var(--platform-border)/0.1)]">
+          <p className="text-xs text-[hsl(var(--platform-foreground-muted))]">
+            Policy: Max {policy.maxConcurrentProjects} concurrent projects · {policy.cooldownAfterDeclineDays}d decline cooldown · {policy.cooldownAfterUnderperformanceDays}d underperformance cooldown
+          </p>
+        </div>
       </div>
     </div>
   );
