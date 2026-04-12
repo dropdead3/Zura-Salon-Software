@@ -1,9 +1,11 @@
 import { useState } from 'react';
-import { Landmark, Building2, TrendingUp, Loader2 } from 'lucide-react';
+import { Landmark, Building2, TrendingUp, Loader2, BookOpen } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { PlatformPageContainer } from '@/components/platform/ui/PlatformPageContainer';
 import { PlatformPageHeader } from '@/components/platform/ui/PlatformPageHeader';
+import { PlatformButton } from '@/components/platform/ui/PlatformButton';
 import {
   PlatformCard,
   PlatformCardContent,
@@ -71,6 +73,7 @@ export default function CapitalControlTower() {
   const { data: orgs, isLoading } = useOrganizationsWithCapital();
   const updateFlag = useUpdateOrgFeatureFlag();
   const [filter, setFilter] = useState<'all' | 'enabled' | 'disabled'>('all');
+  const navigate = useNavigate();
 
   const handleToggle = (orgId: string, orgName: string, currentValue: boolean) => {
     updateFlag.mutate(
@@ -107,6 +110,16 @@ export default function CapitalControlTower() {
       <PlatformPageHeader
         title="Zura Capital Control Tower"
         description="Manage Capital access and monitor rollout across the platform"
+        actions={
+          <PlatformButton
+            variant="outline"
+            onClick={() => navigate('/platform/capital/guide')}
+            className="gap-2"
+          >
+            <BookOpen className="h-4 w-4" />
+            Feature Guide
+          </PlatformButton>
+        }
       />
 
       {/* Summary Stats */}
