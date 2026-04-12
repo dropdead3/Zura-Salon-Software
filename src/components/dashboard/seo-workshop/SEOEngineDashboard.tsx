@@ -10,6 +10,8 @@ import { MOMENTUM_DIRECTION_CONFIG } from '@/lib/seo-engine/seo-momentum-calcula
 import { tokens } from '@/lib/design-tokens';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
+import { BlurredAmount } from '@/contexts/HideNumbersContext';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { AlertTriangle, TrendingUp, TrendingDown, Clock, Target, Star, FileText, MapPin, Pencil, Flag, Crosshair, Minus, DollarSign } from 'lucide-react';
 import { SEOPredictedLiftCard } from './SEOPredictedLiftCard';
 
@@ -35,6 +37,7 @@ const DOMAIN_ICONS: Record<string, React.ElementType> = {
 };
 
 export function SEOEngineDashboard({ organizationId, onGoToTasks, onGoToCampaigns }: Props) {
+  const { formatCurrencyCompact } = useFormatCurrency();
   const { data: healthSummary, isLoading: healthLoading } = useSEOHealthSummary(organizationId);
   const { data: tasks = [], isLoading: tasksLoading } = useSEOTasks(organizationId, {
     status: [...ACTIVE_TASK_STATES, 'overdue', 'escalated'],
@@ -159,7 +162,7 @@ export function SEOEngineDashboard({ organizationId, onGoToTasks, onGoToCampaign
                 ) : (
                   <p className="text-2xl font-display tracking-wide">
                     {totalAttributedRevenue > 0
-                      ? `$${totalAttributedRevenue >= 1000 ? `${(totalAttributedRevenue / 1000).toFixed(1)}k` : totalAttributedRevenue.toFixed(0)}`
+                      ? <BlurredAmount>{formatCurrencyCompact(totalAttributedRevenue)}</BlurredAmount>
                       : '—'}
                   </p>
                 )}

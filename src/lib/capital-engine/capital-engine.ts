@@ -1,10 +1,16 @@
 /**
  * Capital & Expansion Engine — Pure Computation
  *
- * SPI scoring, ROE calculation, risk modeling, capital queue ranking,
- * break-even estimation, and investment scenario simulation.
+ * @deprecated — This module contains legacy capital functions that predate the canonical
+ * formulas layer. Production code should use `capital-formulas.ts` instead:
+ *   - `computeROE` → `calculateRoeRatio` (cents-based)
+ *   - `computeRisk` → `calculateRiskScore` (0-100 inputs)
+ *   - `rankOpportunities` → `calculateSurfacePriority` (weighted multi-factor)
+ *   - `QueuedOpportunity` → `ZuraCapitalOpportunity` type
  *
- * All functions are deterministic. No side effects. No API calls.
+ * SPI computation (`computeSPI`) remains valid and is still used.
+ *
+ * Retained for backward compatibility. Do not add new consumers.
  */
 
 import {
@@ -121,6 +127,7 @@ export function computeSPI(input: SPIInput): SPIResult {
 
 // ── Risk Model ───────────────────────────────────────────────────────
 
+/** @deprecated Use `calculateRiskScore` from `capital-formulas.ts` (0-100 scale inputs). */
 export function computeRisk(input: RiskInput): RiskResult {
   const factors: Record<string, number> = {};
   let weightedSum = 0;
@@ -144,6 +151,7 @@ export function computeRisk(input: RiskInput): RiskResult {
 
 // ── ROE Calculation ──────────────────────────────────────────────────
 
+/** @deprecated Use `calculateRoeRatio` from `capital-formulas.ts` (cents-based). */
 export function computeROE(input: ROEInput): ROEResult {
   if (input.capitalRequired <= 0) {
     return { roe: 0, adjustedBreakEvenMonths: 0, monthlyLift: 0 };
@@ -205,6 +213,7 @@ export function simulateScenario(input: ScenarioInput): ScenarioResult {
 
 // ── Capital Priority Queue ───────────────────────────────────────────
 
+/** @deprecated Use `ZuraCapitalOpportunity` type from `useZuraCapital.ts` instead. */
 export interface QueuedOpportunity {
   id: string;
   title: string;
@@ -219,6 +228,7 @@ export interface QueuedOpportunity {
   city: string | null;
 }
 
+/** @deprecated Use `calculateSurfacePriority` from `capital-formulas.ts` (weighted multi-factor). */
 export function rankOpportunities(opportunities: QueuedOpportunity[]): QueuedOpportunity[] {
   return [...opportunities]
     .filter(o => o.roe > 0)

@@ -1,9 +1,13 @@
 /**
  * Financing Engine — Pure Computation
  *
- * Deterministic eligibility checks, cash-flow projections,
- * repayment schedules, and variance computation.
- * No side effects, no API calls, no AI.
+ * @deprecated — This module contains legacy financing functions that operate in dollars.
+ * The canonical capital system works entirely in cents via `capital-formulas.ts`.
+ *
+ * Production eligibility: `calculateInternalEligibility` from `capital-formulas.ts`
+ * Production cash flow: `calculateMonthlyLiftCents` / `calculateNetMonthlyGainCents` from `capital-formulas.ts`
+ *
+ * Retained for backward compatibility. Do not add new consumers.
  */
 
 import { FINANCING_THRESHOLDS, REPAYMENT_DEFAULTS } from '@/config/capital-engine/financing-config';
@@ -36,7 +40,9 @@ export interface RepaymentScheduleEntry {
 }
 
 /**
- * Deterministic eligibility check — all conditions must pass.
+ * @deprecated Use `calculateInternalEligibility` from `capital-formulas.ts` instead.
+ * That function uses canonical thresholds (ROE >= 1.8, confidence >= 70, etc.)
+ * and operates on cents-based ZuraCapitalOpportunity records.
  */
 export function isFinancingEligible(candidate: FinancingCandidate): EligibilityResult {
   const reasons: string[] = [];
@@ -65,7 +71,8 @@ export function isFinancingEligible(candidate: FinancingCandidate): EligibilityR
 }
 
 /**
- * Compute post-financing monthly cash flow impact.
+ * @deprecated Use `calculateMonthlyLiftCents` and `calculateNetMonthlyGainCents`
+ * from `capital-formulas.ts` instead. Those work in cents, not dollars.
  */
 export function computePostFinancingCashFlow(
   capitalRequired: number,
@@ -119,7 +126,7 @@ export function computeRepaymentSchedule(
 }
 
 /**
- * Compute variance between realized and predicted revenue lift.
+ * @deprecated Use `calculateForecastStatus` from `capital-formulas.ts` instead.
  */
 export function computeVariance(realizedLift: number, predictedLift: number): number | null {
   if (predictedLift === 0) return null;

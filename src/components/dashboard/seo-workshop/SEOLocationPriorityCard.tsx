@@ -2,6 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { tokens } from '@/lib/design-tokens';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
+import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import {
   LOCATION_PRIORITY_CONFIG,
   type LocationState,
@@ -56,7 +57,7 @@ export function SEOLocationPriorityCard({ locationStates }: Props) {
                 <div className="flex items-center gap-3 flex-shrink-0">
                   {loc.topOpportunity && (
                     <span className="text-xs text-muted-foreground font-sans hidden sm:block">
-                      Top: {loc.topOpportunity.objectLabel} (+{formatCurrency(loc.topOpportunity.predictedLift.expected)})
+                      Top: {loc.topOpportunity.objectLabel} (+<BlurredAmount>{formatCurrency(loc.topOpportunity.predictedLift.expected)}</BlurredAmount>)
                     </span>
                   )}
                   <Badge variant="outline" className={`font-display text-xs tracking-wide ${config.color}`}>
