@@ -250,8 +250,8 @@ export function useZuraCapital() {
           expiresAt: o.expires_at,
           locationId: o.location_id,
           locationExposure: o.location_id ? (locationExposure[o.location_id] ?? 0) : 0,
-          stylistId: null,
-          stylistExposure: 0,
+          stylistId: o.stylist_id ?? null,
+          stylistExposure: o.stylist_id ? (stylistExposure[o.stylist_id] ?? 0) : 0,
           lastDeclinedAt,
           lastUnderperformingAt,
         };

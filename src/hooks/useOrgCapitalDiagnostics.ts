@@ -8,7 +8,7 @@ import {
 } from '@/lib/capital-engine/capital-formulas';
 import { DEFAULT_CAPITAL_POLICY } from '@/config/capital-engine/capital-formulas-config';
 
-const QUALIFYING_STATUSES = ['pending_review', 'approved', 'ready'] as const;
+const QUALIFYING_STATUSES = ['eligible_internal', 'eligible_provider', 'surfaced', 'viewed'] as const;
 const EXCLUDED_STATUSES = ['canceled', 'expired'] as const;
 
 export interface OpportunityDiagnostic {

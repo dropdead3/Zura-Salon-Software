@@ -366,6 +366,10 @@ export function calculateInternalEligibility(
     codes.push(REASON_CODES.location_exposure_exceeded);
   }
 
+  // 17. Stylist exposure
+  if (inputs.stylistId && inputs.stylistExposure + inputs.requiredInvestmentCents / 100 > (policy.maxExposurePerStylist ?? policy.maxExposurePerLocation)) {
+    codes.push(REASON_CODES.stylist_exposure_exceeded);
+  }
 
   // 18. Decline cooldown
   if (inputs.lastDeclinedAt) {

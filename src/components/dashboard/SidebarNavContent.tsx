@@ -145,7 +145,7 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
         .from('capital_funding_opportunities')
         .select('id', { count: 'exact', head: true })
         .eq('organization_id', organizationId!)
-        .in('status', ['pending_review', 'approved', 'ready']);
+        .in('status', ['eligible_internal', 'eligible_provider', 'surfaced', 'viewed']);
       return (count ?? 0) > 0;
     },
     enabled: !!organizationId,
