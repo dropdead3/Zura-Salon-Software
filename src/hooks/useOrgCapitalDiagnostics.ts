@@ -29,6 +29,7 @@ export interface OrgCapitalDiagnostics {
   sidebarVisible: boolean;
   opportunities: OpportunityDiagnostic[];
   lastOpportunityAt: string | null;
+  effectivePolicy: CapitalPolicy;
 }
 
 export type VisibilityVerdict = 'surfacing' | 'enabled_not_surfacing' | 'disabled';
@@ -163,6 +164,7 @@ export function useOrgCapitalDiagnostics(orgId: string | null) {
         sidebarVisible: flagEnabled && qualifyingCount > 0,
         opportunities,
         lastOpportunityAt,
+        effectivePolicy,
       };
     },
     enabled: !!orgId,
