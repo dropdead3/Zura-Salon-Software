@@ -1,161 +1,124 @@
 
 
-# Platform Bento Design System — Size-Aware Radius, Spacing & Depth
+# Nested Radius Hierarchy Audit — Platform Bento System
 
-## Overview
+## Problem
 
-Upgrade all platform admin UI primitives and pages to use a proportional, size-aware design system. This creates a tighter, more engineered feel — distinct from the org-facing UI — with radius, padding, shadows, and interactions all scaling with component footprint.
+Parent containers and child cards share the same radius tier (both using `rounded-[16px]`), creating visual flattening. There is no enforced parent-child radius step-down, so nested structures look like merged surfaces rather than framed modules.
 
-**Scope**: Platform layer only (`src/components/platform/`, `src/pages/dashboard/platform/`). No org/salon/stylist UI is touched.
+## Key Violations Found
 
----
+| Pattern | Parent Radius | Child Radius | Issue |
+|---|---|---|---|
+| Overview → StatCards | 16px (via grid, implicit) | 16px | Same level |
+| Overview → Quick Actions container → QuickActionButtons | 16px | 12px (rounded-xl) | OK but container padding tight |
+| PlatformLiveAnalytics → MetricCards | 16px | 12px (rounded-xl) | OK |
+| IncidentManagementCard → active incident / form | 16px | 12px (rounded-xl) | OK |
+| CapitalControlTower → EligibilityReference / OrgOperationalContext | PlatformCard 16px | rounded-lg (8px) | Too large a jump |
+| PlatformCard(glass) → inner content cards | 16px | 16px (same PlatformCard) | **Flat** — e.g. ColorBarAnalyticsTab KPICards inside glass containers |
+| Settings tabs (KnowledgeBase, etc.) → nested PlatformCards | 16px | 16px | **Flat** |
 
-## Architecture
+## Solution — Three-Tier Nested Radius Hierarchy
 
-### New File: `src/lib/platform-bento-tokens.ts`
+Update `platform-bento-tokens.ts` to add explicit nesting-aware tokens and update the `PlatformCard` to support a `nested` prop.
 
-Central token system for all platform sizing decisions. Every platform component imports from here instead of hardcoding classes.
+### Updated Token System
 
 ```text
-Component Size Tiers:
-  micro  → badges, pills, toggles         → radius: 10px (rounded-[10px])
-  small  → stat tiles, KPI cards, inputs   → radius: 12px (rounded-xl)
-  medium → standard dashboard cards         → radius: 14px (rounded-[14px])
-  large  → analytics panels, activity feed → radius: 16px (rounded-[16px])
-  xl     → modals, drawers, overlays       → radius: 20px (rounded-[20px])
-
-Padding by tier:
-  micro:  px-2.5 py-1
-  small:  p-3.5 (14px)
-  medium: p-4 (16px)
-  large:  p-5 (20px)
-  xl:     p-6 (24px)
-
-Grid gaps:
-  dense:   gap-2.5 (10px)
-  standard: gap-3.5 (14px)
-  wide:    gap-5 (20px)
-
-Shadows:
-  micro/small: none
-  medium: shadow-sm shadow-black/5
-  large: shadow-md shadow-black/8
-  xl: shadow-lg shadow-black/10
+Tier          Radius    Use
+───────────── ──────── ─────────────────────────
+container     22px     Outer wrapping containers (Quick Actions panel, glass parent cards)
+card          16px     Standard cards (StatCards, analytics panels)  
+inner         12px     Nested cards inside containers (MetricCards, form sections, checklist items)
+micro         10px     Badges, pills, toggles, chips
 ```
 
-Exported as composable class strings (same pattern as existing `tokens` object).
+This replaces the current 5-tier system (micro/small/medium/large/xl) with clearer nesting semantics while keeping xl for modals/dialogs.
 
----
+### Changes
 
-## Changes by File
+**1. `src/lib/platform-bento-tokens.ts`**
+- Add `container: 'rounded-[22px]'` tier
+- Rename for clarity: `large` → remains 16px (standard card), `xl` stays 20px (dialogs)
+- Add `nested` key pointing to `small` (12px) for explicit inner-card usage
+- Add `NESTING_RULES` comment block documenting the hierarchy
 
-### 1. `src/lib/platform-bento-tokens.ts` (NEW)
-- Define `platformBento` token object with `radius`, `padding`, `gap`, `shadow`, and `hover` sub-objects keyed by size tier
-- Export helper `getPlatformTier(context)` for quick lookups
-- Export `PLATFORM_CARD_BASE` class string (border + bg + backdrop-blur)
+**2. `src/components/platform/ui/PlatformCard.tsx`**
+- Update `size` prop map: `lg` now maps to `container` (22px) when used as an outer wrapper
+- Add new prop `nested?: boolean` — when true, forces `small` (12px) radius regardless of size
+- Default behavior unchanged for standalone cards (16px)
 
-### 2. `src/components/platform/ui/PlatformCard.tsx`
-- Replace hardcoded `rounded-2xl / rounded-xl / rounded-lg` with token-driven values
-- Map `size` prop to bento tiers: `sm → small (12px)`, `md → medium (14px)`, `lg → large (16px)`
-- Update padding in `PlatformCardHeader` and `PlatformCardContent` to use tier-appropriate values (p-4 for small, p-5 for medium/large)
-- Add subtle `shadow-sm` for medium, `shadow-md` for large variants
-- Add hover transition: `hover:-translate-y-px transition-transform duration-150 ease-out`
+**3. `src/pages/dashboard/platform/Overview.tsx`**
+- Quick Actions container: `rounded-[16px]` → `rounded-[22px]` (container tier), padding stays `p-5`
+- StatCards: keep `rounded-[16px]` (card tier — they're top-level, not nested)
+- Skeleton containers: match parent radii
 
-### 3. `src/components/platform/ui/PlatformBadge.tsx`
-- Update from `rounded-full` to `rounded-[10px]` (micro tier)
-- Keep pill shape only for `sm` size badges; default and `lg` get `rounded-[10px]`
+**4. `src/components/platform/overview/PlatformLiveAnalytics.tsx`**
+- Outer container: `rounded-[16px]` → `rounded-[22px]` (container tier, it holds MetricCards)
+- MetricCards inner: already `rounded-xl` (12px) — correct
+- Skeleton: match parent
 
-### 4. `src/components/platform/ui/PlatformButton.tsx`
-- Replace global `rounded-xl` in base CVA with tier-appropriate: `rounded-xl` (12px) for default/sm, `rounded-[14px]` for lg/xl
-- Tighten transition to `duration-150`
+**5. `src/components/platform/overview/IncidentManagementCard.tsx`**
+- Outer container: `rounded-[16px]` → `rounded-[22px]`
+- Inner incident/form sections: already `rounded-xl` (12px) — correct
 
-### 5. `src/components/platform/ui/PlatformInput.tsx` + `PlatformSelect.tsx`
-- Replace `rounded-xl` with `rounded-xl` (12px — small tier, stays same but now token-driven)
-- Reduce height from `h-11` to `h-10` for denser platform feel
+**6. `src/components/platform/overview/PlatformActivityFeed.tsx`**
+- Outer container: `rounded-[16px]` → `rounded-[22px]`
 
-### 6. `src/components/platform/ui/PlatformDialog.tsx`
-- Add `rounded-[20px]` (xl tier) to `PlatformDialogContent` and `PlatformAlertDialogContent`
+**7. `src/components/platform/overview/SystemHealthCard.tsx`**
+- Outer container: `rounded-[16px]` → `rounded-[22px]`
+- Inner elements (icon boxes): `rounded-xl` — correct
 
-### 7. `src/components/platform/ui/PlatformTable.tsx`
-- No radius changes (tables are inline)
-- Tighten row padding from `p-4` to `px-4 py-3` for denser display
+**8. `src/pages/dashboard/platform/CapitalControlTower.tsx`**
+- EligibilityReferenceList inner sections: `rounded-lg` (8px) → `rounded-xl` (12px) for consistency
+- OrgOperationalContext: same treatment
 
-### 8. `src/components/platform/ui/PlatformPageHeader.tsx`
-- Ensure `font-display tracking-wide` on title (currently missing `font-display`)
+**9. Platform-wide: All `PlatformCard variant="glass"` used as parent containers**
+- When a glass card contains other cards or structured content blocks, bump to `rounded-[22px]`
+- Files affected: `KnowledgeBaseTab.tsx`, `AccountNotesSection.tsx`, `ColorBarAnalyticsTab.tsx`, `DockAppTab.tsx`, `PlatformTeamManager.tsx`, `AccountUsersTab.tsx`, `AccountImportHistoryTab.tsx`, `BillingConfigurationPanel` (lazy), settings cards
+- Implementation: Add a `container` size to PlatformCard that maps to 22px, then use `size="container"` on parent glass cards
 
-### 9. `src/pages/dashboard/platform/Overview.tsx`
-- Replace all hardcoded `rounded-2xl` with `rounded-[16px]` (large tier) for main cards
-- Replace `rounded-xl` on QuickActionButtons with `rounded-xl` (small tier, 12px)
-- Replace `p-6` on cards with `p-5` (large tier)
-- Update grid gaps from `gap-5` / `gap-6` to `gap-3.5` (standard) and `gap-5` (wide between sections)
-- Remove `hover:-translate-y-0.5` (too aggressive), replace with `hover:-translate-y-px`
-- Tighten hover duration from `500ms` to `150ms`
+**10. `src/pages/dashboard/platform/SystemHealth.tsx`**
+- Outer section cards: `rounded-xl` → `rounded-[22px]` (container)
+- Inner stat tiles: `rounded-xl` (12px) — correct
 
-### 10. Platform overview components (`SystemHealthCard`, `PlatformActivityFeed`, `PlatformLiveAnalytics`, `IncidentManagementCard`)
-- Replace hardcoded `rounded-2xl` + `p-6` with token imports (`platformBento.radius.large` + `platformBento.padding.large`)
-- Remove heavy shimmer/glow effects — keep only the top-edge highlight for subtle depth
+**11. Skeleton states** across all updated files must match their live counterparts' radii.
 
-### 11. `src/pages/dashboard/platform/Onboarding.tsx`
-- Same pattern: `rounded-2xl` → `rounded-[16px]`, `p-6` → `p-5`
+### PlatformCard API Change
 
-### 12. `src/pages/dashboard/platform/CapitalControlTower.tsx`
-- Apply medium tier tokens to checklist cards
-- Apply small tier tokens to nested items
+```tsx
+// Before
+<PlatformCard variant="glass">           {/* 16px */}
+  <PlatformCard variant="interactive">   {/* 16px — FLAT */}
 
-### 13. `src/components/platform/PlatformContextBanner.tsx`
-- Reduce from `rounded-2xl` to `rounded-[14px]` (medium tier — it's a banner, not a modal)
+// After  
+<PlatformCard variant="glass" size="container">  {/* 22px */}
+  <PlatformCard variant="interactive" size="md">  {/* 14px — clear hierarchy */}
+```
 
-### 14. `src/components/dashboard/GodModeBar.tsx`
-- No radius changes (it's a flush top bar)
-- Already correct — just confirm it stays untouched
+### Shared Curvature Illusion (Apple-Level Polish)
 
-### 15. Audit pass across remaining platform files
-- `AccountDetail.tsx`, `Accounts.tsx`, `Revenue.tsx` — replace all hardcoded `rounded-2xl` with appropriate tier token
-- Skeleton states follow same radius as their live counterparts
+Where inner cards sit flush against a container edge (e.g., grid children touching container padding boundary), the inner card radius echoes `parent_radius - parent_padding`. With 22px outer and 16px padding, inner cards at ~12px create the optical alignment where curves feel continuous. This is already achieved by the 22px → 12px step with `p-4` (16px) padding — the math: `22 - 16 = 6`, inner should be `22 - 6 = 16` or less. At 12px it's comfortably smaller, creating the framed module effect.
 
----
+## Scope
 
-## Interaction Polish
+~15 files. No logic changes. No database changes. Purely radius hierarchy enforcement.
 
-All platform hover states:
-- Lift: `hover:-translate-y-px` (1px max, not 2px)
-- Duration: `duration-150` (not 300/500)
-- Easing: `ease-out`
-- No bounce, no overshoot, no spring physics on cards
-
----
-
-## What This Does NOT Touch
-
-- Organization dashboards (`src/pages/dashboard/` non-platform routes)
-- Shared UI components (`src/components/ui/`)
-- Salon/stylist-facing surfaces
-- The existing `tokens` object in `design-tokens.ts` (org-side tokens stay as-is)
-- `BentoGrid` component (shared utility — not modified)
-
----
-
-## Technical Summary
-
-| File | Action |
+| File | Change |
 |---|---|
-| `src/lib/platform-bento-tokens.ts` | NEW — size-tier token system |
-| `src/components/platform/ui/PlatformCard.tsx` | Proportional radius + padding + shadow |
-| `src/components/platform/ui/PlatformBadge.tsx` | Micro-tier radius |
-| `src/components/platform/ui/PlatformButton.tsx` | Tier-aware radius + faster transitions |
-| `src/components/platform/ui/PlatformInput.tsx` | Denser height |
-| `src/components/platform/ui/PlatformSelect.tsx` | Denser height |
-| `src/components/platform/ui/PlatformDialog.tsx` | XL-tier radius |
-| `src/components/platform/ui/PlatformTable.tsx` | Denser row padding |
-| `src/components/platform/ui/PlatformPageHeader.tsx` | font-display fix |
-| `src/pages/dashboard/platform/Overview.tsx` | Token-driven radius/padding/gaps |
-| `src/components/platform/overview/*.tsx` (4 files) | Token-driven radius/padding |
-| `src/pages/dashboard/platform/Onboarding.tsx` | Token-driven radius/padding |
-| `src/pages/dashboard/platform/CapitalControlTower.tsx` | Medium-tier tokens |
-| `src/components/platform/PlatformContextBanner.tsx` | Medium-tier radius |
-| `src/pages/dashboard/platform/AccountDetail.tsx` | Audit — replace hardcoded radii |
-| `src/pages/dashboard/platform/Accounts.tsx` | Audit — replace hardcoded radii |
-| `src/pages/dashboard/platform/Revenue.tsx` | Audit — replace hardcoded radii |
-
-~18 files total. No database changes. No logic changes. Purely visual token system + application.
+| `platform-bento-tokens.ts` | Add `container` tier (22px), add nesting docs |
+| `PlatformCard.tsx` | Add `container` size option mapping to 22px |
+| `Overview.tsx` | Quick Actions → 22px outer |
+| `PlatformLiveAnalytics.tsx` | Outer → 22px |
+| `IncidentManagementCard.tsx` | Outer → 22px |
+| `PlatformActivityFeed.tsx` | Outer → 22px |
+| `SystemHealthCard.tsx` | Outer → 22px |
+| `CapitalControlTower.tsx` | Inner sections `rounded-lg` → `rounded-xl` |
+| `SystemHealth.tsx` | Section cards → 22px, inner tiles stay 12px |
+| `KnowledgeBaseTab.tsx` | Parent glass → container size |
+| `AccountNotesSection.tsx` | Parent glass → container size |
+| `ColorBarAnalyticsTab.tsx` | Parent glass → container size |
+| `DockAppTab.tsx` | Parent glass → container size |
+| `PlatformTeamManager.tsx` | Parent glass → container size |
+| `AccountUsersTab.tsx` | Parent glass → container size |
 
