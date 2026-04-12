@@ -6,6 +6,7 @@ import { formatCurrency } from '@/lib/format';
 import { useZuraCapital, type ZuraCapitalOpportunity } from '@/hooks/useZuraCapital';
 import { useLogCapitalEvent } from '@/hooks/useCapitalEventLog';
 import { CONSTRAINT_LABELS, OPPORTUNITY_TYPE_LABELS } from '@/config/capital-engine/zura-capital-config';
+import { calculateCoverageRatio } from '@/lib/capital-engine/capital-formulas';
 import { Landmark, TrendingUp, ArrowRight } from 'lucide-react';
 import React, { useState, useEffect } from 'react';
 import { FundingOpportunityDetail } from './FundingOpportunityDetail';
@@ -36,9 +37,11 @@ export function ZuraCapitalCard() {
 
   if (isLoading || !topOpportunity) return null;
 
-  const coveragePercent = topOpportunity.coverageRatio
-    ? Math.round(Number(topOpportunity.coverageRatio) * 100)
-    : null;
+  const coverage = calculateCoverageRatio(
+    topOpportunity.providerOfferAmountCents,
+    topOpportunity.investmentCents,
+  );
+  const coveragePercent = coverage.percent;
 
   const handleOpenDetail = (opp: ZuraCapitalOpportunity) => {
     setSelectedOpp(opp);

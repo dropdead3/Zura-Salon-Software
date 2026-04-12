@@ -119,7 +119,7 @@ export function computeSurfacePriority(
   // Momentum: 0–100, default 50
   const momentumNorm = opp.momentum_score ?? 50;
 
-  // Urgency: computed
+  // Break-even score: not available on PriorityOpportunity, use urgency as proxy
   const urgencyNorm = computeUrgency(opp);
 
   // Constraint severity: mapped
@@ -127,13 +127,17 @@ export function computeSurfacePriority(
     ? (CONSTRAINT_SEVERITY[opp.constraint_type] ?? 40)
     : 30;
 
+  // Net impact: not available on this interface, default 50
+  const netImpactNorm = 50;
+
   const rawScore =
     roeNorm * w.roe +
     confNorm * w.confidence +
     bvNorm * w.businessValue +
     momentumNorm * w.momentum +
-    urgencyNorm * w.urgency +
-    constraintNorm * w.constraintSeverity;
+    urgencyNorm * w.breakEven +
+    constraintNorm * w.constraintSeverity +
+    netImpactNorm * w.netImpact;
 
   // Apply penalties
   let penalty = stalenessPenalty(opp);

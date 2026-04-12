@@ -13,6 +13,7 @@ import { useCapitalOpportunity } from '@/hooks/useCapitalOpportunity';
 import { useLogCapitalEvent } from '@/hooks/useCapitalEventLog';
 import { useDismissOpportunity } from '@/hooks/useCapitalSurfaceState';
 import { getProvider } from '@/lib/capital-engine/capital-provider';
+import { calculateCoverageRatio, calculateMonthlyLiftCents } from '@/lib/capital-engine/capital-formulas';
 import { getROELabel } from '@/config/capital-engine/capital-config';
 import { CapitalMetricTile } from '@/components/dashboard/capital-engine/CapitalMetricTile';
 import { CapitalStatusBadge } from '@/components/dashboard/capital-engine/CapitalStatusBadge';
@@ -62,12 +63,18 @@ export default function CapitalOpportunityDetail() {
   const breakEvenExpected = Number(o.break_even_months_expected);
   const roe = Number(o.roe_score);
   const confidence = Number(o.confidence_score);
-  const monthlyLift = liftExpected / Math.max(1, breakEvenExpected);
-  const monthlyPayment = o.provider_estimated_payment_cents
-    ? c(Number(o.provider_estimated_payment_cents))
-    : investmentDollars / Math.max(1, breakEvenExpected);
-  const netMonthly = monthlyLift - monthlyPayment;
-  const coveragePercent = o.coverage_ratio ? Math.round(Number(o.coverage_ratio) * 100) : null;
+  const { ratio: _cr, percent: coveragePercent } = calculateCoverageRatio(
+    o.provider_offer_amount_cents ? Number(o.provider_offer_amount_cents) : null,
+    Number(o.required_investment_cents),
+  );
+  const monthlyLiftVal = calculateMonthlyLiftCents(Number(o.predicted_revenue_lift_expected_cents), breakEvenExpected);
+  const monthlyPaymentCents = o.provider_estimated_payment_cents
+    ? Number(o.provider_estimated_payment_cents)
+    : Math.round(Number(o.required_investment_cents) / Math.max(1, breakEvenExpected));
+  const netMonthlyCents = monthlyLiftVal - monthlyPaymentCents;
+  const monthlyLift = c(monthlyLiftVal);
+  const monthlyPayment = c(monthlyPaymentCents);
+  const netMonthly = c(netMonthlyCents);
 
   const handleFund = async () => {
     setIsRedirecting(true);
