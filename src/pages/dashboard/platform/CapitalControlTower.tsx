@@ -351,56 +351,35 @@ function DiagnosticPanel({ orgId }: { orgId: string }) {
             Opportunity Breakdown
           </h4>
           <div className="rounded-lg border border-[hsl(var(--platform-border)/0.3)] overflow-hidden">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-[hsl(var(--platform-border)/0.3)]">
-                  <th className="text-left px-3 py-2 font-sans font-medium text-[hsl(var(--platform-foreground-muted))]">
-                    Opportunity
-                  </th>
-                  <th className="text-left px-3 py-2 font-sans font-medium text-[hsl(var(--platform-foreground-muted))]">
-                    Status
-                  </th>
-                  <th className="text-left px-3 py-2 font-sans font-medium text-[hsl(var(--platform-foreground-muted))]">
-                    Eligible
-                  </th>
-                  <th className="text-left px-3 py-2 font-sans font-medium text-[hsl(var(--platform-foreground-muted))]">
-                    Top Blocker
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {data.opportunities.map((opp) => (
-                  <tr
-                    key={opp.id}
-                    className="border-b border-[hsl(var(--platform-border)/0.15)] last:border-0"
+            {data.opportunities.map((opp) => {
+              const isOppExpanded = expandedOppId === opp.id;
+              return (
+                <div key={opp.id} className="border-b border-[hsl(var(--platform-border)/0.15)] last:border-0">
+                  <button
+                    onClick={() => setExpandedOppId(isOppExpanded ? null : opp.id)}
+                    className="w-full flex items-center gap-3 px-3 py-2.5 text-sm hover:bg-[hsl(var(--platform-bg-hover)/0.3)] transition-colors text-left"
                   >
-                    <td className="px-3 py-2 text-[hsl(var(--platform-foreground)/0.85)]">
+                    {isOppExpanded ? (
+                      <ChevronDown className="h-3.5 w-3.5 text-[hsl(var(--platform-foreground-muted))] shrink-0" />
+                    ) : (
+                      <ChevronRight className="h-3.5 w-3.5 text-[hsl(var(--platform-foreground-muted))] shrink-0" />
+                    )}
+                    <span className="text-[hsl(var(--platform-foreground)/0.85)] flex-1 truncate">
                       {opp.title}
-                    </td>
-                    <td className="px-3 py-2">
-                      <PlatformBadge
-                        size="sm"
-                        variant={opp.isQualifying ? 'info' : 'default'}
-                      >
-                        {opp.status}
-                      </PlatformBadge>
-                    </td>
-                    <td className="px-3 py-2">
-                      {opp.eligibility.eligible ? (
-                        <Check className="h-4 w-4 text-emerald-400" />
-                      ) : (
-                        <X className="h-4 w-4 text-red-400" />
-                      )}
-                    </td>
-                    <td className="px-3 py-2 text-[hsl(var(--platform-foreground-muted))] text-xs max-w-[300px]">
-                      {opp.eligibility.eligible
-                        ? '—'
-                        : opp.eligibility.topReasonSummary ?? '—'}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                    </span>
+                    <PlatformBadge size="sm" variant={opp.isQualifying ? 'info' : 'default'}>
+                      {opp.status}
+                    </PlatformBadge>
+                    {opp.eligibility.eligible ? (
+                      <Check className="h-4 w-4 text-emerald-400 shrink-0" />
+                    ) : (
+                      <X className="h-4 w-4 text-red-400 shrink-0" />
+                    )}
+                  </button>
+                  {isOppExpanded && <EligibilityCheckList opp={opp} />}
+                </div>
+              );
+            })}
           </div>
         </div>
       )}
