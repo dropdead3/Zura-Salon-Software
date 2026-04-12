@@ -1,19 +1,29 @@
 /**
  * Surface Priority Engine — Deterministic Ranking & Surface Selection
  *
- * Computes surface_priority for funding opportunities and filters
- * them for display on specific UI surfaces.
+ * Delegates scoring to canonical capital-formulas.ts.
+ * Handles surface filtering, suppression, and cooldown logic.
  *
  * No side effects. No API calls. No AI.
  */
 
 import {
-  SURFACE_PRIORITY_WEIGHTS,
   SURFACE_TYPE_FILTERS,
-  SURFACE_COOLDOWN_DEFAULTS,
   type SurfaceArea,
   type OpportunityType,
 } from '@/config/capital-engine/zura-capital-config';
+import { CANONICAL_SURFACE_COOLDOWNS } from '@/config/capital-engine/capital-formulas-config';
+import {
+  calculateSurfacePriority,
+  calculateRoeScore,
+  calculateBreakEvenScore,
+  calculateFreshnessScore,
+  calculateOpportunityFreshnessDays,
+  calculateNetMonthlyGainCents,
+  calculateNetImpactScore,
+  calculateCoverageRatio,
+  calculateRoeRatio,
+} from './capital-formulas';
 
 /* ── Types ── */
 
@@ -34,6 +44,12 @@ export interface PriorityOpportunity {
   location_id: string | null;
   service_id: string | null;
   stylist_id: string | null;
+  // Optional fields for canonical scoring
+  required_investment_cents?: number;
+  predicted_revenue_lift_expected_cents?: number;
+  break_even_months_expected?: number;
+  provider_estimated_payment_cents?: number;
+  provider_offer_amount_cents?: number;
 }
 
 export interface SurfaceState {
@@ -50,102 +66,54 @@ export interface PriorityContext {
   recentDeclines: number;
 }
 
-/* ── Constraint Severity Mapping ── */
-
-const CONSTRAINT_SEVERITY: Record<string, number> = {
-  capacity_bottleneck: 90,
-  service_waitlist_pressure: 85,
-  inventory_bottleneck: 80,
-  understocking_risk: 75,
-  strong_demand: 70,
-  stylist_ready_to_scale: 60,
-  market_opportunity: 55,
-  page_or_campaign_growth_gap: 50,
-};
-
-/* ── Urgency Scoring ── */
-
-function computeUrgency(opp: PriorityOpportunity): number {
-  if (opp.expires_at) {
-    const daysUntilExpiry = Math.max(
-      0,
-      (new Date(opp.expires_at).getTime() - Date.now()) / (1000 * 60 * 60 * 24),
-    );
-    if (daysUntilExpiry <= 7) return 95;
-    if (daysUntilExpiry <= 14) return 80;
-    if (daysUntilExpiry <= 30) return 60;
-    return 30;
-  }
-  // No expiry — use age as inverse urgency
-  const daysSinceDetected = Math.max(
-    0,
-    (Date.now() - new Date(opp.detected_at).getTime()) / (1000 * 60 * 60 * 24),
-  );
-  if (daysSinceDetected <= 7) return 70;
-  if (daysSinceDetected <= 30) return 50;
-  return 20;
-}
-
-/* ── Staleness Penalty ── */
-
-function stalenessPenalty(opp: PriorityOpportunity): number {
-  const daysSinceDetected = Math.max(
-    0,
-    (Date.now() - new Date(opp.detected_at).getTime()) / (1000 * 60 * 60 * 24),
-  );
-  if (daysSinceDetected > 90) return 30;
-  if (daysSinceDetected > 60) return 15;
-  if (daysSinceDetected > 30) return 5;
-  return 0;
-}
-
-/* ── Core Priority Computation ── */
+/* ── Core Priority Computation (delegates to canonical) ── */
 
 export function computeSurfacePriority(
   opp: PriorityOpportunity,
   context: PriorityContext,
 ): number {
-  const w = SURFACE_PRIORITY_WEIGHTS;
+  const freshnessDays = calculateOpportunityFreshnessDays(opp.detected_at);
+  const roeScore = calculateRoeScore(opp.roe_score); // roe_score from DB is the ratio
+  const breakEvenMonths = opp.break_even_months_expected ?? 9;
+  const breakEvenScore = calculateBreakEvenScore(breakEvenMonths);
+  const momentumScore = opp.momentum_score ?? 50;
+  const businessValueScore = opp.business_value_score ?? 50;
+  const confidenceScore = opp.confidence_score;
 
-  // Normalize ROE to 0–100 scale (cap at 5x = 100)
-  const roeNorm = Math.min(100, (opp.roe_score / 5) * 100);
+  // Compute net impact if we have the data
+  let netImpactScore = 50; // default when data unavailable
+  if (opp.required_investment_cents && opp.predicted_revenue_lift_expected_cents) {
+    const paymentCents = opp.provider_estimated_payment_cents ?? 0;
+    const netGain = calculateNetMonthlyGainCents(
+      opp.predicted_revenue_lift_expected_cents,
+      paymentCents,
+      breakEvenMonths,
+    );
+    netImpactScore = calculateNetImpactScore(netGain, opp.required_investment_cents);
+  }
 
-  // Confidence is already 0–100
-  const confNorm = opp.confidence_score;
+  // Coverage ratio for penalty
+  const coverage = opp.provider_offer_amount_cents && opp.required_investment_cents
+    ? calculateCoverageRatio(opp.provider_offer_amount_cents, opp.required_investment_cents)
+    : { ratio: 1.0 }; // no penalty if no coverage data
 
-  // Business value: 0–100, default 50
-  const bvNorm = opp.business_value_score ?? 50;
-
-  // Momentum: 0–100, default 50
-  const momentumNorm = opp.momentum_score ?? 50;
-
-  // Break-even score: not available on PriorityOpportunity, use urgency as proxy
-  const urgencyNorm = computeUrgency(opp);
-
-  // Constraint severity: mapped
-  const constraintNorm = opp.constraint_type
-    ? (CONSTRAINT_SEVERITY[opp.constraint_type] ?? 40)
-    : 30;
-
-  // Net impact: not available on this interface, default 50
-  const netImpactNorm = 50;
-
-  const rawScore =
-    roeNorm * w.roe +
-    confNorm * w.confidence +
-    bvNorm * w.businessValue +
-    momentumNorm * w.momentum +
-    urgencyNorm * w.breakEven +
-    constraintNorm * w.constraintSeverity +
-    netImpactNorm * w.netImpact;
-
-  // Apply penalties
-  let penalty = stalenessPenalty(opp);
-  if (context.activeProjectCount > 0) penalty += context.activeProjectCount * 3;
-  if (context.recentDismissals > 0) penalty += context.recentDismissals * 5;
-  if (context.recentDeclines > 0) penalty += context.recentDeclines * 8;
-
-  return Math.max(0, Math.round(rawScore - penalty));
+  return calculateSurfacePriority(
+    {
+      roeScore,
+      confidenceScore,
+      businessValueScore,
+      breakEvenScore,
+      momentumScore,
+      constraintType: opp.constraint_type,
+      netImpactScore,
+    },
+    {
+      freshnessDays,
+      recentDismissCount: context.recentDismissals,
+      coverageRatio: coverage.ratio,
+      activeProjectCount: context.activeProjectCount,
+    },
+  );
 }
 
 /* ── Surface Selection ── */
@@ -163,9 +131,8 @@ export function selectForSurface(
   const suppressedIds = new Set<string>();
   for (const ss of surfaceStates) {
     if (ss.surface_area !== surfaceArea) continue;
-    // Dismissed and not past cooldown
     if (ss.dismissed_at) {
-      const cooldownDays = SURFACE_COOLDOWN_DEFAULTS[surfaceArea] ?? 7;
+      const cooldownDays = CANONICAL_SURFACE_COOLDOWNS[surfaceArea] ?? 7;
       const cooldownEnd = ss.cooldown_until
         ? new Date(ss.cooldown_until).getTime()
         : new Date(ss.dismissed_at).getTime() + cooldownDays * 86400000;
@@ -180,19 +147,11 @@ export function selectForSurface(
 
   return opportunities
     .filter((opp) => {
-      // Must be surfaceable status
       if (!['eligible_provider', 'surfaced', 'viewed'].includes(opp.eligibility_status)) return false;
       if (!['detected', 'eligible_internal', 'eligible_provider', 'surfaced', 'viewed'].includes(opp.status)) return false;
-
-      // Suppression check
       if (suppressedIds.has(opp.id)) return false;
-
-      // Type filter
       if (allowedTypes && !allowedTypes.includes(opp.opportunity_type as OpportunityType)) return false;
-
-      // Scope filter for specific surfaces
       if (surfaceArea === 'stylist_dashboard' && !opp.stylist_id) return false;
-
       return true;
     })
     .map((opp) => ({

@@ -1,7 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
-import { SURFACE_COOLDOWN_DEFAULTS, type SurfaceArea } from '@/config/capital-engine/zura-capital-config';
+import { CANONICAL_SURFACE_COOLDOWNS } from '@/config/capital-engine/capital-formulas-config';
+import { type SurfaceArea } from '@/config/capital-engine/zura-capital-config';
 
 export function useCapitalSurfaceState(surfaceArea?: SurfaceArea) {
   const { effectiveOrganization } = useOrganizationContext();
@@ -42,7 +43,7 @@ export function useDismissOpportunity() {
     }) => {
       if (!orgId) throw new Error('No organization');
 
-      const cooldownDays = SURFACE_COOLDOWN_DEFAULTS[input.surfaceArea] ?? 7;
+      const cooldownDays = CANONICAL_SURFACE_COOLDOWNS[input.surfaceArea] ?? 7;
       const cooldownUntil = new Date();
       cooldownUntil.setDate(cooldownUntil.getDate() + cooldownDays);
 

@@ -54,7 +54,6 @@ export {
 
 export {
   isZuraEligible,
-  computeCoverageRatio,
   type ZuraOpportunity,
   type ZuraOrgContext,
   type ZuraEligibilityResult,
