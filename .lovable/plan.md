@@ -1,147 +1,102 @@
 
 
-# SEO Workshop + Zura Capital — Comprehensive Audit (10 Passes)
+# System Adoption and Behavior Design — Phase 1 Build Plan
 
-## Pass Summary
+## What Exists Today
 
-TypeScript build: **CLEAN** — no compilation errors.
+The DashboardHome is a layout-driven page with role-aware sections: quick stats, quick actions, tasks, announcements, pinned analytics cards, client engine (75-day challenge), push list, level progress, SEO tasks, and widgets. The Command Center (⌘K) is a search/navigation surface. Tasks are generic to-do items with no revenue linkage. A leaderboard exists with weights, history, achievements, and trend tracking. Onboarding has a setup wizard for dashboard layout.
 
----
+## What's Missing
 
-## BUGS AND GAPS FOUND
+1. **No Daily Briefing** — Users land on a generic dashboard with scattered widgets. No single "here's what matters today" summary.
+2. **No revenue linkage on tasks** — Tasks have title/priority/due date but no `estimated_revenue_impact_cents` or opportunity decay.
+3. **No "Zura Already Did" visibility** — Automated actions (review requests, GBP posts, SEO tasks) are not surfaced as completed-for-you.
+4. **No "Money Being Left" surface** — Lost opportunity visibility doesn't exist as a dedicated section.
+5. **No task expiry** — Tasks don't expire based on opportunity decay windows.
+6. **No Zura Actions attribution** — No tracking of "revenue generated from Zura-recommended actions."
 
-### BUG 1: `FundThisDialog.tsx` Is Orphaned but Still Uses Legacy Types (P1)
+## Build Scope — Phase 1 (Daily Operating Loop)
 
-`FundThisDialog.tsx` imports `QueuedOpportunity` from `capital-engine.ts` and `computePostFinancingCashFlow` from `financing-engine.ts` (dollars, not cents). **No file imports it** — it was superseded by `CapitalFundingConfirmModal.tsx` but never deleted.
+### 1. Daily Briefing Card (`DailyBriefingCard.tsx`)
 
-**Fix:** Delete `src/components/dashboard/capital-engine/FundThisDialog.tsx`.
+A new dashboard section that replaces the current greeting header with a structured daily operating briefing. Renders at the top of DashboardHome for leadership roles.
 
----
+Sections:
+- **Today's Focus** — Top lever from AI insights or highest-priority opportunity (pulled from existing `useQuickStats` + `useZuraCapital`)
+- **Zura Already Did** — Count of automated actions completed today (SEO tasks auto-completed, review requests sent, GBP posts published). Query `seo_tasks` where `completed_at = today` and `assigned_to = 'system'`, plus `capital_surface_events` for today.
+- **You Should Do** — Top 3 uncompleted tasks sorted by revenue impact (requires new field) or priority
+- **Blocked** — Items from inventory alerts or capacity constraints (query existing `inventory_alerts` and capacity data)
 
-### BUG 2: `FinancingEligibilityBadge.tsx` Is Orphaned and Uses Stale Thresholds (P1)
+### 2. Task Revenue Impact Field
 
-`FinancingEligibilityBadge.tsx` imports `isFinancingEligible` from `financing-engine.ts`, which uses `FINANCING_THRESHOLDS.minROE: 1.5` — not the canonical `1.8`. **No file imports it.**
+Add `estimated_revenue_impact_cents` (integer, nullable, default null) and `expires_at` (timestamptz, nullable) columns to the `tasks` table via migration. Update `useTasks` hook interface, create/update mutations, and `TaskItem` display to show revenue impact when present.
 
-**Fix:** Delete `src/components/dashboard/capital-engine/FinancingEligibilityBadge.tsx`.
+### 3. Revenue Impact Display on Tasks
 
----
+Update `TaskItem.tsx` to show a small revenue badge when `estimated_revenue_impact_cents` is set: "~$800/mo" in green text. Update `AddTaskDialog` and `EditTaskDialog` to include an optional revenue impact field.
 
-### BUG 3: `ExpansionSimulator.tsx` Is Orphaned (P2)
+### 4. Zura Actions Attribution Tracker
 
-Uses legacy `QueuedOpportunity` type and `simulateScenario` from old engine. **No file imports it.**
+New hook `useZuraActionsAttribution` that queries completed tasks where `source = 'zura'` or `source = 'seo_engine'` and sums `estimated_revenue_impact_cents` for the current month. Display as a small card on the dashboard: "You generated $X from Zura actions this month."
 
-**Fix:** Delete `src/components/dashboard/capital-engine/ExpansionSimulator.tsx`.
+### 5. Command Center "Top Lever" Enhancement
 
----
+Add a "Top Lever" section to the Command Center empty-state view (the greeting screen in ⌘K). This surfaces the single highest-impact action from the daily briefing data — reusing the same query logic.
 
-### BUG 4: `SPICard.tsx` Is Orphaned (P2)
+### 6. Task Expiry System
 
-**No file imports it.**
-
-**Fix:** Delete `src/components/dashboard/capital-engine/SPICard.tsx`.
-
----
-
-### BUG 5: `FINANCING_THRESHOLDS` Conflict with Canonical Policy (P1)
-
-`financing-config.ts` defines `FINANCING_THRESHOLDS` with `minROE: 1.5`, while canonical policy uses `1.8`. `financing-engine.ts` uses these old thresholds via `isFinancingEligible()`. Since `FinancingEligibilityBadge` (sole consumer) is orphaned, and the production path uses `calculateInternalEligibility`, the legacy `FINANCING_THRESHOLDS` and `isFinancingEligible()` are dead code that could mislead future development.
-
-**Fix:** Either align `FINANCING_THRESHOLDS.minROE` to `1.8` to match canonical, or add a deprecation comment. Since no production consumer uses `isFinancingEligible`, safest to add `@deprecated` and a note pointing to canonical.
-
----
-
-### BUG 6: `getVarianceLabel` in `financing-config.ts` Conflicts with Canonical (P2)
-
-`getVarianceLabel()` uses symmetric thresholds (±10%, ±25%) and returns 3 statuses (`on_track`, `watch`, `at_risk`). Canonical `calculateForecastStatus()` uses asymmetric thresholds (+15%/-10%/-25%) and returns 5 statuses (`above_forecast`, `on_track`, `below_forecast`, `at_risk`, `early_tracking`). No production code imports `getVarianceLabel`, but it's still exported.
-
-**Fix:** Add `@deprecated` comment pointing to `calculateForecastStatus`.
+Tasks with `expires_at` set show a countdown badge ("Expires in 2d"). Expired tasks are visually dimmed and sorted to a separate "Expired" group in `TasksCard`. No auto-deletion — just visual treatment and a "This opportunity has decayed" label.
 
 ---
 
-### GAP 7: SEO Revenue Values Missing `BlurredAmount` (P1)
+## Database Migration
 
-`SEOPredictedLiftCard.tsx` displays revenue values (`currentRevenue`, `revenueLift.low/expected/high`) without `BlurredAmount`. The card also defines its own local `formatCurrency` function instead of importing from `@/lib/format`.
+```sql
+ALTER TABLE tasks 
+  ADD COLUMN estimated_revenue_impact_cents integer DEFAULT NULL,
+  ADD COLUMN expires_at timestamptz DEFAULT NULL;
+```
 
-`SEOGlobalGrowthDashboard.tsx` and `SEOLocationPriorityCard.tsx` use `useFormatCurrency` hook but still do not wrap outputs in `BlurredAmount`.
+## Files Created
 
-`SEOEngineDashboard.tsx` shows "Revenue Attributed" without `BlurredAmount`.
+| File | Purpose |
+|---|---|
+| `src/components/dashboard/DailyBriefingCard.tsx` | Daily Briefing section for DashboardHome |
+| `src/hooks/useZuraActionsAttribution.ts` | Monthly Zura-attributed revenue query |
+| `src/hooks/useDailyBriefing.ts` | Aggregates briefing data (focus, auto-actions, blockers) |
 
-**Fix:** Wrap all monetary values in `BlurredAmount` across these 4 SEO files. Replace local `formatCurrency` in `SEOPredictedLiftCard.tsx` with the standard import.
-
----
-
-### GAP 8: Legacy `capital-engine.ts` Functions Are Partially Redundant (P2)
-
-`capital-engine.ts` exports `computeSPI`, `computeRisk`, `computeROE`, `simulateScenario`, `rankOpportunities`, and `QueuedOpportunity`. Of these:
-- `computeROE` computes ROE differently than canonical `calculateRoeRatio` (uses confidence multipliers for break-even adjustment, returns dollars not cents)
-- `computeRisk` uses 0-1 inputs and different thresholds than canonical `calculateRiskScore` (0-100 inputs)
-- `QueuedOpportunity` is a legacy type only used by orphaned components
-- `rankOpportunities` just sorts by ROE — no longer the production ranking logic
-
-These are still exported from `index.ts` and could confuse future development.
-
-**Fix:** Add `@deprecated` comments to all exports in `capital-engine.ts`, noting that canonical versions exist in `capital-formulas.ts`. Keep the functions for any remaining consumers (e.g., `SPICard.tsx` — but that's being deleted).
-
----
-
-### GAP 9: `financing-engine.ts` `computePostFinancingCashFlow` Uses Dollars, Not Cents (P2)
-
-The canonical system works entirely in cents. `computePostFinancingCashFlow` takes dollar amounts and returns dollar amounts. Only consumer is the orphaned `FundThisDialog.tsx`.
-
-**Fix:** Since the only consumer is being deleted, add `@deprecated` comment. Canonical equivalents are `calculateMonthlyLiftCents` and `calculateNetMonthlyGainCents`.
-
----
-
-### GAP 10: SEO Engine Dashboard Revenue Card Missing Privacy (P1)
-
-`SEOEngineDashboard.tsx` line 162 displays `$${(totalAttributedRevenue / 1000).toFixed(1)}k` without `BlurredAmount`.
-
-**Fix:** Wrap in `BlurredAmount`.
-
----
-
-## WHAT IS HEALTHY (No Action Required)
-
-- **Formulas pack** (`capital-formulas.ts` + `capital-formulas-config.ts`): All 22 functions present, tested, deterministic ✓
-- **Eligibility engine**: `calculateInternalEligibility` is canonical, wired to org policy ✓  
-- **Surface priority engine**: Delegates to canonical `calculateSurfacePriority` ✓
-- **Edge function**: Thresholds aligned with canonical (ROE 1.8, confidence 70, etc.) ✓
-- **Exposure tracking**: Populates from funded projects via join ✓
-- **Behavioral penalties**: Dismissals, declines, cooldowns all hydrated from DB ✓
-- **`CapitalFundingConfirmModal`**: Uses canonical types + formulas + BlurredAmount ✓
-- **Capital pages** (Queue, OpportunityDetail, ProjectDetail, Projects): All use BlurredAmount ✓
-- **Command Center card** (`ZuraCapitalCard`): BlurredAmount applied ✓
-- **Embedded components** (`OwnerCapitalQueue`, `FinancedProjectsTracker`, `CapitalQueueSummaryStrip`, `CapitalRecyclingCard`): BlurredAmount applied ✓
-- **SEO Engine Dashboard**: Task/campaign/health layers operational ✓
-- **SEO Task Detail**: Proof upload, transition, impact tracking functional ✓
-- **SEO Domination/Industry/Growth**: All operational ✓
-- **SEO autonomy + growth reports**: Hooks and UI functional ✓
-- **State machines**: Both capital and SEO state machines consistent ✓
-- **Config exports**: Clean, no circular dependencies ✓
-- **TypeScript build**: 0 errors ✓
-
----
-
-## BUILD ORDER
-
-1. Delete 4 orphaned capital components: `FundThisDialog.tsx`, `FinancingEligibilityBadge.tsx`, `ExpansionSimulator.tsx`, `SPICard.tsx`
-2. Add `BlurredAmount` to SEO revenue surfaces: `SEOPredictedLiftCard.tsx`, `SEOGlobalGrowthDashboard.tsx`, `SEOLocationPriorityCard.tsx`, `SEOEngineDashboard.tsx`
-3. Add `@deprecated` comments to legacy functions in `financing-config.ts`, `financing-engine.ts`, `capital-engine.ts`
-4. TypeScript build check
-
-## FILES MODIFIED
+## Files Modified
 
 | File | Change |
 |---|---|
-| `src/components/dashboard/capital-engine/FundThisDialog.tsx` | DELETE |
-| `src/components/dashboard/capital-engine/FinancingEligibilityBadge.tsx` | DELETE |
-| `src/components/dashboard/capital-engine/ExpansionSimulator.tsx` | DELETE |
-| `src/components/dashboard/capital-engine/SPICard.tsx` | DELETE |
-| `src/components/dashboard/seo-workshop/SEOPredictedLiftCard.tsx` | Add BlurredAmount + fix formatCurrency import |
-| `src/components/dashboard/seo-workshop/SEOGlobalGrowthDashboard.tsx` | Add BlurredAmount wrapping |
-| `src/components/dashboard/seo-workshop/SEOLocationPriorityCard.tsx` | Add BlurredAmount wrapping |
-| `src/components/dashboard/seo-workshop/SEOEngineDashboard.tsx` | Add BlurredAmount to revenue card |
-| `src/config/capital-engine/financing-config.ts` | Add @deprecated to `getVarianceLabel` |
-| `src/lib/capital-engine/financing-engine.ts` | Add @deprecated to `isFinancingEligible`, `computePostFinancingCashFlow` |
-| `src/lib/capital-engine/capital-engine.ts` | Add @deprecated to `computeROE`, `computeRisk`, `rankOpportunities`, `QueuedOpportunity` |
+| `src/hooks/useTasks.ts` | Add `estimated_revenue_impact_cents` and `expires_at` to Task interface and mutations |
+| `src/components/dashboard/TaskItem.tsx` | Show revenue impact badge and expiry countdown |
+| `src/components/dashboard/AddTaskDialog.tsx` | Optional revenue impact field |
+| `src/components/dashboard/EditTaskDialog.tsx` | Optional revenue impact field |
+| `src/components/dashboard/TasksCard.tsx` | Add "Expired" task group |
+| `src/pages/dashboard/DashboardHome.tsx` | Add `daily_briefing` section to layout, add `zura_attribution` section |
+| `src/components/dashboard/CommandCenterAnalytics.tsx` | Add "Top Lever" to empty state |
+
+## Out of Scope (Future Phases)
+
+- **Soft/Hard Enforcement rules** (restrict lead pool, delay capital) — Phase 2
+- **Team performance leaderboard with Zura contribution** — Phase 2 (leaderboard infra exists, needs attribution column)
+- **Guided first-experience onboarding** (auto-analyze → assign first tasks) — Phase 2
+- **Trust layer** (actual vs predicted tracking with variance explanations) — Phase 2 (partial exists in capital forecast tracking)
+- **Gamification** (revenue-from-Zura ranking) — Phase 2
+- **Task auto-generation from opportunities** — Phase 2
+
+## Build Order
+
+1. Database migration (add columns to tasks)
+2. Update `useTasks` hook with new fields
+3. Update `TaskItem` with revenue badge + expiry
+4. Update `AddTaskDialog` + `EditTaskDialog` with revenue impact field
+5. Update `TasksCard` with expired group
+6. Build `useDailyBriefing` hook
+7. Build `DailyBriefingCard` component
+8. Build `useZuraActionsAttribution` hook
+9. Wire into `DashboardHome` layout
+10. Add Top Lever to Command Center empty state
+11. TypeScript build check
 
