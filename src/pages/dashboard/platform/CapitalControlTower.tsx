@@ -1,5 +1,5 @@
-import { useState, Fragment } from 'react';
-import { Landmark, Building2, TrendingUp, Eye, Loader2, BookOpen, ChevronDown, ChevronRight, Check, X, AlertTriangle } from 'lucide-react';
+import { useState, Fragment, useMemo } from 'react';
+import { Landmark, Building2, TrendingUp, Eye, Loader2, BookOpen, ChevronDown, ChevronRight, Check, X, AlertTriangle, Minus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -28,7 +28,10 @@ import {
   useOrgCapitalDiagnostics,
   getVisibilityVerdict,
   type VisibilityVerdict,
+  type OpportunityDiagnostic,
 } from '@/hooks/useOrgCapitalDiagnostics';
+import type { EligibilityInputs } from '@/lib/capital-engine/capital-formulas';
+import type { CapitalPolicy } from '@/config/capital-engine/capital-formulas-config';
 import { toast } from 'sonner';
 
 /* ── Types ── */
