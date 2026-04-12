@@ -2,11 +2,9 @@ import { useMemo } from 'react';
 import {
   Zap, CheckCircle2, AlertTriangle, TrendingUp,
   Rocket, ShieldAlert, ArrowRight, Sparkles, Timer,
-  DollarSign,
 } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
@@ -17,11 +15,8 @@ import {
   type BriefingRoleContext,
 } from '@/hooks/useDailyBriefingEngine';
 import { useTasks, type Task } from '@/hooks/useTasks';
-import { useZuraCapital } from '@/hooks/useZuraCapital';
-import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 import { MissedOpportunityBanner } from '@/components/dashboard/MissedOpportunityBanner';
 import { toast } from 'sonner';
-import { Link } from 'react-router-dom';
 
 interface DailyBriefingPanelProps {
   tasks: Task[];
@@ -37,8 +32,6 @@ export function DailyBriefingPanel({
 }: DailyBriefingPanelProps) {
   const { formatCurrency } = useFormatCurrency();
   const { toggleTask } = useTasks();
-  const { topOpportunity } = useZuraCapital();
-  const { dashPath } = useOrgDashboardPath();
   const briefing = useDailyBriefingEngine(tasks, roleContext);
 
   const {
@@ -324,22 +317,6 @@ export function DailyBriefingPanel({
                         </span>
                       </div>
                     ))}
-
-                    {/* Inline Capital Available */}
-                    {topOpportunity?.stripeOfferAvailable && roleContext !== 'stylist' && (
-                      <div className="flex items-center gap-2 p-2 rounded-lg bg-primary/5 border border-primary/10">
-                        <DollarSign className="w-3.5 h-3.5 text-primary shrink-0" />
-                        <p className="text-xs font-sans truncate flex-1">
-                          Capital available: <BlurredAmount>{formatCurrency((topOpportunity.providerOfferAmountCents ?? 0) / 100)}</BlurredAmount>
-                        </p>
-                        <Button size="sm" variant="ghost" className="h-6 px-2 text-[10px]" asChild>
-                          <Link to={dashPath(`/capital/${topOpportunity.id}`)}>
-                            Fund
-                            <ArrowRight className="w-3 h-3 ml-0.5" />
-                          </Link>
-                        </Button>
-                      </div>
-                    )}
                   </div>
                 </section>
               )}
