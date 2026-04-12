@@ -1,102 +1,108 @@
 
 
-# System Adoption and Behavior Design — Phase 1 Build Plan
+# Daily Briefing — Full Build Plan
 
-## What Exists Today
+## Gap Analysis: Current vs Spec
 
-The DashboardHome is a layout-driven page with role-aware sections: quick stats, quick actions, tasks, announcements, pinned analytics cards, client engine (75-day challenge), push list, level progress, SEO tasks, and widgets. The Command Center (⌘K) is a search/navigation surface. Tasks are generic to-do items with no revenue linkage. A leaderboard exists with weights, history, achievements, and trend tracking. Onboarding has a setup wizard for dashboard layout.
+| Spec Section | Current State | Status |
+|---|---|---|
+| Today's Focus (singular top opportunity) | Shows top 3 tasks as "You Should Do" | Missing — no capital/opportunity integration |
+| Zura Already Did (automated actions) | Shows "Completed Today" count only | Missing — no SEO/automation query |
+| You Should Do (2-4 revenue-linked tasks) | Partially exists but not tied to focus | Needs rework |
+| Blockers | Not implemented | Missing |
+| Opportunity Remaining | Shows "Revenue at Stake" loosely | Missing — no predicted vs captured calc |
+| Active Growth Moves | Not implemented | Missing |
+| Role-aware variants | Leadership-only gate | Missing stylist/manager variants |
+| Placement in Command Center | Only on DashboardHome | Missing from ⌘K |
+| Empty/missed state messaging | Not implemented | Missing |
 
-## What's Missing
-
-1. **No Daily Briefing** — Users land on a generic dashboard with scattered widgets. No single "here's what matters today" summary.
-2. **No revenue linkage on tasks** — Tasks have title/priority/due date but no `estimated_revenue_impact_cents` or opportunity decay.
-3. **No "Zura Already Did" visibility** — Automated actions (review requests, GBP posts, SEO tasks) are not surfaced as completed-for-you.
-4. **No "Money Being Left" surface** — Lost opportunity visibility doesn't exist as a dedicated section.
-5. **No task expiry** — Tasks don't expire based on opportunity decay windows.
-6. **No Zura Actions attribution** — No tracking of "revenue generated from Zura-recommended actions."
-
-## Build Scope — Phase 1 (Daily Operating Loop)
-
-### 1. Daily Briefing Card (`DailyBriefingCard.tsx`)
-
-A new dashboard section that replaces the current greeting header with a structured daily operating briefing. Renders at the top of DashboardHome for leadership roles.
-
-Sections:
-- **Today's Focus** — Top lever from AI insights or highest-priority opportunity (pulled from existing `useQuickStats` + `useZuraCapital`)
-- **Zura Already Did** — Count of automated actions completed today (SEO tasks auto-completed, review requests sent, GBP posts published). Query `seo_tasks` where `completed_at = today` and `assigned_to = 'system'`, plus `capital_surface_events` for today.
-- **You Should Do** — Top 3 uncompleted tasks sorted by revenue impact (requires new field) or priority
-- **Blocked** — Items from inventory alerts or capacity constraints (query existing `inventory_alerts` and capacity data)
-
-### 2. Task Revenue Impact Field
-
-Add `estimated_revenue_impact_cents` (integer, nullable, default null) and `expires_at` (timestamptz, nullable) columns to the `tasks` table via migration. Update `useTasks` hook interface, create/update mutations, and `TaskItem` display to show revenue impact when present.
-
-### 3. Revenue Impact Display on Tasks
-
-Update `TaskItem.tsx` to show a small revenue badge when `estimated_revenue_impact_cents` is set: "~$800/mo" in green text. Update `AddTaskDialog` and `EditTaskDialog` to include an optional revenue impact field.
-
-### 4. Zura Actions Attribution Tracker
-
-New hook `useZuraActionsAttribution` that queries completed tasks where `source = 'zura'` or `source = 'seo_engine'` and sums `estimated_revenue_impact_cents` for the current month. Display as a small card on the dashboard: "You generated $X from Zura actions this month."
-
-### 5. Command Center "Top Lever" Enhancement
-
-Add a "Top Lever" section to the Command Center empty-state view (the greeting screen in ⌘K). This surfaces the single highest-impact action from the daily briefing data — reusing the same query logic.
-
-### 6. Task Expiry System
-
-Tasks with `expires_at` set show a countdown badge ("Expires in 2d"). Expired tasks are visually dimmed and sorted to a separate "Expired" group in `TasksCard`. No auto-deletion — just visual treatment and a "This opportunity has decayed" label.
+The current implementation is a lightweight card. The spec requires a full panel with 6 structured sections powered by Capital, SEO, tasks, and operational data.
 
 ---
 
-## Database Migration
+## Build Scope
 
-```sql
-ALTER TABLE tasks 
-  ADD COLUMN estimated_revenue_impact_cents integer DEFAULT NULL,
-  ADD COLUMN expires_at timestamptz DEFAULT NULL;
-```
+### 1. New Hook: `useDailyBriefingEngine`
 
-## Files Created
+Replaces `useDailyBriefing` (which is pure task computation). The new hook composes data from multiple systems:
 
-| File | Purpose |
+- **Today's Focus**: Uses `useZuraCapital().topOpportunity` — the highest `surfacePriority` eligible opportunity. Falls back to highest-impact task if no capital opportunity exists.
+- **Zura Already Did**: New query — SEO tasks completed today where `assigned_to = 'system'` (automated). Plus `capital_surface_events` for today.
+- **You Should Do**: Filters tasks by: tied to focus opportunity (via `source`/`service_id`/`location_id`), then highest `estimated_revenue_impact_cents`, capped at 2-4.
+- **Blockers**: Query `inventory_alerts` (if table exists) + check capacity data for fully-booked signals.
+- **Opportunity Remaining**: `predicted_total - captured_to_date` from capital opportunities or SEO revenue predictions.
+- **Active Growth Moves**: Active capital projects + active SEO campaigns.
+- **Role adaptation**: Accept `roleContext` param. Owner = org-wide. Manager = location-scoped. Stylist = personal tasks only, no capital.
+
+### 2. Rewrite `DailyBriefingCard` → `DailyBriefingPanel`
+
+Full component with 6 stacked sections following the spec hierarchy:
+
+**A. Today's Focus** — Single directive. Shows opportunity title, location, revenue lift, one-line context sentence. Uses `tokens.card.title` for the focus label, `BlurredAmount` for revenue.
+
+**B. Zura Already Did** — 2-5 automated action summaries (e.g., "Sent 5 review requests", "Updated extension page metadata"). Small checkmark icons, trust-building.
+
+**C. You Should Do** — 2-4 tasks with revenue impact badges. Each task: title, `~$800/mo` badge, one-line "why". Checkbox to complete inline.
+
+**D. Blockers** — Conditional. Only renders if real blockers exist. Amber styling, tied to lost revenue.
+
+**E. Opportunity Remaining** — Shows `+$X,XXX this month` with a subtle progress indicator (captured vs predicted).
+
+**F. Active Growth Moves** — Active campaigns and funded projects, 2-3 max, status badge.
+
+**Empty state**: "You're on track today — no critical actions needed."
+
+**Missed actions state**: When tasks have been ignored past due, show "$X,XXX opportunity at risk" in amber.
+
+### 3. Role-Aware Variants
+
+The panel renders different data based on role:
+- **Owner/Admin**: Org-wide focus from capital + SEO, strategic tasks
+- **Manager**: Location-filtered focus, team + operations tasks
+- **Stylist**: Personal revenue focus, client-action tasks only, no capital section
+
+### 4. Wire to Command Center (⌘K)
+
+Add `DailyBriefingPanel` as the first section in `CommandCenterAnalytics` — above all pinned cards. Not pinnable, always visible for leadership. Uses same hook, compact layout.
+
+### 5. Task Completion Micro-interaction
+
+When a briefing task is completed via inline checkbox:
+- Animate the row out
+- Show brief toast: "+$800 monthly impact unlocked" (if revenue impact exists)
+
+### 6. Keep Legacy `useDailyBriefing` + `DailyBriefingCard`
+
+Delete both — they're replaced entirely by the new system.
+
+---
+
+## Files
+
+| File | Action |
 |---|---|
-| `src/components/dashboard/DailyBriefingCard.tsx` | Daily Briefing section for DashboardHome |
-| `src/hooks/useZuraActionsAttribution.ts` | Monthly Zura-attributed revenue query |
-| `src/hooks/useDailyBriefing.ts` | Aggregates briefing data (focus, auto-actions, blockers) |
+| `src/hooks/useDailyBriefingEngine.ts` | CREATE — Composes capital, SEO, tasks, campaigns |
+| `src/components/dashboard/DailyBriefingPanel.tsx` | CREATE — Full 6-section panel |
+| `src/components/dashboard/DailyBriefingCard.tsx` | DELETE — Replaced |
+| `src/hooks/useDailyBriefing.ts` | DELETE — Replaced |
+| `src/pages/dashboard/DashboardHome.tsx` | UPDATE — Swap `DailyBriefingCard` → `DailyBriefingPanel`, pass role context |
+| `src/components/dashboard/CommandCenterAnalytics.tsx` | UPDATE — Add briefing panel at top |
+| `src/hooks/useDashboardLayout.ts` | No change needed (already has `daily_briefing` in default) |
 
-## Files Modified
+## Data Dependencies (All Existing)
 
-| File | Change |
-|---|---|
-| `src/hooks/useTasks.ts` | Add `estimated_revenue_impact_cents` and `expires_at` to Task interface and mutations |
-| `src/components/dashboard/TaskItem.tsx` | Show revenue impact badge and expiry countdown |
-| `src/components/dashboard/AddTaskDialog.tsx` | Optional revenue impact field |
-| `src/components/dashboard/EditTaskDialog.tsx` | Optional revenue impact field |
-| `src/components/dashboard/TasksCard.tsx` | Add "Expired" task group |
-| `src/pages/dashboard/DashboardHome.tsx` | Add `daily_briefing` section to layout, add `zura_attribution` section |
-| `src/components/dashboard/CommandCenterAnalytics.tsx` | Add "Top Lever" to empty state |
-
-## Out of Scope (Future Phases)
-
-- **Soft/Hard Enforcement rules** (restrict lead pool, delay capital) — Phase 2
-- **Team performance leaderboard with Zura contribution** — Phase 2 (leaderboard infra exists, needs attribution column)
-- **Guided first-experience onboarding** (auto-analyze → assign first tasks) — Phase 2
-- **Trust layer** (actual vs predicted tracking with variance explanations) — Phase 2 (partial exists in capital forecast tracking)
-- **Gamification** (revenue-from-Zura ranking) — Phase 2
-- **Task auto-generation from opportunities** — Phase 2
+- `useZuraCapital()` — top opportunity, active projects
+- `useSEOTasks(orgId, { status: ['completed'] })` — automated actions today
+- `useTasks()` — personal task list with revenue impact
+- `useOrganizationContext()` — org scoping
+- `useEffectiveRoles()` — role adaptation
 
 ## Build Order
 
-1. Database migration (add columns to tasks)
-2. Update `useTasks` hook with new fields
-3. Update `TaskItem` with revenue badge + expiry
-4. Update `AddTaskDialog` + `EditTaskDialog` with revenue impact field
-5. Update `TasksCard` with expired group
-6. Build `useDailyBriefing` hook
-7. Build `DailyBriefingCard` component
-8. Build `useZuraActionsAttribution` hook
-9. Wire into `DashboardHome` layout
-10. Add Top Lever to Command Center empty state
-11. TypeScript build check
+1. Create `useDailyBriefingEngine` hook
+2. Create `DailyBriefingPanel` component
+3. Wire into `DashboardHome` (replace old card)
+4. Wire into `CommandCenterAnalytics` (top section)
+5. Delete old `DailyBriefingCard` + `useDailyBriefing`
+6. TypeScript build check
 
