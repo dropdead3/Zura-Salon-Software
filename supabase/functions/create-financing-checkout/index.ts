@@ -154,11 +154,11 @@ serve(async (req) => {
       policy = {
         minROE: policySource.roe_threshold ?? policy.minROE,
         minConfidence: policySource.confidence_threshold ?? policy.minConfidence,
-        minOperationalStability: policySource.min_operational_stability ?? policy.minOperationalStability,
-        minExecutionReadiness: policySource.min_execution_readiness ?? policy.minExecutionReadiness,
-        maxRisk: policySource.max_risk_levels ?? policy.maxRisk,
-        maxStaleDays: policySource.stale_days ?? policy.maxStaleDays,
-        minCapitalCents: (policySource.min_capital_required ?? 5000) * 100,
+        minOperationalStability: policy.minOperationalStability,
+        minExecutionReadiness: policy.minExecutionReadiness,
+        maxRisk: policySource.max_risk_level ? [policySource.max_risk_level, "low", "moderate"] : policy.maxRisk,
+        maxStaleDays: policy.maxStaleDays,
+        minCapitalCents: policy.minCapitalCents,
         maxConcurrentProjects: policySource.max_concurrent_projects ?? policy.maxConcurrentProjects,
       };
     }
