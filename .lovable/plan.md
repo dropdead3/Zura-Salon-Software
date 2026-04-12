@@ -1,61 +1,41 @@
 
 
-# Stripe Terminal Configurator — Zura Pay Organization Settings
+# Add Third-Party POS Diagnostic Note to Capital Control Tower
 
 ## Problem
-There is no Terminal management infrastructure in the platform. When shipping Stripe terminals to organizations on Zura Pay, there's no way to register readers, create terminal locations, or generate connection tokens. Additionally, there's no org-facing UI for managing their terminals.
 
-## Important Constraint
-Terminals can ONLY be configured for organizations connected to **Zura Pay** (have an active `stripe_account_id`). Organizations using Phorest Pay or other third-party payment processors cannot use Zura-managed terminals — their terminals must be managed through their POS provider's Stripe platform.
+When an organization like Drop Dead Salons processes payments through Phorest Pay (a third-party POS with its own Stripe Connect relationship), the Capital Control Tower shows "No locations connected to Zura Pay" but doesn't explain **why** this matters or that the org is actively processing payments through another platform. This leaves platform admins without the context needed to advise the organization.
 
-## Architecture
+## Solution
 
-```text
-Organization Settings → Payments Tab
-├── Zura Pay Status (existing)
-├── Terminal Locations (NEW)
-│   ├── Register a location (maps to Stripe Terminal Location)
-│   └── List locations with reader counts
-└── Terminal Readers (NEW)
-    ├── Register a reader (serial/pairing code)
-    ├── List readers with status (online/offline)
-    └── Assign reader to location
-```
+Add a contextual diagnostic note that detects when an organization has Phorest-connected locations but no Zura Pay connections, and explains why Capital cannot surface for that configuration.
 
-## Required Infrastructure
+## Changes
 
-### 1. Edge Function: `manage-stripe-terminals`
-Handles CRUD for Terminal Locations and Readers via Stripe API, scoped to the org's connected account:
-- `POST /v1/terminal/locations` — Create location (label, address)
-- `GET /v1/terminal/locations` — List locations
-- `POST /v1/terminal/readers` — Register reader (registration_code, location)
-- `GET /v1/terminal/readers` — List readers
-- `DELETE /v1/terminal/readers/:id` — Deregister reader
-- All calls use `Stripe-Account: {org_stripe_account_id}` header
+### 1. `src/hooks/useOrgCapitalDiagnostics.ts`
+- Extend the `locations` query to also select `phorest_branch_id`
+- Add two new fields to `OrgCapitalDiagnostics`:
+  - `phorestConnectedLocationCount: number` — count of locations with a `phorest_branch_id`
+  - `usesThirdPartyPOS: boolean` — true when phorest locations exist but no Zura Pay connections
+- Derive `usesThirdPartyPOS` from: `phorestConnectedLocationCount > 0 && !hasActiveStripeConnect`
 
-### 2. Edge Function: `create-terminal-connection-token`
-Generates connection tokens for terminals to authenticate (required by Stripe Terminal SDK):
-- `POST /v1/terminal/connection_tokens` with `Stripe-Account` header
+### 2. `src/pages/dashboard/platform/CapitalControlTower.tsx` — `DiagnosticPanel`
+- After the "Zura Pay Connected" check item, insert a conditional diagnostic note when `data.usesThirdPartyPOS` is true
+- Styled as an amber info box with clear explanation:
+  - **Title**: "Third-Party Payment Processor Detected"
+  - **Detail**: "This organization processes payments through Phorest Pay (X locations connected). Stripe Capital eligibility is determined by the platform that owns the Stripe Connect relationship. Since Phorest — not Zura — is the platform of record, Zura's API keys cannot access this organization's processing history or Capital offers. To qualify for Zura Capital, the organization would need to migrate payment processing to Zura Pay."
 
-### 3. Organization Settings UI — Payments Section
-Add a "Terminals" subsection to org payment settings:
-- **Terminal Locations**: Create/list physical locations mapped to Stripe Terminal Locations
-- **Terminal Readers**: Register readers via pairing code, view status, assign to locations
-- **Gated**: Only visible when org has active Zura Pay connection
+### Visual Treatment
+- Amber-bordered card matching the existing operational context styling
+- `AlertTriangle` icon consistent with existing advisory patterns
+- Placed inline within the Visibility Checklist, directly after the "Zura Pay Connected" row (only when relevant)
 
-### 4. Platform Admin — Terminal Overview
-Add terminal counts to the Account Detail view so platform admins can see how many terminals an org has registered.
+## Files Changed
 
-## Scope
-- 2 edge functions
-- 1 new settings section (org-facing)
-- 1 platform admin enhancement
-- Database: No new tables needed (all state lives in Stripe API, queried on-demand)
+| File | Change |
+|---|---|
+| `src/hooks/useOrgCapitalDiagnostics.ts` | Add `phorest_branch_id` to query, add 2 new fields |
+| `src/pages/dashboard/platform/CapitalControlTower.tsx` | Add conditional third-party POS note in DiagnosticPanel |
 
-## Does this solve Capital for Phorest Pay orgs?
-**No.** This infrastructure only works for Zura Pay connected accounts. For orgs like Drop Dead Salons processing through Phorest Pay, the path to Capital eligibility requires either:
-1. Migrating their payment processing to Zura Pay, OR
-2. A future partnership integration with Phorest to share processing data
-
-The Terminal configurator is valuable infrastructure for Zura Pay orgs regardless of the Capital question.
+2 files. No database changes. No new dependencies.
 
