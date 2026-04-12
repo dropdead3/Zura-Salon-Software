@@ -173,7 +173,7 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
     myTools: [...growthNavItems, ...statsNavItems].filter((item, index, arr) => arr.findIndex(i => i.href === item.href) === index),
     ops: [
       ...managerNavItems.filter(item => item.href.includes('team-hub')),
-      ...(hasCapitalOpportunities ? [{ href: '/dashboard/admin/capital', label: 'Zura Capital', icon: Landmark, roles: ['super_admin', 'admin'] }] : []),
+      ...(hasCapitalOpportunities && profile?.is_super_admin ? [{ href: '/dashboard/admin/capital', label: 'Zura Capital', icon: Landmark, roles: ['super_admin', 'admin'] }] : []),
     ],
     data: managerNavItems.filter(item => item.href.includes('analytics') || item.href.includes('reports')),
     apps: appsNavItemsProp,
