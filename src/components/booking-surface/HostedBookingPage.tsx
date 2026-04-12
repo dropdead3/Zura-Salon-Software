@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useEffect, useRef, useCallback } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { useOrganizationBySlug } from '@/hooks/useOrganizations';
 import { usePublicBookingSurfaceConfig, DEFAULT_BOOKING_SURFACE_CONFIG } from '@/hooks/useBookingSurfaceConfig';
@@ -12,50 +12,65 @@ import { BookingServiceBrowser } from './BookingServiceBrowser';
 import { BookingStylistPicker, type BookingStylist } from './BookingStylistPicker';
 import { BookingLocationPicker, type BookingLocation } from './BookingLocationPicker';
 import { BookingDateTimePicker } from './BookingDateTimePicker';
-import { BookingClientForm, type BookingClientInfo } from './BookingClientForm';
+import { BookingClientForm } from './BookingClientForm';
 import { BookingConfirmation } from './BookingConfirmation';
+import { useBookingSession, STEP_LABELS } from '@/hooks/useBookingSession';
+import {
+  sendBookingReady,
+  sendBookingResize,
+  sendStepChange,
+  sendBookingComplete,
+} from '@/lib/booking-embed-messages';
 import { Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-
-type FlowStep = 'location' | 'service' | 'stylist' | 'datetime' | 'details' | 'confirm';
-
-const FLOW_STEPS: Record<string, FlowStep[]> = {
-  'category-first': ['service', 'stylist', 'datetime', 'details', 'confirm'],
-  'stylist-first': ['stylist', 'service', 'datetime', 'details', 'confirm'],
-  'location-first': ['location', 'service', 'stylist', 'datetime', 'details', 'confirm'],
-};
-
-const STEP_LABELS: Record<FlowStep, string> = {
-  location: 'Location',
-  service: 'Service',
-  stylist: 'Stylist',
-  datetime: 'Date & Time',
-  details: 'Your Info',
-  confirm: 'Review',
-};
 
 export function HostedBookingPage() {
   const { orgSlug } = useParams<{ orgSlug: string }>();
   const [searchParams] = useSearchParams();
+  const isEmbedMode = searchParams.get('embed') === 'true';
+
   const { data: org, isLoading: orgLoading, error: orgError } = useOrganizationBySlug(orgSlug);
   const { data: config } = usePublicBookingSurfaceConfig(org?.id);
   const { categories, levels, isLoading: servicesLoading } = usePublicServicesForWebsite(org?.id);
 
-  const [currentStepIdx, setCurrentStepIdx] = useState(0);
-  const [direction, setDirection] = useState(1);
-  const [selectedLocation, setSelectedLocation] = useState<string | null>(searchParams.get('location'));
-  const [selectedService, setSelectedService] = useState<string | null>(searchParams.get('service'));
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(searchParams.get('category'));
-  const [selectedStylist, setSelectedStylist] = useState<string | null>(searchParams.get('stylist'));
-  const [selectedDate, setSelectedDate] = useState<string | null>(null);
-  const [selectedTime, setSelectedTime] = useState<string | null>(null);
-  const [clientInfo, setClientInfo] = useState<BookingClientInfo | null>(null);
-  const [isConfirmed, setIsConfirmed] = useState(false);
-
   const effectiveConfig = config ?? DEFAULT_BOOKING_SURFACE_CONFIG;
   const { theme, flow, hosted } = effectiveConfig;
-  const steps = FLOW_STEPS[flow.template] || FLOW_STEPS['category-first'];
 
+  const {
+    steps, currentStep, currentStepIdx, direction, state,
+    goNext, goBack, update,
+  } = useBookingSession(flow.template, {
+    location: searchParams.get('location'),
+    service: searchParams.get('service'),
+    category: searchParams.get('category'),
+    stylist: searchParams.get('stylist'),
+    consultation: searchParams.get('consultation'),
+  });
+
+  // ─── Embed: auto-resize via ResizeObserver ─────────────────────
+  const rootRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!isEmbedMode || !rootRef.current) return;
+    sendBookingReady();
+
+    const observer = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        sendBookingResize(Math.ceil(entry.contentRect.height));
+      }
+    });
+    observer.observe(rootRef.current);
+    return () => observer.disconnect();
+  }, [isEmbedMode]);
+
+  // ─── Embed: broadcast step changes ─────────────────────────────
+  useEffect(() => {
+    if (isEmbedMode && currentStep) {
+      sendStepChange(currentStep, currentStepIdx);
+    }
+  }, [isEmbedMode, currentStep, currentStepIdx]);
+
+  // ─── Data queries ──────────────────────────────────────────────
   const { data: locations } = useQuery({
     queryKey: ['public-locations', org?.id],
     queryFn: async () => {
@@ -89,18 +104,20 @@ export function HostedBookingPage() {
     enabled: !!org?.id,
   });
 
-  const currentStep = steps[currentStepIdx];
+  // ─── Confirm handler ──────────────────────────────────────────
+  const handleConfirm = useCallback(() => {
+    update({ isConfirmed: true });
+    if (isEmbedMode) {
+      sendBookingComplete({
+        service: state.selectedService,
+        stylist: state.selectedStylist,
+        date: state.selectedDate,
+        time: state.selectedTime,
+      });
+    }
+  }, [isEmbedMode, state, update]);
 
-  const goNext = useCallback(() => {
-    setDirection(1);
-    setCurrentStepIdx((prev) => Math.min(prev + 1, steps.length - 1));
-  }, [steps.length]);
-
-  const goBack = useCallback(() => {
-    setDirection(-1);
-    setCurrentStepIdx((prev) => Math.max(0, prev - 1));
-  }, []);
-
+  // ─── Loading / Error ──────────────────────────────────────────
   if (orgLoading || servicesLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-white">
@@ -122,8 +139,10 @@ export function HostedBookingPage() {
 
   const salonName = org.name || 'Our Salon';
   const defaultLevel = levels[0]?.slug;
-  const stylistName = selectedStylist === 'any' ? null : stylists?.find(s => s.id === selectedStylist)?.name || null;
-  const locationName = locations?.find(l => l.id === selectedLocation)?.name || null;
+  const stylistName = state.selectedStylist === 'any'
+    ? null
+    : stylists?.find(s => s.id === state.selectedStylist)?.name || null;
+  const locationName = locations?.find(l => l.id === state.selectedLocation)?.name || null;
 
   const slideVariants = {
     enter: (d: number) => ({ x: d > 0 ? 60 : -60, opacity: 0 }),
@@ -134,29 +153,29 @@ export function HostedBookingPage() {
   const renderStep = () => {
     switch (currentStep) {
       case 'location':
-        return <BookingLocationPicker locations={locations ?? []} theme={theme} onSelect={(id) => { setSelectedLocation(id); goNext(); }} />;
+        return <BookingLocationPicker locations={locations ?? []} theme={theme} onSelect={(id) => { update({ selectedLocation: id }); goNext(); }} />;
       case 'service':
-        return <BookingServiceBrowser categories={categories} theme={theme} flow={flow} defaultLevelSlug={defaultLevel} onSelectService={(name, cat) => { setSelectedService(name); setSelectedCategory(cat); goNext(); }} />;
+        return <BookingServiceBrowser categories={categories} theme={theme} flow={flow} defaultLevelSlug={defaultLevel} onSelectService={(name, cat) => { update({ selectedService: name, selectedCategory: cat }); goNext(); }} />;
       case 'stylist':
-        return <BookingStylistPicker stylists={stylists ?? []} theme={theme} showBios={flow.showStylistBios} onSelect={(id) => { setSelectedStylist(id); goNext(); }} />;
+        return <BookingStylistPicker stylists={stylists ?? []} theme={theme} showBios={flow.showStylistBios} onSelect={(id) => { update({ selectedStylist: id }); goNext(); }} />;
       case 'datetime':
-        return <BookingDateTimePicker theme={theme} onSelect={(date, time) => { setSelectedDate(date); setSelectedTime(time); goNext(); }} />;
+        return <BookingDateTimePicker theme={theme} onSelect={(date, time) => { update({ selectedDate: date, selectedTime: time }); goNext(); }} />;
       case 'details':
-        return <BookingClientForm theme={theme} onSubmit={(info) => { setClientInfo(info); goNext(); }} />;
+        return <BookingClientForm theme={theme} onSubmit={(info) => { update({ clientInfo: info }); goNext(); }} />;
       case 'confirm':
-        return clientInfo ? (
+        return state.clientInfo ? (
           <BookingConfirmation
             theme={theme}
-            serviceName={selectedService || '—'}
-            categoryName={selectedCategory || '—'}
+            serviceName={state.selectedService || '—'}
+            categoryName={state.selectedCategory || '—'}
             stylistName={stylistName}
             locationName={locationName}
-            date={selectedDate || '—'}
-            time={selectedTime || '—'}
-            clientInfo={clientInfo}
-            onConfirm={() => setIsConfirmed(true)}
+            date={state.selectedDate || '—'}
+            time={state.selectedTime || '—'}
+            clientInfo={state.clientInfo}
+            onConfirm={handleConfirm}
             onBack={goBack}
-            isConfirmed={isConfirmed}
+            isConfirmed={state.isConfirmed}
           />
         ) : null;
       default:
@@ -166,56 +185,62 @@ export function HostedBookingPage() {
 
   return (
     <BookingThemeProvider theme={theme}>
-      <BookingHeader salonName={salonName} theme={theme} hosted={hosted} />
-
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 pb-16">
-        {!isConfirmed && (
-          <BookingFlowProgress
-            steps={steps.map((s) => STEP_LABELS[s])}
-            currentStep={currentStepIdx}
-            theme={theme}
-          />
+      <div ref={rootRef}>
+        {/* Hide header/chrome in embed mode for compact rendering */}
+        {!isEmbedMode && (
+          <BookingHeader salonName={salonName} theme={theme} hosted={hosted} />
         )}
 
-        {currentStepIdx > 0 && !isConfirmed && (
-          <button
-            onClick={goBack}
-            className="text-sm mb-4 transition-colors"
-            style={{ color: theme.mutedTextColor }}
-          >
-            ← Back
-          </button>
-        )}
+        <div className={`max-w-4xl mx-auto pb-16 ${isEmbedMode ? 'px-3 pt-3' : 'px-4 sm:px-6'}`}>
+          {!state.isConfirmed && (
+            <BookingFlowProgress
+              steps={steps.map((s) => STEP_LABELS[s])}
+              currentStep={currentStepIdx}
+              theme={theme}
+            />
+          )}
 
-        <AnimatePresence mode="wait" custom={direction}>
-          <motion.div
-            key={currentStep}
-            custom={direction}
-            variants={slideVariants}
-            initial="enter"
-            animate="center"
-            exit="exit"
-            transition={{ duration: 0.25, ease: 'easeInOut' }}
-          >
-            {renderStep()}
-          </motion.div>
-        </AnimatePresence>
+          {currentStepIdx > 0 && !state.isConfirmed && (
+            <button
+              onClick={goBack}
+              className="text-sm mb-4 transition-colors"
+              style={{ color: theme.mutedTextColor }}
+            >
+              ← Back
+            </button>
+          )}
 
-        {hosted.policyText && (
-          <div className="mt-12 pt-6 border-t" style={{ borderColor: theme.borderColor }}>
-            <p className="text-xs leading-relaxed" style={{ color: theme.mutedTextColor }}>
-              {hosted.policyText}
-            </p>
-          </div>
-        )}
+          <AnimatePresence mode="wait" custom={direction}>
+            <motion.div
+              key={currentStep}
+              custom={direction}
+              variants={slideVariants}
+              initial="enter"
+              animate="center"
+              exit="exit"
+              transition={{ duration: 0.25, ease: 'easeInOut' }}
+            >
+              {renderStep()}
+            </motion.div>
+          </AnimatePresence>
 
-        {hosted.poweredByVisible && (
-          <div className="text-center mt-8">
-            <span className="text-xs" style={{ color: theme.mutedTextColor }}>
-              Powered by Zura
-            </span>
-          </div>
-        )}
+          {/* Policy + powered-by only on hosted mode */}
+          {!isEmbedMode && hosted.policyText && (
+            <div className="mt-12 pt-6 border-t" style={{ borderColor: theme.borderColor }}>
+              <p className="text-xs leading-relaxed" style={{ color: theme.mutedTextColor }}>
+                {hosted.policyText}
+              </p>
+            </div>
+          )}
+
+          {!isEmbedMode && hosted.poweredByVisible && (
+            <div className="text-center mt-8">
+              <span className="text-xs" style={{ color: theme.mutedTextColor }}>
+                Powered by Zura
+              </span>
+            </div>
+          )}
+        </div>
       </div>
     </BookingThemeProvider>
   );
