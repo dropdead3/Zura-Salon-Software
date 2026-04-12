@@ -17,6 +17,7 @@ import { ToolConsolidation } from '@/components/marketing/ToolConsolidation';
 import { StruggleInput } from '@/components/marketing/StruggleInput';
 import { ZuraInANutshell } from '@/components/marketing/ZuraInANutshell';
 import { FounderQuote } from '@/components/marketing/FounderQuote';
+import { InsightToExecution } from '@/components/marketing/InsightToExecution';
 
 export default function PlatformLanding() {
   return (
@@ -40,6 +41,7 @@ export default function PlatformLanding() {
       <ToolConsolidation />
       <ZuraInANutshell />
       <FounderQuote />
+      <InsightToExecution />
       <OutcomeMetrics />
       <BuiltByOperators />
       <TestimonialSection />
