@@ -17,6 +17,8 @@ export interface OpportunityDiagnostic {
   status: string;
   isQualifying: boolean;
   eligibility: EligibilityResult;
+  inputs: EligibilityInputs;
+  policy: CapitalPolicy;
   createdAt: string;
 }
 
@@ -145,6 +147,8 @@ export function useOrgCapitalDiagnostics(orgId: string | null) {
           status: opp.status,
           isQualifying,
           eligibility,
+          inputs,
+          policy: effectivePolicy,
           createdAt: opp.created_at,
         };
       });
