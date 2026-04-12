@@ -4,7 +4,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useCapitalPolicySettings } from '@/hooks/useCapitalPolicySettings';
 import {
-  calculateInternalEligibility,
+  calculateOperationalReadiness,
+  calculateOpportunityRanking,
   calculateSurfacePriority,
   calculateRoeRatio,
   calculateRoeScore,
@@ -250,7 +251,8 @@ export function useZuraCapital() {
           requiredInvestmentCents: investmentCents,
           constraintType: o.constraint_type,
           momentumScore: o.momentum_score != null ? Number(o.momentum_score) : null,
-          hasCriticalOpsAlerts: false, // TODO: wire to operational alerting system when available
+          // TODO: Wire hasCriticalOpsAlerts to operational alerting system when available
+          hasCriticalOpsAlerts: false,
           expiresAt: o.expires_at,
           locationId: o.location_id,
           locationExposure: o.location_id ? (locationExposure[o.location_id] ?? 0) : 0,
@@ -259,7 +261,9 @@ export function useZuraCapital() {
           lastDeclinedAt,
           lastUnderperformingAt,
         };
-        const eligibility = calculateInternalEligibility(eligInputs, effectivePolicy);
+        // Two-layer model: operational readiness gates, ranking scores
+        const readiness = calculateOperationalReadiness(eligInputs, effectivePolicy);
+        const ranking = calculateOpportunityRanking(eligInputs, effectivePolicy);
 
         // Canonical surface priority
         const roeScore = calculateRoeScore(roeRatio);
@@ -328,8 +332,8 @@ export function useZuraCapital() {
           createdAt: o.created_at,
           expiresAt: o.expires_at,
           surfacePriority: priority,
-          zuraEligible: eligibility.eligible,
-          zuraReasons: eligibility.reasonSummaries,
+          zuraEligible: readiness.ready,
+          zuraReasons: readiness.blockerSummaries,
         };
       })
       .sort((a, b) => b.surfacePriority - a.surfacePriority);
