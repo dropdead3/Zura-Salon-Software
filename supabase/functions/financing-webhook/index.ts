@@ -25,21 +25,30 @@ serve(async (req) => {
     const body = await req.text();
     const sig = req.headers.get("stripe-signature");
 
-    let event: Stripe.Event;
-
-    if (webhookSecret && sig) {
-      event = stripe.webhooks.constructEvent(body, sig, webhookSecret);
-    } else {
-      console.warn("[financing-webhook] No webhook secret. Accepting unverified payload.");
-      event = JSON.parse(body) as Stripe.Event;
+    // G5: Reject unverified payloads — webhook secret is required
+    if (!webhookSecret) {
+      console.error("[financing-webhook] STRIPE_FINANCING_WEBHOOK_SECRET not configured. Rejecting request.");
+      return new Response(JSON.stringify({ error: "Webhook not configured" }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 500,
+      });
     }
+
+    if (!sig) {
+      return new Response(JSON.stringify({ error: "Missing stripe-signature header" }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 400,
+      });
+    }
+
+    const event = stripe.webhooks.constructEvent(body, sig, webhookSecret);
 
     if (event.type === "checkout.session.completed") {
       const session = event.data.object as Stripe.Checkout.Session;
       const meta = session.metadata;
 
       if (meta?.type === "zura_capital" && meta?.is_production === "true" && meta?.opportunity_id) {
-        // Production path: update capital_funding_projects
+        // Production path: promote pending_payment → active
         await supabase
           .from("capital_funding_projects")
           .update({

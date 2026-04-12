@@ -169,8 +169,9 @@ export function useZuraCapital() {
   });
 
   // Derived context values
-  const { locationExposure, lastUnderperformingAt } = useMemo(() => {
+  const { locationExposure, stylistExposure, lastUnderperformingAt } = useMemo(() => {
     const locExp: Record<string, number> = {};
+    const styExp: Record<string, number> = {};
     let lastUnderperf: string | null = null;
 
     (fundedProjects as any[]).forEach((fp) => {
@@ -178,6 +179,9 @@ export function useZuraCapital() {
       const opp = fp.capital_funding_opportunities;
       if (opp?.location_id) {
         locExp[opp.location_id] = (locExp[opp.location_id] ?? 0) + fundedAmount;
+      }
+      if (opp?.stylist_id) {
+        styExp[opp.stylist_id] = (styExp[opp.stylist_id] ?? 0) + fundedAmount;
       }
       // Track most recent at_risk project
       if (fp.status === 'at_risk' && fp.updated_at) {
@@ -187,7 +191,7 @@ export function useZuraCapital() {
       }
     });
 
-    return { locationExposure: locExp, lastUnderperformingAt: lastUnderperf };
+    return { locationExposure: locExp, stylistExposure: styExp, lastUnderperformingAt: lastUnderperf };
   }, [fundedProjects]);
 
   const { recentDismissals, recentDeclines, lastDeclinedAt } = useMemo(() => {
@@ -250,8 +254,8 @@ export function useZuraCapital() {
           expiresAt: o.expires_at,
           locationId: o.location_id,
           locationExposure: o.location_id ? (locationExposure[o.location_id] ?? 0) : 0,
-          stylistId: null,
-          stylistExposure: 0,
+          stylistId: o.stylist_id ?? null,
+          stylistExposure: o.stylist_id ? (stylistExposure[o.stylist_id] ?? 0) : 0,
           lastDeclinedAt,
           lastUnderperformingAt,
         };
@@ -329,7 +333,7 @@ export function useZuraCapital() {
         };
       })
       .sort((a, b) => b.surfacePriority - a.surfacePriority);
-  }, [rawOpps, fundedProjects, locationExposure, lastDeclinedAt, lastUnderperformingAt, surfaceStates, effectivePolicy]);
+  }, [rawOpps, fundedProjects, locationExposure, stylistExposure, lastDeclinedAt, lastUnderperformingAt, surfaceStates, effectivePolicy]);
 
   const eligibleOpportunities = opportunities.filter((o) => o.zuraEligible);
   const topOpportunity = eligibleOpportunities[0] ?? null;

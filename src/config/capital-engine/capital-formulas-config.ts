@@ -130,6 +130,7 @@ export const DEFAULT_CAPITAL_POLICY = {
   cooldownAfterUnderperformanceDays: 30,
   staleDays: 45,
   maxExposurePerLocation: 200_000,
+  maxExposurePerStylist: 100_000,
   minCapitalRequired: 5_000,
   allowManagerInitiation: false,
 } as const;
@@ -145,6 +146,7 @@ export type CapitalPolicy = {
   cooldownAfterUnderperformanceDays: number;
   staleDays: number;
   maxExposurePerLocation: number;
+  maxExposurePerStylist?: number;
   minCapitalRequired: number;
   allowManagerInitiation: boolean;
 };

@@ -64,7 +64,7 @@ function useOrganizationsWithCapital() {
       const { data: qualCounts, error: qualError } = await supabase
         .from('capital_funding_opportunities')
         .select('organization_id, status')
-        .in('status', ['pending_review', 'approved', 'ready']);
+        .in('status', ['eligible_internal', 'eligible_provider', 'surfaced', 'viewed']);
       if (qualError) throw qualError;
 
       const flagMap = new Map(

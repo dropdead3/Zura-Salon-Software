@@ -1,5 +1,5 @@
-import { useState, useMemo } from 'react';
-import { Link } from 'react-router-dom';
+import { useState, useMemo, useEffect } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { DashboardPageHeader } from '@/components/dashboard/DashboardPageHeader';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
@@ -22,14 +22,25 @@ import {
 } from '@/config/capital-engine/zura-capital-config';
 import type { OpportunityType } from '@/config/capital-engine/zura-capital-config';
 import { Landmark, ArrowRight, ShieldCheck } from 'lucide-react';
+import { toast } from 'sonner';
 
 function c(cents: number) { return cents / 100; }
 
 export default function CapitalQueue() {
   const { dashPath } = useOrgDashboardPath();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { opportunities, activeProjectCount, isLoading } = useZuraCapital();
   const { data: projects = [] } = useCapitalProjects(['active', 'on_track', 'above_forecast', 'below_forecast', 'at_risk']);
   const [filters, setFilters] = useState<CapitalFilters>({ type: 'all', status: 'all', risk: 'all' });
+
+  // G9: Show success feedback after Stripe redirect
+  useEffect(() => {
+    if (searchParams.get('funded') === 'true') {
+      toast.success('Funding initiated successfully! Your project is being activated.');
+      searchParams.delete('funded');
+      setSearchParams(searchParams, { replace: true });
+    }
+  }, [searchParams, setSearchParams]);
 
   const totalDeployed = useMemo(() =>
     (projects as any[]).reduce((sum, p) => sum + Number(p.funded_amount_cents || 0), 0),
