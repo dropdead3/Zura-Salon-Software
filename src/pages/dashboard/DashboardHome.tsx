@@ -77,6 +77,10 @@ import { SEOMyTasksCard } from '@/components/dashboard/seo-workshop/SEOMyTasksCa
 import { DailyBriefingPanel } from '@/components/dashboard/DailyBriefingPanel';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 import type { BriefingRoleContext } from '@/hooks/useDailyBriefingEngine';
+import { OperatorTopLever } from '@/components/dashboard/operator/OperatorTopLever';
+import { MoneyLeftOnTable } from '@/components/dashboard/operator/MoneyLeftOnTable';
+import { OperatorPerformanceStrip } from '@/components/dashboard/operator/OperatorPerformanceStrip';
+import { TeamGrowthContribution } from '@/components/dashboard/operator/TeamGrowthContribution';
 
 const ROLE_MESSAGES = {
   leadership: {
@@ -439,9 +443,29 @@ function DashboardSections({
   const briefingRole: BriefingRoleContext = isLeadership ? 'owner' : hasStylistRole ? 'stylist' : 'manager';
 
   const sectionComponents = useMemo(() => ({
+    // Operator Mode — Top Lever (leadership only)
+    operator_top_lever: isLeadership && (
+      <OperatorTopLever tasks={tasks} roleContext={briefingRole} />
+    ),
+
     // Daily Briefing — top of dashboard, role-aware
     daily_briefing: (
       <DailyBriefingPanel tasks={tasks} roleContext={briefingRole} />
+    ),
+
+    // Money Left on the Table (leadership only)
+    money_left: isLeadership && (
+      <MoneyLeftOnTable tasks={tasks} />
+    ),
+
+    // Operator Performance Strip (leadership only)
+    operator_performance: isLeadership && (
+      <OperatorPerformanceStrip />
+    ),
+
+    // Team Growth Contribution (leadership only)
+    team_growth: isLeadership && (
+      <TeamGrowthContribution />
     ),
 
     // Moved to header (right side, under Customize)
