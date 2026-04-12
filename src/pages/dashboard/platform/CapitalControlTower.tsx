@@ -310,6 +310,13 @@ function DiagnosticPanel({ orgId }: { orgId: string }) {
       detail: data.flagEnabled ? 'capital_enabled is ON' : 'capital_enabled is OFF',
     },
     {
+      label: 'Zura Pay Connected',
+      passed: data.hasActiveStripeConnect,
+      detail: data.hasActiveStripeConnect
+        ? `${data.connectedLocationCount} of ${data.totalLocationCount} location${data.totalLocationCount !== 1 ? 's' : ''} connected to Zura Pay`
+        : 'No locations connected to Zura Pay — Stripe Capital requires an active payment processing account',
+    },
+    {
       label: 'Qualifying Opportunities',
       passed: data.qualifyingCount > 0,
       detail:
@@ -324,7 +331,7 @@ function DiagnosticPanel({ orgId }: { orgId: string }) {
       passed: data.sidebarVisible,
       detail: data.sidebarVisible
         ? "Zura Capital is visible in this organization's sidebar"
-        : 'Zura Capital is NOT visible — both conditions above must pass',
+        : 'Zura Capital is NOT visible — all conditions above must pass',
     },
   ];
 

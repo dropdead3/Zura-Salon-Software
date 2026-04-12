@@ -31,6 +31,9 @@ export interface OpportunityDiagnostic {
 
 export interface OrgCapitalDiagnostics {
   flagEnabled: boolean;
+  hasActiveStripeConnect: boolean;
+  connectedLocationCount: number;
+  totalLocationCount: number;
   totalOpportunities: number;
   qualifyingCount: number;
   sidebarVisible: boolean;
@@ -63,6 +66,19 @@ export function useOrgCapitalDiagnostics(orgId: string | null) {
         .maybeSingle();
 
       const flagEnabled = flagData?.is_enabled ?? false;
+
+      // 1b. Check Zura Pay (Stripe Connect) status
+      const { data: allLocations } = await supabase
+        .from('locations')
+        .select('id, stripe_account_id, stripe_status')
+        .eq('organization_id', orgId!);
+
+      const totalLocationCount = allLocations?.length ?? 0;
+      const connectedLocations = (allLocations ?? []).filter(
+        (l) => l.stripe_account_id && l.stripe_status === 'active',
+      );
+      const connectedLocationCount = connectedLocations.length;
+      const hasActiveStripeConnect = connectedLocationCount > 0;
 
       // 2. Load org-specific policy (G11)
       const { data: orgPolicy } = await supabase
@@ -198,9 +214,12 @@ export function useOrgCapitalDiagnostics(orgId: string | null) {
 
       return {
         flagEnabled,
+        hasActiveStripeConnect,
+        connectedLocationCount,
+        totalLocationCount,
         totalOpportunities: opportunities.length,
         qualifyingCount,
-        sidebarVisible: flagEnabled && qualifyingCount > 0,
+        sidebarVisible: flagEnabled && hasActiveStripeConnect && qualifyingCount > 0,
         opportunities,
         lastOpportunityAt,
         effectivePolicy,
