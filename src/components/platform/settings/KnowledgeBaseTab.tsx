@@ -38,7 +38,7 @@ export function KnowledgeBaseTab() {
 
   return (
     <div className="space-y-6">
-      <PlatformCard variant="glass">
+      <PlatformCard variant="glass" size="container">
         <PlatformCardHeader>
           <div className="flex items-center justify-between">
             <div>

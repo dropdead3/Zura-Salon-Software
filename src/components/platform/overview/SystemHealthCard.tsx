@@ -32,7 +32,7 @@ export function SystemHealthCard() {
 
   if (isLoading) {
     return (
-      <div className="rounded-[16px] border border-slate-700/50 bg-slate-800/40 backdrop-blur-xl p-5">
+      <div className="rounded-[22px] border border-slate-700/50 bg-slate-800/40 backdrop-blur-xl p-5">
         <div className="flex items-center gap-2 mb-5">
           <Skeleton className="h-10 w-10 rounded-xl bg-slate-700/50" />
           <Skeleton className="h-6 w-32 bg-slate-700/50" />
@@ -48,7 +48,7 @@ export function SystemHealthCard() {
 
   return (
     <div className={cn(
-      "rounded-[16px] border backdrop-blur-xl p-5 transition-all",
+      "rounded-[22px] border backdrop-blur-xl p-5 transition-all",
       health?.overallStatus === 'healthy' && "border-emerald-500/30 bg-emerald-500/5",
       health?.overallStatus === 'degraded' && "border-amber-500/30 bg-amber-500/5",
       health?.overallStatus === 'down' && "border-rose-500/30 bg-rose-500/5",

@@ -217,7 +217,7 @@ function EligibilityReferenceList({ policy }: { policy: CapitalPolicy }) {
   return (
     <div className="space-y-5">
       {/* Section A — Stripe Capital Requirements */}
-      <div className="rounded-lg border border-[hsl(var(--platform-border)/0.2)] bg-[hsl(var(--platform-bg-card)/0.08)] p-4 space-y-3">
+      <div className="rounded-xl border border-[hsl(var(--platform-border)/0.2)] bg-[hsl(var(--platform-bg-card)/0.08)] p-4 space-y-3">
         <div className="flex items-center gap-2 mb-1">
           <CreditCard className="h-4 w-4 text-violet-400" />
           <h5 className="font-sans text-xs tracking-normal text-[hsl(var(--platform-foreground))] uppercase">
@@ -248,7 +248,7 @@ function EligibilityReferenceList({ policy }: { policy: CapitalPolicy }) {
 
 function OrgOperationalContext({ data }: { data: OrgCapitalDiagnostics }) {
   return (
-    <div className="rounded-lg border border-[hsl(var(--platform-border)/0.2)] bg-[hsl(var(--platform-bg-card)/0.08)] p-4 space-y-3">
+    <div className="rounded-xl border border-[hsl(var(--platform-border)/0.2)] bg-[hsl(var(--platform-bg-card)/0.08)] p-4 space-y-3">
       <div className="flex items-center gap-2 mb-1">
         <Shield className="h-4 w-4 text-amber-400" />
         <h5 className="font-sans text-xs tracking-normal text-[hsl(var(--platform-foreground))] uppercase">
@@ -429,7 +429,7 @@ function DiagnosticPanel({ orgId }: { orgId: string }) {
           <h4 className="font-sans text-xs tracking-normal text-[hsl(var(--platform-foreground-muted))] mb-3 uppercase">
             Opportunity Breakdown
           </h4>
-          <div className="rounded-lg border border-[hsl(var(--platform-border)/0.3)] overflow-hidden">
+          <div className="rounded-xl border border-[hsl(var(--platform-border)/0.3)] overflow-hidden">
             {data.opportunities.map((opp) => {
               const isOppExpanded = expandedOppId === opp.id;
               return (

@@ -55,7 +55,7 @@ export function PlatformActivityFeed({
   if (isLoading) {
     return (
       <div className={cn(
-        "rounded-[16px] border border-[hsl(var(--platform-border)/0.5)] bg-[hsl(var(--platform-bg-card)/0.4)] backdrop-blur-xl p-5 overflow-hidden",
+        "rounded-[22px] border border-[hsl(var(--platform-border)/0.5)] bg-[hsl(var(--platform-bg-card)/0.4)] backdrop-blur-xl p-5 overflow-hidden",
         className
       )}>
         {showHeader && (
@@ -77,7 +77,7 @@ export function PlatformActivityFeed({
 
   return (
     <div className={cn(
-      "relative rounded-[16px] border border-[hsl(var(--platform-border)/0.5)] bg-[hsl(var(--platform-bg-card)/0.4)] backdrop-blur-xl p-5 overflow-hidden",
+      "relative rounded-[22px] border border-[hsl(var(--platform-border)/0.5)] bg-[hsl(var(--platform-bg-card)/0.4)] backdrop-blur-xl p-5 overflow-hidden",
       className
     )}>
       {/* Subtle top-edge highlight */}

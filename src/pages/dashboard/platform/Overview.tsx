@@ -190,7 +190,7 @@ export default function PlatformOverview() {
         />
 
         {/* Quick Actions */}
-        <motion.div variants={fadeUp} className="group/actions relative rounded-[16px] border border-[hsl(var(--platform-border)/0.5)] bg-[hsl(var(--platform-bg-card)/0.4)] backdrop-blur-xl p-5 overflow-hidden">
+        <motion.div variants={fadeUp} className="group/actions relative rounded-[22px] border border-[hsl(var(--platform-border)/0.5)] bg-[hsl(var(--platform-bg-card)/0.4)] backdrop-blur-xl p-5 overflow-hidden">
           {/* Subtle shimmer overlay */}
           <div className="absolute inset-0 bg-gradient-to-r from-transparent via-[hsl(var(--platform-primary)/0.03)] to-transparent -translate-x-full group-hover/actions:translate-x-full transition-transform duration-[1.5s] ease-in-out" />
           
