@@ -18,7 +18,7 @@ export function PlatformContextBanner() {
   };
 
   return (
-    <div className="bg-gradient-to-r from-violet-600/20 via-purple-600/20 to-violet-600/20 border border-violet-500/30 px-4 py-2 backdrop-blur-sm mx-3 mt-3 rounded-2xl shadow-sm overflow-hidden">
+    <div className="bg-gradient-to-r from-violet-600/20 via-purple-600/20 to-violet-600/20 border border-violet-500/30 px-4 py-2 backdrop-blur-sm mx-3 mt-3 rounded-[14px] shadow-sm overflow-hidden">
       <div className="max-w-screen-2xl mx-auto flex items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <div className="p-1.5 rounded-lg bg-violet-500/20">

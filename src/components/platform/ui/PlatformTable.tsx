@@ -50,7 +50,7 @@ const PlatformTableHead = React.forwardRef<HTMLTableCellElement, React.ThHTMLAtt
     <th
       ref={ref}
       className={cn(
-        'h-12 px-4 text-left align-middle font-medium text-[hsl(var(--platform-foreground-muted))] [&:has([role=checkbox])]:pr-0',
+        'h-11 px-4 text-left align-middle font-medium text-[hsl(var(--platform-foreground-muted))] [&:has([role=checkbox])]:pr-0',
         className,
       )}
       {...props}
@@ -61,7 +61,7 @@ PlatformTableHead.displayName = 'PlatformTableHead';
 
 const PlatformTableCell = React.forwardRef<HTMLTableCellElement, React.TdHTMLAttributes<HTMLTableCellElement>>(
   ({ className, ...props }, ref) => (
-    <td ref={ref} className={cn('p-4 align-middle text-[hsl(var(--platform-foreground)/0.85)] [&:has([role=checkbox])]:pr-0', className)} {...props} />
+    <td ref={ref} className={cn('px-4 py-3 align-middle text-[hsl(var(--platform-foreground)/0.85)] [&:has([role=checkbox])]:pr-0', className)} {...props} />
   ),
 );
 PlatformTableCell.displayName = 'PlatformTableCell';

@@ -38,7 +38,7 @@ export function PlatformPageHeader({
           </PlatformButton>
         )}
         <div>
-          <h1 className="text-3xl font-medium tracking-tight text-[hsl(var(--platform-foreground))]">{title}</h1>
+          <h1 className="text-3xl font-display font-medium tracking-wide text-[hsl(var(--platform-foreground))]">{title}</h1>
           {description && (
             <p className="text-[hsl(var(--platform-foreground-muted))]">{description}</p>
           )}
