@@ -61,7 +61,16 @@ export function MoneyLeftOnTable({ tasks }: MoneyLeftOnTableProps) {
 
   const totalCents = signals.reduce((sum, s) => sum + s.cents, 0);
 
-  if (totalCents <= 0) return null;
+  if (totalCents <= 0) {
+    return (
+      <Card className="relative overflow-hidden rounded-xl border-emerald-500/10 bg-card/60">
+        <div className="p-5 flex items-center gap-2">
+          <AlertTriangle className="w-4 h-4 text-emerald-500 shrink-0" />
+          <p className="text-xs font-sans text-muted-foreground">No revenue leakage detected — you're capturing all opportunities</p>
+        </div>
+      </Card>
+    );
+  }
 
   return (
     <Card className="relative overflow-hidden rounded-xl border-amber-500/20 bg-gradient-to-br from-amber-500/5 via-card to-card">
