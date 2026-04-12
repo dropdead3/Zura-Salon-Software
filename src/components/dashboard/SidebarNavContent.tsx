@@ -127,9 +127,18 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
   const { effectiveOrganization } = useOrganizationContext();
   const organizationId = effectiveOrganization?.id;
 
-  const { data: hasCapitalOpportunities } = useQuery({
-    queryKey: ['capital-opportunities-exist', organizationId],
+  const { data: capitalGateData } = useQuery({
+    queryKey: ['capital-gate', organizationId],
     queryFn: async () => {
+      // Check if capital_enabled flag is on for this org
+      const { data: flagData } = await supabase
+        .from('organization_feature_flags')
+        .select('is_enabled')
+        .eq('organization_id', organizationId!)
+        .eq('flag_key', 'capital_enabled')
+        .maybeSingle();
+      if (!flagData?.is_enabled) return false;
+      // Then check if there are active opportunities
       const { count } = await supabase
         .from('capital_funding_opportunities')
         .select('id', { count: 'exact', head: true })
@@ -140,6 +149,7 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
     enabled: !!organizationId,
     staleTime: 5 * 60 * 1000,
   });
+  const hasCapitalOpportunities = capitalGateData ?? false;
 
   const { data: hasPayrollEnrollment } = useQuery({
     queryKey: ['my-payroll-enrollment', user?.id, organizationId],
