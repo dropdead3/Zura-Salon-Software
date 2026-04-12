@@ -17,7 +17,7 @@ import { DashboardThemeProvider } from "./contexts/DashboardThemeContext";
 import { OrganizationProvider } from "./contexts/OrganizationContext";
 import { SoundSettingsProvider } from "./contexts/SoundSettingsContext";
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
-import { OrganizationFeatureGate } from "./components/features/OrganizationFeatureGate";
+import { CapitalFeatureGate } from "./components/features/CapitalFeatureGate";
 import { ThemeInitializer } from "./components/ThemeInitializer";
 import { I18nLocaleSync } from "./components/I18nLocaleSync";
 import { DevContextBridge } from "./dev/DevContextBridge";
