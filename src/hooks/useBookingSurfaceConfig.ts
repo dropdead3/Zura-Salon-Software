@@ -44,6 +44,15 @@ export interface BookingSurfaceHosted {
   poweredByVisible: boolean;
 }
 
+export interface BookingSurfaceEmbed {
+  allowedTypes: ('inline' | 'modal' | 'popup' | 'iframe')[];
+  allowServicePreselect: boolean;
+  allowStylistPreselect: boolean;
+  allowLocationPreselect: boolean;
+  allowCategoryPreselect: boolean;
+  allowConsultationMode: boolean;
+}
+
 export interface BookingSurfaceConfig {
   [key: string]: unknown;
   mode: 'hosted' | 'embed' | 'both';
@@ -52,6 +61,10 @@ export interface BookingSurfaceConfig {
   theme: BookingSurfaceTheme;
   flow: BookingSurfaceFlow;
   hosted: BookingSurfaceHosted;
+  embed: BookingSurfaceEmbed;
+  version: number;
+  publishedAt: string | null;
+  updatedAt: string | null;
 }
 
 // ─── Defaults ────────────────────────────────────────────────────
@@ -96,6 +109,15 @@ export const DEFAULT_BOOKING_HOSTED: BookingSurfaceHosted = {
   poweredByVisible: true,
 };
 
+export const DEFAULT_BOOKING_EMBED: BookingSurfaceEmbed = {
+  allowedTypes: ['inline', 'modal', 'iframe'],
+  allowServicePreselect: true,
+  allowStylistPreselect: true,
+  allowLocationPreselect: true,
+  allowCategoryPreselect: true,
+  allowConsultationMode: true,
+};
+
 export const DEFAULT_BOOKING_SURFACE_CONFIG: BookingSurfaceConfig = {
   mode: 'hosted',
   published: false,
@@ -103,6 +125,10 @@ export const DEFAULT_BOOKING_SURFACE_CONFIG: BookingSurfaceConfig = {
   theme: DEFAULT_BOOKING_THEME,
   flow: DEFAULT_BOOKING_FLOW,
   hosted: DEFAULT_BOOKING_HOSTED,
+  embed: DEFAULT_BOOKING_EMBED,
+  version: 1,
+  publishedAt: null,
+  updatedAt: null,
 };
 
 // ─── Hooks ───────────────────────────────────────────────────────
