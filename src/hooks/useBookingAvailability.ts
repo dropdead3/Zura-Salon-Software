@@ -149,7 +149,7 @@ export function useEligibleStylists(
         .in('user_id', filteredIds)
         .gte('shift_date', today)
         .lte('shift_date', twoWeeks)
-        .eq('status', 'confirmed')
+        .eq('status', 'scheduled')
         .order('shift_date', { ascending: true });
 
       const nextAvailMap: Record<string, string> = {};
@@ -384,7 +384,7 @@ export function useResolvedServiceInfo(
           if (mapping) {
             const { data: phorestSvc } = await supabase
               .from('phorest_services')
-              .select('phorest_id')
+              .select('phorest_service_id')
               .eq('name', serviceName!)
               .maybeSingle();
 
@@ -393,7 +393,7 @@ export function useResolvedServiceInfo(
                 .from('phorest_staff_services')
                 .select('custom_price, custom_duration_minutes')
                 .eq('phorest_staff_id', mapping.phorest_staff_id)
-                .eq('phorest_service_id', phorestSvc.phorest_id)
+                .eq('phorest_service_id', phorestSvc.phorest_service_id)
                 .eq('is_qualified', true)
                 .maybeSingle();
 

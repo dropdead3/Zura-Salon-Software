@@ -84,11 +84,11 @@ export function useBookingEligibleServices(
           const serviceNames = filtered.map((s) => s.name);
           const { data: phorestSvcs } = await supabase
             .from('phorest_services')
-            .select('phorest_id, name')
+            .select('phorest_service_id, name')
             .in('name', serviceNames);
 
           if (phorestSvcs?.length) {
-            const phorestServiceIds = phorestSvcs.map((ps) => ps.phorest_id);
+            const phorestServiceIds = phorestSvcs.map((ps) => ps.phorest_service_id);
             const { data: phorestQuals } = await supabase
               .from('phorest_staff_services')
               .select('phorest_service_id')
@@ -98,7 +98,7 @@ export function useBookingEligibleServices(
 
             if (phorestQuals?.length) {
               const qualPhorestIds = new Set(phorestQuals.map((q) => q.phorest_service_id));
-              const nameToService = new Map(phorestSvcs.map((ps) => [ps.name, ps.phorest_id]));
+              const nameToService = new Map(phorestSvcs.map((ps) => [ps.name, ps.phorest_service_id]));
               filtered.forEach((s) => {
                 const pid = nameToService.get(s.name);
                 if (pid && qualPhorestIds.has(pid)) {
