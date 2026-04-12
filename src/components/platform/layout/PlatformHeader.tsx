@@ -62,7 +62,7 @@ export function PlatformHeader() {
   };
   return (
     <header
-      className="sticky top-0 z-30 h-14 border-b backdrop-blur-xl border-[hsl(var(--platform-border)/0.5)] bg-[hsl(var(--platform-bg)/0.8)]"
+      className="sticky top-3 z-30 h-14 mx-4 rounded-[18px] backdrop-blur-xl border border-[hsl(var(--platform-border)/0.3)] bg-[hsl(var(--platform-bg)/0.6)] shadow-lg shadow-black/[0.06]"
     >
       <div className="flex h-full items-center justify-between px-6">
         {/* Left: Online Users */}

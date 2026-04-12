@@ -56,6 +56,19 @@ export const platformBento = {
     lift: 'hover:-translate-y-px',
     transition: 'transition-all duration-150 ease-out',
   },
+  floatingBar: {
+    sidebar: {
+      radius: 'rounded-[22px]',
+      inset: 'left-3 top-3 bottom-3',
+      shadow: 'shadow-xl shadow-black/10',
+      glass: 'backdrop-blur-xl',
+    },
+    header: {
+      radius: 'rounded-[18px]',
+      shadow: 'shadow-lg shadow-black/[0.06]',
+      glass: 'backdrop-blur-xl',
+    },
+  },
 } as const;
 
 /** Base classes shared by all platform card-like containers */
