@@ -8,6 +8,7 @@ import {
   CheckCircle2,
   XCircle,
   AlertTriangle,
+  MessageSquare,
   Clock,
   Users,
   BarChart3,
