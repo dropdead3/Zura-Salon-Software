@@ -132,11 +132,17 @@ export default function CapitalSettings() {
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-1.5">
-                    <Label className="font-sans text-sm">Cooldown After Decline (days)</Label>
+                    <div className="flex items-center gap-1.5">
+                      <Label className="font-sans text-sm">Cooldown After Decline (days)</Label>
+                      <MetricInfoTooltip description="After an opportunity is declined, it won't resurface for this many days. Prevents alert fatigue from repeated suggestions." />
+                    </div>
                     <Input type="number" value={form.cooldown_after_decline_days} onChange={e => setForm(f => ({ ...f, cooldown_after_decline_days: parseInt(e.target.value) || 0 }))} />
                   </div>
                   <div className="space-y-1.5">
-                    <Label className="font-sans text-sm">Cooldown After Underperformance (days)</Label>
+                    <div className="flex items-center gap-1.5">
+                      <Label className="font-sans text-sm">Cooldown After Underperformance (days)</Label>
+                      <MetricInfoTooltip description="If a funded project underperforms, new opportunities are suppressed for this period. Protects against compounding poor investments." />
+                    </div>
                     <Input type="number" value={form.cooldown_after_underperformance_days} onChange={e => setForm(f => ({ ...f, cooldown_after_underperformance_days: parseInt(e.target.value) || 0 }))} />
                   </div>
                 </div>
