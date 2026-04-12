@@ -138,7 +138,24 @@ export const DEFAULT_CAPITAL_POLICY = {
   allowStylistMicrofunding: true,
 } as const;
 
-export type CapitalPolicy = typeof DEFAULT_CAPITAL_POLICY;
+export type CapitalPolicy = {
+  roeThreshold: number;
+  confidenceThreshold: number;
+  maxRiskLevel: CanonicalRiskLevel;
+  minOperationalStability: number;
+  minExecutionReadiness: number;
+  maxConcurrentProjects: number;
+  cooldownAfterDeclineDays: number;
+  cooldownAfterUnderperformanceDays: number;
+  staleDays: number;
+  stylistSpiThreshold: number;
+  stylistOrsThreshold: number;
+  maxExposurePerLocation: number;
+  maxExposurePerStylist: number;
+  minCapitalRequired: number;
+  allowManagerInitiation: boolean;
+  allowStylistMicrofunding: boolean;
+};
 
 /* ── Reason Codes ── */
 export const REASON_CODES = {
