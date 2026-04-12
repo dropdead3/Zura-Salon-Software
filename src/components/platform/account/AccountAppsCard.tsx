@@ -1,4 +1,4 @@
-import { Package, Play, MessageSquare, DollarSign, Landmark } from 'lucide-react';
+import { Package, Play, MessageSquare, DollarSign } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Switch } from '@/components/ui/switch';
 import {
@@ -66,9 +66,6 @@ export function AccountAppsCard({ organizationId }: AccountAppsCardProps) {
 
   const payrollFlag = flags?.find((f) => f.flag_key === 'payroll_enabled');
   const isPayrollEnabled = payrollFlag?.org_enabled ?? false;
-
-  const capitalFlag = flags?.find((f) => f.flag_key === 'capital_enabled');
-  const isCapitalEnabled = capitalFlag?.org_enabled ?? false;
 
   return (
     <PlatformCard variant="glass">
@@ -161,31 +158,6 @@ export function AccountAppsCard({ organizationId }: AccountAppsCardProps) {
             </div>
           </div>
 
-          {/* Zura Capital */}
-          <div className="flex items-center justify-between py-3 first:pt-0 last:pb-0">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-slate-700/50">
-                <Landmark className="h-4 w-4 text-amber-400" />
-              </div>
-              <div>
-                <p className="font-medium text-[hsl(var(--platform-foreground))]">Zura Capital</p>
-                <p className="text-sm text-[hsl(var(--platform-foreground-muted))]">
-                  Growth Capital Engine
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <PlatformBadge variant={isCapitalEnabled ? 'success' : 'default'}>
-                {isCapitalEnabled ? 'Active' : 'Inactive'}
-              </PlatformBadge>
-              <Switch
-                checked={isCapitalEnabled}
-                onCheckedChange={() => handleToggleFlag('capital_enabled', isCapitalEnabled)}
-                disabled={updateFlag.isPending}
-                className="data-[state=checked]:bg-violet-500 data-[state=unchecked]:bg-slate-600"
-              />
-            </div>
-          </div>
         </div>
       </PlatformCardContent>
     </PlatformCard>
