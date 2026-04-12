@@ -160,7 +160,6 @@ export default function CapitalOpportunityDetail() {
     logEvent.mutate({ opportunityId: o.id, eventType: 'opportunity_dismissed', surfaceArea: 'capital_queue' });
   };
 
-  const [dismissDialogOpen, setDismissDialogOpen] = useState(false);
 
   return (
     <DashboardLayout>
