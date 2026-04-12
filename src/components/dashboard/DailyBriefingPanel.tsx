@@ -37,6 +37,8 @@ export function DailyBriefingPanel({
 }: DailyBriefingPanelProps) {
   const { formatCurrency } = useFormatCurrency();
   const { toggleTask } = useTasks();
+  const { topOpportunity } = useZuraCapital();
+  const { dashPath } = useOrgDashboardPath();
   const briefing = useDailyBriefingEngine(tasks, roleContext);
 
   const {
