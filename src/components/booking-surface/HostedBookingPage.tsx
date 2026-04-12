@@ -3,18 +3,20 @@ import { useParams, useSearchParams } from 'react-router-dom';
 import { useOrganizationBySlug } from '@/hooks/useOrganizations';
 import { usePublicBookingSurfaceConfig, DEFAULT_BOOKING_SURFACE_CONFIG } from '@/hooks/useBookingSurfaceConfig';
 import { usePublicServicesForWebsite } from '@/hooks/usePublicServicesForWebsite';
-import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
+import { useEligibleStylists } from '@/hooks/useBookingAvailability';
+import { useBookingEligibleServices } from '@/hooks/useBookingEligibleServices';
 import { BookingThemeProvider } from './BookingThemeProvider';
 import { BookingHeader } from './BookingHeader';
 import { BookingFlowProgress } from './BookingFlowProgress';
 import { BookingServiceBrowser } from './BookingServiceBrowser';
-import { BookingStylistPicker, type BookingStylist } from './BookingStylistPicker';
+import { BookingStylistPicker } from './BookingStylistPicker';
 import { BookingLocationPicker, type BookingLocation } from './BookingLocationPicker';
 import { BookingDateTimePicker } from './BookingDateTimePicker';
 import { BookingClientForm } from './BookingClientForm';
 import { BookingConfirmation } from './BookingConfirmation';
 import { useBookingSession, STEP_LABELS } from '@/hooks/useBookingSession';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 import {
   sendBookingReady,
   sendBookingResize,
@@ -47,6 +49,58 @@ export function HostedBookingPage() {
     consultation: searchParams.get('consultation'),
   });
 
+  // ─── Availability-aware data queries ───────────────────────────
+  const { data: locations } = useQuery({
+    queryKey: ['public-locations', org?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('locations')
+        .select('id, name, address, city, state_province')
+        .eq('organization_id', org!.id)
+        .eq('is_active', true);
+      if (error) throw error;
+      return (data ?? []).map((l) => ({
+        id: l.id, name: l.name, address: l.address, city: l.city, state: l.state_province,
+      })) as BookingLocation[];
+    },
+    enabled: !!org?.id,
+  });
+
+  // Eligible stylists — filtered by location + service qualifications
+  const { data: eligibleStylists } = useEligibleStylists(
+    org?.id,
+    state.selectedLocation,
+    state.selectedService,
+  );
+
+  // Eligible services — filtered by location + stylist qualifications
+  const { data: eligibleServices } = useBookingEligibleServices(
+    org?.id,
+    state.selectedLocation,
+    state.selectedStylist && state.selectedStylist !== 'any' ? state.selectedStylist : null,
+  );
+
+  // ─── Deep link validation ─────────────────────────────────────
+  useEffect(() => {
+    if (!org?.id || !eligibleStylists || !eligibleServices) return;
+
+    // Validate deep-linked stylist
+    if (state.selectedStylist && state.selectedStylist !== 'any') {
+      const isValid = eligibleStylists.some((s) => s.id === state.selectedStylist);
+      if (!isValid) {
+        update({ selectedStylist: null });
+      }
+    }
+
+    // Validate deep-linked service
+    if (state.selectedService) {
+      const isValid = eligibleServices.some((s) => s.name === state.selectedService);
+      if (!isValid) {
+        update({ selectedService: null, selectedCategory: null });
+      }
+    }
+  }, [org?.id, eligibleStylists, eligibleServices, state.selectedStylist, state.selectedService, update]);
+
   // ─── Embed: auto-resize via ResizeObserver ─────────────────────
   const rootRef = useRef<HTMLDivElement>(null);
 
@@ -69,40 +123,6 @@ export function HostedBookingPage() {
       sendStepChange(currentStep, currentStepIdx);
     }
   }, [isEmbedMode, currentStep, currentStepIdx]);
-
-  // ─── Data queries ──────────────────────────────────────────────
-  const { data: locations } = useQuery({
-    queryKey: ['public-locations', org?.id],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('locations')
-        .select('id, name, address, city, state_province')
-        .eq('organization_id', org!.id)
-        .eq('is_active', true);
-      if (error) throw error;
-      return (data ?? []).map((l) => ({
-        id: l.id, name: l.name, address: l.address, city: l.city, state: l.state_province,
-      })) as BookingLocation[];
-    },
-    enabled: !!org?.id,
-  });
-
-  const { data: stylists } = useQuery({
-    queryKey: ['public-stylists', org?.id],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('employee_profiles')
-        .select('user_id, full_name, photo_url, bio')
-        .eq('organization_id', org!.id)
-        .eq('is_active', true)
-        .eq('is_booking', true);
-      if (error) throw error;
-      return (data ?? []).map((s) => ({
-        id: s.user_id, name: s.full_name || 'Stylist', photoUrl: s.photo_url, bio: s.bio,
-      })) as BookingStylist[];
-    },
-    enabled: !!org?.id,
-  });
 
   // ─── Confirm handler ──────────────────────────────────────────
   const handleConfirm = useCallback(() => {
@@ -141,7 +161,7 @@ export function HostedBookingPage() {
   const defaultLevel = levels[0]?.slug;
   const stylistName = state.selectedStylist === 'any'
     ? null
-    : stylists?.find(s => s.id === state.selectedStylist)?.name || null;
+    : eligibleStylists?.find(s => s.id === state.selectedStylist)?.name || null;
   const locationName = locations?.find(l => l.id === state.selectedLocation)?.name || null;
 
   const slideVariants = {
@@ -153,13 +173,44 @@ export function HostedBookingPage() {
   const renderStep = () => {
     switch (currentStep) {
       case 'location':
-        return <BookingLocationPicker locations={locations ?? []} theme={theme} onSelect={(id) => { update({ selectedLocation: id }); goNext(); }} />;
+        return (
+          <BookingLocationPicker
+            locations={locations ?? []}
+            theme={theme}
+            onSelect={(id) => { update({ selectedLocation: id }); goNext(); }}
+          />
+        );
       case 'service':
-        return <BookingServiceBrowser categories={categories} theme={theme} flow={flow} defaultLevelSlug={defaultLevel} onSelectService={(name, cat) => { update({ selectedService: name, selectedCategory: cat }); goNext(); }} />;
+        return (
+          <BookingServiceBrowser
+            categories={categories}
+            theme={theme}
+            flow={flow}
+            defaultLevelSlug={defaultLevel}
+            eligibleServices={eligibleServices ?? undefined}
+            onSelectService={(name, cat) => { update({ selectedService: name, selectedCategory: cat }); goNext(); }}
+          />
+        );
       case 'stylist':
-        return <BookingStylistPicker stylists={stylists ?? []} theme={theme} showBios={flow.showStylistBios} onSelect={(id) => { update({ selectedStylist: id }); goNext(); }} />;
+        return (
+          <BookingStylistPicker
+            stylists={eligibleStylists ?? []}
+            theme={theme}
+            showBios={flow.showStylistBios}
+            onSelect={(id) => { update({ selectedStylist: id }); goNext(); }}
+          />
+        );
       case 'datetime':
-        return <BookingDateTimePicker theme={theme} onSelect={(date, time) => { update({ selectedDate: date, selectedTime: time }); goNext(); }} />;
+        return (
+          <BookingDateTimePicker
+            theme={theme}
+            orgId={org.id}
+            stylistId={state.selectedStylist}
+            locationId={state.selectedLocation}
+            serviceName={state.selectedService}
+            onSelect={(date, time) => { update({ selectedDate: date, selectedTime: time }); goNext(); }}
+          />
+        );
       case 'details':
         return <BookingClientForm theme={theme} onSubmit={(info) => { update({ clientInfo: info }); goNext(); }} />;
       case 'confirm':
@@ -186,7 +237,6 @@ export function HostedBookingPage() {
   return (
     <BookingThemeProvider theme={theme}>
       <div ref={rootRef}>
-        {/* Hide header/chrome in embed mode for compact rendering */}
         {!isEmbedMode && (
           <BookingHeader salonName={salonName} theme={theme} hosted={hosted} />
         )}
@@ -224,7 +274,6 @@ export function HostedBookingPage() {
             </motion.div>
           </AnimatePresence>
 
-          {/* Policy + powered-by only on hosted mode */}
           {!isEmbedMode && hosted.policyText && (
             <div className="mt-12 pt-6 border-t" style={{ borderColor: theme.borderColor }}>
               <p className="text-xs leading-relaxed" style={{ color: theme.mutedTextColor }}>
