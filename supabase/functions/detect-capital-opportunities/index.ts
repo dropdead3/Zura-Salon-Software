@@ -113,7 +113,7 @@ Deno.serve(async (req) => {
             .from("capital_funding_opportunities")
             .insert({
               organization_id: loc.organization_id,
-              location_id: loc.id,
+              location_id: null, // location_id is UUID in opps table; loc.id is text — skip for now
               title: `Stripe Capital Offer — ${loc.name}`,
               opportunity_type: "stripe_capital",
               status: "identified",
@@ -131,6 +131,8 @@ Deno.serve(async (req) => {
                 currency: offer.offered_terms?.currency ?? "usd",
                 expires_after: offer.expires_after,
                 stripe_status: offer.status,
+                location_id_text: loc.id,
+                location_name: loc.name,
               },
               expires_at: offer.expires_after
                 ? new Date(offer.expires_after * 1000).toISOString()
@@ -152,17 +154,8 @@ Deno.serve(async (req) => {
       }
     }
 
-    // 4. Log detection run
-    await supabase.from("capital_event_log").insert({
-      event_type: "detection_run",
-      event_data: {
-        organizations_checked: orgIds.length,
-        locations_checked: locations.length,
-        offers_detected: offersDetected,
-        offers_created: offersCreated,
-        errors: errors.length > 0 ? errors : undefined,
-      },
-    });
+    // 4. Log summary
+    console.log(`Detection complete: ${orgIds.length} orgs, ${locations.length} locations, ${offersDetected} offers found, ${offersCreated} created`);
 
     return new Response(
       JSON.stringify({
