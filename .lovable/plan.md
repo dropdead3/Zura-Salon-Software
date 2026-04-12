@@ -1,54 +1,63 @@
 
 
-# Add "Zura Pay Not Connected" Visibility Check to Capital Control Tower
+# Improve Capital Control Tower UI Alignment and Separation
 
 ## Problem
 
-The Control Tower currently shows "Enabled, Not Surfacing" with only two visibility conditions (Feature Flag + Qualifying Opportunities). It doesn't explain the most fundamental prerequisite: **the organization must have at least one location connected to Zura Pay (Stripe Connect)**. Without a connected Stripe account, Stripe Capital can never generate offers — so the detection pipeline will always return nothing.
+The Visibility Checklist and Two-Layer Reference sections have labels and descriptions that run together on a single line with a dash separator, making them hard to scan. The checklist items lack visual separation, and the Layer 1/Layer 2 sections could use better internal structure.
 
-## Solution
+## Changes — `src/pages/dashboard/platform/CapitalControlTower.tsx`
 
-Add a third visibility check — "Zura Pay Connected" — to the diagnostic checklist. This check queries the `locations` table for the org and verifies that at least one location has `stripe_account_id IS NOT NULL` and `stripe_status = 'active'`.
+### 1. Visibility Checklist — Stack label above detail
+Currently: `✓ Feature Flag — capital_enabled is ON` (single line, label and detail blurred together)
 
-## Changes
+After: Label on first line (brighter), detail on second line (muted, slightly indented). Add `py-2` spacing between items with a subtle divider or gap instead of `space-y-2`.
 
-### 1. `src/hooks/useOrgCapitalDiagnostics.ts`
-- Add a query for locations with `stripe_account_id` and `stripe_status` for the org
-- Compute `hasActiveStripeConnect`: at least one location with `stripe_status = 'active'`
-- Compute `connectedLocationCount` and `totalLocationCount` for detail text
-- Add these fields to the `OrgCapitalDiagnostics` return type
-- Update `sidebarVisible` to also require `hasActiveStripeConnect` (no Stripe Connect = no offers possible = sidebar should not show)
+### 2. Layer 1 (Stripe Capital Requirements) — Separate label from description
+Currently each requirement is: `icon Label — Description` on one line.
 
-### 2. `src/pages/dashboard/platform/CapitalControlTower.tsx`
-- Add "Zura Pay Connected" as a new check in the visibility checklist, positioned between "Feature Flag" and "Qualifying Opportunities"
-- When not connected: detail text says "No locations connected to Zura Pay — Stripe Capital requires an active payment processing account"
-- When connected: detail text says "N of M locations connected to Zura Pay"
-- Update "Sidebar Visible" detail to reference all three conditions
+After: **Label** on first line with slightly brighter color, description on second line in muted color. This makes the 8 Stripe criteria scannable at a glance without reading every description. Keep the 2-column grid.
 
-### 3. `src/hooks/useOrgCapitalDiagnostics.ts` (type update)
-- Add to `OrgCapitalDiagnostics` interface:
-  - `hasActiveStripeConnect: boolean`
-  - `connectedLocationCount: number`
-  - `totalLocationCount: number`
+### 3. Layer 2 (Zura Operational Context) — Same treatment
+Separate `[Blocker] No Critical Ops Alerts` from `— Unresolved critical operational alerts pause...` onto two lines. The severity tag (`[Blocker]`, `[Warning]`, `[Info]`) stays inline with the label.
 
-## Visibility Checklist After Change
+### 4. Add visual dividers between sections
+Add a subtle `border-t` between the Visibility Checklist and the "No opportunities detected" warning, and between Layer 1 and Layer 2 cards (already have separate cards, but add `gap-5` instead of `gap-4`).
+
+### 5. EligibilityCheckList (opportunity expanded view) — Same stacking
+Apply the same label/description stacking to the Hard Gate, Advisory, and Ranking sections when viewing an actual opportunity's details.
+
+## Visual Result
 
 ```text
-✓ Feature Flag — capital_enabled is ON
-✗ Zura Pay Connected — No locations connected to Zura Pay
-✗ Qualifying Opportunities — No opportunities detected
-✗ Sidebar Visible — All conditions above must pass
+Visibility Checklist
+─────────────────────────────────
+✓  Feature Flag
+   capital_enabled is ON
+
+✗  Zura Pay Connected
+   No locations connected to Zura Pay — Stripe Capital
+   requires an active payment processing account
+
+✗  Qualifying Opportunities
+   No opportunities detected for this organization
+
+✗  Sidebar Visible
+   Zura Capital is NOT visible — all conditions above must pass
 ```
 
-When connected:
+Layer 1 items become:
 ```text
-✓ Feature Flag — capital_enabled is ON
-✓ Zura Pay Connected — 2 of 3 locations connected to Zura Pay
-✗ Qualifying Opportunities — No opportunities detected
-✗ Sidebar Visible — All conditions above must pass
+◻ 3+ months processing history
+  The connected account must have been processing payments
+  on Stripe for at least 3 months.
+
+◻ $5K+ annual processing volume
+  At least $5,000 in annual processing volume and $1,000
+  average over the last 3 months.
 ```
 
-## Why This Matters
+## Scope
 
-This is the single most useful diagnostic for platform admins. Right now when they expand Drop Dead Salons, they see "No opportunities detected" with no explanation of *why*. The Stripe requirements list is informational but doesn't tell them what's actually missing. "Not connected to Zura Pay" is the actionable answer.
+Single file: `src/pages/dashboard/platform/CapitalControlTower.tsx`. No logic changes — purely layout and spacing adjustments.
 
