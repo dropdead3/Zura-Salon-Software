@@ -30,7 +30,9 @@ import {
   getVisibilityVerdict,
   type VisibilityVerdict,
   type OpportunityDiagnostic,
+  type OrgCapitalDiagnostics,
 } from '@/hooks/useOrgCapitalDiagnostics';
+import { formatCurrency } from '@/lib/format';
 import type { EligibilityInputs } from '@/lib/capital-engine/capital-formulas';
 import type { CapitalPolicy } from '@/config/capital-engine/capital-formulas-config';
 import { STRIPE_CAPITAL_REQUIREMENTS, ZURA_HARD_GATES, ZURA_ADVISORIES } from '@/config/capital-engine/capital-formulas-config';
