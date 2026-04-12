@@ -52,8 +52,8 @@ function PlatformLayoutInner() {
       {/* Main Content Area */}
       <div
         className={cn(
-          'min-h-screen transition-all duration-300 flex flex-col',
-          collapsed ? 'ml-16' : 'ml-56'
+          'min-h-screen transition-all duration-300 flex flex-col pt-3',
+          collapsed ? 'ml-[5.5rem]' : 'ml-[15.5rem]'
         )}
       >
         <PlatformHeader />

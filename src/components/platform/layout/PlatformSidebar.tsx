@@ -75,9 +75,12 @@ export function PlatformSidebar() {
   return (
     <aside
       className={cn(
-        'fixed left-0 top-0 z-40 h-screen flex flex-col transition-all duration-300',
+        'fixed left-3 top-3 bottom-3 z-40 flex flex-col transition-all duration-300',
+        'rounded-[22px]',
         collapsed ? 'w-16' : 'w-56',
-        'bg-[hsl(var(--platform-sidebar-bg)/0.95)] backdrop-blur-xl border-r border-[hsl(var(--platform-sidebar-border)/0.5)]'
+        'bg-[hsl(var(--platform-sidebar-bg)/0.85)] backdrop-blur-xl',
+        'border border-[hsl(var(--platform-border)/0.3)]',
+        'shadow-xl shadow-black/10'
       )}
     >
       {/* Logo / Header with collapse toggle */}
@@ -199,7 +202,7 @@ export function PlatformSidebar() {
         </div>
 
         {/* Scroll fade hint */}
-        <div className="sticky bottom-0 left-0 right-0 h-6 pointer-events-none bg-gradient-to-t from-[hsl(var(--platform-sidebar-bg)/0.95)] to-transparent" />
+        <div className="sticky bottom-0 left-0 right-0 h-6 pointer-events-none bg-gradient-to-t from-[hsl(var(--platform-sidebar-bg)/0.85)] to-transparent" />
       </nav>
 
       {/* User Profile Section */}
