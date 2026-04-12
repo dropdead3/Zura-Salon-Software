@@ -1,108 +1,122 @@
 
 
-# Daily Briefing — Full Build Plan
+# Task Engine 2.0 — Build Plan
 
-## Gap Analysis: Current vs Spec
+## Current State
 
-| Spec Section | Current State | Status |
-|---|---|---|
-| Today's Focus (singular top opportunity) | Shows top 3 tasks as "You Should Do" | Missing — no capital/opportunity integration |
-| Zura Already Did (automated actions) | Shows "Completed Today" count only | Missing — no SEO/automation query |
-| You Should Do (2-4 revenue-linked tasks) | Partially exists but not tied to focus | Needs rework |
-| Blockers | Not implemented | Missing |
-| Opportunity Remaining | Shows "Revenue at Stake" loosely | Missing — no predicted vs captured calc |
-| Active Growth Moves | Not implemented | Missing |
-| Role-aware variants | Leadership-only gate | Missing stylist/manager variants |
-| Placement in Command Center | Only on DashboardHome | Missing from ⌘K |
-| Empty/missed state messaging | Not implemented | Missing |
+The `tasks` table has: `id`, `user_id`, `title`, `description`, `is_completed`, `due_date`, `priority` (text: low/normal/high), `source`, `notes`, `recurrence_pattern`, `recurrence_parent_id`, `snoozed_until`, `estimated_revenue_impact_cents`, `expires_at`, `completed_at`, `created_at`, `updated_at`.
 
-The current implementation is a lightweight card. The spec requires a full panel with 6 structured sections powered by Capital, SEO, tasks, and operational data.
+Task UI (`TaskItem`, `TasksCard`, `AddTaskDialog`, `EditTaskDialog`, `TaskDetailDrilldown`) already supports revenue impact badges and expiry countdowns. The Daily Briefing Engine sorts tasks by `estimated_revenue_impact_cents` then priority.
 
----
+**What's missing**: opportunity linkage, priority scoring, task type classification, enforcement level, execution time, difficulty, decay logic, missed opportunity tracking, and the deterministic priority formula.
 
 ## Build Scope
 
-### 1. New Hook: `useDailyBriefingEngine`
+### 1. Database Migration — New Task Columns
 
-Replaces `useDailyBriefing` (which is pure task computation). The new hook composes data from multiple systems:
+Add to `tasks` table:
+- `opportunity_id` (uuid, nullable) — FK to `capital_funding_opportunities`
+- `revenue_type` (text, nullable, default null) — `'generated'` or `'protected'`
+- `priority_score` (integer, nullable, default null) — deterministic 0-100
+- `execution_time_minutes` (integer, nullable, default null)
+- `difficulty_score` (integer, nullable, default null) — 0-100
+- `task_type` (text, nullable, default null) — `'growth'`, `'protection'`, `'acceleration'`, `'unlock'`
+- `enforcement_level` (integer, nullable, default 1) — 1=soft, 2=moderate, 3=hard
+- `decay_days` (integer, nullable, default null)
+- `missed_revenue_cents` (integer, nullable, default null) — populated when expired
+- `status` (text, default `'active'`) — `'created'`, `'active'`, `'in_progress'`, `'completed'`, `'expired'`, `'missed'`
 
-- **Today's Focus**: Uses `useZuraCapital().topOpportunity` — the highest `surfacePriority` eligible opportunity. Falls back to highest-impact task if no capital opportunity exists.
-- **Zura Already Did**: New query — SEO tasks completed today where `assigned_to = 'system'` (automated). Plus `capital_surface_events` for today.
-- **You Should Do**: Filters tasks by: tied to focus opportunity (via `source`/`service_id`/`location_id`), then highest `estimated_revenue_impact_cents`, capped at 2-4.
-- **Blockers**: Query `inventory_alerts` (if table exists) + check capacity data for fully-booked signals.
-- **Opportunity Remaining**: `predicted_total - captured_to_date` from capital opportunities or SEO revenue predictions.
-- **Active Growth Moves**: Active capital projects + active SEO campaigns.
-- **Role adaptation**: Accept `roleContext` param. Owner = org-wide. Manager = location-scoped. Stylist = personal tasks only, no capital.
+### 2. Task Priority Calculator (`src/lib/task-priority-calculator.ts`)
 
-### 2. Rewrite `DailyBriefingCard` → `DailyBriefingPanel`
+Pure deterministic function following the same pattern as `seo-priority-calculator.ts`:
 
-Full component with 6 stacked sections following the spec hierarchy:
+```text
+priority_score = (
+  revenue_impact_score × 0.40 +
+  urgency_score       × 0.25 +
+  ease_score           × 0.15 +
+  confidence_score     × 0.10 +
+  dependency_score     × 0.10
+) × 100  → integer 0–100
+```
 
-**A. Today's Focus** — Single directive. Shows opportunity title, location, revenue lift, one-line context sentence. Uses `tokens.card.title` for the focus label, `BlurredAmount` for revenue.
+Normalization:
+- Revenue: $0→0, $5000/mo→100 (linear clamp)
+- Urgency: 1d→100, 3d→80, 7d→50, 14+→20 (based on `expires_at` or `due_date`)
+- Ease: 5min→100, 15→80, 30→60, 60+→40
+- Confidence: passed through from opportunity (default 0.7 if no opportunity)
+- Dependency: +10 if other tasks are blocked by this one (future; default 0)
 
-**B. Zura Already Did** — 2-5 automated action summaries (e.g., "Sent 5 review requests", "Updated extension page metadata"). Small checkmark icons, trust-building.
+### 3. Update `useTasks` Hook + Task Interface
 
-**C. You Should Do** — 2-4 tasks with revenue impact badges. Each task: title, `~$800/mo` badge, one-line "why". Checkbox to complete inline.
+Extend `Task` interface with all new fields. Update `createTask` and `updateTask` mutations to accept new fields. Add ordering by `priority_score` descending (when non-null) as primary sort.
 
-**D. Blockers** — Conditional. Only renders if real blockers exist. Amber styling, tied to lost revenue.
+### 4. Update Task UI Components
 
-**E. Opportunity Remaining** — Shows `+$X,XXX this month` with a subtle progress indicator (captured vs predicted).
+**TaskItem.tsx**: Show task type badge (Growth/Protection/Acceleration/Unlock), execution time estimate, and priority score dot instead of simple priority indicator.
 
-**F. Active Growth Moves** — Active campaigns and funded projects, 2-3 max, status badge.
+**AddTaskDialog.tsx**: Add optional fields for task type, execution time, opportunity link, and revenue type. Keep the form simple — these are optional for manual tasks.
 
-**Empty state**: "You're on track today — no critical actions needed."
+**EditTaskDialog.tsx**: Same new optional fields.
 
-**Missed actions state**: When tasks have been ignored past due, show "$X,XXX opportunity at risk" in amber.
+**TaskDetailDrilldown.tsx**: Show full task metadata: revenue impact, revenue type, opportunity link, priority score breakdown, enforcement level, and missed revenue (if expired).
 
-### 3. Role-Aware Variants
+**TasksCard.tsx**: Sort active tasks by `priority_score` descending (when available), then by existing priority. Add "Missed" section below Expired showing cumulative missed revenue.
 
-The panel renders different data based on role:
-- **Owner/Admin**: Org-wide focus from capital + SEO, strategic tasks
-- **Manager**: Location-filtered focus, team + operations tasks
-- **Stylist**: Personal revenue focus, client-action tasks only, no capital section
+### 5. Missed Opportunity Tracking
 
-### 4. Wire to Command Center (⌘K)
+When a task expires (detected client-side in `useTasks` or `useDailyBriefingEngine`):
+- If `is_completed = false` and `expires_at < now()` and `missed_revenue_cents` is null:
+  - Set `status = 'expired'`, `missed_revenue_cents = estimated_revenue_impact_cents`
+  - This is a one-time write on detection
 
-Add `DailyBriefingPanel` as the first section in `CommandCenterAnalytics` — above all pinned cards. Not pinnable, always visible for leadership. Uses same hook, compact layout.
+**MissedOpportunityBanner** component: Summarizes weekly missed revenue. Placed in Daily Briefing blockers section.
 
-### 5. Task Completion Micro-interaction
+### 6. Daily Briefing Engine Enhancement
 
-When a briefing task is completed via inline checkbox:
-- Animate the row out
-- Show brief toast: "+$800 monthly impact unlocked" (if revenue impact exists)
+Update `useDailyBriefingEngine.ts`:
+- Sort `shouldDoTasks` by `priority_score` descending instead of raw `estimated_revenue_impact_cents`
+- Include `missed_revenue_cents` aggregation in blockers
+- Show enforcement warnings when tasks with `enforcement_level >= 2` are overdue
 
-### 6. Keep Legacy `useDailyBriefing` + `DailyBriefingCard`
+### 7. Capital Integration Gate
 
-Delete both — they're replaced entirely by the new system.
-
----
+In `useZuraCapital` surfacing logic: if opportunity has linked tasks with `task_type = 'unlock'` that are incomplete, suppress the opportunity's "Fund Now" action and show "Complete prerequisite tasks first" message. This enforces the unlock gate.
 
 ## Files
 
 | File | Action |
 |---|---|
-| `src/hooks/useDailyBriefingEngine.ts` | CREATE — Composes capital, SEO, tasks, campaigns |
-| `src/components/dashboard/DailyBriefingPanel.tsx` | CREATE — Full 6-section panel |
-| `src/components/dashboard/DailyBriefingCard.tsx` | DELETE — Replaced |
-| `src/hooks/useDailyBriefing.ts` | DELETE — Replaced |
-| `src/pages/dashboard/DashboardHome.tsx` | UPDATE — Swap `DailyBriefingCard` → `DailyBriefingPanel`, pass role context |
-| `src/components/dashboard/CommandCenterAnalytics.tsx` | UPDATE — Add briefing panel at top |
-| `src/hooks/useDashboardLayout.ts` | No change needed (already has `daily_briefing` in default) |
-
-## Data Dependencies (All Existing)
-
-- `useZuraCapital()` — top opportunity, active projects
-- `useSEOTasks(orgId, { status: ['completed'] })` — automated actions today
-- `useTasks()` — personal task list with revenue impact
-- `useOrganizationContext()` — org scoping
-- `useEffectiveRoles()` — role adaptation
+| Migration SQL | CREATE — add 10 columns to `tasks` |
+| `src/lib/task-priority-calculator.ts` | CREATE — deterministic priority formula |
+| `src/hooks/useTasks.ts` | UPDATE — extend interface + sort by priority_score |
+| `src/components/dashboard/TaskItem.tsx` | UPDATE — task type badge, priority score, exec time |
+| `src/components/dashboard/AddTaskDialog.tsx` | UPDATE — optional new fields |
+| `src/components/dashboard/EditTaskDialog.tsx` | UPDATE — optional new fields |
+| `src/components/dashboard/TaskDetailDrilldown.tsx` | UPDATE — full metadata display |
+| `src/components/dashboard/TasksCard.tsx` | UPDATE — priority_score sort, missed section |
+| `src/components/dashboard/MissedOpportunityBanner.tsx` | CREATE — weekly missed revenue summary |
+| `src/hooks/useDailyBriefingEngine.ts` | UPDATE — priority_score sort, missed revenue |
+| `src/components/dashboard/DailyBriefingPanel.tsx` | UPDATE — missed opportunity in blockers |
 
 ## Build Order
 
-1. Create `useDailyBriefingEngine` hook
-2. Create `DailyBriefingPanel` component
-3. Wire into `DashboardHome` (replace old card)
-4. Wire into `CommandCenterAnalytics` (top section)
-5. Delete old `DailyBriefingCard` + `useDailyBriefing`
-6. TypeScript build check
+1. Database migration (10 new columns)
+2. Create `task-priority-calculator.ts`
+3. Update `useTasks` hook (interface + sort + missed detection)
+4. Update `TaskItem` (type badge, priority score, exec time)
+5. Update `AddTaskDialog` + `EditTaskDialog` (new fields)
+6. Update `TaskDetailDrilldown` (full metadata)
+7. Update `TasksCard` (priority sort, missed section)
+8. Create `MissedOpportunityBanner`
+9. Update Daily Briefing engine + panel
+10. TypeScript build check
+
+## Out of Scope (Phase 2)
+
+- Task auto-generation from opportunities (POST /tasks/generate)
+- Enforcement levels 2-3 (restrict lead pool, delay capital)
+- Team accountability dashboards (completion rate, missed value per person)
+- Backend endpoints (prioritized fetch, generate from opportunities)
+- Capital unlock gate enforcement in `useZuraCapital`
 
