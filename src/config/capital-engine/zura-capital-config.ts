@@ -6,19 +6,8 @@
  */
 
 /* ── Zura Eligibility Thresholds ── */
-export const ZURA_ELIGIBILITY_THRESHOLDS = {
-  minROE: 1.8,
-  minConfidence: 70,
-  maxRisk: 'medium' as const,
-  maxConcurrentFundedProjects: 2,
-  maxExposurePerLocation: 200_000,
-  maxExposurePerStylist: 50_000,
-  cooldownAfterDeclineDays: 14,
-  cooldownAfterUnderperformingDays: 30,
-  underperformanceVarianceThreshold: -25,
-  maxStaleDays: 90,
-  minCapitalRequired: 5_000,
-} as const;
+// CANONICAL thresholds live in capital-formulas-config.ts (CANONICAL_ELIGIBILITY_THRESHOLDS).
+// All consumers must use calculateInternalEligibility() from capital-formulas.ts.
 
 /* ── Risk Level Ordering ── */
 const RISK_RANK: Record<string, number> = {

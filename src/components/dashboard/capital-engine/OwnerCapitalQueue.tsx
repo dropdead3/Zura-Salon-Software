@@ -4,6 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { tokens } from '@/lib/design-tokens';
 import { formatCurrency } from '@/lib/format';
+import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { useZuraCapital, type ZuraCapitalOpportunity } from '@/hooks/useZuraCapital';
 import { useLogCapitalEvent } from '@/hooks/useCapitalEventLog';
 import { FundingOpportunityDetail } from './FundingOpportunityDetail';
@@ -107,10 +108,10 @@ export function OwnerCapitalQueue() {
                     </span>
                   </div>
                   <span className="font-sans text-sm text-right">
-                    {formatCurrency(c(opp.investmentCents), { noCents: true })}
+                    <BlurredAmount>{formatCurrency(c(opp.investmentCents), { noCents: true })}</BlurredAmount>
                   </span>
                   <span className="font-sans text-sm text-right">
-                    +{formatCurrency(c(opp.predictedLiftExpectedCents), { noCents: true })}
+                    <BlurredAmount>+{formatCurrency(c(opp.predictedLiftExpectedCents), { noCents: true })}</BlurredAmount>
                   </span>
                   <span className={`font-display text-sm text-right tracking-wide ${opp.roe >= 1.8 ? 'text-primary' : ''}`}>
                     {opp.roe.toFixed(1)}x
@@ -155,8 +156,8 @@ export function OwnerCapitalQueue() {
                     </Badge>
                   </div>
                   <div className="flex items-center gap-4 text-xs text-muted-foreground font-sans">
-                    <span>{formatCurrency(c(opp.investmentCents), { noCents: true })}</span>
-                    <span>+{formatCurrency(c(opp.predictedLiftExpectedCents), { noCents: true })}</span>
+                    <span><BlurredAmount>{formatCurrency(c(opp.investmentCents), { noCents: true })}</BlurredAmount></span>
+                    <span><BlurredAmount>+{formatCurrency(c(opp.predictedLiftExpectedCents), { noCents: true })}</BlurredAmount></span>
                     <span className={opp.roe >= 1.8 ? 'text-primary font-display tracking-wide' : 'font-display tracking-wide'}>
                       {opp.roe.toFixed(1)}x
                     </span>

@@ -12,6 +12,12 @@ import { tokens } from '@/lib/design-tokens';
 import { formatCurrency } from '@/lib/format';
 import { getROELabel } from '@/config/capital-engine/capital-config';
 import {
+  calculateMonthlyLiftCents,
+  calculateNetMonthlyGainCents,
+  calculateCoverageRatio,
+} from '@/lib/capital-engine/capital-formulas';
+import { BlurredAmount } from '@/contexts/HideNumbersContext';
+import {
   CONSTRAINT_LABELS,
   OPPORTUNITY_TYPE_LABELS,
   FUNDING_STATUS_LABELS,
@@ -54,15 +60,27 @@ export function FundingOpportunityDetail({ opportunity, open, onOpenChange, surf
   const liftLow = c(opportunity.predictedLiftLowCents);
   const liftHigh = c(opportunity.predictedLiftHighCents);
 
-  const monthlyLift = liftExpected / Math.max(1, opportunity.breakEvenMonthsExpected);
-  const monthlyPayment = opportunity.providerEstimatedPaymentCents
-    ? c(opportunity.providerEstimatedPaymentCents)
+  const monthlyLiftCents = calculateMonthlyLiftCents(
+    opportunity.predictedLiftExpectedCents,
+    opportunity.breakEvenMonthsExpected,
+  );
+  const monthlyLift = monthlyLiftCents / 100;
+  const paymentCents = opportunity.providerEstimatedPaymentCents ?? 0;
+  const netMonthlyCents = calculateNetMonthlyGainCents(
+    opportunity.predictedLiftExpectedCents,
+    paymentCents,
+    opportunity.breakEvenMonthsExpected,
+  );
+  const netMonthly = netMonthlyCents / 100;
+  const monthlyPayment = paymentCents > 0
+    ? paymentCents / 100
     : investmentDollars / Math.max(1, opportunity.breakEvenMonthsExpected);
-  const netMonthly = monthlyLift - monthlyPayment;
 
-  const coveragePercent = opportunity.coverageRatio
-    ? Math.round(Number(opportunity.coverageRatio) * 100)
-    : null;
+  const coverage = calculateCoverageRatio(
+    opportunity.providerOfferAmountCents,
+    opportunity.investmentCents,
+  );
+  const coveragePercent = coverage.percent;
 
   const statusInfo = FUNDING_STATUS_LABELS[opportunity.eligibilityStatus] ?? {
     label: opportunity.eligibilityStatus,
@@ -149,11 +167,13 @@ export function FundingOpportunityDetail({ opportunity, open, onOpenChange, surf
                 icon={<DollarSign className="w-3.5 h-3.5 text-muted-foreground" />}
                 label="Investment"
                 value={formatCurrency(investmentDollars, { noCents: true })}
+                blurred
               />
               <MetricTile
                 icon={<TrendingUp className="w-3.5 h-3.5 text-muted-foreground" />}
                 label="Expected Lift"
                 value={`+${formatCurrency(liftExpected, { noCents: true })}/yr`}
+                blurred
                 sub={liftLow > 0 && liftHigh > 0
                   ? `${formatCurrency(liftLow, { noCents: true })} – ${formatCurrency(liftHigh, { noCents: true })}`
                   : undefined
@@ -199,8 +219,8 @@ export function FundingOpportunityDetail({ opportunity, open, onOpenChange, surf
               <div className="p-3 rounded-lg bg-muted/30 border border-border/40 space-y-2">
                 <div className="flex items-center justify-between text-sm font-sans">
                   <span className="text-muted-foreground">Provider Amount</span>
-                  <span className="font-display tracking-wide">
-                    {formatCurrency(c(opportunity.providerOfferAmountCents), { noCents: true })}
+                   <span className="font-display tracking-wide">
+                    <BlurredAmount>{formatCurrency(c(opportunity.providerOfferAmountCents), { noCents: true })}</BlurredAmount>
                   </span>
                 </div>
                 {coveragePercent != null && (
@@ -213,8 +233,8 @@ export function FundingOpportunityDetail({ opportunity, open, onOpenChange, surf
                   </>
                 )}
                 {coveragePercent != null && coveragePercent < 100 && (
-                  <p className="text-[10px] text-muted-foreground font-sans">
-                    Funding covers {coveragePercent}% of the recommended {formatCurrency(investmentDollars, { noCents: true })} investment.
+                   <p className="text-[10px] text-muted-foreground font-sans">
+                    Funding covers {coveragePercent}% of the recommended <BlurredAmount>{formatCurrency(investmentDollars, { noCents: true })}</BlurredAmount> investment.
                   </p>
                 )}
                 {opportunity.providerFeesSummary && (
@@ -235,11 +255,11 @@ export function FundingOpportunityDetail({ opportunity, open, onOpenChange, surf
                 <span className="text-xs text-primary font-sans font-medium">Post-Financing Net Cash Flow</span>
               </div>
               <span className="font-display text-xl tracking-wide text-primary">
-                {netMonthly >= 0 ? '+' : ''}{formatCurrency(netMonthly, { noCents: true })}
+                <BlurredAmount>{netMonthly >= 0 ? '+' : ''}{formatCurrency(netMonthly, { noCents: true })}</BlurredAmount>
                 <span className="text-xs font-sans text-primary/70">/mo</span>
               </span>
               <p className="text-xs text-muted-foreground font-sans">
-                {formatCurrency(monthlyLift, { noCents: true })} lift − {formatCurrency(monthlyPayment, { noCents: true })} repayment over {opportunity.breakEvenMonthsExpected}mo
+                <BlurredAmount>{formatCurrency(monthlyLift, { noCents: true })}</BlurredAmount> lift − <BlurredAmount>{formatCurrency(monthlyPayment, { noCents: true })}</BlurredAmount> repayment over {opportunity.breakEvenMonthsExpected}mo
               </p>
             </div>
           </div>
@@ -297,12 +317,14 @@ function MetricTile({
   value,
   sub,
   highlight,
+  blurred,
 }: {
   icon: React.ReactNode;
   label: string;
   value: string;
   sub?: string;
   highlight?: boolean;
+  blurred?: boolean;
 }) {
   return (
     <div className="p-3 rounded-lg bg-muted/30 border border-border/40">
@@ -311,10 +333,12 @@ function MetricTile({
         <span className="text-xs text-muted-foreground font-sans">{label}</span>
       </div>
       <span className={`font-display text-lg tracking-wide ${highlight ? 'text-primary' : ''}`}>
-        {value}
+        {blurred ? <BlurredAmount>{value}</BlurredAmount> : value}
       </span>
       {sub && (
-        <span className="text-[10px] text-muted-foreground font-sans block">{sub}</span>
+        <span className="text-[10px] text-muted-foreground font-sans block">
+          {blurred ? <BlurredAmount>{sub}</BlurredAmount> : sub}
+        </span>
       )}
     </div>
   );

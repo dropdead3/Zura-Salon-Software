@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { tokens } from '@/lib/design-tokens';
 import { formatCurrency } from '@/lib/format';
+import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { useCapitalProjects } from '@/hooks/useCapitalProjects';
 import {
   PROJECT_STATUS_LABELS,
@@ -79,7 +80,7 @@ export function FinancedProjectsTracker() {
               </div>
 
               <div className="flex items-center gap-6 text-xs text-muted-foreground font-sans flex-wrap">
-                <span>Funded: {formatCurrency(c(funded), { noCents: true })}</span>
+                <span>Funded: <BlurredAmount>{formatCurrency(c(funded), { noCents: true })}</BlurredAmount></span>
                 <span>Repayment: <span className={repaymentInfo.color}>{repaymentInfo.label}</span></span>
                 {roi != null && roi !== 0 && (
                   <span className={roi >= 0 ? 'text-green-600' : 'text-destructive'}>
@@ -104,10 +105,10 @@ export function FinancedProjectsTracker() {
               {revenue > 0 && (
                 <div className="flex items-center justify-between text-xs font-sans">
                   <span className="text-muted-foreground">
-                    Revenue: {formatCurrency(c(revenue), { noCents: true })}
+                    Revenue: <BlurredAmount>{formatCurrency(c(revenue), { noCents: true })}</BlurredAmount>
                     {predicted > 0 && (
                       <span className="text-muted-foreground/60">
-                        {' '}(vs {formatCurrency(c(predicted), { noCents: true })} pred.)
+                        {' '}(vs <BlurredAmount>{formatCurrency(c(predicted), { noCents: true })}</BlurredAmount> pred.)
                       </span>
                     )}
                   </span>

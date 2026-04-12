@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { tokens } from '@/lib/design-tokens';
 import { formatCurrency } from '@/lib/format';
+import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { useZuraCapital, type ZuraCapitalOpportunity } from '@/hooks/useZuraCapital';
 import { useLogCapitalEvent } from '@/hooks/useCapitalEventLog';
 import { CONSTRAINT_LABELS, OPPORTUNITY_TYPE_LABELS } from '@/config/capital-engine/zura-capital-config';
@@ -103,13 +104,13 @@ export function ZuraCapitalCard() {
               </div>
               <div className="text-center">
                 <span className="font-display text-sm tracking-wide">
-                  {formatCurrency(centsToDisplay(topOpportunity.investmentCents), { noCents: true })}
+                  <BlurredAmount>{formatCurrency(centsToDisplay(topOpportunity.investmentCents), { noCents: true })}</BlurredAmount>
                 </span>
                 <span className="text-[10px] text-muted-foreground font-sans block">Investment</span>
               </div>
               <div className="text-center">
                 <span className="font-display text-sm tracking-wide">
-                  +{formatCurrency(centsToDisplay(topOpportunity.predictedLiftExpectedCents), { noCents: true })}
+                  <BlurredAmount>+{formatCurrency(centsToDisplay(topOpportunity.predictedLiftExpectedCents), { noCents: true })}</BlurredAmount>
                 </span>
                 <span className="text-[10px] text-muted-foreground font-sans block">Expected Lift</span>
               </div>
@@ -125,7 +126,7 @@ export function ZuraCapitalCard() {
               <div className="flex items-center gap-2 text-xs font-sans text-muted-foreground pt-1">
                 <TrendingUp className="w-3 h-3 text-primary" />
                 <span>
-                  Funding available: {formatCurrency(centsToDisplay(topOpportunity.providerOfferAmountCents), { noCents: true })}
+                  Funding available: <BlurredAmount>{formatCurrency(centsToDisplay(topOpportunity.providerOfferAmountCents), { noCents: true })}</BlurredAmount>
                   {coveragePercent != null && coveragePercent < 100 && (
                     <span className="text-muted-foreground/60"> ({coveragePercent}% coverage)</span>
                   )}
