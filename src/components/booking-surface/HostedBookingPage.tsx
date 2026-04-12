@@ -62,11 +62,17 @@ export function HostedBookingPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('locations')
-        .select('id, name, address, city, state')
+        .select('id, name, address, city, state_province')
         .eq('organization_id', org!.id)
         .eq('is_active', true);
       if (error) throw error;
-      return data as BookingLocation[];
+      return (data ?? []).map((l) => ({
+        id: l.id,
+        name: l.name,
+        address: l.address,
+        city: l.city,
+        state: l.state_province,
+      })) as BookingLocation[];
     },
     enabled: !!org?.id,
   });
@@ -77,14 +83,14 @@ export function HostedBookingPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('employee_profiles')
-        .select('user_id, first_name, last_name, photo_url, bio')
+        .select('user_id, full_name, photo_url, bio')
         .eq('organization_id', org!.id)
         .eq('is_active', true)
-        .eq('accepts_bookings', true);
+        .eq('is_booking', true);
       if (error) throw error;
       return (data ?? []).map((s) => ({
         id: s.user_id,
-        name: `${s.first_name || ''} ${s.last_name || ''}`.trim(),
+        name: s.full_name || 'Stylist',
         photoUrl: s.photo_url,
         bio: s.bio,
       })) as BookingStylist[];
