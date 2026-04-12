@@ -87,7 +87,7 @@ export function PlatformLiveAnalytics({ className }: PlatformLiveAnalyticsProps)
   if (isLoading) {
     return (
       <div className={cn(
-        "relative rounded-2xl border border-[hsl(var(--platform-border)/0.5)] bg-[hsl(var(--platform-bg-card)/0.4)] backdrop-blur-xl p-6 overflow-hidden",
+        "relative rounded-[16px] border border-[hsl(var(--platform-border)/0.5)] bg-[hsl(var(--platform-bg-card)/0.4)] backdrop-blur-xl p-5 overflow-hidden",
         className
       )}>
         <div className="flex items-center gap-2 mb-5">
@@ -107,7 +107,7 @@ export function PlatformLiveAnalytics({ className }: PlatformLiveAnalyticsProps)
 
   return (
     <div className={cn(
-      "relative rounded-2xl border border-[hsl(var(--platform-border)/0.5)] bg-[hsl(var(--platform-bg-card)/0.4)] backdrop-blur-xl p-6 overflow-hidden",
+      "relative rounded-[16px] border border-[hsl(var(--platform-border)/0.5)] bg-[hsl(var(--platform-bg-card)/0.4)] backdrop-blur-xl p-5 overflow-hidden",
       className
     )}>
       {/* Top edge highlight */}
@@ -225,9 +225,9 @@ function MetricCard({ label, value, change, icon: Icon, color }: MetricCardProps
   };
 
   return (
-    <div className="group/metric rounded-xl bg-[hsl(var(--platform-bg-hover)/0.3)] border border-[hsl(var(--platform-border)/0.2)] p-3 shadow-[inset_0_1px_1px_hsl(var(--platform-foreground)/0.03)] hover:bg-[hsl(var(--platform-bg-hover)/0.4)] transition-colors duration-300">
+    <div className="group/metric rounded-xl bg-[hsl(var(--platform-bg-hover)/0.3)] border border-[hsl(var(--platform-border)/0.2)] p-3 shadow-[inset_0_1px_1px_hsl(var(--platform-foreground)/0.03)] hover:bg-[hsl(var(--platform-bg-hover)/0.4)] transition-colors duration-150">
       <div className="flex items-center justify-between mb-2">
-        <div className={cn("p-1.5 rounded-lg transition-transform duration-300 group-hover/metric:scale-105", colorStyles[color])}>
+        <div className={cn("p-1.5 rounded-lg transition-transform duration-150 group-hover/metric:scale-105", colorStyles[color])}>
           <Icon className="h-3.5 w-3.5" />
         </div>
         {change !== 0 && (

@@ -55,7 +55,7 @@ export function PlatformActivityFeed({
   if (isLoading) {
     return (
       <div className={cn(
-        "rounded-2xl border border-[hsl(var(--platform-border)/0.5)] bg-[hsl(var(--platform-bg-card)/0.4)] backdrop-blur-xl p-6 overflow-hidden",
+        "rounded-[16px] border border-[hsl(var(--platform-border)/0.5)] bg-[hsl(var(--platform-bg-card)/0.4)] backdrop-blur-xl p-5 overflow-hidden",
         className
       )}>
         {showHeader && (
@@ -77,7 +77,7 @@ export function PlatformActivityFeed({
 
   return (
     <div className={cn(
-      "relative rounded-2xl border border-[hsl(var(--platform-border)/0.5)] bg-[hsl(var(--platform-bg-card)/0.4)] backdrop-blur-xl p-6 overflow-hidden",
+      "relative rounded-[16px] border border-[hsl(var(--platform-border)/0.5)] bg-[hsl(var(--platform-bg-card)/0.4)] backdrop-blur-xl p-5 overflow-hidden",
       className
     )}>
       {/* Subtle top-edge highlight */}
@@ -109,7 +109,7 @@ export function PlatformActivityFeed({
         </div>
       ) : (
         <div className="text-center py-14">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-[hsl(var(--platform-bg-hover)/0.3)] mb-4">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-[16px] bg-[hsl(var(--platform-bg-hover)/0.3)] mb-4">
             <Activity className="h-8 w-8 text-[hsl(var(--platform-foreground-subtle))] opacity-30" />
           </div>
           <p className="text-[hsl(var(--platform-foreground-muted))] font-medium">No activity yet</p>
@@ -154,7 +154,7 @@ function ActivityLogItem({ log, isLatest = false }: ActivityLogItemProps) {
       className={cn(
         "flex items-center gap-3 p-3 rounded-xl bg-[hsl(var(--platform-bg-hover)/0.2)] border border-[hsl(var(--platform-border)/0.2)] border-l-2 cursor-pointer group/feed",
         "hover:bg-[hsl(var(--platform-bg-hover)/0.4)] hover:border-[hsl(var(--platform-border)/0.4)] hover:translate-x-0.5",
-        "transition-all duration-300 ease-[cubic-bezier(0.25,0.1,0.25,1)] will-change-transform",
+        "transition-all duration-150 ease-[cubic-bezier(0.25,0.1,0.25,1)] will-change-transform",
         borderColors[config.color] || 'border-l-[hsl(var(--platform-foreground-subtle)/0.4)]'
       )}
     >
@@ -168,7 +168,7 @@ function ActivityLogItem({ log, isLatest = false }: ActivityLogItemProps) {
 
       {/* Action Icon */}
       <div className={cn(
-        "flex h-8 w-8 items-center justify-center rounded-lg transition-transform duration-300 group-hover/feed:scale-105",
+        "flex h-8 w-8 items-center justify-center rounded-lg transition-transform duration-150 group-hover/feed:scale-105",
         colors.bg
       )}>
         <Icon className={cn("h-4 w-4", colors.text)} />
