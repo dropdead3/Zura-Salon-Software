@@ -324,6 +324,22 @@ export function DailyBriefingPanel({
                         </span>
                       </div>
                     ))}
+
+                    {/* Inline Capital Available */}
+                    {topOpportunity?.stripeOfferAvailable && roleContext !== 'stylist' && (
+                      <div className="flex items-center gap-2 p-2 rounded-lg bg-primary/5 border border-primary/10">
+                        <DollarSign className="w-3.5 h-3.5 text-primary shrink-0" />
+                        <p className="text-xs font-sans truncate flex-1">
+                          Capital available: <BlurredAmount>{formatCurrency((topOpportunity.providerOfferAmountCents ?? 0) / 100)}</BlurredAmount>
+                        </p>
+                        <Button size="sm" variant="ghost" className="h-6 px-2 text-[10px]" asChild>
+                          <Link to={dashPath(`/capital/${topOpportunity.id}`)}>
+                            Fund
+                            <ArrowRight className="w-3 h-3 ml-0.5" />
+                          </Link>
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 </section>
               )}
