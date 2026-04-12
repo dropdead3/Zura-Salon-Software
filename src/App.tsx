@@ -145,6 +145,7 @@ const StylistMixingDashboard = lazyWithRetry(() => import("./pages/dashboard/Sty
 const MetricsGlossary = lazyWithRetry(() => import("./pages/dashboard/MetricsGlossary"));
 const AppsMarketplace = lazyWithRetry(() => import("./pages/dashboard/AppsMarketplace"));
 const PublicBooking = lazyWithRetry(() => import("./pages/PublicBooking"));
+const BookingSurface = lazyWithRetry(() => import("./pages/BookingSurface"));
 const DayRateBooking = lazyWithRetry(() => import("./pages/DayRateBooking"));
 const ProductDemo = lazyWithRetry(() => import("./pages/ProductDemo"));
 const SolIndependent = lazyWithRetry(() => import("./pages/solutions/IndependentStylist"));
@@ -239,6 +240,7 @@ const CapitalOpportunityDetail = lazyWithRetry(() => import("./pages/dashboard/a
 const CapitalProjects = lazyWithRetry(() => import("./pages/dashboard/admin/CapitalProjects"));
 const CapitalProjectDetail = lazyWithRetry(() => import("./pages/dashboard/admin/CapitalProjectDetail"));
 const CapitalSettings = lazyWithRetry(() => import("./pages/dashboard/admin/CapitalSettings"));
+const BookingSurfaceSettingsPage = lazyWithRetry(() => import("./pages/dashboard/admin/BookingSurfaceSettingsPage"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
