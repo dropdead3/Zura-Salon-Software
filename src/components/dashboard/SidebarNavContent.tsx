@@ -127,6 +127,20 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
   const { effectiveOrganization } = useOrganizationContext();
   const organizationId = effectiveOrganization?.id;
 
+  const { data: hasCapitalOpportunities } = useQuery({
+    queryKey: ['capital-opportunities-exist', organizationId],
+    queryFn: async () => {
+      const { count } = await supabase
+        .from('capital_funding_opportunities')
+        .select('id', { count: 'exact', head: true })
+        .eq('organization_id', organizationId!)
+        .in('status', ['pending_review', 'approved', 'ready']);
+      return (count ?? 0) > 0;
+    },
+    enabled: !!organizationId,
+    staleTime: 5 * 60 * 1000,
+  });
+
   const { data: hasPayrollEnrollment } = useQuery({
     queryKey: ['my-payroll-enrollment', user?.id, organizationId],
     queryFn: async () => {
