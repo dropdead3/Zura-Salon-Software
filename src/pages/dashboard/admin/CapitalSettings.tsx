@@ -13,6 +13,7 @@ import { cn } from '@/lib/utils';
 import { useCapitalPolicySettings, useUpdateCapitalPolicySettings } from '@/hooks/useCapitalPolicySettings';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 import { PageExplainer } from '@/components/ui/PageExplainer';
+import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { Settings } from 'lucide-react';
 
 export default function CapitalSettings() {
