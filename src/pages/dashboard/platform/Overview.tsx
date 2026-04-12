@@ -104,7 +104,7 @@ export default function PlatformOverview() {
         variants={stagger}
         initial="hidden"
         animate="show"
-        className="space-y-10"
+        className="space-y-8"
       >
         {/* Header */}
         <motion.div variants={fadeUp} className="flex items-center justify-between">
@@ -126,7 +126,7 @@ export default function PlatformOverview() {
         </motion.div>
 
         {/* Stats Grid */}
-        <motion.div variants={fadeUp} className="grid gap-5 md:grid-cols-2 lg:grid-cols-4">
+        <motion.div variants={fadeUp} className="grid gap-3.5 md:grid-cols-2 lg:grid-cols-4">
           <StatCard
             title="Total Accounts"
             value={stats?.totalOrganizations || 0}
@@ -174,7 +174,7 @@ export default function PlatformOverview() {
         />
 
         {/* Incident Banner + Analytics Row */}
-        <motion.div variants={fadeUp} className="grid gap-6 lg:grid-cols-3">
+        <motion.div variants={fadeUp} className="grid gap-5 lg:grid-cols-3">
           <div className="lg:col-span-2">
             <PlatformLiveAnalytics />
           </div>
@@ -190,7 +190,7 @@ export default function PlatformOverview() {
         />
 
         {/* Quick Actions */}
-        <motion.div variants={fadeUp} className="group/actions relative rounded-2xl border border-[hsl(var(--platform-border)/0.5)] bg-[hsl(var(--platform-bg-card)/0.4)] backdrop-blur-xl p-6 overflow-hidden">
+        <motion.div variants={fadeUp} className="group/actions relative rounded-[16px] border border-[hsl(var(--platform-border)/0.5)] bg-[hsl(var(--platform-bg-card)/0.4)] backdrop-blur-xl p-5 overflow-hidden">
           {/* Subtle shimmer overlay */}
           <div className="absolute inset-0 bg-gradient-to-r from-transparent via-[hsl(var(--platform-primary)/0.03)] to-transparent -translate-x-full group-hover/actions:translate-x-full transition-transform duration-[1.5s] ease-in-out" />
           
@@ -268,9 +268,9 @@ function StatCard({ title, value, icon: Icon, description, variant = 'default', 
   };
 
   const cardClasses = cn(
-    "group/card relative rounded-2xl border border-[hsl(var(--platform-border)/0.5)] bg-[hsl(var(--platform-bg-card)/0.4)] backdrop-blur-xl p-6",
-    "transition-all duration-500 ease-[cubic-bezier(0.25,0.1,0.25,1)] will-change-transform",
-    "hover:-translate-y-0.5",
+    "group/card relative rounded-[16px] border border-[hsl(var(--platform-border)/0.5)] bg-[hsl(var(--platform-bg-card)/0.4)] backdrop-blur-xl p-5",
+    "transition-all duration-150 ease-out will-change-transform",
+    "hover:-translate-y-px",
     glowStyles[variant],
     borderHoverStyles[variant],
     "overflow-hidden"
@@ -279,7 +279,7 @@ function StatCard({ title, value, icon: Icon, description, variant = 'default', 
   const content = (
     <>
       {/* Gradient shimmer on hover */}
-      <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-[hsl(var(--platform-primary)/0.07)] via-[hsl(var(--platform-secondary)/0.04)] to-transparent opacity-0 group-hover/card:opacity-100 transition-opacity duration-700" />
+      <div className="absolute inset-0 rounded-[16px] bg-gradient-to-br from-[hsl(var(--platform-primary)/0.07)] via-[hsl(var(--platform-secondary)/0.04)] to-transparent opacity-0 group-hover/card:opacity-100 transition-opacity duration-300" />
       
       {/* Top edge highlight */}
       <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[hsl(var(--platform-foreground)/0.06)] to-transparent" />
@@ -288,7 +288,7 @@ function StatCard({ title, value, icon: Icon, description, variant = 'default', 
         <div className="flex items-center justify-between mb-4">
           <span className="text-xs font-medium text-[hsl(var(--platform-foreground-muted))] tracking-wide uppercase">{title}</span>
           <div className={cn(
-            'p-2.5 rounded-xl transition-all duration-500 group-hover/card:scale-110 group-hover/card:rotate-3',
+            'p-2.5 rounded-xl transition-all duration-150 group-hover/card:scale-105',
             iconStyles[variant]
           )}>
             <Icon className="h-5 w-5" />
@@ -303,12 +303,12 @@ function StatCard({ title, value, icon: Icon, description, variant = 'default', 
               data={sparkData} 
               width={72} 
               height={28} 
-              className="mb-1 opacity-50 group-hover/card:opacity-100 transition-opacity duration-500" 
+            className="mb-1 opacity-50 group-hover/card:opacity-100 transition-opacity duration-150" 
             />
           )}
         </div>
         <div className="h-px bg-gradient-to-r from-[hsl(var(--platform-border)/0.4)] via-[hsl(var(--platform-border)/0.2)] to-transparent my-3" />
-        <p className="text-sm text-[hsl(var(--platform-foreground-subtle))] group-hover/card:text-[hsl(var(--platform-foreground-muted))] transition-colors duration-300">{description}</p>
+        <p className="text-sm text-[hsl(var(--platform-foreground-subtle))] group-hover/card:text-[hsl(var(--platform-foreground-muted))] transition-colors duration-150">{description}</p>
       </div>
     </>
   );
@@ -357,24 +357,24 @@ function QuickActionButton({ icon: Icon, label, onClick, hoverAnimation }: Quick
         "text-[hsl(var(--platform-foreground)/0.9)] hover:text-[hsl(var(--platform-foreground))]",
         "hover:bg-[hsl(var(--platform-bg-hover)/0.5)] hover:border-[hsl(var(--platform-primary)/0.3)]",
         "active:scale-[0.98]",
-        "transition-all duration-300 ease-[cubic-bezier(0.25,0.1,0.25,1)]"
+        "transition-all duration-150 ease-out"
       )}
     >
-      <div className="p-1.5 rounded-lg bg-[hsl(var(--platform-border)/0.3)] group-hover/action:bg-[hsl(var(--platform-primary)/0.2)] transition-colors duration-300">
+      <div className="p-1.5 rounded-lg bg-[hsl(var(--platform-border)/0.3)] group-hover/action:bg-[hsl(var(--platform-primary)/0.2)] transition-colors duration-150">
         <Icon className={cn(
-          "h-4 w-4 text-[hsl(var(--platform-foreground-muted))] group-hover/action:text-[hsl(var(--platform-primary))] transition-all duration-300",
+          "h-4 w-4 text-[hsl(var(--platform-foreground-muted))] group-hover/action:text-[hsl(var(--platform-primary))] transition-all duration-150",
           hoverAnimation
         )} />
       </div>
       <span className="flex-1 text-left text-sm font-medium">{label}</span>
-      <ArrowRight className="h-4 w-4 text-[hsl(var(--platform-foreground-subtle))] group-hover/action:text-[hsl(var(--platform-primary))] group-hover/action:translate-x-1 transition-all duration-300" />
+      <ArrowRight className="h-4 w-4 text-[hsl(var(--platform-foreground-subtle))] group-hover/action:text-[hsl(var(--platform-primary))] group-hover/action:translate-x-1 transition-all duration-150" />
     </button>
   );
 }
 
 function PlatformOverviewSkeleton() {
   return (
-    <div className="space-y-10">
+    <div className="space-y-8">
       <div className="flex items-center justify-between">
         <div>
           <Skeleton className="h-9 w-48 mb-2 bg-[hsl(var(--platform-bg-hover))]" />
@@ -382,9 +382,9 @@ function PlatformOverviewSkeleton() {
         </div>
         <Skeleton className="h-10 w-40 bg-[hsl(var(--platform-bg-hover))]" />
       </div>
-      <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-3.5 md:grid-cols-2 lg:grid-cols-4">
         {[...Array(4)].map((_, i) => (
-          <div key={i} className="rounded-2xl border border-[hsl(var(--platform-border)/0.5)] bg-[hsl(var(--platform-bg-card)/0.4)] p-6">
+          <div key={i} className="rounded-[16px] border border-[hsl(var(--platform-border)/0.5)] bg-[hsl(var(--platform-bg-card)/0.4)] p-5">
             <div className="flex items-center justify-between mb-4">
               <Skeleton className="h-4 w-24 bg-[hsl(var(--platform-bg-hover))]" />
               <Skeleton className="h-10 w-10 rounded-xl bg-[hsl(var(--platform-bg-hover))]" />
@@ -394,12 +394,12 @@ function PlatformOverviewSkeleton() {
           </div>
         ))}
       </div>
-      <div className="grid gap-6 lg:grid-cols-3">
-        <div className="lg:col-span-2 rounded-2xl border border-[hsl(var(--platform-border)/0.5)] bg-[hsl(var(--platform-bg-card)/0.4)] p-6">
+      <div className="grid gap-5 lg:grid-cols-3">
+        <div className="lg:col-span-2 rounded-[16px] border border-[hsl(var(--platform-border)/0.5)] bg-[hsl(var(--platform-bg-card)/0.4)] p-5">
           <Skeleton className="h-6 w-32 mb-5 bg-[hsl(var(--platform-bg-hover))]" />
           <Skeleton className="h-[220px] w-full rounded-xl bg-[hsl(var(--platform-bg-hover))]" />
         </div>
-        <div className="rounded-2xl border border-[hsl(var(--platform-border)/0.5)] bg-[hsl(var(--platform-bg-card)/0.4)] p-6">
+        <div className="rounded-[16px] border border-[hsl(var(--platform-border)/0.5)] bg-[hsl(var(--platform-bg-card)/0.4)] p-5">
           <Skeleton className="h-6 w-32 mb-5 bg-[hsl(var(--platform-bg-hover))]" />
           <div className="space-y-3">
             {[...Array(3)].map((_, i) => (
