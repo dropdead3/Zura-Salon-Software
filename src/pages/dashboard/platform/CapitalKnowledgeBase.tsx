@@ -345,7 +345,47 @@ export default function CapitalKnowledgeBase() {
         </PlatformCardContent>
       </PlatformCard>
 
-      {/* ── FAQ ── */}
+      {/* ── How to Talk About It ── */}
+      <PlatformCard variant="glass">
+        <PlatformCardHeader>
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-[hsl(var(--platform-bg-elevated))] rounded-lg flex items-center justify-center">
+              <MessageSquare className="h-5 w-5 text-[hsl(var(--platform-accent))]" />
+            </div>
+            <div>
+              <PlatformCardTitle className="text-lg">How to Talk About It</PlatformCardTitle>
+              <PlatformCardDescription>Three layers of explanation for different contexts.</PlatformCardDescription>
+            </div>
+          </div>
+        </PlatformCardHeader>
+        <PlatformCardContent className="space-y-4">
+          <div className="rounded-lg border border-[hsl(var(--platform-border)/0.4)] bg-[hsl(var(--platform-bg-elevated)/0.3)] p-4">
+            <div className="flex items-center gap-2 mb-2">
+              <PlatformBadge variant="primary" size="sm">Layer 1 — Marketing</PlatformBadge>
+            </div>
+            <p className="text-[hsl(var(--platform-foreground))] text-base leading-relaxed italic">
+              "Zura doesn't just tell you how to grow — it helps you fund it."
+            </p>
+          </div>
+          <div className="rounded-lg border border-[hsl(var(--platform-border)/0.4)] bg-[hsl(var(--platform-bg-elevated)/0.3)] p-4">
+            <div className="flex items-center gap-2 mb-2">
+              <PlatformBadge variant="info" size="sm">Layer 2 — Product Explanation</PlatformBadge>
+            </div>
+            <p className="text-[hsl(var(--platform-foreground))] text-base leading-relaxed italic">
+              "When Zura identifies a strong growth opportunity, it may surface funding options so you can act on it."
+            </p>
+          </div>
+          <div className="rounded-lg border border-[hsl(var(--platform-border)/0.4)] bg-[hsl(var(--platform-bg-elevated)/0.3)] p-4">
+            <div className="flex items-center gap-2 mb-2">
+              <PlatformBadge variant="default" size="sm">Layer 3 — Full Transparency</PlatformBadge>
+            </div>
+            <p className="text-[hsl(var(--platform-foreground))] text-base leading-relaxed italic">
+              "Funding is provided by third-party partners such as Stripe and is subject to their underwriting criteria."
+            </p>
+          </div>
+        </PlatformCardContent>
+      </PlatformCard>
+
       <PlatformCard variant="glass">
         <PlatformCardHeader>
           <PlatformCardTitle className="text-lg">Frequently Asked Questions</PlatformCardTitle>
