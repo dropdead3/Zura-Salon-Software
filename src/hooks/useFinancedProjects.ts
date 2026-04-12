@@ -3,6 +3,10 @@ import { supabase } from '@/integrations/supabase/client';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { toast } from 'sonner';
 
+/**
+ * @deprecated Use `useCapitalProjects` instead. This queries the legacy `financed_projects` table
+ * which is no longer the primary source of truth for capital funding projects.
+ */
 export function useFinancedProjects() {
   const { effectiveOrganization } = useOrganizationContext();
   const orgId = effectiveOrganization?.id;
@@ -22,6 +26,9 @@ export function useFinancedProjects() {
   });
 }
 
+/**
+ * @deprecated Use capital_funding_projects-based ledger instead. This queries the legacy table.
+ */
 export function useFinancedProjectLedger(projectId: string | undefined) {
   const { effectiveOrganization } = useOrganizationContext();
   const orgId = effectiveOrganization?.id;
