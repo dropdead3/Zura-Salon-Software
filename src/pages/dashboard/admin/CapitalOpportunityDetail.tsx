@@ -14,6 +14,7 @@ import { useLogCapitalEvent } from '@/hooks/useCapitalEventLog';
 import { useDismissOpportunity } from '@/hooks/useCapitalSurfaceState';
 import { getProvider } from '@/lib/capital-engine/capital-provider';
 import { calculateCoverageRatio, calculateMonthlyLiftCents } from '@/lib/capital-engine/capital-formulas';
+import { getROELabel } from '@/config/capital-engine/capital-config';
 import { CapitalMetricTile } from '@/components/dashboard/capital-engine/CapitalMetricTile';
 import { CapitalStatusBadge } from '@/components/dashboard/capital-engine/CapitalStatusBadge';
 import {
