@@ -53,7 +53,7 @@ import { PlatformPageContainer } from '@/components/platform/ui/PlatformPageCont
 import { PlatformPageHeader } from '@/components/platform/ui/PlatformPageHeader';
 import { StripeStatusIndicator } from '@/components/platform/ui/StripeStatusIndicator';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
-import { PageExplainer } from '@/components/ui/PageExplainer';
+
 
 
 const statusColors: Record<string, 'success' | 'warning' | 'error' | 'default'> = {
@@ -163,7 +163,6 @@ export default function PlatformAccounts() {
         actions={
           <PlatformButton onClick={() => setCreateDialogOpen(true)} className="gap-2">
             <Plus className="h-4 w-4" />
-        <PageExplainer pageId="platform-accounts" />
             New Account
           </PlatformButton>
         }
