@@ -10,7 +10,7 @@ import { MOMENTUM_DIRECTION_CONFIG } from '@/lib/seo-engine/seo-momentum-calcula
 import { tokens } from '@/lib/design-tokens';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
-import { BlurredAmount } from '@/components/ui/blurred-amount';
+import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { AlertTriangle, TrendingUp, TrendingDown, Clock, Target, Star, FileText, MapPin, Pencil, Flag, Crosshair, Minus, DollarSign } from 'lucide-react';
 import { SEOPredictedLiftCard } from './SEOPredictedLiftCard';

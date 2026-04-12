@@ -11,7 +11,7 @@ import { useSEORevenuePredictions } from '@/hooks/useSEORevenuePrediction';
 import { MOMENTUM_DIRECTION_CONFIG } from '@/lib/seo-engine/seo-momentum-calculator';
 import type { ConfidenceLevel } from '@/lib/seo-engine/seo-revenue-predictor';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
-import { BlurredAmount } from '@/components/ui/blurred-amount';
+import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { tokens } from '@/lib/design-tokens';
 import { TrendingUp, TrendingDown, Minus, Info } from 'lucide-react';
 

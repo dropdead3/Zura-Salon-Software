@@ -4,7 +4,7 @@ import { tokens } from '@/lib/design-tokens';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useSEOGrowthOrchestration } from '@/hooks/useSEOGrowthOrchestration';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
-import { BlurredAmount } from '@/components/ui/blurred-amount';
+import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { SEOLocationPriorityCard } from './SEOLocationPriorityCard';
 import { Globe, TrendingUp, Target, AlertTriangle, Lightbulb } from 'lucide-react';
 

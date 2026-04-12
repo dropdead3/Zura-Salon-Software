@@ -2,7 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { tokens } from '@/lib/design-tokens';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
-import { BlurredAmount } from '@/components/ui/blurred-amount';
+import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import {
   LOCATION_PRIORITY_CONFIG,
   type LocationState,
