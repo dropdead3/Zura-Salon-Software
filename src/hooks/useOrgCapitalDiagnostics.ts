@@ -42,6 +42,8 @@ export interface OrgCapitalDiagnostics {
   hasActiveStripeConnect: boolean;
   connectedLocationCount: number;
   totalLocationCount: number;
+  phorestConnectedLocationCount: number;
+  usesThirdPartyPOS: boolean;
   totalOpportunities: number;
   qualifyingCount: number;
   sidebarVisible: boolean;
@@ -80,10 +82,10 @@ export function useOrgCapitalDiagnostics(orgId: string | null) {
 
       const flagEnabled = flagData?.is_enabled ?? false;
 
-      // 1b. Check Zura Pay (Stripe Connect) status
+      // 1b. Check Zura Pay (Stripe Connect) status + Phorest connections
       const { data: allLocations } = await supabase
         .from('locations')
-        .select('id, stripe_account_id, stripe_status')
+        .select('id, stripe_account_id, stripe_status, phorest_branch_id')
         .eq('organization_id', orgId!);
 
       const totalLocationCount = allLocations?.length ?? 0;
@@ -92,6 +94,10 @@ export function useOrgCapitalDiagnostics(orgId: string | null) {
       );
       const connectedLocationCount = connectedLocations.length;
       const hasActiveStripeConnect = connectedLocationCount > 0;
+      const phorestConnectedLocationCount = (allLocations ?? []).filter(
+        (l) => l.phorest_branch_id,
+      ).length;
+      const usesThirdPartyPOS = phorestConnectedLocationCount > 0 && !hasActiveStripeConnect;
 
       // 2. Load org-specific policy (G11)
       const { data: orgPolicy } = await supabase
@@ -240,6 +246,8 @@ export function useOrgCapitalDiagnostics(orgId: string | null) {
         hasActiveStripeConnect,
         connectedLocationCount,
         totalLocationCount,
+        phorestConnectedLocationCount,
+        usesThirdPartyPOS,
         totalOpportunities: opportunities.length,
         qualifyingCount,
         sidebarVisible: flagEnabled && hasActiveStripeConnect && qualifyingCount > 0,

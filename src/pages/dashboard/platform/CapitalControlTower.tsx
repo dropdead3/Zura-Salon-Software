@@ -421,6 +421,29 @@ function DiagnosticPanel({ orgId }: { orgId: string }) {
             Last opportunity detected: {new Date(data.lastOpportunityAt).toLocaleDateString()}
           </p>
         )}
+
+        {/* Third-Party POS Diagnostic Note */}
+        {data.usesThirdPartyPOS && (
+          <div className="mt-4 rounded-xl border border-amber-500/20 bg-amber-500/[0.04] p-4">
+            <div className="flex items-start gap-3">
+              <div className="mt-0.5 shrink-0">
+                <AlertTriangle className="h-4 w-4 text-amber-400" />
+              </div>
+              <div className="space-y-1.5">
+                <p className="font-sans text-sm text-[hsl(var(--platform-foreground))]">
+                  Third-Party Payment Processor Detected
+                </p>
+                <p className="font-sans text-xs text-[hsl(var(--platform-foreground-muted))] leading-relaxed">
+                  This organization processes payments through Phorest Pay ({data.phorestConnectedLocationCount} location{data.phorestConnectedLocationCount !== 1 ? 's' : ''} connected).
+                  Stripe Capital eligibility is determined by the platform that owns the Stripe Connect relationship.
+                  Since Phorest — not Zura — is the platform of record, Zura's API keys cannot access this organization's
+                  processing history or Capital offers. To qualify for Zura Capital, the organization would need to migrate
+                  payment processing to Zura Pay.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Opportunity Breakdown */}
