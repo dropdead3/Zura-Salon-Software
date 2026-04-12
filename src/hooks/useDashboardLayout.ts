@@ -118,8 +118,8 @@ function sanitizeDashboardLayout(layout: DashboardLayout): DashboardLayout {
 }
 
 const DEFAULT_LAYOUT: DashboardLayout = {
-  sections: ['ai_insights', 'todays_prep', 'hub_quicklinks', 'payroll_deadline', 'payday_countdown', 'active_campaigns', 'quick_actions', 'todays_queue', 'quick_stats', 'level_progress', 'graduation_kpi', 'schedule_tasks', 'announcements', 'client_engine', 'widgets'],
-  sectionOrder: ['ai_insights', 'todays_prep', 'hub_quicklinks', 'payroll_deadline', 'payday_countdown', 'active_campaigns', 'quick_actions', 'todays_queue', 'quick_stats', 'level_progress', 'graduation_kpi', 'schedule_tasks', 'announcements', 'client_engine', 'widgets'],
+  sections: ['daily_briefing', 'ai_insights', 'todays_prep', 'hub_quicklinks', 'payroll_deadline', 'payday_countdown', 'active_campaigns', 'quick_actions', 'todays_queue', 'quick_stats', 'level_progress', 'graduation_kpi', 'schedule_tasks', 'announcements', 'client_engine', 'widgets'],
+  sectionOrder: ['daily_briefing', 'ai_insights', 'todays_prep', 'hub_quicklinks', 'payroll_deadline', 'payday_countdown', 'active_campaigns', 'quick_actions', 'todays_queue', 'quick_stats', 'level_progress', 'graduation_kpi', 'schedule_tasks', 'announcements', 'client_engine', 'widgets'],
   pinnedCards: [],
   widgets: ['changelog', 'birthdays', 'anniversaries', 'schedule'],
   hasCompletedSetup: false,

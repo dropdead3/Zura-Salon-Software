@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { parseISO, startOfDay, addDays, isSameDay } from 'date-fns';
+import { parseISO, startOfDay, addDays, isSameDay, isPast } from 'date-fns';
 import { AnimatePresence } from 'framer-motion';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -61,18 +61,21 @@ export function TasksCard({
   const today = startOfDay(new Date());
 
   // Separate snoozed tasks
-  const { visibleActive, snoozedTasks } = useMemo(() => {
+  const { visibleActive, snoozedTasks, expiredTasks } = useMemo(() => {
     const active = tasks.filter((t) => !t.is_completed);
     const snoozed: Task[] = [];
     const visible: Task[] = [];
+    const expired: Task[] = [];
     for (const task of active) {
-      if (task.snoozed_until && startOfDay(parseISO(task.snoozed_until)) > today) {
+      if (task.expires_at && isPast(parseISO(task.expires_at))) {
+        expired.push(task);
+      } else if (task.snoozed_until && startOfDay(parseISO(task.snoozed_until)) > today) {
         snoozed.push(task);
       } else {
         visible.push(task);
       }
     }
-    return { visibleActive: visible, snoozedTasks: snoozed };
+    return { visibleActive: visible, snoozedTasks: snoozed, expiredTasks: expired };
   }, [tasks, today]);
 
   const completedTasks = useMemo(() => tasks.filter((t) => t.is_completed), [tasks]);
@@ -254,7 +257,7 @@ export function TasksCard({
                     </div>
                   </div>
                 ))
-              ) : completedTasks.length === 0 && snoozedTasks.length === 0 ? (
+              ) : completedTasks.length === 0 && snoozedTasks.length === 0 && expiredTasks.length === 0 ? (
                 <div className="text-center py-14 text-muted-foreground">
                   <CheckSquare className="w-6 h-6 mx-auto mb-3 opacity-20" />
                   <p className="text-sm font-display">{t('home.no_tasks')}</p>
@@ -268,6 +271,20 @@ export function TasksCard({
                 <p className="text-center text-xs text-muted-foreground py-4">All tasks completed 🎉</p>
               )}
             </div>
+
+            {/* Expired Section */}
+            {expiredTasks.length > 0 && (
+              <div className="mt-4 pt-3 border-t border-border/30">
+                <p className="text-[10px] font-display tracking-wide text-muted-foreground mb-2">
+                  EXPIRED — OPPORTUNITY DECAYED
+                </p>
+                <div className="space-y-3 opacity-50">
+                  <AnimatePresence mode="popLayout">
+                    {expiredTasks.map((task) => renderTask(task))}
+                  </AnimatePresence>
+                </div>
+              </div>
+            )}
 
             {/* Snoozed Section */}
             {snoozedTasks.length > 0 && (

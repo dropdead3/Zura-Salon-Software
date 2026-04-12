@@ -26,7 +26,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { cn } from '@/lib/utils';
 
 interface AddTaskDialogProps {
-  onAdd: (task: { title: string; description?: string; due_date?: string; priority?: 'low' | 'normal' | 'high'; recurrence_pattern?: string | null }) => void;
+  onAdd: (task: { title: string; description?: string; due_date?: string; priority?: 'low' | 'normal' | 'high'; recurrence_pattern?: string | null; estimated_revenue_impact_cents?: number | null }) => void;
   isPending: boolean;
   isReadOnly?: boolean;
 }
@@ -38,10 +38,13 @@ export function AddTaskDialog({ onAdd, isPending, isReadOnly = false }: AddTaskD
   const [dueDate, setDueDate] = useState<Date>(new Date());
   const [priority, setPriority] = useState<'low' | 'normal' | 'high'>('normal');
   const [recurrence, setRecurrence] = useState<string>('none');
+  const [revenueImpact, setRevenueImpact] = useState<string>('');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim() || isReadOnly) return;
+
+    const impactCents = revenueImpact ? Math.round(parseFloat(revenueImpact) * 100) : null;
 
     onAdd({
       title: title.trim(),
@@ -49,6 +52,7 @@ export function AddTaskDialog({ onAdd, isPending, isReadOnly = false }: AddTaskD
       due_date: dueDate ? format(dueDate, 'yyyy-MM-dd') : undefined,
       priority,
       recurrence_pattern: recurrence === 'none' ? null : recurrence,
+      estimated_revenue_impact_cents: impactCents && impactCents > 0 ? impactCents : null,
     });
 
     setTitle('');
@@ -56,6 +60,7 @@ export function AddTaskDialog({ onAdd, isPending, isReadOnly = false }: AddTaskD
     setDueDate(new Date());
     setPriority('normal');
     setRecurrence('none');
+    setRevenueImpact('');
     setOpen(false);
   };
 
@@ -168,6 +173,18 @@ export function AddTaskDialog({ onAdd, isPending, isReadOnly = false }: AddTaskD
                 <SelectItem value="monthly">Monthly</SelectItem>
               </SelectContent>
             </Select>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="revenue-impact">Est. Revenue Impact ($/mo, optional)</Label>
+            <Input
+              id="revenue-impact"
+              type="number"
+              min="0"
+              step="1"
+              value={revenueImpact}
+              onChange={(e) => setRevenueImpact(e.target.value)}
+              placeholder="e.g. 800"
+            />
           </div>
           <div className="flex justify-end gap-2 pt-2">
             <Button type="button" variant="outline" onClick={() => setOpen(false)}>

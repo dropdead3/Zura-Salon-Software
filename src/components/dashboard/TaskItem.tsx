@@ -1,9 +1,11 @@
 import { useState, useCallback } from 'react';
-import { parseISO, startOfDay, differenceInCalendarDays, addDays, addWeeks, format } from 'date-fns';
+import { parseISO, startOfDay, differenceInCalendarDays, differenceInHours, addDays, addWeeks, format, isPast } from 'date-fns';
 import { motion } from 'framer-motion';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
-import { Trash2, Lock, Pencil, RefreshCw, AlarmClock } from 'lucide-react';
+import { Trash2, Lock, Pencil, RefreshCw, AlarmClock, TrendingUp, Clock } from 'lucide-react';
+import { BlurredAmount } from '@/contexts/HideNumbersContext';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { cn } from '@/lib/utils';
 import { tokens } from '@/lib/design-tokens';
 import { useFormatDate } from '@/hooks/useFormatDate';
@@ -32,9 +34,22 @@ const priorityIndicator = {
 
 export function TaskItem({ task, onToggle, onDelete, onEdit, onView, onSnooze, isReadOnly = false, isArchiveView = false, checklistProgress }: TaskItemProps) {
   const { formatDate } = useFormatDate();
+  const { formatCurrency } = useFormatCurrency();
   const [isHovered, setIsHovered] = useState(false);
   const [isCompleting, setIsCompleting] = useState(false);
   const [snoozeOpen, setSnoozeOpen] = useState(false);
+
+  // Expiry calculations
+  const isExpired = task.expires_at ? isPast(parseISO(task.expires_at)) : false;
+  const expiryLabel = (() => {
+    if (!task.expires_at || task.is_completed) return null;
+    const expiresAt = parseISO(task.expires_at);
+    if (isPast(expiresAt)) return 'Expired';
+    const hoursLeft = differenceInHours(expiresAt, new Date());
+    if (hoursLeft < 24) return `Expires in ${hoursLeft}h`;
+    const daysLeft = differenceInCalendarDays(expiresAt, new Date());
+    return `Expires in ${daysLeft}d`;
+  })();
 
   const handleToggle = useCallback((id: string, completed: boolean) => {
     if (completed && !task.is_completed) {
@@ -71,7 +86,8 @@ export function TaskItem({ task, onToggle, onDelete, onEdit, onView, onSnooze, i
           "flex items-start gap-3 group",
           isReadOnly && "opacity-75",
           isOverdue && !isArchiveView && "border-l-2 border-destructive pl-2",
-          isArchiveView && "opacity-60"
+          isArchiveView && "opacity-60",
+          isExpired && !task.is_completed && "opacity-50"
         )}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
@@ -116,6 +132,21 @@ export function TaskItem({ task, onToggle, onDelete, onEdit, onView, onSnooze, i
                   Repeats {task.recurrence_pattern}
                 </TooltipContent>
               </Tooltip>
+            )}
+            {task.estimated_revenue_impact_cents != null && task.estimated_revenue_impact_cents > 0 && (
+              <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 shrink-0 flex items-center gap-0.5">
+                <TrendingUp className="w-2.5 h-2.5" />
+                <BlurredAmount>~{formatCurrency(task.estimated_revenue_impact_cents / 100)}</BlurredAmount>/mo
+              </span>
+            )}
+            {expiryLabel && (
+              <span className={cn(
+                "text-[10px] px-1.5 py-0.5 rounded shrink-0 flex items-center gap-0.5",
+                isExpired ? "bg-destructive/10 text-destructive" : "bg-amber-500/10 text-amber-600 dark:text-amber-400"
+              )}>
+                <Clock className="w-2.5 h-2.5" />
+                {expiryLabel}
+              </span>
             )}
             {checklistProgress && checklistProgress.total > 0 && (
               <span className={cn(
