@@ -137,7 +137,7 @@ function DiagnosticPanel({ orgId }: { orgId: string }) {
       label: 'Sidebar Visible',
       passed: data.sidebarVisible,
       detail: data.sidebarVisible
-        ? 'Zura Capital is visible in this organization's sidebar'
+        ? "Zura Capital is visible in this organization's sidebar"
         : 'Zura Capital is NOT visible — both conditions above must pass',
     },
   ];
