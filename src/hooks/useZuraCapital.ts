@@ -333,7 +333,7 @@ export function useZuraCapital() {
         };
       })
       .sort((a, b) => b.surfacePriority - a.surfacePriority);
-  }, [rawOpps, fundedProjects, locationExposure, lastDeclinedAt, lastUnderperformingAt, surfaceStates, effectivePolicy]);
+  }, [rawOpps, fundedProjects, locationExposure, stylistExposure, lastDeclinedAt, lastUnderperformingAt, surfaceStates, effectivePolicy]);
 
   const eligibleOpportunities = opportunities.filter((o) => o.zuraEligible);
   const topOpportunity = eligibleOpportunities[0] ?? null;
