@@ -9,6 +9,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import { formatCurrency } from '@/lib/format';
+import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { useZuraCapital, type ZuraCapitalOpportunity } from '@/hooks/useZuraCapital';
 import { useCapitalProjects } from '@/hooks/useCapitalProjects';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
@@ -135,8 +136,8 @@ export default function CapitalQueue() {
                           <span className="text-[10px] text-muted-foreground font-sans truncate">
                             {OPPORTUNITY_TYPE_LABELS[opp.opportunityType as OpportunityType] ?? opp.opportunityType}
                           </span>
-                          <span className="font-sans text-sm text-right">{formatCurrency(c(opp.investmentCents), { noCents: true })}</span>
-                          <span className="font-sans text-sm text-right">+{formatCurrency(c(opp.predictedLiftExpectedCents), { noCents: true })}</span>
+                          <span className="font-sans text-sm text-right"><BlurredAmount>{formatCurrency(c(opp.investmentCents), { noCents: true })}</BlurredAmount></span>
+                          <span className="font-sans text-sm text-right"><BlurredAmount>+{formatCurrency(c(opp.predictedLiftExpectedCents), { noCents: true })}</BlurredAmount></span>
                           <span className={`font-display text-sm text-right tracking-wide ${opp.roe >= 1.8 ? 'text-primary' : ''}`}>{opp.roe.toFixed(1)}x</span>
                           <span className="font-sans text-sm text-right">{opp.breakEvenMonthsExpected}mo</span>
                           <span className="font-sans text-xs text-right capitalize text-muted-foreground">{opp.riskLevel}</span>
@@ -161,8 +162,8 @@ export default function CapitalQueue() {
                             <CapitalStatusBadge status={opp.eligibilityStatus} />
                           </div>
                           <div className="flex items-center gap-4 text-xs text-muted-foreground font-sans">
-                            <span>{formatCurrency(c(opp.investmentCents), { noCents: true })}</span>
-                            <span>+{formatCurrency(c(opp.predictedLiftExpectedCents), { noCents: true })}</span>
+                            <span><BlurredAmount>{formatCurrency(c(opp.investmentCents), { noCents: true })}</BlurredAmount></span>
+                            <span><BlurredAmount>+{formatCurrency(c(opp.predictedLiftExpectedCents), { noCents: true })}</BlurredAmount></span>
                             <span className={opp.roe >= 1.8 ? 'text-primary font-display tracking-wide' : 'font-display tracking-wide'}>{opp.roe.toFixed(1)}x</span>
                             <span>{opp.breakEvenMonthsExpected}mo</span>
                           </div>
