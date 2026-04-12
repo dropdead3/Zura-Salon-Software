@@ -70,15 +70,12 @@ export function useOrgCapitalDiagnostics(orgId: string | null) {
 
         // Build eligibility inputs from opportunity data
         const inputs: EligibilityInputs = {
-          roeRatio: calculateRoeRatio(
-            opp.predicted_annual_lift_cents ?? 0,
-            opp.required_investment_cents ?? 0,
-          ),
+          roeRatio: opp.roe_score ?? 0,
           confidenceScore: opp.confidence_score ?? 0,
           riskLevel: opp.risk_level ?? 'critical',
           operationalStabilityScore: opp.operational_stability_score ?? 0,
-          executionReadinessScore: opp.execution_readiness_score ?? 0,
-          activeCapitalProjectsCount: 0, // org-level, not per-opp
+          executionReadinessScore: opp.effort_score ?? 0,
+          activeCapitalProjectsCount: 0,
           activeUnderperformingProjectsCount: 0,
           repaymentDistressFlag: false,
           opportunityFreshnessDays: calculateOpportunityFreshnessDays(opp.created_at),
@@ -89,9 +86,9 @@ export function useOrgCapitalDiagnostics(orgId: string | null) {
           expiresAt: opp.expires_at ?? null,
           locationId: opp.location_id ?? null,
           locationExposure: 0,
-          stylistId: opp.stylist_user_id ?? null,
+          stylistId: opp.stylist_id ?? null,
           stylistExposure: 0,
-          lastDeclinedAt: opp.last_declined_at ?? null,
+          lastDeclinedAt: null,
           lastUnderperformingAt: null,
         };
 
