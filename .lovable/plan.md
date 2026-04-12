@@ -1,129 +1,97 @@
 
 
-# Zura Capital — Audit: Gaps and Bugs
+# Zura Capital — Pre-Build Audit Pass
 
-## Critical Findings
+## Findings
 
-### BUG 1: Dual Eligibility System — Two Competing Engines
+### BUG 1: `FundingOpportunityDetail` Dialog Still Uses Inline Math (P1)
 
-**`zura-eligibility-engine.ts`** (legacy) and **`capital-formulas.ts`** (canonical) both implement eligibility logic, but `useZuraCapital.ts` still calls the **legacy** `isZuraEligible()`. This means the production hook does not use the canonical `calculateInternalEligibility()` from the formulas pack.
+`FundingOpportunityDetail.tsx` lines 57-65 compute monthly lift, monthly payment, and net monthly using raw division instead of canonical formulas. The page version (`CapitalOpportunityDetail.tsx`) correctly uses `calculateMonthlyLiftCents` and `calculateCoverageRatio`, but the dialog version does not. This means the same opportunity shows different net impact numbers depending on whether the user opens it from the Command Center dialog vs the dedicated page route.
 
-Key differences causing inconsistency:
-- Legacy engine uses `confidence` as a string (`'high'|'medium'|'low'`) mapped via `confidenceToNumber()`, while canonical uses numeric `confidenceScore` directly
-- Legacy `maxStaleDays` is **90** days; canonical `staleDays` is **45** days (per spec)
-- Legacy is missing checks for `execution_readiness_score >= 70`, `operational_stability_score >= 60`, `repayment_distress_flag`
-- Legacy returns free-text `reasons: string[]`; canonical returns structured `reasonCodes: ReasonCode[]`
-
-**Fix:** Rewire `useZuraCapital.ts` to call `calculateInternalEligibility()` from `capital-formulas.ts` instead of `isZuraEligible()`.
+**Fix:** Replace inline math in `FundingOpportunityDetail.tsx` with `calculateMonthlyLiftCents`, `calculateNetMonthlyGainCents`, and `calculateCoverageRatio` from `capital-formulas.ts`.
 
 ---
 
-### BUG 2: Dual Surface Priority System — Two Competing Engines
+### BUG 2: Financial Values Missing `BlurredAmount` Wrapper (P1)
 
-**`surface-priority-engine.ts`** still uses its own inline `computeSurfacePriority()` with **different weights and penalties** than the canonical `calculateSurfacePriority()` in `capital-formulas.ts`.
+Per UI Canon, all monetary values must be wrapped in `BlurredAmount` for privacy toggle support. None of the 5 capital pages or the embedded components use `BlurredAmount`. This affects: `CapitalQueue.tsx`, `CapitalOpportunityDetail.tsx`, `CapitalProjectDetail.tsx`, `CapitalProjects.tsx`, `ZuraCapitalCard.tsx`, `OwnerCapitalQueue.tsx`, `FundingOpportunityDetail.tsx`, `FinancedProjectsTracker.tsx`.
 
-Differences:
-- Old engine: ROE normalized by dividing by 5x, not using `calculateRoeScore()`
-- Old engine: `breakEven` term uses an urgency proxy, not `calculateBreakEvenScore()`
-- Old engine: `netImpact` hardcoded to 50, not computed
-- Old engine: staleness penalties at 30/60/90 days (5/15/30), canonical uses 7/14/30 days (0/5/10/20)
-- Old engine: project load penalty is `count * 3`, canonical is `count * 10`
-- Old engine: dismissal penalty is `count * 5`, canonical uses `min(20, 5 * count)`
-- Old engine: missing coverage penalty entirely
-
-`useZuraCapital.ts` imports from the **old** engine. `selectForSurface()` also uses the old engine internally.
-
-**Fix:** Replace `computeSurfacePriority()` internals with delegation to `calculateSurfacePriority()` from `capital-formulas.ts`, or remove the old function entirely and have `useZuraCapital.ts` + `selectForSurface()` call the canonical version.
+**Fix:** Wrap all `formatCurrency()` outputs in `BlurredAmount` across capital UI surfaces.
 
 ---
 
-### BUG 3: Exposure Tracking Is Empty (TODO Comment)
+### GAP 3: `ZURA_ELIGIBILITY_THRESHOLDS` Is Orphaned and Inconsistent (P2)
 
-In `useZuraCapital.ts` lines 89-91, the exposure computation has a `// TODO` and an empty `forEach`:
-```ts
-(fundedProjects as any[]).forEach((fp) => {
-  // TODO: join with opportunity for location_id if needed
-});
-```
-This means `locationExposure` and `stylistExposure` are always empty objects `{}`, so **exposure limit checks in eligibility always pass** — even when real exposure exceeds policy limits.
+`zura-capital-config.ts` still defines `ZURA_ELIGIBILITY_THRESHOLDS` with `maxStaleDays: 90` (canonical is 45). No consumers import it, so it is dead code that could mislead future development.
 
-**Fix:** Populate `locationExposure` and `stylistExposure` from `capital_funding_projects` joined with their parent `capital_funding_opportunities` for `location_id`/`stylist_id`.
+**Fix:** Remove `ZURA_ELIGIBILITY_THRESHOLDS` from `zura-capital-config.ts`.
 
 ---
 
-### BUG 4: `VARIANCE_THRESHOLDS` Duplicated
+### GAP 4: Three Orphaned Files (P2)
 
-`zura-capital-config.ts` defines `VARIANCE_THRESHOLDS` and `getPerformanceStatus()`. `capital-formulas-config.ts` defines `CANONICAL_VARIANCE_THRESHOLDS` and `capital-formulas.ts` defines `calculateForecastStatus()`. These are parallel implementations. Any consumer using the wrong one gets inconsistent status labels.
+- `CapitalDashboard.tsx` — no longer imported anywhere (removed from SEO Workshop)
+- `useCapitalEngine.ts` — no longer imported anywhere (superseded by `useZuraCapital`)
+- `CapitalPriorityQueue.tsx` — no longer imported anywhere
 
-**Fix:** Remove `VARIANCE_THRESHOLDS` and `getPerformanceStatus()` from `zura-capital-config.ts`; all consumers should use canonical versions.
+These are dead code that add confusion.
 
----
-
-### GAP 5: `SURFACE_COOLDOWN_DEFAULTS` Duplicated
-
-`zura-capital-config.ts` defines `SURFACE_COOLDOWN_DEFAULTS` (with `expansion_planner: 0`). `capital-formulas-config.ts` defines `CANONICAL_SURFACE_COOLDOWNS` (with `expansion_planner: 7`). Different values for the same surface. `surface-priority-engine.ts` imports from `zura-capital-config.ts`.
-
-**Fix:** Remove `SURFACE_COOLDOWN_DEFAULTS` from `zura-capital-config.ts`; use `CANONICAL_SURFACE_COOLDOWNS` everywhere.
+**Fix:** Delete these 3 files.
 
 ---
 
-### GAP 6: `computeCoverageRatio` in Legacy Engine Still Exists
+### GAP 5: `CapitalQueue` Page Doesn't Use `useCapitalPolicySettings` for Eligibility Display (P2)
 
-`zura-eligibility-engine.ts` exports `computeCoverageRatio()` which returns `{ ratio, label, covered }`. The canonical `calculateCoverageRatio()` returns `{ ratio, percent, tier, tierLabel }`. Both are exported from `index.ts`. Consumers might use either.
+The queue page shows all opportunities but doesn't indicate which ones are ineligible vs eligible in a way that respects the org's actual policy settings. The eligibility check in `useZuraCapital` uses `DEFAULT_CAPITAL_POLICY` from the formulas config rather than the org's saved policy from `capital_policy_settings` table.
 
-**Fix:** Remove legacy `computeCoverageRatio` from `zura-eligibility-engine.ts` and update any remaining consumers.
-
----
-
-### GAP 7: `recentDismissals` and `recentDeclines` Always Zero
-
-In `useZuraCapital.ts` line 106-110, `priorityContext` hardcodes:
-```ts
-recentDismissals: 0,
-recentDeclines: 0,
-```
-This means dismissal and decline penalties never apply to surface priority scoring.
-
-**Fix:** Query `capital_surface_state` for recent dismissals and `capital_event_log` for recent declines to populate these values.
+**Fix:** Have `useZuraCapital` accept an optional policy override, and pass the org's settings from `useCapitalPolicySettings` when available. This ensures eligibility reflects the org's actual thresholds, not just platform defaults.
 
 ---
 
-### GAP 8: `hasCriticalOperationalAlerts` Always False
+### GAP 6: `OwnerCapitalQueue` Opens Dialog Instead of Navigating to Page Route (P1)
 
-`useZuraCapital.ts` line 98 hardcodes `hasCriticalOperationalAlerts: false`. This eligibility check is disabled.
+The `OwnerCapitalQueue` component (used in the embedded `CapitalDashboard` context, though currently orphaned) still opens a `FundingOpportunityDetail` dialog on click rather than navigating to `/admin/capital/opportunities/:id`. The new `CapitalQueue` page correctly uses `Link` to navigate. If `OwnerCapitalQueue` is re-used in any embedded surface in the future, it should also navigate to the detail page.
 
-**Fix:** Wire this to actual operational alert state from the ops engine if available, or leave as false with a documented TODO if the alerting system is not yet built.
-
----
-
-### GAP 9: `lastDeclinedAt` and `lastUnderperformingAt` Always Null
-
-`useZuraCapital.ts` lines 101-102 hardcode both to `null`, disabling decline and underperformance cooldowns entirely.
-
-**Fix:** Query `capital_event_log` for the most recent `funding_declined` event and `capital_funding_projects` for the most recent `at_risk` status to populate these.
+**Fix:** This is low-priority since `OwnerCapitalQueue` is only used in the orphaned `CapitalDashboard`. If we keep it for future embedded use, update it to navigate. If not, it's covered by GAP 4 cleanup.
 
 ---
 
-## Summary of Required Changes
+### GAP 7: `CapitalProjectDetail` Missing Linked Work Section (P2)
+
+The spec calls for a `FundedProjectLinkedWorkPanel` showing linked campaigns, task batches, inventory orders, expansion plans. The current `CapitalProjectDetail.tsx` has no linked work section — just performance, repayment, forecast, and timeline.
+
+**Fix:** Add a "Linked Work" section. For now, query related campaigns or tasks by `funding_project_id` if such a relationship exists in the schema, or show an empty state placeholder.
+
+---
+
+### GAP 8: `CapitalOpportunityDetail` Missing Execution Plan Section (P2)
+
+The spec calls for `FundingOpportunityExecutionPlanBlock` previewing what happens if funding is accepted (linked campaigns, task batches, etc.). Current page has no such section.
+
+**Fix:** Add an "Execution Plan" section with a placeholder or deterministic preview based on opportunity type.
+
+---
+
+## Summary
 
 | Priority | Issue | File(s) |
 |---|---|---|
-| P0 | Rewire eligibility to canonical `calculateInternalEligibility` | `useZuraCapital.ts` |
-| P0 | Rewire surface priority to canonical `calculateSurfacePriority` | `surface-priority-engine.ts`, `useZuraCapital.ts` |
-| P0 | Populate exposure tracking (remove TODO) | `useZuraCapital.ts` |
-| P1 | Remove duplicated `VARIANCE_THRESHOLDS` + `getPerformanceStatus` | `zura-capital-config.ts` |
-| P1 | Consolidate `SURFACE_COOLDOWN_DEFAULTS` to canonical | `zura-capital-config.ts`, `surface-priority-engine.ts` |
-| P1 | Remove legacy `computeCoverageRatio` | `zura-eligibility-engine.ts`, `index.ts` |
-| P1 | Populate `recentDismissals` and `recentDeclines` from data | `useZuraCapital.ts` |
-| P2 | Populate `lastDeclinedAt` and `lastUnderperformingAt` from data | `useZuraCapital.ts` |
-| P2 | Wire or document `hasCriticalOperationalAlerts` | `useZuraCapital.ts` |
+| P1 | Dialog uses inline math, not canonical formulas | `FundingOpportunityDetail.tsx` |
+| P1 | Missing `BlurredAmount` on all monetary values | 8 files across pages + components |
+| P2 | Remove orphaned `ZURA_ELIGIBILITY_THRESHOLDS` | `zura-capital-config.ts` |
+| P2 | Delete 3 orphaned files | `CapitalDashboard.tsx`, `useCapitalEngine.ts`, `CapitalPriorityQueue.tsx` |
+| P2 | Eligibility uses platform defaults, not org policy | `useZuraCapital.ts` |
+| P2 | Missing Linked Work section on project detail | `CapitalProjectDetail.tsx` |
+| P2 | Missing Execution Plan section on opportunity detail | `CapitalOpportunityDetail.tsx` |
 
 ## Build Order
 
-1. **`useZuraCapital.ts`** — Replace `isZuraEligible` with `calculateInternalEligibility`. Replace `computeSurfacePriority` import with canonical `calculateSurfacePriority`. Populate exposure maps from funded projects. Query dismissals/declines from `capital_surface_state` and `capital_event_log`. Populate `lastDeclinedAt`/`lastUnderperformingAt` from event log.
-2. **`surface-priority-engine.ts`** — Replace `computeSurfacePriority` internals with delegation to canonical formula. Update `selectForSurface` to use canonical cooldowns.
-3. **`zura-capital-config.ts`** — Remove `VARIANCE_THRESHOLDS`, `getPerformanceStatus`, `SURFACE_COOLDOWN_DEFAULTS`. Re-export canonical versions for backward compat if any consumers remain.
-4. **`zura-eligibility-engine.ts`** — Remove `computeCoverageRatio`. Keep `isZuraEligible` as a thin wrapper around canonical if needed, or deprecate.
-5. **`index.ts`** — Clean up exports to remove legacy duplicates.
-6. **TypeScript build check** — Verify no broken imports or type errors.
+1. Fix `FundingOpportunityDetail.tsx` inline math — replace with canonical formulas
+2. Wrap all monetary values in `BlurredAmount` across 8 capital UI files
+3. Wire `useZuraCapital` to accept org policy from `useCapitalPolicySettings`
+4. Add Execution Plan placeholder section to `CapitalOpportunityDetail.tsx`
+5. Add Linked Work placeholder section to `CapitalProjectDetail.tsx`
+6. Remove `ZURA_ELIGIBILITY_THRESHOLDS` from `zura-capital-config.ts`
+7. Delete 3 orphaned files
+8. TypeScript build check
 
