@@ -83,15 +83,24 @@ export default function CapitalSettings() {
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-1.5">
-                    <Label className="font-sans text-sm">Min ROE Score</Label>
+                    <div className="flex items-center gap-1.5">
+                      <Label className="font-sans text-sm">Min ROE Score</Label>
+                      <MetricInfoTooltip description="Return on Expansion score. Opportunities below this threshold won't surface. Higher values mean only the most efficient growth levers appear. Default: 1.8" />
+                    </div>
                     <Input type="number" step="0.1" value={form.roe_threshold} onChange={e => setForm(f => ({ ...f, roe_threshold: parseFloat(e.target.value) || 0 }))} />
                   </div>
                   <div className="space-y-1.5">
-                    <Label className="font-sans text-sm">Min Confidence Score</Label>
+                    <div className="flex items-center gap-1.5">
+                      <Label className="font-sans text-sm">Min Confidence Score</Label>
+                      <MetricInfoTooltip description="How confident the system must be in the opportunity before showing it. Scale of 0–100. Lower values surface more opportunities but with less certainty. Default: 70" />
+                    </div>
                     <Input type="number" value={form.confidence_threshold} onChange={e => setForm(f => ({ ...f, confidence_threshold: parseInt(e.target.value) || 0 }))} />
                   </div>
                   <div className="space-y-1.5">
-                    <Label className="font-sans text-sm">Max Risk Level</Label>
+                    <div className="flex items-center gap-1.5">
+                      <Label className="font-sans text-sm">Max Risk Level</Label>
+                      <MetricInfoTooltip description="The highest risk tier allowed for surfaced opportunities. 'Low' is most conservative, 'High' allows riskier bets with higher potential upside." />
+                    </div>
                     <Select value={form.max_risk_level} onValueChange={v => setForm(f => ({ ...f, max_risk_level: v }))}>
                       <SelectTrigger><SelectValue /></SelectTrigger>
                       <SelectContent>
@@ -102,7 +111,10 @@ export default function CapitalSettings() {
                     </Select>
                   </div>
                   <div className="space-y-1.5">
-                    <Label className="font-sans text-sm">Max Concurrent Projects</Label>
+                    <div className="flex items-center gap-1.5">
+                      <Label className="font-sans text-sm">Max Concurrent Projects</Label>
+                      <MetricInfoTooltip description="Limits how many funded projects can be active at once per organization. Prevents overextension during growth phases." />
+                    </div>
                     <Input type="number" value={form.max_concurrent_projects} onChange={e => setForm(f => ({ ...f, max_concurrent_projects: parseInt(e.target.value) || 0 }))} />
                   </div>
                 </div>
