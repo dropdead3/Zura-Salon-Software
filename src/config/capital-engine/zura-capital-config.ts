@@ -260,15 +260,11 @@ export const SURFACE_COOLDOWN_DEFAULTS: Record<SurfaceArea, number> = {
   expansion_planner: 0,
 };
 
-/* ── Surface Priority Weights (must sum to 1.0) ── */
-export const SURFACE_PRIORITY_WEIGHTS = {
-  roe: 0.35,
-  confidence: 0.20,
-  businessValue: 0.15,
-  momentum: 0.10,
-  urgency: 0.10,
-  constraintSeverity: 0.10,
-} as const;
+/* ── Surface Priority Weights ── */
+// CANONICAL weights are in capital-formulas-config.ts (CANONICAL_SURFACE_PRIORITY_WEIGHTS).
+// This legacy export is kept for backward compatibility with surface-priority-engine.ts.
+// New consumers should import from capital-formulas-config.ts.
+export { CANONICAL_SURFACE_PRIORITY_WEIGHTS as SURFACE_PRIORITY_WEIGHTS } from './capital-formulas-config';
 
 /* ── Surface Type Filters ── */
 export const SURFACE_TYPE_FILTERS: Record<SurfaceArea, OpportunityType[] | null> = {
