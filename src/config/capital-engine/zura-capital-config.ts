@@ -250,15 +250,8 @@ export const SURFACE_AREAS = [
 
 export type SurfaceArea = typeof SURFACE_AREAS[number];
 
-/* ── Surface Cooldown Defaults (days) ── */
-export const SURFACE_COOLDOWN_DEFAULTS: Record<SurfaceArea, number> = {
-  command_center: 7,
-  ops_hub: 3,
-  service_dashboard: 5,
-  stylist_dashboard: 14,
-  capital_queue: 0,
-  expansion_planner: 0,
-};
+/* ── Surface Cooldown Defaults (days) — re-exported from canonical ── */
+export { CANONICAL_SURFACE_COOLDOWNS as SURFACE_COOLDOWN_DEFAULTS } from './capital-formulas-config';
 
 /* ── Surface Priority Weights ── */
 // CANONICAL weights are in capital-formulas-config.ts (CANONICAL_SURFACE_PRIORITY_WEIGHTS).
@@ -282,17 +275,8 @@ export const SURFACING_LIMITS = {
   perOwnerView: 3,
 } as const;
 
-/* ── Variance Thresholds for Performance Status ── */
-export const VARIANCE_THRESHOLDS = {
-  aboveForecast: 15,
-  onTrackLow: -10,
-  belowForecast: -25,
-} as const;
+/* ── Variance Thresholds — re-exported from canonical ── */
+export { CANONICAL_VARIANCE_THRESHOLDS as VARIANCE_THRESHOLDS } from './capital-formulas-config';
 
-export function getPerformanceStatus(variancePercent: number | null): FundingProjectStatus {
-  if (variancePercent == null) return 'active';
-  if (variancePercent >= VARIANCE_THRESHOLDS.aboveForecast) return 'above_forecast';
-  if (variancePercent > VARIANCE_THRESHOLDS.onTrackLow) return 'on_track';
-  if (variancePercent > VARIANCE_THRESHOLDS.belowForecast) return 'below_forecast';
-  return 'at_risk';
-}
+/** @deprecated Use calculateForecastStatus from capital-formulas.ts */
+export { calculateForecastStatus as getPerformanceStatus } from '@/lib/capital-engine/capital-formulas';
