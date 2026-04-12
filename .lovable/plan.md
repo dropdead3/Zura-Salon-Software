@@ -1,103 +1,183 @@
 
 
-# Growth Estimator — Build Plan
+# Booking Embed + External Booking Page — Build Plan
 
-## What We're Building
+## Current State
 
-An interactive "See Your Growth Potential" section for the sales page. Users input basic business data and receive a modeled, conservatively calculated estimate of revenue opportunity — broken into demand generation, conversion, and capacity optimization. Legally cautious language throughout. Premium two-column layout matching existing marketing aesthetic.
+- **`PublicBooking.tsx`** (`/book`): Existing 6-step booking flow (service → location → stylist → datetime → details → confirm). Uses `phorest_services` directly, hardcoded time slots, basic Card UI. No theming, no org-scoping, no embed support.
+- **`Booking.tsx`** (`/booking`): Lead capture form (consultation request), not real booking. Uses `Layout` wrapper.
+- **`WebsiteBookingSettings`**: Minimal — `enabled`, `provider`, `booking_url`, `show_prices` stored in `site_settings`.
+- **Theme infrastructure**: `website_themes` table exists with blueprint system, but no booking-specific theme tokens.
+- **`useSiteSettings`**: Generic org-scoped key-value store — ideal for storing booking surface config.
 
-## Placement
+## What's Missing
 
-Between `StruggleInput` and `StatBar` in `PlatformLanding.tsx` — early in the funnel after the user has described their struggle, before proof sections. This positions it as a natural "what if" moment.
+Everything. No embed system, no hosted booking page, no booking theme editor, no flow configuration, no deep linking, no embed code generation. The existing `PublicBooking.tsx` is a bare prototype with no theming or org-awareness.
 
-## Component: `GrowthEstimator.tsx`
+## Build Scope — Phase 1 Only
 
-Single file in `src/components/marketing/`. Follows established patterns: `useScrollReveal`, `mkt-reveal`, `motion` from framer-motion, explicit marketing palette colors, `font-display` for headlines, `font-sans` for body.
+Phase 1 delivers: **hosted booking page + core theme system + admin setup + service browsing**. Embed widget is Phase 2.
 
-### Layout
+### 1. Database: `booking_surface_config` site_settings key
 
-Two-column on desktop (inputs left, output right). Stacked on mobile (inputs first, output below).
-
-### Left Column — Inputs
-
-- **Monthly Revenue**: Numeric input with `$` prefix, formatted. Default placeholder: `$25,000`
-- **Number of Stylists**: Numeric input. Default placeholder: `4`
-- **Primary Service Focus**: Dropdown (Extensions, Color, Blonding, Mixed). Default: Mixed
-- **Booking Utilization**: Slider 30-100%, default 65%. Label shows current value.
-
-All inputs styled with the dark marketing card aesthetic (bg-white/[0.03], border-white/[0.06]).
-
-### Right Column — Output
-
-**Primary**: "Estimated Monthly Growth Opportunity" → `+$X,XXX` in violet gradient text, animated via `AnimatedNumber`.
-
-**Breakdown** (3 stacked cards):
-- Demand Generation (SEO & visibility) — percentage + dollar amount
-- Conversion Improvements (rebooking, reviews) — percentage + dollar amount  
-- Capacity Optimization (booking efficiency) — percentage + dollar amount
-
-Each card: icon, label, estimated dollar range, subtle progress indicator.
-
-**Secondary layer** (conditional, shows when opportunity > $3,000):
-"With expansion and funding, this opportunity could increase further" → `+$X,XXX additional potential`
-
-**Disclaimer** (always visible, below output):
-"This estimate is based on modeled scenarios using your inputs and common optimization patterns. Actual results will vary based on execution, market conditions, and individual business factors."
-
-**Expandable disclosure**: "How this is calculated" toggle → methodology text.
-
-### Calculation Logic (conservative, deterministic)
+Store per-org config in `site_settings` with key `booking_surface_config`. No new table needed.
 
 ```text
-Base opportunity % varies by service type:
-  Extensions: 18-28%
-  Color: 12-22%
-  Blonding: 15-25%
-  Mixed: 14-24%
-
-Utilization adjustment:
-  Lower utilization → higher capacity opportunity
-  capacityMultiplier = 1 + (1 - utilization) * 0.4
-
-Diminishing returns at scale:
-  scaleMultiplier = 1 - (revenue / 500000) * 0.3  (floor 0.5)
-
-Breakdown split:
-  Demand: 40% of total
-  Conversion: 35% of total
-  Capacity: 25% of total
-
-Expansion potential (secondary):
-  expansionMultiplier = 0.4 of base opportunity
+BookingSurfaceConfig {
+  mode: 'hosted' | 'embed' | 'both'
+  published: boolean
+  slug: string  // e.g. "mesa-salon"
+  
+  // Theme tokens
+  theme: {
+    primaryColor: string
+    secondaryColor: string
+    accentColor: string
+    backgroundColor: string
+    surfaceColor: string
+    textColor: string
+    mutedTextColor: string
+    borderColor: string
+    buttonRadius: 'none' | 'sm' | 'md' | 'lg' | 'full'
+    cardRadius: 'none' | 'sm' | 'md' | 'lg'
+    fontFamily: 'inter' | 'dm-sans' | 'plus-jakarta' | 'cormorant' | 'playfair'
+    headingStyle: 'uppercase' | 'titlecase' | 'lowercase'
+    elevation: 'flat' | 'subtle' | 'elevated'
+    density: 'compact' | 'comfortable' | 'spacious'
+    mode: 'light' | 'dark'
+    logoUrl: string | null
+    heroImageUrl: string | null
+  }
+  
+  // Flow config
+  flow: {
+    template: 'category-first' | 'stylist-first' | 'location-first'
+    showPrices: boolean
+    showDuration: boolean
+    showDescriptions: boolean
+    showStylistBios: boolean
+    showAddOns: boolean
+    featuredCategoryIds: string[]
+  }
+  
+  // Hosted page content
+  hosted: {
+    pageTitle: string
+    introText: string | null
+    showHero: boolean
+    showFaq: boolean
+    faqItems: { q: string; a: string }[]
+    policyText: string | null
+    poweredByVisible: boolean
+  }
+}
 ```
 
-All outputs clamped to reasonable ranges. Never exceeds 35% of input revenue.
+### 2. Hosted Booking Page — `/book/:orgSlug`
 
-### CTA Block
+New public route. Renders a fully themed, standalone booking experience.
 
-Below output:
-- Primary: "Get My Growth Plan" → `/demo`
-- Secondary: "See How Zura Works" → `/explore`
+**Components** (new directory `src/components/booking-surface/`):
+- `HostedBookingPage.tsx` — Shell: resolves org by slug, applies theme CSS vars, renders flow
+- `BookingThemeProvider.tsx` — Converts config theme tokens into CSS custom properties
+- `BookingServiceBrowser.tsx` — Category grid → service cards with descriptions, prices, durations
+- `BookingServiceCard.tsx` — Individual service with optional photo, price, duration, popular badge
+- `BookingStylistPicker.tsx` — Stylist cards with optional bio/photo
+- `BookingLocationPicker.tsx` — Location cards with address
+- `BookingDateTimePicker.tsx` — Date + time slot selection (reuse existing logic)
+- `BookingClientForm.tsx` — Name, email, phone, notes
+- `BookingConfirmation.tsx` — Summary + confirm
+- `BookingFlowProgress.tsx` — Step indicator
+- `BookingHeader.tsx` — Logo + salon name + optional nav
 
-### Conversion Bridge
+Data: Uses `usePublicServicesForWebsite` (already exists) + existing location/stylist queries, scoped by org ID resolved from slug.
 
-Below CTA: "When the opportunity is large enough, Zura helps you act on it — including access to funding when appropriate."
+### 3. Admin Setup Page — `/dashboard/admin/booking-surface`
+
+New dashboard page with tabs:
+
+- **Mode & Publishing** — Mode selector, slug input, publish toggle, copy link
+- **Theme Editor** — Color pickers, font selector, radius/elevation/density controls, logo upload, live preview
+- **Flow Config** — Template selector, toggle switches for prices/duration/descriptions/bios
+- **Hosted Page** — Page title, intro text, hero toggle, FAQ editor, policy text
+- **Preview** — Embedded iframe showing the hosted page with current config
+
+**Components** (in `src/components/dashboard/booking-surface/`):
+- `BookingSurfaceSettings.tsx` — Main tabbed layout
+- `BookingThemeEditor.tsx` — Color/font/radius controls with live preview
+- `BookingFlowConfigurator.tsx` — Flow template + toggles
+- `BookingHostedPageEditor.tsx` — Content fields for hosted page
+- `BookingPreviewPanel.tsx` — Side-by-side desktop/mobile preview
+- `BookingPublishBar.tsx` — Publish status + copy link + slug
+
+### 4. Deep Linking
+
+Support URL params on the hosted page: `?location=X&stylist=Y&category=Z&service=S`
+
+Pre-selects the relevant step and skips completed steps. Salon can generate specific booking links from the admin panel.
+
+### 5. Route Registration
+
+- Public: `/book/:orgSlug` → `HostedBookingPage`
+- Dashboard: `admin/booking-surface` → `BookingSurfaceSettingsPage`
 
 ## Files
 
 | File | Action |
 |---|---|
-| `src/components/marketing/GrowthEstimator.tsx` | CREATE |
-| `src/pages/PlatformLanding.tsx` | UPDATE — import + place between `StruggleInput` and `StatBar` |
+| `src/hooks/useBookingSurfaceConfig.ts` | CREATE — CRUD hook for `booking_surface_config` in site_settings |
+| `src/hooks/usePublicOrgBySlug.ts` | CREATE — Resolve org by booking slug |
+| `src/components/booking-surface/BookingThemeProvider.tsx` | CREATE |
+| `src/components/booking-surface/HostedBookingPage.tsx` | CREATE |
+| `src/components/booking-surface/BookingServiceBrowser.tsx` | CREATE |
+| `src/components/booking-surface/BookingServiceCard.tsx` | CREATE |
+| `src/components/booking-surface/BookingStylistPicker.tsx` | CREATE |
+| `src/components/booking-surface/BookingLocationPicker.tsx` | CREATE |
+| `src/components/booking-surface/BookingDateTimePicker.tsx` | CREATE |
+| `src/components/booking-surface/BookingClientForm.tsx` | CREATE |
+| `src/components/booking-surface/BookingConfirmation.tsx` | CREATE |
+| `src/components/booking-surface/BookingFlowProgress.tsx` | CREATE |
+| `src/components/booking-surface/BookingHeader.tsx` | CREATE |
+| `src/components/dashboard/booking-surface/BookingSurfaceSettings.tsx` | CREATE |
+| `src/components/dashboard/booking-surface/BookingThemeEditor.tsx` | CREATE |
+| `src/components/dashboard/booking-surface/BookingFlowConfigurator.tsx` | CREATE |
+| `src/components/dashboard/booking-surface/BookingHostedPageEditor.tsx` | CREATE |
+| `src/components/dashboard/booking-surface/BookingPublishBar.tsx` | CREATE |
+| `src/pages/dashboard/admin/BookingSurfaceSettingsPage.tsx` | CREATE |
+| `src/pages/BookingSurface.tsx` | CREATE — Route wrapper for `/book/:orgSlug` |
+| `src/App.tsx` | UPDATE — Add routes |
+| `src/config/dashboardNav.ts` | UPDATE — Add nav entry under Website Hub |
+
+## Build Order
+
+1. Create `useBookingSurfaceConfig` hook + `usePublicOrgBySlug`
+2. Create `BookingThemeProvider` (CSS var injection from config)
+3. Build client-facing booking components (ServiceBrowser, StylistPicker, LocationPicker, DateTimePicker, ClientForm, Confirmation, FlowProgress, Header)
+4. Build `HostedBookingPage` shell assembling all components
+5. Build admin components (ThemeEditor, FlowConfigurator, HostedPageEditor, PublishBar, Settings)
+6. Create admin page + public page route wrappers
+7. Register routes in App.tsx + nav entry
+8. TypeScript build check
+
+## Out of Scope (Phase 2+)
+
+- Embed widget (inline, modal, popup, floating button)
+- Embed code generation
+- iframe fallback
+- Custom domain for hosted page
+- Per-location theme overrides
+- Analytics tracking
+- Advanced style controls (slim mode, image banner hero)
+- FAQ and policy blocks on hosted page
+- Stylist bio content management
 
 ## Technical Notes
 
-- Uses `useState` for inputs, `useMemo` for calculations
-- `AnimatedNumber` for smooth value transitions
-- `useScrollReveal` + `mkt-reveal` for scroll-triggered reveals
-- `useIsMobile` for responsive layout
-- `motion` from framer-motion for card animations
-- `Collapsible` from radix for "How this is calculated" toggle
-- All explicit marketing palette colors (no theme tokens)
-- No new dependencies
+- Theme CSS variables applied via inline `style` on the booking surface root — fully isolated from Zura's own theme
+- Public route renders outside `PrivateAppShell` — no auth required
+- Org resolution by slug uses a new lightweight query against `organizations` table
+- All booking data queries scoped by resolved org ID
+- Font families loaded via Google Fonts link tag injected dynamically by `BookingThemeProvider`
+- Mobile: flow becomes full-screen stacked steps with sticky continue button
+- No new database tables — config stored in existing `site_settings`
 
