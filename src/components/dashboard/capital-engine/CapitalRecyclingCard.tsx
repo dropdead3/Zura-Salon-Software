@@ -2,6 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { RefreshCw } from 'lucide-react';
 import { tokens } from '@/lib/design-tokens';
 import { formatCurrency } from '@/lib/format';
+import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import type { CapitalRecyclingMetrics } from '@/lib/capital-engine/ownership-engine';
 
 interface CapitalRecyclingCardProps {
@@ -24,13 +25,13 @@ export function CapitalRecyclingCard({ metrics }: CapitalRecyclingCardProps) {
           <div>
             <p className="text-xs text-muted-foreground font-sans">Deployed</p>
             <p className="font-display text-xl tracking-wide">
-              {formatCurrency(metrics.totalDeployed, { compact: true, noCents: true })}
+              <BlurredAmount>{formatCurrency(metrics.totalDeployed, { compact: true, noCents: true })}</BlurredAmount>
             </p>
           </div>
           <div>
             <p className="text-xs text-muted-foreground font-sans">Returned</p>
             <p className="font-display text-xl tracking-wide">
-              {formatCurrency(metrics.totalReturned, { compact: true, noCents: true })}
+              <BlurredAmount>{formatCurrency(metrics.totalReturned, { compact: true, noCents: true })}</BlurredAmount>
             </p>
           </div>
           <div>
@@ -40,7 +41,7 @@ export function CapitalRecyclingCard({ metrics }: CapitalRecyclingCardProps) {
           <div>
             <p className="text-xs text-muted-foreground font-sans">Reinvested</p>
             <p className="font-display text-xl tracking-wide">
-              {formatCurrency(metrics.totalReinvested, { compact: true, noCents: true })}
+              <BlurredAmount>{formatCurrency(metrics.totalReinvested, { compact: true, noCents: true })}</BlurredAmount>
             </p>
           </div>
         </div>
