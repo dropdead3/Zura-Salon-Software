@@ -264,6 +264,58 @@ function EligibilityCheckList({ opp }: { opp: OpportunityDiagnostic }) {
   );
 }
 
+/* ── Eligibility Reference List (no-opportunity state) ── */
+
+function EligibilityReferenceList({ policy }: { policy: CapitalPolicy }) {
+  const fmtDollars = (v: number) => `$${v.toLocaleString()}`;
+
+  const criteria = [
+    { label: 'ROE Ratio', threshold: `must be ≥ ${policy.roeThreshold}x` },
+    { label: 'Confidence Score', threshold: `must be ≥ ${policy.confidenceThreshold}` },
+    { label: 'Risk Level', threshold: `must be ≤ ${policy.maxRiskLevel}` },
+    { label: 'Operational Stability', threshold: `must be ≥ ${policy.minOperationalStability}` },
+    { label: 'Execution Readiness', threshold: `must be ≥ ${policy.minExecutionReadiness}` },
+    { label: 'Concurrent Projects', threshold: `must be < ${policy.maxConcurrentProjects}` },
+    { label: 'No Underperforming Projects', threshold: 'must have none' },
+    { label: 'No Repayment Distress', threshold: 'must be clear' },
+    { label: 'Opportunity Freshness', threshold: `must be ≤ ${policy.staleDays} days` },
+    { label: 'Investment Amount', threshold: 'must be > $0' },
+    { label: 'Above Minimum Capital', threshold: `must be ≥ ${fmtDollars(policy.minCapitalRequired)}` },
+    { label: 'Not Expired', threshold: 'must not be past expiration' },
+    { label: 'Constraint Type', threshold: 'must be identified' },
+    { label: 'Momentum Score', threshold: 'must be ≥ 20' },
+    { label: 'No Critical Ops Alerts', threshold: 'must be clear' },
+    { label: 'Location Exposure', threshold: `must be ≤ ${fmtDollars(policy.maxExposurePerLocation)}` },
+    { label: 'Stylist Exposure', threshold: `must be ≤ ${fmtDollars(policy.maxExposurePerStylist ?? policy.maxExposurePerLocation)}` },
+    { label: 'Decline Cooldown', threshold: `${policy.cooldownAfterDeclineDays} day wait` },
+    { label: 'Underperformance Cooldown', threshold: `${policy.cooldownAfterUnderperformanceDays} day wait` },
+  ];
+
+  return (
+    <div className="rounded-lg border border-[hsl(var(--platform-border)/0.2)] bg-[hsl(var(--platform-bg-card)/0.08)] p-4 space-y-3">
+      <div>
+        <h5 className="font-sans text-xs tracking-normal text-[hsl(var(--platform-foreground))] uppercase mb-1">
+          Eligibility Reference — What Gets Checked
+        </h5>
+        <p className="text-xs text-[hsl(var(--platform-foreground-muted))]">
+          When an opportunity is detected, it must pass all {criteria.length} checks:
+        </p>
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-1">
+        {criteria.map((c) => (
+          <div key={c.label} className="flex items-start gap-2 text-xs py-0.5">
+            <BookOpen className="h-3.5 w-3.5 mt-0.5 shrink-0 text-[hsl(var(--platform-foreground-muted)/0.5)]" />
+            <span className="text-[hsl(var(--platform-foreground)/0.85)]">
+              {c.label}
+              <span className="text-[hsl(var(--platform-foreground-muted))] ml-1">— {c.threshold}</span>
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 /* ── Diagnostic Panel (expanded row) ── */
 
 function DiagnosticPanel({ orgId }: { orgId: string }) {
