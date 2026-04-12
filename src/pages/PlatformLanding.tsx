@@ -31,6 +31,7 @@ export default function PlatformLanding() {
       <HeroSection />
       <DashboardShowcase />
       <StruggleInput />
+      <GrowthEstimator />
       <StatBar />
       <ChaosToClarity />
       <SectionDivider />
