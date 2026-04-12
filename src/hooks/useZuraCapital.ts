@@ -59,24 +59,27 @@ export interface ZuraCapitalOpportunity {
 }
 
 /** Map org policy settings row to CapitalPolicy override */
-function buildPolicyOverride(settings: Record<string, any> | null | undefined): Partial<CapitalPolicy> {
-  if (!settings) return {};
-  const override: Partial<CapitalPolicy> = {};
-  if (settings.roe_threshold != null) override.roeThreshold = Number(settings.roe_threshold);
-  if (settings.confidence_threshold != null) override.confidenceThreshold = Number(settings.confidence_threshold);
-  if (settings.max_risk_level != null) override.maxRiskLevel = settings.max_risk_level;
-  if (settings.min_operational_stability != null) override.minOperationalStability = Number(settings.min_operational_stability);
-  if (settings.min_execution_readiness != null) override.minExecutionReadiness = Number(settings.min_execution_readiness);
-  if (settings.max_concurrent_projects != null) override.maxConcurrentProjects = Number(settings.max_concurrent_projects);
-  if (settings.cooldown_after_decline_days != null) override.cooldownAfterDeclineDays = Number(settings.cooldown_after_decline_days);
-  if (settings.cooldown_after_underperformance_days != null) override.cooldownAfterUnderperformanceDays = Number(settings.cooldown_after_underperformance_days);
-  if (settings.stale_days != null) override.staleDays = Number(settings.stale_days);
-  if (settings.max_exposure_per_location != null) override.maxExposurePerLocation = Number(settings.max_exposure_per_location);
-  if (settings.max_exposure_per_stylist != null) override.maxExposurePerStylist = Number(settings.max_exposure_per_stylist);
-  if (settings.min_capital_required != null) override.minCapitalRequired = Number(settings.min_capital_required);
-  if (settings.allow_manager_initiation != null) override.allowManagerInitiation = Boolean(settings.allow_manager_initiation);
-  if (settings.allow_stylist_microfunding != null) override.allowStylistMicrofunding = Boolean(settings.allow_stylist_microfunding);
-  return override;
+/** Map org policy settings row to a mutable policy object merged with defaults */
+function buildEffectivePolicy(settings: Record<string, any> | null | undefined): CapitalPolicy {
+  // Start with a mutable copy of defaults
+  const base = { ...DEFAULT_CAPITAL_POLICY } as { -readonly [K in keyof CapitalPolicy]: CapitalPolicy[K] };
+  if (!settings) return base;
+
+  if (settings.roe_threshold != null) base.roeThreshold = Number(settings.roe_threshold);
+  if (settings.confidence_threshold != null) base.confidenceThreshold = Number(settings.confidence_threshold);
+  if (settings.max_risk_level != null) base.maxRiskLevel = settings.max_risk_level;
+  if (settings.min_operational_stability != null) base.minOperationalStability = Number(settings.min_operational_stability);
+  if (settings.min_execution_readiness != null) base.minExecutionReadiness = Number(settings.min_execution_readiness);
+  if (settings.max_concurrent_projects != null) base.maxConcurrentProjects = Number(settings.max_concurrent_projects);
+  if (settings.cooldown_after_decline_days != null) base.cooldownAfterDeclineDays = Number(settings.cooldown_after_decline_days);
+  if (settings.cooldown_after_underperformance_days != null) base.cooldownAfterUnderperformanceDays = Number(settings.cooldown_after_underperformance_days);
+  if (settings.stale_days != null) base.staleDays = Number(settings.stale_days);
+  if (settings.max_exposure_per_location != null) base.maxExposurePerLocation = Number(settings.max_exposure_per_location);
+  if (settings.max_exposure_per_stylist != null) base.maxExposurePerStylist = Number(settings.max_exposure_per_stylist);
+  if (settings.min_capital_required != null) base.minCapitalRequired = Number(settings.min_capital_required);
+  if (settings.allow_manager_initiation != null) base.allowManagerInitiation = Boolean(settings.allow_manager_initiation);
+  if (settings.allow_stylist_microfunding != null) base.allowStylistMicrofunding = Boolean(settings.allow_stylist_microfunding);
+  return base;
 }
 
 export function useZuraCapital() {

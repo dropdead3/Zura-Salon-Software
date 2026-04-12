@@ -3,8 +3,8 @@ import type { ReactNode } from 'react';
 interface CapitalMetricTileProps {
   icon: ReactNode;
   label: string;
-  value: string;
-  sub?: string;
+  value: ReactNode;
+  sub?: ReactNode;
   highlight?: boolean;
 }
 

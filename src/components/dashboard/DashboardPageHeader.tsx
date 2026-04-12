@@ -7,7 +7,7 @@ import { tokens } from '@/lib/design-tokens';
 
 export interface DashboardPageHeaderProps {
   title: string;
-  description?: string;
+  description?: ReactNode;
   /** Path to navigate when back is clicked (e.g. hub or list). */
   backTo?: string;
   /** Accessible label for back button; e.g. "Back to Analytics Hub". */
