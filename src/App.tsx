@@ -17,6 +17,7 @@ import { DashboardThemeProvider } from "./contexts/DashboardThemeContext";
 import { OrganizationProvider } from "./contexts/OrganizationContext";
 import { SoundSettingsProvider } from "./contexts/SoundSettingsContext";
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
+import { CapitalFeatureGate } from "./components/features/CapitalFeatureGate";
 import { ThemeInitializer } from "./components/ThemeInitializer";
 import { I18nLocaleSync } from "./components/I18nLocaleSync";
 import { DevContextBridge } from "./dev/DevContextBridge";
@@ -393,12 +394,12 @@ function DashboardRoutes() {
       <Route path="admin/merge-clients" element={<ProtectedRoute requiredPermission="client_merge"><MergeClients /></ProtectedRoute>} />
       <Route path="admin/access-hub" element={<ProtectedRoute requiredPermission="manage_settings"><AccessHub /></ProtectedRoute>} />
 
-      {/* Zura Capital routes — super_admin + org admin only */}
-      <Route path="admin/capital" element={<ProtectedRoute requiredPermission="manage_settings"><CapitalQueue /></ProtectedRoute>} />
-      <Route path="admin/capital/opportunities/:opportunityId" element={<ProtectedRoute requiredPermission="manage_settings"><CapitalOpportunityDetail /></ProtectedRoute>} />
-      <Route path="admin/capital/projects" element={<ProtectedRoute requiredPermission="manage_settings"><CapitalProjects /></ProtectedRoute>} />
-      <Route path="admin/capital/projects/:projectId" element={<ProtectedRoute requiredPermission="manage_settings"><CapitalProjectDetail /></ProtectedRoute>} />
-      <Route path="admin/capital/settings" element={<ProtectedRoute requiredPermission="manage_settings"><CapitalSettings /></ProtectedRoute>} />
+      {/* Zura Capital routes — gated by capital_enabled flag + manage_settings permission */}
+      <Route path="admin/capital" element={<ProtectedRoute requiredPermission="manage_settings"><CapitalFeatureGate fallback={<Navigate to=".." replace />}><CapitalQueue /></CapitalFeatureGate></ProtectedRoute>} />
+      <Route path="admin/capital/opportunities/:opportunityId" element={<ProtectedRoute requiredPermission="manage_settings"><CapitalFeatureGate fallback={<Navigate to="../.." replace />}><CapitalOpportunityDetail /></CapitalFeatureGate></ProtectedRoute>} />
+      <Route path="admin/capital/projects" element={<ProtectedRoute requiredPermission="manage_settings"><CapitalFeatureGate fallback={<Navigate to=".." replace />}><CapitalProjects /></CapitalFeatureGate></ProtectedRoute>} />
+      <Route path="admin/capital/projects/:projectId" element={<ProtectedRoute requiredPermission="manage_settings"><CapitalFeatureGate fallback={<Navigate to="../.." replace />}><CapitalProjectDetail /></CapitalFeatureGate></ProtectedRoute>} />
+      <Route path="admin/capital/settings" element={<ProtectedRoute requiredPermission="manage_settings"><CapitalFeatureGate fallback={<Navigate to=".." replace />}><CapitalSettings /></CapitalFeatureGate></ProtectedRoute>} />
       <Route path="admin/booking-surface" element={<ProtectedRoute requiredPermission="manage_settings"><BookingSurfaceSettingsPage /></ProtectedRoute>} />
 
       {/* Team Challenges routes */}
