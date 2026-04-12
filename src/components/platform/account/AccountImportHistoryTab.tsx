@@ -78,7 +78,7 @@ export function AccountImportHistoryTab({ organizationId }: AccountImportHistory
   };
 
   return (
-    <PlatformCard variant="glass">
+    <PlatformCard variant="glass" size="container">
       <PlatformCardHeader className="flex flex-row items-center justify-between">
         <PlatformCardTitle>Import History</PlatformCardTitle>
         <div className="flex items-center gap-3">

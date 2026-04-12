@@ -107,7 +107,7 @@ export function AccountUsersTab({ organizationId, organizationName }: AccountUse
 
   return (
     <>
-      <PlatformCard variant="glass">
+      <PlatformCard variant="glass" size="container">
         <PlatformCardHeader className="flex flex-row items-center justify-between">
           <div className="flex items-center gap-3">
             <PlatformCardTitle>Team Members</PlatformCardTitle>

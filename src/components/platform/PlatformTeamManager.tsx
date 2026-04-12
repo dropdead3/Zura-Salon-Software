@@ -131,7 +131,7 @@ export function PlatformTeamManager() {
 
   if (isLoading) {
     return (
-      <PlatformCard variant="glass">
+      <PlatformCard variant="glass" size="container">
         <PlatformCardContent className="flex items-center justify-center py-12">
           <ZuraLoader size="xl" platformColors />
         </PlatformCardContent>
@@ -143,7 +143,7 @@ export function PlatformTeamManager() {
     <div className="space-y-6">
       <PendingInvitationsSection />
       
-      <PlatformCard variant="glass">
+      <PlatformCard variant="glass" size="container">
         <PlatformCardHeader className="flex flex-row items-center justify-between">
           <div>
             <div className="flex items-center gap-3">

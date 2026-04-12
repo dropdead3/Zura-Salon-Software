@@ -170,7 +170,7 @@ export function ColorBarAnalyticsTab() {
 
       {/* Adoption Timeline */}
       {metrics.adoptionTimeline.length > 0 && (
-        <PlatformCard variant="glass">
+        <PlatformCard variant="glass" size="container">
           <PlatformCardHeader>
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-lg bg-[hsl(var(--platform-bg-hover))] flex items-center justify-center">
@@ -204,7 +204,7 @@ export function ColorBarAnalyticsTab() {
       )}
 
       {/* Per-Org Usage */}
-      <PlatformCard variant="glass">
+       <PlatformCard variant="glass" size="container">
         <PlatformCardHeader>
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-[hsl(var(--platform-bg-hover))] flex items-center justify-center">
@@ -266,7 +266,7 @@ export function ColorBarAnalyticsTab() {
 
       {/* Coaching & Adoption Signals */}
       {metrics.coachingSignals.length > 0 && (
-        <PlatformCard variant="glass">
+        <PlatformCard variant="glass" size="container">
           <PlatformCardHeader>
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-lg bg-[hsl(var(--platform-bg-hover))] flex items-center justify-center">
