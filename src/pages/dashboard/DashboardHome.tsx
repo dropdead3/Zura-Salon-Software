@@ -79,7 +79,7 @@ import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 import type { BriefingRoleContext } from '@/hooks/useDailyBriefingEngine';
 import { OperatorTopLever } from '@/components/dashboard/operator/OperatorTopLever';
 import { MoneyLeftOnTable } from '@/components/dashboard/operator/MoneyLeftOnTable';
-import { OperatorPerformanceStrip } from '@/components/dashboard/operator/OperatorPerformanceStrip';
+
 import { TeamGrowthContribution } from '@/components/dashboard/operator/TeamGrowthContribution';
 
 const ROLE_MESSAGES = {
@@ -456,11 +456,6 @@ function DashboardSections({
     // Money Left on the Table (leadership only)
     money_left: isLeadership && (
       <MoneyLeftOnTable tasks={tasks} />
-    ),
-
-    // Operator Performance Strip (leadership only)
-    operator_performance: isLeadership && (
-      <OperatorPerformanceStrip />
     ),
 
     // Team Growth Contribution (leadership only)

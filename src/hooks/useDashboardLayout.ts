@@ -118,8 +118,8 @@ function sanitizeDashboardLayout(layout: DashboardLayout): DashboardLayout {
 }
 
 const DEFAULT_LAYOUT: DashboardLayout = {
-  sections: ['operator_top_lever', 'daily_briefing', 'money_left', 'operator_performance', 'team_growth', 'ai_insights', 'todays_prep', 'hub_quicklinks', 'payroll_deadline', 'payday_countdown', 'active_campaigns', 'quick_actions', 'todays_queue', 'quick_stats', 'level_progress', 'graduation_kpi', 'schedule_tasks', 'announcements', 'client_engine', 'widgets'],
-  sectionOrder: ['operator_top_lever', 'daily_briefing', 'money_left', 'operator_performance', 'team_growth', 'ai_insights', 'todays_prep', 'hub_quicklinks', 'payroll_deadline', 'payday_countdown', 'active_campaigns', 'quick_actions', 'todays_queue', 'quick_stats', 'level_progress', 'graduation_kpi', 'schedule_tasks', 'announcements', 'client_engine', 'widgets'],
+  sections: ['operator_top_lever', 'daily_briefing', 'money_left', 'team_growth', 'ai_insights', 'todays_prep', 'hub_quicklinks', 'payroll_deadline', 'payday_countdown', 'active_campaigns', 'quick_actions', 'todays_queue', 'quick_stats', 'level_progress', 'graduation_kpi', 'schedule_tasks', 'announcements', 'client_engine', 'widgets'],
+  sectionOrder: ['operator_top_lever', 'daily_briefing', 'money_left', 'team_growth', 'ai_insights', 'todays_prep', 'hub_quicklinks', 'payroll_deadline', 'payday_countdown', 'active_campaigns', 'quick_actions', 'todays_queue', 'quick_stats', 'level_progress', 'graduation_kpi', 'schedule_tasks', 'announcements', 'client_engine', 'widgets'],
   pinnedCards: [],
   widgets: ['changelog', 'birthdays', 'anniversaries', 'schedule'],
   hasCompletedSetup: false,
@@ -220,7 +220,7 @@ function migrateLayout(layout: DashboardLayout, pinnedCards: string[]): Dashboar
   }
 
   // Ensure Operator Mode sections exist for existing layouts
-  const operatorSections = ['operator_top_lever', 'money_left', 'operator_performance', 'team_growth'];
+  const operatorSections = ['operator_top_lever', 'money_left', 'team_growth'];
   for (const sectionKey of operatorSections) {
     if (!migrated.sectionOrder?.includes(sectionKey)) {
       // Insert before daily_briefing for top_lever, after daily_briefing for others
