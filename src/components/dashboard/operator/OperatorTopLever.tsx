@@ -39,7 +39,23 @@ export function OperatorTopLever({ tasks, roleContext = 'owner' }: OperatorTopLe
     ? dashPath(`/capital/${topOpportunity.id}`)
     : dashPath('/capital');
 
-  if (!title || capitalLoading) return null;
+  if (capitalLoading) return null;
+
+  if (!title) {
+    return (
+      <Card className="relative overflow-hidden rounded-xl border-primary/10 bg-card/60">
+        <div className="p-6 flex items-center gap-3">
+          <div className={cn(tokens.card.iconBox, 'bg-primary/10')}>
+            <Crown className={cn(tokens.card.icon, 'text-primary/40')} />
+          </div>
+          <div>
+            <p className={tokens.label.tiny}>TOP LEVER</p>
+            <p className="text-xs text-muted-foreground font-sans mt-1">No growth opportunities detected yet — Zura is analyzing your business</p>
+          </div>
+        </div>
+      </Card>
+    );
+  }
 
   return (
     <Card className="relative overflow-hidden rounded-xl border-primary/20 bg-gradient-to-br from-primary/5 via-card to-card">

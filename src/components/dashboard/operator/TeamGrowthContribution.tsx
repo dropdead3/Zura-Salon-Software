@@ -73,7 +73,23 @@ export function TeamGrowthContribution() {
     enabled: !!orgId,
   });
 
-  if (isLoading || members.length === 0) return null;
+  if (isLoading) return null;
+
+  if (members.length === 0) {
+    return (
+      <Card className="rounded-xl overflow-hidden">
+        <div className="p-5 flex items-center gap-3">
+          <div className={tokens.card.iconBox}>
+            <Users className={tokens.card.icon} />
+          </div>
+          <div>
+            <h3 className={tokens.card.title}>Growth Drivers</h3>
+            <p className="text-xs text-muted-foreground font-sans mt-0.5">Complete Zura tasks to see team growth attribution here</p>
+          </div>
+        </div>
+      </Card>
+    );
+  }
 
   return (
     <Card className="rounded-xl overflow-hidden">
