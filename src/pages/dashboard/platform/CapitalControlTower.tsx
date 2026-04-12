@@ -385,9 +385,12 @@ function DiagnosticPanel({ orgId }: { orgId: string }) {
       )}
 
       {data.flagEnabled && data.opportunities.length === 0 && (
-        <div className="flex items-center gap-2 text-sm text-[hsl(var(--platform-foreground-muted))]">
-          <AlertTriangle className="h-4 w-4 text-amber-400" />
-          No opportunities have been detected for this organization yet.
+        <div className="space-y-4">
+          <div className="flex items-center gap-2 text-sm text-[hsl(var(--platform-foreground-muted))]">
+            <AlertTriangle className="h-4 w-4 text-amber-400" />
+            No opportunities have been detected for this organization yet.
+          </div>
+          <EligibilityReferenceList policy={data.effectivePolicy} />
         </div>
       )}
     </div>
