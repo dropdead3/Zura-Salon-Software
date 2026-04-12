@@ -246,6 +246,11 @@ export function useOrgCapitalDiagnostics(orgId: string | null) {
         opportunities,
         lastOpportunityAt,
         effectivePolicy,
+        criticalOpsAlertCount: hasCriticalOpsAlerts ? 1 : 0,
+        repaymentDistress,
+        distressedProjectNames,
+        activeProjectCount,
+        activeProjectSummaries,
       };
     },
     enabled: !!orgId,
