@@ -39,6 +39,9 @@ export function EditTaskDialog({ task, open, onOpenChange, onSave, isPending }: 
   const [priority, setPriority] = useState<'low' | 'normal' | 'high'>('normal');
   const [recurrence, setRecurrence] = useState<string>('none');
   const [revenueImpact, setRevenueImpact] = useState<string>('');
+  const [taskType, setTaskType] = useState<string>('none');
+  const [executionTime, setExecutionTime] = useState<string>('');
+  const [revenueType, setRevenueType] = useState<string>('none');
 
   useEffect(() => {
     if (task) {
@@ -49,6 +52,9 @@ export function EditTaskDialog({ task, open, onOpenChange, onSave, isPending }: 
       setPriority(task.priority);
       setRecurrence(task.recurrence_pattern || 'none');
       setRevenueImpact(task.estimated_revenue_impact_cents ? String(task.estimated_revenue_impact_cents / 100) : '');
+      setTaskType(task.task_type || 'none');
+      setExecutionTime(task.execution_time_minutes ? String(task.execution_time_minutes) : '');
+      setRevenueType(task.revenue_type || 'none');
     }
   }, [task]);
 
@@ -66,7 +72,10 @@ export function EditTaskDialog({ task, open, onOpenChange, onSave, isPending }: 
       priority,
       recurrence_pattern: recurrence === 'none' ? null : recurrence,
       estimated_revenue_impact_cents: impactCents && impactCents > 0 ? impactCents : null,
-    });
+      task_type: taskType === 'none' ? null : taskType,
+      execution_time_minutes: executionTime ? parseInt(executionTime) : null,
+      revenue_type: revenueType === 'none' ? null : revenueType,
+    } as any);
 
     onOpenChange(false);
   };
@@ -163,17 +172,60 @@ export function EditTaskDialog({ task, open, onOpenChange, onSave, isPending }: 
               </SelectContent>
             </Select>
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="edit-revenue-impact">Est. Revenue Impact ($/mo, optional)</Label>
-            <Input
-              id="edit-revenue-impact"
-              type="number"
-              min="0"
-              step="1"
-              value={revenueImpact}
-              onChange={(e) => setRevenueImpact(e.target.value)}
-              placeholder="e.g. 800"
-            />
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="edit-revenue-impact">Revenue Impact ($/mo)</Label>
+              <Input
+                id="edit-revenue-impact"
+                type="number"
+                min="0"
+                step="1"
+                value={revenueImpact}
+                onChange={(e) => setRevenueImpact(e.target.value)}
+                placeholder="e.g. 800"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-exec-time">Time to Complete (min)</Label>
+              <Input
+                id="edit-exec-time"
+                type="number"
+                min="1"
+                value={executionTime}
+                onChange={(e) => setExecutionTime(e.target.value)}
+                placeholder="e.g. 15"
+              />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="edit-task-type">Task Type</Label>
+              <Select value={taskType} onValueChange={setTaskType}>
+                <SelectTrigger id="edit-task-type">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">None</SelectItem>
+                  <SelectItem value="growth">Growth</SelectItem>
+                  <SelectItem value="protection">Protection</SelectItem>
+                  <SelectItem value="acceleration">Acceleration</SelectItem>
+                  <SelectItem value="unlock">Unlock</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-revenue-type">Revenue Type</Label>
+              <Select value={revenueType} onValueChange={setRevenueType}>
+                <SelectTrigger id="edit-revenue-type">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">None</SelectItem>
+                  <SelectItem value="generated">Generated</SelectItem>
+                  <SelectItem value="protected">Protected</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
           <div className="flex justify-end gap-2 pt-2">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>

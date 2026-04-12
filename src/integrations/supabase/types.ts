@@ -24493,18 +24493,28 @@ export type Database = {
         Row: {
           completed_at: string | null
           created_at: string
+          decay_days: number | null
           description: string | null
+          difficulty_score: number | null
           due_date: string | null
+          enforcement_level: number
           estimated_revenue_impact_cents: number | null
+          execution_time_minutes: number | null
           expires_at: string | null
           id: string
           is_completed: boolean | null
+          missed_revenue_cents: number | null
           notes: string | null
+          opportunity_id: string | null
           priority: string | null
+          priority_score: number | null
           recurrence_parent_id: string | null
           recurrence_pattern: string | null
+          revenue_type: string | null
           snoozed_until: string | null
           source: string
+          status: string
+          task_type: string | null
           title: string
           updated_at: string
           user_id: string
@@ -24512,18 +24522,28 @@ export type Database = {
         Insert: {
           completed_at?: string | null
           created_at?: string
+          decay_days?: number | null
           description?: string | null
+          difficulty_score?: number | null
           due_date?: string | null
+          enforcement_level?: number
           estimated_revenue_impact_cents?: number | null
+          execution_time_minutes?: number | null
           expires_at?: string | null
           id?: string
           is_completed?: boolean | null
+          missed_revenue_cents?: number | null
           notes?: string | null
+          opportunity_id?: string | null
           priority?: string | null
+          priority_score?: number | null
           recurrence_parent_id?: string | null
           recurrence_pattern?: string | null
+          revenue_type?: string | null
           snoozed_until?: string | null
           source?: string
+          status?: string
+          task_type?: string | null
           title: string
           updated_at?: string
           user_id: string
@@ -24531,23 +24551,40 @@ export type Database = {
         Update: {
           completed_at?: string | null
           created_at?: string
+          decay_days?: number | null
           description?: string | null
+          difficulty_score?: number | null
           due_date?: string | null
+          enforcement_level?: number
           estimated_revenue_impact_cents?: number | null
+          execution_time_minutes?: number | null
           expires_at?: string | null
           id?: string
           is_completed?: boolean | null
+          missed_revenue_cents?: number | null
           notes?: string | null
+          opportunity_id?: string | null
           priority?: string | null
+          priority_score?: number | null
           recurrence_parent_id?: string | null
           recurrence_pattern?: string | null
+          revenue_type?: string | null
           snoozed_until?: string | null
           source?: string
+          status?: string
+          task_type?: string | null
           title?: string
           updated_at?: string
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "tasks_opportunity_id_fkey"
+            columns: ["opportunity_id"]
+            isOneToOne: false
+            referencedRelation: "capital_funding_opportunities"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "tasks_recurrence_parent_id_fkey"
             columns: ["recurrence_parent_id"]
