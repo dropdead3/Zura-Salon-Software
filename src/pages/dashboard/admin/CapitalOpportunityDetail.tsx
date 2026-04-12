@@ -102,6 +102,7 @@ export default function CapitalOpportunityDetail() {
   const logEvent = useLogCapitalEvent();
   const dismiss = useDismissOpportunity();
   const [isRedirecting, setIsRedirecting] = useState(false);
+  const [dismissDialogOpen, setDismissDialogOpen] = useState(false);
 
   if (isLoading || !opp) {
     return (
