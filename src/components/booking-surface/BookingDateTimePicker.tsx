@@ -16,12 +16,19 @@ const TIME_SLOTS = [
 
 export function BookingDateTimePicker({ theme, onSelect }: BookingDateTimePickerProps) {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [selectedTime, setSelectedTime] = useState<string | null>(null);
   const [weekOffset, setWeekOffset] = useState(0);
 
   const days = useMemo(() => {
     const today = startOfDay(new Date());
     return Array.from({ length: 7 }, (_, i) => addDays(today, weekOffset * 7 + i));
   }, [weekOffset]);
+
+  const handleTimeSelect = (time: string) => {
+    if (!selectedDate) return;
+    setSelectedTime(time);
+    onSelect(format(selectedDate, 'yyyy-MM-dd'), time);
+  };
 
   return (
     <div className="flex flex-col gap-5">
@@ -31,7 +38,7 @@ export function BookingDateTimePicker({ theme, onSelect }: BookingDateTimePicker
           <button
             onClick={() => setWeekOffset(Math.max(0, weekOffset - 1))}
             disabled={weekOffset === 0}
-            className="p-1.5 rounded-full transition-colors disabled:opacity-30"
+            className="p-2 rounded-full transition-colors disabled:opacity-30 hover:bg-black/5"
             style={{ color: theme.textColor }}
           >
             <ChevronLeft className="w-5 h-5" />
@@ -41,7 +48,7 @@ export function BookingDateTimePicker({ theme, onSelect }: BookingDateTimePicker
           </span>
           <button
             onClick={() => setWeekOffset(weekOffset + 1)}
-            className="p-1.5 rounded-full transition-colors"
+            className="p-2 rounded-full transition-colors hover:bg-black/5"
             style={{ color: theme.textColor }}
             disabled={weekOffset >= 8}
           >
@@ -59,17 +66,17 @@ export function BookingDateTimePicker({ theme, onSelect }: BookingDateTimePicker
                 key={day.toISOString()}
                 onClick={() => !isPast && setSelectedDate(day)}
                 disabled={isPast}
-                className="flex flex-col items-center py-2.5 px-1 rounded-lg transition-colors disabled:opacity-30"
+                className="flex flex-col items-center py-3 px-1 rounded-xl transition-all disabled:opacity-30"
                 style={{
                   backgroundColor: isSelected ? theme.primaryColor : 'transparent',
                   color: isSelected ? '#fff' : theme.textColor,
-                  border: `1px solid ${isSelected ? theme.primaryColor : 'transparent'}`,
+                  border: `1.5px solid ${isSelected ? theme.primaryColor : theme.borderColor}`,
                 }}
               >
-                <span className="text-xs" style={{ color: isSelected ? '#fff' : theme.mutedTextColor }}>
+                <span className="text-[11px]" style={{ color: isSelected ? '#fff' : theme.mutedTextColor }}>
                   {format(day, 'EEE')}
                 </span>
-                <span className="text-sm font-medium mt-0.5">{format(day, 'd')}</span>
+                <span className="text-base font-medium mt-0.5">{format(day, 'd')}</span>
               </button>
             );
           })}
@@ -83,20 +90,23 @@ export function BookingDateTimePicker({ theme, onSelect }: BookingDateTimePicker
             Available Times for {format(selectedDate, 'EEEE, MMMM d')}
           </p>
           <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
-            {TIME_SLOTS.map((time) => (
-              <button
-                key={time}
-                onClick={() => onSelect(format(selectedDate, 'yyyy-MM-dd'), time)}
-                className="py-2.5 px-3 text-sm font-medium rounded-lg transition-all hover:scale-[1.02]"
-                style={{
-                  backgroundColor: theme.surfaceColor,
-                  color: theme.textColor,
-                  border: `1px solid ${theme.borderColor}`,
-                }}
-              >
-                {time}
-              </button>
-            ))}
+            {TIME_SLOTS.map((time) => {
+              const isActive = selectedTime === time;
+              return (
+                <button
+                  key={time}
+                  onClick={() => handleTimeSelect(time)}
+                  className="py-3 px-3 text-sm font-medium rounded-xl transition-all active:scale-95"
+                  style={{
+                    backgroundColor: isActive ? theme.primaryColor : theme.surfaceColor,
+                    color: isActive ? '#fff' : theme.textColor,
+                    border: `1.5px solid ${isActive ? theme.primaryColor : theme.borderColor}`,
+                  }}
+                >
+                  {time}
+                </button>
+              );
+            })}
           </div>
         </div>
       )}

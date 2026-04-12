@@ -1,4 +1,5 @@
 import { Check } from 'lucide-react';
+import { motion } from 'framer-motion';
 import type { BookingSurfaceTheme } from '@/hooks/useBookingSurfaceConfig';
 
 interface BookingFlowProgressProps {
@@ -17,27 +18,35 @@ export function BookingFlowProgress({ steps, currentStep, theme }: BookingFlowPr
         return (
           <div key={step} className="flex items-center gap-2 flex-1">
             <div className="flex flex-col items-center gap-1 flex-1">
-              <div
-                className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-colors"
+              <motion.div
+                className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium"
                 style={{
                   backgroundColor: isCompleted || isCurrent ? theme.primaryColor : theme.surfaceColor,
                   color: isCompleted || isCurrent ? '#fff' : theme.mutedTextColor,
                   border: `1.5px solid ${isCompleted || isCurrent ? theme.primaryColor : theme.borderColor}`,
                 }}
+                animate={{
+                  scale: isCurrent ? 1.1 : 1,
+                }}
+                transition={{ duration: 0.2 }}
               >
                 {isCompleted ? <Check className="w-4 h-4" /> : idx + 1}
-              </div>
+              </motion.div>
               <span
-                className="text-xs whitespace-nowrap"
+                className="text-xs whitespace-nowrap hidden sm:block"
                 style={{ color: isCurrent ? theme.textColor : theme.mutedTextColor }}
               >
                 {step}
               </span>
             </div>
             {idx < steps.length - 1 && (
-              <div
-                className="h-px flex-1 mt-[-16px]"
-                style={{ backgroundColor: isCompleted ? theme.primaryColor : theme.borderColor }}
+              <motion.div
+                className="h-px flex-1 mt-[-16px] sm:mt-[-20px]"
+                style={{ backgroundColor: theme.borderColor }}
+                animate={{
+                  backgroundColor: isCompleted ? theme.primaryColor : theme.borderColor,
+                }}
+                transition={{ duration: 0.3 }}
               />
             )}
           </div>

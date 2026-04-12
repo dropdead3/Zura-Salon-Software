@@ -8,8 +8,8 @@ export default function BookingSurfaceSettingsPage() {
   return (
     <DashboardLayout>
       <DashboardPageHeader
-        title="Booking Surface"
-        description="Theme, flow, and deployment settings for your online booking experience"
+        title="Booking Surfaces"
+        description="Configure, theme, and deploy your branded booking experience"
         backTo={dashPath('/admin/website-hub')}
       />
       <BookingSurfaceSettings />

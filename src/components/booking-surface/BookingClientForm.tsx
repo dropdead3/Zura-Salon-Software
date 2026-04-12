@@ -24,6 +24,7 @@ export function BookingClientForm({ theme, onSubmit }: BookingClientFormProps) {
     color: theme.textColor,
     borderColor: theme.borderColor,
     borderRadius: 'var(--bk-btn-radius, 8px)',
+    outlineColor: theme.primaryColor,
   };
 
   const isValid = form.firstName.trim() && form.email.trim();
@@ -37,7 +38,7 @@ export function BookingClientForm({ theme, onSubmit }: BookingClientFormProps) {
             type="text"
             value={form.firstName}
             onChange={(e) => setForm({ ...form, firstName: e.target.value })}
-            className="w-full px-3 py-2.5 text-sm border outline-none focus:ring-2 transition-shadow"
+            className="w-full px-3 py-3 text-sm border outline-none focus:ring-2 transition-shadow"
             style={{ ...inputStyle, '--tw-ring-color': theme.primaryColor } as React.CSSProperties}
             placeholder="Jane"
           />
@@ -48,7 +49,7 @@ export function BookingClientForm({ theme, onSubmit }: BookingClientFormProps) {
             type="text"
             value={form.lastName}
             onChange={(e) => setForm({ ...form, lastName: e.target.value })}
-            className="w-full px-3 py-2.5 text-sm border outline-none focus:ring-2 transition-shadow"
+            className="w-full px-3 py-3 text-sm border outline-none focus:ring-2 transition-shadow"
             style={inputStyle}
             placeholder="Doe"
           />
@@ -61,7 +62,7 @@ export function BookingClientForm({ theme, onSubmit }: BookingClientFormProps) {
           type="email"
           value={form.email}
           onChange={(e) => setForm({ ...form, email: e.target.value })}
-          className="w-full px-3 py-2.5 text-sm border outline-none focus:ring-2 transition-shadow"
+          className="w-full px-3 py-3 text-sm border outline-none focus:ring-2 transition-shadow"
           style={inputStyle}
           placeholder="jane@example.com"
         />
@@ -73,7 +74,7 @@ export function BookingClientForm({ theme, onSubmit }: BookingClientFormProps) {
           type="tel"
           value={form.phone}
           onChange={(e) => setForm({ ...form, phone: e.target.value })}
-          className="w-full px-3 py-2.5 text-sm border outline-none focus:ring-2 transition-shadow"
+          className="w-full px-3 py-3 text-sm border outline-none focus:ring-2 transition-shadow"
           style={inputStyle}
           placeholder="(555) 123-4567"
         />
@@ -85,23 +86,26 @@ export function BookingClientForm({ theme, onSubmit }: BookingClientFormProps) {
           value={form.notes}
           onChange={(e) => setForm({ ...form, notes: e.target.value })}
           rows={3}
-          className="w-full px-3 py-2.5 text-sm border outline-none focus:ring-2 transition-shadow resize-none"
+          className="w-full px-3 py-3 text-sm border outline-none focus:ring-2 transition-shadow resize-none"
           style={inputStyle}
           placeholder="Any special requests or notes for your stylist..."
         />
       </div>
 
-      <button
-        onClick={() => isValid && onSubmit(form)}
-        disabled={!isValid}
-        className="w-full py-3 text-sm font-medium text-white transition-all hover:opacity-90 disabled:opacity-50"
-        style={{
-          backgroundColor: theme.primaryColor,
-          borderRadius: 'var(--bk-btn-radius, 8px)',
-        }}
-      >
-        Continue to Review
-      </button>
+      {/* Sticky on mobile */}
+      <div className="sm:relative fixed bottom-0 left-0 right-0 sm:p-0 p-4 bg-gradient-to-t from-white via-white sm:bg-none z-10">
+        <button
+          onClick={() => isValid && onSubmit(form)}
+          disabled={!isValid}
+          className="w-full py-3.5 text-sm font-medium text-white transition-all hover:opacity-90 disabled:opacity-50 active:scale-[0.98]"
+          style={{
+            backgroundColor: theme.primaryColor,
+            borderRadius: 'var(--bk-btn-radius, 8px)',
+          }}
+        >
+          Continue to Review
+        </button>
+      </div>
     </div>
   );
 }

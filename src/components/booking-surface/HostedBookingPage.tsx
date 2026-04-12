@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { useOrganizationBySlug } from '@/hooks/useOrganizations';
 import { usePublicBookingSurfaceConfig, DEFAULT_BOOKING_SURFACE_CONFIG } from '@/hooks/useBookingSurfaceConfig';
@@ -15,6 +15,7 @@ import { BookingDateTimePicker } from './BookingDateTimePicker';
 import { BookingClientForm, type BookingClientInfo } from './BookingClientForm';
 import { BookingConfirmation } from './BookingConfirmation';
 import { Loader2 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 type FlowStep = 'location' | 'service' | 'stylist' | 'datetime' | 'details' | 'confirm';
 
@@ -40,8 +41,8 @@ export function HostedBookingPage() {
   const { data: config } = usePublicBookingSurfaceConfig(org?.id);
   const { categories, levels, isLoading: servicesLoading } = usePublicServicesForWebsite(org?.id);
 
-  // Selections
   const [currentStepIdx, setCurrentStepIdx] = useState(0);
+  const [direction, setDirection] = useState(1);
   const [selectedLocation, setSelectedLocation] = useState<string | null>(searchParams.get('location'));
   const [selectedService, setSelectedService] = useState<string | null>(searchParams.get('service'));
   const [selectedCategory, setSelectedCategory] = useState<string | null>(searchParams.get('category'));
@@ -53,10 +54,8 @@ export function HostedBookingPage() {
 
   const effectiveConfig = config ?? DEFAULT_BOOKING_SURFACE_CONFIG;
   const { theme, flow, hosted } = effectiveConfig;
-
   const steps = FLOW_STEPS[flow.template] || FLOW_STEPS['category-first'];
 
-  // Fetch locations
   const { data: locations } = useQuery({
     queryKey: ['public-locations', org?.id],
     queryFn: async () => {
@@ -67,17 +66,12 @@ export function HostedBookingPage() {
         .eq('is_active', true);
       if (error) throw error;
       return (data ?? []).map((l) => ({
-        id: l.id,
-        name: l.name,
-        address: l.address,
-        city: l.city,
-        state: l.state_province,
+        id: l.id, name: l.name, address: l.address, city: l.city, state: l.state_province,
       })) as BookingLocation[];
     },
     enabled: !!org?.id,
   });
 
-  // Fetch stylists
   const { data: stylists } = useQuery({
     queryKey: ['public-stylists', org?.id],
     queryFn: async () => {
@@ -89,10 +83,7 @@ export function HostedBookingPage() {
         .eq('is_booking', true);
       if (error) throw error;
       return (data ?? []).map((s) => ({
-        id: s.user_id,
-        name: s.full_name || 'Stylist',
-        photoUrl: s.photo_url,
-        bio: s.bio,
+        id: s.user_id, name: s.full_name || 'Stylist', photoUrl: s.photo_url, bio: s.bio,
       })) as BookingStylist[];
     },
     enabled: !!org?.id,
@@ -101,14 +92,15 @@ export function HostedBookingPage() {
   const currentStep = steps[currentStepIdx];
 
   const goNext = useCallback(() => {
+    setDirection(1);
     setCurrentStepIdx((prev) => Math.min(prev + 1, steps.length - 1));
   }, [steps.length]);
 
   const goBack = useCallback(() => {
+    setDirection(-1);
     setCurrentStepIdx((prev) => Math.max(0, prev - 1));
   }, []);
 
-  // Loading & error states
   if (orgLoading || servicesLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-white">
@@ -130,54 +122,27 @@ export function HostedBookingPage() {
 
   const salonName = org.name || 'Our Salon';
   const defaultLevel = levels[0]?.slug;
-
-  // Resolve names for confirmation
   const stylistName = selectedStylist === 'any' ? null : stylists?.find(s => s.id === selectedStylist)?.name || null;
   const locationName = locations?.find(l => l.id === selectedLocation)?.name || null;
+
+  const slideVariants = {
+    enter: (d: number) => ({ x: d > 0 ? 60 : -60, opacity: 0 }),
+    center: { x: 0, opacity: 1 },
+    exit: (d: number) => ({ x: d > 0 ? -60 : 60, opacity: 0 }),
+  };
 
   const renderStep = () => {
     switch (currentStep) {
       case 'location':
-        return (
-          <BookingLocationPicker
-            locations={locations ?? []}
-            theme={theme}
-            onSelect={(id) => { setSelectedLocation(id); goNext(); }}
-          />
-        );
+        return <BookingLocationPicker locations={locations ?? []} theme={theme} onSelect={(id) => { setSelectedLocation(id); goNext(); }} />;
       case 'service':
-        return (
-          <BookingServiceBrowser
-            categories={categories}
-            theme={theme}
-            flow={flow}
-            defaultLevelSlug={defaultLevel}
-            onSelectService={(name, cat) => { setSelectedService(name); setSelectedCategory(cat); goNext(); }}
-          />
-        );
+        return <BookingServiceBrowser categories={categories} theme={theme} flow={flow} defaultLevelSlug={defaultLevel} onSelectService={(name, cat) => { setSelectedService(name); setSelectedCategory(cat); goNext(); }} />;
       case 'stylist':
-        return (
-          <BookingStylistPicker
-            stylists={stylists ?? []}
-            theme={theme}
-            showBios={flow.showStylistBios}
-            onSelect={(id) => { setSelectedStylist(id); goNext(); }}
-          />
-        );
+        return <BookingStylistPicker stylists={stylists ?? []} theme={theme} showBios={flow.showStylistBios} onSelect={(id) => { setSelectedStylist(id); goNext(); }} />;
       case 'datetime':
-        return (
-          <BookingDateTimePicker
-            theme={theme}
-            onSelect={(date, time) => { setSelectedDate(date); setSelectedTime(time); goNext(); }}
-          />
-        );
+        return <BookingDateTimePicker theme={theme} onSelect={(date, time) => { setSelectedDate(date); setSelectedTime(time); goNext(); }} />;
       case 'details':
-        return (
-          <BookingClientForm
-            theme={theme}
-            onSubmit={(info) => { setClientInfo(info); goNext(); }}
-          />
-        );
+        return <BookingClientForm theme={theme} onSubmit={(info) => { setClientInfo(info); goNext(); }} />;
       case 'confirm':
         return clientInfo ? (
           <BookingConfirmation
@@ -212,7 +177,6 @@ export function HostedBookingPage() {
           />
         )}
 
-        {/* Back button */}
         {currentStepIdx > 0 && !isConfirmed && (
           <button
             onClick={goBack}
@@ -223,11 +187,30 @@ export function HostedBookingPage() {
           </button>
         )}
 
-        {renderStep()}
+        <AnimatePresence mode="wait" custom={direction}>
+          <motion.div
+            key={currentStep}
+            custom={direction}
+            variants={slideVariants}
+            initial="enter"
+            animate="center"
+            exit="exit"
+            transition={{ duration: 0.25, ease: 'easeInOut' }}
+          >
+            {renderStep()}
+          </motion.div>
+        </AnimatePresence>
 
-        {/* Powered by */}
+        {hosted.policyText && (
+          <div className="mt-12 pt-6 border-t" style={{ borderColor: theme.borderColor }}>
+            <p className="text-xs leading-relaxed" style={{ color: theme.mutedTextColor }}>
+              {hosted.policyText}
+            </p>
+          </div>
+        )}
+
         {hosted.poweredByVisible && (
-          <div className="text-center mt-12">
+          <div className="text-center mt-8">
             <span className="text-xs" style={{ color: theme.mutedTextColor }}>
               Powered by Zura
             </span>

@@ -1,4 +1,5 @@
-import { Calendar, Clock, User, Scissors, MapPin, CheckCircle2 } from 'lucide-react';
+import { Calendar, Clock, User, Scissors, MapPin, CheckCircle2, CalendarPlus } from 'lucide-react';
+import { motion } from 'framer-motion';
 import type { BookingSurfaceTheme } from '@/hooks/useBookingSurfaceConfig';
 import type { BookingClientInfo } from './BookingClientForm';
 
@@ -22,22 +23,46 @@ export function BookingConfirmation({
   date, time, clientInfo, onConfirm, onBack, isSubmitting, isConfirmed,
 }: BookingConfirmationProps) {
   if (isConfirmed) {
+    const calTitle = encodeURIComponent(`${serviceName} at ${locationName || 'Salon'}`);
+    const googleCalUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${calTitle}&dates=${date.replace(/-/g, '')}/${date.replace(/-/g, '')}`;
+
     return (
-      <div className="text-center py-12">
-        <div
-          className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4"
+      <motion.div
+        className="text-center py-12"
+        initial={{ scale: 0.9, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        transition={{ duration: 0.4, ease: 'easeOut' }}
+      >
+        <motion.div
+          className="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-5"
           style={{ backgroundColor: `${theme.primaryColor}15` }}
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
         >
-          <CheckCircle2 className="w-8 h-8" style={{ color: theme.primaryColor }} />
-        </div>
+          <CheckCircle2 className="w-10 h-10" style={{ color: theme.primaryColor }} />
+        </motion.div>
         <h3 className="text-xl font-medium mb-2" style={{ color: theme.textColor }}>
           Booking Request Submitted
         </h3>
-        <p className="text-sm max-w-sm mx-auto" style={{ color: theme.mutedTextColor }}>
+        <p className="text-sm max-w-sm mx-auto mb-6" style={{ color: theme.mutedTextColor }}>
           We've received your booking request. You'll receive a confirmation email at{' '}
           <strong>{clientInfo.email}</strong> once it's confirmed.
         </p>
-      </div>
+        <a
+          href={googleCalUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-lg transition-colors"
+          style={{
+            color: theme.primaryColor,
+            border: `1.5px solid ${theme.borderColor}`,
+          }}
+        >
+          <CalendarPlus className="w-4 h-4" />
+          Add to Calendar
+        </a>
+      </motion.div>
     );
   }
 
@@ -93,7 +118,7 @@ export function BookingConfirmation({
       <div className="flex gap-3">
         <button
           onClick={onBack}
-          className="flex-1 py-3 text-sm font-medium transition-colors"
+          className="flex-1 py-3 text-sm font-medium transition-colors active:scale-[0.98]"
           style={{
             color: theme.textColor,
             borderRadius: 'var(--bk-btn-radius, 8px)',
@@ -105,7 +130,7 @@ export function BookingConfirmation({
         <button
           onClick={onConfirm}
           disabled={isSubmitting}
-          className="flex-1 py-3 text-sm font-medium text-white transition-all hover:opacity-90 disabled:opacity-50"
+          className="flex-1 py-3 text-sm font-medium text-white transition-all hover:opacity-90 disabled:opacity-50 active:scale-[0.98]"
           style={{
             backgroundColor: theme.primaryColor,
             borderRadius: 'var(--bk-btn-radius, 8px)',

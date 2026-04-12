@@ -1,9 +1,7 @@
-import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
-import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Copy, ExternalLink, Globe } from 'lucide-react';
+import { Copy, ExternalLink, Globe, Eye } from 'lucide-react';
 import { toast } from 'sonner';
 import type { BookingSurfaceConfig } from '@/hooks/useBookingSurfaceConfig';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
@@ -11,11 +9,12 @@ import { useOrganizationContext } from '@/contexts/OrganizationContext';
 interface BookingPublishBarProps {
   config: BookingSurfaceConfig;
   onSave: (partial: Partial<BookingSurfaceConfig>) => Promise<void>;
+  isSaving?: boolean;
 }
 
-export function BookingPublishBar({ config, onSave }: BookingPublishBarProps) {
+export function BookingPublishBar({ config, onSave, isSaving }: BookingPublishBarProps) {
   const { effectiveOrganization } = useOrganizationContext();
-  const orgSlug = effectiveOrganization?.slug || '';
+  const orgSlug = config.slug || effectiveOrganization?.slug || '';
   const bookingUrl = `${window.location.origin}/book/${orgSlug}`;
 
   const handleCopy = () => {
@@ -24,43 +23,36 @@ export function BookingPublishBar({ config, onSave }: BookingPublishBarProps) {
   };
 
   return (
-    <Card>
-      <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-muted rounded-lg flex items-center justify-center">
-              <Globe className="w-5 h-5 text-primary" />
+    <div className="sticky bottom-0 z-10">
+      <Card className="border-t-2 border-primary/20 bg-card/95 backdrop-blur-sm shadow-lg">
+        <CardContent className="py-3 px-4">
+          <div className="flex items-center justify-between gap-4 flex-wrap">
+            {/* Left: status */}
+            <div className="flex items-center gap-3">
+              <div className={`w-2.5 h-2.5 rounded-full ${config.published ? 'bg-emerald-500' : 'bg-amber-500'}`} />
+              <span className="text-sm font-medium text-foreground">
+                {config.published ? 'Published' : 'Draft'}
+              </span>
+              <Switch
+                checked={config.published}
+                onCheckedChange={(published) => onSave({ published })}
+              />
             </div>
-            <CardTitle className="font-display text-base tracking-wide">BOOKING SURFACE</CardTitle>
+
+            {/* Right: actions */}
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="sm" asChild>
+                <a href={bookingUrl} target="_blank" rel="noopener noreferrer">
+                  <Eye className="w-3.5 h-3.5 mr-1" /> Preview
+                </a>
+              </Button>
+              <Button variant="outline" size="sm" onClick={handleCopy}>
+                <Copy className="w-3.5 h-3.5 mr-1" /> Copy Link
+              </Button>
+            </div>
           </div>
-          <div className="flex items-center gap-3">
-            <span className="text-sm text-muted-foreground">
-              {config.published ? 'Published' : 'Unpublished'}
-            </span>
-            <Switch
-              checked={config.published}
-              onCheckedChange={(published) => onSave({ published })}
-            />
-          </div>
-        </div>
-      </CardHeader>
-      <CardContent>
-        <div className="flex items-center gap-2">
-          <Input
-            value={bookingUrl}
-            readOnly
-            className="font-mono text-sm flex-1"
-          />
-          <Button variant="outline" size="icon" onClick={handleCopy}>
-            <Copy className="w-4 h-4" />
-          </Button>
-          <Button variant="outline" size="icon" asChild>
-            <a href={bookingUrl} target="_blank" rel="noopener noreferrer">
-              <ExternalLink className="w-4 h-4" />
-            </a>
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
+    </div>
   );
 }
