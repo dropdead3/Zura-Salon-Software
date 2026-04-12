@@ -4,6 +4,7 @@ import { tokens } from '@/lib/design-tokens';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useSEOGrowthOrchestration } from '@/hooks/useSEOGrowthOrchestration';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
+import { BlurredAmount } from '@/components/ui/blurred-amount';
 import { SEOLocationPriorityCard } from './SEOLocationPriorityCard';
 import { Globe, TrendingUp, Target, AlertTriangle, Lightbulb } from 'lucide-react';
 
@@ -41,7 +42,7 @@ export function SEOGlobalGrowthDashboard({ organizationId }: Props) {
   }
 
   if (!orchestration || orchestration.rankedOpportunities.length === 0) {
-    return null; // Don't show if no data
+    return null;
   }
 
   const { networkSummary, locationStates } = orchestration;
@@ -71,7 +72,7 @@ export function SEOGlobalGrowthDashboard({ organizationId }: Props) {
               </div>
               <p className="text-xl font-display tracking-wide">
                 {networkSummary.totalNetworkRevenue > 0
-                  ? formatCurrency(networkSummary.totalNetworkRevenue)
+                  ? <BlurredAmount>{formatCurrency(networkSummary.totalNetworkRevenue)}</BlurredAmount>
                   : '—'}
               </p>
               <p className="text-[10px] text-muted-foreground font-sans">30d rolling</p>
@@ -89,7 +90,7 @@ export function SEOGlobalGrowthDashboard({ organizationId }: Props) {
                     {networkSummary.topGrowthDriver.label}
                   </p>
                   <p className="text-xs text-muted-foreground font-sans">
-                    {formatCurrency(networkSummary.topGrowthDriver.lift)} revenue
+                    <BlurredAmount>{formatCurrency(networkSummary.topGrowthDriver.lift)}</BlurredAmount> revenue
                   </p>
                 </>
               ) : (
@@ -109,7 +110,7 @@ export function SEOGlobalGrowthDashboard({ organizationId }: Props) {
                     {networkSummary.biggestOpportunity.label}
                   </p>
                   <p className="text-xs text-green-500 font-sans">
-                    +{formatCurrency(networkSummary.biggestOpportunity.lift)} available
+                    +<BlurredAmount>{formatCurrency(networkSummary.biggestOpportunity.lift)}</BlurredAmount> available
                   </p>
                 </>
               ) : (

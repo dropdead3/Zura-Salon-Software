@@ -10,6 +10,8 @@ import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/comp
 import { useSEORevenuePredictions } from '@/hooks/useSEORevenuePrediction';
 import { MOMENTUM_DIRECTION_CONFIG } from '@/lib/seo-engine/seo-momentum-calculator';
 import type { ConfidenceLevel } from '@/lib/seo-engine/seo-revenue-predictor';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
+import { BlurredAmount } from '@/components/ui/blurred-amount';
 import { tokens } from '@/lib/design-tokens';
 import { TrendingUp, TrendingDown, Minus, Info } from 'lucide-react';
 
@@ -23,13 +25,9 @@ const CONFIDENCE_STYLES: Record<ConfidenceLevel, { label: string; className: str
   low: { label: 'Low', className: 'bg-muted text-muted-foreground' },
 };
 
-function formatCurrency(v: number): string {
-  if (v >= 1000) return `$${(v / 1000).toFixed(1)}k`;
-  return `$${v.toFixed(0)}`;
-}
-
 export function SEOPredictedLiftCard({ organizationId }: Props) {
   const { data: predictions = [], isLoading } = useSEORevenuePredictions(organizationId);
+  const { formatCurrencyCompact } = useFormatCurrency();
 
   if (isLoading) {
     return (
@@ -89,7 +87,7 @@ export function SEOPredictedLiftCard({ organizationId }: Props) {
 
                   <div className="flex items-center justify-between text-xs font-sans">
                     <span className="text-muted-foreground">
-                      Current: {p.currentRevenue > 0 ? formatCurrency(p.currentRevenue) : '—'}
+                      Current: {p.currentRevenue > 0 ? <BlurredAmount>{formatCurrencyCompact(p.currentRevenue)}</BlurredAmount> : '—'}
                     </span>
                     <span className="flex items-center gap-1">
                       <MIcon className={`w-3 h-3 ${mConf.color}`} />
@@ -99,15 +97,15 @@ export function SEOPredictedLiftCard({ organizationId }: Props) {
 
                   <div className="flex items-baseline gap-1 text-sm font-display tracking-wide">
                     <span className="text-green-600">
-                      +{formatCurrency(p.prediction.revenueLift.low)}
+                      +<BlurredAmount>{formatCurrencyCompact(p.prediction.revenueLift.low)}</BlurredAmount>
                     </span>
                     <span className="text-muted-foreground text-xs">→</span>
                     <span className="text-green-600">
-                      {formatCurrency(p.prediction.revenueLift.expected)}
+                      <BlurredAmount>{formatCurrencyCompact(p.prediction.revenueLift.expected)}</BlurredAmount>
                     </span>
                     <span className="text-muted-foreground text-xs">→</span>
                     <span className="text-green-600">
-                      {formatCurrency(p.prediction.revenueLift.high)}
+                      <BlurredAmount>{formatCurrencyCompact(p.prediction.revenueLift.high)}</BlurredAmount>
                     </span>
                   </div>
                 </div>

@@ -1,10 +1,17 @@
 /**
  * Financing Layer — Configuration
  *
- * Deterministic thresholds that gate financing eligibility.
- * No AI involvement in eligibility determination.
+ * @deprecated — This file contains legacy financing thresholds from the pre-canonical
+ * capital engine. Production eligibility now uses `calculateInternalEligibility` from
+ * `@/lib/capital-engine/capital-formulas.ts` with policy from `capital-formulas-config.ts`.
+ *
+ * Retained for backward compatibility. Do not add new consumers.
  */
 
+/**
+ * @deprecated Use `DEFAULT_CAPITAL_POLICY` from `capital-formulas-config.ts` instead.
+ * Note: canonical minROE is 1.8, not 1.5.
+ */
 export const FINANCING_THRESHOLDS = {
   /** Minimum ROE multiplier to qualify */
   minROE: 1.5,
@@ -41,6 +48,11 @@ export const STYLIST_FINANCING_THRESHOLDS = {
   minORS: 60,
 } as const;
 
+/**
+ * @deprecated Use `calculateForecastStatus` from `capital-formulas.ts` instead.
+ * That function uses asymmetric thresholds (+15%/-10%/-25%) and returns 5 statuses
+ * (above_forecast, on_track, below_forecast, at_risk, early_tracking).
+ */
 export function getVarianceLabel(variancePct: number | null): { label: string; status: 'on_track' | 'watch' | 'at_risk' } {
   if (variancePct === null) return { label: 'No Data', status: 'on_track' };
   const abs = Math.abs(variancePct);
