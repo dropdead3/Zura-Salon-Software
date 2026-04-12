@@ -24,7 +24,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion';
-import { STRIPE_CAPITAL_REQUIREMENTS, ZURA_OPERATIONAL_GUARDRAILS } from '@/config/capital-engine/capital-formulas-config';
+import { STRIPE_CAPITAL_REQUIREMENTS, ZURA_HARD_GATES, ZURA_ADVISORIES } from '@/config/capital-engine/capital-formulas-config';
 
 /* ── Messaging Tier ── */
 function MessagingTier({ label, variant, quote }: { label: string; variant: 'primary' | 'secondary' | 'info'; quote: string }) {
@@ -161,22 +161,27 @@ export default function CapitalKnowledgeBase() {
             <div className="flex items-center gap-2">
               <Shield className="h-4 w-4 text-amber-400" />
               <h4 className="font-sans text-sm text-[hsl(var(--platform-foreground))]">
-                Layer 2 — Zura Operational Guardrails (Zura-owned)
+                Layer 2 — Zura Operational Context (Zura-owned)
               </h4>
             </div>
             <p className="text-sm text-[hsl(var(--platform-foreground-muted))] leading-relaxed">
-              Before surfacing a Stripe-approved offer to an organization, Zura applies operational readiness checks. These are not underwriting criteria — they are guardrails to ensure the organization is in a healthy state to deploy capital responsibly.
+              Stripe is the lender and underwriter. Zura provides operational context — not additional underwriting gates. Only critical operational alerts block surfacing. Other conditions are shown as advisory information.
             </p>
-            <div className="rounded-lg border border-[hsl(var(--platform-border)/0.15)] bg-[hsl(var(--platform-bg-card)/0.05)] p-3">
-              <p className="text-xs text-[hsl(var(--platform-foreground-muted))] mb-2 uppercase tracking-wide">What Zura checks:</p>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-1">
-                {ZURA_OPERATIONAL_GUARDRAILS.map((guard) => (
-                  <div key={guard.code} className="flex items-start gap-2 text-xs py-0.5">
-                    <CheckCircle2 className="h-3.5 w-3.5 mt-0.5 shrink-0 text-amber-400/60" />
-                    <span className="text-[hsl(var(--platform-foreground)/0.85)]">{guard.label}</span>
-                  </div>
-                ))}
-              </div>
+            <div className="rounded-lg border border-[hsl(var(--platform-border)/0.15)] bg-[hsl(var(--platform-bg-card)/0.05)] p-3 space-y-2">
+              <p className="text-xs text-[hsl(var(--platform-foreground-muted))] mb-2 uppercase tracking-wide">Hard gate (blocks surfacing):</p>
+              {ZURA_HARD_GATES.map((gate) => (
+                <div key={gate.code} className="flex items-start gap-2 text-xs py-0.5">
+                  <Shield className="h-3.5 w-3.5 mt-0.5 shrink-0 text-red-400/60" />
+                  <span className="text-[hsl(var(--platform-foreground)/0.85)]">{gate.label}</span>
+                </div>
+              ))}
+              <p className="text-xs text-[hsl(var(--platform-foreground-muted))] mt-3 mb-2 uppercase tracking-wide">Advisory context (informational):</p>
+              {ZURA_ADVISORIES.map((adv) => (
+                <div key={adv.code} className="flex items-start gap-2 text-xs py-0.5">
+                  <CheckCircle2 className="h-3.5 w-3.5 mt-0.5 shrink-0 text-amber-400/60" />
+                  <span className="text-[hsl(var(--platform-foreground)/0.85)]">{adv.label}</span>
+                </div>
+              ))}
             </div>
           </div>
 
@@ -202,7 +207,7 @@ export default function CapitalKnowledgeBase() {
         <PlatformCardContent>
           <StepRow number={1} title="Stripe Review" description="Stripe automatically reviews connected accounts daily based on processing history, volume, and growth trajectory." />
           <StepRow number={2} title="Offer Detection" description="When Stripe approves a financing offer, Zura's detection pipeline picks it up and creates a capital opportunity record." />
-          <StepRow number={3} title="Operational Readiness" description="Zura checks operational guardrails — no critical alerts, no repayment distress, under project limits — to confirm the org is ready." />
+          <StepRow number={3} title="Operational Context" description="Zura checks for critical operational alerts (the only hard gate). Repayment and project context is shown as advisory information." />
           <StepRow number={4} title="Surfacing" description="Qualifying opportunities appear in the organization's Growth Hub under Zura Capital." />
           <StepRow number={5} title="Activation" description="The organization admin reviews the opportunity and decides whether to activate funding through Stripe." />
         </PlatformCardContent>
@@ -318,7 +323,7 @@ export default function CapitalKnowledgeBase() {
                 What are Zura's operational guardrails?
               </AccordionTrigger>
               <AccordionContent className="text-sm text-[hsl(var(--platform-foreground-muted))]">
-                Before surfacing a Stripe-approved offer, Zura checks: no critical operational alerts, no active repayment distress, under the concurrent project limit, and no recent decline or underperformance cooldowns. These protect organizations from deploying capital when operations aren't ready.
+                Zura applies one hard gate: no unresolved critical operational alerts. Additionally, advisory context is shown for repayment distress and concurrent project counts — but these do not block surfacing. Stripe is the lender and underwriter; Zura provides operational context, not additional gates.
               </AccordionContent>
             </AccordionItem>
           </Accordion>
