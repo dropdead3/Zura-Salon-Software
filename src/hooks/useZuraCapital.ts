@@ -169,8 +169,9 @@ export function useZuraCapital() {
   });
 
   // Derived context values
-  const { locationExposure, lastUnderperformingAt } = useMemo(() => {
+  const { locationExposure, stylistExposure, lastUnderperformingAt } = useMemo(() => {
     const locExp: Record<string, number> = {};
+    const styExp: Record<string, number> = {};
     let lastUnderperf: string | null = null;
 
     (fundedProjects as any[]).forEach((fp) => {
@@ -178,6 +179,9 @@ export function useZuraCapital() {
       const opp = fp.capital_funding_opportunities;
       if (opp?.location_id) {
         locExp[opp.location_id] = (locExp[opp.location_id] ?? 0) + fundedAmount;
+      }
+      if (opp?.stylist_id) {
+        styExp[opp.stylist_id] = (styExp[opp.stylist_id] ?? 0) + fundedAmount;
       }
       // Track most recent at_risk project
       if (fp.status === 'at_risk' && fp.updated_at) {
@@ -187,7 +191,7 @@ export function useZuraCapital() {
       }
     });
 
-    return { locationExposure: locExp, lastUnderperformingAt: lastUnderperf };
+    return { locationExposure: locExp, stylistExposure: styExp, lastUnderperformingAt: lastUnderperf };
   }, [fundedProjects]);
 
   const { recentDismissals, recentDeclines, lastDeclinedAt } = useMemo(() => {
