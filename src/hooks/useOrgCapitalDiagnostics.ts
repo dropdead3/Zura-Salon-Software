@@ -89,13 +89,40 @@ export function useOrgCapitalDiagnostics(orgId: string | null) {
       // 3. Get real project context (N4) + exposure data (B4)
       const { data: activeProjects } = await supabase
         .from('capital_funding_projects')
-        .select('id, status, repayment_status, funded_amount_cents, capital_funding_opportunities(location_id, stylist_id)')
+        .select('id, status, repayment_status, funded_amount_cents, updated_at, capital_funding_opportunities(location_id, stylist_id)')
         .eq('organization_id', orgId!)
         .in('status', ['active', 'on_track', 'above_forecast', 'below_forecast', 'at_risk']);
 
       const activeProjectCount = activeProjects?.length ?? 0;
       const underperformingCount = (activeProjects ?? []).filter(p => p.status === 'at_risk').length;
       const repaymentDistress = (activeProjects ?? []).some(p => p.repayment_status === 'delinquent');
+
+      // Derive lastUnderperformingAt from at_risk projects
+      let lastUnderperformingAt: string | null = null;
+      for (const proj of activeProjects ?? []) {
+        if (proj.status === 'at_risk' && proj.updated_at) {
+          if (!lastUnderperformingAt || proj.updated_at > lastUnderperformingAt) {
+            lastUnderperformingAt = proj.updated_at;
+          }
+        }
+      }
+
+      // Derive lastDeclinedAt from capital_event_log
+      const { data: declineEvents } = await supabase
+        .from('capital_event_log')
+        .select('created_at')
+        .eq('organization_id', orgId!)
+        .eq('event_type', 'funding_declined')
+        .order('created_at', { ascending: false })
+        .limit(1);
+      const lastDeclinedAt = declineEvents?.[0]?.created_at ?? null;
+
+      // TODO: Wire hasCriticalOpsAlerts to operational alerting system
+      // Currently no alerting table exists — defaulting to false with warning
+      const hasCriticalOpsAlerts = false;
+      if (hasCriticalOpsAlerts === false) {
+        console.warn('[Capital Diagnostics] hasCriticalOpsAlerts is hardcoded to false — wire to alerting system when available');
+      }
 
       // Compute per-location and per-stylist exposure from active projects
       const locationExposureMap = new Map<string, number>();
@@ -137,14 +164,14 @@ export function useOrgCapitalDiagnostics(orgId: string | null) {
           requiredInvestmentCents: opp.required_investment_cents ?? 0,
           constraintType: opp.constraint_type ?? null,
           momentumScore: opp.momentum_score ?? null,
-          hasCriticalOpsAlerts: false,
+          hasCriticalOpsAlerts,
           expiresAt: opp.expires_at ?? null,
           locationId: opp.location_id ?? null,
           locationExposure: opp.location_id ? (locationExposureMap.get(opp.location_id) ?? 0) : 0,
           stylistId: opp.stylist_id ?? null,
           stylistExposure: opp.stylist_id ? (stylistExposureMap.get(opp.stylist_id) ?? 0) : 0,
-          lastDeclinedAt: null,
-          lastUnderperformingAt: null,
+          lastDeclinedAt,
+          lastUnderperformingAt,
         };
 
         const eligibility = calculateInternalEligibility(inputs, effectivePolicy);

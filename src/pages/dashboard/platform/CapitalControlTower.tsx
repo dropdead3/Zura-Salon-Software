@@ -105,161 +105,71 @@ function VisibilityBadge({ verdict }: { verdict: VisibilityVerdict }) {
   }
 }
 
-/* ── Eligibility Check List (19 checks) ── */
-
-interface CheckItem {
-  label: string;
-  status: 'pass' | 'fail' | 'na';
-  detail: string;
-}
-
-function buildChecks(inputs: EligibilityInputs, policy: CapitalPolicy): CheckItem[] {
-  const fmt$ = (cents: number) => `$${(cents / 100).toLocaleString()}`;
-  const fmtDollars = (v: number) => `$${v.toLocaleString()}`;
-
-  const riskRank: Record<string, number> = { low: 1, medium: 2, high: 3, critical: 4 };
-  const rank = (l: string) => riskRank[l] ?? 99;
-
-  const isExpired = inputs.expiresAt ? new Date(inputs.expiresAt) < new Date() : false;
-  const declineDays = inputs.lastDeclinedAt
-    ? Math.floor((Date.now() - new Date(inputs.lastDeclinedAt).getTime()) / 86400000)
-    : null;
-  const underDays = inputs.lastUnderperformingAt
-    ? Math.floor((Date.now() - new Date(inputs.lastUnderperformingAt).getTime()) / 86400000)
-    : null;
-
-  return [
-    {
-      label: 'ROE Ratio',
-      status: inputs.roeRatio >= policy.roeThreshold ? 'pass' : 'fail',
-      detail: `${inputs.roeRatio.toFixed(2)}x (threshold: ${policy.roeThreshold}x)`,
-    },
-    {
-      label: 'Confidence Score',
-      status: inputs.confidenceScore >= policy.confidenceThreshold ? 'pass' : 'fail',
-      detail: `${inputs.confidenceScore} (threshold: ${policy.confidenceThreshold})`,
-    },
-    {
-      label: 'Risk Level',
-      status: rank(inputs.riskLevel) <= rank(policy.maxRiskLevel) ? 'pass' : 'fail',
-      detail: `${inputs.riskLevel} (max: ${policy.maxRiskLevel})`,
-    },
-    {
-      label: 'Operational Stability',
-      status: inputs.operationalStabilityScore >= policy.minOperationalStability ? 'pass' : 'fail',
-      detail: `${inputs.operationalStabilityScore} (threshold: ${policy.minOperationalStability})`,
-    },
-    {
-      label: 'Execution Readiness',
-      status: inputs.executionReadinessScore >= policy.minExecutionReadiness ? 'pass' : 'fail',
-      detail: `${inputs.executionReadinessScore} (threshold: ${policy.minExecutionReadiness})`,
-    },
-    {
-      label: 'Concurrent Projects',
-      status: inputs.activeCapitalProjectsCount < policy.maxConcurrentProjects ? 'pass' : 'fail',
-      detail: `${inputs.activeCapitalProjectsCount} active (max: ${policy.maxConcurrentProjects})`,
-    },
-    {
-      label: 'No Underperforming Projects',
-      status: inputs.activeUnderperformingProjectsCount === 0 ? 'pass' : 'fail',
-      detail: inputs.activeUnderperformingProjectsCount === 0 ? 'None' : `${inputs.activeUnderperformingProjectsCount} underperforming`,
-    },
-    {
-      label: 'No Repayment Distress',
-      status: !inputs.repaymentDistressFlag ? 'pass' : 'fail',
-      detail: inputs.repaymentDistressFlag ? 'Delinquent repayment detected' : 'Clear',
-    },
-    {
-      label: 'Opportunity Freshness',
-      status: inputs.opportunityFreshnessDays <= policy.staleDays ? 'pass' : 'fail',
-      detail: `${inputs.opportunityFreshnessDays} days (max: ${policy.staleDays})`,
-    },
-    {
-      label: 'Investment Amount',
-      status: inputs.requiredInvestmentCents > 0 ? 'pass' : 'fail',
-      detail: inputs.requiredInvestmentCents > 0 ? fmt$(inputs.requiredInvestmentCents) : '$0 — invalid',
-    },
-    {
-      label: 'Above Minimum Capital',
-      status: inputs.requiredInvestmentCents > 0 && inputs.requiredInvestmentCents / 100 >= policy.minCapitalRequired ? 'pass' : 'fail',
-      detail: `${fmt$(inputs.requiredInvestmentCents)} (min: ${fmtDollars(policy.minCapitalRequired)})`,
-    },
-    {
-      label: 'Not Expired',
-      status: isExpired ? 'fail' : 'pass',
-      detail: inputs.expiresAt
-        ? isExpired ? `Expired ${new Date(inputs.expiresAt).toLocaleDateString()}` : `Expires ${new Date(inputs.expiresAt).toLocaleDateString()}`
-        : 'No expiration set',
-    },
-    {
-      label: 'Constraint Type',
-      status: inputs.constraintType ? 'pass' : 'fail',
-      detail: inputs.constraintType ?? 'Not identified',
-    },
-    {
-      label: 'Momentum Score',
-      status: inputs.momentumScore == null ? 'na' : inputs.momentumScore >= 20 ? 'pass' : 'fail',
-      detail: inputs.momentumScore != null ? `${inputs.momentumScore} (threshold: 20)` : 'N/A',
-    },
-    {
-      label: 'No Critical Ops Alerts',
-      status: !inputs.hasCriticalOpsAlerts ? 'pass' : 'fail',
-      detail: inputs.hasCriticalOpsAlerts ? 'Unresolved alerts' : 'Clear',
-    },
-    {
-      label: 'Location Exposure',
-      status: !inputs.locationId ? 'na' : (inputs.locationExposure + inputs.requiredInvestmentCents / 100 <= policy.maxExposurePerLocation ? 'pass' : 'fail'),
-      detail: inputs.locationId
-        ? `${fmtDollars(inputs.locationExposure)} + ${fmt$(inputs.requiredInvestmentCents)} (max: ${fmtDollars(policy.maxExposurePerLocation)})`
-        : 'N/A (no location)',
-    },
-    {
-      label: 'Stylist Exposure',
-      status: !inputs.stylistId ? 'na' : (inputs.stylistExposure + inputs.requiredInvestmentCents / 100 <= (policy.maxExposurePerStylist ?? policy.maxExposurePerLocation) ? 'pass' : 'fail'),
-      detail: inputs.stylistId
-        ? `${fmtDollars(inputs.stylistExposure)} + ${fmt$(inputs.requiredInvestmentCents)} (max: ${fmtDollars(policy.maxExposurePerStylist ?? policy.maxExposurePerLocation)})`
-        : 'N/A (no stylist)',
-    },
-    {
-      label: 'Decline Cooldown',
-      status: declineDays == null ? 'pass' : declineDays >= policy.cooldownAfterDeclineDays ? 'pass' : 'fail',
-      detail: declineDays != null ? `${declineDays}d since decline (cooldown: ${policy.cooldownAfterDeclineDays}d)` : 'Clear',
-    },
-    {
-      label: 'Underperformance Cooldown',
-      status: underDays == null ? 'pass' : underDays >= policy.cooldownAfterUnderperformanceDays ? 'pass' : 'fail',
-      detail: underDays != null ? `${underDays}d since underperformance (cooldown: ${policy.cooldownAfterUnderperformanceDays}d)` : 'Clear',
-    },
-  ];
-}
+/* ── Two-Layer Eligibility Check List (replaces legacy 19-check list) ── */
 
 function EligibilityCheckList({ opp }: { opp: OpportunityDiagnostic }) {
-  const checks = useMemo(() => buildChecks(opp.inputs, opp.policy), [opp.inputs, opp.policy]);
-  const passCount = checks.filter(c => c.status === 'pass').length;
-  const sorted = useMemo(() => [...checks].sort((a, b) => {
-    const order = { fail: 0, na: 1, pass: 2 };
-    return order[a.status] - order[b.status];
-  }), [checks]);
+  const readiness = opp.operationalReadiness;
+  const ranking = opp.ranking;
 
   return (
-    <div className="px-4 py-3 space-y-2 border-t border-[hsl(var(--platform-border)/0.15)] bg-[hsl(var(--platform-bg-card)/0.08)]">
-      <p className="text-xs font-sans text-[hsl(var(--platform-foreground-muted))]">
-        Eligibility Checks ({passCount}/{checks.length} passed)
-      </p>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-1">
-        {sorted.map((check) => (
-          <div key={check.label} className="flex items-start gap-2 text-xs py-0.5">
-            <div className="mt-0.5 shrink-0">
-              {check.status === 'pass' && <Check className="h-3.5 w-3.5 text-emerald-400" />}
-              {check.status === 'fail' && <X className="h-3.5 w-3.5 text-red-400" />}
-              {check.status === 'na' && <Minus className="h-3.5 w-3.5 text-[hsl(var(--platform-foreground-muted)/0.5)]" />}
+    <div className="px-4 py-3 space-y-4 border-t border-[hsl(var(--platform-border)/0.15)] bg-[hsl(var(--platform-bg-card)/0.08)]">
+      {/* Section 1: Zura Operational Guardrails (pass/fail) */}
+      <div>
+        <div className="flex items-center gap-2 mb-2">
+          <Shield className="h-3.5 w-3.5 text-amber-400" />
+          <p className="text-xs font-sans text-[hsl(var(--platform-foreground))] uppercase">
+            Zura Guardrails ({readiness.ready ? 'All Clear' : `${readiness.blockerCodes.length} Blocker${readiness.blockerCodes.length > 1 ? 's' : ''}`})
+          </p>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-1">
+          {ZURA_OPERATIONAL_GUARDRAILS.map((guard) => {
+            const isBlocked = readiness.blockerCodes.includes(guard.code as any);
+            return (
+              <div key={guard.code} className="flex items-start gap-2 text-xs py-0.5">
+                <div className="mt-0.5 shrink-0">
+                  {isBlocked ? (
+                    <X className="h-3.5 w-3.5 text-red-400" />
+                  ) : (
+                    <Check className="h-3.5 w-3.5 text-emerald-400" />
+                  )}
+                </div>
+                <span className="text-[hsl(var(--platform-foreground)/0.85)]">
+                  {guard.label}
+                  <span className="text-[hsl(var(--platform-foreground-muted))] ml-1">— {guard.description}</span>
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Section 2: Ranking Factors (scored, not gates) */}
+      <div>
+        <div className="flex items-center gap-2 mb-2">
+          <TrendingUp className="h-3.5 w-3.5 text-violet-400" />
+          <p className="text-xs font-sans text-[hsl(var(--platform-foreground))] uppercase">
+            Ranking Score: {ranking.score}/100
+          </p>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-1">
+          {ranking.factors.map((factor) => (
+            <div key={factor.code} className="flex items-start gap-2 text-xs py-0.5">
+              <div className="mt-0.5 shrink-0">
+                {factor.passed ? (
+                  <Check className="h-3.5 w-3.5 text-emerald-400/60" />
+                ) : (
+                  <AlertTriangle className="h-3.5 w-3.5 text-amber-400/60" />
+                )}
+              </div>
+              <span className="text-[hsl(var(--platform-foreground)/0.85)]">
+                {factor.label}
+                <span className="text-[hsl(var(--platform-foreground-muted))] ml-1">
+                  — {factor.code === 'risk' ? `Level ${factor.value}` : factor.value.toFixed(factor.code === 'roe' ? 2 : 0)}
+                </span>
+              </span>
             </div>
-            <span className="text-[hsl(var(--platform-foreground)/0.85)]">
-              {check.label}
-              <span className="text-[hsl(var(--platform-foreground-muted))] ml-1">— {check.detail}</span>
-            </span>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
     </div>
   );
@@ -432,7 +342,7 @@ function DiagnosticPanel({ orgId }: { orgId: string }) {
                     <PlatformBadge size="sm" variant={opp.isQualifying ? 'info' : 'default'}>
                       {opp.status}
                     </PlatformBadge>
-                    {opp.eligibility.eligible ? (
+                    {opp.operationalReadiness.ready ? (
                       <Check className="h-4 w-4 text-emerald-400 shrink-0" />
                     ) : (
                       <X className="h-4 w-4 text-red-400 shrink-0" />
