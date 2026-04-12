@@ -395,11 +395,11 @@ function DashboardRoutes() {
       <Route path="admin/access-hub" element={<ProtectedRoute requiredPermission="manage_settings"><AccessHub /></ProtectedRoute>} />
 
       {/* Zura Capital routes — gated by capital_enabled flag + manage_settings permission */}
-      <Route path="admin/capital" element={<ProtectedRoute requiredPermission="manage_settings"><OrganizationFeatureGate featureKey="capital_enabled" fallback={<Navigate to=".." replace />}><CapitalQueue /></OrganizationFeatureGate></ProtectedRoute>} />
-      <Route path="admin/capital/opportunities/:opportunityId" element={<ProtectedRoute requiredPermission="manage_settings"><OrganizationFeatureGate featureKey="capital_enabled" fallback={<Navigate to="../.." replace />}><CapitalOpportunityDetail /></OrganizationFeatureGate></ProtectedRoute>} />
-      <Route path="admin/capital/projects" element={<ProtectedRoute requiredPermission="manage_settings"><OrganizationFeatureGate featureKey="capital_enabled" fallback={<Navigate to=".." replace />}><CapitalProjects /></OrganizationFeatureGate></ProtectedRoute>} />
-      <Route path="admin/capital/projects/:projectId" element={<ProtectedRoute requiredPermission="manage_settings"><OrganizationFeatureGate featureKey="capital_enabled" fallback={<Navigate to="../.." replace />}><CapitalProjectDetail /></OrganizationFeatureGate></ProtectedRoute>} />
-      <Route path="admin/capital/settings" element={<ProtectedRoute requiredPermission="manage_settings"><OrganizationFeatureGate featureKey="capital_enabled" fallback={<Navigate to=".." replace />}><CapitalSettings /></OrganizationFeatureGate></ProtectedRoute>} />
+      <Route path="admin/capital" element={<ProtectedRoute requiredPermission="manage_settings"><CapitalFeatureGate fallback={<Navigate to=".." replace />}><CapitalQueue /></CapitalFeatureGate></ProtectedRoute>} />
+      <Route path="admin/capital/opportunities/:opportunityId" element={<ProtectedRoute requiredPermission="manage_settings"><CapitalFeatureGate fallback={<Navigate to="../.." replace />}><CapitalOpportunityDetail /></CapitalFeatureGate></ProtectedRoute>} />
+      <Route path="admin/capital/projects" element={<ProtectedRoute requiredPermission="manage_settings"><CapitalFeatureGate fallback={<Navigate to=".." replace />}><CapitalProjects /></CapitalFeatureGate></ProtectedRoute>} />
+      <Route path="admin/capital/projects/:projectId" element={<ProtectedRoute requiredPermission="manage_settings"><CapitalFeatureGate fallback={<Navigate to="../.." replace />}><CapitalProjectDetail /></CapitalFeatureGate></ProtectedRoute>} />
+      <Route path="admin/capital/settings" element={<ProtectedRoute requiredPermission="manage_settings"><CapitalFeatureGate fallback={<Navigate to=".." replace />}><CapitalSettings /></CapitalFeatureGate></ProtectedRoute>} />
       <Route path="admin/booking-surface" element={<ProtectedRoute requiredPermission="manage_settings"><BookingSurfaceSettingsPage /></ProtectedRoute>} />
 
       {/* Team Challenges routes */}
