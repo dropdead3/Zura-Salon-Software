@@ -74,8 +74,9 @@ const InsightsNudgeBanner = React.lazy(() => import('@/components/dashboard/Insi
 const ActiveCampaignsCard = React.lazy(() => import('@/components/dashboard/ActiveCampaignsCard').then(m => ({ default: m.ActiveCampaignsCard })));
 const InventoryManagerDashboardCard = React.lazy(() => import('@/components/dashboard/InventoryManagerDashboardCard').then(m => ({ default: m.InventoryManagerDashboardCard })));
 import { SEOMyTasksCard } from '@/components/dashboard/seo-workshop/SEOMyTasksCard';
-import { DailyBriefingCard } from '@/components/dashboard/DailyBriefingCard';
+import { DailyBriefingPanel } from '@/components/dashboard/DailyBriefingPanel';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
+import type { BriefingRoleContext } from '@/hooks/useDailyBriefingEngine';
 
 const ROLE_MESSAGES = {
   leadership: {
@@ -435,10 +436,12 @@ function DashboardSections({
   }, [layout.sectionOrder, visibilityData, missingPinnedCards]);
 
   // Build section components map (excludes pinned cards - those are rendered separately)
+  const briefingRole: BriefingRoleContext = isLeadership ? 'owner' : hasStylistRole ? 'stylist' : 'manager';
+
   const sectionComponents = useMemo(() => ({
-    // Daily Briefing — top of dashboard for leadership
-    daily_briefing: isLeadership && (
-      <DailyBriefingCard tasks={tasks} />
+    // Daily Briefing — top of dashboard, role-aware
+    daily_briefing: (
+      <DailyBriefingPanel tasks={tasks} roleContext={briefingRole} />
     ),
 
     // Moved to header (right side, under Customize)
