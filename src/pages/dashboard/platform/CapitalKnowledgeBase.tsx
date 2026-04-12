@@ -119,7 +119,7 @@ export default function CapitalKnowledgeBase() {
         </PlatformCardHeader>
         <PlatformCardContent className="space-y-4">
           <p className="text-sm text-[hsl(var(--platform-foreground-muted))] leading-relaxed">
-            Zura Capital is a conditional growth execution layer that turns validated business opportunities into funded actions. It is not a loan product, credit line, or financial service. Capital activates only when the platform's deterministic scoring engine identifies high-confidence, high-return opportunities within an organization's operations.
+            Zura Capital is a conditional growth execution layer that turns validated business opportunities into funded actions. It is not a loan product, credit line, or financial service. Capital activates only when the platform's deterministic scoring engine identifies high-confidence, high-return opportunities within an organization's operations. When an opportunity qualifies, Zura surfaces funding options powered by third-party providers such as Stripe. Zura handles the intelligence — opportunity detection, scoring, and tracking — while funding execution flows through trusted financial infrastructure partners.
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div className="p-4 rounded-lg bg-[hsl(var(--platform-bg-hover)/0.5)] text-center">
@@ -139,7 +139,7 @@ export default function CapitalKnowledgeBase() {
             </div>
           </div>
           <p className="text-xs text-[hsl(var(--platform-foreground-muted))]">
-            Core philosophy: Capital is positioned as "Activate Growth" or "Fund This" — never as a loan or financing. Every funded project follows the Decision → Action → Outcome loop with variance alerts when actual performance diverges from forecasts.
+            Core philosophy: Capital is positioned as "Activate Growth" or "Fund This" — never as a loan or financing. Every funded project follows the Decision → Action → Outcome loop with variance alerts when actual performance diverges from forecasts. Zura is the brain; third-party providers like Stripe are the funding rails.
           </p>
         </PlatformCardContent>
       </PlatformCard>
