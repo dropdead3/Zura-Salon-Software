@@ -1,103 +1,117 @@
 
 
-# Booking Surface Embed Architecture — Build Plan
+# Booking Surface — Operational Availability + Permission Logic
 
-## Current State
+## Problem
 
-The system already has:
-- **11 client-facing components** in `src/components/booking-surface/` (HostedBookingPage, service browser, stylist picker, date picker, client form, confirmation, flow progress, header, theme provider, location picker)
-- **9 admin components** in `src/components/dashboard/booking-surface/` (mode selector, theme editor, flow configurator, hosted page editor, live preview, publish bar, link configurator, embed code generator)
-- **Config hook** (`useBookingSurfaceConfig`) storing config in `site_settings` as JSON
-- **Public route** at `/book/:orgSlug` rendering `HostedBookingPage`
-- **Embed code generator** producing inline/modal/popup/iframe snippets (referencing a non-existent `embed.js`)
+The current booking surface shows **all active stylists** and **hardcoded time slots** with no awareness of:
+- Stylist-service qualifications (`phorest_staff_services`, `staff_service_qualifications`)
+- Stylist location assignments (`employee_location_schedules`, `location_id`, `location_ids`)
+- Real availability (`staff_shifts`, `time_off_requests`, `phorest_appointments`)
+- Service constraints (`lead_time_days`, `allow_same_day_booking`, `requires_new_client_consultation`, `requires_qualification`)
+- Stylist-specific pricing/duration overrides (`custom_price`, `custom_duration_minutes`)
+- Service duration (`duration_minutes`, `processing_time_minutes`, `finishing_time_minutes`)
 
-## What's Missing
+The `BookingDateTimePicker` uses a static `TIME_SLOTS` array — no real availability whatsoever.
 
-The current system generates embed snippets that reference an `embed.js` loader that doesn't exist. There is no actual embeddable widget runtime, no style isolation, no cross-origin messaging, no embed-mode rendering, no booking session state abstraction, and no public bootstrap endpoint. The booking flow state is scattered across `useState` calls in `HostedBookingPage` rather than a reusable engine.
+## Database Assets Available
+
+| Table | Key Columns | Purpose |
+|---|---|---|
+| `services` | `bookable_online`, `lead_time_days`, `allow_same_day_booking`, `requires_new_client_consultation`, `requires_qualification`, `duration_minutes`, `processing_time_minutes` | Service eligibility + constraints |
+| `employee_profiles` | `is_booking`, `is_active`, `location_id`, `location_ids`, `stylist_level` | Stylist online visibility |
+| `staff_service_qualifications` | `user_id`, `service_id`, `is_active`, `custom_price`, `custom_duration_minutes`, `location_id` | Manual service permissions + overrides |
+| `phorest_staff_services` | `phorest_staff_id`, `phorest_service_id`, `is_qualified`, `custom_price`, `custom_duration_minutes` | Synced service permissions + overrides |
+| `phorest_staff_mapping` | `user_id`, `phorest_staff_id` | Bridge between user_id and phorest_staff_id |
+| `employee_location_schedules` | `user_id`, `location_id`, `work_days` | Which days a stylist works at a location |
+| `staff_shifts` | `user_id`, `shift_date`, `start_time`, `end_time`, `status`, `location_id` | Actual shift data |
+| `time_off_requests` | `user_id`, `start_date`, `end_date`, `status`, `is_full_day` | Approved time off |
+| `phorest_appointments` | `stylist_user_id`, `appointment_date`, `start_time`, `end_time`, `status` | Existing bookings (for slot exclusion) |
+| `service_level_prices` | `service_id`, `stylist_level_id`, `price` | Level-based pricing |
 
 ## Build Scope
 
-### 1. Booking Session State Engine
-Extract all booking state from `HostedBookingPage` into a shared `useBookingSession` hook that both hosted page and embedded widget consume.
+### 1. `useBookingAvailability` Hook (CREATE)
+Central availability engine for the booking surface. Server-side filtering for the public booking flow.
 
-**File**: `src/hooks/useBookingSession.ts`
+**Accepts**: `orgId`, `selectedLocationId`, `selectedServiceName`, `selectedStylistId`, `selectedDate`
 
-Manages: selectedLocation, selectedService, selectedCategory, selectedStylist, selectedDate, selectedTime, clientInfo, currentStep, direction, isConfirmed. Provides: goNext, goBack, reset, applyDeepLinks. Accepts flow template to determine step sequence.
+**Returns**:
+- `eligibleStylists`: Stylists who are `is_booking=true`, active at selected location, qualified for selected service
+- `availableSlots`: Real time slots for selected date + stylist, computed from `staff_shifts` minus `phorest_appointments` minus `time_off_requests`
+- `serviceDuration`: Resolved duration (stylist override → service base)
+- `servicePrice`: Resolved price (stylist override → level price → service base)
 
-### 2. Embed-Aware Hosted Page
-Update `HostedBookingPage` to detect `?embed=true` query param and render in embed mode (no header, no policy footer, no powered-by, compact padding). This makes the iframe fallback actually work.
+### 2. `useBookingEligibleServices` Hook (CREATE)
+Filters services based on selected context (location, stylist).
 
-**File**: `src/components/booking-surface/HostedBookingPage.tsx` — UPDATE
+**Logic**:
+- Start with `services` where `bookable_online=true`, `is_active=true`
+- If stylist selected: filter to services they're qualified for (via `staff_service_qualifications` + `phorest_staff_services`)
+- If location selected: filter to services available at that location
+- Apply `lead_time_days` / `allow_same_day_booking` constraints to suppress services that can't be booked today
+- Flag `requires_new_client_consultation` services
 
-### 3. Embed Loader Script
-Create a standalone vanilla JS embed loader that external sites include via `<script>` tag. Uses iframe-based embedding (most robust for third-party sites — avoids CSS conflicts entirely).
+### 3. Update `HostedBookingPage.tsx`
+- Replace static stylist query with `useBookingAvailability` data
+- Pass `eligibleStylists` to `BookingStylistPicker` (filtered by service + location)
+- Pass `eligibleServices` to `BookingServiceBrowser` (filtered by stylist + location)
+- When stylist is "any", show union of all eligible stylists' availability
+- Validate deep link params: if stylist isn't bookable or service isn't eligible, reset to valid state
 
-**File**: `public/embed.js` — CREATE
+### 4. Update `BookingDateTimePicker.tsx`
+- Accept `orgId`, `stylistId`, `serviceName`, `locationId` props
+- Replace hardcoded `TIME_SLOTS` with real availability from `useBookingAvailability`
+- Query `staff_shifts` for working hours on selected date
+- Subtract `phorest_appointments` (booked slots) and `time_off_requests`
+- Generate available 30-min slots based on service duration
+- Show loading skeleton while availability loads
+- Handle "no availability" gracefully
 
-Responsibilities:
-- Reads `data-zura-org`, `data-zura-mode` (inline|modal), `data-zura-*` preselection attributes from the script tag
-- For **inline mode**: creates a responsive iframe in `#zura-booking` container pointing to `/book/{org}?embed=true&{params}`
-- For **modal mode**: exposes `window.ZuraBooking.open()`, creates overlay + iframe on demand
-- Listens for `postMessage` from iframe for height resize and booking completion
-- Lightweight (~3KB), no framework dependencies
+### 5. Update `BookingStylistPicker.tsx`
+- Accept optional `serviceName` to filter by qualification
+- Show "Next available" date hint per stylist (from shift data)
+- Hide stylists with zero upcoming availability
 
-### 4. PostMessage Contract
-Add postMessage dispatching inside the booking flow so the embed loader can react.
+### 6. Update `BookingServiceBrowser.tsx`
+- Accept resolved price/duration per service (from stylist context when available)
+- Show "Consultation Required" badge for `requires_new_client_consultation` services
+- Hide services with no eligible online-bookable stylists
 
-**File**: `src/lib/booking-embed-messages.ts` — CREATE
+### 7. Deep Link Validation
+In `HostedBookingPage`, after data loads:
+- Validate `?stylist=X` → check `is_booking=true` + exists
+- Validate `?service=X` → check `bookable_online=true` + exists
+- If invalid, clear the param and show the normal selection step
 
-Message types: `ZURA_BOOKING_READY`, `ZURA_BOOKING_RESIZE`, `ZURA_BOOKING_STEP_CHANGE`, `ZURA_BOOKING_COMPLETE`, `ZURA_BOOKING_ERROR`, `ZURA_MODAL_CLOSE`
-
-**Integration**: `HostedBookingPage` dispatches these messages when in embed mode via `window.parent.postMessage()`.
-
-### 5. Auto-Resize Observer
-In embed mode, attach a `ResizeObserver` to the booking root that posts height changes to the parent window, eliminating scroll-in-scroll.
-
-Integrated into `HostedBookingPage` when `embed=true`.
-
-### 6. Updated Embed Code Generator
-Fix the admin snippet generator to produce working snippets that reference the real `embed.js` path and use correct `data-*` attributes.
-
-**File**: `src/components/dashboard/booking-surface/EmbedCodeGenerator.tsx` — UPDATE
-
-Snippets will reference `{origin}/embed.js` with proper data attributes (`data-zura-org`, `data-zura-mode`). Deep link configurator links will be reflected in generated snippets when preselections are set.
-
-### 7. Config Model Extension
-Add missing fields to `BookingSurfaceConfig` type for embed-specific settings.
-
-**File**: `src/hooks/useBookingSurfaceConfig.ts` — UPDATE
-
-Add to config: `allowedEmbedTypes: ('inline'|'modal'|'popup'|'iframe')[]` and deep link permission flags (`allowServicePreselect`, `allowStylistPreselect`, etc.). Add `version`, `publishedAt`, `updatedAt` metadata fields.
-
-## Architecture Decision: iframe Over Shadow DOM
-
-Using iframe-based embedding rather than Shadow DOM because:
-- Complete style isolation without CSS leakage in either direction
-- Works on all host sites regardless of framework
-- The booking app already runs as a full React app — mounting it inside Shadow DOM would require significant rearchitecting
-- postMessage provides clean cross-origin communication
-- iframe fallback and script embed share the same rendering path
-
-The embed loader script creates and manages the iframe, handling resize, modal overlay, and deep linking — making it feel native despite being an iframe.
-
-## Files Summary
+## Files
 
 | File | Action |
 |---|---|
-| `src/hooks/useBookingSession.ts` | CREATE — shared booking state machine |
-| `src/lib/booking-embed-messages.ts` | CREATE — postMessage type definitions + helpers |
-| `public/embed.js` | CREATE — lightweight embed loader script |
-| `src/components/booking-surface/HostedBookingPage.tsx` | UPDATE — embed mode, use session hook, postMessage dispatch |
-| `src/hooks/useBookingSurfaceConfig.ts` | UPDATE — add embed config fields |
-| `src/components/dashboard/booking-surface/EmbedCodeGenerator.tsx` | UPDATE — working snippets with real embed.js |
+| `src/hooks/useBookingAvailability.ts` | CREATE — availability engine (shifts, appointments, time-off, qualifications) |
+| `src/hooks/useBookingEligibleServices.ts` | CREATE — filtered services based on context |
+| `src/components/booking-surface/HostedBookingPage.tsx` | UPDATE — wire availability + eligible services |
+| `src/components/booking-surface/BookingDateTimePicker.tsx` | UPDATE — real slot computation |
+| `src/components/booking-surface/BookingStylistPicker.tsx` | UPDATE — filtered by service qualifications |
+| `src/components/booking-surface/BookingServiceBrowser.tsx` | UPDATE — consultation badges, qualification filtering |
+| `src/components/booking-surface/BookingServiceCard.tsx` | UPDATE — add duration prop, consultation badge |
 
 ## Build Order
 
-1. Create `booking-embed-messages.ts` (message types)
-2. Create `useBookingSession.ts` (extract state from HostedBookingPage)
-3. Update `useBookingSurfaceConfig.ts` (add embed fields)
-4. Update `HostedBookingPage.tsx` (embed mode + session hook + postMessage)
-5. Create `public/embed.js` (embed loader)
-6. Update `EmbedCodeGenerator.tsx` (correct snippets)
+1. Create `useBookingAvailability` (core availability queries)
+2. Create `useBookingEligibleServices` (service filtering)
+3. Update `BookingDateTimePicker` (real slots)
+4. Update `BookingStylistPicker` (qualification filtering)
+5. Update `BookingServiceBrowser` + `BookingServiceCard` (badges, dynamic pricing)
+6. Update `HostedBookingPage` (wire everything together, deep link validation)
 7. TypeScript build check
+
+## Technical Notes
+
+- All queries use RLS-safe public reads (services, employee_profiles, staff_shifts are readable)
+- `phorest_staff_mapping` bridges `user_id` ↔ `phorest_staff_id` for qualification lookups
+- Slot computation: divide shift window into 30-min increments, subtract booked appointments overlapping each slot, check service duration fits remaining gap
+- "Any stylist" mode unions all eligible stylists' shifts and shows merged availability
+- `staleTime: 60_000` for availability queries (near-real-time but not polling)
+- No new database tables needed — all data already exists
 
