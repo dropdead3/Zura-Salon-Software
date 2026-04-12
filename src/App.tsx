@@ -393,11 +393,11 @@ function DashboardRoutes() {
       <Route path="admin/merge-clients" element={<ProtectedRoute requiredPermission="client_merge"><MergeClients /></ProtectedRoute>} />
       <Route path="admin/access-hub" element={<ProtectedRoute requiredPermission="manage_settings"><AccessHub /></ProtectedRoute>} />
 
-      {/* Zura Capital routes */}
-      <Route path="admin/capital" element={<ProtectedRoute requiredPermission="view_team_overview"><CapitalQueue /></ProtectedRoute>} />
-      <Route path="admin/capital/opportunities/:opportunityId" element={<ProtectedRoute requiredPermission="view_team_overview"><CapitalOpportunityDetail /></ProtectedRoute>} />
-      <Route path="admin/capital/projects" element={<ProtectedRoute requiredPermission="view_team_overview"><CapitalProjects /></ProtectedRoute>} />
-      <Route path="admin/capital/projects/:projectId" element={<ProtectedRoute requiredPermission="view_team_overview"><CapitalProjectDetail /></ProtectedRoute>} />
+      {/* Zura Capital routes — super_admin + org admin only */}
+      <Route path="admin/capital" element={<ProtectedRoute requiredPermission="manage_settings"><CapitalQueue /></ProtectedRoute>} />
+      <Route path="admin/capital/opportunities/:opportunityId" element={<ProtectedRoute requiredPermission="manage_settings"><CapitalOpportunityDetail /></ProtectedRoute>} />
+      <Route path="admin/capital/projects" element={<ProtectedRoute requiredPermission="manage_settings"><CapitalProjects /></ProtectedRoute>} />
+      <Route path="admin/capital/projects/:projectId" element={<ProtectedRoute requiredPermission="manage_settings"><CapitalProjectDetail /></ProtectedRoute>} />
       <Route path="admin/capital/settings" element={<ProtectedRoute requiredPermission="manage_settings"><CapitalSettings /></ProtectedRoute>} />
       <Route path="admin/booking-surface" element={<ProtectedRoute requiredPermission="manage_settings"><BookingSurfaceSettingsPage /></ProtectedRoute>} />
 
