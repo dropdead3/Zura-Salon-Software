@@ -1,4 +1,4 @@
-import { Clock, Star } from 'lucide-react';
+import { Clock, Star, MessageCircle } from 'lucide-react';
 import type { BookingSurfaceTheme, BookingSurfaceFlow } from '@/hooks/useBookingSurfaceConfig';
 
 interface BookingServiceCardProps {
@@ -7,13 +7,14 @@ interface BookingServiceCardProps {
   price: string | null;
   duration?: number | null;
   isPopular?: boolean;
+  requiresConsultation?: boolean;
   theme: BookingSurfaceTheme;
   flow: BookingSurfaceFlow;
   onSelect: () => void;
 }
 
 export function BookingServiceCard({
-  name, description, price, duration, isPopular, theme, flow, onSelect,
+  name, description, price, duration, isPopular, requiresConsultation, theme, flow, onSelect,
 }: BookingServiceCardProps) {
   return (
     <button
@@ -28,7 +29,7 @@ export function BookingServiceCard({
     >
       <div className="flex items-start justify-between gap-3">
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <span className="font-medium" style={{ color: theme.textColor }}>
               {name}
             </span>
@@ -38,6 +39,14 @@ export function BookingServiceCard({
                 style={{ backgroundColor: `${theme.primaryColor}15`, color: theme.primaryColor }}
               >
                 <Star className="w-3 h-3" /> Popular
+              </span>
+            )}
+            {requiresConsultation && (
+              <span
+                className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full font-medium"
+                style={{ backgroundColor: `${theme.accentColor}20`, color: theme.accentColor }}
+              >
+                <MessageCircle className="w-3 h-3" /> Consultation
               </span>
             )}
           </div>
