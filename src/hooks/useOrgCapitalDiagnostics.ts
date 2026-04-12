@@ -76,16 +76,30 @@ export function useOrgCapitalDiagnostics(orgId: string | null) {
         };
       }
 
-      // 3. Get real project context (N4)
+      // 3. Get real project context (N4) + exposure data (B4)
       const { data: activeProjects } = await supabase
         .from('capital_funding_projects')
-        .select('id, status, repayment_status')
+        .select('id, status, repayment_status, funded_amount_cents, capital_funding_opportunities(location_id, stylist_id)')
         .eq('organization_id', orgId!)
         .in('status', ['active', 'on_track', 'above_forecast', 'below_forecast', 'at_risk']);
 
       const activeProjectCount = activeProjects?.length ?? 0;
       const underperformingCount = (activeProjects ?? []).filter(p => p.status === 'at_risk').length;
       const repaymentDistress = (activeProjects ?? []).some(p => p.repayment_status === 'delinquent');
+
+      // Compute per-location and per-stylist exposure from active projects
+      const locationExposureMap = new Map<string, number>();
+      const stylistExposureMap = new Map<string, number>();
+      for (const proj of activeProjects ?? []) {
+        const fundedCents = Number(proj.funded_amount_cents ?? 0);
+        const opp = proj.capital_funding_opportunities as any;
+        if (opp?.location_id) {
+          locationExposureMap.set(opp.location_id, (locationExposureMap.get(opp.location_id) ?? 0) + fundedCents / 100);
+        }
+        if (opp?.stylist_id) {
+          stylistExposureMap.set(opp.stylist_id, (stylistExposureMap.get(opp.stylist_id) ?? 0) + fundedCents / 100);
+        }
+      }
 
       // 4. Get all non-canceled/expired opportunities
       const { data: opps, error } = await supabase
@@ -116,9 +130,9 @@ export function useOrgCapitalDiagnostics(orgId: string | null) {
           hasCriticalOpsAlerts: false,
           expiresAt: opp.expires_at ?? null,
           locationId: opp.location_id ?? null,
-          locationExposure: 0,
+          locationExposure: opp.location_id ? (locationExposureMap.get(opp.location_id) ?? 0) : 0,
           stylistId: opp.stylist_id ?? null,
-          stylistExposure: 0,
+          stylistExposure: opp.stylist_id ? (stylistExposureMap.get(opp.stylist_id) ?? 0) : 0,
           lastDeclinedAt: null,
           lastUnderperformingAt: null,
         };

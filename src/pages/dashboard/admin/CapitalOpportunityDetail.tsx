@@ -13,7 +13,8 @@ import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { useCapitalOpportunity } from '@/hooks/useCapitalOpportunity';
 import { useLogCapitalEvent } from '@/hooks/useCapitalEventLog';
 import { useDismissOpportunity } from '@/hooks/useCapitalSurfaceState';
-import { getProvider } from '@/lib/capital-engine/capital-provider';
+import { useInitiateFinancing } from '@/hooks/useFinancedProjects';
+import { useIsPrimaryOwner } from '@/hooks/useIsPrimaryOwner';
 import { calculateCoverageRatio, calculateMonthlyLiftCents } from '@/lib/capital-engine/capital-formulas';
 import { getROELabel } from '@/config/capital-engine/capital-config';
 import { CapitalMetricTile } from '@/components/dashboard/capital-engine/CapitalMetricTile';
@@ -38,10 +39,11 @@ import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 import { PageExplainer } from '@/components/ui/PageExplainer';
 import {
   Landmark, DollarSign, TrendingUp, Target, Clock, ShieldCheck,
-  ArrowUpRight, Zap, X, Activity, ListChecks,
+  ArrowUpRight, Zap, X, Activity, ListChecks, Lock,
 } from 'lucide-react';
 import { useState } from 'react';
 import { format } from 'date-fns';
+import { toast } from 'sonner';
 
 function c(cents: number) { return cents / 100; }
 
@@ -101,6 +103,8 @@ export default function CapitalOpportunityDetail() {
   const { opportunity: opp, events, isLoading } = useCapitalOpportunity(opportunityId);
   const logEvent = useLogCapitalEvent();
   const dismiss = useDismissOpportunity();
+  const initiateFinancing = useInitiateFinancing();
+  const { data: isPrimaryOwner } = useIsPrimaryOwner();
   const [isRedirecting, setIsRedirecting] = useState(false);
   const [dismissDialogOpen, setDismissDialogOpen] = useState(false);
 
@@ -141,15 +145,20 @@ export default function CapitalOpportunityDetail() {
   const executionSteps = EXECUTION_PLAN_STEPS[o.opportunity_type] ?? DEFAULT_EXECUTION_STEPS;
 
   const handleFund = async () => {
+    if (!isPrimaryOwner) {
+      toast.error('Only the Account Owner can approve funding.');
+      return;
+    }
     setIsRedirecting(true);
     logEvent.mutate({ opportunityId: o.id, eventType: 'funding_initiated', surfaceArea: 'capital_queue' });
     try {
-      const provider = getProvider('stripe');
-      const result = await provider.initiateFunding(o.id, '', '');
-      if (result.redirectUrl) {
-        const win = window.open(result.redirectUrl, '_blank');
-        if (!win) window.location.href = result.redirectUrl;
+      const result = await initiateFinancing.mutateAsync({ opportunityId: o.id });
+      if (result?.url) {
+        const win = window.open(result.url, '_blank');
+        if (!win) window.location.href = result.url;
       }
+    } catch (err) {
+      // Error toast is handled by useInitiateFinancing onError
     } finally {
       setIsRedirecting(false);
     }
@@ -192,10 +201,15 @@ export default function CapitalOpportunityDetail() {
                   </AlertDialogContent>
                 </AlertDialog>
               )}
-              {o.stripe_offer_available && o.eligibility_status !== 'funded' && (
+              {o.stripe_offer_available && o.eligibility_status !== 'funded' && isPrimaryOwner && (
                 <Button onClick={handleFund} disabled={isRedirecting} className={`${tokens.button.page} font-sans`}>
                   {isRedirecting ? 'Redirecting…' : o.recommended_action_label || 'Fund This'}
                 </Button>
+              )}
+              {o.stripe_offer_available && o.eligibility_status !== 'funded' && !isPrimaryOwner && (
+                <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-sans">
+                  <Lock className="w-3.5 h-3.5" /> Owner approval required
+                </div>
               )}
             </div>
           }

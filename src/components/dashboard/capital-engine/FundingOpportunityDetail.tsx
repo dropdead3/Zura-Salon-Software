@@ -25,7 +25,7 @@ import {
 } from '@/config/capital-engine/zura-capital-config';
 import { useLogCapitalEvent } from '@/hooks/useCapitalEventLog';
 import { useDismissOpportunity } from '@/hooks/useCapitalSurfaceState';
-import { getProvider } from '@/lib/capital-engine/capital-provider';
+import { useInitiateFinancing } from '@/hooks/useFinancedProjects';
 import { useIsPrimaryOwner } from '@/hooks/useIsPrimaryOwner';
 import {
   Landmark,
@@ -40,6 +40,7 @@ import {
   Lock,
 } from 'lucide-react';
 import { useState } from 'react';
+import { toast } from 'sonner';
 import type { ZuraCapitalOpportunity } from '@/hooks/useZuraCapital';
 import type { ConstraintType, OpportunityType } from '@/config/capital-engine/zura-capital-config';
 
@@ -56,6 +57,7 @@ export function FundingOpportunityDetail({ opportunity, open, onOpenChange, surf
   const [isRedirecting, setIsRedirecting] = useState(false);
   const logEvent = useLogCapitalEvent();
   const dismiss = useDismissOpportunity();
+  const initiateFinancing = useInitiateFinancing();
   const { data: isPrimaryOwner } = useIsPrimaryOwner();
 
   const investmentDollars = c(opportunity.investmentCents);
@@ -91,6 +93,10 @@ export function FundingOpportunityDetail({ opportunity, open, onOpenChange, surf
   };
 
   const handleFund = async () => {
+    if (!isPrimaryOwner) {
+      toast.error('Only the Account Owner can approve funding.');
+      return;
+    }
     setIsRedirecting(true);
     logEvent.mutate({
       opportunityId: opportunity.id,
@@ -98,14 +104,13 @@ export function FundingOpportunityDetail({ opportunity, open, onOpenChange, surf
       surfaceArea,
     });
     try {
-      const provider = getProvider('stripe');
-      const result = await provider.initiateFunding(opportunity.id, '', '');
-      if (result.redirectUrl) {
-        const win = window.open(result.redirectUrl, '_blank');
-        if (!win) window.location.href = result.redirectUrl;
-      } else if (result.error) {
-        console.error('Funding initiation failed:', result.error);
+      const result = await initiateFinancing.mutateAsync({ opportunityId: opportunity.id });
+      if (result?.url) {
+        const win = window.open(result.url, '_blank');
+        if (!win) window.location.href = result.url;
       }
+    } catch (err) {
+      // Error toast handled by useInitiateFinancing onError
     } finally {
       setIsRedirecting(false);
       onOpenChange(false);
