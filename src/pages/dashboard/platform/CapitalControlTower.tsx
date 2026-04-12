@@ -28,6 +28,7 @@ interface OrgWithCapital {
   id: string;
   name: string;
   slug: string;
+  account_number: number | null;
   capital_enabled: boolean;
 }
 
@@ -38,7 +39,7 @@ function useOrganizationsWithCapital() {
       // Get all orgs
       const { data: orgs, error: orgsError } = await supabase
         .from('organizations')
-        .select('id, name, slug')
+        .select('id, name, slug, account_number')
         .order('name');
 
       if (orgsError) throw orgsError;
@@ -59,6 +60,7 @@ function useOrganizationsWithCapital() {
         id: org.id,
         name: org.name,
         slug: org.slug || '',
+        account_number: org.account_number ?? null,
         capital_enabled: flagMap.get(org.id) ?? false,
       }));
     },
@@ -208,6 +210,7 @@ export default function CapitalControlTower() {
               <PlatformTableHeader>
                 <PlatformTableRow>
                   <PlatformTableHead>Organization</PlatformTableHead>
+                  <PlatformTableHead>Account #</PlatformTableHead>
                   <PlatformTableHead>Slug</PlatformTableHead>
                   <PlatformTableHead>Status</PlatformTableHead>
                   <PlatformTableHead className="text-right">
@@ -220,6 +223,11 @@ export default function CapitalControlTower() {
                   <PlatformTableRow key={org.id}>
                     <PlatformTableCell className="font-medium">
                       {org.name}
+                    </PlatformTableCell>
+                    <PlatformTableCell>
+                      <span className="text-[hsl(var(--platform-foreground-muted))] font-mono text-xs">
+                        {org.account_number || '—'}
+                      </span>
                     </PlatformTableCell>
                     <PlatformTableCell>
                       <span className="text-[hsl(var(--platform-foreground-muted))]">
