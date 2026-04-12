@@ -211,9 +211,8 @@ export function useZuraCapital() {
   }, [surfaceStates, recentEvents]);
 
   // Build effective policy: defaults merged with org overrides
-  const effectivePolicy = useMemo<CapitalPolicy>(() => {
-    const overrides = buildPolicyOverride(policySettings);
-    return { ...DEFAULT_CAPITAL_POLICY, ...overrides };
+  const effectivePolicy = useMemo(() => {
+    return buildEffectivePolicy(policySettings);
   }, [policySettings]);
 
   // Map and score opportunities using canonical formulas
