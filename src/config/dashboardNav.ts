@@ -190,6 +190,7 @@ export const hubChildrenItems: { href: string; label: string }[] = [
   { href: '/dashboard/admin/reports', label: 'Reports' },
   { href: '/dashboard/admin/day-rate-settings', label: 'Day Rate Settings' },
   { href: '/dashboard/admin/day-rate-calendar', label: 'Day Rate Calendar' },
+  { href: '/dashboard/admin/booking-surface', label: 'Booking Surface' },
 ];
 
 // --- Hub quick links (Command Center surface) ---
