@@ -213,7 +213,7 @@ function EligibilityCheckList({ opp }: { opp: OpportunityDiagnostic }) {
 
 function EligibilityReferenceList({ policy }: { policy: CapitalPolicy }) {
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       {/* Section A — Stripe Capital Requirements */}
       <div className="rounded-lg border border-[hsl(var(--platform-border)/0.2)] bg-[hsl(var(--platform-bg-card)/0.08)] p-4 space-y-3">
         <div className="flex items-center gap-2 mb-1">
