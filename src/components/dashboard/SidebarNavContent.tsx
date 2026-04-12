@@ -176,7 +176,7 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
     stats: statsNavItems,
     manager: managerNavItems,
     adminOnly: adminOnlyNavItems,
-  }), [mainNavItems, growthNavItems, statsNavItems, housekeepingNavItems, managerNavItems, websiteNavItems, adminOnlyNavItems, appsNavItemsProp, platformNavItems]);
+  }), [mainNavItems, growthNavItems, statsNavItems, housekeepingNavItems, managerNavItems, websiteNavItems, adminOnlyNavItems, appsNavItemsProp, platformNavItems, hasCapitalOpportunities]);
 
   // Create a map of all nav items by href (for custom sections that can contain any link)
   const allNavItemsByHref = useMemo(() => {
