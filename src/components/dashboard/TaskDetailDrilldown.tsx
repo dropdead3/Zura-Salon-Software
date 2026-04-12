@@ -6,9 +6,11 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Pencil, Trash2, Calendar, Clock, CheckCircle2, Sparkles, FileText, StickyNote, RefreshCw, AlarmClock, Plus, X, ListChecks } from 'lucide-react';
+import { Pencil, Trash2, Calendar, Clock, CheckCircle2, Sparkles, FileText, StickyNote, RefreshCw, AlarmClock, Plus, X, ListChecks, TrendingUp, Shield, Rocket, Unlock, Timer, Target } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { tokens } from '@/lib/design-tokens';
+import { BlurredAmount } from '@/contexts/HideNumbersContext';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { DRILLDOWN_DIALOG_CONTENT_CLASS, DRILLDOWN_OVERLAY_CLASS } from './drilldownDialogStyles';
 import type { Task } from '@/hooks/useTasks';
 import { useTaskChecklist } from '@/hooks/useTaskChecklist';
@@ -42,6 +44,7 @@ export function TaskDetailDrilldown({
   isReadOnly = false,
   isNotesSaving = false,
 }: TaskDetailDrilldownProps) {
+  const { formatCurrency } = useFormatCurrency();
   const [localNotes, setLocalNotes] = useState('');
   const [notesDirty, setNotesDirty] = useState(false);
   const [newChecklistItem, setNewChecklistItem] = useState('');
@@ -110,6 +113,26 @@ export function TaskDetailDrilldown({
                     Overdue
                   </Badge>
                 )}
+                {task.task_type && (
+                  <Badge variant="outline" className={cn(
+                    "text-[10px] px-2 py-0.5 border-0 rounded-full gap-1 capitalize",
+                    task.task_type === 'growth' ? 'bg-emerald-500/10 text-emerald-600' :
+                    task.task_type === 'protection' ? 'bg-blue-500/10 text-blue-600' :
+                    task.task_type === 'acceleration' ? 'bg-violet-500/10 text-violet-600' :
+                    'bg-amber-500/10 text-amber-600',
+                  )}>
+                    {task.task_type === 'growth' && <TrendingUp className="w-2.5 h-2.5" />}
+                    {task.task_type === 'protection' && <Shield className="w-2.5 h-2.5" />}
+                    {task.task_type === 'acceleration' && <Rocket className="w-2.5 h-2.5" />}
+                    {task.task_type === 'unlock' && <Unlock className="w-2.5 h-2.5" />}
+                    {task.task_type}
+                  </Badge>
+                )}
+                {task.revenue_type && (
+                  <Badge variant="outline" className="text-[10px] px-2 py-0.5 border-0 rounded-full bg-primary/10 text-primary capitalize">
+                    {task.revenue_type}
+                  </Badge>
+                )}
                 {task.recurrence_pattern && (
                   <Badge variant="outline" className="text-[10px] px-2 py-0.5 border-0 rounded-full bg-primary/10 text-primary gap-1">
                     <RefreshCw className="w-2.5 h-2.5" /> {task.recurrence_pattern}
@@ -118,6 +141,11 @@ export function TaskDetailDrilldown({
                 {isSnoozed && (
                   <Badge variant="outline" className="text-[10px] px-2 py-0.5 border-0 rounded-full bg-amber-500/10 text-amber-600 gap-1">
                     <AlarmClock className="w-2.5 h-2.5" /> Snoozed until {format(parseISO(task.snoozed_until!), 'MMM d')}
+                  </Badge>
+                )}
+                {task.priority_score != null && (
+                  <Badge variant="outline" className="text-[10px] px-2 py-0.5 border-0 rounded-full bg-muted text-muted-foreground">
+                    Score: {task.priority_score}/100
                   </Badge>
                 )}
               </div>
@@ -245,6 +273,34 @@ export function TaskDetailDrilldown({
                 <p className="font-sans text-xs text-muted-foreground flex items-center gap-1"><Sparkles className="w-3 h-3" /> Source</p>
                 <p className="font-sans font-medium capitalize">{(task as any).source === 'ai_insights' ? 'AI Insights' : (task as any).source === 'recurring' ? 'Recurring' : 'Manual'}</p>
               </div>
+              {task.estimated_revenue_impact_cents != null && task.estimated_revenue_impact_cents > 0 && (
+                <div className="space-y-1">
+                  <p className="font-sans text-xs text-emerald-600 flex items-center gap-1"><TrendingUp className="w-3 h-3" /> Revenue Impact</p>
+                  <p className="font-sans font-medium text-emerald-600">
+                    <BlurredAmount>{formatCurrency(task.estimated_revenue_impact_cents / 100)}</BlurredAmount>/mo
+                  </p>
+                </div>
+              )}
+              {task.execution_time_minutes != null && (
+                <div className="space-y-1">
+                  <p className="font-sans text-xs text-muted-foreground flex items-center gap-1"><Timer className="w-3 h-3" /> Est. Time</p>
+                  <p className="font-sans font-medium">{task.execution_time_minutes} min</p>
+                </div>
+              )}
+              {task.enforcement_level > 1 && (
+                <div className="space-y-1">
+                  <p className="font-sans text-xs text-amber-600 flex items-center gap-1"><Target className="w-3 h-3" /> Enforcement</p>
+                  <p className="font-sans font-medium text-amber-600">Level {task.enforcement_level}</p>
+                </div>
+              )}
+              {task.missed_revenue_cents != null && task.missed_revenue_cents > 0 && (
+                <div className="space-y-1">
+                  <p className="font-sans text-xs text-destructive flex items-center gap-1"><TrendingUp className="w-3 h-3" /> Missed Revenue</p>
+                  <p className="font-sans font-medium text-destructive">
+                    <BlurredAmount>{formatCurrency(task.missed_revenue_cents / 100)}</BlurredAmount>/mo
+                  </p>
+                </div>
+              )}
               {task.recurrence_pattern && (
                 <div className="space-y-1">
                   <p className="font-sans text-xs text-muted-foreground flex items-center gap-1"><RefreshCw className="w-3 h-3" /> Recurrence</p>
