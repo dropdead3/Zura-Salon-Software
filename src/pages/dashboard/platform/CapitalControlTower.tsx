@@ -240,54 +240,6 @@ function EligibilityReferenceList({ policy }: { policy: CapitalPolicy }) {
         </div>
       </div>
 
-      {/* Section B — Zura Operational Context (static reference for knowledge base) */}
-      <div className="rounded-lg border border-[hsl(var(--platform-border)/0.2)] bg-[hsl(var(--platform-bg-card)/0.08)] p-4 space-y-3">
-        <div className="flex items-center gap-2 mb-1">
-          <Shield className="h-4 w-4 text-amber-400" />
-          <h5 className="font-sans text-xs tracking-normal text-[hsl(var(--platform-foreground))] uppercase">
-            Layer 2 — Zura Operational Context
-          </h5>
-        </div>
-        <p className="text-xs text-[hsl(var(--platform-foreground-muted))]">
-          Stripe is the lender — Zura provides operational context, not additional underwriting. Only critical operational alerts block surfacing. Repayment and project context is shown as advisory information.
-        </p>
-        <div className="space-y-3">
-          {ZURA_HARD_GATES.map((gate) => (
-            <div key={gate.code} className="flex items-start gap-2.5">
-              <Shield className="h-3.5 w-3.5 mt-0.5 shrink-0 text-red-400/60" />
-              <div className="space-y-0.5">
-                <p className="text-xs text-[hsl(var(--platform-foreground))]">
-                  <span className="text-red-400/80">[Blocker]</span> {gate.label}
-                </p>
-                <p className="text-xs text-[hsl(var(--platform-foreground-muted))] leading-relaxed">{gate.description}</p>
-              </div>
-            </div>
-          ))}
-          {ZURA_ADVISORIES.map((adv) => (
-            <div key={adv.code} className="flex items-start gap-2.5">
-              {adv.severity === 'warning' ? (
-                <AlertTriangle className="h-3.5 w-3.5 mt-0.5 shrink-0 text-amber-400/60" />
-              ) : (
-                <BookOpen className="h-3.5 w-3.5 mt-0.5 shrink-0 text-blue-400/60" />
-              )}
-              <div className="space-y-0.5">
-                <p className="text-xs text-[hsl(var(--platform-foreground))]">
-                  <span className={adv.severity === 'warning' ? 'text-amber-400/80' : 'text-blue-400/80'}>
-                    [{adv.severity === 'warning' ? 'Warning' : 'Info'}]
-                  </span>{' '}
-                  {adv.label}
-                </p>
-                <p className="text-xs text-[hsl(var(--platform-foreground-muted))] leading-relaxed">{adv.description}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-        <div className="pt-2 border-t border-[hsl(var(--platform-border)/0.1)]">
-          <p className="text-xs text-[hsl(var(--platform-foreground-muted))]">
-            Capital offers are surfaced when no critical operational alerts are active. Repayment and project context is shown as advisory information.
-          </p>
-        </div>
-      </div>
     </div>
   );
 }
