@@ -68,10 +68,11 @@ export function useOrgCapitalDiagnostics(orgId: string | null) {
           ...effectivePolicy,
           roeThreshold: policySource.roe_threshold ?? effectivePolicy.roeThreshold,
           confidenceThreshold: policySource.confidence_threshold ?? effectivePolicy.confidenceThreshold,
-          minOperationalStability: policySource.min_operational_stability ?? effectivePolicy.minOperationalStability,
-          minExecutionReadiness: policySource.min_execution_readiness ?? effectivePolicy.minExecutionReadiness,
           maxConcurrentProjects: policySource.max_concurrent_projects ?? effectivePolicy.maxConcurrentProjects,
-          staleDays: policySource.stale_days ?? effectivePolicy.staleDays,
+          maxRiskLevel: (policySource.max_risk_level as any) ?? effectivePolicy.maxRiskLevel,
+          cooldownAfterDeclineDays: policySource.cooldown_after_decline_days ?? effectivePolicy.cooldownAfterDeclineDays,
+          cooldownAfterUnderperformanceDays: policySource.cooldown_after_underperformance_days ?? effectivePolicy.cooldownAfterUnderperformanceDays,
+          allowManagerInitiation: policySource.allow_manager_initiation ?? effectivePolicy.allowManagerInitiation,
         };
       }
 
