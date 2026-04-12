@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { cn } from '@/lib/utils';
+import { platformBento } from '@/lib/platform-bento-tokens';
 
 interface PlatformCardProps extends React.HTMLAttributes<HTMLDivElement> {
   variant?: 'default' | 'glass' | 'elevated' | 'interactive';
@@ -12,14 +13,20 @@ const PlatformCard = React.forwardRef<HTMLDivElement, PlatformCardProps>(
     const variants = {
       default: 'bg-[hsl(var(--platform-bg-card))] border-[hsl(var(--platform-border)/0.5)]',
       glass: 'platform-glass',
-      elevated: 'bg-[hsl(var(--platform-bg-card)/0.8)] border-[hsl(var(--platform-border)/0.6)] shadow-xl',
-      interactive: 'bg-[hsl(var(--platform-bg-card))] border-[hsl(var(--platform-border)/0.5)] platform-card-hover transition-all duration-300',
+      elevated: 'bg-[hsl(var(--platform-bg-card)/0.8)] border-[hsl(var(--platform-border)/0.6)]',
+      interactive: 'bg-[hsl(var(--platform-bg-card))] border-[hsl(var(--platform-border)/0.5)] platform-card-hover',
     };
 
     const radii = {
-      lg: 'rounded-2xl',
-      md: 'rounded-xl',
-      sm: 'rounded-lg',
+      lg: platformBento.radius.large,
+      md: platformBento.radius.medium,
+      sm: platformBento.radius.small,
+    };
+
+    const shadows = {
+      lg: platformBento.shadow.large,
+      md: platformBento.shadow.medium,
+      sm: platformBento.shadow.none,
     };
 
     return (
@@ -27,7 +34,10 @@ const PlatformCard = React.forwardRef<HTMLDivElement, PlatformCardProps>(
         ref={ref}
         className={cn(
           radii[size], 'border backdrop-blur-xl',
+          platformBento.hover.transition,
           variants[variant],
+          shadows[size],
+          variant === 'interactive' && platformBento.hover.lift,
           glow && 'platform-glow-sm',
           className
         )}
@@ -46,7 +56,7 @@ const PlatformCardHeader = React.forwardRef<HTMLDivElement, PlatformCardHeaderPr
   ({ className, ...props }, ref) => (
     <div
       ref={ref}
-      className={cn('flex flex-col space-y-1.5 p-6', className)}
+      className={cn('flex flex-col space-y-1.5 p-5', className)}
       {...props}
     />
   )
@@ -86,7 +96,7 @@ interface PlatformCardContentProps extends React.HTMLAttributes<HTMLDivElement> 
 
 const PlatformCardContent = React.forwardRef<HTMLDivElement, PlatformCardContentProps>(
   ({ className, ...props }, ref) => (
-    <div ref={ref} className={cn('p-6 pt-0', className)} {...props} />
+    <div ref={ref} className={cn('p-5 pt-0', className)} {...props} />
   )
 );
 PlatformCardContent.displayName = 'PlatformCardContent';
@@ -97,7 +107,7 @@ const PlatformCardFooter = React.forwardRef<HTMLDivElement, PlatformCardFooterPr
   ({ className, ...props }, ref) => (
     <div
       ref={ref}
-      className={cn('flex items-center p-6 pt-0', className)}
+      className={cn('flex items-center p-5 pt-0', className)}
       {...props}
     />
   )

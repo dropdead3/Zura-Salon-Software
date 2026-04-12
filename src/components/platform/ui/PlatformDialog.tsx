@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { cn } from '@/lib/utils';
+import { platformBento } from '@/lib/platform-bento-tokens';
 import {
   Dialog,
   DialogClose,
@@ -30,7 +31,7 @@ const PlatformDialogContent = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <DialogContent
     ref={ref}
-    className={cn('bg-[hsl(var(--platform-bg-elevated))] border-[hsl(var(--platform-border))] text-[hsl(var(--platform-foreground))]', className)}
+    className={cn(`bg-[hsl(var(--platform-bg-elevated))] border-[hsl(var(--platform-border))] text-[hsl(var(--platform-foreground))] ${platformBento.radius.xl}`, className)}
     {...props}
   />
 ));
@@ -68,7 +69,7 @@ const PlatformAlertDialogContent = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <AlertDialogContent
     ref={ref}
-    className={cn('bg-[hsl(var(--platform-bg-elevated))] border-[hsl(var(--platform-border))] text-[hsl(var(--platform-foreground))]', className)}
+    className={cn(`bg-[hsl(var(--platform-bg-elevated))] border-[hsl(var(--platform-border))] text-[hsl(var(--platform-foreground))] ${platformBento.radius.xl}`, className)}
     {...props}
   />
 ));
