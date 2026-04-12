@@ -1,145 +1,164 @@
 
 
-# Zura Capital — UI Architecture, Route Map, and Service Wiring
+# Zura Capital — Deterministic Formulas Pack
 
 ## Current State
 
-**What exists:**
-- `CapitalDashboard` embedded inside SEO Workshop only (no dedicated routes)
-- `ZuraCapitalCard` (Command Center pinnable card) — working
-- `OwnerCapitalQueue` — working but no filters, opens detail dialog
-- `FundingOpportunityDetail` — working as Dialog, no deep-link support
-- `FinancedProjectsTracker` — working but compact card only
-- All production tables (`capital_funding_opportunities`, `capital_funding_projects`, `capital_surface_state`, etc.) — exist
-- Hooks: `useZuraCapital`, `useCapitalProjects`, `useCapitalSurfaceState`, `useCapitalEventLog`, `useCapitalPolicySettings` — exist
-- Config, eligibility engine, surface priority engine, provider abstraction — all exist
-- **No dedicated routes** — capital is only accessible inside the SEO Workshop tab
-- **No sidebar entry** for capital
-- **No dedicated pages** for queue, opportunity detail, projects, project detail, or settings
+Formula logic is scattered across 4 files and multiple UI components:
 
-**What the spec requires:**
-- Dedicated `/admin/capital` routes (queue, opportunity detail, projects, project detail, settings)
-- Sidebar navigation entry under Operations or Data sections
-- Full page compositions with headers, filter bars, summary strips, and pagination
-- Deep-linkable opportunity and project detail pages (not just dialogs)
-- `CapitalSettingsPage` for org-level policy management
-- `CapitalProjectDetailPage` with repayment, activation, linked work, timeline sections
-- Embedded surface components (Operations Hub, service dashboards, stylist dashboards) — Phase 2
+- **`capital-engine.ts`** — has `clamp`, `computeROE` (uses confidence string + annual lift, not cents), `computeRisk` (uses 0-1 inputs, not 0-100 scores)
+- **`financing-engine.ts`** — has `computeVariance`, `computePostFinancingCashFlow` (uses dollars, not cents)
+- **`zura-eligibility-engine.ts`** — hardcodes `confidenceToNumber()` mapping, missing checks for `execution_readiness_score`, `operational_stability_score >= 60`, `repayment_distress_flag`, returns free-text reasons not structured reason codes
+- **`surface-priority-engine.ts`** — weights differ from spec (0.35 roe vs spec 0.30, missing `break_even_score` and `net_impact_score` terms), staleness penalty thresholds differ (30/60/90 days vs spec 7/14/30)
+- **UI inline math** — `CapitalOpportunityDetail.tsx` line 65-69 computes monthly lift/net gain inline; `ZuraCapitalCard.tsx` computes coverage inline
+
+**Missing entirely:**
+- ROE score normalization (0-100 from ratio)
+- Break-even score
+- Confidence score composition (weighted from historical accuracy, stability, readiness, etc.)
+- Risk score composition (from stability, uncertainty, project load, etc.)
+- Business value score composition
+- Net impact score
+- Freshness score / freshness multiplier
+- Forecast status derivation (with early-stage override)
+- Underperformance detection
+- Predicted revenue to date (linear pacing)
+- Concurrent exposure checks (org/location/stylist level)
+- Stylist micro-funding eligibility
+- Explanation template mapping from reason codes
+- Normalization helpers (`normalize_ratio_to_100`, `normalize_inverse_to_100`, `safe_divide`)
+
+## Architecture
+
+Create one canonical formulas module. All consumers import from it. No inline math.
+
+```text
+src/lib/capital-engine/capital-formulas.ts  ← NEW (single source of truth)
+src/config/capital-engine/capital-formulas-config.ts  ← NEW (all thresholds/weights)
+```
 
 ## Build Plan
 
-### 1. Create 5 Dedicated Page Components
+### 1. Create `capital-formulas-config.ts`
 
-**`src/pages/dashboard/admin/CapitalQueue.tsx`**
-- Uses `DashboardLayout` + `DashboardPageHeader` with `backTo` pointing to growth-hub
-- Composition: summary strip (active opportunities count, active projects, total predicted lift, capital deployed), filters bar (location, service, type, status, risk), the existing `OwnerCapitalQueue` component rewritten as a full-page table with pagination
-- Permission: `view_team_overview`
+All policy defaults, weights, and thresholds in one file:
+- `DEFAULT_POLICY` — roe_threshold, confidence_threshold, max_risk_level, max_concurrent_projects, cooldowns, stylist thresholds, min_operational_stability, min_execution_readiness, stale_days
+- `ROE_SCORE_RANGE` — min 0.5, max 3.0
+- `BREAK_EVEN_RANGE` — min 0, max 18
+- `FRESHNESS_DECAY` — day thresholds and multipliers
+- `SURFACE_PRIORITY_WEIGHTS` — spec weights (roe 0.30, confidence 0.20, business_value 0.15, break_even 0.10, momentum 0.10, constraint_severity 0.10, net_impact 0.05)
+- `CONFIDENCE_WEIGHTS` — historical_accuracy 0.30, operational_stability 0.20, execution_readiness 0.20, break_even 0.10, momentum 0.10, freshness 0.10
+- `RISK_WEIGHTS` — instability 0.25, uncertainty 0.20, underperformance 0.20, project_load 0.15, repayment 0.10, momentum 0.10
+- `RISK_LEVEL_THRESHOLDS` — low 0-34, medium 35-59, high 60-79, critical 80-100
+- `VARIANCE_THRESHOLDS` — above_forecast 15, on_track_low -10, below_forecast -25
+- `COVERAGE_TIERS` — full >= 1.0, strong >= 0.75, partial >= 0.50, weak < 0.50
+- `STALENESS_PENALTIES`, `DISMISSAL_PENALTIES`, `COVERAGE_PENALTIES`, `PROJECT_LOAD_PENALTY_PER`
+- `CONSTRAINT_SEVERITY_MAP`
+- `REASON_CODES` — structured enum of all eligibility failure codes
+- `EXPLANATION_TEMPLATES` — deterministic text for each reason code
 
-**`src/pages/dashboard/admin/CapitalOpportunityDetail.tsx`**
-- Route param `:opportunityId`
-- Full-page version of `FundingOpportunityDetail` — not a dialog but a proper page with all spec sections: Hero, Metrics Grid, Provider Block, Net Impact, Reason Block, Execution Plan, Activity Timeline, Actions Bar
-- Uses `useZuraCapital` to fetch single opportunity or new `useCapitalOpportunity(id)` hook
-- Includes breadcrumb back to queue
+### 2. Create `capital-formulas.ts` — 22 canonical functions
 
-**`src/pages/dashboard/admin/CapitalProjects.tsx`**
-- Lists all funded projects with the `useCapitalProjects` hook
-- Full table: Project, Type, Location, Funded Amount, Revenue Generated, Repayment Progress, ROI, Forecast Status, Activation Status
-- Filter by status
+All pure, deterministic, no side effects:
 
-**`src/pages/dashboard/admin/CapitalProjectDetail.tsx`**
-- Route param `:projectId`
-- Uses `useCapitalProject(id)`
-- Sections: Hero, Performance Strip, Repayment Panel, Forecast Panel, Activation Panel, Linked Work, Timeline
-- Shows variance, ROI, break-even progress prominently
+**Normalization helpers:**
+- `clamp(value, min, max)`
+- `normalizeRatioTo100(value, minValue, maxValue)`
+- `normalizeInverseTo100(value, minValue, maxValue)`
+- `safeDivide(numerator, denominator, fallback)`
+- `freshnessMultiplier(days)`
 
-**`src/pages/dashboard/admin/CapitalSettings.tsx`**
-- Uses `useCapitalPolicySettings`
-- Form for editing thresholds: min ROE, min confidence, max risk, max concurrent projects, max exposure, cooldowns
-- Permission: `manage_settings`
+**Core scoring:**
+- `calculateRoeRatio(predictedLiftCents, investmentCents)` — returns decimal ratio
+- `calculateRoeScore(roeRatio)` — returns 0-100 normalized
+- `calculateBreakEvenScore(months)` — inverse normalize 0-18 range
+- `calculateConfidenceScore(inputs)` — weighted composition, returns 0-100
+- `calculateRiskScore(inputs)` — weighted composition, returns 0-100
+- `mapRiskLevel(riskScore)` — returns low/medium/high/critical
+- `calculateBusinessValueScore(inputs)` — weighted composition placeholder
+- `calculateNetMonthlyGainCents(liftExpectedCents, paymentCents, breakEvenMonths)` — cents in, cents out
+- `calculateNetImpactScore(netGainCents, investmentCents)` — 0-100
+- `calculateCoverageRatio(providerAmountCents, investmentCents)` — ratio + tier label
 
-### 2. Register Routes in `App.tsx`
+**Eligibility:**
+- `calculateInternalEligibility(inputs, policy)` — returns `{ eligible, reasonCode, reasonSummary }` with structured codes
+- `calculateStylistEligibility(inputs, policy)` — separate path
 
-Add inside the org dashboard route block:
-```
-admin/capital — CapitalQueue
-admin/capital/opportunities/:opportunityId — CapitalOpportunityDetail
-admin/capital/projects — CapitalProjects
-admin/capital/projects/:projectId — CapitalProjectDetail
-admin/capital/settings — CapitalSettings
-```
+**Surface priority:**
+- `calculateSurfacePriority(inputs, penalties)` — single canonical formula, 0-100 clamped
+- `calculateFreshnessScore(days)` — inverse normalize 0-30
 
-All wrapped in `ProtectedRoute` with `view_team_overview` (settings uses `manage_settings`).
+**Funded project performance:**
+- `calculateVariancePercent(actualCents, predictedCents)` — safe divide
+- `calculateRoiToDate(revenueCents, repaymentCents, fundedCents)` — ratio
+- `calculateRepaymentProgress(repaidCents, totalRepaymentCents)` — percent
+- `calculateBreakEvenProgress(revenueCents, totalRepaymentOrFundedCents)` — percent
+- `calculateForecastStatus(variancePercent, repaymentDistress, projectAgeDays)` — with early-stage override
+- `calculateUnderperformance(forecastStatus, projectAgeDays, variancePercent)` — boolean + suppress flag
+- `calculatePredictedRevenueToDateCents(liftExpectedCents, fundingStartDate, breakEvenMonths)` — linear pacing
 
-### 3. Add Sidebar Navigation Entry
+### 3. Update `surface-priority-engine.ts`
 
-Add `'/dashboard/admin/capital'` to the `ops` section in `DEFAULT_LINK_ORDER` in `useSidebarLayout.ts`. Add the corresponding nav item in `SidebarNavContent.tsx` with the `Landmark` icon and label "Zura Capital".
+- Replace inline weight constants with imports from `capital-formulas-config.ts`
+- Replace inline staleness/urgency functions with calls to `capital-formulas.ts`
+- Add `break_even_score` and `net_impact_score` to the priority formula
+- Align penalty values with spec (staleness: 0/5/10/20 at 7/14/30/30+ days)
+- Add `partial_coverage_penalty` and `project_load_penalty`
 
-### 4. New Hook: `useCapitalOpportunity(id)`
+### 4. Update `zura-eligibility-engine.ts`
 
-Single-opportunity fetch from `capital_funding_opportunities` by ID + org scope, with joined event log for timeline.
+- Replace with call to `calculateInternalEligibility` from formulas module
+- Add missing checks: `execution_readiness_score >= 70`, `operational_stability_score >= 60`, `repayment_distress_flag`
+- Return structured `reason_code` alongside text
+- Keep existing `isZuraEligible` signature but delegate to canonical function
 
-### 5. Refactor Existing Components
+### 5. Update `zura-capital-config.ts`
 
-**`OwnerCapitalQueue`** — Add filters bar (location, type, status, risk) using existing filter patterns. Add column for Provider Coverage. Support click-to-navigate to detail page (via `dashPath`) instead of opening dialog.
+- Move weights/thresholds that now live in `capital-formulas-config.ts` to avoid duplication
+- Keep status labels, state machine transitions, surface areas, event types (those are not formula concerns)
+- Re-export from formulas config for backward compat where needed
 
-**`FundingOpportunityDetail`** — Keep dialog version for embedded surfaces (Command Center card click). Create a new `FundingOpportunityDetailPage` component for the full-page route that reuses the same section components but in a page layout.
+### 6. Rewire UI consumers
 
-**`FinancedProjectsTracker`** — Add "View All" footer link to `/admin/capital/projects`. Keep compact version for dashboard embedding.
+- **`CapitalOpportunityDetail.tsx`** — remove inline `monthlyLift`, `monthlyPayment`, `netMonthly`, `coveragePercent` computation; import and call `calculateNetMonthlyGainCents`, `calculateCoverageRatio`
+- **`ZuraCapitalCard.tsx`** — remove inline `coveragePercent` computation; use `calculateCoverageRatio`
+- **`CapitalProjectDetail.tsx`** — use `calculateVariancePercent`, `calculateRoiToDate`, `calculateForecastStatus` from formulas
+- **`useZuraCapital.ts`** — use `calculateRoeScore`, `calculateSurfacePriority` from formulas module instead of direct `computeSurfacePriority` call; use `calculateInternalEligibility` wrapper
 
-**`CapitalDashboard`** — Repurpose as the capital queue landing page content, or deprecate in favor of the new `CapitalQueue` page. Remove from SEO Workshop (capital should not be confined there).
+### 7. Update exports
 
-### 6. Composable Section Components
-
-Extract reusable section components for both dialog and page contexts:
-- `CapitalGrowthMathGrid` — investment, lift range, ROE, break-even
-- `CapitalProviderBlock` — provider amount, coverage ratio, fees
-- `CapitalNetImpactBlock` — monthly lift, repayment drag, net gain
-- `CapitalReasonBlock` — deterministic explanation
-- `CapitalStatusBadge` — reusable status badge
-- `CapitalMetricTile` — already exists inline, extract to shared component
-
-### 7. Wire into Growth Hub
-
-Add a `HubCard` entry for Zura Capital in `GrowthHub.tsx` linking to `/admin/capital`.
+- `src/lib/capital-engine/index.ts` — export all formulas
+- `src/config/capital-engine/index.ts` — export formulas config
 
 ## Files Created
+
 | File | Purpose |
 |---|---|
-| `src/pages/dashboard/admin/CapitalQueue.tsx` | Capital queue landing page |
-| `src/pages/dashboard/admin/CapitalOpportunityDetail.tsx` | Opportunity detail page |
-| `src/pages/dashboard/admin/CapitalProjects.tsx` | Funded projects list page |
-| `src/pages/dashboard/admin/CapitalProjectDetail.tsx` | Funded project detail page |
-| `src/pages/dashboard/admin/CapitalSettings.tsx` | Policy settings page |
-| `src/hooks/useCapitalOpportunity.ts` | Single opportunity fetch hook |
-| `src/components/dashboard/capital-engine/CapitalQueueFilters.tsx` | Reusable filter bar |
-| `src/components/dashboard/capital-engine/CapitalQueueSummaryStrip.tsx` | KPI summary strip |
-| `src/components/dashboard/capital-engine/FundedProjectDetailSections.tsx` | Reusable project detail sections |
-| `src/components/dashboard/capital-engine/CapitalMetricTile.tsx` | Extracted reusable metric tile |
-| `src/components/dashboard/capital-engine/CapitalStatusBadge.tsx` | Reusable status badge |
+| `src/config/capital-engine/capital-formulas-config.ts` | All weights, thresholds, reason codes, explanation templates |
+| `src/lib/capital-engine/capital-formulas.ts` | 22 canonical formula functions |
 
 ## Files Modified
+
 | File | Change |
 |---|---|
-| `src/App.tsx` | Add 5 capital routes + lazy imports |
-| `src/hooks/useSidebarLayout.ts` | Add capital to ops section |
-| `src/components/dashboard/SidebarNavContent.tsx` | Add capital nav item |
-| `src/components/dashboard/capital-engine/OwnerCapitalQueue.tsx` | Add filters, navigate to detail page |
-| `src/components/dashboard/capital-engine/FinancedProjectsTracker.tsx` | Add "View All" link |
-| `src/pages/dashboard/admin/GrowthHub.tsx` | Add Zura Capital hub card |
-| `src/components/dashboard/seo-workshop/SEOEngineDashboard.tsx` | Remove embedded CapitalDashboard |
+| `src/lib/capital-engine/surface-priority-engine.ts` | Delegate to formulas, add break_even/net_impact terms |
+| `src/lib/capital-engine/zura-eligibility-engine.ts` | Add missing checks, structured reason codes |
+| `src/config/capital-engine/zura-capital-config.ts` | Remove duplicated weights, re-export from formulas config |
+| `src/hooks/useZuraCapital.ts` | Use canonical scoring functions |
+| `src/pages/dashboard/admin/CapitalOpportunityDetail.tsx` | Remove inline math |
+| `src/pages/dashboard/admin/CapitalProjectDetail.tsx` | Use canonical performance formulas |
+| `src/components/dashboard/capital-engine/ZuraCapitalCard.tsx` | Use canonical coverage computation |
+| `src/lib/capital-engine/index.ts` | Export formulas |
+| `src/config/capital-engine/index.ts` | Export formulas config |
 
 ## Build Order
-1. Extract `CapitalMetricTile` and `CapitalStatusBadge` shared components
-2. Create `useCapitalOpportunity` hook
-3. Create `CapitalQueueFilters` and `CapitalQueueSummaryStrip`
-4. Create all 5 page components
-5. Register routes in `App.tsx` with lazy imports
-6. Add sidebar entry
-7. Add Growth Hub card
-8. Update `OwnerCapitalQueue` to navigate to page routes
-9. Add "View All" to `FinancedProjectsTracker`
-10. Remove capital from SEO Workshop
 
-## Phase Scope
-This build covers **Mode 2 (centralized administration)** — dedicated routes, navigation, and full page compositions. **Mode 1 (embedded contextual surfacing)** in Operations Hub, service dashboards, and stylist dashboards remains Phase 2.
+1. `capital-formulas-config.ts` — all constants
+2. `capital-formulas.ts` — all 22 functions
+3. Update `surface-priority-engine.ts` and `zura-eligibility-engine.ts` to delegate
+4. Update `zura-capital-config.ts` to remove duplicates
+5. Rewire `useZuraCapital.ts`
+6. Rewire 3 UI components
+7. Update exports
+8. TypeScript build check
 
