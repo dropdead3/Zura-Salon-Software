@@ -487,6 +487,7 @@ const App = () => (
                     <Route path="/rewards" element={<ClientPortalPage />} />
                     <Route path="/kiosk/:locationId" element={<Kiosk />} />
                     <Route path="/dock" element={<Dock />} />
+                    <Route path="/book/:orgSlug" element={<BookingSurface />} />
                     {/* TEMP: Preview access denied page — remove after review */}
                     <Route path="/_preview/access-denied" element={<AccessDeniedPreview />} />
 
