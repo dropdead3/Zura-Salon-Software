@@ -6,16 +6,28 @@
  *
  * Formula: radius = clamp(10px, ~3.5-4% of shortest side, 22px)
  *
- * Tiers:
- *   micro  → badges, pills, toggles
- *   small  → stat tiles, KPI cards, inputs
- *   medium → standard dashboard cards
- *   large  → analytics panels, activity feed
- *   xl     → modals, drawers, overlays
+ * ── NESTING HIERARCHY (CRITICAL) ──
+ *
+ * Parent containers MUST always have a larger radius than children.
+ * Child cards MUST be reduced by 4–8px from parent.
+ *
+ *   container  → 22px  Outer wrapping containers, glass parent cards
+ *   large      → 16px  Standard standalone cards (StatCards, analytics)
+ *   medium     → 14px  Standard dashboard cards
+ *   small      → 12px  Nested/inner cards inside containers
+ *   micro      → 10px  Badges, pills, toggles
+ *   xl         → 20px  Modals, drawers, overlays (not for nesting)
+ *
+ * Valid nesting:
+ *   container (22px) → large (16px) or small (12px)
+ *   large (16px)     → small (12px) or micro (10px)
+ *
+ * NEVER nest same-radius cards. NEVER let child exceed parent.
  */
 
 export const platformBento = {
   radius: {
+    container: 'rounded-[22px]',
     micro: 'rounded-[10px]',
     small: 'rounded-xl',       // 12px
     medium: 'rounded-[14px]',
@@ -51,7 +63,7 @@ export const PLATFORM_CARD_BASE =
   'border border-[hsl(var(--platform-border)/0.5)] bg-[hsl(var(--platform-bg-card)/0.4)] backdrop-blur-xl';
 
 /** Map PlatformCard size prop to bento tier */
-export function getCardTier(size: 'sm' | 'md' | 'lg') {
-  const map = { sm: 'small', md: 'medium', lg: 'large' } as const;
+export function getCardTier(size: 'sm' | 'md' | 'lg' | 'container') {
+  const map = { sm: 'small', md: 'medium', lg: 'large', container: 'container' } as const;
   return map[size];
 }

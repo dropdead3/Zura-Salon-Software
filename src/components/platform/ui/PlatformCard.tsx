@@ -4,12 +4,13 @@ import { platformBento } from '@/lib/platform-bento-tokens';
 
 interface PlatformCardProps extends React.HTMLAttributes<HTMLDivElement> {
   variant?: 'default' | 'glass' | 'elevated' | 'interactive';
-  size?: 'lg' | 'md' | 'sm';
+  size?: 'container' | 'lg' | 'md' | 'sm';
+  nested?: boolean;
   glow?: boolean;
 }
 
 const PlatformCard = React.forwardRef<HTMLDivElement, PlatformCardProps>(
-  ({ className, variant = 'default', size = 'lg', glow = false, children, ...props }, ref) => {
+  ({ className, variant = 'default', size = 'lg', nested = false, glow = false, children, ...props }, ref) => {
     const variants = {
       default: 'bg-[hsl(var(--platform-bg-card))] border-[hsl(var(--platform-border)/0.5)]',
       glass: 'platform-glass',
@@ -18,25 +19,31 @@ const PlatformCard = React.forwardRef<HTMLDivElement, PlatformCardProps>(
     };
 
     const radii = {
+      container: platformBento.radius.container,
       lg: platformBento.radius.large,
       md: platformBento.radius.medium,
       sm: platformBento.radius.small,
     };
 
     const shadows = {
+      container: platformBento.shadow.large,
       lg: platformBento.shadow.large,
       md: platformBento.shadow.medium,
       sm: platformBento.shadow.none,
     };
 
+    // nested prop forces inner-card radius (12px) regardless of size
+    const resolvedRadius = nested ? platformBento.radius.small : radii[size];
+    const resolvedShadow = nested ? platformBento.shadow.none : shadows[size];
+
     return (
       <div
         ref={ref}
         className={cn(
-          radii[size], 'border backdrop-blur-xl',
+          resolvedRadius, 'border backdrop-blur-xl',
           platformBento.hover.transition,
           variants[variant],
-          shadows[size],
+          resolvedShadow,
           variant === 'interactive' && platformBento.hover.lift,
           glow && 'platform-glow-sm',
           className
