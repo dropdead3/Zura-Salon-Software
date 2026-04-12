@@ -30,7 +30,9 @@ import {
   getVisibilityVerdict,
   type VisibilityVerdict,
   type OpportunityDiagnostic,
+  type OrgCapitalDiagnostics,
 } from '@/hooks/useOrgCapitalDiagnostics';
+import { formatCurrency } from '@/lib/format';
 import type { EligibilityInputs } from '@/lib/capital-engine/capital-formulas';
 import type { CapitalPolicy } from '@/config/capital-engine/capital-formulas-config';
 import { STRIPE_CAPITAL_REQUIREMENTS, ZURA_HARD_GATES, ZURA_ADVISORIES } from '@/config/capital-engine/capital-formulas-config';
@@ -238,52 +240,96 @@ function EligibilityReferenceList({ policy }: { policy: CapitalPolicy }) {
         </div>
       </div>
 
-      {/* Section B — Zura Operational Context */}
-      <div className="rounded-lg border border-[hsl(var(--platform-border)/0.2)] bg-[hsl(var(--platform-bg-card)/0.08)] p-4 space-y-3">
-        <div className="flex items-center gap-2 mb-1">
-          <Shield className="h-4 w-4 text-amber-400" />
-          <h5 className="font-sans text-xs tracking-normal text-[hsl(var(--platform-foreground))] uppercase">
-            Layer 2 — Zura Operational Context
-          </h5>
+    </div>
+  );
+}
+
+/* ── Data-Aware Operational Context (per-org diagnostic) ── */
+
+function OrgOperationalContext({ data }: { data: OrgCapitalDiagnostics }) {
+  return (
+    <div className="rounded-lg border border-[hsl(var(--platform-border)/0.2)] bg-[hsl(var(--platform-bg-card)/0.08)] p-4 space-y-3">
+      <div className="flex items-center gap-2 mb-1">
+        <Shield className="h-4 w-4 text-amber-400" />
+        <h5 className="font-sans text-xs tracking-normal text-[hsl(var(--platform-foreground))] uppercase">
+          Layer 2 — Zura Operational Context
+        </h5>
+      </div>
+
+      <div className="space-y-0 divide-y divide-[hsl(var(--platform-border)/0.1)]">
+        {/* Critical Ops Alerts */}
+        <div className="flex items-start gap-2.5 py-2.5 first:pt-0">
+          <div className="mt-0.5 shrink-0">
+            {data.criticalOpsAlertCount === 0 ? (
+              <Check className="h-3.5 w-3.5 text-emerald-400" />
+            ) : (
+              <X className="h-3.5 w-3.5 text-red-400" />
+            )}
+          </div>
+          <div className="space-y-0.5">
+            <p className="text-xs text-[hsl(var(--platform-foreground))]">
+              {data.criticalOpsAlertCount === 0
+                ? 'No Critical Ops Alerts'
+                : `${data.criticalOpsAlertCount} Critical Alert${data.criticalOpsAlertCount !== 1 ? 's' : ''} Active`}
+            </p>
+            <p className="text-xs text-[hsl(var(--platform-foreground-muted))] leading-relaxed">
+              {data.criticalOpsAlertCount === 0
+                ? 'No critical operational alerts detected for this organization.'
+                : 'Unresolved critical alerts are blocking new capital offers from surfacing.'}
+            </p>
+          </div>
         </div>
-        <p className="text-xs text-[hsl(var(--platform-foreground-muted))]">
-          Stripe is the lender — Zura provides operational context, not additional underwriting. Only critical operational alerts block surfacing. Repayment and project context is shown as advisory information.
-        </p>
-        <div className="space-y-3">
-          {ZURA_HARD_GATES.map((gate) => (
-            <div key={gate.code} className="flex items-start gap-2.5">
-              <Shield className="h-3.5 w-3.5 mt-0.5 shrink-0 text-red-400/60" />
-              <div className="space-y-0.5">
-                <p className="text-xs text-[hsl(var(--platform-foreground))]">
-                  <span className="text-red-400/80">[Blocker]</span> {gate.label}
-                </p>
-                <p className="text-xs text-[hsl(var(--platform-foreground-muted))] leading-relaxed">{gate.description}</p>
-              </div>
-            </div>
-          ))}
-          {ZURA_ADVISORIES.map((adv) => (
-            <div key={adv.code} className="flex items-start gap-2.5">
-              {adv.severity === 'warning' ? (
-                <AlertTriangle className="h-3.5 w-3.5 mt-0.5 shrink-0 text-amber-400/60" />
-              ) : (
-                <BookOpen className="h-3.5 w-3.5 mt-0.5 shrink-0 text-blue-400/60" />
-              )}
-              <div className="space-y-0.5">
-                <p className="text-xs text-[hsl(var(--platform-foreground))]">
-                  <span className={adv.severity === 'warning' ? 'text-amber-400/80' : 'text-blue-400/80'}>
-                    [{adv.severity === 'warning' ? 'Warning' : 'Info'}]
-                  </span>{' '}
-                  {adv.label}
-                </p>
-                <p className="text-xs text-[hsl(var(--platform-foreground-muted))] leading-relaxed">{adv.description}</p>
-              </div>
-            </div>
-          ))}
+
+        {/* Repayment Status */}
+        <div className="flex items-start gap-2.5 py-2.5">
+          <div className="mt-0.5 shrink-0">
+            {!data.repaymentDistress ? (
+              <Check className="h-3.5 w-3.5 text-emerald-400" />
+            ) : (
+              <AlertTriangle className="h-3.5 w-3.5 text-amber-400" />
+            )}
+          </div>
+          <div className="space-y-0.5">
+            <p className="text-xs text-[hsl(var(--platform-foreground))]">
+              {!data.repaymentDistress
+                ? 'Repayment Status'
+                : `Repayment Distress — ${data.distressedProjectNames.length} project${data.distressedProjectNames.length !== 1 ? 's' : ''}`}
+            </p>
+            <p className="text-xs text-[hsl(var(--platform-foreground-muted))] leading-relaxed">
+              {!data.repaymentDistress
+                ? data.activeProjectCount > 0
+                  ? 'No repayment distress — all active projects are current.'
+                  : 'No active funded projects to evaluate.'
+                : `In distress: ${data.distressedProjectNames.map(n => `"${n}"`).join(', ')}`}
+            </p>
+          </div>
         </div>
-        <div className="pt-2 border-t border-[hsl(var(--platform-border)/0.1)]">
-          <p className="text-xs text-[hsl(var(--platform-foreground-muted))]">
-            Capital offers are surfaced when no critical operational alerts are active. Repayment and project context is shown as advisory information.
-          </p>
+
+        {/* Active Projects */}
+        <div className="flex items-start gap-2.5 py-2.5 last:pb-0">
+          <div className="mt-0.5 shrink-0">
+            <Info className="h-3.5 w-3.5 text-blue-400" />
+          </div>
+          <div className="space-y-1">
+            <p className="text-xs text-[hsl(var(--platform-foreground))]">
+              {data.activeProjectCount === 0
+                ? 'No Active Funded Projects'
+                : `Active Projects (${data.activeProjectCount})`}
+            </p>
+            {data.activeProjectCount === 0 ? (
+              <p className="text-xs text-[hsl(var(--platform-foreground-muted))] leading-relaxed">
+                This organization has no active funded projects.
+              </p>
+            ) : (
+              <div className="space-y-1">
+                {data.activeProjectSummaries.map((proj) => (
+                  <p key={proj.id} className="text-xs text-[hsl(var(--platform-foreground-muted))] leading-relaxed">
+                    "{proj.title}" — {formatCurrency(proj.fundedAmount, { noCents: true })} funded · {proj.status.replace(/_/g, ' ')}
+                  </p>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>
@@ -424,6 +470,7 @@ function DiagnosticPanel({ orgId }: { orgId: string }) {
             No opportunities have been detected for this organization yet.
           </div>
           <EligibilityReferenceList policy={data.effectivePolicy} />
+          <OrgOperationalContext data={data} />
         </div>
       )}
     </div>

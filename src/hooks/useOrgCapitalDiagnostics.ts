@@ -29,6 +29,14 @@ export interface OpportunityDiagnostic {
   isStripeOffer: boolean;
 }
 
+export interface ActiveProjectSummary {
+  id: string;
+  title: string;
+  status: string;
+  fundedAmount: number;
+  repaymentStatus: string | null;
+}
+
 export interface OrgCapitalDiagnostics {
   flagEnabled: boolean;
   hasActiveStripeConnect: boolean;
@@ -40,6 +48,11 @@ export interface OrgCapitalDiagnostics {
   opportunities: OpportunityDiagnostic[];
   lastOpportunityAt: string | null;
   effectivePolicy: CapitalPolicy;
+  criticalOpsAlertCount: number;
+  repaymentDistress: boolean;
+  distressedProjectNames: string[];
+  activeProjectCount: number;
+  activeProjectSummaries: ActiveProjectSummary[];
 }
 
 export type VisibilityVerdict = 'surfacing' | 'enabled_not_surfacing' | 'disabled';
@@ -105,13 +118,23 @@ export function useOrgCapitalDiagnostics(orgId: string | null) {
       // 3. Get real project context (N4) + exposure data (B4)
       const { data: activeProjects } = await supabase
         .from('capital_funding_projects')
-        .select('id, status, repayment_status, funded_amount_cents, updated_at, capital_funding_opportunities(location_id, stylist_id)')
+        .select('id, status, repayment_status, funded_amount_cents, updated_at, capital_funding_opportunities(title, location_id, stylist_id)')
         .eq('organization_id', orgId!)
         .in('status', ['active', 'on_track', 'above_forecast', 'below_forecast', 'at_risk']);
 
       const activeProjectCount = activeProjects?.length ?? 0;
       const underperformingCount = (activeProjects ?? []).filter(p => p.status === 'at_risk').length;
       const repaymentDistress = (activeProjects ?? []).some(p => p.repayment_status === 'delinquent');
+      const distressedProjectNames = (activeProjects ?? [])
+        .filter(p => p.repayment_status === 'delinquent')
+        .map(p => (p.capital_funding_opportunities as any)?.title ?? 'Untitled');
+      const activeProjectSummaries: ActiveProjectSummary[] = (activeProjects ?? []).map(p => ({
+        id: p.id,
+        title: (p.capital_funding_opportunities as any)?.title ?? 'Untitled',
+        status: p.status,
+        fundedAmount: Number(p.funded_amount_cents ?? 0) / 100,
+        repaymentStatus: p.repayment_status,
+      }));
 
       // Derive lastUnderperformingAt from at_risk projects
       let lastUnderperformingAt: string | null = null;
@@ -223,6 +246,11 @@ export function useOrgCapitalDiagnostics(orgId: string | null) {
         opportunities,
         lastOpportunityAt,
         effectivePolicy,
+        criticalOpsAlertCount: hasCriticalOpsAlerts ? 1 : 0,
+        repaymentDistress,
+        distressedProjectNames,
+        activeProjectCount,
+        activeProjectSummaries,
       };
     },
     enabled: !!orgId,
