@@ -399,6 +399,7 @@ function DashboardRoutes() {
       <Route path="admin/capital/projects" element={<ProtectedRoute requiredPermission="view_team_overview"><CapitalProjects /></ProtectedRoute>} />
       <Route path="admin/capital/projects/:projectId" element={<ProtectedRoute requiredPermission="view_team_overview"><CapitalProjectDetail /></ProtectedRoute>} />
       <Route path="admin/capital/settings" element={<ProtectedRoute requiredPermission="manage_settings"><CapitalSettings /></ProtectedRoute>} />
+      <Route path="admin/booking-surface" element={<ProtectedRoute requiredPermission="manage_settings"><BookingSurfaceSettingsPage /></ProtectedRoute>} />
 
       {/* Team Challenges routes */}
       <Route path="admin/challenges" element={<ProtectedRoute requiredPermission="view_team_overview"><ChallengesDashboard /></ProtectedRoute>} />
