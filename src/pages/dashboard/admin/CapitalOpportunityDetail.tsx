@@ -21,9 +21,19 @@ import { CapitalStatusBadge } from '@/components/dashboard/capital-engine/Capita
 import {
   OPPORTUNITY_TYPE_LABELS,
   CONSTRAINT_LABELS,
-  CAPITAL_EVENT_TYPES,
 } from '@/config/capital-engine/zura-capital-config';
 import type { OpportunityType, ConstraintType } from '@/config/capital-engine/zura-capital-config';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 import { PageExplainer } from '@/components/ui/PageExplainer';
 import {
@@ -61,11 +71,6 @@ const EXECUTION_PLAN_STEPS: Record<string, { label: string; description: string 
     { label: 'Location setup', description: 'Activate new location entity with full operational configuration.' },
     { label: 'Team hiring', description: 'Initiate hiring pipeline for new location staffing needs.' },
     { label: 'Grand opening campaign', description: 'Launch multi-channel grand opening marketing campaign.' },
-  ],
-  stylist_capacity_growth: [
-    { label: 'Schedule optimization', description: 'Expand stylist availability windows based on demand data.' },
-    { label: 'Client growth tasks', description: 'Create client acquisition task batch for the stylist.' },
-    { label: 'Performance tracking', description: 'Activate enhanced performance monitoring for funded period.' },
   ],
   campaign_acceleration: [
     { label: 'Campaign launch', description: 'Activate funded marketing campaign with allocated budget.' },
@@ -154,6 +159,8 @@ export default function CapitalOpportunityDetail() {
     logEvent.mutate({ opportunityId: o.id, eventType: 'opportunity_dismissed', surfaceArea: 'capital_queue' });
   };
 
+  const [dismissDialogOpen, setDismissDialogOpen] = useState(false);
+
   return (
     <DashboardLayout>
       <div className={cn(tokens.layout.pageContainer, 'max-w-[1200px] mx-auto')}>
@@ -165,9 +172,25 @@ export default function CapitalOpportunityDetail() {
           actions={
             <div className="flex items-center gap-2">
               {o.eligibility_status !== 'funded' && (
-                <Button variant="ghost" size="sm" className="font-sans text-xs" onClick={handleDismiss}>
-                  <X className="w-3.5 h-3.5 mr-1" /> Dismiss
-                </Button>
+                <AlertDialog open={dismissDialogOpen} onOpenChange={setDismissDialogOpen}>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="ghost" size="sm" className="font-sans text-xs">
+                      <X className="w-3.5 h-3.5 mr-1" /> Dismiss
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Dismiss this opportunity?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        This will suppress the opportunity for the configured cooldown period. You can still view it in the queue, but it won't resurface automatically.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel className="font-sans">Cancel</AlertDialogCancel>
+                      <AlertDialogAction className="font-sans" onClick={handleDismiss}>Dismiss</AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
               )}
               {o.stripe_offer_available && o.eligibility_status !== 'funded' && (
                 <Button onClick={handleFund} disabled={isRedirecting} className={`${tokens.button.page} font-sans`}>

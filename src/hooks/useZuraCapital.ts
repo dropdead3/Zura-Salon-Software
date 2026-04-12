@@ -49,7 +49,7 @@ export interface ZuraCapitalOpportunity {
   recommendedActionLabel: string;
   locationId: string | null;
   serviceId: string | null;
-  stylistId: string | null;
+  
   campaignId: string | null;
   createdAt: string;
   expiresAt: string | null;
@@ -169,9 +169,8 @@ export function useZuraCapital() {
   });
 
   // Derived context values
-  const { locationExposure, stylistExposure, lastUnderperformingAt } = useMemo(() => {
+  const { locationExposure, lastUnderperformingAt } = useMemo(() => {
     const locExp: Record<string, number> = {};
-    const styExp: Record<string, number> = {};
     let lastUnderperf: string | null = null;
 
     (fundedProjects as any[]).forEach((fp) => {
@@ -179,9 +178,6 @@ export function useZuraCapital() {
       const opp = fp.capital_funding_opportunities;
       if (opp?.location_id) {
         locExp[opp.location_id] = (locExp[opp.location_id] ?? 0) + fundedAmount;
-      }
-      if (opp?.stylist_id) {
-        styExp[opp.stylist_id] = (styExp[opp.stylist_id] ?? 0) + fundedAmount;
       }
       // Track most recent at_risk project
       if (fp.status === 'at_risk' && fp.updated_at) {
@@ -191,7 +187,7 @@ export function useZuraCapital() {
       }
     });
 
-    return { locationExposure: locExp, stylistExposure: styExp, lastUnderperformingAt: lastUnderperf };
+    return { locationExposure: locExp, lastUnderperformingAt: lastUnderperf };
   }, [fundedProjects]);
 
   const { recentDismissals, recentDeclines, lastDeclinedAt } = useMemo(() => {
@@ -254,8 +250,8 @@ export function useZuraCapital() {
           expiresAt: o.expires_at,
           locationId: o.location_id,
           locationExposure: o.location_id ? (locationExposure[o.location_id] ?? 0) : 0,
-          stylistId: o.stylist_id,
-          stylistExposure: o.stylist_id ? (stylistExposure[o.stylist_id] ?? 0) : 0,
+          stylistId: null,
+          stylistExposure: 0,
           lastDeclinedAt,
           lastUnderperformingAt,
         };
@@ -323,7 +319,7 @@ export function useZuraCapital() {
           recommendedActionLabel: o.recommended_action_label,
           locationId: o.location_id,
           serviceId: o.service_id,
-          stylistId: o.stylist_id,
+          
           campaignId: o.campaign_id,
           createdAt: o.created_at,
           expiresAt: o.expires_at,
@@ -333,7 +329,7 @@ export function useZuraCapital() {
         };
       })
       .sort((a, b) => b.surfacePriority - a.surfacePriority);
-  }, [rawOpps, fundedProjects, locationExposure, stylistExposure, lastDeclinedAt, lastUnderperformingAt, surfaceStates, effectivePolicy]);
+  }, [rawOpps, fundedProjects, locationExposure, lastDeclinedAt, lastUnderperformingAt, surfaceStates, effectivePolicy]);
 
   const eligibleOpportunities = opportunities.filter((o) => o.zuraEligible);
   const topOpportunity = eligibleOpportunities[0] ?? null;
