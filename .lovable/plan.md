@@ -1,93 +1,103 @@
 
 
-# "From Insight to Execution" — Capital Section Build Plan
+# Growth Estimator — Build Plan
 
 ## What We're Building
 
-A premium marketing section for the Zura sales page (`PlatformLanding.tsx`) that positions the funding capability as a natural extension of the intelligence system. Not fintech. Growth acceleration.
+An interactive "See Your Growth Potential" section for the sales page. Users input basic business data and receive a modeled, conservatively calculated estimate of revenue opportunity — broken into demand generation, conversion, and capacity optimization. Legally cautious language throughout. Premium two-column layout matching existing marketing aesthetic.
 
 ## Placement
 
-Between `FounderQuote` and `OutcomeMetrics` in `PlatformLanding.tsx` — after the narrative has established Zura's intelligence and before the proof/CTA sections.
+Between `StruggleInput` and `StatBar` in `PlatformLanding.tsx` — early in the funnel after the user has described their struggle, before proof sections. This positions it as a natural "what if" moment.
 
-## Component: `InsightToExecution.tsx`
+## Component: `GrowthEstimator.tsx`
 
-Single file in `src/components/marketing/`. Follows existing patterns: `useScrollReveal`, `mkt-reveal` classes, `motion` from framer-motion, explicit marketing palette colors (not theme tokens), `font-display` for headlines, `font-sans` for body.
+Single file in `src/components/marketing/`. Follows established patterns: `useScrollReveal`, `mkt-reveal`, `motion` from framer-motion, explicit marketing palette colors, `font-display` for headlines, `font-sans` for body.
 
-### Section Structure (top to bottom)
+### Layout
 
-**1. Hero Header**
-- Eyebrow: `FROM INSIGHT TO EXECUTION` (font-display, tracking-[0.15em], dusky color)
-- Headline: "Zura doesn't just tell you how to grow — " + gradient span: "it helps you fund it."
-- Subhead: "Zura identifies your highest-return opportunities — and lets you fund them instantly when it makes sense."
+Two-column on desktop (inputs left, output right). Stacked on mobile (inputs first, output below).
 
-**2. Animated Flow (the centerpiece)**
+### Left Column — Inputs
 
-A 4-step horizontal (desktop) / vertical (mobile) animated pipeline showing the Decision → Action → Outcome loop:
+- **Monthly Revenue**: Numeric input with `$` prefix, formatted. Default placeholder: `$25,000`
+- **Number of Stylists**: Numeric input. Default placeholder: `4`
+- **Primary Service Focus**: Dropdown (Extensions, Color, Blonding, Mixed). Default: Mixed
+- **Booking Utilization**: Slider 30-100%, default 65%. Label shows current value.
 
-| Step | Icon | Label | Detail |
-|---|---|---|---|
-| 1 | TrendingUp | Insight Detected | "Extensions demand exceeding capacity" |
-| 2 | Target | Opportunity Scored | "+$8,200/mo · Break-even: 5.8 months" |
-| 3 | Banknote | Funding Available | "$35,000 ready to deploy" |
-| 4 | Rocket | Growth Activated | "Capacity expanded. Revenue climbing." |
+All inputs styled with the dark marketing card aesthetic (bg-white/[0.03], border-white/[0.06]).
 
-Each step animates in sequentially (staggered 0.3s). Connected by animated gradient lines (violet→purple). Auto-advances through steps like `SystemWalkthrough` (reuse same pattern with `AnimatePresence`). Steps are clickable to pause and select.
+### Right Column — Output
 
-**3. Three Value Pillars (3-column grid)**
+**Primary**: "Estimated Monthly Growth Opportunity" → `+$X,XXX` in violet gradient text, animated via `AnimatedNumber`.
 
-Cards with icon containers (w-10 h-10 rounded-lg bg-violet-500/10), using the established card style (border-white/[0.06], bg-white/[0.03]):
+**Breakdown** (3 stacked cards):
+- Demand Generation (SEO & visibility) — percentage + dollar amount
+- Conversion Improvements (rebooking, reviews) — percentage + dollar amount  
+- Capacity Optimization (booking efficiency) — percentage + dollar amount
 
-- **Identify the Opportunity** — Eye icon. "Zura continuously analyzes your business to surface where you're leaving money on the table." Bullets: Demand gaps · Capacity constraints · Missed bookings.
-- **Validate the Return** — BarChart3 icon. "Every opportunity is scored on real data." Bullets: Expected revenue lift · Break-even timeline · Confidence level.
-- **Fund It Instantly** — Zap icon. "When an opportunity makes sense, Zura connects you to funding — seamlessly." Bullets: No applications upfront · No browsing loan options · Execution when ready.
+Each card: icon, label, estimated dollar range, subtle progress indicator.
 
-**4. Product UI Mock**
+**Secondary layer** (conditional, shows when opportunity > $3,000):
+"With expansion and funding, this opportunity could increase further" → `+$X,XXX additional potential`
 
-A simulated Zura Capital card matching the dark SaaS aesthetic:
-- Header row: "ZURA CAPITAL" label + status badge
-- Title: "Mesa Extensions Expansion"
-- KPI row: "+$8,200/month" (violet gradient text) | "Break-even: 5.8 months"
-- Funding bar: "$35,000 available" with animated fill
-- CTA button: gradient violet pill "Fund This"
-- Subtle glow border (violet-500/20)
+**Disclaimer** (always visible, below output):
+"This estimate is based on modeled scenarios using your inputs and common optimization patterns. Actual results will vary based on execution, market conditions, and individual business factors."
 
-Card animates in with scale-in + fade. On hover, slight lift + glow intensify.
+**Expandable disclosure**: "How this is calculated" toggle → methodology text.
 
-**5. Differentiation Block**
+### Calculation Logic (conservative, deterministic)
 
-Two-column layout:
-- Left: "Most software shows you problems." (large, white)
-- Right: Two stacked mini-lists comparing "Other platforms" (dashboards, reports, suggestions — slate-500 text) vs "Zura" (identifies, tells you what to do, executes, funds — violet-400 text with checkmarks)
+```text
+Base opportunity % varies by service type:
+  Extensions: 18-28%
+  Color: 12-22%
+  Blonding: 15-25%
+  Mixed: 14-24%
 
-**6. Trust / Control Strip**
+Utilization adjustment:
+  Lower utilization → higher capacity opportunity
+  capacityMultiplier = 1 + (1 - utilization) * 0.4
 
-Centered text block with shield icon:
-- "You stay in control."
-- "Zura never pushes funding. It only appears when the numbers make sense."
-- Three trust points inline: "Real performance data · Clear expected outcomes · Full transparency" — subtle slate-400 text.
+Diminishing returns at scale:
+  scaleMultiplier = 1 - (revenue / 500000) * 0.3  (floor 0.5)
 
-**7. Section CTA**
+Breakdown split:
+  Demand: 40% of total
+  Conversion: 35% of total
+  Capacity: 25% of total
 
-Reuses the established dual-button pattern from HeroSection/FinalCTA:
-- "Ready to grow without guessing?"
-- Primary: "See How Zura Works" → `/demo`
-- Secondary: "Start Free Trial" → `/explore`
+Expansion potential (secondary):
+  expansionMultiplier = 0.4 of base opportunity
+```
 
-## File Changes
+All outputs clamped to reasonable ranges. Never exceeds 35% of input revenue.
+
+### CTA Block
+
+Below output:
+- Primary: "Get My Growth Plan" → `/demo`
+- Secondary: "See How Zura Works" → `/explore`
+
+### Conversion Bridge
+
+Below CTA: "When the opportunity is large enough, Zura helps you act on it — including access to funding when appropriate."
+
+## Files
 
 | File | Action |
 |---|---|
-| `src/components/marketing/InsightToExecution.tsx` | CREATE — Full section (~350 lines) |
-| `src/pages/PlatformLanding.tsx` | UPDATE — Import + place between `FounderQuote` and `OutcomeMetrics` |
+| `src/components/marketing/GrowthEstimator.tsx` | CREATE |
+| `src/pages/PlatformLanding.tsx` | UPDATE — import + place between `StruggleInput` and `StatBar` |
 
 ## Technical Notes
 
-- All colors use explicit marketing palette (`text-white`, `text-slate-400`, `text-violet-400`, `bg-violet-500/10`) — no semantic tokens
-- Uses `motion` from framer-motion for all animations
-- Uses `useScrollReveal` + `mkt-reveal` for scroll-triggered reveals
-- Uses `useInView` from framer-motion for the flow animation trigger
-- Uses `useIsMobile` for responsive layout switching
-- `AnimatedNumber` reused for the KPI in the mock card
-- No new dependencies required
+- Uses `useState` for inputs, `useMemo` for calculations
+- `AnimatedNumber` for smooth value transitions
+- `useScrollReveal` + `mkt-reveal` for scroll-triggered reveals
+- `useIsMobile` for responsive layout
+- `motion` from framer-motion for card animations
+- `Collapsible` from radix for "How this is calculated" toggle
+- All explicit marketing palette colors (no theme tokens)
+- No new dependencies
 
