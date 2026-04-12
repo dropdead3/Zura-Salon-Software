@@ -57,11 +57,11 @@ function StatCard({ title, value, icon: Icon, description, variant = 'default', 
     error: 'text-red-300',
   };
 
-  const cardClasses = "group relative rounded-2xl border border-slate-700/50 bg-slate-800/40 backdrop-blur-xl p-6 transition-all duration-300 hover:bg-slate-800/60 hover:border-slate-600/50";
+  const cardClasses = "group relative rounded-[16px] border border-slate-700/50 bg-slate-800/40 backdrop-blur-xl p-5 transition-all duration-300 hover:bg-slate-800/60 hover:border-slate-600/50";
 
   const content = (
     <>
-      <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-violet-500/5 to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity" />
+      <div className="absolute inset-0 rounded-[16px] bg-gradient-to-br from-violet-500/5 to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity" />
       <div className="relative">
         <div className="flex items-center justify-between mb-4">
           <span className="text-sm font-medium text-slate-400">{title}</span>

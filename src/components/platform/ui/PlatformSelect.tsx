@@ -2,6 +2,7 @@ import * as React from 'react';
 import * as SelectPrimitive from '@radix-ui/react-select';
 import { Check, ChevronDown, ChevronUp } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { platformBento } from '@/lib/platform-bento-tokens';
 
 // Re-export base primitives that don't need restyling
 export {
@@ -18,9 +19,9 @@ const PlatformSelectTrigger = React.forwardRef<
   <SelectPrimitive.Trigger
     ref={ref}
     className={cn(
-      'flex h-11 w-full items-center justify-between rounded-xl border border-[hsl(var(--platform-border)/0.5)] bg-[hsl(var(--platform-input))] px-4 py-2 text-sm text-[hsl(var(--platform-foreground))]',
+      'flex h-10 w-full items-center justify-between rounded-xl border border-[hsl(var(--platform-border)/0.5)] bg-[hsl(var(--platform-input))] px-4 py-2 text-sm text-[hsl(var(--platform-foreground))]',
       'placeholder:text-[hsl(var(--platform-foreground-subtle))]',
-      'transition-all duration-200',
+      'transition-all duration-150',
       'focus:outline-none focus:border-[hsl(var(--platform-primary)/0.5)]',
       'hover:border-[hsl(var(--platform-border))] hover:bg-[hsl(var(--platform-input-focus)/0.5)]',
       'disabled:cursor-not-allowed disabled:opacity-50',
@@ -45,7 +46,7 @@ const PlatformSelectContent = React.forwardRef<
     <SelectPrimitive.Content
       ref={ref}
       className={cn(
-        'relative z-[100] max-h-96 min-w-[8rem] overflow-hidden rounded-xl border border-[hsl(var(--platform-border))] bg-[hsl(var(--platform-bg-elevated))] text-[hsl(var(--platform-foreground))] shadow-xl',
+        `relative z-[100] max-h-96 min-w-[8rem] overflow-hidden ${platformBento.radius.small} border border-[hsl(var(--platform-border))] bg-[hsl(var(--platform-bg-elevated))] text-[hsl(var(--platform-foreground))] shadow-xl`,
         'data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95',
         'data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2',
         position === 'popper' &&

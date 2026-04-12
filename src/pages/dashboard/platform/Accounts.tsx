@@ -463,7 +463,7 @@ export default function PlatformAccounts() {
             </div>
           ) : (
             <div className="text-center py-12">
-              <div className="w-16 h-16 rounded-2xl bg-slate-800/50 flex items-center justify-center mx-auto mb-4">
+              <div className="w-16 h-16 rounded-[16px] bg-slate-800/50 flex items-center justify-center mx-auto mb-4">
                 <Building2 className="h-8 w-8 text-slate-600" />
               </div>
               <h3 className="text-lg font-medium text-white mb-1">No organizations found</h3>
