@@ -122,11 +122,11 @@ function EligibilityCheckList({ opp }: { opp: OpportunityDiagnostic }) {
             Hard Gate ({readiness.ready ? 'Clear' : 'Blocked'})
           </p>
         </div>
-        <div className="space-y-1">
+        <div className="space-y-3">
           {ZURA_HARD_GATES.map((gate) => {
             const isBlocked = readiness.blockerCodes.includes(gate.code as any);
             return (
-              <div key={gate.code} className="flex items-start gap-2 text-xs py-0.5">
+              <div key={gate.code} className="flex items-start gap-2.5">
                 <div className="mt-0.5 shrink-0">
                   {isBlocked ? (
                     <X className="h-3.5 w-3.5 text-red-400" />
@@ -134,10 +134,10 @@ function EligibilityCheckList({ opp }: { opp: OpportunityDiagnostic }) {
                     <Check className="h-3.5 w-3.5 text-emerald-400" />
                   )}
                 </div>
-                <span className="text-[hsl(var(--platform-foreground)/0.85)]">
-                  {gate.label}
-                  <span className="text-[hsl(var(--platform-foreground-muted))] ml-1">— {gate.description}</span>
-                </span>
+                <div className="space-y-0.5">
+                  <p className="text-xs text-[hsl(var(--platform-foreground))]">{gate.label}</p>
+                  <p className="text-xs text-[hsl(var(--platform-foreground-muted))] leading-relaxed">{gate.description}</p>
+                </div>
               </div>
             );
           })}
@@ -153,12 +153,12 @@ function EligibilityCheckList({ opp }: { opp: OpportunityDiagnostic }) {
               Advisory Context
             </p>
           </div>
-          <div className="space-y-1">
+          <div className="space-y-3">
             {ZURA_ADVISORIES.map((adv) => {
               const isActive = readiness.advisoryCodes.includes(adv.code as any);
               if (!isActive) return null;
               return (
-                <div key={adv.code} className="flex items-start gap-2 text-xs py-0.5">
+                <div key={adv.code} className="flex items-start gap-2.5">
                   <div className="mt-0.5 shrink-0">
                     {adv.severity === 'warning' ? (
                       <AlertTriangle className="h-3.5 w-3.5 text-amber-400" />
@@ -166,10 +166,10 @@ function EligibilityCheckList({ opp }: { opp: OpportunityDiagnostic }) {
                       <Info className="h-3.5 w-3.5 text-blue-400" />
                     )}
                   </div>
-                  <span className="text-[hsl(var(--platform-foreground)/0.85)]">
-                    {adv.label}
-                    <span className="text-[hsl(var(--platform-foreground-muted))] ml-1">— {adv.description}</span>
-                  </span>
+                  <div className="space-y-0.5">
+                    <p className="text-xs text-[hsl(var(--platform-foreground))]">{adv.label}</p>
+                    <p className="text-xs text-[hsl(var(--platform-foreground-muted))] leading-relaxed">{adv.description}</p>
+                  </div>
                 </div>
               );
             })}
@@ -185,9 +185,9 @@ function EligibilityCheckList({ opp }: { opp: OpportunityDiagnostic }) {
             Ranking Score: {ranking.score}/100
           </p>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-1">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-3">
           {ranking.factors.map((factor) => (
-            <div key={factor.code} className="flex items-start gap-2 text-xs py-0.5">
+            <div key={factor.code} className="flex items-start gap-2.5">
               <div className="mt-0.5 shrink-0">
                 {factor.passed ? (
                   <Check className="h-3.5 w-3.5 text-emerald-400/60" />
@@ -195,12 +195,12 @@ function EligibilityCheckList({ opp }: { opp: OpportunityDiagnostic }) {
                   <AlertTriangle className="h-3.5 w-3.5 text-amber-400/60" />
                 )}
               </div>
-              <span className="text-[hsl(var(--platform-foreground)/0.85)]">
-                {factor.label}
-                <span className="text-[hsl(var(--platform-foreground-muted))] ml-1">
-                  — {factor.code === 'risk' ? `Level ${factor.value}` : factor.value.toFixed(factor.code === 'roe' ? 2 : 0)}
-                </span>
-              </span>
+              <div className="space-y-0.5">
+                <p className="text-xs text-[hsl(var(--platform-foreground))]">{factor.label}</p>
+                <p className="text-xs text-[hsl(var(--platform-foreground-muted))]">
+                  {factor.code === 'risk' ? `Level ${factor.value}` : factor.value.toFixed(factor.code === 'roe' ? 2 : 0)}
+                </p>
+              </div>
             </div>
           ))}
         </div>
@@ -213,7 +213,7 @@ function EligibilityCheckList({ opp }: { opp: OpportunityDiagnostic }) {
 
 function EligibilityReferenceList({ policy }: { policy: CapitalPolicy }) {
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       {/* Section A — Stripe Capital Requirements */}
       <div className="rounded-lg border border-[hsl(var(--platform-border)/0.2)] bg-[hsl(var(--platform-bg-card)/0.08)] p-4 space-y-3">
         <div className="flex items-center gap-2 mb-1">
@@ -225,14 +225,14 @@ function EligibilityReferenceList({ policy }: { policy: CapitalPolicy }) {
         <p className="text-xs text-[hsl(var(--platform-foreground-muted))]">
           Stripe reviews connected accounts daily and determines eligibility automatically. Zura cannot influence these criteria — they are evaluated by Stripe's underwriting engine.
         </p>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-1">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-3">
           {STRIPE_CAPITAL_REQUIREMENTS.map((req) => (
-            <div key={req.label} className="flex items-start gap-2 text-xs py-0.5">
+            <div key={req.label} className="flex items-start gap-2.5">
               <BookOpen className="h-3.5 w-3.5 mt-0.5 shrink-0 text-violet-400/50" />
-              <span className="text-[hsl(var(--platform-foreground)/0.85)]">
-                {req.label}
-                <span className="text-[hsl(var(--platform-foreground-muted))] ml-1">— {req.description}</span>
-              </span>
+              <div className="space-y-0.5">
+                <p className="text-xs text-[hsl(var(--platform-foreground))]">{req.label}</p>
+                <p className="text-xs text-[hsl(var(--platform-foreground-muted))] leading-relaxed">{req.description}</p>
+              </div>
             </div>
           ))}
         </div>
@@ -249,30 +249,34 @@ function EligibilityReferenceList({ policy }: { policy: CapitalPolicy }) {
         <p className="text-xs text-[hsl(var(--platform-foreground-muted))]">
           Stripe is the lender — Zura provides operational context, not additional underwriting. Only critical operational alerts block surfacing. Repayment and project context is shown as advisory information.
         </p>
-        <div className="space-y-2">
+        <div className="space-y-3">
           {ZURA_HARD_GATES.map((gate) => (
-            <div key={gate.code} className="flex items-start gap-2 text-xs py-0.5">
+            <div key={gate.code} className="flex items-start gap-2.5">
               <Shield className="h-3.5 w-3.5 mt-0.5 shrink-0 text-red-400/60" />
-              <span className="text-[hsl(var(--platform-foreground)/0.85)]">
-                <span className="text-red-400/80">[Blocker]</span> {gate.label}
-                <span className="text-[hsl(var(--platform-foreground-muted))] ml-1">— {gate.description}</span>
-              </span>
+              <div className="space-y-0.5">
+                <p className="text-xs text-[hsl(var(--platform-foreground))]">
+                  <span className="text-red-400/80">[Blocker]</span> {gate.label}
+                </p>
+                <p className="text-xs text-[hsl(var(--platform-foreground-muted))] leading-relaxed">{gate.description}</p>
+              </div>
             </div>
           ))}
           {ZURA_ADVISORIES.map((adv) => (
-            <div key={adv.code} className="flex items-start gap-2 text-xs py-0.5">
+            <div key={adv.code} className="flex items-start gap-2.5">
               {adv.severity === 'warning' ? (
                 <AlertTriangle className="h-3.5 w-3.5 mt-0.5 shrink-0 text-amber-400/60" />
               ) : (
                 <BookOpen className="h-3.5 w-3.5 mt-0.5 shrink-0 text-blue-400/60" />
               )}
-              <span className="text-[hsl(var(--platform-foreground)/0.85)]">
-                <span className={adv.severity === 'warning' ? 'text-amber-400/80' : 'text-blue-400/80'}>
-                  [{adv.severity === 'warning' ? 'Warning' : 'Info'}]
-                </span>{' '}
-                {adv.label}
-                <span className="text-[hsl(var(--platform-foreground-muted))] ml-1">— {adv.description}</span>
-              </span>
+              <div className="space-y-0.5">
+                <p className="text-xs text-[hsl(var(--platform-foreground))]">
+                  <span className={adv.severity === 'warning' ? 'text-amber-400/80' : 'text-blue-400/80'}>
+                    [{adv.severity === 'warning' ? 'Warning' : 'Info'}]
+                  </span>{' '}
+                  {adv.label}
+                </p>
+                <p className="text-xs text-[hsl(var(--platform-foreground-muted))] leading-relaxed">{adv.description}</p>
+              </div>
             </div>
           ))}
         </div>
@@ -342,26 +346,26 @@ function DiagnosticPanel({ orgId }: { orgId: string }) {
         <h4 className="font-sans text-xs tracking-normal text-[hsl(var(--platform-foreground-muted))] mb-3 uppercase">
           Visibility Checklist
         </h4>
-        <div className="space-y-2">
+        <div className="space-y-0 divide-y divide-[hsl(var(--platform-border)/0.1)]">
           {checks.map((check) => (
             <div
               key={check.label}
-              className="flex items-start gap-3 text-sm"
+              className="flex items-start gap-3 py-2.5 first:pt-0"
             >
-              <div className="mt-0.5">
+              <div className="mt-0.5 shrink-0">
                 {check.passed ? (
                   <Check className="h-4 w-4 text-emerald-400" />
                 ) : (
                   <X className="h-4 w-4 text-red-400" />
                 )}
               </div>
-              <div>
-                <span className="font-sans text-[hsl(var(--platform-foreground))]">
+              <div className="space-y-0.5">
+                <p className="font-sans text-sm text-[hsl(var(--platform-foreground))]">
                   {check.label}
-                </span>
-                <span className="text-[hsl(var(--platform-foreground-muted))] ml-2">
-                  — {check.detail}
-                </span>
+                </p>
+                <p className="font-sans text-xs text-[hsl(var(--platform-foreground-muted))] leading-relaxed">
+                  {check.detail}
+                </p>
               </div>
             </div>
           ))}
