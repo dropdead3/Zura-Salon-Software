@@ -1,98 +1,52 @@
 
 
-# Capital Visibility Diagnostics — Control Tower Enhancement
+# Capital Access Control — Owner & Super Admin Gating
 
 ## Problem
 
-When an org owner contacts support asking "Why can't I see Zura Capital?", platform admins currently have no way to answer. The Control Tower only shows a toggle and "Active/Inactive" status — it doesn't reveal whether Capital is actually **surfacing** in the org's dashboard or **why not**.
+Capital routes are gated by `manage_settings` permission, which managers can also have. The user's access model is:
 
-The sidebar visibility logic (in `SidebarNavContent.tsx`) requires TWO conditions:
-1. `capital_enabled` flag is ON
-2. At least one opportunity exists with status `pending_review`, `approved`, or `ready`
+- **View Capital (opportunities, projects, settings):** Account Owner + Super Admin only
+- **Approve/Initiate funding:** Account Owner only
 
-Even when both are met, individual opportunities may fail internal eligibility checks (19 possible reason codes). Admins need to see all of this at a glance.
+Currently there is no distinction between viewing and approving, and no `is_primary_owner` check anywhere in the Capital flow.
 
-## What We're Building
+## Changes
 
-An expandable **Visibility Diagnostics** row for each organization in the Control Tower table. When an admin clicks an org row, it expands to show:
+### 1. Route-level gating — `src/App.tsx`
 
-### Diagnostic Checklist (per org)
-A vertical checklist showing each gate in the visibility chain:
+Replace `requiredPermission="manage_settings"` on all 5 Capital routes with `requireSuperAdmin`. This restricts access to `is_super_admin` and `is_primary_owner` users (ProtectedRoute already handles this pattern — it checks `profile?.is_super_admin`, and primary owners are always super admins).
 
-| Check | Status | Detail |
-|---|---|---|
-| Feature Flag | ✅ Enabled / ❌ Disabled | `capital_enabled` flag state |
-| Qualifying Opportunities | ✅ 3 found / ⚠️ 0 qualifying | Count of opps with status in `pending_review, approved, ready` |
-| Sidebar Visible | ✅ Yes / ❌ No | Both conditions above met |
+### 2. Funding approval gating — `src/components/dashboard/capital-engine/CapitalFundingConfirmModal.tsx`
 
-### Opportunity Breakdown (if flag is ON)
-A mini-table of all non-canceled/expired opportunities for that org:
+Add an `is_primary_owner` check using `useEmployeeProfile()`. If the user is not the Account Owner:
+- Disable the "Confirm & Fund" button
+- Show a message: "Only the Account Owner can approve funding"
 
-| Opportunity | Status | Eligible | Top Blocker |
-|---|---|---|---|
-| Retail Expansion — Downtown | pending_review | ✅ | — |
-| Chair Rental Upsell | detected | ❌ | ROE below threshold (1.2 vs 1.8 required) |
-| Marketing Campaign Push | detected | ❌ | Confidence too low (45 vs 70 required) |
+### 3. Funding detail CTA — `src/components/dashboard/capital-engine/FundingOpportunityDetail.tsx`
 
-Each ineligible opportunity shows its **top reason code** mapped to the human-readable explanation from `EXPLANATION_TEMPLATES`.
+Same pattern — gate the "Activate Funding" / "Initiate" button behind `is_primary_owner`. Super Admins can view all details but cannot trigger the funding flow.
 
-### Summary Column (table-level)
-Add a new "Visibility" column to the main org table showing a quick badge:
-- **Surfacing** (green) — flag ON + qualifying opps exist
-- **Enabled, Not Surfacing** (amber) — flag ON but no qualifying opps
-- **Disabled** (gray) — flag OFF
+### 4. Edge function server-side enforcement — `supabase/functions/create-financing-checkout/index.ts`
 
-This gives admins an instant answer without expanding.
+Currently checks `is_org_admin`. Tighten to also verify `is_primary_owner` from the employee_profiles table before allowing checkout creation. This is the server-side safety net.
 
-## Technical Approach
+### 5. Sidebar visibility — `src/components/dashboard/SidebarNavContent.tsx`
 
-### File: `src/pages/dashboard/platform/CapitalControlTower.tsx`
+The Capital nav link currently shows based on feature flag + qualifying opportunities. Add a profile check so only `is_super_admin` or `is_primary_owner` users see it. (Managers and other roles should never see the link.)
 
-**Data fetching** — Extend `useOrganizationsWithCapital` to also fetch:
-- Count of qualifying opportunities per org (status in `pending_review, approved, ready`)
-- Total opportunity count per org (non-canceled/expired)
+### 6. Daily briefing capital section — `src/hooks/useDailyBriefingEngine.ts`
 
-Add a new hook `useOrgCapitalDiagnostics(orgId)` that fetches on-demand (when a row is expanded):
-- All opportunities for that org from `capital_funding_opportunities`
-- Run `calculateInternalEligibility` client-side for each to get reason codes
-- Return the checklist + opportunity breakdown
-
-**UI changes:**
-1. Add "Visibility" column to the main table with badge (Surfacing / Enabled, Not Surfacing / Disabled)
-2. Make rows expandable — clicking reveals the diagnostic panel
-3. Diagnostic panel contains the checklist + opportunity breakdown mini-table
-4. Use existing `PlatformBadge` variants for status indicators
-
-**Imports needed:**
-- `calculateInternalEligibility`, `calculateRoeRatio`, `calculateOpportunityFreshnessDays`, `EXPLANATION_TEMPLATES` from capital-formulas
-- `DEFAULT_CAPITAL_POLICY` from capital-formulas-config
-- `ChevronDown`, `ChevronRight`, `Check`, `X`, `AlertTriangle` from lucide-react
-
-### New file: `src/hooks/useOrgCapitalDiagnostics.ts`
-
-On-demand hook that takes an `orgId` and returns:
-- All opportunities with eligibility results
-- Qualifying count
-- Visibility verdict
-
-Uses the same `calculateInternalEligibility` logic that the production sidebar uses, ensuring diagnostic output matches reality.
-
-## Gaps & Enhancements Identified
-
-1. **Policy overrides not visible** — If an org has custom policy settings (e.g., different ROE threshold), the diagnostics should show the effective policy values vs defaults so admins understand why thresholds differ.
-
-2. **Dismissal/cooldown state not surfaced** — The sidebar check doesn't account for dismissals, but eligibility does. Diagnostics should show if cooldowns are active.
-
-3. **No audit trail for flag changes** — Currently toggling capital_enabled doesn't log who changed it or when. The `organization_feature_flags` table has `updated_by` and `updated_at` but we should surface the last toggle timestamp per org.
-
-4. **Missing "last opportunity detected" timestamp** — Admins should see when the system last generated an opportunity for an org, to distinguish "no data yet" from "evaluated and nothing qualified."
-
-5. **No org-level health summary stat** — The top summary cards could add a 4th: "Surfacing" count (orgs where Capital is actually visible in sidebar).
+Currently shows capital data when `roleContext !== 'stylist'` (line 71). Tighten to only show for super admins and primary owners.
 
 ## File Summary
 
 | File | Change |
 |---|---|
-| `src/hooks/useOrgCapitalDiagnostics.ts` | New — on-demand diagnostic hook per org |
-| `src/pages/dashboard/platform/CapitalControlTower.tsx` | Add Visibility column, expandable diagnostic rows, 4th summary card |
+| `src/App.tsx` | Replace `requiredPermission="manage_settings"` with `requireSuperAdmin` on Capital routes |
+| `src/components/dashboard/capital-engine/CapitalFundingConfirmModal.tsx` | Gate "Confirm & Fund" button to `is_primary_owner` only |
+| `src/components/dashboard/capital-engine/FundingOpportunityDetail.tsx` | Gate funding initiation CTA to `is_primary_owner` only |
+| `supabase/functions/create-financing-checkout/index.ts` | Add `is_primary_owner` server-side check |
+| `src/components/dashboard/SidebarNavContent.tsx` | Restrict Capital nav link to super admin / primary owner |
+| `src/hooks/useDailyBriefingEngine.ts` | Restrict capital briefing section to super admin / primary owner |
 
