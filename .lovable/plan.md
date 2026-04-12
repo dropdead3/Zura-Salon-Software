@@ -1,60 +1,54 @@
 
 
-# Slim Down Zura Guardrails — Stop Blocking Stripe-Approved Capital
+# Add "Zura Pay Not Connected" Visibility Check to Capital Control Tower
 
-## Rationale
+## Problem
 
-Stripe is the lender and underwriter. When Stripe approves a financing offer, they have already evaluated risk, repayment capacity, and account health. Zura adding 7 hard gates on top means Zura is overriding Stripe's lending decision — which is not Zura's role.
+The Control Tower currently shows "Enabled, Not Surfacing" with only two visibility conditions (Feature Flag + Qualifying Opportunities). It doesn't explain the most fundamental prerequisite: **the organization must have at least one location connected to Zura Pay (Stripe Connect)**. Without a connected Stripe account, Stripe Capital can never generate offers — so the detection pipeline will always return nothing.
 
-Zura's role is to **surface** Stripe-approved offers with operational context, not to second-guess the underwriter.
+## Solution
 
-## Proposed Change
+Add a third visibility check — "Zura Pay Connected" — to the diagnostic checklist. This check queries the `locations` table for the org and verifies that at least one location has `stripe_account_id IS NOT NULL` and `stripe_status = 'active'`.
 
-Reduce from 7 hard-gating guardrails to **1 hard gate + 2 advisory warnings**.
+## Changes
 
-### Keep as Hard Gate (1)
-- **No Critical Ops Alerts** — This is genuinely Zura-specific. If the org has unresolved critical operational issues (margin breach, utilization collapse), surfacing a capital offer without context would be irresponsible. But this is about *timing*, not *eligibility*.
+### 1. `src/hooks/useOrgCapitalDiagnostics.ts`
+- Add a query for locations with `stripe_account_id` and `stripe_status` for the org
+- Compute `hasActiveStripeConnect`: at least one location with `stripe_status = 'active'`
+- Compute `connectedLocationCount` and `totalLocationCount` for detail text
+- Add these fields to the `OrgCapitalDiagnostics` return type
+- Update `sidebarVisible` to also require `hasActiveStripeConnect` (no Stripe Connect = no offers possible = sidebar should not show)
 
-### Demote to Advisory Warnings (2)
-- **Active Repayment Distress** — Show a warning banner: "This organization has active repayment concerns. Review before proceeding." Don't block.
-- **Max Concurrent Projects** — Show an info note: "This organization has N active funded projects." Let the operator decide.
+### 2. `src/pages/dashboard/platform/CapitalControlTower.tsx`
+- Add "Zura Pay Connected" as a new check in the visibility checklist, positioned between "Feature Flag" and "Qualifying Opportunities"
+- When not connected: detail text says "No locations connected to Zura Pay — Stripe Capital requires an active payment processing account"
+- When connected: detail text says "N of M locations connected to Zura Pay"
+- Update "Sidebar Visible" detail to reference all three conditions
 
-### Remove Entirely (4)
-- **No Underperforming Projects** — Stripe already approved the offer knowing the account's full history. Blocking capital that could fix underperformance is counterproductive.
-- **Decline Cooldown (14d)** — Stripe already enforces a 30-day cooldown after rejection. Zura's 14-day cooldown is redundant and shorter than Stripe's own.
-- **Underperformance Cooldown (30d)** — Punitive and not Zura's call as a non-lender.
-- **No Underperforming Projects count** — Redundant with the removal above.
+### 3. `src/hooks/useOrgCapitalDiagnostics.ts` (type update)
+- Add to `OrgCapitalDiagnostics` interface:
+  - `hasActiveStripeConnect: boolean`
+  - `connectedLocationCount: number`
+  - `totalLocationCount: number`
 
-## Architecture After Change
+## Visibility Checklist After Change
 
 ```text
-Layer 1: Stripe Capital Underwriting (8 criteria, unchanged)
-Layer 2: Zura Operational Context
-  Hard gate:  Critical ops alerts (timing protection)
-  Advisory:   Repayment distress warning (informational)
-  Advisory:   Concurrent project count (informational)
+✓ Feature Flag — capital_enabled is ON
+✗ Zura Pay Connected — No locations connected to Zura Pay
+✗ Qualifying Opportunities — No opportunities detected
+✗ Sidebar Visible — All conditions above must pass
 ```
 
-## File Changes
+When connected:
+```text
+✓ Feature Flag — capital_enabled is ON
+✓ Zura Pay Connected — 2 of 3 locations connected to Zura Pay
+✗ Qualifying Opportunities — No opportunities detected
+✗ Sidebar Visible — All conditions above must pass
+```
 
-| File | Change |
-|---|---|
-| `src/config/capital-engine/capital-formulas-config.ts` | Slim `ZURA_OPERATIONAL_GUARDRAILS` from 7 items to 1 gate + 2 advisories; update `DEFAULT_CAPITAL_POLICY` |
-| `src/lib/capital-engine/capital-formulas.ts` | Update `calculateOperationalReadiness` — only critical ops alerts blocks; repayment distress and concurrent projects return warnings instead of failures |
-| `src/pages/dashboard/platform/CapitalControlTower.tsx` | Update Layer 2 UI to show 1 gate + 2 advisories with distinct visual treatment (blocker vs. warning vs. info) |
-| `src/hooks/useOrgCapitalDiagnostics.ts` | Update diagnostics to reflect slimmed guardrails |
-| `src/hooks/useZuraCapital.ts` | Update operational readiness consumption to handle advisories vs. blockers |
-| `src/pages/dashboard/platform/CapitalKnowledgeBase.tsx` | Update documentation to explain the lighter guardrail philosophy |
+## Why This Matters
 
-## UI Treatment
-
-- **Hard gate** (critical ops): Red shield icon, blocks surfacing
-- **Advisory warning** (repayment distress): Amber warning icon, shown but does not block
-- **Advisory info** (concurrent projects): Blue info icon, contextual only
-
-Policy line updates from:
-> "Max 2 concurrent projects · 14d decline cooldown · 30d underperformance cooldown"
-
-To:
-> "Capital offers are surfaced when no critical operational alerts are active. Repayment and project context is shown as advisory information."
+This is the single most useful diagnostic for platform admins. Right now when they expand Drop Dead Salons, they see "No opportunities detected" with no explanation of *why*. The Stripe requirements list is informational but doesn't tell them what's actually missing. "Not connected to Zura Pay" is the actionable answer.
 
