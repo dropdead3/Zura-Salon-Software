@@ -28,7 +28,7 @@ interface OrgWithCapital {
   id: string;
   name: string;
   slug: string;
-  account_number: string | null;
+  account_number: number | null;
   capital_enabled: boolean;
 }
 
