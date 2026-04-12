@@ -62,7 +62,7 @@ export interface ZuraCapitalOpportunity {
 type MutableCapitalPolicy = {
   roeThreshold: number;
   confidenceThreshold: number;
-  maxRiskLevel: string;
+  maxRiskLevel: 'low' | 'medium' | 'high' | 'critical';
   minOperationalStability: number;
   minExecutionReadiness: number;
   maxConcurrentProjects: number;
