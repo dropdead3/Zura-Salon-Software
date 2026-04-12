@@ -34,6 +34,7 @@ import { usePayrollEntitlement } from '@/hooks/payroll/usePayrollEntitlement';
 import { useColorBarEntitlement } from '@/hooks/color-bar/useColorBarEntitlement';
 import { AccountOwnerOrgSwitcher } from './AccountOwnerOrgSwitcher';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
+import { useEmployeeProfile } from '@/hooks/useEmployeeProfile';
 
 type PlatformRole = 'platform_owner' | 'platform_admin' | 'platform_support' | 'platform_developer';
 
@@ -124,6 +125,7 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
   const { isEntitled: isPayrollEntitled } = usePayrollEntitlement();
   const { isEntitled: isColorBarEntitled } = useColorBarEntitlement();
   const { user } = useAuth();
+  const { data: profile } = useEmployeeProfile();
   const { effectiveOrganization } = useOrganizationContext();
   const organizationId = effectiveOrganization?.id;
 
@@ -173,7 +175,7 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
     myTools: [...growthNavItems, ...statsNavItems].filter((item, index, arr) => arr.findIndex(i => i.href === item.href) === index),
     ops: [
       ...managerNavItems.filter(item => item.href.includes('team-hub')),
-      ...(hasCapitalOpportunities ? [{ href: '/dashboard/admin/capital', label: 'Zura Capital', icon: Landmark, roles: ['super_admin', 'admin'] }] : []),
+      ...(hasCapitalOpportunities && profile?.is_super_admin ? [{ href: '/dashboard/admin/capital', label: 'Zura Capital', icon: Landmark, roles: ['super_admin', 'admin'] }] : []),
     ],
     data: managerNavItems.filter(item => item.href.includes('analytics') || item.href.includes('reports')),
     apps: appsNavItemsProp,

@@ -17,7 +17,8 @@ import {
 } from '@/lib/capital-engine/capital-formulas';
 import { getROELabel } from '@/config/capital-engine/capital-config';
 import { useInitiateFinancing } from '@/hooks/useFinancedProjects';
-import { Banknote, TrendingUp, Clock, DollarSign, ShieldCheck } from 'lucide-react';
+import { useIsPrimaryOwner } from '@/hooks/useIsPrimaryOwner';
+import { Banknote, TrendingUp, Clock, DollarSign, ShieldCheck, Lock } from 'lucide-react';
 import type { ZuraCapitalOpportunity } from '@/hooks/useZuraCapital';
 
 function c(cents: number) { return cents / 100; }
@@ -31,6 +32,7 @@ interface Props {
 export function CapitalFundingConfirmModal({ opportunity, open, onOpenChange }: Props) {
   const [isRedirecting, setIsRedirecting] = useState(false);
   const initiate = useInitiateFinancing();
+  const { data: isPrimaryOwner } = useIsPrimaryOwner();
 
   const monthlyLiftCents = calculateMonthlyLiftCents(
     opportunity.predictedLiftExpectedCents,
@@ -153,9 +155,18 @@ export function CapitalFundingConfirmModal({ opportunity, open, onOpenChange }: 
             )}
           </div>
 
+          {!isPrimaryOwner && (
+            <div className="p-3 rounded-lg bg-muted/30 border border-border/40 flex items-center gap-2">
+              <Lock className="w-4 h-4 text-muted-foreground shrink-0" />
+              <p className="text-xs text-muted-foreground font-sans">
+                Only the Account Owner can approve funding. Contact your Account Owner to proceed.
+              </p>
+            </div>
+          )}
+
           <Button
             onClick={handleFund}
-            disabled={isRedirecting || initiate.isPending}
+            disabled={isRedirecting || initiate.isPending || !isPrimaryOwner}
             className={`${tokens.button.page} w-full font-sans`}
           >
             {isRedirecting ? 'Redirecting…' : 'Proceed to Payment'}

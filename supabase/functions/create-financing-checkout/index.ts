@@ -55,6 +55,20 @@ serve(async (req) => {
     });
     if (!isAdmin) throw new Error("Only organization admins can initiate financing");
 
+    // Verify primary owner — only the Account Owner can approve funding
+    const { data: ownerCheck } = await serviceClient
+      .from("employee_profiles")
+      .select("is_primary_owner")
+      .eq("user_id", user.id)
+      .eq("organization_id", organizationId)
+      .single();
+    if (!ownerCheck?.is_primary_owner) {
+      return new Response(JSON.stringify({ error: "Only the Account Owner can approve funding" }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 403,
+      });
+    }
+
     // Duplicate guard: check capital_funding_projects
     const { data: existingProject } = await serviceClient
       .from("capital_funding_projects")

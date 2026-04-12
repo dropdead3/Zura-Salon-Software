@@ -26,6 +26,7 @@ import {
 import { useLogCapitalEvent } from '@/hooks/useCapitalEventLog';
 import { useDismissOpportunity } from '@/hooks/useCapitalSurfaceState';
 import { getProvider } from '@/lib/capital-engine/capital-provider';
+import { useIsPrimaryOwner } from '@/hooks/useIsPrimaryOwner';
 import {
   Landmark,
   TrendingUp,
@@ -36,6 +37,7 @@ import {
   ArrowUpRight,
   Zap,
   X,
+  Lock,
 } from 'lucide-react';
 import { useState } from 'react';
 import type { ZuraCapitalOpportunity } from '@/hooks/useZuraCapital';
@@ -54,6 +56,7 @@ export function FundingOpportunityDetail({ opportunity, open, onOpenChange, surf
   const [isRedirecting, setIsRedirecting] = useState(false);
   const logEvent = useLogCapitalEvent();
   const dismiss = useDismissOpportunity();
+  const { data: isPrimaryOwner } = useIsPrimaryOwner();
 
   const investmentDollars = c(opportunity.investmentCents);
   const liftExpected = c(opportunity.predictedLiftExpectedCents);
@@ -294,7 +297,15 @@ export function FundingOpportunityDetail({ opportunity, open, onOpenChange, surf
           )}
 
           {/* CTA */}
-          {opportunity.zuraEligible && (
+          {opportunity.zuraEligible && !isPrimaryOwner && (
+            <div className="p-3 rounded-lg bg-muted/30 border border-border/40 flex items-center gap-2">
+              <Lock className="w-4 h-4 text-muted-foreground shrink-0" />
+              <p className="text-xs text-muted-foreground font-sans">
+                Only the Account Owner can approve funding. Contact your Account Owner to proceed.
+              </p>
+            </div>
+          )}
+          {opportunity.zuraEligible && isPrimaryOwner && (
             <Button
               onClick={handleFund}
               disabled={isRedirecting}

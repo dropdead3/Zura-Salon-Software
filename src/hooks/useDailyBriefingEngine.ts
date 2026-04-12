@@ -67,8 +67,8 @@ export function useDailyBriefingEngine(
   const { effectiveOrganization } = useOrganizationContext();
   const orgId = effectiveOrganization?.id;
 
-  // Capital data (owner/manager only)
-  const showCapital = roleContext !== 'stylist';
+  // Capital data (super admin / primary owner only)
+  const showCapital = roleContext === 'owner';
   const { topOpportunity, opportunities, activeProjectCount, isLoading: capitalLoading } = useZuraCapital();
   const { data: capitalProjects = [], isLoading: projectsLoading } = useCapitalProjects(
     ['active', 'on_track', 'above_forecast', 'below_forecast', 'at_risk'],
