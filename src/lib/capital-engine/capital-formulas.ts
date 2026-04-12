@@ -598,7 +598,6 @@ export function calculatePredictedRevenueToDateCents(
 
 /** Cooldown until date for a given surface area. */
 export function calculateCooldownUntil(surfaceArea: string, now: Date = new Date()): Date {
-  const { CANONICAL_SURFACE_COOLDOWNS } = require('@/config/capital-engine/capital-formulas-config');
   const days = CANONICAL_SURFACE_COOLDOWNS[surfaceArea] ?? 7;
   const result = new Date(now);
   result.setDate(result.getDate() + days);
