@@ -8,17 +8,8 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-// Canonical thresholds aligned with DEFAULT_CAPITAL_POLICY
-const THRESHOLDS = {
-  minROE: 1.8,
-  minConfidence: 70,
-  minOperationalStability: 60,
-  minExecutionReadiness: 70,
-  maxRisk: ["low", "moderate", "medium"],
-  maxStaleDays: 45,
-  minCapitalCents: 500_000, // $5,000
-  maxConcurrentProjects: 2,
-};
+// Valid statuses from which funding can be initiated
+const VALID_INITIATION_STATUSES = ["surfaced", "viewed"];
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -124,6 +115,54 @@ serve(async (req) => {
       opp = legacyOpp;
     }
 
+    // N2: Validate state transition — only surfaced/viewed can be initiated
+    if (isProductionOpp && !VALID_INITIATION_STATUSES.includes(opp.status)) {
+      return new Response(JSON.stringify({
+        error: "Invalid state transition",
+        detail: `Opportunity status "${opp.status}" cannot transition to "initiated". Must be one of: ${VALID_INITIATION_STATUSES.join(", ")}`,
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 400,
+      });
+    }
+
+    // G1: Load org-specific policy, fallback to platform defaults
+    let policy = {
+      minROE: 1.8,
+      minConfidence: 70,
+      minOperationalStability: 60,
+      minExecutionReadiness: 70,
+      maxRisk: ["low", "moderate", "medium"],
+      maxStaleDays: 45,
+      minCapitalCents: 500_000,
+      maxConcurrentProjects: 2,
+    };
+
+    const { data: orgPolicy } = await serviceClient
+      .from("capital_policy_settings")
+      .select("*")
+      .eq("organization_id", organizationId)
+      .maybeSingle();
+
+    const policySource = orgPolicy ?? (await serviceClient
+      .from("capital_policy_settings")
+      .select("*")
+      .is("organization_id", null)
+      .maybeSingle()).data;
+
+    if (policySource) {
+      policy = {
+        minROE: policySource.roe_threshold ?? policy.minROE,
+        minConfidence: policySource.confidence_threshold ?? policy.minConfidence,
+        minOperationalStability: policySource.min_operational_stability ?? policy.minOperationalStability,
+        minExecutionReadiness: policySource.min_execution_readiness ?? policy.minExecutionReadiness,
+        maxRisk: policySource.max_risk_levels ?? policy.maxRisk,
+        maxStaleDays: policySource.stale_days ?? policy.maxStaleDays,
+        minCapitalCents: (policySource.min_capital_required ?? 5000) * 100,
+        maxConcurrentProjects: policySource.max_concurrent_projects ?? policy.maxConcurrentProjects,
+      };
+    }
+
     // Server-side eligibility
     const failures: string[] = [];
 
@@ -139,15 +178,15 @@ serve(async (req) => {
       const detectedAt = opp.detected_at || opp.created_at;
       if (detectedAt) {
         const freshnessDays = Math.floor((Date.now() - new Date(detectedAt).getTime()) / 86400000);
-        if (freshnessDays > THRESHOLDS.maxStaleDays) failures.push("Opportunity is stale");
+        if (freshnessDays > policy.maxStaleDays) failures.push("Opportunity is stale");
       }
 
-      if (roe < THRESHOLDS.minROE) failures.push("ROE below threshold");
-      if (confidence < THRESHOLDS.minConfidence) failures.push("Confidence below threshold");
-      if (!THRESHOLDS.maxRisk.includes(riskLevel)) failures.push("Risk level too high");
-      if (capitalCents < THRESHOLDS.minCapitalCents) failures.push("Capital below minimum");
-      if (operationalStability < THRESHOLDS.minOperationalStability) failures.push("Operational stability below threshold");
-      if (executionReadiness < THRESHOLDS.minExecutionReadiness) failures.push("Execution readiness below threshold");
+      if (roe < policy.minROE) failures.push("ROE below threshold");
+      if (confidence < policy.minConfidence) failures.push("Confidence below threshold");
+      if (!policy.maxRisk.includes(riskLevel)) failures.push("Risk level too high");
+      if (capitalCents < policy.minCapitalCents) failures.push("Capital below minimum");
+      if (operationalStability < policy.minOperationalStability) failures.push("Operational stability below threshold");
+      if (executionReadiness < policy.minExecutionReadiness) failures.push("Execution readiness below threshold");
 
       // Repayment distress check
       const { data: distressedProjects } = await serviceClient
@@ -176,9 +215,9 @@ serve(async (req) => {
       const riskLevel = (opp.risk_factors as any)?.level ?? "moderate";
       const capital = Number(opp.capital_required);
 
-      if (roe < THRESHOLDS.minROE) failures.push("ROE below threshold");
-      if (!THRESHOLDS.maxRisk.includes(riskLevel)) failures.push("Risk level too high");
-      if (capital < THRESHOLDS.minCapitalCents / 100) failures.push("Capital below minimum");
+      if (roe < policy.minROE) failures.push("ROE below threshold");
+      if (!policy.maxRisk.includes(riskLevel)) failures.push("Risk level too high");
+      if (capital < policy.minCapitalCents / 100) failures.push("Capital below minimum");
     }
 
     // Concurrent project check across both tables
@@ -195,7 +234,7 @@ serve(async (req) => {
       .in("status", ["active", "pending_payment"]);
 
     const totalActive = (activeCapital?.length ?? 0) + (activeLegacy?.length ?? 0);
-    if (totalActive >= THRESHOLDS.maxConcurrentProjects) {
+    if (totalActive >= policy.maxConcurrentProjects) {
       failures.push("Maximum concurrent funded projects reached");
     }
 
@@ -237,11 +276,11 @@ serve(async (req) => {
         type: "zura_capital",
         is_production: isProductionOpp ? "true" : "false",
       },
-      success_url: `${req.headers.get("origin")}/dashboard/capital?funded=true`,
-      cancel_url: `${req.headers.get("origin")}/dashboard/capital`,
+      success_url: `${req.headers.get("origin")}/dashboard/admin/capital?funded=true`,
+      cancel_url: `${req.headers.get("origin")}/dashboard/admin/capital`,
     });
 
-    // Create capital_funding_projects record if production opportunity
+    // B5: Create project with pending_payment status — webhook promotes to active
     if (isProductionOpp) {
       const coverageRatio = opp.provider_offer_amount_cents
         ? Number(opp.provider_offer_amount_cents) / capitalCents
@@ -259,7 +298,7 @@ serve(async (req) => {
         repayment_status: "not_started",
         estimated_total_repayment_cents: capitalCents,
         expected_monthly_payment_cents: Math.round(capitalCents / Math.max(1, Number(opp.break_even_months_expected) || 12)),
-        status: "active",
+        status: "pending_payment",
         activation_status: "pending",
       });
 
