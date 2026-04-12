@@ -104,7 +104,7 @@ export function useEligibleStylists(
             // Get phorest service ID
             const { data: phorestSvc } = await supabase
               .from('phorest_services')
-              .select('phorest_id')
+              .select('phorest_service_id')
               .eq('name', serviceName)
               .maybeSingle();
 
@@ -113,7 +113,7 @@ export function useEligibleStylists(
                 .from('phorest_staff_services')
                 .select('phorest_staff_id')
                 .in('phorest_staff_id', phorestStaffIds)
-                .eq('phorest_service_id', phorestSvc.phorest_id)
+                .eq('phorest_service_id', phorestSvc.phorest_service_id)
                 .eq('is_qualified', true);
 
               if (phorestQuals?.length) {
@@ -236,7 +236,7 @@ export function useAvailableSlots(
         .select('user_id, start_time, end_time')
         .in('user_id', stylistIds)
         .eq('shift_date', selectedDate)
-        .eq('status', 'confirmed');
+        .eq('status', 'scheduled');
 
       if (locationId) {
         shiftQuery = shiftQuery.eq('location_id', locationId);
