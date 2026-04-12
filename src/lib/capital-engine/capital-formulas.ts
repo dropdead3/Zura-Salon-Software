@@ -366,10 +366,6 @@ export function calculateInternalEligibility(
     codes.push(REASON_CODES.location_exposure_exceeded);
   }
 
-  // 17. Stylist exposure
-  if (inputs.stylistId && inputs.stylistExposure + inputs.requiredInvestmentCents / 100 > policy.maxExposurePerStylist) {
-    codes.push(REASON_CODES.stylist_exposure_exceeded);
-  }
 
   // 18. Decline cooldown
   if (inputs.lastDeclinedAt) {
@@ -398,57 +394,6 @@ export function calculateInternalEligibility(
   };
 }
 
-/* ── Stylist Eligibility ── */
-
-export interface StylistEligibilityInputs {
-  stylistSpi: number;
-  stylistOrs: number;
-  demandSupportScore: number;
-  confidenceScore: number;
-  riskLevel: string;
-  hasActiveUnderperformingProject: boolean;
-}
-
-export interface StylistEligibilityResult {
-  eligible: boolean;
-  reasonCodes: ReasonCode[];
-  reasonSummaries: string[];
-}
-
-export function calculateStylistEligibility(
-  inputs: StylistEligibilityInputs,
-  policy: CapitalPolicy = DEFAULT_CAPITAL_POLICY,
-): StylistEligibilityResult {
-  const codes: ReasonCode[] = [];
-
-  if (!policy.allowStylistMicrofunding) {
-    codes.push(REASON_CODES.stylist_microfunding_disabled);
-  }
-  if (inputs.stylistSpi < policy.stylistSpiThreshold) {
-    codes.push(REASON_CODES.stylist_spi_too_low);
-  }
-  if (inputs.stylistOrs < policy.stylistOrsThreshold) {
-    codes.push(REASON_CODES.stylist_ors_too_low);
-  }
-  if (inputs.demandSupportScore < 70) {
-    codes.push(REASON_CODES.stylist_demand_too_low);
-  }
-  if (inputs.confidenceScore < 75) {
-    codes.push(REASON_CODES.low_confidence);
-  }
-  if (riskLevelRank(inputs.riskLevel) > riskLevelRank('medium')) {
-    codes.push(REASON_CODES.risk_too_high);
-  }
-  if (inputs.hasActiveUnderperformingProject) {
-    codes.push(REASON_CODES.underperforming_project_exists);
-  }
-
-  return {
-    eligible: codes.length === 0,
-    reasonCodes: codes,
-    reasonSummaries: codes.map(c => EXPLANATION_TEMPLATES[c] ?? c),
-  };
-}
 
 /* ════════════════════════════════════════════════
    SURFACE PRIORITY

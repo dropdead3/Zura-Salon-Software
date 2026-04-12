@@ -69,13 +69,9 @@ type MutableCapitalPolicy = {
   cooldownAfterDeclineDays: number;
   cooldownAfterUnderperformanceDays: number;
   staleDays: number;
-  stylistSpiThreshold: number;
-  stylistOrsThreshold: number;
   maxExposurePerLocation: number;
-  maxExposurePerStylist: number;
   minCapitalRequired: number;
   allowManagerInitiation: boolean;
-  allowStylistMicrofunding: boolean;
 };
 
 /** Map org policy settings row to a mutable policy object merged with defaults */
@@ -93,10 +89,8 @@ function buildEffectivePolicy(settings: Record<string, any> | null | undefined):
   if (settings.cooldown_after_underperformance_days != null) base.cooldownAfterUnderperformanceDays = Number(settings.cooldown_after_underperformance_days);
   if (settings.stale_days != null) base.staleDays = Number(settings.stale_days);
   if (settings.max_exposure_per_location != null) base.maxExposurePerLocation = Number(settings.max_exposure_per_location);
-  if (settings.max_exposure_per_stylist != null) base.maxExposurePerStylist = Number(settings.max_exposure_per_stylist);
   if (settings.min_capital_required != null) base.minCapitalRequired = Number(settings.min_capital_required);
   if (settings.allow_manager_initiation != null) base.allowManagerInitiation = Boolean(settings.allow_manager_initiation);
-  if (settings.allow_stylist_microfunding != null) base.allowStylistMicrofunding = Boolean(settings.allow_stylist_microfunding);
   return base;
 }
 

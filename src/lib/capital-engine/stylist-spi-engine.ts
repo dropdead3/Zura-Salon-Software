@@ -188,16 +188,3 @@ export function determineCareerStage(
   }
   return 'stylist';
 }
-
-/**
- * Check if a stylist qualifies for a specific micro-financing use case.
- */
-export function isMicroFinancingEligible(
-  spi: number,
-  ors: number | null,
-  useCase: { spiMin: number; orsMin: number | null },
-): boolean {
-  if (spi < useCase.spiMin) return false;
-  if (useCase.orsMin !== null && (ors === null || ors < useCase.orsMin)) return false;
-  return true;
-}

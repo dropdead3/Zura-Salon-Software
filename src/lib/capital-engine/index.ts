@@ -45,7 +45,7 @@ export {
   computeStylistSPI,
   computeORS,
   determineCareerStage,
-  isMicroFinancingEligible,
+  
   type StylistSPIInput,
   type StylistSPIResult,
   type ORSInput,
@@ -98,7 +98,7 @@ export {
   calculateNetImpactScore,
   calculateCoverageRatio,
   calculateInternalEligibility,
-  calculateStylistEligibility,
+  
   calculateSurfacePriority as calculateCanonicalSurfacePriority,
   calculateVariancePercent as calculateCanonicalVariancePercent,
   calculateRoiToDate,
@@ -114,8 +114,6 @@ export {
   type CoverageResult,
   type EligibilityInputs,
   type EligibilityResult as CanonicalEligibilityResult,
-  type StylistEligibilityInputs,
-  type StylistEligibilityResult,
   type SurfacePriorityInputs,
   type SurfacePriorityPenalties,
 } from './capital-formulas';

@@ -129,13 +129,9 @@ export const DEFAULT_CAPITAL_POLICY = {
   cooldownAfterDeclineDays: 14,
   cooldownAfterUnderperformanceDays: 30,
   staleDays: 45,
-  stylistSpiThreshold: 80,
-  stylistOrsThreshold: 85,
   maxExposurePerLocation: 200_000,
-  maxExposurePerStylist: 50_000,
   minCapitalRequired: 5_000,
   allowManagerInitiation: false,
-  allowStylistMicrofunding: true,
 } as const;
 
 export type CapitalPolicy = {
@@ -148,13 +144,9 @@ export type CapitalPolicy = {
   cooldownAfterDeclineDays: number;
   cooldownAfterUnderperformanceDays: number;
   staleDays: number;
-  stylistSpiThreshold: number;
-  stylistOrsThreshold: number;
   maxExposurePerLocation: number;
-  maxExposurePerStylist: number;
   minCapitalRequired: number;
   allowManagerInitiation: boolean;
-  allowStylistMicrofunding: boolean;
 };
 
 /* ── Reason Codes ── */
@@ -178,11 +170,6 @@ export const REASON_CODES = {
   underperformance_cooldown: 'underperformance_cooldown',
   critical_ops_alerts: 'critical_ops_alerts',
   capital_below_minimum: 'capital_below_minimum',
-  // Stylist-specific
-  stylist_spi_too_low: 'stylist_spi_too_low',
-  stylist_ors_too_low: 'stylist_ors_too_low',
-  stylist_microfunding_disabled: 'stylist_microfunding_disabled',
-  stylist_demand_too_low: 'stylist_demand_too_low',
 } as const;
 
 export type ReasonCode = typeof REASON_CODES[keyof typeof REASON_CODES];
@@ -208,10 +195,6 @@ export const EXPLANATION_TEMPLATES: Record<string, string> = {
   [REASON_CODES.underperformance_cooldown]: 'A recent underperformance event is still within the cooldown period.',
   [REASON_CODES.critical_ops_alerts]: 'Unresolved critical operational alerts block new capital deployment.',
   [REASON_CODES.capital_below_minimum]: 'The required capital amount is below the minimum financing threshold.',
-  [REASON_CODES.stylist_spi_too_low]: 'Stylist SPI is below the threshold for personal growth funding.',
-  [REASON_CODES.stylist_ors_too_low]: 'Stylist ORS is below the threshold for expansion-level funding.',
-  [REASON_CODES.stylist_microfunding_disabled]: 'Stylist micro-funding is not enabled for this organization.',
-  [REASON_CODES.stylist_demand_too_low]: 'Stylist demand support score is below the threshold for growth funding.',
 };
 
 /* ── Forecast Status ── */
@@ -222,7 +205,7 @@ export const CANONICAL_SURFACE_COOLDOWNS: Record<string, number> = {
   command_center: 7,
   ops_hub: 3,
   service_dashboard: 5,
-  stylist_dashboard: 14,
+  
   expansion_planner: 7,
   capital_queue: 0,
 };

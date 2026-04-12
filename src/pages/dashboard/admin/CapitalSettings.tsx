@@ -30,9 +30,6 @@ export default function CapitalSettings() {
     cooldown_after_decline_days: 14,
     cooldown_after_underperformance_days: 30,
     allow_manager_initiation: false,
-    allow_stylist_microfunding: false,
-    stylist_spi_threshold: 80,
-    stylist_ors_threshold: 85,
   });
 
   useEffect(() => {
@@ -46,9 +43,6 @@ export default function CapitalSettings() {
         cooldown_after_decline_days: Number(settings.cooldown_after_decline_days),
         cooldown_after_underperformance_days: Number(settings.cooldown_after_underperformance_days),
         allow_manager_initiation: Boolean(settings.allow_manager_initiation),
-        allow_stylist_microfunding: Boolean(settings.allow_stylist_microfunding),
-        stylist_spi_threshold: Number(settings.stylist_spi_threshold),
-        stylist_ors_threshold: Number(settings.stylist_ors_threshold),
       });
     }
   }, [settings]);
@@ -168,34 +162,6 @@ export default function CapitalSettings() {
                   </div>
                   <Switch checked={form.allow_manager_initiation} onCheckedChange={v => setForm(f => ({ ...f, allow_manager_initiation: v }))} />
                 </div>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="flex items-center gap-1.5">
-                      <Label className="font-sans text-sm">Allow Stylist Micro-Funding</Label>
-                      <MetricInfoTooltip description="When enabled, stylists who meet the SPI and ORS thresholds below can access personal growth funding (e.g. education, chair expansion)." />
-                    </div>
-                    <p className="text-xs text-muted-foreground font-sans">Stylists meeting thresholds can access personal growth funding</p>
-                  </div>
-                  <Switch checked={form.allow_stylist_microfunding} onCheckedChange={v => setForm(f => ({ ...f, allow_stylist_microfunding: v }))} />
-                </div>
-                {form.allow_stylist_microfunding && (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
-                    <div className="space-y-1.5">
-                      <div className="flex items-center gap-1.5">
-                        <Label className="font-sans text-sm">Stylist SPI Threshold</Label>
-                        <MetricInfoTooltip description="Minimum Stylist Performance Index required. Measures revenue, retention, and productivity. Scale of 0–100." />
-                      </div>
-                      <Input type="number" value={form.stylist_spi_threshold} onChange={e => setForm(f => ({ ...f, stylist_spi_threshold: parseInt(e.target.value) || 0 }))} />
-                    </div>
-                    <div className="space-y-1.5">
-                      <div className="flex items-center gap-1.5">
-                        <Label className="font-sans text-sm">Stylist ORS Threshold</Label>
-                        <MetricInfoTooltip description="Minimum Ownership Readiness Score required. Measures leadership, consistency, and operational maturity. Scale of 0–100." />
-                      </div>
-                      <Input type="number" value={form.stylist_ors_threshold} onChange={e => setForm(f => ({ ...f, stylist_ors_threshold: parseInt(e.target.value) || 0 }))} />
-                    </div>
-                  </div>
-                )}
               </CardContent>
             </Card>
 
