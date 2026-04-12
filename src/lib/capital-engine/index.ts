@@ -45,7 +45,7 @@ export {
   computeStylistSPI,
   computeORS,
   determineCareerStage,
-  isMicroFinancingEligible,
+  
   type StylistSPIInput,
   type StylistSPIResult,
   type ORSInput,
