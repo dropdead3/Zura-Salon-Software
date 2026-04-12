@@ -12,6 +12,13 @@ import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 import { CapitalMetricTile } from '@/components/dashboard/capital-engine/CapitalMetricTile';
 import { CapitalStatusBadge } from '@/components/dashboard/capital-engine/CapitalStatusBadge';
 import { PageExplainer } from '@/components/ui/PageExplainer';
+import {
+  calculateVariancePercent,
+  calculateRoiToDate,
+  calculateRepaymentProgress,
+  calculateBreakEvenProgress,
+  calculateForecastStatus,
+} from '@/lib/capital-engine/capital-formulas';
 import { DollarSign, TrendingUp, BarChart3, Clock, Activity, Zap } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -59,10 +66,15 @@ export default function CapitalProjectDetail() {
   const revenue = Number(p.revenue_generated_to_date_cents);
   const predicted = Number(p.predicted_revenue_to_date_cents);
   const repaid = Number(p.actual_total_repayment_to_date_cents);
-  const repaidPct = funded > 0 ? Math.round((repaid / funded) * 100) : 0;
-  const roi = p.roi_to_date != null ? Number(p.roi_to_date) : null;
-  const variancePct = p.variance_percent != null ? Number(p.variance_percent) : null;
-  const breakEvenPct = Number(p.break_even_progress_percent);
+  const estimatedRepayment = Number(p.estimated_total_repayment_cents || funded);
+  const repaidPct = calculateRepaymentProgress(repaid, estimatedRepayment);
+  const roi = calculateRoiToDate(revenue, repaid, funded);
+  const variancePct = calculateVariancePercent(revenue, predicted);
+  const breakEvenPct = calculateBreakEvenProgress(revenue, estimatedRepayment);
+  const projectAgeDays = p.funding_start_date
+    ? Math.floor((Date.now() - new Date(p.funding_start_date).getTime()) / 86400000)
+    : 0;
+  const forecastStatus = calculateForecastStatus(variancePct, p.repayment_status === 'delinquent', projectAgeDays);
 
   return (
     <DashboardLayout>
@@ -86,7 +98,7 @@ export default function CapitalProjectDetail() {
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
             <CapitalMetricTile icon={<DollarSign className="w-3.5 h-3.5 text-muted-foreground" />} label="Funded" value={formatCurrency(c(funded), { noCents: true })} />
             <CapitalMetricTile icon={<TrendingUp className="w-3.5 h-3.5 text-muted-foreground" />} label="Revenue Generated" value={formatCurrency(c(revenue), { noCents: true })} />
-            <CapitalMetricTile icon={<BarChart3 className="w-3.5 h-3.5 text-muted-foreground" />} label="ROI to Date" value={roi != null ? `${roi > 0 ? '+' : ''}${(roi * 100).toFixed(0)}%` : '—'} highlight={roi != null && roi > 0} />
+            <CapitalMetricTile icon={<BarChart3 className="w-3.5 h-3.5 text-muted-foreground" />} label="ROI to Date" value={`${roi > 0 ? '+' : ''}${(roi * 100).toFixed(0)}%`} highlight={roi > 0} />
             <CapitalMetricTile icon={<Zap className="w-3.5 h-3.5 text-muted-foreground" />} label="Variance" value={variancePct != null ? `${variancePct > 0 ? '+' : ''}${variancePct.toFixed(0)}%` : '—'} highlight={variancePct != null && variancePct >= 15} />
             <CapitalMetricTile icon={<Clock className="w-3.5 h-3.5 text-muted-foreground" />} label="Break-Even" value={`${breakEvenPct.toFixed(0)}%`} />
             <CapitalMetricTile icon={<DollarSign className="w-3.5 h-3.5 text-muted-foreground" />} label="Predicted Revenue" value={formatCurrency(c(predicted), { noCents: true })} />
