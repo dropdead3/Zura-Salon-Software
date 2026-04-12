@@ -1,124 +1,87 @@
 
 
-# Zura Capital — Second Audit Pass (Gaps & Bugs)
+# Zura Capital — Third Audit Pass
 
-## Status of Previous Findings
+## Summary
 
-Several bugs from the first audit were fixed (access control gating, `is_primary_owner` enforcement). The following remain open, plus new findings from this pass.
-
----
-
-## STILL OPEN FROM FIRST AUDIT
-
-### B1. Missing Eligibility Check #17 — Stylist Exposure (Bug)
-`capital-formulas.ts` jumps from check #16 (location exposure, line 364) to #18 (decline cooldown, line 370). Check #17 for `stylist_exposure_exceeded` is absent. The reason code and explanation template exist in config but are never evaluated. Stylist-level concentration is unchecked.
-
-**File:** `src/lib/capital-engine/capital-formulas.ts` line 368 (empty gap)
-
-### B2. Sidebar & Diagnostics Status Mismatch (Bug — Critical)
-Three files still filter for `['pending_review', 'approved', 'ready']` — statuses that do not exist in the state machine (`zura-capital-config.ts`). The valid statuses are `detected, eligible_internal, eligible_provider, surfaced, viewed, initiated, pending_provider, funded`, etc. This means:
-- The sidebar will **never** show Capital for any org
-- The Control Tower diagnostics will always report 0 qualifying opportunities
-- The "Surfacing" summary card will always be 0
-
-**Files:**
-- `src/components/dashboard/SidebarNavContent.tsx` line 148
-- `src/hooks/useOrgCapitalDiagnostics.ts` line 11
-- `src/pages/dashboard/platform/CapitalControlTower.tsx` line 67
-
-### B5. Premature Project Status (Bug)
-`create-financing-checkout` sets `status: "active"` (line 262) before Stripe payment completes. The webhook also sets it to `"active"`. If payment fails, a ghost "active" project remains.
-
-**File:** `supabase/functions/create-financing-checkout/index.ts` line 262
-
-### G1. Server-Side Hardcoded Thresholds (Gap)
-`create-financing-checkout` uses hardcoded `THRESHOLDS` (lines 12-21) and never reads `capital_policy_settings` for org overrides. Client-side uses `useCapitalPolicySettings` correctly, but the server rejects/accepts based on defaults only.
-
-### G5. Webhook Accepts Unverified Payloads (Security Gap)
-`financing-webhook` line 32-34: when `STRIPE_FINANCING_WEBHOOK_SECRET` is not set, it parses raw JSON without any verification. Anyone can POST fake `checkout.session.completed` events to mark projects as funded.
-
-### G9. No Success Feedback After Funding
-The checkout `success_url` redirects to `/dashboard/capital?funded=true` but no component reads the `?funded=true` query param. Users see no confirmation.
-
-### G11. Diagnostics Use Default Policy Only
-`useOrgCapitalDiagnostics` always uses `DEFAULT_CAPITAL_POLICY` (line 9), not the org's actual policy from `capital_policy_settings`. Diagnostic results may contradict what `useZuraCapital` computes (which does use org policy).
+Previous passes fixed access control, status alignment, webhook security, stylist exposure check, and policy overrides. This pass found **4 remaining bugs**, **3 gaps**, and **1 data integrity issue**.
 
 ---
 
-## NEW FINDINGS
+## BUGS
 
-### N1. `useZuraCapital` Passes `stylistId: null` Always (Bug)
-Line 253 in `useZuraCapital.ts` hardcodes `stylistId: null` and `stylistExposure: 0` for every opportunity, even when the opportunity has a `stylist_id`. Combined with B1, stylist-level exposure is doubly broken — neither the input nor the check exists.
+### B1. `CapitalOpportunityDetail` Page — No Owner Gating on Fund Button
+**Severity: High (Security)**
 
-### N2. Opportunity Status Transition Violation in Checkout (Bug)
-`create-financing-checkout` sets opportunity status to `initiated` (line 270) regardless of its current status. The state machine only allows `initiated` from `viewed` or `surfaced`. If the opportunity is in `detected` or `eligible_internal`, this is an invalid transition that skips required states.
+`src/pages/dashboard/admin/CapitalOpportunityDetail.tsx` renders the "Fund This" button (line 196) without any `isPrimaryOwner` check. It also uses `getProvider('stripe').initiateFunding()` which silently swallows errors instead of showing a toast. The server-side `is_primary_owner` check will reject the request, but the user gets no clear feedback — the provider abstraction returns `{ error: "..." }` and the code only checks `result.redirectUrl` (line 149), silently dropping the error.
 
-### N3. Legacy Dual-Write Creates Orphaned Records (Gap)
-The checkout function creates records in both `financed_projects` (legacy, lines 276+) and `capital_funding_projects` (production, lines 250+) depending on the path. The `useFinancedProjects` hook only queries the legacy table. The `useCapitalProjects` hook only queries the production table. No UI shows a unified view. If an admin checks one view, they miss data from the other.
+**Fix:** Import `useIsPrimaryOwner`, gate the button (same pattern as `CapitalFundingConfirmModal`), and show error feedback.
 
-### N4. `useOrgCapitalDiagnostics` Hardcodes Cross-Org Context (Gap)
-Lines 77-79 hardcode `activeCapitalProjectsCount: 0`, `activeUnderperformingProjectsCount: 0`, and `repaymentDistressFlag: false`. The diagnostic panel tells admins an opportunity is eligible when it might actually fail checks 6, 7, or 8 in production (which `useZuraCapital` populates correctly from real data).
+### B2. `FundingOpportunityDetail` — Same Dual-Path + Silent Error Issue
+**Severity: Medium**
 
-### N5. `CapitalFeatureGate` Does Not Check Role (Gap)
-`CapitalFeatureGate.tsx` only checks the `capital_enabled` flag. If someone bookmarks a Capital URL and the route `requireSuperAdmin` check passes (because they're a super admin), they bypass the feature gate when the flag is on — which is correct. But the gate itself provides no role check, meaning it could be reused elsewhere without protection. Minor, but worth noting for defense-in-depth.
+`src/components/dashboard/capital-engine/FundingOpportunityDetail.tsx` line 101 uses `getProvider('stripe').initiateFunding(opportunity.id, '', '')` — passing empty strings for `organizationId` and `returnUrl`. The edge function will fail with "Missing opportunityId or organizationId" but the error is caught silently (line 107: `console.error` only, no toast).
 
-### N6. Control Tower `useOrganizationsWithCapital` No Pagination (Gap)
-The Control Tower fetches all organizations in one query. With many orgs, this will hit the Supabase 1000-row default limit, silently truncating results.
+The `isPrimaryOwner` gating was added visually (the button shows a lock icon for non-owners) but the `handleFund` function itself doesn't short-circuit — if someone bypasses the disabled state, the call proceeds (fails server-side, but silently).
+
+**Fix:** Replace `getProvider` with `useInitiateFinancing` (same as `CapitalFundingConfirmModal`), which passes `organizationId` correctly and shows error toasts. Add early return in `handleFund` if not primary owner.
+
+### B3. `CapitalOpportunityDetail` Page — `getProvider` Passes Empty orgId
+**Severity: Medium**
+
+Line 148: `provider.initiateFunding(o.id, '', '')` passes empty string for `organizationId`. The edge function receives `organizationId: ''` and will fail at the `is_org_admin` RPC call, but error handling only reaches `console.error` in the `finally` block — no user feedback.
+
+**Fix:** Same consolidation — replace with `useInitiateFinancing` which sources orgId from context.
+
+### B4. `useOrgCapitalDiagnostics` — Location/Stylist Exposure Always Zero
+**Severity: Low**
+
+Lines 119-121 hardcode `locationExposure: 0` and `stylistExposure: 0`. While the diagnostics query active projects (line 80), it doesn't compute per-location or per-stylist exposure from funded amounts. This means checks #16 and #17 always pass in diagnostics, potentially telling admins an opportunity is eligible when production (`useZuraCapital`) would flag it for exposure limits.
+
+**Fix:** Compute exposure from active projects (same logic as `useZuraCapital` lines 172-194) using the `capital_funding_opportunities` join for location/stylist IDs.
+
+---
+
+## GAPS
+
+### G1. `CapitalOpportunityDetail` Page — No `isPrimaryOwner` Import at All
+This is a full page route (`/admin/capital/:opportunityId`) that renders funding CTAs without any ownership check. Unlike the modal components which were fixed in the last pass, this page was missed entirely.
+
+### G2. Three Funding Initiation Paths — Should Be One
+Funding can be triggered from:
+1. `CapitalFundingConfirmModal` — uses `useInitiateFinancing` (correct)
+2. `FundingOpportunityDetail` — uses `getProvider('stripe')` (broken orgId)
+3. `CapitalOpportunityDetail` — uses `getProvider('stripe')` (broken orgId)
+
+All three should use `useInitiateFinancing` for consistent error handling, correct orgId, and the `is_primary_owner` server-side check.
+
+### G3. Legacy `useFinancedProjects` Hook Still Exported and Consumed
+`useFinancedProjects` (querying legacy `financed_projects` table) is still imported by `CapitalFundingConfirmModal` for `useInitiateFinancing`. While `useInitiateFinancing` itself is correct (it calls the edge function), the hook file also exports `useFinancedProjects` and `useFinancedProjectLedger` which query legacy tables. Any component using those gets stale data. These should be deprecated or removed.
 
 ---
 
 ## Recommended Fix Priority
 
 ```text
-Priority 1 (Blocking / Security):
-  B2   Status mismatch — Capital never surfaces
-  G5   Webhook signature enforcement
-  B5   Premature project status → "pending_payment"
+Priority 1 (Security):
+  B1  CapitalOpportunityDetail — add owner gating
+  G2  Consolidate all funding paths to useInitiateFinancing
 
 Priority 2 (Correctness):
-  B1   Missing stylist exposure check
-  N1   stylistId always null
-  N2   Invalid state transition in checkout
-  G1   Server-side policy overrides
-  G11  Diagnostics using wrong policy
+  B2  FundingOpportunityDetail — fix silent errors + empty orgId
+  B3  CapitalOpportunityDetail — fix empty orgId
+  B4  Diagnostics — compute real exposure values
 
-Priority 3 (Data Integrity):
-  N3   Legacy dual-write cleanup
-  N4   Diagnostics hardcoded context
-  G9   Success feedback after funding
-
-Priority 4 (Robustness):
-  N6   Pagination for Control Tower
+Priority 3 (Cleanup):
+  G3  Deprecate legacy useFinancedProjects/useFinancedProjectLedger
 ```
 
-## Technical Detail
-
-### B2 Fix — Correct Qualifying Statuses
-Replace `['pending_review', 'approved', 'ready']` with statuses from the actual state machine that represent "user-actionable" opportunities. Based on the lifecycle, the qualifying statuses should be:
-```typescript
-const QUALIFYING_STATUSES = ['eligible_internal', 'eligible_provider', 'surfaced', 'viewed'] as const;
-```
-These are the statuses where an opportunity has passed detection, is eligible, and is available for the owner to act on. Must be updated in all three files simultaneously.
-
-### B5 Fix — Initial Status
-Change `status: "active"` to `status: "pending_payment"` in `create-financing-checkout`. The webhook already handles the promotion to `"active"` on `checkout.session.completed`.
-
-### B1 Fix — Add Check #17
-Insert between lines 367-369 in `capital-formulas.ts`:
-```typescript
-// 17. Stylist exposure
-if (inputs.stylistId && inputs.stylistExposure + inputs.requiredInvestmentCents / 100 > policy.maxExposurePerStylist) {
-  codes.push(REASON_CODES.stylist_exposure_exceeded);
-}
-```
+## File Summary
 
 | File | Change |
 |---|---|
-| `src/lib/capital-engine/capital-formulas.ts` | Add check #17 (stylist exposure) |
-| `src/components/dashboard/SidebarNavContent.tsx` | Fix qualifying statuses |
-| `src/hooks/useOrgCapitalDiagnostics.ts` | Fix qualifying statuses + use org policy + populate real project counts |
-| `src/pages/dashboard/platform/CapitalControlTower.tsx` | Fix qualifying statuses |
-| `supabase/functions/create-financing-checkout/index.ts` | Fix initial status to `pending_payment`, validate state transition, read org policy |
-| `supabase/functions/financing-webhook/index.ts` | Reject unverified payloads when secret is missing |
-| `src/hooks/useZuraCapital.ts` | Pass `stylistId` from opportunity data |
+| `src/pages/dashboard/admin/CapitalOpportunityDetail.tsx` | Add `useIsPrimaryOwner` gating on fund button; replace `getProvider` with `useInitiateFinancing`; add error toast |
+| `src/components/dashboard/capital-engine/FundingOpportunityDetail.tsx` | Replace `getProvider` with `useInitiateFinancing`; add early return for non-owner; add error toast |
+| `src/hooks/useOrgCapitalDiagnostics.ts` | Compute per-location and per-stylist exposure from active project data |
+| `src/hooks/useFinancedProjects.ts` | Add deprecation comments to legacy hooks; keep `useInitiateFinancing` |
 
