@@ -40,13 +40,6 @@ export const REPAYMENT_DEFAULTS = {
   annualRate: 0,
 } as const;
 
-/** Stylist-level financing thresholds — gates micro-financing by SPI/ORS */
-export const STYLIST_FINANCING_THRESHOLDS = {
-  /** Minimum SPI to access any financing */
-  minSPI: 65,
-  /** Minimum ORS for expansion-level financing */
-  minORS: 60,
-} as const;
 
 /**
  * @deprecated Use `calculateForecastStatus` from `capital-formulas.ts` instead.
