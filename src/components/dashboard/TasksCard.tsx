@@ -4,7 +4,7 @@ import { AnimatePresence } from 'framer-motion';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { CheckSquare, ChevronDown, ChevronUp, Search, X, AlarmClock } from 'lucide-react';
+import { CheckSquare, ChevronDown, ChevronUp, Search, X, AlarmClock, AlertTriangle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { tokens } from '@/lib/design-tokens';
 import { TaskItem } from '@/components/dashboard/TaskItem';
@@ -14,6 +14,8 @@ import { TaskDetailDrilldown } from '@/components/dashboard/TaskDetailDrilldown'
 import { CompletedTasksFilter, type CompletedFilters } from '@/components/dashboard/CompletedTasksFilter';
 import { useTranslation } from 'react-i18next';
 import { useFormatDate } from '@/hooks/useFormatDate';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
+import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import type { Task } from '@/hooks/useTasks';
 
 interface TasksCardProps {
@@ -51,6 +53,7 @@ export function TasksCard({
 }: TasksCardProps) {
   const { t } = useTranslation('dashboard');
   const { formatDate } = useFormatDate();
+  const { formatCurrency } = useFormatCurrency();
   const [showAllActive, setShowAllActive] = useState(false);
   const [showCompleted, setShowCompleted] = useState(false);
   const [showSnoozed, setShowSnoozed] = useState(false);
@@ -108,7 +111,13 @@ export function TasksCard({
     }
 
     const prioOrder = { high: 3, normal: 2, low: 1 };
-    const sortByPrio = (a: Task, b: Task) => prioOrder[b.priority] - prioOrder[a.priority];
+    const sortByPrio = (a: Task, b: Task) => {
+      // Sort by priority_score first when available
+      const aScore = a.priority_score ?? -1;
+      const bScore = b.priority_score ?? -1;
+      if (aScore !== bScore) return bScore - aScore;
+      return prioOrder[b.priority] - prioOrder[a.priority];
+    };
     overdue.sort(sortByPrio);
     todayTasks.sort(sortByPrio);
     tomorrowTasks.sort(sortByPrio);
@@ -273,18 +282,27 @@ export function TasksCard({
             </div>
 
             {/* Expired Section */}
-            {expiredTasks.length > 0 && (
-              <div className="mt-4 pt-3 border-t border-border/30">
-                <p className="text-[10px] font-display tracking-wide text-muted-foreground mb-2">
-                  EXPIRED — OPPORTUNITY DECAYED
-                </p>
-                <div className="space-y-3 opacity-50">
-                  <AnimatePresence mode="popLayout">
-                    {expiredTasks.map((task) => renderTask(task))}
-                  </AnimatePresence>
+            {expiredTasks.length > 0 && (() => {
+              const missedRevenue = expiredTasks.reduce((sum, t) => sum + (t.missed_revenue_cents || t.estimated_revenue_impact_cents || 0), 0);
+              return (
+                <div className="mt-4 pt-3 border-t border-border/30">
+                  <p className="text-[10px] font-display tracking-wide text-destructive mb-2 flex items-center gap-1.5">
+                    <AlertTriangle className="w-3 h-3" />
+                    EXPIRED — OPPORTUNITY DECAYED
+                    {missedRevenue > 0 && (
+                      <span className="text-destructive/80 ml-1">
+                        (<BlurredAmount>{formatCurrency(missedRevenue / 100)}</BlurredAmount>/mo missed)
+                      </span>
+                    )}
+                  </p>
+                  <div className="space-y-3 opacity-50">
+                    <AnimatePresence mode="popLayout">
+                      {expiredTasks.map((task) => renderTask(task))}
+                    </AnimatePresence>
+                  </div>
                 </div>
-              </div>
-            )}
+              );
+            })()}
 
             {/* Snoozed Section */}
             {snoozedTasks.length > 0 && (

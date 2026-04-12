@@ -143,7 +143,6 @@ export function useDailyBriefingEngine(
     }
 
     // ── 3. YOU SHOULD DO (2-4 revenue-linked tasks) ──────────────────
-    const prioWeight = { high: 3, normal: 2, low: 1 };
     const activeTasks = tasks.filter(t => !t.is_completed);
     const nonExpired = activeTasks.filter(
       t => !t.expires_at || !isPast(parseISO(t.expires_at)),
@@ -151,9 +150,15 @@ export function useDailyBriefingEngine(
 
     // For stylists, only show personal tasks (already filtered by useTasks)
     const sorted = [...nonExpired].sort((a, b) => {
+      // Primary: priority_score descending (when available)
+      const aScore = a.priority_score ?? -1;
+      const bScore = b.priority_score ?? -1;
+      if (aScore !== bScore) return bScore - aScore;
+      // Fallback: revenue impact then priority
       const aImpact = a.estimated_revenue_impact_cents || 0;
       const bImpact = b.estimated_revenue_impact_cents || 0;
       if (bImpact !== aImpact) return bImpact - aImpact;
+      const prioWeight = { high: 3, normal: 2, low: 1 };
       return prioWeight[b.priority] - prioWeight[a.priority];
     });
 
@@ -168,11 +173,32 @@ export function useDailyBriefingEngine(
     );
     if (expiredWithRevenue.length > 0) {
       const lostCents = expiredWithRevenue.reduce(
-        (sum, t) => sum + (t.estimated_revenue_impact_cents || 0), 0,
+        (sum, t) => sum + (t.missed_revenue_cents || t.estimated_revenue_impact_cents || 0), 0,
       );
       blockers.push({
         label: `${expiredWithRevenue.length} expired task${expiredWithRevenue.length !== 1 ? 's' : ''} with decayed opportunities`,
         revenueLostCents: lostCents,
+      });
+    }
+
+    // Detect missed revenue from tasks already marked
+    const missedTasks = tasks.filter(t => (t.missed_revenue_cents || 0) > 0);
+    const totalMissedCents = missedTasks.reduce((sum, t) => sum + (t.missed_revenue_cents || 0), 0);
+    if (totalMissedCents > 0 && expiredWithRevenue.length === 0) {
+      blockers.push({
+        label: `Missed opportunities from expired tasks`,
+        revenueLostCents: totalMissedCents,
+      });
+    }
+
+    // Detect enforcement warnings (tasks with level >= 2 overdue)
+    const enforcementOverdue = activeTasks.filter(t =>
+      t.enforcement_level >= 2 && t.due_date && isPast(parseISO(t.due_date)),
+    );
+    if (enforcementOverdue.length > 0) {
+      blockers.push({
+        label: `${enforcementOverdue.length} high-enforcement task${enforcementOverdue.length !== 1 ? 's' : ''} overdue — may impact access`,
+        revenueLostCents: null,
       });
     }
 
