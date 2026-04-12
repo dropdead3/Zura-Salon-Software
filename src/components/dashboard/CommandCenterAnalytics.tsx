@@ -545,6 +545,9 @@ export function CommandCenterAnalytics() {
   
   return (
     <div className="space-y-6">
+      {/* Daily Briefing Panel — always first */}
+      <DailyBriefingSection />
+
       {/* Shared Filter Bar - appears when any analytics cards are pinned */}
       <div className="flex flex-wrap items-center gap-3">
         {/* Location Select */}
