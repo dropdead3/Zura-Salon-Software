@@ -125,6 +125,7 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
   const { isEntitled: isPayrollEntitled } = usePayrollEntitlement();
   const { isEntitled: isColorBarEntitled } = useColorBarEntitlement();
   const { user } = useAuth();
+  const { data: profile } = useEmployeeProfile();
   const { effectiveOrganization } = useOrganizationContext();
   const organizationId = effectiveOrganization?.id;
 
