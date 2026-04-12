@@ -87,7 +87,7 @@ export function PlatformLiveAnalytics({ className }: PlatformLiveAnalyticsProps)
   if (isLoading) {
     return (
       <div className={cn(
-        "relative rounded-[16px] border border-[hsl(var(--platform-border)/0.5)] bg-[hsl(var(--platform-bg-card)/0.4)] backdrop-blur-xl p-5 overflow-hidden",
+        "relative rounded-[22px] border border-[hsl(var(--platform-border)/0.5)] bg-[hsl(var(--platform-bg-card)/0.4)] backdrop-blur-xl p-5 overflow-hidden",
         className
       )}>
         <div className="flex items-center gap-2 mb-5">
@@ -107,7 +107,7 @@ export function PlatformLiveAnalytics({ className }: PlatformLiveAnalyticsProps)
 
   return (
     <div className={cn(
-      "relative rounded-[16px] border border-[hsl(var(--platform-border)/0.5)] bg-[hsl(var(--platform-bg-card)/0.4)] backdrop-blur-xl p-5 overflow-hidden",
+      "relative rounded-[22px] border border-[hsl(var(--platform-border)/0.5)] bg-[hsl(var(--platform-bg-card)/0.4)] backdrop-blur-xl p-5 overflow-hidden",
       className
     )}>
       {/* Top edge highlight */}
