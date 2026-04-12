@@ -1,4 +1,4 @@
-import { Package, Play, MessageSquare, DollarSign } from 'lucide-react';
+import { Package, Play, MessageSquare, DollarSign, Landmark } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Switch } from '@/components/ui/switch';
 import {
