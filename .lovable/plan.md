@@ -1,122 +1,93 @@
 
 
-# Task Engine 2.0 — Build Plan
+# "From Insight to Execution" — Capital Section Build Plan
 
-## Current State
+## What We're Building
 
-The `tasks` table has: `id`, `user_id`, `title`, `description`, `is_completed`, `due_date`, `priority` (text: low/normal/high), `source`, `notes`, `recurrence_pattern`, `recurrence_parent_id`, `snoozed_until`, `estimated_revenue_impact_cents`, `expires_at`, `completed_at`, `created_at`, `updated_at`.
+A premium marketing section for the Zura sales page (`PlatformLanding.tsx`) that positions the funding capability as a natural extension of the intelligence system. Not fintech. Growth acceleration.
 
-Task UI (`TaskItem`, `TasksCard`, `AddTaskDialog`, `EditTaskDialog`, `TaskDetailDrilldown`) already supports revenue impact badges and expiry countdowns. The Daily Briefing Engine sorts tasks by `estimated_revenue_impact_cents` then priority.
+## Placement
 
-**What's missing**: opportunity linkage, priority scoring, task type classification, enforcement level, execution time, difficulty, decay logic, missed opportunity tracking, and the deterministic priority formula.
+Between `FounderQuote` and `OutcomeMetrics` in `PlatformLanding.tsx` — after the narrative has established Zura's intelligence and before the proof/CTA sections.
 
-## Build Scope
+## Component: `InsightToExecution.tsx`
 
-### 1. Database Migration — New Task Columns
+Single file in `src/components/marketing/`. Follows existing patterns: `useScrollReveal`, `mkt-reveal` classes, `motion` from framer-motion, explicit marketing palette colors (not theme tokens), `font-display` for headlines, `font-sans` for body.
 
-Add to `tasks` table:
-- `opportunity_id` (uuid, nullable) — FK to `capital_funding_opportunities`
-- `revenue_type` (text, nullable, default null) — `'generated'` or `'protected'`
-- `priority_score` (integer, nullable, default null) — deterministic 0-100
-- `execution_time_minutes` (integer, nullable, default null)
-- `difficulty_score` (integer, nullable, default null) — 0-100
-- `task_type` (text, nullable, default null) — `'growth'`, `'protection'`, `'acceleration'`, `'unlock'`
-- `enforcement_level` (integer, nullable, default 1) — 1=soft, 2=moderate, 3=hard
-- `decay_days` (integer, nullable, default null)
-- `missed_revenue_cents` (integer, nullable, default null) — populated when expired
-- `status` (text, default `'active'`) — `'created'`, `'active'`, `'in_progress'`, `'completed'`, `'expired'`, `'missed'`
+### Section Structure (top to bottom)
 
-### 2. Task Priority Calculator (`src/lib/task-priority-calculator.ts`)
+**1. Hero Header**
+- Eyebrow: `FROM INSIGHT TO EXECUTION` (font-display, tracking-[0.15em], dusky color)
+- Headline: "Zura doesn't just tell you how to grow — " + gradient span: "it helps you fund it."
+- Subhead: "Zura identifies your highest-return opportunities — and lets you fund them instantly when it makes sense."
 
-Pure deterministic function following the same pattern as `seo-priority-calculator.ts`:
+**2. Animated Flow (the centerpiece)**
 
-```text
-priority_score = (
-  revenue_impact_score × 0.40 +
-  urgency_score       × 0.25 +
-  ease_score           × 0.15 +
-  confidence_score     × 0.10 +
-  dependency_score     × 0.10
-) × 100  → integer 0–100
-```
+A 4-step horizontal (desktop) / vertical (mobile) animated pipeline showing the Decision → Action → Outcome loop:
 
-Normalization:
-- Revenue: $0→0, $5000/mo→100 (linear clamp)
-- Urgency: 1d→100, 3d→80, 7d→50, 14+→20 (based on `expires_at` or `due_date`)
-- Ease: 5min→100, 15→80, 30→60, 60+→40
-- Confidence: passed through from opportunity (default 0.7 if no opportunity)
-- Dependency: +10 if other tasks are blocked by this one (future; default 0)
+| Step | Icon | Label | Detail |
+|---|---|---|---|
+| 1 | TrendingUp | Insight Detected | "Extensions demand exceeding capacity" |
+| 2 | Target | Opportunity Scored | "+$8,200/mo · Break-even: 5.8 months" |
+| 3 | Banknote | Funding Available | "$35,000 ready to deploy" |
+| 4 | Rocket | Growth Activated | "Capacity expanded. Revenue climbing." |
 
-### 3. Update `useTasks` Hook + Task Interface
+Each step animates in sequentially (staggered 0.3s). Connected by animated gradient lines (violet→purple). Auto-advances through steps like `SystemWalkthrough` (reuse same pattern with `AnimatePresence`). Steps are clickable to pause and select.
 
-Extend `Task` interface with all new fields. Update `createTask` and `updateTask` mutations to accept new fields. Add ordering by `priority_score` descending (when non-null) as primary sort.
+**3. Three Value Pillars (3-column grid)**
 
-### 4. Update Task UI Components
+Cards with icon containers (w-10 h-10 rounded-lg bg-violet-500/10), using the established card style (border-white/[0.06], bg-white/[0.03]):
 
-**TaskItem.tsx**: Show task type badge (Growth/Protection/Acceleration/Unlock), execution time estimate, and priority score dot instead of simple priority indicator.
+- **Identify the Opportunity** — Eye icon. "Zura continuously analyzes your business to surface where you're leaving money on the table." Bullets: Demand gaps · Capacity constraints · Missed bookings.
+- **Validate the Return** — BarChart3 icon. "Every opportunity is scored on real data." Bullets: Expected revenue lift · Break-even timeline · Confidence level.
+- **Fund It Instantly** — Zap icon. "When an opportunity makes sense, Zura connects you to funding — seamlessly." Bullets: No applications upfront · No browsing loan options · Execution when ready.
 
-**AddTaskDialog.tsx**: Add optional fields for task type, execution time, opportunity link, and revenue type. Keep the form simple — these are optional for manual tasks.
+**4. Product UI Mock**
 
-**EditTaskDialog.tsx**: Same new optional fields.
+A simulated Zura Capital card matching the dark SaaS aesthetic:
+- Header row: "ZURA CAPITAL" label + status badge
+- Title: "Mesa Extensions Expansion"
+- KPI row: "+$8,200/month" (violet gradient text) | "Break-even: 5.8 months"
+- Funding bar: "$35,000 available" with animated fill
+- CTA button: gradient violet pill "Fund This"
+- Subtle glow border (violet-500/20)
 
-**TaskDetailDrilldown.tsx**: Show full task metadata: revenue impact, revenue type, opportunity link, priority score breakdown, enforcement level, and missed revenue (if expired).
+Card animates in with scale-in + fade. On hover, slight lift + glow intensify.
 
-**TasksCard.tsx**: Sort active tasks by `priority_score` descending (when available), then by existing priority. Add "Missed" section below Expired showing cumulative missed revenue.
+**5. Differentiation Block**
 
-### 5. Missed Opportunity Tracking
+Two-column layout:
+- Left: "Most software shows you problems." (large, white)
+- Right: Two stacked mini-lists comparing "Other platforms" (dashboards, reports, suggestions — slate-500 text) vs "Zura" (identifies, tells you what to do, executes, funds — violet-400 text with checkmarks)
 
-When a task expires (detected client-side in `useTasks` or `useDailyBriefingEngine`):
-- If `is_completed = false` and `expires_at < now()` and `missed_revenue_cents` is null:
-  - Set `status = 'expired'`, `missed_revenue_cents = estimated_revenue_impact_cents`
-  - This is a one-time write on detection
+**6. Trust / Control Strip**
 
-**MissedOpportunityBanner** component: Summarizes weekly missed revenue. Placed in Daily Briefing blockers section.
+Centered text block with shield icon:
+- "You stay in control."
+- "Zura never pushes funding. It only appears when the numbers make sense."
+- Three trust points inline: "Real performance data · Clear expected outcomes · Full transparency" — subtle slate-400 text.
 
-### 6. Daily Briefing Engine Enhancement
+**7. Section CTA**
 
-Update `useDailyBriefingEngine.ts`:
-- Sort `shouldDoTasks` by `priority_score` descending instead of raw `estimated_revenue_impact_cents`
-- Include `missed_revenue_cents` aggregation in blockers
-- Show enforcement warnings when tasks with `enforcement_level >= 2` are overdue
+Reuses the established dual-button pattern from HeroSection/FinalCTA:
+- "Ready to grow without guessing?"
+- Primary: "See How Zura Works" → `/demo`
+- Secondary: "Start Free Trial" → `/explore`
 
-### 7. Capital Integration Gate
-
-In `useZuraCapital` surfacing logic: if opportunity has linked tasks with `task_type = 'unlock'` that are incomplete, suppress the opportunity's "Fund Now" action and show "Complete prerequisite tasks first" message. This enforces the unlock gate.
-
-## Files
+## File Changes
 
 | File | Action |
 |---|---|
-| Migration SQL | CREATE — add 10 columns to `tasks` |
-| `src/lib/task-priority-calculator.ts` | CREATE — deterministic priority formula |
-| `src/hooks/useTasks.ts` | UPDATE — extend interface + sort by priority_score |
-| `src/components/dashboard/TaskItem.tsx` | UPDATE — task type badge, priority score, exec time |
-| `src/components/dashboard/AddTaskDialog.tsx` | UPDATE — optional new fields |
-| `src/components/dashboard/EditTaskDialog.tsx` | UPDATE — optional new fields |
-| `src/components/dashboard/TaskDetailDrilldown.tsx` | UPDATE — full metadata display |
-| `src/components/dashboard/TasksCard.tsx` | UPDATE — priority_score sort, missed section |
-| `src/components/dashboard/MissedOpportunityBanner.tsx` | CREATE — weekly missed revenue summary |
-| `src/hooks/useDailyBriefingEngine.ts` | UPDATE — priority_score sort, missed revenue |
-| `src/components/dashboard/DailyBriefingPanel.tsx` | UPDATE — missed opportunity in blockers |
+| `src/components/marketing/InsightToExecution.tsx` | CREATE — Full section (~350 lines) |
+| `src/pages/PlatformLanding.tsx` | UPDATE — Import + place between `FounderQuote` and `OutcomeMetrics` |
 
-## Build Order
+## Technical Notes
 
-1. Database migration (10 new columns)
-2. Create `task-priority-calculator.ts`
-3. Update `useTasks` hook (interface + sort + missed detection)
-4. Update `TaskItem` (type badge, priority score, exec time)
-5. Update `AddTaskDialog` + `EditTaskDialog` (new fields)
-6. Update `TaskDetailDrilldown` (full metadata)
-7. Update `TasksCard` (priority sort, missed section)
-8. Create `MissedOpportunityBanner`
-9. Update Daily Briefing engine + panel
-10. TypeScript build check
-
-## Out of Scope (Phase 2)
-
-- Task auto-generation from opportunities (POST /tasks/generate)
-- Enforcement levels 2-3 (restrict lead pool, delay capital)
-- Team accountability dashboards (completion rate, missed value per person)
-- Backend endpoints (prioritized fetch, generate from opportunities)
-- Capital unlock gate enforcement in `useZuraCapital`
+- All colors use explicit marketing palette (`text-white`, `text-slate-400`, `text-violet-400`, `bg-violet-500/10`) — no semantic tokens
+- Uses `motion` from framer-motion for all animations
+- Uses `useScrollReveal` + `mkt-reveal` for scroll-triggered reveals
+- Uses `useInView` from framer-motion for the flow animation trigger
+- Uses `useIsMobile` for responsive layout switching
+- `AnimatedNumber` reused for the KPI in the mock card
+- No new dependencies required
 
