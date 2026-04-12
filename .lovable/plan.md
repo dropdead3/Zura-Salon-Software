@@ -1,124 +1,97 @@
 
 
-# Nested Radius Hierarchy Audit — Platform Bento System
+# Luxury Bento Floating Bars — Platform Sidebar & Header
 
-## Problem
+## Concept
 
-Parent containers and child cards share the same radius tier (both using `rounded-[16px]`), creating visual flattening. There is no enforced parent-child radius step-down, so nested structures look like merged surfaces rather than framed modules.
+Transform the platform sidebar and top header from edge-flush, full-bleed bars into **floating, inset panels** with rounded corners, subtle glass effects, and visible breathing room against the page background. Think Linear/Raycast/Arc — the chrome floats inside the viewport rather than anchoring to edges.
 
-## Key Violations Found
+## Current State
 
-| Pattern | Parent Radius | Child Radius | Issue |
-|---|---|---|---|
-| Overview → StatCards | 16px (via grid, implicit) | 16px | Same level |
-| Overview → Quick Actions container → QuickActionButtons | 16px | 12px (rounded-xl) | OK but container padding tight |
-| PlatformLiveAnalytics → MetricCards | 16px | 12px (rounded-xl) | OK |
-| IncidentManagementCard → active incident / form | 16px | 12px (rounded-xl) | OK |
-| CapitalControlTower → EligibilityReference / OrgOperationalContext | PlatformCard 16px | rounded-lg (8px) | Too large a jump |
-| PlatformCard(glass) → inner content cards | 16px | 16px (same PlatformCard) | **Flat** — e.g. ColorBarAnalyticsTab KPICards inside glass containers |
-| Settings tabs (KnowledgeBase, etc.) → nested PlatformCards | 16px | 16px | **Flat** |
+- **Sidebar**: Flush `left-0 top-0`, full height, hard border-right, no radius
+- **Header**: Flush sticky bar, full width, hard border-bottom, no radius
+- **Layout**: Content uses `ml-16/ml-56` with no gap — sidebar merges into content
 
-## Solution — Three-Tier Nested Radius Hierarchy
+## Design Direction
 
-Update `platform-bento-tokens.ts` to add explicit nesting-aware tokens and update the `PlatformCard` to support a `nested` prop.
+### Sidebar → Floating Panel
+- Inset from viewport edges: `top-3 left-3 bottom-3` (12px breathing room)
+- Height: `calc(100vh - 24px)` instead of `h-screen`
+- Radius: `rounded-[22px]` (container tier)
+- Background: glass effect with higher opacity (`bg-[hsl(var(--platform-sidebar-bg)/0.85)]`)
+- Border: subtle all-around border (not just right edge)
+- Shadow: soft `shadow-xl shadow-black/10` for floating depth
+- Remove hard `border-r`, replace with full border
 
-### Updated Token System
+### Header → Floating Top Bar
+- Inset from top: `top-3`, with horizontal margins matching content area
+- Not full-width — floats with rounded corners
+- Radius: `rounded-[18px]` (between large and xl tiers)
+- Background: glass `bg-[hsl(var(--platform-bg)/0.6)] backdrop-blur-xl`
+- Border: subtle ring instead of hard `border-b`
+- Shadow: `shadow-lg shadow-black/[0.06]`
+- Height stays `h-14` but with visual separation from content
+
+### Layout Adjustments
+- Sidebar width stays `w-56` / `w-16` but actual visual width includes the 12px inset
+- Content `ml` adjusts to account for sidebar + gap: `ml-[15.5rem]` / `ml-[5.5rem]` (sidebar + 12px inset + 12px gap)
+- Header gets `mx-4` horizontal margin within the content column
+- Main content area keeps its existing `PlatformPageContainer` padding
+
+## Changes
+
+### 1. `src/components/platform/layout/PlatformSidebar.tsx`
+- Replace `fixed left-0 top-0 h-screen` with `fixed left-3 top-3 bottom-3`
+- Add `rounded-[22px]` (container tier)
+- Replace `border-r border-[hsl(...)]` with full `border border-[hsl(var(--platform-border)/0.3)]`
+- Add `shadow-xl shadow-black/10`
+- Adjust `w-56` / `w-16` to stay the same (content width)
+- Tweak internal padding to account for rounded corners (slightly more padding at top/bottom)
+
+### 2. `src/components/platform/layout/PlatformHeader.tsx`
+- Replace `sticky top-0 border-b` with `sticky top-3 mx-4 rounded-[18px]`
+- Add `border border-[hsl(var(--platform-border)/0.3)]` (full border, not just bottom)
+- Add `shadow-lg shadow-black/[0.06]`
+- Slightly reduce background opacity for more glass feel
+
+### 3. `src/components/platform/layout/PlatformLayout.tsx`
+- Update content area margins: `ml-[15.5rem]` expanded / `ml-[5.5rem]` collapsed (to account for sidebar inset + breathing room)
+- Add `pt-3` to the main content column so the header's `top-3` aligns with the sidebar's `top-3`
+- Ensure main content has subtle top padding below the floating header
+
+### 4. `src/lib/platform-bento-tokens.ts`
+- Add `floatingBar` token group:
+  - `radius: 'rounded-[18px]'`
+  - `inset: 12px` (as documentation)
+  - `shadow: 'shadow-xl shadow-black/10'`
+  - `glass: 'backdrop-blur-xl'`
+
+## Visual Result
 
 ```text
-Tier          Radius    Use
-───────────── ──────── ─────────────────────────
-container     22px     Outer wrapping containers (Quick Actions panel, glass parent cards)
-card          16px     Standard cards (StatCards, analytics panels)  
-inner         12px     Nested cards inside containers (MetricCards, form sections, checklist items)
-micro         10px     Badges, pills, toggles, chips
+┌──────────────────────────────────────────────────┐
+│  ┌──────┐  ┌──────────────────────────────────┐  │
+│  │      │  │  Floating Header (rounded-18)    │  │
+│  │ Side │  └──────────────────────────────────┘  │
+│  │ bar  │                                        │
+│  │      │  ┌──────────────────────────────────┐  │
+│  │ r-22 │  │  Page Content                    │  │
+│  │      │  │                                  │  │
+│  │      │  │                                  │  │
+│  └──────┘  └──────────────────────────────────┘  │
+│                                                  │
+│  (dark background visible around all edges)      │
+└──────────────────────────────────────────────────┘
 ```
 
-This replaces the current 5-tier system (micro/small/medium/large/xl) with clearer nesting semantics while keeping xl for modals/dialogs.
-
-### Changes
-
-**1. `src/lib/platform-bento-tokens.ts`**
-- Add `container: 'rounded-[22px]'` tier
-- Rename for clarity: `large` → remains 16px (standard card), `xl` stays 20px (dialogs)
-- Add `nested` key pointing to `small` (12px) for explicit inner-card usage
-- Add `NESTING_RULES` comment block documenting the hierarchy
-
-**2. `src/components/platform/ui/PlatformCard.tsx`**
-- Update `size` prop map: `lg` now maps to `container` (22px) when used as an outer wrapper
-- Add new prop `nested?: boolean` — when true, forces `small` (12px) radius regardless of size
-- Default behavior unchanged for standalone cards (16px)
-
-**3. `src/pages/dashboard/platform/Overview.tsx`**
-- Quick Actions container: `rounded-[16px]` → `rounded-[22px]` (container tier), padding stays `p-5`
-- StatCards: keep `rounded-[16px]` (card tier — they're top-level, not nested)
-- Skeleton containers: match parent radii
-
-**4. `src/components/platform/overview/PlatformLiveAnalytics.tsx`**
-- Outer container: `rounded-[16px]` → `rounded-[22px]` (container tier, it holds MetricCards)
-- MetricCards inner: already `rounded-xl` (12px) — correct
-- Skeleton: match parent
-
-**5. `src/components/platform/overview/IncidentManagementCard.tsx`**
-- Outer container: `rounded-[16px]` → `rounded-[22px]`
-- Inner incident/form sections: already `rounded-xl` (12px) — correct
-
-**6. `src/components/platform/overview/PlatformActivityFeed.tsx`**
-- Outer container: `rounded-[16px]` → `rounded-[22px]`
-
-**7. `src/components/platform/overview/SystemHealthCard.tsx`**
-- Outer container: `rounded-[16px]` → `rounded-[22px]`
-- Inner elements (icon boxes): `rounded-xl` — correct
-
-**8. `src/pages/dashboard/platform/CapitalControlTower.tsx`**
-- EligibilityReferenceList inner sections: `rounded-lg` (8px) → `rounded-xl` (12px) for consistency
-- OrgOperationalContext: same treatment
-
-**9. Platform-wide: All `PlatformCard variant="glass"` used as parent containers**
-- When a glass card contains other cards or structured content blocks, bump to `rounded-[22px]`
-- Files affected: `KnowledgeBaseTab.tsx`, `AccountNotesSection.tsx`, `ColorBarAnalyticsTab.tsx`, `DockAppTab.tsx`, `PlatformTeamManager.tsx`, `AccountUsersTab.tsx`, `AccountImportHistoryTab.tsx`, `BillingConfigurationPanel` (lazy), settings cards
-- Implementation: Add a `container` size to PlatformCard that maps to 22px, then use `size="container"` on parent glass cards
-
-**10. `src/pages/dashboard/platform/SystemHealth.tsx`**
-- Outer section cards: `rounded-xl` → `rounded-[22px]` (container)
-- Inner stat tiles: `rounded-xl` (12px) — correct
-
-**11. Skeleton states** across all updated files must match their live counterparts' radii.
-
-### PlatformCard API Change
-
-```tsx
-// Before
-<PlatformCard variant="glass">           {/* 16px */}
-  <PlatformCard variant="interactive">   {/* 16px — FLAT */}
-
-// After  
-<PlatformCard variant="glass" size="container">  {/* 22px */}
-  <PlatformCard variant="interactive" size="md">  {/* 14px — clear hierarchy */}
-```
-
-### Shared Curvature Illusion (Apple-Level Polish)
-
-Where inner cards sit flush against a container edge (e.g., grid children touching container padding boundary), the inner card radius echoes `parent_radius - parent_padding`. With 22px outer and 16px padding, inner cards at ~12px create the optical alignment where curves feel continuous. This is already achieved by the 22px → 12px step with `p-4` (16px) padding — the math: `22 - 16 = 6`, inner should be `22 - 6 = 16` or less. At 12px it's comfortably smaller, creating the framed module effect.
-
-## Scope
-
-~15 files. No logic changes. No database changes. Purely radius hierarchy enforcement.
+## Files
 
 | File | Change |
 |---|---|
-| `platform-bento-tokens.ts` | Add `container` tier (22px), add nesting docs |
-| `PlatformCard.tsx` | Add `container` size option mapping to 22px |
-| `Overview.tsx` | Quick Actions → 22px outer |
-| `PlatformLiveAnalytics.tsx` | Outer → 22px |
-| `IncidentManagementCard.tsx` | Outer → 22px |
-| `PlatformActivityFeed.tsx` | Outer → 22px |
-| `SystemHealthCard.tsx` | Outer → 22px |
-| `CapitalControlTower.tsx` | Inner sections `rounded-lg` → `rounded-xl` |
-| `SystemHealth.tsx` | Section cards → 22px, inner tiles stay 12px |
-| `KnowledgeBaseTab.tsx` | Parent glass → container size |
-| `AccountNotesSection.tsx` | Parent glass → container size |
-| `ColorBarAnalyticsTab.tsx` | Parent glass → container size |
-| `DockAppTab.tsx` | Parent glass → container size |
-| `PlatformTeamManager.tsx` | Parent glass → container size |
-| `AccountUsersTab.tsx` | Parent glass → container size |
+| `src/lib/platform-bento-tokens.ts` | Add `floatingBar` token group |
+| `src/components/platform/layout/PlatformSidebar.tsx` | Floating inset, container radius, full border + shadow |
+| `src/components/platform/layout/PlatformHeader.tsx` | Floating inset, rounded-18, glass border + shadow |
+| `src/components/platform/layout/PlatformLayout.tsx` | Adjust margins/padding for floating chrome |
+
+4 files. No logic changes. No database changes. Purely visual positioning and styling.
 
