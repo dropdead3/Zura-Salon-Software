@@ -74,6 +74,7 @@ const InsightsNudgeBanner = React.lazy(() => import('@/components/dashboard/Insi
 const ActiveCampaignsCard = React.lazy(() => import('@/components/dashboard/ActiveCampaignsCard').then(m => ({ default: m.ActiveCampaignsCard })));
 const InventoryManagerDashboardCard = React.lazy(() => import('@/components/dashboard/InventoryManagerDashboardCard').then(m => ({ default: m.InventoryManagerDashboardCard })));
 import { SEOMyTasksCard } from '@/components/dashboard/seo-workshop/SEOMyTasksCard';
+import { DailyBriefingCard } from '@/components/dashboard/DailyBriefingCard';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 
 const ROLE_MESSAGES = {
@@ -435,6 +436,11 @@ function DashboardSections({
 
   // Build section components map (excludes pinned cards - those are rendered separately)
   const sectionComponents = useMemo(() => ({
+    // Daily Briefing — top of dashboard for leadership
+    daily_briefing: isLeadership && (
+      <DailyBriefingCard tasks={tasks} />
+    ),
+
     // Moved to header (right side, under Customize)
     ai_insights: null,
     
