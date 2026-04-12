@@ -15,6 +15,7 @@ import { SectionDivider } from '@/components/marketing/SectionDivider';
 import { BeforeAfterShowcase } from '@/components/marketing/BeforeAfterShowcase';
 import { ToolConsolidation } from '@/components/marketing/ToolConsolidation';
 import { StruggleInput } from '@/components/marketing/StruggleInput';
+import { GrowthEstimator } from '@/components/marketing/GrowthEstimator';
 import { ZuraInANutshell } from '@/components/marketing/ZuraInANutshell';
 import { FounderQuote } from '@/components/marketing/FounderQuote';
 import { InsightToExecution } from '@/components/marketing/InsightToExecution';
@@ -30,6 +31,7 @@ export default function PlatformLanding() {
       <HeroSection />
       <DashboardShowcase />
       <StruggleInput />
+      <GrowthEstimator />
       <StatBar />
       <ChaosToClarity />
       <SectionDivider />
