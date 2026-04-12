@@ -1,20 +1,21 @@
 import { useState, useMemo } from 'react';
 import { format, addDays, isSameDay, startOfDay } from 'date-fns';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
 import type { BookingSurfaceTheme } from '@/hooks/useBookingSurfaceConfig';
+import { useAvailableSlots } from '@/hooks/useBookingAvailability';
 
 interface BookingDateTimePickerProps {
   theme: BookingSurfaceTheme;
+  orgId?: string;
+  stylistId?: string | null;
+  locationId?: string | null;
+  serviceName?: string | null;
   onSelect: (date: string, time: string) => void;
 }
 
-const TIME_SLOTS = [
-  '9:00 AM', '9:30 AM', '10:00 AM', '10:30 AM', '11:00 AM', '11:30 AM',
-  '12:00 PM', '12:30 PM', '1:00 PM', '1:30 PM', '2:00 PM', '2:30 PM',
-  '3:00 PM', '3:30 PM', '4:00 PM', '4:30 PM', '5:00 PM',
-];
-
-export function BookingDateTimePicker({ theme, onSelect }: BookingDateTimePickerProps) {
+export function BookingDateTimePicker({
+  theme, orgId, stylistId, locationId, serviceName, onSelect,
+}: BookingDateTimePickerProps) {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
   const [weekOffset, setWeekOffset] = useState(0);
@@ -23,6 +24,14 @@ export function BookingDateTimePicker({ theme, onSelect }: BookingDateTimePicker
     const today = startOfDay(new Date());
     return Array.from({ length: 7 }, (_, i) => addDays(today, weekOffset * 7 + i));
   }, [weekOffset]);
+
+  const dateStr = selectedDate ? format(selectedDate, 'yyyy-MM-dd') : null;
+
+  const { data: slotData, isLoading: slotsLoading } = useAvailableSlots(
+    orgId, stylistId ?? null, locationId ?? null, serviceName ?? null, dateStr,
+  );
+
+  const availableSlots = slotData?.slots ?? [];
 
   const handleTimeSelect = (time: string) => {
     if (!selectedDate) return;
@@ -89,25 +98,41 @@ export function BookingDateTimePicker({ theme, onSelect }: BookingDateTimePicker
           <p className="text-sm font-medium mb-3" style={{ color: theme.textColor }}>
             Available Times for {format(selectedDate, 'EEEE, MMMM d')}
           </p>
-          <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
-            {TIME_SLOTS.map((time) => {
-              const isActive = selectedTime === time;
-              return (
-                <button
-                  key={time}
-                  onClick={() => handleTimeSelect(time)}
-                  className="py-3 px-3 text-sm font-medium rounded-xl transition-all active:scale-95"
-                  style={{
-                    backgroundColor: isActive ? theme.primaryColor : theme.surfaceColor,
-                    color: isActive ? '#fff' : theme.textColor,
-                    border: `1.5px solid ${isActive ? theme.primaryColor : theme.borderColor}`,
-                  }}
-                >
-                  {time}
-                </button>
-              );
-            })}
-          </div>
+
+          {slotsLoading ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="w-5 h-5 animate-spin" style={{ color: theme.mutedTextColor }} />
+              <span className="ml-2 text-sm" style={{ color: theme.mutedTextColor }}>
+                Checking availability…
+              </span>
+            </div>
+          ) : availableSlots.length === 0 ? (
+            <div className="text-center py-8">
+              <p className="text-sm" style={{ color: theme.mutedTextColor }}>
+                No available times on this date. Try another day.
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+              {availableSlots.map((slot) => {
+                const isActive = selectedTime === slot.time;
+                return (
+                  <button
+                    key={slot.time}
+                    onClick={() => handleTimeSelect(slot.time)}
+                    className="py-3 px-3 text-sm font-medium rounded-xl transition-all active:scale-95"
+                    style={{
+                      backgroundColor: isActive ? theme.primaryColor : theme.surfaceColor,
+                      color: isActive ? '#fff' : theme.textColor,
+                      border: `1.5px solid ${isActive ? theme.primaryColor : theme.borderColor}`,
+                    }}
+                  >
+                    {slot.time}
+                  </button>
+                );
+              })}
+            </div>
+          )}
         </div>
       )}
     </div>
