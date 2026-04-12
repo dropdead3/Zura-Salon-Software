@@ -13,6 +13,7 @@ import { cn } from '@/lib/utils';
 import { useCapitalPolicySettings, useUpdateCapitalPolicySettings } from '@/hooks/useCapitalPolicySettings';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 import { PageExplainer } from '@/components/ui/PageExplainer';
+import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { Settings } from 'lucide-react';
 
 export default function CapitalSettings() {
@@ -82,15 +83,24 @@ export default function CapitalSettings() {
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-1.5">
-                    <Label className="font-sans text-sm">Min ROE Score</Label>
+                    <div className="flex items-center gap-1.5">
+                      <Label className="font-sans text-sm">Min ROE Score</Label>
+                      <MetricInfoTooltip description="Return on Expansion score. Opportunities below this threshold won't surface. Higher values mean only the most efficient growth levers appear. Default: 1.8" />
+                    </div>
                     <Input type="number" step="0.1" value={form.roe_threshold} onChange={e => setForm(f => ({ ...f, roe_threshold: parseFloat(e.target.value) || 0 }))} />
                   </div>
                   <div className="space-y-1.5">
-                    <Label className="font-sans text-sm">Min Confidence Score</Label>
+                    <div className="flex items-center gap-1.5">
+                      <Label className="font-sans text-sm">Min Confidence Score</Label>
+                      <MetricInfoTooltip description="How confident the system must be in the opportunity before showing it. Scale of 0–100. Lower values surface more opportunities but with less certainty. Default: 70" />
+                    </div>
                     <Input type="number" value={form.confidence_threshold} onChange={e => setForm(f => ({ ...f, confidence_threshold: parseInt(e.target.value) || 0 }))} />
                   </div>
                   <div className="space-y-1.5">
-                    <Label className="font-sans text-sm">Max Risk Level</Label>
+                    <div className="flex items-center gap-1.5">
+                      <Label className="font-sans text-sm">Max Risk Level</Label>
+                      <MetricInfoTooltip description="The highest risk tier allowed for surfaced opportunities. 'Low' is most conservative, 'High' allows riskier bets with higher potential upside." />
+                    </div>
                     <Select value={form.max_risk_level} onValueChange={v => setForm(f => ({ ...f, max_risk_level: v }))}>
                       <SelectTrigger><SelectValue /></SelectTrigger>
                       <SelectContent>
@@ -101,7 +111,10 @@ export default function CapitalSettings() {
                     </Select>
                   </div>
                   <div className="space-y-1.5">
-                    <Label className="font-sans text-sm">Max Concurrent Projects</Label>
+                    <div className="flex items-center gap-1.5">
+                      <Label className="font-sans text-sm">Max Concurrent Projects</Label>
+                      <MetricInfoTooltip description="Limits how many funded projects can be active at once per organization. Prevents overextension during growth phases." />
+                    </div>
                     <Input type="number" value={form.max_concurrent_projects} onChange={e => setForm(f => ({ ...f, max_concurrent_projects: parseInt(e.target.value) || 0 }))} />
                   </div>
                 </div>
@@ -119,11 +132,17 @@ export default function CapitalSettings() {
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-1.5">
-                    <Label className="font-sans text-sm">Cooldown After Decline (days)</Label>
+                    <div className="flex items-center gap-1.5">
+                      <Label className="font-sans text-sm">Cooldown After Decline (days)</Label>
+                      <MetricInfoTooltip description="After an opportunity is declined, it won't resurface for this many days. Prevents alert fatigue from repeated suggestions." />
+                    </div>
                     <Input type="number" value={form.cooldown_after_decline_days} onChange={e => setForm(f => ({ ...f, cooldown_after_decline_days: parseInt(e.target.value) || 0 }))} />
                   </div>
                   <div className="space-y-1.5">
-                    <Label className="font-sans text-sm">Cooldown After Underperformance (days)</Label>
+                    <div className="flex items-center gap-1.5">
+                      <Label className="font-sans text-sm">Cooldown After Underperformance (days)</Label>
+                      <MetricInfoTooltip description="If a funded project underperforms, new opportunities are suppressed for this period. Protects against compounding poor investments." />
+                    </div>
                     <Input type="number" value={form.cooldown_after_underperformance_days} onChange={e => setForm(f => ({ ...f, cooldown_after_underperformance_days: parseInt(e.target.value) || 0 }))} />
                   </div>
                 </div>
@@ -141,14 +160,20 @@ export default function CapitalSettings() {
               <CardContent className="space-y-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <Label className="font-sans text-sm">Allow Manager Initiation</Label>
+                    <div className="flex items-center gap-1.5">
+                      <Label className="font-sans text-sm">Allow Manager Initiation</Label>
+                      <MetricInfoTooltip description="When enabled, managers can submit capital funding requests for their location without requiring admin approval first." />
+                    </div>
                     <p className="text-xs text-muted-foreground font-sans">Managers can initiate operational funding</p>
                   </div>
                   <Switch checked={form.allow_manager_initiation} onCheckedChange={v => setForm(f => ({ ...f, allow_manager_initiation: v }))} />
                 </div>
                 <div className="flex items-center justify-between">
                   <div>
-                    <Label className="font-sans text-sm">Allow Stylist Micro-Funding</Label>
+                    <div className="flex items-center gap-1.5">
+                      <Label className="font-sans text-sm">Allow Stylist Micro-Funding</Label>
+                      <MetricInfoTooltip description="When enabled, stylists who meet the SPI and ORS thresholds below can access personal growth funding (e.g. education, chair expansion)." />
+                    </div>
                     <p className="text-xs text-muted-foreground font-sans">Stylists meeting thresholds can access personal growth funding</p>
                   </div>
                   <Switch checked={form.allow_stylist_microfunding} onCheckedChange={v => setForm(f => ({ ...f, allow_stylist_microfunding: v }))} />
@@ -156,11 +181,17 @@ export default function CapitalSettings() {
                 {form.allow_stylist_microfunding && (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
                     <div className="space-y-1.5">
-                      <Label className="font-sans text-sm">Stylist SPI Threshold</Label>
+                      <div className="flex items-center gap-1.5">
+                        <Label className="font-sans text-sm">Stylist SPI Threshold</Label>
+                        <MetricInfoTooltip description="Minimum Stylist Performance Index required. Measures revenue, retention, and productivity. Scale of 0–100." />
+                      </div>
                       <Input type="number" value={form.stylist_spi_threshold} onChange={e => setForm(f => ({ ...f, stylist_spi_threshold: parseInt(e.target.value) || 0 }))} />
                     </div>
                     <div className="space-y-1.5">
-                      <Label className="font-sans text-sm">Stylist ORS Threshold</Label>
+                      <div className="flex items-center gap-1.5">
+                        <Label className="font-sans text-sm">Stylist ORS Threshold</Label>
+                        <MetricInfoTooltip description="Minimum Ownership Readiness Score required. Measures leadership, consistency, and operational maturity. Scale of 0–100." />
+                      </div>
                       <Input type="number" value={form.stylist_ors_threshold} onChange={e => setForm(f => ({ ...f, stylist_ors_threshold: parseInt(e.target.value) || 0 }))} />
                     </div>
                   </div>
