@@ -1,4 +1,20 @@
 import { useState, useMemo } from 'react';
+import { DailyBriefingPanel } from '@/components/dashboard/DailyBriefingPanel';
+import { useTasks } from '@/hooks/useTasks';
+import { useEffectiveRoles } from '@/hooks/useEffectiveUser';
+import type { BriefingRoleContext } from '@/hooks/useDailyBriefingEngine';
+
+/** Inline wrapper that provides task + role data to DailyBriefingPanel inside Command Center */
+function DailyBriefingSection() {
+  const { tasks } = useTasks();
+  const roles = useEffectiveRoles();
+  const roleContext: BriefingRoleContext = roles.includes('super_admin') || roles.includes('admin')
+    ? 'owner'
+    : roles.includes('manager')
+    ? 'manager'
+    : 'stylist';
+  return <DailyBriefingPanel tasks={tasks} roleContext={roleContext} compact />;
+}
 import { VisibilityGate } from '@/components/visibility';
 import { EnforcementGateBanner } from '@/components/enforcement/EnforcementGateBanner';
 import { PinnableCard } from '@/components/dashboard/PinnableCard';
