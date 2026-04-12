@@ -24,7 +24,7 @@ const modules = [
 export function DockAppTab() {
   return (
     <div className="space-y-6">
-      <PlatformCard variant="glass" className="p-8">
+      <PlatformCard variant="glass" size="container" className="p-8">
         <div className="flex flex-col items-center text-center space-y-4">
           <div className="w-14 h-14 rounded-2xl bg-violet-500/15 border border-violet-500/25 flex items-center justify-center">
             <Tablet className="w-7 h-7 text-violet-400" />

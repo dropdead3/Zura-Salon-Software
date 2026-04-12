@@ -43,7 +43,7 @@ export function AccountNotesSection({ organizationId, organizationName }: Accoun
   return (
     <div className="space-y-6">
       {/* Add Note Form */}
-      <PlatformCard variant="glass">
+       <PlatformCard variant="glass" size="container">
         <PlatformCardHeader>
           <PlatformCardTitle className="flex items-center gap-2">
             <MessageSquare className="h-5 w-5 text-violet-400" />
@@ -70,7 +70,7 @@ export function AccountNotesSection({ organizationId, organizationName }: Accoun
       </PlatformCard>
       
       {/* Notes List */}
-      <PlatformCard variant="glass">
+      <PlatformCard variant="glass" size="container">
         <PlatformCardHeader>
           <PlatformCardTitle>
             Notes ({notes?.length || 0})
