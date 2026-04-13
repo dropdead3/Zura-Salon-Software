@@ -112,6 +112,8 @@ export function CheckoutSummarySheet({
       setDeclineReason('');
       setDeclineOtherText('');
       setRebooked(false);
+      setPaymentMethod('cash');
+      terminalFlow.reset();
     }
   }, [open]);
 
