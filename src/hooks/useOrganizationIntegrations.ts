@@ -35,7 +35,7 @@ export function useOrganizationIntegrations(organizationId: string | undefined) 
 
       const staffMappingPromise = supabase
         .from('phorest_staff_mapping')
-        .select('id, is_active, location_id')
+        .select('id, is_active')
         .eq('is_active', true);
 
       const payrollPromise = supabase
@@ -54,10 +54,7 @@ export function useOrganizationIntegrations(organizationId: string | undefined) 
       const phorestData = phorestResult.data || [];
       const branchIds = new Set(phorestData.map(l => l.phorest_branch_id).filter(Boolean));
       const branchCount = branchIds.size;
-      const locationIds = new Set(phorestData.map(l => l.id));
-      const staffMappingCount = (staffResult.data || []).filter(
-        m => m.is_active && m.location_id && locationIds.has(m.location_id)
-      ).length;
+      const staffMappingCount = (staffResult.data || []).length;
 
       // Process Payroll data
       const payrollData = payrollResult.data;
