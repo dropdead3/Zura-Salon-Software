@@ -68,7 +68,12 @@ Deno.serve(async (req) => {
     }
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
 
-    const appUrl = Deno.env.get("APP_URL") || "https://getzura.com";
+    // Derive app URL from request origin with fallback
+    const allowedOrigins = ["https://getzura.com", "https://id-preview--b06a5744-64b6-4629-9f76-e0e2cb73ea52.lovable.app"];
+    const requestOrigin = req.headers.get("origin") || req.headers.get("referer")?.replace(/\/+$/, "") || "";
+    const appUrl = allowedOrigins.includes(requestOrigin) || requestOrigin.endsWith(".lovable.app")
+      ? requestOrigin
+      : Deno.env.get("APP_URL") || "https://getzura.com";
 
     if (action === "create_account") {
       // Check if account already exists

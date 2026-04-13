@@ -42,21 +42,26 @@ export default function MyPay() {
 
   // Handle Stripe onboarding return
   useEffect(() => {
-    if (
-      onboardingHandled.current ||
-      searchParams.get('onboarding') !== 'complete' ||
-      !effectiveOrganization?.id
-    ) return;
+    if (onboardingHandled.current || !effectiveOrganization?.id) return;
+
+    const onboardingParam = searchParams.get('onboarding');
+    if (!onboardingParam) return;
 
     onboardingHandled.current = true;
-    refreshStatus.mutate(
-      { organization_id: effectiveOrganization.id },
-      {
-        onSuccess: () => {
-          toast.success('Bank account connected! Your payout status has been updated.');
-        },
-      }
-    );
+
+    if (onboardingParam === 'complete') {
+      refreshStatus.mutate(
+        { organization_id: effectiveOrganization.id },
+        {
+          onSuccess: () => {
+            toast.success('Bank account connected! Your payout status has been updated.');
+          },
+        }
+      );
+    } else if (onboardingParam === 'refresh') {
+      toast.warning('Your verification link expired. Please try connecting again.');
+    }
+
     // Clear the query param
     searchParams.delete('onboarding');
     setSearchParams(searchParams, { replace: true });
