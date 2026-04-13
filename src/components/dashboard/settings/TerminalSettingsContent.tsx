@@ -353,7 +353,7 @@ export function TerminalSettingsContent() {
       </div>
 
       {/* Tabs */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+      <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
         <TabsList>
           <TabsTrigger value="fleet" className="font-sans">Fleet</TabsTrigger>
           <TabsTrigger value="hardware" className="font-sans">Hardware</TabsTrigger>
@@ -362,48 +362,56 @@ export function TerminalSettingsContent() {
         </TabsList>
 
         <TabsContent value="fleet" className="mt-6">
-          <ZuraPayFleetTab
-            locations={locations}
-            activeLocationId={activeLocationId}
-            showAllLocations={showAllLocations}
-            isLocationConnected={isLocationConnected}
-            setShowAllLocations={setShowAllLocations}
-            setSelectedLocationId={setSelectedLocationId}
-            terminalLocations={terminalLocations}
-            tlLoading={tlLoading}
-            readers={readers}
-            readersLoading={readersLoading}
-            onCreateTerminalLocation={handleCreateTerminalLocation}
-            createTerminalLocationPending={createTerminalLocation.isPending}
-            onDeleteLocation={setDeleteLocationTarget}
-            onDeleteReader={setDeleteReaderTarget}
-            onRegisterReader={() => setRegisterOpen(true)}
-            useTerminalLocationsHook={useTerminalLocations}
-            useTerminalReadersHook={useTerminalReaders}
-            orgConnectStatus={connectStatus?.stripe_connect_status}
-            onStartConnect={() => orgId && connectMutation.mutate({
-              organizationId: orgId,
-              returnUrl: `${window.location.origin}${window.location.pathname}?tab=terminals&zura_pay_return=true`,
-              refreshUrl: `${window.location.origin}${window.location.pathname}?tab=terminals&zura_pay_refresh=true`,
-            })}
-            isConnecting={connectMutation.isPending}
-            onVerifyConnection={() => orgId && verifyMutation.mutate({ organizationId: orgId })}
-            isVerifying={verifyMutation.isPending}
-            onConnectLocation={(locationId) => orgId && connectLocationMutation.mutate({ organizationId: orgId, locationId })}
-            isConnectingLocation={connectLocationMutation.isPending}
-          />
+          <TabErrorBoundary tabName="Fleet">
+            <ZuraPayFleetTab
+              locations={locations}
+              activeLocationId={activeLocationId}
+              showAllLocations={showAllLocations}
+              isLocationConnected={isLocationConnected}
+              setShowAllLocations={setShowAllLocations}
+              setSelectedLocationId={setSelectedLocationId}
+              terminalLocations={terminalLocations}
+              tlLoading={tlLoading}
+              readers={readers}
+              readersLoading={readersLoading}
+              onCreateTerminalLocation={handleCreateTerminalLocation}
+              createTerminalLocationPending={createTerminalLocation.isPending}
+              onDeleteLocation={setDeleteLocationTarget}
+              onDeleteReader={setDeleteReaderTarget}
+              onRegisterReader={() => setRegisterOpen(true)}
+              useTerminalLocationsHook={useTerminalLocations}
+              useTerminalReadersHook={useTerminalReaders}
+              orgConnectStatus={connectStatus?.stripe_connect_status}
+              onStartConnect={() => orgId && connectMutation.mutate({
+                organizationId: orgId,
+                returnUrl: `${window.location.origin}${window.location.pathname}?tab=terminals&zura_pay_return=true`,
+                refreshUrl: `${window.location.origin}${window.location.pathname}?tab=terminals&zura_pay_refresh=true`,
+              })}
+              isConnecting={connectMutation.isPending}
+              onVerifyConnection={() => orgId && verifyMutation.mutate({ organizationId: orgId })}
+              isVerifying={verifyMutation.isPending}
+              onConnectLocation={(locationId) => orgId && connectLocationMutation.mutate({ organizationId: orgId, locationId })}
+              isConnectingLocation={connectLocationMutation.isPending}
+            />
+          </TabErrorBoundary>
         </TabsContent>
 
         <TabsContent value="hardware" className="mt-6">
-          <ZuraPayHardwareTab locations={locations} />
+          <TabErrorBoundary tabName="Hardware">
+            <ZuraPayHardwareTab locations={locations} />
+          </TabErrorBoundary>
         </TabsContent>
 
         <TabsContent value="connectivity" className="mt-6">
-          <ZuraPayConnectivityTab />
+          <TabErrorBoundary tabName="Connectivity">
+            <ZuraPayConnectivityTab />
+          </TabErrorBoundary>
         </TabsContent>
 
         <TabsContent value="display" className="mt-6">
-          <ZuraPayDisplayTab businessName={selectedLocation?.name || locations?.[0]?.name || 'Your Salon'} />
+          <TabErrorBoundary tabName="Display">
+            <ZuraPayDisplayTab businessName={selectedLocation?.name || locations?.[0]?.name || 'Your Salon'} />
+          </TabErrorBoundary>
         </TabsContent>
       </Tabs>
 
