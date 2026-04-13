@@ -1,60 +1,86 @@
 
 
-# Zura Pay Configurator — Self-Contained Location Management
+# Zura Pay Configurator — Platform vs Organization Audit
 
-## Problem
-The Zura Pay configurator currently filters locations by `stripe_account_id IS NOT NULL`. When no locations are connected, users see a dead-end empty state directing them to "Integrations" — but Zura Pay was already removed from Integrations. All Zura Pay management must be self-contained within this page.
+## Findings
 
-## Solution
-Fetch ALL org locations regardless of Stripe connection status, show connection status per location, and provide setup guidance within the configurator itself. Locations without `stripe_account_id` are shown as "not connected" with clear indicators — no more redirecting users elsewhere.
+### Issue 1: "Apps on Devices" and "Integration Paths" are platform-internal (REMOVE)
+**File:** `src/components/dashboard/settings/terminal/CheckoutDisplayConcept.tsx`
+
+The "Integration Paths" section (lines 108-135) and the "Apps on Devices deployment info" callout (lines 139-147) expose platform engineering details to organization users:
+- "Server-Driven Display" vs "Apps on Devices (Full Custom)" — orgs don't choose integration paths; Zura controls the reader experience
+- "Android APK via Stripe app review" — leaks Stripe's name and internal deployment process
+- "Phase 2" badge — orgs shouldn't see internal roadmap phases
+- Links to Stripe docs — orgs shouldn't be directed to Stripe documentation
+- "Apps require Stripe review before deployment" — internal process detail
+
+**Decision needed from you:** Can organizations customize their own terminal branding (splash screens, colors, logo), or does Zura control the display for all terminals uniformly? Based on the memory context ("Server-Driven Integration strategy" and "Zura Pay branded on-screen experience"), it appears Zura controls the display — orgs get the Zura-branded checkout experience, not custom branding.
+
+**Fix:** Remove the entire "Integration Paths" section and "Apps on Devices" callout. Replace with a simpler "Your Checkout Experience" description that explains what the org's customers will see (branded checkout with their business name, cart items, tap-to-pay). Keep the S710 simulator and device specs (orgs need to know what they're buying).
+
+### Issue 2: S710 Device Specifications may be too technical
+**File:** `src/components/dashboard/settings/terminal/CheckoutDisplayConcept.tsx` (lines 36-42)
+
+Specs like "Snapdragon 665 · 4GB", "Android 10 (AOSP)", "1080×1920 · 420dpi" are engineering details. Orgs care about: screen size, connectivity, and payment methods.
+
+**Fix:** Simplify specs to org-relevant details: Display size, Connectivity (WiFi + Cellular), Payment methods (Tap, Chip, Swipe), and Offline capability.
+
+### Issue 3: Stripe brand leakage in Hardware tab
+**File:** `src/components/dashboard/settings/terminal/ZuraPayHardwareTab.tsx` (line 183)
+
+`'stripe_api' ? 'Live pricing' : 'Published rate'` — The `stripe_api` source string is internal but only used as a conditional; the user-facing text says "Live pricing" which is fine. However, the tooltip (line 149) says "Pricing comes directly from the payment processor" — this is acceptable (doesn't name Stripe).
+
+**Status:** Acceptable — no visible Stripe branding.
+
+### Issue 4: Stripe docs links in INTEGRATION_PATHS data
+**File:** `src/components/dashboard/settings/terminal/CheckoutDisplayConcept.tsx` (lines 21, 32)
+
+Direct links to `docs.stripe.com` are present in the data. These aren't currently rendered as clickable links, but they exist in the code and could leak. Removing the Integration Paths section (Issue 1) resolves this.
+
+### Issue 5: Internal type name `LocationWithStripe`
+**File:** `src/components/dashboard/settings/terminal/ZuraPayFleetTab.tsx` (line 28)
+
+Minor code hygiene — the type is named `LocationWithStripe`. Not user-facing, but should be renamed for brand consistency (e.g., `LocationWithPayment`).
+
+---
 
 ## Changes
 
-### 1. Fetch all org locations (not just connected ones)
-**File:** `src/components/dashboard/settings/TerminalSettingsContent.tsx`
+### 1. Strip platform-internal content from Display tab
+**File:** `src/components/dashboard/settings/terminal/CheckoutDisplayConcept.tsx`
 
-Change `useZuraPayLocations` to remove the `.not('stripe_account_id', 'is', null)` filter. Also add `stripe_account_id`, `stripe_status`, and `stripe_payments_enabled` to the select. This means the configurator shows all locations, whether connected or not.
+- Remove `INTEGRATION_PATHS` array entirely
+- Remove "Integration Paths" section (lines 108-135)
+- Remove "Apps on Devices deployment info" callout (lines 139-147)
+- Remove unused imports (`Code2`, `Layers`, `Server`, `ArrowRight`)
+- Simplify `S710_SPECS` to org-relevant specs only (display size, connectivity, payments, offline)
+- Keep the S710 simulator and auto-play controls — these show the org what their customers will see
 
-### 2. Replace the dead-end empty state
-**File:** `src/components/dashboard/settings/TerminalSettingsContent.tsx`
-
-Remove the "No Zura Pay Locations" empty state that references Integrations. Instead, always render the tabs — the Fleet tab will differentiate between connected and unconnected locations.
-
-If the org has zero locations at all, show an empty state directing to "Locations" settings to create one first.
-
-### 3. Add connection status indicators to Fleet tab
+### 2. Rename internal Stripe types
 **File:** `src/components/dashboard/settings/terminal/ZuraPayFleetTab.tsx`
 
-- Add a connection status badge next to each location in the picker and summary: green "Active" for connected (`stripe_account_id` present + `stripe_status === 'active'`), amber "Pending" for in-progress, and outline "Not Connected" for unconnected locations.
-- When a user selects an unconnected location, show an informational card instead of the terminal locations/readers cards: "This location is not yet connected to Zura Pay. Contact your account manager to enable payment processing."
-- In the All Locations summary, add a "Status" column showing connection state per location.
-- Location picker dropdown items get small status dots (green/gray) for quick visual scanning.
+- Rename `LocationWithStripe` → `LocationWithPayment`
+- Update all references
 
-### 4. Update FleetTab props
-**File:** `src/components/dashboard/settings/terminal/ZuraPayFleetTab.tsx`
+### 3. Clean up Stripe references in CheckoutDisplayConcept tooltip
+**File:** `src/components/dashboard/settings/terminal/CheckoutDisplayConcept.tsx`
 
-Update the `locations` prop type to include `stripe_account_id: string | null`, `stripe_status: string | null`, and `stripe_payments_enabled: boolean | null` so the tab can render connection state.
-
-### 5. Guard terminal operations for unconnected locations
-**File:** `src/components/dashboard/settings/TerminalSettingsContent.tsx`
-
-Disable "Create Terminal Location" and "Register Reader" actions when the selected location has no `stripe_account_id`. The edge function already rejects these — this prevents confusing error messages.
-
-### 6. Update Hardware tab guard
-**File:** `src/components/dashboard/settings/terminal/ZuraPayHardwareTab.tsx`
-
-Show hardware purchasing regardless of location connection status (ordering hardware can happen before connecting). No change needed if it already works this way — just verify.
+- Update `MetricInfoTooltip` description to remove "server-driven integration" and "Phase 2" language
+- New: "Preview the branded Zura Pay checkout experience that appears on your S710 readers during transactions."
 
 ## Files Modified
 | File | Action |
 |------|--------|
-| `src/components/dashboard/settings/TerminalSettingsContent.tsx` | Remove `stripe_account_id` filter from query, update empty state logic, pass connection data to Fleet tab |
-| `src/components/dashboard/settings/terminal/ZuraPayFleetTab.tsx` | Add connection status badges, guard actions for unconnected locations, status column in summary |
+| `src/components/dashboard/settings/terminal/CheckoutDisplayConcept.tsx` | Remove Integration Paths, Apps on Devices, simplify specs, clean tooltip |
+| `src/components/dashboard/settings/terminal/ZuraPayFleetTab.tsx` | Rename `LocationWithStripe` → `LocationWithPayment` |
 
-## Technical Details
-- No migrations — all data already exists in the `locations` table
-- No edge function changes — the `manage-stripe-terminals` edge function already validates `stripe_account_id` server-side
-- The location picker now shows all locations with visual status indicators
-- Terminal location/reader CRUD is only enabled for connected locations (UI-level guard matching existing server-side guard)
-- `stripe_account_id` connection is handled externally (platform admin provisioning) — this plan does not add self-service Stripe Connect onboarding, just removes the broken "go to Integrations" reference
+## What stays
+- S710 simulator (org-facing — shows what customers see)
+- Device specs (simplified to what matters for purchasing decisions)
+- Fleet tab connection status badges
+- Hardware purchasing flow
+- Connectivity/NeverDown section
+- All operational functionality
+
+0 migrations, 0 edge function changes, 0 new dependencies.
 
