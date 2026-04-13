@@ -17,9 +17,12 @@ import {
   useGenerateTipDistributions,
   useConfirmTipDistribution,
   useBulkConfirmTipDistributions,
+  useProcessTipPayout,
 } from '@/hooks/useTipDistributions';
-import { Loader2, Calendar, RefreshCw, CheckCircle2, Clock, Banknote, Wallet } from 'lucide-react';
+import { useStaffPayoutAccounts } from '@/hooks/useStaffPayoutAccount';
+import { Loader2, Calendar, RefreshCw, CheckCircle2, Clock, Banknote, Wallet, AlertTriangle } from 'lucide-react';
 import { EmptyState } from '@/components/ui/empty-state';
+import { toast } from 'sonner';
 import {
   AlertDialog,
   AlertDialogCancel,
@@ -46,9 +49,18 @@ export function TipDistributionManager() {
   const [confirmTarget, setConfirmTarget] = useState<{ id: string; name: string; amount: number } | null>(null);
 
   const { data: distributions = [], isLoading } = useTipDistributions(selectedDate);
+  const { data: payoutAccounts = [] } = useStaffPayoutAccounts();
   const generateMutation = useGenerateTipDistributions();
   const confirmMutation = useConfirmTipDistribution();
   const bulkConfirmMutation = useBulkConfirmTipDistributions();
+  const payoutMutation = useProcessTipPayout();
+
+  // Build a lookup of verified payout accounts
+  const verifiedAccountMap = new Map(
+    payoutAccounts
+      .filter(a => a.payouts_enabled)
+      .map(a => [a.user_id, true])
+  );
 
   const pendingDistributions = distributions.filter(d => d.status === 'pending');
   const totalTips = distributions.reduce((sum, d) => sum + Number(d.total_tips), 0);
@@ -81,18 +93,60 @@ export function TipDistributionManager() {
 
   const handleBulkConfirm = () => {
     const ids = Array.from(selectedIds);
-    if (ids.length === 0) return;
-    bulkConfirmMutation.mutate({ ids, method: bulkMethod }, {
-      onSuccess: () => setSelectedIds(new Set()),
-    });
+    if (ids.length === 0 || !orgId) return;
+
+    if (bulkMethod === 'direct_deposit') {
+      // Validate all selected stylists have verified accounts
+      const selectedDists = distributions.filter(d => ids.includes(d.id));
+      const unverified = selectedDists.filter(d => !verifiedAccountMap.has(d.stylist_user_id));
+      if (unverified.length > 0) {
+        const names = unverified.map(d => d.stylist_name || 'Unknown').join(', ');
+        toast.error(`Cannot process direct deposit: ${names} ${unverified.length === 1 ? 'has' : 'have'} no verified payout account`);
+        return;
+      }
+      // Process each as a payout
+      let completed = 0;
+      const total = ids.length;
+      for (const id of ids) {
+        payoutMutation.mutate(
+          { distribution_id: id, organization_id: orgId },
+          {
+            onSuccess: () => {
+              completed++;
+              if (completed === total) setSelectedIds(new Set());
+            },
+          }
+        );
+      }
+    } else {
+      bulkConfirmMutation.mutate({ ids, method: bulkMethod }, {
+        onSuccess: () => setSelectedIds(new Set()),
+      });
+    }
   };
 
   const handleConfirmSingle = () => {
-    if (!confirmTarget) return;
-    confirmMutation.mutate({ id: confirmTarget.id, method: bulkMethod }, {
-      onSuccess: () => setConfirmTarget(null),
-    });
+    if (!confirmTarget || !orgId) return;
+
+    if (bulkMethod === 'direct_deposit') {
+      const dist = distributions.find(d => d.id === confirmTarget.id);
+      if (dist && !verifiedAccountMap.has(dist.stylist_user_id)) {
+        toast.error('This staff member has no verified payout account. They must connect their bank account first.');
+        return;
+      }
+      payoutMutation.mutate(
+        { distribution_id: confirmTarget.id, organization_id: orgId },
+        { onSuccess: () => setConfirmTarget(null) }
+      );
+    } else {
+      confirmMutation.mutate({ id: confirmTarget.id, method: bulkMethod }, {
+        onSuccess: () => setConfirmTarget(null),
+      });
+    }
   };
+
+  const isProcessing = confirmMutation.isPending || payoutMutation.isPending;
+  const isBulkProcessing = bulkConfirmMutation.isPending || payoutMutation.isPending;
 
   return (
     <Card>
@@ -173,10 +227,10 @@ export function TipDistributionManager() {
               size="sm"
               variant="outline"
               className="rounded-full"
-              disabled={selectedIds.size === 0 || bulkConfirmMutation.isPending}
+              disabled={selectedIds.size === 0 || isBulkProcessing}
               onClick={handleBulkConfirm}
             >
-              {bulkConfirmMutation.isPending && <Loader2 className="w-4 h-4 mr-1 animate-spin" />}
+              {isBulkProcessing && <Loader2 className="w-4 h-4 mr-1 animate-spin" />}
               <CheckCircle2 className="w-4 h-4 mr-1" />
               Confirm Selected ({selectedIds.size})
             </Button>
@@ -216,6 +270,7 @@ export function TipDistributionManager() {
               {distributions.map((dist) => {
                 const status = STATUS_STYLES[dist.status] || STATUS_STYLES.pending;
                 const isPending = dist.status === 'pending';
+                const hasPayoutAccount = verifiedAccountMap.has(dist.stylist_user_id);
                 return (
                   <TableRow key={dist.id}>
                     <TableCell>
@@ -226,7 +281,14 @@ export function TipDistributionManager() {
                         />
                       )}
                     </TableCell>
-                    <TableCell className="font-medium">{dist.stylist_name || 'Unknown'}</TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium">{dist.stylist_name || 'Unknown'}</span>
+                        {bulkMethod === 'direct_deposit' && isPending && !hasPayoutAccount && (
+                          <AlertTriangle className="w-3.5 h-3.5 text-warning" />
+                        )}
+                      </div>
+                    </TableCell>
                     <TableCell><BlurredAmount>{formatCurrency(Number(dist.total_tips))}</BlurredAmount></TableCell>
                     <TableCell><BlurredAmount>{formatCurrency(Number(dist.cash_tips))}</BlurredAmount></TableCell>
                     <TableCell><BlurredAmount>{formatCurrency(Number(dist.card_tips))}</BlurredAmount></TableCell>
@@ -267,14 +329,17 @@ export function TipDistributionManager() {
           <AlertDialogHeader>
             <AlertDialogTitle>Confirm Tip Distribution</AlertDialogTitle>
             <AlertDialogDescription>
-              Confirm {formatCurrency(confirmTarget?.amount || 0)} tip payout to {confirmTarget?.name} via {bulkMethod.replace('_', ' ')}?
+              {bulkMethod === 'direct_deposit'
+                ? `Process ${formatCurrency(confirmTarget?.amount || 0)} direct deposit payout to ${confirmTarget?.name}? This will initiate a bank transfer.`
+                : `Confirm ${formatCurrency(confirmTarget?.amount || 0)} tip payout to ${confirmTarget?.name} via ${bulkMethod.replace('_', ' ')}?`
+              }
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={confirmMutation.isPending}>Cancel</AlertDialogCancel>
-            <Button onClick={handleConfirmSingle} disabled={confirmMutation.isPending}>
-              {confirmMutation.isPending && <Loader2 className="w-4 h-4 mr-1 animate-spin" />}
-              Confirm
+            <AlertDialogCancel disabled={isProcessing}>Cancel</AlertDialogCancel>
+            <Button onClick={handleConfirmSingle} disabled={isProcessing}>
+              {isProcessing && <Loader2 className="w-4 h-4 mr-1 animate-spin" />}
+              {bulkMethod === 'direct_deposit' ? 'Process Payout' : 'Confirm'}
             </Button>
           </AlertDialogFooter>
         </AlertDialogContent>

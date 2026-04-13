@@ -2,7 +2,8 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
 Deno.serve(async (req) => {
@@ -94,7 +95,7 @@ Deno.serve(async (req) => {
       stylistMap.set(sid, existing);
     }
 
-    // Upsert distributions (uses unique index to prevent duplicates)
+    // Upsert distributions — skip confirmed/paid rows
     const rows = Array.from(stylistMap.entries()).map(([stylistId, tips]) => ({
       organization_id,
       location_id: location_id || null,
@@ -108,11 +109,12 @@ Deno.serve(async (req) => {
     }));
 
     let created = 0;
+    let skipped = 0;
     for (const row of rows) {
       // Check if already exists
       let existsQuery = supabase
         .from("tip_distributions")
-        .select("id")
+        .select("id, status")
         .eq("organization_id", row.organization_id)
         .eq("stylist_user_id", row.stylist_user_id)
         .eq("distribution_date", row.distribution_date);
@@ -126,7 +128,12 @@ Deno.serve(async (req) => {
       const { data: existing } = await existsQuery.maybeSingle();
 
       if (existing) {
-        // Update totals
+        // Skip updating confirmed or paid distributions
+        if (existing.status === "confirmed" || existing.status === "paid") {
+          skipped++;
+          continue;
+        }
+        // Only update pending distributions
         await supabase
           .from("tip_distributions")
           .update({
@@ -148,7 +155,12 @@ Deno.serve(async (req) => {
     }
 
     return new Response(
-      JSON.stringify({ success: true, distributions_created: created, total_stylists: rows.length }),
+      JSON.stringify({
+        success: true,
+        distributions_created: created,
+        total_stylists: rows.length,
+        skipped_confirmed: skipped,
+      }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {

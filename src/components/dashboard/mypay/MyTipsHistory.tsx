@@ -1,15 +1,15 @@
 import { useState } from 'react';
-import { format, subDays, startOfMonth } from 'date-fns';
+import { format, subMonths, startOfMonth, endOfMonth } from 'date-fns';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { tokens } from '@/lib/design-tokens';
-import { cn } from '@/lib/utils';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { useMyTipDistributions } from '@/hooks/useTipDistributions';
-import { Loader2, Banknote, CheckCircle2, Clock, Wallet } from 'lucide-react';
+import { Loader2, Banknote, CheckCircle2, Clock, Wallet, ChevronLeft, ChevronRight } from 'lucide-react';
 import { EmptyState } from '@/components/ui/empty-state';
 
 const STATUS_BADGE: Record<string, { label: string; variant: 'default' | 'secondary' | 'outline' }> = {
@@ -20,8 +20,12 @@ const STATUS_BADGE: Record<string, { label: string; variant: 'default' | 'second
 
 export function MyTipsHistory() {
   const { formatCurrency } = useFormatCurrency();
-  const [dateFrom] = useState(format(startOfMonth(new Date()), 'yyyy-MM-dd'));
-  const [dateTo] = useState(format(new Date(), 'yyyy-MM-dd'));
+  const [monthOffset, setMonthOffset] = useState(0);
+
+  const targetMonth = subMonths(new Date(), monthOffset);
+  const dateFrom = format(startOfMonth(targetMonth), 'yyyy-MM-dd');
+  const dateTo = format(endOfMonth(targetMonth), 'yyyy-MM-dd');
+  const monthLabel = format(targetMonth, 'MMMM yyyy');
 
   const { data: tips = [], isLoading } = useMyTipDistributions(dateFrom, dateTo);
 
@@ -42,16 +46,38 @@ export function MyTipsHistory() {
   return (
     <Card>
       <CardHeader>
-        <div className="flex items-center gap-3">
-          <div className={tokens.card.iconBox}>
-            <Banknote className="w-5 h-5 text-primary" />
-          </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <CardTitle className={tokens.card.title}>My Tips</CardTitle>
-              <MetricInfoTooltip description="Your daily tip distributions for the current pay period." />
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className={tokens.card.iconBox}>
+              <Banknote className="w-5 h-5 text-primary" />
             </div>
-            <CardDescription>Current period tip history</CardDescription>
+            <div>
+              <div className="flex items-center gap-2">
+                <CardTitle className={tokens.card.title}>My Tips</CardTitle>
+                <MetricInfoTooltip description="Your daily tip distributions for the selected period." />
+              </div>
+              <CardDescription>Tip history by month</CardDescription>
+            </div>
+          </div>
+          <div className="flex items-center gap-1">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-8 w-8 p-0"
+              onClick={() => setMonthOffset(prev => prev + 1)}
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </Button>
+            <span className="text-sm font-sans min-w-[120px] text-center">{monthLabel}</span>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-8 w-8 p-0"
+              disabled={monthOffset === 0}
+              onClick={() => setMonthOffset(prev => Math.max(0, prev - 1))}
+            >
+              <ChevronRight className="w-4 h-4" />
+            </Button>
           </div>
         </div>
       </CardHeader>
