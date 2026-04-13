@@ -38,6 +38,18 @@ const REASON_LABELS: Record<string, string> = {
   other: 'Other',
 };
 
+const VALID_TRANSITIONS: Record<string, string[]> = {
+  pending: ['pending', 'approved', 'denied'],
+  approved: ['approved', 'shipped', 'denied'],
+  shipped: ['shipped', 'delivered'],
+  delivered: ['delivered'],
+  denied: ['denied', 'pending'],
+};
+
+function getValidTransitions(currentStatus: string): string[] {
+  return VALID_TRANSITIONS[currentStatus] || Object.keys(STATUS_CONFIG);
+}
+
 function StatusBadge({ status }: { status: string }) {
   const config = STATUS_CONFIG[status] || STATUS_CONFIG.pending;
   const Icon = config.icon;
@@ -145,9 +157,10 @@ function ManageRequestDialog({ request, open, onOpenChange }: ManageDialogProps)
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {Object.entries(STATUS_CONFIG).map(([key, config]) => (
-                  <SelectItem key={key} value={key}>{config.label}</SelectItem>
-                ))}
+                {getValidTransitions(request.status).map((key) => {
+                  const config = STATUS_CONFIG[key];
+                  return <SelectItem key={key} value={key}>{config?.label || key}</SelectItem>;
+                })}
               </SelectContent>
             </Select>
           </div>
@@ -193,6 +206,7 @@ export function TerminalRequestsTable() {
   const [manageTarget, setManageTarget] = useState<TerminalHardwareRequest | null>(null);
 
   const pendingCount = requests?.filter((r) => r.status === 'pending').length || 0;
+  const totalRevenueCents = requests?.reduce((sum, r) => sum + (r.estimated_total_cents || 0), 0) || 0;
 
   return (
     <div className="rounded-xl border border-[hsl(var(--platform-border)/0.5)] bg-[hsl(var(--platform-bg-card)/0.6)] backdrop-blur-sm">
@@ -207,6 +221,9 @@ export function TerminalRequestsTable() {
             </h3>
             <p className="text-sm text-[hsl(var(--platform-foreground-muted))]">
               Incoming requests from organizations for terminal hardware
+              {totalRevenueCents > 0 && (
+                <span className="ml-2 text-emerald-400">· Est. Revenue: {formatCurrency(totalRevenueCents / 100)}</span>
+              )}
             </p>
           </div>
           {pendingCount > 0 && (
