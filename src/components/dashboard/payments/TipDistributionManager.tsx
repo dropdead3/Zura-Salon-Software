@@ -46,7 +46,7 @@ export function TipDistributionManager() {
   const [selectedDate, setSelectedDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkMethod, setBulkMethod] = useState('cash');
-  const [confirmTarget, setConfirmTarget] = useState<{ id: string; name: string; amount: number } | null>(null);
+  const [confirmTarget, setConfirmTarget] = useState<{ id: string; name: string; amount: number; method: string } | null>(null);
 
   const { data: distributions = [], isLoading } = useTipDistributions(selectedDate);
   const { data: payoutAccounts = [] } = useStaffPayoutAccounts();
@@ -91,7 +91,7 @@ export function TipDistributionManager() {
     });
   };
 
-  const handleBulkConfirm = () => {
+  const handleBulkConfirm = async () => {
     const ids = Array.from(selectedIds);
     if (ids.length === 0 || !orgId) return;
 
@@ -104,20 +104,24 @@ export function TipDistributionManager() {
         toast.error(`Cannot process direct deposit: ${names} ${unverified.length === 1 ? 'has' : 'have'} no verified payout account`);
         return;
       }
-      // Process each as a payout
-      let completed = 0;
-      const total = ids.length;
-      for (const id of ids) {
-        payoutMutation.mutate(
-          { distribution_id: id, organization_id: orgId },
-          {
-            onSuccess: () => {
-              completed++;
-              if (completed === total) setSelectedIds(new Set());
-            },
-          }
-        );
+      // Process all payouts concurrently with Promise.allSettled
+      const results = await Promise.allSettled(
+        ids.map(id =>
+          payoutMutation.mutateAsync({ distribution_id: id, organization_id: orgId })
+        )
+      );
+      const succeeded = results.filter(r => r.status === 'fulfilled').length;
+      const failed = results.filter(r => r.status === 'rejected').length;
+      if (failed > 0) {
+        toast.error(`${failed} payout(s) failed, ${succeeded} succeeded`);
       }
+      // Clear only successful IDs
+      const successIds = new Set(ids.filter((_, i) => results[i].status === 'fulfilled'));
+      setSelectedIds(prev => {
+        const next = new Set(prev);
+        successIds.forEach(id => next.delete(id));
+        return next;
+      });
     } else {
       bulkConfirmMutation.mutate({ ids, method: bulkMethod }, {
         onSuccess: () => setSelectedIds(new Set()),
@@ -127,8 +131,9 @@ export function TipDistributionManager() {
 
   const handleConfirmSingle = () => {
     if (!confirmTarget || !orgId) return;
+    const method = confirmTarget.method;
 
-    if (bulkMethod === 'direct_deposit') {
+    if (method === 'direct_deposit') {
       const dist = distributions.find(d => d.id === confirmTarget.id);
       if (dist && !verifiedAccountMap.has(dist.stylist_user_id)) {
         toast.error('This staff member has no verified payout account. They must connect their bank account first.');
@@ -139,7 +144,7 @@ export function TipDistributionManager() {
         { onSuccess: () => setConfirmTarget(null) }
       );
     } else {
-      confirmMutation.mutate({ id: confirmTarget.id, method: bulkMethod }, {
+      confirmMutation.mutate({ id: confirmTarget.id, method }, {
         onSuccess: () => setConfirmTarget(null),
       });
     }
