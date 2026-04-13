@@ -186,14 +186,18 @@ function FeeLedgerCard({ orgId, formatCurrency }: { orgId?: string; formatCurren
 
     const { data: card } = await supabase
       .from('client_cards_on_file')
-      .select('brand, last4, exp_month, exp_year')
+      .select('card_brand, card_last4, card_exp_month, card_exp_year')
       .eq('organization_id', orgId!)
       .eq('client_id', charge.clientId)
       .eq('is_default', true)
       .limit(1)
       .maybeSingle();
 
-    setClientCard(card as { brand: string; last4: string; exp_month: number; exp_year: number } | null);
+    if (card) {
+      setClientCard({ brand: card.card_brand ?? '', last4: card.card_last4 ?? '', exp_month: card.card_exp_month ?? 0, exp_year: card.card_exp_year ?? 0 });
+    } else {
+      setClientCard(null);
+    }
     setCardLoading(false);
   }, [orgId]);
 
