@@ -26,7 +26,6 @@ import {
   CheckCircle2, 
   XCircle,
   Calendar,
-  DollarSign,
   Users,
 } from 'lucide-react';
 import { usePhorestConnection } from '@/hooks/usePhorestSync';
@@ -75,15 +74,6 @@ export function IntegrationsTab() {
       icon: Calendar,
       status: 'not_connected',
       features: ['Calendar Sync', 'Meeting Reminders', 'Availability'],
-      available: false,
-    },
-    {
-      id: 'stripe',
-      name: 'Stripe',
-      description: 'Process payments and manage transactions.',
-      icon: DollarSign,
-      status: 'not_connected',
-      features: ['Payment Processing', 'Invoicing', 'Subscriptions'],
       available: false,
     },
     {
