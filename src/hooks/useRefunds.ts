@@ -57,6 +57,7 @@ export function useProcessRefund() {
       refundType,
       reason,
       notes,
+      stripePaymentIntentId,
     }: {
       organizationId: string;
       clientId: string | null;
@@ -67,6 +68,7 @@ export function useProcessRefund() {
       refundType: 'original_payment' | 'salon_credit' | 'gift_card';
       reason?: string;
       notes?: string;
+      stripePaymentIntentId?: string;
     }) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
@@ -93,6 +95,39 @@ export function useProcessRefund() {
         .single();
 
       if (refundError) throw refundError;
+
+      // If original_payment refund AND we have a Stripe PI, issue the refund through Stripe
+      if (refundType === 'original_payment' && stripePaymentIntentId) {
+        const { data: stripeResult, error: stripeError } = await supabase.functions.invoke(
+          'process-stripe-refund',
+          {
+            body: {
+              payment_intent_id: stripePaymentIntentId,
+              amount: Math.round(refundAmount * 100), // cents
+              organization_id: organizationId,
+              refund_record_id: refund.id,
+              reason: 'requested_by_customer',
+            },
+          }
+        );
+
+        if (stripeError) {
+          // Mark the refund record as failed but don't throw — the record exists for manual retry
+          await supabase
+            .from('refund_records')
+            .update({ status: 'rejected', notes: `Stripe refund failed: ${stripeError.message}` })
+            .eq('id', refund.id);
+          throw new Error(`Stripe refund failed: ${stripeError.message}`);
+        }
+
+        if (stripeResult?.error) {
+          await supabase
+            .from('refund_records')
+            .update({ status: 'rejected', notes: `Stripe refund failed: ${stripeResult.error}` })
+            .eq('id', refund.id);
+          throw new Error(`Stripe refund failed: ${stripeResult.error}`);
+        }
+      }
 
       // If refunding to credit or gift card, add to client balance
       if (clientId && (refundType === 'salon_credit' || refundType === 'gift_card')) {
@@ -122,7 +157,9 @@ export function useProcessRefund() {
       }
       
       const message = variables.refundType === 'original_payment'
-        ? 'Refund flagged for PhorestPay processing'
+        ? variables.stripePaymentIntentId
+          ? 'Refund issued through Stripe'
+          : 'Refund flagged for PhorestPay processing'
         : variables.refundType === 'salon_credit'
         ? 'Refund issued as salon credit'
         : 'Refund issued as gift card balance';

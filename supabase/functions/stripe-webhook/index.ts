@@ -562,6 +562,69 @@ async function handleSubscriptionUpdated(
   console.log(`Subscription status updated to ${mappedStatus} for ${org.name}`);
 }
 
+// Handler for terminal payment_intent.succeeded (G1 — eventual consistency for card-present payments)
+async function handleTerminalPaymentIntentSucceeded(
+  supabase: SupabaseClientAny,
+  paymentIntent: Record<string, unknown>
+) {
+  const metadata = paymentIntent.metadata as Record<string, string> | null;
+  const appointmentId = metadata?.appointment_id;
+  if (!appointmentId) {
+    console.log("payment_intent.succeeded has no appointment_id metadata — skipping");
+    return;
+  }
+
+  const piId = paymentIntent.id as string;
+  console.log(`Terminal PI succeeded: ${piId} for appointment ${appointmentId}`);
+
+  // Idempotent update — only update if not already paid
+  const { error } = await supabase
+    .from('appointments')
+    .update({
+      payment_status: 'paid',
+      payment_method: 'card_reader',
+      stripe_payment_intent_id: piId,
+    })
+    .eq('id', appointmentId)
+    .neq('payment_status', 'paid');
+
+  if (error) {
+    console.error("Failed to update appointment from PI webhook:", error);
+  } else {
+    console.log(`Appointment ${appointmentId} marked paid via webhook`);
+  }
+}
+
+// Handler for terminal payment_intent.payment_failed
+async function handleTerminalPaymentIntentFailed(
+  supabase: SupabaseClientAny,
+  paymentIntent: Record<string, unknown>
+) {
+  const metadata = paymentIntent.metadata as Record<string, string> | null;
+  const appointmentId = metadata?.appointment_id;
+  if (!appointmentId) {
+    console.log("payment_intent.payment_failed has no appointment_id metadata — skipping");
+    return;
+  }
+
+  const piId = paymentIntent.id as string;
+  const errorMsg = (paymentIntent.last_payment_error as Record<string, unknown>)?.message || 'Unknown';
+  console.log(`Terminal PI failed: ${piId} for appointment ${appointmentId} — ${errorMsg}`);
+
+  // Update appointment to reflect failed payment
+  const { error } = await supabase
+    .from('appointments')
+    .update({
+      payment_status: 'failed',
+    })
+    .eq('id', appointmentId)
+    .neq('payment_status', 'paid'); // Don't overwrite a paid status
+
+  if (error) {
+    console.error("Failed to update appointment from PI failure webhook:", error);
+  }
+}
+
 // Main handler
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -614,6 +677,14 @@ Deno.serve(async (req) => {
         
       case "customer.subscription.updated":
         await handleSubscriptionUpdated(supabase, event.data.object);
+        break;
+
+      case "payment_intent.succeeded":
+        await handleTerminalPaymentIntentSucceeded(supabase, event.data.object);
+        break;
+
+      case "payment_intent.payment_failed":
+        await handleTerminalPaymentIntentFailed(supabase, event.data.object);
         break;
         
       default:
