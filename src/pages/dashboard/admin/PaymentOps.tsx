@@ -1368,9 +1368,9 @@ export default function PaymentOps() {
                 ) : filteredRefunds.length === 0 ? (
                   <div className={tokens.empty.container}>
                     <Banknote className={tokens.empty.icon} />
-                    <h3 className={tokens.empty.heading}>No pending refunds</h3>
+                    <h3 className={tokens.empty.heading}>No {refundStatus === 'all' ? '' : refundStatus} refunds</h3>
                     <p className={tokens.empty.description}>
-                      All refund requests have been processed.
+                      {debouncedClientSearch ? 'No matching results for your search.' : 'No refund records found for this date range.'}
                     </p>
                   </div>
                 ) : (
@@ -1382,7 +1382,8 @@ export default function PaymentOps() {
                         <TableHead className={tokens.table.columnHeader}>Type</TableHead>
                         <TableHead className={tokens.table.columnHeader}>Reason</TableHead>
                         <TableHead className={tokens.table.columnHeader}>Requested</TableHead>
-                        <TableHead className={tokens.table.columnHeader}>Action</TableHead>
+                        {refundStatus !== 'pending' && <TableHead className={tokens.table.columnHeader}>Status</TableHead>}
+                        {(refundStatus === 'pending' || refundStatus === 'all') && <TableHead className={tokens.table.columnHeader}>Action</TableHead>}
                       </TableRow>
                     </TableHeader>
                     <TableBody>
