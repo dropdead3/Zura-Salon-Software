@@ -1,73 +1,92 @@
 
 
-# Zura Pay POS — Tenth-Pass Audit
+# Zura Pay POS — Ship-Readiness Audit
 
-## Status of Previous Fixes
+## What's Working
 
-The Ninth-Pass fixes (G1 webhook handlers, G2 refund integration, G4 atomic updates, G5 tip on reader display) are all properly implemented. The Operations Hub migration (PaymentOps page, TeamHub card, TillBalanceSummary navigation) is clean. Good structural progress.
+The core terminal checkout flow is solid: PI creation on Connected Accounts, server-driven reader display, payment polling with PI verification fallback, webhook handlers for `payment_intent.succeeded/failed`, till reconciliation against Stripe, deposit hold/capture/release, refund processing, and the Operations Hub consolidation. Good structural progress.
 
 ## Remaining Bugs
 
-### B1: No `transactions` table insert for terminal card payments (G3 — still open)
-**Severity: High — card payments are invisible in the Transactions hub and all financial reports.**
+### B1: Refund "Process" still broken — `payment_intent_id` never reaches the edge function
+**Severity: High — refunds will fail 100% of the time.**
 
-`handleCheckoutConfirm` in `Schedule.tsx` updates the `appointments` table but never inserts a row into `transactions`. The Transactions tab, till balance summary, and all sales reports query the `transactions` table. Terminal card payments are therefore completely absent from financial reporting.
+`PaymentOps.tsx` passes `original_transaction_id` and `amount` to `process-stripe-refund`, but that edge function requires `payment_intent_id` (line 68). Nobody resolves the transaction ID into a PI ID. The edge function doesn't look it up, and the client doesn't fetch it.
 
-**Fix:** After the appointment update succeeds in `handleCheckoutConfirm`, insert a `transactions` row with `type: 'service'`, the appointment ID, client ID, total amount, payment method (`card_reader`), and the PI ID. Alternatively, do this server-side in the `payment_intent.succeeded` webhook handler for reliability.
+**Fix:** Modify `process-stripe-refund` to accept `original_transaction_id` as an alternative, look up the `stripe_payment_intent_id` from `phorest_sales_transactions` (or `appointments`), and use that for the Stripe refund call. This is more reliable than having the client fetch and pass it.
 
-### B2: Reconciliation queries appointments without `organization_id` filter
-**Severity: Medium — cross-tenant data leakage risk.**
+### B2: `refund_amount` sent in dollars but edge function expects cents
+**Severity: High — refunds will be 100x smaller than intended.**
 
-In `reconcile-till/index.ts` line 108-112, the local appointments query filters by `appointment_date` and `stripe_payment_intent_id IS NOT NULL` but does **not** filter by `organization_id`. This means the reconciliation could match appointments from other organizations if they happen to share a date.
+`refund_records.refund_amount` is stored in dollars (matching display values). The edge function passes `amount` directly to `stripe.refunds.create()`, which expects cents. The conversion (`* 100`) is missing.
 
-**Fix:** Add `.eq("organization_id", organization_id)` to the appointments query in the `reconcile_daily` action.
+**Fix:** Add `Math.round(amount * 100)` conversion in the edge function before calling Stripe, or document and enforce cent storage in `refund_records`.
 
-### B3: `PaymentOps` refund "Process" button doesn't pass `payment_intent_id` or `amount`
-**Severity: Medium — refund processing will fail.**
+### B3: `as any` casts for deposit fields in `AppointmentDetailSheet`
+**Severity: Low — type safety gap, no runtime impact.**
 
-`handleProcessRefund` sends `{ refund_record_id, organization_id }` to the edge function, but `process-stripe-refund` requires `payment_intent_id`, `amount`, `organization_id`, and `refund_record_id`. The PI ID and amount are not fetched from the refund record before calling.
+Lines 1212-1230 use `(appointment as any).deposit_status` and `deposit_amount`. These fields exist on the `appointments` table but the component's local type doesn't include them.
 
-**Fix:** Either fetch the full refund record (with its linked transaction's PI ID and amount) before invoking the edge function, or modify the edge function to look up the PI ID from the refund record itself.
-
-### B4: `as any` cast on `AppointmentDetailSheet.tsx` for deposit fields
-**Severity: Low — type safety gap.**
-
-Line 1216 casts `(appointment as any).deposit_amount`. These fields should be on the appointment type by now.
+**Fix:** Extend the appointment type/interface used in `AppointmentDetailSheet` to include `deposit_required`, `deposit_amount`, `deposit_status`, and `deposit_stripe_payment_id`.
 
 ## Gaps
 
-### G1: No entry point to collect deposits via terminal
-The `useTerminalDeposit.collectDeposit` hook exists and the edge function supports `collect_deposit`, but there is no UI button to initiate deposit collection. The booking flow and appointment detail sheet don't surface a "Collect Deposit" action for appointments with `require_deposit = true`.
+### G1: No UI to collect deposits via terminal
+**Impact: High — the deposit flow is dead-ended.**
 
-**Fix:** Add a "Collect Deposit" button in `AppointmentDetailSheet` when the appointment has `require_deposit = true` and `deposit_status` is null/undefined. This button should invoke `collectDeposit` with the active reader.
+`useTerminalDeposit.collectDeposit` exists, the edge function handles `collect_deposit`, but there is zero UI to trigger it. The `AppointmentDetailSheet` shows deposit status but has no "Collect Deposit" button.
 
-### G2: Deposit hold expiration not handled
-Stripe pre-auth holds expire after ~7 days (card-present). If an appointment is booked more than 7 days out, the hold will expire silently. There's no mechanism to detect or re-collect expired holds.
+**Fix:** Add a "Collect Deposit" button in `AppointmentDetailSheet` when `deposit_required === true` and `deposit_status` is null/undefined. Wire it to `collectDeposit` using the active reader from `useActiveTerminalReader`.
 
-**Fix (lightweight):** Add a note in the PaymentOps deposit holds section warning about hold expiration windows. For a more robust solution, add a scheduled check or webhook for `payment_intent.canceled` (auto-expired) that updates `deposit_status = 'expired'`.
+### G2: Auto-capture at checkout doesn't verify PI status before capturing
+**Impact: Medium — capturing an expired hold will throw an unhandled Stripe error.**
 
-### G3: Webhook doesn't distinguish platform vs Connect events
-The `payment_intent.succeeded` handler runs for all PI events — including platform subscription payments. If a platform subscription PI has no `appointment_id` metadata, it returns early (correct), but this is fragile. Consider checking `event.account` to determine if the event is from a Connected Account.
+`CheckoutSummarySheet` calls `captureDeposit` during checkout, but doesn't check whether the hold is still valid. Card-present pre-auth holds expire after ~7 days. If the appointment is more than 7 days out, the capture will fail with a Stripe error and the checkout will break.
+
+**Fix:** Wrap the `captureDeposit` call in a try/catch with a graceful fallback (toast warning that deposit expired, proceed with full charge). Optionally add `payment_intent.canceled` to the webhook handler to auto-update `deposit_status = 'expired'`.
+
+### G3: Webhook doesn't handle `charge.refunded` events
+**Impact: Medium — refunds initiated outside Zura (e.g. Stripe Dashboard) won't update local records.**
+
+If someone issues a refund directly in Stripe, the local `refund_records` and appointment status won't reflect it. This creates reconciliation discrepancies.
+
+**Fix:** Add a `charge.refunded` handler in `stripe-webhook` that looks up the appointment by PI ID and updates the refund status.
+
+### G4: No Stripe Connect webhook endpoint registration
+**Impact: Critical for production — none of the terminal webhook handlers will fire.**
+
+The `stripe-webhook` edge function handles Connect events (checking `event.account`), but there's no documented or automated step to register this endpoint URL in the Stripe Dashboard as a Connect webhook listener. Without this, Stripe never sends events to the endpoint.
+
+**Fix:** This is a deployment/ops task, not a code change. Document the webhook URL (`https://<project-ref>.supabase.co/functions/v1/stripe-webhook`) and the required events (`payment_intent.succeeded`, `payment_intent.payment_failed`, `charge.refunded`) in a setup guide. Consider adding a "Webhook Status" indicator in Zura Pay Configurator settings.
+
+### G5: `TeamHub` badge query missing `organization_id` filter
+**Impact: Medium — badge count includes data from all organizations.**
+
+The pending refunds and active holds queries in `TeamHub.tsx` (lines 256-264) don't filter by `organization_id`, so the badge count is cross-tenant.
+
+**Fix:** Add `.eq('organization_id', orgId)` to both queries.
 
 ## Enhancements
 
-### E1: Confirmation dialogs for destructive actions
-The Capture/Release deposit buttons and Process Refund button execute immediately on click with no confirmation. These are irreversible financial operations that should require explicit confirmation.
+### E1: Reconciliation should show local totals alongside Stripe totals
+Currently the reconciliation result shows Stripe totals and "matched count" but not the local dollar total. Operators can't compare amounts without doing mental math.
 
-### E2: Optimistic badge count on Operations Hub card
-The TeamHub "Payment Operations" card has no live stat badge. Adding a lightweight count of `pending refunds + active holds` would give operators a reason to click through.
+### E2: Transaction record should include `organization_id`
+The B1 fix in `Schedule.tsx` inserts into `phorest_sales_transactions` but doesn't include `organization_id`, which will cause RLS issues if the table has org-scoped policies.
 
 ---
 
-## Immediate Changes
+## Changes
 
-| File | Change |
-|------|--------|
-| `supabase/functions/reconcile-till/index.ts` | Add `.eq("organization_id", organization_id)` to reconcile_daily appointments query (B2) |
-| `src/pages/dashboard/Schedule.tsx` | Insert `transactions` row after successful checkout for card payments (B1) |
-| `src/pages/dashboard/admin/PaymentOps.tsx` | Fix `handleProcessRefund` to fetch PI ID and amount from refund record before calling edge function (B3); add confirmation dialogs for Capture/Release/Process (E1) |
-| `src/pages/dashboard/admin/TeamHub.tsx` | Add stat badge to Payment Operations card showing pending refund + hold count (E2) |
-| `supabase/functions/stripe-webhook/index.ts` | Add `event.account` check to distinguish Connect vs platform events (G3) |
+| Priority | File | Change |
+|----------|------|--------|
+| **Critical** | `supabase/functions/process-stripe-refund/index.ts` | Accept `original_transaction_id` as alternative; look up PI ID from transactions/appointments; convert amount to cents (B1, B2) |
+| **Critical** | `src/pages/dashboard/admin/TeamHub.tsx` | Add `organization_id` filter to badge queries (G5) |
+| **High** | `src/components/dashboard/schedule/AppointmentDetailSheet.tsx` | Add "Collect Deposit" button for appointments with `deposit_required` and no held deposit (G1); fix `as any` casts (B3) |
+| **High** | `src/components/dashboard/schedule/CheckoutSummarySheet.tsx` | Wrap `captureDeposit` in try/catch with expired-hold fallback (G2) |
+| **High** | `src/pages/dashboard/Schedule.tsx` | Add `organization_id` to transaction insert (E2) |
+| **Medium** | `supabase/functions/stripe-webhook/index.ts` | Add `charge.refunded` handler (G3) |
+| **Low** | `src/pages/dashboard/admin/PaymentOps.tsx` | Add local totals to reconciliation results display (E1) |
 
-0 migrations, 0 new edge functions, 0 new dependencies.
+1 edge function update, 0 migrations, 0 new dependencies.
 
