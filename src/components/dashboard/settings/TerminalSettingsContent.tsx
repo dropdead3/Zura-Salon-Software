@@ -34,6 +34,7 @@ import { ZuraPayConnectivityTab } from './terminal/ZuraPayConnectivityTab';
 import { ZuraPayDisplayTab } from './terminal/ZuraPayDisplayTab';
 import { ZuraPayActivationChecklist } from './terminal/ZuraPayActivationChecklist';
 import { ZuraPayReceiptsTab } from './terminal/ZuraPayReceiptsTab';
+import { ZuraPayTippingTab } from './terminal/ZuraPayTippingTab';
 
 
 // Lightweight error boundary for individual tabs
@@ -397,6 +398,7 @@ export function TerminalSettingsContent() {
           <TabsTrigger value="hardware" className="font-sans">Hardware</TabsTrigger>
           <TabsTrigger value="connectivity" className="font-sans">Connectivity</TabsTrigger>
           <TabsTrigger value="display" className="font-sans">Display</TabsTrigger>
+          <TabsTrigger value="tipping" className="font-sans">Tipping</TabsTrigger>
           <TabsTrigger value="receipts" className="font-sans">Receipts</TabsTrigger>
         </TabsList>
 
@@ -450,6 +452,12 @@ export function TerminalSettingsContent() {
         <TabsContent value="display" className="mt-6">
           <TabErrorBoundary tabName="Display" key={activeTab === 'display' ? 'display-active' : 'display'}>
             <ZuraPayDisplayTab businessName={selectedLocation?.name || locations?.[0]?.name || 'Your Salon'} />
+          </TabErrorBoundary>
+        </TabsContent>
+
+        <TabsContent value="tipping" className="mt-6">
+          <TabErrorBoundary tabName="Tipping" key={activeTab === 'tipping' ? 'tipping-active' : 'tipping'}>
+            <ZuraPayTippingTab />
           </TabErrorBoundary>
         </TabsContent>
 
