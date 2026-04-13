@@ -1,83 +1,105 @@
 
 
-# Offline Payments & S710 Terminal — Audit Report
+# Terminal Hardware Order Enhancement — Pricing, Accessories, and Product Images
 
-## Findings: 3 Bugs, 2 Security Gaps, 7 Enhancements
+## Summary
 
----
-
-## Bugs
-
-### B1. `REASON_LABELS` on platform side missing `upgrade_to_s710`
-**File:** `TerminalRequestsTable.tsx:32-37`
-The org-side form includes `upgrade_to_s710` as a reason option, but the platform admin `REASON_LABELS` map omits it. Requests with that reason render the raw string `upgrade_to_s710` instead of a human label.
-
-### B2. `markForwarded` sets `isForwarding` synchronously — never actually true in render
-**File:** `useOfflinePaymentQueue.ts:76-87`
-`setIsForwarding(true)` is called, then `setIsForwarding(false)` in the same synchronous block. React batches these — `isForwarding` is never `true` during a render cycle. Any UI relying on this flag (e.g., a spinner) will never show.
-
-### B3. `OfflinePaymentStatus` shows `$` prefix but `pendingTotal` is in raw amount units — ambiguous currency
-**File:** `OfflinePaymentStatus.tsx:80`
-The display assumes USD (`$`) and divides by 100 (cents). But `useOfflinePaymentQueue` stores `amount` as whatever the caller passes — there's no currency enforcement. If amounts are already in dollars, the division produces wrong values. The `currency` field on `OfflinePayment` is never used in display.
+Enrich the terminal hardware request/purchase flow with:
+1. Device type and accessory selection in the order form
+2. Live pricing from Stripe SKU API (with fallback images)
+3. Product images wired from Stripe's hardware product data
+4. Platform admin revenue tracking on the requests table
 
 ---
 
-## Security Gaps
+## Technical Details
 
-### S1. Edge function `update_request` allows arbitrary status transitions
-**File:** `manage-terminal-requests/index.ts:189-233`
-A platform admin can set any status in any order (e.g., jump from `pending` directly to `delivered`, or revert `denied` to `pending`). There's no state machine enforcing valid transitions like `pending → approved → shipped → delivered`.
+### 1. Database Migration
 
-### S2. Edge function doesn't validate `location_id` belongs to the `organization_id`
-**File:** `manage-terminal-requests/index.ts:41-108`
-The `create_request` action accepts any `location_id` without confirming it belongs to the specified `organization_id`. A user with admin access to Org A could submit a request referencing a location in Org B.
+Add columns to `terminal_hardware_requests`:
+
+```sql
+ALTER TABLE public.terminal_hardware_requests
+  ADD COLUMN IF NOT EXISTS device_type TEXT NOT NULL DEFAULT 's710',
+  ADD COLUMN IF NOT EXISTS accessories JSONB DEFAULT '[]',
+  ADD COLUMN IF NOT EXISTS estimated_total_cents INTEGER DEFAULT 0;
+```
+
+The edge function already inserts `device_type: 's710'` but the column doesn't exist — this fixes that silent failure. `accessories` stores an array of `{id, name, quantity, unit_price_cents}`. `estimated_total_cents` records the price snapshot at request time.
+
+### 2. Edge Function: `terminal-hardware-order` — Return Images
+
+Update the `get_skus` action to:
+- Extract `hardware_product.images` from the Stripe SKU API response and include them in the returned data
+- Add fallback image URLs for the static/fallback path (Stripe's public product page images for S710, dock, hub, case)
+- Return accessories with image URLs in the response shape
+
+Updated response shape:
+```typescript
+{
+  source: 'stripe_api' | 'fallback',
+  skus: [{ id, product, amount, currency, status, description, image_url }],
+  accessories: [{ id, product, amount, currency, image_url }],
+  shipping_methods: [...],
+  pricing_note: string
+}
+```
+
+Fallback images will use Stripe's publicly hosted CDN URLs for the S710 product line (these are stable Stripe-hosted assets).
+
+### 3. Edge Function: `manage-terminal-requests` — Store Pricing + Accessories
+
+Update `create_request` action to accept and persist:
+- `device_type` (already sent, now stored)
+- `accessories` array with id/quantity
+- `estimated_total_cents` computed from SKU prices passed from the client
+
+Update `list_all_requests` to return the new fields so platform admin sees pricing.
+
+### 4. Hook: `useTerminalHardwareOrder.ts` — Expanded Types
+
+Add `image_url` to `HardwareSku` and `HardwareAccessory` interfaces. No logic change — the edge function already returns the data, UI just needs to consume it.
+
+### 5. Hook: `useTerminalRequests.ts` — Expanded Type
+
+Add `device_type`, `accessories`, `estimated_total_cents` to `TerminalHardwareRequest` interface.
+
+### 6. UI: `TerminalPurchaseCard` — Product Images + Accessory Selection
+
+Replace the generic `<Smartphone>` icon with the actual product image from Stripe:
+- Use `<img src={sku.image_url} />` with a fallback to the Smartphone icon if no image
+- Add an accessories section below the reader with checkboxes for dock, hub, case — each showing image, name, and price
+- Update the order summary to include selected accessories with line-item pricing
+- Pass accessories to the checkout mutation
+
+### 7. UI: `TerminalRequestsTable` (Platform Admin) — Revenue Column
+
+Add columns:
+- "Est. Total" showing `estimated_total_cents` formatted as currency
+- "Accessories" showing count or list of selected accessories
+- Update the ManageRequestDialog to show full order breakdown
+
+### 8. Purchase Dialog Enhancement
+
+The purchase dialog gets:
+- Product image for S710 at the top
+- Accessory cards with images, toggle selection, quantity
+- Running total that updates as accessories are added
+- All items passed as `items[]` to the `create_checkout` mutation (already supported)
 
 ---
 
-## Enhancements
+## Files Modified
 
-### E1. Add `device_type` column to platform admin table
-The edge function stores `device_type: 's710'` on every request, but neither the platform table nor the manage dialog surfaces it. Useful for future-proofing if other hardware becomes available.
+| File | Change |
+|------|--------|
+| Migration (new) | Add `device_type`, `accessories`, `estimated_total_cents` columns |
+| `supabase/functions/terminal-hardware-order/index.ts` | Return `image_url` from SKU API + fallback images |
+| `supabase/functions/manage-terminal-requests/index.ts` | Persist new fields on create |
+| `src/hooks/useTerminalHardwareOrder.ts` | Add `image_url` to interfaces |
+| `src/hooks/useTerminalRequests.ts` | Add new fields to interface |
+| `src/components/dashboard/settings/TerminalSettingsContent.tsx` | Product images, accessory selection, pricing breakdown |
+| `src/components/platform/stripe/TerminalRequestsTable.tsx` | Revenue column, accessories display |
 
-### E2. Show requester name on platform side
-The `TerminalHardwareRequest` interface has `requester_name` but it's never populated by the edge function. Platform admins see `requested_by` (a UUID) with no way to know who submitted the request.
-
-### E3. Marketing section hardcodes light-on-dark colors
-**File:** `NeverDownPayments.tsx`
-Text uses `text-white/90`, `text-slate-400`, `text-slate-500` — these don't adapt to light mode. The PlatformLanding page may be viewed in both themes. Should use theme-aware classes (`text-foreground`, `text-muted-foreground`) or confirm this section is dark-only with an explicit dark background.
-
-### E4. Service Worker caches `/dashboard` shell but Vite SPA doesn't serve static HTML at that path
-**File:** `sw.js:9`
-`PRECACHE_ASSETS` includes `/dashboard` which will fail during `cache.addAll()` in dev (404). The SPA serves everything from `/index.html`. Should precache `/index.html` and use it as the navigation fallback.
-
-### E5. No org-side notification when request status changes
-When a platform admin approves, ships, or denies a request, the org side only discovers the change by polling the query (30s stale time). Consider enabling realtime on `terminal_hardware_requests` so org users see status updates live.
-
-### E6. `useOfflineStatus` recreates the event handler on every `offlineSince` change
-**File:** `useOfflineStatus.ts:97`
-The `useEffect` that attaches `online`/`offline` listeners has `[offlineSince]` in its dependency array. Every time `offlineSince` changes, listeners are removed and re-added. This is a minor perf issue — the closure can capture `offlineSince` via a ref instead.
-
-### E7. Offline event timeline has no "clear history" action
-The `OfflinePaymentStatus` component shows the last 5 events but provides no way to clear old events. Over time, localStorage accumulates up to 50 entries with no user-facing management.
-
----
-
-## Plan
-
-| # | Fix | File(s) |
-|---|---|---|
-| B1 | Add `upgrade_to_s710: 'Upgrade to S710'` to `REASON_LABELS` | `TerminalRequestsTable.tsx` |
-| B2 | Make `markForwarded` async or use a `setTimeout(0)` to let the `isForwarding=true` state render | `useOfflinePaymentQueue.ts` |
-| B3 | Use the stored `currency` field in display and default to cents convention with a comment | `OfflinePaymentStatus.tsx` |
-| S1 | Add valid transition map in edge function: `pending→approved/denied`, `approved→shipped`, `shipped→delivered` | `manage-terminal-requests/index.ts` |
-| S2 | Validate `location_id` belongs to `organization_id` before insert | `manage-terminal-requests/index.ts` |
-| E1 | Add Device column to platform table showing `device_type` | `TerminalRequestsTable.tsx` |
-| E2 | Join `profiles.display_name` in `list_all_requests` and surface in table | `manage-terminal-requests/index.ts`, `TerminalRequestsTable.tsx` |
-| E3 | Wrap NeverDownPayments section in explicit dark bg container and keep hardcoded colors, or convert to theme tokens | `NeverDownPayments.tsx` |
-| E4 | Replace `/dashboard` with `/index.html` in precache and add navigation fallback to `index.html` | `sw.js` |
-| E5 | Enable realtime on `terminal_hardware_requests` for org-side live status updates | Migration + `useTerminalRequests.ts` |
-| E6 | Use a ref for `offlineSince` to stabilize the listener effect | `useOfflineStatus.ts` |
-| E7 | Add "Clear history" button to offline event timeline | `OfflinePaymentStatus.tsx` |
-
-8 files modified. 1 migration (realtime publication). No new dependencies.
+7 files touched. 1 migration. No new dependencies.
 
