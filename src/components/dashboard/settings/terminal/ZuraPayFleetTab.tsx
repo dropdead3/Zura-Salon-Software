@@ -25,7 +25,7 @@ interface Reader {
   ip_address?: string;
 }
 
-type LocationWithStripe = {
+type LocationWithPayment = {
   id: string;
   name: string;
   stripe_account_id: string | null;
