@@ -1,105 +1,70 @@
 
 
-# Terminal Hardware Order Enhancement — Pricing, Accessories, and Product Images
+# Terminal Hardware Order — Bug, Gap & Enhancement Audit
 
-## Summary
+## Bugs Found
 
-Enrich the terminal hardware request/purchase flow with:
-1. Device type and accessory selection in the order form
-2. Live pricing from Stripe SKU API (with fallback images)
-3. Product images wired from Stripe's hardware product data
-4. Platform admin revenue tracking on the requests table
+### 1. Accessories missing on live Stripe API path (Critical)
+**File:** `supabase/functions/terminal-hardware-order/index.ts`, lines 109-114
 
----
+When the Stripe Hardware SKUs API succeeds, the response returns `skus` and `s710_skus` but **never returns `accessories`**. Only the fallback path (line 138-142) includes accessories. The UI reads `skuData?.accessories` which will be `undefined` on the live API path, meaning organizations with API access see no accessory options.
 
-## Technical Details
+**Fix:** After filtering S710 SKUs from the API response, also filter non-reader products (hub, dock, case) into a separate `accessories` array. Use product name matching to classify.
 
-### 1. Database Migration
+### 2. React `useEffect` missing dependencies
+**File:** `TerminalSettingsContent.tsx`, line 344
 
-Add columns to `terminal_hardware_requests`:
+The payment verification `useEffect` references `verifyPayment` and `setSearchParams` but they're not in the dependency array. This can cause stale closures.
 
-```sql
-ALTER TABLE public.terminal_hardware_requests
-  ADD COLUMN IF NOT EXISTS device_type TEXT NOT NULL DEFAULT 's710',
-  ADD COLUMN IF NOT EXISTS accessories JSONB DEFAULT '[]',
-  ADD COLUMN IF NOT EXISTS estimated_total_cents INTEGER DEFAULT 0;
-```
+**Fix:** Add proper deps or wrap in refs.
 
-The edge function already inserts `device_type: 's710'` but the column doesn't exist — this fixes that silent failure. `accessories` stores an array of `{id, name, quantity, unit_price_cents}`. `estimated_total_cents` records the price snapshot at request time.
+### 3. Manage Dialog allows invalid status transitions
+**File:** `TerminalRequestsTable.tsx`, lines 143-152
 
-### 2. Edge Function: `terminal-hardware-order` — Return Images
+The status dropdown shows all 5 statuses regardless of the current status. The backend enforces valid transitions (`pending → approved/denied`, `approved → shipped/denied`, etc.) and will reject invalid ones, but the UI gives no indication of what's allowed.
 
-Update the `get_skus` action to:
-- Extract `hardware_product.images` from the Stripe SKU API response and include them in the returned data
-- Add fallback image URLs for the static/fallback path (Stripe's public product page images for S710, dock, hub, case)
-- Return accessories with image URLs in the response shape
+**Fix:** Filter the status `<Select>` options to only show valid next states based on `request.status`, using the same transition map the backend uses.
 
-Updated response shape:
-```typescript
-{
-  source: 'stripe_api' | 'fallback',
-  skus: [{ id, product, amount, currency, status, description, image_url }],
-  accessories: [{ id, product, amount, currency, image_url }],
-  shipping_methods: [...],
-  pricing_note: string
-}
-```
+## Gaps Found
 
-Fallback images will use Stripe's publicly hosted CDN URLs for the S710 product line (these are stable Stripe-hosted assets).
+### 4. Order history rows don't show accessories or pricing
+**File:** `TerminalSettingsContent.tsx`, lines 472-501
 
-### 3. Edge Function: `manage-terminal-requests` — Store Pricing + Accessories
+Each order history row shows "S710 Reader × qty" but never displays accessories or the estimated total, even though the data is now stored.
 
-Update `create_request` action to accept and persist:
-- `device_type` (already sent, now stored)
-- `accessories` array with id/quantity
-- `estimated_total_cents` computed from SKU prices passed from the client
+**Fix:** Show accessories count and `estimated_total_cents` formatted as currency in the order history rows.
 
-Update `list_all_requests` to return the new fields so platform admin sees pricing.
+### 5. Purchase flow doesn't create a `terminal_hardware_request` record
+The `TerminalPurchaseCard` goes directly to Stripe Checkout but never calls `create_request` on `manage-terminal-requests`. This means the platform admin `TerminalRequestsTable` has no visibility into checkout-based orders — only manually submitted requests appear there.
 
-### 4. Hook: `useTerminalHardwareOrder.ts` — Expanded Types
+**Fix:** Before redirecting to checkout, create a `terminal_hardware_request` with status `pending` and persist `device_type`, `accessories`, and `estimated_total_cents`. After successful payment verification, update the request status to `approved`/`shipped`.
 
-Add `image_url` to `HardwareSku` and `HardwareAccessory` interfaces. No logic change — the edge function already returns the data, UI just needs to consume it.
+### 6. Fallback CDN image URLs may not be publicly accessible
+The `b.stripecdn.com/terminal-ui-resources/...` URLs are Stripe's internal CDN. These may return 403 for unauthenticated requests.
 
-### 5. Hook: `useTerminalRequests.ts` — Expanded Type
+**Fix:** Add `onError` handlers on all `<img>` tags to fall back to the `<Smartphone>` / `<Package>` icon if the image fails to load. Already partially done but should be explicit with an error state.
 
-Add `device_type`, `accessories`, `estimated_total_cents` to `TerminalHardwareRequest` interface.
+## Enhancements
 
-### 6. UI: `TerminalPurchaseCard` — Product Images + Accessory Selection
+### 7. Accessories quantity selector
+Currently accessories toggle on/off with quantity locked at 1. For hub/dock/case, quantity should match reader quantity or be independently selectable (e.g., 3 readers + 3 docks).
 
-Replace the generic `<Smartphone>` icon with the actual product image from Stripe:
-- Use `<img src={sku.image_url} />` with a fallback to the Smartphone icon if no image
-- Add an accessories section below the reader with checkboxes for dock, hub, case — each showing image, name, and price
-- Update the order summary to include selected accessories with line-item pricing
-- Pass accessories to the checkout mutation
+**Fix:** Add a small quantity stepper (1-5) for each selected accessory in the purchase dialog.
 
-### 7. UI: `TerminalRequestsTable` (Platform Admin) — Revenue Column
+### 8. Platform admin revenue summary
+The `TerminalRequestsTable` shows individual request totals but has no aggregate view.
 
-Add columns:
-- "Est. Total" showing `estimated_total_cents` formatted as currency
-- "Accessories" showing count or list of selected accessories
-- Update the ManageRequestDialog to show full order breakdown
-
-### 8. Purchase Dialog Enhancement
-
-The purchase dialog gets:
-- Product image for S710 at the top
-- Accessory cards with images, toggle selection, quantity
-- Running total that updates as accessories are added
-- All items passed as `items[]` to the `create_checkout` mutation (already supported)
+**Fix:** Add a summary row or header stat showing total estimated revenue across filtered requests.
 
 ---
 
 ## Files Modified
 
-| File | Change |
-|------|--------|
-| Migration (new) | Add `device_type`, `accessories`, `estimated_total_cents` columns |
-| `supabase/functions/terminal-hardware-order/index.ts` | Return `image_url` from SKU API + fallback images |
-| `supabase/functions/manage-terminal-requests/index.ts` | Persist new fields on create |
-| `src/hooks/useTerminalHardwareOrder.ts` | Add `image_url` to interfaces |
-| `src/hooks/useTerminalRequests.ts` | Add new fields to interface |
-| `src/components/dashboard/settings/TerminalSettingsContent.tsx` | Product images, accessory selection, pricing breakdown |
-| `src/components/platform/stripe/TerminalRequestsTable.tsx` | Revenue column, accessories display |
+| File | Changes |
+|------|---------|
+| `supabase/functions/terminal-hardware-order/index.ts` | Extract accessories from API response; fix live path |
+| `src/components/dashboard/settings/TerminalSettingsContent.tsx` | Fix useEffect deps; add img onError; show accessories in history; create request before checkout; accessory qty stepper |
+| `src/components/platform/stripe/TerminalRequestsTable.tsx` | Filter status dropdown to valid transitions; add revenue summary |
 
-7 files touched. 1 migration. No new dependencies.
+3 files, 0 migrations, 0 new dependencies.
 
