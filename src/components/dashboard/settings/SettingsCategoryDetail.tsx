@@ -434,7 +434,13 @@ export function SettingsCategoryDetail({ activeCategory, categoryLabel, category
 
   const removeUser = async (userId: string) => {
     if (userId === user?.id) { toast({ variant: 'destructive', title: 'Error', description: "You can't remove yourself." }); return; }
-    if (!confirm('Are you sure you want to deactivate this user?')) return;
+    setDeactivateUserId(userId);
+  };
+
+  const confirmDeactivateUser = async () => {
+    const userId = deactivateUserId;
+    if (!userId) return;
+    setDeactivateUserId(null);
     const { error } = await supabase.from('employee_profiles').update({ is_active: false }).eq('user_id', userId);
     if (!error) {
       setUsers(prev => prev.filter(u => u.user_id !== userId));
