@@ -36,8 +36,8 @@ export function ZuraPayHardwareTab({ locations }: ZuraPayHardwareTabProps) {
   const orgId = effectiveOrganization?.id;
   const { data: connectStatus } = useOrgConnectStatus(orgId);
   const isOrgConnected = connectStatus?.stripe_connect_status === 'active';
-  const { data: requests, isLoading: requestsLoading } = useTerminalRequests(orgId);
-  const { data: skuData, isLoading: skuLoading } = useTerminalHardwareSkus();
+  const { data: requests, isLoading: requestsLoading } = useTerminalRequests(isOrgConnected ? orgId : undefined);
+  const { data: skuData, isLoading: skuLoading } = useTerminalHardwareSkus('US', isOrgConnected);
   const createCheckout = useCreateTerminalCheckout();
   const createRequest = useCreateTerminalRequest();
   const verifyPayment = useVerifyTerminalPayment();
@@ -134,8 +134,23 @@ export function ZuraPayHardwareTab({ locations }: ZuraPayHardwareTabProps) {
         notes: `Purchase checkout — ${selectedAccList.length} accessor${selectedAccList.length === 1 ? 'y' : 'ies'} selected`,
       },
       {
-        onSuccess: () => { createCheckout.mutate({ organizationId: orgId, locationId: reqLocationId || undefined, items }); },
-        onError: () => { console.warn('[ZuraPay] Hardware request record failed — proceeding with checkout anyway'); createCheckout.mutate({ organizationId: orgId, locationId: reqLocationId || undefined, items }); },
+        onSuccess: () => {
+          const currentPath = window.location.pathname;
+          createCheckout.mutate({
+            organizationId: orgId, locationId: reqLocationId || undefined, items,
+            successUrl: `${window.location.origin}${currentPath}?tab=terminals`,
+            cancelUrl: `${window.location.origin}${currentPath}?tab=terminals`,
+          });
+        },
+        onError: () => {
+          console.warn('[ZuraPay] Hardware request record failed — proceeding with checkout anyway');
+          const currentPath = window.location.pathname;
+          createCheckout.mutate({
+            organizationId: orgId, locationId: reqLocationId || undefined, items,
+            successUrl: `${window.location.origin}${currentPath}?tab=terminals`,
+            cancelUrl: `${window.location.origin}${currentPath}?tab=terminals`,
+          });
+        },
       }
     );
   };
