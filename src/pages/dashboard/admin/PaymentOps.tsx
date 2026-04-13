@@ -1344,7 +1344,7 @@ export default function PaymentOps() {
 
           {/* Disputes */}
           <TabsContent value="disputes">
-            <DisputesCard orgId={orgId} formatCurrency={formatCurrency} />
+            <DisputesCard orgId={orgId} formatCurrency={formatCurrency} dateFrom={dateFrom} dateTo={dateTo} disputeStatus={disputeStatus} clientSearch={debouncedClientSearch} />
           </TabsContent>
         </Tabs>
 
