@@ -1044,7 +1044,7 @@ Deno.serve(async (req) => {
 
       // --- Connect terminal events ---
       case "payment_intent.succeeded":
-        await handleTerminalPaymentIntentSucceeded(supabase, event.data.object);
+        await handlePaymentIntentSucceeded(supabase, event.data.object);
         break;
 
       case "payment_intent.payment_failed":
