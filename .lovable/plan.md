@@ -1,69 +1,49 @@
 
 
-# Build Analysis: Gaps, Bugs & Enhancements
+# Gaps & Bugs: Staff Tip Payout Feature
 
-## Bugs / Critical Gaps
+## Critical Gaps
 
-### 1. Webhook handler missing `account.updated` for staff accounts
-The plan called for handling `account.updated` in `stripe-webhook/index.ts` to sync staff payout account verification status. **This was never implemented.** The webhook has zero references to `staff_payout_accounts`. This means after a staff member completes Stripe onboarding, their status will remain "pending" in the database until they manually click "Refresh" — a poor experience and a reliability gap.
+### 1. No feature gating — MyPayoutSetup and My Tips always render
+`MyPayoutSetup` and `MyTipsHistory` render unconditionally on the "My Tips" tab. There is **no check** for whether the org admin has enabled tip distributions or selected `direct_deposit` as the default method. A stylist sees "Connect Bank Account" even if the org has tip distributions disabled or uses cash-only payouts.
 
-### 2. `staff-payout-onboarding` RLS conflict on `create_account`
-The edge function uses a **service-role client** to upsert into `staff_payout_accounts`, but the RLS INSERT policy only allows **org admins**. When a regular staff member triggers onboarding, the service-role client bypasses RLS — this works, but if any future code path uses the anon/user client to insert, it will silently fail. The migration should also have a policy allowing staff to insert their own row (`auth.uid() = user_id`), or the architecture should be explicitly documented as service-role-only writes.
+**Fix**: Read the `tip_distribution_policy` setting. Hide the entire "My Tips" tab when `enabled === false`. Show `MyPayoutSetup` only when the policy's `default_method` is `direct_deposit` (or offer it as opt-in regardless, with contextual copy explaining the org supports direct deposit).
 
-### 3. `generate-tip-distributions` CORS headers incomplete
-Line 6 of `generate-tip-distributions/index.ts` has a minimal CORS header set missing the modern Supabase client headers (`x-supabase-client-platform`, etc.). The other two edge functions include them. This could cause CORS failures on newer SDK versions.
+### 2. Onboarding opens in new tab — return URL broken
+`handleConnect` calls `window.open(url, '_blank')`. The return URL from Stripe includes `?onboarding=complete`, but it returns to the **new tab**, not the original. The `useEffect` on the original tab never fires. The user lands on a fresh page load in the new tab with the query param, but if they navigate away before the effect runs, the status never refreshes.
 
-### 4. `generate-tip-distributions` overwrites confirmed distributions
-When re-generating for a date, the edge function updates `total_tips`, `cash_tips`, `card_tips` on existing rows regardless of status. If a manager has already **confirmed** a distribution, re-generating will silently overwrite the amounts without resetting the confirmation. This should skip rows with `status != 'pending'`.
+**Fix**: Use `window.location.href` instead of `window.open` to keep the user in the same tab, or add the onboarding detection to `MyPayoutSetup` itself (not just the parent page).
 
-### 5. `TipDistributionManager` — direct deposit confirms without invoking payout
-Selecting "Direct Deposit" as the method and clicking "Confirm" just updates the `status` to `confirmed` with `method = 'direct_deposit'` via a regular DB update. It does **not** invoke `process-tip-payout`. The edge function exists but is never called from the UI. Direct deposit confirmations should trigger the payout edge function.
+### 3. No admin visibility into staff payout account statuses
+Admins have no UI to see which stylists have connected bank accounts, who is verified, and who hasn't started. When confirming direct deposit distributions, they get a warning icon but no centralized view.
 
-### 6. Bulk confirm with direct deposit has no account validation
-Bulk confirming with method `direct_deposit` does not check whether each stylist has a verified payout account. Could confirm distributions that can never actually be paid.
+**Fix**: Add a "Staff Payout Accounts" section to Payment Ops or the Tip Distribution Manager showing each stylist's connection status, with the ability to nudge incomplete onboarding.
+
+### 4. Onboarding return `useEffect` can double-fire
+The effect depends on `searchParams` and `effectiveOrganization?.id` but mutates `searchParams` synchronously. React 18 strict mode or fast re-renders could trigger the mutation twice. The `refreshStatus.mutate` call doesn't guard against being already in-flight.
+
+**Fix**: Add a `useRef` guard to ensure the effect runs exactly once.
+
+### 5. Stylist doesn't know *why* they should connect
+The `MyPayoutSetup` empty state says "Connect your bank account to receive daily tip payouts directly" but doesn't show how much they've earned in pending tips. There's no motivation — a stylist with $0 tips sees the same prompt as one with $200 pending.
+
+**Fix**: Show pending tip total above the connect CTA: "You have $X in pending tips. Connect your bank to receive them via direct deposit."
 
 ## Moderate Issues
 
-### 7. `MyTipsHistory` date range is fixed to current month
-The `dateFrom` and `dateTo` states are initialized once and never updated (no date picker). Staff can only ever see the current calendar month's tips. A period selector or "Previous Period" navigation is needed.
+### 6. `MyPayoutSetup` uses `useColorBarOrgId` inconsistency
+The settings component uses `useColorBarOrgId` but the payout setup uses `useOrganizationContext` directly. These should use the same org resolution path to avoid mismatches.
 
-### 8. `TipDistributionPolicySettings` missing `direct_deposit` as default method
-The policy settings dropdown offers Cash, Manual Transfer, and Payroll — but not Direct Deposit, even though it's an option in the distribution manager.
-
-### 9. No `onboarding=complete` return URL handling
-`staff-payout-onboarding` sets return URL to `?onboarding=complete`, but `MyPay.tsx` doesn't check query params. After completing Stripe onboarding, the page just loads normally without auto-refreshing the account status.
-
-### 10. `process-tip-payout` Stripe transfer architecture concern
-The function creates a transfer with `stripeAccount: org.stripe_connect_account_id`, meaning it transfers funds **from the org's Connected Account balance**. This is correct for a platform model, but requires the org's Connected Account to have sufficient balance from collected card tips. There's no balance check before attempting the transfer — Stripe will return an error, but the user gets a generic failure message.
-
-## Enhancements
-
-### 11. Add Stripe balance pre-check before direct deposit payout
-Before creating a Stripe Transfer, retrieve the org's Connected Account balance and compare against the payout amount. Surface a clear "Insufficient balance" message rather than a generic Stripe error.
-
-### 12. Add `direct_deposit` method to `TipDistributionPolicySettings`
-Include it as an option in the default method selector so orgs preferring direct deposit don't have to change it every time.
-
-### 13. Add onboarding return handler in `MyPay`
-Detect `?onboarding=complete` query param, auto-trigger `refreshStatus`, and show a success toast.
-
-### 14. Add date range picker to `MyTipsHistory`
-Allow staff to navigate between months or custom date ranges.
-
-### 15. Wire `process-tip-payout` to the UI
-When confirming (single or bulk) with method `direct_deposit`, invoke the edge function instead of doing a plain DB update.
-
----
+### 7. No loading/error state for onboarding link generation
+If the edge function is slow or fails, the button shows a spinner but there's no timeout or error recovery UX beyond the toast. The user might click multiple times.
 
 ## Proposed Fix Plan
 
 | # | File | Change |
 |---|---|---|
-| 1 | `supabase/functions/stripe-webhook/index.ts` | Add `account.updated` handler that syncs `staff_payout_accounts` |
-| 2 | `supabase/functions/generate-tip-distributions/index.ts` | Fix CORS headers; skip updating confirmed/paid rows |
-| 3 | `src/components/dashboard/payments/TipDistributionManager.tsx` | Wire direct deposit confirms to `process-tip-payout` edge function; add payout account validation |
-| 4 | `src/hooks/useTipDistributions.ts` | Add `useProcessTipPayout` mutation hook |
-| 5 | `src/components/dashboard/mypay/MyTipsHistory.tsx` | Add month navigation |
-| 6 | `src/components/dashboard/settings/TipDistributionPolicySettings.tsx` | Add `direct_deposit` to method options |
-| 7 | `src/pages/dashboard/MyPay.tsx` | Handle `?onboarding=complete` return URL with auto-refresh |
+| 1 | `src/pages/dashboard/MyPay.tsx` | Gate "My Tips" tab visibility on `tip_distribution_policy.enabled`; fix onboarding `useEffect` with ref guard |
+| 2 | `src/components/dashboard/mypay/MyPayoutSetup.tsx` | Gate rendering on policy `default_method === 'direct_deposit'`; use `window.location.href` for onboarding; show pending tip total as motivation |
+| 3 | `src/components/dashboard/mypay/MyTipsHistory.tsx` | No changes needed (gated by parent) |
+| 4 | `src/components/dashboard/payments/TipDistributionManager.tsx` | Add a "Staff Accounts" summary showing connected vs unconnected stylists |
+| 5 | `src/hooks/useStaffPayoutAccount.ts` | No changes needed |
 
