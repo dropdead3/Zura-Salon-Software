@@ -202,7 +202,10 @@ function RegisterReaderDialog({ open, onOpenChange, locationId, terminalLocation
 // ---- Main Terminal Settings Content ----
 
 export function TerminalSettingsContent() {
+  const { effectiveOrganization } = useOrganizationContext();
+  const orgId = effectiveOrganization?.id;
   const { data: locations, isLoading: locationsLoading } = useZuraPayLocations();
+  const { data: connectStatus } = useOrgConnectStatus(orgId);
   const [selectedLocationId, setSelectedLocationId] = useState<string | null>(null);
   const [showAllLocations, setShowAllLocations] = useState(false);
   const [registerOpen, setRegisterOpen] = useState(false);
@@ -210,6 +213,30 @@ export function TerminalSettingsContent() {
   const [deleteReaderTarget, setDeleteReaderTarget] = useState<{ id: string; label: string } | null>(null);
   const [isDeletingLocation, setIsDeletingLocation] = useState(false);
   const [isDeletingReader, setIsDeletingReader] = useState(false);
+
+  const connectMutation = useConnectZuraPay();
+  const verifyMutation = useVerifyZuraPayConnection();
+  const connectLocationMutation = useConnectLocation();
+
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // Handle return from Stripe onboarding
+  useEffect(() => {
+    const isReturn = searchParams.get('zura_pay_return') === 'true';
+    const isRefresh = searchParams.get('zura_pay_refresh') === 'true';
+    if ((isReturn || isRefresh) && orgId) {
+      // Clean up URL params
+      const newParams = new URLSearchParams(searchParams);
+      newParams.delete('zura_pay_return');
+      newParams.delete('zura_pay_refresh');
+      setSearchParams(newParams, { replace: true });
+
+      if (isReturn) {
+        // Auto-verify on return
+        verifyMutation.mutate({ organizationId: orgId });
+      }
+    }
+  }, [orgId]); // Only run once on mount with orgId
 
   const activeLocationId = showAllLocations ? null : (selectedLocationId || locations?.[0]?.id || null);
 
