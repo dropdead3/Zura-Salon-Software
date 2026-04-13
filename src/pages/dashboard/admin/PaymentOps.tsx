@@ -50,10 +50,12 @@ import {
   Plus,
   Search,
   ChevronDown,
+  Wallet,
 } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { useOrgConnectStatus } from '@/hooks/useZuraPayConnect';
 import { ZuraPayPayoutsTab } from '@/components/dashboard/settings/terminal/ZuraPayPayoutsTab';
+import { EmptyState } from '@/components/ui/empty-state';
 
 // ─── Fee Ledger Sub-component ─────────────────────────────────
 const FEE_STATUS_FILTERS = ['pending', 'collected', 'waived'] as const;
