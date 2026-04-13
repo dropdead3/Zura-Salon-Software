@@ -1,98 +1,60 @@
 
 
-# Zura Pay Configurator — Full Rebuild of Terminal Settings
+# Zura Pay Configurator — Self-Contained Location Management
 
-## Summary
-Transform the current "Terminals" settings page from a flat list of cards into a tabbed **Zura Pay Configurator** — a cohesive hub for all payment hardware, connectivity, and display configuration. The entry point card is renamed from "Terminals" to "Zura Pay" with updated branding copy, and the content is restructured into four focused tabs.
+## Problem
+The Zura Pay configurator currently filters locations by `stripe_account_id IS NOT NULL`. When no locations are connected, users see a dead-end empty state directing them to "Integrations" — but Zura Pay was already removed from Integrations. All Zura Pay management must be self-contained within this page.
 
-## Current State
-- Settings card: labeled "Terminals" with description referencing "Stripe Terminal"
-- Content: a single scrollable column of cards (location picker → terminal locations → readers → offline status → purchase → checkout display concept)
-- ~1150 lines in one file, mixing fleet management, purchasing, and display preview
-
-## Proposed Structure
-
-```text
-┌──────────────────────────────────────────────────┐
-│  ZURA PAY                                        │
-│  Your complete in-person payment configurator    │
-├──────────────────────────────────────────────────┤
-│  [Fleet]  [Hardware]  [Connectivity]  [Display]  │
-├──────────────────────────────────────────────────┤
-│                                                  │
-│  (Tab content renders here)                      │
-│                                                  │
-└──────────────────────────────────────────────────┘
-```
-
-### Tab 1: Fleet
-- Location picker (existing)
-- All Locations Summary (existing)
-- Terminal Locations card (existing) — create, delete, reader count badges
-- Terminal Readers card (existing) — register, delete, firmware/IP metadata
-
-### Tab 2: Hardware
-- Order Terminal card (existing purchase flow, pricing, accessories, checkout dialog)
-- Order History (existing request history list)
-
-### Tab 3: Connectivity
-- OfflinePaymentStatus card (existing) — shown unconditionally in this tab
-- NeverDown Payments callout (new, small) — brief explainer of cellular failover and store-and-forward
-
-### Tab 4: Display
-- CheckoutDisplayConcept with S710 simulator (existing)
+## Solution
+Fetch ALL org locations regardless of Stripe connection status, show connection status per location, and provide setup guidance within the configurator itself. Locations without `stripe_account_id` are shown as "not connected" with clear indicators — no more redirecting users elsewhere.
 
 ## Changes
 
-### 1. Rename settings entry point
-**File:** `src/pages/dashboard/admin/Settings.tsx`
-- Change `terminals` label from "Terminals" to "Zura Pay"
-- Update description: "Configure your Zura Pay hardware fleet, purchase readers, monitor connectivity, and preview checkout display."
-- Remove "Stripe" from description
-- Change icon to `CreditCard` (more payment-focused)
-
-### 2. Decompose into tab-based layout
+### 1. Fetch all org locations (not just connected ones)
 **File:** `src/components/dashboard/settings/TerminalSettingsContent.tsx`
-- Add `Tabs` / `TabsList` / `TabsTrigger` / `TabsContent` at the top level
-- Move existing card groups into their respective tab panels
-- Extract sub-components into separate files for maintainability:
-  - `terminal/ZuraPayFleetTab.tsx` — location picker, summary, terminal locations, readers
-  - `terminal/ZuraPayHardwareTab.tsx` — purchase card + order history (the existing `TerminalPurchaseCard`)
-  - `terminal/ZuraPayConnectivityTab.tsx` — OfflinePaymentStatus + NeverDown callout
-  - `terminal/ZuraPayDisplayTab.tsx` — thin wrapper around CheckoutDisplayConcept
 
-### 3. Add page-level header inside TerminalSettingsContent
-- Use existing card header pattern with `CreditCard` icon
-- Title: "ZURA PAY" (font-display)
-- Subtitle: "In-person payment infrastructure for your locations."
-- No back button (parent settings handles that)
+Change `useZuraPayLocations` to remove the `.not('stripe_account_id', 'is', null)` filter. Also add `stripe_account_id`, `stripe_status`, and `stripe_payments_enabled` to the select. This means the configurator shows all locations, whether connected or not.
 
-### 4. Connectivity tab — NeverDown callout
-- Small informational card explaining "NeverDown Payments" as the value proposition
-- Uses `ShieldCheck` icon and emerald accent styling (consistent with existing patterns)
-- Static content — no data fetching
+### 2. Replace the dead-end empty state
+**File:** `src/components/dashboard/settings/TerminalSettingsContent.tsx`
 
-### 5. Preserve all existing functionality
-- All hooks, mutations, dialogs, and state management remain identical
-- RegisterReaderDialog, delete confirmations — all stay
-- useEffect for payment verification stays in Hardware tab
-- `useZuraPayLocations` query stays as-is
+Remove the "No Zura Pay Locations" empty state that references Integrations. Instead, always render the tabs — the Fleet tab will differentiate between connected and unconnected locations.
+
+If the org has zero locations at all, show an empty state directing to "Locations" settings to create one first.
+
+### 3. Add connection status indicators to Fleet tab
+**File:** `src/components/dashboard/settings/terminal/ZuraPayFleetTab.tsx`
+
+- Add a connection status badge next to each location in the picker and summary: green "Active" for connected (`stripe_account_id` present + `stripe_status === 'active'`), amber "Pending" for in-progress, and outline "Not Connected" for unconnected locations.
+- When a user selects an unconnected location, show an informational card instead of the terminal locations/readers cards: "This location is not yet connected to Zura Pay. Contact your account manager to enable payment processing."
+- In the All Locations summary, add a "Status" column showing connection state per location.
+- Location picker dropdown items get small status dots (green/gray) for quick visual scanning.
+
+### 4. Update FleetTab props
+**File:** `src/components/dashboard/settings/terminal/ZuraPayFleetTab.tsx`
+
+Update the `locations` prop type to include `stripe_account_id: string | null`, `stripe_status: string | null`, and `stripe_payments_enabled: boolean | null` so the tab can render connection state.
+
+### 5. Guard terminal operations for unconnected locations
+**File:** `src/components/dashboard/settings/TerminalSettingsContent.tsx`
+
+Disable "Create Terminal Location" and "Register Reader" actions when the selected location has no `stripe_account_id`. The edge function already rejects these — this prevents confusing error messages.
+
+### 6. Update Hardware tab guard
+**File:** `src/components/dashboard/settings/terminal/ZuraPayHardwareTab.tsx`
+
+Show hardware purchasing regardless of location connection status (ordering hardware can happen before connecting). No change needed if it already works this way — just verify.
 
 ## Files Modified
 | File | Action |
 |------|--------|
-| `src/pages/dashboard/admin/Settings.tsx` | Update label, description, icon for `terminals` |
-| `src/components/dashboard/settings/TerminalSettingsContent.tsx` | Refactor into tabbed shell, extract sub-components |
-| `src/components/dashboard/settings/terminal/ZuraPayFleetTab.tsx` | New — fleet management UI |
-| `src/components/dashboard/settings/terminal/ZuraPayHardwareTab.tsx` | New — purchase + order history |
-| `src/components/dashboard/settings/terminal/ZuraPayConnectivityTab.tsx` | New — connectivity + NeverDown |
-| `src/components/dashboard/settings/terminal/ZuraPayDisplayTab.tsx` | New — display preview wrapper |
+| `src/components/dashboard/settings/TerminalSettingsContent.tsx` | Remove `stripe_account_id` filter from query, update empty state logic, pass connection data to Fleet tab |
+| `src/components/dashboard/settings/terminal/ZuraPayFleetTab.tsx` | Add connection status badges, guard actions for unconnected locations, status column in summary |
 
 ## Technical Details
-- Tabs use the existing `@/components/ui/tabs` (Radix-based)
-- Tab triggers use `font-sans` per UI Canon (never uppercase on tab triggers)
-- All state that spans tabs (like `selectedLocationId`, `showAllLocations`) remains in the parent `TerminalSettingsContent` and is passed down as props
-- The `RegisterReaderDialog` and `AlertDialog` confirmations remain at the parent level since they're triggered from Fleet tab but need portal-level rendering
-- No new dependencies, no migrations, no edge function changes
-- Existing bug fixes from the previous plan (refs, failedImages, dialog reset) are preserved
+- No migrations — all data already exists in the `locations` table
+- No edge function changes — the `manage-stripe-terminals` edge function already validates `stripe_account_id` server-side
+- The location picker now shows all locations with visual status indicators
+- Terminal location/reader CRUD is only enabled for connected locations (UI-level guard matching existing server-side guard)
+- `stripe_account_id` connection is handled externally (platform admin provisioning) — this plan does not add self-service Stripe Connect onboarding, just removes the broken "go to Integrations" reference
 
