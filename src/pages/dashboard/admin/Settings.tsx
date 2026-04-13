@@ -10,7 +10,7 @@ import {
   Users, Shield, Loader2, Mail, Cog, Rocket, Plug,
   GraduationCap, Layers, GripVertical, Pencil, X, Save, RotateCcw,
   Building2, MapPin, Armchair, MessageSquare, Sparkles, FileCheck,
-  Gift, Trophy, TabletSmartphone, Scissors, ShoppingBag, Wallet,
+  Gift, Trophy, TabletSmartphone, Scissors, ShoppingBag, Wallet, CreditCard,
   Upload,
 } from 'lucide-react';
 import { MessageSquareHeart } from 'lucide-react';
