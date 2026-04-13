@@ -53,7 +53,7 @@ interface CheckoutSummarySheetProps {
   appointment: PhorestAppointment | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onConfirm: (tipAmount: number, rebooked: boolean, promoResult?: PromoValidationResult | null, declineReason?: string) => void;
+  onConfirm: (tipAmount: number, rebooked: boolean, promoResult?: PromoValidationResult | null, declineReason?: string, paymentMetadata?: { method: CheckoutPaymentMethod; stripe_payment_intent_id?: string }) => void;
   isUpdating?: boolean;
   taxRate: number;
   businessSettings: BusinessSettings | null;
@@ -61,6 +61,7 @@ interface CheckoutSummarySheetProps {
   locationAddress?: string;
   locationPhone?: string;
   organizationId?: string;
+  locationId?: string;
   onScheduleNext?: (apt: PhorestAppointment) => void;
   rebookCompleted?: boolean;
 }
@@ -84,6 +85,7 @@ export function CheckoutSummarySheet({
   locationAddress,
   locationPhone,
   organizationId,
+  locationId,
   onScheduleNext,
   rebookCompleted = false,
 }: CheckoutSummarySheetProps) {
