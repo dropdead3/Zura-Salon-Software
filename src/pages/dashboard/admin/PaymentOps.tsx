@@ -964,6 +964,86 @@ export default function PaymentOps() {
             </TabsTrigger>
           </ResponsiveTabsList>
 
+          {/* ─── Shared Filter Bar ─────────────────────── */}
+          {showFilters && (
+            <div className="flex flex-wrap items-center gap-3 mt-4 mb-2">
+              {locations.length > 1 && (
+                <LocationGroupSelect
+                  locations={locations}
+                  selectedIds={selectedLocationIds}
+                  onSelectionChange={setSelectedLocationIds}
+                />
+              )}
+              <div className="flex items-center gap-1.5">
+                <div className="relative">
+                  <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+                  <input
+                    type="date"
+                    value={dateFrom}
+                    onChange={(e) => setDateFrom(e.target.value)}
+                    className="h-9 pl-9 pr-3 rounded-full border border-input bg-background text-sm"
+                  />
+                </div>
+                <span className="text-muted-foreground text-xs">to</span>
+                <input
+                  type="date"
+                  value={dateTo}
+                  onChange={(e) => setDateTo(e.target.value)}
+                  className="h-9 px-3 rounded-full border border-input bg-background text-sm"
+                />
+              </div>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+                <input
+                  type="text"
+                  placeholder="Search client…"
+                  value={clientSearch}
+                  onChange={(e) => setClientSearch(e.target.value)}
+                  className="h-9 pl-9 pr-3 w-[180px] rounded-full border border-input bg-background text-sm placeholder:text-muted-foreground"
+                />
+              </div>
+
+              {/* Per-tab status toggles */}
+              {activeTab === 'holds' && (
+                <TogglePill
+                  size="sm"
+                  options={[
+                    { value: 'held', label: 'Held' },
+                    { value: 'captured', label: 'Captured' },
+                    { value: 'released', label: 'Released' },
+                    { value: 'all', label: 'All' },
+                  ]}
+                  value={holdStatus}
+                  onChange={(v) => setHoldStatus(v as any)}
+                />
+              )}
+              {activeTab === 'refunds' && (
+                <TogglePill
+                  size="sm"
+                  options={[
+                    { value: 'pending', label: 'Pending' },
+                    { value: 'processed', label: 'Processed' },
+                    { value: 'all', label: 'All' },
+                  ]}
+                  value={refundStatus}
+                  onChange={(v) => setRefundStatus(v as any)}
+                />
+              )}
+              {activeTab === 'disputes' && (
+                <TogglePill
+                  size="sm"
+                  options={[
+                    { value: 'active', label: 'Active' },
+                    { value: 'resolved', label: 'Resolved' },
+                    { value: 'all', label: 'All' },
+                  ]}
+                  value={disputeStatus}
+                  onChange={(v) => setDisputeStatus(v as any)}
+                />
+              )}
+            </div>
+          )}
+
           {/* Payouts */}
           <TabsContent value="payouts">
             <Card>
