@@ -33,6 +33,32 @@ import { ZuraPayHardwareTab } from './terminal/ZuraPayHardwareTab';
 import { ZuraPayConnectivityTab } from './terminal/ZuraPayConnectivityTab';
 import { ZuraPayDisplayTab } from './terminal/ZuraPayDisplayTab';
 
+// Lightweight error boundary for individual tabs
+class TabErrorBoundary extends React.Component<
+  { tabName: string; children: React.ReactNode },
+  { hasError: boolean; error?: Error }
+> {
+  state = { hasError: false, error: undefined as Error | undefined };
+  static getDerivedStateFromError(error: Error) { return { hasError: true, error }; }
+  componentDidCatch(error: Error, info: React.ErrorInfo) { console.error(`[ZuraPay ${this.props.tabName}] render error`, error, info); }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="rounded-xl border border-border bg-card/60 p-8 text-center space-y-3">
+          <p className="font-display text-sm tracking-wide text-muted-foreground">
+            {this.props.tabName} tab encountered an error
+          </p>
+          <p className="text-xs text-muted-foreground">{this.state.error?.message}</p>
+          <Button variant="outline" size="sm" onClick={() => this.setState({ hasError: false, error: undefined })}>
+            Retry
+          </Button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 // Fetch ALL org locations — connection status shown inline
 function useZuraPayLocations() {
   const { effectiveOrganization } = useOrganizationContext();
