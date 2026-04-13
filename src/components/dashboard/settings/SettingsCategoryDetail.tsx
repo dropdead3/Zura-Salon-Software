@@ -83,6 +83,7 @@ interface UserWithRole {
 interface SettingsCategoryDetailProps {
   activeCategory: NonNullable<SettingsCategory>;
   categoryLabel: string;
+  categoryDescription?: string;
   onBack: () => void;
 }
 
@@ -373,7 +374,7 @@ function UserCard({ u, updatingUser, updateUserRole, removeUser, currentUserId, 
   );
 }
 
-export function SettingsCategoryDetail({ activeCategory, categoryLabel, onBack }: SettingsCategoryDetailProps) {
+export function SettingsCategoryDetail({ activeCategory, categoryLabel, categoryDescription, onBack }: SettingsCategoryDetailProps) {
   const { user, roles } = useAuth();
   const { toast } = useToast();
   const { theme, setTheme, resolvedTheme } = useDashboardTheme();
@@ -445,7 +446,7 @@ export function SettingsCategoryDetail({ activeCategory, categoryLabel, onBack }
     <DashboardLayout>
       <div className="p-6 lg:p-8">
         <div className="mb-6">
-          <DashboardPageHeader title={categoryLabel.toUpperCase()} actions={categoryActions} backTo={dashPath('/admin/settings')} backLabel="Back to Settings" />
+          <DashboardPageHeader title={categoryLabel.toUpperCase()} description={categoryDescription} actions={categoryActions} backTo={dashPath('/admin/settings')} backLabel="Back to Settings" />
           <div className="mt-4"><PageExplainer pageId="settings" /></div>
         </div>
 
