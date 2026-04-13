@@ -1,57 +1,73 @@
 
 
-# Update `payment_intent.payment_failed` Handler for Card-on-File Charges
+# Surface `payment_failure_reason` in Dock Card and Schedule UI
 
 ## Problem
 
-The existing `handleTerminalPaymentIntentFailed` handler fires for all `payment_intent.payment_failed` events on Connected Accounts — including card-on-file charges — but it doesn't extract `charge_type` from metadata. The handler works correctly (sets `payment_status: 'failed'`), but the function name and logging are misleading, and the error message from Stripe's `last_payment_error` could be stored for staff visibility.
+The `payment_failure_reason` is stored on the `appointments` table by the webhook but never surfaced in the UI. Staff have no way to see *why* a charge failed without checking externally. Additionally, the `phorest_appointments` table lacks this column entirely, so failures on phorest-sourced appointments can't be tracked.
 
 ## Changes
 
-### 1. Rename and enhance `handleTerminalPaymentIntentFailed` → `handlePaymentIntentFailed`
-**File:** `supabase/functions/stripe-webhook/index.ts`
-
-- Read `metadata.charge_type` to distinguish terminal vs card-on-file failures
-- Store the Stripe error reason in a new `payment_failure_reason` column so front desk staff can see *why* the charge failed (e.g., "Your card was declined", "Insufficient funds")
-- Update logging to reflect charge type
-- Keep existing idempotency guard (`neq('payment_status', 'paid')`)
-
-```text
-Before:
-  .update({ payment_status: 'failed' })
-
-After:
-  .update({
-    payment_status: 'failed',
-    payment_failure_reason: errorMsg,
-  })
-```
-
-### 2. Migration: Add `payment_failure_reason` column to appointments
+### 1. Migration: Add `payment_failure_reason` to `phorest_appointments`
+Ensures parity with the `appointments` table so both appointment sources can store decline reasons.
 
 ```sql
-ALTER TABLE appointments
+ALTER TABLE public.phorest_appointments
 ADD COLUMN IF NOT EXISTS payment_failure_reason text;
 ```
 
-This gives the Operations Hub and dock cards access to the decline reason without requiring a Stripe Dashboard lookup.
+### 2. Update webhook to write failure reason to both tables
+**File:** `supabase/functions/stripe-webhook/index.ts`
 
-### 3. Update switch case reference
+In `handlePaymentIntentFailed`, after updating `appointments`, add a fallback update to `phorest_appointments` using the same `appointmentId`. This is safe — one will match, the other won't (no-op). Same pattern for the `handlePaymentIntentSucceeded` handler to clear the failure reason when a retry succeeds.
 
-Rename the function call from `handleTerminalPaymentIntentFailed` to `handlePaymentIntentFailed` in the switch statement.
+### 3. Add `payment_failure_reason` to `DockAppointment` interface
+**File:** `src/hooks/dock/useDockAppointments.ts`
 
-## Technical Details
+- Add `payment_failure_reason?: string | null` to the interface
+- Include `payment_failure_reason` in both the `phorest_appointments` and `appointments` select queries
+- Map the field through in all data transforms
 
-- The `charge-card-on-file` edge function already sets `metadata: { charge_type: "card_on_file", appointment_id: "..." }` on PaymentIntents, so the failed event carries the same metadata
-- The handler already correctly guards against overwriting `paid` status
-- No UI changes in this step — the `payment_failure_reason` column is available for future Operations Hub display
+### 4. Add `failed` badge with tooltip to `DockAppointmentCard`
+**File:** `src/components/dock/schedule/DockAppointmentCard.tsx`
+**File:** `src/components/dock/dock-ui-tokens.ts`
+
+- Add `failed` variant to `DOCK_BADGE` (red-themed, matching existing `unpaid` styling)
+- Add `failed` entry to `PAYMENT_BADGE` map with label "Failed"
+- Show the failed badge for any appointment (not just `completed`) when `payment_status === 'failed'`
+- When `payment_failure_reason` exists, wrap the badge in a Tooltip showing the decline reason (e.g., "Insufficient funds", "Incorrect billing address")
+- Show badge for non-terminal appointments too (so staff see it before/during the visit)
+
+### 5. Handle AVS-related failure reasons
+The user specifically asked about billing address and zip code errors. Stripe's `last_payment_error.message` already includes these natively (e.g., "Your card's zip code is incorrect", "Your card was declined due to billing address mismatch"). No special handling needed — the stored message will surface as-is in the tooltip.
+
+The `decline_code` field from Stripe's error object provides more granular codes like `incorrect_zip`, `incorrect_address`. We'll store the human-readable `message` (already implemented) which covers these cases.
+
+## UI Behavior
+
+```text
+┌─────────────────────────────────────────────┐
+│  Jane D. · Balayage + Toner       Failed ⓘ  │
+│  10:30 AM – 12:30 PM · 2h                   │
+└─────────────────────────────────────────────┘
+                                    ↑ tooltip:
+                          "Your card's zip code
+                           is incorrect"
+```
+
+- Badge appears in the top-right corner alongside existing status/payment badges
+- Tooltip on hover/tap shows the specific Stripe decline reason
+- Badge shown regardless of appointment status (scheduled, in_progress, completed)
 
 ## Files Summary
 
 | File | Action |
 |------|--------|
-| **Migration** | Add `payment_failure_reason` column to `appointments` |
-| `supabase/functions/stripe-webhook/index.ts` | Rename handler, extract `charge_type`, store failure reason |
+| **Migration** | Add `payment_failure_reason` to `phorest_appointments` |
+| `supabase/functions/stripe-webhook/index.ts` | Write failure reason to both tables; clear on success |
+| `src/hooks/dock/useDockAppointments.ts` | Add field to interface + queries |
+| `src/components/dock/dock-ui-tokens.ts` | Add `failed` badge variant |
+| `src/components/dock/schedule/DockAppointmentCard.tsx` | Add failed badge with tooltip |
 
 1 migration, 0 new edge functions, 0 new dependencies.
 
