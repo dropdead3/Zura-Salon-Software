@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
+import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
@@ -38,6 +39,7 @@ const categories = [
 ];
 
 export default function Training() {
+  const { dashPath } = useOrgDashboardPath();
   const { user, roles: userRoles } = useAuth();
   const [videos, setVideos] = useState<TrainingVideo[]>([]);
   const [progress, setProgress] = useState<TrainingProgress[]>([]);

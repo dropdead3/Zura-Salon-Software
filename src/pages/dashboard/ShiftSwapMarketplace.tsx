@@ -29,6 +29,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { PageExplainer } from '@/components/ui/PageExplainer';
 
 export default function ShiftSwapMarketplace() {
+  const { dashPath } = useOrgDashboardPath();
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState('available');
   const [postDialogOpen, setPostDialogOpen] = useState(false);
