@@ -1,57 +1,51 @@
 
 
-# Payment Operations — Location, Date Range & Status Filtering
+# Payout Schedule Configurator & Bank Account Card
 
 ## Current State
-The Payment Ops page has 6 tabs (Payouts, Reconciliation, Deposit Holds, Refunds, Fee Charges, Disputes). None of the tabs support location filtering or date range filtering (except Reconciliation which has a single-date picker). Refunds show only `status = 'pending'`, Disputes show all with no status toggle, and Deposit Holds show only `deposit_status = 'held'`.
+- The `zura-pay-payouts` edge function **already supports** `action: 'update_schedule'` and returns `payout_schedule` from Stripe
+- The `useZuraPayPayouts` hook **already types** `PayoutSchedule` with `interval`, `weekly_anchor`, `monthly_anchor`, `delay_days`
+- The `ZuraPayPayoutsTab` UI shows balance + payout history but **does not render** the schedule or offer a way to change it
+- No bank account information is surfaced anywhere
 
-## Design
+## Plan
 
-### Shared Filter Bar
-Add a persistent filter bar below the page header (above the tabs) containing:
-- **LocationMultiSelect** — uses the existing `LocationMultiSelect` component, filters all tabs by `location_id`
-- **Date Range** — two date inputs (From / To), defaults to last 30 days; applies to Holds (by `appointment_date`), Refunds (by `created_at`), Fee Charges (by `created_at`), Disputes (by `created_at`)
-- Reconciliation keeps its own single-date picker (unchanged)
-- Payouts tab is Stripe-sourced (no location/date filter applies) — filters are visually hidden when Payouts is active
+### 1. Extend Edge Function to Return Bank Account Info
+Add the connected bank account details from Stripe's `external_accounts` to the response. The `account` object is already fetched (line 114), so extract the default bank account:
 
-### Per-Tab Status Filters
-- **Refunds**: Add status toggle pills (Pending / Processed / All) — currently hardcoded to `pending`
-- **Disputes**: Add status toggle pills (Active / Resolved / All) — currently shows all with no filter
-- **Deposit Holds**: Add status toggle (Held / Captured / Released / All) — currently hardcoded to `held`
-- **Fee Charges**: Already has status toggle — no change needed
-
-### Client Search
-Add a search input in the filter bar that filters by client name across the active tab's data (client-side `.filter()` on the already-fetched rows).
-
-## Implementation
-
-### Filter State (in `PaymentOps` component)
-```text
-locationIds: string[]        // from LocationMultiSelect
-dateFrom: string             // yyyy-MM-dd, default 30 days ago
-dateTo: string               // yyyy-MM-dd, default today
-clientSearch: string          // debounced, client-side filter
-holdStatus: 'held' | 'captured' | 'released' | 'all'
-refundStatus: 'pending' | 'processed' | 'all'
-disputeStatus: 'active' | 'resolved' | 'all'
+```typescript
+const defaultBank = (account.external_accounts?.data || []).find(
+  (ea: any) => ea.object === 'bank_account' && ea.default_for_currency
+);
 ```
 
-### Query Changes
-Each tab's `useQuery` call gets updated to accept location + date range filters:
+Return: `{ bank_name, last4, routing_number (last 4), currency, status }` — no full account numbers.
 
-- **Deposit Holds**: Add `.in('location_id', ids)` (if not all), `.gte/.lte('appointment_date', ...)`, change `.eq('deposit_status', ...)` to use `holdStatus`
-- **Refunds**: Add date range on `created_at`, change status filter to use `refundStatus` (or remove for 'all')
-- **Fee Charges**: Add `.in('location_id', ids)` via a join on `appointment_id → appointments.location_id`, add date range on `created_at`
-- **Disputes**: Add date range on `created_at`, add status grouping (`active` = `needs_response`/`under_review`/`warning_needs_response`, `resolved` = `won`/`lost`/`charge_refunded`)
+### 2. Update Hook Types
+Add `bank_account` to `ZuraPayPayoutsData` interface. Add `useUpdatePayoutSchedule` mutation that calls the existing `update_schedule` action.
 
-### Client Search
-Applied client-side via `useMemo` filtering on the rendered list for each tab (`client_name.toLowerCase().includes(search)`).
+### 3. Add Payout Schedule Card to UI
+Insert a card between the summary KPIs and the payouts table showing:
+- Current schedule (Daily / Weekly / Monthly) as radio group
+- Weekly anchor day picker (Mon–Fri, shown only when Weekly is selected)
+- Monthly anchor date picker (1–28, shown only when Monthly is selected)
+- Save button that calls `update_schedule`
+- Current `delay_days` displayed as read-only info ("Payouts arrive T+2 days")
+
+### 4. Add Bank Account Card to UI
+Insert a card alongside the schedule card showing:
+- Bank name + last 4 digits
+- Status badge (verified / new / errored)
+- Note: "To update your bank account, contact support" (Stripe Express doesn't allow self-service bank changes via API without a dashboard link)
+- If no bank account: empty state prompting to complete onboarding
 
 ## Files
 
 | File | Action |
 |---|---|
-| `src/pages/dashboard/admin/PaymentOps.tsx` | Add filter bar with LocationMultiSelect, date range, search input. Add status toggles to Refunds/Disputes/Holds tabs. Pass filters into all queries. |
+| `supabase/functions/zura-pay-payouts/index.ts` | Add `bank_account` to response from `account.external_accounts` |
+| `src/hooks/useZuraPayPayouts.ts` | Add `BankAccountInfo` type, add `useUpdatePayoutSchedule` mutation |
+| `src/components/dashboard/settings/terminal/ZuraPayPayoutsTab.tsx` | Add Payout Schedule card (radio group + anchor pickers) and Bank Account card |
 
-Single file change. No migrations. No edge function changes. No new dependencies — uses existing `LocationMultiSelect`, `useLocations`, `useDebounce`, and `date-fns`.
+No migrations. No new edge functions — reuses the existing `update_schedule` action.
 
