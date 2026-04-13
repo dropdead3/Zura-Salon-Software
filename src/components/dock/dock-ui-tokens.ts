@@ -40,6 +40,7 @@ export const DOCK_BADGE = {
   unpaid:             'bg-red-500/15 text-red-400 border-red-500/25',
   refunded:           'bg-slate-500/15 text-slate-400 border-slate-500/25',
   partiallyRefunded:  'bg-amber-500/15 text-amber-400 border-amber-500/25',
+  failed:             'bg-red-500/15 text-red-400 border-red-500/25',
   comp:               'bg-[hsl(var(--platform-foreground-muted)/0.15)] text-[hsl(var(--platform-foreground-muted))] border-[hsl(var(--platform-foreground-muted)/0.3)]',
 
   /** Status variants */

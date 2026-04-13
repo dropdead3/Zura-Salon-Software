@@ -23,6 +23,7 @@ export interface DockAppointment {
   end_time: string;
   status: string | null;
   payment_status?: string | null;
+  payment_failure_reason?: string | null;
   location_id: string | null;
   phorest_client_id?: string | null;
   client_id?: string | null;
