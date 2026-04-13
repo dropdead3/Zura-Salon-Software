@@ -440,9 +440,22 @@ export function ServiceEditorDialog({
                         )}
                       </div>
                     )}
+                    </div>
+
+                  {/* Require Card On File */}
+                  <div className="pt-2 border-t border-border/60">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className="flex items-center gap-1.5">
+                          <p className={tokens.body.emphasis}>Require Card On File</p>
+                          <MetricInfoTooltip description="Clients must save a payment method before this service can be booked. Enables automatic no-show and cancellation fee collection." />
+                        </div>
+                        <p className={tokens.body.muted}>Require a saved card to confirm bookings for this service</p>
+                      </div>
+                      <Switch checked={requireCardOnFile} onCheckedChange={setRequireCardOnFile} />
+                    </div>
                   </div>
                 </div>
-              </form>
             </TabsContent>
 
             <TabsContent value="levels" className="mt-0">
