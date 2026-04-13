@@ -715,6 +715,62 @@ async function handleCustomerDeleted(
   console.log(`customer.deleted: deleted ${count} card(s) for customer ${customerId} in org ${organizationId}`);
 }
 
+// Handler for payment_method.updated — sync card details (brand, last4, expiration)
+async function handlePaymentMethodUpdated(
+  supabase: SupabaseClientAny,
+  paymentMethod: any,
+  connectedAccountId: string
+) {
+  const paymentMethodId = paymentMethod.id as string;
+  if (!paymentMethodId) {
+    console.log("payment_method.updated has no id — skipping");
+    return;
+  }
+
+  const card = paymentMethod.card;
+  if (!card) {
+    console.log("payment_method.updated has no card details — skipping");
+    return;
+  }
+
+  console.log(`payment_method.updated: PM ${paymentMethodId}, account ${connectedAccountId}`);
+
+  // Look up organization_id from the connected account
+  const { data: orgAccount, error: orgError } = await supabase
+    .from("organization_stripe_accounts")
+    .select("organization_id")
+    .eq("stripe_account_id", connectedAccountId)
+    .maybeSingle();
+
+  if (orgError || !orgAccount) {
+    console.log(`No org found for connected account ${connectedAccountId} — skipping`);
+    return;
+  }
+
+  const organizationId = orgAccount.organization_id;
+
+  // Update card details on the matching row
+  const { data: updated, error: updateError } = await supabase
+    .from("client_cards_on_file")
+    .update({
+      card_brand: (card.brand as string) || "unknown",
+      card_last4: (card.last4 as string) || "****",
+      card_exp_month: (card.exp_month as number) || 0,
+      card_exp_year: (card.exp_year as number) || 0,
+    })
+    .eq("stripe_payment_method_id", paymentMethodId)
+    .eq("organization_id", organizationId)
+    .select("id");
+
+  if (updateError) {
+    console.error("Error updating card on file:", updateError);
+    return;
+  }
+
+  const count = updated?.length ?? 0;
+  console.log(`payment_method.updated: synced ${count} card(s) for PM ${paymentMethodId} in org ${organizationId}`);
+}
+
 // Handler for setup_intent.succeeded — auto-insert cards on file
 async function handleSetupIntentSucceeded(
   supabase: SupabaseClientAny,
@@ -1007,6 +1063,13 @@ Deno.serve(async (req) => {
       case "payment_method.detached":
         if (isConnectEvent) {
           await handlePaymentMethodDetached(supabase, event.data.object, event.account);
+        }
+        break;
+
+      // Sync card details when payment method is updated (e.g. network auto-update)
+      case "payment_method.updated":
+        if (isConnectEvent) {
+          await handlePaymentMethodUpdated(supabase, event.data.object, event.account);
         }
         break;
 
