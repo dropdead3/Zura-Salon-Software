@@ -134,8 +134,23 @@ export function ZuraPayHardwareTab({ locations }: ZuraPayHardwareTabProps) {
         notes: `Purchase checkout — ${selectedAccList.length} accessor${selectedAccList.length === 1 ? 'y' : 'ies'} selected`,
       },
       {
-        onSuccess: () => { createCheckout.mutate({ organizationId: orgId, locationId: reqLocationId || undefined, items }); },
-        onError: () => { console.warn('[ZuraPay] Hardware request record failed — proceeding with checkout anyway'); createCheckout.mutate({ organizationId: orgId, locationId: reqLocationId || undefined, items }); },
+        onSuccess: () => {
+          const currentPath = window.location.pathname;
+          createCheckout.mutate({
+            organizationId: orgId, locationId: reqLocationId || undefined, items,
+            successUrl: `${window.location.origin}${currentPath}?tab=terminals`,
+            cancelUrl: `${window.location.origin}${currentPath}?tab=terminals`,
+          });
+        },
+        onError: () => {
+          console.warn('[ZuraPay] Hardware request record failed — proceeding with checkout anyway');
+          const currentPath = window.location.pathname;
+          createCheckout.mutate({
+            organizationId: orgId, locationId: reqLocationId || undefined, items,
+            successUrl: `${window.location.origin}${currentPath}?tab=terminals`,
+            cancelUrl: `${window.location.origin}${currentPath}?tab=terminals`,
+          });
+        },
       }
     );
   };
