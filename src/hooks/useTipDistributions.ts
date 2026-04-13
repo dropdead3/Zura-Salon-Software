@@ -199,29 +199,3 @@ export function useBulkConfirmTipDistributions() {
     },
   });
 }
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (params: { ids: string[]; method?: string }) => {
-      const userId = (await supabase.auth.getUser()).data.user?.id;
-      const { error } = await supabase
-        .from('tip_distributions')
-        .update({
-          status: 'confirmed',
-          method: params.method || 'cash',
-          confirmed_by: userId,
-          confirmed_at: new Date().toISOString(),
-        })
-        .in('id', params.ids);
-
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['tip-distributions'] });
-      toast.success('All tip distributions confirmed');
-    },
-    onError: (error) => {
-      toast.error('Failed to confirm: ' + error.message);
-    },
-  });
-}
