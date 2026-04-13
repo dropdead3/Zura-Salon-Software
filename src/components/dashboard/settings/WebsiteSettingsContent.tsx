@@ -722,6 +722,11 @@ function BookingTab() {
       <div className="lg:col-span-2">
         <CancellationFeePoliciesSettings />
       </div>
+
+      {/* Dispute Policy */}
+      <div className="lg:col-span-2">
+        <DisputePolicySettings />
+      </div>
     </div>
   );
 }
