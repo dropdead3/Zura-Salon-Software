@@ -80,13 +80,13 @@ export default function PaymentOps() {
     enabled: !!orgId,
   });
 
-  // Pending refunds — include stripe PI for processing
+  // Pending refunds
   const { data: pendingRefunds = [], isLoading: refundsLoading } = useQuery({
     queryKey: ['pending-refunds', orgId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('refund_records')
-        .select('id, original_item_name, refund_amount, refund_type, reason, created_at, stripe_payment_intent_id')
+        .select('id, original_item_name, refund_amount, refund_type, reason, created_at, original_transaction_id')
         .eq('organization_id', orgId!)
         .eq('status', 'pending')
         .order('created_at', { ascending: false });
@@ -111,16 +111,14 @@ export default function PaymentOps() {
         await cancelDeposit(orgId, confirmAction.id);
         queryClient.invalidateQueries({ queryKey: ['active-deposit-holds', orgId] });
       } else if (confirmAction.type === 'refund') {
-        // B3 fix: fetch the refund record to get PI ID and amount
+        // B3 fix: pass original_transaction_id and amount so edge function can look up PI
         const refund = pendingRefunds.find((r) => r.id === confirmAction.id);
         const body: Record<string, unknown> = {
           refund_record_id: confirmAction.id,
           organization_id: orgId,
+          original_transaction_id: refund?.original_transaction_id || null,
+          amount: refund?.refund_amount || 0,
         };
-        if (refund?.stripe_payment_intent_id) {
-          body.payment_intent_id = refund.stripe_payment_intent_id;
-          body.amount = refund.refund_amount;
-        }
         const { error } = await supabase.functions.invoke('process-stripe-refund', { body });
         if (error) throw error;
         toast.success('Refund processed');

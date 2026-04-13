@@ -560,19 +560,20 @@ export default function Schedule() {
       if (paymentMetadata?.method === 'card_reader' || paymentMetadata?.method === 'card') {
         const totalPrice = selectedAppointment.total_price ?? selectedAppointment.original_price ?? 0;
         const transactionInsert = {
-          organization_id: orgId,
-          appointment_id: selectedAppointment.id,
-          client_id: selectedAppointment.client_id || null,
-          type: 'service',
-          amount: totalPrice,
-          tip_amount: tipAmount,
-          payment_method: paymentMetadata.method,
-          stripe_payment_intent_id: paymentMetadata.stripe_payment_intent_id || null,
-          status: 'completed',
+          phorest_transaction_id: paymentMetadata.stripe_payment_intent_id || `terminal_${selectedAppointment.id}`,
+          item_name: selectedAppointment.service_name || 'Service',
+          item_type: 'service',
+          total_amount: totalPrice,
+          tip_amount: tipAmount || null,
+          payment_method: 'card_reader',
           transaction_date: selectedAppointment.appointment_date || format(new Date(), 'yyyy-MM-dd'),
+          transaction_time: format(new Date(), 'HH:mm:ss'),
+          client_name: selectedAppointment.client_name || null,
+          stylist_user_id: selectedAppointment.stylist_user_id || null,
+          location_id: selectedAppointment.location_id || null,
         };
         const { error: txError } = await supabase
-          .from('transactions')
+          .from('phorest_sales_transactions')
           .insert(transactionInsert);
         if (txError) {
           console.error('Failed to insert transaction record:', txError);
@@ -582,7 +583,7 @@ export default function Schedule() {
 
       queryClient.invalidateQueries({ queryKey: ['phorest-appointments'] });
       queryClient.invalidateQueries({ queryKey: ['appointments'] });
-      queryClient.invalidateQueries({ queryKey: ['transactions'] });
+      queryClient.invalidateQueries({ queryKey: ['phorest-sales'] });
       toast.success('Appointment completed');
     } catch (e) {
       console.error('Failed to complete appointment:', e);
