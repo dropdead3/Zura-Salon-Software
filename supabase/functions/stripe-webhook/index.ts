@@ -625,6 +625,68 @@ async function handleTerminalPaymentIntentFailed(
   }
 }
 
+// G3: Handler for charge.refunded — sync refunds initiated outside Zura (e.g. Stripe Dashboard)
+async function handleChargeRefunded(
+  supabase: SupabaseClientAny,
+  charge: Record<string, unknown>
+) {
+  const piId = charge.payment_intent as string;
+  if (!piId) {
+    console.log("charge.refunded has no payment_intent — skipping");
+    return;
+  }
+
+  console.log(`charge.refunded for PI: ${piId}`);
+
+  // Find appointment by PI ID
+  const { data: appointment } = await supabase
+    .from("appointments")
+    .select("id, organization_id, payment_status")
+    .eq("stripe_payment_intent_id", piId)
+    .single();
+
+  if (!appointment) {
+    console.log(`No appointment found for PI ${piId} — may be a non-terminal refund`);
+    return;
+  }
+
+  // Update any pending refund records for this appointment's org
+  const { data: pendingRefunds } = await supabase
+    .from("refund_records")
+    .select("id")
+    .eq("original_transaction_id", appointment.id)
+    .eq("status", "pending");
+
+  if (pendingRefunds && pendingRefunds.length > 0) {
+    for (const refund of pendingRefunds) {
+      await supabase
+        .from("refund_records")
+        .update({
+          status: "completed",
+          processed_at: new Date().toISOString(),
+          notes: "Refund completed via Stripe Dashboard",
+        })
+        .eq("id", refund.id);
+    }
+    console.log(`Updated ${pendingRefunds.length} pending refund record(s) for appointment ${appointment.id}`);
+  }
+
+  // Update appointment payment status
+  const refundAmount = (charge.amount_refunded as number) || 0;
+  const chargeAmount = (charge.amount as number) || 0;
+  const isFullRefund = refundAmount >= chargeAmount;
+
+  if (isFullRefund) {
+    await supabase
+      .from("appointments")
+      .update({ payment_status: "refunded" })
+      .eq("id", appointment.id);
+    console.log(`Appointment ${appointment.id} marked as fully refunded`);
+  } else {
+    console.log(`Partial refund on appointment ${appointment.id}: ${refundAmount}/${chargeAmount} cents`);
+  }
+}
+
 // Main handler
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
