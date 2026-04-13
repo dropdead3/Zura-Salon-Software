@@ -236,6 +236,16 @@ export default function PaymentOps() {
                         <span className="text-muted-foreground">Local matched:</span>{' '}
                         <span className="font-medium">{reconciliation.local.matched_count} records</span>
                       </div>
+                      {(reconciliation.local as any).matched_amount_cents != null && (
+                        <div>
+                          <span className="text-muted-foreground">Local total:</span>{' '}
+                          <span className="font-medium">
+                            <BlurredAmount>
+                              {formatCurrency((reconciliation.local as any).matched_amount_cents / 100)}
+                            </BlurredAmount>
+                          </span>
+                        </div>
+                      )}
                       {reconciliation.stripe.total_tips_cents > 0 && (
                         <div>
                           <span className="text-muted-foreground">Tips:</span>{' '}
