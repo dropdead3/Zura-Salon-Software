@@ -1242,13 +1242,20 @@ export function AppointmentDetailSheet({
                             onClick={async () => {
                               if (!effectiveOrganization?.id) return;
                               try {
-                                const { useTerminalDeposit } = await import('@/hooks/useTerminalDeposit');
-                                const { collectDeposit } = useTerminalDeposit();
-                                await collectDeposit({
-                                  organizationId: effectiveOrganization.id,
-                                  appointmentId: appointment.id,
-                                  amount: Math.round((appointment.deposit_amount || 0) * 100),
-                                  description: `Deposit for ${appointment.client_name || 'appointment'}`,
+                                const { data, error } = await supabase.functions.invoke('reconcile-till', {
+                                  body: {
+                                    action: 'collect_deposit',
+                                    organization_id: effectiveOrganization.id,
+                                    appointment_id: appointment.id,
+                                    amount: Math.round((appointment.deposit_amount || 0) * 100),
+                                    currency: 'usd',
+                                    description: `Deposit for ${appointment.client_name || 'appointment'}`,
+                                  },
+                                });
+                                if (error) throw error;
+                                if (data?.error) throw new Error(data.error);
+                                toast.success('Deposit hold placed', {
+                                  description: `$${(appointment.deposit_amount || 0).toFixed(2)} held on card`,
                                 });
                               } catch (e) {
                                 console.error('Failed to collect deposit:', e);
