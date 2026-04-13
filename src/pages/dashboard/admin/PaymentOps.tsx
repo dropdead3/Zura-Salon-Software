@@ -66,6 +66,12 @@ function FeeLedgerCard({ orgId, formatCurrency }: { orgId?: string; formatCurren
   const [waiveDialogOpen, setWaiveDialogOpen] = useState(false);
   const [selectedCharge, setSelectedCharge] = useState<{ id: string; clientName: string; amount: number } | null>(null);
   const [waiveReason, setWaiveReason] = useState('');
+  const [collectDialogOpen, setCollectDialogOpen] = useState(false);
+  const [collectingCharge, setCollectingCharge] = useState<{
+    id: string; clientName: string; amount: number; feeType: string; appointmentId: string; clientId: string | null;
+  } | null>(null);
+  const [clientCard, setClientCard] = useState<{ brand: string; last4: string; exp_month: number; exp_year: number } | null>(null);
+  const [cardLoading, setCardLoading] = useState(false);
   const queryClient = useQueryClient();
 
   const { data: feeCharges = [], isLoading } = useQuery({
@@ -74,8 +80,8 @@ function FeeLedgerCard({ orgId, formatCurrency }: { orgId?: string; formatCurren
       const { data, error } = await supabase
         .from('appointment_fee_charges')
         .select(`
-          id, fee_type, fee_amount, status, collected_via, charged_at, created_at,
-          appointment:appointment_id (client_name, appointment_date, status)
+          id, fee_type, fee_amount, status, collected_via, charged_at, created_at, appointment_id,
+          appointment:appointment_id (client_name, client_id, phorest_client_id, appointment_date, status)
         `)
         .eq('organization_id', orgId!)
         .eq('status', statusFilter)
@@ -90,7 +96,8 @@ function FeeLedgerCard({ orgId, formatCurrency }: { orgId?: string; formatCurren
         collected_via: string | null;
         charged_at: string | null;
         created_at: string;
-        appointment: { client_name: string | null; appointment_date: string; status: string | null } | null;
+        appointment_id: string;
+        appointment: { client_name: string | null; client_id: string | null; phorest_client_id: string | null; appointment_date: string; status: string | null } | null;
       }>;
     },
     enabled: !!orgId,
@@ -138,11 +145,65 @@ function FeeLedgerCard({ orgId, formatCurrency }: { orgId?: string; formatCurren
     },
   });
 
+  const collectMutation = useMutation({
+    mutationFn: async (charge: { id: string; appointmentId: string; clientId: string | null; amount: number; feeType: string }) => {
+      const { error } = await supabase.functions.invoke('charge-card-on-file', {
+        body: {
+          organization_id: orgId,
+          appointment_id: charge.appointmentId,
+          client_id: charge.clientId,
+          amount: charge.amount,
+          fee_type: charge.feeType,
+          fee_charge_id: charge.id,
+          description: `${FEE_TYPE_LABELS[charge.feeType] ?? charge.feeType} fee collection`,
+        },
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['fee-ledger'] });
+      queryClient.invalidateQueries({ queryKey: ['fee-ledger-pending-count'] });
+      toast.success('Fee charge collected');
+      setCollectDialogOpen(false);
+      setCollectingCharge(null);
+      setClientCard(null);
+    },
+    onError: (error) => {
+      toast.error('Failed to collect fee', { description: error.message });
+    },
+  });
+
+  const openCollectDialog = useCallback(async (charge: {
+    id: string; clientName: string; amount: number; feeType: string; appointmentId: string; clientId: string | null;
+  }) => {
+    if (!charge.clientId) {
+      toast.error('No client linked to this appointment');
+      return;
+    }
+    setCardLoading(true);
+    setCollectingCharge(charge);
+    setCollectDialogOpen(true);
+
+    const { data: card } = await supabase
+      .from('client_cards_on_file')
+      .select('brand, last4, exp_month, exp_year')
+      .eq('organization_id', orgId!)
+      .eq('client_id', charge.clientId)
+      .eq('is_default', true)
+      .limit(1)
+      .maybeSingle();
+
+    setClientCard(card as { brand: string; last4: string; exp_month: number; exp_year: number } | null);
+    setCardLoading(false);
+  }, [orgId]);
+
   const openWaiveDialog = useCallback((charge: { id: string; clientName: string; amount: number }) => {
     setSelectedCharge(charge);
     setWaiveReason('');
     setWaiveDialogOpen(true);
   }, []);
+
+  const cardExpired = clientCard ? isCardExpired(clientCard.exp_month, clientCard.exp_year) : false;
 
   const isPending = statusFilter === 'pending';
 
