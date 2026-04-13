@@ -252,6 +252,7 @@ export function TerminalRequestsTable() {
               <PlatformTableHead>Device</PlatformTableHead>
               <PlatformTableHead>Reason</PlatformTableHead>
               <PlatformTableHead className="text-center">Qty</PlatformTableHead>
+              <PlatformTableHead className="text-right">Est. Total</PlatformTableHead>
               <PlatformTableHead>Status</PlatformTableHead>
               <PlatformTableHead>Tracking</PlatformTableHead>
               <PlatformTableHead>Requested</PlatformTableHead>
@@ -273,6 +274,9 @@ export function TerminalRequestsTable() {
                 </PlatformTableCell>
                 <PlatformTableCell>{REASON_LABELS[req.reason] || req.reason}</PlatformTableCell>
                 <PlatformTableCell className="text-center">{req.quantity}</PlatformTableCell>
+                <PlatformTableCell className="text-right font-mono text-xs">
+                  {req.estimated_total_cents ? formatCurrency(req.estimated_total_cents / 100) : '—'}
+                </PlatformTableCell>
                 <PlatformTableCell><StatusBadge status={req.status} /></PlatformTableCell>
                 <PlatformTableCell>
                   {req.tracking_number ? (
